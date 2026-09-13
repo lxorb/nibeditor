@@ -277,16 +277,42 @@ describe('a file embedded in a note', () => {
 
   test('a paper is a card that opens it, with the page the link asked for', () => {
     const html = renderMarkdown('![[paper.pdf#page=3]]\n', { resolveLink })
-    expect(html).toContain('<figure class="embed embed-file" data-kind="pdf">')
+    expect(html).toContain('<figure class="embed embed-file" data-kind="pdf"')
     expect(html).toContain('href="/i/abc.pdf#page=3"')
     expect(html).toContain('paper.pdf#page=3')
     expect(html).toContain('<svg')
+  })
+
+  test('and says which page of which file a surface should draw in it', () => {
+    // The card is what a published page keeps, because a published page runs no
+    // script; in the app these two are what the drawing is made from, so the one
+    // piece of markup serves both readings. See `card`.
+    const html = renderMarkdown('![[paper.pdf#page=3]]\n', { resolveLink })
+    expect(html).toContain('data-file="paper.pdf"')
+    expect(html).toContain('data-page="3"')
+  })
+
+  test('a paper whose link names no page carries none', () => {
+    // Which page a paper opens at when the link is silent is the business of
+    // whatever asks pdf.js for one, and is said once there.
+    expect(renderMarkdown('![[paper.pdf]]\n', { resolveLink })).not.toContain('data-page')
   })
 
   test('a plane is a card as well', () => {
     const html = renderMarkdown('![[board.canvas]]\n')
     expect(html).toContain('data-kind="canvas"')
     expect(html).toContain('board.canvas')
+  })
+
+  test('and names the file to draw, with no page, since a plane has none', () => {
+    const html = renderMarkdown('![[board.canvas]]\n')
+    expect(html).toContain('data-file="board.canvas"')
+    expect(html).not.toContain('data-page=')
+  })
+
+  test('a file name cannot end the attribute the card names it in', () => {
+    const html = renderMarkdown('![[a" onerror="alert(1).pdf]]\n')
+    expect(html).not.toContain('onerror="alert(1)"')
   })
 
   test('a card nobody can open is still the name of the file', () => {

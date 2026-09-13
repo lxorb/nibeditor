@@ -316,8 +316,13 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
   return out.join('')
 }
 
-/** The whole plane as one SVG, sized to what is on it. */
-function canvasSvg(
+/** The whole plane as one SVG, sized to what is on it.
+ *
+ *  Exported because a plane is also drawn inside the note that embeds it, where the
+ *  same reasoning holds: there is one description of what a canvas looks like as a
+ *  picture, and an embed that drew its own would be a second one to drift from.
+ *  That reader asks for `plain`, and reading/drawn.ts says why. */
+export function canvasSvg(
   canvas: Canvas,
   palette: Palette,
   canvasPath: string | null,

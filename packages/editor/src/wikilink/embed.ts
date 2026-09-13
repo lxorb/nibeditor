@@ -1,7 +1,14 @@
 import type { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { DOCUMENT, PLANE } from '@nib/markdown/icons'
-import { embedKind, embedSize, linkTarget, parseWikilink, sectionOf } from '@nib/markdown/links'
+import {
+  embedKind,
+  embedSize,
+  linkTarget,
+  pageFragment,
+  parseWikilink,
+  sectionOf,
+} from '@nib/markdown/links'
 import { iconElement } from '../icon'
 import { imageResolver } from '../images'
 import { label } from '../labels'
@@ -10,7 +17,7 @@ import { openLightbox } from '../live-preview/image/lightbox'
 import { NibWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import { jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
+import { type FileDrawing, jumpFor, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
 
 /** What `![[…]]` draws: a note inside the note that names it, or a picture.
  *
@@ -288,15 +295,29 @@ export class EmbedMediaWidget extends NibWidget {
   }
 }
 
-/** What `![[paper.pdf#page=3]]` and `![[board.canvas]]` draw: a card naming the
- *  file, which opens it.
+/** What `![[paper.pdf#page=3]]` and `![[board.canvas]]` draw: the page of the
+ *  paper, or the plane, drawn where the embed stands - over the card that names
+ *  the file and opens it.
  *
- *  Neither can be shown where it stands, and both already have somewhere they are
- *  shown properly. A paper is pages, and the page wanted is written in the link
- *  rather than in the file; a plane is a surface somebody moves around on. The app
- *  opens each in a tab of its own, so the card is the name, the mark of what kind
- *  of thing it is, and one click - the same card the reading view, an export and a
- *  published page draw, which is the only way all four can agree on one design.
+ *  The card comes first and stays underneath. It is what the markup is on every
+ *  surface, including the two that can never draw anything: a published page runs
+ *  no script and an exported document has no space behind it to read a paper out
+ *  of. So the card is the honest reading everywhere, and the drawing is what the
+ *  app adds on top of it where there is a script and a disk. Nothing is lost if
+ *  the drawing never comes - no such page, no such file, a paper that turned out
+ *  to be broken - because what is left is the card, which is what this used to be
+ *  in every case.
+ *
+ *  The drawing itself is the app's, and arrives through the index's `drawFile`:
+ *  pdf.js and the canvas painter both live in the app, and neither could be
+ *  reached from here. Read-only, and lazily - the app draws nothing until the card
+ *  is scrolled into view - so a note that names thirty papers costs thirty cards
+ *  and the pages the reader actually reaches.
+ *
+ *  The press is unchanged and is the whole card, the drawing included: a click
+ *  opens the paper at that page, or the plane, in a tab of its own. What is drawn
+ *  here is a page rather than a reader - no scrolling, no selecting, no marks -
+ *  and the tab is where the reading happens.
  *
  *  A card for a file the space has not got says so, exactly as an embed of a
  *  missing note does: the markup is there to be corrected. */
@@ -318,6 +339,25 @@ export class EmbedFileWidget extends NibWidget {
       other.link.heading === this.link.heading &&
       other.link.alias === this.link.alias
     )
+  }
+
+  /** What this card asks the app to draw in it, or null when there is nothing to
+   *  draw: the space holds no such file, so the card stays the name and the click.
+   *
+   *  The arithmetic on the link and no more, which is the whole of the editor's
+   *  side of this and the reason it is a method rather than a line inside `toDOM`:
+   *  what is drawn is the app's, but which page of which file is the grammar's, and
+   *  the grammar is what this package can be held to. */
+  drawing(): FileDrawing | null {
+    if (this.path === null) return null
+
+    return {
+      kind: this.kind,
+      path: this.path,
+      // A paper's page is written in the link rather than in the file, and
+      // `pageFragment` answers nothing for a fragment that is not a page.
+      page: this.kind === 'pdf' ? pageFragment(this.link.heading) : null,
+    }
   }
 
   toDOM(view: EditorView) {
@@ -344,6 +384,13 @@ export class EmbedFileWidget extends NibWidget {
       open()
     })
     pressedByKey(card, open)
+
+    // And then the page, or the plane, over the top of it - if the app can draw
+    // one. Given the card rather than asked for a picture: the app waits until the
+    // reader can see it, measures the column it landed in, and draws at that width.
+    const drawing = this.drawing()
+    const draw = view.state.facet(noteIndex).drawFile
+    if (drawing !== null && draw !== undefined) this.onDestroy(card, draw(card, drawing))
 
     return card
   }

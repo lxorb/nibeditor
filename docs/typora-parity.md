@@ -585,12 +585,19 @@ Features Typora does not have, which are the reason this exists.
 - [x] Files a note embeds, in Obsidian's spelling, so the note travels. A
       recording (`![[take.mp3]]`) and a film (`![[demo.mp4]]`) are the browser's
       own player, plainly, with no frame around them and nothing playing until
-      somebody presses play. A paper (`![[paper.pdf#page=3]]`) and a plane
-      (`![[Board.canvas]]`) are a card saying which file it is, which opens it at
-      the page the link named. `![[shot.png|300]]` or `|300x200]]` is how wide to
-      draw it, and anything else after the bar says what it is. The same four in
-      the editor, in the reading view, in an export and on a published page; on
-      the glasses each is one line, its name behind the picture mark
+      somebody presses play. A paper (`![[paper.pdf#page=3]]`) draws that page of
+      it where the embed stands and a plane (`![[Board.canvas]]`) draws the whole
+      surface, read-only, at the note's own width and only once the reader has
+      scrolled it into view; a press opens the file in a tab of its own, at the
+      page the link named. Under the drawing is the card that says which file it
+      is, which is the whole of it wherever nothing can draw: an export has no
+      space behind it and a published page runs no script, so both keep the card
+      and its one click. So does anything that could not be drawn - no such page,
+      no such file, a plane with nothing on it - because a card says more than an
+      empty box. `![[shot.png|300]]` or `|300x200]]` is how wide to draw it, and
+      anything else after the bar says what it is. The same four in the editor, in
+      the reading view, in an export and on a published page; on the glasses each
+      is one line, its name behind the picture mark
 - [x] A page from somewhere else, written as a picture:
       `![](https://youtube.com/watch?v=…)`. Two lists are known and everything
       else stays the link it was. Nine rows are written by hand - YouTube, Vimeo,

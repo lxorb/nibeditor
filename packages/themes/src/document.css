@@ -197,7 +197,11 @@
 }
 
 /* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: one row saying which file, in
-   the frame an embedded note sits in. The same card the editor draws. */
+   the frame an embedded note sits in. The card the editor starts from too, and the
+   whole of it on a published page and in an exported document - neither runs a
+   script, so neither can ever draw a page of a paper. Inside the app the page or
+   the plane is drawn over this once the reader reaches it; those rules are in
+   editor.css, which only the app loads. */
 #write .embed-file {
   display: flex;
   align-items: center;

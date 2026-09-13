@@ -18,6 +18,7 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { modes } from './modes.svelte'
+  import { inlineFiles } from './reading/drawn'
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
   import { readingHtml } from './reading/render'
@@ -49,6 +50,12 @@
   let redraw: ReturnType<typeof setTimeout> | undefined
   let drawn = false
 
+  /** What gives back the observers watching for a paper or a plane card to come
+   *  into view. The cards belong to the page that was rendered, so a page drawn
+   *  again hands the old ones back before it watches the new ones; see
+   *  reading/drawn.ts. */
+  let undrawn: (() => void) | undefined
+
   /** Whether the note holds a ` ```query ` fence, which is what makes it answer
    *  again when the space changes. A scan of the words rather than a parse: the
    *  fence has to be written out to be one. */
@@ -77,6 +84,14 @@
     requestAnimationFrame(() => {
       if (mine !== latest) return
       show(untrack(() => tab.anchor) ?? 0)
+
+      // An embedded paper or plane is drawn into the card that names it as the
+      // reader reaches it. After the place is put back, so a card the reader
+      // landed on is already in view and draws at once.
+      undrawn?.()
+      undrawn = surface
+        ? inlineFiles(surface, untrack(() => workspace.activeSpace?.root) ?? null)
+        : undefined
       // The matches were painted onto nodes this render has thrown away, so the
       // find bar would be counting places nothing was showing.
       if (untrack(() => finding)) reveal()
@@ -253,12 +268,14 @@
     })
   }
 
-  // On the way out: the frame that would record the place, and the render that
-  // may still be waiting on a diagram drawer - nothing in flight is current
-  // once the pane has gone.
+  // On the way out: the frame that would record the place, the render that may
+  // still be waiting on a diagram drawer, and the observers watching for a paper
+  // to come into view - nothing in flight is current once the pane has gone.
   $effect(() => () => {
     cancelAnimationFrame(scheduled)
     latest++
+    undrawn?.()
+    undrawn = undefined
   })
 
   // The pane that is being read takes the keyboard, so Page Down, the arrows and

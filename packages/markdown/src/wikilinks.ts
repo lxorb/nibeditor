@@ -193,14 +193,28 @@ function media(link: Wikilink): string | null {
 }
 
 /** What an embedded PDF or canvas is drawn as: a card naming the file, which
- *  opens it.
+ *  opens it, and which says what a surface with a script behind it should draw in
+ *  its place.
  *
- *  Neither can be shown where it stands. A paper is pages, and which page is
- *  wanted is written in the link rather than in the file; a plane is a surface
- *  somebody moves around on. Both are things the app opens in a tab of their
- *  own, and a card that says which one and takes one click is the whole of what
- *  the reader came for. Where the card cannot be clicked - an export, which has
- *  no space behind it - it is still the file's name, said once.
+ *  The card is what the markup is, because the markup has to be right where there
+ *  is no script at all. A published page runs none and is not about to start; an
+ *  exported document has no space behind it to read a paper or a plane out of.
+ *  For both of those a page of a paper drawn into the note would be a picture
+ *  neither could ever produce, so what they get is the file's name, the mark of
+ *  what kind of thing it is, and - where there is anywhere to point - one click.
+ *  The same reasoning `![](https://youtube.com/…)` goes by; see web-embed.ts.
+ *
+ *  Inside the app there is a script, and there the card is where the drawing
+ *  goes: the page of the paper the link named, or the plane, drawn read-only at
+ *  the note's own width once the reader has scrolled it into view. That is why
+ *  `data-file` and `data-page` are here rather than worked out again by each
+ *  surface - the grammar is read once, in one place, and the editor's live preview
+ *  and the reading view draw from the same two facts. A surface that cannot draw
+ *  leaves the card exactly as it found it.
+ *
+ *  `data-page` is absent where the link named no page. Which page a paper opens at
+ *  then is not something a renderer knows: it belongs to whatever asks pdf.js for
+ *  one, and is said once there.
  *
  *  Null for every other kind. */
 function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string | null {
@@ -210,7 +224,14 @@ function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string |
   const icon = iconMarkup(kind === 'pdf' ? DOCUMENT : PLANE, 'embed-icon')
   const name = anchor(link, options.resolveLink, shownText(link))
 
-  return `<figure class="embed embed-file" data-kind="${kind}">${icon}${name}</figure>\n`
+  // A plane is one surface and has no pages, so it is never asked which.
+  const page = kind === 'pdf' ? pageFragment(link.heading) : null
+  const asked = page === null ? '' : ` data-page="${page}"`
+
+  return (
+    `<figure class="embed embed-file" data-kind="${kind}"` +
+    ` data-file="${escape(link.target)}"${asked}>${icon}${name}</figure>\n`
+  )
 }
 
 /** The frame an embedded note sits in, with a marker where its content goes.

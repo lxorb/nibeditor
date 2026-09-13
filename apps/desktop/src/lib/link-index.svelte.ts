@@ -15,6 +15,7 @@
  *  what a link says. `space-paths.ts` is the only place that converts. */
 
 import {
+  type FileDrawing,
   type NoteIndex,
   type NoteRef,
   resolveFile,
@@ -35,6 +36,7 @@ import {
   withoutBlockIds,
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
+import { drawFile } from './reading/drawn'
 import { rewriteLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
 import { pressRow, queryRowsHtml } from './query-block'
@@ -544,9 +546,24 @@ class Links {
       // the preview over a link. The reading view's own call, so one render
       // serves every place a note is read; see reading/render.ts.
       render: (source, from) => this.shownHtml(source, from),
+      // A page of a paper and a plane, drawn inside the card that stands for one.
+      // The reading view's own drawing, so a note shows the same page in the same
+      // frame whichever face it is read on; see reading/drawn.ts. Handed over with
+      // the rest of what the space holds for the reason a query fence is: a paper
+      // replaced on disk or a plane saved in the tab beside this one is a drawing
+      // that has to be made again, and this object being remade is what says so.
+      drawFile: (card, file) => this.drawnFile(card, file),
     }
     this.handed.set(key, made)
     return made
+  }
+
+  /** One card filled in with the file it names. Nothing to draw for a note opened
+   *  from outside any space: the path a card asks about is relative to a space, and
+   *  there is no space to read it against. */
+  private drawnFile(card: HTMLElement, file: FileDrawing): () => void {
+    const root = this.root
+    return root === null ? () => undefined : drawFile(card, { ...file, root })
   }
 
   /** One note as the HTML that shows it, for the editor: the note inside an

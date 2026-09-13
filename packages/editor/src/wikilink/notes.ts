@@ -37,6 +37,22 @@ export interface SpaceTag {
   notes: number
 }
 
+/** A page of a paper or a plane, as the card standing in for one asks to have it
+ *  drawn.
+ *
+ *  Three facts and no more, because that is the whole of what the editor knows
+ *  about either: the editor reads the grammar, and drawing is the app's. */
+export interface FileDrawing {
+  kind: 'pdf' | 'canvas'
+  /** Where the file sits, relative to the space, which is what the index speaks
+   *  in and what the words inside a plane's cards resolve from. */
+  path: string
+  /** Which page of a paper, counting from one, when the link named one. Null for
+   *  a plane, which is one surface and has no pages, and for a paper whose link
+   *  named none - which whatever asks pdf.js for a page draws as the first. */
+  page: number | null
+}
+
 /** One block somewhere in the space, as a row that can be linked to.
  *
  *  A line rather than a whole block, because this comes back from the search and
@@ -115,6 +131,27 @@ export interface NoteIndex {
    *  Absent where the editor stands on its own, and preview.ts then renders what
    *  a renderer alone can. */
   render?: ((source: string, path: string | null) => Promise<string>) | undefined
+  /** Draws a page of a paper, or a plane, inside the card that stands for one,
+   *  once the reader has scrolled that card into view. Answers with what stops it,
+   *  for a card that leaves the editor before or after the drawing lands.
+   *
+   *  Handed the card rather than asked for a picture, because the card is where the
+   *  reader is looking and the drawing is worth nothing anywhere else: the app can
+   *  measure the column it is in, draw the page at that width, and leave the card
+   *  untouched where there is nothing to draw - no such page, no such file, a
+   *  drawing that failed. A card is never replaced by an empty box.
+   *
+   *  Here with `render`, `query` and `pressRow` rather than in a facet of its own
+   *  for the same reason all three are: it is a thing the app can do and the editor
+   *  cannot - pdf.js and the canvas painter are both the app's - and it is about
+   *  what the space holds, which changes while the editor is open. A paper replaced
+   *  on disk or a plane saved in the tab beside this one is a drawing that has to be
+   *  made again, and remaking this object is what says so. A facet would be the
+   *  right home for something settled once, the way an image path becomes a URL.
+   *
+   *  Absent where the editor stands on its own, and `![[paper.pdf#page=3]]` is then
+   *  the card and nothing else. */
+  drawFile?: ((card: HTMLElement, file: FileDrawing) => () => void) | undefined
 }
 
 const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise.resolve(null) }
