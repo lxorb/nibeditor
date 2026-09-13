@@ -20,34 +20,55 @@
  *  at 31% and more. A catalogue in a script the firmware gains is drawable the day
  *  the metrics say so, and a hand list would still say no. */
 
-import { undrawable } from '@nib/glasses'
+import { drawsScript, undrawable } from '@nib/glasses'
 import { i18n, t } from '../i18n.svelte'
 
 /** How much of a catalogue may be undrawable before the panel gives up on it.
  *
- *  A tenth. The two groups are 0% and 31%, so this is nowhere near either: what it
- *  is for is a catalogue that borrows a word - a brand, a key name - rather than one
- *  written in a script the font has not got. */
+ *  A tenth, and only where the script could not be named: the two groups are 0% and
+ *  31%, so it is nowhere near either. What it is for is a catalogue that borrows a
+ *  word - a brand, a key name - rather than one written in a script the font lacks. */
 const MOST_MISSING = 0.1
 
-/** The words the question is asked of: the panel's own, in the reader's language.
- *
- *  Its own menu rather than a sample of the whole catalogue, because these are the
- *  strings that would be drawn as boxes, and because it is six lookups rather than a
- *  walk of a thousand rows on every launch. */
+/** The words the question is asked of when it has to be measured: the panel's own,
+ *  in the reader's language. Its own menu rather than a sample of the whole
+ *  catalogue, because these are the strings that would be drawn as boxes. */
 const SAMPLE = ['Settings', 'Switch space', 'Change note', 'Voice off', 'Spaces', 'Notes']
 
-/** What was decided, and for which catalogue. A reader who changes language mid
+/** What was decided, and for which language. A reader who changes language mid
  *  sitting is asked again; nobody else is. */
 let decided: { language: string; drawable: boolean } | null = null
 
-/** Whether the panel can be written in the reader's own language. */
+/** The writing system a language tag is in, as ISO 15924. `Intl` knows which script
+ *  every language is written in, so `hi` and `mr` are one answer and a Devanagari
+ *  language added tomorrow is the same answer again. */
+function scriptOf(tag: string): string | undefined {
+  try {
+    return new Intl.Locale(tag).maximize().script
+  } catch {
+    // A tag storage or a hand-edited setting made up. Measured below instead.
+    return undefined
+  }
+}
+
+/** Whether the panel can be written in the reader's own language.
+ *
+ *  **Per script, not per language.** What a font has or has not got is a writing
+ *  system: Hindi and Marathi are one question, and the answer for Devanagari is the
+ *  answer for every language written in it. `SCRIPTS` in the glasses package is that
+ *  list, measured against the firmware's own metrics by its own test.
+ *
+ *  Where a tag names no script - one that is not a tag at all - the reader's own
+ *  words are measured instead, which is the same question asked the slow way. */
 export function panelDrawable(): boolean {
   const language = i18n.language
   if (decided?.language === language) return decided.drawable
 
-  const said = SAMPLE.map((one) => t(one)).join(' ')
-  const drawable = undrawable(said) <= MOST_MISSING
+  const script = scriptOf(language)
+  const drawable = script
+    ? drawsScript(script)
+    : undrawable(SAMPLE.map((one) => t(one)).join(' ')) <= MOST_MISSING
+
   decided = { language, drawable }
   return drawable
 }

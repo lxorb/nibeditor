@@ -1,5 +1,7 @@
+import { readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { undrawable } from '@nib/glasses'
+import { SCRIPTS, undrawable } from '@nib/glasses'
 import { i18n, t } from '../i18n.svelte'
 import { forgetPanelLanguage, panelDrawable, panelWord } from './panel-words'
 
@@ -104,5 +106,55 @@ describe('the decision itself', () => {
 
     expect(panelDrawable()).toBe(true)
     expect(panelWord('Settings')).toBe('Settings')
+  })
+})
+
+describe('the rule is about scripts rather than languages', () => {
+  /** Hindi and Marathi are one question, and Arabic answers for Persian, Pashto and
+   *  Urdu as well. A list of languages would have been four lines that can disagree;
+   *  the script is one line that cannot. */
+  test('every language in a script the font lacks is answered the same way', async () => {
+    for (const one of ['hi', 'mr', 'bn', 'ta', 'te', 'kn', 'ml', 'pa', 'gu']) {
+      await reading(one)
+      expect(panelDrawable(), one).toBe(false)
+      expect(panelWord('Settings'), one).toBe('Settings')
+    }
+  })
+
+  test('and Arabic answers for every language written in it', async () => {
+    for (const one of ['ar', 'fa', 'ps', 'ur']) {
+      await reading(one)
+      expect(panelDrawable(), one).toBe(false)
+    }
+  })
+
+  test('while every script the font has keeps its own words', async () => {
+    for (const one of ['de', 'fr', 'gsw', 'ru', 'uk', 'ja', 'ko', 'zh-Hans', 'zh-Hant']) {
+      await reading(one)
+      expect(panelDrawable(), one).toBe(true)
+      expect(panelWord('Settings'), one).toBe(t('Settings'))
+    }
+  })
+})
+
+/** The catalogues this app has, against the scripts the glasses package lists.
+ *
+ *  That list decides the panel's language and what the plugin build packs, so a
+ *  catalogue in a script nobody has listed is a language neither has an answer for.
+ *  Here rather than in the glasses package, which has no business knowing where this
+ *  app keeps its words. */
+describe('every catalogue is in a script the list names', () => {
+  test('and no language is named twice', () => {
+    const where = resolve(import.meta.dirname, '../../locales')
+    const catalogues = readdirSync(where)
+      .filter((one) => one.endsWith('.ts'))
+      .map((one) => one.replace('.ts', ''))
+    const listed = SCRIPTS.flatMap((one) => one.languages)
+
+    expect(catalogues.length).toBeGreaterThan(30)
+    // English is in the list and has no file of its own: every string is its key.
+    expect(listed).toContain('en')
+    expect(catalogues.filter((one) => !listed.includes(one))).toEqual([])
+    expect(new Set(listed).size).toBe(listed.length)
   })
 })
