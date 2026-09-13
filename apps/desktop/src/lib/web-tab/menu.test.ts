@@ -24,14 +24,14 @@ function page(url: string | null) {
 }
 
 const actions = {
-  newTab: () => {},
-  bookmarks: () => {},
-  zoom: () => {},
-  fullScreen: () => {},
-  print: () => {},
-  save: () => {},
-  share: () => {},
-  settings: () => {},
+  newTab: () => undefined,
+  bookmarks: () => undefined,
+  zoom: () => undefined,
+  fullScreen: () => undefined,
+  print: () => undefined,
+  save: () => undefined,
+  share: () => undefined,
+  settings: () => undefined,
 }
 
 /** Every row's label, with the rules between groups left out. */

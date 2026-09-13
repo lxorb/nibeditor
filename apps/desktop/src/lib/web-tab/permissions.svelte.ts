@@ -56,7 +56,7 @@ export type Ask = (typeof ASKS)[number]
 
 /** What was said about one of them. There is no third answer: a site nobody has
  *  decided about has no entry at all, which is what makes the bubble appear. */
-export type Answer = 'allow' | 'block'
+type Answer = 'allow' | 'block'
 
 function isAsk(value: string): value is Ask {
   return ASKS.some((one) => one === value)
@@ -138,9 +138,10 @@ class Grants {
   remember(site: string, ask: Ask, answer: Answer | null) {
     if (!site) return
 
-    const kept = { ...this.of(site) }
-    if (answer === null) delete kept[ask]
-    else kept[ask] = answer
+    const kept = Object.fromEntries(
+      Object.entries(this.of(site)).filter(([one]) => one !== ask),
+    ) as Partial<Record<Ask, Answer>>
+    if (answer !== null) kept[ask] = answer
 
     const all = withOrWithout(this.by, site, Object.keys(kept).length ? kept : null)
     this.by = all

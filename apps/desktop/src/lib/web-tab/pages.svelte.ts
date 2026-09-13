@@ -44,13 +44,18 @@ import { placeOf, placeKept } from './place'
  *  and not a loss. */
 const PARKED_AFTER = 30 * 60 * 1000
 
-/** How many pages may be running at once.
+/** How many pages may be running at once, beyond which the least recently looked at is
+ *  parked.
  *
- *  Eight, beyond which the least recently looked at is parked: the cost of a page is
- *  a browser's cost, and a window with thirty web tabs in it is a window somebody
- *  has thirty bookmarks in and is reading one of. The one on screen is never the one
- *  parked. */
-const LIVE_AT_MOST = 8
+ *  The cost of a page is a browser's cost, and it was measured rather than guessed:
+ *  `scripts/web-switch-probe.py` reads what the webview processes under this launch are
+ *  holding, and one open page on this machine is about 180 MB. Six is a working set -
+ *  what somebody is reading and the handful they are going back and forth to - at a bit
+ *  over a gigabyte, which is what a browser with six tabs in it costs and is the honest
+ *  price of never reloading one. A window with thirty web tabs in it is a window
+ *  somebody has thirty bookmarks in and is reading one of. The one on screen is never
+ *  the one parked. */
+const LIVE_AT_MOST = 6
 
 /** How long a still picture of a page stands for the page. Under half a second, so
  *  two overlays in a row share one and a page that has scrolled since is
@@ -278,9 +283,12 @@ class Pages {
     // at the place it was parked at, and a note opened again tomorrow comes back at the
     // place the reading got to. The crate restores it inside the page as it loads,
     // which is the only moment it can be done without a jump; see web_tabs.rs.
+    // Only when it is this page's place: a tab that followed a link on the way in is a
+    // tab whose place belongs to the page it came from.
     const kept = placeOf(page.path)
-    const place = kept && kept.url === page.url ? { x: kept.x, y: kept.y } : null
-    const trail = kept?.url === page.url ? (kept?.trail ?? []) : []
+    const here = kept?.url === page.url ? kept : null
+    const place = here ? { x: here.x, y: here.y } : null
+    const trail = here?.trail ?? []
 
     try {
       await invoke('web_open', {

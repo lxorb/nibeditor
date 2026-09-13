@@ -64,7 +64,14 @@ globalThis.ResizeObserver = NoLayout
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   const gone = { x: 0, y: 0, width: 0, height: 0 }
   if (!this.isConnected) {
-    return { ...gone, top: 0, left: 0, right: 0, bottom: 0, toJSON: () => gone } as DOMRect
+    return {
+      ...gone,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      toJSON: () => gone,
+    }
   }
 
   const hole = this.classList.contains('hole')
@@ -76,7 +83,7 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
     right: 800,
     bottom: 600,
     toJSON: () => rect,
-  } as DOMRect
+  }
 }
 
 // jsdom has no hit testing either. Nothing of the app's is over the page here, so
@@ -129,7 +136,7 @@ test('switching away from a web tab keeps the page and switching back does not b
 
   // The tab strip switches to a note: the pane's web surface goes.
   asked.length = 0
-  unmount(first)
+  void unmount(first)
   flushSync()
   await frames()
 
@@ -143,11 +150,10 @@ test('switching away from a web tab keeps the page and switching back does not b
   flushSync()
   await frames()
 
-  console.log('back:', JSON.stringify(asked), 'holes:', document.querySelectorAll('.hole').length)
   expect(asked.map((one) => one.command)).not.toContain('web_open')
   expect(asked.map((one) => one.command)).toContain('web_place')
 
-  unmount(second)
+  void unmount(second)
 })
 
 /** A native webview draws above every pixel of HTML in the window, so anything the app
@@ -189,5 +195,5 @@ test('the page is hidden while anything of the app is over it, and comes back wh
   const shown = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(shown?.args.visible).toBe(true)
 
-  unmount(app)
+  void unmount(app)
 })

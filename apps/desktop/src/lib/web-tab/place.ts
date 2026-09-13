@@ -50,7 +50,9 @@ function readPlace(value: unknown): Place | null {
   const { url, x, y, trail, at } = value
   if (typeof url !== 'string' || typeof x !== 'number' || typeof y !== 'number') return null
 
-  const walked = Array.isArray(trail) ? trail.filter((one): one is string => typeof one === 'string') : []
+  const walked = Array.isArray(trail)
+    ? trail.filter((one): one is string => typeof one === 'string')
+    : []
 
   return {
     url,
@@ -85,14 +87,14 @@ export function placeOf(path: string | null): Place | null {
 export function placeKept(path: string | null, place: Place) {
   if (!path) return
 
+  // Built rather than edited, so that the newest is last however many times this note
+  // has been written down before: the order of the keys is what makes the oldest the
+  // one that goes when the list is full.
   const held = all()
-  delete held[path]
-  held[path] = place
-
-  const paths = Object.keys(held)
-  for (const old of paths.slice(0, Math.max(0, paths.length - KEEPS))) delete held[old]
+  const others = Object.entries(held).filter(([one]) => one !== path)
+  const kept = [...others.slice(Math.max(0, others.length + 1 - KEEPS)), [path, place] as const]
 
   // A device that cannot keep this opens the page at the top, which is what a
   // browser with no session does.
-  keep(STORAGE_KEY, JSON.stringify(held))
+  keep(STORAGE_KEY, JSON.stringify(Object.fromEntries(kept)))
 }
