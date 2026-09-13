@@ -9,11 +9,10 @@
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
-  import { markOf } from './file-mark'
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
-  import FileMark from './FileMark.svelte'
   import SharedMark from './SharedMark.svelte'
+  import TabMark from './TabMark.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { inside } from './workspace/zones'
   import { dur } from './motion'
@@ -305,9 +304,6 @@
     ondrop={(event) => drop(event, tabs.length)}
   >
     {#each tabs as tab, at (tab.id)}
-      <!-- Which mark this tab wears, once: the rows asked three times over, and the
-           strip is drawn again whenever anything about the panes changes. -->
-      {@const wears = markOf(tab.kind)}
       <!-- How many other devices are in this note, once and at most three: the
            expression below it allocated a fresh array-like per tab per render. -->
       {@const elsewhere = Math.min(rooms.present[tab.note.key] ?? 0, 3)}
@@ -352,28 +348,19 @@
             workspace.panes.landing = null
           }}
         >
-          <!-- A pinned tab is its mark and nothing else: the name is what
-               takes the room, and a tab kept open all day is one somebody knows
-               by sight. The name is still what it says to a reader who cannot
-               see it, and what the title shows. -->
-          {#if tab.pinned && wears}
-            <span class="pin" aria-hidden="true">
-              <!-- With the path where there is one, so a note that chose an icon
-                   wears it here as well; see FileMark.svelte. -->
-              {#if tab.path}
-                <FileMark mark={wears} path={tab.path} />
-              {:else}
-                <FileMark mark={wears} />
-              {/if}
-            </span>
-          {/if}
+          <!-- What this tab is looking at, on every tab: a strip of a note, a
+               canvas and two websites says which is which before any of the names
+               are read, and every name in it starts at the same place. Never the
+               icon the file chose for its row - a tab says what kind of thing it
+               holds, and a website says which site. See TabMark.svelte. -->
+          <TabMark {tab} />
           {#if tab.reading}
             <!-- An open book, quietly: the tab says which face of the note is up
                  without spending a word on it. -->
             <!-- A drawing that says something, so it says what: an `svg` carrying a
                  name and no role is a graphic nothing reads. -->
             <svg
-              class="mark"
+              class="reading"
               viewBox="0 0 14 12"
               role="img"
               aria-label={t('Reading')}
@@ -387,7 +374,11 @@
                the text directly inside it, so the words were being cut through
                the middle of a letter. This is also the only part of the tab that
                gives way as the strip fills. -->
-          {#if !(tab.pinned && wears)}
+          <!-- A pinned tab is its mark and nothing else: the name is what takes the
+               room, and a tab kept open all day is one somebody knows by sight. The
+               name is still what it says to a reader who cannot see it, and what the
+               title shows. -->
+          {#if !tab.pinned}
             <span class="label">{tab.shown}</span>
           {/if}
           <!-- Not yours: this document is one somebody else shared on its own, and
@@ -655,12 +646,6 @@
     padding: 7px 8px;
   }
 
-  .pin {
-    display: grid;
-    place-items: center;
-    flex: none;
-  }
-
   /* The tab being read gives way a third as fast as the rest, so the name of
      the note in front of you is the last one still worth reading. Eased, so
      that in a full strip the two tabs trade their width rather than swap it. */
@@ -762,9 +747,11 @@
     font-style: italic;
   }
 
-  /* Before the name rather than after it, where the saving dot is: the two say
-     different kinds of thing and should not be read as one pair. */
-  .mark {
+  /* The open book, after the mark that says what the tab holds and before the name:
+     the two say different kinds of thing and should not be read as one pair, and a
+     state belongs beside the name rather than in front of the mark. Smaller than the
+     mark, because it is about the note rather than what the note is. */
+  .reading {
     width: var(--icon-sm);
     height: var(--icon-sm);
     flex: none;
