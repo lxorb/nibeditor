@@ -13,6 +13,7 @@ export const sw: Dictionary = {
   'Add a page after this': 'Ongeza ukurasa baada ya huu',
   'Delete this page': 'Futa ukurasa huu',
   'Page {number}': 'Ukurasa {number}',
+  'The paper could not be read': 'Karatasi haikuweza kusomwa',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Turubai',
   Card: 'Kadi',

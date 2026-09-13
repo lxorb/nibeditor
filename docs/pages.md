@@ -204,7 +204,18 @@ costs what a note made from four pages costs. See `pages/paper.ts`.
 
 The page sizes come out of the PDF's own dictionaries and nothing is drawn to get
 them, which is what lets the sheet say what it is about to make before it makes it.
-A landscape plate in a portrait book gets a landscape page.
+A landscape plate in a portrait book gets a landscape page, and a page is called what
+it is: a page out of a Letter paper says `letter`, so changing its ruling does not
+snap it to A4's size.
+
+**The `file` a page names is relative, and to two things.** Obsidian writes one
+relative to the vault; this import writes the paper's bare name beside the note it
+made, which is the same path only when the note sits at the top of the space. So both
+are tried - the note's own folder first, then the space's root - and the one that opens
+is the one the page draws. `placesOf` in `apps/desktop/src/lib/space-paths.ts` is the
+whole of it. A page whose paper is nowhere says so on the sheet: a blank sheet and a
+sheet whose PDF could not be read look identical, which is how a whole note of blank
+pages went unnoticed.
 
 **Highlights carry over.** A PDF's highlights live in `paper.pdf.highlights.json`
 (see the sidecar in `pdf/highlights.ts`), and that file is untouched by any of

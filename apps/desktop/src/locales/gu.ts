@@ -13,6 +13,7 @@ export const gu: Dictionary = {
   'Add a page after this': 'આ પછી પાનું ઉમેરો',
   'Delete this page': 'આ પાનું કાઢો',
   'Page {number}': 'પાનું {number}',
+  'The paper could not be read': 'કાગળ વાંચી શકાયો નહીં',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',

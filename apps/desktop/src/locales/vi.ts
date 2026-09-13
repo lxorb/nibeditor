@@ -13,6 +13,7 @@ export const vi: Dictionary = {
   'Add a page after this': 'Thêm một trang sau trang này',
   'Delete this page': 'Xoá trang này',
   'Page {number}': 'Trang {number}',
+  'The paper could not be read': 'Không đọc được giấy',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Canvas',
   Card: 'Thẻ',

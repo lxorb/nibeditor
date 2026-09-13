@@ -13,6 +13,7 @@ export const ml: Dictionary = {
   'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
   'Delete this page': 'ഈ താൾ മായ്ക്കുക',
   'Page {number}': 'താൾ {number}',
+  'The paper could not be read': 'കടലാസ് വായിക്കാൻ കഴിഞ്ഞില്ല',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',

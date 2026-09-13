@@ -13,6 +13,7 @@ export const kn: Dictionary = {
   'Add a page after this': 'ಇದರ ನಂತರ ಪುಟ ಸೇರಿಸು',
   'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',
   'Page {number}': 'ಪುಟ {number}',
+  'The paper could not be read': 'ಕಾಗದವನ್ನು ಓದಲು ಆಗಲಿಲ್ಲ',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',

@@ -13,6 +13,7 @@ export const ha: Dictionary = {
   'Add a page after this': 'Ƙara shafi bayan wannan',
   'Delete this page': 'Share wannan shafi',
   'Page {number}': 'Shafi {number}',
+  'The paper could not be read': 'Ba a iya karanta takardar ba',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanbas',
   Card: 'Kati',

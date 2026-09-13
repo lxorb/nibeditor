@@ -13,6 +13,7 @@ export const fil: Dictionary = {
   'Add a page after this': 'Magdagdag ng pahina pagkatapos nito',
   'Delete this page': 'Tanggalin ang pahinang ito',
   'Page {number}': 'Pahina {number}',
+  'The paper could not be read': 'Hindi mabasa ang papel',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Canvas',
   Card: 'Card',

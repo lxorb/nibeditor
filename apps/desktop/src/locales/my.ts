@@ -13,6 +13,7 @@ export const my: Dictionary = {
   'Add a page after this': 'ဤအပြီး စာမျက်နှာထည့်ပါ',
   'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',
   'Page {number}': 'စာမျက်နှာ {number}',
+  'The paper could not be read': 'စာရွက်ကို ဖတ်လို့မရပါ',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',

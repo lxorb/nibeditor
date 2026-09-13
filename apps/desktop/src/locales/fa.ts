@@ -13,6 +13,7 @@ export const fa: Dictionary = {
   'Add a page after this': 'افزودن صفحه پس از این',
   'Delete this page': 'حذف این صفحه',
   'Page {number}': 'صفحه {number}',
+  'The paper could not be read': 'کاغذ خوانده نشد',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'بوم',
   Card: 'کارت',

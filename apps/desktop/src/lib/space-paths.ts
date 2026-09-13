@@ -45,6 +45,43 @@ export function insideSpace(root: string, relative: string): string {
   return joinPath(root, relative)
 }
 
+/** Where a file a note names could be, in the order to look.
+ *
+ *  A JSON Canvas file node holds a path and the spec does not say what it is relative
+ *  to, so two answers are honest and both are in the wild: Obsidian writes one
+ *  relative to the vault, and this app's own PDF import writes the paper's bare name
+ *  beside the note it made - the same path when the note is at the top of the space
+ *  and a different one when it is in a folder. So both are offered, the note's own
+ *  folder first, and whichever is there is the one that reads.
+ *
+ *  A path of its own - a drive letter, a leading separator - is itself and is offered
+ *  alone. A `..` in it is left in: a picture kept in one folder for the whole space is
+ *  written that way, and a path that climbs out of the space is refused where every
+ *  other path is, by the reader rather than by a second rule here. See
+ *  `beside_a_note` in src-tauri/src/paths.rs and `normalise` in web/paths.ts.
+ *
+ *  Ordered, each place once, and empty only for a page that names no file at all. */
+export function placesOf(file: string, notePath: string | null, root: string | null): string[] {
+  if (!file) return []
+  if (/^[/\\]/.test(file) || /^[A-Za-z]:/.test(file)) return [file]
+
+  const out: string[] = []
+  const add = (path: string) => {
+    if (!out.includes(path)) out.push(path)
+  }
+
+  if (notePath) {
+    const folder = folderOf(notePath)
+    add(folder ? joinPath(folder, file) : file)
+  }
+  if (root) add(insideSpace(root, file))
+  // Neither a note nor a space to resolve against: the name as it stands is the only
+  // thing left to try, and the reader is what says whether it is anywhere.
+  if (!out.length) add(file)
+
+  return out
+}
+
 /** How long a path a store may keep. The service's limit, so nothing is kept
  *  here that would be refused there. */
 const LONGEST_PATH = 300

@@ -13,6 +13,7 @@ export const ta: Dictionary = {
   'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
   'Page {number}': 'பக்கம் {number}',
+  'The paper could not be read': 'தாளைப் படிக்க முடியவில்லை',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',

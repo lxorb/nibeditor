@@ -13,6 +13,7 @@ export const zhHantHK: Dictionary = {
   'Add a page after this': '在此頁之後加一頁',
   'Delete this page': '刪除此頁',
   'Page {number}': '第 {number} 頁',
+  'The paper could not be read': '無法讀取紙張',
   '{at} / {count}': '{at} / {count}',
   Canvas: '畫布',
   Card: '卡片',

@@ -13,6 +13,7 @@ export const pl: Dictionary = {
   'Add a page after this': 'Dodaj stronę po tej',
   'Delete this page': 'Usuń tę stronę',
   'Page {number}': 'Strona {number}',
+  'The paper could not be read': 'Nie udało się odczytać papieru',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanwa',
   Card: 'Karta',

@@ -18,6 +18,9 @@ What it checks and photographs:
     adding, reordering and deleting a page, and what reordering does to the ink on it
     a long page growing past A4 when writing reaches the bottom of it
     the page counter in the status bar, and the thumbnails in the outline panel's slot
+    a PDF imported as a page note: every page drawn, on the sheet and in the panel,
+      counted in pixels rather than taken on trust, and a page whose paper has gone
+      saying so rather than coming out blank
     the file on disk: JSON Canvas, a group node per page, the ink under `nib`
     the same note renamed to `.canvas` still reading as the same pages
     the phone: the same bar, the pages in a column, no second interface
@@ -56,7 +59,7 @@ SHOTS = HERE / "shots" / "pages"
 DIST = APP / "dist"
 
 # Its own port, in the range this agent was given.
-PORT = 20231
+PORT = 23301
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 failures: list[str] = []
@@ -978,6 +981,233 @@ def check_as_canvas(page: Page, label: str) -> None:
     shot(page, f"{label}-as-a-canvas")
 
 
+def paper_bytes(sizes: list[tuple[float, float]]) -> str:
+    """A PDF of `sizes` pages, each with a black block on it, as base64.
+
+    Written out here rather than kept as a fixture, the way search.py writes its own:
+    a drive that makes its own paper cannot drift from the paper it opens. The block is
+    what the checks below count - a page that drew is a page with dark pixels on it -
+    and it is inset from the edge so the count is about the paper and not about the
+    sheet's own border.
+    """
+    import base64
+
+    objects: list[str] = []
+    kids = " ".join(f"{3 + at * 2} 0 R" for at in range(len(sizes)))
+    objects.append("1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj")
+    objects.append(f"2 0 obj<</Type/Pages/Kids[{kids}]/Count {len(sizes)}>>endobj")
+
+    for at, (wide, tall) in enumerate(sizes):
+        page = 3 + at * 2
+        stream = f"0 0 0 rg 40 40 {wide - 80:.0f} {tall - 80:.0f} re f"
+        objects.append(
+            f"{page} 0 obj<</Type/Page/Parent 2 0 R"
+            f"/MediaBox[0 0 {wide:.2f} {tall:.2f}]/Contents {page + 1} 0 R>>endobj"
+        )
+        objects.append(f"{page + 1} 0 obj<</Length {len(stream)}>>stream\n{stream}\nendstream\nendobj")
+
+    body = "\n".join(
+        ["%PDF-1.4", *objects, f"trailer<</Root 1 0 R/Size {2 + len(sizes) * 2 + 1}>>", "%%EOF"]
+    )
+
+    return base64.b64encode(body.encode("latin-1")).decode("ascii")
+
+
+# A PDF handed to the app's own import, which is the road a reader takes: File ▸ Import,
+# one paper picked. The import makes a folder of its own named after the paper, so the
+# note and the paper land one folder down from the space's root - which is exactly the
+# case that was broken, because a page's `file` is the paper's bare name and nothing
+# above resolved it against the note's own folder.
+IMPORT_PAPER = """
+async ({ base64, name }) => {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let at = 0; at < binary.length; at++) bytes[at] = binary.charCodeAt(at)
+
+  const importing = window.nibApp.importing
+  importing.show()
+  importing.root = window.nibApp.workspace.activeSpace.root
+  await importing.take([new File([bytes], name, { type: 'application/pdf' })])
+
+  const format = importing.format
+  const said = importing.error
+  if (format !== 'pdf-pages') return { format, error: said }
+
+  await importing.run()
+  importing.close()
+  await window.nibApp.workspace.loadTree()
+
+  return { format, error: importing.error, stage: importing.stage, folder: importing.folder }
+}
+"""
+
+# How much of a sheet is not the colour of the sheet.
+#
+# Read off the canvas the page draws its paper onto, at the size the canvas holds
+# rather than at the size it is shown: what is asked is whether the paper was drawn at
+# all, and a blank sheet answers nought however big it is on screen.
+DARK_ON_SHEETS = """
+() => {
+  const out = []
+  for (const sheet of document.querySelectorAll('.sheet canvas')) {
+    const context = sheet.getContext('2d', { willReadFrequently: true })
+    if (!context || !sheet.width || !sheet.height) {
+      out.push({ width: sheet.width, height: sheet.height, dark: 0 })
+      continue
+    }
+
+    const data = context.getImageData(0, 0, sheet.width, sheet.height).data
+    let dark = 0
+    // Every fortieth pixel, which is thousands of them on a page and quick enough to
+    // ask for on every sheet in the note.
+    for (let at = 0; at < data.length; at += 160) {
+      if (data[at + 3] > 8 && data[at] < 100 && data[at + 1] < 100 && data[at + 2] < 100) dark++
+    }
+
+    out.push({ width: sheet.width, height: sheet.height, dark })
+  }
+  return out
+}
+"""
+
+# And the same question of the thumbnails in the outline panel, which draw the paper
+# through the same one reader.
+DARK_ON_THUMBS = """
+() => {
+  const out = []
+  for (const thumb of document.querySelectorAll('.navigator .page canvas')) {
+    const context = thumb.getContext('2d', { willReadFrequently: true })
+    if (!context || !thumb.width || !thumb.height) continue
+
+    const data = context.getImageData(0, 0, thumb.width, thumb.height).data
+    let dark = 0
+    for (let at = 0; at < data.length; at += 40) {
+      if (data[at + 3] > 8 && data[at] < 100 && data[at + 1] < 100 && data[at + 2] < 100) dark++
+    }
+
+    out.push({ width: thumb.width, height: thumb.height, dark })
+  }
+  return out
+}
+"""
+
+
+def check_paper(page: Page, label: str) -> None:
+    """A PDF imported as a page note draws, page by page, on the sheet and in the panel.
+
+    The bug this is here for: the note was written correctly - one `file` node per page,
+    at the paper's own size, with `#page=N` in the subpath - and every page came out
+    blank, on the web build and in the app alike, while the PDF viewer drew the same
+    file. The paper's path in the note is relative, and it was handed to the reader as
+    it stood; nothing in the app can read `Lecture 4.pdf`.
+
+    So this counts pixels rather than trusting the file: a page that drew has a black
+    block on it, and a page that did not is the colour of the sheet. Both places the
+    paper is drawn are asked - the sheet in the pane and the thumbnail in the panel -
+    because they used to fail together and would fail together again.
+
+    A Letter page is in there as well, because a page out of a Letter paper used to
+    call itself A4: the size was right and the name was wrong, so changing its ruling
+    snapped it to A4's size.
+    """
+    say("--- a paper imported as pages ---")
+
+    # A4 and Letter, in the points a PDF measures in.
+    made = page.evaluate(
+        IMPORT_PAPER,
+        {"base64": paper_bytes([(595.28, 841.89), (612.0, 792.0)]), "name": "Lecture 4.pdf"},
+    )
+    if made.get("format") != "pdf-pages":
+        fail(f"[{label}] the import read the paper as {made.get('format')!r}: {made.get('error')!r}")
+        return
+
+    say(f"[{label}] imported into a folder of its own: {made.get('folder')!r}")
+
+    opened_note = page.evaluate(
+        """async () => {
+          const ws = window.nibApp.workspace
+          const note = ws.files.find((one) => one.name === 'Lecture 4.pages')
+          if (!note) return null
+          await ws.openEntry(note.path, { activate: true })
+          return note.path
+        }"""
+    )
+    if not opened_note:
+        fail(f"[{label}] the import wrote no page note beside the paper")
+        return
+
+    say(f"[{label}] the note the import made: {opened_note}")
+    page.wait_for_selector(".pages", timeout=15000)
+    # The reader is fetched the first time a paper is asked for - it brings pdf.js with
+    # it - and then every page is rasterised.
+    page.wait_for_timeout(3500)
+
+    held = pages_of(page)
+    if len(held) != 2:
+        fail(f"[{label}] the paper became {len(held)} pages rather than two")
+        return
+
+    # The sizes are the paper's own, and so are the names now.
+    if [one["paper"] for one in held] != ["a4", "letter"]:
+        fail(f"[{label}] the pages call themselves {[one['paper'] for one in held]}")
+    if (held[0]["width"], held[0]["height"]) != (794, 1123):
+        fail(f"[{label}] the A4 page is {held[0]['width']}x{held[0]['height']}")
+    if (held[1]["width"], held[1]["height"]) != (816, 1056):
+        fail(f"[{label}] the Letter page is {held[1]['width']}x{held[1]['height']}")
+
+    sheets = page.evaluate(DARK_ON_SHEETS)
+    say(f"[{label}] the sheets: {sheets}")
+    if len(sheets) != 2:
+        fail(f"[{label}] {len(sheets)} sheets draw a paper rather than two")
+    for at, one in enumerate(sheets):
+        if one["dark"] < 100:
+            fail(f"[{label}] page {at + 1} drew nothing: {one}")
+
+    shot(page, f"{label}-paper")
+
+    # And the panel, which draws the same paper through the same reader. Opened the way
+    # the checks above open it, then waited for: it slides in, and the thumbnails are
+    # drawn a pause after the last change rather than on every stroke.
+    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.wait_for_timeout(3000)
+    thumbs = page.evaluate(DARK_ON_THUMBS)
+    say(f"[{label}] the thumbnails: {thumbs}")
+    if not thumbs:
+        fail(f"[{label}] the outline panel drew no thumbnails at all")
+    elif not any(one["dark"] >= 20 for one in thumbs):
+        fail(f"[{label}] no thumbnail has any of the paper on it: {thumbs}")
+
+    shot(page, f"{label}-paper-thumbnails")
+
+    # A page whose paper is not there says so rather than coming out blank, which is
+    # the other half of the bug: a silent blank sheet is what hid it.
+    # A page whose paper is not there says so rather than coming out blank, which is
+    # the other half of the bug: a silent blank sheet is what hid it. Pointed at a paper
+    # that was never there, through the store's own edit, which is what changing a page
+    # amounts to anywhere else.
+    page.evaluate(
+        """() => {
+          const store = window.nibApp.pages.current.store
+          const first = store.pages[0]
+          store.edit({
+            ...store.canvas,
+            nodes: store.canvas.nodes.map((node) =>
+              node.id === first.id ? { ...node, file: 'Nowhere at all.pdf' } : node,
+            ),
+          })
+        }"""
+    )
+    page.wait_for_timeout(1500)
+
+    said = page.locator(".sheet .missing").count()
+    if said < 1:
+        fail(f"[{label}] a page whose paper is not there says nothing about it")
+    else:
+        say(f"[{label}] {said} sheet(s) say the paper could not be read")
+
+    shot(page, f"{label}-paper-missing")
+
+
 def drive(browser, theme: str) -> None:
     say(f"=== {theme} ===")
     context = browser.new_context(
@@ -1009,6 +1239,9 @@ def drive(browser, theme: str) -> None:
             check_long_page(page, theme)
             check_file(page, theme)
             check_as_canvas(page, theme)
+        # Last, because it imports a paper and opens the note the import made: every
+        # check above is about the note this drive started with.
+        check_paper(page, theme)
     finally:
         context.close()
 

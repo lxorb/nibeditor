@@ -13,6 +13,7 @@ export const tr: Dictionary = {
   'Add a page after this': 'Bundan sonra sayfa ekle',
   'Delete this page': 'Bu sayfayı sil',
   'Page {number}': 'Sayfa {number}',
+  'The paper could not be read': 'Kâğıt okunamadı',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Tuval',
   Card: 'Kart',

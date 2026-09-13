@@ -5,6 +5,7 @@ import {
   insideItsSpace,
   nameOf,
   noteName,
+  placesOf,
   relativePath,
   relativeTo,
 } from './space-paths'
@@ -133,5 +134,62 @@ describe('a path a store may keep', () => {
     expect(insideItsSpace('a/../../out.md')).toBe(false)
     expect(insideItsSpace('')).toBe(false)
     expect(insideItsSpace('a\nb.md')).toBe(false)
+  })
+})
+
+/** Where a file a note names could be, which is the bug a page note made from a PDF
+ *  had: the pages held the paper's own name, the name was handed to the reader as it
+ *  stood, no such file could be read, and every page came out blank. */
+describe('the places a file a note names could be', () => {
+  const root = 'C:\\Notes\\Work'
+
+  test('is beside the note first, because that is where an import puts the pair', () => {
+    expect(placesOf('Paper.pdf', 'C:\\Notes\\Work\\Lectures\\Paper.pages', root)).toEqual([
+      'C:\\Notes\\Work\\Lectures\\Paper.pdf',
+      'C:\\Notes\\Work\\Paper.pdf',
+    ])
+  })
+
+  test('and under the space root, which is how Obsidian writes one', () => {
+    expect(placesOf('papers/Paper.pdf', 'C:\\Notes\\Work\\Lectures\\Paper.pages', root)).toEqual([
+      'C:\\Notes\\Work\\Lectures\\papers\\Paper.pdf',
+      'C:\\Notes\\Work\\papers\\Paper.pdf',
+    ])
+  })
+
+  test('the same folder twice is named once', () => {
+    expect(placesOf('Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual([
+      'C:\\Notes\\Work\\Paper.pdf',
+    ])
+  })
+
+  test('the browser’s own paths work the same way, with its own separator', () => {
+    expect(placesOf('Paper.pdf', '/Work/Lectures/Paper.pages', '/Work')).toEqual([
+      '/Work/Lectures/Paper.pdf',
+      '/Work/Paper.pdf',
+    ])
+  })
+
+  test('a path that climbs to a folder beside the note is still a place to look', () => {
+    // Which is what the Attachments setting writes for a picture, so a page note
+    // whose paper is kept in one folder for the whole space still draws.
+    expect(placesOf('../papers/Paper.pdf', '/Work/Lectures/Paper.pages', '/Work')).toEqual([
+      '/Work/Lectures/../papers/Paper.pdf',
+      '/Work/../papers/Paper.pdf',
+    ])
+  })
+
+  test('a path of its own is itself and nothing else', () => {
+    expect(placesOf('C:/Elsewhere/Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual([
+      'C:/Elsewhere/Paper.pdf',
+    ])
+    expect(placesOf('/elsewhere/Paper.pdf', '/Work/Paper.pages', '/Work')).toEqual([
+      '/elsewhere/Paper.pdf',
+    ])
+  })
+
+  test('nothing named is nowhere to look', () => {
+    expect(placesOf('', '/Work/Paper.pages', '/Work')).toEqual([])
+    expect(placesOf('Paper.pdf', null, null)).toEqual(['Paper.pdf'])
   })
 })

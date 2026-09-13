@@ -13,6 +13,7 @@ export const te: Dictionary = {
   'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
   'Delete this page': 'ఈ పేజీ తొలగించు',
   'Page {number}': 'పేజీ {number}',
+  'The paper could not be read': 'కాగితాన్ని చదవలేకపోయాం',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',

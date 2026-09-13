@@ -22,15 +22,23 @@
 
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
+  import { t } from './i18n.svelte'
   import { paperOf } from './pages/paper'
 
   const {
     page,
     number,
+    notePath,
+    root,
   }: {
     page: PageNode
     /** Counting from one, which is what a page's label says. */
     number: number
+    /** The note this page belongs to, and the space it is in. A page's `file` is a
+     *  relative path - the two things it can be relative to are these - so a sheet
+     *  cannot find its own paper without them; see pages/paper.ts. */
+    notePath: string | null
+    root: string | null
   } = $props()
 
   /** The ruling pitches, in the pixels everything else on the plane is in: 8mm and
@@ -40,6 +48,10 @@
 
   /** The page of the PDF behind this sheet, once it has been drawn. */
   let paper = $state.raw<ImageBitmap | null>(null)
+  /** Whether the paper was asked for and could not be read. A sheet with no picture is
+   *  either still drawing or has nothing to draw, and those look the same; a page that
+   *  came out blank because nothing could read its PDF is the bug this says out loud. */
+  let lost = $state(false)
   let sheet = $state<HTMLCanvasElement>()
 
   /** Whether this page wants a picture at all. */
@@ -53,13 +65,17 @@
     if (!file || !at) return
 
     let alive = true
-    void paperOf(file, at).then((drawn) => {
-      if (alive) paper = drawn?.image ?? null
+    void paperOf({ file, note: notePath, root }, at).then((drawn) => {
+      if (!alive) return
+
+      paper = drawn?.image ?? null
+      lost = !drawn
     })
 
     return () => {
       alive = false
       paper = null
+      lost = false
     }
   })
 
@@ -118,6 +134,13 @@
          rather than in it. -->
     <canvas bind:this={sheet} class:there={!!paper}></canvas>
   {/if}
+  {#if lost}
+    <!-- Said on the sheet, quietly and once. A page whose paper cannot be read used
+         to be indistinguishable from a page with nothing on it, which is how a whole
+         note of blank sheets read as a note of blank sheets rather than as a paper
+         nothing had resolved. -->
+    <span class="missing">{t('The paper could not be read')}</span>
+  {/if}
   <span class="number">{number}</span>
 </div>
 
@@ -149,6 +172,18 @@
      appear with a snap under the nib. */
   .sheet canvas.there {
     opacity: 1;
+  }
+
+  /* What a page says when its paper is not there: at the top of the sheet, in the
+     muted shade every other aside is in, and out of the way of the writing. */
+  .missing {
+    position: absolute;
+    inset-inline: 0;
+    top: 12px;
+    color: var(--muted);
+    font: 12px/1.4 var(--font-ui, inherit);
+    text-align: center;
+    user-select: none;
   }
 
   /* The page's number, in the corner of the sheet, quiet enough to be ignored and

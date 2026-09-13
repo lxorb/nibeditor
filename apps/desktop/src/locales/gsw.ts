@@ -13,6 +13,7 @@ export const gsw: Dictionary = {
   'Add a page after this': 'Siite dernaa hinzuefüege',
   'Delete this page': 'Die Siite lösche',
   'Page {number}': 'Siite {number}',
+  'The paper could not be read': 'S Papier het mer nöd chöne läse',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Liinwand',
   Card: 'Chärtli',

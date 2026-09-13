@@ -13,6 +13,7 @@ export const ps: Dictionary = {
   'Add a page after this': 'له دې وروسته مخ ورزياتول',
   'Delete this page': 'دا مخ ړنګول',
   'Page {number}': 'مخ {number}',
+  'The paper could not be read': 'کاغذ ونه لوستل شو',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'تخته',
   Card: 'کارت',

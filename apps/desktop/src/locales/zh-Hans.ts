@@ -13,6 +13,7 @@ export const zhHans: Dictionary = {
   'Add a page after this': '在此页后添加一页',
   'Delete this page': '删除此页',
   'Page {number}': '第 {number} 页',
+  'The paper could not be read': '无法读取纸张',
   '{at} / {count}': '{at} / {count}',
   Canvas: '画布',
   Card: '卡片',

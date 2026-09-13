@@ -13,6 +13,7 @@ export const ru: Dictionary = {
   'Add a page after this': 'Добавить страницу после этой',
   'Delete this page': 'Удалить эту страницу',
   'Page {number}': 'Страница {number}',
+  'The paper could not be read': 'Не удалось прочитать бумагу',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Полотно',
   Card: 'Карточка',

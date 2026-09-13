@@ -13,6 +13,7 @@ export const ur: Dictionary = {
   'Add a page after this': 'اس کے بعد صفحہ شامل کریں',
   'Delete this page': 'یہ صفحہ حذف کریں',
   'Page {number}': 'صفحہ {number}',
+  'The paper could not be read': 'کاغذ نہیں پڑھا جا سکا',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'کینوس',
   Card: 'کارڈ',

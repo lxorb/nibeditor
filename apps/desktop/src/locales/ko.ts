@@ -13,6 +13,7 @@ export const ko: Dictionary = {
   'Add a page after this': '이 뒤에 페이지 추가',
   'Delete this page': '이 페이지 삭제',
   'Page {number}': '{number}쪽',
+  'The paper could not be read': '용지를 읽을 수 없습니다',
   '{at} / {count}': '{at} / {count}',
   Canvas: '캔버스',
   Card: '카드',
