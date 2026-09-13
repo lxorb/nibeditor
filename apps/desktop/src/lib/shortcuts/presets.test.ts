@@ -198,7 +198,10 @@ describe('the Notion keyboard', () => {
   test('puts the block types on the numbers, the way Notion does', () => {
     const keys = presets.presetById('notion')?.keys ?? {}
 
-    expect(keys['paragraph.body']).toBe('Mod-Shift-0')
+    // Every one of them but Paragraph, which Notion puts on Ctrl+Shift+0: the nought
+    // is the shifted character on AZERTY, so that chord is Ctrl+0 there as well, and
+    // Ctrl+0 is the text size. Paragraph keeps Nib's own key.
+    expect(keys['paragraph.body']).toBeUndefined()
     expect(keys['paragraph.heading-1']).toBe('Mod-Shift-1')
     expect(keys['paragraph.bullet-list']).toBe('Mod-Shift-5')
     expect(keys['paragraph.ordered-list']).toBe('Mod-Shift-6')

@@ -2,9 +2,17 @@
 
 What it proves: Ctrl and a notch over the note steps `--zoom` and says so with a
 badge that goes on its own; a notch without Ctrl scrolls and changes nothing; a
-notch over the panel changes nothing; the keys step and reset the same value; and
-nothing here touches the browser's own zoom - the page's own scale stays 1, which
-is the whole point of the app owning the gesture.
+notch over the panel changes nothing; and nothing here touches the browser's own
+zoom - the page's own scale stays 1, which is the whole point of the app owning the
+gesture.
+
+And the keys, which are the three every browser uses: **Ctrl+=**, **Ctrl+-** and
+**Ctrl+0** are the size and nothing else, Ctrl+0 answers to the key underneath so it
+reads the same on a keyboard where the nought needs Shift, and Heading up, heading
+down and Paragraph are one modifier over on Ctrl+Shift+=, Ctrl+Shift+- and
+Ctrl+Shift+P, where they change the line and not the size.
+
+It fails loudly: anything wrong is printed at the end and the exit code says so.
 
 Build first, with the app's own handle on the page:
 
@@ -30,8 +38,8 @@ ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
 SHOTS = APP / "test" / "e2e" / "shots" / "text-size"
 
-# Above 18000, and not a port any other drive here uses.
-PORT = 18939
+# Its own port, in the range this agent was given.
+PORT = 23302
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 DESKTOP_AGENT = (
@@ -66,8 +74,16 @@ SIZE = """
 """
 
 
+failures: list[str] = []
+
+
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
+
+
+def wrong(words: str) -> None:
+    failures.append(words)
+    print(f"  FAIL {words}", flush=True)
 
 
 class Quiet(http.server.SimpleHTTPRequestHandler):
@@ -159,23 +175,105 @@ def drive(browser) -> None:
     say(f"a notch over the file list: {page.evaluate('() => window.nibApp.modes.zoom')}")
 
     say("--- the keys ---")
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
-    for key in ["Control+Shift+Equal", "Control+Shift+Equal", "Control+Shift+Minus"]:
+
+    def focus() -> None:
+        page.evaluate(
+            "() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()"
+        )
+
+    def size() -> float:
+        return page.evaluate("() => window.nibApp.modes.zoom")
+
+    def line() -> str:
+        return page.evaluate(LINE)
+
+    def pressed(key: str) -> None:
         page.keyboard.press(key)
-        page.wait_for_timeout(220)
-        say(f"{key:<22} -> {page.evaluate('() => window.nibApp.modes.zoom')}")
+        page.wait_for_timeout(260)
 
-    page.keyboard.press("Control+Alt+Digit0")
+    # Inside the note, because that is where somebody is when they want bigger words -
+    # and because it is the one place a key of the editor's could take it instead.
+    focus()
+    page.evaluate("() => window.nibApp.modes.resetZoom()")
     page.wait_for_timeout(300)
-    say(f"Control+Alt+0          -> {page.evaluate(SIZE)}")
 
-    # The three keys the brief asked about, which are the editor's: they must
-    # still be the editor's.
-    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
-    page.keyboard.press("Control+Equal")
-    page.wait_for_timeout(260)
-    say(f"Control+= (Heading up) left the size at {page.evaluate('() => window.nibApp.modes.zoom')}")
-    say(f"and the line now reads: {page.evaluate(LINE)!r}")
+    # The caret onto the heading, so a key that is the editor's can be seen to have
+    # been the editor's.
+    page.evaluate(
+        """() => {
+          const view = window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)
+          view?.dispatch({ selection: { anchor: 6 } })
+        }"""
+    )
+    page.wait_for_timeout(200)
+    heading = line()
+    say(f"the caret is in {heading!r} at {size()}")
+
+    pressed("Control+Equal")
+    bigger = size()
+    say(f"Control+=              -> {bigger}")
+    if bigger <= 1:
+        wrong(f"Ctrl+= did not make the words bigger: {bigger}")
+    if line() != heading:
+        wrong(f"Ctrl+= changed the line as well: {line()!r}")
+
+    pressed("Control+Equal")
+    if size() <= bigger:
+        wrong(f"a second Ctrl+= did not step again: {size()}")
+    say(f"Control+= twice        -> {size()}")
+
+    pressed("Control+Minus")
+    if size() != bigger:
+        wrong(f"Ctrl+- did not step back down: {size()} rather than {bigger}")
+    say(f"Control+-              -> {size()}")
+
+    pressed("Control+Digit0")
+    said = page.evaluate(SIZE)
+    if said["kept"] != 1:
+        wrong(f"Ctrl+0 did not reset the size: {said}")
+    if not said["badge"]:
+        wrong("Ctrl+0 said nothing: the badge is what says what just happened")
+    say(f"Control+0              -> {said}")
+    page.screenshot(path=str(SHOTS / "reset-badge.png"))
+    say("shot reset-badge.png")
+
+    # The layout case. On AZERTY the nought is the shifted character of the top row, so
+    # what a French reader presses for Ctrl+0 has Shift down - and Shift and the nought
+    # key is exactly what this sends. The chord is matched by the key underneath, which
+    # is what every browser does with its own Ctrl+0; see keys.ts.
+    pressed("Control+Equal")
+    if size() <= 1:
+        wrong("Ctrl+= would not step, so the layout case cannot be told apart")
+    pressed("Control+Shift+Digit0")
+    if size() != 1:
+        wrong(f"Ctrl+Shift+0 - which is Ctrl+0 on AZERTY - did not reset: {size()}")
+    else:
+        say("Control+Shift+0        -> reset, which is the AZERTY road to Ctrl+0")
+
+    say("--- and the three that moved ---")
+    was = size()
+
+    pressed("Control+Shift+Equal")
+    if line() == heading:
+        wrong(f"Ctrl+Shift+= did not change the heading: {line()!r}")
+    else:
+        say(f"Control+Shift+=        -> {line()!r}")
+    if size() != was:
+        wrong(f"Ctrl+Shift+= changed the size as well: {size()}")
+
+    pressed("Control+Shift+Minus")
+    if line() != heading:
+        wrong(f"Ctrl+Shift+- did not put the heading back: {line()!r}")
+    else:
+        say(f"Control+Shift+-        -> {line()!r}")
+
+    pressed("Control+Shift+KeyP")
+    if line().startswith("#"):
+        wrong(f"Ctrl+Shift+P did not make it a paragraph: {line()!r}")
+    else:
+        say(f"Control+Shift+P        -> {line()!r}")
+    if size() != was:
+        wrong(f"Ctrl+Shift+P changed the size as well: {size()}")
 
     page.screenshot(path=str(SHOTS / "after.png"))
     say("shot after.png")
@@ -211,6 +309,14 @@ def main() -> int:
         pages.stop()
 
     say(f"shots in {SHOTS}")
+
+    if failures:
+        print("\n%d thing(s) wrong:" % len(failures))
+        for one in failures:
+            print(f"  - {one}")
+        return 1
+
+    print("\neverything the drive checked was right")
     return 0
 
 

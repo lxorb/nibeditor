@@ -233,10 +233,21 @@ the digit and sets a heading level. Ctrl+Shift+3 used to open the file list and
 turn the line into a heading, both. A letter cannot be read that way round,
 because the shifted letter and the letter are different names for the key.
 
-The same rule caught one that was already there: Actual size was on Ctrl+Shift+0
-and Ctrl+0 is Paragraph, so on those layouts it reset the zoom and flattened the
-heading the caret was in. It is Ctrl+Alt+0 now, which is still the 0 every
-browser resets with. `shortcuts.test.ts` fails if another one appears.
+The rule reads both ways round now, because the app reads a digit the same way on
+purpose: a chord that wants a digit and no Shift is matched by the key underneath, so
+Ctrl+0 reaches the text size on AZERTY as it does everywhere else (see
+`matchesCombination` in `keys.ts`). Which means Ctrl+Shift+0 and Ctrl+0 are one press
+on those keyboards whichever of the two something is bound to, so nothing may hold one
+while anything holds the other. That is why Paragraph is Ctrl+Shift+P and not
+Ctrl+Shift+0, where Notion puts it, and it is the one key of Notion's the Notion preset
+cannot take. `shortcuts.test.ts` fails if a pair appears, in either direction.
+
+**A press a surface has already answered is spent.** The window's handler is the last
+one to run, and the plane, the page column and the file list read their own keys off
+their own element before the press gets there. So the app stands down on anything one
+of them has stopped - the same rule the wheel follows - which is what makes a
+`contextual` binding work as the registry describes it: one that found nothing to do
+stops nothing, and the app still gets the key.
 
 **The notes**
 
@@ -370,13 +381,23 @@ not passive and prevents the default, which is what stops WebView2 and WKWebView
 from zooming underneath; the window's own zoom hotkeys are off for the same
 reason. What has just happened is said once, as a badge over the note, and goes.
 
-The keys stay where they are: **Ctrl+Shift+=**, **Ctrl+Shift+-** and
-**Ctrl+Alt+0**. Ctrl+= and Ctrl+- are Heading up and Heading down in the editor
-and have been since the first version, Ctrl+0 is Paragraph, and Ctrl+Shift+0 is
-the clash the digit rule above is about. These three are also Typora's own, which
-is the editor nib is closest to. A surface with a zoom of its own - the canvas,
-the graph, a page note - answers the same gesture on its own element, and the
-note's rule stands down on anything one of them has already prevented.
+The keys are the three every browser uses, and Obsidian and Typora with them:
+**Ctrl+=**, **Ctrl+-** and **Ctrl+0**. A reader who wants bigger words presses one of
+those before they open a shortcut list, so those are what they are. Ctrl+0 is matched
+by the key rather than by the character it printed, which is what makes it Ctrl+0 on
+AZERTY too, where the nought is the shifted character; see the digit rule above.
+
+They were Heading up, Heading down and Paragraph in the editor, which have moved one
+modifier over: **Ctrl+Shift+=**, **Ctrl+Shift+-** and **Ctrl+Shift+P**. Obsidian binds
+none of those three at all, so nothing carries over from it, and the heading levels keep
+Ctrl+1 to Ctrl+6, which are nobody else's. Paragraph takes a letter because
+Ctrl+Shift+0 cannot be pressed on AZERTY without also being Ctrl+0.
+
+The plane's Fit is Ctrl+Alt+0 for the same reason: it is read off the plane and the
+press goes on to the window afterwards, so the two on one key would fit the plane and
+resize the words at once. A surface with a zoom of its own - the canvas, the graph, a
+page note - answers the same gesture on its own element, and the note's rule stands
+down on anything one of them has already prevented, keys as well as the wheel.
 
 ### Not covered
 

@@ -61,8 +61,9 @@ for (let index = 1; index <= 9; index++) OBSIDIAN[`app.note-${index}`] = `Mod-${
 for (let level = 1; level <= 6; level++) OBSIDIAN[`paragraph.heading-${level}`] = null
 // The plane's Ctrl+1 goes the same way, and for a sharper reason: it is read off
 // the plane itself and the press goes on to the window afterwards, so leaving it
-// there would zoom to what is picked and switch note from one key. Ctrl+0 fits
-// the whole plane and stays: Obsidian's digits are 1 to 9.
+// there would zoom to what is picked and switch note from one key. Obsidian's digits
+// are 1 to 9, and the plane's Fit is on Ctrl+Alt+0 for the same reason, so neither of
+// those is in anybody's way.
 OBSIDIAN['canvas.frame'] = null
 
 /** Notion's own keys.
@@ -85,7 +86,9 @@ const NOTION: KeyOverrides = {
   'format.code': 'Mod-e',
   'app.reading': null,
   'format.strikethrough': 'Mod-Shift-s',
-  'paragraph.body': 'Mod-Shift-0',
+  // Notion's own is Ctrl+Shift+0, and that is the one key of theirs this cannot take:
+  // on AZERTY the nought is the shifted character, so Ctrl+Shift+0 is Ctrl+0 there as
+  // well, and Ctrl+0 is the text size. So Paragraph keeps Nib's own letter.
   'paragraph.heading-1': 'Mod-Shift-1',
   'paragraph.heading-2': 'Mod-Shift-2',
   'paragraph.heading-3': 'Mod-Shift-3',
