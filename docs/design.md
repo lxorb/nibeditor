@@ -735,9 +735,20 @@ puts it.
 ### Tabs and bars
 
 The tab strip and the title bar are `--header-height`. A tab's name is
-`--text-row`, its mark `--icon-sm`, and the active tab keeps its sliding
-underline. The status bar is unchanged: it is already the right idea - nothing
-until it is looked at.
+`--text-row`, and the active tab keeps its sliding underline. The status bar is
+unchanged: it is already the right idea - nothing until it is looked at.
+
+Every tab wears one mark, in front of its name, in the box a row in the file list
+draws one in - `--icon-md`, whatever the tab holds, so every name in the strip
+starts at the same place. It is the kind's own mark and never the icon the file
+chose for its row: a row is the file and a tab is a window onto one kind of thing,
+and a strip of six of somebody's emoji is a strip nothing can be found in. A
+website is the exception every browser makes - it wears the site's own favicon,
+and the generic web mark only where there is none to be had - and while its page
+is loading the mark turns, which is the one moment the box says what the tab is
+doing rather than what it holds. The open book that says a note is being read is
+`--icon-sm` and sits after the mark, because it is a state rather than a mark. See
+`lib/TabMark.svelte`.
 
 ### Tables
 

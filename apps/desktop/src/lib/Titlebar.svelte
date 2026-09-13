@@ -1,11 +1,10 @@
 <script lang="ts">
   import type { EditorView } from '@nib/editor'
   import AppMenu from './AppMenu.svelte'
-  import FileMark from './FileMark.svelte'
-  import { markOf } from './file-mark'
   import { t } from './i18n.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceMark from './SpaceMark.svelte'
+  import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
   import { currentWindow, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
@@ -31,12 +30,13 @@
   const only = $derived(workspace.panes.count === 1 ? workspace.panes.focused : null)
 
   /** A phone and a tablet show one document, so the bar says which one, with the
-   *  mark its kind wears in every list that shows it and the dot that says
-   *  something in it is not written down yet. */
+   *  dot that says something in it is not written down yet. The mark in front of the
+   *  name is the same one the desktop's tab wears, because this bar is that strip on
+   *  a screen that holds one document; see TabMark.svelte. */
   const title = $derived(
     workspace.active ? workspace.active.shown + (workspace.active.unsaved ? ' ·' : '') : 'Nib',
   )
-  const mark = $derived(workspace.active ? markOf(workspace.active.kind) : null)
+  const showing = $derived(workspace.active)
 
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()
@@ -93,7 +93,7 @@
          tabs too narrow to read: the mark for what it is, and what it is called.
          The rest is behind the three dots. -->
     <h1 class="title">
-      {#if mark}<FileMark {mark} />{/if}
+      {#if showing}<TabMark tab={showing} />{/if}
       <span class="name">{title}</span>
     </h1>
 
