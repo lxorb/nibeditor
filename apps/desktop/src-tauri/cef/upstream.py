@@ -2,8 +2,8 @@
 """Fetch the Tauri revision this workspace is pinned to, and repair it.
 
 The pin is one revision in `Cargo.toml` beside this file, and this is what turns
-it into a checkout `cargo` can build against. Two things have to happen before
-nib compiles on `tauri-runtime-cef`, and both of them are upstream's rather than
+it into a checkout `cargo` can build against. Four things have to happen before
+nib runs on `tauri-runtime-cef`, and every one of them is upstream's rather than
 nib's:
 
 **1. `tauri` needs the `wry` feature back, as a name that does nothing.** Every
@@ -25,14 +25,29 @@ does with its own code.** That is the first thing batch 1 measured, it is one
 line to repair, and the repair is here rather than in a fork nib would have to
 host.
 
-**2. `dpi` has to be one crate.** `tauri` takes it from crates.io while
+**2. Windows cannot load what the branch links.** The branch takes the `cef` crate
+with its default features and those include `sandbox`, which links
+`cef_sandbox.lib`; since Chromium M138 that library only works in a binary built
+with Chromium's own toolchain and loaded as a DLL by CEF's `bootstrap.exe`, so a
+plain executable dies in the loader before its first line. That is ship gate 1 of
+docs/browser.md, met in person: the repair takes the crate without the feature and
+the flagged build runs unsandboxed, which is what the runtime's own documentation
+says a Windows build does today.
+
+**3. The winit method macOS no longer has.** The branch calls
+`WindowAttributesMacOS::with_accepts_first_mouse`, which winit 0.31 removed - and it
+takes `winit` from a fork's `master`, so the branch does not compile on a Mac
+against the fork as it stands today. Dropping the call is what upstream itself did by
+the time it published `tauri-runtime-cef 3.0.0-alpha.0`.
+
+**4. `dpi` has to be one crate.** `tauri` takes it from crates.io while
 `tauri-runtime-cef` takes `winit` from the `winit-gtk4` fork, which vendors a
 `dpi` of its own. That one is a `[patch.crates-io]` in `Cargo.toml` and needs no
 checkout; it is named here because the two belong together.
 
-Both are reported by the bump workflow, so the day the branch fixes either of
-them the pull request says so - an edit that no longer applies is the good
-outcome, not a failure.
+All of them are reported by the bump workflow, so the day the branch fixes one of
+them the pull request says so - an edit that no longer applies is the good outcome,
+not a failure.
 
     python upstream.py            # fetch and repair, into target/upstream/tauri
     python upstream.py --print    # say where it is, fetch nothing
@@ -64,6 +79,25 @@ FEATURE_ADDED = """unstable = []
 # resolve against this branch. See apps/desktop/src-tauri/cef/upstream.py.
 wry = []
 """
+
+# The Windows one, and it is ship gate 1 measured rather than described. The branch
+# takes the `cef` crate with its default features, and those include `sandbox`, which
+# links `cef_sandbox.lib`. Since Chromium M138 that library can only be linked by a
+# binary built with Chromium's own toolchain and **loaded as a DLL by CEF's
+# `bootstrap.exe`** - so a plain executable that links it dies in the loader with
+# `STATUS_ENTRYPOINT_NOT_FOUND` before a line of its own code runs, which is exactly
+# what the first Windows run of the gate did. A Tauri application is not that DLL
+# yet, so the flagged build takes the crate without the feature and runs unsandboxed,
+# which is what `tauri-runtime-cef`'s own documentation says a Windows build does.
+# `spike/browser` says the same thing in its own manifest, for the same reason.
+SANDBOX_BEFORE = 'cef = { version = "=151.8.1", features = ["build-util", "linux-x11"] }'
+SANDBOX_AFTER = (
+    'cef = { version = "=151.8.1", default-features = false, features = [\n'
+    '  "build-util",\n'
+    '  "linux-x11",\n'
+    '  "resources",\n'
+    '] }  # `sandbox` off: see apps/desktop/src-tauri/cef/upstream.py'
+)
 
 # The macOS one. The branch calls a winit method that winit 0.31 removed - its own
 # changelog says so: *"On macOS, remove `WindowAttributesMacOS::with_accepts_first_mouse`"*
@@ -142,13 +176,20 @@ def edit(path: Path, before: str, after: str, done: str, what: str) -> None:
 
 
 def repair() -> None:
-    """Both edits, applied once each."""
+    """Every edit, applied once each."""
     edit(
         INTO / 'crates' / 'tauri' / 'Cargo.toml',
         FEATURE_ANCHOR,
         FEATURE_ADDED,
         'wry = []',
         'the wry feature every plugin asks for',
+    )
+    edit(
+        INTO / 'crates' / 'tauri-runtime-cef' / 'Cargo.toml',
+        SANDBOX_BEFORE,
+        SANDBOX_AFTER,
+        '# `sandbox` off:',
+        'the sandbox library Windows cannot load as an executable',
     )
     edit(
         INTO / 'crates' / 'tauri-runtime-cef' / 'src' / 'window_builder.rs',

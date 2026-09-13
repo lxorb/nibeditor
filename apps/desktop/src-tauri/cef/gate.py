@@ -20,7 +20,11 @@ so its launch is read from the launch trace the app already writes when
 `NIB_TRACE_STARTUP` is set. Same instrument, same axis, both builds.
 
     python gate.py --cef target/release/nib-cef --control ../target/release/nib \\
-        --payload target/release --out gate-out
+        --engine ../../../../.cef --out gate-out
+
+`--engine` is a CEF distribution, and the run stages the engine's own files beside
+the flagged binary out of it before it starts anything - which is both what a release
+has to do and what makes the size rows here the bytes a reader downloads.
 """
 
 from __future__ import annotations
@@ -224,6 +228,41 @@ def chosen_files(payload: Path, names: tuple[str, ...] | None) -> list[Path]:
         for one in found
         if one.name in wanted or any(part in wanted for part in one.relative_to(payload).parts)
     ]
+
+
+def stage(engine: Path, beside: Path) -> list[str]:
+    """Put the engine's own files where a release puts them: beside the binary.
+
+    That is what the loader looks for on Windows, what `$ORIGIN` means on Linux, and
+    what makes the size rows below the bytes a reader downloads rather than whatever a
+    distribution happened to unpack - a CEF distribution also carries its headers, its
+    CMake files and its samples, and a release ships none of those.
+    """
+    copied = []
+    for one in chosen_files(engine, CEF_PAYLOAD):
+        # Flat, and a named directory keeps its own shape: Chromium wants `locales/`
+        # and the macOS framework as directories and the rest as files.
+        inside = one.relative_to(engine).parts
+        at = next((part for part in inside if part in CEF_PAYLOAD), None)
+        if at is None:
+            continue
+        kept = inside[inside.index(at) :]
+
+        # macOS is the exception, and it is not a choice: CEF's loader looks for
+        # `../Frameworks/Chromium Embedded Framework.framework` relative to the
+        # executable and panics if it is not there, because a CEF application on that
+        # platform is a bundle. This is the smallest thing that satisfies it; the real
+        # bundle, with its five helper apps and its signatures, is batch 7.
+        root = beside
+        if kept[0].endswith('.framework'):
+            root = beside.parent / 'Frameworks'
+
+        target = root.joinpath(*kept)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists():
+            shutil.copy2(one, target)
+            copied.append(str(target.relative_to(beside.parent)))
+    return copied
 
 
 def weigh(payload: Path, names: tuple[str, ...] | None = None) -> dict:
@@ -526,7 +565,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--cef', required=True, help='the flagged binary')
     ap.add_argument('--control', default=None, help='the app as it ships')
-    ap.add_argument('--payload', default=None, help='the folder a release would ship out of')
+    ap.add_argument('--engine', default=None, help='a CEF distribution, to stage beside it')
     ap.add_argument('--extension', default=None, help='an unpacked MV3 extension to load')
     ap.add_argument('--tabs', type=int, default=2)
     ap.add_argument('--timeout', type=int, default=420)
@@ -536,6 +575,14 @@ def main() -> int:
 
     out_dir = Path(args.out).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    flagged = Path(args.cef).resolve()
+    beside = flagged.parent
+
+    # The engine, where a release would put it. Before anything runs, because on
+    # Windows the loader and on macOS CEF's own loader both look for it there.
+    if args.engine:
+        copied = stage(Path(args.engine).resolve(), beside)
+        print(f'staged {len(copied)} engine files beside the binary')
     report: dict = {
         'platform': f'{platform.system()} {platform.machine()}',
         'sandbox': os.environ.get('NIB_CEF_SANDBOX', 'auto'),
@@ -563,7 +610,7 @@ def main() -> int:
     env = {'NIB_TRACE_STARTUP': '1', 'NIB_CEF_GATE': str(args.tabs)}
     if args.extension:
         env['NIB_CEF_EXTENSION'] = str(Path(args.extension).resolve())
-    cef = run(Path(args.cef).resolve(), env, out_dir / 'cef', args.timeout, measured=True)
+    cef = run(flagged, env, out_dir / 'cef', args.timeout, measured=True)
     report['cef'] = cef
     report['cef_api'] = next(
         (one.get('cef_api') for one in cef['events'] if one.get('event') == 'engine'), None
@@ -579,33 +626,30 @@ def main() -> int:
     report['profile_children'] = sorted(one.name for one in root.iterdir()) if root.is_dir() else []
 
     # What a release would have to carry, and what that costs a reader: the engine's
-    # own files, weighed and then compressed with the algorithm an installer uses.
-    # The two binaries are compared beside it, because one of them has Chromium's
-    # bindings linked into it and the other does not.
-    if args.payload:
-        payload = Path(args.payload).resolve()
-        ships: dict = {'payload': str(payload)}
-        ships['engine'] = weigh(payload, CEF_PAYLOAD)
-        ships['engine_unpacked_mb'] = ships['engine'].get('unpacked_mb')
+    # own files where the run staged them, weighed and then compressed with the
+    # algorithm an installer uses. The two binaries are beside it, because one of them
+    # has Chromium's bindings linked into it and the other does not.
+    ships: dict = {'payload': str(beside)}
+    ships['engine'] = weigh(beside, CEF_PAYLOAD)
+    ships['engine_unpacked_mb'] = ships['engine'].get('unpacked_mb')
 
-        flagged = Path(args.cef).resolve()
-        if flagged.is_file():
-            ships['cef_binary_mb'] = round(flagged.stat().st_size / 1048576, 2)
-        if args.control and Path(args.control).is_file():
-            ships['app_binary_mb'] = round(Path(args.control).stat().st_size / 1048576, 2)
+    if flagged.is_file():
+        ships['cef_binary_mb'] = round(flagged.stat().st_size / 1048576, 2)
+    if args.control and Path(args.control).is_file():
+        ships['app_binary_mb'] = round(Path(args.control).stat().st_size / 1048576, 2)
 
-        if not args.no_compress:
-            print('compressing, which is the installer delta measured rather than guessed')
-            packed = compress(payload, CEF_PAYLOAD)
-            ships['engine_packed_mb'] = round(packed / 1048576, 1)
-            # The delta is the engine plus however much bigger the binary itself got.
-            grew = (ships.get('cef_binary_mb') or 0) - (ships.get('app_binary_mb') or 0)
-            ships['delta_packed_mb'] = round(packed / 1048576 + max(grew, 0.0), 1)
-            ships['delta_note'] = (
-                'LZMA, which is what NSIS and a deb use; a dmg is zlib and compresses '
-                'a little less well'
-            )
-        report['ships'] = ships
+    if not args.no_compress:
+        print('compressing, which is the installer delta measured rather than guessed')
+        packed = compress(beside, CEF_PAYLOAD)
+        ships['engine_packed_mb'] = round(packed / 1048576, 1)
+        # The delta is the engine plus however much bigger the binary itself got.
+        grew = (ships.get('cef_binary_mb') or 0) - (ships.get('app_binary_mb') or 0)
+        ships['delta_packed_mb'] = round(packed / 1048576 + max(grew, 0.0), 1)
+        ships['delta_note'] = (
+            'LZMA, which is what NSIS and a deb use; a dmg is zlib and compresses '
+            'a little less well'
+        )
+    report['ships'] = ships
 
     (out_dir / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
     summary = table(report)

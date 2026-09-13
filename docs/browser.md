@@ -1307,6 +1307,18 @@ and GTK 4 aborts when it finds GTK 3 in the process - the plugin has an `xdg-por
 feature that would fix it, and turning it on is a change to the *shipping* Linux build
 and therefore Emil's to make. It is in batch 7's Linux row now rather than a surprise.
 
+### The gate table
+
+Every number below is `.github/workflows/cef.yml` on GitHub's own runners, from
+`apps/desktop/src-tauri/cef/gate.py` reading what the flagged build says about
+itself. The launch figures are the app's own launch trace - `NIB_TRACE_STARTUP`, the
+same instrument on both builds, counting from before our first line - and the memory
+figures are the resident set of the whole process tree, so Chromium's browser, GPU,
+network and renderer processes are all in them. The engine is CEF 151.3.24, which is
+Chromium 151.0.7922.174, because that is what the pinned revision pins.
+
+THE-TABLE-GOES-HERE
+
 ### Go or no-go for batch 2
 
 Batch 2 is web tabs on the new engine with the two profiles, and it is the one batch
