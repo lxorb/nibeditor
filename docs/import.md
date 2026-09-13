@@ -231,11 +231,20 @@ synced out of Bear, a note pasted from a friend. Same rewrites, run on demand,
 in this note or in the whole space, with the count shown before anything is
 written and one thing to undo afterwards.
 
-Two rewrites, which are the two that actually break something. Bear's closed tags
+Three rewrites, which are the ones that actually break something. Bear's closed tags
 become tags. A Zettelkasten id link, `[[202201011200]]`, points at a note by the
 timestamp it was made at; nib names such a note `202201011200 The title.md`, the
 way its own unique-note command does, so a link to the bare id points at nothing
 until it is written out in full.
+
+And Roam's own markup, with the importer's own rules: `{{[[TODO]]}}` and
+`{{[[DONE]]}}` become `- [ ]` and `- [x]`, `^^text^^` becomes `==text==`, and
+whatever else a `{{[[…]]}}` wrapped becomes the word it wrapped. A line that is
+already a list item gets the box and no second marker; a line that is not becomes a
+task, marker and all. Nothing inside a fence, where braces and carets are code. And
+`((block-ref))` is left exactly as it was: outside a Roam graph nothing knows what
+that block said, and a converter that dropped it would be a converter that lost
+words - which is the same thing the importer does with a uid it has never seen.
 
 Roam's `[[page]]` is deliberately not in the list: it is already a wikilink and
 already means what it says here. Which is worth writing down, because it is the

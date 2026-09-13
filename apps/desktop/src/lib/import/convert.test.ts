@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { convertIdLinks, convertTags, converted, idsIn } from './convert'
+import { convertIdLinks, convertRoam, convertTags, converted, idsIn } from './convert'
 
 describe("Bear's closed tags", () => {
   test('become tags, and are counted', () => {
@@ -89,5 +89,67 @@ describe('both rewrites together', () => {
     const text = 'See [[The plan]] and [[Ideas]].'
 
     expect(converted(text, ['The plan.md', 'Ideas.md']).changes).toBe(0)
+  })
+
+  test('and a note pasted out of Roam gets its boxes and its highlights', () => {
+    const said = converted('- {{[[TODO]]}} Buy ^^milk^^\n', [])
+
+    expect(said.text).toBe('- [ ] Buy ==milk==\n')
+    expect(said.changes).toBe(2)
+  })
+})
+
+/** The importer's own rules, run on a note that is already here: `roamText` is what
+ *  an imported Roam page is written with, and a note pasted out of Roam holds exactly
+ *  the same markup. See import/roam.test.ts for what each spelling becomes. */
+describe("Roam's own spellings in a note", () => {
+  const roam = (text: string) => convertRoam(text)
+
+  test('a box becomes a task, marker and all, on a line that had none', () => {
+    expect(roam('{{[[TODO]]}} Buy milk').text).toBe('- [ ] Buy milk')
+    expect(roam('{{[[DONE]]}} Bought it').text).toBe('- [x] Bought it')
+  })
+
+  test('and only the box on a line that is already a list item', () => {
+    expect(roam('- {{[[TODO]]}} Buy milk').text).toBe('- [ ] Buy milk')
+    expect(roam('  * {{[[DONE]]}} Bought it').text).toBe('  * [x] Bought it')
+    expect(roam('1. {{[[TODO]]}} Buy milk').text).toBe('1. [ ] Buy milk')
+  })
+
+  test('and the indentation is kept, so a nested task stays nested', () => {
+    expect(roam('    {{[[TODO]]}} Buy milk').text).toBe('    - [ ] Buy milk')
+  })
+
+  test('a highlight becomes the one everything else reads', () => {
+    expect(roam('The ^^whole^^ point.').text).toBe('The ==whole== point.')
+  })
+
+  test('and whatever else a pair of braces wrapped is the words it wrapped', () => {
+    expect(roam('{{[[query]]}} here').text).toBe('query here')
+  })
+
+  test('a block reference is left exactly as it was, because nothing here knows it', () => {
+    const text = 'As ((abc123)) said.'
+
+    expect(roam(text)).toEqual({ text, changes: 0 })
+  })
+
+  test('nothing inside a fence, where braces and carets are code', () => {
+    const text = ['```', '{{[[TODO]]}} not a task', '^^not a highlight^^', '```'].join('\n')
+
+    expect(roam(text)).toEqual({ text, changes: 0 })
+  })
+
+  test('and every mark on a line is counted, not just the line', () => {
+    const said = roam('{{[[TODO]]}} Buy ^^milk^^ and ^^bread^^')
+
+    expect(said.text).toBe('- [ ] Buy ==milk== and ==bread==')
+    expect(said.changes).toBe(3)
+  })
+
+  test('a note with none of it is left exactly as it was', () => {
+    const text = '# Plan\n\n- [ ] Buy milk\n\nA ==highlight== and a [[link]].\n'
+
+    expect(roam(text)).toEqual({ text, changes: 0 })
   })
 })
