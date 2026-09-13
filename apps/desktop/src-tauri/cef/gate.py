@@ -276,12 +276,7 @@ def weigh(payload: Path, names: tuple[str, ...] | None = None) -> dict:
     if not payload.is_dir():
         return {'error': f'{payload} is not a directory'}
 
-    chosen = [payload / name for name in names] if names else [payload]
-    found: list[Path] = []
-    for one in chosen:
-        if one.exists():
-            found.extend(files_under(one))
-
+    found = chosen_files(payload, names)
     total = sum(one.stat().st_size for one in found)
     biggest = sorted(found, key=lambda one: one.stat().st_size, reverse=True)[:12]
     return {
@@ -296,12 +291,7 @@ def weigh(payload: Path, names: tuple[str, ...] | None = None) -> dict:
 
 def compress(payload: Path, names: tuple[str, ...] | None = None) -> int:
     """How many bytes those files come to under LZMA, streamed so nothing is held."""
-    chosen = [payload / name for name in names] if names else [payload]
-    found: list[Path] = []
-    for one in chosen:
-        if one.exists():
-            found.extend(files_under(one))
-
+    found = chosen_files(payload, names)
     out = 0
     packer = lzma.LZMACompressor(preset=6)
     for one in sorted(found):
