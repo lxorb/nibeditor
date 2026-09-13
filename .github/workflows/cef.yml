@@ -168,20 +168,30 @@ jobs:
       - name: The crate's own tests
         run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
-      # Everything Chromium has to find beside the binary, in one folder, so the
-      # size rows are what a release would carry rather than what a distribution
-      # happens to unpack. On Windows the loader wants them next to the executable.
+      # Everything Chromium has to find beside the binary, in one folder: that is
+      # how a release ships it, it is what the loader looks for on Windows and what
+      # `$ORIGIN` means on Linux, and it makes the size rows the bytes a reader
+      # actually downloads rather than whatever a distribution happens to unpack.
+      # Found rather than assumed, because the exporter's layout is a versioned
+      # subdirectory and not a flat one.
       - name: Stage the engine beside the binary
         run: |
-          out=apps/desktop/src-tauri/cef/target/release
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cp -R "$CEF_DIR"/*.dll "$out"/ 2>/dev/null || true
-            cp -R "$CEF_DIR"/*.bin "$out"/ 2>/dev/null || true
-            cp -R "$CEF_DIR"/*.dat "$out"/ 2>/dev/null || true
-            cp -R "$CEF_DIR"/*.pak "$out"/ 2>/dev/null || true
-            cp -R "$CEF_DIR"/locales "$out"/ 2>/dev/null || true
+          out="$(pwd)/apps/desktop/src-tauri/cef/target/release"
+          engine=$(find "$CEF_DIR" \( -name 'libcef.dll' -o -name 'libcef.so' \) -print -quit)
+          resources=$(find "$CEF_DIR" -name 'resources.pak' -print -quit)
+          framework=$(find "$CEF_DIR" -name 'Chromium Embedded Framework.framework' -print -quit)
+
+          [ -n "$engine" ] && cp -R "$(dirname "$engine")"/. "$out"/
+          if [ -n "$resources" ] && [ "$(dirname "$resources")" != "$(dirname "$engine")" ]; then
+            cp -R "$(dirname "$resources")"/. "$out"/
           fi
-          ls -la "$out" | head -30
+          [ -n "$framework" ] && cp -R "$framework" "$out"/
+
+          echo "STAGED=$out" >>"$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$out:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$out:$out/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          du -sh "$out"
+          ls "$out" | head -20
 
       # The run. A window has to be able to appear: Windows and macOS runners log in
       # a desktop session of their own, Linux is handed one.
@@ -194,7 +204,7 @@ jobs:
           run=(python apps/desktop/src-tauri/cef/gate.py
             --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
             --control "apps/desktop/src-tauri/target/release/nib$suffix"
-            --payload "$CEF_DIR"
+            --payload "$STAGED"
             --extension spike/browser/extension
             --tabs "$NIB_CEF_TABS"
             --out gate-out)
