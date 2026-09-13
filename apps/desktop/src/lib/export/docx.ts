@@ -350,6 +350,27 @@ function pictureRun(span: Span, drawn: Drawn | null): ParagraphChild {
   })
 }
 
+/** The six colours a `==highlight==` can be, as the nearest of the seventeen
+ *  Word's highlight attribute allows.
+ *
+ *  Word has no colour of its own to mix here: `w:highlight` takes one of a fixed
+ *  seventeen names, so a wash of `--canvas-2` cannot be asked for and the nearest
+ *  is what a reader gets. What matters is that a red highlight and a green one do
+ *  not both arrive yellow, which is what one hardcoded colour made of them.
+ *
+ *  The plain highlight keeps yellow: it named no colour, and yellow is what a
+ *  highlighter is. `darkYellow` is Word's amber and the only orange it has.
+ *  `cyan` rather than `blue` for the blue tone, and `magenta` rather than
+ *  `darkMagenta` for the violet one, because Word's own blue and dark magenta are
+ *  dark enough to swallow the words they are meant to be lighting up. */
+const HIGHLIGHTS: Record<number, (typeof HighlightColor)[keyof typeof HighlightColor]> = {
+  1: HighlightColor.RED,
+  2: HighlightColor.DARK_YELLOW,
+  4: HighlightColor.GREEN,
+  5: HighlightColor.CYAN,
+  6: HighlightColor.MAGENTA,
+}
+
 /** The marks a span carries, and only those. Word writes `<w:b w:val="false"/>`
  *  for a mark set to false, and a file full of those is a file nothing can be
  *  read out of. */
@@ -358,7 +379,7 @@ function marksOf(span: Span): IRunPropertiesOptions {
     ...(span.bold ? { bold: true } : {}),
     ...(span.italic ? { italics: true } : {}),
     ...(span.strike ? { strike: true } : {}),
-    ...(span.mark ? { highlight: HighlightColor.YELLOW } : {}),
+    ...(span.mark ? { highlight: HIGHLIGHTS[span.tone ?? 0] ?? HighlightColor.YELLOW } : {}),
     ...(span.sup ? { superScript: true } : {}),
     ...(span.sub ? { subScript: true } : {}),
     // A run wears one character style, so code beats a link. The address is not

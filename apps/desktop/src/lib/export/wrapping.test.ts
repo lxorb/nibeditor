@@ -1,5 +1,9 @@
-import { describe, expect, test } from 'vitest'
+import JSZip from 'jszip'
+import { setHardBreaks } from '@nib/markdown'
+import { afterEach, describe, expect, test } from 'vitest'
 import { documentOf } from './document'
+import { toDocx } from './docx'
+import { toRtf } from './rtf'
 import { toPlainText } from './text'
 
 /** A paragraph hard wrapped in the file is one paragraph. A single newline in
@@ -34,5 +38,73 @@ describe('a paragraph wrapped in the file', () => {
     const doc = documentOf('```\none\ntwo\n```\n', 'Note.md')
     const fence = doc.blocks.find((block) => 'code' in block)
     expect(fence && 'code' in fence ? fence.code : '').toBe('one\ntwo')
+  })
+})
+
+/** The other answer to the same switch. "A single newline breaks the line" on, and
+ *  the note reads the way it was typed - on every surface, which is the whole
+ *  point of the switch being asked once. The reading view, the HTML export, a
+ *  card on a canvas and a published page went through the one renderer and broke
+ *  the line; Word, RTF and plain text are written from the blocks in
+ *  document.ts, which flowed the newline away whatever the switch said.
+ *
+ *  The setting is read where every other reader of it reads it, so these set it
+ *  the way the app does and put it back afterwards. */
+describe('a single newline, when the switch says it breaks the line', () => {
+  const WRAPPED = 'one\ntwo\n'
+
+  afterEach(() => {
+    setHardBreaks(false)
+  })
+
+  test('is a break in the blocks every document format is written from', () => {
+    setHardBreaks(true)
+    const doc = documentOf(WRAPPED, 'Note.md')
+    const first = doc.blocks.find((block) => block.kind === 'paragraph')
+
+    expect(first && 'spans' in first ? first.spans.map((span) => span.text).join('') : '').toBe(
+      'one\ntwo',
+    )
+  })
+
+  test('is asked of the caller when the caller has an answer of its own', () => {
+    expect(
+      documentOf(WRAPPED, 'Note.md', { hardBreaks: true })
+        .blocks.flatMap((block) => ('spans' in block ? block.spans : []))
+        .map((span) => span.text)
+        .join(''),
+    ).toBe('one\ntwo')
+  })
+
+  test('is two lines in the plain text file', () => {
+    expect(toPlainText(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }))).toContain('one\ntwo')
+  })
+
+  test('is a \\line in the RTF file', () => {
+    const rtf = toRtf(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [])
+
+    expect(rtf).toContain('one\\line two')
+    expect(rtf).not.toContain('one two')
+  })
+
+  test('is a real break in the Word document', async () => {
+    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [])
+    const zip = await JSZip.loadAsync(bytes)
+    const file = zip.file('word/document.xml')
+    expect(file).not.toBeNull()
+    // Asserted on the line above.
+    const xml = await file!.async('string')
+
+    expect(xml).toContain('<w:br/>')
+    expect(xml).not.toContain('one two')
+  })
+
+  test('leaves the fence and the wrapped paragraph alone when the switch is off', async () => {
+    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: false }), [])
+    const zip = await JSZip.loadAsync(bytes)
+    const file = zip.file('word/document.xml')
+    expect(file).not.toBeNull()
+    // Asserted on the line above.
+    expect(await file!.async('string')).toContain('one two')
   })
 })

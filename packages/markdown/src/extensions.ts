@@ -3,7 +3,7 @@ import { blockMath, definitionList } from './blocks'
 import { calloutChevron, calloutIcon, calloutOf } from './callouts'
 import { emojiTable, loadEmoji, loadMaths, mathsEngine } from './engines'
 import { closesFence, fenceMark } from './fences'
-import { readHighlight } from './highlights'
+import { highlightTone, readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
 
@@ -58,7 +58,13 @@ function math(tex: string, display: boolean): string {
  *  The colour comes off the front of the words before they are tokenized, so it
  *  never reaches the page as an emoji and never reaches the glasses, an export or
  *  a search as one either: what the reader sees is the words, tinted. See
- *  highlights.ts, which is also what the editor reads. */
+ *  highlights.ts, which is also what the editor reads.
+ *
+ *  The token carries the palette tone as the number it is, not as the class it is
+ *  drawn in: one representation, so the page's `<mark class="tone-4">` and the
+ *  Word highlight and the RTF colour a document export writes are all read off
+ *  the same answer. See `documentOf` in apps/desktop/src/lib/export/document.ts,
+ *  the other reader. */
 export const highlight: MarkedExtension = {
   extensions: [
     {
@@ -76,12 +82,13 @@ export const highlight: MarkedExtension = {
           type: 'highlight',
           raw: match[0],
           text: words,
-          tone: colour.className,
+          tone: colour.tone,
           tokens: this.lexer.inlineTokens(words),
         }
       },
       renderer(token: Tokens.Generic) {
-        const tone = typeof token.tone === 'string' && token.tone ? ` class="${token.tone}"` : ''
+        const drawn = highlightTone(typeof token.tone === 'number' ? token.tone : null).className
+        const tone = drawn ? ` class="${drawn}"` : ''
         return `<mark${tone}>${this.parser.parseInline(token.tokens ?? [])}</mark>`
       },
     },

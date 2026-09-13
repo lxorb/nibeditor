@@ -13,6 +13,7 @@
 import {
   documentTitle,
   frontMatterValue,
+  hardBreaks,
   lexMarkdown,
   type Wikilink,
   withoutComments,
@@ -31,6 +32,11 @@ export interface Span {
   strike?: boolean
   code?: boolean
   mark?: boolean
+  /** Which of the six palette tones a `==highlight==` was written in - `1` for the
+   *  red one and so on, exactly as highlights.ts in @nib/markdown numbers them.
+   *  Absent for the plain highlight, which named no colour of its own and is drawn
+   *  the way it always was; only meaningful beside `mark`. */
+  tone?: number
   sup?: boolean
   sub?: boolean
   /** Where it points, for a link. */
@@ -102,6 +108,7 @@ interface Marks {
   italic?: boolean
   strike?: boolean
   mark?: boolean
+  tone?: number
   sup?: boolean
   sub?: boolean
   href?: string
@@ -131,8 +138,13 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
       return inner({ italic: true })
     case 'del':
       return inner({ strike: true })
+    // The tone comes off the token as the number it is; see highlights.ts in
+    // @nib/markdown. Absent for the plain highlight, so a span carries only the
+    // marks it actually has.
     case 'highlight':
-      return inner({ mark: true })
+      return inner(
+        typeof token.tone === 'number' ? { mark: true, tone: token.tone } : { mark: true },
+      )
     case 'superscript':
       return inner({ sup: true })
     case 'subscript':
@@ -412,17 +424,26 @@ export function titleOf(source: string, name: string): string {
   return frontMatterValue(source, 'title') ?? documentTitle(source) ?? name.replace(/\.[^.]+$/, '')
 }
 
+export interface DocumentOptions {
+  /** Whether a single newline breaks the line. Left out, the app's own answer is
+   *  used - the same one the reading view, a canvas card and a published page
+   *  read - so a writer never has to remember to ask. A test passes it to say
+   *  which answer it is about. */
+  hardBreaks?: boolean
+}
+
 /** The note read into blocks. `name` is the file's, and stands in for a title
  *  when neither the front matter nor a first heading gives one. */
-export function documentOf(source: string, name: string): Doc {
+export function documentOf(source: string, name: string, options: DocumentOptions = {}): Doc {
   const notes: Footnote[] = []
+  const hard = options.hardBreaks ?? hardBreaks()
   // Front matter is metadata, a block's name is a marker and a comment is a note
   // to the writer, exactly as the HTML renderer treats all three.
   const body = withoutComments(
     withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
   )
 
-  const blocks = flowed(blocksOf(lexMarkdown(body), notes))
+  const blocks = flowed(blocksOf(lexMarkdown(body), notes), hard)
 
   return {
     title: titleOf(source, name),
@@ -431,65 +452,78 @@ export function documentOf(source: string, name: string): Doc {
     lang: frontMatterValue(source, 'lang') ?? 'en',
     date: frontMatterValue(source, 'date'),
     blocks,
-    notes: notes.map((note) => ({ ...note, spans: flowedSpans(note.spans) })),
+    notes: notes.map((note) => ({ ...note, spans: flowedSpans(note.spans, hard) })),
   }
 }
 
-/** A paragraph's own line breaks, as the space markdown says they are.
+/** A paragraph's own line breaks, as the switch says they are.
  *
- *  A paragraph hard wrapped in the file is one paragraph, and a single newline
- *  in the middle of it is a space. That is what a browser does with it, so it is
- *  what the reading view, every published page and the HTML export already say,
- *  and `flowing` in @nib/glasses says the same out loud. These blocks are what
- *  Word, RTF and plain text are written from, and they kept the newline: a note
- *  wrapped at eighty columns arrived broken at eighty columns.
+ *  Off - which is CommonMark, and the default - a paragraph hard wrapped in the
+ *  file is one paragraph and a single newline in the middle of it is a space. That
+ *  is what a browser does with it, so it is what the reading view, every published
+ *  page and the HTML export already say, and `flowing` in @nib/glasses says the
+ *  same out loud. These blocks are what Word, RTF and plain text are written from,
+ *  and they kept the newline: a note wrapped at eighty columns arrived broken at
+ *  eighty columns.
+ *
+ *  On, the note reads the way it was typed and the newline stays, which is what
+ *  the one renderer already does for every other surface. A newline in a span is
+ *  a line break to all three writers - Word's own `<w:br/>`, RTF's `\line`, and a
+ *  newline in a plain text file - so keeping it is the whole of it.
+ *
+ *  The spaces around the newline go either way: they are the wrapping, not words,
+ *  and a line that ends in one would otherwise break after a trailing space.
  *
  *  Last of all, once the blocks are built, because a callout's marker line ends
  *  at a newline and `callout` above reads it off the spans. */
-function flowing(text: string): string {
-  return text.replace(/[ \t]*\n[ \t]*/gu, ' ')
+function flowing(text: string, hard: boolean): string {
+  return text.replace(/[ \t]*\n[ \t]*/gu, hard ? '\n' : ' ')
 }
 
 /** A hard break is a span of its own that is exactly a newline, and the writer
  *  asked for it with two spaces or a backslash. A wrapped line is a newline
- *  among words. Only the second becomes a space. */
-function flowedSpans(spans: Span[]): Span[] {
-  return spans.map((span) => (span.text === '\n' ? span : { ...span, text: flowing(span.text) }))
+ *  among words. Only the second answers to the switch. */
+function flowedSpans(spans: Span[], hard: boolean): Span[] {
+  return spans.map((span) =>
+    span.text === '\n' ? span : { ...span, text: flowing(span.text, hard) },
+  )
 }
 
-function flowed(blocks: Block[]): Block[] {
+function flowed(blocks: Block[], hard: boolean): Block[] {
+  const spans = (one: Span[]) => flowedSpans(one, hard)
+
   return blocks.map((block): Block => {
     switch (block.kind) {
       case 'heading':
       case 'paragraph':
-        return { ...block, spans: flowedSpans(block.spans) }
+        return { ...block, spans: spans(block.spans) }
 
       case 'quote':
-        return { ...block, blocks: flowed(block.blocks) }
+        return { ...block, blocks: flowed(block.blocks, hard) }
 
       case 'list':
         return {
           ...block,
           items: block.items.map((item) => ({
             ...item,
-            spans: flowedSpans(item.spans),
-            blocks: flowed(item.blocks),
+            spans: spans(item.spans),
+            blocks: flowed(item.blocks, hard),
           })),
         }
 
       case 'table':
         return {
           ...block,
-          head: block.head.map(flowedSpans),
-          rows: block.rows.map((row) => row.map(flowedSpans)),
+          head: block.head.map(spans),
+          rows: block.rows.map((row) => row.map(spans)),
         }
 
       case 'terms':
         return {
           ...block,
           entries: block.entries.map((entry) => ({
-            term: flowedSpans(entry.term),
-            details: entry.details.map(flowedSpans),
+            term: spans(entry.term),
+            details: entry.details.map(spans),
           })),
         }
 

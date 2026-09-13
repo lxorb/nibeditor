@@ -21,6 +21,28 @@ const LINK = 3
 const SHADE = 4
 const WASH = 5
 
+/** The five coloured highlights, in the order highlights.ts in @nib/markdown
+ *  names them, as the indices they take in the table above.
+ *
+ *  A tone rather than a name: `==🔴 careful==` is drawn in `--canvas-1` on every
+ *  other surface, and a document that arrived with all five the same yellow was
+ *  the one surface that threw the colour away. RTF has a colour table of the
+ *  document's own, so unlike Word these are the real wash rather than the nearest
+ *  of a fixed few; the plain highlight keeps `WASH`, the index it always had. */
+const TONE_COLOURS: Record<number, number> = { 1: 6, 2: 7, 4: 8, 5: 9, 6: 10 }
+
+/** The wash each of the five is drawn in: the light theme's own `--canvas-1` and
+ *  its neighbours at the same strength `--mark-1` mixes them, over the white of
+ *  the page. Written out because an RTF colour table is numbers, and a word
+ *  processor has no `color-mix` to do it with. See tokens.css in @nib/themes. */
+const TONE_WASHES = [
+  '\\red250\\green210\\blue215',
+  '\\red251\\green225\\blue199',
+  '\\red201\\green240\\blue216',
+  '\\red199\\green238\\blue238',
+  '\\red225\\green217\\blue251',
+].join(';')
+
 /** The three faces, and the colours everything is drawn in. `\f0` is the body,
  *  `\f1` the headings, `\f2` code and maths. Each names a face that is on every
  *  machine as its `\*\falt`, so a reader that has neither Georgia nor Consolas
@@ -33,7 +55,8 @@ const HEADER = [
   '{\\f2\\fmodern\\fcharset0 Consolas{\\*\\falt Courier New};}',
   '}',
   '{\\colortbl;\\red0\\green0\\blue0;\\red90\\green90\\blue90;\\red17\\green85\\blue204;',
-  '\\red238\\green238\\blue238;\\red255\\green242\\blue160;}',
+  '\\red238\\green238\\blue238;\\red255\\green242\\blue160;',
+  `${TONE_WASHES};}`,
 ].join('')
 
 /** Letter paper with an inch of margin all round, which is what leaves the
@@ -106,7 +129,9 @@ function escaped(text: string): string {
 
 interface Mark {
   of: (span: Span) => boolean
-  on: string
+  /** What turns it on. A function where the span decides which: a highlight is
+   *  one of six colours, and each is its own control word. */
+  on: string | ((span: Span) => string)
   off: string
 }
 
@@ -117,7 +142,11 @@ const MARKS: readonly Mark[] = [
   { of: (span) => span.bold === true, on: '\\b', off: '\\b0' },
   { of: (span) => span.italic === true, on: '\\i', off: '\\i0' },
   { of: (span) => span.strike === true, on: '\\strike', off: '\\strike0' },
-  { of: (span) => span.mark === true, on: `\\highlight${WASH}`, off: '\\highlight0' },
+  {
+    of: (span) => span.mark === true,
+    on: (span) => `\\highlight${TONE_COLOURS[span.tone ?? 0] ?? WASH}`,
+    off: '\\highlight0',
+  },
   { of: (span) => span.sup === true, on: '\\super', off: '\\nosupersub' },
   { of: (span) => span.sub === true, on: '\\sub', off: '\\nosupersub' },
   // Inline maths is TeX, so it reads as what it is, in the face code is set in
@@ -135,7 +164,7 @@ function marked(span: Span, words: string): string {
 
   for (const mark of MARKS) {
     if (!mark.of(span)) continue
-    on.push(mark.on)
+    on.push(typeof mark.on === 'string' ? mark.on : mark.on(span))
     off.unshift(mark.off)
   }
 
