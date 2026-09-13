@@ -44,6 +44,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -53,6 +54,12 @@ from ctypes import wintypes
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
 PORT_TO = 22399
+
+# What says where the notes go. The identifier a probe build runs under does not keep
+# anybody's notes apart - it moves the settings and the browsing profile and leaves the
+# spaces in `Documents/Nib` - so this is the one thing that does. See `SPACES_DIR` in
+# src-tauri/src/paths.rs and docs/automation.md.
+SPACES_DIR = "NIB_SPACES_DIR"
 
 SPACE = "Web session probe"
 NOTE = "Idea"
@@ -171,9 +178,21 @@ def serve(port: int) -> Server:
 
 
 def spaces_root() -> pathlib.Path:
-    home = pathlib.Path.home()
-    documents = home / "Documents"
-    return (documents if documents.is_dir() else home) / "Nib"
+    """A folder of this drive's own, in the system's temp area, said to the app in
+    `NIB_SPACES_DIR`.
+
+    **Never `Documents/Nib`.** The identifier this build runs under moves the settings
+    folder and the browsing profile and says nothing about where the spaces are, so a
+    drive that wrote its space the obvious way wrote it beside somebody's real notes -
+    which is exactly what happened once. The variable is read by `spaces_dir` at call
+    time and wins over the documents folder; see docs/automation.md.
+
+    Set in this process's environment, so the app inherits it when it is launched.
+    """
+
+    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-session-probe-"))
+    os.environ[SPACES_DIR] = str(made)
+    return made
 
 
 def shortcut(url: str, title: str) -> str:
@@ -186,8 +205,11 @@ def shortcut(url: str, title: str) -> str:
 
 
 def space(port: int) -> pathlib.Path:
+    """The space this drive opens, inside a spaces root of its own. Its parent is the
+    temp folder `spaces_root` made and named in `NIB_SPACES_DIR`, which is what `main`
+    takes away at the end."""
+
     made = spaces_root() / SPACE
-    shutil.rmtree(made, ignore_errors=True)
     made.mkdir(parents=True, exist_ok=True)
     (made / f"{NOTE}.md").write_text(
         f"# {NOTE}\n\nAn ordinary note, to switch away to.\n", encoding="utf-8"
@@ -466,6 +488,9 @@ def main() -> int:
                 running.wait(timeout=30)
             except subprocess.TimeoutExpired:
                 running.kill()
+        # The spaces root this drive made, taken away with the space in it: it is in the
+        # temp area and nobody's notes, so there is nothing here worth keeping.
+        shutil.rmtree(made.parent, ignore_errors=True)
 
     print(json.dumps(said, indent=2))
     print("\nPASS" if ok else "\nFAIL")
