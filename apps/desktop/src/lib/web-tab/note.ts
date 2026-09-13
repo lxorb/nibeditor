@@ -73,6 +73,26 @@ export function keptBody(text: string): string | null {
   return edit === null ? text : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
 }
 
+/** Where a clip says it came from, or null where there is nothing to clip.
+ *
+ *  A web tab does not always have a page. "Open a website" opens one with an address
+ *  field and no file yet, and until somebody types into it the tab has no address, no
+ *  title and no words - and clipping it wrote a note whose `source:` was empty and whose
+ *  whole body was `<>`. The audit found one of those called `Second page.md`.
+ *
+ *  Judged rather than merely present, and by the same rule the tab itself is held to:
+ *  what is not the web is not somewhere a clip can have come from, because it is not
+ *  somewhere the tab could have been. The page's own address wins over the tab's, which
+ *  is what the reader is looking at. See clip.ts, which refuses on this, and
+ *  WebBar.svelte, where the glyph is not offered while there is nothing to clip. */
+export function clipSource(
+  read: string | null | undefined,
+  fallback: string | null,
+): string | null {
+  const url = (read ?? '').trim() || (fallback ?? '').trim()
+  return isWebAddress(url) ? url : null
+}
+
 /** The longest a page may name itself. A title is a line above an article, and a
  *  page handing over a paragraph is handing over content in the wrong field. The
  *  clipper's own number, for the same reason. */
@@ -116,5 +136,17 @@ export async function clipNote(
   // The heading is the page's own words, and a page names itself: the front matter
   // quotes what it holds, but a heading is markdown and a note's markup is markup.
   // See `asWords`, which is what the converter escapes a page's prose with.
-  return `${block}\n\n# ${asWords(title)}\n\n${words || `<${page.url}>`}\n`
+  const heading = `# ${asWords(title)}`
+
+  // Written once. Most pages put their title in an `h1` at the top of the article, and
+  // the converter keeps it because it is part of the page - so a clip carried the same
+  // line twice, this heading and then theirs. Where the article opens by saying what the
+  // page is called, that is the heading; where it opens with something else, both stay,
+  // because the note is titled after the page and the article's heading is the
+  // article's. Compared unescaped, since the converter escapes what it writes.
+  const first = words.split('\n', 1)[0]?.trim() ?? ''
+  const said = first.startsWith('# ') ? first.slice(2).replace(/\\(.)/g, '$1').trim() : null
+  const body = said === title ? words : `${heading}\n\n${words || `<${page.url}>`}`
+
+  return `${block}\n\n${body}\n`
 }

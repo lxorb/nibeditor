@@ -13,7 +13,7 @@
 
 import { workspace } from '../workspace.svelte'
 import { plainOrigin } from './address'
-import { clipNote } from './note'
+import { clipNote, clipSource } from './note'
 import { pages } from './pages.svelte'
 
 /** Clips what the tab is showing into the space, and answers where it landed.
@@ -30,7 +30,12 @@ export async function clipPage(
   fallback: { url: string | null; title: string },
 ): Promise<string | null> {
   const read = await pages.read(tabId, true)
-  const url = read?.url ?? fallback.url
+
+  // A tab with no page yet is nothing to clip: an empty address used to come through
+  // here as an address and write a note saying `source: ''` with `<>` for a body. The
+  // glyph is not offered in that state either, so this is the second lock rather than
+  // the first; see `clipSource` and WebBar.svelte.
+  const url = clipSource(read?.url, fallback.url)
   if (url === null) return null
 
   // A page that never said what it is called is named after the site, which is

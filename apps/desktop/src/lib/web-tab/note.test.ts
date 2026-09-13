@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { frontMatterValue } from '@nib/markdown/front-matter'
-import { clipNote, keptBody, webTitleOf, webUrlOf } from './note'
+import { clipNote, clipSource, keptBody, webTitleOf, webUrlOf } from './note'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
@@ -104,6 +104,71 @@ describe('the note a clip is', () => {
       WHEN,
     )
     expect(frontMatterValue(note, 'title')).toBe('One Two')
+  })
+})
+
+/** A tab that has no page yet - the address field still empty, which is what "Open a
+ *  website" opens on - has no address to have come from. Clipping it wrote a note whose
+ *  `source:` was empty and whose whole body was `<>`; the audit found one called
+ *  `Second page.md`. */
+describe('a tab with no address is not a clip', () => {
+  test('refuses a blank address rather than writing an empty source', () => {
+    expect(clipSource('', null)).toBeNull()
+    expect(clipSource(null, null)).toBeNull()
+    expect(clipSource(undefined, '')).toBeNull()
+    expect(clipSource('   ', null)).toBeNull()
+  })
+
+  /** The same judgement the tab itself is held to, so a clip cannot come from
+   *  somewhere the tab would never have opened. */
+  test('and anything that is not the web', () => {
+    expect(clipSource('javascript:alert(1)', null)).toBeNull()
+    expect(clipSource('file:///C:/notes/Idea.md', null)).toBeNull()
+    expect(clipSource('http://tauri.localhost/index.html', null)).toBeNull()
+  })
+
+  test('while a page that has an address clips from it, read first', () => {
+    expect(clipSource('https://a.example/read', 'https://a.example/tab')).toBe(
+      'https://a.example/read',
+    )
+    expect(clipSource('', 'https://a.example/tab')).toBe('https://a.example/tab')
+    expect(clipSource(null, 'https://a.example/tab')).toBe('https://a.example/tab')
+  })
+})
+
+/** A clip carried its title twice: the heading this file writes above the words, and
+ *  the article's own `h1`, which the converter keeps because it is part of the page. */
+describe('the heading a clip wears', () => {
+  test('is written once when the article opens with the same heading', async () => {
+    const note = await clipNote(
+      {
+        url: 'https://example.com/post',
+        title: 'What runes are',
+        html: '<h1>What runes are</h1><p>They are signals.</p>',
+      },
+      WHEN,
+    )
+
+    expect(note.match(/^# /gm)?.length).toBe(1)
+    expect(note).toContain('# What runes are')
+    expect(note).toContain('They are signals.')
+  })
+
+  /** A page whose article says something else keeps both: the note is still titled
+   *  after the page, and the article's own heading is the article's. */
+  test('and twice when the article says something else', async () => {
+    const note = await clipNote(
+      {
+        url: 'https://example.com/post',
+        title: 'What runes are',
+        html: '<h1>Signals, actually</h1><p>Words.</p>',
+      },
+      WHEN,
+    )
+
+    expect(note.match(/^# /gm)?.length).toBe(2)
+    expect(note).toContain('# What runes are')
+    expect(note).toContain('# Signals, actually')
   })
 })
 

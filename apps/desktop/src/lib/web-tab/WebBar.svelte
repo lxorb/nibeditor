@@ -28,6 +28,7 @@
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { dotCom, plainOrigin } from './address'
+  import { clipSource } from './note'
   import type { Page } from './pages.svelte'
 
   const {
@@ -70,6 +71,15 @@
   /** Whether the field itself has the keyboard, which is what swaps its two faces.
    *  Not the same as `focused`, which is about the pane. */
   let editing = $state(false)
+
+  /** Whether there is a page to clip at all.
+   *
+   *  A tab opened by "Open a website" has an address field and no page behind it yet,
+   *  and an address field nobody has typed into is the empty string rather than null -
+   *  so the glyph was pressable and wrote a note whose `source:` was empty. The glyph
+   *  says so by not being pressable, which is what this bar does everywhere else:
+   *  before the press rather than as an apology after it. See `clipSource`. */
+  const clippable = $derived(clipSource(page.url, null) !== null)
 
   /** The site, plainly, and the page's own name after it. The name is the page's
    *  while it has said one and the address's host until then, so the bar never reads
@@ -270,7 +280,7 @@
     class="nib-glyph"
     title={reads ? t('Clip this page') : t('Clip the link')}
     aria-label={reads ? t('Clip this page') : t('Clip the link')}
-    disabled={page.url === null}
+    disabled={!clippable}
     onclick={onclip}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
