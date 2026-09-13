@@ -604,8 +604,14 @@
     padding: 0 var(--row-pad);
   }
 
+  /* The word, with a width reserved for it: a card of six dials whose tracks each
+     start where their own word happens to end reads as six different controls. Wide
+     enough for the longest of the six in English, and a floor rather than a fixed
+     width - a language that spells one of them out at length needs the room more than
+     the track does, and the track shrinks to give it. */
   .dial span {
     flex: none;
+    min-width: 7rem;
     color: var(--muted-strong);
     font-family: var(--font-ui);
     font-size: var(--text-row);

@@ -728,15 +728,19 @@ Features Typora does not have, which are the reason this exists.
       those measured 1200 ms a frame against 17. The notes' own dots, their names
       and the arrowheads are all free by comparison
 - [x] One three-step Lines dial on the card: thin, the hairline the picture has
-      always had, and thick. The cliff is at one device pixel exactly - measured
-      again for the dial, on the same five thousand notes: 20 ms a frame at one
-      device pixel and 3.6 seconds at one and a quarter - so thick is not a wider
-      stroke. It is the same hairline stroked three times, a device pixel apart in x
-      and in y, which reads as a line two device pixels wide whichever way it runs
-      and measured 20.5 ms a frame against the 19.3 the cleared canvas costs on its
-      own. Four strokes is where it starts to show, at 24 ms, so three is the
-      brush. graph-paint.test.ts holds every step to one device pixel, and graph.py
-      pans at each of the three
+      always had, and thick. The cliff is at one device pixel exactly - measured again
+      for the dial, on the same five thousand notes and ten thousand links: 23 ms a
+      frame for the links at one device pixel, 4.0 seconds at one and a quarter - so
+      thick is not a wider stroke. It is the same hairline stroked three times, a
+      device pixel apart in x and in y, which reads as a line two device pixels wide
+      whichever way it runs. What that costs, said plainly, because it is not nothing:
+      panning the whole picture measured 24.7 ms a frame at thin, 24.0 at normal and
+      36.1 at thick - 40 frames a second against 28, on a run whose cleared-canvas
+      ceiling was 21.3 ms. Still a picture that answers the pointer, a hundred times
+      better than the two frames a second a genuinely wider stroke costs, and nobody
+      pays it who did not ask: the default is the middle step.
+      graph-paint.test.ts holds every step to one device pixel, and graph.py pans at
+      each of the three
 - [x] `task:`, `task-todo:` and `task-done:`: a task item as something to search
       for, held to one item the way `line:` is held to one line, so
       `task-todo:(ledger send)` wants both words in the one task. On its own

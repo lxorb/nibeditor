@@ -71,11 +71,19 @@ const LABEL_SIZE = 11
  *  numbers come from and what measures them again.
  *
  *  Which is why the thick step is not a wider stroke. The cliff is at one device
- *  pixel exactly - measured again for the dial, on the same five thousand notes:
- *  20 ms a frame at one device pixel and 3.6 seconds at one and a quarter - so
- *  thick is the same hairline stroked three times, a device pixel apart in x and in
- *  y. A line comes out two device pixels wide whichever way it runs, and every one
- *  of the three strokes is still a hairline. See `brushed`.
+ *  pixel exactly - measured again for the dial, on the same five thousand notes and
+ *  ten thousand links: 23 ms a frame for the links at one device pixel, 4.0 seconds
+ *  at one and a quarter. So thick is the same hairline stroked three times, a device
+ *  pixel apart in x and in y: a line comes out two device pixels wide whichever way
+ *  it runs, and every one of the three strokes is still a hairline. See `brushed`.
+ *
+ *  What thick costs, said plainly, because it is not nothing: panning that space
+ *  measured 24 ms a frame at the first two steps and 36 ms at the third - three
+ *  passes over ten thousand lines instead of one. Forty frames a second against
+ *  twenty-eight, which is a picture that still answers the pointer, and a hundred
+ *  times better than the two frames a second a genuinely wider stroke costs. The
+ *  default is the middle step, so nobody pays it who did not ask. See
+ *  test/e2e/graph.py, which pans at each of the three.
  *
  *  The lit ones are the handful around whatever the pointer is on, so they can
  *  afford to be twice as wide and say so: a dozen tessellated lines cost nothing. */

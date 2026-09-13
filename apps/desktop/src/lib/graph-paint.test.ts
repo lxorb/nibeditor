@@ -8,9 +8,10 @@ import { paint } from './graph-paint'
  *  of them there are, which is the one thing about the drawing that decides whether
  *  a space of ten thousand links pans at sixty frames a second. A stroke wider than
  *  one of the screen's own pixels leaves Skia's hairline path and is tessellated into
- *  geometry - 20 ms a frame against 3.6 seconds, measured in test/e2e/graph.py - so
- *  the thick step is the same hairline drawn three times a pixel apart instead. See
- *  `LINES` in graph-paint.ts. */
+ *  geometry - 23 ms a frame against 4.0 seconds, measured in test/e2e/graph.py - so
+ *  the thick step is the same hairline drawn three times a pixel apart instead, and
+ *  what it costs is three passes rather than a tessellation. See `LINES` in
+ *  graph-paint.ts, which states both numbers. */
 
 /** The path, which only has to remember that something was written into it. */
 class FakePath {
@@ -86,7 +87,7 @@ function context(): {
     arc: () => undefined,
     fill: (path?: Path2D) =>
       fills.push({
-        colour: String(fake.fillStyle),
+        colour: fake.fillStyle,
         shapes: path ? [...(path as unknown as FakePath).steps] : [],
       }),
     fillText: (text: string) =>
@@ -104,7 +105,7 @@ function context(): {
     stroke: (path?: Path2D) =>
       strokes.push({
         wide: fake.lineWidth,
-        colour: String(fake.strokeStyle),
+        colour: fake.strokeStyle,
         dx,
         dy,
         shapes: path ? [...(path as unknown as FakePath).steps] : [],

@@ -237,6 +237,35 @@ describe('a whole view, taken at once', () => {
 
     expect(graph.here.filter).toBe('tag:now')
   })
+
+  /** Every dial and every switch on the card, whichever was added last: a bookmarked
+   *  view is the JSON of the settings, so a key the store knows about and the row does
+   *  not would be a view that came back half the picture it was kept from. See
+   *  `forGraph` in bookmarks.svelte.ts, which writes it. */
+  test('and carries every setting the card can change, not a chosen few', () => {
+    const kept = {
+      filter: 'tag:work',
+      orphans: false,
+      attachments: true,
+      groups: [{ query: 'tag:later', colour: 4 }],
+      spread: 2,
+      gather: false,
+      distance: 60,
+      push: 220,
+      arrows: true,
+      sized: false,
+      lines: 3,
+      fade: 2,
+      depth: 4,
+    }
+
+    graph.take(JSON.stringify(kept))
+
+    expect(graph.here).toEqual(kept)
+    // Which is the same thing said the other way: the keys the store holds are the
+    // keys a view carries, so neither can grow one the other has never heard of.
+    expect(Object.keys(graph.here).sort()).toEqual(Object.keys(DEFAULT_GRAPH).sort())
+  })
 })
 
 describe('two sets of settings', () => {
