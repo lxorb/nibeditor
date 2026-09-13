@@ -118,6 +118,9 @@ enum Term {
     Text {
         needle: String,
         folded: bool,
+        /// Whether only the note's own words answer, which is what `content:`
+        /// asks and what a bare word does not.
+        body: bool,
     },
     /// None for a pattern that will not compile, which is a query still being
     /// typed rather than something to report, and matches nothing.
@@ -707,11 +710,31 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 
         Term::Not(of) => walk(of, note, facts, region).is_none().then(Vec::new),
 
-        Term::Text { needle, folded } => literals(
-            if *folded { note.folded() } else { note.body },
+        Term::Text {
             needle,
-            region,
-        ),
+            folded,
+            body,
+        } => {
+            // `content:` is the same look in a smaller region: the note past its
+            // front matter. The twin of the `content` arm in match.ts.
+            let within = if *body {
+                clip(
+                    Region {
+                        from: words_in(note.body),
+                        to: note.body.len(),
+                    },
+                    region,
+                )?
+            } else {
+                region
+            };
+
+            literals(
+                if *folded { note.folded() } else { note.body },
+                needle,
+                within,
+            )
+        }
 
         Term::Regex(pattern) => patterned(pattern.as_ref()?, note.body, region, &facts.budget),
 
@@ -780,6 +803,18 @@ fn walk(term: &Term, note: &Note, facts: &Facts, region: Region) -> Option<Vec<S
 /// Whether a tag sits under another: `work/2026` is under `work`.
 fn under(tag: &str, parent: &str) -> bool {
     tag.starts_with(parent) && tag.as_bytes().get(parent.len()) == Some(&b'/')
+}
+
+/// Where the note's own words start: past its front matter block, or the top of
+/// the note where there is none.
+///
+/// What `content:` narrows to, and the twin of `wordsIn` in match.ts.
+/// `past_front_matter` answers the same question in lines; a region is offsets, so
+/// this one is an offset.
+fn words_in(body: &str) -> usize {
+    // A block nobody closed is a note that opens with a rule, so its words start
+    // where the note does; front_matter.rs is what decides that, here as everywhere.
+    front_matter_block(body).map_or(0, |block| (block.end + 1).min(body.len()))
 }
 
 /// Which line the note's words start on: the one after the front matter block, or
@@ -970,8 +1005,15 @@ fn compile(query: Query, needs: &mut Needs) -> Term {
             Term::Text {
                 needle: if folded { fold(&text) } else { text },
                 folded,
+                body: false,
             }
         }
+
+        Query::Content { text, fold: folded } => Term::Text {
+            needle: if folded { fold(&text) } else { text },
+            folded,
+            body: true,
+        },
 
         Query::Regex { source, fold } => Term::Regex(Pattern::compile(&source, fold)),
 
@@ -1095,6 +1137,10 @@ mod tests {
         format!(r#"{{"kind":"text","text":"{word}","fold":false}}"#)
     }
 
+    fn content(word: &str) -> String {
+        format!(r#"{{"kind":"content","text":"{word}","fold":true}}"#)
+    }
+
     fn all(parts: &[String]) -> String {
         format!(r#"{{"kind":"all","of":[{}]}}"#, parts.join(","))
     }
@@ -1207,6 +1253,41 @@ mod tests {
         );
         // A block nobody closed is not a block.
         assert_eq!(lines(&file("Meeting"), "---\nstatus: done\n"), ["---"]);
+    }
+
+    /// A bare word reads the whole file, front matter and all. `content:` is the
+    /// narrower question: the words a reader of the note would see. The twin of
+    /// "content" in match.test.ts.
+    #[test]
+    fn content_asks_the_notes_own_words_and_not_its_front_matter() {
+        assert!(answers(&text("nib"), NOTE));
+        assert!(!answers(&content("nib"), NOTE));
+        assert!(answers(&text("status"), NOTE));
+        assert!(!answers(&content("status"), NOTE));
+        assert!(answers(&content("alpha"), NOTE));
+    }
+
+    #[test]
+    fn content_brings_back_the_line_folded_like_any_other_word() {
+        assert_eq!(lines(&content("GAMMA"), NOTE), ["Gamma was away."]);
+        assert_eq!(marked(&content("gamma"), NOTE), ["Gamma"]);
+        // Exact where the reader said so.
+        assert!(answers(
+            r#"{"kind":"content","text":"Alpha","fold":false}"#,
+            NOTE
+        ));
+        assert!(!answers(
+            r#"{"kind":"content","text":"alpha","fold":false}"#,
+            NOTE
+        ));
+    }
+
+    #[test]
+    fn content_reads_a_note_with_no_front_matter_from_the_top() {
+        assert!(answers(&content("alpha"), CLOSE));
+        // A block nobody closed is a note that opens with a rule, so its words are
+        // all of it.
+        assert!(answers(&content("status"), "---\nstatus: done\n"));
     }
 
     #[test]

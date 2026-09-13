@@ -140,6 +140,40 @@ describe('path and file', () => {
   })
 })
 
+describe('content', () => {
+  /** A bare word reads the whole file, front matter and all. `content:` is the
+   *  narrower question: the words a reader of the note would see. */
+  test('asks the note’s own words and not its front matter', () => {
+    expect(answers('nib')).toBe(true)
+    expect(answers('content:nib')).toBe(false)
+    expect(answers('status')).toBe(true)
+    expect(answers('content:status')).toBe(false)
+    expect(answers('content:alpha')).toBe(true)
+  })
+
+  test('and brings back the line, folded like any other word', () => {
+    expect(lines('content:GAMMA')).toEqual(['Gamma was away.'])
+    expect(marked('content:gamma')).toEqual(['Gamma'])
+  })
+
+  test('reads a note with no front matter from the top', () => {
+    expect(answers('content:first', { body: 'the first words\n' })).toBe(true)
+    // A block nobody closed is a note that opens with a rule, so its words are all
+    // of it - the same reading `path:` and the row fall back to.
+    expect(answers('content:status', { body: '---\nstatus: done\n' })).toBe(true)
+  })
+
+  test('is exact where the reader said so', () => {
+    expect(answers('case: content:Alpha')).toBe(true)
+    expect(answers('case: content:alpha')).toBe(false)
+  })
+
+  test('and narrows a nearness group rather than widening it', () => {
+    expect(answers('line:(content:alpha content:beta)')).toBe(true)
+    expect(answers('line:(content:alpha content:gamma)')).toBe(false)
+  })
+})
+
 describe('tags', () => {
   test('match the tag itself', () => {
     expect(answers('tag:done')).toBe(true)

@@ -383,8 +383,9 @@ fn ranges(body: &str, at: &[usize]) -> Vec<Span> {
 /// asked about at all.
 ///
 /// Nothing is relaxed that the reader asked to be exact. A phrase in quotes, a
-/// `/re/`, a `-` that excludes, an `OR`, a nearness group and `case:` are each
-/// somebody being precise, and a loose answer under a precise question is noise.
+/// `/re/`, a `-` that excludes, an `OR`, a nearness group, `content:` and `case:`
+/// are each somebody being precise, and a loose answer under a precise question is
+/// noise.
 /// What is left, bare words with `path:` `file:` `tag:` and `[key]` narrowing
 /// them, is the ordinary search, and the one a typo lands in.
 ///
@@ -428,7 +429,14 @@ fn gather(query: &Query, out: &mut Vec<String>) -> bool {
             true
         }
 
-        Query::Any { .. } | Query::Not { .. } | Query::Regex { .. } | Query::Scope { .. } => false,
+        // `content:` is somebody saying where to look, and a loose answer under it
+        // would be a word the note does not hold, found outside the body they asked
+        // about. So it is exact, like the rest of these.
+        Query::Any { .. }
+        | Query::Not { .. }
+        | Query::Regex { .. }
+        | Query::Scope { .. }
+        | Query::Content { .. } => false,
     }
 }
 
@@ -960,6 +968,7 @@ mod tests {
         assert!(terms(&any(&[text("a"), text("b")])).is_empty());
         assert!(terms(&scope("line", &all(&[text("a"), text("b")]))).is_empty());
         assert!(terms(&exact("Alpha")).is_empty());
+        assert!(terms(r#"{"kind":"content","text":"meting","fold":true}"#).is_empty());
         // One precise term takes the whole query out: half a loose answer under
         // a precise question is still noise.
         assert!(terms(&all(&[text("meting"), text("a phrase")])).is_empty());

@@ -115,6 +115,7 @@ describe('which queries are relaxed at all', () => {
     expect(terms('a OR b')).toEqual([])
     expect(terms('line:(a b)')).toEqual([])
     expect(terms('case: Alpha')).toEqual([])
+    expect(terms('content:meting')).toEqual([])
     // One precise term takes the whole query out: half a loose answer under a
     // precise question is still noise.
     expect(terms('meting "a phrase"')).toEqual([])

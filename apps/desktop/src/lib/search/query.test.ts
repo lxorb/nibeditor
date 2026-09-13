@@ -172,6 +172,20 @@ describe('the fields', () => {
     expect(parseQuery('tag:work')).toEqual({ kind: 'tag', tag: 'work' })
   })
 
+  test('read the note’s own words, which is what content: asks for', () => {
+    expect(parseQuery('content:plan')).toEqual({ kind: 'content', text: 'plan', fold: true })
+    expect(parseQuery('content:"the plan"')).toEqual({
+      kind: 'content',
+      text: 'the plan',
+      fold: true,
+    })
+    expect(parseQuery('case: content:Plan')).toEqual({
+      kind: 'content',
+      text: 'Plan',
+      fold: false,
+    })
+  })
+
   test('take a quoted value, so a folder may hold a space', () => {
     expect(parseQuery('path:"my notes/"')).toEqual({
       kind: 'path',
@@ -182,6 +196,7 @@ describe('the fields', () => {
 
   test('are dropped while their value is still being typed', () => {
     expect(isEmpty(parseQuery('path:'))).toBe(true)
+    expect(isEmpty(parseQuery('content:'))).toBe(true)
     expect(parseQuery('alpha tag:')).toEqual(word('alpha'))
   })
 

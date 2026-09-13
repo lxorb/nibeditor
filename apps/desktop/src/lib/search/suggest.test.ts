@@ -170,6 +170,7 @@ describe('finishing an operator name', () => {
         case 'scope':
           return words(query.of)
         case 'text':
+        case 'content':
           return [query.text]
         case 'regex':
         case 'path':

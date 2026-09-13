@@ -672,8 +672,9 @@ Features Typora does not have, which are the reason this exists.
       the search carries over. What a picture can answer is narrower than what a
       search can and the placeholder says so: a note is its name, its path and its
       tags there, because reading five thousand notes off the disk to answer one
-      keystroke is not a filter. `[key:value]` and `line:(a b)` want the note's
-      own lines, so they narrow nothing rather than quietly emptying the view.
+      keystroke is not a filter. `[key:value]`, `line:(a b)` and `content:` want
+      the note's own lines, so they narrow nothing rather than quietly emptying the
+      view.
       Then: a switch for the notes nothing links to, which in a young space are
       most of them and all of the clutter; up to six colour groups, each a query
       and one of the six colours the theme names, tapped to change; one Spread
@@ -716,6 +717,15 @@ Features Typora does not have, which are the reason this exists.
       the same path a replacement takes, so no caret in a pane moves and it is one
       thing to undo. A space is not done and anything else is, which takes in the
       marks a theme gives a task of its own
+- [x] `content:` for the note's own words. A bare word reads the whole file, front
+      matter and all, so a note whose `project:` row says Nib answers `nib`;
+      `content:nib` answers only for the notes that say it where a reader would see
+      it, which is the question asked of a space whose notes all carry the same
+      dozen keys. One narrowing of the region the word is looked for in rather than
+      a second walk of the note, so it costs a bare word's search and nothing more,
+      and `case:` and a nearness group reach into it like any other term. The
+      picture of a space cannot hear it and says so by narrowing nothing, the way
+      `[key:value]` does
 - [x] Front matter held against a value rather than only read: `[pages:<200]`,
       `[due:>2026-09-01]`, `[pages:100..200]` with both ends in, `[status:=done]`
       for a value that is exactly this where the bare form takes a part of it, and

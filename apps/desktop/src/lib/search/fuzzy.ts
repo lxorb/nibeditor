@@ -350,8 +350,8 @@ function ranges(at: readonly number[]): Range[] {
  *  be asked about at all.
  *
  *  Nothing is relaxed that the reader asked to be exact. A phrase in quotes, a
- *  `/re/`, a `-` that excludes, an `OR`, a nearness group and `case:` are each
- *  somebody being precise, and a loose answer under a precise question is
+ *  `/re/`, a `-` that excludes, an `OR`, a nearness group, `content:` and `case:`
+ *  are each somebody being precise, and a loose answer under a precise question is
  *  noise. What is left - bare words, with `path:` `file:` `tag:` and `[key]`
  *  narrowing them - is the ordinary search, and the one a typo lands in. */
 export function fuzzyTerms(query: Query): string[] {
@@ -382,6 +382,10 @@ function gather(query: Query, out: string[]): boolean {
     case 'property':
       return true
 
+    // `content:` is somebody saying where to look, and a loose answer under it
+    // would be a word the note does not hold, found outside the body they asked
+    // about. So it is exact, like the rest of these.
+    case 'content':
     case 'any':
     case 'not':
     case 'regex':

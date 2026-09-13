@@ -91,6 +91,14 @@ pub enum Query {
         /// Whether case is folded.
         fold: bool,
     },
+    /// Words in the note's body, which is the note past its front matter. What
+    /// `content:` asks, where a bare word reads the whole file.
+    Content {
+        /// The word or the phrase, as it was typed.
+        text: String,
+        /// Whether case is folded.
+        fold: bool,
+    },
     /// A `/pattern/`.
     Regex {
         /// The pattern between the slashes.

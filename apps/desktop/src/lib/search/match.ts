@@ -277,6 +277,8 @@ interface Facts {
   starts: readonly number[] | null
   tags: string[] | null
   front: Map<string, string> | null
+  /** Where the note's own words start; see `wordsIn`. */
+  words: number | null
   units: Partial<Record<Unit, Range[]>>
   /** Where each needle sits in the note, by the needle and which text it was
    *  looked for in; see `placesIn`. */
@@ -299,6 +301,22 @@ function tagsOf(facts: Facts): string[] {
 
 function frontOf(facts: Facts): Map<string, string> {
   return (facts.front ??= frontMatter(facts.note.body))
+}
+
+/** Where the note's own words start: past its front matter block, or the top of
+ *  the note where there is none.
+ *
+ *  What `content:` narrows to. `pastFrontMatter` below answers the same question
+ *  in lines, for the row a note found by something no line of it says falls back
+ *  to; a region is offsets, so this one is an offset. matcher.rs has both. */
+function wordsIn(body: string): number {
+  // A block nobody closed is a note that opens with a rule, so its words start
+  // where the note does; front-matter.ts is what decides that, here as everywhere.
+  return frontMatterBlock(body)?.to ?? 0
+}
+
+function wordsFrom(facts: Facts): number {
+  return (facts.words ??= wordsIn(facts.note.body))
 }
 
 function unitsOf(facts: Facts, unit: Unit): Range[] {
@@ -479,6 +497,7 @@ export class Matcher {
       starts: null,
       tags: null,
       front: null,
+      words: null,
       units: {},
       places: new Map(),
     }
@@ -573,12 +592,22 @@ export class Matcher {
       case 'not':
         return this.walk(query.of, facts, region) ? null : []
 
-      case 'text': {
+      case 'text':
+      case 'content': {
         const needle = query.fold ? this.folded(query.text) : query.text
         if (!needle) return null
 
+        // `content:` is the same look in a smaller region: the note past its front
+        // matter. One narrowing rather than a second walk, so the places a word
+        // sits are found once however the query asked for them.
+        const within =
+          query.kind === 'content'
+            ? clip({ from: wordsFrom(facts), to: facts.note.body.length }, region)
+            : region
+        if (!within) return null
+
         const hay = query.fold ? foldedOf(facts) : facts.note.body
-        return literals(placesIn(facts, hay, needle, query.fold), needle.length, region)
+        return literals(placesIn(facts, hay, needle, query.fold), needle.length, within)
       }
 
       case 'regex':

@@ -3,10 +3,10 @@
  *  Obsidian's operators, so a habit from there carries over. Bare words are
  *  ANDed in any order, `"a phrase"` is exact, `-` excludes, `OR` widens,
  *  brackets group and nest, `path:` `file:` `tag:` ask about the note rather
- *  than its words, `/re/` and `/re/i` are regular expressions, `case:` stops
- *  case being folded from there on, `line:(a b)` `block:(a b)` `section:(a b)`
- *  ask for terms near each other, and `[key]` or `[key:value]` asks the note's
- *  front matter.
+ *  than its words, `content:` asks its words and nothing else, `/re/` and `/re/i`
+ *  are regular expressions, `case:` stops case being folded from there on,
+ *  `line:(a b)` `block:(a b)` `section:(a b)` ask for terms near each other, and
+ *  `[key]` or `[key:value]` asks the note's front matter.
  *
  *  A space binds tighter than `OR`, so `a b OR c` reads as `(a b) OR c`.
  *
@@ -56,6 +56,11 @@ export type Query =
   | { kind: 'not'; of: Query }
   /** Words in the note. `fold` is case folded, which is the default. */
   | { kind: 'text'; text: string; fold: boolean }
+  /** Words in the note's body, which is the note past its front matter. What
+   *  `content:` asks: a bare word reads the whole file, so `nib` finds a note
+   *  whose `project:` row says so, and `content:nib` finds the ones that say it
+   *  where a reader would see it. */
+  | { kind: 'content'; text: string; fold: boolean }
   | { kind: 'regex'; source: string; fold: boolean }
   | { kind: 'path'; text: string; fold: boolean }
   | { kind: 'file'; text: string; fold: boolean }
@@ -76,7 +81,7 @@ export function isEmpty(query: Query): boolean {
 }
 
 /** The fields that take a value, and the tree each builds. */
-const VALUED = ['path', 'file', 'tag'] as const
+const VALUED = ['path', 'file', 'tag', 'content'] as const
 
 const UNITS: Record<string, Unit> = {
   line: 'line',
@@ -103,6 +108,7 @@ export const OPERATORS: readonly string[] = [
   'tag:',
   'path:',
   'file:',
+  'content:',
   'task:',
   'task-todo:',
   'task-done:',
@@ -207,8 +213,8 @@ class Parser {
     return isEmpty(inner) ? null : inner
   }
 
-  /** `path:` `file:` `tag:` `case:` and the three nearness groups. Null when
-   *  what is at the cursor is not one of them, with nothing consumed. */
+  /** `path:` `file:` `tag:` `content:` `case:` and the three nearness groups.
+   *  Null when what is at the cursor is not one of them, with nothing consumed. */
   private field(): Query | null {
     const found = FIELD.exec(this.source.slice(this.at))
     const [whole, word] = found ?? []
@@ -242,6 +248,7 @@ class Parser {
     if (!value) return null
 
     if (valued === 'tag') return { kind: 'tag', tag: value.replace(/^#/, '').toLowerCase() }
+    if (valued === 'content') return { kind: 'content', text: value, fold: this.folding }
     return { kind: valued === 'path' ? 'path' : 'file', text: value, fold: this.folding }
   }
 
