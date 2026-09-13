@@ -7,7 +7,7 @@
 # bytes a package manager hands somebody who types `brew install nib`, and for the
 # Tauri configuration, which is where the capabilities, the updater's public key and
 # the bundle's identity live. Dependabot opens pull requests against the first of
-# these every week (see dependabot.yml), which is exactly why they are listed: a
+# these every week (dependabot's version bumps were switched off on purpose; only GitHub's security alerts remain), which is exactly why they are listed: a
 # routine bump to an action is the change nobody looks twice at.
 #
 # Nothing else has an owner. The app is reviewed by whoever is reviewing.

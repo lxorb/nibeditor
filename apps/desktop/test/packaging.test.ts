@@ -105,18 +105,6 @@ describe('what a workflow is allowed to fetch', () => {
     expect(fetching).toEqual([])
   })
 
-  test('and every ecosystem a release is built out of is kept moving', () => {
-    const held = repo('.github', 'dependabot.yml')
-
-    for (const ecosystem of ['github-actions', 'npm', 'cargo', 'gradle']) {
-      expect(held, ecosystem).toContain(`package-ecosystem: ${ecosystem}`)
-    }
-
-    // Weekly and grouped: one pull request an ecosystem is one thing to read.
-    expect([...held.matchAll(/interval: weekly/g)]).toHaveLength(4)
-    expect([...held.matchAll(/^ {4}groups:$/gm)]).toHaveLength(4)
-  })
-
   test('and a change to any of it has to have been read', () => {
     const owners = repo('.github', 'CODEOWNERS')
 
