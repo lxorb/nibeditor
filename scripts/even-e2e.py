@@ -49,6 +49,11 @@ CANVAS_PATH = f"{SPACE}/A canvas.canvas"
 # comment to nobody, and a folded section. Its own note rather than more of the one
 # above, so every assertion about that note's pages still says what it said.
 MORE_PATH = f"{SPACE}/Everything else.md"
+# One line per writing system, to see on the glass which of them the firmware's one
+# font actually draws. The samples are read out of the glasses package rather than
+# written again here: that list is data with a test of its own against the metrics,
+# and this puts the same data in front of the firmware's own folding.
+SCRIPTS_PATH = f"{SPACE}/Scripts.md"
 
 # A second space, for the icons: one that chose an icon and one that did not.
 OTHER_SPACE = "/Uni"
@@ -160,6 +165,26 @@ $$
 \int_0^1 x^2\,dx = \frac{1}{3}
 $$
 """
+
+def scripts() -> list[dict]:
+    """The writing systems, read out of packages/glasses/src/scripts.ts.
+
+    One source for the samples: that file is data with a test against the firmware's
+    own metrics, and a second copy here would be a second copy to go stale."""
+    text = (ROOT / "packages" / "glasses" / "src" / "scripts.ts").read_text(encoding="utf-8")
+    found = re.findall(
+        r"code: '(\w+)',\s*name: '([^']+)',\s*sample: '([^']+)',\s*draws: (true|false)",
+        text,
+    )
+
+    return [
+        {"code": one[0], "name": one[1], "sample": one[2], "draws": one[3] == "true"}
+        for one in found
+    ]
+
+
+SCRIPTS = scripts()
+SCRIPTS_NOTE = "# Scripts\n\n" + "".join(f"- {one['name']}: {one['sample']}\n" for one in SCRIPTS)
 
 OTHER = "# Monday standup\n\nSomewhere for the wikilink to point.\n"
 DEEP = "# Reading list\n\nA note one folder in.\n"
@@ -603,6 +628,7 @@ def main() -> int:
                         [DEEP_PATH, DEEP],
                         [CANVAS_PATH, CANVAS],
                         [MORE_PATH, MORE],
+                        [SCRIPTS_PATH, SCRIPTS_NOTE],
                     ]
                 ],
             )
@@ -1216,6 +1242,47 @@ def main() -> int:
                 "head" in said and "body" in said and "$$" in said and "E = mc^2" in said,
             )
             page.screenshot(path=str(OUT / "phone-everything.png"))
+
+            # ── Which scripts the firmware actually draws ─────────────────────
+            # One line per writing system, on the glass, through the whole road: the
+            # app's reader, the mapping, the firmware's own folding, the containers.
+            # `packages/glasses/src/scripts.ts` is the list as data and its own test
+            # holds it to the metrics; this is the same data seen on the panel, which
+            # is where a claim about a font becomes a picture.
+            open_note(page, "Scripts")
+            page.wait_for_timeout(900)
+            drawn = []
+            for _page in range(6):
+                bands = page.evaluate("window.__bands()")
+                drawn.append(bands.get("nibBody", ""))
+                if _page == 0:
+                    screens.append({"name": "scripts", "lineNumbers": False, **naming(bands)})
+                page.evaluate("window.__gesture('down')")
+                page.wait_for_timeout(180)
+
+            panel = "\n".join(drawn)
+            wrong = []
+            for one in SCRIPTS:
+                line = next((row for row in panel.split("\n") if one["name"] in row), None)
+                if line is None:
+                    wrong.append(f"{one['name']} never reached the panel")
+                elif one["draws"] and one["sample"] not in line:
+                    wrong.append(f"{one['name']} should draw: {line.strip()}")
+                elif not one["draws"] and "□" not in line:
+                    wrong.append(f"{one['name']} should be boxes: {line.strip()}")
+
+            report.ok(
+                "every script the list claims is drawn is drawn, and every other is boxes",
+                not wrong,
+                "; ".join(wrong[:3]) or f"{len(SCRIPTS)} scripts on the glass",
+            )
+            report.say(
+                "drawn: "
+                + ", ".join(one["name"] for one in SCRIPTS if one["draws"])
+                + "; boxes: "
+                + ", ".join(one["name"] for one in SCRIPTS if not one["draws"])
+            )
+            page.screenshot(path=str(OUT / "phone-scripts.png"))
 
             open_note(page, "Even Realities glasses")
             page.wait_for_timeout(900)

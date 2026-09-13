@@ -238,8 +238,10 @@ describe('the bundle a package is made of', () => {
 
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
-    // 7.36 MB as this is written, measured on 2026-09-12, down from 8.59 by leaving
-    // the catalogues the firmware cannot draw out; see below. The ceiling is close to
+    // 7.53 MB as this is written, measured on 2026-09-13, against 8.80 with every
+    // catalogue in: the sixteen the firmware has no glyphs for are left out, which is
+    // 1.27 MB. The ceiling is a quarter of a megabyte over it, which is room for the
+    // app to grow and not room for those catalogues to come back. The ceiling is close to
     // it on purpose: this number went from 11.8 MB to 6.0 by leaving libraries out,
     // and a megabyte back is a library that crept in again. Speed is the selling
     // point, and on a phone the download is part of it.
@@ -249,7 +251,7 @@ describe('the bundle a package is made of', () => {
     // packages/glasses/src/firmware.ts uses to write an emoji the firmware cannot
     // draw as its own `:name:` rather than as a box; and the 23 catalogues that are
     // shipped, about 1.3 MB between them.
-    expect(bytes).toBeLessThan(8 * 1024 * 1024)
+    expect(bytes).toBeLessThan(7.8 * 1024 * 1024)
   })
 
   /** The catalogues, held to what the font can draw.

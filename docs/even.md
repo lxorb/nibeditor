@@ -251,29 +251,53 @@ what every construct in a note *is*. Section 3 is that mapping.
 
 The app's interface is in thirty-nine languages, one lazily loaded catalogue each.
 The firmware's font draws **Latin, Cyrillic, Greek, CJK and emoji**, and nothing
-else: Devanagari, Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati,
-Arabic, Persian, Pashto, Urdu, Thai, Burmese and Amharic have no glyphs in it at all.
-A reader in one of those got a menu of perfectly correct words drawn as a row of
-boxes, which is the one way of being wrong text mode cannot afford.
+else. A reader in one of the other scripts got a menu of perfectly correct words
+drawn as a row of boxes, which is the one way of being wrong text mode cannot afford.
+
+**Verified on the panel, one string per script.** Not read off a specification: each
+sample below went through the whole road - the app's own reader, the mapping, the
+firmware's folding, the containers - and came back as what a reader would see.
+
+![One line per writing system on the glass: seven of them drawn, and Devanagari as boxes](even/scripts.png)
+
+| Drawn | Boxes |
+| --- | --- |
+| Latin, Cyrillic, Greek, Chinese (simplified and traditional), Japanese, Korean | Devanagari, Bengali, Gurmukhi, Gujarati, Tamil, Telugu, Kannada, Malayalam, Arabic, Thai, Burmese, Ethiopic |
+
+Greek and Korean are in the first column because the metrics say so, which is the
+reason to measure rather than to assume. The list lives in
+`packages/glasses/src/scripts.ts` as data - a row per script with a sample, a `draws`
+column and the catalogues written in it - and `scripts.test.ts` measures every sample
+against `@evenrealities/pretext` and fails if the column disagrees. The drive draws
+the same samples on the panel, so the day a firmware update adds a script, one test
+says which line to change and one picture shows it.
 
 So **the panel falls back to English wherever the font cannot draw the reader's own
-language**, and the phone's own panes are untouched - a reader reads their language on
+script**, and the phone's own panes are untouched - a reader reads their language on
 the glass where the glass can draw it, and on the phone always. Every string in this
 app is filed under what it says in English, so the fallback is the key itself and
 there is no second catalogue to ship; see `lib/even/panel-words.ts`.
 
-**Decided by what the font can draw, not by a list of scripts.** `undrawable` in
-`packages/glasses/src/firmware.ts` answers what share of a text has no glyph, and it
-is asked of the reader's own catalogue. Measured over all thirty-nine, the answer is
-two groups and nothing in between: every Latin, Cyrillic, Greek and CJK catalogue is
-at **0.0%**, and those fifteen scripts at **31% and more**. The line is drawn at a
-tenth, which is nowhere near either, and a catalogue in a script the firmware ever
-gains is drawable the day the metrics say so.
+**Per script, not per language.** What a font has or has not got is a writing system:
+Hindi and Marathi are one question, and Arabic answers for Persian, Pashto and Urdu
+as well. `Intl` says which script a language is written in and `drawsScript` looks it
+up in the list above, so a Devanagari language added tomorrow is answered by the row
+that is already there. Where a tag names no script at all - one that is not a tag -
+the reader's own words are measured instead with `undrawable`, which is the same
+question asked the slow way: every Latin, Cyrillic, Greek and CJK catalogue comes out
+at **0.0%** and the twelve undrawable scripts at **31% and more**, so the tenth the
+measurement is cut at is nowhere near either.
 
-The same measurement decides what is *packed*. A reader loads one catalogue and the
-store fetches the package whole, so all thirty-nine were paid for by everybody: the
-sixteen catalogues in those fifteen scripts are left out of the plugin build, which
-took it from **8.59 MB to 7.36 MB**. Those readers get an English plugin rather than a
+And it is said once where the choice is made: for a reader whose script the glass
+cannot draw, the Language row says **"The glasses show English."** - only where a pair
+has been seen, because it is noise to anybody else, and in all thirty-nine catalogues
+because a string the reader sees is a row in every one of them.
+
+The same list decides what is *packed*. A reader loads one catalogue and the store
+fetches the package whole, so all thirty-nine were paid for by everybody: the sixteen
+catalogues in those twelve scripts are left out of the plugin build, which on
+2026-09-13 is **8.80 MB with them and 7.53 MB without**, and the bundle test's ceiling
+sits a quarter of a megabyte over that. Those readers get an English plugin rather than a
 Thai one with a panel of boxes - and `src/lib/even/bundle.test.ts` holds the package
 to the rule from both ends, so a drawable catalogue cannot be dropped by accident
 either.
@@ -1467,7 +1491,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1520,6 +1544,9 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
 - **a reader whose script the firmware has no glyphs for got an English panel** and
   not one box on it, with the catalogue that would have said otherwise absent from the
   package altogether;
+- **one string per writing system, on the panel**: seven scripts drawn as their own
+  words and twelve as boxes, which is the list in `packages/glasses/src/scripts.ts`
+  seen rather than claimed;
 - **a note holding everything the app has learned to write since** reached the panel
   whole: a fence with a caption (the caption above the code, the language alone on the
   fence line), callouts by name - known, unknown, titled and folded - tasks as boxes,
