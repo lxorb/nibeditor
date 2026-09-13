@@ -118,10 +118,12 @@ out of the same renderer and were already the same markup.
   as safe to serve as a link is. Which means a page needs no `frame-src` and
   never grew one - what the reader gets is the link, and what the app gets on a
   press is the page in a frame sandboxed without `allow-same-origin`. An address
-  one of the providers answers for gets that row's card instead, with the
-  narrower sandbox and the permissions its player needs; anything else gets
-  scripts and nothing more, and says its domain rather than a name it would have
-  had to ask somebody for. The card or nothing, and never the tag: a frame at
+  one of the nine hand-written providers answers for gets that row's card
+  instead, with the narrower sandbox and the permissions its player needs; a row
+  of the broad list gets a name and a shape and nothing else, because scripts and
+  nothing more is already all such a row asks for. Anything else gets scripts and
+  nothing more too, and says its domain rather than a name it would have had to
+  ask somebody for. The card or nothing, and never the tag: a frame at
   `javascript:`, at a page of the app's own, or at plain http is one a note may
   not have, and both halves of such a tag are dropped rather than escaped into
   four characters of text.

@@ -273,9 +273,10 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       /** The same, for a picture. `data:` is allowed here and nowhere else:
        *  it is how a small image travels inside the document. */
       image(token: Tokens.Image) {
-        // An address one of the handful of providers answers for is that page,
-        // shown where it stands rather than a picture that was never there. A
-        // card until the reader asks for it; see web-embed.ts.
+        // An address one of the providers answers for is that page, shown where it
+        // stands rather than a picture that was never there - the nine rows written
+        // by hand and the broad list behind them both; see providers.ts. A card
+        // until the reader asks for it; see web-embed.ts.
         const card = webCard(token.href)
         if (card) return card
 

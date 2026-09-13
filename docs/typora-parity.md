@@ -592,16 +592,26 @@ Features Typora does not have, which are the reason this exists.
       the editor, in the reading view, in an export and on a published page; on
       the glasses each is one line, its name behind the picture mark
 - [x] A page from somewhere else, written as a picture:
-      `![](https://youtube.com/watch?v=…)`. Nine places are known - YouTube,
-      Vimeo, X, Spotify, SoundCloud, Figma, CodePen, Loom and Google Maps - and
-      everything else stays the link it was. Nothing is loaded from any of them
-      until the reader asks: what the note renders as is a card the size the
-      frame will be, saying whose page it stands for, and a click swaps in a
-      sandboxed frame with only the permissions that provider needs. The card is
-      a real link, which is what makes one piece of markup right everywhere: a
-      published page runs no script of any kind, so there the same click simply
-      takes the reader to the page. YouTube is framed from `youtube-nocookie.com`,
-      and a frame tells the provider which site asked and never which note
+      `![](https://youtube.com/watch?v=…)`. Two lists are known and everything
+      else stays the link it was. Nine rows are written by hand - YouTube, Vimeo,
+      X, Spotify, SoundCloud, Figma, CodePen, Loom and Google Maps - and each of
+      those frames is driven both ways round by a test, which is what lets it ask
+      for a narrower sandbox and for the permissions its player needs. Behind them
+      are forty-two rows more, as broad a list as Notion's and generated against
+      the public oEmbed registry: Google Drive, Miro, Twitch, TikTok, a gist, a
+      Typeform, a Sketchfab model and thirty-odd others. Those get
+      `allow-scripts` and nothing else, the same bargain an `<iframe>` a note
+      wrote by hand gets, because a row nobody has driven has promised only that
+      this address turns into that frame. No oEmbed request is made and no markup
+      from a provider ever reaches the page: a frame address is derived from the
+      address the note already had. Nothing is loaded from any of them until the
+      reader asks: what the note renders as is a card the size the frame will be,
+      saying whose page it stands for, and a click swaps in the sandboxed frame.
+      The card is a real link, which is what makes one piece of markup right
+      everywhere: a published page runs no script of any kind, so there the same
+      click simply takes the reader to the page. YouTube is framed from
+      `youtube-nocookie.com`, and a frame tells the provider which site asked and
+      never which note
 - [x] ` ```chart ` fences, in the shape the Obsidian Charts plugin reads
       (`type`, `title`, `labels`, and `series` with a `title` and `data` each),
       drawn as `bar`, `line`, `pie` or `donut`. Built as an SVG out of the

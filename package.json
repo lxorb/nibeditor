@@ -16,6 +16,7 @@
     "knip": "knip",
     "blog:css": "node scripts/blog-css.ts",
     "blog:js": "node scripts/site-js.ts",
+    "embed:table": "node scripts/embed-table.ts",
     "even:pack": "evenhub pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk"
   },
   "devDependencies": {

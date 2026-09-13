@@ -1,10 +1,13 @@
 """What an embed still does without `allow-same-origin`, measured against the real
 providers.
 
-The question this answers is not a regression: it is a decision. Every provider row
-in packages/markdown/src/providers.ts asks for `allow-same-origin`, and the comment
-beside it says why that is not the hole it reads as - with a cross-origin `src` the
-token grants the frame *its own* origin rather than the page's. That is true, and it
+The question this answers is not a regression: it is a decision. Every one of the nine
+hand-written provider rows in packages/markdown/src/providers.ts asks for
+`allow-same-origin`, and the comment beside it says why that is not the hole it reads
+as - with a cross-origin `src` the token grants the frame *its own* origin rather than
+the page's. The broad list behind those nine asks for no such thing: a row nobody has
+driven gets `allow-scripts` and nothing else, which is what this drive is the argument
+for. That is true, and it
 leaves one case: a frame whose address is the app's own origin. On the web app,
 `https://<the app's own host>/anything` is a card a note can write, and a frame that
 is same-origin with the page *and* holds `allow-scripts allow-same-origin` is not

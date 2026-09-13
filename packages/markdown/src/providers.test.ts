@@ -112,6 +112,82 @@ describe('the addresses a note can show rather than link to', () => {
   })
 })
 
+describe('the broad list, for the places nobody wrote a row for by hand', () => {
+  /** One address apiece on the seven Notion shows where nib used to show a link.
+   *  Four of them - Drive, Twitch, the gist and the form - are in no oEmbed
+   *  registry at all, which is the reason the list cannot simply be the registry
+   *  and has to be a table of embed addresses instead. */
+  const listed = [
+    ['https://drive.google.com/file/d/1A2b3C4d5E6f7G8hI9j/view?usp=sharing', 'drive'],
+    ['https://miro.com/app/board/uXjVNZvHEJI=/', 'miro'],
+    ['https://www.twitch.tv/videos/1234567890', 'twitch'],
+    ['https://www.tiktok.com/@nib/video/7212345678901234567', 'tiktok'],
+    ['https://gist.github.com/someone/4060606e8f4a4d3c9b1a', 'gist'],
+    ['https://form.typeform.com/to/u6nXL7', 'typeform'],
+    ['https://sketchfab.com/3d-models/a-thing-0d8e5c1e0f7f4a0a9e5b2a7b0e3c1d2f', 'sketchfab'],
+  ] as const
+
+  test('each of them is a card saying whose page it stands for', () => {
+    for (const [address, id] of listed) {
+      expect(named(address), address).toBe(id)
+      expect(webCard(address), address).toContain(`data-provider="${id}"`)
+    }
+  })
+
+  test('and what it frames is an address of that provider’s, over https', () => {
+    for (const [address] of listed) {
+      expect(frame(address) ?? '', address).toMatch(/^https:\/\/[\w.-]+\//)
+    }
+  })
+
+  test('a row nobody measured gets scripts and nothing more', () => {
+    // The nine rows above may ask for a narrower sandbox and a player's
+    // permissions, because somebody drove each of those frames both ways round.
+    // A row off the list has promised only that this address turns into that
+    // frame, so it gets the same bargain an `<iframe>` a note wrote by hand gets.
+    for (const [address] of listed) {
+      const card = webCard(address) ?? ''
+      expect(card, address).toContain('data-sandbox="allow-scripts"')
+      expect(card, address).not.toContain('allow-same-origin')
+      expect(card, address).not.toContain('data-allow=')
+      // Nothing a provider said, and nothing a browser would fetch on its own.
+      expect(card, address).not.toContain('<iframe')
+      expect(card, address).not.toContain('src=')
+    }
+  })
+
+  test('a page of a listed provider that is not a thing to show is a link', () => {
+    expect(webEmbed('https://miro.com/pricing')).toBe(null)
+    expect(webEmbed('https://drive.google.com/drive/folders/1A2b3C')).toBe(null)
+    expect(webEmbed('https://www.tiktok.com/@nib')).toBe(null)
+    expect(webEmbed('https://form.typeform.com/')).toBe(null)
+  })
+
+  test('and a domain the list never named stays the link it was', () => {
+    expect(webEmbed('https://embed.example.test/a/b/c')).toBe(null)
+    expect(webEmbed('https://notion.test/page/abc123')).toBe(null)
+    expect(webCard('https://example.test/a')).toBe(null)
+    expect(webCard('https://drive.google.example/file/d/abc/view')).toBe(null)
+  })
+
+  test('nothing a link wrote reaches a listed frame address unchecked', () => {
+    for (const address of [
+      'https://miro.com/app/board/a%2f..%2fevil/',
+      'https://form.typeform.com/to/a%26b',
+      'https://www.tiktok.com/@nib/video/1?a=b#c',
+    ]) {
+      const framed = frame(address)
+      if (framed === null) continue
+      expect(framed, address).not.toContain('..')
+      expect(framed, address).not.toContain('%2f')
+      expect(new URL(framed).hostname, address).not.toBe('example.test')
+    }
+    expect(frame('https://www.tiktok.com/@nib/video/1?a=b#c')).toBe(
+      'https://www.tiktok.com/embed/v2/1',
+    )
+  })
+})
+
 describe('the card an address is shown as', () => {
   test('says whose page it is, and holds the frame without loading it', () => {
     const card = webCard('https://youtu.be/dQw4w9WgXcQ')
