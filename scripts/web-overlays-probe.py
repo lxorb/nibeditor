@@ -81,9 +81,18 @@ PAGES = {
   // nothing in the app asked for it and nothing in the app could have. Where you are
   // rather than the camera, because a machine with no camera answers that one itself
   // before there is anything to ask about.
+  //
+  // The page says in its own title what the engine told it, which is how the drive sees
+  // the far end of the answer: code 1 is PERMISSION_DENIED - the reader said no, or
+  // nobody ever answered - and anything else means the request was allowed and the
+  // machine simply has no location to give.
   navigator.geolocation.getCurrentPosition(
-    function () {},
-    function () {},
+    function () {
+      document.title = 'allowed'
+    },
+    function (wrong) {
+      document.title = 'refused ' + wrong.code
+    },
   )
 </script>
 </body>
@@ -332,6 +341,25 @@ def main() -> int:
         shoot(hwnd, "a-site-asks")
         if not asked:
             print("FAIL: a site asked for where you are and no bubble went up")
+
+        # And the far end of it: Allow is pressed, the engine is let go of, and the page's
+        # own callback runs. The page puts what it was told in its title, so `refused 1`
+        # would mean the answer never reached the engine - or reached it as a no.
+        app.ask("document.querySelectorAll('.ask .nib-button')[1].click()")
+        time.sleep(3)
+        said["the bubble is gone"] = app.ask(
+            "JSON.stringify(document.querySelector('.ask[role=dialog]') === null)"
+        )
+        # Read off the bar, which shows the site and then the page's own title: the page
+        # wrote what it was told into that title, so this is the engine's answer as a
+        # reader would see it.
+        said["what the engine told the page"] = app.ask(
+            "JSON.stringify(document.querySelector('.webbar input.address')?.value ?? '')"
+        )
+        said["what the site is allowed now"] = app.ask(
+            "JSON.stringify(JSON.parse(localStorage.getItem('nib:web-grants') ?? '{}'))"
+        )
+        shoot(hwnd, "a-site-allowed")
     finally:
         if running is not None:
             running.terminate()
