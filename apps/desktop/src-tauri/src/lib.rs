@@ -50,6 +50,8 @@ mod assets;
 mod clock;
 #[cfg(desktop)]
 mod endpoint;
+#[cfg(desktop)]
+mod engine;
 mod front_matter;
 mod fuzzy;
 mod highlights;
@@ -177,15 +179,49 @@ mod entry {
     }
 }
 
-/// Starts the app. Returns when the last window has closed, and exits with a
-/// message if the app could not be built at all.
+/// Which runtime every type in this crate is written against.
+///
+/// On the app that ships it is Tauri's own `Wry`, compiled in, and a bare
+/// `AppHandle` or `Webview` means that - which is why nothing else in the crate
+/// names a runtime at all. On nib's own Chromium the engine is chosen by the binary
+/// rather than compiled in, so the type is Tauri's type-erased one and a bare
+/// `AppHandle` means that instead. Every other signature in the crate is unchanged
+/// either way, which is what makes one seam enough; see src/engine.rs.
+#[cfg(not(feature = "cef"))]
+pub type Engine = tauri::Wry;
+
+/// Which runtime every type in this crate is written against: the type-erased one,
+/// because the engine arrives from the binary. See above.
+#[cfg(feature = "cef")]
+pub type Engine = tauri::DynRuntime;
+
+/// Starts the app on the engine this build ships with: the system's own, which is
+/// what `tauri::Builder::default` gives - `WebView2` on Windows, `WKWebView` on a
+/// Mac, `WebKitGTK` on Linux. Returns when the last window has closed.
 pub fn run() {
+    run_on(tauri::Builder::default());
+}
+
+/// Starts the app on an engine the binary chose, and exits with a message if the app
+/// could not be built at all.
+///
+/// One seam, for one reason: `apps/desktop/src-tauri/cef` is a binary that links
+/// Chromium through `tauri-runtime-cef` and hands the engine in here already
+/// configured, so nib's own interface and every web tab are views in one browser
+/// process. The engine is never named in this crate, which is what keeps three
+/// hundred megabytes of Chromium out of the default build's dependency graph
+/// entirely. See src/engine.rs and docs/browser.md.
+pub fn run_on(builder: tauri::Builder<Engine>) {
+    // Before the trace, because the gate's clock is the process's and a measurement
+    // that starts late is a measurement that flatters. Nothing at all in the default
+    // build: the module is behind the `cef` feature.
+    #[cfg(feature = "cef")]
+    engine::gate::begin();
+
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
     trace::begin();
-
-    let builder = tauri::Builder::default();
 
     // A second launch belongs to the window that is already open: it raises it
     // and hands over whatever file it was asked to open. A phone launches an app
@@ -275,13 +311,35 @@ pub fn run() {
     let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
 
-    builder
-        .setup(ready)
-        .run(tauri::generate_context!())
-        .unwrap_or_else(|error| {
-            eprintln!("Nib could not start: {error}");
-            std::process::exit(1);
-        });
+    // The window comes out of the config, except on nib's own Chromium, where the
+    // interface needs a profile of its own and a profile is asked for when a webview
+    // is built. The config still says what the window looks like; see engine.rs.
+    #[cfg_attr(
+        not(feature = "cef"),
+        allow(
+            unused_mut,
+            reason = "only nib's own Chromium takes the window out of the config"
+        )
+    )]
+    let mut context = tauri::generate_context!();
+    #[cfg(feature = "cef")]
+    let ui = engine::take_ui_window(&mut context);
+
+    #[cfg(not(feature = "cef"))]
+    let builder = builder.setup(ready);
+    #[cfg(feature = "cef")]
+    let builder = builder.setup(move |app| {
+        engine::gate::say("\"event\":\"cef-initialised\"");
+        if let Some(ui) = &ui {
+            engine::open_ui_window(app, ui)?;
+        }
+        ready(app)
+    });
+
+    builder.run(context).unwrap_or_else(|error| {
+        eprintln!("Nib could not start: {error}");
+        std::process::exit(1);
+    });
 }
 
 /// Everything that has to happen once, after the app is built and before the
@@ -344,6 +402,15 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
+
+    // And, on a build that is being measured rather than used, the gate: it opens a
+    // web tab and the engine's own pages, says what each cost and quits. Off unless
+    // NIB_CEF_GATE says otherwise, and not in the default build at all.
+    #[cfg(feature = "cef")]
+    {
+        engine::gate::say("\"event\":\"window-shown\"");
+        engine::gate::start(handle);
+    }
 
     Ok(())
 }
