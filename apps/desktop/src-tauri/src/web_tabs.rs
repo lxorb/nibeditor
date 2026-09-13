@@ -584,7 +584,14 @@ fn opening(place: Option<Place>, url: &str) -> String {
 
     match want {
         None => guard(),
-        Some(one) => format!("{}\n{}", guard(), PLACE.replace("__PLACE__", &one)),
+        // The semicolon is load bearing, and it cost an afternoon. Both halves are
+        // `(function () { ... })()`, and JavaScript has no statement boundary between
+        // `})()` and `(function`: the parser reads the second one as an argument list
+        // applied to whatever the first returned, so the guard ran, the place was
+        // evaluated as a function expression, and the call threw `undefined is not a
+        // function` before the place was ever put back. A revived page opened at the top
+        // and nothing said why; see scripts/web-switch-probe.py, which is what caught it.
+        Some(one) => format!("{};\n{};\n", guard(), PLACE.replace("__PLACE__", &one)),
     }
 }
 
@@ -1505,6 +1512,12 @@ mod tests {
         assert!(revived.contains("window.scrollTo"));
         assert!(revived.contains("\"url\":\"https://a.example/page\""));
         assert!(revived.contains("940"));
+
+        // And the two halves are two statements. Without the semicolon the parser reads
+        // `})()` followed by `(function` as a call, which threw before the place was put
+        // back and opened every revived page at the top; see `opening`.
+        assert!(revived.contains("})();"));
+        assert!(!revived.contains("})()\n(function"));
     }
 
     #[test]
