@@ -1,0 +1,306 @@
+# Keeping up with Chromium, as a button.
+#
+# Emil's requirement for the engine was *"we don't need to do anything manually
+# when there are upstream changes"*. The engine's cadence is CEF's - a branch per
+# Chromium milestone, about four weeks apart, `cef-rs` publishing within days of
+# each and `tauri-runtime-cef` taking whatever `cef-rs` has - so nib's part is to
+# follow one revision, rebuild, re-measure and put the numbers in front of a
+# person. Weekly, and whenever somebody asks.
+#
+# What it does: moves the one pin in apps/desktop/src-tauri/cef/Cargo.toml to the
+# head of the branch it follows, builds the flagged app on all three desktops,
+# runs the same gate .github/workflows/cef.yml runs, and opens a **draft** pull
+# request with the table and with what moved. Nobody edits a URL and nobody reads
+# a release note to find a version number; a person presses merge, or does not.
+#
+# It never runs on a pull request and never on a branch: a scheduled workflow runs
+# on the default branch, and the only thing it pushes is the branch its own pull
+# request is for. See docs/browser.md, section 7.
+name: cef-bump
+
+on:
+  schedule:
+    # Monday morning, after CEF's own weekly builds and before anybody looks.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Move the pin to exactly this revision, rather than the head of the branch'
+        type: string
+        default: ''
+
+concurrency:
+  group: cef-bump
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # What upstream has now, against what nib is pinned to. Cheap, and it decides
+  # whether anything below runs at all.
+  pin:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      moved: ${{ steps.look.outputs.moved }}
+      revision: ${{ steps.look.outputs.revision }}
+      report: ${{ steps.look.outputs.report }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - id: look
+        shell: bash
+        run: |
+          args=()
+          [ -n "${{ inputs.revision }}" ] && args=(--set "${{ inputs.revision }}")
+          python apps/desktop/src-tauri/cef/bump.py "${args[@]}" --out bump.json
+          echo "moved=$(python -c "import json;print(str(json.load(open('bump.json'))['moved']).lower())")" >>"$GITHUB_OUTPUT"
+          echo "revision=$(python -c "import json;print(json.load(open('bump.json'))['to'])")" >>"$GITHUB_OUTPUT"
+          {
+            echo 'report<<REPORT'
+            cat bump.json
+            echo REPORT
+          } >>"$GITHUB_OUTPUT"
+
+      - name: What moved
+        shell: bash
+        run: |
+          {
+            echo '## The pin'
+            echo
+            echo '```json'
+            cat bump.json
+            echo '```'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cef-bump-pin
+          path: bump.json
+          retention-days: 7
+
+  # The same gate cef.yml runs, on the revision above. Its own job per platform so
+  # a red Mac is a row in the pull request rather than the end of the run.
+  gate:
+    needs: pin
+    if: needs.pin.outputs.moved == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    continue-on-error: true
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      CEF_DIR: ${{ github.workspace }}/.cef
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      - name: Move the pin
+        run: |
+          python apps/desktop/src-tauri/cef/bump.py --set "${{ needs.pin.outputs.revision }}"
+
+      - name: System dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev \
+            libgtk-4-dev libclang-dev libglib2.0-dev \
+            libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 libdrm2 libxkbcommon0 \
+            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 libcups2t64 \
+            xvfb imagemagick dbus-x11
+
+      - name: The frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @nib/desktop build
+
+      - name: The app as it ships
+        run: cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --release
+
+      - name: Upstream
+        run: python apps/desktop/src-tauri/cef/upstream.py
+
+      - name: The CEF the engine is pinned to
+        id: cef
+        run: |
+          version=$(grep -oE 'cef = \{ version = "=[^"]+"' \
+            apps/desktop/src-tauri/cef/.upstream/tauri/crates/tauri-runtime-cef/Cargo.toml \
+            | head -1 | grep -oE '[0-9][^"]+')
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: cef-cache
+        with:
+          path: .cef
+          key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.cef.outputs.version }}
+
+      - name: CEF
+        run: |
+          if [ "${{ steps.cef-cache.outputs.cache-hit }}" != "true" ]; then
+            cargo install export-cef-dir --version "=${{ steps.cef.outputs.version }}"
+            export-cef-dir --force "$CEF_DIR"
+          fi
+          echo "CEF_PATH=$CEF_DIR" >>"$GITHUB_ENV"
+
+      - name: The library path
+        run: |
+          echo "LD_LIBRARY_PATH=$CEF_DIR:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_DIR:$CEF_DIR/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "$CEF_DIR" >>"$GITHUB_PATH"
+
+      # A moved pin is a new resolution: the lock file is regenerated rather than
+      # honoured, and the new one is part of what the pull request carries.
+      - name: The flagged build
+        run: |
+          cargo generate-lockfile --manifest-path apps/desktop/src-tauri/cef/Cargo.toml
+          cargo build --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --release
+
+      - name: Tests under the flag
+        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml
+
+      - name: Stage the engine beside the binary
+        run: |
+          out=apps/desktop/src-tauri/cef/target/release
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp -R "$CEF_DIR"/*.dll "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.bin "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.dat "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.pak "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/locales "$out"/ 2>/dev/null || true
+          fi
+
+      - name: Run the gate
+        run: |
+          suffix=''
+          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
+          run=(python apps/desktop/src-tauri/cef/gate.py
+            --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
+            --control "apps/desktop/src-tauri/target/release/nib$suffix"
+            --payload "$CEF_DIR"
+            --extension spike/browser/extension
+            --out gate-out)
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
+          else
+            "${run[@]}"
+          fi
+
+      - name: The gate table
+        if: always()
+        run: |
+          mkdir -p bumped
+          cp gate-out/gate.md "bumped/${{ matrix.os }}.md" 2>/dev/null || true
+          cp apps/desktop/src-tauri/cef/Cargo.lock bumped/Cargo.lock 2>/dev/null || true
+          cp apps/desktop/src-tauri/cef/Cargo.toml bumped/Cargo.toml 2>/dev/null || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: cef-bump-${{ matrix.os }}
+          path: |
+            bumped/**
+            gate-out/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  # And the button: a draft pull request with the pin moved, the lock file the new
+  # revision resolved to, and the three tables in the body. Draft, because a person
+  # decides whether a Chromium nib has not shipped yet is a Chromium nib wants.
+  propose:
+    needs: [pin, gate]
+    if: always() && needs.pin.outputs.moved == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          path: artefacts
+
+      - name: The branch
+        id: branch
+        shell: bash
+        env:
+          REVISION: ${{ needs.pin.outputs.revision }}
+        run: |
+          short=${REVISION:0:12}
+          echo "name=cef-pin-$short" >>"$GITHUB_OUTPUT"
+          echo "short=$short" >>"$GITHUB_OUTPUT"
+
+      - name: Move the pin and take the lock file the runners resolved
+        shell: bash
+        env:
+          REVISION: ${{ needs.pin.outputs.revision }}
+        run: |
+          python apps/desktop/src-tauri/cef/bump.py --set "$REVISION"
+          lock=$(find artefacts -name 'Cargo.lock' -path '*bumped*' | head -1)
+          if [ -n "$lock" ]; then
+            cp "$lock" apps/desktop/src-tauri/cef/Cargo.lock
+          fi
+
+      - name: The body
+        shell: bash
+        run: |
+          {
+            echo "The engine's pin moves to \`${{ steps.branch.outputs.short }}\`."
+            echo
+            echo '```json'
+            cat <<'REPORT'
+          ${{ needs.pin.outputs.report }}
+          REPORT
+            echo '```'
+            echo
+            echo '## The gate'
+            echo
+            for table in artefacts/*/bumped/*.md; do
+              [ -f "$table" ] || continue
+              echo "### $(basename "$table" .md)"
+              echo
+              cat "$table"
+              echo
+            done
+            echo
+            echo 'Draft on purpose: batch 1 of docs/browser.md is a gate, and a gate is'
+            echo 'allowed to say no. Read the table before merging.'
+          } >body.md
+          cat body.md
+
+      - name: Open it
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          branch='${{ steps.branch.outputs.name }}'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$branch"
+          git add apps/desktop/src-tauri/cef/Cargo.toml apps/desktop/src-tauri/cef/Cargo.lock
+          git commit -m "chore: cef pin ${{ steps.branch.outputs.short }}"
+          git push --force origin "$branch"
+          gh pr create --draft --base "${{ github.event.repository.default_branch }}" \
+            --head "$branch" \
+            --title "chore: cef pin ${{ steps.branch.outputs.short }}" \
+            --body-file body.md || gh pr edit "$branch" --body-file body.md
