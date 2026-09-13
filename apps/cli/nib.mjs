@@ -114,6 +114,7 @@ const USAGE = `nib - drive the running nibeditor
 
   open <path> [--heading H] [--block B]
   new <name> [--content TEXT] [--append] [--prepend] [--silent]
+  append <path> [--content TEXT] [--from FILE|-] [--silent]
   search <query>
   files list
   files read [path]

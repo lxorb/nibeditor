@@ -40,7 +40,7 @@ DIST = APP / "dist"
 SHOTS = HERE / "shots" / "automation"
 
 # Not the dev server's 1420, and not the other drives' ports either.
-PORT = 19703
+PORT = 23303
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 PLAN = """# The plan
@@ -285,6 +285,46 @@ def drive_making(page: Page) -> None:
         wrong(f"appending lost what the note already said: {added['text']!r}")
 
 
+def drive_appending(page: Page) -> None:
+    """`nib://append`, which is what a shortcut filing a line into today's note asks for.
+
+    Two roads and both of them matter: the note that is there is added to, and the note
+    that is not is made. A caller with a link in a watch face has no way of knowing
+    which of the two it is, which is the whole reason the action exists.
+    """
+    added = follow(
+        page,
+        "nib://append?path=From a link.md&content=A line from a link.",
+        "append",
+    )
+    shot(page, "04b-appended-by-its-own-action")
+
+    if added["active"] != "From a link.md":
+        wrong(f"appending did not open the note it added to: {added['active']}")
+    if (added["text"] or "").count("From a link") != 1:
+        wrong("appending wrote a second note instead of adding to the one that is there")
+    if "A line from a link." not in (added["text"] or ""):
+        wrong(f"appending did not add the words: {added['text']!r}")
+    if "Words." not in (added["text"] or ""):
+        wrong(f"appending lost what the note already said: {added['text']!r}")
+    if added["trouble"]:
+        wrong(f"appending said something went wrong: {added['trouble']!r}")
+
+    # And the note that is not there yet, which is the day's note on the first morning
+    # somebody uses the link.
+    fresh_note = follow(
+        page,
+        "nib://append?path=inbox/Not there yet.md&content=The first line.",
+        "append-new",
+    )
+    shot(page, "04c-appended-into-a-new-note")
+
+    if fresh_note["active"] != "Not there yet.md":
+        wrong(f"appending did not make the note: {fresh_note['active']}")
+    if "The first line." not in (fresh_note["text"] or ""):
+        wrong(f"the made note is missing the words: {fresh_note['text']!r}")
+
+
 def drive_searching(page: Page) -> None:
     state = follow(page, "nib://search?query=happens", "search")
     say(f"[search] panel {state['panel']}, {state['hits']} hits for {state['query']!r}")
@@ -363,6 +403,8 @@ def main() -> int:
                 drive_heading(page)
                 say("--- a link that makes a note, and one that adds to it ---")
                 drive_making(page)
+                say("--- a link that adds to a note ---")
+                drive_appending(page)
                 say("--- a link that searches ---")
                 drive_searching(page)
                 say("--- what a link may not do ---")

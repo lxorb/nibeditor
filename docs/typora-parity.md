@@ -1017,7 +1017,7 @@ Features Typora does not have, which are the reason this exists.
       the one link verb that changes anything; opening, searching and running a
       command answer no callback, because a link's outcome goes to an address the
       link itself chose. A link may ask for
-      four things and nothing else, and a test pins the list: writing over a note,
+      five things and nothing else, and a test pins the list: writing over a note,
       moving one, deleting one and running code are out of a link's reach, `new`
       refuses a note that is already there unless it was asked to append, and a
       callback goes to `http(s)` or back into nib and nowhere else. A row in the

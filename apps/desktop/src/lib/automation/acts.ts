@@ -167,6 +167,22 @@ export async function newNote(args: Said): Promise<unknown> {
   return { path: relativeTo(space.root, made?.path ?? path), added: false }
 }
 
+/** Words onto the end of a note, and a note made if it is not there yet.
+ *
+ *  The thing a shortcut, a watch and a script all want: a line into the day's note
+ *  without knowing or caring whether today's note exists. `nib://new?…&append` could
+ *  already do it, which is a thing nobody would guess the name of - so it is an action
+ *  of its own, and it is `new` with the answer to "and if it is already there?" given
+ *  in advance. One road, so the path is judged once, the words are joined once, and a
+ *  link can do exactly what a link could do before and no more: appending never
+ *  overwrites and never deletes, which is why it is a link's to ask for at all.
+ *
+ *  `prepend` is not read here. The action is append; a caller who wants the top of the
+ *  note asks `new` for it. */
+export function appendNote(args: Said): Promise<unknown> {
+  return newNote({ ...args, append: true, prepend: false })
+}
+
 /** Two bodies with exactly one blank line between them, however the first ended.
  *  A note appended to twice should not grow a run of empty lines. */
 function joined(first: string, second: string): string {

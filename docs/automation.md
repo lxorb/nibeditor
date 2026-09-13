@@ -26,6 +26,7 @@ do, and it happens the same way, so it is visible and undoable.
 | `nib://new?path=inbox/Today.md&content=Words&append` | adds to the note that is there |
 | `nib://new?path=inbox/Today.md&content=Words&prepend` | adds it at the top instead |
 | `nib://new?name=Idea&content=Words&silent` | writes it without opening it |
+| `nib://append?path=Daily.md&content=Words` | adds the words to the end of that note, and makes it if it is not there |
 | `nib://search?query=tag:%23work` | opens the search panel on that query |
 | `nib://command?id=save` | runs one command out of the registry |
 
@@ -51,17 +52,18 @@ below write it.
 
 | Key | When |
 | --- | --- |
-| `x-success` | `nib://new` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
-| `x-error` | `nib://new` did not, or the link named an action that does not exist. `error` is added |
+| `x-success` | `nib://new` or `nib://append` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
+| `x-error` | one of those did not, or the link named an action that does not exist. `error` is added |
 | `x-cancel` | the app knows what was asked for and will not do it from a link |
 
 ```
 nib://new?name=Standup&content=Notes&x-success=https://example.com/done
 ```
 
-**Only `nib://new` says anything back.** `open`, `search` and `command` follow no
-callback at all, neither success nor error, and the log says so when a link carried
-one. A callback address is written by whoever wrote the link, so whatever a verb
+**Only `nib://new` and `nib://append` say anything back.** `open`, `search` and
+`command` follow no callback at all, neither success nor error, and the log says so when
+a link carried one. Those two are the ones that changed something, and what they answer
+is the path the caller itself wrote plus whether the note was already there. A callback address is written by whoever wrote the link, so whatever a verb
 answers is read by them - and `nib://open?path=Plan` answers the path it landed on.
 Said back, that is a question about somebody's space: a hundred of those links, each
 with an `x-success` of its own, is a listing of what a person keeps notes about, from
@@ -112,6 +114,7 @@ listen on. Run against the web app it says so rather than failing to connect.
 | --- | --- |
 | `open <path> [--heading H] [--block B]` | opens a note |
 | `new <name> [--content T] [--append] [--prepend] [--silent]` | makes one |
+| `append <path> [--content T] [--from FILE|-] [--silent]` | adds to the end of one, making it if it is not there |
 | `search <query>` | opens the panel on the query, prints the hits |
 | `files list` | every file in the space |
 | `files read [path]` | one note, or the one that is open |
@@ -165,16 +168,23 @@ every one of them, for both roads in: no absolute path, no `..` anywhere, no
 character a file name cannot hold, no name Windows keeps for a device. A path that
 fails is refused, not clamped.
 
-**A link can do four things.** `open`, `new`, `search` and `command`. Everything
-that writes over a note, moves one, deletes one or runs code is out of a link's
-reach entirely, and the list is pinned by a test so that adding a verb cannot
+**A link can do five things.** `open`, `new`, `append`, `search` and `command`.
+Everything that writes over a note, moves one, deletes one or runs code is out of a
+link's reach entirely, and the list is pinned by a test so that adding a verb cannot
 quietly widen it. `new` never writes over an existing note: it says the note is
-already there unless the link asked to append or prepend.
+already there unless the link asked to append or prepend. `append` only ever adds to
+the end of one, and makes the note when it is not there, which is why a link may ask
+for it at all - there is nothing it can destroy.
 
-**A link hears only about what it changed.** `nib://new` answers its `x-success`
-with the path it wrote; the three verbs that change nothing answer no callback, so a
-link cannot ask whether a note exists and have the answer sent anywhere. See the
-table above.
+None of the five confirms, and that is deliberate rather than missed. A confirmation
+is a flag in the request, and a link writes the whole request: `&yes` is one word for
+anybody who writes the link. What keeps a link out of the rest is the column itself.
+
+**A link hears only about what it changed.** `nib://new` and `nib://append` answer
+their `x-success` with the path they wrote; the three verbs that change nothing answer
+no callback, so a link cannot ask whether a note exists and have the answer sent
+anywhere. Appending says whether the note was there already, which is the one fact
+about the space either of them gives up - and it is a fact the caller just changed.
 
 **Writes show their result.** A note that was made or added to is opened. With
 `silent` it is written and the row appears in the file list, and the reader is left

@@ -44,6 +44,13 @@ let scans = 0
 /** Every path the workspace was asked to open. */
 const opened: string[] = []
 
+/** What the space holds, by path, which `noteText` answers out of. */
+const held = new Map<string, string>()
+
+/** The replacements the workspace was handed, and the notes it was asked to make. */
+const written: { path: string; before: string; after: string }[] = []
+const made: { folder: string; name: string }[] = []
+
 vi.mock('../link-index.svelte', () => ({
   links: {
     fileNamed: () => beside,
@@ -76,6 +83,27 @@ vi.mock('../workspace.svelte', () => ({
       opened.push(path)
       return Promise.resolve()
     },
+    activeTabId: null,
+    noteText: (path: string) => Promise.resolve(held.get(path) ?? null),
+    replaceInNotes: (changes: { path: string; before: string; after: string }[]) => {
+      for (const change of changes) {
+        written.push({ path: change.path, before: change.before, after: change.after })
+        held.set(change.path, change.after)
+      }
+      return Promise.resolve()
+    },
+    createNote: (folder: string, name: string) => {
+      made.push({ folder, name })
+      return Promise.resolve()
+    },
+    replace: () => undefined,
+    save: () => Promise.resolve(),
+    open: (path: string) => {
+      opened.push(path)
+      return Promise.resolve()
+    },
+    close: () => undefined,
+    activate: () => undefined,
   },
 }))
 
@@ -91,7 +119,7 @@ const ran: string[] = []
 vi.mock('../commands', () => ({ appCommands: () => rows }))
 vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 
-const { openNote, runCommand } = await import('./acts')
+const { appendNote, openNote, runCommand } = await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -205,5 +233,68 @@ describe('a row of the palette', () => {
     expect(() => runCommand({ id: 'nothing' }, 'here')).toThrow(/there is no command/)
     expect(() => runCommand({}, 'here')).toThrow(/say which command/)
     expect(ran).toEqual([])
+  })
+})
+
+/** Words onto the end of a note, which is `nib://append` and `nib append`.
+ *
+ *  The point of the action is that a caller does not have to know whether the note is
+ *  there: a shortcut that files a line into today's note is the same shortcut on the
+ *  first of the month. So both roads are checked - the note that is there is added to,
+ *  the note that is not is made - along with the path being judged exactly as every
+ *  other path a link writes is. */
+describe('words appended to a note', () => {
+  test('go onto the end of the one that is there, once', async () => {
+    held.set('/Work/Daily.md', '# Monday\n\nA kestrel.')
+    written.length = 0
+    made.length = 0
+
+    expect(await appendNote({ path: 'Daily.md', content: 'And a buzzard.' })).toEqual({
+      path: 'Daily.md',
+      added: true,
+    })
+
+    expect(made).toEqual([])
+    expect(written).toHaveLength(1)
+    expect(written[0]?.after).toBe('# Monday\n\nA kestrel.\n\nAnd a buzzard.\n')
+    // One blank line between them however the first ended, and the words that were
+    // there are still there.
+    expect(written[0]?.before).toBe('# Monday\n\nA kestrel.')
+  })
+
+  test('make the note when it is not there, rather than refusing', async () => {
+    held.clear()
+    written.length = 0
+    made.length = 0
+
+    expect(await appendNote({ path: 'notes/Fresh.md', content: 'A line.' })).toEqual({
+      path: 'notes/Fresh.md',
+      added: false,
+    })
+
+    expect(made).toEqual([{ folder: '/Work/notes', name: 'Fresh.md' }])
+    expect(written).toEqual([])
+  })
+
+  test('never reach a path the space would not take', async () => {
+    held.clear()
+    written.length = 0
+    made.length = 0
+
+    await expect(appendNote({ path: '../../outside.md', content: 'x' })).rejects.toThrow(
+      /not a path inside the space/,
+    )
+    expect(written).toEqual([])
+    expect(made).toEqual([])
+  })
+
+  test('and the top of the note is not what append means', async () => {
+    held.set('/Work/Daily.md', 'Already here.')
+    written.length = 0
+
+    // `prepend` is `new`'s to offer. A link that asked this action for the top of the
+    // note gets the end of it, which is what the action is called.
+    await appendNote({ path: 'Daily.md', content: 'Added.', prepend: true })
+    expect(written[0]?.after).toBe('Already here.\n\nAdded.\n')
   })
 })
