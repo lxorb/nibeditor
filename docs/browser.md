@@ -1348,7 +1348,7 @@ has never seen, and none of the three is a number to compare between platforms.
 | resident with no web tab, the whole tree | 302.8 MB | 87.6 MB | 524.5 MB |
 
 **And the row this batch turns on: the flagged app builds on all three desktops and
-starts on none of them yet.** Eight runs of the workflow, each one a different answer,
+starts on none of them yet.** Nine runs of the workflow, each one a different answer,
 and every failure upstream of nib's own code rather than in it:
 
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
