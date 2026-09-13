@@ -7,11 +7,11 @@ it, reads that, and answers the five questions the decision rests on:
 
   processes  how many browser processes serve two tabs. One is the whole point.
   memory     the resident set of the whole tree with two tabs open.
-  paint      milliseconds from "make me a browser" to the first paint in it.
-  size       the bytes a release would have to ship.
-  cold       that nib's own launch is untouched when no web tab is open, which is
-             measured as the spike started with `--no-browser`: CEF is not
-             initialised, so the number is the binary's own start.
+  paint      milliseconds from asking for a browser to the first load finishing.
+  ships      what the staged tree weighs, file by file.
+  cold       what a launch costs when no web tab is asked for - three runs, so the
+             number can be read: the control with no Chromium linked in at all,
+             the spike linked but never initialised, and the full run.
 
 Everything is written to a JSON file and a short human summary, and both go up as
 CI artefacts. No third-party packages: a runner has Python and nothing else.
@@ -116,71 +116,30 @@ def kind(command: str) -> str:
     return 'browser'
 
 
-# --- what a release would ship ---------------------------------------------
-
-# The files CEF's own distribution documents as required at runtime, by platform.
-# Anything in the distribution that is not here is a header, a static library, a
-# sample, or a debug binary - none of which ships.
-SHIPPED = {
-    'Windows': [
-        'libcef.dll',
-        'chrome_elf.dll',
-        'd3dcompiler_47.dll',
-        'libEGL.dll',
-        'libGLESv2.dll',
-        'vk_swiftshader.dll',
-        'vk_swiftshader_icd.json',
-        'vulkan-1.dll',
-        'v8_context_snapshot.bin',
-        'icudtl.dat',
-        'chrome_100_percent.pak',
-        'chrome_200_percent.pak',
-        'resources.pak',
-        'locales',
-    ],
-    'Linux': [
-        'libcef.so',
-        'libEGL.so',
-        'libGLESv2.so',
-        'libvk_swiftshader.so',
-        'libvulkan.so.1',
-        'vk_swiftshader_icd.json',
-        'v8_context_snapshot.bin',
-        'snapshot_blob.bin',
-        'icudtl.dat',
-        'chrome_100_percent.pak',
-        'chrome_200_percent.pak',
-        'resources.pak',
-        'locales',
-        'chrome-sandbox',
-    ],
-    # One framework bundle, which holds all of the above.
-    'Darwin': ['Chromium Embedded Framework.framework'],
-}
+# --- what a release would ship -------------------------------------------
 
 
-def bytes_at(path: Path) -> int:
-    if path.is_file():
-        return path.stat().st_size
-    if not path.is_dir():
-        return 0
-    return sum(p.stat().st_size for p in path.rglob('*') if p.is_file())
+def weigh(stage: Path) -> dict:
+    """What a staged tree weighs, and what the big pieces are.
 
-
-def shipped_size(cef_path: Path) -> dict:
-    """What the release half of a CEF distribution weighs, file by file."""
-    release = cef_path / 'Release'
-    resources = cef_path / 'Resources'
-    per_file: dict[str, int] = {}
-    for name in SHIPPED.get(platform.system(), []):
-        for base in (release, resources):
-            candidate = base / name
-            if candidate.exists():
-                per_file[name] = bytes_at(candidate)
-                break
-    # The locale packs live under Resources on Windows and Linux and are a
-    # directory of a hundred small files; the framework already holds them.
-    return {'total': sum(per_file.values()), 'files': per_file}
+    The staged tree and not the distribution: a CEF distribution holds headers, a
+    static library, the sample sources and, on Linux, an unstripped `libcef.so`
+    five times the size of the one a release ships. Weighing the directory the
+    program actually ran out of is the only honest number.
+    """
+    if not stage.is_dir():
+        return {'error': f'{stage} is not a directory'}
+    files = [p for p in stage.rglob('*') if p.is_file() and not p.is_symlink()]
+    total = sum(p.stat().st_size for p in files)
+    biggest = sorted(files, key=lambda p: p.stat().st_size, reverse=True)[:14]
+    return {
+        'files': len(files),
+        'total_mb': round(total / 1048576, 1),
+        'biggest': [
+            {'name': str(p.relative_to(stage)), 'mb': round(p.stat().st_size / 1048576, 2)}
+            for p in biggest
+        ],
+    }
 
 
 # --- a picture of the screen ------------------------------------------------
@@ -303,7 +262,7 @@ def summarise(result: dict) -> dict:
     two_tabs = next((s for s in result['snapshots'] if s['when'] == 'two tabs'), None)
     answer: dict = {
         'exit': result['exit'],
-        'paint_ms': events.get('first-paint', {}).get('at'),
+        'paint_ms': events.get('first-load-end', {}).get('at'),
         'init_ms': events.get('cef-initialised', {}).get('at'),
         'binary_ready_ms': events.get('window-shown', {}).get('at'),
     }

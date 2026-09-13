@@ -1,0 +1,28 @@
+# The spike that proves the recommendation: a Tauri window, two CEF webviews in
+# it, one browser process.
+#
+# `tauri-runtime-cef` is a first-party Tauri runtime that puts CEF where
+# `tauri-runtime-wry` puts WebView2 and WebKitGTK - so the app's own interface and
+# a web tab are two webviews in one window on one engine, and the parts that are
+# genuinely hard (the message pump, the macOS application class, the sandbox on
+# three platforms, the bundle layout, the setuid helper in the deb and the rpm)
+# are Tauri's code and not nib's. That is the whole argument in docs/browser.md.
+#
+# It is on a branch and not published, which is why this crate pins a revision and
+# why batch 1 of the plan is a gate rather than a migration. When the crate
+# releases, these three git dependencies become three version numbers.
+[package]
+name = "nib-spike-shell"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "A Tauri window with two CEF webviews. A proof, not part of the app."
+
+[build-dependencies]
+tauri-build = { git = "https://github.com/tauri-apps/tauri", branch = "feat/cef", features = [] }
+
+[dependencies]
+tauri = { git = "https://github.com/tauri-apps/tauri", branch = "feat/cef", features = ["unstable"] }
+tauri-runtime-cef = { git = "https://github.com/tauri-apps/tauri", branch = "feat/cef", features = [
+  "unstable",
+] }

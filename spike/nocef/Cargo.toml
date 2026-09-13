@@ -1,0 +1,13 @@
+# The control for the measurement next door, and a crate of its own for one
+# reason: it must have no path to CEF at all. As a second binary inside
+# `spike/browser` it would sit in a package that depends on `cef`, and whether the
+# linker then left libcef out of its import table would be a question about the
+# linker rather than an answer about the cost. Here there is nothing to leave out.
+[package]
+name = "nib-spike-nocef"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "The same program with no Chromium linked into it. See spike/nocef/src/main.rs."
+
+[dependencies]

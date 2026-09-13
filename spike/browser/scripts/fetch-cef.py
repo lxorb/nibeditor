@@ -33,6 +33,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -105,6 +106,26 @@ def newest_stable(index: dict, plat: str) -> dict:
     # file would walk the pin backwards every time an old branch was patched.
     stable.sort(key=lambda v: version_key(v['cef_version']), reverse=True)
     return stable[0]
+
+
+def channel_note(index: dict, plat: str) -> str:
+    """What the index cannot tell you, said out loud.
+
+    `channel` in the index only ever holds `stable` or `beta`, and CEF's
+    long-term-support branches are labelled `stable` as well - every sixth branch
+    from M138 keeps getting security fixes for about eight months after it leaves
+    stable. So the index shows several live `stable` majors at once and cannot say
+    which is the current one; only the channel table in CEF's own docs can
+    (<https://chromiumembedded.github.io/cef/branches_and_building>).
+
+    This matters for the pin: a shipping build may well want the LTS branch rather
+    than the newest, and the choice has to be made by a person, not by a sort.
+    """
+    majors = sorted(
+        {version_key(v['cef_version'])[0] for v in index[plat]['versions'] if v.get('channel') == 'stable'},
+        reverse=True,
+    )
+    return 'live stable majors, newest first: ' + ', '.join(str(m) for m in majors[:6])
 
 
 def pinned(index: dict, plat: str, version: str) -> dict:
@@ -182,6 +203,7 @@ def main() -> int:
 
     print(f'cef {entry["cef_version"]}')
     print(f'chromium {entry["chromium_version"]}')
+    print(channel_note(index, plat))
     if args.print_version:
         github_out = os.environ.get('GITHUB_OUTPUT')
         if github_out:
@@ -194,7 +216,10 @@ def main() -> int:
     print(f'{ARTEFACT} distribution {file["size"] / 1048576:.1f} MB')
     cache = Path(args.cache or (HERE.parent / '.cef-cache'))
     archive = cache / file['name']
-    download(BASE + file['name'], archive, file['sha1'])
+    # The name holds a `+` and the CDN wants it percent-encoded; sent raw the
+    # request comes back wrong. `quote` with no safe characters, because the only
+    # thing in a name that is not already safe is the `+`.
+    download(BASE + urllib.parse.quote(file['name'], safe=''), archive, file['sha1'])
 
     out = Path(args.out or (HERE.parent / 'third_party'))
     if out.exists():

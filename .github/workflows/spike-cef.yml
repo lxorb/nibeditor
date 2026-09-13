@@ -1,14 +1,22 @@
 # The browser spike, and nothing else in the repository builds it.
 #
-# `spike/browser` is a crate of its own that links a CEF binary distribution and
-# opens two browser views over one window. It is not in the app's Cargo workspace
-# and no other workflow reads it, so main stays a repository that builds in two
-# minutes without downloading 150 MB of Chromium: this file runs on a push to the
-# one branch it is named for, and when somebody asks for it by hand.
+# `spike/` holds three crates that are not in the app's Cargo workspace and that
+# no other workflow reads, so main stays a repository that builds in two minutes
+# without downloading 300 MB of Chromium. This file runs on a push to the one
+# branch it is named for, and when somebody asks for it by hand.
 #
-# What the run has to prove is in spike/browser/src/main.rs and measured by
-# spike/browser/scripts/measure.py. The numbers land as artefacts, with
-# screenshots, because "one browser process" is a claim a table has to carry.
+#   spike/browser  a CEF application: two browsers, Chromium's own pages, an
+#                  unpacked extension, DevTools, print, find. The engine's
+#                  capabilities and the numbers.
+#   spike/shell    a Tauri window with the app's own webview and two web tabs in
+#                  it, on `tauri-runtime-cef`. The shape docs/browser.md
+#                  recommends, which is the thing a spike is for.
+#   spike/nocef    the control: the same program with no Chromium linked in.
+#
+# What each has to prove is in its own source. `scripts/measure.py` reads what
+# they print, counts the processes, weighs the tree and photographs the screen,
+# and every number lands as an artefact - because "one browser process" is a claim
+# a table has to carry.
 #
 # See docs/browser.md.
 name: spike-cef
@@ -19,7 +27,7 @@ on:
   workflow_dispatch:
     inputs:
       newest:
-        description: 'Resolve the newest stable CEF instead of the pinned one'
+        description: 'Report the newest stable CEF as well as the pinned one'
         type: boolean
         default: false
 
@@ -31,9 +39,10 @@ permissions:
   contents: read
 
 jobs:
-  spike:
-    # Not fail-fast: what Windows does and what macOS does are two answers, and a
-    # red one on either is a thing to read rather than a reason to stop the other.
+  # The engine. Not fail-fast: what Windows does and what macOS does are two
+  # answers, and a red one on either is a thing to read rather than a reason to
+  # stop the other.
+  engine:
     strategy:
       fail-fast: false
       matrix:
@@ -53,96 +62,164 @@ jobs:
           toolchain: stable
           components: rustfmt
 
-      # What CEF's own binaries need to load, what bindgen needs to read the
-      # headers, and what a GUI on a runner with no screen needs to have one.
-      # Windows and macOS have all three already: the images carry LLVM, and both
-      # log a desktop session in that a window can actually appear on.
+      # What CEF's binaries need to load, what a bindgen build needs to read the
+      # headers, and what a window needs on a machine with no screen. Windows and
+      # macOS have all three already: the images carry LLVM, and both log in a
+      # desktop session a window can actually appear on.
       - name: System dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            build-essential libclang-dev \
-            libgtk-3-0 libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 \
+            build-essential libclang-dev libglib2.0-dev \
+            libgtk-3-0t64 libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 \
             libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 libdrm2 libxkbcommon0 \
             libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 \
             xvfb imagemagick
 
-      - name: The CEF version this is pinned to
+      - name: The CEF this is pinned to
         id: pin
         run: |
+          python spike/browser/scripts/fetch-cef.py --pin --print-version
           if [ "${{ inputs.newest }}" = "true" ]; then
+            echo "--- and the newest stable, for the bump workflow's sake ---"
             python spike/browser/scripts/fetch-cef.py --newest-stable --print-version
-          else
-            python spike/browser/scripts/fetch-cef.py --pin --print-version
           fi
 
       # Keyed on the version, so a bump downloads once and every later run on the
-      # same pin is a cache hit. The archive and not the unpacked tree: 150 MB
-      # compressed restores faster than 600 MB of small files.
+      # same pin is a cache hit. The archive and not the unpacked tree: 160 MB
+      # compressed restores faster than 400 MB of small files.
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: spike/browser/.cef-cache
           key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.pin.outputs.cef }}
 
       - name: CEF
+        run: python spike/browser/scripts/fetch-cef.py --pin --out spike/browser/third_party
+
+      # What the loader needs to find libcef at run time, which is not the same
+      # thing as what the linker needed to find it at build time.
+      - name: Where the engine is
         run: |
-          if [ "${{ inputs.newest }}" = "true" ]; then
-            python spike/browser/scripts/fetch-cef.py --newest-stable --out spike/browser/third_party
-          else
-            python spike/browser/scripts/fetch-cef.py --pin --out spike/browser/third_party
-          fi
+          echo "LD_LIBRARY_PATH=$CEF_PATH/Release:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_PATH/Release:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          workspaces: spike/browser
+          workspaces: |
+            spike/browser
+            spike/nocef
           key: ${{ steps.pin.outputs.cef }}
 
       - name: Format
-        run: cargo fmt --manifest-path spike/browser/Cargo.toml --check
+        run: |
+          cargo fmt --manifest-path spike/browser/Cargo.toml --check
+          cargo fmt --manifest-path spike/nocef/Cargo.toml --check
 
       - name: Build
-        run: cargo build --manifest-path spike/browser/Cargo.toml --release
+        run: |
+          cargo build --manifest-path spike/browser/Cargo.toml --release
+          cargo build --manifest-path spike/nocef/Cargo.toml --release
 
-      # The release layout: the binary, CEF's own runtime files beside it, and on
-      # macOS the framework and the four helper bundles. A script rather than
-      # twenty lines of yaml, because a release will have to do the same thing.
-      # The layout, not a copy of the binary: on macOS that means an app bundle
-      # holding the framework and five helper bundles, which is the part of
-      # shipping CEF that has nothing to do with Rust. It says what to run.
+      # The layout a release would need, which on macOS means an app bundle
+      # holding the framework and five helper bundles - the part of shipping CEF
+      # that has nothing to do with Rust. It says what to run.
       - name: Stage
         id: stage
         run: |
-          echo "binary=$(python spike/browser/scripts/stage.py --out spike/browser/stage --print-binary)" >>"$GITHUB_OUTPUT"
           python spike/browser/scripts/stage.py --out spike/browser/stage
+          echo "binary=$(python spike/browser/scripts/stage.py --out spike/browser/stage --print-binary)" >>"$GITHUB_OUTPUT"
 
-      # A window has to be able to appear. Windows and macOS runners have a
-      # desktop session of their own; Linux is handed one.
+      # A window has to be able to appear. Windows and macOS runners have a desktop
+      # session of their own; Linux is handed one.
       - name: Run and measure
         env:
           NIB_SPIKE_EXTENSION: ${{ github.workspace }}/spike/browser/extension
         run: |
-          runner=(python spike/browser/scripts/measure.py
+          run=(python spike/browser/scripts/measure.py
             --binary "${{ steps.stage.outputs.binary }}"
+            --control "spike/nocef/target/release/nib-spike-nocef${{ runner.os == 'Windows' && '.exe' || '' }}"
             --cef-path "$CEF_PATH"
-            --out spike-out)
+            --stage spike/browser/stage
+            --out spike-out/engine)
           if [ "${{ runner.os }}" = "Linux" ]; then
-            # 1600x1000 so the two views and the devtools window all fit, and
-            # 24-bit so a PNG of it is worth looking at.
-            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' "${runner[@]}"
+            # 1600x1000 so two views and a DevTools window all fit, and 24-bit so
+            # a PNG of it is worth looking at.
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' "${run[@]}"
           else
-            "${runner[@]}"
+            "${run[@]}"
           fi
-
-      - name: What it weighs
-        if: always()
-        run: python spike/browser/scripts/stage.py --out spike/browser/stage --report spike-out/size.json
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: spike-${{ matrix.os }}
-          path: |
-            spike-out/**
+          name: spike-engine-${{ matrix.os }}
+          path: spike-out/**
+          if-no-files-found: warn
+          retention-days: 7
+
+  # The shape. Its own job because it is allowed to be red while the engine job is
+  # green: `tauri-runtime-cef` is on a branch and not published, and the whole
+  # point of a gate is that it can be shut. Windows first, because it is the
+  # platform Emil is on and the only one where the sandbox story is still open.
+  shell:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    continue-on-error: true
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      # `tauri-runtime-cef` is GTK4 on Linux where the app is GTK3 today, which is
+      # a fact with consequences and is in docs/browser.md rather than only here.
+      - name: System dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libclang-dev libglib2.0-dev libgtk-4-dev \
+            libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 libdrm2 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
+            xvfb imagemagick
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: spike/shell
+          key: shell
+
+      - name: Build
+        run: cargo build --manifest-path spike/shell/Cargo.toml --release
+
+      - name: Run and measure
+        env:
+          NIB_SPIKE_EXTENSION: ${{ github.workspace }}/spike/browser/extension
+        run: |
+          run=(python spike/browser/scripts/measure.py
+            --binary "spike/shell/target/release/nib-spike-shell${{ runner.os == 'Windows' && '.exe' || '' }}"
+            --stage spike/shell/target/release
+            --out spike-out/shell)
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' "${run[@]}"
+          else
+            "${run[@]}"
+          fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: spike-shell-${{ matrix.os }}
+          path: spike-out/**
           if-no-files-found: warn
           retention-days: 7
