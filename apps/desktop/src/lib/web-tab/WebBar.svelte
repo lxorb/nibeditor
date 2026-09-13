@@ -113,8 +113,22 @@
 
   function onBlur() {
     editing = false
+
+    // A field that is no longer in the page is one the pane has taken away, and this
+    // blur is that removal: swapping the tab under a pane destroys the bar while the
+    // field has the keyboard. Everything below reads something belonging to the pane
+    // - a prop is the parent's derived, read through a getter - and a derived whose
+    // effect is over answers with whatever it last had, which Svelte warns about as
+    // `derived_inert`. So a bar on its way out says nothing at all; what the page
+    // says about typing is put right by the pane itself, in WebTab.svelte.
+    //
+    // Asked of the element rather than kept as a flag, because the order is the
+    // other way round: the blur arrives while the DOM is being taken apart and
+    // before any teardown of ours has run.
+    if (!field?.isConnected) return
+
     ontyping(false)
-    if (field) field.value = resting
+    field.value = resting
   }
 
   function onKeydown(event: KeyboardEvent) {

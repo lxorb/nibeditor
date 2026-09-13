@@ -150,6 +150,22 @@
     if (page.url !== null && page.url !== tab.address) workspace.webWalked(tab, page.url)
   })
 
+  // Nobody is typing in a bar that is not there.
+  //
+  // The field may well have had the keyboard when the pane went - swapping the tab
+  // under it is exactly that, and so is closing it - and the blur that would have
+  // said so never comes, because the listener goes with the component. A page left
+  // saying somebody is typing takes no further address from the page it is showing
+  // (see `heard` in pages.svelte.ts), so its bar would show where the reader was
+  // when they last touched it and nothing they clicked afterwards.
+  $effect(() => {
+    const id = tab.id
+
+    return () => {
+      pages.of(id).typing = false
+    }
+  })
+
   // A website in the space keeps itself, the way a note in a space does: as soon as
   // the page has said what it is called, there is a file. Nothing to press.
   $effect(() => {
@@ -188,7 +204,12 @@
     onclip={clip}
     onmenu={(event: MouseEvent) => menu.show(event, webRows(page, clip), { title: t('Website') })}
     ontyping={(on: boolean) => {
-      page.typing = on
+      // The store rather than `page` above. This arrives from the field's own blur,
+      // which is exactly the event a pane fires while it is swapping the tab under
+      // it: by then the derived belongs to an effect that is gone, and Svelte says
+      // so - `derived_inert`, and the page it would hand back may be the tab
+      // before this one's. The tab's id is a prop and is true whenever this runs.
+      pages.of(tab.id).typing = on
     }}
   />
 

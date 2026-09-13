@@ -83,3 +83,44 @@ test('a pane draws the bar for a website nothing has asked about before', () => 
   void unmount(app)
   workspace.close(tab.id)
 })
+
+/** The bar's address field reports typing so the pane can leave the page alone while
+ *  somebody is in it. The field loses the keyboard when the pane swaps the tab under
+ *  it - which is the same moment the component is destroyed - so that report arrives
+ *  after the `$derived` the component read its page from is gone: Svelte says
+ *  `derived_inert`, and the page handed back may be the tab before this one's. The
+ *  store is asked by id instead, which is true whenever the report comes. */
+test('the bar can report typing after its own pane has gone', () => {
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no tab')
+
+  const said: string[] = []
+  const warn = vi.spyOn(console, 'warn').mockImplementation((...words) => {
+    said.push(words.map((one) => String(one)).join(' '))
+  })
+
+  try {
+    const app = mount(WebTab, { target, props: { tab, focused: true } })
+    flushSync()
+
+    const field = target.querySelector('input')
+    if (!field) throw new Error('no address field')
+
+    // The keyboard really in the field, so that taking the pane away is what takes
+    // it out: a focused element being removed loses the keyboard, and the blur that
+    // says so lands while the component is being destroyed. That is the moment.
+    field.focus()
+    flushSync()
+    expect(pages.of(tab.id).typing).toBe(true)
+
+    void unmount(app)
+    flushSync()
+
+    expect(pages.of(tab.id).typing).toBe(false)
+    expect(said.filter((one) => one.includes('derived_inert'))).toEqual([])
+  } finally {
+    warn.mockRestore()
+    workspace.close(tab.id)
+  }
+})
