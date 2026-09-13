@@ -59,14 +59,31 @@ def target_dir() -> Path:
 
 
 def cef_path() -> Path:
+    """Where the CEF runtime files are, in either of the two layouts there are.
+
+    `export-cef-dir` - which is how `cef-dll-sys` wants to be handed a
+    distribution, and therefore what CI uses - writes a *flat* directory: libcef
+    and the resource packs and the locales all directly inside `CEF_PATH`, with
+    the headers under a versioned subdirectory the build script finds on its own.
+    A raw distribution from `fetch-cef.py` instead has `Release/` and `Resources/`.
+    Both are accepted here, because both exist on somebody's machine.
+    """
     env = os.environ.get('CEF_PATH')
-    if env:
+    if env and Path(env).is_dir():
         return Path(env)
     third = CRATE / 'third_party'
     roots = sorted(p for p in third.glob('cef_binary_*') if p.is_dir()) if third.is_dir() else []
     if not roots:
         raise SystemExit('no CEF distribution: set CEF_PATH or run fetch-cef.py')
     return roots[-1]
+
+
+def runtime_dirs(cef: Path) -> list[Path]:
+    """The directories holding the files a release ships, in copy order."""
+    split = [cef / 'Release', cef / 'Resources']
+    if all(d.is_dir() for d in split):
+        return split
+    return [cef]
 
 
 def exe(name: str) -> str:
@@ -90,15 +107,19 @@ def stage_flat(out: Path, cef: Path) -> Path:
         if source.is_file():
             copy(source, out / exe(name))
 
-    # Everything CEF's Release directory holds that is not an import library or a
-    # static one: the loader needs all of it and picking by name is how a release
-    # ends up missing a Vulkan stub on one machine in fifty.
-    for item in (cef / 'Release').iterdir():
-        if item.suffix.lower() in {'.lib', '.a', '.pdb', '.exp'}:
-            continue
-        copy(item, out / item.name)
-    for item in (cef / 'Resources').iterdir():
-        copy(item, out / item.name)
+    # Everything the runtime directory holds that is not an import library, a
+    # static one or a header: the loader needs all of the rest, and picking by
+    # name is how a release ends up missing a Vulkan stub on one machine in fifty.
+    for base in runtime_dirs(cef):
+        for item in base.iterdir():
+            if item.suffix.lower() in {'.lib', '.a', '.pdb', '.exp'}:
+                continue
+            # The versioned subdirectory `export-cef-dir` leaves behind is the
+            # headers and the static library the build linked against; none of it
+            # runs.
+            if item.is_dir() and item.name[0].isdigit():
+                continue
+            copy(item, out / item.name)
 
     sandbox = out / 'chrome-sandbox'
     if sandbox.is_file():
@@ -143,8 +164,14 @@ def stage_bundle(out: Path, cef: Path) -> Path:
         },
     )
 
-    framework = cef / 'Release' / 'Chromium Embedded Framework.framework'
-    copy(framework, frameworks / framework.name)
+    name = 'Chromium Embedded Framework.framework'
+    framework = next(
+        (base / name for base in runtime_dirs(cef) if (base / name).is_dir()),
+        None,
+    )
+    if framework is None:
+        raise SystemExit(f'no {name} under {cef}')
+    copy(framework, frameworks / name)
 
     helper_binary = target_dir() / HELPER
     for suffix, id_suffix in HELPERS:
@@ -207,13 +234,21 @@ def main() -> int:
         print(json.dumps(numbers, indent=2))
         return 0
 
+    # Asking where the binary is must not lay the tree out again: the bundle path
+    # starts by deleting what is there, and a caller that only wanted a path would
+    # get a rebuild and, on a bad day, a race with the thing it is about to run.
+    if args.print_binary:
+        print(
+            out / f'{APP}.app' / 'Contents' / 'MacOS' / APP
+            if SYSTEM == 'Darwin'
+            else out / exe(APP)
+        )
+        return 0
+
     cef = cef_path()
     binary = stage_bundle(out, cef) if SYSTEM == 'Darwin' else stage_flat(out, cef)
-    if args.print_binary:
-        print(binary)
-    else:
-        print(f'staged {out}')
-        print(f'binary {binary}')
+    print(f'staged {out}')
+    print(f'binary {binary}')
     return 0
 
 

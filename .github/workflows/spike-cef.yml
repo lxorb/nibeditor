@@ -77,39 +77,64 @@ jobs:
             libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 \
             xvfb imagemagick
 
+      # Two different questions about the same version, and both are worth asking.
+      #
+      # The pin is the `cef` crate in spike/browser/Cargo.toml and nothing else -
+      # the crate's version carries the CEF version, and `cef-dll-sys` fetches the
+      # matching distribution itself. So this step does not choose anything; it
+      # reports, which is what the weekly bump workflow will read: what the crate
+      # pins, and what CEF's own index says is newest.
       - name: The CEF this is pinned to
         id: pin
         run: |
-          python spike/browser/scripts/fetch-cef.py --pin --print-version
-          if [ "${{ inputs.newest }}" = "true" ]; then
-            echo "--- and the newest stable, for the bump workflow's sake ---"
-            python spike/browser/scripts/fetch-cef.py --newest-stable --print-version
-          fi
+          crate=$(grep -oE 'cef = \{ version = "[^"]+"' spike/browser/Cargo.toml | grep -oE '[0-9][^"]+')
+          echo "crate=$crate" >>"$GITHUB_OUTPUT"
+          echo "the cef crate is pinned to $crate"
+          python spike/browser/scripts/fetch-cef.py --newest-stable --print-version
 
-      # Keyed on the version, so a bump downloads once and every later run on the
-      # same pin is a cache hit. The archive and not the unpacked tree: 160 MB
-      # compressed restores faster than 400 MB of small files.
+      # Upstream's own exporter, and not this repository's downloader, because
+      # `cef-dll-sys` wants a very particular layout - a versioned subdirectory
+      # holding the headers it compiles against - and the tool that writes it is
+      # published beside the crate at the same version. `fetch-cef.py` stays for
+      # the question above, which is the one it is actually good at.
+      #
+      # An absolute path worked out by Python rather than `$HOME`: bash on a
+      # Windows runner reports `/c/Users/...`, which is not a path the Rust
+      # toolchain can open.
+      - name: Where the engine goes
+        id: where
+        run: |
+          echo "dir=$(python -c "import pathlib; print(pathlib.Path('.cef').resolve())")" >>"$GITHUB_OUTPUT"
+
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: cef-cache
         with:
-          path: spike/browser/.cef-cache
-          key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.pin.outputs.cef }}
+          path: .cef
+          key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.pin.outputs.crate }}
 
       - name: CEF
-        run: python spike/browser/scripts/fetch-cef.py --pin --out spike/browser/third_party
+        run: |
+          if [ "${{ steps.cef-cache.outputs.cache-hit }}" != "true" ]; then
+            cargo install export-cef-dir --version "=${{ steps.pin.outputs.crate }}"
+            export-cef-dir --force "${{ steps.where.outputs.dir }}"
+          fi
+          echo "CEF_PATH=${{ steps.where.outputs.dir }}" >>"$GITHUB_ENV"
 
       # What the loader needs to find libcef at run time, which is not the same
       # thing as what the linker needed to find it at build time.
-      - name: Where the engine is
+      - name: The library path
         run: |
-          echo "LD_LIBRARY_PATH=$CEF_PATH/Release:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_PATH/Release:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          dir='${{ steps.where.outputs.dir }}'
+          echo "LD_LIBRARY_PATH=$dir:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$dir:$dir/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "$dir" >>"$GITHUB_PATH"
 
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: |
             spike/browser
             spike/nocef
-          key: ${{ steps.pin.outputs.cef }}
+          key: ${{ steps.pin.outputs.crate }}
 
       - name: Format
         run: |
@@ -208,7 +233,6 @@ jobs:
         run: |
           run=(python spike/browser/scripts/measure.py
             --binary "spike/shell/target/release/nib-spike-shell${{ runner.os == 'Windows' && '.exe' || '' }}"
-            --stage spike/shell/target/release
             --out spike-out/shell)
           if [ "${{ runner.os }}" = "Linux" ]; then
             xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' "${run[@]}"

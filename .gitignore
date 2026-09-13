@@ -59,3 +59,5 @@ spike/browser/.cef-cache/
 spike/browser/third_party/
 spike/browser/stage/
 spike-out/
+
+.cef/
