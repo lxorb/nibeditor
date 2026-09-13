@@ -150,44 +150,20 @@ jobs:
           cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
           cargo fmt --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --check
 
-      # `--locked`, because the lock file beside the manifest is part of the pin:
-      # it is what fixes the commit of the `winit-gtk4` fork the `dpi` patch points
-      # at, which is a branch and therefore moves.
-      # Run from inside the workspace, not with `--manifest-path` from here: the
-      # engine's Windows libraries want the static CRT, and the Cargo config that
-      # asks for it is only read from the directory a build runs in upwards. See
+      # `--locked`, because the lock file beside the manifest is part of the pin: it
+      # is what fixes the commit of the `winit-gtk4` fork the `dpi` patch points at,
+      # which is a branch and therefore moves. And run from *inside* the workspace
+      # rather than with `--manifest-path` from here, because the engine's Windows
+      # libraries want the static CRT and the Cargo config that asks for it is only
+      # read from the directory a build runs in upwards; see
       # apps/desktop/src-tauri/cef/.cargo/config.toml.
       - name: The flagged build
         working-directory: apps/desktop/src-tauri/cef
         run: cargo build --release --locked
 
-      # Everything Chromium has to find beside the binary, in one folder: that is
-      # how a release ships it, it is what the loader looks for on Windows and what
-      # `$ORIGIN` means on Linux, and it makes the size rows the bytes a reader
-      # actually downloads rather than whatever a distribution happens to unpack.
-      # Found rather than assumed, because the exporter's layout is a versioned
-      # subdirectory and not a flat one.
-      - name: Stage the engine beside the binary
-        run: |
-          out="$(pwd)/apps/desktop/src-tauri/cef/target/release"
-          engine=$(find "$CEF_DIR" \( -name 'libcef.dll' -o -name 'libcef.so' \) -print -quit)
-          resources=$(find "$CEF_DIR" -name 'resources.pak' -print -quit)
-          framework=$(find "$CEF_DIR" -name 'Chromium Embedded Framework.framework' -print -quit)
-
-          [ -n "$engine" ] && cp -R "$(dirname "$engine")"/. "$out"/
-          if [ -n "$resources" ] && [ "$(dirname "$resources")" != "$(dirname "$engine")" ]; then
-            cp -R "$(dirname "$resources")"/. "$out"/
-          fi
-          [ -n "$framework" ] && cp -R "$framework" "$out"/
-
-          echo "STAGED=$out" >>"$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$out:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          echo "DYLD_FALLBACK_LIBRARY_PATH=$out:$out/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          du -sh "$out"
-          ls "$out" | head -20
-
-      # The run. A window has to be able to appear: Windows and macOS runners log in
-      # a desktop session of their own, Linux is handed one.
+      # The run. A window has to be able to appear: Windows and macOS runners log in a
+      # desktop session of their own, Linux is handed one. The engine's own files are
+      # staged beside the binary by the gate itself, off the same list it weighs.
       - name: Run the gate
         env:
           NIB_CEF_TABS: ${{ inputs.tabs || '2' }}
@@ -197,7 +173,7 @@ jobs:
           run=(python apps/desktop/src-tauri/cef/gate.py
             --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
             --control "apps/desktop/src-tauri/target/release/nib$suffix"
-            --payload "$STAGED"
+            --engine "$CEF_PATH"
             --extension spike/browser/extension
             --tabs "$NIB_CEF_TABS"
             --out gate-out)

@@ -181,23 +181,6 @@ jobs:
         working-directory: apps/desktop/src-tauri/cef
         run: cargo test
 
-      # The same staging cef.yml does: the engine's own files beside the binary,
-      # found rather than assumed. See that file for why.
-      - name: Stage the engine beside the binary
-        run: |
-          out="$(pwd)/apps/desktop/src-tauri/cef/target/release"
-          engine=$(find "$CEF_DIR" \( -name 'libcef.dll' -o -name 'libcef.so' \) -print -quit)
-          resources=$(find "$CEF_DIR" -name 'resources.pak' -print -quit)
-          framework=$(find "$CEF_DIR" -name 'Chromium Embedded Framework.framework' -print -quit)
-          [ -n "$engine" ] && cp -R "$(dirname "$engine")"/. "$out"/
-          if [ -n "$resources" ] && [ "$(dirname "$resources")" != "$(dirname "$engine")" ]; then
-            cp -R "$(dirname "$resources")"/. "$out"/
-          fi
-          [ -n "$framework" ] && cp -R "$framework" "$out"/
-          echo "STAGED=$out" >>"$GITHUB_ENV"
-          echo "LD_LIBRARY_PATH=$out:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          echo "DYLD_FALLBACK_LIBRARY_PATH=$out:$out/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-
       - name: Run the gate
         run: |
           suffix=''
@@ -205,7 +188,7 @@ jobs:
           run=(python apps/desktop/src-tauri/cef/gate.py
             --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
             --control "apps/desktop/src-tauri/target/release/nib$suffix"
-            --payload "$STAGED"
+            --engine "$CEF_PATH"
             --extension spike/browser/extension
             --out gate-out)
           if [ "${{ runner.os }}" = "Linux" ]; then
