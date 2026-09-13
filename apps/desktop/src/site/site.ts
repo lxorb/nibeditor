@@ -321,6 +321,11 @@ function graphs() {
         shown,
         tint,
         arrows: false,
+        // What the card's dials do unasked. A published page is the site's own
+        // picture rather than the reader's: there is no card on it, and a stranger
+        // arriving at a page is shown what a picture of a space looks like.
+        lines: 2,
+        fade: 1,
         ratio,
       })
     }
