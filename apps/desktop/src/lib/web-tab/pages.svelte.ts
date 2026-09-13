@@ -312,6 +312,10 @@ class Pages {
       })
       page.live = true
       page.openable = true
+      // A webview the crate has just built is on screen at the rectangle it was built
+      // at: nothing has to place it to make that true, and the first thing drawn over
+      // the page would otherwise photograph nothing. See `shoot`.
+      page.shown = true
       this.bound(tabId)
     } catch {
       // No webview to be had here. Reported by the pane rather than by a message:
