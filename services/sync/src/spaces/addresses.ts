@@ -16,21 +16,164 @@ export const DOMAIN_LIMIT = 253
 
 /** Names people cannot take on the shared blog domain.
  *
- *  Only what is in use, or must not be usable, is held back; a name that is
- *  merely plausible is free until the day it is needed. The list was derived
- *  on 2026-09-04 from the zone itself: its records are the apex, the wildcard
- *  that serves every blog, and Email Routing's MX, SPF and DKIM; its Worker
- *  routes are the apex and the wildcard; it has no Worker custom domains. So
- *  nothing named is in use, and what is kept is structural: `www` because
- *  it is the site by convention, the mail names because mail records exist,
- *  and the nameserver names because a blog there would be read as the zone's
- *  own. The CNAME target for domains of one's own is held back too, from its
- *  setting rather than from here, since it is the one name that must never
- *  publish anything.
+ *  The zone's own records, on the day this was written, were the apex, the wildcard
+ *  that serves every blog, Email Routing's MX, SPF and DKIM, and the SaaS fallback
+ *  target; its Worker routes are the apex and the wildcard. So almost nothing here is
+ *  a name in use - and "only what is in use" was the wrong rule, because the app, the
+ *  API and the mail are all on this one domain: a site at `login.` or `account.` is a
+ *  page under the product's own name, served over the product's own certificate, and
+ *  a reader who checks the address bar sees nothing wrong. That is the whole of what
+ *  a phishing page wants, and it costs an attacker one free signup.
  *
- *  Extend this when a record, route or custom domain is added on a new label
- *  of the zone, and only then. */
-const RESERVED = new Set(['www', 'mail', 'smtp', 'imap', 'ns', 'ns1', 'ns2'])
+ *  So four kinds of name are held back rather than one:
+ *
+ *  - **The zone's own.** `www`, the mail and nameserver labels, and the CNAME target
+ *    for domains of one's own (from its setting rather than from here, since it is
+ *    the one name that must never publish anything).
+ *  - **What a browser or a mail client goes looking for by itself**: `autoconfig`,
+ *    `autodiscover`, `mta-sts`, and the rest.
+ *  - **What reads as the product speaking**: signing in, the account, paying,
+ *    support, status, the docs, an update. None of these is in use; each of them is a
+ *    sentence a stranger would believe.
+ *  - **RFC 2142's mailbox names**, which are the addresses a domain is expected to
+ *    answer at - `postmaster`, `abuse`, `security` - and which read as official
+ *    wherever they appear, a hostname included.
+ *
+ *  Extend it when a record, route or custom domain is added on a new label of the
+ *  zone, and when a name turns out to read as ours. Nothing here is a name anybody
+ *  has lost: the list is checked when an address is chosen, and a space already on
+ *  one of these would keep it - there are none, and the test says so. */
+const RESERVED = new Set([
+  // The zone as it stands, and the names DNS itself uses.
+  'www',
+  'mail',
+  'smtp',
+  'imap',
+  'pop',
+  'pop3',
+  'webmail',
+  'mx',
+  'ns',
+  'ns1',
+  'ns2',
+  'ns3',
+  'ns4',
+  'dns',
+  'cname',
+  'localhost',
+  'local',
+
+  // What a client looks for without being told: mail autoconfiguration, and the
+  // policy names a mail or TLS check fetches.
+  'autoconfig',
+  'autodiscover',
+  'mta-sts',
+  'dmarc',
+  'dkim',
+  'spf',
+  'wpad',
+  'isatap',
+
+  // The product, said in a way a reader would believe.
+  'about',
+  'account',
+  'accounts',
+  'admin',
+  'api',
+  'app',
+  'apps',
+  'assets',
+  'auth',
+  'billing',
+  'blog',
+  'cdn',
+  'changelog',
+  'checkout',
+  'cloud',
+  'connect',
+  'dashboard',
+  'demo',
+  'dev',
+  'developer',
+  'developers',
+  'doc',
+  'docs',
+  'download',
+  'downloads',
+  'edge',
+  'even',
+  'files',
+  'forum',
+  'git',
+  'help',
+  'id',
+  'img',
+  'images',
+  'internal',
+  'legal',
+  'license',
+  'login',
+  'logout',
+  'manage',
+  'mcp',
+  'media',
+  'nib',
+  'nibeditor',
+  'oauth',
+  'ops',
+  'pay',
+  'payment',
+  'payments',
+  'plugin',
+  'plugins',
+  'portal',
+  'preview',
+  'pricing',
+  'privacy',
+  'private',
+  'public',
+  'register',
+  'release',
+  'releases',
+  'rooms',
+  'secure',
+  'session',
+  'settings',
+  'shop',
+  'signin',
+  'signup',
+  'sso',
+  'staging',
+  'static',
+  'status',
+  'store',
+  'support',
+  'sync',
+  'terms',
+  'test',
+  'update',
+  'updates',
+  'upgrade',
+  'vpn',
+  'ws',
+
+  // RFC 2142: the mailbox names a domain is expected to answer at, which read as
+  // the domain's own wherever they are written.
+  'abuse',
+  'hostmaster',
+  'info',
+  'marketing',
+  'news',
+  'noc',
+  'postmaster',
+  'sales',
+  'security',
+  'usenet',
+  'uucp',
+  'webmaster',
+  'ftp',
+  'sftp',
+])
 
 export function reserved(env: Env, subdomain: string): boolean {
   return RESERVED.has(subdomain) || subdomain === env.BLOG_CNAME_TARGET.split('.')[0]

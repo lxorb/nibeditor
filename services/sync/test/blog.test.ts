@@ -558,8 +558,16 @@ describe('choosing a subdomain', () => {
     expect((await publish({ subdomain: 'mail' })).status).toBe(409)
   })
 
-  test('a name that is merely plausible is not reserved', async () => {
-    expect((await publish({ subdomain: 'blog' })).status).toBe(200)
+  /** A name that reads as the product is refused as well, and `blog` was the
+   *  example this used to make of the opposite rule; see `RESERVED` in
+   *  spaces/addresses.ts. What is free is somebody's own words. */
+  test('and so is one that reads as ours', async () => {
+    expect((await publish({ subdomain: 'blog' })).status).toBe(409)
+    expect((await publish({ subdomain: 'login' })).status).toBe(409)
+  })
+
+  test('while a name of somebody’s own is taken', async () => {
+    expect((await publish({ subdomain: 'hedgehogs' })).status).toBe(200)
   })
 
   test('malformed names are refused', async () => {

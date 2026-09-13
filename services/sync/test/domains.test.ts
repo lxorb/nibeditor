@@ -605,13 +605,72 @@ describe('names kept off the shared domain', () => {
     return (await call(env, `/v1/spaces/available/${name}`, { token })).json.available
   }
 
-  test('names nobody uses are free', async () => {
-    for (const name of ['blog', 'docs', 'help', 'support', 'status', 'cdn', 'assets', 'static']) {
+  test('a name that is somebody’s own words is free', async () => {
+    for (const name of ['markdown', 'field', 'notes', 'emil', 'hedgehogs', 'the-lab', 'ideas']) {
       expect(await available(name), name).toBe(true)
     }
-    for (const name of ['api', 'app', 'admin', 'nib', 'markdown', 'test', 'staging', 'dev']) {
-      expect(await available(name), name).toBe(true)
+  })
+
+  /** The app, the API and the mail are all on this one domain, so a site at
+   *  `login.` is a page under the product's own name on the product's own
+   *  certificate - which is the whole of what a phishing page wants, for the price
+   *  of one signup. "Only what is in use" was the wrong rule. */
+  test('a name that reads as the product speaking is not', async () => {
+    const theirs = [
+      'login',
+      'signin',
+      'account',
+      'accounts',
+      'api',
+      'app',
+      'admin',
+      'auth',
+      'billing',
+      'pay',
+      'secure',
+      'status',
+      'support',
+      'help',
+      'docs',
+      'download',
+      'updates',
+      'blog',
+      'cdn',
+      'assets',
+      'static',
+      'nib',
+      'nibeditor',
+      'dev',
+      'staging',
+      'test',
+    ]
+
+    for (const name of theirs) expect(await available(name), name).toBe(false)
+  })
+
+  /** What a browser or a mail client goes looking for without being told. A site
+   *  answering one of these is a site answering for the domain. */
+  test('nor one a client fetches by itself', async () => {
+    for (const name of ['autoconfig', 'autodiscover', 'mta-sts', 'dmarc', 'wpad']) {
+      expect(await available(name), name).toBe(false)
     }
+  })
+
+  /** RFC 2142's mailbox names: the addresses a domain is expected to answer at,
+   *  which read as official wherever they are written. */
+  test('nor one of the names a domain answers mail at', async () => {
+    for (const name of ['postmaster', 'abuse', 'security', 'webmaster', 'hostmaster', 'noc']) {
+      expect(await available(name), name).toBe(false)
+    }
+  })
+
+  /** Nobody is losing a name to this: the list is read when an address is chosen. */
+  test('and no space on the domain today holds one of them', async () => {
+    const held = env.db
+      .prepare('select blog_subdomain as name from spaces where blog_subdomain is not null')
+      .all() as { name: string }[]
+
+    for (const { name } of held) expect(await available(name), name).toBe(true)
   })
 
   test("the site's own name is not", async () => {
