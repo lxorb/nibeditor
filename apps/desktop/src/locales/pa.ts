@@ -1220,10 +1220,7 @@ export const pa: Dictionary = {
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
   'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
   'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
-  'Allow the camera': 'ਕੈਮਰੇ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
-  'Allow the clipboard': 'ਕਲਿੱਪਬੋਰਡ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
-  'Copy the address': 'ਪਤਾ ਨਕਲ ਕਰੋ',
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
@@ -1351,4 +1348,45 @@ export const pa: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ਇਹ ਨੋਟ ਓਨਾ ਵੱਡਾ ਹੋ ਗਿਆ ਹੈ ਜਿੰਨਾ ਇੱਕ ਕਮਰੇ ਵਿੱਚ ਕੋਈ ਨੋਟ ਹੋ ਸਕਦਾ ਹੈ।',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'ਨਵੀਂ ਟੈਬ',
+  'Full screen': 'ਪੂਰੀ ਸਕ੍ਰੀਨ',
+  'Print…': 'ਛਾਪੋ…',
+  'Save page': 'ਪੰਨਾ ਰੱਖਿਅਤ ਕਰੋ',
+  'Share…': 'ਸਾਂਝਾ ਕਰੋ…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ਇਹ ਕਰਨਾ ਚਾਹੁੰਦੀ ਹੈ',
+  'Don’t allow': 'ਆਗਿਆ ਨਾ ਦਿਓ',
+  Allow: 'ਆਗਿਆ ਦਿਓ',
+  'Use your camera': 'ਆਪਣਾ ਕੈਮਰਾ ਵਰਤੋ',
+  'Use your microphone': 'ਆਪਣਾ ਮਾਈਕ੍ਰੋਫੋਨ ਵਰਤੋ',
+  'Know your location': 'ਆਪਣੇ ਨਿਰਧਾਰਿਤ ਸਥਾਨ ਬਾਰੇ ਜਾਣੋ',
+  'Show notifications': 'ਸੂਚਨਾਵਾਂ ਦਿਖਾਓ',
+  'See text and images copied to the clipboard':
+    "ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤੀ ਲਿਖਤ ਅਤੇ ਚਿੱਤਰਾਂ ਨੂੰ ਦੇਖੋ",
+  'Use your motion sensors': 'ਆਪਣੇ ਮੋਸ਼ਨ ਸੈਂਸਰਾਂ ਦੀ ਵਰਤੋਂ ਕਰੋ',
+  'Download multiple files': 'ਕਈ ਫ਼ਾਈਲਾਂ ਡਾਊਨਲੋਡ ਕਰੋ',
+  'Use fonts installed on your device': "ਆਪਣੇ ਡੀਵਾਈਸ 'ਤੇ ਸਥਾਪਤ ਫ਼ੌਂਟਾਂ ਨੂੰ ਵਰਤੋ",
+  'Use your MIDI devices': 'ਆਪਣੇ MIDI ਡੀਵਾਈਸਾਂ ਨੂੰ ਵਰਤੋ',
+  'Manage windows on all your displays': "ਆਪਣੀਆਂ ਸਾਰੀਆਂ ਡਿਸਪਲੇਆਂ 'ਤੇ ਵਿੰਡੋਆਂ ਦਾ ਪ੍ਰਬੰਧਨ ਕਰੋ",
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'ਸਾਈਟ ਜਾਣਕਾਰੀ',
+  Camera: 'ਕੈਮਰਾ',
+  Microphone: 'ਮਾਈਕ੍ਰੋਫੋਨ',
+  Location: 'ਨਿਰਧਾਰਿਤ ਸਥਾਨ',
+  Notifications: 'ਸੂਚਨਾਵਾਂ',
+  Clipboard: 'ਕਲਿੱਪਬੋਰਡ',
+  'Motion sensors': 'ਮੋਸ਼ਨ ਸੈਂਸਰ',
+  'Automatic downloads': 'ਆਟੋਮੈਟਿਕ ਡਾਊਨਲੋਡਸ',
+  Fonts: 'ਫੌਂਟ',
+  'MIDI devices': 'MIDI ਡੀਵਾਈਸ',
+  'Window management': 'ਵਿੰਡੋ ਪ੍ਰਬੰਧਨ',
+  'Connection is secure': 'ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਹੈ',
+  'Connection is not secure': 'ਕਨੈਕਸ਼ਨ ਸੁਰੱਖਿਅਤ ਨਹੀਂ ਹੈ',
+  Allowed: 'ਆਗਿਆ ਦਿੱਤੀ',
+  Blocked: 'ਬਲੌਕ ਕੀਤਾ',
+  'Reset permissions': 'ਇਜਾਜ਼ਤਾਂ ਰੀਸੈੱਟ ਕਰੋ',
 }

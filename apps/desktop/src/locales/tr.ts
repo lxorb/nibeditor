@@ -1215,10 +1215,7 @@ export const tr: Dictionary = {
   Reload: 'Yeniden yükle',
   'Clip this page': 'Bu sayfayı sakla',
   'Clip the link': 'Bağlantıyı sakla',
-  'Allow the camera': 'Kameraya izin ver',
-  'Allow the clipboard': 'Panoya izin ver',
   'Open in the browser': 'Tarayıcıda aç',
-  'Copy the address': 'Adresi kopyala',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',
@@ -1349,4 +1346,44 @@ export const tr: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Bu not, bir odadaki bir notun olabileceği en büyük boyutta.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Yeni sekme',
+  'Full screen': 'Tam ekran',
+  'Print…': 'Yazdır…',
+  'Save page': 'Sayfayı kaydet',
+  'Share…': 'Paylaş…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'şunu yapmak istiyor',
+  'Don’t allow': 'İzin verme',
+  Allow: 'İzin ver',
+  'Use your camera': 'Kameranızı kullanma',
+  'Use your microphone': 'Mikrofonunuzu kullanma',
+  'Know your location': 'Konumunuzu bilme',
+  'Show notifications': 'Bildirimleri gösterme',
+  'See text and images copied to the clipboard': 'Panoya kopyalanan metin ve resimleri görme',
+  'Use your motion sensors': 'Hareket sensörlerinizi kullanma',
+  'Download multiple files': 'Birden çok dosya indirme',
+  'Use fonts installed on your device': 'Cihazınızda yüklü yazı tiplerini kullanma',
+  'Use your MIDI devices': 'MIDI cihazlarınızı kullanma',
+  'Manage windows on all your displays': 'Tüm ekranlarınızda pencereleri yönetme',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Site bilgileri',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Konum',
+  Notifications: 'Bildirimler',
+  Clipboard: 'Pano',
+  'Motion sensors': 'Hareket sensörleri',
+  'Automatic downloads': 'Otomatik indirmeler',
+  Fonts: 'Yazı tipleri',
+  'MIDI devices': 'MIDI cihazları',
+  'Window management': 'Pencere yönetimi',
+  'Connection is secure': 'Bağlantı güvenli',
+  'Connection is not secure': 'Bağlantı güvenli değil',
+  Allowed: 'İzin veriliyor',
+  Blocked: 'Engelleniyor',
+  'Reset permissions': 'İzinleri sıfırla',
 }

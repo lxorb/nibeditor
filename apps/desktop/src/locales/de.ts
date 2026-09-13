@@ -1236,10 +1236,7 @@ export const de: Dictionary = {
   Reload: 'Neu laden',
   'Clip this page': 'Diese Seite speichern',
   'Clip the link': 'Den Link speichern',
-  'Allow the camera': 'Kamera erlauben',
-  'Allow the clipboard': 'Zwischenablage erlauben',
   'Open in the browser': 'Im Browser öffnen',
-  'Copy the address': 'Adresse kopieren',
   'Show it here': 'Hier anzeigen',
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
@@ -1386,4 +1383,44 @@ export const de: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Diese Notiz ist so groß, wie eine Notiz in einem Raum werden kann.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Neuer Tab',
+  'Full screen': 'Vollbildmodus',
+  'Print…': 'Drucken…',
+  'Save page': 'Seite speichern',
+  'Share…': 'Teilen…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'möchte',
+  'Don’t allow': 'Nicht zulassen',
+  Allow: 'Zulassen',
+  'Use your camera': 'Deine Kamera verwenden',
+  'Use your microphone': 'Mikrofon verwenden',
+  'Know your location': 'Deinen Standort abrufen',
+  'Show notifications': 'Benachrichtigungen anzeigen',
+  'See text and images copied to the clipboard': 'Texte und Bilder aus der Zwischenablage abrufen',
+  'Use your motion sensors': 'Bewegungssensoren verwenden',
+  'Download multiple files': 'Mehrere Dateien herunterladen',
+  'Use fonts installed on your device': 'Auf deinem Gerät installierte Schriftarten verwenden',
+  'Use your MIDI devices': 'MIDI-Geräte verwenden',
+  'Manage windows on all your displays': 'Fenster auf allen Bildschirmen verwalten',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Website-Informationen',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Standort',
+  Notifications: 'Benachrichtigungen',
+  Clipboard: 'Zwischenablage',
+  'Motion sensors': 'Bewegungssensoren',
+  'Automatic downloads': 'Automatische Downloads',
+  Fonts: 'Schriftarten',
+  'MIDI devices': 'MIDI-Geräte',
+  'Window management': 'Fensterverwaltung',
+  'Connection is secure': 'Verbindung ist sicher',
+  'Connection is not secure': 'Verbindung ist nicht sicher',
+  Allowed: 'Zugelassen',
+  Blocked: 'Blockiert',
+  'Reset permissions': 'Berechtigungen zurücksetzen',
 }

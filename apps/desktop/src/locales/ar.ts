@@ -1300,10 +1300,7 @@ export const ar: Dictionary = {
   Reload: 'إعادة التحميل',
   'Clip this page': 'حفظ هذه الصفحة',
   'Clip the link': 'حفظ الرابط',
-  'Allow the camera': 'السماح بالكاميرا',
-  'Allow the clipboard': 'السماح بالحافظة',
   'Open in the browser': 'فتح في المتصفح',
-  'Copy the address': 'نسخ العنوان',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',
@@ -1430,4 +1427,45 @@ export const ar: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'وصلت هذه الملاحظة إلى أقصى حجم يمكن أن تبلغه ملاحظة في غرفة.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'علامة تبويب جديدة',
+  'Full screen': 'ملء الشاشة',
+  'Print…': 'طباعة…',
+  'Save page': 'حفظ الصفحة',
+  'Share…': 'مشاركة…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'يريد',
+  'Don’t allow': 'عدم السماح',
+  Allow: 'سماح',
+  'Use your camera': 'استخدام الكاميرا',
+  'Use your microphone': 'استخدام الميكروفون',
+  'Know your location': 'معرفة موقعك',
+  'Show notifications': 'عرض الإشعارات',
+  'See text and images copied to the clipboard':
+    'الاطلاع على النصوص والصور التي تم نسخها إلى الحافظة',
+  'Use your motion sensors': 'استخدام أدوات استشعار الحركة',
+  'Download multiple files': 'تنزيل ملفات متعددة',
+  'Use fonts installed on your device': 'استخدام أشكال الخط المثبَّتة على جهازك',
+  'Use your MIDI devices': 'استخدام أجهزة MIDI',
+  'Manage windows on all your displays': 'إدارة النوافذ على جميع شاشات أجهزتك',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'معلومات الموقع',
+  Camera: 'الكاميرا',
+  Microphone: 'الميكروفون',
+  Location: 'الموقع الجغرافي',
+  Notifications: 'الإشعارات',
+  Clipboard: 'الحافظة',
+  'Motion sensors': 'أجهزة استشعار الحركة',
+  'Automatic downloads': 'عمليات التنزيل التلقائية',
+  Fonts: 'الخطوط',
+  'MIDI devices': 'أجهزة MIDI',
+  'Window management': 'إدارة النوافذ',
+  'Connection is secure': 'الاتصال بهذا الموقع الإلكتروني آمن',
+  'Connection is not secure': 'الاتصال بهذا الموقع الإلكتروني غير آمن',
+  Allowed: 'مسموح به',
+  Blocked: 'محظور',
+  'Reset permissions': 'إعادة ضبط الأذونات',
 }

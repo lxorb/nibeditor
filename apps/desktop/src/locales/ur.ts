@@ -1214,10 +1214,7 @@ export const ur: Dictionary = {
   Reload: 'دوبارہ لوڈ کریں',
   'Clip this page': 'یہ صفحہ محفوظ کریں',
   'Clip the link': 'لنک محفوظ کریں',
-  'Allow the camera': 'کیمرے کی اجازت دیں',
-  'Allow the clipboard': 'کلپ بورڈ کی اجازت دیں',
   'Open in the browser': 'براؤزر میں کھولیں',
-  'Copy the address': 'پتہ نقل کریں',
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
   'Open a website': 'ویب سائٹ کھولیں',
@@ -1344,4 +1341,44 @@ export const ur: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'یہ نوٹ اُتنا بڑا ہو گیا ہے جتنا کسی روم میں کوئی نوٹ ہو سکتا ہے۔',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'نیا ٹیب',
+  'Full screen': 'پوری اسکرین',
+  'Print…': 'پرنٹ کریں…',
+  'Save page': 'صفحہ محفوظ کریں',
+  'Share…': 'شیئر کریں…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'چاہتی ہے کہ',
+  'Don’t allow': 'اجازت نہ دیں',
+  Allow: 'اجازت دیں',
+  'Use your camera': 'اپنا کیمرا استعمال کریں',
+  'Use your microphone': 'اپنا مائیکروفون استعمال کریں',
+  'Know your location': 'اپنا مقام جانیں',
+  'Show notifications': 'اطلاعات دکھائیں',
+  'See text and images copied to the clipboard': 'کلپ بورڈ میں کاپی کیے گئے متن اور تصاویر دیکھیں',
+  'Use your motion sensors': 'اپنے موشن سینسرز کا استعمال کریں',
+  'Download multiple files': 'متعدد فائلیں ڈاؤن لوڈ کریں',
+  'Use fonts installed on your device': 'اپنے آلے پر انسٹال کردہ فونٹس استعمال کریں',
+  'Use your MIDI devices': 'اپنے MIDI آلات استعمال کریں',
+  'Manage windows on all your displays': 'اپنے سبھی ڈسپلیز پر ونڈوز کا نظم کریں',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'سائٹ کی معلومات',
+  Camera: 'کیمرا',
+  Microphone: 'مائیکروفون',
+  Location: 'مقام',
+  Notifications: 'اطلاعات',
+  Clipboard: 'کلپ بورڈ',
+  'Motion sensors': 'موشن سینسرز',
+  'Automatic downloads': 'خود کار ڈاؤن لوڈز',
+  Fonts: 'فونٹس',
+  'MIDI devices': 'MIDI آلات',
+  'Window management': 'ونڈو کا نظم و نسق',
+  'Connection is secure': 'کنکشن محفوظ ہے',
+  'Connection is not secure': 'کنکشن محفوظ نہیں ہے',
+  Allowed: 'اجازت یافتہ',
+  Blocked: 'مسدود کردہ',
+  'Reset permissions': 'اجازتیں دوبارہ ترتیب دیں',
 }

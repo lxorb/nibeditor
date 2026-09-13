@@ -1257,10 +1257,7 @@ export const it: Dictionary = {
   Reload: 'Ricarica',
   'Clip this page': 'Salva questa pagina',
   'Clip the link': 'Salva il link',
-  'Allow the camera': 'Consenti la fotocamera',
-  'Allow the clipboard': 'Consenti gli appunti',
   'Open in the browser': 'Apri nel browser',
-  'Copy the address': 'Copia l’indirizzo',
   'Show it here': 'Mostralo qui',
   Website: 'Sito web',
   'Open a website': 'Apri un sito web',
@@ -1396,4 +1393,44 @@ export const it: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Questa nota è grande quanto può diventare una nota in una stanza.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Nuova scheda',
+  'Full screen': 'Schermo intero',
+  'Print…': 'Stampa…',
+  'Save page': 'Salva pagina',
+  'Share…': 'Condividi…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'vorrebbe',
+  'Don’t allow': 'Non consentire',
+  Allow: 'Consenti',
+  'Use your camera': 'Utilizzare la fotocamera',
+  'Use your microphone': 'Utilizzare il microfono',
+  'Know your location': 'Conoscere la tua posizione',
+  'Show notifications': 'Mostrare le notifiche',
+  'See text and images copied to the clipboard': 'Leggere testi e immagini copiati negli appunti',
+  'Use your motion sensors': 'Usare i sensori di movimento',
+  'Download multiple files': 'Scaricare più file',
+  'Use fonts installed on your device': 'Utilizzare i caratteri installati sul tuo dispositivo',
+  'Use your MIDI devices': 'Utilizzare i tuoi dispositivi MIDI',
+  'Manage windows on all your displays': 'Gestire le finestre su tutti i tuoi schermi',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informazioni sul sito',
+  Camera: 'Videocamera',
+  Microphone: 'Microfono',
+  Location: 'Posizione',
+  Notifications: 'Notifiche',
+  Clipboard: 'Appunti',
+  'Motion sensors': 'Sensori di movimento',
+  'Automatic downloads': 'Download automatici',
+  Fonts: 'Caratteri',
+  'MIDI devices': 'Dispositivi MIDI',
+  'Window management': 'Gestione delle finestre',
+  'Connection is secure': 'La connessione è sicura',
+  'Connection is not secure': 'La connessione non è sicura',
+  Allowed: 'Autorizzazione concessa',
+  Blocked: 'Autorizzazione negata',
+  'Reset permissions': 'Reimposta le autorizzazioni',
 }

@@ -1233,10 +1233,7 @@ export const ta: Dictionary = {
   Reload: 'மீண்டும் ஏற்று',
   'Clip this page': 'இந்தப் பக்கத்தை எடு',
   'Clip the link': 'இணைப்பை எடு',
-  'Allow the camera': 'கேமராவை அனுமதி',
-  'Allow the clipboard': 'பிடிப்புப் பலகையை அனுமதி',
   'Open in the browser': 'உலாவியில் திற',
-  'Copy the address': 'முகவரியை நகலெடு',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',
@@ -1367,4 +1364,46 @@ export const ta: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ஒரு அறையில் ஒரு குறிப்பு எவ்வளவு பெரியதாக இருக்க முடியுமோ அந்த அளவை இந்தக் குறிப்பு அடைந்துவிட்டது.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'புதிய தாவல்',
+  'Full screen': 'முழுத்திரை',
+  'Print…': 'அச்சிடு…',
+  'Save page': 'பக்கத்தைச் சேமி',
+  'Share…': 'பகிர்…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'பின்வருவனவற்றைச் செய்ய விரும்புகிறது',
+  'Don’t allow': 'அனுமதிக்காதே',
+  Allow: 'அனுமதி',
+  'Use your camera': 'உங்கள் கேமராவைப் பயன்படுத்த',
+  'Use your microphone': 'உங்கள் மைக்ரோஃபோனைப் பயன்படுத்த',
+  'Know your location': 'உங்கள் இருப்பிடத்தை அறிய',
+  'Show notifications': 'அறிவிப்புகளைக் காட்ட',
+  'See text and images copied to the clipboard':
+    'கிளிப்போர்டுக்கு நகலெடுத்த உரையையும் படங்களையும் பார்க்க',
+  'Use your motion sensors': 'மோஷன் சென்சார்களைப் பயன்படுத்த',
+  'Download multiple files': 'பல ஃபைல்களைப் பதிவிறக்க',
+  'Use fonts installed on your device':
+    'உங்கள் சாதனத்தில் நிறுவப்பட்டுள்ள எழுத்துருக்களைப் பயன்படுத்த',
+  'Use your MIDI devices': 'உங்கள் MIDI சாதனங்களைப் பயன்படுத்த',
+  'Manage windows on all your displays': 'உங்கள் டிஸ்ப்ளேக்கள் அனைத்திலும் சாளரங்களை நிர்வகிக்க',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'தள விவரங்கள்',
+  Camera: 'கேமரா',
+  Microphone: 'மைக்ரோஃபோன்',
+  Location: 'இருப்பிடம்',
+  Notifications: 'அறிவிப்புகள்',
+  Clipboard: 'கிளிப்போர்டு',
+  'Motion sensors': 'மோஷன் சென்சார்கள்',
+  'Automatic downloads': 'தன்னியக்கப் பதிவிறக்கங்கள்',
+  Fonts: 'எழுத்துருக்கள்',
+  'MIDI devices': 'MIDI சாதனங்கள்',
+  'Window management': 'சாளரங்களை நிர்வகித்தல்',
+  'Connection is secure': 'இணைப்பு பாதுகாப்பானது',
+  'Connection is not secure': 'பாதுகாப்பற்ற இணைப்பு',
+  Allowed: 'அனுமதிக்கப்பட்டது',
+  Blocked: 'தடுக்கப்பட்டது',
+  'Reset permissions': 'அனுமதிகளை மீட்டமை',
 }

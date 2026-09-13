@@ -1235,10 +1235,7 @@ export const ha: Dictionary = {
   Reload: 'Sake ɗauko',
   'Clip this page': 'Ajiye wannan shafi',
   'Clip the link': 'Ajiye haɗin',
-  'Allow the camera': 'Bar kamara',
-  'Allow the clipboard': 'Bar allon kwafi',
   'Open in the browser': 'Buɗe a birawuza',
-  'Copy the address': 'Kwafa adireshin',
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',
@@ -1372,4 +1369,45 @@ export const ha: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Wannan rubutu ya kai girman da rubutu zai iya kaiwa a cikin ɗaki.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Sabon tab',
+  'Full screen': 'Cikakken allo',
+  'Print…': 'Buga…',
+  'Save page': 'Ajiye shafi',
+  'Share…': 'Raba…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'yana son',
+  'Don’t allow': 'Kar ka bari',
+  Allow: 'Bari',
+  'Use your camera': 'Yi amfani da kamararka',
+  'Use your microphone': 'Yi amfani da makirufonka',
+  'Know your location': 'San wurin da kake',
+  'Show notifications': 'Nuna sanarwa',
+  'See text and images copied to the clipboard':
+    'Duba rubutu da hotunan da aka kwafa zuwa allon kwafi',
+  'Use your motion sensors': "Yi amfani da na'urorin gano motsi naka",
+  'Download multiple files': 'Ɗauko fayiloli da yawa',
+  'Use fonts installed on your device': "Yi amfani da fontin da ke na'urarka",
+  'Use your MIDI devices': "Yi amfani da na'urorin MIDI naka",
+  'Manage windows on all your displays': 'Sarrafa tagogi a duk allunanka',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Bayanin gidan yanar',
+  Camera: 'Kamara',
+  Microphone: 'Makirufo',
+  Location: 'Wuri',
+  Notifications: 'Sanarwa',
+  Clipboard: 'Allon kwafi',
+  'Motion sensors': "Na'urorin gano motsi",
+  'Automatic downloads': 'Ɗaukowa ta atomatik',
+  Fonts: 'Fonti',
+  'MIDI devices': "Na'urorin MIDI",
+  'Window management': 'Sarrafa tagogi',
+  'Connection is secure': 'Haɗin amintacce ne',
+  'Connection is not secure': 'Haɗin ba amintacce ba ne',
+  Allowed: 'An bari',
+  Blocked: 'An hana',
+  'Reset permissions': 'Mayar da izini',
 }

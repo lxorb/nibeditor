@@ -1235,10 +1235,7 @@ export const fil: Dictionary = {
   Reload: 'I-reload',
   'Clip this page': 'I-clip ang pahinang ito',
   'Clip the link': 'I-clip ang link',
-  'Allow the camera': 'Payagan ang kamera',
-  'Allow the clipboard': 'Payagan ang clipboard',
   'Open in the browser': 'Buksan sa browser',
-  'Copy the address': 'Kopyahin ang address',
   'Show it here': 'Ipakita dito',
   Website: 'Website',
   'Open a website': 'Buksan ang website',
@@ -1377,4 +1374,45 @@ export const fil: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Kasinglaki na ng pinakamalaking posibleng laki ng tala sa isang silid ang talang ito.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Bagong tab',
+  'Full screen': 'Buong screen',
+  'Print…': 'I-print…',
+  'Save page': 'I-save ang page',
+  'Share…': 'Ibahagi…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ay gustong',
+  'Don’t allow': 'Huwag payagan',
+  Allow: 'Payagan',
+  'Use your camera': 'Gamitin ang iyong camera',
+  'Use your microphone': 'Gamitin ang iyong mikropono',
+  'Know your location': 'Alamin ang iyong lokasyon',
+  'Show notifications': 'Ipakita ang mga notification',
+  'See text and images copied to the clipboard':
+    'Tingnan ang text at mga larawang kinopya sa clipboard',
+  'Use your motion sensors': 'Gamitin ang iyong mga sensor ng paggalaw',
+  'Download multiple files': 'Mag-download ng maraming file',
+  'Use fonts installed on your device': 'Gamitin ang mga font na naka-install sa iyong device',
+  'Use your MIDI devices': 'Gamitin ang iyong mga MIDI device',
+  'Manage windows on all your displays': 'Pamahalaan ang mga window sa lahat ng iyong display',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Impormasyon ng site',
+  Camera: 'Camera',
+  Microphone: 'Mikropono',
+  Location: 'Lokasyon',
+  Notifications: 'Mga abiso',
+  Clipboard: 'Clipboard',
+  'Motion sensors': 'Mga sensor ng paggalaw',
+  'Automatic downloads': 'Mga awtomatikong pag-download',
+  Fonts: 'Mga font',
+  'MIDI devices': 'Mga MIDI device',
+  'Window management': 'Pamamahala sa window',
+  'Connection is secure': 'Secure ang koneksyon',
+  'Connection is not secure': 'Hindi secure ang koneksyon',
+  Allowed: 'Pinapayagan',
+  Blocked: 'Naka-block',
+  'Reset permissions': 'I-reset ang mga pahintulot',
 }

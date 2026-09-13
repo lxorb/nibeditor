@@ -1213,10 +1213,7 @@ export const bn: Dictionary = {
   Reload: 'আবার লোড করুন',
   'Clip this page': 'এই পাতা রাখুন',
   'Clip the link': 'লিঙ্ক রাখুন',
-  'Allow the camera': 'ক্যামেরার অনুমতি দিন',
-  'Allow the clipboard': 'ক্লিপবোর্ডের অনুমতি দিন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
-  'Copy the address': 'ঠিকানা কপি করুন',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',
@@ -1344,4 +1341,44 @@ export const bn: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'একটি রুমে একটি নোট যত বড় হতে পারে, এই নোটটি তত বড় হয়ে গেছে।',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'নতুন ট্যাব',
+  'Full screen': 'পূর্ণ স্ক্রীণ',
+  'Print…': 'প্রিন্ট…',
+  'Save page': 'পৃষ্ঠা সেভ করুন',
+  'Share…': 'শেয়ার…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'চায়',
+  'Don’t allow': 'অনুমতি দেবেন না',
+  Allow: 'অনুমতি দিন',
+  'Use your camera': 'আপনার ক্যামেরা ব্যবহার করুন',
+  'Use your microphone': 'আপনার মাইক্রোফোন ব্যবহার করুন',
+  'Know your location': 'আপনার লোকেশন জানুন',
+  'Show notifications': 'বিজ্ঞপ্তিগুলি দেখান',
+  'See text and images copied to the clipboard': 'ক্লিপবোর্ডে কপি করা টেক্সট এবং ছবি দেখুন',
+  'Use your motion sensors': 'আপনার মোশন সেন্সর ব্যবহার করুন',
+  'Download multiple files': 'একাধিক ফাইল ডাউনলোড করুন',
+  'Use fonts installed on your device': 'আপনার ডিভাইসে ইনস্টল করা ফন্ট ব্যবহার করুন',
+  'Use your MIDI devices': 'আপনার MIDI ডিভাইস ব্যবহার করুন',
+  'Manage windows on all your displays': 'আপনার সব ডিসপ্লেতে উইন্ডো ম্যানেজ করুন',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'সাইটের তথ্য',
+  Camera: 'ক্যামেরা',
+  Microphone: 'মাইক্রোফোন',
+  Location: 'লোকেশন',
+  Notifications: 'বিজ্ঞপ্তিগুলি',
+  Clipboard: 'ক্লিপবোর্ড',
+  'Motion sensors': 'মোশন সেন্সর',
+  'Automatic downloads': 'অটোমেটিক ডাউনলোডগুলি',
+  Fonts: 'হরফগুলি',
+  'MIDI devices': 'MIDI ডিভাইস',
+  'Window management': 'উইন্ডো ম্যানেজমেন্ট',
+  'Connection is secure': 'কানেকশনটি নিরাপদ',
+  'Connection is not secure': 'কানেকশন সুরক্ষিত নয়',
+  Allowed: 'মঞ্জুরিপ্রাপ্ত',
+  Blocked: 'অবরুদ্ধ',
+  'Reset permissions': 'অনুমতি রিসেট করুন',
 }

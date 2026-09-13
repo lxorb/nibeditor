@@ -1223,10 +1223,7 @@ export const kn: Dictionary = {
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
   'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
-  'Allow the camera': 'ಕ್ಯಾಮೆರಾಕ್ಕೆ ಅನುಮತಿ ಕೊಡು',
-  'Allow the clipboard': 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ಅನುಮತಿ ಕೊಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
-  'Copy the address': 'ವಿಳಾಸ ನಕಲಿಸು',
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
@@ -1358,4 +1355,45 @@ export const kn: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ಈ ನೋಟ್ ಒಂದು ಕೋಣೆಯಲ್ಲಿ ನೋಟ್ ಆಗಬಹುದಾದ ಗರಿಷ್ಠ ಗಾತ್ರವನ್ನು ತಲುಪಿದೆ.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'ಹೊಸ ಟ್ಯಾಬ್',
+  'Full screen': 'ಪೂರ್ಣ ಪರದೆ',
+  'Print…': 'ಮುದ್ರಿಸಿ…',
+  'Save page': 'ಪುಟವನ್ನು ಸೇವ್ ಮಾಡಿ',
+  'Share…': 'ಹಂಚಿ…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ಗೆ ಅನುಮತಿ ಬೇಕಿದೆ',
+  'Don’t allow': 'ಅನುಮತಿಸಬೇಡಿ',
+  Allow: 'ಅನುಮತಿಸಿ',
+  'Use your camera': 'ನಿಮ್ಮ ಕ್ಯಾಮರಾವನ್ನು ಬಳಸಿ',
+  'Use your microphone': 'ನಿಮ್ಮ ಮೈಕ್ರೋಫೋನ್ ಅನ್ನು ಬಳಸಿ',
+  'Know your location': 'ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ತಿಳಿದುಕೊಳ್ಳಿ',
+  'Show notifications': 'ಸೂಚನೆಗಳನ್ನು ತೋರಿಸಿ',
+  'See text and images copied to the clipboard':
+    'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಿರುವ ಪಠ್ಯ ಮತ್ತು ಚಿತ್ರಗಳನ್ನು ನೋಡಿ',
+  'Use your motion sensors': 'ನಿಮ್ಮ ಮೋಷನ್ ಸೆನ್ಸರ್‌ಗಳನ್ನು ಬಳಸಿ',
+  'Download multiple files': 'ಅನೇಕ ಫೈಲ್‌ಗಳನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ',
+  'Use fonts installed on your device': 'ನಿಮ್ಮ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಫಾಂಟ್‌ಗಳನ್ನು ಬಳಸಿ',
+  'Use your MIDI devices': 'ನಿಮ್ಮ MIDI ಸಾಧನಗಳನ್ನು ಬಳಸಿ',
+  'Manage windows on all your displays': 'ನಿಮ್ಮ ಎಲ್ಲಾ ಡಿಸ್ಪ್ಲೇಗಳಲ್ಲಿ ವಿಂಡೋಗಳನ್ನು ನಿರ್ವಹಿಸಿ',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
+  Camera: 'ಕ್ಯಾಮರಾ',
+  Microphone: 'ಮೈಕ್ರೋಫೋನ್',
+  Location: 'ಸ್ಥಳ',
+  Notifications: 'ಸೂಚನೆಗಳು',
+  Clipboard: 'ಕ್ಲಿಪ್‌ಬೋರ್ಡ್',
+  'Motion sensors': 'ಮೋಷನ್ ಸೆನ್ಸರ್‌ಗಳು',
+  'Automatic downloads': 'ಸ್ವಯಂಚಾಲಿತ ಡೌನ್‌ಲೋಡ್‌ಗಳು',
+  Fonts: 'ಫಾಂಟ್‌ಗಳು',
+  'MIDI devices': 'MIDI ಸಾಧನಗಳು',
+  'Window management': 'ವಿಂಡೋ ನಿರ್ವಹಣೆ',
+  'Connection is secure': 'ಸಂಪರ್ಕ ಸುರಕ್ಷಿತವಾಗಿದೆ',
+  'Connection is not secure': 'ಸಂಪರ್ಕ ಸುರಕ್ಷಿತವಾಗಿಲ್ಲ',
+  Allowed: 'ಅನುಮತಿಸಲಾಗಿದೆ',
+  Blocked: 'ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
+  'Reset permissions': 'ಅನುಮತಿಗಳನ್ನು ಮರುಹೊಂದಿಸಿ',
 }

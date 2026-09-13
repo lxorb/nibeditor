@@ -1259,10 +1259,7 @@ export const fr: Dictionary = {
   Reload: 'Recharger',
   'Clip this page': 'Enregistrer cette page',
   'Clip the link': 'Enregistrer le lien',
-  'Allow the camera': 'Autoriser la caméra',
-  'Allow the clipboard': 'Autoriser le presse-papiers',
   'Open in the browser': 'Ouvrir dans le navigateur',
-  'Copy the address': 'Copier l’adresse',
   'Show it here': 'Afficher ici',
   Website: 'Site web',
   'Open a website': 'Ouvrir un site web',
@@ -1400,4 +1397,45 @@ export const fr: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Cette note atteint la taille maximale d’une note dans une salle.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Nouvel onglet',
+  'Full screen': 'Plein écran',
+  'Print…': 'Imprimer…',
+  'Save page': 'Enregistrer la page',
+  'Share…': 'Partager…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'souhaite',
+  'Don’t allow': 'Ne pas autoriser',
+  Allow: 'Autoriser',
+  'Use your camera': 'Utiliser votre caméra',
+  'Use your microphone': 'Utiliser votre micro',
+  'Know your location': 'Connaître votre position',
+  'Show notifications': 'Afficher les notifications',
+  'See text and images copied to the clipboard':
+    'Voir le texte et les images copiés dans le presse-papiers',
+  'Use your motion sensors': 'Utiliser vos capteurs de mouvement',
+  'Download multiple files': 'Télécharger plusieurs fichiers',
+  'Use fonts installed on your device': 'Utiliser les polices installées sur votre appareil',
+  'Use your MIDI devices': 'Utiliser vos appareils MIDI',
+  'Manage windows on all your displays': 'Gérer les fenêtres sur tous vos écrans',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informations sur le site',
+  Camera: 'Caméra',
+  Microphone: 'Micro',
+  Location: 'Localisation',
+  Notifications: 'Notifications',
+  Clipboard: 'Presse-papiers',
+  'Motion sensors': 'Capteurs de mouvement',
+  'Automatic downloads': 'Téléchargements automatiques',
+  Fonts: 'Polices',
+  'MIDI devices': 'Appareils MIDI',
+  'Window management': 'Gestion des fenêtres',
+  'Connection is secure': 'La connexion est sécurisée',
+  'Connection is not secure': 'La connexion n’est pas sécurisée',
+  Allowed: 'Autorisé',
+  Blocked: 'Bloqué',
+  'Reset permissions': 'Réinitialiser les autorisations',
 }

@@ -1213,10 +1213,7 @@ export const mr: Dictionary = {
   Reload: 'पुन्हा लोड करा',
   'Clip this page': 'हे पान जतन करा',
   'Clip the link': 'दुवा जतन करा',
-  'Allow the camera': 'कॅमेऱ्याला परवानगी द्या',
-  'Allow the clipboard': 'क्लिपबोर्डला परवानगी द्या',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',
-  'Copy the address': 'पत्ता कॉपी करा',
   'Show it here': 'येथे दाखवा',
   Website: 'संस्थळ',
   'Open a website': 'संस्थळ उघडा',
@@ -1347,4 +1344,44 @@ export const mr: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'या नोंदीने रूममधील नोंद जितकी मोठी असू शकते तितका आकार गाठला आहे.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'नवीन टॅब',
+  'Full screen': 'फुल स्क्रीन',
+  'Print…': 'प्रिंट करा…',
+  'Save page': 'पेज सेव्ह करा',
+  'Share…': 'शेअर करा…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ला हे करायचे आहे',
+  'Don’t allow': 'अनुमती देऊ नका',
+  Allow: 'परवानगी द्या',
+  'Use your camera': 'तुमचा कॅमेरा वापरा',
+  'Use your microphone': 'तुमचा मायक्रोफोन वापरा',
+  'Know your location': 'तुमचे स्थान जाणून घ्या',
+  'Show notifications': 'सूचना दर्शवा',
+  'See text and images copied to the clipboard': 'क्लिपबोर्डवर कॉपी केलेला मजकूर आणि इमेज पहा',
+  'Use your motion sensors': 'तुमचे मोशन सेन्सर वापरा',
+  'Download multiple files': 'एकापेक्षा जास्त फाइल डाउनलोड करा',
+  'Use fonts installed on your device': 'तुमच्या डिव्हाइसवर इंस्टॉल केलेले फॉंट वापरा',
+  'Use your MIDI devices': 'तुमची MIDI डिव्हाइस वापरा',
+  'Manage windows on all your displays': 'तुमच्या सर्व डिस्प्लेवर विंडो व्यवस्थापित करा',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'साइटची माहिती',
+  Camera: 'कॅमेरा',
+  Microphone: 'मायक्रोफोन',
+  Location: 'स्थान',
+  Notifications: 'सूचना',
+  Clipboard: 'क्लिपबोर्ड',
+  'Motion sensors': 'मोशन सेन्सर',
+  'Automatic downloads': 'स्वयंचलित डाउनलोड',
+  Fonts: 'फॉंट',
+  'MIDI devices': 'MIDI डिव्हाइस',
+  'Window management': 'विंडो व्यवस्थापन',
+  'Connection is secure': 'कनेक्शन सुरक्षित आहे',
+  'Connection is not secure': 'कनेक्शन सुरक्षित नाही',
+  Allowed: 'अनुमत',
+  Blocked: 'ब्लॉक केले',
+  'Reset permissions': 'परवानग्या रीसेट करा',
 }

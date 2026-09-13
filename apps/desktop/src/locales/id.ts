@@ -1207,10 +1207,7 @@ export const id: Dictionary = {
   Reload: 'Muat ulang',
   'Clip this page': 'Simpan halaman ini',
   'Clip the link': 'Simpan tautannya',
-  'Allow the camera': 'Izinkan kamera',
-  'Allow the clipboard': 'Izinkan papan klip',
   'Open in the browser': 'Buka di peramban',
-  'Copy the address': 'Salin alamatnya',
   'Show it here': 'Tampilkan di sini',
   Website: 'Situs web',
   'Open a website': 'Buka situs web',
@@ -1345,4 +1342,45 @@ export const id: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Catatan ini sudah sebesar ukuran maksimum catatan di sebuah ruang.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Tab baru',
+  'Full screen': 'Layar penuh',
+  'Print…': 'Cetak…',
+  'Save page': 'Simpan halaman',
+  'Share…': 'Bagikan…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ingin',
+  'Don’t allow': 'Jangan izinkan',
+  Allow: 'Izinkan',
+  'Use your camera': 'Menggunakan kamera Anda',
+  'Use your microphone': 'Menggunakan mikrofon Anda',
+  'Know your location': 'Mengetahui lokasi Anda',
+  'Show notifications': 'Menampilkan notifikasi',
+  'See text and images copied to the clipboard':
+    'Melihat teks dan gambar yang disalin ke papan klip',
+  'Use your motion sensors': 'Menggunakan sensor gerakan Anda',
+  'Download multiple files': 'Mendownload beberapa file',
+  'Use fonts installed on your device': 'Menggunakan font yang diinstal di perangkat Anda',
+  'Use your MIDI devices': 'Menggunakan perangkat MIDI Anda',
+  'Manage windows on all your displays': 'Mengelola jendela di semua layar Anda',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informasi situs',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Lokasi',
+  Notifications: 'Notifikasi',
+  Clipboard: 'Papan klip',
+  'Motion sensors': 'Sensor gerakan',
+  'Automatic downloads': 'Download otomatis',
+  Fonts: 'Font',
+  'MIDI devices': 'Perangkat MIDI',
+  'Window management': 'Pengelolaan jendela',
+  'Connection is secure': 'Koneksi aman',
+  'Connection is not secure': 'Koneksi tidak aman',
+  Allowed: 'Diizinkan',
+  Blocked: 'Diblokir',
+  'Reset permissions': 'Reset izin',
 }

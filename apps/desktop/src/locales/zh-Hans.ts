@@ -1182,10 +1182,7 @@ export const zhHans: Dictionary = {
   Reload: '重新加载',
   'Clip this page': '保存此页',
   'Clip the link': '保存链接',
-  'Allow the camera': '允许使用相机',
-  'Allow the clipboard': '允许使用剪贴板',
   'Open in the browser': '在浏览器中打开',
-  'Copy the address': '复制地址',
   'Show it here': '在此显示',
   Website: '网站',
   'Open a website': '打开网站',
@@ -1310,4 +1307,44 @@ export const zhHans: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '这则笔记已达到房间中笔记可以达到的最大大小。',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': '新建标签页',
+  'Full screen': '全屏',
+  'Print…': '打印…',
+  'Save page': '保存页面',
+  'Share…': '共享…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': '想要',
+  'Don’t allow': '不允许',
+  Allow: '允许',
+  'Use your camera': '使用您的摄像头',
+  'Use your microphone': '使用您的麦克风',
+  'Know your location': '获取您的位置',
+  'Show notifications': '显示通知',
+  'See text and images copied to the clipboard': '查看复制到剪贴板的文字和图片',
+  'Use your motion sensors': '使用您的移动传感器',
+  'Download multiple files': '下载多个文件',
+  'Use fonts installed on your device': '使用您设备上安装的字体',
+  'Use your MIDI devices': '使用您的 MIDI 设备',
+  'Manage windows on all your displays': '管理您的所有显示屏上的窗口',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': '网站信息',
+  Camera: '摄像头',
+  Microphone: '麦克风',
+  Location: '位置信息',
+  Notifications: '通知',
+  Clipboard: '剪贴板',
+  'Motion sensors': '移动传感器',
+  'Automatic downloads': '自动下载项',
+  Fonts: '字体',
+  'MIDI devices': 'MIDI 设备',
+  'Window management': '窗口管理',
+  'Connection is secure': '连接是安全的',
+  'Connection is not secure': '连接不安全',
+  Allowed: '已允许',
+  Blocked: '已阻止',
+  'Reset permissions': '重置权限',
 }
