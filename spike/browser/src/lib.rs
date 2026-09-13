@@ -149,6 +149,14 @@ fn step(spike: &Arc<Mutex<Spike>>, n: usize) {
                 held.browsers.len() == 2,
                 &format!("{} browsers", held.browsers.len()),
             );
+            let chrome = held
+                .browser(0)
+                .map(|host| host.runtime_style() == RuntimeStyle::CHROME);
+            check(
+                "Chrome style, which is what unlocks the pages below",
+                chrome == Some(true),
+                "BrowserHost::runtime_style",
+            );
             say(&format!(
                 "\"event\":\"ready\",\"pid\":{},\"browsers\":{}",
                 std::process::id(),
@@ -393,7 +401,12 @@ wrap_load_handler! {
 // ---------------------------------------------------------------------------
 
 wrap_browser_view_delegate! {
-    struct SpikeBrowserViewDelegate;
+    // A field and not a unit struct: `wrap_browser_view_delegate!` matches
+    // `struct Name { field: ty, ... }` and nothing else, which the first version of
+    // this file learned from CI. And the field is worth having anyway - see below.
+    struct SpikeBrowserViewDelegate {
+        runtime_style: RuntimeStyle,
+    }
 
     impl ViewDelegate {}
 
@@ -408,10 +421,26 @@ wrap_browser_view_delegate! {
             popup_browser_view: Option<&mut BrowserView>,
             _is_devtools: i32,
         ) -> i32 {
-            let mut delegate =
-                SpikeWindowDelegate::new(RefCell::new(popup_browser_view.cloned()), None);
+            let mut delegate = SpikeWindowDelegate::new(
+                RefCell::new(popup_browser_view.cloned()),
+                self.runtime_style,
+            );
             window_create_top_level(Some(&mut delegate));
             1
+        }
+
+        /// **Chrome style, said out loud.** This one line is what gives this
+        /// browser Chromium's own pages, its own extension machinery, its own
+        /// print preview and its own find bar. `RuntimeStyle::ALLOY` here would
+        /// leave a browser that blocks `chrome://settings` and every other page
+        /// this spike exists to load - CEF holds a twenty-four-host allowlist for
+        /// Alloy-style browsers and none of those pages is on it.
+        ///
+        /// And no toolbar comes with it: `GetChromeToolbarType` defaults to
+        /// `CEF_CTT_NONE`, which is not overridden here. Chromium's features,
+        /// the host's window. See docs/browser.md.
+        fn browser_runtime_style(&self) -> RuntimeStyle {
+            self.runtime_style
         }
     }
 }
@@ -419,7 +448,7 @@ wrap_browser_view_delegate! {
 wrap_window_delegate! {
     struct SpikeWindowDelegate {
         browser_view: RefCell<Option<BrowserView>>,
-        spike: Option<Arc<Mutex<Spike>>>,
+        runtime_style: RuntimeStyle,
     }
 
     impl ViewDelegate {
@@ -452,6 +481,10 @@ wrap_window_delegate! {
                 Some(host) => host.try_close_browser(),
                 None => 1,
             }
+        }
+
+        fn window_runtime_style(&self) -> RuntimeStyle {
+            self.runtime_style
         }
     }
 }
@@ -519,7 +552,7 @@ wrap_browser_process_handler! {
             // window, the strip and the bar stay the host's. That combination is
             // the whole reason CEF is the recommendation in docs/browser.md.
             let mut client_a = self.client.borrow().clone();
-            let mut view_delegate = SpikeBrowserViewDelegate::new();
+            let mut view_delegate = SpikeBrowserViewDelegate::new(RuntimeStyle::CHROME);
             let browser_view = browser_view_create(
                 client_a.as_mut(),
                 Some(&CefString::from(TAB_A)),
@@ -529,7 +562,7 @@ wrap_browser_process_handler! {
                 Some(&mut view_delegate),
             );
             let mut window_delegate =
-                SpikeWindowDelegate::new(RefCell::new(browser_view), Some(spike.clone()));
+                SpikeWindowDelegate::new(RefCell::new(browser_view), RuntimeStyle::CHROME);
             window_create_top_level(Some(&mut window_delegate));
 
             // Tab B: a second browser, and the one measurement everything else
@@ -544,7 +577,7 @@ wrap_browser_process_handler! {
             // one process. Proving it twice in two different ways would prove the
             // wrong one twice.
             let mut client_b = self.client.borrow().clone();
-            let mut view_delegate_b = SpikeBrowserViewDelegate::new();
+            let mut view_delegate_b = SpikeBrowserViewDelegate::new(RuntimeStyle::CHROME);
             let browser_view_b = browser_view_create(
                 client_b.as_mut(),
                 Some(&CefString::from(TAB_B)),
@@ -554,7 +587,7 @@ wrap_browser_process_handler! {
                 Some(&mut view_delegate_b),
             );
             let mut window_delegate_b =
-                SpikeWindowDelegate::new(RefCell::new(browser_view_b), None);
+                SpikeWindowDelegate::new(RefCell::new(browser_view_b), RuntimeStyle::CHROME);
             window_create_top_level(Some(&mut window_delegate_b));
 
             let mut task = Step::new(spike, 0);

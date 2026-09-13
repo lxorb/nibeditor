@@ -426,9 +426,10 @@ and it may be worth more than the browser. Today the editor runs on Chromium on
 Windows and on WebKit on macOS and Linux, and that is the largest source of
 inconsistency in the product: every layout difference, every font-rendering
 difference, every `contenteditable` and `IntersectionObserver` and CSS difference
-in the list in `docs/gaps` traces back to it. B deletes that whole class of bug and
-replaces it with a single engine nib pins and tests. "ONE consistent design on
-every device" stops being a thing to chase.
+that has ever needed a note saying "on a Mac" traces back to it. B deletes that whole
+class of bug and replaces it with a single engine nib pins and tests. "ONE consistent
+design on every device" stops being a thing to chase and becomes a property of the
+build.
 
 **The work above the engine is identical either way.** Everything in sections 3, 4
 and 5 - the `chrome://` tabs, the extension list on the account, the new tab page,
@@ -1051,4 +1052,39 @@ that nothing above rests on a plausible sentence.
 | `scripts/measure.py` | counts the processes by their `--type=` switch, sums the tree's resident set, weighs the staged tree file by file, photographs the screen, and fails the job if more than one browser process served two tabs |
 | `scripts/stage.py` | the layout a release needs, including the macOS app bundle with its framework and five helper bundles - the part of shipping CEF that has nothing to do with Rust |
 
+`spike/` is outside the app's Cargo workspace, outside `pnpm-workspace.yaml`,
+ignored by `eslint.config.js` and by `knip.json`, and built by no workflow that runs
+on main or on a pull request. That is deliberate and worth keeping: the moment a
+300 MB download is on the path of an ordinary check, every contribution gets slower.
+
 _The numbers are in the report from the run; see the pull request's artefacts._
+
+---
+
+## 10. What is left
+
+- **The engine is one to two Chromium milestones behind Chrome, always.** Section 7.
+  Nothing in this design fixes it; CEF's branch cadence is upstream and manual.
+- **H.264 and AAC**, until CEF is built with them or
+  [#3559](https://github.com/chromiumembedded/cef/issues/3559) lands. A ship gate.
+- **Chromium's sandbox on Windows**, until nib's build is the DLL `bootstrap.exe`
+  hosts. A ship gate, and the same work buys out-of-band engine updates.
+- **The Chrome Web Store's own install flow is unproven.** The CRX-and-policy route
+  is the plan and batch 4 proves it; if the store's own button works in a
+  Chrome-style browser, better.
+- **An extension's own settings do not follow the account.** Chrome syncs them
+  through a Google account and there is no second door.
+- **Translate depends on Google keys a CEF build does not have.** nib's own
+  providers are the substitute, and the row is not drawn if it would fail.
+- **The page still blinks while something is over it.** Chrome style rules out
+  off-screen rendering, so a native view over the pane is the only shape and an
+  overlay means hiding the page. `web-tabs.md` already says this; CEF does not
+  change it.
+- **No sandbox in an AppImage or a snap**, so the browser should not be offered in
+  those builds. Section 7.
+- **`tauri-runtime-cef` is unpublished**, and batch 1 is allowed to end in "not
+  yet".
+- **Android and iOS get the system browser**, because CEF has no build for either.
+- **The saved-website format is `.url`**, which is a decision being made next door
+  rather than here; this design reads it and does not change it. See
+  `docs/web-tabs.md`.
