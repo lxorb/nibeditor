@@ -1,0 +1,64 @@
+name: ci-check-webfreeze
+
+# A throwaway: an app to run on the machine that has the freeze. The Rust does
+# not compile on that machine, so the exe is built here and carried back. Native
+# ARM64, the same row release.yml builds for that machine, so nothing about the
+# measurement is about emulation.
+#
+# Deleted with the branch when the freeze is fixed.
+
+on:
+  push:
+    branches: [ci-check-webfreeze]
+
+concurrency:
+  group: webfreeze-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    runs-on: windows-11-arm
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          key: webfreeze-arm64
+
+      - run: pnpm install --frozen-lockfile
+
+      # No bundle: an installer is twenty minutes of NSIS for a file nobody here
+      # installs. The exe beside its resources is what a probe runs.
+      #
+      # An identifier of its own, so the probe gets a settings folder, a webview
+      # profile and a session of its own and cannot walk over the session of the
+      # app the machine already has installed.
+      - name: Build the app
+        shell: bash
+        run: |
+          pnpm --filter @nib/desktop exec tauri build --no-bundle \
+            --config '{"identifier":"ch.emilvinu.nib.probe"}'
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nib-webfreeze-arm64
+          if-no-files-found: error
+          path: apps/desktop/src-tauri/target/release/Nib.exe
