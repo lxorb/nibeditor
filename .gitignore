@@ -61,3 +61,9 @@ spike/browser/stage/
 spike-out/
 
 .cef/
+
+# The Tauri checkout the flagged CEF build compiles against, made by
+# apps/desktop/src-tauri/cef/upstream.py out of the revision pinned beside it, and
+# what the gate writes when it runs. See docs/browser.md.
+apps/desktop/src-tauri/cef/.upstream/
+gate-out/
