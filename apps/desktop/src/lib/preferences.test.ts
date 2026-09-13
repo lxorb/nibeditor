@@ -60,18 +60,21 @@ function readsAsOneSentence(hint: string, label: string) {
 /** The `i` beside a label: for the settings whose name only means something to
  *  somebody who already knows the word. */
 describe('the sentence behind a setting', () => {
-  const HINTED = [
-    'Strict CommonMark',
-    'Smart punctuation',
-    'A single newline breaks the line',
-    'New links',
-    'Number headings',
-    'Number equations',
+  /** Each with the pane it is in, and in the order the panes offer them: how a link
+   *  is written is a setting about the editor and sits there, and the rest are about
+   *  the markdown itself. */
+  const HINTED: readonly (readonly [pane: string, label: string])[] = [
+    ['editor', 'New links'],
+    ['markdown', 'Strict CommonMark'],
+    ['markdown', 'Smart punctuation'],
+    ['markdown', 'A single newline breaks the line'],
+    ['markdown', 'Number headings'],
+    ['markdown', 'Number equations'],
   ]
 
-  test('is there for the markdown switches a word does not explain', () => {
-    for (const label of HINTED) {
-      expect(field('markdown', label).hint, label).toBeTruthy()
+  test('is there for the settings a word does not explain', () => {
+    for (const [pane, label] of HINTED) {
+      expect(field(pane, label).hint, label).toBeTruthy()
     }
   })
 
@@ -81,12 +84,12 @@ describe('the sentence behind a setting', () => {
       .filter((one) => one.hint)
       .map((one) => one.label)
 
-    expect(hinted).toEqual(HINTED)
+    expect(hinted).toEqual(HINTED.map(([, label]) => label))
   })
 
   test('is one plain sentence, which is all a tooltip has room for', () => {
-    for (const label of HINTED) {
-      readsAsOneSentence(field('markdown', label).hint ?? '', label)
+    for (const [pane, label] of HINTED) {
+      readsAsOneSentence(field(pane, label).hint ?? '', label)
     }
   })
 })
