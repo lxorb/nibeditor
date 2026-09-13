@@ -1282,12 +1282,16 @@ neither copy declares a native library and because no plugin hands one of its ty
 `tauri`. It is the kind of thing that only a build finds, and it is why the patch list
 has a test over it.
 
-**One thing the crate had to give up, and it is one line in `web_tabs.rs`.** The
-closure that answers a page asking for a new window named its own argument's type -
-`NewWindowFeatures` - and on the branch that type carries two type parameters where
-the system engine's carries none. The annotation is redundant in both, so it is gone
-and the closure infers it; that is the only line of the app's own product code that
-batch 1 changed, and the file it is in is being reworked next door.
+**What the crate gave up in `web_tabs.rs`, once it was rebased onto the browser
+rework.** Two things, both small. The closure that answers a page asking for a new
+window named its own argument's type - `NewWindowFeatures` - and on the branch that
+type carries two type parameters where the system engine's carries none; the
+annotation is redundant in both, so it is gone and the closure infers it. And
+`web_open`'s two per-platform storage blocks - `data_directory` on Windows and Linux,
+`data_store_identifier` on a Mac, with the `store()` helper and the `STORE_ID`
+constant behind them - collapse into one call, `engine::web_store(builder, &app)?`,
+which is the seam: byte-identical on the system engine, the browsing profile under
+nib's own Chromium. Nothing else of the app's own product code changed.
 
 **One good surprise about this machine.** `cef-dll-sys` resolved
 `cef_binary_151.3.24+g2384915+chromium-151.0.7922.174_windowsarm64_minimal` when the
