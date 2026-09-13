@@ -99,6 +99,12 @@ pub struct Note {
     /// Read on this pass for the reason the icon is: the space is already being
     /// read. See web-tab/shortcut.ts and docs/web-tabs.md.
     url: Option<String>,
+    /// The site's own mark, as an address: a website's `Nib-Icon`, so the file list
+    /// draws the favicon in front of the row rather than the plain globe - before the
+    /// page has loaded, and on a machine that has never opened the site. None for
+    /// every note and canvas, and for a website nobody has followed a link out of yet.
+    /// Read on this pass for the reason the icon is. See web-tab/shortcut.ts.
+    favicon: Option<String>,
 }
 
 /// A whole space's links.
@@ -144,11 +150,13 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     // And the websites, so a link can be made to one. A shortcut is a file rather
     // than a note - `Svelte docs.url` - and it stays among `files` like a canvas;
     // it is here as well because `[[Svelte docs]]` resolves by name against this
-    // list, and a website is a document in the space that a note may point at. What
-    // is inside the file is not read: an address is not a link out of the space's
-    // own graph, and the words of it are the search's business. See shortcut.ts.
+    // list, and a website is a document in the space that a note may point at. Its
+    // one line worth reading is the favicon the file list draws in front of the row:
+    // an address is not a link out of the graph, and the words of it are the search's
+    // business, but the site's own mark is the row's. See shortcut.ts.
     for path in others.iter().filter(|path| is_shortcut(path)) {
-        out.push(shortcut_note(relative_to(&dir, path)));
+        let body = fs::read_to_string(path).unwrap_or_default();
+        out.push(shortcut_note(relative_to(&dir, path), &body));
     }
 
     // By path, so the order is the browser's order too: there the notes, the
@@ -198,6 +206,9 @@ fn note_at(relative: String, body: &str) -> Note {
             .as_ref()
             .map_or_else(Vec::new, |one| front_matter::list(body, one, "aliases")),
         url: said("url"),
+        // A note wears its own front-matter icon, not a site's favicon; that is a
+        // website's, read in `shortcut_note`.
+        favicon: None,
     }
 }
 
@@ -303,17 +314,18 @@ fn canvas_note(relative: String, body: &str) -> Note {
         // A plane of cards is never a website: a canvas has no front matter to say
         // so, and JSON Canvas has no key for one.
         url: None,
+        favicon: None,
     }
 }
 
-/// A website as the link index sees it: a name, and nothing else at all.
+/// A website as the link index sees it: a name, and the site's own mark.
 ///
 /// A shortcut holds one address and no words: no links out, no headings, no blocks,
-/// no tags, and no icon of its own - there is nowhere in the format to put one that
-/// another program reading it would not trip over. It is in the index so that a link
-/// can be made to it and so that the graph has a node for it, which is what a
-/// website in a space is.
-fn shortcut_note(relative: String) -> Note {
+/// no tags, and no front-matter icon of its own. It is in the index so that a link
+/// can be made to it and so that the graph has a node for it, which is what a website
+/// in a space is - and it carries the one thing the file list wants that the name
+/// cannot give, the favicon out of its `Nib-Icon` key.
+fn shortcut_note(relative: String, content: &str) -> Note {
     // The extension is part of the name, the way it is for a canvas: a link may be
     // written `[[Svelte docs.url]]` as well as `[[Svelte docs]]`.
     let name = relative.rsplit('/').next().unwrap_or(&relative).to_string();
@@ -331,7 +343,25 @@ fn shortcut_note(relative: String) -> Note {
         // What `url:` means here is a note that is a website in the old format and
         // wants converting; a shortcut is already one. See shortcut.ts.
         url: None,
+        favicon: favicon_of(content),
     }
+}
+
+/// The site's own mark out of a shortcut, as an address: the `Nib-Icon` line the app
+/// writes into a `.url`. None for a `.webloc`, which has no such key, and for a
+/// shortcut nobody has followed a link out of yet. A twenty-line reader for a
+/// twenty-line file, so the whole INI parser the app has is not asked for on a pass
+/// that wants one line; see web-tab/shortcut.ts, which writes it and reads it there.
+fn favicon_of(content: &str) -> Option<String> {
+    content.lines().find_map(|line| {
+        let (key, value) = line.split_once('=')?;
+        if !key.trim().eq_ignore_ascii_case("nib-icon") {
+            return None;
+        }
+
+        let value = value.trim();
+        (!value.is_empty()).then(|| value.to_string())
+    })
 }
 
 /// The tags of one note as the index keeps them: each once, folded, and without
@@ -833,7 +863,8 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, canvas_note, decode, heading_of, note_at, note_tags, prose, without_code, Link,
+        block_id_of, canvas_note, decode, favicon_of, heading_of, note_at, note_tags, prose,
+        shortcut_note, without_code, Link,
     };
 
     /// The links out of one note, which is one of the three lists the pass down it
@@ -880,6 +911,46 @@ mod tests {
         );
 
         assert_eq!(read.url.as_deref(), Some("https://svelte.dev/docs"));
+    }
+
+    /// A website carries the site's own mark for the file list, out of its `Nib-Icon`
+    /// key. Emil, 2026-09-13: *"the website favicon should also be used in the
+    /// sidebar."* Read on the same pass as everything else, so a row has the favicon
+    /// before the file has been opened and on a machine that never has.
+    #[test]
+    fn a_website_carries_its_favicon_for_the_file_list() {
+        let read = shortcut_note(
+            "Reading/Svelte docs.url".to_string(),
+            "[InternetShortcut]\nURL=https://svelte.dev/docs\nNib-Icon=https://svelte.dev/favicon.png\n",
+        );
+
+        assert_eq!(read.name, "Svelte docs.url");
+        assert_eq!(
+            read.favicon.as_deref(),
+            Some("https://svelte.dev/favicon.png")
+        );
+        // A shortcut is a name and a mark and nothing else the index reads off it.
+        assert!(read.url.is_none());
+        assert!(read.icon.is_none());
+    }
+
+    /// A shortcut nobody has followed a link out of has no mark yet, and a `.webloc`
+    /// never carries one, so the row falls back to the globe.
+    #[test]
+    fn a_shortcut_with_no_mark_has_no_favicon() {
+        let bare = shortcut_note(
+            "A.url".to_string(),
+            "[InternetShortcut]\nURL=https://a.example/\n",
+        );
+        assert!(bare.favicon.is_none());
+
+        // The key is matched however it is cased, and a value of nothing is nothing.
+        assert_eq!(
+            favicon_of("nib-icon=https://a.example/i.png").as_deref(),
+            Some("https://a.example/i.png")
+        );
+        assert!(favicon_of("Nib-Icon=   ").is_none());
+        assert!(favicon_of("URL=https://a.example/").is_none());
     }
 
     #[test]

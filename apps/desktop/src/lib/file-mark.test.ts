@@ -153,13 +153,16 @@ describe('the mark a file or folder chose for itself', () => {
     expect(source).toContain('fallback={MARKS[mark]}')
   })
 
-  /** The mark a website wears comes off its name like every other kind's, because a
-   *  website in the space is `Svelte docs.url` - a shortcut file. It used to be a
-   *  note with `url:` in its front matter, which no name could say, and every list
-   *  that drew a mark had to ask the link index what the file said. Nothing asks
-   *  now, and this is what keeps the lookup from coming back. */
-  test('nothing about a mark is read out of the index', () => {
+  /** Which KIND a row is comes off its name: a website is `Svelte docs.url`, a
+   *  shortcut file, so the globe is drawn from the name like every other kind's and
+   *  no list has to ask the index what the file is - the lookup the old `url:` note
+   *  needed does not come back. The site's own favicon, which a website does wear
+   *  over the globe, is read through the same chosen-icon façade every mark uses, so
+   *  this component still names no store of its own. */
+  test('the store is reached through the façade, never named here', () => {
     expect(source).not.toContain('links.')
+    expect(source).toContain("from './chosen-icon'")
+    expect(source).toContain('faviconFor(path)')
   })
 
   /** One box, whichever of the three kinds is in it, and one size in it: `--icon-md`

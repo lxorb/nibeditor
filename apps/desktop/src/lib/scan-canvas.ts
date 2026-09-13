@@ -36,6 +36,8 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     // And a plane of cards is never a website: there is no front matter in JSON to
     // say so, and JSON Canvas has no key for one.
     url: null,
+    // A favicon is a website's; a canvas draws its own icon above.
+    favicon: null,
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({

@@ -31,6 +31,15 @@ export function chosenIcon(path: string): string | null {
   return links.iconOf(path) ?? workspace.folderIcons.iconOf(mapKey(path))
 }
 
+/** A website's own mark, as an address, or null for anything that is not one or has
+ *  no mark cached yet. The favicon out of the `.url`'s `Nib-Icon`, drawn as a picture
+ *  in front of the row rather than the plain globe - the same mark the tab strip and
+ *  the address bar show. Here beside the chosen icon so a row asks one façade for
+ *  what it draws and never the index by name; see link-index `faviconOf`. */
+export function faviconFor(path: string): string | null {
+  return links.faviconOf(path)
+}
+
 /** The colour a stroked icon is drawn in, or null for the plain foreground.
  *
  *  A second value rather than part of the first, because the first is what other

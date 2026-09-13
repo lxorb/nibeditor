@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { scanCanvas } from './scan-canvas'
-import { scanNote } from './scan-note'
+import { scanNote, scanShortcut } from './scan-note'
 
 describe('reading a note for the index', () => {
   test('finds its headings, its blocks and its links', () => {
@@ -120,5 +120,31 @@ describe('reading a canvas for the index', () => {
    *  written with, and nothing writes `[[Board]]` for a canvas. */
   test('and never an alias', () => {
     expect(scanCanvas('Board.canvas', '{"nib":{"icon":"rocket"}}').aliases).toEqual([])
+  })
+})
+
+/** A website is a shortcut file, and the one thing the file list wants off it that
+ *  its name cannot give is the site's own mark. Emil, 2026-09-13: *"the website
+ *  favicon should also be used in the sidebar."* The twin of `shortcut_note`'s tests
+ *  in links.rs. */
+describe('reading a website for the index', () => {
+  const url =
+    '[InternetShortcut]\nURL=https://svelte.dev/docs\nNib-Icon=https://svelte.dev/favicon.png\n'
+
+  test('carries the favicon out of its Nib-Icon key', () => {
+    const site = scanShortcut('Reading/Svelte docs.url', url)
+    expect(site.name).toBe('Svelte docs.url')
+    expect(site.favicon).toBe('https://svelte.dev/favicon.png')
+    // A shortcut is a name and a mark, and nothing else the index reads off it.
+    expect(site.url).toBeNull()
+    expect(site.icon).toBeNull()
+    expect(site.links).toEqual([])
+  })
+
+  test('and the plain globe where there is no mark yet', () => {
+    const bare = scanShortcut('A.url', '[InternetShortcut]\nURL=https://a.example/\n')
+    expect(bare.favicon).toBeNull()
+    // A .webloc carries no such key either.
+    expect(scanShortcut('A.webloc', '<plist><dict></dict></plist>').favicon).toBeNull()
   })
 })

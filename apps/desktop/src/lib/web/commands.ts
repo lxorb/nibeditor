@@ -402,8 +402,9 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
       // A website is both: a file beside the notes, so `[[Svelte docs.url]]`
       // resolves, and a row in the index, so `[[Svelte docs]]` does and the graph
-      // has a node for it. Nothing in the file is read; see scanShortcut.
-      if (isWebTarget(row.path)) notes.push(scanShortcut(relative(row.path)))
+      // has a node for it. Its one line worth reading is the favicon the file list
+      // draws in front of the row; see scanShortcut.
+      if (isWebTarget(row.path)) notes.push(scanShortcut(relative(row.path), row.content))
 
       // A `.keep` is scaffolding rather than a file somebody put in the space, and
       // a PDF's highlights are part of the PDF.

@@ -316,6 +316,26 @@ class Links {
     return map
   })
 
+  /** The websites that carry the site's own mark, by path: a `.url`'s `Nib-Icon`,
+   *  which the file list draws in front of the row rather than the plain globe.
+   *
+   *  The same shape as the icons above and for the same reason: a space holds a
+   *  handful of websites, so the map is the size of what is there rather than of the
+   *  space, and a row redraws by itself the moment the file's `Nib-Icon` changes -
+   *  which is what makes a favicon a page found land in the tree without the row being
+   *  told. It is kept apart from `icons` because a favicon is an address the row draws
+   *  as a picture, not an icon name icons.ts reads. See file-mark and web-tab. */
+  private readonly favicons = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.favicon) map.set(note.path, note.favicon)
+    }
+
+    return map
+  })
+
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
    *
@@ -339,6 +359,15 @@ class Links {
   urlOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.addresses.get(relative) ?? null
+  }
+
+  /** The site's own mark for the website at this path, as an address, or null where
+   *  there is none - a website nobody has followed a link out of yet, or anything
+   *  that is not one. Drawn as a picture in front of the row; see FileMark.svelte.
+   *  Takes either spelling of a path, like the icon above it. */
+  faviconOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.favicons.get(relative) ?? null
   }
 
   /** Whether this space still holds a website written as a note, which is what the
