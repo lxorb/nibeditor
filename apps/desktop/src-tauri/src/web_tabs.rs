@@ -52,6 +52,10 @@ const LABEL: &str = "web-";
 /// it calls itself, and whether there is anywhere to step.
 const MOVED: &str = "nib://web-tab";
 
+/// The event the window hears when a site asks for something it has to be given: the
+/// camera, the microphone, where you are, notifications, the clipboard to read.
+const ASKED: &str = "nib://web-ask";
+
 /// The largest page a clip reads, in characters. A note the account would refuse
 /// is worse than a clip that stops early, and 4 MB is what the API takes; see
 /// `MAX_NOTE_BYTES` in the clipper.
@@ -60,17 +64,23 @@ const LONGEST_PAGE: usize = 4_000_000;
 /// What a site in a web tab does not get, taken away before its own first script
 /// runs.
 ///
-/// Two kinds of thing. The app's own globals, so nothing in the page can speak to
-/// the crate even by accident: the capabilities already refuse it, and this is the
-/// lock that does not depend on a list of labels being right. And the devices a
-/// page can ask a browser for, which a note-taking app has no business granting
-/// silently: the camera and the microphone, the clipboard, where you are, and the
-/// buses a page can reach hardware over. Taking the API away rather than answering
-/// a prompt with no is what keeps the engine from putting a prompt on screen at
-/// all.
+/// Two kinds of thing, and it used to be three. The app's own globals, so nothing in
+/// the page can speak to the crate even by accident: the capabilities already refuse
+/// it, and this is the lock that does not depend on a list of labels being right. And
+/// the buses a page can reach hardware over - Bluetooth, USB, serial, HID - and the
+/// credential store, none of which a note-taking app has any business handing to a
+/// page and none of which a browser asks about in a bubble anybody could answer.
 ///
-/// `__HIDDEN__` is filled in by `guard` with whatever this origin has not been
-/// granted, which is everything until somebody says otherwise.
+/// **What is no longer here is the camera, the microphone, where you are,
+/// notifications and the clipboard.** Those were taken off `Navigator.prototype` too,
+/// so the engine never had a request to raise and the only way to allow one was a row
+/// in a menu saying "Allow the camera" - which is not how a browser works and not how
+/// anybody expects to be asked. Emil, 2026-09-13: *"a lot of stuff is still done
+/// extremely bad, e.g. having explicit buttons for allow clipboard or allow camera. I
+/// don't think chrome does it like this."* He is right: Chrome asks at the point of
+/// use, in a bubble under the address bar, and remembers the answer for that site. So
+/// the APIs are left where they are and the engine's own request is what the window
+/// answers; see `ask` and `web_answer`.
 const GUARD: &str = r"(function () {
   try {
     delete window.__TAURI_INTERNALS__
@@ -86,13 +96,14 @@ const GUARD: &str = r"(function () {
     try {
       Object.defineProperty(on, name, { configurable: true, get: () => undefined })
     } catch (error) {
-      // A property that will not be redefined is one the engine still prompts
-      // for, and the prompt is answered by nobody pressing allow.
+      // A property that will not be redefined is a bus the engine will still ask
+      // about, and a request nothing answers is a request that was refused.
     }
   }
 
-  for (const name of __HIDDEN__) hide(Navigator.prototype, name)
-  hide(window, 'Notification')
+  for (const name of ['bluetooth', 'usb', 'serial', 'hid', 'credentials']) {
+    hide(Navigator.prototype, name)
+  }
 })()";
 
 /// Puts a revived page back where the reading was.
@@ -454,6 +465,19 @@ struct Looked {
     y: f64,
 }
 
+/// What a site has asked for, on its way to the window.
+///
+/// `id` is what the answer comes back with: the request is held open in the engine
+/// while the reader decides, and the only thing either side needs to agree on is which
+/// request is being answered.
+#[derive(Clone, Serialize)]
+struct Asked {
+    tab: String,
+    id: u64,
+    origin: String,
+    kind: String,
+}
+
 /// Where a tab is, for the window to write down against the note: the page, the place
 /// on it, and the trail behind it.
 #[derive(Serialize)]
@@ -529,30 +553,16 @@ fn address(url: &str) -> Result<Url, String> {
     }
 }
 
-/// The guard script for one origin: `GUARD` with the list of what it may not have.
+/// The guard script, which is the same for every page now.
 ///
-/// A grant is spent by leaving that one alone. The hardware buses are never in the
-/// list of grants, so they are never left alone; a note-taking app has no reason to
-/// let a page talk to a USB device.
-fn guard(granted: &[String]) -> String {
-    let asked = ["camera", "clipboard", "location"];
-    let named = ["mediaDevices", "clipboard", "geolocation"];
-
-    let mut hidden: Vec<&str> = Vec::new();
-    for (want, api) in asked.iter().zip(named) {
-        if !granted.iter().any(|one| one == want) {
-            hidden.push(api);
-        }
-    }
-    hidden.extend(["bluetooth", "usb", "serial", "hid", "credentials"]);
-
-    let list = hidden
-        .iter()
-        .map(|one| format!("'{one}'"))
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    GUARD.replace("__HIDDEN__", &format!("[{list}]"))
+/// It used to be built per origin, out of a list of what that site had been allowed,
+/// and a change to the list meant building the webview again - which threw away the
+/// page somebody was reading to answer a question about the camera. What a site may do
+/// is now answered where a browser answers it, while the page goes on running; see
+/// `ask`. Kept as a function because the script is a constant and this is the one
+/// place that says so.
+fn guard() -> String {
+    GUARD.to_string()
 }
 
 /// The reader script, told whether it is after a selection.
@@ -567,14 +577,14 @@ fn reader(selection: bool) -> String {
 ///
 /// One string, because a builder is handed one script and two calls to it on one
 /// builder is a thing this crate should not have to be sure about.
-fn opening(granted: &[String], place: Option<Place>, url: &str) -> String {
+fn opening(place: Option<Place>, url: &str) -> String {
     let want = place.and_then(|one| {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
     match want {
-        None => guard(granted),
-        Some(one) => format!("{}\n{}", guard(granted), PLACE.replace("__PLACE__", &one)),
+        None => guard(),
+        Some(one) => format!("{}\n{}", guard(), PLACE.replace("__PLACE__", &one)),
     }
 }
 
@@ -628,7 +638,6 @@ pub async fn web_open(
     tab: String,
     url: String,
     pane: Pane,
-    granted: Vec<String>,
     revived: Revived,
 ) -> Result<(), String> {
     let address = address(&url)?;
@@ -653,7 +662,7 @@ pub async fn web_open(
         reason = "the storage builders below are per platform, and one platform sets neither"
     )]
     let mut builder = WebviewBuilder::new(label, WebviewUrl::External(address))
-        .initialization_script(opening(&granted, revived.place, &url))
+        .initialization_script(opening(revived.place, &url))
         .on_navigation(allowed)
         // The page takes its own drops. A file dropped on a site is the site's
         // business, and the app is not in the middle of it.
@@ -753,8 +762,27 @@ pub async fn web_open(
     tabs.built(&tab);
     made?;
 
+    listening(&app, &tab);
     tabs.walked(&tab, &url);
     Ok(())
+}
+
+/// Starts listening for what the site in this tab asks to be given.
+///
+/// After the build, because it is the engine's own event on the webview that has just
+/// been made, and on the window's thread, because that is the only thread the engine's
+/// objects may be touched from. See `ask`.
+fn listening(app: &AppHandle, tab: &str) {
+    let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) else {
+        return;
+    };
+
+    let window = view.window().label().to_string();
+    let asking = app.clone();
+    let named = tab.to_string();
+    let _ = view.with_webview(move |platform| {
+        ask::listen(&platform, asking, named, window);
+    });
 }
 
 /// Says where a page is, to the window that holds it and to nothing else.
@@ -1036,12 +1064,219 @@ pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, Str
     }))
 }
 
+/// What a site asked for, answered.
+///
+/// The request has been sitting open in the engine since the bubble went up - a
+/// deferral is the engine's own way of saying "I will wait" - and this is the window
+/// letting it go, with the answer the reader gave or the one they gave this site the
+/// last time it asked. Posted onto the window's own thread because that is the only
+/// thread the engine's objects may be touched from; see `ask`.
+#[tauri::command]
+pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
+    let _ = app.run_on_main_thread(move || ask::answer(id, allow));
+}
+
 /// The webview for a tab, or a reason there is none. A tab whose page has been
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
 fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&format!("{LABEL}{tab}"))
         .ok_or_else(|| "that tab has no page open".to_string())
+}
+
+/// Asking the reader what a site may do, the way a browser asks.
+///
+/// The engine raises a request when the page calls the API - `getUserMedia`,
+/// `geolocation.getCurrentPosition`, `Notification.requestPermission`,
+/// `clipboard.readText` - and that is the only honest moment to ask, because it is the
+/// moment the reader pressed something on the site. So the request is **held open**
+/// while the window puts Chrome's bubble under the address bar, and answered when they
+/// press Allow or Block, or at once from what they told this site last time.
+///
+/// Three things make this work and each is load bearing:
+///
+/// * **A deferral.** `GetDeferral` tells the engine to wait. The alternative - deciding
+///   here and now - would mean either refusing everything or running a message loop
+///   inside the engine's own event handler, which is the freeze this file spent a day
+///   on; see `web_open`.
+/// * **One thread.** Everything the engine hands out here belongs to the window's
+///   thread and may not be touched from another, so the requests waiting for an answer
+///   are kept in a thread local on that thread and `web_answer` posts itself there.
+///   That is also why none of this needs to be `Send`.
+/// * **The window decides.** What a site was allowed lives where the reader's other
+///   choices live - this device's own storage, per origin - so the crate asks and does
+///   not remember. See `lib/web-tab/permissions.svelte.ts`.
+#[cfg(windows)]
+mod ask {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    use tauri::webview::PlatformWebview;
+    use tauri::{AppHandle, Emitter};
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        ICoreWebView2Deferral, ICoreWebView2PermissionRequestedEventArgs,
+        COREWEBVIEW2_PERMISSION_KIND, COREWEBVIEW2_PERMISSION_KIND_CAMERA,
+        COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ, COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION,
+        COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS, COREWEBVIEW2_PERMISSION_KIND_MICROPHONE,
+        COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES,
+        COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS,
+        COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS, COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS,
+        COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT, COREWEBVIEW2_PERMISSION_STATE_ALLOW,
+        COREWEBVIEW2_PERMISSION_STATE_DENY,
+    };
+    use webview2_com::PermissionRequestedEventHandler;
+
+    use super::{Asked, ASKED};
+
+    /// One request the reader has not answered yet: the engine's own two objects, held
+    /// exactly as long as the bubble is up.
+    struct Waiting {
+        args: ICoreWebView2PermissionRequestedEventArgs,
+        deferral: ICoreWebView2Deferral,
+    }
+
+    thread_local! {
+        /// The requests waiting for an answer, on the window's own thread and nowhere
+        /// else. A `RefCell` rather than a lock because there is only ever one thread
+        /// in here.
+        static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
+    }
+
+    /// What the next request is called. Across threads, because the id is the only
+    /// thing about a request that leaves this thread.
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+
+    /// What the window calls each kind. Chrome's own words for them, because the bubble
+    /// says "wants to use your camera" and the window is what writes that sentence.
+    fn named(kind: COREWEBVIEW2_PERMISSION_KIND) -> Option<&'static str> {
+        match kind {
+            COREWEBVIEW2_PERMISSION_KIND_CAMERA => Some("camera"),
+            COREWEBVIEW2_PERMISSION_KIND_MICROPHONE => Some("microphone"),
+            COREWEBVIEW2_PERMISSION_KIND_GEOLOCATION => Some("location"),
+            COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS => Some("notifications"),
+            COREWEBVIEW2_PERMISSION_KIND_CLIPBOARD_READ => Some("clipboard"),
+            COREWEBVIEW2_PERMISSION_KIND_OTHER_SENSORS => Some("sensors"),
+            COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS => Some("downloads"),
+            COREWEBVIEW2_PERMISSION_KIND_LOCAL_FONTS => Some("fonts"),
+            COREWEBVIEW2_PERMISSION_KIND_MIDI_SYSTEM_EXCLUSIVE_MESSAGES => Some("midi"),
+            COREWEBVIEW2_PERMISSION_KIND_WINDOW_MANAGEMENT => Some("windows"),
+            // A kind this app has never heard of is a kind nobody can be asked about.
+            _ => None,
+        }
+    }
+
+    /// Starts listening on one webview. Called on the window's thread, once, as the
+    /// page is built.
+    #[allow(
+        unsafe_code,
+        reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
+    )]
+    pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
+        // Safe: the controller is the one this window owns, every object below is used
+        // only on this thread, and the handler outlives the call because WebView2 holds
+        // it.
+        unsafe {
+            let Ok(core) = webview.controller().CoreWebView2() else {
+                return;
+            };
+
+            let handler =
+                PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
+                    let Some(args) = args else {
+                        return Ok(());
+                    };
+
+                    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
+                    if args.PermissionKind(&raw mut kind).is_err() {
+                        return Ok(());
+                    }
+                    let Some(kind) = named(kind) else {
+                        // Nothing the window can put a sentence on screen about, so it is
+                        // refused the way everything used to be.
+                        let _ = args.SetState(COREWEBVIEW2_PERMISSION_STATE_DENY);
+                        return Ok(());
+                    };
+
+                    let mut uri = windows_core::PWSTR::null();
+                    if args.Uri(&raw mut uri).is_err() {
+                        return Ok(());
+                    }
+                    let origin = webview2_com::take_pwstr(uri);
+
+                    let Ok(deferral) = args.GetDeferral() else {
+                        return Ok(());
+                    };
+
+                    let id = NEXT.fetch_add(1, Ordering::Relaxed);
+                    WAITING.with_borrow_mut(|held| {
+                        held.insert(
+                            id,
+                            Waiting {
+                                args: args.clone(),
+                                deferral,
+                            },
+                        );
+                    });
+
+                    let _ = app.emit_to(
+                        window.as_str(),
+                        ASKED,
+                        Asked {
+                            tab: tab.clone(),
+                            id,
+                            origin,
+                            kind: kind.to_string(),
+                        },
+                    );
+
+                    Ok(())
+                }));
+
+            let mut token = 0i64;
+            let _ = core.add_PermissionRequested(&handler, &raw mut token);
+        }
+    }
+
+    /// The answer, given to the engine. On the window's own thread, which is where the
+    /// request has been waiting.
+    #[allow(
+        unsafe_code,
+        reason = "the request and its deferral are WebView2's own objects"
+    )]
+    pub fn answer(id: u64, allow: bool) {
+        let Some(waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
+            // Answered twice, or the page went away with the question. Nothing to let
+            // go of either way.
+            return;
+        };
+
+        // Safe: both objects came from this thread's own event and are used here and
+        // nowhere else.
+        unsafe {
+            let _ = waiting.args.SetState(if allow {
+                COREWEBVIEW2_PERMISSION_STATE_ALLOW
+            } else {
+                COREWEBVIEW2_PERMISSION_STATE_DENY
+            });
+            let _ = waiting.deferral.Complete();
+        }
+    }
+}
+
+#[cfg(not(windows))]
+mod ask {
+    use tauri::webview::PlatformWebview;
+    use tauri::AppHandle;
+
+    /// `WKWebView` and `WebKitGTK` both have the same event under another name - a
+    /// capture delegate and a `permission-request` signal - and neither is reachable
+    /// through what wry hands out. Until it is, a site on those platforms is answered
+    /// by the engine's own prompt; said out loud in docs/web-tabs.md.
+    pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _tab: String, _window: String) {}
+
+    /// Nothing was ever asked here, so nothing is ever answered.
+    pub fn answer(_id: u64, _allow: bool) {}
 }
 
 #[cfg(windows)]
@@ -1152,7 +1387,7 @@ mod shot {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed, guard, handed_over, reader, Trail, WebTabs};
+    use super::{allowed, guard, handed_over, opening, reader, Place, Trail, WebTabs};
     use tauri::Url;
 
     fn at(url: &str) -> Url {
@@ -1241,28 +1476,35 @@ mod tests {
         assert!(!trail.forward());
     }
 
+    /// The app is not in the page, and neither are the buses. What a browser asks about
+    /// is deliberately still there - the camera, the microphone, where you are,
+    /// notifications, the clipboard - because the engine's own request is what the
+    /// window answers now; see `ask`.
     #[test]
-    fn nothing_granted_takes_every_device_away() {
-        let script = guard(&[]);
-        assert!(script.contains("'mediaDevices'"));
-        assert!(script.contains("'clipboard'"));
-        assert!(script.contains("'geolocation'"));
+    fn the_app_and_the_hardware_buses_are_taken_away() {
+        let script = guard();
         assert!(script.contains("delete window.__TAURI_INTERNALS__"));
-        assert!(!script.contains("__HIDDEN__"));
-    }
-
-    #[test]
-    fn a_grant_is_spent_by_leaving_one_alone() {
-        let script = guard(&["camera".to_string()]);
-        assert!(!script.contains("'mediaDevices'"));
-        assert!(script.contains("'clipboard'"));
-    }
-
-    #[test]
-    fn the_hardware_buses_are_never_granted() {
-        let script = guard(&["usb".to_string(), "bluetooth".to_string()]);
         assert!(script.contains("'usb'"));
         assert!(script.contains("'bluetooth'"));
+        assert!(script.contains("'credentials'"));
+
+        assert!(!script.contains("'mediaDevices'"));
+        assert!(!script.contains("'geolocation'"));
+        assert!(!script.contains("Notification"));
+    }
+
+    /// A revived tab is put back where the reading was, and one that is being opened
+    /// for the first time is handed no place at all.
+    #[test]
+    fn a_revived_page_carries_the_place_it_was_left_at() {
+        let opened = opening(None, "https://a.example/page");
+        assert!(!opened.contains("__PLACE__"));
+        assert!(!opened.contains("scrollTo"));
+
+        let revived = opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page");
+        assert!(revived.contains("window.scrollTo"));
+        assert!(revived.contains("\"url\":\"https://a.example/page\""));
+        assert!(revived.contains("940"));
     }
 
     #[test]

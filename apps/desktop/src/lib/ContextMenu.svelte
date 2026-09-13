@@ -127,7 +127,10 @@
   }
 
   function choose(item: MenuItem) {
-    menu.hide()
+    // A row that says so stays: the zoom rows on a web tab are pressed two or three
+    // times in a row, and a menu that closed under each of them would be a menu
+    // somebody opens four times. See menu-item.ts.
+    if (!item.keep) menu.hide()
     item.run()
   }
 

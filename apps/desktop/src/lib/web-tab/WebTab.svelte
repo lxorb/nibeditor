@@ -17,9 +17,12 @@
    *  page the page is hidden - otherwise a menu would come up behind it. */
 
   import { onMount, untrack } from 'svelte'
+  import { fullscreen } from '../fullscreen.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
   import { overlays } from '../overlays'
+  import { settings } from '../settings.svelte'
+  import { shareThisFile } from '../sharing.svelte'
   import { startup } from '../startup.svelte'
   import { isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
@@ -28,9 +31,12 @@
   import { clipPage } from './clip'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
-  import { webRows } from './menu'
+  import { webRows, type WebActions } from './menu'
   import { pages, type Rect, type Step } from './pages.svelte'
+  import { grants, siteOf } from './permissions.svelte'
+  import WebAsk from './WebAsk.svelte'
   import WebBar from './WebBar.svelte'
+  import WebSite from './WebSite.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
@@ -259,6 +265,42 @@
   $effect(() => {
     if (address) marked = true
   })
+
+  /** How large the page is drawn, as a browser's own zoom. The tab's, because a reader
+   *  who made one site larger did not ask for every site to be. */
+  let zoom = $state(1)
+
+  /** Whether the popover behind the site's mark is open. */
+  let showingSite = $state(false)
+
+  /** The site this tab is on, which is what a permission and the popover are about. */
+  const site = $derived(siteOf(page.url))
+
+  /** The question this pane has to put on screen, if any: the first request from this
+   *  tab nobody has answered. One at a time, the way a browser asks. */
+  const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
+
+  /** Chrome's own rows, and what each of them does here; see menu.ts. */
+  const actions: WebActions = {
+    newTab: () => workspace.openWebsite(),
+    // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
+    // file list, which is where the app already draws them; see Bookmarks.svelte.
+    bookmarks: () => workspace.showPanel('tree'),
+    zoom: (factor: number) => {
+      zoom = factor
+      void pages.zoom(tab.id, factor)
+      // The menu is still open on the row that was pressed, so the size it says has to
+      // be the size it now is.
+      menu.replace(webRows(page, factor, actions))
+    },
+    fullScreen: () => void fullscreen.toggle(tab.id),
+    print: () => void pages.print(tab.id),
+    save: clip,
+    share: () => {
+      if (tab.path !== null) void shareThisFile(tab.path)
+    },
+    settings: () => settings.show(),
+  }
 </script>
 
 <div class="web">
@@ -277,7 +319,9 @@
       void workspace.webAimed(tab, url)
     }}
     onclip={clip}
-    onmenu={(event: MouseEvent) => menu.show(event, webRows(page, clip), { title: t('Website') })}
+    onmenu={(event: MouseEvent) =>
+      menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
+    onsite={() => (showingSite = !showingSite)}
     ontyping={(on: boolean) => {
       // The store rather than `page` above. This arrives from the field's own blur,
       // which is exactly the event a pane fires while it is swapping the tab under
@@ -287,6 +331,16 @@
       pages.of(tab.id).typing = on
     }}
   />
+
+  <!-- What a site asked for, and what a site is. Both hang under the bar at its left
+       edge, where a browser hangs them, and both are on the overlay stack - so the page
+       is out of sight while either is up and the still picture of it stands in; see
+       `covered`. -->
+  {#if asking}
+    <WebAsk {asking} icon={page.icon} />
+  {:else if showingSite && page.url !== null}
+    <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
+  {/if}
 
   {#if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it but the last picture of the page: the page
@@ -353,7 +407,10 @@
 </div>
 
 <style>
+  /* Relative, so the two things that hang under the bar - what a site asked for, and
+     what a site is - are placed against this pane rather than against the window. */
   .web {
+    position: relative;
     flex: 1;
     min-width: 0;
     min-height: 0;

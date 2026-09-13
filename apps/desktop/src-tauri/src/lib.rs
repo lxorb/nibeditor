@@ -268,6 +268,7 @@ pub fn run() {
         web_tabs::web_zoom,
         web_tabs::web_print,
         web_tabs::web_shot,
+        web_tabs::web_answer,
     ]);
 
     #[cfg(mobile)]

@@ -21,6 +21,8 @@
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
+  import Globe from 'lucide/dist/esm/icons/globe.mjs'
+  import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
@@ -40,6 +42,7 @@
     onaddress,
     onclip,
     onmenu,
+    onsite,
     ontyping,
   }: {
     page: Page
@@ -49,8 +52,19 @@
     onaddress: (typed: string) => void
     onclip: () => void
     onmenu: (event: MouseEvent) => void
+    onsite: () => void
     ontyping: (on: boolean) => void
   } = $props()
+
+  /** Whether the site's own mark arrived. A site with none, or one the engine will not
+   *  fetch, leaves a broken picture where a mark should be, and the lock reads better
+   *  than that. */
+  let marked = $state(true)
+
+  // A new page is a new mark to look for.
+  $effect(() => {
+    if (page.icon) marked = true
+  })
 
   let field = $state<HTMLInputElement>()
   /** Whether the field itself has the keyboard, which is what swaps its two faces.
@@ -194,6 +208,29 @@
     </svg>
   </button>
 
+  <!-- The site, at the left of the field, which is where every browser puts it: the
+       page's own mark, and the lock for a site that has none or whose mark will not
+       load. Pressing it says what this site is and what it has been allowed; see
+       WebSite.svelte. -->
+  <button
+    class="nib-glyph site"
+    title={t('Site information')}
+    aria-label={t('Site information')}
+    aria-haspopup="dialog"
+    disabled={page.url === null}
+    onclick={onsite}
+  >
+    {#if page.icon && marked}
+      <img class="mark" src={page.icon} alt="" onerror={() => (marked = false)} />
+    {:else}
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        {#each page.url?.startsWith('https:') ? Lock : Globe as [tag, attrs], index (index)}
+          <svelte:element this={tag} {...attrs} />
+        {/each}
+      </svg>
+    {/if}
+  </button>
+
   <input
     bind:this={field}
     class="nib-field address"
@@ -254,6 +291,18 @@
   .address {
     flex: 1 1 8rem;
     min-width: 0;
+  }
+
+  /* The site's mark sits against the field rather than in the row of arrows, so the
+     bar reads as "where you have been" and then "where you are". */
+  .site {
+    margin-left: var(--space-1);
+  }
+
+  .mark {
+    width: var(--icon-md);
+    height: var(--icon-md);
+    border-radius: var(--radius-sm);
   }
 
   /* A page on its way says so where a browser says it: on the button that would

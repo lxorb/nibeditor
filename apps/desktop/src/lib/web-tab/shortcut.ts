@@ -213,3 +213,18 @@ function entities(value: string): string {
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, '&')
 }
+
+/** The site's own mark a website file wrote down, or null where it says nothing.
+ *
+ *  Here rather than on the tab, because a tab is a name and a string of words and this
+ *  is the file format's business: the one reader answers it, the way it answers where
+ *  the file points. What it is for is the moment before there is a page - the strip
+ *  wears the site's picture while the page is still loading, and on a machine that has
+ *  never opened the site at all. See TabMark.svelte.
+ *
+ *  A path and its words, rather than a tab, so a row in a list can ask it as easily as
+ *  a tab can; null for a document with no file yet, which has nothing to have said. */
+export function iconOf(path: string | null, text: string): string | null {
+  if (path === null) return null
+  return readWebFile(path, text)?.icon ?? null
+}
