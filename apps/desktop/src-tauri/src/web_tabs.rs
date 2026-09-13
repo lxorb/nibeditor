@@ -95,6 +95,79 @@ const GUARD: &str = r"(function () {
   hide(window, 'Notification')
 })()";
 
+/// Puts a revived page back where the reading was.
+///
+/// It runs before the page's own first script, like the guard, and does its work when
+/// the document is ready: a scroll offset set before there is a document to scroll is
+/// an offset set on nothing. Three times, because a page that lays itself out in
+/// stages - a font, a picture without a size, a script that writes the body - is
+/// shorter than its final self when the document is first ready, and a browser
+/// restoring a tab does exactly the same thing.
+///
+/// Only for the page it was left on: `__PLACE__` carries the address, and a tab that
+/// followed a link on the way in is a tab whose place is not this page's. And only in
+/// the page itself, never in a frame inside it - `window.top` is the test - because a
+/// frame that scrolled itself to the page's offset would be a frame scrolled somewhere
+/// nobody asked for.
+const PLACE: &str = r"(function () {
+  var want = __PLACE__
+  if (!want || window.top !== window) return
+
+  function put() {
+    try {
+      if (location.href !== want.url) return
+      window.scrollTo(want.x, want.y)
+    } catch (error) {
+      // A page that will not be scrolled is a page that opens at the top.
+    }
+  }
+
+  if (document.readyState !== 'loading') put()
+  else document.addEventListener('DOMContentLoaded', put, { once: true })
+  window.addEventListener('load', function () {
+    put()
+    setTimeout(put, 400)
+  }, { once: true })
+})()";
+
+/// Where the page is now: the address, and how far down it the reading has got.
+///
+/// Read out of the page rather than kept as it scrolls, because a page scrolling is
+/// the one thing about a web tab the app cannot see - the wheel goes to the webview
+/// and nothing of ours hears it - and asking once, when the tab is left, is the whole
+/// of what is needed to open it again where it was.
+const LOOKED: &str = r"(function () {
+  try {
+    return JSON.stringify({
+      url: location.href,
+      x: window.scrollX || 0,
+      y: window.scrollY || 0,
+    })
+  } catch (error) {
+    return JSON.stringify({ url: '', x: 0, y: 0 })
+  }
+})()";
+
+/// The site's own mark, as an address.
+///
+/// What the page says its icon is, and `/favicon.ico` where it says nothing - which is
+/// the same order a browser looks in, and the reason a tab has the site's mark on it
+/// rather than a generic one. Asked of the page rather than of the engine: `WebView2`
+/// has an event for it, `WKWebView` has nothing at all, and the page's own `<link>` is
+/// what both of them read.
+const ICON: &str = r"(function () {
+  try {
+    var links = document.querySelectorAll('link[rel]')
+    for (var index = links.length - 1; index >= 0; index--) {
+      var rel = (links[index].getAttribute('rel') || '').toLowerCase()
+      if (rel.split(/\s+/).indexOf('icon') >= 0 && links[index].href) return links[index].href
+    }
+    return new URL('/favicon.ico', location.href).href
+  } catch (error) {
+    return ''
+  }
+})()";
+
 /// The page, read for a clip, in the site's own document.
 ///
 /// It reads what is on screen rather than what the server sent: a page that writes
@@ -175,13 +248,47 @@ const READER: &str = r"(function () {
 /// Kept here rather than asked of the engine, because neither `WebView2` nor
 /// `WKWebView` tells Tauri whether a page can go back, and a back arrow that is
 /// always lit is an arrow that lies half the time.
+///
+/// It outlives the webview. A parked tab keeps its trail, so the arrows over a page
+/// that has just been revived are right from the first frame rather than dead until
+/// somebody follows a link - and stepping one of them walks the trail rather than the
+/// engine's own history, which a revived webview has none of. See `engine`.
 #[derive(Default)]
 struct Trail {
     urls: Vec<String>,
     at: usize,
+    /// Whether the engine's own history is this trail.
+    ///
+    /// True for a webview that has only been sent where the page and the address bar
+    /// sent it: `history.back()` is then the right call, and the engine takes the
+    /// place on the page and the half-filled form back with it. False from the moment
+    /// this crate navigates a step itself - which is how a revived page steps, its
+    /// engine holding no history at all - because a `history.back()` after one of
+    /// those goes the wrong way: the step put a *new* entry on the engine's stack.
+    engine: bool,
 }
 
 impl Trail {
+    /// The trail a parked tab was parked with, restored under a webview that has just
+    /// been built. Its own history is empty, so every step from here is a navigation.
+    fn restored(urls: Vec<String>, at: usize) -> Self {
+        let at = at.min(urls.len().saturating_sub(1));
+        Self {
+            engine: urls.len() < 2,
+            urls,
+            at,
+        }
+    }
+
+    /// The address one step back or forward, for a tab whose engine cannot step
+    /// itself.
+    fn step_to(&self, forward: bool) -> Option<&String> {
+        if forward {
+            self.urls.get(self.at + 1)
+        } else {
+            self.at.checked_sub(1).and_then(|back| self.urls.get(back))
+        }
+    }
     /// A page that has arrived. A step back or forward lands on the address next
     /// to where the trail is, and anything else is somewhere new, which forgets
     /// whatever was ahead.
@@ -253,6 +360,42 @@ impl WebTabs {
             trails.entry(tab.to_string()).or_default().visited(url);
         }
     }
+
+    /// The trail a tab was parked with, put back under the webview that has just been
+    /// built for it. An empty one is no trail at all, which is a tab being opened for
+    /// the first time.
+    fn restore(&self, tab: &str, urls: Vec<String>, at: usize) {
+        if urls.is_empty() {
+            return;
+        }
+
+        if let Ok(mut trails) = self.trails.lock() {
+            trails.insert(tab.to_string(), Trail::restored(urls, at));
+        }
+    }
+
+    /// Where this tab has been and where along it it is, for the window to write down
+    /// against the note.
+    fn walk(&self, tab: &str) -> (Vec<String>, usize) {
+        self.trails
+            .lock()
+            .ok()
+            .and_then(|trails| trails.get(tab).map(|one| (one.urls.clone(), one.at)))
+            .unwrap_or_default()
+    }
+
+    /// Where a step goes: the address to send the tab to, or `None` for a tab whose
+    /// own engine can take the step. Stepping by address is what a revived page does,
+    /// and from the first one this tab does it for good; see `Trail::engine`.
+    fn stepping(&self, tab: &str, forward: bool) -> Option<String> {
+        let mut trails = self.trails.lock().ok()?;
+        let trail = trails.get_mut(tab)?;
+        if trail.engine {
+            return None;
+        }
+
+        trail.step_to(forward).cloned()
+    }
 }
 
 /// Where the pane is, in the window's own coordinates, as the window measured it.
@@ -265,14 +408,61 @@ pub struct Pane {
 }
 
 /// What the window is told when a page moves.
+///
+/// A field that says nothing is a field the window leaves as it was: the title and the
+/// mark arrive later than the address and on their own, and an empty one here is "no
+/// news" rather than "gone".
 #[derive(Clone, Serialize)]
 struct Moved {
     tab: String,
     url: String,
     title: String,
+    icon: String,
     back: bool,
     forward: bool,
     loading: bool,
+}
+
+/// Where a page was left, and where it is put back.
+#[derive(Clone, Copy, Deserialize, Serialize)]
+pub struct Place {
+    x: f64,
+    y: f64,
+}
+
+/// What a tab that has been parked - or closed and opened again tomorrow - is handed
+/// back when its page is built: the place the reading was at, and the trail behind it.
+///
+/// One argument rather than three, because they are one thing: everything about where
+/// this tab had got to before the webview under it went away.
+#[derive(Deserialize)]
+pub struct Revived {
+    /// Where the reading was on the page, or `None` for a page being opened rather
+    /// than revived.
+    place: Option<Place>,
+    /// Where the tab had been, oldest first.
+    trail: Vec<String>,
+    /// Where along that it was.
+    at: usize,
+}
+
+/// What the page says about where it is, read by `LOOKED`.
+#[derive(Deserialize)]
+struct Looked {
+    url: String,
+    x: f64,
+    y: f64,
+}
+
+/// Where a tab is, for the window to write down against the note: the page, the place
+/// on it, and the trail behind it.
+#[derive(Serialize)]
+pub struct Look {
+    url: String,
+    x: f64,
+    y: f64,
+    trail: Vec<String>,
+    at: usize,
 }
 
 /// A page as a clip reads it: where it is, what it calls itself, and the HTML of
@@ -372,6 +562,22 @@ fn reader(selection: bool) -> String {
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
+/// The script a webview is built with: the guard, and - for a tab being revived - the
+/// place the reading was left at.
+///
+/// One string, because a builder is handed one script and two calls to it on one
+/// builder is a thing this crate should not have to be sure about.
+fn opening(granted: &[String], place: Option<Place>, url: &str) -> String {
+    let want = place.and_then(|one| {
+        serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
+    });
+
+    match want {
+        None => guard(granted),
+        Some(one) => format!("{}\n{}", guard(granted), PLACE.replace("__PLACE__", &one)),
+    }
+}
+
 /// Where the site's own storage lives: the app's folder, in a directory of its own.
 ///
 /// Not the app's webview data, which is the point. A page in a tab keeps its
@@ -423,8 +629,9 @@ pub async fn web_open(
     url: String,
     pane: Pane,
     granted: Vec<String>,
+    revived: Revived,
 ) -> Result<(), String> {
-    let at = address(&url)?;
+    let address = address(&url)?;
     let label = format!("{LABEL}{tab}");
     let app = webview.app_handle().clone();
 
@@ -436,12 +643,17 @@ pub async fn web_open(
         return Err("that tab is already opening a page".into());
     }
 
+    // Where this tab had been, back under the webview being built for it: a tab being
+    // revived keeps its arrows, and stepping one of them walks this rather than an
+    // engine history that is empty.
+    tabs.restore(&tab, revived.trail, revived.at);
+
     #[allow(
         unused_mut,
         reason = "the storage builders below are per platform, and one platform sets neither"
     )]
-    let mut builder = WebviewBuilder::new(label, WebviewUrl::External(at))
-        .initialization_script(guard(&granted))
+    let mut builder = WebviewBuilder::new(label, WebviewUrl::External(address))
+        .initialization_script(opening(&granted, revived.place, &url))
         .on_navigation(allowed)
         // The page takes its own drops. A file dropped on a site is the site's
         // business, and the app is not in the middle of it.
@@ -477,15 +689,37 @@ pub async fn web_open(
             &moved,
             payload.url().as_str(),
             None,
+            None,
             loading,
         );
+
+        // The page is there, so it can be asked what its own mark is. Once per page,
+        // on the way in, because that is when a browser puts the site's icon on the
+        // tab; the answer comes back through the engine's own script callback and is
+        // said to the window the way the address is.
+        if loading {
+            return;
+        }
+
+        let marked = sending.clone();
+        let named = moved.clone();
+        let asked = view.clone();
+        let _ = view.eval_with_callback(ICON, move |answer| {
+            let icon = serde_json::from_str::<String>(&answer).unwrap_or_default();
+            if icon.is_empty() {
+                return;
+            }
+
+            let url = asked.url().map(|one| one.to_string()).unwrap_or_default();
+            say(&marked, &asked, &named, &url, None, Some(icon), false);
+        });
     });
 
     let titled = tab.clone();
     let naming = app.clone();
     let builder = builder.on_document_title_changed(move |view, title| {
         let url = view.url().map(|one| one.to_string()).unwrap_or_default();
-        say(&naming, &view, &titled, &url, Some(title), false);
+        say(&naming, &view, &titled, &url, Some(title), None, false);
     });
 
     let window = webview.window();
@@ -530,6 +764,7 @@ fn say(
     tab: &str,
     url: &str,
     title: Option<String>,
+    icon: Option<String>,
     loading: bool,
 ) {
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
@@ -547,6 +782,7 @@ fn say(
         tab: tab.to_string(),
         url: url.to_string(),
         title: title.unwrap_or_default(),
+        icon: icon.unwrap_or_default(),
         back,
         forward,
         loading,
@@ -598,13 +834,38 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
 
 /// Back, forward, or the same page again.
 ///
-/// The history is the page's own, so it is stepped in the page: neither `WebView2`
-/// nor `WKWebView` hands Tauri a Go Back, and `history.back()` is what a browser's
-/// own button calls. Reload goes through the engine, which is the one of the three
-/// it does offer.
+/// For a page that has been running all along the history is the page's own, so the
+/// step is taken in the page: neither `WebView2` nor `WKWebView` hands Tauri a Go
+/// Back, and `history.back()` is what a browser's own button calls - it also takes the
+/// place on the page and the half-filled form back with it, which no navigation can.
+///
+/// For a page that has just been revived there is no history in the engine to step:
+/// the webview is a minute old and the trail behind the tab is half an hour of
+/// reading. So the step is an address off the trail this crate keeps, and from the
+/// first of those this tab steps that way for good; see `Trail::engine`.
+///
+/// Reload goes through the engine either way, which is the one of the three it offers.
 #[tauri::command]
-pub fn web_step(app: AppHandle, tab: String, step: Step) -> Result<(), String> {
+pub fn web_step(
+    app: AppHandle,
+    tabs: tauri::State<'_, WebTabs>,
+    tab: String,
+    step: Step,
+) -> Result<(), String> {
     let view = found(&app, &tab)?;
+
+    let walked = match step {
+        Step::Reload => None,
+        Step::Back => tabs.stepping(&tab, false),
+        Step::Forward => tabs.stepping(&tab, true),
+    };
+
+    if let Some(url) = walked {
+        let at = address(&url)?;
+        return view
+            .navigate(at)
+            .map_err(|error| format!("that page could not be stepped: {error}"));
+    }
 
     match step {
         Step::Reload => view.reload(),
@@ -612,6 +873,75 @@ pub fn web_step(app: AppHandle, tab: String, step: Step) -> Result<(), String> {
         Step::Forward => view.eval("history.forward()"),
     }
     .map_err(|error| format!("that page could not be stepped: {error}"))
+}
+
+/// Where the tab is: the page, how far down it the reading has got, and the trail
+/// behind it.
+///
+/// Asked when a tab is left and before it is parked, and written down by the window
+/// against the note rather than against this visit to it - so opening the note again
+/// tomorrow lands on this page at this place. The scroll offset has to be read out of
+/// the page, because a page scrolling is the one thing about a web tab the app cannot
+/// see.
+#[tauri::command]
+pub async fn web_look(
+    app: AppHandle,
+    tabs: tauri::State<'_, WebTabs>,
+    tab: String,
+) -> Result<Look, String> {
+    let view = found(&app, &tab)?;
+    let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
+
+    view.eval_with_callback(LOOKED, move |answer| {
+        let _ = sending.try_send(answer);
+    })
+    .map_err(|error| format!("that page could not be read: {error}"))?;
+
+    let answer = waiting
+        .recv()
+        .await
+        .ok_or_else(|| "that page said nothing".to_string())?;
+
+    let said = serde_json::from_str::<Looked>(&answer)
+        .map_err(|error| format!("that page could not be read: {error}"))?;
+    let (trail, at) = tabs.walk(&tab);
+
+    Ok(Look {
+        url: said.url,
+        x: said.x,
+        y: said.y,
+        trail,
+        at,
+    })
+}
+
+/// Puts the page somewhere on itself. For a drive, which has no wheel to turn: see
+/// scripts/web-switch-probe.py.
+#[tauri::command]
+pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), String> {
+    found(&app, &tab)?
+        .eval(format!("window.scrollTo({x}, {y})"))
+        .map_err(|error| format!("that page could not be scrolled: {error}"))
+}
+
+/// How large the page is drawn, as a browser's own zoom: 1 is a hundred per cent.
+#[tauri::command]
+pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
+    found(&app, &tab)?
+        .set_zoom(factor)
+        .map_err(|error| format!("that page could not be zoomed: {error}"))
+}
+
+/// The engine's own print dialog, for the page in the tab.
+///
+/// `window.print()` rather than anything of the app's: what a page prints as is the
+/// engine's business, the dialog is the one the reader knows from their browser, and
+/// nib's own printing is about a note.
+#[tauri::command]
+pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
+    found(&app, &tab)?
+        .eval("window.print()")
+        .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
 /// The page, read for a clip.
@@ -639,17 +969,71 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
         .map_err(|error| format!("that page could not be read: {error}"))
 }
 
-/// Takes the page away. A closed tab keeps nothing: the webview goes and so does
-/// its trail.
+/// Takes the page away.
+///
+/// Two callers and two meanings, which is what `keep` says. A tab being **parked** to
+/// give the memory back keeps its trail, because the tab is still open and looking at
+/// it again has to put the arrows back the way they were. A tab being **closed** keeps
+/// nothing: nobody is coming back to it.
 #[tauri::command]
-pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String) {
+pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String, keep: bool) {
     if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
         let _ = view.close();
     }
 
     if let Ok(mut open) = tabs.trails.lock() {
-        open.remove(&tab);
+        if keep {
+            // The engine's history goes with the webview, so the trail that is left is
+            // one every step has to walk by address.
+            if let Some(trail) = open.get_mut(&tab) {
+                trail.engine = false;
+            }
+        } else {
+            open.remove(&tab);
+        }
     }
+}
+
+/// A still picture of the page as it is now, as a `data:` address the window can put
+/// in the pane.
+///
+/// The whole of why this exists: a native webview draws above every pixel of HTML in
+/// the window, so anything the app opens over a page means hiding the page - and a pane
+/// that went blank under every menu was the worst thing about a web tab. The window
+/// asks for this first, paints it in the hole, and then hides the webview, so what is
+/// behind the menu is the page.
+///
+/// `WebView2` has `CapturePreview`, which is the engine photographing itself and is
+/// the only way to get at those pixels: the app's own webview cannot draw the page and
+/// nothing outside the process may copy the screen. Elsewhere there is nothing to call
+/// - `WKWebView`'s `takeSnapshot` is not reachable through what wry hands out - and the
+/// answer is `None`, which the window reads as "keep your own ground". Said in
+/// docs/web-tabs.md rather than hidden here.
+#[tauri::command]
+pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
+    let view = found(&app, &tab)?;
+    let (sending, mut waiting) = tauri::async_runtime::channel::<Option<Vec<u8>>>(1);
+
+    let asked = view.with_webview(move |platform| {
+        let answering = sending.clone();
+        if let Err(error) = shot::photograph(&platform, sending) {
+            eprintln!("web_shot: {error}");
+            let _ = answering.try_send(None);
+        }
+    });
+
+    if asked.is_err() {
+        return Ok(None);
+    }
+
+    let bytes = waiting.recv().await.flatten();
+    Ok(bytes.map(|one| {
+        use base64::Engine as _;
+        format!(
+            "data:image/png;base64,{}",
+            base64::engine::general_purpose::STANDARD.encode(one)
+        )
+    }))
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been
@@ -658,6 +1042,112 @@ pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String) {
 fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&format!("{LABEL}{tab}"))
         .ok_or_else(|| "that tab has no page open".to_string())
+}
+
+#[cfg(windows)]
+mod shot {
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+    use webview2_com::CapturePreviewCompletedHandler;
+    use webview2_com::Microsoft::Web::WebView2::Win32::COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG;
+    use windows_com::Win32::Foundation::HGLOBAL;
+    use windows_com::Win32::System::Com::{
+        IStream, StructuredStorage::CreateStreamOnHGlobal, STREAM_SEEK_END, STREAM_SEEK_SET,
+    };
+
+    /// Asks the engine to photograph itself. The answer arrives later, on the channel.
+    #[allow(
+        unsafe_code,
+        reason = "CapturePreview is reached through WebView2's COM interfaces, and the picture comes back in a COM stream"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        // Safe: the controller comes from the webview this window owns, the stream is
+        // made here and read only after the engine says it is written, and the handler
+        // outlives the call because WebView2 holds it.
+        unsafe {
+            let core = webview
+                .controller()
+                .CoreWebView2()
+                .map_err(|error| error.to_string())?;
+
+            // A stream that allocates for itself - a null handle is what asks for that -
+            // and frees itself when the last hold on it goes, which is when this
+            // closure has read it.
+            let stream: IStream = CreateStreamOnHGlobal(HGLOBAL(std::ptr::null_mut()), true)
+                .map_err(|error| error.to_string())?;
+
+            let reading = stream.clone();
+            let handler = CapturePreviewCompletedHandler::create(Box::new(move |result| {
+                let bytes = match result {
+                    Err(_) => None,
+                    Ok(()) => png(&reading),
+                };
+                let _ = done.try_send(bytes);
+                Ok(())
+            }));
+
+            core.CapturePreview(
+                COREWEBVIEW2_CAPTURE_PREVIEW_IMAGE_FORMAT_PNG,
+                &stream,
+                &handler,
+            )
+            .map_err(|error| error.to_string())
+        }
+    }
+
+    /// The PNG out of the stream the engine wrote it into.
+    #[allow(unsafe_code, reason = "a COM stream is read through its own interface")]
+    fn png(stream: &IStream) -> Option<Vec<u8>> {
+        // Safe: the stream was written by the engine before this is called, and every
+        // length below is the one the stream itself reports.
+        unsafe {
+            let mut end = 0u64;
+            stream.Seek(0, STREAM_SEEK_END, Some(&raw mut end)).ok()?;
+            stream.Seek(0, STREAM_SEEK_SET, None).ok()?;
+
+            let size = usize::try_from(end).ok()?;
+            if size == 0 || size > 32 * 1024 * 1024 {
+                return None;
+            }
+
+            let mut bytes = vec![0u8; size];
+            let mut read = 0u32;
+            // `Read` answers with an HRESULT rather than a result, because a stream that
+            // gave less than it was asked for is `S_FALSE` and not a failure. How much
+            // arrived is the answer that matters.
+            let got = stream.Read(
+                bytes.as_mut_ptr().cast(),
+                u32::try_from(size).ok()?,
+                Some(&raw mut read),
+            );
+            if got.is_err() {
+                return None;
+            }
+
+            bytes.truncate(usize::try_from(read).unwrap_or(0));
+            (!bytes.is_empty()).then_some(bytes)
+        }
+    }
+}
+
+#[cfg(not(windows))]
+mod shot {
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+
+    /// No way in. `WKWebView`'s own snapshot and `WebKitGTK`'s are not reachable
+    /// through what wry hands out, so the window keeps its own ground under an overlay
+    /// here; see the note on `web_shot`.
+    pub fn photograph(
+        _webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        let _ = done.try_send(None);
+        Ok(())
+    }
 }
 
 #[cfg(test)]

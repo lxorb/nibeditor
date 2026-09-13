@@ -49,14 +49,21 @@ const SECTION = 'internetshortcut'
 /** The key that makes the file a shortcut at all. */
 const URL_KEY = 'url'
 
-/** nib's own two, in the same block. */
+/** nib's own, in the same block. */
 const TITLE_KEY = 'title'
 const ADDED_KEY = 'nib-added'
+const HOME_KEY = 'nib-home'
+const ICON_KEY = 'nib-icon'
 
 /** What a shortcut file says. */
 export interface Shortcut {
-  /** Where it points. Always a web address: a file whose `URL` is anything else is
-   *  not a website this app will open, and reads as no shortcut at all. */
+  /** Where it points, which is **where the reading has got to**: a web note is a
+   *  browser tab, so following a link inside the page moves this - and opening the
+   *  note again, here or on another machine the space syncs to, opens the page that
+   *  was open rather than the site's front door.
+   *
+   *  Always a web address: a file whose `URL` is anything else is not a website this
+   *  app will open, and reads as no shortcut at all. */
   url: string
   /** What it is called, or null when the file does not say and the name is all
    *  there is. */
@@ -64,15 +71,46 @@ export interface Shortcut {
   /** When it was written down, as the file says it. Carried rather than read: only
    *  the file it came from has any use for it. */
   added: string | null
+  /** Where the note points, as against where the reading has got to: the address
+   *  somebody typed into the bar, or the one the note was made with. Null when it is
+   *  the same as `url`, which is a note nobody has followed a link out of.
+   *
+   *  It is here because `URL` had to be the one a browser opens - double-clicking the
+   *  file in Explorer should land where the reading is - and because a note whose
+   *  address had quietly become the eighth page of somebody's browsing would be a note
+   *  no link could point at. Home is what the note is; `URL` is where it is. */
+  home: string | null
+  /** The site's own mark, as an address: what the page's `<link rel=icon>` said the
+   *  last time the page was open.
+   *
+   *  An address rather than the picture itself, because a picture inside a text file
+   *  is a text file nothing else will read, and because the one thing a favicon always
+   *  has is somewhere to be fetched from. It is here so that the tab strip and the file
+   *  list have the site's mark before the page has loaded and on a machine that has
+   *  never opened it. */
+  icon: string | null
 }
 
-/** A shortcut file, from its three parts. */
-export function writeShortcut(url: string, title: string, when: Date): string {
+/** A shortcut file, from its parts.
+ *
+ *  `home` and `icon` are left out when there is nothing to say, so the ordinary file
+ *  is the three lines it always was: a note nobody has browsed out of writes exactly
+ *  what it wrote before this existed. */
+export function writeShortcut(
+  url: string,
+  title: string,
+  when: Date,
+  home?: string | null,
+  icon?: string | null,
+): string {
   const rows = [
     `URL=${oneLine(url)}`,
     `Title=${oneLine(title.trim() || url)}`,
     `Nib-Added=${when.toISOString()}`,
   ]
+
+  if (home && home !== url) rows.push(`Nib-Home=${oneLine(home)}`)
+  if (icon) rows.push(`Nib-Icon=${oneLine(icon)}`)
 
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
@@ -127,6 +165,8 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
     url,
     title: nothing(said.get(TITLE_KEY)),
     added: nothing(said.get(ADDED_KEY)),
+    home: nothing(said.get(HOME_KEY)),
+    icon: nothing(said.get(ICON_KEY)),
   }
 }
 
@@ -146,7 +186,7 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
   if (!/\.webloc$/i.test(path.trim())) return readShortcut(text)
 
   const url = readWebloc(text)
-  return url === null ? null : { url, title: null, added: null }
+  return url === null ? null : { url, title: null, added: null, home: null, icon: null }
 }
 
 /** The address in a macOS `.webloc`, or null.

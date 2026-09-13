@@ -12,22 +12,50 @@
  *  holding the card or the frame the reader asked for. One store for both builds, so
  *  the bar above the page is one bar.
  *
- *  Memory is honest about itself. A page nobody has looked at for a few minutes is
- *  taken down and the tab remembers where it was, so a window left open for a day
- *  with eight sites in it is not eight browsers; looking at it again opens it where
- *  it was. */
+ *  **A web note is a browser tab.** While the app is running, an open web tab keeps
+ *  its page: switching to a note and back hides the webview and shows it again, and
+ *  never closes it, because closing one is a browser process and a load of the site
+ *  and everything the reader had done on the page. Where the tab is - the address,
+ *  the place on the page, the trail behind it - is kept whether the page is running or
+ *  not, so reopening the note tomorrow on another machine opens the page that was
+ *  open and not the site's front door. Which half is kept where is one rule, written
+ *  down in docs/web-tabs.md: the address is in the file, because that is the document
+ *  and it syncs; the place and the trail are this device's, because they are about
+ *  this screen.
+ *
+ *  Memory is bounded, the way Chrome bounds it. A page nobody has looked at for half
+ *  an hour is parked - the webview goes, the tab keeps everything about itself - and
+ *  so is the least recently looked at page over the cap, so a window left open all
+ *  day with thirty sites in it is not thirty browsers. Looking at a parked tab again
+ *  opens the page where it was, at the place it was at. */
 
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import { grants, type Grant, siteOf } from './permissions.svelte'
+import { placeOf, placeKept } from './place'
 
-/** How long a page goes on running after the tab showing it went away.
+/** How long a parked page's webview goes on running after the tab showing it went
+ *  away.
  *
- *  Five minutes, which is long enough that switching between two tabs never reloads
- *  and short enough that a window somebody left open overnight is holding nothing.
- *  A page that is taken down keeps its address, so coming back to the tab is a load
+ *  Half an hour, which is what Chrome's own memory saver waits before it discards a
+ *  background tab: long enough that coming back to something read this morning is
+ *  still instant, short enough that a window left open overnight holds nothing. A
+ *  parked page keeps its address, its place and its trail, so coming back is a load
  *  and not a loss. */
-const ASLEEP_AFTER = 5 * 60 * 1000
+const PARKED_AFTER = 30 * 60 * 1000
+
+/** How many pages may be running at once.
+ *
+ *  Eight, beyond which the least recently looked at is parked: the cost of a page is
+ *  a browser's cost, and a window with thirty web tabs in it is a window somebody
+ *  has thirty bookmarks in and is reading one of. The one on screen is never the one
+ *  parked. */
+const LIVE_AT_MOST = 8
+
+/** How long a still picture of a page stands for the page. Under half a second, so
+ *  two overlays in a row share one and a page that has scrolled since is
+ *  photographed again. */
+const SHOT_KEEPS = 400
 
 /** Where the pane left room for the page, in the window's own pixels. */
 export interface Rect {
@@ -64,6 +92,7 @@ interface Moved {
   tab: string
   url: string
   title: string
+  icon: string
   back: boolean
   forward: boolean
   loading: boolean
@@ -79,6 +108,7 @@ function readMoved(value: unknown): Moved | null {
     tab: said.tab,
     url: said.url,
     title: typeof said.title === 'string' ? said.title : '',
+    icon: typeof said.icon === 'string' ? said.icon : '',
     back: said.back === true,
     forward: said.forward === true,
     loading: said.loading === true,
@@ -92,6 +122,14 @@ export class Page {
   url = $state<string | null>(null)
   /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
+  /** The site's own mark, as an address the window can load: what the page's
+   *  `<link rel=icon>` says, or the site's `/favicon.ico` where it says nothing.
+   *
+   *  Null until the page has loaded, and the tab strip draws the one the file
+   *  remembered until then - so a tab has the site's mark before the page is there
+   *  and on a machine that has never opened it. See shortcut.ts for where it is
+   *  kept. */
+  icon = $state<string | null>(null)
   back = $state(false)
   forward = $state(false)
   loading = $state(false)
@@ -130,7 +168,30 @@ export class Page {
    *  title does not rewrite what somebody is halfway through typing. */
   typing = $state(false)
 
-  asleep: ReturnType<typeof setTimeout> | undefined
+  /** A still picture of the page, as a data address, from the last time anything was
+   *  about to be drawn over it.
+   *
+   *  A native webview cannot be drawn under the window's own HTML, so a menu over a
+   *  page means hiding the page - and a pane that went blank under every menu was the
+   *  worst thing about a web tab. The picture is what the hole holds while the page is
+   *  out of sight, which is also what stands in while a parked page is loading again,
+   *  so nothing about an overlay or a revival flashes. */
+  shot = $state<string | null>(null)
+  /** When that picture was taken, so two overlays in a row share one. */
+  shotAt = 0
+
+  /** The file this tab is showing, or null for a tab with no file yet. Set by the
+   *  pane, because the store keeps what is about the page and the tab keeps what is
+   *  about the document - and where the reading got to is kept by path, so that
+   *  closing the tab and opening the note tomorrow lands back on it. See place.ts. */
+  path: string | null = null
+
+  /** When this tab was last looked at, so the least recently looked at is the one
+   *  parked when there are more pages running than a window should hold. */
+  looked = Date.now()
+
+  /** The countdown to being parked, running while nobody is looking at this tab. */
+  parking: ReturnType<typeof setTimeout> | undefined
 }
 
 class Pages {
@@ -186,7 +247,7 @@ class Pages {
 
     const site = siteOf(page.url)
     const stale = page.live && page.builtAt !== grants.changed
-    if (stale) await this.sleep(tabId)
+    if (stale) await this.park(tabId)
 
     if (page.live) {
       await this.place(tabId, pane, true)
@@ -215,10 +276,25 @@ class Pages {
     page.builtAt = grants.changed
     const granted: Grant[] = grants.of(site)
 
+    // Where this tab was left, if it is the page being opened: a parked tab comes back
+    // at the place it was parked at, and a note opened again tomorrow comes back at the
+    // place the reading got to. The crate restores it inside the page as it loads,
+    // which is the only moment it can be done without a jump; see web_tabs.rs.
+    const kept = placeOf(page.path)
+    const place = kept && kept.url === page.url ? { x: kept.x, y: kept.y } : null
+    const trail = kept?.url === page.url ? (kept?.trail ?? []) : []
+
     try {
-      await invoke('web_open', { tab: tabId, url: page.url, pane, granted })
+      await invoke('web_open', {
+        tab: tabId,
+        url: page.url,
+        pane,
+        granted,
+        revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
+      })
       page.live = true
       page.openable = true
+      this.bound(tabId)
     } catch {
       // No webview to be had here. Reported by the pane rather than by a message:
       // it shows the card, which offers the page in the reader's own browser.
@@ -235,7 +311,7 @@ class Pages {
     // and a page nothing places is a browser running behind the window.
     if (this.held.get(tabId) !== page) {
       page.live = false
-      await invoke('web_close', { tab: tabId }).catch(() => undefined)
+      await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
 
@@ -246,10 +322,13 @@ class Pages {
     else this.hide(tabId, wanted.pane)
   }
 
-  /** Where the page sits, and whether it is on screen at all. A tab that is not the
-   *  one showing hides its page rather than closing it: coming back to a tab should
-   *  not be a reload. */
-  async place(tabId: string, pane: Rect, visible: boolean): Promise<void> {
+  /** Where the page sits, and whether it is on screen at all.
+   *
+   *  A page is hidden for two quite different reasons and closed for neither. The tab
+   *  is not the one showing, which is `hide`; or something of the app's is over it,
+   *  which is `covering` - and that one takes a picture of the page first, so what the
+   *  pane holds under the menu is the page rather than nothing. */
+  async place(tabId: string, pane: Rect, visible: boolean, covering = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
 
@@ -263,6 +342,7 @@ class Pages {
     }
 
     if (!page.live) return
+    if (covering) await this.shoot(tabId)
 
     try {
       await invoke('web_place', { tab: tabId, pane, visible })
@@ -273,35 +353,109 @@ class Pages {
     }
   }
 
-  /** The tab is no longer the one on top: the page goes out of sight and starts
-   *  counting down to being taken down altogether. */
+  /** The tab is no longer the one showing.
+   *
+   *  The page goes out of sight and **goes on running**: a web note is a browser tab,
+   *  so coming back to it is not a load. What starts here is the countdown to being
+   *  parked - the one thing that does close a webview - and a note of where the reading
+   *  had got to, which is what makes reopening the note tomorrow land on this page at
+   *  this place. */
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
     if (!page) return
 
     void this.place(tabId, pane, false)
-
-    clearTimeout(page.asleep)
     if (!isDesktop) return
 
-    page.asleep = setTimeout(() => void this.sleep(tabId), ASLEEP_AFTER)
+    void this.look(tabId)
+    clearTimeout(page.parking)
+    page.parking = setTimeout(() => void this.park(tabId), PARKED_AFTER)
   }
 
-  /** Takes the page down but keeps the tab: what a window left open all day costs
-   *  after a few minutes of nobody looking. The address stays, so the tab opens
-   *  where it was. */
-  async sleep(tabId: string): Promise<void> {
+  /** Parks the page and keeps the tab: the webview goes and everything about where the
+   *  tab is stays, so looking at it again opens the page it was on at the place it was
+   *  at. What a window left open all day costs after half an hour of nobody looking,
+   *  and what the page over the cap costs the moment there is one too many. */
+  async park(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!page?.live) return
 
+    await this.look(tabId)
     page.live = false
     page.loading = false
-    await invoke('web_close', { tab: tabId }).catch(() => undefined)
+    clearTimeout(page.parking)
+    // The trail stays in the crate, so the arrows over a page that has just been
+    // revived are right from the first frame.
+    await invoke('web_close', { tab: tabId, keep: true }).catch(() => undefined)
   }
 
+  /** Reads where the page has got to and writes it down for this device. Quiet about
+   *  failure: a page that has gone is a page whose place was already written when it
+   *  went. */
+  private async look(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!isDesktop || !page?.live || !page.path) return
+
+    try {
+      const said = await invoke<{ url: string; x: number; y: number; trail: string[]; at: number }>(
+        'web_look',
+        { tab: tabId },
+      )
+      placeKept(page.path, {
+        url: said.url,
+        x: said.x,
+        y: said.y,
+        trail: said.trail,
+        at: said.at,
+      })
+    } catch {
+      // Nothing to write down. The next look answers, or the tab has closed.
+    }
+  }
+
+  /** A still picture of the page as it is now, kept on the page's state for the hole
+   *  to hold while the webview is out of sight. One picture per few hundred
+   *  milliseconds, so a menu and the sheet it opens share one. */
+  private async shoot(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!isDesktop || !page?.live) return
+    if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
+
+    try {
+      const said = await invoke<string | null>('web_shot', { tab: tabId })
+      if (said) {
+        page.shot = said
+        page.shotAt = Date.now()
+      }
+    } catch {
+      // A platform with no way to photograph a webview. The hole keeps its own
+      // ground, which is what it held before there was a picture to hold.
+    }
+  }
+
+  /** This tab has just been looked at: nothing is counting down for it, and it is the
+   *  newest thing in the window. */
   private wake(page: Page) {
-    clearTimeout(page.asleep)
-    page.asleep = undefined
+    clearTimeout(page.parking)
+    page.parking = undefined
+    page.looked = Date.now()
+  }
+
+  /** Keeps the number of pages running inside the cap, by parking the ones nobody has
+   *  looked at for longest. Called when one more has just been built.
+   *
+   *  The tab that has just been opened is the newest looked at, so it is never the one
+   *  parked; a tab on screen beside it in another pane was looked at a moment ago and
+   *  is only parked once the window holds nine pages, which is a window nobody is
+   *  reading. */
+  private bound(tabId: string) {
+    this.of(tabId).looked = Date.now()
+
+    const live = [...this.held.entries()].filter(([, page]) => page.live)
+    if (live.length <= LIVE_AT_MOST) return
+
+    const oldest = live.sort(([, one], [, other]) => one.looked - other.looked)
+    for (const [id] of oldest.slice(0, live.length - LIVE_AT_MOST)) void this.park(id)
   }
 
   /** Somewhere else, in this tab. */
@@ -311,9 +465,12 @@ class Pages {
 
     page.url = url
     page.openable = true
-    // The title belonged to the page that was there. Until the new one says what it
-    // is called the bar shows the site, which is true of both.
+    // The title, the mark and the picture all belonged to the page that was there.
+    // Until the new one says what it is called the bar shows the site, which is true
+    // of both.
     page.title = ''
+    page.icon = null
+    page.shot = null
 
     // A browser build shows the page in whatever the pane already holds: a frame is
     // told where to go by its `src`, which the component watches `url` for, and a
@@ -368,14 +525,16 @@ class Pages {
     }
   }
 
-  /** The tab has closed. Nothing is kept: the webview goes with it. */
+  /** The tab has closed. The webview goes with it, and so does the trail: a tab
+   *  somebody closed is not a tab anybody is coming back to. Where the reading got to
+   *  stays on the device, because the note can be opened again. */
   forget(tabId: string) {
     const page = this.held.get(tabId)
     if (!page) return
 
-    clearTimeout(page.asleep)
+    clearTimeout(page.parking)
     this.held.delete(tabId)
-    if (isDesktop) void invoke('web_close', { tab: tabId }).catch(() => undefined)
+    if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
   /** Every page whose tab has gone, closed.
@@ -409,6 +568,10 @@ class Pages {
       page.forward = said.forward
       if (said.url && !page.typing) page.url = said.url
       if (said.title) page.title = said.title
+      if (said.icon) page.icon = said.icon
+      // The page has arrived, so the picture of the last one is no longer a picture of
+      // this page. Nothing is drawn from it while the webview is on top.
+      if (!said.loading) page.shot = null
     })
   }
 }
