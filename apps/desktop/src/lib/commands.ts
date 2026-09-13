@@ -1078,10 +1078,32 @@ export function appCommands(view?: EditorView): Command[] {
       checked: palette.id === modes.codeTheme,
       run: () => modes.setCodeTheme(palette.id, view),
     })),
-    { id: 'themes-folder', label: t('Open themes folder'), run: () => void openThemesFolder() },
-    { id: 'custom-css', label: t('Edit custom CSS'), run: () => void openCustomCss() },
-    { id: 'snippets', label: t('Edit snippets'), run: () => void openSnippets() },
-    { id: 'logs', label: t('Open the log file'), run: () => void openLog() },
+    // Four rows about files on a disk, and the web build has no disk: a themes
+    // folder to reveal, a `custom.css` and a `snippets.json` to open, a log to
+    // find. Each of the four already refused on the web and refused silently,
+    // which is the worst of the three answers - the row was there, it was not
+    // greyed, and pressing it did nothing at all. Left out instead, the way every
+    // other row the build cannot answer is; see `exportCommands` above. The
+    // refusals inside the four stay, because a command reached any other way must
+    // still not try.
+    ...(isDesktop
+      ? [
+          {
+            id: 'themes-folder',
+            label: t('Open themes folder'),
+            run: () => void openThemesFolder(),
+          },
+        ]
+      : []),
+    ...(isNative
+      ? [
+          { id: 'custom-css', label: t('Edit custom CSS'), run: () => void openCustomCss() },
+          { id: 'snippets', label: t('Edit snippets'), run: () => void openSnippets() },
+        ]
+      : []),
+    ...(isDesktop
+      ? [{ id: 'logs', label: t('Open the log file'), run: () => void openLog() }]
+      : []),
     {
       id: 'update',
       label: t('Check for updates'),
