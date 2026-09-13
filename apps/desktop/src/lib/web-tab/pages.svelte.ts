@@ -17,7 +17,6 @@
  *  with eight sites in it is not eight browsers; looking at it again opens it where
  *  it was. */
 
-import { SvelteMap } from 'svelte/reactivity'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import { grants, type Grant, siteOf } from './permissions.svelte'
@@ -40,6 +39,19 @@ export interface Rect {
 
 /** Which way a step goes, as the crate names them. */
 export type Step = 'back' | 'forward' | 'reload'
+
+/** Where a page should be and whether it should be seen at all: what the pane asked
+ *  for while the page was still being built.
+ *
+ *  Building one is not instant. The crate answers when the platform has handed it a
+ *  webview, and in that time the pane can have moved, the tab can have stopped being
+ *  the one showing, or the tab can have been closed altogether - so what the pane
+ *  asked for in the meantime is kept and applied, rather than assumed not to have
+ *  happened. */
+interface Wanted {
+  pane: Rect
+  visible: boolean
+}
 
 /** What a browser build is showing in the pane: the card that stands for the page,
  *  or the frame the reader asked for. A desktop has neither - the page is a webview
@@ -98,6 +110,17 @@ export class Page {
   /** Whether there is a webview behind this tab at the moment. */
   live = $state(false)
 
+  /** Whether one is being built at this moment.
+   *
+   *  Not reactive and not drawn: the bar and the hole are on screen from the first
+   *  frame, and a page arriving is the page appearing. This is here so that a second
+   *  placement while the first is in the air does not ask for a second webview under
+   *  the same label; the crate refuses that too, and this saves the round trip. */
+  opening = false
+
+  /** What the pane asked for while the page was being built. */
+  wanted: Wanted | null = null
+
   /** The grant count the live webview was built under, so a change to what this
    *  site may do is a page built again rather than a page that quietly kept the old
    *  answer. */
@@ -111,7 +134,18 @@ export class Page {
 }
 
 class Pages {
-  private readonly held = new SvelteMap<string, Page>()
+  /** Which tab has which page.
+   *
+   *  A plain map, deliberately, and this is the one line in the file worth being sure
+   *  about. Nothing draws the collection: what a pane draws is one `Page`, and every
+   *  field of a page that anything reads is `$state` of its own. A reactive map would
+   *  add nothing to that and would take the app down, because a pane asks for its
+   *  page from a `$derived` - the tab under a pane can be swapped - and a reaction may
+   *  not write to state that was made outside it. Making a page the first time it is
+   *  asked for would then throw `state_unsafe_mutation` while Svelte was flushing,
+   *  which abandons the batch and leaves the window drawn and no longer reactive: no
+   *  menu opens and no button answers. See test/effects/web-pages.effect.test.ts. */
+  private readonly held = new Map<string, Page>()
 
   /** Started once, on the first web tab, and never taken down: the window hears
    *  about every page in it through one listener. */
@@ -154,22 +188,62 @@ class Pages {
     const stale = page.live && page.builtAt !== grants.changed
     if (stale) await this.sleep(tabId)
 
-    if (!page.live) {
-      page.builtAt = grants.changed
-      const granted: Grant[] = grants.of(site)
-      try {
-        await invoke('web_open', { tab: tabId, url: page.url, pane, granted })
-        page.live = true
-        page.openable = true
-      } catch {
-        // No webview to be had here. Reported by the pane rather than by a message:
-        // it shows the card, which offers the page in the reader's own browser.
-        page.openable = false
-      }
+    if (page.live) {
+      await this.place(tabId, pane, true)
       return
     }
 
-    await this.place(tabId, pane, true)
+    // A page already on its way. Where the pane is now is where it will be put when
+    // it arrives; see `place`.
+    if (page.opening) {
+      page.wanted = { pane, visible: true }
+      return
+    }
+
+    await this.build(tabId, page, site, pane)
+  }
+
+  /** The webview for a tab, and then whatever happened while it was being built.
+   *
+   *  The crate builds a page on the window's own thread and answers when the platform
+   *  has handed it one, which is long enough for the pane to have moved, for the tab
+   *  to have been switched away from, or for the tab to have been closed. None of
+   *  those used to be possible - the command was answered inline, which is what froze
+   *  the window - so all three are answered here now. */
+  private async build(tabId: string, page: Page, site: string, pane: Rect): Promise<void> {
+    page.opening = true
+    page.builtAt = grants.changed
+    const granted: Grant[] = grants.of(site)
+
+    try {
+      await invoke('web_open', { tab: tabId, url: page.url, pane, granted })
+      page.live = true
+      page.openable = true
+    } catch {
+      // No webview to be had here. Reported by the pane rather than by a message:
+      // it shows the card, which offers the page in the reader's own browser.
+      page.openable = false
+    } finally {
+      page.opening = false
+    }
+
+    const wanted = page.wanted
+    page.wanted = null
+    if (!page.live) return
+
+    // The tab was closed while its page was being built. Nothing is left to place it,
+    // and a page nothing places is a browser running behind the window.
+    if (this.held.get(tabId) !== page) {
+      page.live = false
+      await invoke('web_close', { tab: tabId }).catch(() => undefined)
+      return
+    }
+
+    if (!wanted) return
+    if (wanted.visible) await this.place(tabId, wanted.pane, true)
+    // Out of sight, and counting down to being taken down: the countdown that should
+    // have started when the tab was switched away from found no page to start it on.
+    else this.hide(tabId, wanted.pane)
   }
 
   /** Where the page sits, and whether it is on screen at all. A tab that is not the
@@ -177,7 +251,18 @@ class Pages {
    *  not be a reload. */
   async place(tabId: string, pane: Rect, visible: boolean): Promise<void> {
     const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live) return
+    if (!isDesktop || !page) return
+
+    // The page is still being built. Where it goes, and whether it is seen at all, is
+    // what the pane says now rather than what it said when the page was asked for: a
+    // tab switched away from while its page was on its way must not have the page
+    // arrive over the tab that took its place.
+    if (page.opening) {
+      page.wanted = { pane, visible }
+      return
+    }
+
+    if (!page.live) return
 
     try {
       await invoke('web_place', { tab: tabId, pane, visible })

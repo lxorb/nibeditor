@@ -28,6 +28,19 @@ export function watch(run: Parameters<typeof $effect>[0]): void {
   $effect(run)
 }
 
+/** A value a component works out from state, read as often as the test likes.
+ *
+ *  What `const page = $derived(...)` is in a component, in a file that is not one.
+ *  Worth having because a derived is not just a function that is cached: it runs as
+ *  a reaction, and a reaction may not write to state that was made outside it. A
+ *  store method that looks perfectly ordinary can therefore throw the moment a
+ *  component reads it through one, which no test of the method by itself would ever
+ *  see. Call it inside a `root` body, as a component would. */
+export function computed<T>(of: () => T): () => T {
+  const value = $derived.by(of)
+  return () => value
+}
+
 /** State a plain test file can write to and a component can read as props. A
  *  `$state` object is a proxy: every read of a field through it is tracked and
  *  every write to one is a change, wherever the code doing it lives. */
