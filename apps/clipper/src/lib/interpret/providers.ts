@@ -87,11 +87,43 @@ export interface Request {
   body: unknown
 }
 
+/** Whether an address is one the key may be sent to.
+ *
+ *  The compatible provider's address is typed by hand, and what is sent to it is the
+ *  key plus the page: a typo is somebody else's server being handed both, and `http:`
+ *  to anywhere but this machine is both of them in the clear. So it has to parse, it
+ *  has to be `https:`, and the one exception is loopback - which is where a model on
+ *  the machine answers, has no certificate, and is the reason the provider exists.
+ *
+ *  Judged here rather than where it is typed, because here is where it is used: the
+ *  options page says the same thing to the reader as they type it. */
+export function reachable(address: string): boolean {
+  let parsed: URL
+  try {
+    parsed = new URL(address.trim())
+  } catch {
+    return false
+  }
+
+  if (parsed.protocol === 'https:') return true
+
+  return (
+    parsed.protocol === 'http:' &&
+    (parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '[::1]' ||
+      parsed.hostname === '::1')
+  )
+}
+
 /** Where a provider answers, with the trailing slash a pasted address usually
- *  carries taken off. */
+ *  carries taken off. Nothing for an address the key may not be sent to, which
+ *  `ready` then reads as a provider that is not set up. */
 function base(setup: Setup): string {
   const said = setup.provider === 'compatible' ? setup.address : PROVIDERS[setup.provider].base
-  return said.trim().replace(/\/+$/, '')
+  const trimmed = said.trim().replace(/\/+$/, '')
+
+  return setup.provider === 'compatible' && !reachable(trimmed) ? '' : trimmed
 }
 
 /** Whether the setup is worth sending anything at all. */

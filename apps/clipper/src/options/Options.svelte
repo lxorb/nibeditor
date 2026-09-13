@@ -238,10 +238,17 @@
         {#if provider === 'compatible'}
           <label class="setting">
             <span class="name">{t('Address')}</span>
+            <!-- Typed, kept, and asked nothing. Looking a provider's models up sends
+                 the key, and this field is half an address for as long as somebody is
+                 typing it: a blur used to hand the key to whatever host was in it,
+                 which for a typo or a paste is somebody else's server. The models are
+                 looked up when the key is committed or a provider is chosen, both of
+                 which are somebody saying so about the provider rather than about the
+                 letters in a hostname - and `reachable` in interpret/providers.ts is
+                 what refuses the request either way. -->
             <input
               bind:value={address}
               oninput={() => void keep()}
-              onchange={() => void look()}
               spellcheck="false"
               placeholder={OLLAMA}
             />

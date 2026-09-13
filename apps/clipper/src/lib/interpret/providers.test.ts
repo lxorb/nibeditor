@@ -6,6 +6,7 @@ import {
   PROVIDERS,
   readModels,
   readReply,
+  reachable,
   ready,
   refusalIn,
   requestFor,
@@ -196,5 +197,52 @@ describe('the three providers between them', () => {
   test('start a local server at the address Ollama answers on', () => {
     expect(PROVIDERS.compatible.base).toBe(OLLAMA)
     expect(OLLAMA.startsWith('http://localhost:')).toBe(true)
+  })
+})
+
+/** The compatible provider's address is typed by hand, and what goes to it is the
+ *  key and the page. So a typo is somebody else's server being handed both. */
+describe('an address the key may be sent to', () => {
+  test('is https, wherever it points', () => {
+    for (const address of [
+      'https://api.example.com/v1',
+      'https://api.example.com:8443/v1',
+      'https://127.0.0.1:1234/v1',
+    ]) {
+      expect(reachable(address), address).toBe(true)
+    }
+  })
+
+  test('or this machine, which is where a model with no certificate answers', () => {
+    for (const address of [OLLAMA, 'http://localhost:8080/v1', 'http://127.0.0.1:11434/v1']) {
+      expect(reachable(address), address).toBe(true)
+    }
+  })
+
+  test('and never plain http to somebody else', () => {
+    for (const address of [
+      'http://api.example.com/v1',
+      'http://192.168.1.7:11434/v1',
+      'http://localhost.evil.example/v1',
+    ]) {
+      expect(reachable(address), address).toBe(false)
+    }
+  })
+
+  test('nor anything that is not an address at all', () => {
+    for (const address of ['', '   ', 'api.example.com', 'ftp://example.com', 'javascript:1']) {
+      expect(reachable(address), address).toBe(false)
+    }
+  })
+
+  /** And the request itself: `ready` is what every caller asks before sending, so an
+   *  address the key may not go to is a provider that is not set up. */
+  test('so a provider pointed anywhere else is not asked anything', () => {
+    const setup = { provider: 'compatible' as const, key: 'sk-test', model: 'llama', address: '' }
+
+    expect(ready({ ...setup, address: OLLAMA })).toBe(true)
+    expect(ready({ ...setup, address: 'https://api.example.com/v1' })).toBe(true)
+    expect(ready({ ...setup, address: 'http://api.example.com/v1' })).toBe(false)
+    expect(ready({ ...setup, address: 'not an address' })).toBe(false)
   })
 })

@@ -137,7 +137,17 @@ chrome.commands.onCommand.addListener((command, tab) => {
   void straightToNotes(kind, tab.id, null)
 })
 
-chrome.runtime.onMessage.addListener((message: unknown, _sender, respond) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
+  // Ours, and from a page of this extension's own. A message carries whatever the
+  // sender wanted it to, and `save` writes a note into the account - so the shape
+  // being right is not the same question as the sender being us. A web page cannot
+  // reach this listener at all (there is no `externally_connectable` and no
+  // `onMessageExternal`), which is what makes this the second lock rather than the
+  // first; what it closes is a content script on a hostile page, which runs in that
+  // tab and can say anything the popup can.
+  if (sender.id !== chrome.runtime.id) return false
+  if (!sender.url?.startsWith(chrome.runtime.getURL(''))) return false
+
   const asked = readAsk(message)
   if (!asked) return false
 

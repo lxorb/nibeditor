@@ -66,6 +66,15 @@ Chosen in the options page, one at a time.
 
 The model is picked from what the provider lists, and typed where it lists nothing.
 
+That address is the one field here that decides where the key goes, so it has to be
+`https:` or this machine - `localhost`, `127.0.0.1`, `[::1]` - and has to parse as an
+address at all. Anything else is read as a provider that is not set up yet, and
+nothing is sent: plain `http:` to somebody else's host is the key and the page in the
+clear, and a typo is both handed to whoever owns the name. Typing in the field asks
+nothing either; the models are looked up when the key is committed or a provider is
+chosen, because a field being typed into is half an address for as long as that
+lasts.
+
 **Local first.** The options page looks for Ollama on `localhost:11434` as it opens
 and offers it where it finds it: one press sets the address, the key to nothing and
 the first model it has. A model on the machine costs nothing per clip and sends the

@@ -46,6 +46,17 @@ export const manifest: chrome.runtime.ManifestV3 = {
   // any host at all, and uploaded to the account so the note stops depending on
   // the site. That is the whole reason for the breadth; nibeditor.com alone
   // would leave every image a dead link the day the article moves.
+  //
+  // Asked for at install rather than at the first clip with pictures in it, which
+  // would be the smaller prompt and was looked at: `chrome.permissions.request`
+  // has to be made inside a user gesture, so it would move into the popup's Save
+  // press; a reader who said no would need a sentence and a clip with no pictures
+  // in it; and the browser drive - which runs the service worker directly and
+  // fetches its pictures off a local server - has no way to answer a permission
+  // prompt, so `test/e2e/clip.py` would stop proving anything. A narrower prompt
+  // that costs a refusal path nobody designed and a drive that no longer drives is
+  // not obviously the safer of the two. Said here so the next reader has the
+  // reasoning rather than the question.
   host_permissions: ['<all_urls>'],
 
   // Suggestions rather than settings: Chrome hands them out only if nothing

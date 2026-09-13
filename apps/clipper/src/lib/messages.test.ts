@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import { type Clip, readAnswer, readAsk, readClip, readReading } from './messages'
 
@@ -128,5 +130,31 @@ describe('what comes back', () => {
   test('nothing recognisable at all', () => {
     expect(readAnswer({ ok: true })).toBe(null)
     expect(readAnswer(null)).toBe(null)
+  })
+})
+
+/** The other half of the same boundary. Everything above reads what a message says;
+ *  this is who said it, which the shape cannot tell you - and `save` writes a note
+ *  into somebody's account. Read off the source, because a listener registered on the
+ *  real `chrome` is not a thing a unit test holds. */
+describe('who a message is taken from', () => {
+  // Vitest runs in the package's own root, and `import.meta.url` is not a file URL
+  // under jsdom; see i18n.test.ts, which reads the manifest the same way.
+  const read = (...parts: string[]) => readFileSync(join(process.cwd(), 'src', ...parts), 'utf8')
+
+  test('the worker takes one from this extension’s own pages and nothing else', () => {
+    const worker = read('background', 'index.ts')
+
+    expect(worker).toContain('sender.id !== chrome.runtime.id')
+    expect(worker).toContain("sender.url?.startsWith(chrome.runtime.getURL(''))")
+    // And the sender is read rather than thrown away, which is what it used to be.
+    expect(worker).not.toContain('(message: unknown, _sender, respond)')
+  })
+
+  test('and the reader in the page answers only this extension', () => {
+    const content = read('content', 'index.ts')
+
+    expect(content).toContain('sender.id !== chrome.runtime.id')
+    expect(content).not.toContain('(message: unknown, _sender, respond)')
   })
 })

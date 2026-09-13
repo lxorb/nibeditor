@@ -20,7 +20,12 @@ declare global {
 if (!window.nibClipperReading) {
   window.nibClipperReading = true
 
-  chrome.runtime.onMessage.addListener((message: unknown, _sender, respond) => {
+  chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
+    // From this extension and nothing else. Reading the page is the one thing this
+    // listener does, and what it answers with is the page's own words - which is
+    // not something another extension on the same tab gets to ask for.
+    if (sender.id !== chrome.runtime.id) return false
+
     const wanted = readReading(message)
     if (!wanted) return false
 
