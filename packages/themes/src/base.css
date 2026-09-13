@@ -387,6 +387,26 @@ select option {
   cursor: default;
 }
 
+/* The name gives way, because the control cannot. What sits at the end of one of
+   these rows is a switch, a slider or a segmented control at the size a thumb
+   needs, so when the words do not fit the words are the only thing that can move -
+   and a row one line taller costs nothing, while a name cut in half no longer says
+   which setting it is.
+
+   `anywhere` rather than `break-word`, because only `anywhere` counts for the
+   min-content width a flex row is measured by: with `break-word` the row is still
+   laid out as though the longest word were unbreakable, and the break comes too
+   late to stop the overflow.
+
+   Not a German rule, though German is where it shows first: `Schreibmaschinenmodus`
+   is twice the English it replaces, and Thai and Japanese give a line no spaces to
+   break at at all. English rows are unaffected - a box that already fits has nothing
+   to break. */
+.nib-setting .name,
+.nib-setting .name .what {
+  overflow-wrap: anywhere;
+}
+
 /* ── Layers over the app ───────────────────── */
 
 /* What a layer is put up over: the app, dimmed and softened, so the surface in
