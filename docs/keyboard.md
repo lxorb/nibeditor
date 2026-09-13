@@ -251,6 +251,35 @@ browser resets with. `shortcuts.test.ts` fails if another one appears.
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.
 
+**A web tab**
+
+Four keys that only mean anything while the pane is showing a website, and they are
+the four a browser has taught everybody. They are in the registry like the rest, so
+they show in Settings, show in the palette and can be rebound.
+
+| | |
+| --- | --- |
+| Ctrl+T | a new tab. In a web tab that is a new web tab, on the new tab page |
+| Ctrl+W | close, which is the same key every other tab closes with (already there) |
+| Ctrl+L | the address field, in the pane that has the focus |
+| Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
+| Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
+| Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
+| F12 | the engine's developer tools |
+
+Ctrl+L is also the chord CodeMirror selects a line with, and both keep it, because
+the bar reads the press where the bar is rather than off the window: an app-level
+binding would never reach the editor, while a pane showing a page has no editor to
+shadow.
+
+**And these work even while the page has the keyboard**, which is new and is the
+whole reason the engine underneath matters. A child webview of the system's engine
+hands the host no chance at a key, so after a click into a site Ctrl+L used to be
+that site's shortcut and the app never saw the press. Chromium gives the host
+`OnPreKeyEvent`, in the browser process, before the page's own handlers - so these
+seven are the shell's and everything else is the page's, including a site that wants
+Ctrl+K for itself. See docs/browser.md.
+
 **The spaces**
 
 | | |

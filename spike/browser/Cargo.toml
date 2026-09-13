@@ -1,0 +1,52 @@
+[package]
+name = "nib-spike-browser"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "A proof that nib can host Chromium through CEF. Not part of the app."
+
+# One pin, and it is this line. The `cef` crate's version carries the CEF version
+# it wraps - `152.2.0+152.0.6` is CEF 152.0.6, which is Chromium 152.0.7977.83 -
+# and cef-rs's own nightly `get-latest` workflow bumps itself to each new CEF and
+# publishes within days. So "we don't need to do anything manually when there are
+# upstream changes" is a Renovate bump of one line, and the workflow that proves
+# the bump is .github/workflows/spike-cef.yml. See docs/browser.md.
+#
+# `default-features = false`: the crate's defaults turn on `sandbox`, which on
+# Windows switches the build to a cdylib plus a `bootstrap.exe`, and a CI runner
+# cannot give Linux's `chrome-sandbox` the setuid bit it needs either. A shipping
+# build turns the sandbox back on - a browser without one is not shippable - and
+# what that costs is in docs/browser.md rather than measured here.
+#
+[dependencies]
+cef = { version = "152.2.0+152.0.6", default-features = false }
+
+# The macOS half, and the one platform where an embedding host has to write
+# Objective-C. CEF requires the process's `NSApplication` to conform to
+# `CefAppProtocol`, which means a subclass of its own: see src/mac.rs, and see
+# docs.md on why that single requirement decides the whole architecture.
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.3"
+objc2-foundation = "0.3.2"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = [
+  "NSApplication",
+  "NSEvent",
+  "NSResponder",
+  "NSWindow",
+] }
+
+# The browser process, which is also every subprocess on Windows and Linux.
+[[bin]]
+name = "nib-spike-browser"
+path = "src/main.rs"
+
+# The subprocess, which macOS insists is a separate executable in a bundle of its
+# own. Harmless to ship on the other two and one fewer difference between them.
+[[bin]]
+name = "nib-spike-helper"
+path = "src/helper.rs"
+
+
+[lib]
+name = "nib_spike_browser"
+path = "src/lib.rs"

@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "nib spike probe",
+  "version": "1.0",
+  "description": "Proves an unpacked extension loads, runs an MV3 service worker, injects a content script and has an action.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "worker.js" },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_idle" }
+  ],
+  "action": { "default_title": "nib spike probe", "default_popup": "popup.html" }
+}

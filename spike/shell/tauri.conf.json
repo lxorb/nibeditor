@@ -1,0 +1,18 @@
+{
+  "productName": "nib-spike-shell",
+  "version": "0.1.0",
+  "identifier": "com.nibeditor.spike.shell",
+  "build": {
+    "frontendDist": "web"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}
