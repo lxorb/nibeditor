@@ -170,6 +170,29 @@ pub fn made(dir: &Path) -> Result<(), String> {
     fs::create_dir_all(dir).map_err(|error| cannot("create", dir, &error))
 }
 
+/// The variable that says where the notes are, for a probe or a drive.
+///
+/// **The identifier a build runs under does not keep anybody's notes apart.** It moves
+/// the settings folder and the browsing profile, and says nothing at all about where the
+/// spaces are - so a drive that made itself a space made it in the reader's own
+/// `Documents/Nib`, beside their notes. This is the one way to keep out of them, and
+/// every probe and drive sets it; see docs/automation.md.
+const SPACES_DIR: &str = "NIB_SPACES_DIR";
+
+/// The spaces root a variable names, or `None` for one it does not name.
+///
+/// Absolute only. A relative path is read against whatever folder the app happened to be
+/// started in, which is not a place to decide somebody's notes live; and an empty value
+/// is what a shell leaves behind when it clears a variable, so it reads as unset rather
+/// than as the root of the disk.
+///
+/// Pure, and told what the variable said rather than reading it, so the rule is tested
+/// without an app, a documents folder, or a variable set across a running test suite.
+fn spaces_named(said: Option<&OsStr>) -> Option<PathBuf> {
+    let path = PathBuf::from(said?);
+    path.is_absolute().then_some(path)
+}
+
 /// `Documents/Nib`, so notes sit where a person would look for them rather than
 /// buried in application data. Falls back to the home folder on a system that
 /// has no documents folder of its own.
@@ -179,7 +202,15 @@ pub fn made(dir: &Path) -> Result<(), String> {
 /// stands in front of every note, folder, tree, search and trash command, and a
 /// note being read asks whether it is inside. What wants the folder to be there
 /// says so, with `spaces_root`.
+///
+/// `NIB_SPACES_DIR` wins outright, and is read at call time and before the documents
+/// folder is asked for: a drive that says where the notes go must not be overruled by a
+/// documents folder, and must not need one to exist at all.
 pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Some(named) = spaces_named(std::env::var_os(SPACES_DIR).as_deref()) {
+        return Ok(named);
+    }
+
     let base = app
         .path()
         .document_dir()
@@ -662,14 +693,48 @@ mod tests {
     use super::{
         a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
         highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged,
-        judged_space, link_to, move_highlights, space_root, write_atomically,
+        judged_space, link_to, move_highlights, space_root, spaces_named, write_atomically,
     };
+    use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
+    }
+
+    /// A probe says where its notes go, because nothing else does: the identifier a
+    /// build runs under moves the settings and the browsing profile and leaves the
+    /// spaces in `Documents/Nib`, which is where a drive of mine wrote a space of its
+    /// own beside somebody's real notes. See `SPACES_DIR` and docs/automation.md.
+    #[test]
+    fn a_variable_says_where_the_spaces_are_and_wins() {
+        let absolute = if cfg!(windows) {
+            path(&[r"C:\", "probe", "notes"])
+        } else {
+            path(&["/", "probe", "notes"])
+        };
+
+        // What comes back is that folder itself: not joined with `Nib`, and with no
+        // documents folder anywhere in it. That is what "wins" means - `spaces_dir`
+        // answers this before it asks for a documents folder at all.
+        let said = spaces_named(Some(absolute.as_os_str())).expect("an absolute path");
+        assert_eq!(said, absolute);
+        assert!(!said.ends_with("Nib"));
+    }
+
+    /// Anything that is not an absolute path is not an override. A relative one would be
+    /// read against whatever folder the app was started in, and an empty value is what a
+    /// shell leaves behind when it clears a variable.
+    #[test]
+    fn a_variable_that_names_no_absolute_folder_is_ignored() {
+        assert!(spaces_named(None).is_none());
+        assert!(spaces_named(Some(OsStr::new(""))).is_none());
+        assert!(spaces_named(Some(OsStr::new("notes"))).is_none());
+        assert!(spaces_named(Some(OsStr::new("./notes"))).is_none());
+        assert!(spaces_named(Some(OsStr::new("../notes"))).is_none());
+        assert!(spaces_named(Some(OsStr::new("Documents/Nib"))).is_none());
     }
 
     #[test]

@@ -222,10 +222,38 @@ the secret is in; there is no way to turn it on from a request or from a link. T
 check is in the crate, before the request reaches any code in the page. The Even
 Realities plugin does not carry the code for it at all.
 
+## Driving the app without writing into somebody's notes
+
+**A probe says where its notes go, because nothing else does.** Building under an
+identifier of its own - `--config '{"identifier":"ch.emilvinu.nib.probe"}'`, which is
+what every drive in `scripts/` does - moves the settings folder and the browsing
+profile, and says **nothing at all** about where the spaces are: `spaces_dir` resolves
+`Documents/Nib` whatever the identifier is. So a drive that makes itself a space to
+open makes it in the reader's own notes folder, beside their notes. That is not a
+hypothetical; it is what happened, and the space had to be deleted by hand.
+
+So the spaces root is a variable, and every probe and drive sets it:
+
+```
+NIB_SPACES_DIR=/some/temp/folder
+```
+
+| | |
+| --- | --- |
+| when it is set | it **is** the spaces root - used as given, with no `Nib` joined onto it |
+| when it wins | outright, and before the documents folder is asked for, so a drive needs no documents folder to exist |
+| when it is read | at call time, so a drive sets it and starts the app, with nothing built again |
+| what is ignored | anything that is not an absolute path: a relative one would be read against whatever folder the app was started in, and an empty value is what a shell leaves behind when it clears a variable |
+
+A drive points it at a folder it made in the system's temp area and writes its space
+there, so a run touches nothing of anybody's. See `SPACES_DIR` and `spaces_named` in
+`src-tauri/src/paths.rs`, and `scripts/web-session-probe.py` for a drive that does it.
+
 ## Where the code is
 
 | File | What it owns |
 | --- | --- |
+| `src-tauri/src/paths.rs` | where the spaces are, and the variable a drive says it with |
 | `src-tauri/src/uris.rs` | links arriving: the one the app was launched by, and every later one |
 | `src-tauri/src/endpoint.rs` | the socket, the secret, and handing a request to the window |
 | `src/lib/automation/uri.ts` | reading a link, and where a callback may go |
