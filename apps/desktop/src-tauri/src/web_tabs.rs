@@ -54,6 +54,10 @@ const MOVED: &str = "nib://web-tab";
 
 /// The event the window hears when a site asks for something it has to be given: the
 /// camera, the microphone, where you are, notifications, the clipboard to read.
+///
+/// Only `WebView2` raises the request this carries, so off Windows nothing emits it;
+/// the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
+#[cfg_attr(not(windows), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
@@ -470,6 +474,10 @@ struct Looked {
 /// `id` is what the answer comes back with: the request is held open in the engine
 /// while the reader decides, and the only thing either side needs to agree on is which
 /// request is being answered.
+///
+/// Built only where a permission request is raised, which is Windows; off it the ask
+/// module is a stub and nothing constructs this, so it is allowed to be dead there.
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,
@@ -1383,6 +1391,14 @@ mod shot {
     /// No way in. `WKWebView`'s own snapshot and `WebKitGTK`'s are not reachable
     /// through what wry hands out, so the window keeps its own ground under an overlay
     /// here; see the note on `web_shot`.
+    ///
+    /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
+    /// signature has to match the Windows one `web_shot` calls, where the engine's own
+    /// failures are real.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the signature matches the Windows photograph, which does fail"
+    )]
     pub fn photograph(
         _webview: &PlatformWebview,
         done: Sender<Option<Vec<u8>>>,
