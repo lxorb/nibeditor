@@ -175,8 +175,9 @@ where that stops being true:
   `apps/desktop/src/lib/automation/inside.ts`: relative, `/` separators, no
   `..`, no drive letter, no control character, no name Windows keeps for a
   device. `insideSpace` then only concatenates, which cannot leave a root
-  given steps that hold no `..`. A link reaches four verbs and no writing
-  one; `eval` is refused in the crate, before the window is asked, unless
+  given steps that hold no `..`. A link reaches five verbs, and the two of
+  them that write can only make a note or add to the end of one;
+  `eval` is refused in the crate, before the window is asked, unless
   the endpoint file turns it on. A caller that names no path at all is
   answered about the note on screen, and that note is judged too: a note
   opened from a downloads folder is outside every space, so `noteFor` in

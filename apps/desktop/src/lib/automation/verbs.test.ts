@@ -86,11 +86,11 @@ describe('what a link may ask for', () => {
   /** The whole security surface of the scheme, pinned. A link can be written by
    *  anybody and sent to anybody, so this list growing is a decision rather than a
    *  side effect of adding a verb. */
-  test('is these four actions and nothing else', async () => {
+  test('is these five actions and nothing else', async () => {
     const actions = [...(await verbs()), 'command', 'nonsense']
     const allowed = actions.filter((one) => verbForAction(one) !== null)
 
-    expect(allowed.sort()).toEqual(['command', 'new', 'open', 'search'])
+    expect(allowed.sort()).toEqual(['append', 'command', 'new', 'open', 'search'])
   })
 
   test('reads `command` as the row the palette runs', () => {
@@ -99,14 +99,15 @@ describe('what a link may ask for', () => {
     expect(verbForAction('commands.run')).toBeNull()
   })
 
-  test('and hears how it went only from the one verb that changed something', async () => {
+  test('and hears how it went only from the verbs that changed something', async () => {
     const heard = (await verbs()).filter((verb) => linkHearsFrom(verb))
 
-    // `new` was told the name it made by the caller, so saying it back tells the
-    // caller nothing it did not write. Every other link verb answers a question
-    // about the space - `open` answers the path it landed on - and a link's outcome
-    // goes to an address the link itself chose; see `byLink` in verbs.ts.
-    expect(heard).toEqual(['new'])
+    // `new` and `append` were told the path by the caller, so saying it back tells the
+    // caller nothing it did not write - only whether the note was made or added to.
+    // Every other link verb answers a question about the space - `open` answers the
+    // path it landed on - and a link's outcome goes to an address the link itself
+    // chose; see `byLink` in verbs.ts.
+    expect(heard).toEqual(['append', 'new'])
     expect(linkHearsFrom('open')).toBe(false)
     // Not even the verbs no link may ask for, so widening one column cannot quietly
     // widen the other.

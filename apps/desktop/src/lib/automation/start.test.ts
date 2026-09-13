@@ -165,6 +165,21 @@ describe('a link that made a note', () => {
   })
 })
 
+describe('a link that added to a note', () => {
+  test('is followed, and says whether the note was there already', async () => {
+    world.answer = { ok: true, value: { path: 'Daily.md', added: true } }
+    await arrives(
+      `nib://append?path=Daily.md&content=A%20line.&x-success=${encodeURIComponent(BACK)}`,
+    )
+
+    expect(world.asked).toEqual(['append'])
+
+    const said = new URL(world.went[0] ?? '').searchParams
+    expect(said.get('path')).toBe('Daily.md')
+    expect(said.get('added')).toBe('true')
+  })
+})
+
 describe('a link the app will not take at all', () => {
   test('is declined to its face, which says nothing about any space', async () => {
     await arrives(`nib://files.delete?path=x&x-cancel=${encodeURIComponent(BACK)}`)

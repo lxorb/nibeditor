@@ -28,6 +28,7 @@
  *  `BY_LINK` below. */
 
 import {
+  appendNote,
   deleteFile,
   moveFile,
   newNote,
@@ -88,11 +89,17 @@ interface Verb {
 }
 
 const VERBS: Record<string, Verb> = {
-  // The four a link can ask for. Opening, searching and running a command change
-  // nothing a person could not change back, and making a note never writes over
-  // one; see acts.ts.
+  // The five a link can ask for. Opening, searching and running a command change
+  // nothing a person could not change back; making a note never writes over one, and
+  // appending only ever adds to the end of one. See acts.ts.
+  //
+  // None of them confirms, and that is not an oversight: a link writes its own query
+  // string, so it would write the `yes` as well. What keeps a link out is `byLink`
+  // being absent, which is how every verb that could overwrite, move or delete a note
+  // is out of reach.
   open: { takes: ['path'], byLink: 'quiet', run: openNote },
   new: { takes: ['name'], byLink: 'back', run: newNote },
+  append: { takes: ['path', 'content'], byLink: 'back', run: appendNote },
   search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
   'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
 
