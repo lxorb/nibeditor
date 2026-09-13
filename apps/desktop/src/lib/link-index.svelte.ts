@@ -354,6 +354,24 @@ class Links {
     return map
   })
 
+  /** The notes that carry a cover, by path.
+   *
+   *  The same shape and the same reason as the icons: a handful of a space, asked
+   *  by a lookup rather than a walk, and derived so the row's own menu says Change
+   *  rather than Set the moment a cover is written - without the tree being told.
+   *  Only which picture, not where its band sits: what asks this is a menu deciding
+   *  between three words. See cover.ts in @nib/markdown. */
+  private readonly covers = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.cover) map.set(note.path, note.cover)
+    }
+
+    return map
+  })
+
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
    *
@@ -364,6 +382,13 @@ class Links {
   iconOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
     return this.icons.get(relative) ?? null
+  }
+
+  /** The picture across the top of the note at this path, as written, or null where
+   *  it has none. Takes either spelling of a path, like the two around it. */
+  coverOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.covers.get(relative) ?? null
   }
 
   /** The colour that icon is drawn in, or null for the plain foreground. */

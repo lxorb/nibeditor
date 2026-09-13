@@ -82,6 +82,10 @@ export function buildBody(source: string, options: HtmlOptions = {}): string {
   return renderMarkdown(source, {
     footnotes: true,
     toc: true,
+    // The note's cover, where it names one: the banner is the top of the note, so
+    // a document of it opens on the same picture the app shows. Its own picture
+    // like any other, so `inlineImages` below carries it into the file.
+    cover: true,
     ...(options.fence ? { code: options.fence } : {}),
     // No link resolver: an exported document stands on its own, and a link to a
     // note that is not in it has nowhere to point, so it reads as its own words.

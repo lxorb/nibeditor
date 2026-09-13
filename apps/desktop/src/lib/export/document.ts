@@ -19,6 +19,7 @@ import {
   withoutComments,
 } from '@nib/markdown'
 import { calloutOf } from '@nib/markdown/callouts'
+import { coverOf } from '@nib/markdown/cover'
 import { embedKind, embedSize, shownText, withoutBlockIds } from '@nib/markdown/links'
 import type { Token, Tokens } from 'marked'
 
@@ -443,7 +444,16 @@ export function documentOf(source: string, name: string, options: DocumentOption
     withoutBlockIds(source.startsWith('---') ? stripFront(source) : source),
   )
 
-  const blocks = flowed(blocksOf(lexMarkdown(body), notes), hard)
+  // The note's cover, where it names one, as the document's first picture: the
+  // banner is the top of the note, so a note whose cover is a photograph opens on
+  // the photograph in Word as it does in the app. A picture like any other from
+  // here on - `picturesIn` finds it, so it is read and embedded with the rest.
+  const cover = coverOf(source)
+  const banner: Block[] = cover
+    ? [{ kind: 'paragraph', spans: [{ text: '', picture: cover.src }] }]
+    : []
+
+  const blocks = [...banner, ...flowed(blocksOf(lexMarkdown(body), notes), hard)]
 
   return {
     title: titleOf(source, name),

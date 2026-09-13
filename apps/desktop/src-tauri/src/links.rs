@@ -105,6 +105,15 @@ pub struct Note {
     /// every note and canvas, and for a website nobody has followed a link out of yet.
     /// Read on this pass for the reason the icon is. See web-tab/shortcut.ts.
     favicon: Option<String>,
+    /// The picture across the top of the note, as its front matter says it under
+    /// `cover:`. None for a note with no cover, which is almost every note.
+    ///
+    /// Read on this pass for the reason the icon is: the space is already being
+    /// read, and the row's own menu has to know whether there is a cover to change
+    /// or to take away. Where the band is taken from - `cover-position:` - is not
+    /// read, because no list asks it; the surface that draws the banner reads it
+    /// out of the note itself. See cover.ts in @nib/markdown.
+    cover: Option<String>,
 }
 
 /// A whole space's links.
@@ -209,6 +218,7 @@ fn note_at(relative: String, body: &str) -> Note {
         // A note wears its own front-matter icon, not a site's favicon; that is a
         // website's, read in `shortcut_note`.
         favicon: None,
+        cover: said("cover"),
     }
 }
 
@@ -315,6 +325,8 @@ fn canvas_note(relative: String, body: &str) -> Note {
         // so, and JSON Canvas has no key for one.
         url: None,
         favicon: None,
+        // And a plane has no cover: the whole of it is a picture already.
+        cover: None,
     }
 }
 
@@ -344,6 +356,7 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         // wants converting; a shortcut is already one. See shortcut.ts.
         url: None,
         favicon: favicon_of(content),
+        cover: None,
     }
 }
 

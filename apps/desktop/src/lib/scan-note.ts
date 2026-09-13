@@ -6,6 +6,7 @@
  *  function, so a note re-read after a save cannot come back looking different
  *  from the same note read by the first scan. */
 
+import { COVER_KEY } from '@nib/markdown/cover'
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
@@ -66,6 +67,15 @@ export interface ScannedNote {
    *  and canvas, and for a website nobody has followed a link out of yet. The twin of
    *  the same field in links.rs. See web-tab/shortcut.ts. */
   favicon: string | null
+  /** The picture across the top of the note, as its front matter says it under
+   *  `cover:`, or null where it says nothing - which is almost every note.
+   *
+   *  Read on this pass for the reason the icon is, and read at all because the
+   *  row's own menu has to know whether there is a cover to change or to take
+   *  away. Where the band is taken from is not read: no list asks it, and the
+   *  surface that draws the banner reads it out of the note. See cover.ts in
+   *  @nib/markdown. */
+  cover: string | null
 }
 
 export interface SpaceLinks {
@@ -94,6 +104,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     // A note wears its own front-matter icon, not a site's favicon; that is a
     // website's, read in `scanShortcut`.
     favicon: null,
+    cover: frontMatterValue(content, COVER_KEY),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -146,6 +157,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     // The site's mark, so the row draws the favicon rather than the globe. `iconOf`
     // reads it out of the `.url`; a `.webloc` has none and falls back to the globe.
     favicon: iconOf(path, content),
+    cover: null,
     links: [],
   }
 }

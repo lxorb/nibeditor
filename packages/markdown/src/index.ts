@@ -4,6 +4,7 @@ import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
 import { propertiesTable, readProperties } from './properties'
 import { withoutComments } from './comments'
+import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard } from './html-block'
@@ -37,6 +38,12 @@ export interface RenderOptions {
    *  app; a document that has left is a document, and its metadata is what the
    *  page furniture was built from rather than a table at the top of it. */
   properties?: boolean
+  /** Draw the note's cover, where it names one, as a banner above everything else.
+   *  Every surface that shows the whole note asks for it - the reading view, the
+   *  HTML and ePub exports, a published page - because a cover is the top of the
+   *  note wherever the note is read. A deck does not: a slide is a poster and has
+   *  no top to put a band across. See cover.ts. */
+  cover?: boolean
   /** Render raw HTML as visible text instead of markup. Used when publishing:
    *  a note is authored content, and a public page must not run its scripts. */
   escapeHtml?: boolean
@@ -451,6 +458,9 @@ function inside(options: RenderOptions): RenderOptions {
   const rest = { ...options }
   delete rest.resolveEmbed
   delete rest.toc
+  // And no banner: a cover is the top of the note it belongs to, not a picture
+  // pushed into the middle of whichever note quotes it.
+  delete rest.cover
   return rest
 }
 
@@ -494,15 +504,19 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     )
   }
 
-  if (!options.properties) return html
+  if (options.properties) {
+    // Above the note rather than inside it: the block was taken out before the
+    // parse, and what it says is about the note rather than part of it. A block
+    // whose shape cannot be read draws nothing here, the same answer the editor
+    // gives - except that the editor can fall back to the source and a page has
+    // nowhere to fall back to.
+    const rows = readProperties(source)
+    if (rows !== null && rows.length > 0) html = propertiesTable(rows) + html
+  }
 
-  // Above the note rather than inside it: the block was taken out before the
-  // parse, and what it says is about the note rather than part of it. A block
-  // whose shape cannot be read draws nothing here, the same answer the editor
-  // gives - except that the editor can fall back to the source and a page has
-  // nowhere to fall back to.
-  const rows = readProperties(source)
-  return rows === null || rows.length === 0 ? html : propertiesTable(rows) + html
+  // The banner above both, because the cover is the top of the note: what a
+  // reader sees before its name, its metadata or its first word. See cover.ts.
+  return options.cover ? coverFigure(coverOf(source)) + html : html
 }
 
 /** Nested lists of links, one level deeper for each step down in heading
