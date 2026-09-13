@@ -100,6 +100,7 @@ export const ko: Dictionary = {
   Arrows: '화살표',
   'Size by links': '링크 수로 크기',
   Lines: '선',
+  'Text fade': '글자 페이드',
   'Over time': '시간에 따라',
   Play: '재생',
   Pause: '일시정지',

@@ -100,6 +100,7 @@ export const gsw: Dictionary = {
   Arrows: 'Pfyl',
   'Size by links': 'Grössi nach Links',
   Lines: 'Linie',
+  'Text fade': 'Näme iiblände',
   'Over time': 'Über d Zyt',
   Play: 'Abspiele',
   Pause: 'Pause',

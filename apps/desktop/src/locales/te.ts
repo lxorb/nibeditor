@@ -100,6 +100,7 @@ export const te: Dictionary = {
   Arrows: 'బాణాలు',
   'Size by links': 'లింక్‌ల ప్రకారం పరిమాణం',
   Lines: 'గీతలు',
+  'Text fade': 'వచనం మసకబారడం',
   'Over time': 'కాలక్రమంలో',
   Play: 'ప్లే చేయి',
   Pause: 'పాజ్ చేయి',

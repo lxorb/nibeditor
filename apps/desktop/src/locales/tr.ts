@@ -100,6 +100,7 @@ export const tr: Dictionary = {
   Arrows: 'Oklar',
   'Size by links': 'Bağlantıya göre boyut',
   Lines: 'Çizgiler',
+  'Text fade': 'Yazı solması',
   'Over time': 'Zaman içinde',
   Play: 'Oynat',
   Pause: 'Duraklat',

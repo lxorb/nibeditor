@@ -3,7 +3,9 @@ import {
   DEEPEST,
   DEFAULT_GRAPH,
   graphSettingsOf,
+  LEAST_FADE,
   LEAST_LINES,
+  MOST_FADE,
   MOST_GROUPS,
   MOST_LINES,
   sameGraph,
@@ -123,6 +125,21 @@ describe('what a space says about its graph', () => {
 
     graph.set({ lines: 2.6 })
     expect(graph.here.lines).toBe(3)
+  })
+
+  /** One is the zoom the names have always arrived at, so nothing changes until the
+   *  dial is touched. */
+  test('holds the text fade to what the dial offers, one by default', () => {
+    expect(graph.here.fade).toBe(1)
+
+    graph.set({ fade: 0.5 })
+    expect(graph.here.fade).toBe(0.5)
+
+    graph.set({ fade: 40 })
+    expect(graph.here.fade).toBe(MOST_FADE)
+
+    graph.set({ fade: 0 })
+    expect(graph.here.fade).toBe(LEAST_FADE)
   })
 
   test('takes at most one colour group per colour the theme names', () => {

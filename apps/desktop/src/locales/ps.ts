@@ -100,6 +100,7 @@ export const ps: Dictionary = {
   Arrows: 'غشي',
   'Size by links': 'کچه د تړنو له مخې',
   Lines: 'کرښې',
+  'Text fade': 'د متن ورکېدل',
   'Over time': 'د وخت په تېرېدو',
   Play: 'چلول',
   Pause: 'درول',

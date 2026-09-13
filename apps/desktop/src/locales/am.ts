@@ -100,6 +100,7 @@ export const am: Dictionary = {
   Arrows: 'ቀስቶች',
   'Size by links': 'መጠን በአገናኞች',
   Lines: 'መስመሮች',
+  'Text fade': 'የጽሑፍ መደብዘዝ',
   'Over time': 'በጊዜ ሂደት',
   Play: 'አጫውት',
   Pause: 'አቁም',

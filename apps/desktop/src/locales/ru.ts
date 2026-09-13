@@ -100,6 +100,7 @@ export const ru: Dictionary = {
   Arrows: 'Стрелки',
   'Size by links': 'Размер по связям',
   Lines: 'Линии',
+  'Text fade': 'Проявление подписей',
   'Over time': 'Со временем',
   Play: 'Пуск',
   Pause: 'Пауза',

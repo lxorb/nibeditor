@@ -100,6 +100,7 @@ export const hi: Dictionary = {
   Arrows: 'तीर',
   'Size by links': 'लिंक से आकार',
   Lines: 'रेखाएँ',
+  'Text fade': 'पाठ का फ़ीका होना',
   'Over time': 'समय के साथ',
   Play: 'चलाएँ',
   Pause: 'ठहराएँ',

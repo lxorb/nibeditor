@@ -100,6 +100,7 @@ export const ja: Dictionary = {
   Arrows: '矢印',
   'Size by links': 'リンク数で大きさ',
   Lines: '線',
+  'Text fade': '文字のフェード',
   'Over time': '時間の流れ',
   Play: '再生',
   Pause: '一時停止',

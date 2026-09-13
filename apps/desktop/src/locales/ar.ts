@@ -100,6 +100,7 @@ export const ar: Dictionary = {
   Arrows: 'أسهم',
   'Size by links': 'الحجم حسب الروابط',
   Lines: 'الخطوط',
+  'Text fade': 'تلاشي النص',
   'Over time': 'عبر الزمن',
   Play: 'تشغيل',
   Pause: 'إيقاف مؤقت',

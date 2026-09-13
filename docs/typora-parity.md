@@ -699,7 +699,12 @@ Features Typora does not have, which are the reason this exists.
       saying nothing
 - [x] Names that fade in as the view comes in, rather than four hundred of them
       appearing at once on one notch of the wheel. A threshold that follows the
-      zoom, so there is nothing to set
+      zoom, so there is nothing to set - and one Text fade dial on the card for where
+      that threshold sits, because how dense a space is is a fact about the space
+      rather than about the picture of one. One is the zoom the names have always
+      arrived at, so nothing changes until it is touched; to the left they arrive
+      while the space is still small, to the right they wait until the view is in
+      among the notes. graph-paint.test.ts holds the fade to its zoom at each end
 - [x] How far the picture beside a note reaches, as a slider on the graph's own card
       and as a stepper beside the picture switch in the Links panel - one setting, so
       the two are never out of step, and remembered with the rest of the space's

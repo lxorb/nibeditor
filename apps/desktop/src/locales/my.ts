@@ -100,6 +100,7 @@ export const my: Dictionary = {
   Arrows: 'မြားများ',
   'Size by links': 'လင့်အလိုက်အရွယ်',
   Lines: 'မျဉ်းများ',
+  'Text fade': 'စာလုံး မှိန်ဝင်မှု',
   'Over time': 'အချိန်အလိုက်',
   Play: 'စတင်',
   Pause: 'ခေတ္တရပ်',

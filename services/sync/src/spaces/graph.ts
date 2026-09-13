@@ -39,6 +39,10 @@ const DEEPEST = 5
 /** The three widths a link may be drawn at; the app offers the same three. */
 const LEAST_LINES = 1
 const MOST_LINES = 3
+/** How much sooner or later the names may be asked to fade in, as a multiple of the
+ *  zoom the picture shows them at unasked. */
+const LEAST_FADE = 0.25
+const MOST_FADE = 4
 
 interface ColourGroup {
   query: string
@@ -57,6 +61,7 @@ interface GraphSettings {
   arrows?: boolean
   sized?: boolean
   lines?: number
+  fade?: number
   depth?: number
 }
 
@@ -144,6 +149,9 @@ function settingsOf(value: object): GraphSettings {
 
   const lines = held(sent.lines, LEAST_LINES, MOST_LINES)
   if (lines !== undefined) out.lines = Math.round(lines)
+
+  const fade = held(sent.fade, LEAST_FADE, MOST_FADE)
+  if (fade !== undefined) out.fade = fade
 
   const depth = held(sent.depth, SHALLOWEST, DEEPEST)
   if (depth !== undefined) out.depth = Math.round(depth)

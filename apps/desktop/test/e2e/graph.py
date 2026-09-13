@@ -584,6 +584,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
     page.wait_for_timeout(400)
 
+    # Where the names fade in, at each end of the dial: they arrive while the space is
+    # still small, or wait until the view is in among the notes.
+    for fade, what in ((0.25, "soon"), (4, "late")):
+        page.evaluate(
+            f"() => window.nibApp.workspace.graphSettings.set({{ fade: {fade} }})"
+        )
+        page.wait_for_timeout(600)
+        shot(f"fade-{what}")
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ fade: 1 })")
+    page.wait_for_timeout(400)
+
     # Arrowheads, which say which note reached for which.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: true })")
     page.wait_for_timeout(600)

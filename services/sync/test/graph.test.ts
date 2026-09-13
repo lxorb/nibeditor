@@ -39,6 +39,7 @@ const DRAWN = {
   arrows: true,
   sized: false,
   lines: 3,
+  fade: 0.5,
   depth: 2,
 }
 
@@ -103,6 +104,12 @@ describe('what a space may say about its graph', () => {
     expect((await put({ lines: 9 })).json.graph).toEqual({ lines: 3 })
     expect((await put({ lines: 0 })).json.graph).toEqual({ lines: 1 })
     expect((await put({ lines: 'thick' })).json.graph).toEqual({})
+  })
+
+  test('and a text fade outside what the dial offers is held to it', async () => {
+    expect((await put({ fade: 40 })).json.graph).toEqual({ fade: 4 })
+    expect((await put({ fade: 0 })).json.graph).toEqual({ fade: 0.25 })
+    expect((await put({ fade: 1.5 })).json.graph).toEqual({ fade: 1.5 })
   })
 
   test('and a filter longer than a query is refused, so nothing else is lost', async () => {

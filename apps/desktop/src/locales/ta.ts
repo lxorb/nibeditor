@@ -100,6 +100,7 @@ export const ta: Dictionary = {
   Arrows: 'அம்புக்குறிகள்',
   'Size by links': 'இணைப்புகளுக்கேற்ப அளவு',
   Lines: 'கோடுகள்',
+  'Text fade': 'எழுத்து மங்கல்',
   'Over time': 'காலப்போக்கில்',
   Play: 'இயக்கு',
   Pause: 'இடைநிறுத்து',

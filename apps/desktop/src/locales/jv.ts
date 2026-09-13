@@ -100,6 +100,7 @@ export const jv: Dictionary = {
   Arrows: 'Panah',
   'Size by links': 'Ukuran miturut pranala',
   Lines: 'Garis',
+  'Text fade': 'Pudhar teks',
   'Over time': 'Sajrone wektu',
   Play: 'Puter',
   Pause: 'Ngaso',

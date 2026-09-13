@@ -55,6 +55,14 @@ export const MOST_SPREAD = 4
 export const SHALLOWEST = 1
 export const DEEPEST = 5
 
+/** How much sooner or later the names fade in, as a multiple of the zoom the picture
+ *  has always shown them at. One is that zoom exactly, so a dial nobody has touched
+ *  changes nothing; below it the names arrive while the space is still small, above it
+ *  they wait until the view is in among the notes. See `LABELS_FROM` in
+ *  graph-paint.ts. */
+export const LEAST_FADE = 0.25
+export const MOST_FADE = 4
+
 /** The three widths a link may be drawn at: thin, the look the picture has always
  *  had, and thick. Three steps rather than a range, because the widths worth having
  *  are the ones a screen can actually draw as a hairline; see `EDGE_PIXELS` in
@@ -90,6 +98,9 @@ export interface GraphSettings {
   /** How wide a link is drawn: 1 thin, 2 the look the picture has always had, 3
    *  thick. */
   lines: number
+  /** Where the names fade in, as a multiple of the zoom they have always faded in
+   *  at. One is that zoom. */
+  fade: number
   /** How many links out the picture beside a note reaches, `SHALLOWEST` to
    *  `DEEPEST`. */
   depth: number
@@ -112,6 +123,8 @@ export const DEFAULT_GRAPH: GraphSettings = {
   // The middle step, which is the hairline the picture has always been drawn with:
   // a dial nobody has touched changes nothing.
   lines: 2,
+  // And the zoom the names have always arrived at, for the same reason.
+  fade: 1,
   depth: 1,
 }
 
@@ -158,6 +171,7 @@ export function graphSettingsOf(value: unknown): GraphSettings {
     arrows: isBoolean(value.arrows) ? value.arrows : DEFAULT_GRAPH.arrows,
     sized: isBoolean(value.sized) ? value.sized : DEFAULT_GRAPH.sized,
     lines: Math.round(held(value.lines, LEAST_LINES, MOST_LINES, DEFAULT_GRAPH.lines)),
+    fade: held(value.fade, LEAST_FADE, MOST_FADE, DEFAULT_GRAPH.fade),
     depth: Math.round(held(value.depth, SHALLOWEST, DEEPEST, DEFAULT_GRAPH.depth)),
   }
 }

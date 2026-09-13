@@ -100,6 +100,7 @@ export const fa: Dictionary = {
   Arrows: 'پیکان‌ها',
   'Size by links': 'اندازه بر پایه پیوند',
   Lines: 'خطوط',
+  'Text fade': 'محو نوشته',
   'Over time': 'در گذر زمان',
   Play: 'پخش',
   Pause: 'ایست',

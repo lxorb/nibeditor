@@ -100,6 +100,7 @@ export const mr: Dictionary = {
   Arrows: 'बाण',
   'Size by links': 'लिंकनुसार आकार',
   Lines: 'रेषा',
+  'Text fade': 'मजकूर फिकट होणे',
   'Over time': 'काळानुसार',
   Play: 'चालवा',
   Pause: 'थांबवा',

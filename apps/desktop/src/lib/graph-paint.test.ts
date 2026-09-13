@@ -54,13 +54,21 @@ interface Fill {
   shapes: string[]
 }
 
+/** One name drawn: what it said, and how far up the fade it was. */
+interface Label {
+  text: string
+  alpha: number
+}
+
 function context(): {
   strokes: Stroke[]
   fills: Fill[]
+  labels: Label[]
   context: CanvasRenderingContext2D
 } {
   const strokes: Stroke[] = []
   const fills: Fill[] = []
+  const labels: Label[] = []
   let dx = 0
   let dy = 0
   const saved: [number, number][] = []
@@ -81,7 +89,8 @@ function context(): {
         colour: String(fake.fillStyle),
         shapes: path ? [...(path as unknown as FakePath).steps] : [],
       }),
-    fillText: () => undefined,
+    fillText: (text: string) =>
+      labels.push({ text, alpha: Math.round(fake.globalAlpha * 1000) / 1000 }),
     save: () => saved.push([dx, dy]),
     restore: () => {
       const back = saved.pop() ?? [0, 0]
@@ -102,7 +111,7 @@ function context(): {
       }),
   }
 
-  return { strokes, fills, context: fake as unknown as CanvasRenderingContext2D }
+  return { strokes, fills, labels, context: fake as unknown as CanvasRenderingContext2D }
 }
 
 /** Two notes and the link between them, which is all a width needs. */
@@ -122,8 +131,8 @@ function painted(
   lines: number,
   ratio: number,
   over: Record<string, unknown> = {},
-): { strokes: Stroke[]; fills: Fill[] } {
-  const { strokes, fills, context: fake } = context()
+): { strokes: Stroke[]; fills: Fill[]; labels: Label[] } {
+  const { strokes, fills, labels, context: fake } = context()
 
   paint(fake, {
     graph: (over.graph as NoteGraph | undefined) ?? GRAPH,
@@ -150,11 +159,12 @@ function painted(
     tint: Int8Array.from([-1, -1]),
     arrows: false,
     lines,
+    fade: 1,
     ratio,
     ...over,
   })
 
-  return { strokes, fills }
+  return { strokes, fills, labels }
 }
 
 const all = (lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] =>
@@ -259,5 +269,45 @@ describe('a file a note embeds', () => {
     const { fills } = painted(2, 2)
 
     expect(fills.map((one) => one.shapes)).not.toContainEqual(['rect'])
+  })
+})
+
+/** Where the names fade in. A threshold that follows the zoom, with one dial for
+ *  where it sits: one is the zoom the picture has always shown them at, so a dial
+ *  nobody has touched changes nothing. See `LABELS_FROM` in graph-paint.ts. */
+describe('the names', () => {
+  const named = (scale: number, fade: number) =>
+    painted(2, 2, { camera: { x: 0, y: 0, scale }, fade }).labels
+
+  test('arrive at the zoom they always have when the dial is untouched', () => {
+    // 0.55 is where they start and 0.85 is where they are fully there.
+    expect(named(0.5, 1)).toEqual([])
+    expect(named(0.6, 1).map((one) => one.text)).toEqual(['A', 'B'])
+    expect(named(0.9, 1).map((one) => one.alpha)).toEqual([1, 1])
+  })
+
+  test('and fade up between the two rather than appearing at once', () => {
+    const half = named(0.7, 1)
+
+    expect(half).toHaveLength(2)
+    expect(half[0]?.alpha).toBeGreaterThan(0)
+    expect(half[0]?.alpha).toBeLessThan(1)
+  })
+
+  test('sooner where the dial asks for it', () => {
+    // Half the threshold: a zoom that showed none of them now shows them all.
+    expect(named(0.5, 0.5).map((one) => one.alpha)).toEqual([1, 1])
+    expect(named(0.3, 0.5).map((one) => one.text)).toEqual(['A', 'B'])
+    expect(named(0.2, 0.5)).toEqual([])
+  })
+
+  test('and later where it asks for that', () => {
+    expect(named(0.9, 2)).toEqual([])
+    expect(named(1.2, 2).map((one) => one.text)).toEqual(['A', 'B'])
+  })
+
+  test('and a dial nothing wrote reads as the zoom they always had', () => {
+    expect(named(0.5, 0)).toEqual([])
+    expect(named(0.6, 0).map((one) => one.text)).toEqual(['A', 'B'])
   })
 })

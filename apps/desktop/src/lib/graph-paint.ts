@@ -40,8 +40,14 @@ const SQUARE = 0.88
 /** How close the view has to be before the names appear, and where they are fully
  *  there. Below the first a label would be smaller than the gaps between the notes;
  *  between the two they fade up, so a name arrives as the view comes in rather than
- *  four hundred of them appearing at once on one notch of the wheel. A threshold
- *  that follows the zoom, so there is nothing to set. */
+ *  four hundred of them appearing at once on one notch of the wheel.
+ *
+ *  A threshold that follows the zoom, so there is nothing to set - and one dial for
+ *  where it sits, because how dense a space is is a fact about the space rather than
+ *  about the picture of one. `fade` multiplies both: one is these two numbers
+ *  exactly, below one the names arrive while the space is still small, above one they
+ *  wait until the view is in among the notes. See `fade` in
+ *  workspace/graph-settings.svelte.ts. */
 const LABELS_FROM = 0.55
 const LABELS_FULL = 0.85
 
@@ -156,6 +162,9 @@ export interface GraphView {
   /** How wide a link is drawn: 1 thin, 2 the hairline the picture has always had,
    *  3 thick. See `LINES`. */
   lines: number
+  /** Where the names fade in, as a multiple of `LABELS_FROM`. One is the zoom they
+   *  have always faded in at. */
+  fade: number
   /** How many of the screen's pixels one of the page's is worth, which is what the
    *  context has been scaled by. The line widths are stated in the screen's; see
    *  `LINES`. */
@@ -241,7 +250,11 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   /** Which nodes are on screen and close enough to name, gathered on the way
    *  past so the labels do not walk the whole graph again. */
   const naming: number[] = []
-  const labelling = scale >= LABELS_FROM
+  /** Where the names start arriving and where they are fully there, as the dial has
+   *  asked for them. */
+  const namesFrom = LABELS_FROM * (view.fade || 1)
+  const namesFull = LABELS_FULL * (view.fade || 1)
+  const labelling = scale >= namesFrom
   /** One path per colour group, and one for the groups' nodes brought forward.
    *  Made only where a group has something in it, so a space with no groups pays
    *  nothing for them. */
@@ -345,7 +358,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   context.fillStyle = colours.label
 
   // How far up the fade the view has come, so the names arrive rather than appear.
-  const arriving = Math.min(1, (scale - LABELS_FROM) / (LABELS_FULL - LABELS_FROM))
+  const arriving = Math.min(1, (scale - namesFrom) / (namesFull - namesFrom))
 
   for (const one of naming) {
     context.globalAlpha = (highlighting && lit[one] === 0 ? DIMMED : 1) * arriving

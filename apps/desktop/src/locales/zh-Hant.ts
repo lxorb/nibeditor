@@ -100,6 +100,7 @@ export const zhHant: Dictionary = {
   Arrows: '箭頭',
   'Size by links': '依連結數定大小',
   Lines: '連線',
+  'Text fade': '文字淡入',
   'Over time': '隨時間變化',
   Play: '播放',
   Pause: '暫停',

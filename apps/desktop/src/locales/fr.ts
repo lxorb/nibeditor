@@ -100,6 +100,7 @@ export const fr: Dictionary = {
   Arrows: 'Flèches',
   'Size by links': 'Taille selon les liens',
   Lines: 'Lignes',
+  'Text fade': 'Fondu du texte',
   'Over time': 'Au fil du temps',
   Play: 'Lecture',
   Pause: 'Pause',

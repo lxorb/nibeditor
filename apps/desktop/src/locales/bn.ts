@@ -100,6 +100,7 @@ export const bn: Dictionary = {
   Arrows: 'তীর',
   'Size by links': 'লিংক অনুযায়ী আকার',
   Lines: 'রেখা',
+  'Text fade': 'লেখা মিলিয়ে যাওয়া',
   'Over time': 'সময় ধরে',
   Play: 'প্লে',
   Pause: 'পজ',

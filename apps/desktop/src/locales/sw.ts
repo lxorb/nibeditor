@@ -100,6 +100,7 @@ export const sw: Dictionary = {
   Arrows: 'Mishale',
   'Size by links': 'Ukubwa kwa viungo',
   Lines: 'Mistari',
+  'Text fade': 'Kufifia kwa maandishi',
   'Over time': 'Kwa muda',
   Play: 'Anza',
   Pause: 'Pumzisha',

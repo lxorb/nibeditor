@@ -100,6 +100,7 @@ export const kn: Dictionary = {
   Arrows: 'ಬಾಣಗಳು',
   'Size by links': 'ಲಿಂಕ್‌ಗಳ ಪ್ರಕಾರ ಗಾತ್ರ',
   Lines: 'ಗೆರೆಗಳು',
+  'Text fade': 'ಪಠ್ಯ ಮಸುಕು',
   'Over time': 'ಕಾಲಕ್ರಮದಲ್ಲಿ',
   Play: 'ಪ್ಲೇ ಮಾಡಿ',
   Pause: 'ವಿರಾಮ',

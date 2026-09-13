@@ -100,6 +100,7 @@ export const vi: Dictionary = {
   Arrows: 'Mũi tên',
   'Size by links': 'Cỡ theo liên kết',
   Lines: 'Đường kẻ',
+  'Text fade': 'Độ mờ của chữ',
   'Over time': 'Theo thời gian',
   Play: 'Chạy',
   Pause: 'Tạm dừng',

@@ -100,6 +100,7 @@ export const gu: Dictionary = {
   Arrows: 'તીર',
   'Size by links': 'કડીઓ પ્રમાણે માપ',
   Lines: 'રેખાઓ',
+  'Text fade': 'લખાણ ઝાંખું',
   'Over time': 'સમય સાથે',
   Play: 'ચલાવો',
   Pause: 'થોભો',

@@ -100,6 +100,7 @@ export const ml: Dictionary = {
   Arrows: 'അമ്പുകൾ',
   'Size by links': 'ലിങ്കുകൾക്കനുസരിച്ച് വലുപ്പം',
   Lines: 'വരകൾ',
+  'Text fade': 'എഴുത്ത് മങ്ങൽ',
   'Over time': 'കാലക്രമത്തിൽ',
   Play: 'പ്ലേ ചെയ്യുക',
   Pause: 'നിർത്തിവയ്ക്കുക',

@@ -100,6 +100,7 @@ export const de: Dictionary = {
   Arrows: 'Pfeile',
   'Size by links': 'Größe nach Links',
   Lines: 'Linien',
+  'Text fade': 'Namen einblenden',
   'Over time': 'Im Zeitverlauf',
   Play: 'Abspielen',
   Pause: 'Pause',

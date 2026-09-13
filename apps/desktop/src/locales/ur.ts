@@ -100,6 +100,7 @@ export const ur: Dictionary = {
   Arrows: 'تیر',
   'Size by links': 'لنکس کے مطابق سائز',
   Lines: 'لکیریں',
+  'Text fade': 'متن کا دھندلانا',
   'Over time': 'وقت کے ساتھ',
   Play: 'پلے',
   Pause: 'پاز',

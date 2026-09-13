@@ -100,6 +100,7 @@ export const pa: Dictionary = {
   Arrows: 'ਤੀਰ',
   'Size by links': 'ਕੜੀਆਂ ਮੁਤਾਬਕ ਆਕਾਰ',
   Lines: 'ਲਾਈਨਾਂ',
+  'Text fade': 'ਲਿਖਤ ਮੱਧਮ',
   'Over time': 'ਸਮੇਂ ਨਾਲ',
   Play: 'ਚਲਾਓ',
   Pause: 'ਰੋਕੋ',

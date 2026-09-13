@@ -100,6 +100,7 @@ export const ms: Dictionary = {
   Arrows: 'Anak panah',
   'Size by links': 'Saiz mengikut pautan',
   Lines: 'Garis',
+  'Text fade': 'Pudar teks',
   'Over time': 'Sepanjang masa',
   Play: 'Main',
   Pause: 'Hentikan sebentar',

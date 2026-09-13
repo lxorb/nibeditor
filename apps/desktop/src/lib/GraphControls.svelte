@@ -23,8 +23,10 @@
   import { workspace } from './workspace.svelte'
   import {
     DEEPEST,
+    LEAST_FADE,
     LEAST_LINES,
     LEAST_SPREAD,
+    MOST_FADE,
     MOST_GROUPS,
     MOST_LINES,
     MOST_SPREAD,
@@ -267,6 +269,28 @@
           style:--fill="{((settings.lines - LEAST_LINES) / (MOST_LINES - LEAST_LINES)) * 100}%"
           oninput={(event) =>
             workspace.graphSettings.set({ lines: Number(event.currentTarget.value) })}
+        />
+      </div>
+
+      <!-- Where the names fade in. A threshold that follows the zoom is what a
+           picture of a space wants; how dense the space is is what only its reader
+           knows, so this is where that threshold sits. One is the zoom the names have
+           always arrived at, so nothing changes until it is touched: to the left they
+           arrive while the space is still small, to the right they wait until the view
+           is in among the notes. See `LABELS_FROM` in graph-paint.ts. -->
+      <div class="dial">
+        <span>{t('Text fade')}</span>
+        <input
+          class="nib-slider"
+          type="range"
+          min={LEAST_FADE}
+          max={MOST_FADE}
+          step="0.25"
+          value={settings.fade}
+          aria-label={t('Text fade')}
+          style:--fill="{((settings.fade - LEAST_FADE) / (MOST_FADE - LEAST_FADE)) * 100}%"
+          oninput={(event) =>
+            workspace.graphSettings.set({ fade: Number(event.currentTarget.value) })}
         />
       </div>
 

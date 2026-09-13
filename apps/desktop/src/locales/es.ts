@@ -100,6 +100,7 @@ export const es: Dictionary = {
   Arrows: 'Flechas',
   'Size by links': 'Tamaño por enlaces',
   Lines: 'Líneas',
+  'Text fade': 'Desvanecer texto',
   'Over time': 'Con el tiempo',
   Play: 'Reproducir',
   Pause: 'Pausa',

@@ -100,6 +100,7 @@ export const ptPT: Dictionary = {
   Arrows: 'Setas',
   'Size by links': 'Tamanho pelas ligações',
   Lines: 'Linhas',
+  'Text fade': 'Desvanecer texto',
   'Over time': 'Ao longo do tempo',
   Play: 'Reproduzir',
   Pause: 'Pausa',

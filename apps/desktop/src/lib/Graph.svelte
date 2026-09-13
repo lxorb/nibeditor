@@ -250,11 +250,12 @@
     schedule()
   })
 
-  // An arrowhead and the width of a link change what is drawn and nothing else, so
-  // they ask for a frame and nothing more.
+  // An arrowhead, the width of a link and where the names fade in change what is
+  // drawn and nothing else, so they ask for a frame and nothing more.
   $effect(() => {
     follows(settings.arrows)
     follows(settings.lines)
+    follows(settings.fade)
     schedule()
   })
 
@@ -545,6 +546,7 @@
       tint,
       arrows: settings.arrows,
       lines: settings.lines,
+      fade: settings.fade,
       ratio,
     })
   }

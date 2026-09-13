@@ -100,6 +100,7 @@ export const ha: Dictionary = {
   Arrows: 'Kibiyoyi',
   'Size by links': 'Girma bisa haɗi',
   Lines: 'Layuka',
+  'Text fade': 'Shuɗewar rubutu',
   'Over time': 'A cikin lokaci',
   Play: 'Kunna',
   Pause: 'Dakata',

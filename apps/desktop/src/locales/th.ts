@@ -100,6 +100,7 @@ export const th: Dictionary = {
   Arrows: 'ลูกศร',
   'Size by links': 'ขนาดตามลิงก์',
   Lines: 'เส้น',
+  'Text fade': 'การเลือนของข้อความ',
   'Over time': 'ตามเวลา',
   Play: 'เล่น',
   Pause: 'หยุดชั่วคราว',
