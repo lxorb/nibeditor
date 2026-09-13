@@ -14,7 +14,9 @@ import { fenceCode, fenceLanguage } from '../fence'
 import { readChart } from '@nib/markdown/chart'
 import { htmlBlockCard } from '@nib/markdown/html-block'
 import { type EmbedKind, embedKind } from '@nib/markdown/links'
+import { coverOf } from '@nib/markdown/cover'
 import { readProperties } from '@nib/markdown/properties'
+import { CoverWidget } from './cover'
 import { PropertiesWidget } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
 import { trustChanged, trustsMarkup } from '../markup'
@@ -160,9 +162,25 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
         // see properties.ts there and beside this file.
         case 'FrontMatter': {
           const span = found(node.from, node.to)
-          if (revealed(node.from, node.to)) return false
-
           const source = doc.sliceString(node.from, node.to)
+
+          // The cover, first: a band of picture across the top of the note, drawn
+          // above the metadata whether or not the metadata is showing its source.
+          // Inserted rather than replacing anything, because it stands for two keys
+          // of front matter and not for a run of the document; see cover.ts beside
+          // this file.
+          const cover = coverOf(source)
+          if (cover) {
+            ranges.push(
+              Decoration.widget({
+                widget: new CoverWidget(cover),
+                block: true,
+                side: -1,
+              }).range(span.from),
+            )
+          }
+
+          if (revealed(node.from, node.to)) return false
           if (readProperties(source) === null) return false
 
           ranges.push(

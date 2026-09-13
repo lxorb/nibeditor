@@ -10,6 +10,7 @@
     "./canvas": "./src/canvas.ts",
     "./chart": "./src/chart.ts",
     "./code": "./src/code.ts",
+    "./cover": "./src/cover.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
     "./deck": "./src/deck.ts",
     "./diagrams": "./src/diagrams.ts",

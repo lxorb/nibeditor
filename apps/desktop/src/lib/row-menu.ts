@@ -21,6 +21,7 @@ import { folderNote, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
 import {
   bookmarkEntry,
+  coverEntries,
   DIVIDER,
   excludeEntry,
   iconEntries,
@@ -63,6 +64,9 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // Beside the name, because both are what the row shows. A folder with no note
     // has nowhere in itself to keep an icon, so that one goes in the space's map.
     ...iconEntries(marked.path, entry.is_dir && !own),
+    // And the picture across the top of it, which is the other thing the note looks
+    // like; see `coverEntries`.
+    ...coverEntries(marked.path),
     ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
     // On the row's own path, folder and all: a row that holds notes stands for
     // everything under it, so leaving it out leaves out what is nested in it. See

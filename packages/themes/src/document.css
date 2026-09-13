@@ -227,6 +227,44 @@
   color: var(--muted);
 }
 
+/* ── Cover ───────────────────────────────────────────────────────── */
+
+/* The note's cover: a wide band of picture across the top of it, before its name,
+   its metadata and its first word. The width of the column the words are in, so
+   the top of the note lines up with the note; a band that ran past the words would
+   have to know how wide the page around it is, and there are four of those.
+
+   A fixed height rather than the picture's own shape, so every note with a cover
+   has the same top and a tall photograph does not push the words off the screen.
+   `object-fit: cover` crops it to that band, and `object-position`, which the note
+   itself writes, says which part of the picture the band is taken from - see
+   cover.ts in @nib/markdown. Drawn here rather than per surface so the editor, the
+   reading view, an exported document and a published page all draw one cover. */
+#write .nib-cover {
+  margin: 0 0 1.8em;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+#write .nib-cover img {
+  display: block;
+  width: 100%;
+  height: var(--cover-height);
+  object-fit: cover;
+  /* The note writes the vertical half of this; the horizontal half is the middle,
+     because a cover is only ever dragged up and down. */
+  object-position: 50% 50%;
+}
+
+/* A hand's width of screen has less room to give a picture, and the words are what
+   somebody came for. */
+@media (max-width: 600px) {
+  #write .nib-cover img {
+    height: calc(var(--cover-height) * 0.7);
+  }
+}
+
 /* ── Properties ──────────────────────────────────────────────────── */
 
 /* A note's front matter as the rows it says. Quiet: it is what the note is

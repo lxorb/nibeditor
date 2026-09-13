@@ -59,6 +59,8 @@ const DEFAULTS = {
    *  word a new key is named with until it is given a name of its own. */
   addProperty: 'Add a property',
   property: 'property',
+  /** The handle on a note's cover, which drags the band up and down the picture. */
+  dragCover: 'Drag to reposition',
 }
 
 export type LabelKey = keyof typeof DEFAULTS

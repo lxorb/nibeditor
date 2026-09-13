@@ -91,6 +91,10 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean):
       // being in the app looking at it, so it says the same thing either way; a
       // document that has left does not, and no exporter asks for these.
       properties: true,
+      // And the note's cover, where it names one: the wide picture across the top
+      // of it, exactly as the editor's live preview draws it a pane away. See
+      // cover.ts in @nib/markdown.
+      cover: true,
       toc: true,
       escapeHtml: !trusted,
       code: fence,

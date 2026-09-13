@@ -4,6 +4,8 @@ import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
+import { links } from './link-index.svelte'
+import { canHaveCover, chooseCover, removeCover } from './note-cover'
 import { canShareItem, shareThisFile } from './sharing.svelte'
 import { isMarkdownPath } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
@@ -138,6 +140,31 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
       run: () => (folder ? iconChoice.folder(path) : iconChoice.file(path)),
     },
     ...(chosenIcon(path) === null ? [] : [{ label: t('Remove icon'), run: take }]),
+  ]
+}
+
+/** The picture across the top of a note: choose one, change the one that is there,
+ *  or take it away.
+ *
+ *  Beside the icon rows, because they are the same kind of thing said about the same
+ *  file - what it looks like - and a reader who has come to this menu for one has
+ *  come to the right place for the other. A note only: a canvas and a set of pages
+ *  are JSON with nowhere to put a cover, a folder is not a file, and the whole of a
+ *  plane is a picture already.
+ *
+ *  Which of Set and Change is offered comes from the index, so the words follow the
+ *  file without this asking the disk; see `coverOf` in link-index.svelte.ts. */
+export function coverEntries(path: string | null | undefined): MenuEntry[] {
+  if (!canHaveCover(path) || !path) return []
+
+  const there = links.coverOf(path) !== null
+
+  return [
+    {
+      label: there ? t('Change cover') : t('Set cover'),
+      run: () => void chooseCover(path),
+    },
+    ...(there ? [{ label: t('Remove cover'), run: () => void removeCover(path) }] : []),
   ]
 }
 

@@ -596,7 +596,9 @@ function presentLink(source: string): string {
 function publishedDeck(source: string, options: Parameters<typeof renderMarkdown>[1]): string {
   return deckBody(
     deckOf(source).map((slide) => ({
-      html: renderMarkdown(slide.markdown, { ...options, breaks: true }),
+      // And no cover: a cover is a band across the top of a note, and a slide is a
+      // poster with no top to put one on.
+      html: renderMarkdown(slide.markdown, { ...options, breaks: true, cover: false }),
       shape: slide.shape,
       vertical: slide.vertical,
       fragments: slide.fragments,
@@ -1246,6 +1248,10 @@ async function served(
       escapeHtml: true,
       code: fencesOf(only.id, url, request, await diagramsIn(env, space, source)),
       breaks,
+      // The note's cover, drawn as the banner the app draws. The same key this page
+      // has always read as its `og:image`, and the picture beside the note is
+      // served the way every other picture in it is; see cover.ts in @nib/markdown.
+      cover: true,
       locale: PAGE_LANGUAGE,
       // One note is the whole site, so `linkResolver` has no other note to point
       // at - but the files beside it are still served, and a link to one still
@@ -1453,6 +1459,7 @@ async function served(
     escapeHtml: true,
     code: fencesOf(note.id, url, request, await diagramsIn(env, space, source)),
     breaks,
+    cover: true,
     locale: PAGE_LANGUAGE,
     resolveLink: linkResolver(pageList, files),
     resolveNoteHref: noteHrefResolver(note.path, pageList, files),

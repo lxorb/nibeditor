@@ -381,3 +381,38 @@ describe('a selection dragged over a rendered block', () => {
     expect(opened.field(blockDecorations).decorations.size).toBe(1)
   })
 })
+
+/** A note's cover, drawn across the top of it while it is being written.
+ *
+ *  Not a replacement like everything else here: it stands for two keys of front
+ *  matter rather than for a run of the document, so it is inserted before the block
+ *  and stays drawn whether or not the metadata is showing its own source. A band of
+ *  picture that vanished whenever somebody put the caret in the YAML under it would
+ *  be the one thing on the page that flickers. */
+describe('a note cover', () => {
+  const COVERED = '---\ntitle: Wide\ncover: assets/wide.jpg\n---\n\n# Wide\n\nWords.\n'
+
+  const covers = (doc: string, cursor = 0) => {
+    let found = 0
+    state(doc, cursor)
+      .field(blockDecorations)
+      .decorations.between(0, doc.length, (_from, _to, value) => {
+        if (value.spec.widget?.constructor.name === 'CoverWidget') found += 1
+      })
+    return found
+  }
+
+  test('is drawn for a note that names one', () => {
+    expect(covers(COVERED)).toBe(1)
+  })
+
+  test('is not drawn for a note that names none', () => {
+    expect(covers('---\ntitle: Wide\n---\n\n# Wide\n')).toBe(0)
+  })
+
+  test('stays drawn while the caret is inside the front matter', () => {
+    // Which is where the rows give way to the YAML: the properties go, the band
+    // stays.
+    expect(covers(COVERED, COVERED.indexOf('cover:') + 3)).toBe(1)
+  })
+})

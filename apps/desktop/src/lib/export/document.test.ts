@@ -319,6 +319,35 @@ describe('the pictures a document names', () => {
   })
 })
 
+/** A note's cover is the top of it, so a document of the note opens on the same
+ *  picture the app draws a band of. A picture like any other from there on, which is
+ *  what carries it into the Word package, the RTF and the bundle beside the note. */
+describe('the cover a note names', () => {
+  const NOTED = '---\ntitle: Wide\ncover: assets/wide.jpg\n---\n\n# Wide\n\nWords.\n'
+
+  test('is the document’s first picture', () => {
+    const first = documentOf(NOTED, 'Wide.md').blocks[0]
+
+    expect(first?.kind).toBe('paragraph')
+    expect(first && 'spans' in first ? first.spans : []).toEqual([
+      { text: '', picture: 'assets/wide.jpg' },
+    ])
+  })
+
+  test('is one of the pictures the document names, so it travels with it', () => {
+    expect(picturesIn(documentOf(NOTED, 'Wide.md'))).toEqual(['assets/wide.jpg'])
+  })
+
+  test('leaves a note that names none exactly as it was', () => {
+    expect(documentOf('# Wide\n\nWords.\n', 'Wide.md').blocks[0]?.kind).toBe('heading')
+  })
+
+  test('reads a wikilink the way every other reader of the key does', () => {
+    const linked = documentOf('---\ncover: "[[wide.jpg]]"\n---\n\nWords.\n', 'W.md')
+    expect(picturesIn(linked)).toEqual(['wide.jpg'])
+  })
+})
+
 describe('naming the document', () => {
   test('prefers the front matter, then the first heading, then the file', () => {
     expect(titleOf('---\ntitle: Meta\n---\n# Head\n', 'File.md')).toBe('Meta')

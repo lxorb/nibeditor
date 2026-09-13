@@ -2442,6 +2442,52 @@
   height: auto;
 }
 
+/* A note's cover. The band itself is in document.css, which the app loads too, so
+   the editor, the reading view, a document and a page all draw one cover; what the
+   writing surface adds is that it can be moved.
+
+   The handle is the whole band rather than a control in a corner: a picture you can
+   place is placed by taking hold of it. Transparent, so nothing is drawn over the
+   photograph until a pointer is on it, and focusable, so the arrow keys reach it
+   for anybody who is not holding a pointer. */
+#write .nib-cover {
+  position: relative;
+  animation: settle-in var(--dur-base) var(--ease-out);
+}
+
+#write .nib-cover-drag {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A line of shade under the pointer, saying which way the picture moves. */
+#write .nib-cover-drag::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent 55%, rgb(0 0 0 / 0.35));
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  #write .nib-cover-drag:hover::after {
+    opacity: 1;
+  }
+}
+
+#write .nib-cover-drag:focus-visible::after {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 /* A note's front matter drawn as its rows. The rows themselves are in
    document.css, which the app loads too, so the editor and the reading view are
    one drawing; this is what the writing surface adds on top of it. */

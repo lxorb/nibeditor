@@ -65,6 +65,12 @@
      row: a 56px row a thumb lands on wants more of a corner than a 28px one. */
   --radius-row: 6px;
 
+  /* How tall a note's cover is. One number, so the editor, the reading view, an
+     exported document and a published page all give a note the same top; a theme
+     may say otherwise like any other token. Shorter on a hand's width of screen,
+     where the words are what somebody came for. See cover.ts in @nib/markdown. */
+  --cover-height: 200px;
+
   /* Icons, one size per context, so how big a glyph is says what kind of thing
      it is. A mark inside a row that is not the row's own; the mark in front of a
      name, which is the one a file list is read by - and the one inside a space's

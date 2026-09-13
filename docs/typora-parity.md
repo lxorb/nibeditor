@@ -638,6 +638,24 @@ Features Typora does not have, which are the reason this exists.
       does one asking for a kind nib does not draw - which used to come out as a
       bar chart, silently, saying the wrong thing about the right numbers. On the
       glasses a titled chart is its title
+- [x] Page covers: a wide band of picture across the top of a note, before its
+      name, its metadata and its first word. Two keys of front matter and nothing
+      else - `cover:` for the picture, said the way a picture is said anywhere in a
+      note, and `cover-position:` for which part of it the band is taken from, 0 to
+      100 - so the file stays a file every other reader can read: Obsidian shows
+      neither key and changes neither, and a published page has read `cover:` as its
+      `og:image` since before there was a banner to draw. `Set cover`, `Change
+      cover` and `Remove cover` sit beside the icon rows in the note's own menu; the
+      picture is chosen the way a picture is inserted and stored the way a pasted one
+      is, addressed by the hash of its bytes, so choosing one that is already in the
+      space lands on the file that is already there. Taking hold of the band in the
+      editor and dragging it up or down writes the position back as one whole number
+      - one document change per gesture, and the arrow keys do the same in fives.
+      Drawn from one place, so the editor, the reading view, a published page, the
+      HTML and ePub exports all show one cover of the same height; Word, RTF and
+      plain text take it as the document's first picture, which is what carries it
+      into the file. A slide has no cover: a deck is a poster and has no top to put a
+      band across
 - [x] A note's front matter drawn as the rows it says: the key on the left, the
       value in the control its shape asks for - a list as chips, a `true` as a
       checkbox, a date as a date - and nib's own `export:` page setup as its
@@ -1111,7 +1129,8 @@ Features Typora does not have, which are the reason this exists.
       and the site's own defaults behind them. A page that wrote no description
       gets its own first sentence, and one that named no picture gets the first
       picture in it, so the ordinary post has a card without anybody filling in a
-      form
+      form. A `cover:` is also drawn on the page itself, as the banner the app draws
+      it as; see the page covers entry in section 17
 - [x] A favicon: the space's own mark, drawn by the app - which is the side that
       has the icon sets - and served at `/favicon.svg`. A space with no icon yet
       gets its letter on the same ground, drawn by the Worker from the name it
