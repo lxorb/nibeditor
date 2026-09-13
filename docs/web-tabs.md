@@ -548,10 +548,17 @@ answers. `ICoreWebView2::add_PermissionRequested` raises one when the page calls
 API - which is the only honest moment to ask, because it is the moment the reader
 pressed something on the site - and the request is **held open** with a deferral
 while the bubble is up: `example.com wants to / Use your camera`, with the site's own
-mark, and Block or Allow. The answer is remembered for that origin, so a site is
-asked once; the next request from it is answered before anything appears on screen.
-Escape is Block, because a permission bubble nobody answered is a request that was
-refused.
+mark, and **Don't allow** or **Allow**. The answer is remembered for that origin, so a
+site is asked once; the next request from it is answered before anything appears on
+screen.
+
+Escape tells the site no and remembers nothing, which is what Chrome does with a bubble
+somebody dismissed: they have not decided about the site, so the next time it asks is a
+fair time to ask them again. And the refusing button says "Don't allow" rather than
+"Block" for a reason worth knowing: the app already has a row called Block - the kind of
+thing a paragraph is - and one English string cannot be two rows in a catalogue, so a
+German reader was being offered *Block*, the markdown block, as the way to refuse a site
+the camera.
 
 Three things make that work, and each is load bearing: the deferral, because deciding
 inside the engine's own event handler would mean either refusing everything or running
