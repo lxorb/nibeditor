@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@nib/lang-html": "workspace:*",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.5.1",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"
   }
