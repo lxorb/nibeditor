@@ -1272,6 +1272,13 @@ built in Rust rather than by `tauri.conf.json`, because a window in the config c
 ask for a profile. `engine::take_ui_window` and `engine::open_ui_window` are that,
 behind the feature, and the config still says what the window looks like.
 
+**One good surprise about this machine.** `cef-dll-sys` resolved
+`cef_binary_151.3.24+g2384915+chromium-151.0.7922.174_windowsarm64_minimal` when the
+flagged workspace was built on Emil's own ARM64 Windows box - so CEF publishes a
+native arm64 Windows distribution and a nib on Chromium is not an x64-only product.
+The gate's runners are x64, so that is a local observation rather than a measured row,
+and it is the reason the batch could be developed here at all.
+
 **And two places where the flagged build is deliberately less than the app.** PDF
 export talks to `WebView2`'s print engine directly, which is not the engine any more,
 so under the flag `pdf_supported` says no and the window falls back to the system's
