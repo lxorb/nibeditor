@@ -151,7 +151,7 @@ function entryOf(html: string, path: string): Entry {
   return {
     date,
     title: words(title?.inner ?? ''),
-    body: withMedia(htmlToMarkdown(rest), html),
+    body: withMedia(htmlToMarkdown(rest, { fileTargets: true }), html),
     drawn: drawnCards(html),
   }
 }

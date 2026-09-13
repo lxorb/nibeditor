@@ -53,6 +53,19 @@ export const NEVER = [
 export interface FromHtmlOptions {
   /** What a picture becomes. The default writes the address the page gave it. */
   image?: (source: string, alt: string) => string
+  /** Whether a `file:` target is the caller's to resolve.
+   *
+   *  Off by default, which is what a clip and a paste want: the note is the finished
+   *  thing, and an address on somebody else's disk is not one it can follow.
+   *
+   *  On for the imports, where it is the whole point. macOS writes
+   *  `file:///Users/…/photo.png` into the HTML it hands out for every attachment,
+   *  and that file is usually one of the files arriving beside the note - so the
+   *  address has to survive the conversion for the pass afterwards to point it at
+   *  where the file landed, and to leave it alone where the file was not in the
+   *  export. See `isAddress` in apps/desktop/src/lib/import/rewrite.ts, which is the
+   *  other half of this. */
+  fileTargets?: boolean
 }
 
 /** The TeX a formula carries about itself.
@@ -359,6 +372,18 @@ function titleOf(link: Element): string {
   return title ? ` "${title}"` : ''
 }
 
+/** Whether a target may be written into the note at all.
+ *
+ *  The same question `safeHref` and `safeSrc` answer for a renderer, asked before the
+ *  file is written rather than after: a note outlives the page it came from, so a
+ *  `javascript:` or a `data:` document in one is a target nothing will ever follow
+ *  and every surface has to refuse again. The exception is a caller resolving its
+ *  own `file:` addresses; see `fileTargets`. */
+function mayPointAt(said: string, options: FromHtmlOptions, picture = false): boolean {
+  if (options.fileTargets === true && /^file:/i.test(said.trim())) return true
+  return picture ? safeSrc(said) : safeHref(said)
+}
+
 function converter(options: FromHtmlOptions): TurndownService {
   const service = new TurndownService({
     headingStyle: 'atx',
@@ -558,11 +583,9 @@ function converter(options: FromHtmlOptions): TurndownService {
     filter: (node) => node.nodeName === 'A' && !!node.getAttribute('href'),
     replacement: (content, node) => {
       const href = node.getAttribute('href') ?? ''
-      // A page's link may name `javascript:` or a `data:` document, and a note is a
-      // file that outlives the page it came from: every surface refuses such a
-      // target when it renders one - see `safeHref` - so the note does not carry it
-      // either. The words stay, which is what an unresolvable link is anywhere.
-      if (!safeHref(href)) return content
+      // The words stay where the target may not be written down, which is what an
+      // unresolvable link is anywhere; see `mayPointAt`.
+      if (!mayPointAt(href, options)) return content
 
       return `[${content}](${destination(href)}${titleOf(node)})`
     },
@@ -578,10 +601,10 @@ function converter(options: FromHtmlOptions): TurndownService {
     filter: 'img',
     replacement: (_content, node) => {
       const source = node.getAttribute('src') ?? ''
-      // The same rule a link goes through, and the one difference `safeSrc` makes:
-      // a small picture may travel inside the document as a `data:` image, and an
-      // SVG is a document rather than a picture so it is not one of those.
-      if (!source || !safeSrc(source)) return ''
+      // The same rule a link goes through, and the one difference a picture makes: a
+      // small one may travel inside the document as a `data:` image, and an SVG is a
+      // document rather than a picture so it is not one of those.
+      if (!source || !mayPointAt(source, options, true)) return ''
 
       const alt = altOf(node)
       return `![${alt}](${destination(options.image ? options.image(source, alt) : source)})`

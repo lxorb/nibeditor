@@ -89,7 +89,9 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
       // The title after the words, because a note with no title of its own is
       // named after what it says, and what it says is the markdown rather than
       // the markup it arrived as.
-      const words = htmlToMarkdown(enml.html)
+      // The addresses in an export are the export's own to resolve; see
+      // `fileTargets` and rewrite.ts.
+      const words = htmlToMarkdown(enml.html, { fileTargets: true })
       const said = textOf(note.inner, 'title')?.trim()
       const title = (said ? safeName(said) : titleFrom(words)) ?? 'Untitled'
       const path = names.free(`${notebook ? `${notebook}/` : ''}${title}.md`)

@@ -33,6 +33,29 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** The imports are the one caller whose addresses are not finished: macOS writes
+   *  `file:///Users/…/photo.png` into the HTML it hands out, and the file is usually
+   *  one of the files arriving beside the note. */
+  test('and a file on the old machine survives for the caller that resolves one', () => {
+    const html = '<p><img src="file:///Users/emil/photo.png"></p>'
+
+    expect(htmlToMarkdown(html)).toBe('')
+    expect(htmlToMarkdown(html, { fileTargets: true })).toBe('![](file:///Users/emil/photo.png)')
+
+    const link = '<a href="file:///Users/emil/Notes/Other.html">other</a>'
+    expect(htmlToMarkdown(link)).toBe('other')
+    expect(htmlToMarkdown(link, { fileTargets: true })).toBe(
+      '[other](file:///Users/emil/Notes/Other.html)',
+    )
+  })
+
+  test('while that caller still gets no target a note could never follow', () => {
+    expect(htmlToMarkdown('<a href="javascript:alert(1)">x</a>', { fileTargets: true })).toBe('x')
+    expect(
+      htmlToMarkdown('<img src="data:image/svg+xml,<svg>" alt="a">', { fileTargets: true }),
+    ).toBe('')
+  })
+
   test('while the ones a note is full of are', () => {
     expect(htmlToMarkdown('<a href="mailto:a@b.dev">mail</a>')).toBe('[mail](mailto:a@b.dev)')
     expect(htmlToMarkdown('<a href="/notes/Plan.md">plan</a>')).toBe('[plan](/notes/Plan.md)')
