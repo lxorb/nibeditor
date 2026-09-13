@@ -219,12 +219,23 @@ function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
   return byName
 }
 
-/** The file a request is asking for, when the path names one the space keeps.
+/** A file carries no front matter, so the site's folder rules are the whole of what
+ *  decides about one. */
+const NO_FRONT: NoteFront = {}
+
+/** The file a request is asking for, when the path names one the space keeps and
+ *  the site publishes the folder it sits in.
  *
  *  A markdown link writes the path the note wrote, so the reader's browser asks
  *  the blog for `files/paper.pdf`. The bytes are a blob; this sends them there,
- *  which keeps one place serving them and the `#page=` on the link intact. */
-function fileFor(space: Space, slug: string, url: URL): Response | null {
+ *  which keeps one place serving them and the `#page=` on the link intact.
+ *
+ *  The rules are asked the same question they are asked about a note, and used not
+ *  to be asked at all: a space that published only `Blog/` answered
+ *  `/private/salary.pdf` to anybody who guessed the path. A file is not a note and
+ *  has no `publish:` of its own to settle it, so where it sits is the whole of the
+ *  answer - and where it sits is a path somebody can guess, which a hash is not. */
+function fileFor(space: Space, site: Site, slug: string, url: URL): Response | null {
   const files = readSpaceFiles(space.files)
   if (!files.length) return null
 
@@ -236,7 +247,9 @@ function fileFor(space: Space, slug: string, url: URL): Response | null {
   }
 
   const found = files.find((one) => one.path.toLowerCase() === wanted.toLowerCase())
-  return found ? Response.redirect(new URL(blobUrl(found), url).toString(), 302) : null
+  if (!found || !publishes(site.rules, found.path, NO_FRONT)) return null
+
+  return Response.redirect(new URL(blobUrl(found), url).toString(), 302)
 }
 
 /** What a `[[wikilink]]` on a published page points at. A note the space does
@@ -1175,7 +1188,7 @@ async function served(
 
   // A file the space keeps beside its notes, asked for by the path a link in one
   // of them wrote. Before the notes, because it is settled by the path alone.
-  const asked = slug ? fileFor(space, slug, url) : null
+  const asked = slug ? fileFor(space, site, slug, url) : null
   if (asked) return asked
 
   // One note published on its own is the whole site: it sits at the root with

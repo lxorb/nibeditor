@@ -151,6 +151,11 @@ Publishing a space used to publish every note in it. That is the right default
 for a space somebody made to be a blog, and the wrong one for the space somebody
 already writes in, which is most spaces.
 
+Both decide about the papers beside the notes as well. A PDF is asked for by the
+path a link wrote - `/reading/paper.pdf` - so it goes through the folder rules the
+way a note does; it carries no front matter to settle its own case, and a path is
+something somebody can guess where the hash it redirects to is not.
+
 So there are two places a decision can live, and they are not equals. Neither is
 asked about a drawing: a `.canvas` and a `.pages` note are JSON Canvas rather than
 prose, and a published one would be its own source - the ink's coordinates, the

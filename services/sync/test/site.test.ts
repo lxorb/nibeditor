@@ -174,6 +174,34 @@ describe('a site with rules', () => {
     expect((await page('/public/one')).status).toBe(200)
   })
 
+  /** A file keeps the same rules a note does. It carries no front matter to settle
+   *  its own case, so where it sits is the whole of the answer - and where it sits is
+   *  a path somebody can guess, which the hash it redirects to is not. */
+  test('and the papers in them, which are asked for by their own path', async () => {
+    const hash = 'd'.repeat(64)
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: new Uint8Array(64),
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: {
+        files: [
+          { path: 'Public/paper.pdf', hash },
+          { path: 'Drafts/salary.pdf', hash },
+        ],
+      },
+    })
+
+    await setSite({ rules: { exclude: ['Drafts'], otherwise: 'all' } })
+
+    expect((await page('/Public/paper.pdf')).status).toBe(302)
+    expect((await page('/Drafts/salary.pdf')).status).toBe(404)
+  })
+
   test('or publishes only what is named', async () => {
     await setSite({ rules: { include: ['Public'], otherwise: 'none' } })
 
