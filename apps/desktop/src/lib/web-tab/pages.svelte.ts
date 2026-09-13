@@ -493,18 +493,21 @@ class Pages {
   /** Keeps the number of pages running inside the cap, by parking the ones nobody has
    *  looked at for longest. Called when one more has just been built.
    *
-   *  The tab that has just been opened is the newest looked at, so it is never the one
-   *  parked; a tab on screen beside it in another pane was looked at a moment ago and
-   *  is only parked once the window holds nine pages, which is a window nobody is
-   *  reading. */
+   *  **A page on screen is never parked**, whatever the clock says: two panes side by
+   *  side are two pages somebody is looking at, and a page that went out from under the
+   *  reader because a seventh tab was opened somewhere else would be the worst kind of
+   *  saving. So the cap is only ever spent on pages nobody can see, and a window with
+   *  more panes than the cap keeps them all. */
   private bound(tabId: string) {
     this.of(tabId).looked = Date.now()
 
-    const live = [...this.held.entries()].filter(([, page]) => page.live)
-    if (live.length <= LIVE_AT_MOST) return
+    const running = [...this.held.values()].filter((page) => page.live).length
+    const over = running - LIVE_AT_MOST
+    if (over <= 0) return
 
-    const oldest = live.sort(([, one], [, other]) => one.looked - other.looked)
-    for (const [id] of oldest.slice(0, live.length - LIVE_AT_MOST)) void this.park(id)
+    const hidden = [...this.held.entries()].filter(([, page]) => page.live && !page.shown)
+    const oldest = hidden.sort(([, one], [, other]) => one.looked - other.looked)
+    for (const [id] of oldest.slice(0, over)) void this.park(id)
   }
 
   /** Somewhere else, in this tab. */
