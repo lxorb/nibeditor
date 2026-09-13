@@ -603,27 +603,6 @@ fn opening(place: Option<Place>, url: &str) -> String {
     }
 }
 
-/// Where the site's own storage lives: the app's folder, in a directory of its own.
-///
-/// Not the app's webview data, which is the point. A page in a tab keeps its
-/// cookies and its logins in a profile the app's own session is not in, so signing
-/// into a site is not signing into anything of nib's, and clearing one never
-/// touches the other. Cross-origin reading is the engine's own rule either way;
-/// this is about what sits in the same store on disk.
-#[cfg(any(windows, target_os = "linux"))]
-fn store(app: &AppHandle) -> Result<std::path::PathBuf, String> {
-    let dir = crate::paths::config_dir(app)?.join("web");
-    crate::paths::made(&dir)?;
-    Ok(dir)
-}
-
-/// The same sixteen bytes every time, so `WKWebView` hands back the store it handed
-/// out last time. macOS 14 and later; older macOS has no such API and falls back
-/// to the default store, which is the one case where a web tab and the app share a
-/// profile on disk. Said out loud in docs/web-tabs.md rather than hidden here.
-#[cfg(target_os = "macos")]
-const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
-
 /// The webview for one tab, built and attached to the window that asked.
 ///
 /// Async, and the building itself posted to the window's own event loop. Both
@@ -672,25 +651,20 @@ pub async fn web_open(
     // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
-    #[allow(
-        unused_mut,
-        reason = "the storage builders below are per platform, and one platform sets neither"
-    )]
-    let mut builder = WebviewBuilder::new(label, WebviewUrl::External(address))
+    let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .initialization_script(opening(revived.place, &url))
         .on_navigation(allowed)
         // The page takes its own drops. A file dropped on a site is the site's
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
 
-    #[cfg(any(windows, target_os = "linux"))]
-    {
-        builder = builder.data_directory(store(&app)?);
-    }
-    #[cfg(target_os = "macos")]
-    {
-        builder = builder.data_store_identifier(STORE_ID);
-    }
+    // Where the site's own storage goes, decided once by the engine this build runs
+    // on rather than here: a store the app's own session is not in under the system
+    // engine, in the folder web tabs have always used and unchanged to the byte; the
+    // browsing profile, which is a different Chromium profile from the interface's,
+    // under nib's own engine. One call, so this file no longer knows which platform
+    // or which engine it is. See src/engine.rs.
+    let builder = crate::engine::web_store(builder, &app)?;
 
     let opening = app.clone();
     // What the page asked for, unnamed: the type is the runtime's, and on nib's

@@ -283,6 +283,12 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
     }))
     .map_err(|error| error.to_string())?;
 
+    // A fresh page, not a revived one: no place to restore and an empty trail. Built
+    // from JSON because the fields are the web-tab module's own to keep private.
+    let revived: crate::web_tabs::Revived =
+        serde_json::from_value(serde_json::json!({ "trail": [], "at": 0 }))
+            .map_err(|error| error.to_string())?;
+
     let tab = format!("gate-{at}");
     let state = app.state::<crate::web_tabs::WebTabs>();
     tauri::async_runtime::block_on(crate::web_tabs::web_open(
@@ -291,7 +297,7 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
         tab.clone(),
         site.to_owned(),
         pane,
-        Vec::new(),
+        revived,
     ))?;
 
     Ok(format!("web-{tab}"))
