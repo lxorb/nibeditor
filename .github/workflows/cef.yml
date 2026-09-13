@@ -183,6 +183,29 @@ jobs:
             "${run[@]}"
           fi
 
+      # Windows stopped the gate in the loader rather than in nib, with
+      # `STATUS_ENTRYPOINT_NOT_FOUND` and no output of its own - so this says which
+      # export is missing rather than leaving the next reader to guess. It never fails
+      # the job: it is a note, and the gate's own table is the finding.
+      - name: What the loader could not find
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $exe = "apps/desktop/src-tauri/cef/target/release/nib-cef.exe"
+          $dumpbin = Get-ChildItem -Path "$env:VCINSTALLDIR" -Filter dumpbin.exe -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -like '*Hostx64*' } | Select-Object -First 1
+          if (-not $dumpbin) { Write-Output 'no dumpbin on this image'; exit 0 }
+          $imports = & $dumpbin.FullName /imports $exe
+          $wanted = $imports | Select-String -Pattern '^\s+[0-9A-F]+\s+(cef_\w+)' -AllMatches |
+            ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object -Unique
+          $exports = & $dumpbin.FullName /exports "apps/desktop/src-tauri/cef/target/release/libcef.dll" |
+            Select-String -Pattern '\s(cef_\w+)$' | ForEach-Object { $_.Matches.Groups[1].Value }
+          Write-Output "the binary imports $($wanted.Count) cef symbols; libcef.dll exports $($exports.Count)"
+          $missing = $wanted | Where-Object { $exports -notcontains $_ }
+          if ($missing) { Write-Output 'missing from libcef.dll:'; $missing | ForEach-Object { Write-Output "  $_" } }
+          else { Write-Output 'every cef symbol the binary imports is exported' }
+
       # After the gate, deliberately: the numbers are what this workflow is for, and a
       # red test should not be the reason a table is missing. The flagged package's
       # own tests hold the pin and the patch list; the crate's own tests are the same

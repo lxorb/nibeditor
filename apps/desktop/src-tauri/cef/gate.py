@@ -629,8 +629,11 @@ def main() -> int:
     # own files where the run staged them, weighed and then compressed with the
     # algorithm an installer uses. The two binaries are beside it, because one of them
     # has Chromium's bindings linked into it and the other does not.
-    ships: dict = {'payload': str(beside)}
-    ships['engine'] = weigh(beside, CEF_PAYLOAD)
+    # From the binary's own folder upwards on a Mac, because the framework has to sit
+    # in `../Frameworks` there and a release carries it either way.
+    payload = beside.parent if MACOS else beside
+    ships: dict = {'payload': str(payload)}
+    ships['engine'] = weigh(payload, CEF_PAYLOAD)
     ships['engine_unpacked_mb'] = ships['engine'].get('unpacked_mb')
 
     if flagged.is_file():
@@ -640,7 +643,7 @@ def main() -> int:
 
     if not args.no_compress:
         print('compressing, which is the installer delta measured rather than guessed')
-        packed = compress(beside, CEF_PAYLOAD)
+        packed = compress(payload, CEF_PAYLOAD)
         ships['engine_packed_mb'] = round(packed / 1048576, 1)
         # The delta is the engine plus however much bigger the binary itself got.
         grew = (ships.get('cef_binary_mb') or 0) - (ships.get('app_binary_mb') or 0)
