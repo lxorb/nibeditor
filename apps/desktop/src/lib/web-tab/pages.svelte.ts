@@ -62,6 +62,11 @@ const LIVE_AT_MOST = 6
  *  photographed again. */
 const SHOT_KEEPS = 400
 
+/** How long the page is given to say where it is before it is parked anyway. Half a
+ *  second: the answer is a line of script in the page's own document, and a page that
+ *  has not answered in that long is a page busy with something of its own. */
+const LOOK_WAITS = 500
+
 /** How long the engine is given to photograph itself, for the one caller that has to
  *  wait for it.
  *
@@ -402,10 +407,18 @@ class Pages {
     if (!isDesktop || !page?.live || !page.path) return
 
     try {
-      const said = await invoke<{ url: string; x: number; y: number; trail: string[]; at: number }>(
-        'web_look',
-        { tab: tabId },
-      )
+      // Raced against a clock, because the answer comes out of the page itself: a page
+      // busy in a loop of its own answers nothing, and parking is what takes the memory
+      // back - so a page that will not say where it is is parked without its place
+      // rather than left running for ever.
+      const said = await Promise.race([
+        invoke<{ url: string; x: number; y: number; trail: string[]; at: number }>('web_look', {
+          tab: tabId,
+        }),
+        new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
+      ])
+      if (!said) return
+
       placeKept(page.path, {
         url: said.url,
         x: said.x,
