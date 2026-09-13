@@ -53,7 +53,9 @@ export type Field = Common &
       }
     | {
         kind: 'select'
-        options: { value: string; label: string }[]
+        /** `note` is one thing worth knowing about that choice before it is made,
+         *  drawn as a footnote mark against the name; see Select.svelte. */
+        options: { value: string; label: string; note?: string }[]
         initial?: string
         get(): string
         set(value: string): void
@@ -193,7 +195,17 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'select',
               label: t('Language'),
-              options: LANGUAGES.map((one) => ({ value: one.id, label: t(one.name) })),
+              // Each row says for itself whether its catalogue was written in one
+              // pass and never read through, in the same sentence the caption says
+              // it in - said once, in machineSaid. The caption is about the
+              // language already chosen, which is the one row nobody in the list is
+              // choosing; a reader deciding between forty of them can only read it
+              // here.
+              options: LANGUAGES.map((one) => ({
+                value: one.id,
+                label: t(one.name),
+                ...(one.machine ? { note: machineSaid() } : {}),
+              })),
               get: () => i18n.choice,
               set: (value) => i18n.select(value),
             },
@@ -649,9 +661,16 @@ export function preferences(view?: EditorView): Pane[] {
  *  One caption, because two sentences about the same choice are one caption; the link
  *  is the catalogues folder either way, since that is where a correction goes and a
  *  reader who cannot read the panel may well want to fix the words too. */
+/** What a machine-written catalogue says about itself. Two readers of the one
+ *  sentence: the mark on every such row in the list, and the caption under the row
+ *  once one of them is the language in force. */
+function machineSaid(): string {
+  return t('Machine-translated. Corrections welcome.')
+}
+
 function caption(): { caption?: { text: string; url: string } } {
   const said = [
-    i18n.machine ? t('Machine-translated. Corrections welcome.') : '',
+    i18n.machine ? machineSaid() : '',
     (isPlugin() || modes.glassesSeen) && !panelDrawable() ? t('The glasses show English.') : '',
   ].filter(Boolean)
 

@@ -20,6 +20,12 @@
      *  somebody out of a space. Last in the list, and in the one colour the app
      *  says that in. */
     danger?: boolean
+    /** One thing worth knowing about this choice before it is made: the language
+     *  list uses it to say that a catalogue was written in one pass and never read
+     *  through. Drawn as a footnote mark against the name, with these words in its
+     *  tooltip and said for anybody who cannot see one. A sentence, not a
+     *  paragraph: a list of forty rows is not the place for prose. */
+    note?: string
   }
 
   const {
@@ -145,6 +151,24 @@
 
 <svelte:window onpointerdown={outside} />
 
+<!-- One row's name, with the footnote mark a choice can carry after it. Written
+     once and rendered in both lists - the dropdown and the phone's sheet - because
+     they are one control in two shapes and a mark on only one of them would be two
+     designs.
+
+     The mark is against the name with nothing between them, so it reads as a
+     footnote on that word. Its words are in the tooltip for a pointer and said for
+     a screen reader; the mark itself is out of the reading, since saying
+     "asterisk" would be neither. -->
+{#snippet named(option: Option)}
+  <span class="text"
+    >{option.label}{#if option.note}<span class="mark" title={option.note} aria-hidden="true"
+        >*</span
+      >{/if}</span
+  >
+  {#if option.note}<span class="nib-said">{option.note}</span>{/if}
+{/snippet}
+
 <div class="select" class:plain class:open bind:this={host}>
   <!-- A select-only combobox, in ARIA's terms: a button that opens a listbox
        and keeps the focus while the arrow keys walk the list. -->
@@ -181,7 +205,7 @@
             class:chosen={option.value === value}
           >
             <button type="button" class:danger={option.danger} onclick={() => choose(option.value)}>
-              <span class="text">{option.label}</span>
+              {@render named(option)}
               {#if option.value === value}
                 <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 5" /></svg>
               {/if}
@@ -213,7 +237,7 @@
           onmouseenter={() => (hovered = index)}
           onclick={() => choose(option.value)}
         >
-          <span class="text">{option.label}</span>
+          {@render named(option)}
           {#if option.value === value}
             <svg class="tick" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 5" /></svg>
           {/if}
@@ -289,6 +313,18 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* The footnote mark on a row that has something to say about itself. Quiet and
+     small, raised the way a footnote is: it says there is something to know, and
+     the something is in the tooltip, in the words a screen reader is given, and in
+     the caption under the list. The same mark in the dropdown and in the sheet. */
+  .mark {
+    margin-inline-start: 1px;
+    color: var(--muted);
+    font-size: 0.78em;
+    line-height: 1;
+    vertical-align: super;
   }
 
   /* A mark inside a control rather than in front of a name, which is `--icon-sm`
