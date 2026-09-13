@@ -41,7 +41,8 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged') } }))
 
-const { loadTags, noteText, replaceInNotes, toggleTaskAt } = await import('./note-text')
+const { loadTags, noteText, replaceInNotes, toggleTaskAt, writeNoteText } =
+  await import('./note-text')
 const { FileActions } = await import('./undo.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
 
@@ -221,5 +222,55 @@ describe("the space's tags", () => {
     await loadTags(ws)
 
     expect(ws.tags).toEqual([{ path: 'work', count: 2 }])
+  })
+})
+
+/** The editor in a hover card hands back the whole note it was given, because that is
+ *  what an editor holds. What reaches the file is the one span that changed, so a pane
+ *  showing the same note keeps every caret in it. See preview-card.ts and hover.ts in
+ *  @nib/editor. */
+describe('a note written from a hover card', () => {
+  test('goes in as the one span it changed by, not as the note again', async () => {
+    const { ws, edits } = space({ [`${SPACE}/a.md`]: 'the plan for monday' }, `${SPACE}/a.md`)
+
+    await writeNoteText(ws, `${SPACE}/a.md`, 'the plan for monday', 'the plan for tuesday')
+
+    expect(sent).toEqual([
+      { command: 'snapshot_note', path: `${SPACE}/a.md`, content: 'the plan for monday' },
+      { command: 'write_note', path: `${SPACE}/a.md`, content: 'the plan for tuesday' },
+    ])
+    expect(edits).toEqual(['the plan for tuesday'])
+    expect(ws.undone.stack).toEqual([
+      {
+        kind: 'replace',
+        notes: [
+          {
+            path: `${SPACE}/a.md`,
+            content: 'the plan for monday',
+            // `mon` became `tues`, and nothing either side of it moved.
+            edits: [{ from: 13, to: 17, insert: 'mon' }],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('and is one thing to undo, which puts the words back', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'one\ntwo\n' })
+
+    await writeNoteText(ws, `${SPACE}/a.md`, 'one\ntwo\n', 'one\ntwo\nthree\n')
+
+    const undo = ws.undone.stack[0]
+    expect(undo?.kind).toBe('replace')
+    expect(told).toEqual([`saved ${SPACE}/a.md`, 'nudged'])
+  })
+
+  test('writes nothing at all where nothing was typed', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'unchanged' })
+
+    await writeNoteText(ws, `${SPACE}/a.md`, 'unchanged', 'unchanged')
+
+    expect(sent).toEqual([])
+    expect(ws.undone.stack).toEqual([])
   })
 })

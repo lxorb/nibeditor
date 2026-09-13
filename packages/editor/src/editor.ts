@@ -21,6 +21,7 @@ import { linkClicks, linkOpener } from './links'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
+import { type PreviewMount, previewEditor } from './wikilink/hover'
 import {
   type LinkWrite,
   linkWriter,
@@ -98,6 +99,11 @@ export interface StateOptions {
    *  is made of, which is the app's answer and nobody else's; see markup.ts. False
    *  without one, and an interactive block then stays the markup it is. */
   trustedMarkup?: boolean
+  /** Mounts an editor on another note's words inside the card that previews it, so a
+   *  word of the linked note can be fixed without opening it. The app's, because the
+   *  modes and the one path a note is saved by are both the app's; see
+   *  wikilink/hover.ts. Without it the card is a reading of the note. */
+  editPreview?: PreviewMount
 }
 
 export interface EditorOptions extends StateOptions {
@@ -107,6 +113,7 @@ export interface EditorOptions extends StateOptions {
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
   const { openLink, openNote, nameBlock, writeLink, shared, selection, folds } = options
+  const { editPreview } = options
   const text = shared ? shared.text : doc
 
   const state = EditorState.create({
@@ -181,6 +188,7 @@ export function editorState(options: StateOptions): EditorState {
       ...(openNote ? [noteOpener.of(openNote)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
       ...(writeLink ? [linkWriter.of(writeLink)] : []),
+      ...(editPreview ? [previewEditor.of(editPreview)] : []),
       nibTheme,
       // Above the markdown keys below, which continue a list or a quote and
       // would otherwise take the key on a fence inside one.

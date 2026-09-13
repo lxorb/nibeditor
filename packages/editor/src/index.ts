@@ -92,6 +92,7 @@ export {
   type SpaceTag,
 } from './wikilink/notes'
 export { trustedMarkupEffect } from './markup'
+export { type PreviewMount, type PreviewNote } from './wikilink/hover'
 export { renderNote } from './wikilink/preview'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, loadEmbed } from './web-frame'

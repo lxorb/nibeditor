@@ -2408,6 +2408,12 @@ class Workspace {
     await text.replaceInNotes(this, changes)
   }
 
+  /** Writes the whole of one note that nobody has open, as the one span it changed
+   *  by: what the editor in a hover card saves with. */
+  async writeNoteText(path: string, before: string, after: string) {
+    await text.writeNoteText(this, path, before, after)
+  }
+
   /** Makes a note in a folder.
    *
    *  With no name it is the file list's own gesture: a row goes into the tree

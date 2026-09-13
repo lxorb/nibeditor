@@ -2532,6 +2532,21 @@
   margin-bottom: 0.7em;
 }
 
+/* Written in rather than read: the card holds a small editor on the linked note's
+   own words, so a word of it can be fixed without opening it; see hover.ts and
+   preview-card.ts in the app. The editor brings its own padding and its own
+   scroller, and the fade at the foot goes with them - it would have sat over the
+   line being typed. Nothing about the card's size changes, so the card does not move
+   when the caret arrives in it. */
+#write.nib-note-preview-body[data-written='yes'] {
+  padding: 0;
+  mask-image: none;
+}
+
+#write.nib-note-preview-body[data-written='yes'] .cm-editor {
+  max-height: 17em;
+}
+
 /* Before it has arrived, or when there is nothing to show: one line of words,
    which wants the padding the note's own paragraphs bring with them. */
 #write.nib-note-preview-body:not(:has(*)) {

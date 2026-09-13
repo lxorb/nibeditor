@@ -13,6 +13,7 @@
  *  Its own module because none of it is about what is open: `noteText` prefers an
  *  open document over the disk and that is the whole of its dealings with them. */
 
+import { oneEdit } from '@nib/markdown/edits'
 import { taskAt } from '@nib/markdown/tasks'
 import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
@@ -132,6 +133,44 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   ])
 
   return true
+}
+
+/** Writes the whole of one note, from words somebody typed somewhere other than a
+ *  pane: the editor mounted in a hover card, which is a note being written in without
+ *  being opened. See wikilink/hover.ts in @nib/editor and preview-card.ts.
+ *
+ *  The whole note in, one span of characters out: `oneEdit` is the smallest change the
+ *  two versions differ by, so a pane that happens to be showing the same note takes
+ *  the words that moved rather than the note again and nobody's caret moves. Which is
+ *  the same road a replacement across the space takes, and the reason this is here
+ *  rather than beside the card: a note is written in one way.
+ *
+ *  `before` is what the file says now and is the caller's to read: it is what the
+ *  snapshot keeps and what the edit is measured against. */
+export async function writeNoteText(
+  ws: HoldsNotes,
+  path: string,
+  before: string,
+  after: string,
+): Promise<void> {
+  const edit = oneEdit(before, after)
+  if (!edit) return
+
+  await replaceInNotes(ws, [
+    {
+      path,
+      before,
+      after,
+      edits: [edit],
+      back: [
+        {
+          from: edit.from,
+          to: edit.from + edit.insert.length,
+          insert: before.slice(edit.from, edit.to),
+        },
+      ],
+    },
+  ])
 }
 
 /** Writes a replacement across the space. Every note keeps a snapshot of

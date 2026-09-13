@@ -37,6 +37,7 @@
     trustedMarkupEffect,
   } from '@nib/editor'
   import { pickedLink } from './composer'
+  import { mountPreview } from './preview-card'
   import { EditorStates, noteKey } from './editor-states'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
@@ -117,6 +118,9 @@
       // Whether this note's own HTML is markup, which is what decides whether an
       // interactive block draws its card; see trust.ts.
       trustedMarkup: trustsHtmlIn(one.note),
+      // What goes in the card over a `[[link]]`: an editor on the linked note, so a
+      // word of it can be fixed from here. See preview-card.ts.
+      editPreview: mountPreview,
       // What was folded here last time, in the state for the same reason the
       // caret is: folded a frame later is a frame spent looking at the note
       // unfolded. See fold.ts in the editor package.
