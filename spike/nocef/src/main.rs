@@ -16,8 +16,14 @@
 fn main() {
     let start = std::time::Instant::now();
     // The same two event names the other binary prints, so one harness reads both.
-    println!("{{\"at\":{},\"event\":\"window-shown\"}}", start.elapsed().as_millis());
-    println!("{{\"at\":{},\"event\":\"no-browser\"}}", start.elapsed().as_millis());
+    println!(
+        "{{\"at\":{},\"event\":\"window-shown\"}}",
+        start.elapsed().as_millis()
+    );
+    println!(
+        "{{\"at\":{},\"event\":\"no-browser\"}}",
+        start.elapsed().as_millis()
+    );
     println!(
         "{{\"at\":{},\"event\":\"check\",\"name\":\"a binary with no Chromium in it starts\",\"ok\":true,\"note\":\"the control\"}}",
         start.elapsed().as_millis()
