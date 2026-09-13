@@ -217,6 +217,27 @@ whole of it. A page whose paper is nowhere says so on the sheet: a blank sheet a
 sheet whose PDF could not be read look identical, which is how a whole note of blank
 pages went unnoticed.
 
+## The paper, and what is ruled on it
+
+Three papers: A4, Letter, and the long page that grows instead of ending. They are rows
+in the menu on a page's own thumbnail, above the four rulings, because the paper is the
+larger decision - how big the sheet is and whether it ends, then what is printed on it.
+The row for the paper a page already wears is disabled rather than ticked, which is what
+this menu does everywhere else.
+
+A page note *starts* on whichever of the three the reader chose, in
+Settings ▸ Editor ▸ Page notes. A4 outside North America and Letter inside it are both
+right and neither is something an app can guess, so it is a choice, and it is this
+machine's own: which paper somebody writes on is a decision about the printer in the
+room. A page added to a note takes the size of the one it follows, and a page already
+written on is changed from its menu - so the setting is only ever about the first sheet.
+
+`PAPERS` in `packages/markdown/src/canvas.ts` holds the three sizes and is the one place
+a fourth would be added; `paperSized` there is what names the paper a PDF page arrived
+at, and `reshaped` in `pages.ts` is what changes one. A long page that becomes A4 goes
+back to A4's height; one that was A4 keeps the height it had, because it is about to grow
+from there.
+
 **Highlights carry over.** A PDF's highlights live in `paper.pdf.highlights.json`
 (see the sidecar in `pdf/highlights.ts`), and that file is untouched by any of
 this: the paper keeps its sidecar, so the same PDF opened in the PDF viewer still

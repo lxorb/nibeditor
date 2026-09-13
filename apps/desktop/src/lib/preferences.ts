@@ -346,6 +346,26 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
         {
+          // The paper a page note starts on. A page already written on is changed from
+          // its own menu in the panel, which is where somebody looking at a page is;
+          // this is only what a new one is given. See PagesNavigator.svelte.
+          title: t('Page notes'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('New pages'),
+              options: [
+                { value: 'a4', label: t('A4') },
+                { value: 'letter', label: t('Letter') },
+                { value: 'long', label: t('Long page') },
+              ],
+              initial: 'a4',
+              get: () => modes.pagesPaper,
+              set: (value) => modes.setPagesPaper(value),
+            },
+          ],
+        },
+        {
           // What "New unique note" names a note. Each option is labelled with
           // what it would produce right now, which says more than the tokens do.
           title: t('Unique note names'),

@@ -22,7 +22,7 @@
 
   import { added, moved, removed, reshaped } from '@nib/markdown/pages'
   import type { Canvas } from './canvas/format'
-  import { PATTERNS, type PageNode, type Pattern } from './canvas/format'
+  import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
   import { paintInk } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import { t } from './i18n.svelte'
@@ -175,9 +175,23 @@
     dots: 'Dots',
   }
 
-  /** What the menu on a page offers: the two things somebody does to a page, and the
-   *  four rulings, with the one it wears already disabled - there is no tick in this
-   *  menu, and a row that would do nothing says so the way every other one does. */
+  /** And what each paper is called. A4 and Letter are the names printed on the packet
+   *  in every language; the third is not a size at all but the page that keeps going,
+   *  so it is the one that needs words. */
+  const PAPER_WORDS: Record<Paper, string> = {
+    a4: 'A4',
+    letter: 'Letter',
+    long: 'Long page',
+  }
+
+  /** What the menu on a page offers: the two things somebody does to a page, the three
+   *  papers and the four rulings, with the one it wears already disabled - there is no
+   *  tick in this menu, and a row that would do nothing says so the way every other one
+   *  does.
+   *
+   *  The paper above the ruling, because it is the larger decision: how big the sheet is
+   *  and whether it ends, then what is printed on it. A long page keeps whatever height
+   *  it has already grown to; A4 and Letter go back to their own. */
   function pageMenu(page: PageNode): MenuEntry[] {
     return [
       { label: t('Add a page after this'), run: () => add(page.id) },
@@ -190,6 +204,15 @@
           if (canvas) edit(removed(canvas, page.id))
         },
       },
+      DIVIDER,
+      ...PAPER_NAMES.map((paper) => ({
+        label: t(PAPER_WORDS[paper]),
+        disabled: page.paper === paper,
+        run: () => {
+          const canvas = store?.canvas
+          if (canvas) edit(reshaped(canvas, page.id, { paper }))
+        },
+      })),
       DIVIDER,
       ...PATTERNS.map((pattern) => ({
         label: t(WORDS[pattern]),

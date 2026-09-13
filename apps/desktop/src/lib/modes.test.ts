@@ -714,3 +714,28 @@ describe('how far back a bulk restore offers to go', () => {
     expect(rollbackSteps(modes.keepVersions)).not.toContain(365)
   })
 })
+
+/** The paper a new page note starts on.
+ *
+ *  A4 outside North America and Letter inside it, and neither of those is something an
+ *  app can guess from a locale it was never told. So it is a choice, and a choice this
+ *  machine keeps: which paper somebody writes on is about their printer. */
+describe('the paper new page notes start on', () => {
+  test('is A4 until somebody says otherwise', () => {
+    expect(modes.pagesPaper).toBe('a4')
+  })
+
+  test('is whichever of the three they chose, and is remembered', async () => {
+    modes.setPagesPaper('letter')
+    expect(modes.pagesPaper).toBe('letter')
+    expect((await restarted()).pagesPaper).toBe('letter')
+
+    modes.setPagesPaper('long')
+    expect((await restarted()).pagesPaper).toBe('long')
+  })
+
+  test('and a word nobody wrote is A4 again', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ pagesPaper: 'foolscap' }))
+    expect((await restarted()).pagesPaper).toBe('a4')
+  })
+})

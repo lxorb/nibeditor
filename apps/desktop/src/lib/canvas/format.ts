@@ -27,6 +27,8 @@ export {
   isInkTool,
   isShape,
   type PageNode,
+  type Paper,
+  PAPER_NAMES,
   type Pattern,
   PATTERNS,
   PRESET_COLOURS,

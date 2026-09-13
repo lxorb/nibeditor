@@ -39,6 +39,20 @@ describe('a page note as a file', () => {
     expect(pages[0]?.pattern).toBe('blank')
   })
 
+  test('starts on the paper it was asked for, which is what a new one is given', () => {
+    // A4 where nothing says otherwise, and whatever the reader chose where something
+    // does: the size of the paper somebody writes on is a decision about their printer
+    // and their country, and every page note used to start on A4 whatever they said.
+    for (const paper of ['a4', 'letter', 'long'] as const) {
+      const pages = pagesOf(readCanvas(blankPages(paper)))
+
+      expect(pages).toHaveLength(1)
+      expect(pages[0]?.paper, paper).toBe(paper)
+      expect(pages[0]?.width, paper).toBe(PAPERS[paper].width)
+      expect(pages[0]?.height, paper).toBe(PAPERS[paper].height)
+    }
+  })
+
   test('writes each page as a spec node, so the file is JSON Canvas', () => {
     const written = JSON.parse(blankPages()) as {
       nodes: { id: string; type: string; label?: string }[]
