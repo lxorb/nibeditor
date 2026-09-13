@@ -26,6 +26,13 @@ export default tseslint.config(
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',
       'docs/**',
+      // A proof, not a product: `spike/` holds throwaway crates and the fixtures
+      // they load, built only by the workflow that measures them. The JavaScript
+      // in there is an unpacked extension loaded by a Chromium under test, so it
+      // is in no tsconfig project for the type-aware rules to read and its
+      // globals are an extension's rather than a page's. Prettier still formats
+      // it. See docs/browser.md.
+      'spike/**',
     ],
   },
   js.configs.recommended,
