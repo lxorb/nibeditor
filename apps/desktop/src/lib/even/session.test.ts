@@ -265,3 +265,77 @@ describe('the paging the reader chose', () => {
     expect(session.page?.numbers).not.toBe('')
   })
 })
+
+/** What the card on the phone follows while a finger is dragging.
+ *
+ *  Emil: *"it doesn't change WHILE scrolling but you kinda need to pause for it to
+ *  react."* The card was drawn around the page the glasses had, and the glasses are
+ *  told a tenth of a second after the thumb stops - so it sat still through the drag
+ *  and jumped afterwards. `regionAt` answers the same question about any offset, with
+ *  none of the consequences: nothing sent, nothing written down. */
+describe('where the panel would be', () => {
+  const paged = () => {
+    const session = new Session()
+    session.follow(note({ text: LONG }), paging)
+    return session
+  }
+
+  test('is the page holding that offset, without going there', () => {
+    const session = paged()
+    const first = session.showing
+
+    const later = session.regionAt(LONG.length - 200)
+    expect(later?.from).toBeGreaterThan(first?.from ?? 0)
+    // Nothing moved: the glasses are still where they were, and nothing was written
+    // down about a page the reader only scrolled past.
+    expect(session.showing?.from).toBe(first?.from)
+    expect(session.showing?.page).toBe(first?.page)
+  })
+
+  test('stops at the last page of the note', () => {
+    const session = paged()
+
+    const far = session.regionAt(1_000_000)
+    expect(far?.page).toBe(session.pages.length - 1)
+  })
+
+  test('and is the page that is up when the offset is on it', () => {
+    const session = paged()
+    const where = session.showing
+
+    expect(session.regionAt(where?.from ?? 0)?.from).toBe(where?.from)
+  })
+
+  test('answers nothing for a note with nothing in it', () => {
+    expect(new Session().regionAt(0)).toBeNull()
+  })
+})
+
+/** One behaviour, since Emil asked for the choice to go: *"effectively it should be
+ *  always nib who turns the pages."* A page is the panel, a flick is a page, and the
+ *  number in the head always means something. */
+describe('who turns the pages', () => {
+  test('is the app, a whole panel at a time', () => {
+    const session = new Session()
+    session.follow(note({ text: LONG }), paging)
+
+    const first = session.words
+    expect(first.split('\n').length).toBeGreaterThan(1)
+
+    session.turn(1)
+    expect(session.words).not.toBe(first)
+    expect(session.showing?.page).toBe(1)
+    // A page of the note, not a row of it: the second page begins where the first
+    // one ended.
+    expect(session.showing?.firstLine).toBeGreaterThan(1)
+  })
+
+  test('and a page is one page of however many the note came to', () => {
+    const session = new Session()
+    session.follow(note({ text: LONG }), paging)
+
+    expect(session.showing?.count).toBe(session.pages.length)
+    session.goTo(1_000)
+    expect(session.showing?.page).toBe(session.pages.length - 1)
+  })
+})

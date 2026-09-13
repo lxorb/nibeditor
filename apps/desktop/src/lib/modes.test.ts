@@ -154,9 +154,23 @@ describe('the glasses settings', () => {
   test('start a page at H2 and above, with the note’s own line numbers', () => {
     expect(modes.glassesBreak).toBe(2)
     expect(modes.glassesLineNumbers).toBe(true)
-    // There is no page-number setting: the scroll mode decides it. See
-    // even/settings.ts.
-    expect(modes.glassesScroll).toBe('paged')
+  })
+
+  /** Two settings the glasses section used to have and has not got: the page
+   *  number, and who scrolls. Both are one behaviour now - the app cuts the note
+   *  into panels and turns them, and the number always means a page - so neither
+   *  is a field, and a value left in storage by a version that had them is dropped
+   *  rather than read. See even/settings.ts. */
+  test('carry no scroll mode, and drop one an older version wrote down', async () => {
+    localStorage.setItem(
+      'nib:modes',
+      JSON.stringify({ glassesScroll: 'native', glassesLineNumbers: false }),
+    )
+
+    const back = await restarted()
+    expect(back.glassesLineNumbers).toBe(false)
+    expect(saved()).not.toHaveProperty('glassesScroll')
+    expect(Object.keys(back as unknown as Record<string, unknown>)).not.toContain('glassesScroll')
   })
 
   test('start with the microphone off, which is the only defensible default', () => {

@@ -342,7 +342,6 @@ export interface AccountSettings {
   /** Which of a note's markers are drawn on the panel, by construct. */
   glassesMarks?: Record<string, boolean>
   /** Who scrolls the note: the app, page by page, or the glasses themselves. */
-  glassesScroll?: string
   /** The phrases a spoken command answers to, where the reader changed them.
    *  Only the differences travel, the way the shortcuts do. */
   glassesWords?: Record<string, string>

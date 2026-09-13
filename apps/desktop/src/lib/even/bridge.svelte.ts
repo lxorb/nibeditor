@@ -307,9 +307,6 @@ class Bridge {
       enter: (id) => void workspace.showSpace(id),
       listen: (on) => void this.listen(on),
       listening: () => this.listening,
-      // Wherever the app is turning the pages. A note the glasses are scrolling a
-      // line at a time has no page three of twelve to say.
-      pageNumber: () => modes.glassesScroll === 'paged',
       atSpace: () => workspace.activeSpace?.id ?? '',
       // By path, because that is what a row in these lists is named by. The note
       // the glasses are on is the note the plugin has active; see session.ts.
@@ -393,24 +390,10 @@ class Bridge {
       breakAt: modes.glassesBreak,
       gutter: modes.glassesLineNumbers ? GUTTER : 0,
       inner: BODY_INNER,
-      // One row a page where the glasses are scrolling, and the panel then shows a
-      // window of eight of them: a flick moves the note by a line rather than by a
-      // panel. See even/scroll.ts and `Session.follow`.
-      rows: this.rolling() ? 1 : BODY_ROWS,
+      rows: BODY_ROWS,
       marks: modes.glassesMarks,
       compaction: modes.glassesCompaction,
     }
-  }
-
-  /** Whether the glasses are doing the scrolling. */
-  private rolling(): boolean {
-    return modes.glassesScroll === 'native'
-  }
-
-  /** How many of the panel's rows a window fills: none in the ordinary mode, where a
-   *  page already is the panel, and all eight where the glasses are scrolling. */
-  private window(): number {
-    return this.rolling() ? BODY_ROWS : 0
   }
 
   /** Everything that decides what the glasses show, in one value.
@@ -500,11 +483,7 @@ class Bridge {
     const reading = this.reading
     if (reading) {
       const name = reading.note.name.replace(/\.md$/iu, '')
-      this.session.follow(
-        { key: reading.note.key, name, text: reading.note.text },
-        this.paging(),
-        this.window(),
-      )
+      this.session.follow({ key: reading.note.key, name, text: reading.note.text }, this.paging())
     }
 
     this.showing = this.session.showing
@@ -521,7 +500,7 @@ class Bridge {
 
   /** The note, paged, and the panel brought up to date if anything moved. */
   private follow(note: OpenNote | null): void {
-    this.session.follow(note, this.paging(), this.window())
+    this.session.follow(note, this.paging())
     this.showing = this.session.showing
       ? {
           from: this.session.showing.from,

@@ -86,11 +86,6 @@ export interface World {
   listen: (on: boolean) => void
   /** Whether it is on now. */
   listening: () => boolean
-  /** Whether a page number means anything: true where the app is cutting the note
-   *  into panels and turning them, false where the glasses are scrolling it, because
-   *  a note being scrolled a line at a time has no pages to count. Not a setting any
-   *  more - the scroll mode decides it. See even/scroll.ts. */
-  pageNumber: () => boolean
   /** The space the reader is in, by the id its row carries, so a list of spaces
    *  opens with the cursor on the one they are already in rather than at the top. */
   atSpace: () => string
@@ -697,13 +692,13 @@ export class Shell {
     }
   }
 
-  /** Which page of how many, or nothing where there are no pages to count.
+  /** Which page of how many.
    *
-   *  Shown wherever the app is turning the pages, and never where the glasses are
-   *  scrolling: a note moving a line at a time has no page three of twelve, and a
-   *  number that counted rows would say 41/380 and mean nothing. */
+   *  Always there: the app cuts the note into panels and turns them, which is the
+   *  only way the glass is ever fed, so a page number always means a page. It was a
+   *  question for as long as the glasses could be asked to scroll the note
+   *  themselves; see even/settings.ts for why that is gone. */
   private place(showing: { page: number; count: number }): string {
-    if (!this.world.pageNumber()) return ''
     return `${String(showing.page + 1)}/${String(showing.count)}`
   }
 

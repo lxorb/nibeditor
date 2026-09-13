@@ -101,15 +101,12 @@ class Fake implements World {
     this.on = on
   }
   listening = () => this.on
-  pageNumber = () => this.numbered
   /** Where the reader already is, which is where a list opens. Empty by default,
    *  so the cases that are not about that behave as they always did. */
   space_ = ''
   note_ = ''
   atSpace = () => this.space_
   atNote = () => this.note_
-
-  numbered = true
 }
 
 let world: Fake
@@ -336,11 +333,14 @@ describe('the view', () => {
     expect(view.head.trimEnd()).toMatch(/^THE TITLE {2,}1\/\d+$/)
   })
 
-  test('leaves the page count out when the reader asked it to', () => {
-    world.numbered = false
+  /** There is no setting for this any more. It used to be off wherever the glasses
+   *  were scrolling the note themselves, and that mode is gone: the app turns every
+   *  page, so a number always means a page. See even/settings.ts. */
+  test('and the number is there on every page, because the app turns them all', () => {
+    expect(shell.view().head.trimEnd()).toMatch(/\d+\/\d+$/)
 
-    // Nothing at the right, and the section keeps the whole line.
-    expect(shell.view().head).toBe('THE TITLE')
+    session.turn(1)
+    expect(shell.view().head.trimEnd()).toMatch(/2\/\d+$/)
   })
 
   test('falls back to the note name when a note opens without a heading', () => {
@@ -414,14 +414,6 @@ describe('the view', () => {
     expect(shell.view().body).toBe('Nothing here')
     // The space's name, and nothing at the right: there is no row to be at.
     expect(shell.view().head).toBe('Work')
-  })
-
-  test('leaves the page number out where there are no pages to count', () => {
-    world.numbered = false
-
-    const head = shell.view().head
-    expect(head).toContain('THE TITLE')
-    expect(head.trimEnd()).not.toMatch(/\d+\/\d+$/)
   })
 
   test('lights the corner while the microphone is open', () => {

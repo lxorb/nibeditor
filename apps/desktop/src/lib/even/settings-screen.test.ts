@@ -38,7 +38,6 @@ const WORLD: World = {
   enter: () => undefined,
   listen: () => undefined,
   listening: () => false,
-  pageNumber: () => true,
   atSpace: () => '',
   atNote: () => '',
 }

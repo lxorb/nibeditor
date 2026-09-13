@@ -21,16 +21,29 @@ import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import type { Field, Group } from '../preferences'
 import { commandWords, DEFAULT_WORDS } from './commands'
-import { SCROLLS } from './scroll'
 
-/** There is no page-number setting.
+/** There is no scrolling setting either.
+ *
+ *  There was, and it offered two answers to "who moves the note": the app cutting it
+ *  into panels and turning them, or the whole note handed to the firmware to scroll
+ *  itself. The second one never worked on a device - nothing in the SDK scrolls a
+ *  container, `TextContainerUpgrade`'s `contentOffset` is undocumented and inert, and
+ *  what the firmware did instead was show a scroll bar and ignore every flick. The
+ *  app scrolled it in the end, a line at a time, which is the app turning pages of
+ *  one row: the same mechanism with a worse page.
+ *
+ *  Emil: *"please remove the scrolling 'nib turns the pages / glasses scroll'
+ *  setting from the glasses section of the settings. Effectively it should be always
+ *  nib who turns the pages."* So there is one behaviour and no row for it, and the
+ *  page number means something again on every page.
+ *
+ *  There is no page-number setting either.
  *
  *  There was, and Emil turned it off and on again and found it broken; the mechanism
- *  is fixed, but the setting itself was the wrong idea. A page number means something
- *  exactly where the app is cutting the note into panels and turning them, and means
- *  nothing at all where the glasses are scrolling it a line at a time. So the scroll
- *  mode decides it and nothing else does. A value an older build saved is ignored.
- *  See shell.ts's `place` and even/scroll.ts. */
+ *  was fixed and the setting was still the wrong idea. A page number means something
+ *  exactly where the app is cutting the note into panels and turning them - which is
+ *  now the only thing it ever does - so it is always there and nothing decides it. A
+ *  value an older build saved is ignored. See `place` in shell.ts. */
 
 /** One setting, and where it appears. */
 export interface Setting {
@@ -51,11 +64,6 @@ const COMPACTION_WORDS: Record<string, string> = {
   none: key('Every line break'),
   collapse: key('One break between blocks'),
   aggressive: key('As little as possible'),
-}
-
-const SCROLL_WORDS: Record<string, string> = {
-  paged: key('Nib turns the pages'),
-  native: key('The glasses scroll'),
 }
 
 /** The markers a reader may turn on, in the order the pane lists them: what a
@@ -158,21 +166,6 @@ export function glassesSettings(say: Say = t): Setting[] {
         (value) => modes.setGlassesCompaction(value),
       ),
     },
-    {
-      id: 'scroll',
-      group: reading,
-      onGlasses: true,
-      field: chooser(
-        say,
-        say('Scrolling'),
-        SCROLLS,
-        SCROLL_WORDS,
-        'paged',
-        () => modes.glassesScroll,
-        (value) => modes.setGlassesScroll(value),
-      ),
-    },
-
     ...MARK_WORDS.map((one): Setting => ({
       id: `mark.${one.id}`,
       group: marked,

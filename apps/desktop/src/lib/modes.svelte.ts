@@ -43,7 +43,6 @@ import {
   type Marks,
 } from '@nib/glasses/choices'
 import { glassesKey } from './even/key.svelte'
-import { isScroll, type Scroll } from './even/scroll'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
@@ -121,7 +120,6 @@ interface Saved {
   glassesVoice: boolean
   glassesCompaction: string
   glassesMarks: Marks
-  glassesScroll: string
   glassesWords: Record<string, unknown>
   glassesSeen: boolean
   glassesModel: string
@@ -277,9 +275,6 @@ class Modes {
   /** Which of a note's markers are drawn. Rule one as it stands, until a reader
    *  overrules it per construct; see `Marks` in @nib/glasses. */
   glassesMarks = $state<Marks>({ ...MARKS })
-  /** Whether the app pages the note and turns the pages, or hands the whole note
-   *  over and lets the glasses scroll it; see even/screen.ts. */
-  glassesScroll = $state<Scroll>('paged')
   /** The phrases each spoken command answers to, where the reader has changed
    *  them. Only the differences travel, the way the shortcuts do: a full dump
    *  would freeze today's wording into every account that ever saved one. */
@@ -355,6 +350,10 @@ class Modes {
   }
 
   restore() {
+    // Whether the entry holds a setting this version has not got. Written back once
+    // at the end, so that the file stops carrying it.
+    let stale = false
+
     // Field by field off an unknown, not a cast: the entry may have been
     // written by another version of the app or edited by hand, and a mode that
     // reads as neither on nor off should simply be the default.
@@ -396,9 +395,15 @@ class Modes {
       this.glassesVoice = saved.glassesVoice === true
       if (isCompaction(saved.glassesCompaction)) this.glassesCompaction = saved.glassesCompaction
       this.glassesMarks = marksOf(saved.glassesMarks)
-      if (isScroll(saved.glassesScroll)) this.glassesScroll = saved.glassesScroll
       this.glassesWords = wordsOf(saved.glassesWords)
       this.glassesSeen = saved.glassesSeen === true
+      // A setting that is gone: who scrolls the note. It offered the glasses' own
+      // scrolling, which no firmware ever did - see even/settings.ts - and Emil asked
+      // for the row to go: "effectively it should be always nib who turns the pages."
+      // Machines that chose one have it written down, so it is dropped rather than
+      // left in the entry for a later version to wonder about. Written back at the
+      // end of this method, once everything else has been read.
+      stale = 'glassesScroll' in saved
       this.glassesModel = text(saved.glassesModel, '')
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
@@ -417,6 +422,9 @@ class Modes {
     setHighlightColour(this.highlight)
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
+
+    // Written back without whatever this version has not got; see `stale` above.
+    if (stale) this.persist()
   }
 
   toggleAlwaysOnTop() {
@@ -671,14 +679,6 @@ class Modes {
     this.glassesCompaction = level
     this.persist()
     this.share({ glassesCompaction: level })
-  }
-
-  setGlassesScroll(mode: string) {
-    if (!isScroll(mode) || mode === this.glassesScroll) return
-
-    this.glassesScroll = mode
-    this.persist()
-    this.share({ glassesScroll: mode })
   }
 
   /** One marker on or off. Written whole rather than as a difference, because
@@ -951,9 +951,6 @@ class Modes {
     if (remote.glassesMarks !== undefined) {
       took(marksOf(remote.glassesMarks), (marks) => (this.glassesMarks = marks))
     }
-    if (isScroll(remote.glassesScroll)) {
-      took(remote.glassesScroll, (mode) => (this.glassesScroll = mode))
-    }
     if (remote.glassesWords !== undefined) {
       took(wordsOf(remote.glassesWords), (words) => (this.glassesWords = words))
     }
@@ -1136,7 +1133,6 @@ class Modes {
       glassesVoice: this.glassesVoice,
       glassesCompaction: this.glassesCompaction,
       glassesMarks: this.glassesMarks,
-      glassesScroll: this.glassesScroll,
       glassesWords: this.glassesWords,
       glassesSeen: this.glassesSeen,
       glassesModel: this.glassesModel,
