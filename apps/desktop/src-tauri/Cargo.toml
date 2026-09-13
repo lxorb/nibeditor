@@ -61,7 +61,7 @@ serde_json = "1"
 # Bytes cross the bridge as base64: an export is a Word file, an ePub or a
 # picture, and JSON digits would cost six characters a byte. Already in the lock
 # file as something tauri builds with, so this adds nothing to the build.
-base64 = "0.22"
+base64 = "0.23"
 # A note's body on one of Apple Notes' rows is a gzipped protobuf, and unpacking it
 # is `apple_text.rs`. Every platform, although only a Mac has the database: the
 # decoding is `std` and this, so keeping it out of the other builds only meant that
