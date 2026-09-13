@@ -121,11 +121,12 @@ mod tests {
         assert!(revision.chars().all(|one| one.is_ascii_hexdigit()));
     }
 
-    /// Every crate of the Tauri ecosystem comes out of the one checkout, because a
-    /// graph holding two copies of `tauri-utils` does not compile and the error it
-    /// gives says nothing about why.
+    /// `tauri` and `tauri-build` come out of the checkout and the rest does not, which
+    /// is a finding rather than an omission: the branch moved `tauri-utils` to
+    /// `schemars` 1 without moving its version number, and every plugin's build script
+    /// is written against the 0.8 API. The manifest says why; this holds it to it.
     #[test]
-    fn the_whole_ecosystem_comes_from_the_checkout() {
+    fn the_engine_and_its_codegen_come_from_the_checkout() {
         let manifest = include_str!("../Cargo.toml");
         let patched: Vec<&str> = manifest
             .split("[patch.crates-io]")
@@ -136,13 +137,7 @@ mod tests {
             .filter(|line| line.contains('='))
             .collect();
 
-        for name in [
-            "tauri ",
-            "tauri-build ",
-            "tauri-plugin ",
-            "tauri-runtime ",
-            "tauri-utils ",
-        ] {
+        for name in ["tauri ", "tauri-build "] {
             let line = patched
                 .iter()
                 .find(|line| line.starts_with(name))
@@ -150,6 +145,12 @@ mod tests {
             assert!(
                 line.contains(".upstream/tauri/crates/"),
                 "{name} does not come from the checkout"
+            );
+        }
+        for name in ["tauri-utils ", "tauri-plugin "] {
+            assert!(
+                !patched.iter().any(|line| line.starts_with(name)),
+                "{name} is patched, and every plugin's build script then fails to compile"
             );
         }
         assert!(
