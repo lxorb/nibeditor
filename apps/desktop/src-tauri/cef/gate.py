@@ -439,6 +439,9 @@ def run(binary: Path, env: dict[str, str], out_dir: Path, timeout: int, measured
 
     return {
         'binary': binary.name,
+        # The default build has no gate in it and no reason to stop, so the harness
+        # stops it once the window is up: its exit code is the harness's, not its own.
+        'stopped_by_the_gate': not measured,
         'exit': process.returncode,
         'wall_ms': round((time.monotonic() - started) * 1000),
         'events': events,
@@ -490,17 +493,18 @@ def table(report: dict) -> str:
 
     rows = [
         ('platform', report.get('platform'), report.get('platform')),
-        ('engine', 'the system\'s', f'CEF, API {report.get("cef_api")}'),
-        ('sandbox', 'the system\'s own', report.get('sandbox')),
+        ('engine', "the system's", f'CEF, API {report.get("cef_api")}'),
+        ('sandbox', "the system's own", report.get('sandbox')),
         ('launch to the window, ms', cell(launch_ms(control)), cell(launch_ms(cef))),
         ('resident, no web tab, MB', cell(rss(control, 0)), cell(rss(cef, 0))),
         ('resident, one web tab, MB', 'not measured', cell(rss(cef, 1))),
         ('resident, two web tabs, MB', 'not measured', cell(rss(cef, 2))),
         ('browser processes, two tabs', 'n/a', cell(browsers(cef, 2))),
-        ('unpacked, MB', cell(ships.get('app_unpacked_mb')), cell(ships.get('cef_unpacked_mb'))),
-        ('compressed, MB', cell(ships.get('app_packed_mb')), cell(ships.get('cef_packed_mb'))),
-        ('installer delta, MB', '-', cell(ships.get('delta_packed_mb'))),
-        ('exit code', cell(control.get('exit')), cell(cef.get('exit'))),
+        ('the binary, MB', cell(ships.get('app_binary_mb')), cell(ships.get('cef_binary_mb'))),
+        ('the engine beside it, unpacked MB', '0', cell(ships.get('engine_unpacked_mb'))),
+        ('the engine beside it, compressed MB', '0', cell(ships.get('engine_packed_mb'))),
+        ('**what the download grows by, MB**', '-', cell(ships.get('delta_packed_mb'))),
+        ('exit code', 'stopped by the gate', cell(cef.get('exit'))),
     ]
 
     out = ['| | default build | `cef` |', '| --- | --- | --- |']
@@ -561,7 +565,7 @@ def main() -> int:
         env['NIB_CEF_EXTENSION'] = str(Path(args.extension).resolve())
     cef = run(Path(args.cef).resolve(), env, out_dir / 'cef', args.timeout, measured=True)
     report['cef'] = cef
-    report['cef_api'] = (at(cef, 'engine') is not None) and next(
+    report['cef_api'] = next(
         (one.get('cef_api') for one in cef['events'] if one.get('event') == 'engine'), None
     )
 
@@ -574,26 +578,33 @@ def main() -> int:
     report['profile_root'] = str(root)
     report['profile_children'] = sorted(one.name for one in root.iterdir()) if root.is_dir() else []
 
+    # What a release would have to carry, and what that costs a reader: the engine's
+    # own files, weighed and then compressed with the algorithm an installer uses.
+    # The two binaries are compared beside it, because one of them has Chromium's
+    # bindings linked into it and the other does not.
     if args.payload:
         payload = Path(args.payload).resolve()
         ships: dict = {'payload': str(payload)}
-        ships['cef'] = weigh(payload, CEF_PAYLOAD)
-        ships['cef_unpacked_mb'] = ships['cef'].get('unpacked_mb')
-        binary = Path(args.cef).resolve()
-        ships['binary_mb'] = round(binary.stat().st_size / 1048576, 2) if binary.is_file() else None
+        ships['engine'] = weigh(payload, CEF_PAYLOAD)
+        ships['engine_unpacked_mb'] = ships['engine'].get('unpacked_mb')
+
+        flagged = Path(args.cef).resolve()
+        if flagged.is_file():
+            ships['cef_binary_mb'] = round(flagged.stat().st_size / 1048576, 2)
         if args.control and Path(args.control).is_file():
-            ships['app_unpacked_mb'] = round(
-                Path(args.control).stat().st_size / 1048576, 2
-            )
+            ships['app_binary_mb'] = round(Path(args.control).stat().st_size / 1048576, 2)
+
         if not args.no_compress:
-            print('compressing, which is the installer delta rather than a guess')
-            ships['cef_packed_mb'] = round(compress(payload, CEF_PAYLOAD) / 1048576, 1)
-            if args.control and Path(args.control).is_file():
-                ships['app_packed_mb'] = round(
-                    compress(Path(args.control).parent, (Path(args.control).name,)) / 1048576, 1
-                )
-            if ships.get('cef_packed_mb') is not None:
-                ships['delta_packed_mb'] = ships['cef_packed_mb']
+            print('compressing, which is the installer delta measured rather than guessed')
+            packed = compress(payload, CEF_PAYLOAD)
+            ships['engine_packed_mb'] = round(packed / 1048576, 1)
+            # The delta is the engine plus however much bigger the binary itself got.
+            grew = (ships.get('cef_binary_mb') or 0) - (ships.get('app_binary_mb') or 0)
+            ships['delta_packed_mb'] = round(packed / 1048576 + max(grew, 0.0), 1)
+            ships['delta_note'] = (
+                'LZMA, which is what NSIS and a deb use; a dmg is zlib and compresses '
+                'a little less well'
+            )
         report['ships'] = ships
 
     (out_dir / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')

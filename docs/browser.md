@@ -528,6 +528,16 @@ can depend on, and batch 1 is the batch that finds out when it is.** That is not
 argument against the recommendation - the engine itself is proven, four times over,
 in section 9 - it is an argument for the gate being real.
 
+**What batch 1 found, a day later, in one paragraph.** Both of those breakages are
+fixed upstream, in a release: `tauri-runtime-cef 3.0.0-alpha.0` was published on
+2026-09-13 against `tauri 3.0.0-alpha.0` and a published `tauri-winit`, so no
+duplicated `dpi` and no unnamed winit. nib cannot use that release, because no Tauri
+plugin has one on the 3.x line. And on the branch itself, the blocker turned out not
+to be `dpi` at all but the plugins: every Tauri plugin that supports iOS asks for a
+`tauri` feature the branch removed, so Cargo will not resolve a graph that contains
+one. Sections 7 and 8 have both, and the second one is the reason batch 1's answer is
+"yes, with a patch nib carries" rather than "yes".
+
 That is what an unreleased branch is like, and it is the argument for the shape of
 batch 1: **a gate, not a migration.** Build nib against a pinned revision behind a
 Cargo feature, keep wry the default, run every test the app has under both, and move
@@ -785,21 +795,27 @@ directory, so two installations pointed at one directory need
 `OnAlreadyRunningAppRelaunch`, which is the same problem
 `tauri-plugin-single-instance` already solves for nib.
 
-**This is the one piece of the design with no upstream API yet found for it, and the
-spike proved it is not optional.** CEF has the mechanism - a `CefRequestContext` per
-profile, and `browser_host_create_browser` takes one - but `tauri-runtime-cef` is
-configured with a single `root_cache_path` for the whole application, and whether a
-*per-webview* request context can be asked for through `CefWebviewAttributes` was not
-established.
+**Batch 1 found the API, and it is the call `web_tabs.rs` already makes.** This
+paragraph used to say no upstream API had been found and that batch 2 would have to
+add one; that is no longer true. `tauri-runtime-cef` maps the portable
+`WebviewAttributes::data_directory` onto a `CefRequestContext` per webview: a path
+inside `root_cache_path` becomes a named profile, a path outside it becomes a hashed
+one, and `incognito` leaves the cache path empty, which is CEF's own off-the-record
+profile. So the two profiles and the private tab are both expressible today, through
+attributes the app already sets. Section 8's batch 1 notes have the two consequences:
+which profile has to be the *primary* one, and why nib's own window then has to be
+built in Rust.
 
 What settles it is a screenshot. In `spike/shell`, with one profile for everything,
 the test extension's content script ran in **nib's own interface** as well as in the
 two web tabs - an `<all_urls>` extension reading the application's own document, in a
 picture, on the first try (section 9). So this is not a precaution any more.
-**Batch 2's first job is a second request context, and if `tauri-runtime-cef` cannot
-give one, adding it upstream is the batch** - because most of section 6 rests on it
-and the alternative is an app whose own interface is readable by anything a reader
-installs.
+**So batch 1 shipped the second profile rather than leaving it to batch 2**, because
+most of section 6 rests on it and the alternative is an app whose own interface is
+readable by anything a reader installs. `engine::web_store` is where a web tab's
+profile is chosen and `engine::open_ui_window` is where the interface's is, and the
+gate checks both directions on every platform: the extension's content script has to
+reach a web tab and has to not reach the interface.
 
 ### Where it starts
 
@@ -1481,12 +1497,26 @@ shape that will actually ship rather than in a standalone program.
   change it.
 - **No sandbox in an AppImage or a snap**, so the browser should not be offered in
   those builds. Section 7.
-- **`tauri-runtime-cef` is unpublished, and at revision `c8c75b1` it does not
-  compile on any desktop** - one duplicated `dpi` crate, eleven type errors on macOS
-  and thirty on Linux. Batch 1 is allowed to end in "not yet".
-- **A per-webview Chromium profile has no API found for it yet, and it is not
-  optional**: with one profile, the spike's test extension read nib's own interface.
-  Section 5 and section 9. Batch 2's first job.
+- **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
+  one that supports iOS asks for a `wry` feature the branch removed. One empty
+  feature repairs it and batch 1 carries the repair in
+  `apps/desktop/src-tauri/cef/upstream.py`; until it is upstream, nib's flagged build
+  depends on a patch against somebody else's branch. Section 8.
+- **`tauri-runtime-cef 3.0.0-alpha.0` is published, and nib cannot use it**: the
+  alpha is built against `tauri 3.0.0-alpha.0` and no plugin has a release on that
+  line. Moving nib to Tauri 3 is the clean door and it is a decision, not a bump.
+  Section 7.
+- **The engine is CEF 151 and CEF's own stable is 152.** The branch pins
+  `cef = "=151.8.1"`, so the flagged build is one CEF milestone behind CEF and two or
+  three behind Chrome. It moves when the branch moves, which is what `cef-bump.yml`
+  watches.
+- **PDF export does not work under the flag.** It talks to `WebView2`'s print engine,
+  which is not the engine any more; `pdf_supported` says no and the window falls back
+  to the system's print panel. Chromium's own `PrintToPDF` is batch 6.
+- **On Linux the flagged build has GTK 3 in it**, through `tauri-plugin-dialog` and
+  `rfd`, and GTK 4 aborts when it finds GTK 3 in the process. The plugin has an
+  `xdg-portal` feature that would fix it, and turning that on changes the *shipping*
+  Linux build. Section 8, batch 7.
 - **The shell spike segfaults on exit** after its work is done - a shutdown path in
   an unreleased runtime, to report upstream.
 - **Android and iOS get the system browser**, because CEF has no build for either.

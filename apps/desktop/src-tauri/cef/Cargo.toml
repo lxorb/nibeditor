@@ -71,14 +71,21 @@ tauri-runtime-cef = { path = ".upstream/tauri/crates/tauri-runtime-cef", feature
 dirs = "6"
 serde_json = "1"
 
-# **The whole `tauri` ecosystem, out of the one checkout.** The `tauri` on crates.io
-# compiles the system's webview into itself; the one on this branch takes a runtime
-# from the application, which is the whole shape this batch is measuring, so every
-# crate that names `tauri-utils` or `tauri-plugin` has to agree on which one it got.
-# The versions on the branch are the versions on crates.io -
-# `tauri` 2.11.5, `tauri-utils` 2.9.3, `tauri-runtime` 2.11.3, `tauri-build` and
-# `tauri-plugin` 2.6.3 - so every requirement in the graph, the app's own and the
-# seven plugins', is satisfied by the patch and the graph unifies on one copy.
+# **Two crates, and deliberately not five.** The `tauri` on crates.io compiles the
+# system's webview into itself; the one on this branch takes a runtime from the
+# application, which is the whole shape this batch is measuring - and `tauri-build`
+# comes with it, because the context it generates is read by the macros in that copy
+# of `tauri`. Both are 2.11.5 and 2.6.3 on the branch as well as on crates.io, so
+# every requirement in the graph is satisfied and each brings its own path siblings.
+#
+# **`tauri-utils` and `tauri-plugin` are left on crates.io on purpose, and this is a
+# finding.** The branch moved `tauri-utils` to `schemars` 1 without moving its version
+# number, and every plugin's build script is written against the 0.8 API - patch it and
+# `tauri-plugin-fs` fails to build with `expected Schema, found RootSchema`. So the
+# graph holds two copies of `tauri-utils` 2.9.3, one per source, which is allowed
+# because neither declares a native library and because no plugin hands one of its
+# types to `tauri`: only `tauri-plugin-deep-link` names the crate at run time at all,
+# for a type it deserialises its own config into.
 #
 # `dpi` is the one-line repair the spike found and the reason batch 1 is a gate:
 # `tauri` takes `dpi` from crates.io while `tauri-runtime-cef` takes `winit` from
@@ -89,9 +96,6 @@ serde_json = "1"
 [patch.crates-io]
 tauri = { path = ".upstream/tauri/crates/tauri" }
 tauri-build = { path = ".upstream/tauri/crates/tauri-build" }
-tauri-plugin = { path = ".upstream/tauri/crates/tauri-plugin" }
-tauri-runtime = { path = ".upstream/tauri/crates/tauri-runtime" }
-tauri-utils = { path = ".upstream/tauri/crates/tauri-utils" }
 dpi = { git = "https://github.com/tauri-apps/winit-gtk4", branch = "master" }
 
 # **The pin.** One revision, in one line, and `upstream.py` is what reads it: it
