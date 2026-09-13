@@ -139,10 +139,12 @@
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: tab.shown })
 
-  /** The things a tab can be opened as. A click on the plus makes a note, which is
-   *  what a strip is mostly filled with; asking the plus for a menu is where the
-   *  other kinds live, so a canvas or a website is one gesture away rather than two
-   *  more buttons in the row. */
+  /** The things a tab can be opened as. Pressing the plus asks which - Emil,
+   *  2026-09-13: *"When you press on the plus for creating a new tab, then you should
+   *  be able to choose between the different things (note, canvas, web note etc.)."* -
+   *  so a note, a canvas, a website or a page note is one gesture away rather than a
+   *  row of buttons. A note is first, which is what a strip is mostly filled with, and
+   *  the same key and held finger open the same list. */
   function newMenu(): MenuEntry[] {
     return [
       { label: t('New note'), run: () => makeNote() },
@@ -150,6 +152,7 @@
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void makeWebsite() }]),
+      { label: t('New page note'), run: () => void makePages() },
     ]
   }
 
@@ -168,6 +171,11 @@
   function makeWebsite() {
     workspace.focusPane(paneId)
     return workspace.createWebsite()
+  }
+
+  function makePages() {
+    workspace.focusPane(paneId)
+    return workspace.createPages()
   }
 
   /** A held finger is the right click a touch screen has, and the menu key is
@@ -431,9 +439,9 @@
       </div>
     {/each}
 
-    <!-- A click makes a note. The menu is the other kind, asked for the way
-         every other menu in the app is: a right click, a held finger, or the
-         key a keyboard has for it.
+    <!-- A press opens the chooser: note, canvas, website, page note. The right
+         click, the held finger and the menu key open the same list, so the plus
+         answers every way of asking with the one gesture Emil asked for.
          Left out on a phone and a tablet, which hold one document at a time: a
          plus has no second tab to open, and the round button over the note is
          what makes one there. Left out rather than hidden, so no key reaches it
@@ -441,10 +449,10 @@
     {#if !viewport.touch}
       <button
         class="new"
-        title={t('New note')}
-        aria-label={t('New note')}
+        title={t('New')}
+        aria-label={t('New')}
         aria-haspopup="menu"
-        onclick={() => makeNote()}
+        onclick={showNewMenu}
         oncontextmenu={showNewMenu}
         use:longPress={showNewMenu}
       >

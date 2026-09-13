@@ -252,14 +252,20 @@ describe('what the plus in the tab strip offers', () => {
   test('the kinds a tab can hold, in the words the other menus use', () => {
     expect(entries).toContain("t('New note')")
     expect(entries).toContain("t('New canvas')")
-    // A website is the third, and not on a phone: there is no bar there to type an
-    // address into. See docs/web-tabs.md.
+    // A website is not on a phone: there is no bar there to type an address into.
+    // See docs/web-tabs.md.
     expect(entries).toContain("t('New web note')")
     expect(entries).toContain("viewport.device === 'phone'")
+    // And a page note, so every kind a tab can be is one press away.
+    expect(entries).toContain("t('New page note')")
   })
 
-  test('a plain click still makes a note, so the menu is never in the way', () => {
-    expect(plus).toContain('onclick={() => makeNote()}')
+  /** Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you
+   *  should be able to choose between the different things (note, canvas, web note
+   *  etc.)."* So a press opens the chooser rather than making a note outright; a note
+   *  is the first row, which is the tab a strip is mostly filled with. */
+  test('a press opens the chooser, the gesture Emil asked for', () => {
+    expect(plus).toContain('onclick={showNewMenu}')
   })
 
   /** A right click, the menu key a keyboard has - both arrive as `contextmenu` -
