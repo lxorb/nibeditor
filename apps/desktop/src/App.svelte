@@ -28,7 +28,7 @@
   import { busy } from './lib/busy.svelte'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
-  import { drawer } from './lib/drawer.svelte'
+  import { drawer, followDrawers, rightDrawer } from './lib/drawer.svelte'
   import { fullscreen } from './lib/fullscreen.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -313,14 +313,15 @@
   // back rather than leaving a window with nothing in it. See fullscreen.svelte.ts.
   $effect(() => fullscreen.watch(workspace.tabs.map((tab) => tab.id)))
 
-  // The drawer follows the finger, the way a phone app's does; see
-  // drawer.svelte.ts. Only where the sidebar is a drawer: a tablet on its side
-  // keeps it open beside the note, and a column in the layout is not dragged.
+  // Both drawers follow the finger, the way a phone app's do; see
+  // drawer.svelte.ts, which is one engine for the two edges. Only where the
+  // panels are a drawer: a tablet on its side keeps the sidebar open beside the
+  // note, and a column in the layout is not dragged.
   $effect(() => {
     const host = middle
     if (!host || !viewport.drawer) return
 
-    return drawer.follow(host)
+    return followDrawers(host)
   })
 
   // Syncing only runs while there is an account behind it - and not before a
@@ -703,12 +704,15 @@
 
     {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
       <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
+      <!-- One scrim for both drawers, which is why it fades with whichever of
+           them a finger is on. Only one can be moving: a gesture belongs to one
+           edge. -->
       <div
         class="scrim"
         class:over={!!workspace.rightPanel}
-        class:held={drawer.held}
-        class:dragging={drawer.at !== null}
-        style:opacity={drawer.at === null || !drawer.width ? undefined : drawer.at / drawer.width}
+        class:held={drawer.held || rightDrawer.held}
+        class:dragging={drawer.at !== null || rightDrawer.at !== null}
+        style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
         onclick={() => {
           workspace.closePanel()
           workspace.closePanel('right')
@@ -760,10 +764,10 @@
 
            Wherever the panels are drawers - a phone, a tablet held upright - this
            one comes in from the right over the note, the way a members panel
-           does, and the same scrim dismisses it. It does not follow the thumb:
-           the drag belongs to the left drawer, which is the one gesture a phone's
-           edge has, and a second engine for the other edge is a batch of its
-           own. -->
+           does, and the same scrim dismisses it. A thumb drags it out and back,
+           with the same claim, the same clamp and the same settle the left one
+           has: one engine serves both edges and each drawer carries the sign that
+           says which edge is its own. See drawer.svelte.ts. -->
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
@@ -777,6 +781,14 @@
             class="panels right"
             inert={viewport.drawer && !workspace.rightPanel}
             class:open={!!workspace.rightPanel}
+            class:held={rightDrawer.held}
+            class:dragging={rightDrawer.at !== null}
+            class:settling={rightDrawer.settle !== null}
+            style:transform={rightDrawer.at === null
+              ? undefined
+              : `translateX(calc(var(--dir) * ${rightDrawer.width - rightDrawer.at}px))`}
+            style:--settle={rightDrawer.settle === null ? undefined : `${rightDrawer.settle}ms`}
+            ontransitionend={(event) => rightDrawer.arrived(event)}
           >
             {#if workspace.rightPanel}
               <Sidebar side="right" ongoto={goto} onmovesection={moveSectionTo} />
@@ -1171,6 +1183,19 @@
 
   :global([data-drawer][data-narrow]) .panels.right.open {
     transform: none;
+  }
+
+  /* While a thumb is on it, and the ease that finishes the drag. The same two
+     rules the left drawer has, said again for this one because the narrow rule
+     above declares a transition of its own and would otherwise animate against
+     the finger. After it, so this is the one that stands. */
+  :global([data-drawer]) .panels.right.dragging {
+    transition: none;
+    animation: none;
+  }
+
+  :global([data-drawer]) .panels.right.settling {
+    transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Full width rather than leaving a sliver of the document showing - and once

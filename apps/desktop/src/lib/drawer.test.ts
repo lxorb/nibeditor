@@ -1,8 +1,9 @@
 import { afterEach, beforeAll, describe, expect, test, vi } from 'vitest'
 
-/** The sidebar a thumb pulls out. The arithmetic is in swipe.ts; what this
- *  covers is the part that needs a finger and a screen: which gestures the
- *  drawer takes, and which it has to keep its hands off.
+/** The sidebars a thumb pulls out. The arithmetic is in swipe.ts; what this
+ *  covers is the part that needs a finger and a screen: which gestures a drawer
+ *  takes, which of the two edges a gesture belongs to, and which it has to keep
+ *  its hands off.
  *
  *  Nothing here is a phone. The host, the panels inside it and the element
  *  under the finger are the few members the handlers actually read. */
@@ -65,21 +66,38 @@ function moment(x: number, y: number, at: number): TouchEvent {
 }
 
 /** A fresh drawer over a fresh workspace, since both remember the last
- *  gesture, on a device of the given kind. */
-async function opened(device: 'phone' | 'tablet' = 'phone') {
+ *  gesture, on a device of the given kind.
+ *
+ *  `right` is what the other side of the window holds, which is empty for
+ *  everybody until somebody moves a panel over: a side with nothing on it has no
+ *  drawer to pull out, and that is what the drag asks before it takes a gesture
+ *  going that way. */
+async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []) {
   vi.resetModules()
   const workspace = {
     panel: null as string | null,
+    rightPanel: null as string | null,
+    right,
+    /** The panel the right side shows when something asks it to open: whatever
+     *  was last open there, or the first one that was moved over. */
+    get nextRight(): string | null {
+      return this.rightPanel ?? this.right[0] ?? null
+    },
     showPanel(next: string) {
-      this.panel = this.panel === next ? null : next
+      if (this.right.includes(next)) this.rightPanel = this.rightPanel === next ? null : next
+      else this.panel = this.panel === next ? null : next
+    },
+    closePanel(side: 'left' | 'right' = 'left') {
+      if (side === 'right') this.rightPanel = null
+      else this.panel = null
     },
   }
   vi.doMock('./workspace.svelte', () => ({ workspace }))
   vi.doMock('./viewport.svelte', () => ({ viewport: { device } }))
 
-  const { drawer } = await import('./drawer.svelte')
+  const { drawer, followDrawers, rightDrawer } = await import('./drawer.svelte')
   const host = stage()
-  const stop = drawer.follow(host.element)
+  const stop = followDrawers(host.element)
 
   /** One finger - or one pen - down, across and up, over whatever `on` is. */
   const swipe = (on: Element, from: number, to: number, pointer = 'touch', y = 400) => {
@@ -93,11 +111,13 @@ async function opened(device: 'phone' | 'tablet' = 'phone') {
     return {
       /** How far the drawer has been pulled out, before the finger lifts. */
       pulled: drawer.at,
+      /** And the other side's, for a gesture that belongs to that edge. */
+      pulledRight: rightDrawer.at,
       lift: () => host.listeners.get('touchend')?.(moment(to, y, (at += 16)) as never),
     }
   }
 
-  return { drawer, workspace, swipe, stop, host }
+  return { drawer, followDrawers, rightDrawer, workspace, swipe, stop, host }
 }
 
 beforeAll(async () => {
@@ -127,12 +147,12 @@ describe('the drag that opens the drawer', () => {
   })
 
   test('a scroll up the note is not a pull, however far it goes', async () => {
-    const { drawer, workspace } = await opened()
+    const { drawer, followDrawers, workspace } = await opened()
     const host = stage()
 
     // Straight up the screen, which the drag gives up on at the first move.
     touched = prose
-    drawer.follow(host.element)
+    followDrawers(host.element)
     host.listeners.get('touchstart')?.(moment(200, 600, 16) as never)
     host.listeners.get('touchmove')?.(moment(202, 500, 32) as never)
     host.listeners.get('touchmove')?.(moment(204, 380, 48) as never)
@@ -162,9 +182,9 @@ describe('the drag that opens the drawer', () => {
   })
 
   test('a second finger is a pinch, and the drawer lets go of the gesture', async () => {
-    const { drawer } = await opened()
+    const { drawer, followDrawers } = await opened()
     const host = stage()
-    drawer.follow(host.element)
+    followDrawers(host.element)
 
     touched = prose
     host.listeners.get('touchstart')?.({
@@ -178,6 +198,114 @@ describe('the drag that opens the drawer', () => {
     host.listeners.get('touchmove')?.(moment(200, 400, 32) as never)
 
     expect(drawer.at).toBe(null)
+  })
+})
+
+/** The other side of the window, which is a drawer wherever the left one is -
+ *  Discord's members panel, and swipeable the same way. One engine drives both:
+ *  the same claim, the same clamp, the same settle, with a sign that says which
+ *  edge the drawer comes out of. */
+describe('the drag that opens the other side', () => {
+  test('a pull the other way opens it and follows the thumb', async () => {
+    const { swipe, workspace, rightDrawer } = await opened('phone', ['outline'])
+
+    const drag = swipe(prose, 300, 60)
+    expect(workspace.rightPanel).toBe('outline')
+    expect(drag.pulledRight).toBeGreaterThan(0)
+    expect(rightDrawer.held).toBe(true)
+    drag.lift()
+    expect(rightDrawer.held).toBe(false)
+    expect(workspace.rightPanel).toBe('outline')
+  })
+
+  /** The left drawer is not disturbed by any of it: the same gesture used to be
+   *  its own and meant nothing, and a rightward one still opens the file list. */
+  test('and leaves the left one where it was', async () => {
+    const { swipe, workspace, drawer } = await opened('phone', ['outline'])
+
+    swipe(prose, 300, 60).lift()
+    expect(workspace.panel).toBe(null)
+    expect(drawer.at).toBe(null)
+  })
+
+  test('a pull along the line still opens the file list', async () => {
+    const { swipe, workspace } = await opened('phone', ['outline'])
+
+    const drag = swipe(prose, 30, 260)
+    expect(workspace.panel).toBe('tree')
+    expect(workspace.rightPanel).toBe(null)
+    expect(drag.pulled).toBeGreaterThan(0)
+    expect(drag.pulledRight).toBe(null)
+  })
+
+  /** A window nobody has arranged has no right side at all - not an empty one -
+   *  so there is nothing there to pull out and the gesture means nothing, which
+   *  is what it meant before this existed. */
+  test('nothing happens where the right side holds nothing', async () => {
+    const { swipe, workspace } = await opened('phone')
+
+    const drag = swipe(prose, 300, 60)
+    expect(drag.pulled).toBe(null)
+    expect(drag.pulledRight).toBe(null)
+    expect(workspace.rightPanel).toBe(null)
+    expect(workspace.panel).toBe(null)
+  })
+
+  test('open, a pull back the other way puts it away', async () => {
+    const { swipe, workspace } = await opened('phone', ['outline'])
+
+    swipe(prose, 300, 60).lift()
+    expect(workspace.rightPanel).toBe('outline')
+
+    const back = swipe(prose, 60, 300)
+    expect(back.pulledRight).toBeLessThan(WIDTH)
+    back.lift()
+    expect(workspace.rightPanel).toBe(null)
+  })
+
+  /** The settle is the left drawer's own, to the millisecond: it is worked out
+   *  from how far the drawer still has to go, and one engine works it out. The
+   *  same distance mirrored is the same number - which is the whole reason for
+   *  there being one engine rather than two. */
+  test('settles over exactly the time the left one takes', async () => {
+    const left = await opened('phone', ['outline'])
+    left.swipe(prose, 30, 270).lift()
+    expect(left.drawer.settle).toBeGreaterThan(0)
+    expect(left.drawer.at).toBe(null)
+
+    const right = await opened('phone', ['outline'])
+    right.swipe(prose, 300, 60).lift()
+    expect(right.rightDrawer.at).toBe(null)
+    expect(right.rightDrawer.settle).toBe(left.drawer.settle)
+  })
+
+  test('a tablet opens it from its own edge and nowhere else', async () => {
+    const near = await opened('tablet', ['outline'])
+    // 1280 wide, so the trailing strip is the last 32 pixels of it.
+    expect(near.swipe(prose, 1276, 1000).pulledRight).toBeGreaterThan(0)
+    expect(near.workspace.rightPanel).toBe('outline')
+
+    const middle = await opened('tablet', ['outline'])
+    expect(middle.swipe(prose, 640, 300).pulledRight).toBe(null)
+    expect(middle.workspace.rightPanel).toBe(null)
+  })
+
+  /** Both layers go on the compositor while it is still either drawer's gesture,
+   *  and the one that turns out not to be moving comes straight off again. */
+  test('the side that loses the gesture is not left promoted', async () => {
+    const { swipe, drawer, rightDrawer } = await opened('phone', ['outline'])
+
+    const drag = swipe(prose, 300, 60)
+    expect(rightDrawer.held).toBe(true)
+    expect(drawer.held).toBe(false)
+    drag.lift()
+  })
+
+  test('a pen is drawing on that edge too', async () => {
+    const { swipe, workspace } = await opened('tablet', ['outline'])
+
+    expect(swipe(prose, 1276, 1000, 'pen').pulledRight).toBe(null)
+    expect(workspace.rightPanel).toBe(null)
   })
 })
 

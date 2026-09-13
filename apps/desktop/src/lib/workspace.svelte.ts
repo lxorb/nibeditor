@@ -3016,6 +3016,17 @@ class Workspace {
     return panels.panelsOn(this.right, side, every)
   }
 
+  /** The panel the right side shows when something asks it to open: whatever was
+   *  last open there, or the first one that was moved over - which, on a side
+   *  holding one panel, is that panel.
+   *
+   *  One rule, because two things ask it: the bar's own button for that side, and
+   *  the drag that pulls the drawer out from that edge on a phone. Nothing until
+   *  a panel has been moved over, which is a side that is not drawn at all. */
+  get nextRight(): Panel | null {
+    return this.rightPanel ?? this.right[0] ?? null
+  }
+
   /** Shows a panel, or shuts it where it is already the one showing. */
   showPanel(next: Panel) {
     this.sides = panels.showing(this.sides, next)
