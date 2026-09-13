@@ -5,7 +5,14 @@ import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer, wikilinkCompletions } from './complete'
-import { type NoteIndex, noteIndex, type NoteRef, type SpaceBlock } from './notes'
+import {
+  type LinkWrite,
+  linkWriter,
+  type NoteIndex,
+  noteIndex,
+  type NoteRef,
+  type SpaceBlock,
+} from './notes'
 import { parsed } from '../../test/parsed'
 
 /** What the space offers, and what it was asked for: every test below counts the
@@ -56,7 +63,19 @@ function space(
   return asked
 }
 
-function state(doc: string, index: NoteIndex, at = doc.length): EditorState {
+/** A writer that spells out every fact the row handed over rather than only the
+ *  ones a wikilink keeps, so a test can see what the popup knew. The app's own
+ *  writer makes a markdown link out of the same four facts; see link-format.ts. */
+function spelled(target: LinkWrite): string {
+  return `[${target.name}](${target.path ?? ''}|${target.from ?? ''}|${target.fragment ?? ''})`
+}
+
+function state(
+  doc: string,
+  index: NoteIndex,
+  at = doc.length,
+  write?: (target: LinkWrite) => string,
+): EditorState {
   return parsed(
     EditorState.create({
       doc,
@@ -65,6 +84,7 @@ function state(doc: string, index: NoteIndex, at = doc.length): EditorState {
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         noteIndex.of(index),
         blockNamer.of((path, line) => Promise.resolve(`from-${path.replace(/\W/g, '')}-${line}`)),
+        ...(write ? [linkWriter.of(write)] : []),
       ],
     }),
   )
@@ -91,12 +111,13 @@ async function picked(
   doc: string,
   asked: Asked,
   label: string,
+  write?: (target: LinkWrite) => string,
 ): Promise<{ doc: string; head: number }> {
   const found = await rowsFor(doc, asked)
   const row = found?.options.find((one) => one.label === label)
   if (!found || !row || typeof row.apply !== 'function') throw new Error(`no row for ${label}`)
 
-  let built = state(doc, asked.index)
+  let built = state(doc, asked.index, doc.length, write)
   const view = {
     get state() {
       return built
@@ -287,5 +308,113 @@ describe('the lists that were already there', () => {
 
     expect(asked.reads).toEqual(['Plan.md'])
     expect(labels(found)).toEqual(['first block', 'second block'])
+  })
+})
+
+/** The Links setting is the app's, and the app answers it in one writer; the popup
+ *  hands that writer what it knows and puts back whatever comes out. Every kind of
+ *  row here, because the whole of the bug was that one of them wrote a wikilink
+ *  whatever the setting said - and all of them did.
+ *
+ *  What the four spellings actually look like is the app's own test, over a nested
+ *  space: see link-format.test.ts. */
+describe('every row writes the link the app spells', () => {
+  const ALIASED: NoteRef[] = [
+    { ...note('ideas/Spark.md', ['Sparks'], ['b2c3d4']), aliases: ['The spark'] },
+  ]
+
+  test('a note row hands over its name, its path and the note being written in', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[Spa', asked, 'Spark', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|)',
+    )
+  })
+
+  test('an alias row writes the alias over the note it belongs to', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[spa', asked, 'The spark', spelled)).doc).toBe(
+      '[The spark](ideas/Spark.md|journal/Monday.md|)',
+    )
+  })
+
+  test('a heading row of one note carries the heading', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[Spark#Spa', asked, 'Sparks', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|Sparks)',
+    )
+  })
+
+  test('a block row of one note carries the block it already answers to', async () => {
+    const asked = space(ALIASED, {
+      path: 'journal/Monday.md',
+      bodies: { 'ideas/Spark.md': 'a line of it ^b2c3d4\n' },
+    })
+
+    expect((await picked('[[Spark#^', asked, 'a line of it', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|^b2c3d4)',
+    )
+  })
+
+  test('a block the app had to name carries the name it gave it', async () => {
+    const asked = space(ALIASED, {
+      path: 'journal/Monday.md',
+      bodies: { 'ideas/Spark.md': 'a line with no name\n' },
+    })
+
+    expect((await picked('[[Spark#^', asked, 'a line with no name', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|^from-ideasSparkmd-0)',
+    )
+  })
+
+  test('a `[[##` row carries the heading and takes the hashes with it', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[##spk', asked, 'Sparks', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|Sparks)',
+    )
+  })
+
+  test('a `[[^^` row out of the index carries the block', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[^^b2c', asked, '^b2c3d4', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|^b2c3d4)',
+    )
+  })
+
+  test('a `[[^^` row the search found carries it too, named or not', async () => {
+    const named = space(ALIASED, {
+      path: 'journal/Monday.md',
+      found: [{ path: 'ideas/Spark.md', line: 9, text: 'already named', id: 'zz9999' }],
+    })
+    expect((await picked('[[^^alrea', named, 'already named', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|^zz9999)',
+    )
+
+    const fresh = space(ALIASED, {
+      path: 'journal/Monday.md',
+      found: [{ path: 'ideas/Spark.md', line: 4, text: 'not named yet', id: null }],
+    })
+    expect((await picked('[[^^not n', fresh, 'not named yet', spelled)).doc).toBe(
+      '[Spark](ideas/Spark.md|journal/Monday.md|^from-ideasSparkmd-4)',
+    )
+  })
+
+  /** A link into the note it is written in has no name to write, which is exactly
+   *  what `[[#Heading]]` is - and what the app spells as an anchor on its own. */
+  test('a heading of this very note hands over no name at all', async () => {
+    const asked = space([note('Plan.md', ['Today'])], { path: 'Plan.md' })
+
+    expect((await picked('[[#Tod', asked, 'Today', spelled)).doc).toBe('[](Plan.md|Plan.md|Today)')
+  })
+
+  test('writes a wikilink where nothing told it otherwise, as it always has', async () => {
+    const asked = space(ALIASED, { path: 'journal/Monday.md' })
+
+    expect((await picked('[[Spa', asked, 'Spark')).doc).toBe('[[Spark]]')
+    expect((await picked('[[Spark#Spa', asked, 'Sparks')).doc).toBe('[[Spark#Sparks]]')
   })
 })

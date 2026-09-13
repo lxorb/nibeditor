@@ -20,7 +20,14 @@ import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
-import { type NoteIndex, noteIndexExtension, type NoteJump, noteOpener } from './wikilink/notes'
+import {
+  type LinkWrite,
+  linkWriter,
+  type NoteIndex,
+  noteIndexExtension,
+  type NoteJump,
+  noteOpener,
+} from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
 import { closeFence, leaveQuote } from './commands'
@@ -74,6 +81,10 @@ export interface StateOptions {
   openNote?: (jump: NoteJump) => void
   /** Names a block of another note, so a link can point at the block. */
   nameBlock?: (path: string, line: number) => Promise<string | null>
+  /** Spells a link to another note, so what the `[[` popup writes is what the
+   *  Links setting asks for. The app's one writer; without it the editor writes a
+   *  wikilink, which is that setting's default. */
+  writeLink?: (target: LinkWrite) => string
   /** What was folded when this note was last read on this device, as lines; see
    *  fold.ts. In the state rather than dispatched afterwards, so the note is
    *  already folded on the frame it appears. */
@@ -90,7 +101,7 @@ export interface EditorOptions extends StateOptions {
 
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
-  const { openLink, openNote, nameBlock, shared, selection, folds } = options
+  const { openLink, openNote, nameBlock, writeLink, shared, selection, folds } = options
   const text = shared ? shared.text : doc
 
   const state = EditorState.create({
@@ -163,6 +174,7 @@ export function editorState(options: StateOptions): EditorState {
       noteIndexExtension(options.notes),
       ...(openNote ? [noteOpener.of(openNote)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
+      ...(writeLink ? [linkWriter.of(writeLink)] : []),
       nibTheme,
       // Above the markdown keys below, which continue a list or a quote and
       // would otherwise take the key on a fence inside one.

@@ -16,6 +16,7 @@
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
+  import { pickedLink } from './composer'
   import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
   import { shortcuts } from './shortcuts.svelte'
@@ -167,6 +168,9 @@
         typed = doc.toString()
       },
       notes: links.index(canvasPath),
+      // A `[[` picked in a card is spelled the way one picked in a note is; see
+      // composer.ts.
+      writeLink: pickedLink,
       ...(onfollow ? { openNote: onfollow } : {}),
       openLink: (href: string) => void openExternal(href),
       shortcuts: shortcuts.forEditor,

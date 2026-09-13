@@ -182,6 +182,42 @@ export const noteOpener = Facet.define<(jump: NoteJump) => void, (jump: NoteJump
   combine: (values) => values[0] ?? (() => undefined),
 })
 
+/** What a link the editor is about to write points at, as the app's one writer
+ *  takes it.
+ *
+ *  The same four facts `LinkTarget` in the app's link-format.ts holds, said again
+ *  here because the editor cannot import the app - and only the four the editor
+ *  ever knows: nothing in the popup writes an alias or an embed. */
+export interface LinkWrite {
+  /** The name a wikilink uses for the target. Empty for a link into the note it
+   *  is being written in, which is what `[[#Heading]]` is. */
+  name: string
+  /** Where the target sits in the space, extension and all: what the spellings
+   *  that write a path need. */
+  path?: string | null
+  /** The note the link is being written in, as a path inside the space, which is
+   *  what a relative path is relative to. */
+  from?: string | null
+  /** What follows the target, written without its `#`: a heading, a `^blockid`. */
+  fragment?: string | null
+}
+
+/** Writes one link to another note, in the spelling the space is set to.
+ *
+ *  The app's own writer - `linkTo` in composer.ts, the one place in the app a link
+ *  is spelled, which is what answers the Links setting - so a link the `[[` popup
+ *  writes is spelled the way the grip's Copy link spells one. Without it the
+ *  editor writes the wikilink it has always written, which is that setting's own
+ *  default and the only spelling an editor standing on its own could know. */
+export const linkWriter = Facet.define<
+  (target: LinkWrite) => string,
+  (target: LinkWrite) => string
+>({ combine: (values) => values[0] ?? wikilinkFor })
+
+function wikilinkFor(target: LinkWrite): string {
+  return `[[${target.fragment ? `${target.name}#${target.fragment}` : target.name}]]`
+}
+
 /** Whether every character of `needle` stands in `text` in order, however far
  *  apart: `pln` finds "The plan", `cnvs` finds `work/nib/canvas`.
  *

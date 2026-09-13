@@ -4,6 +4,8 @@ import type { EditorView } from '@codemirror/view'
 import { blocksOf } from '@nib/markdown/links'
 import {
   fuzzy,
+  type LinkWrite,
+  linkWriter,
   type NoteIndex,
   noteIndex,
   type NoteRef,
@@ -25,9 +27,9 @@ import {
  *  note it is in, which is most of them:
  *
  *  - `[[##` offers every heading of the space, each with the note it is in beside
- *    it, and writes `[[Note#Heading]]`. Free, because the index already holds
- *    every heading of every note.
- *  - `[[^^` offers every block of the space, and writes `[[Note#^id]]`. The blocks
+ *    it, and writes a link to that note's heading. Free, because the index already
+ *    holds every heading of every note.
+ *  - `[[^^` offers every block of the space, and writes a link to it. The blocks
  *    that already have a name come first, out of the index; the rest are found by
  *    their own words through the app's search, which is the only thing that can
  *    read a space without the editor reading a space. Two characters before it
@@ -36,7 +38,15 @@ import {
  *
  *  Neither is Obsidian's; both are the same popup, the same keys and the same
  *  brackets. A note written with one travels as `[[Note#Heading]]`, which is
- *  Obsidian's own spelling, so nothing about the file is nib's. */
+ *  Obsidian's own spelling, so nothing about the file is nib's.
+ *
+ *  What every row here actually writes is the app's business rather than this
+ *  file's: a space set to markdown links gets `[Note](folder/Note.md#heading)` out
+ *  of the same pick. One writer answers that for the whole app - the Links setting,
+ *  which the grip's Copy link, a split, an import and a cited PDF page all go
+ *  through - and it arrives as `linkWriter`; see notes.ts and composer.ts in the
+ *  app. On its own the editor writes the wikilink, which is that setting's own
+ *  default. */
 
 /** Gives a block of another note a name and returns it, so a link can point at
  *  the block rather than at the note. Supplied by the app, which owns the file;
@@ -45,6 +55,19 @@ export const blockNamer = Facet.define<
   (path: string, line: number) => Promise<string | null>,
   (path: string, line: number) => Promise<string | null>
 >({ combine: (values) => values[0] ?? (() => Promise.resolve(null)) })
+
+/** Where a row that was picked starts: at the `[[` that opened the link, so the
+ *  whole link is rewritten rather than only the part after the brackets.
+ *
+ *  Found rather than counted back from the popup's own start, because every kind
+ *  of row starts the popup somewhere else - past the brackets, past a `#`, past a
+ *  doubled mark - and all of them replace the same thing. The popup only ever
+ *  fires inside a `[[`, so there is one on the line in front of the caret. */
+function opened(view: EditorView, from: number): number {
+  const line = view.state.doc.lineAt(from)
+  const at = view.state.doc.sliceString(line.from, from).lastIndexOf('[[')
+  return at === -1 ? from : line.from + at
+}
 
 /** How many of each kind the list shows. Long enough to reach any note by
  *  typing two or three letters, short enough that the popup is a list. */
@@ -55,8 +78,10 @@ const MOST_SHOWN = 40
  *  list nobody can read. */
 const LEAST_SEARCHED = 2
 
-/** How long the two characters that open a space-wide list are, which is how far
- *  back the row that is picked has to reach to take them with it. */
+/** How long the two characters that open a space-wide list are. The popup starts
+ *  past them so that what is typed filters on a heading's own words rather than on
+ *  the marks that asked for headings; the row that is picked rewrites the whole
+ *  link anyway, marks and all. */
 const MARKER = 2
 
 /** A note's extension, which is not part of the name a link writes. */
@@ -68,28 +93,33 @@ function typing(context: CompletionContext) {
   return context.matchBefore(/\[\[[^[\]\n]*/)
 }
 
-/** Puts the text in and finishes the link, so a chosen note needs no closing
- *  brackets typed after it. Whatever `]]` is already there is stepped over
- *  rather than doubled, which is what close-brackets leaves behind.
+/** Writes the whole link the row stands for, so a chosen note needs no closing
+ *  brackets typed after it. Whatever `]]` is already there goes with it rather
+ *  than being doubled, which is what close-brackets leaves behind.
  *
- *  `back` is how many characters in front of where the popup started go with the
- *  row: two for the `##` or `^^` that opened a space-wide list, which the link
- *  being written must not keep. The popup starts after those characters rather
- *  than on them so that what is typed filters on a heading's own words rather
- *  than on the marks that asked for headings. */
-function insert(text: string, back = 0) {
+ *  The link's spelling is the app's, through `linkWriter`: a space set to markdown
+ *  links gets one here, exactly as the grip's Copy link does. Which is why the
+ *  whole construct is replaced from its `[[` rather than only the words after it -
+ *  a markdown link has no brackets of that shape to keep. */
+function insert(target: LinkWrite) {
   return (view: EditorView, _completion: Completion, from: number, to: number) => {
-    const start = from - back
+    const start = opened(view, from)
     const closed = view.state.doc.sliceString(to, to + 2) === ']]'
-    const tail = closed ? '' : ']]'
-    const at = start + text.length + tail.length + (closed ? 2 : 0)
+    const text = view.state.facet(linkWriter)(target)
 
     view.dispatch({
-      changes: { from: start, to, insert: text + tail },
-      selection: { anchor: at },
+      changes: { from: start, to: closed ? to + 2 : to, insert: text },
+      selection: { anchor: start + text.length },
       userEvent: 'input.complete',
     })
   }
+}
+
+/** Everything a link the popup writes knows about its target except which part of
+ *  the note it points at: the name to write, where the note sits, and the note the
+ *  link is being written in. The rows add the heading or the block. */
+function about(index: NoteIndex, note: NoteRef): LinkWrite {
+  return { name: nameFor(index, note), path: note.path, from: index.path }
 }
 
 /** The name to write for a note: its own, unless the space holds another note by
@@ -120,7 +150,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     rows.push({
       label: note.name,
       ...(folder === undefined ? {} : { detail: folder }),
-      apply: insert(nameFor(index, note)),
+      apply: insert(about(index, note)),
       type: 'text',
     })
   }
@@ -129,7 +159,14 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
     if (!alias.trim()) continue
     if (needle && !alias.toLowerCase().includes(needle)) continue
 
-    rows.push({ label: alias, detail: note.name, apply: insert(alias), type: 'text' })
+    // The alias is the name, so a wikilink writes the alias and a markdown link
+    // shows it over the note's own path - which is the same sentence either way.
+    rows.push({
+      label: alias,
+      detail: note.name,
+      apply: insert({ ...about(index, note), name: alias }),
+      type: 'text',
+    })
   }
 
   return rows
@@ -162,19 +199,28 @@ function matches(note: NoteRef, needle: string): boolean {
   )
 }
 
-function headingOptions(note: NoteRef, typed: string): Completion[] {
+function headingOptions(target: LinkWrite, note: NoteRef, typed: string): Completion[] {
   const needle = typed.trim().toLowerCase()
 
   return note.headings
     .filter((heading) => !needle || heading.toLowerCase().includes(needle))
     .slice(0, MOST_SHOWN)
-    .map((heading) => ({ label: heading, apply: insert(heading), type: 'keyword' }))
+    .map((heading) => ({
+      label: heading,
+      apply: insert({ ...target, fragment: heading }),
+      type: 'keyword',
+    }))
 }
 
 /** The target note's blocks. Its text is read for this rather than kept in the
  *  index: a block has no name until one is picked, so there would be nothing to
  *  index, and one note is read at the moment somebody asks about it. */
-async function blockOptions(index: NoteIndex, note: NoteRef, typed: string): Promise<Completion[]> {
+async function blockOptions(
+  index: NoteIndex,
+  target: LinkWrite,
+  note: NoteRef,
+  typed: string,
+): Promise<Completion[]> {
   const source = await index.read(note.path)
   if (source === null) return []
 
@@ -186,7 +232,10 @@ async function blockOptions(index: NoteIndex, note: NoteRef, typed: string): Pro
     .slice(0, MOST_SHOWN)
     .map((block) => ({
       label: block.text,
-      apply: block.id === null ? name(note.path, block.line) : insert(`^${block.id}`),
+      apply:
+        block.id === null
+          ? name(note.path, block.line, target)
+          : insert({ ...target, fragment: `^${block.id}` }),
       type: 'property',
     }))
 }
@@ -196,15 +245,14 @@ async function blockOptions(index: NoteIndex, note: NoteRef, typed: string): Pro
  *  until that lands, so a target that could not be written leaves no link
  *  pointing at a name nothing has.
  *
- *  `before` is whatever the link needs in front of the name - nothing for a block
- *  of the note already named in the link, `Note#` for one found across the space -
- *  and `back` is what the row has to take with it; see `insert`. */
-function name(path: string, line: number, before = '', back = 0) {
+ *  `target` is everything about the link except which block it points at, which is
+ *  what the name that comes back finishes; see `insert`. */
+function name(path: string, line: number, target: LinkWrite) {
   return (view: EditorView, completion: Completion, from: number, to: number) => {
     void view.state
       .facet(blockNamer)(path, line)
       .then((id) => {
-        if (id) insert(`${before}^${id}`, back)(view, completion, from, to)
+        if (id) insert({ ...target, fragment: `^${id}` })(view, completion, from, to)
       })
       // Nothing to say to the writer: the link is still there to be finished by
       // hand, which is what inserting nothing leaves them with.
@@ -228,7 +276,7 @@ function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
       rows.push({
         label: heading,
         detail: note.name,
-        apply: insert(`${nameFor(index, note)}#${heading}`, MARKER),
+        apply: insert({ ...about(index, note), fragment: heading }),
         type: 'keyword',
       })
       if (rows.length >= MOST_SHOWN) return rows
@@ -254,7 +302,7 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
       rows.push({
         label: `^${id}`,
         detail: note.name,
-        apply: insert(`${nameFor(index, note)}#^${id}`, MARKER),
+        apply: insert({ ...about(index, note), fragment: `^${id}` }),
         type: 'property',
         // Above the found ones, whatever the popup's own scores make of them.
         boost: 1,
@@ -273,14 +321,16 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
  *  is picked, by the app, which is the same writer the grip's Copy link uses. */
 function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
   const note = index.notes.find((one) => one.path === block.path)
-  const target = note ? nameFor(index, note) : block.path.replace(MARKDOWN, '')
+  const target: LinkWrite = note
+    ? about(index, note)
+    : { name: block.path.replace(MARKDOWN, ''), path: block.path, from: index.path }
 
   return {
     label: block.text,
     ...(note ? { detail: note.name } : {}),
     apply: block.id
-      ? insert(`${target}#^${block.id}`, MARKER)
-      : name(block.path, block.line, `${target}#`, MARKER),
+      ? insert({ ...target, fragment: `^${block.id}` })
+      : name(block.path, block.line, target),
     type: 'property',
   }
 }
@@ -355,13 +405,17 @@ export function wikilinkCompletions(
 
   const after = inner.slice(hash + 1)
   const from = typed.from + 2 + hash + 1
+  // The name exactly as it was typed, so a link somebody wrote path-qualified stays
+  // that way - and empty where they wrote none, which is a link into this very note
+  // and is spelled as the anchor on its own.
+  const target: LinkWrite = { name: named, path: note.path, from: index.path }
 
   if (!after.startsWith('^')) {
-    const options = headingOptions(note, after)
+    const options = headingOptions(target, note, after)
     return options.length ? { from, options, validFor: /^[^[\]\n|^]*$/ } : null
   }
 
-  return blockOptions(index, note, after.slice(1)).then((options) =>
+  return blockOptions(index, target, note, after.slice(1)).then((options) =>
     options.length ? { from, options, validFor: /^\^[^[\]\n|]*$/ } : null,
   )
 }

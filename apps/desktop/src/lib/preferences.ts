@@ -350,6 +350,30 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
         {
+          // How a link to another note is written. Not what is read: both
+          // spellings are read whatever this says, so a space may hold both and
+          // nothing already written changes.
+          title: t('Links'),
+          fields: [
+            {
+              kind: 'select',
+              label: t('New links'),
+              hint: t(
+                'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
+              ),
+              options: [
+                { value: 'wikilink', label: t('[[Wikilinks]]') },
+                { value: 'shortest', label: t('Markdown, shortest name') },
+                { value: 'relative', label: t('Markdown, relative path') },
+                { value: 'absolute', label: t('Markdown, path in the space') },
+              ],
+              initial: 'wikilink',
+              get: () => modes.linkFormat,
+              set: (value) => modes.setLinkFormat(value),
+            },
+          ],
+        },
+        {
           title: t('Code'),
           fields: [
             {
@@ -444,30 +468,6 @@ export function preferences(view?: EditorView): Pane[] {
               initial: false,
               get: () => modes.hardBreaks,
               set: () => modes.toggleHardBreaks(),
-            },
-          ],
-        },
-        {
-          // How a link to another note is written. Not what is read: both
-          // spellings are read whatever this says, so a space may hold both and
-          // nothing already written changes.
-          title: t('Links'),
-          fields: [
-            {
-              kind: 'select',
-              label: t('New links'),
-              hint: t(
-                'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',
-              ),
-              options: [
-                { value: 'wikilink', label: t('[[Wikilinks]]') },
-                { value: 'shortest', label: t('Markdown, shortest name') },
-                { value: 'relative', label: t('Markdown, relative path') },
-                { value: 'absolute', label: t('Markdown, path in the space') },
-              ],
-              initial: 'wikilink',
-              get: () => modes.linkFormat,
-              set: (value) => modes.setLinkFormat(value),
             },
           ],
         },

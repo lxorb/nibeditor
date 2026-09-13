@@ -9,6 +9,7 @@
  *  behind, what the link reads - so it can be tested without a disk. Which files
  *  are written, and what is undone, is workspace's business. */
 
+import type { LinkWrite } from '@nib/editor'
 import { formatLink, type LinkFormat, type LinkTarget, linkWriting } from './link-format'
 import { nameFromContent } from './note-name'
 
@@ -47,6 +48,24 @@ export function linkTo(
   format: LinkFormat = linkWriting(),
 ): string {
   return formatLink({ ...about, name, ...(shown ? { shown } : {}) }, format)
+}
+
+/** The link a pick in the editor's `[[` popup writes.
+ *
+ *  The popup knows a name, a path, the note it is writing in and which heading or
+ *  block was chosen, and nothing about how a link is spelled - that is this app's
+ *  business and this file's, so the popup hands those four facts over and gets a
+ *  link back. Handed to every editor the app builds; see `writeLink` in
+ *  @nib/editor and Editor.svelte.
+ *
+ *  Through `linkTo`, like every other link the app writes, so the Links setting is
+ *  still answered in exactly one place. */
+export function pickedLink(target: LinkWrite): string {
+  return linkTo(target.name, null, {
+    path: target.path ?? null,
+    from: target.from ?? null,
+    fragment: target.fragment ?? null,
+  })
 }
 
 export interface Split {

@@ -78,6 +78,7 @@ export { selectedImage } from './live-preview/image'
 export { imageResolver, type ImageSink } from './images'
 export { hrefOf, linkOpener } from './links'
 export {
+  type LinkWrite,
   type NoteIndex,
   noteIndexExtension,
   type NoteJump,

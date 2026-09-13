@@ -35,6 +35,7 @@
     type StateOptions,
     shortcutEffect,
   } from '@nib/editor'
+  import { pickedLink } from './composer'
   import { EditorStates, noteKey } from './editor-states'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
@@ -103,6 +104,10 @@
       ...(notes ? { notes: notes(one) } : {}),
       ...(opennote ? { openNote: opennote } : {}),
       ...(nameblock ? { nameBlock: nameblock } : {}),
+      // How a link the `[[` popup writes is spelled: the app's one writer, so the
+      // Links setting reaches the popup the way it reaches the grip's Copy link.
+      // See composer.ts.
+      writeLink: pickedLink,
       ...(onfind ? { onFind: onfind } : {}),
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.

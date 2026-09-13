@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { formatLink, isLinkFormat, LINK_FORMATS, linkWriting, setLinkWriting } from './link-format'
-import { linkTo } from './composer'
+import { linkTo, pickedLink } from './composer'
 import { citation } from './pdf/highlights'
 import { rewriteLinks } from './import/rewrite'
 
@@ -136,5 +136,90 @@ describe('every writer in the app', () => {
     } finally {
       setLinkWriting('wikilink')
     }
+  })
+})
+
+/** The `[[` popup is a writer of the app's too, and it was the one that ignored the
+ *  setting: every row wrote `[[Deep note]]` whatever it said.
+ *
+ *  Which facts each kind of row hands over is pinned in the editor's own test - see
+ *  complete.test.ts in @nib/editor, where the rows are picked for real - and these
+ *  are those facts, spelled in all four. A nested space, because a flat one cannot
+ *  tell the three markdown spellings apart: all three say `Deep note.md` there. */
+describe('the `[[` popup, in a nested space', () => {
+  const HERE = 'journal/2026/Monday.md'
+  const DEEP = { path: 'ideas/deep/Deep note.md', from: HERE }
+
+  /** One row's target in all four spellings, in the order the setting offers them. */
+  function spellings(target: Parameters<typeof pickedLink>[0]): string[] {
+    return LINK_FORMATS.map((format) => {
+      setLinkWriting(format)
+      try {
+        return pickedLink(target)
+      } finally {
+        setLinkWriting('wikilink')
+      }
+    })
+  }
+
+  test('a note row', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP })).toEqual([
+      '[[Deep note]]',
+      '[Deep note](Deep%20note.md)',
+      '[Deep note](../../ideas/deep/Deep%20note.md)',
+      '[Deep note](ideas/deep/Deep%20note.md)',
+    ])
+  })
+
+  test('the three markdown spellings are three different links here', () => {
+    const [, shortest, relative, absolute] = spellings({ name: 'Deep note', ...DEEP })
+
+    expect(new Set([shortest, relative, absolute]).size).toBe(3)
+  })
+
+  test('an alias row writes the alias and still points at the note', () => {
+    expect(spellings({ name: 'The deep one', ...DEEP })).toEqual([
+      '[[The deep one]]',
+      '[The deep one](Deep%20note.md)',
+      '[The deep one](../../ideas/deep/Deep%20note.md)',
+      '[The deep one](ideas/deep/Deep%20note.md)',
+    ])
+  })
+
+  test('a heading row, of one note or out of `[[##`', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP, fragment: 'Next steps' })).toEqual([
+      '[[Deep note#Next steps]]',
+      '[Deep note](Deep%20note.md#next-steps)',
+      '[Deep note](../../ideas/deep/Deep%20note.md#next-steps)',
+      '[Deep note](ideas/deep/Deep%20note.md#next-steps)',
+    ])
+  })
+
+  test('a block row, one the note already named or one the app just named', () => {
+    expect(spellings({ name: 'Deep note', ...DEEP, fragment: '^a1b2c3' })).toEqual([
+      '[[Deep note#^a1b2c3]]',
+      '[Deep note](Deep%20note.md#^a1b2c3)',
+      '[Deep note](../../ideas/deep/Deep%20note.md#^a1b2c3)',
+      '[Deep note](ideas/deep/Deep%20note.md#^a1b2c3)',
+    ])
+  })
+
+  /** `[[#Heading]]`: a link into the note it is written in, which names no file. */
+  test('a heading of this very note is an anchor on its own', () => {
+    expect(spellings({ name: '', path: null, from: HERE, fragment: 'Today' })).toEqual([
+      '[[#Today]]',
+      '[Today](#today)',
+      '[Today](#today)',
+      '[Today](#today)',
+    ])
+  })
+
+  test('a block of this very note, likewise', () => {
+    expect(spellings({ name: '', path: null, from: HERE, fragment: '^a1b2c3' })).toEqual([
+      '[[#^a1b2c3]]',
+      '[a1b2c3](#^a1b2c3)',
+      '[a1b2c3](#^a1b2c3)',
+      '[a1b2c3](#^a1b2c3)',
+    ])
   })
 })

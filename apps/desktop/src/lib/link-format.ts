@@ -84,7 +84,7 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
     return `${bang}[[${inner}${shown ? `|${shown}` : ''}]]`
   }
 
-  const label = shown || target.name
+  const label = shown || target.name || bareFragment(fragment)
   const anchor = fragment ? `#${markdownFragment(fragment)}` : ''
 
   return `${bang}[${label}](${encodeTarget(pathFor(target, format))}${anchor})`
@@ -96,12 +96,25 @@ export function formatLink(target: LinkTarget, format: LinkFormat): string {
  *  the shortest spelling however the setting is set: nothing else can be worked
  *  out from a name, and a link with no extension is not a link to a file. */
 function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): string {
+  // A target with neither a name nor a path is the note the link is written in,
+  // which is what `[[#Heading]]` means: the anchor is the whole link, and a
+  // markdown link to a heading of this very note is `[Heading](#heading)`.
+  if (!target.path && !target.name) return ''
+
   const path = target.path ?? withExtension(target.name)
   if (format === 'absolute') return path
   if (format === 'shortest') return withExtension(nameOf(path))
   // A note that does not know where it is being written cannot say "from here",
   // so the path from the top of the space is the closest true answer.
   return target.from ? relativePath(folderOf(target.from), path) : path
+}
+
+/** What a markdown link shows for a target that has no name: a link into the note
+ *  it is written in, where the heading's own words - or a block's name without the
+ *  caret that marks it - are all there is to read. A markdown link with no words
+ *  shows nothing at all, which is the one thing it must not do. */
+function bareFragment(fragment: string): string {
+  return fragment.startsWith('^') ? fragment.slice(1) : fragment
 }
 
 const EXTENSION = /\.[^./]+$/
