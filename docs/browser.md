@@ -978,24 +978,58 @@ purpose - somebody may well want one without the other.
 
 ## 7. Keeping up with Chromium
 
-**The pin is one line.** `cef = "152.2.0+152.0.6"` in one `Cargo.toml`. The crate's
-version carries the CEF version, `cef-dll-sys` fetches the matching distribution,
-and CEF's own minor number only moves when the C API does - so a bump that keeps the
-minor is source-compatible by construction.
+**The pin is one line, and batch 1 built it.** It is `[package.metadata.cef]` in
+`apps/desktop/src-tauri/cef/Cargo.toml`: a repository, the branch it follows and one
+forty-character revision. Nothing else in the repository names an upstream revision,
+and a test holds it to being one.
 
-**A scheduled workflow does the bumping.** Weekly:
+Note what the pin is *not*: nib does not pin `cef` itself. The engine's CEF version
+is whatever `tauri-runtime-cef` pins at that revision - `=151.8.1` today, which is
+Chromium 151 - so the chain is Chromium to CEF to `cef-rs` to `tauri-runtime-cef` to
+nib, and nib's own job is only to follow the last link and re-measure. The bump
+reports the whole chain so nobody has to hold it in their head: which `cef` the
+revision pins, and what CEF's own index says is newest.
 
-1. Read `https://cef-builds.spotifycdn.com/index.json` and work out the newest true
-   stable, sorting by version and not by date, and the current LTS branch - this is
-   `spike/browser/scripts/fetch-cef.py --newest-stable`, which exists.
-2. Ask crates.io what the newest `cef` is. cef-rs publishes within about a week of
-   each CEF release - 152.0.6 was cut on 2026-09-07 and `152.2.0+152.0.6` was
-   published on 2026-09-12 - so this is usually the same answer.
-3. If nib is behind, change the one line, run the spike's tests against the new
-   engine, run the app's own tests, and open a pull request that says what moved
-   and what the numbers did.
-4. A person presses merge. Nobody edits a URL, and nobody reads a release note to
-   find out a version number.
+**A scheduled workflow does the bumping**, and it exists:
+`.github/workflows/cef-bump.yml`, weekly on a Monday morning and whenever somebody
+asks. `apps/desktop/src-tauri/cef/bump.py` is what it runs.
+
+1. Resolve the head of the branch the pin follows, and read which `cef` crate that
+   revision pins - straight out of the manifest at that commit.
+2. Read `https://cef-builds.spotifycdn.com/index.json` for the newest *true* stable,
+   sorting by version and not by date, because the index is ordered by modification
+   time and LTC branches are labelled stable too. That is
+   `spike/browser/scripts/fetch-cef.py --newest-stable`, which already knows.
+3. Ask crates.io whether `tauri-runtime-cef` is a release yet. **On 2026-09-13 it
+   became one**, as `3.0.0-alpha.0`, which matters enough to have its own paragraph
+   below.
+4. If the pin has moved: build the flagged app on all three desktops, run the same
+   gate `.github/workflows/cef.yml` runs, and open a **draft** pull request carrying
+   the moved pin, the lock file the new revision resolved to, and the three gate
+   tables in the body.
+5. A person presses merge, or does not. Nobody edits a URL, and nobody reads a
+   release note to find out a version number.
+
+**One hand step remains, and it is upstream's fault rather than a design choice.**
+The pin is turned into a checkout by `apps/desktop/src-tauri/cef/upstream.py` instead
+of being a plain git dependency, because one line has to be repaired between the
+fetch and the build: the branch removed `tauri`'s `wry` feature, and every Tauri
+plugin that supports iOS still asks for it, so Cargo refuses to resolve. Section 8's
+batch 1 notes have the whole of it. The repair is three lines the script carries, the
+bump workflow reports when it stops applying - which is the good outcome - and the
+day the plugins are republished the script goes away and the pin becomes a version
+number.
+
+**And the pin will want to become a version.** `tauri-runtime-cef 3.0.0-alpha.0`,
+`tauri 3.0.0-alpha.0` and `tauri-runtime-wry 3.0.0-alpha.0` were published on
+2026-09-13, and the alpha fixes upstream both of the things the spike had to work
+round: `winit` is published as `tauri-winit`, so there is no duplicated `dpi`, and
+the macOS `with_accepts_first_mouse` mismatch goes with it. What has *not* been
+published is a single plugin for that line - `tauri-plugin-opener`, `-dialog`,
+`-updater`, `-os`, `-process`, `-deep-link` and `-single-instance` are all still 2.x
+and all ask for `tauri ^2` - so nib cannot use the alpha without moving the whole app
+to Tauri 3, which is a decision rather than a bump. It is the cleanest door and it is
+not open yet.
 
 **Which branch to track: CEF stable, and it will never be Chrome's stable.** This
 is the least comfortable fact in this document and it gets its own paragraph.
@@ -1140,7 +1174,7 @@ means a week of one agent's attention, not an afternoon.
 
 | | what it does | what it proves | size |
 | --- | --- | --- | --- |
-| **1** | **The gate.** Build nib against `tauri-runtime-cef` behind a Cargo feature, both runtimes selectable, no product change. Run every test the app has under both, on all three desktops. Measure launch, memory and the installer delta against today | that the app runs on Chromium at all, and what it costs. This batch is allowed to end in "not yet" | large |
+| **1** | **The gate. Done, and its answer is below.** Build nib against `tauri-runtime-cef` behind a Cargo feature, both runtimes selectable, no product change. Run every test the app has under both, on all three desktops. Measure launch, memory and the installer delta against today | that the app runs on Chromium at all, and what it costs. This batch is allowed to end in "not yet" | large |
 | **2** | **Web tabs on the new engine.** `web_tabs.rs` onto CEF webviews: place, show, hide, navigate, real back and forward, the `.url` file untouched, the bar untouched. Delete the address trail and the guard's permission half; keep the globals half. The two profiles | that a web tab is the same three calls, that one browser process serves them all, and that nothing about the file or the bar changed | large |
 | **3** | **Chromium's own pages.** `chrome://settings`, `extensions`, `history`, `downloads`, `password-manager` as tabs, with the gear and puzzle marks, never files in the space. The ⋮ menu's twenty-one rows into nib's menus. The search engine through the preference tree | that Emil's *"chrome://settings will work for us"* is true, and that no new surface was needed to reach any of it | medium |
 | **4** | **Extensions.** The CRX fetch, the external-extension declaration, install, enable, disable, remove, and `chrome://extensions` as the management surface. The puzzle glyph in the tab's bar for an extension's action | that a reader can install any MV3 extension and take it away again, which is the ask with the least documented support behind it | large |
@@ -1152,6 +1186,131 @@ means a week of one agent's attention, not an afternoon.
 Batches 1 and 7 are the ones that can say no. Everything between them is ordinary
 work on a foundation those two either give or withhold, and sequencing it any other
 way would mean discovering in batch 7 that batch 2 was built on sand.
+
+### What batch 1 delivered
+
+The flag, the seam, the workspace with the pin in it, the gate that measures the two
+builds against each other, the workflow that runs it on three desktops and the
+workflow that follows upstream. Eight files and one feature:
+
+| | |
+| --- | --- |
+| `apps/desktop/src-tauri/Cargo.toml` | `[features] cef = []` - a name with **nothing behind it**. The crate has no default features at all, which is what keeps the flag off in every build nobody typed it into |
+| `apps/desktop/src-tauri/src/engine.rs` | the seam. Which engine, where its profiles are, and `web_store`, which is the one call `web_tabs.rs` makes for a web tab's storage on either engine |
+| `apps/desktop/src-tauri/src/engine/gate.rs` | the measuring gate, behind the feature: it opens a web tab through the app's own command, opens `chrome://settings` and `chrome://extensions`, says what each step cost as JSON, and quits |
+| `nib_lib::run_on` | the whole of what the app's own source gives up to be portable between engines: one function that takes an already-configured builder, and `nib_lib::Engine`, the runtime every other signature in the crate means when it says none |
+| `apps/desktop/src-tauri/cef/` | its own Cargo workspace: the pin, `upstream.py` that turns it into a checkout, `gate.py` that runs the pair and writes the table, `bump.py` that follows upstream, and a `main.rs` that links CEF and hands it in |
+| `.github/workflows/cef.yml` | the gate on `windows-latest`, `macos-latest` and `ubuntu-latest`. Gated to branches named `ci-check-cef*` and to being asked for by hand, like the spike |
+| `.github/workflows/cef-bump.yml` | weekly, and a draft pull request with the table. Section 7 |
+| `apps/desktop/test/cef.test.ts` | the promise, held: no default features, no patch in the app's manifest, and no workflow, script or bundle config that ships anything ever naming the flag |
+
+**Five things were found, and two of them change what a later batch has to do.**
+
+**1. The engine cannot be a feature of the app's own crate, and that is a fact about
+Cargo.** `tauri-runtime-cef` is built against the `tauri` beside it in Tauri's
+repository, where the runtime is chosen by the application instead of compiled in - so
+the whole `tauri` ecosystem has to come from that revision, which is a
+`[patch.crates-io]`, and a patch applies to **every** build of the workspace it is in.
+In the app's manifest, the app that ships would be built against an unreleased Tauri.
+So the flagged build is a workspace of its own that depends on the app's crate by
+path, carries the patch, and hands the engine in through `run_on`. The app's own
+manifest gains four words and a comment.
+
+**2. Nothing else in the crate had to change, because the branch's default runtime is
+type-erased.** This was the pleasant surprise. On `feat/cef`, `tauri::Builder::default`
+is a `Builder<DynRuntime>` and `AppHandle`, `Window` and `Webview` with no type
+argument mean the type-erased runtime rather than `Wry` - so every signature in
+thirty-four modules is correct under both builds and the only place that names a
+runtime at all is one `pub type Engine`. The two exceptions are named below.
+
+**3. No Tauri application that uses `tauri-plugin-opener` or `tauri-plugin-dialog` can
+build against `tauri-runtime-cef` today.** This is the finding, it is upstream, and it
+has nothing to do with Chromium. Every Tauri plugin that supports iOS carries
+`[target.'cfg(target_os = "ios")'.dependencies.tauri] features = ["wry"]`, and the
+branch removed that feature; Cargo resolves a dependency's target-specific
+dependencies whatever platform it is building for, so the missing name is a hard
+resolution failure. It is not one an application can work round: both plugins are in
+nib's graph, nib's capabilities name their permissions, and **every** published
+version of either asks for it. The repair is one empty feature, carried as three lines
+in `apps/desktop/src-tauri/cef/upstream.py` rather than a fork nib would have to host,
+and it is worth sending upstream - either the branch keeps `wry` as an empty name
+until the plugins are republished, or the plugins stop naming it.
+
+**4. A per-webview Chromium profile does exist, and it is the call `web_tabs.rs`
+already makes.** Section 5 said this had no API found for it and that batch 2's first
+job was to add one upstream. It does not have to: `tauri-runtime-cef` maps the
+portable `WebviewAttributes::data_directory` onto a `CefRequestContext` per webview -
+a path inside the root cache path becomes a named profile, anything else becomes a
+hashed one, and `incognito` leaves the cache path empty, which is CEF's own
+off-the-record profile. So private tabs and the two profiles are both already
+expressible, and `engine::web_store` is where the choice is made.
+
+**5. Which profile is the *primary* one is a decision, and section 5 had it the wrong
+way round.** An extension installed by Chromium's command line or by its policy
+mechanisms lands in the primary profile - so the browsing profile has to be the
+primary one and **nib's own interface has to be the named profile beside it**, which
+is the reverse of the `app` and `web` sketch. The layout is now
+`<config>/web/Default` for the web and `<config>/web/app` for the interface, and it
+has one consequence worth knowing before batch 2: the interface's window has to be
+built in Rust rather than by `tauri.conf.json`, because a window in the config cannot
+ask for a profile. `engine::take_ui_window` and `engine::open_ui_window` are that,
+behind the feature, and the config still says what the window looks like.
+
+**And two places where the flagged build is deliberately less than the app.** PDF
+export talks to `WebView2`'s print engine directly, which is not the engine any more,
+so under the flag `pdf_supported` says no and the window falls back to the system's
+print panel exactly as it does on a Mac; Chromium's own `PrintToPDF` is batch 6's.
+And on Linux `tauri-plugin-dialog` brings `rfd` with GTK 3 while the runtime is GTK 4,
+and GTK 4 aborts when it finds GTK 3 in the process - the plugin has an `xdg-portal`
+feature that would fix it, and turning it on is a change to the *shipping* Linux build
+and therefore Emil's to make. It is in batch 7's Linux row now rather than a surprise.
+
+### Go or no-go for batch 2
+
+Batch 2 is web tabs on the new engine with the two profiles, and it is the one batch
+whose shape depends on where the engine lives - so it is the one batch that must not
+start on a guess. These are the criteria, and every one of them is a row the gate
+already prints, so the answer is a workflow run and not a conversation.
+
+**Go needs all six.**
+
+1. **The flagged build compiles and runs on Windows and on macOS**, from a clean
+   runner, with `--locked`. Linux may lag on the GTK 3 dialog question above without
+   holding batch 2 up, because nothing about a web tab depends on the answer - but it
+   has to be a known lag with an owner, not a red square nobody read.
+2. **One browser process serves two web tabs**, counted off `--type=` on the process
+   tree rather than asserted. More than one and the premise of the whole design is
+   wrong and B′ is the shape.
+3. **`chrome://settings` and `chrome://extensions` both load** in a webview inside
+   nib's own window, with no Chrome toolbar and no Chrome tab strip. This is the ask
+   Emil made by name.
+4. **An extension's content script runs in a web tab and not in nib's interface.**
+   Both halves. One profile let the spike's extension read the app's own document in a
+   screenshot; two profiles have to be shown to stop it, on each platform, or nothing
+   after batch 2 is safe to ship.
+5. **The launch stays inside what Emil was told.** The flagged build's time to a
+   window, on the same runner as the control: no more than **+250 ms on Windows** and
+   no more than **+1.2 s on macOS**. The spike's figures were +170 ms and +1006 ms and
+   he has not objected to them; a number outside this band is a number he has not
+   agreed to, and the macOS one is the one to watch - if a *real* Mac still costs most
+   of a second, that is the moment to take B′ seriously rather than after batch 2.
+6. **The download grows by no more than 170 MB on Windows and 140 MB on macOS**,
+   measured as the compressed size of what a release would have to carry rather than
+   estimated from a ratio. Those are the numbers in section 9 that Emil was told.
+
+**No-go, and what each one means.** Any of 2, 3 or 4 failing is a reason to stop and
+reconsider the shape, not to work round it: they are the premise. 5 or 6 outside the
+band is Emil's call rather than a technical block - the engine works, it simply costs
+more than he was told it would, and he should be told again before batch 2 spends a
+week on it. 1 failing on both desktops means the branch is not ready and the pin
+waits: `cef-bump.yml` will ask again every Monday, and that is exactly what it is for.
+
+**And one criterion that is not the gate's.** The plugin repair in `upstream.py` is a
+patch nib carries against somebody else's branch, and a batch 2 built on it inherits
+that. Before batch 2 ships anything, the repair should be an upstream pull request
+(the empty `wry` feature, or the plugins' iOS dependencies) or a published
+`tauri-runtime-cef` that needs neither - otherwise the first upstream force-push is a
+build nib cannot make.
 
 **And if batch 1 stays shut.** The honest contingency, because an unreleased branch
 can stay unreleased. Batch 2 is the only batch whose shape depends on where the
