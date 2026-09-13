@@ -48,7 +48,13 @@ export interface Provider {
    *  page's, so a player can keep its own settings and still knows nothing about
    *  the note it sits in. It is a hole only when the framed document is
    *  same-origin with the page, and every address here is somebody else's
-   *  domain. Anything a provider does not need is left off. */
+   *  domain - which is a fact about these rows rather than about the token, so a
+   *  row whose address is ever this app's own is a row that must not ask for it.
+   *  Anything a provider does not need is left off.
+   *
+   *  What each provider does without the token is measured rather than argued
+   *  about; see apps/desktop/test/e2e/embed-sandbox.py, which drives the real
+   *  players both ways round. */
   sandbox: string
   /** The capabilities the frame is granted, and no others. Absent where a
    *  provider needs none: a permission nobody asked for is a permission that

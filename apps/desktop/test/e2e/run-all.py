@@ -59,7 +59,9 @@ APP = ROOT / "apps" / "desktop"
 
 #: This file, and anything else that is not a drive: a tool two of them use, and
 #: the comparer, which is run by hand over two folders of shots.
-NOT_A_DRIVE = {"run-all.py", "compare.py", "settling.py"}
+# `embed-sandbox.py` talks to YouTube, Vimeo and CodePen over the network and is
+# evidence for one decision rather than a check on the app; see its own docstring.
+NOT_A_DRIVE = {"run-all.py", "compare.py", "settling.py", "embed-sandbox.py"}
 
 #: How long one drive may take before it is called hung. The longest of them,
 #: the one that drives two browsers through a shared canvas, takes minutes.
