@@ -62,13 +62,15 @@
   <p class="which">{WANTS[asking.ask]()}</p>
 
   <div class="rows">
-    <!-- Chrome's own two words for the two answers. "Don't allow" rather than "Block"
-         because the app already has a row called Block - the kind of thing a paragraph
-         is - and one English word cannot be two rows in a catalogue: a German reader
-         would have been offered "Block", the markdown block, as the way to refuse a
-         site the camera. -->
+    <!-- Chrome's own two words for the two answers, and "Don’t allow" rather than
+         "Block" for a reason worth writing down: the app already has a row called
+         Block - the kind of thing a paragraph is - and one English string cannot be two
+         rows in a catalogue, so a German reader was being offered "Block", the markdown
+         block, as the way to refuse a site the camera. The apostrophe is the
+         typographic one the app's other refusals use, which is also the one the
+         catalogue guard can see. -->
     <button class="nib-button is-quiet" onclick={() => grants.answer(asking, false)}>
-      {t("Don't allow")}
+      {t('Don’t allow')}
     </button>
     <button class="nib-button" onclick={() => grants.answer(asking, true)}>{t('Allow')}</button>
   </div>
