@@ -286,8 +286,10 @@ being the same pixels: build, drive, change, drive again, compare.
 two shots differ it counts the pixels and the worst channel between them.
 
 **`shell.py` has no floor: two runs of one build are byte-identical, all 83
-shots.** It gets there by settling rather than by sleeping, and a drive that
-wants the same has to do the same four things:
+shots. `access.py` comes to 63 of its 66, and the three that move do so by a
+pixel or none.** Both get there by settling rather than by sleeping, and the
+recipe is `apps/desktop/test/e2e/settling.py`, which both import - a drive that
+wants the same imports it too. Five things:
 
 - **Motion off.** The context is made with `reduced_motion="reduce"`. A sheet
   caught half way through its slide differs from the same sheet by more than half
@@ -303,29 +305,27 @@ wants the same has to do the same four things:
   `document.getAnimations()`, and the overlay scrollbar's own `is-lit` class,
   which dims on a timer of its own - so whether the bar is in the picture used to
   depend on how long the step before took.
+- **The keyboard settled.** Where a sheet puts the focus when it opens is not
+  always reached before the first shot, and both states are still - so two
+  matching frames do not catch it. `document.activeElement` is read twice and has
+  to be the same element both times. This was the last of `access.py`'s shots to
+  move: four hundred pixels of focus ring, round a close button in one run and a
+  back button in the next.
 - **Two matching frames.** Every shot is taken twice and kept only when the two
   match byte for byte, which catches what the page never declared: a face that
   arrived in between, an image decoding, a shadow settling. The caret cannot be
   caught that way because both of its states are still, so it is hidden outright.
 
-`access.py` has not had this done to it and still differs in about fourteen of
-its 70 shots, including one whose bytes differ with zero pixels changed. Until it
-has, a comparison against it is only ever against a same-build baseline:
+What is left of `access.py`'s floor, measured on this machine: `desktop-dark-launch`
+and `still-reduced-motion` move by one pixel with a worst channel of three, and
+`contrast-contrast-more` differs in its bytes with zero pixels changed. Nothing
+else. A shot that differs by the same file and the same magnitude as that is the
+floor; a scrim painted a different grey is every pixel over a note, and looks
+nothing like it.
 
-```sh
-python apps/desktop/test/e2e/access.py before     # then again, unchanged
-python apps/desktop/test/e2e/access.py before2
-python apps/desktop/test/e2e/compare.py access/before access/before2  # the floor
-# make the change, rebuild, then
-python apps/desktop/test/e2e/access.py after
-python apps/desktop/test/e2e/compare.py access/before access/after
-```
-
-A shot that differs by the same file and the same magnitude as the floor is the
-floor. A scrim painted a different grey is every pixel over a note, and looks
-nothing like it. `access.py` also writes `axe.json` per run, which is compared by
-reading: a count that went up is a regression, one that went down is worth
-saying in the commit message.
+`access.py` also writes `axe.json` per run, which is compared by reading: a count
+that went up is a regression, one that went down is worth saying in the commit
+message. Those counts are untouched by any of the above.
 
 A drive that checks rather than photographs settles the same way, and for the
 same reason: `find-bar.py` failed about one run in three, and all three causes
