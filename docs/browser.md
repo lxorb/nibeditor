@@ -908,27 +908,109 @@ minor is source-compatible by construction.
 4. A person presses merge. Nobody edits a URL, and nobody reads a release note to
    find out a version number.
 
-**Which branch to track: stable.** A browser's value is that it is current, and the
-alternative is shipping a known-vulnerable engine on purpose. CEF's LTS branch -
-every sixth, with about eight more months of security fixes, which is Chromium 144
-today - is the fallback for a release that has to slip, not the default.
+**Which branch to track: CEF stable, and it will never be Chrome's stable.** This
+is the least comfortable fact in this document and it gets its own paragraph.
+Chromium's
+[release cycle](https://chromium.googlesource.com/chromium/src/+/main/docs/process/release_cycle.md)
+now reads *"Chrome ships a new milestone... to the stable channel **every two
+weeks**"* - M152 on 2026-08-12, M153 on 08-26, M154 on 09-09 - while CEF's own
+document says *"updating CEF branches is currently a manual process so there will
+likely be a delay"*. On 2026-09-13 CEF's stable is **M152**, Chromium's is M153 or
+M154, there is **no CEF branch for M153 at all**, and CEF's M151 branch is already
+marked unsupported. So a non-LTS CEF branch now lives about four to six weeks, and
+**an app on CEF stable is permanently one to two Chromium milestones behind
+Chrome.** That is the price of embedding Chromium rather than being Chromium, it is
+not a thing nib can fix, and it is a thing a reader deserves to have decided
+knowingly.
+
+What that is worth in numbers: the milestones between 2026-06-13 and 2026-09-13
+carried on the order of 1,500 CVE-numbered fixes and two exploited-in-the-wild
+zero-days, and Chromium's
+[severity guidelines](https://chromium.googlesource.com/chromium/src/+/main/docs/security/severity-guidelines.md)
+promise Critical fixes to users *"in under 30 days"* with in-the-wild exploits on a
+*"SLO of 7 days or faster"*. So the two honest positions are **follow CEF stable
+within days of each branch** - which is what the workflow above is for - or **sit on
+an LTS branch** (every sixth, ~8 further months of platform-agnostic security fixes,
+Chromium 144 today) and accept a known gap on purpose. Follow stable. LTS is for a
+release that has to slip, not a policy.
 
 **And the consequence to state out loud: nib's release cadence becomes Chromium's.**
-Under B the engine is linked into the app, so an engine update is an app update, and
-Chromium ships a security release roughly every two to four weeks. That is the real
-recurring cost of this decision. It is bearable because the bump is automated end to
-end and the app already ships its own updates through `tauri-plugin-updater` - but it
-is a change in how often this project releases, and it should be a decision rather
-than a discovery.
+Under B the engine is linked into the app, so an engine update is an app update. It
+is bearable because the bump is automated end to end and the app already ships its
+own updates through `tauri-plugin-updater` - but it is a change in how often this
+project releases, and it should be a decision rather than a discovery.
 
-The alternative, and it is worth naming because it is the WebView2 Evergreen model:
-ship the engine as **its own signed artefact**, downloaded on first use and updated
-on its own schedule, so a Chromium security fix does not need an app release and
-somebody who never opens a web tab never downloads 300 MB. It is the better answer
-on both counts and it is out of reach under B, because a linked library cannot be
-swapped under a running process - it is B′'s to have, and it is the strongest
-argument B′ has after the sandbox. If the release treadmill turns out to be the
-thing that hurts, that is the reason to revisit the shape.
+### The engine as its own artefact, which CEF already built
+
+The alternative is the WebView2 Evergreen model: the engine as **its own signed
+artefact**, updated on its own schedule, so a Chromium security fix does not need an
+app release and somebody who never opens a web tab never downloads 300 MB.
+
+**CEF ships this upstream, from 151.1, and only on Windows.** Its bootstrap
+*"downloads, installs, updates, and uninstalls CEF from a shared installation
+directory so that multiple applications can share a single managed copy"*, and
+[its threat model](https://github.com/chromiumembedded/cef/blob/master/libcef_dll/bootstrap/installer/SECURITY.md)
+is the one anybody building this would have had to write: HTTPS only, a streaming
+SHA-256 against a sidecar hash, publication gated on a **signed catalogue with a
+pinned certificate thumbprint**, a compiled-in revocation baseline with a CDN delta,
+and launch-health tracking that rolls back a version that keeps crashing. Its
+[admin policy](https://github.com/chromiumembedded/cef/blob/master/libcef_dll/bootstrap/installer/ADMIN_POLICY.md)
+has `DisableDownloads`, a UNC mirror and *"Managed applications should ship a
+bundled fallback"*. There is no Linux or macOS equivalent.
+
+**And it is the same mechanism as the Windows sandbox.** The installer is part of
+the `bootstrap.exe`-loads-your-DLL pattern, tied to `chrome_elf.dll` and the sandbox
+ABI. So shutting ship gate 1 - making nib's Windows build the DLL that
+`bootstrap.exe` hosts - buys **both** Chromium's sandbox **and** out-of-band engine
+updates, on the platform most of nib's users are on. That makes gate 1 the highest-value
+piece of work in the whole plan, and it is why batch 7 does it upstream rather than
+around it.
+
+**On Linux, on-demand delivery is actively worse, and this was the surprise.** A
+downloaded engine cannot be installed `root:4755` and cannot be given an AppArmor
+profile, because an unprivileged application process cannot do either - so an
+on-demand engine on Linux depends entirely on the host's unprivileged user
+namespaces, which is exactly what Ubuntu 24.04 turns off by default for unlisted
+paths. Downloading the engine there **removes the one robust sandbox path**. Add
+that Fedora's guidelines refuse software that *"downloads code bundles from the
+internet in order to be functional"* and Debian puts such wrappers in `contrib`, and
+the answer is settled: **bundle on Linux and macOS, and let Windows use CEF's own
+installer once gate 1 is shut.**
+
+Worth knowing about the precedents, because they are sobering: Steam has shipped its
+CEF as a separately-updated 125 MB package for years and sat on Chromium 126 for
+some twenty-one months; JetBrains fetches a 246 MB JCEF runtime on demand and runs
+about three milestones behind. Separating the engine does not by itself buy a
+cadence. Only automation does, which is what the workflow above is.
+
+### Packaging, which on Linux is the sandbox question again
+
+Chromium's Linux sandbox has two possible first layers and the choice is made at run
+time by `ZygoteHostImpl::Init`: the **namespace sandbox** if the host allows
+unprivileged user namespaces, otherwise the **setuid helper** `chrome-sandbox`, and
+if neither, `LOG(FATAL) "No usable sandbox!"` and the application does not start.
+The helper must be `root`-owned with mode `4755` - executable, uid 0, setuid bit,
+and the other-execute bit, so `4750` fails - and Chromium says so in the abort
+message.
+
+The complication is that **Ubuntu 24.04 turns unprivileged user namespaces off by
+default** for unconfined binaries, and allowlists by path with root-owned AppArmor
+profiles; Chrome's own deb now installs one. So on the distribution most Linux
+readers are on, a CEF application at an unlisted path gets no namespace sandbox and
+must either ship the setuid helper or ship its own profile - and both need root at
+install time.
+
+| | what a CEF app gets |
+| --- | --- |
+| **deb, rpm** | the good case, and the only one. Ship `chrome-sandbox` and set `4755` in `postInstallScript`, and install an AppArmor profile granting `userns` for Ubuntu 24.04+. Tauri's bundler supports both scripts. **One trap:** Tauri's deb writer normalises every file to 0755/0644, so the setuid bit cannot be baked into the payload and *has* to be set in the post-install |
+| **Flatpak** | works, through [zypak](https://github.com/refi64/zypak), which redirects Chromium's sandbox onto Flatpak's own - *"actively used by the majority of the Electron and Chrome-based Flatpaks on Flathub"*. For CEF specifically it needs `ZYPAK_CEF_LIBRARY_PATH` pointing at `libcef.so`, which is what Zoom's Flatpak does. And there is a Tauri-plus-CEF application on Flathub already - [Readest](https://github.com/flathub/com.bilingify.readest) - which is the template rather than a guess. `--allow=devel` is **not** needed, and `--talk-name=org.freedesktop.portal.*` is a linter error rather than a requirement |
+| **AppImage** | no sandbox. libfuse mounts the image `nosuid` unconditionally, so a setuid helper cannot work, and there is no root to install a profile with. `--no-sandbox` is what every Electron AppImage falls back to, and for a *browser* that is not acceptable - so nib's AppImage should either not offer web tabs or not be the recommended download |
+| **Snap** | no sandbox in practice. `browser-support` with `allow-sandbox: true` is what would give it, and it is *"limited to trusted publishers only"*: the base declaration denies the connection outright, so it takes a store-side override and human review, and Canonical's position on the record is that it is *"reserved for major browsers... not electron apps"*. Without it there is no `unshare` in the profile either, so the namespace sandbox is gone too |
+
+So the recommendation for batch 7: **deb and rpm are the sandboxed Linux builds, and
+Flathub through zypak is the third**. The AppImage and the snap either ship without
+web tabs or ship with a plain statement that the browser in them is unsandboxed, and
+of the two, not shipping the feature there is the more honest choice.
 
 ---
 
