@@ -30,6 +30,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 /** Loaded at module scope: the pane list reaches half the app, and compiling
  *  that belongs to no single test. See docs/conventions.md. */
 const { preferences, resettable } = await import('./preferences')
+const { LANGUAGES } = await import('./i18n.svelte')
 const { theme } = await import('./theme.svelte')
 
 const panes = preferences()
@@ -222,5 +223,53 @@ describe('the release channel', () => {
     const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
 
     expect(group?.title).toBe('Updates')
+  })
+})
+
+/** The language list, and what each row says about itself.
+ *
+ *  Every catalogue but the four that were written by hand was written in one pass
+ *  and never read through, and Emil asked for those to be machine-translated "and
+ *  marked so in the picker". The caption under the row says it about the language
+ *  already chosen, which is the one row nobody is choosing; the mark says it about
+ *  every row in the list, which is where somebody about to choose can read it. */
+describe('the language picker', () => {
+  /** The one sentence a marked row carries, which is the sentence the caption
+   *  under the list says about the language already chosen: one thing said one
+   *  way. See `caption` in preferences.ts. */
+  const SAID = 'Machine-translated. Corrections welcome.'
+
+  const row = () => {
+    const one = field('general', 'Language')
+    if (one.kind !== 'select') throw new Error('the language is a dropdown')
+    return one
+  }
+
+  test('offers every language the app has a catalogue for', () => {
+    expect(row().options.map((one) => one.value)).toEqual(LANGUAGES.map((one) => one.id))
+  })
+
+  test('marks every catalogue nobody has read through', () => {
+    const marked = row()
+      .options.filter((one) => one.note)
+      .map((one) => one.value)
+
+    expect(marked).toEqual(LANGUAGES.filter((one) => one.machine).map((one) => one.id))
+    expect(marked.length).toBeGreaterThan(30)
+  })
+
+  /** And nothing else: the four that were read through say nothing about
+   *  themselves, and neither does following the system or English. */
+  test('and leaves the hand-written ones plain', () => {
+    const plain = row()
+      .options.filter((one) => !one.note)
+      .map((one) => one.value)
+
+    expect(plain).toEqual(['system', 'en', 'de', 'gsw', 'fr', 'ja'])
+  })
+
+  test('says the same thing on every marked row, in the caption’s own words', () => {
+    const said = new Set(row().options.flatMap((one) => (one.note ? [one.note] : [])))
+    expect([...said]).toEqual([SAID])
   })
 })

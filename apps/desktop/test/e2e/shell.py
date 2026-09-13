@@ -103,6 +103,43 @@ async () => {
 """
 
 
+# Opens the language list and says what is in it: how many rows there are, how
+# many of them carry the footnote mark, and what that mark says. The list itself is
+# what the shot beside it photographs.
+LANGUAGES = """
+() => {
+  const trigger = [...document.querySelectorAll('button.trigger')].find(
+    (one) => one.getAttribute('aria-label') === 'Language',
+  )
+  if (!trigger) return { none: true }
+
+  trigger.click()
+  return new Promise((go) =>
+    requestAnimationFrame(() => {
+      const rows = [...document.querySelectorAll('[role=option]')]
+      const marked = rows.filter((one) => one.querySelector('.mark'))
+      go({
+        rows: rows.length,
+        marked: marked.length,
+        plain: rows
+          .filter((one) => !one.querySelector('.mark'))
+          .map((one) => one.querySelector('.text')?.textContent),
+        says: marked[0]?.querySelector('.mark')?.getAttribute('title') ?? '',
+        reads: marked[0]?.querySelector('.text')?.textContent ?? '',
+      })
+    }),
+  )
+}
+"""
+
+
+# Names in a language of their own reach this output - the language list is
+# written in each language's own script - and a Windows console is not UTF-8 until
+# it is told. The same two lines half the drives here already carry.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
@@ -393,6 +430,19 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_selector(".sheet .segmented, .sheet", state="visible", timeout=8000)
     shot("settings-appearance")
+
+    # And the language list, open, which is the one list in the app whose rows
+    # carry a mark of their own: every catalogue that was written in one pass and
+    # never read through says so on its own row. The same mark in the dropdown a
+    # pointer opens and in the sheet a thumb gets, which is what one design on
+    # every device looks like.
+    page.evaluate(
+        "() => { window.nibApp.settings.section = 'general'; window.nibApp.settings.listing = false }"
+    )
+    page.wait_for_timeout(300)
+    say(f"[{name}] the language list: {page.evaluate(LANGUAGES)}")
+    shot("settings-language")
+
     page.evaluate("() => window.nibApp.settings.hide?.() ?? (window.nibApp.settings.open = false)")
     page.wait_for_timeout(400)
 
