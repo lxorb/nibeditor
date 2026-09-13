@@ -144,7 +144,7 @@ jobs:
         id: cef
         run: |
           version=$(grep -oE 'cef = \{ version = "=[^"]+"' \
-            apps/desktop/src-tauri/cef/.upstream/tauri/crates/tauri-runtime-cef/Cargo.toml \
+            apps/desktop/src-tauri/cef/target/upstream/tauri/crates/tauri-runtime-cef/Cargo.toml \
             | head -1 | grep -oE '[0-9][^"]+')
           echo "version=$version" >>"$GITHUB_OUTPUT"
 
