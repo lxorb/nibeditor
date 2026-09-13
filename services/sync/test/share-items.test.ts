@@ -481,6 +481,31 @@ describe('revoking a share about one file', () => {
     expect(refused.status).toBe(404)
   })
 
+  /** Letting go of something is not a question about what exists. Anybody signed in
+   *  can ask this, holding nothing, so an answer that differed would be a way to ask
+   *  whether an id names a file on this server - one guess at a time, about spaces the
+   *  asker has never been near. */
+  test('and it answers the same for a file nobody handed them', async () => {
+    const stranger = await signIn(env, STRANGER)
+
+    // A note that exists, in a space this person cannot see at all.
+    const real = await call(env, `/v1/shared/${note}`, { method: 'DELETE', token: stranger })
+    // And a name no note has.
+    const madeUp = await call(env, '/v1/shared/not-a-note-at-all', {
+      method: 'DELETE',
+      token: stranger,
+    })
+
+    expect(real.status).toBe(200)
+    expect(madeUp.status).toBe(real.status)
+    expect(madeUp.json).toEqual(real.json)
+
+    // And the share that was there is still there: answering ok is not doing anything.
+    const friend = await given(FRIEND, 'write')
+    const listed = await call<SharedView>(env, '/v1/shared', { token: friend })
+    expect(listed.json.shared.map((one) => one.id)).toEqual([note])
+  })
+
   test('and a file purged from Recently deleted takes its shares with it', async () => {
     await given(FRIEND, 'write')
     await itemLink('read', 'open')

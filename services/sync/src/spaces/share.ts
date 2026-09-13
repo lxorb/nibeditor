@@ -849,7 +849,15 @@ sharedWithMe.get('/', async (context) => {
  *  and for the same reason: what somebody was handed is theirs to hand back.
  *
  *  Outside `atLeast`, because somebody holding one note of a space cannot reach
- *  the space at all - which is the whole point of an item share. */
+ *  the space at all - which is the whole point of an item share.
+ *
+ *  The same answer whatever is there. Nobody has to hold anything to ask this, and it
+ *  used to say 404 for a name no note has - so anybody signed in, and any guest with
+ *  a link to one unrelated file, could ask whether an id names a note on this server
+ *  and be told, one guess at a time, about spaces they have never been near. Letting
+ *  go of what you were never holding is already done, so `ok` is the truth as well as
+ *  the only thing worth saying: a row that is not there is deleted by a statement that
+ *  matches nothing. */
 sharedWithMe.delete('/:noteId', async (context) => {
   const who = context.get('who')
   const noteId = context.req.param('noteId').slice(0, ID_LIMIT)
@@ -858,9 +866,7 @@ sharedWithMe.delete('/:noteId', async (context) => {
     .bind(noteId)
     .first<Pick<Note, 'id' | 'space_id'>>()
 
-  if (!note) return context.json({ error: NO_SUCH_NOTE }, 404)
-
-  if (who.kind === 'guest') {
+  if (note && who.kind === 'guest') {
     await context.env.DB.prepare(
       'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
     )
@@ -868,17 +874,17 @@ sharedWithMe.delete('/:noteId', async (context) => {
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
     await roomsRevoked(context.env, note.space_id, who.guest.id, 'none', note.id)
-
-    return context.json({ ok: true })
   }
 
-  await context.env.DB.prepare(
-    'delete from space_members where space_id = ? and email = ? and item = ?',
-  )
-    .bind(note.space_id, who.user.email, note.id)
-    .run()
+  if (note && who.kind === 'user') {
+    await context.env.DB.prepare(
+      'delete from space_members where space_id = ? and email = ? and item = ?',
+    )
+      .bind(note.space_id, who.user.email, note.id)
+      .run()
 
-  await roomsRevoked(context.env, note.space_id, who.user.id, 'none', note.id)
+    await roomsRevoked(context.env, note.space_id, who.user.id, 'none', note.id)
+  }
 
   return context.json({ ok: true })
 })
