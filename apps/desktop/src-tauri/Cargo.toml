@@ -119,7 +119,7 @@ windows = { version = "0.58", features = [
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
 # against, so the handles it hands out line up.
-webview2-com = "0.38"
+webview2-com = "0.39"
 windows-core = "0.61"
 # The COM stream `CapturePreview` writes a page's picture into; see `web_shot` in
 # web_tabs.rs. It has to be the same `windows` crate webview2-com's own signature
