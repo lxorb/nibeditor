@@ -949,7 +949,10 @@ Features Typora does not have, which are the reason this exists.
       `web+nib://`, which is the only shape a browser lets a page register, handed
       back as `?nib=` and taken off the address once it has been followed.
       x-callback-url's `x-success`, `x-error` and `x-cancel` are all three real, so
-      a link is a step in a shortcut rather than the end of one. A link may ask for
+      a link is a step in a shortcut rather than the end of one - for `nib://new`,
+      the one link verb that changes anything; opening, searching and running a
+      command answer no callback, because a link's outcome goes to an address the
+      link itself chose. A link may ask for
       four things and nothing else, and a test pins the list: writing over a note,
       moving one, deleting one and running code are out of a link's reach, `new`
       refuses a note that is already there unless it was asked to append, and a

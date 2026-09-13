@@ -13,10 +13,12 @@
  *    which is what the command line's positional words become. The verbs
  *    themselves only ever read named arguments, so the command line does not have
  *    to know the shape of anything.
- *  - `byLink` is whether a `nib://` link may ask for it. Off by default, and off
- *    for everything that writes or reads the window: a link can be written by
- *    anybody and sent to anybody, so the most one can do is what a person clicking
- *    about in the app could undo in a moment.
+ *  - `byLink` is whether a `nib://` link may ask for it, and whether it answers one.
+ *    Off by default, and off for everything that writes or reads the window: a link
+ *    can be written by anybody and sent to anybody, so the most one can do is what a
+ *    person clicking about in the app could undo in a moment. `'quiet'` means a link
+ *    may ask and hears nothing back; `'back'` means the outcome goes to the link's
+ *    own `x-success`, which only a verb that changed something says.
  *  - `confirms` is whether the caller has to say `yes` first. In the table rather
  *    than in the command line, so the app refuses whoever asks rather than
  *    trusting a flag somebody else's script did or did not pass.
@@ -59,8 +61,21 @@ import { said as wordsOf, type Road, type Said, yes } from './args'
 interface Verb {
   /** The arguments a caller may give in order without naming them. */
   takes?: readonly string[]
-  /** Whether a `nib://` link may ask for it. */
-  byLink?: boolean
+  /** Whether a `nib://` link may ask for it, and what it tells one afterwards.
+   *
+   *  `'quiet'` is the answer for every verb that only moves the window about, and it
+   *  is not politeness. A link carries the address its outcome goes to, so whatever
+   *  a verb answers a link is an answer the writer of the link has read - and
+   *  `nib://open?path=Plan` answers the path it landed on. Said back, that is a
+   *  question about the space: send somebody a hundred of these, each with an
+   *  `x-success` of your own, and what comes back is a list of what they keep notes
+   *  about, from a scheme that was only ever allowed to move a window.
+   *
+   *  `'back'` is for a verb the caller already knows the answer to, because the
+   *  caller is the one who changed it: `nib://new` was told the name it made. That is
+   *  the shape x-callback-url exists for, a shortcut that files something and carries
+   *  on, and it is the only shape that says anything. */
+  byLink?: 'quiet' | 'back'
   /** Whether it has to be confirmed before it runs. */
   confirms?: boolean
   /** What it answers. A verb that has nothing to wait for is written without a
@@ -76,10 +91,10 @@ const VERBS: Record<string, Verb> = {
   // The four a link can ask for. Opening, searching and running a command change
   // nothing a person could not change back, and making a note never writes over
   // one; see acts.ts.
-  open: { takes: ['path'], byLink: true, run: openNote },
-  new: { takes: ['name'], byLink: true, run: newNote },
-  search: { takes: ['query'], byLink: true, run: searchSpace },
-  'commands.run': { takes: ['id'], byLink: true, run: runCommand },
+  open: { takes: ['path'], byLink: 'quiet', run: openNote },
+  new: { takes: ['name'], byLink: 'back', run: newNote },
+  search: { takes: ['query'], byLink: 'quiet', run: searchSpace },
+  'commands.run': { takes: ['id'], byLink: 'quiet', run: runCommand },
 
   // Questions. None of them changes anything, and none is answered to a link
   // either: a link cannot read the answer, so the only thing it could do with one
@@ -134,7 +149,14 @@ export function verbForAction(action: string): string | null {
   if (Object.values(BY_LINK).includes(action)) return null
 
   const name = BY_LINK[action] ?? action
-  return VERBS[name]?.byLink === true ? name : null
+  return VERBS[name]?.byLink === undefined ? null : name
+}
+
+/** Whether a link hears how the verb went, which is whether the verb changed
+ *  something the link itself asked for; see `byLink`. Read by the road in start.ts,
+ *  so the rule lives in the table with the rest of what a link may do. */
+export function linkHearsFrom(verb: string): boolean {
+  return VERBS[verb]?.byLink === 'back'
 }
 
 /** Whether a link action names a verb at all, whether or not a link may ask for

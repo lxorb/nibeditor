@@ -25,7 +25,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 /** Loaded once, at module scope: the table reaches half the app through the
  *  workspace and the command registry, and compiling that belongs to no one test.
  *  See docs/conventions.md. */
-const { dispatch, isVerb, verbForAction } = await import('./verbs')
+const { dispatch, isVerb, linkHearsFrom, verbForAction } = await import('./verbs')
 
 /** Every verb the app has, asked of the app. */
 async function verbs(): Promise<string[]> {
@@ -97,6 +97,20 @@ describe('what a link may ask for', () => {
     expect(verbForAction('command')).toBe('commands.run')
     // And not by its command-line name, which a link has no business knowing.
     expect(verbForAction('commands.run')).toBeNull()
+  })
+
+  test('and hears how it went only from the one verb that changed something', async () => {
+    const heard = (await verbs()).filter((verb) => linkHearsFrom(verb))
+
+    // `new` was told the name it made by the caller, so saying it back tells the
+    // caller nothing it did not write. Every other link verb answers a question
+    // about the space - `open` answers the path it landed on - and a link's outcome
+    // goes to an address the link itself chose; see `byLink` in verbs.ts.
+    expect(heard).toEqual(['new'])
+    expect(linkHearsFrom('open')).toBe(false)
+    // Not even the verbs no link may ask for, so widening one column cannot quietly
+    // widen the other.
+    expect(linkHearsFrom('files.read')).toBe(false)
   })
 
   test('tells a verb it declines apart from a name it does not know', () => {

@@ -51,13 +51,25 @@ below write it.
 
 | Key | When |
 | --- | --- |
-| `x-success` | it worked. The values the action answered with are added to the address: `path`, `heading`, and so on |
-| `x-error` | it did not, or the link named an action that does not exist. `error` is added |
+| `x-success` | `nib://new` worked. The values it answered with are added to the address: `path`, and whether the note was made or added to |
+| `x-error` | `nib://new` did not, or the link named an action that does not exist. `error` is added |
 | `x-cancel` | the app knows what was asked for and will not do it from a link |
 
 ```
 nib://new?name=Standup&content=Notes&x-success=https://example.com/done
 ```
+
+**Only `nib://new` says anything back.** `open`, `search` and `command` follow no
+callback at all, neither success nor error, and the log says so when a link carried
+one. A callback address is written by whoever wrote the link, so whatever a verb
+answers is read by them - and `nib://open?path=Plan` answers the path it landed on.
+Said back, that is a question about somebody's space: a hundred of those links, each
+with an `x-success` of its own, is a listing of what a person keeps notes about, from
+a scheme that was only ever allowed to move a window. Success and error are both
+silent for the same reason - told apart, they are that question answered more slowly.
+`new` is the exception because the caller named the note itself, which is the shape
+x-callback-url exists for: file something from a shortcut and carry on. The column is
+`byLink` in verbs.ts, `'quiet'` or `'back'`, and a test pins which verbs are which.
 
 Only two kinds of address are followed: `http(s)`, which leaves through the system
 browser, and `nib://`, which is followed inside the app and at most one step deep.
@@ -158,6 +170,11 @@ that writes over a note, moves one, deletes one or runs code is out of a link's
 reach entirely, and the list is pinned by a test so that adding a verb cannot
 quietly widen it. `new` never writes over an existing note: it says the note is
 already there unless the link asked to append or prepend.
+
+**A link hears only about what it changed.** `nib://new` answers its `x-success`
+with the path it wrote; the three verbs that change nothing answer no callback, so a
+link cannot ask whether a note exists and have the answer sent anywhere. See the
+table above.
 
 **Writes show their result.** A note that was made or added to is opened. With
 `silent` it is written and the row appears in the file list, and the reader is left

@@ -15,7 +15,7 @@ import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { invoke, isDesktop, isNative, openExternal } from '../tauri'
 import { callbackKind, readUri, withOutcome } from './uri'
-import { dispatch, isVerb, verbForAction } from './verbs'
+import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
 /** What the browser's protocol handler hands the link back in; see
  *  public/manifest.webmanifest. */
@@ -146,13 +146,25 @@ async function follow(uri: string, depth = 0): Promise<void> {
   // Said to be a link, because that is what decides whether a row of the palette
   // may run: see `runCommand`. Never an argument - a link writes its own.
   const result = await dispatch(verb, link.args, [], 'link')
+
+  // Whether this verb says anything back at all, which the table decides; see
+  // `byLink` in verbs.ts. A quiet verb is quiet either way round, success and error
+  // both: "no answer" and "an answer saying it failed" are two different things to
+  // hear, and told apart they are the same question about the space answered more
+  // slowly. What the reader sees, and the log, are unchanged - the reader is the
+  // person at the keyboard and is allowed to know.
+  const heard = linkHearsFrom(verb)
+
   if (!result.ok) {
-    await went(link.callbacks.error, depth, { error: result.error })
+    if (heard) await went(link.callbacks.error, depth, { error: result.error })
     refuse(uri, result.error)
     return
   }
 
-  await went(link.callbacks.success, depth, plainly(result.value))
+  if (heard) await went(link.callbacks.success, depth, plainly(result.value))
+  else if (link.callbacks.success ?? link.callbacks.error) {
+    log('warn', `automation: ${link.action} tells a link nothing back: ${uri}`)
+  }
 }
 
 /** What goes onto an `x-success` address: the values a verb answered with, and
