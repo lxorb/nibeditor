@@ -1,0 +1,222 @@
+# The gate: nib on its own Chromium, built and measured on all three desktops.
+#
+# Batch 1 of docs/browser.md is a gate rather than a migration, which means it is
+# allowed to answer "not yet" - so it has to answer with numbers. This builds the
+# app twice, once as it ships and once behind the `cef` feature, runs both, and
+# prints the table the decision rests on: the launch, the memory with no tab and
+# with one and with two, what a release would have to carry, whether
+# `chrome://settings` and `chrome://extensions` load, and whether an extension in
+# the browsing profile can reach nib's own interface.
+#
+# Gated the same way spike-cef.yml is, and for the same reason: this downloads
+# three hundred megabytes of Chromium and builds it into a browser, which has no
+# business on the path of an ordinary contribution. A branch named `ci-check-cef*`,
+# or somebody asking for it by hand.
+#
+# The pieces: apps/desktop/src-tauri/cef is the workspace with the pin in it,
+# `upstream.py` beside it turns that pin into a checkout, `gate.py` runs the pair
+# and writes the table, and `engine::gate` in the crate is what the flagged build
+# says about itself. See docs/browser.md.
+name: cef
+
+on:
+  push:
+    branches: [ci-check-cef, 'ci-check-cef-**']
+  workflow_dispatch:
+    inputs:
+      sandbox:
+        description: 'Sandbox policy for the flagged build: auto, required or disabled'
+        type: string
+        default: auto
+      tabs:
+        description: 'How many web tabs the gate opens'
+        type: string
+        default: '2'
+
+concurrency:
+  group: cef-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    strategy:
+      # Not fail fast: what Windows does and what a Mac does are two answers, and a
+      # red one on either is a thing to read rather than a reason to stop the other.
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      NIB_CEF_SANDBOX: ${{ inputs.sandbox || 'auto' }}
+      CEF_DIR: ${{ github.workspace }}/.cef
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      # The system's own webview for the default build, and GTK 4 for the flagged
+      # one - `tauri-runtime-cef` is GTK 4 where wry is GTK 3, which is a fact with
+      # consequences and is in docs/browser.md rather than only here. Plus what
+      # Chromium's binaries need to load at all, and a screen and a session bus,
+      # because the first Linux spike run spent its whole timeout printing "Failed
+      # to connect to the bus".
+      - name: System dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev \
+            libgtk-4-dev libclang-dev libglib2.0-dev \
+            libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 libdrm2 libxkbcommon0 \
+            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 libcups2t64 \
+            xvfb imagemagick dbus-x11
+
+      # Tauri's build script embeds the built frontend, so it has to exist before
+      # either crate will compile - and the flagged build asks for
+      # `tauri/custom-protocol`, so what it embeds is the real interface rather than
+      # a dev server a runner does not have.
+      - name: The frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @nib/desktop build
+
+      # The app as it ships, which is the control every number is read against. No
+      # feature, no patch, its own lock file: this is the build main produces.
+      - name: The app as it ships
+        run: cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --release
+
+      # The pin, turned into a checkout. This is also where the first finding of
+      # batch 1 lives: the branch removed a `tauri` feature its own plugins still
+      # ask for, so the script adds it back. If that edit stops applying, the branch
+      # has moved and may well have fixed it.
+      - name: Upstream
+        run: python apps/desktop/src-tauri/cef/upstream.py
+
+      # Which CEF the engine wants, read off the crate the checkout pins rather than
+      # written down twice. `export-cef-dir` is upstream's own exporter and writes
+      # the layout `cef-dll-sys` compiles against, which a plain download does not.
+      - name: The CEF the engine is pinned to
+        id: cef
+        run: |
+          version=$(grep -oE 'cef = \{ version = "=[^"]+"' \
+            apps/desktop/src-tauri/cef/.upstream/tauri/crates/tauri-runtime-cef/Cargo.toml \
+            | head -1 | grep -oE '[0-9][^"]+')
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "the engine is pinned to cef $version"
+
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        id: cef-cache
+        with:
+          path: .cef
+          key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.cef.outputs.version }}
+
+      - name: CEF
+        run: |
+          if [ "${{ steps.cef-cache.outputs.cache-hit }}" != "true" ]; then
+            cargo install export-cef-dir --version "=${{ steps.cef.outputs.version }}"
+            export-cef-dir --force "$CEF_DIR"
+          fi
+          echo "CEF_PATH=$CEF_DIR" >>"$GITHUB_ENV"
+
+      # What the loader needs to find libcef at run time, which is not the same as
+      # what the linker needed to find it at build time.
+      - name: The library path
+        run: |
+          echo "LD_LIBRARY_PATH=$CEF_DIR:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_DIR:$CEF_DIR/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
+          echo "$CEF_DIR" >>"$GITHUB_PATH"
+
+      - name: Format
+        run: |
+          cargo fmt --manifest-path apps/desktop/src-tauri/Cargo.toml --check
+          cargo fmt --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --check
+
+      # `--locked`, because the lock file beside the manifest is part of the pin:
+      # it is what fixes the commit of the `winit-gtk4` fork the `dpi` patch points
+      # at, which is a branch and therefore moves.
+      - name: The flagged build
+        run: |
+          cargo build --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --release --locked
+
+      # The flagged package's own tests: the pin is one revision, the ecosystem all
+      # comes from the checkout, the profiles are where the library puts them, and
+      # the library was compiled for an engine it is handed rather than one compiled
+      # into it. The crate's own unit tests run in the default build below, where
+      # they are runtime-independent anyway.
+      - name: Tests under the flag
+        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --locked
+
+      - name: The crate's own tests
+        run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
+
+      # Everything Chromium has to find beside the binary, in one folder, so the
+      # size rows are what a release would carry rather than what a distribution
+      # happens to unpack. On Windows the loader wants them next to the executable.
+      - name: Stage the engine beside the binary
+        run: |
+          out=apps/desktop/src-tauri/cef/target/release
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp -R "$CEF_DIR"/*.dll "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.bin "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.dat "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/*.pak "$out"/ 2>/dev/null || true
+            cp -R "$CEF_DIR"/locales "$out"/ 2>/dev/null || true
+          fi
+          ls -la "$out" | head -30
+
+      # The run. A window has to be able to appear: Windows and macOS runners log in
+      # a desktop session of their own, Linux is handed one.
+      - name: Run the gate
+        env:
+          NIB_CEF_TABS: ${{ inputs.tabs || '2' }}
+        run: |
+          suffix=''
+          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
+          run=(python apps/desktop/src-tauri/cef/gate.py
+            --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
+            --control "apps/desktop/src-tauri/target/release/nib$suffix"
+            --payload "$CEF_DIR"
+            --extension spike/browser/extension
+            --tabs "$NIB_CEF_TABS"
+            --out gate-out)
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
+          else
+            "${run[@]}"
+          fi
+
+      - name: The gate table
+        if: always()
+        run: |
+          {
+            echo "## ${{ matrix.os }}"
+            echo
+            cat gate-out/gate.md 2>/dev/null || echo 'the gate wrote no table'
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: cef-gate-${{ matrix.os }}
+          path: gate-out/**
+          if-no-files-found: warn
+          retention-days: 7
