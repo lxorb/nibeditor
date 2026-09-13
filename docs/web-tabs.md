@@ -556,9 +556,14 @@ the second is the one Emil met. The page that holds the session open is the answ
 and that row is what the probe is for - run it after any change to this seam. A session
 cookie after the app is started again is gone either way, which is what a browser throws
 away when it quits; a login kept in a lasting cookie or in `localStorage` comes back off
-disk. What holding the session open costs is that a run which has opened one website
-keeps a browser process until the app quits, which is what a browser does with its own
-window. See `session` in `apps/desktop/src-tauri/src/web_tabs.rs`.
+disk.
+
+**What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
+browser process until you quit, the way a browser does.** That is the price of a web note
+being a browser tab you can close and open again without signing in each time, and it is
+paid once rather than per tab - the pages in the tabs are the part that costs a
+gigabyte, and those are still parked and closed as they always were. See `session` in
+`apps/desktop/src-tauri/src/web_tabs.rs`.
 
 On Linux the runtime already keeps the web tabs' context alive for the app's life (it
 has to, to reuse the WebKit network process). On macOS the context is let go when the
