@@ -1384,4 +1384,6 @@ export const jv: Dictionary = {
   Allowed: 'Diulehake',
   Blocked: 'Diblokir',
   'Reset permissions': 'Balèkaké idin',
+  'Turn into': 'Owahi dadi',
+  'Bookmark these blocks': 'Tandhani blok-blok iki',
 }

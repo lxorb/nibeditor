@@ -1391,4 +1391,6 @@ export const mr: Dictionary = {
   Allowed: 'अनुमत',
   Blocked: 'ब्लॉक केले',
   'Reset permissions': 'परवानग्या रीसेट करा',
+  'Turn into': 'मध्ये बदला',
+  'Bookmark these blocks': 'हे ब्लॉक बुकमार्क करा',
 }

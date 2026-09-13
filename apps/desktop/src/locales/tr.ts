@@ -1393,4 +1393,6 @@ export const tr: Dictionary = {
   Allowed: 'İzin veriliyor',
   Blocked: 'Engelleniyor',
   'Reset permissions': 'İzinleri sıfırla',
+  'Turn into': 'Şuna dönüştür',
+  'Bookmark these blocks': 'Bu bloklara yer imi koy',
 }

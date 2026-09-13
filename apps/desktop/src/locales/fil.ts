@@ -1422,4 +1422,6 @@ export const fil: Dictionary = {
   Allowed: 'Pinapayagan',
   Blocked: 'Naka-block',
   'Reset permissions': 'I-reset ang mga pahintulot',
+  'Turn into': 'Gawing',
+  'Bookmark these blocks': 'I-bookmark ang mga block na ito',
 }

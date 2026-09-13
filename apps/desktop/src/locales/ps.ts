@@ -1393,4 +1393,6 @@ export const ps: Dictionary = {
   Allowed: 'اجازه شوی',
   Blocked: 'بند شوی',
   'Reset permissions': 'اجازې بیا تنظیمول',
+  'Turn into': 'بدلول په',
+  'Bookmark these blocks': 'دې بلاکونو ته نښانه',
 }

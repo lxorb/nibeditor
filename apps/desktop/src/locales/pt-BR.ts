@@ -1420,4 +1420,6 @@ export const ptBR: Dictionary = {
   Allowed: 'Permitido',
   Blocked: 'Bloqueado',
   'Reset permissions': 'Redefinir permissões',
+  'Turn into': 'Transformar em',
+  'Bookmark these blocks': 'Favoritar estes blocos',
 }

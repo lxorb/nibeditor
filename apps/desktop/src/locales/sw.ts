@@ -1416,4 +1416,6 @@ export const sw: Dictionary = {
   Allowed: 'Imeruhusiwa',
   Blocked: 'Imezuiwa',
   'Reset permissions': 'Badilisha ruhusa',
+  'Turn into': 'Badilisha kuwa',
+  'Bookmark these blocks': 'Alamisha vizuizi hivi',
 }

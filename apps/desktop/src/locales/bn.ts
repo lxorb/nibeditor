@@ -1388,4 +1388,6 @@ export const bn: Dictionary = {
   Allowed: 'মঞ্জুরিপ্রাপ্ত',
   Blocked: 'অবরুদ্ধ',
   'Reset permissions': 'অনুমতি রিসেট করুন',
+  'Turn into': 'বদলান',
+  'Bookmark these blocks': 'এই ব্লকগুলো বুকমার্ক',
 }

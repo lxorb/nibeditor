@@ -1378,4 +1378,6 @@ export const vi: Dictionary = {
   Allowed: 'Được cho phép',
   Blocked: 'Bị chặn',
   'Reset permissions': 'Đặt lại quyền',
+  'Turn into': 'Biến thành',
+  'Bookmark these blocks': 'Đánh dấu các khối này',
 }

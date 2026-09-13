@@ -1392,4 +1392,6 @@ export const fa: Dictionary = {
   Allowed: 'اجازه داشتن',
   Blocked: 'مسدود است',
   'Reset permissions': 'بازنشانی اجازه‌ها',
+  'Turn into': 'تبدیل به',
+  'Bookmark these blocks': 'نشانک این بلوک‌ها',
 }

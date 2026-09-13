@@ -1401,4 +1401,6 @@ export const gsw: Dictionary = {
   Allowed: 'Erlaubt',
   Blocked: 'Blockiert',
   'Reset permissions': 'Brächtigunge zrugsetze',
+  'Turn into': 'Umwandle i',
+  'Bookmark these blocks': 'Die Block merke',
 }

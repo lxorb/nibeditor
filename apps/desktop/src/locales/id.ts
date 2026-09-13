@@ -1390,4 +1390,6 @@ export const id: Dictionary = {
   Allowed: 'Diizinkan',
   Blocked: 'Diblokir',
   'Reset permissions': 'Reset izin',
+  'Turn into': 'Ubah menjadi',
+  'Bookmark these blocks': 'Markahi blok-blok ini',
 }

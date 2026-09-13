@@ -1430,4 +1430,6 @@ export const de: Dictionary = {
   Allowed: 'Zugelassen',
   Blocked: 'Blockiert',
   'Reset permissions': 'Berechtigungen zurücksetzen',
+  'Turn into': 'Umwandeln in',
+  'Bookmark these blocks': 'Diese Blöcke merken',
 }

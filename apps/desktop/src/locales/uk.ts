@@ -1452,4 +1452,6 @@ export const uk: Dictionary = {
   Allowed: 'Дозволено',
   Blocked: 'Заблоковано',
   'Reset permissions': 'Скинути дозволи',
+  'Turn into': 'Перетворити в',
+  'Bookmark these blocks': 'Додати блоки до закладок',
 }

@@ -1457,4 +1457,6 @@ export const ru: Dictionary = {
   Allowed: 'Разрешено',
   Blocked: 'Заблокировано',
   'Reset permissions': 'Сбросить разрешения',
+  'Turn into': 'Превратить в',
+  'Bookmark these blocks': 'Добавить блоки в закладки',
 }

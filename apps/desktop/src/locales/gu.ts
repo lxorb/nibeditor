@@ -1382,4 +1382,6 @@ export const gu: Dictionary = {
   Allowed: 'મંજૂર',
   Blocked: 'બ્લૉક કરેલ',
   'Reset permissions': 'પરવાનગીઓ રીસેટ કરો',
+  'Turn into': 'માં ફેરવો',
+  'Bookmark these blocks': 'આ બ્લૉકો બુકમાર્ક કરો',
 }

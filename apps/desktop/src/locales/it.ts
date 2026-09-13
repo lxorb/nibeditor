@@ -1440,4 +1440,6 @@ export const it: Dictionary = {
   Allowed: 'Autorizzazione concessa',
   Blocked: 'Autorizzazione negata',
   'Reset permissions': 'Reimposta le autorizzazioni',
+  'Turn into': 'Trasforma in',
+  'Bookmark these blocks': 'Segna questi blocchi',
 }

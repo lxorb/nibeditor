@@ -1389,4 +1389,6 @@ export const ms: Dictionary = {
   Allowed: 'Dibenarkan',
   Blocked: 'Disekat',
   'Reset permissions': 'Tetapkan semula kebenaran',
+  'Turn into': 'Jadikan',
+  'Bookmark these blocks': 'Tandakan blok-blok ini',
 }

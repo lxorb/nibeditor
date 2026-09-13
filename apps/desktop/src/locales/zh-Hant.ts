@@ -1354,4 +1354,6 @@ export const zhHant: Dictionary = {
   Allowed: '已允許',
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
+  'Turn into': '轉換為',
+  'Bookmark these blocks': '為這些區塊加書籤',
 }

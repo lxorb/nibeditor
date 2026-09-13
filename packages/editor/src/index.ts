@@ -63,11 +63,17 @@ export { DIAGRAM_LANGUAGES, diagramSvg, RENDERED_LANGUAGES } from './live-previe
 export {
   blockAt,
   type BlockKind,
+  type BlockShape,
   type BlockSpan,
   blocksFor,
   blockTarget,
+  blockTargets,
   deleteBlocks,
   duplicateBlocks,
+  indentBlocks,
+  moveBlocks,
+  outdentBlocks,
+  turnBlocksInto,
 } from './block'
 export { landed } from './landing'
 export { fenceLanguages } from './languages'

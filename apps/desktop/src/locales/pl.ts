@@ -1458,4 +1458,6 @@ export const pl: Dictionary = {
   Allowed: 'Dozwolone',
   Blocked: 'Zablokowane',
   'Reset permissions': 'Zresetuj uprawnienia',
+  'Turn into': 'Zamień na',
+  'Bookmark these blocks': 'Dodaj zakładki do bloków',
 }

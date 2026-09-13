@@ -1417,4 +1417,6 @@ export const ha: Dictionary = {
   Allowed: 'An bari',
   Blocked: 'An hana',
   'Reset permissions': 'Mayar da izini',
+  'Turn into': 'Juya zuwa',
+  'Bookmark these blocks': 'Sa alamar shafi ga waɗannan sassa',
 }

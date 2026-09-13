@@ -1388,4 +1388,6 @@ export const ur: Dictionary = {
   Allowed: 'اجازت یافتہ',
   Blocked: 'مسدود کردہ',
   'Reset permissions': 'اجازتیں دوبارہ ترتیب دیں',
+  'Turn into': 'میں بدلیں',
+  'Bookmark these blocks': 'ان بلاکس کو بک مارک کریں',
 }

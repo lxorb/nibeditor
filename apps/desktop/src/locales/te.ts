@@ -1393,4 +1393,6 @@ export const te: Dictionary = {
   Allowed: 'అనుమతించబడింది',
   Blocked: 'బ్లాక్ అయింది',
   'Reset permissions': 'అనుమతులను రీసెట్ చేయండి',
+  'Turn into': 'గా మార్చు',
+  'Bookmark these blocks': 'ఈ బ్లాక్‌లను బుక్‌మార్క్ చేయి',
 }

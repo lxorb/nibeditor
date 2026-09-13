@@ -1385,4 +1385,6 @@ export const ja: Dictionary = {
   Allowed: '許可',
   Blocked: 'ブロック',
   'Reset permissions': '権限をリセット',
+  'Turn into': '種類を変える',
+  'Bookmark these blocks': 'これらのブロックをブックマーク',
 }

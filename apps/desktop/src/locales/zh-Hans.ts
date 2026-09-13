@@ -1354,4 +1354,6 @@ export const zhHans: Dictionary = {
   Allowed: '已允许',
   Blocked: '已阻止',
   'Reset permissions': '重置权限',
+  'Turn into': '转换为',
+  'Bookmark these blocks': '为这些块加书签',
 }

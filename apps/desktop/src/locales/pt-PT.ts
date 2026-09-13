@@ -1430,4 +1430,6 @@ export const ptPT: Dictionary = {
   Allowed: 'Permitido',
   Blocked: 'Bloqueado',
   'Reset permissions': 'Repor autorizações',
+  'Turn into': 'Transformar em',
+  'Bookmark these blocks': 'Marcar estes blocos',
 }

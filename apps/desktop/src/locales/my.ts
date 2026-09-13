@@ -1378,4 +1378,6 @@ export const my: Dictionary = {
   Allowed: 'ခွင့်ပြုထား',
   Blocked: 'ပိတ်ဆို့ထား',
   'Reset permissions': 'ခွင့်ပြုချက်များကို ပြင်ဆင်သတ်မှတ်ရန်',
+  'Turn into': 'အဖြစ် ပြောင်းပါ',
+  'Bookmark these blocks': 'ဤဘလောက်များကိုစာမှတ်ထား',
 }

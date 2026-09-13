@@ -1368,4 +1368,6 @@ export const ko: Dictionary = {
   Allowed: '허용됨',
   Blocked: '차단됨',
   'Reset permissions': '권한 재설정',
+  'Turn into': '형식 바꾸기',
+  'Bookmark these blocks': '이 블록들 북마크',
 }

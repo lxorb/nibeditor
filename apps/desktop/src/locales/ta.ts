@@ -1413,4 +1413,6 @@ export const ta: Dictionary = {
   Allowed: 'அனுமதிக்கப்பட்டது',
   Blocked: 'தடுக்கப்பட்டது',
   'Reset permissions': 'அனுமதிகளை மீட்டமை',
+  'Turn into': 'ஆக மாற்று',
+  'Bookmark these blocks': 'இந்தத் தொகுதிகளைப் புத்தகக்குறியிடு',
 }

@@ -1435,4 +1435,6 @@ export const es: Dictionary = {
   Allowed: 'Permitido',
   Blocked: 'Bloqueado',
   'Reset permissions': 'Restablecer permisos',
+  'Turn into': 'Convertir en',
+  'Bookmark these blocks': 'Marcar estos bloques',
 }

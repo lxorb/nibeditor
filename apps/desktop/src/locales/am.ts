@@ -1371,4 +1371,6 @@ export const am: Dictionary = {
   Allowed: 'ተፈቅዷል',
   Blocked: 'ታግዷል',
   'Reset permissions': 'ፈቃዶችን ዳግም ያቀናብሩ',
+  'Turn into': 'ቀይር',
+  'Bookmark these blocks': 'እነዚህን ብሎኮች ምልክት አድርግ',
 }

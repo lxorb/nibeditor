@@ -1410,4 +1410,6 @@ export const ml: Dictionary = {
   Allowed: 'അനുവദനീയം',
   Blocked: 'തടഞ്ഞു',
   'Reset permissions': 'അനുമതികൾ പുനഃസജ്ജീകരിക്കുക',
+  'Turn into': 'ആയി മാറ്റുക',
+  'Bookmark these blocks': 'ഈ ബ്ലോക്കുകൾ ബുക്ക്‌മാർക്ക് ചെയ്യുക',
 }

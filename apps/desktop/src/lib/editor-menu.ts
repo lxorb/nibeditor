@@ -1,23 +1,28 @@
 import {
   type BlockKind,
+  type BlockShape,
   blocksFor,
-  blockTarget,
+  blockTargets,
   clearFormatting,
   deleteBlocks,
   duplicateBlocks,
   type EditorView,
+  indentBlocks,
   insertCodeFence,
   insertHorizontalRule,
   insertLink,
   insertPageBreak,
   insertTableToEdit,
   isSpellWord,
+  moveBlocks,
+  outdentBlocks,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
   toggleQuote,
   toggleWrap,
   type Transaction,
+  turnBlocksInto,
 } from '@nib/editor'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { countText } from './counts'
@@ -93,8 +98,14 @@ function blockName(kind: BlockKind): string {
  *  of them are about, and how much of the note that is, which is the only place
  *  the app counts anything smaller than a note.
  *
- *  Nothing at all in a note nobody can write in: all three of these write, and a
- *  row that cannot happen is worse than no row. */
+ *  Nothing at all in a note nobody can write in: every one of these writes, and a
+ *  row that cannot happen is worse than no row.
+ *
+ *  Every row acts on all of them. A reader holding four blocks wants what they would
+ *  want holding one - turn these into a list, take them a step in, move them, link to
+ *  them - and the editor answers each of those for a run of blocks as readily as for
+ *  one; see block/commands.ts in @nib/editor. What the rows say changes with the
+ *  count and what they do does not. */
 function blockEntries(
   view: EditorView | undefined,
   at: number | null,
@@ -124,17 +135,31 @@ function blockEntries(
       disabled: true,
       run: () => undefined,
     },
+    // Behind one word rather than in front of seven: a row's own menu has no room
+    // for a list, and the sheet the app already asks its short questions with reads
+    // the same on a phone as under a pointer. See prompt.svelte.ts.
+    { label: t('Turn into'), run: () => void turnInto(view, at) },
+    DIVIDER,
+    { label: t('Indent'), run: () => indentBlocks(view, at) },
+    { label: t('Outdent'), run: () => outdentBlocks(view, at) },
+    { label: t('Move up'), run: () => moveBlocks(view, at, -1) },
+    { label: t('Move down'), run: () => moveBlocks(view, at, 1) },
+    DIVIDER,
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
       // A link to a block needs the block to have a name, and giving it one is a
       // change to the note; see blockTarget in @nib/editor. A note nobody has
       // saved yet has no path and so nothing to point at: the row is there and
       // says it cannot happen, which is shorter than explaining why.
+      //
+      // One link per block, each on its own line, which is a list of links a note
+      // can be pasted into. The row says the same word for one block or four
+      // because it is the same thing: the link to what is in hand.
       label: t('Copy link'),
       disabled: !name,
       run: () => {
-        const target = name ? blockTarget(view, at) : null
-        if (!name || !target) return
+        const targets = name ? blockTargets(view, at) : []
+        if (!name || !targets.length) return
 
         // Through `linkTo` like every other link the app writes, so a space set
         // to markdown links gets one here too; see composer.ts. The block's own
@@ -144,16 +169,55 @@ function blockEntries(
         const relative =
           root !== undefined && path?.startsWith(root) ? relativeTo(root, path) : null
         void copyText(
-          linkTo(name, null, {
-            fragment: target.slice(1),
-            ...(relative ? { path: relative, from: relative } : {}),
-          }),
+          targets
+            .map((target) =>
+              linkTo(name, null, {
+                fragment: target.slice(1),
+                ...(relative ? { path: relative, from: relative } : {}),
+              }),
+            )
+            .join('\n'),
         )
       },
     },
     { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },
     ...blockBookmark(view, at, path),
   ]
+}
+
+/** What the blocks in hand could become, in the order a note is written in: the
+ *  three heading levels anybody uses, plain words, the three kinds of list, and a
+ *  quote. Obsidian and Notion offer the same handful, because it is the handful
+ *  markdown has.
+ *
+ *  The labels are the app's own words for these, already written: the heading rows
+ *  are the row the palette offers for each level, and the rest are the words the
+ *  slash menu and the format menu use. */
+const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
+  { shape: 'heading1', label: () => t('Heading {level}', { level: 1 }) },
+  { shape: 'heading2', label: () => t('Heading {level}', { level: 2 }) },
+  { shape: 'heading3', label: () => t('Heading {level}', { level: 3 }) },
+  { shape: 'paragraph', label: () => t('Paragraph') },
+  { shape: 'bullet', label: () => t('Bulleted list') },
+  { shape: 'numbered', label: () => t('Numbered list') },
+  { shape: 'task', label: () => t('Task list') },
+  { shape: 'quote', label: () => t('Quote') },
+]
+
+/** Asks which, and turns them into it.
+ *
+ *  The sheet is fetched rather than imported: it is the app's short-question surface
+ *  and carries its own drawing, and the menu row is already a press by the time this
+ *  runs. The same shape the rewrite sheet is opened with; see `rewrite` below. */
+async function turnInto(view: EditorView, at: number) {
+  const { prompt } = await import('./prompt.svelte')
+  const chosen = await prompt.choose({
+    title: t('Turn into'),
+    options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),
+  })
+
+  const shape = SHAPES.find((one) => one.shape === chosen)
+  if (shape) turnBlocksInto(view, at, shape.shape)
 }
 
 /** The first words of a block, which is what a list of them can be read by: the
@@ -177,7 +241,8 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
   if (!path || root === undefined || !path.startsWith(root)) return []
 
   const relative = relativeTo(root, path)
-  const span = blocksFor(view, at)[0]
+  const spans = blocksFor(view, at)
+  const span = spans[0]
   if (!span) return []
 
   const words = firstWords(view.state.doc.sliceString(span.from, span.to))
@@ -189,11 +254,21 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
     held
       ? { label: t('Remove bookmark'), run: () => workspace.bookmarks.toggle(held) }
       : {
-          label: t('Bookmark this block'),
+          // One bookmark per block, each under its own first words, so a run of them
+          // arrives in the list as the blocks they are rather than as one row standing
+          // for several.
+          label: spans.length > 1 ? t('Bookmark these blocks') : t('Bookmark this block'),
           run: () => {
-            const target = blockTarget(view, at)
-            const mark = target ? workspace.bookmarks.forBlock(relative, target, words) : null
-            if (mark) workspace.bookmarks.toggle(mark)
+            // The words are read before any naming: giving a block a name writes into
+            // the note and moves every offset after it.
+            const said = blocksFor(view, at).map((one) =>
+              firstWords(view.state.doc.sliceString(one.from, one.to)),
+            )
+
+            for (const [index, target] of blockTargets(view, at).entries()) {
+              const mark = workspace.bookmarks.forBlock(relative, target, said[index] ?? words)
+              if (mark) workspace.bookmarks.toggle(mark)
+            }
           },
         },
   ]

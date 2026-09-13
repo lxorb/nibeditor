@@ -1403,4 +1403,6 @@ export const kn: Dictionary = {
   Allowed: 'ಅನುಮತಿಸಲಾಗಿದೆ',
   Blocked: 'ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
   'Reset permissions': 'ಅನುಮತಿಗಳನ್ನು ಮರುಹೊಂದಿಸಿ',
+  'Turn into': 'ಆಗಿ ಮಾಡಿ',
+  'Bookmark these blocks': 'ಈ ಬ್ಲಾಕ್‌ಗಳನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
 }

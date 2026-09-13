@@ -1389,4 +1389,6 @@ export const hi: Dictionary = {
   Allowed: 'अनुमति है',
   Blocked: 'ब्लॉक किया गया है',
   'Reset permissions': 'अनुमतियां रीसेट करें',
+  'Turn into': 'में बदलें',
+  'Bookmark these blocks': 'इन ब्लॉकों को बुकमार्क करें',
 }
