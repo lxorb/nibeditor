@@ -59,6 +59,7 @@ Pass the same identifier here if you build it under another.
 from __future__ import annotations
 
 import argparse
+import atexit
 import ctypes
 import http.server
 import json
@@ -68,6 +69,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -77,6 +79,11 @@ from ctypes import wintypes
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORT_FROM = 21500
 PORT_TO = 21599
+
+# What says where the notes go. The identifier a probe build runs under does not keep
+# anybody's notes apart, so this is the one thing that does; see `spaces_root` and
+# docs/automation.md.
+SPACES_DIR = "NIB_SPACES_DIR"
 
 # The space the probe makes for itself, and the note in it.
 SPACE = "Web freeze probe"
@@ -246,12 +253,26 @@ def serve(port: int) -> http.server.ThreadingHTTPServer:
 
 
 def spaces_root() -> pathlib.Path:
-    """`Documents/Nib`, which is where the app keeps spaces and the only place it
-    opens a note from."""
+    """A spaces root of this drive's own, in the temp area, said to the app in
+    `NIB_SPACES_DIR` and taken away when the drive exits.
 
-    home = pathlib.Path.home()
-    documents = home / "Documents"
-    return (documents if documents.is_dir() else home) / "Nib"
+    **Never `Documents/Nib`.** The identifier a probe build runs under moves the
+    settings folder and the browsing profile and says nothing at all about where the
+    spaces are, so a drive that wrote its space the obvious way wrote it beside
+    somebody's real notes - which is what happened, and had to be deleted by hand. The
+    variable is read by `spaces_dir` at call time and wins over the documents folder;
+    see docs/automation.md.
+
+    Set in this process's environment, so the app inherits it when it is launched, and
+    removed through `atexit` rather than a `finally`, because this drive leaves by
+    `SystemExit` in several places - a window that never appeared, a page that never
+    loaded - and every one of them has to take the folder with it.
+    """
+
+    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-freeze-probe-"))
+    os.environ[SPACES_DIR] = str(made)
+    atexit.register(shutil.rmtree, made, ignore_errors=True)
+    return made
 
 
 def space_with_a_website(url: str) -> pathlib.Path:

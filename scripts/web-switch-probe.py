@@ -47,6 +47,7 @@ turn it on; see src-tauri/src/endpoint.rs.
 from __future__ import annotations
 
 import argparse
+import atexit
 import ctypes
 import http.server
 import json
@@ -56,6 +57,7 @@ import shutil
 import socket
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -65,6 +67,11 @@ from ctypes import wintypes
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
 PORT_TO = 22399
+
+# What says where the notes go. The identifier a probe build runs under does not keep
+# anybody's notes apart, so this is the one thing that does; see `spaces_root` and
+# docs/automation.md.
+SPACES_DIR = "NIB_SPACES_DIR"
 
 SPACE = "Web switch probe"
 NOTE = "Idea"
@@ -144,9 +151,26 @@ def serve(port: int) -> Server:
 
 
 def spaces_root() -> pathlib.Path:
-    home = pathlib.Path.home()
-    documents = home / "Documents"
-    return (documents if documents.is_dir() else home) / "Nib"
+    """A spaces root of this drive's own, in the temp area, said to the app in
+    `NIB_SPACES_DIR` and taken away when the drive exits.
+
+    **Never `Documents/Nib`.** The identifier a probe build runs under moves the
+    settings folder and the browsing profile and says nothing at all about where the
+    spaces are, so a drive that wrote its space the obvious way wrote it beside
+    somebody's real notes - which is what happened, and had to be deleted by hand. The
+    variable is read by `spaces_dir` at call time and wins over the documents folder;
+    see docs/automation.md.
+
+    Set in this process's environment, so the app inherits it when it is launched, and
+    removed through `atexit` rather than a caller's `finally`, so it goes on every road
+    out of a drive - including the `SystemExit` a probe raises when the window never
+    appears. `web-overlays-probe.py` calls this too, and is kept out of the notes by it.
+    """
+
+    made = pathlib.Path(tempfile.mkdtemp(prefix="nib-switch-probe-"))
+    os.environ[SPACES_DIR] = str(made)
+    atexit.register(shutil.rmtree, made, ignore_errors=True)
+    return made
 
 
 def shortcut(url: str, title: str) -> str:
