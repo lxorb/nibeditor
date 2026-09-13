@@ -168,6 +168,17 @@ risk while they wait, because every device in the room holds the same keystrokes
 a room that woke without its last few asks for them, by sending sync step 1 to the
 sockets that were already there.
 
+Both keys are numbered six digits wide and are put back in the order of the number
+rather than of the text, so the tenth piece cannot land before the ninth. And the
+document has a ceiling: twice `MAX_NOTE_BYTES`, measured off the encoding a snapshot
+was making anyway, checked before an update is applied because an update applied is
+in the document for good. Past it the room stops taking keystrokes, says so in the
+log, and stays a room that opens - the file itself goes on saving the ordinary way,
+where a note too large is refused in as many words. Nothing else was a ceiling: the
+settle refuses a file over `MAX_NOTE_BYTES` and the quota counts what the note store
+holds, so a document past either was storage nobody was charged for and nobody could
+read. See `full` in `rooms/state.ts`.
+
 **The settle.** A moment after the typing stops, the room writes the markdown into
 the note store the way any other save writes it: the bytes into R2, the row's
 version and the space's cursor moved on. Every device that is not in the room

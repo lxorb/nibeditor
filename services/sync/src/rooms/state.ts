@@ -14,11 +14,36 @@
  *  Written against as much of a Durable Object's storage as this needs, so the
  *  whole of it can be driven by a Map in a test. */
 
+import { MAX_NOTE_BYTES } from '../notes'
+
 import * as Y from 'yjs'
 
 const SNAPSHOT = 'state:'
 const LOG = 'log:'
 const COUNT = 'count'
+
+/** How large a room's document may get.
+ *
+ *  Twice the longest note, because a document is not a note: the CRDT carries what
+ *  was deleted as well as what is there, so a note written and rewritten for a year
+ *  is legitimately several times the file it settles into. Past this it is not a
+ *  note anybody is reading.
+ *
+ *  Nothing else was a ceiling. The settle refuses a file over `MAX_NOTE_BYTES` and
+ *  the quota counts what the note store holds, so a document grown past either was
+ *  storage nobody was charged for and nobody could read: the object goes on
+ *  appending snapshot chunks, every wake reads all of them, and the memory it wants
+ *  passes what the runtime gives it. So the room says no while it still can, which
+ *  is before the update is applied; see `full`. */
+export const MOST_DOCUMENT_BYTES = 2 * MAX_NOTE_BYTES
+
+/** What a room answers when it will take no more.
+ *
+ *  Short, because it travels as a socket's closing reason and a close carries 123
+ *  bytes; lowercase, because it drops into a line of the app's own text like every
+ *  other refusal. Here rather than in refused.ts, which is the sentences the service
+ *  answers `{ error }` with, and this one is never a body. */
+export const TOO_LARGE_IN_A_ROOM = 'this note is as large as a note in a room may get'
 
 /** What one storage value may hold. A Durable Object's own ceiling is higher;
  *  staying well under it keeps the snapshot from ever being the reason a room
@@ -48,10 +73,37 @@ interface Count {
   bytes: number
 }
 
+/** How wide a key's number is written. Six digits, which is past what either kind
+ *  of key can reach: the log is folded in every two hundred updates, and a snapshot
+ *  is the document in ninety-six kilobyte pieces.
+ *
+ *  It used to be three for a snapshot, which a document over about ninety-six
+ *  megabytes runs past - and a key that has run past its own padding sorts wrongly
+ *  against its neighbours, so the pieces go back together in the wrong order and the
+ *  document will not parse at all. That is a room nobody can open again, owner
+ *  included. The ceiling above is what stops a document getting there; this width
+ *  and the sort below are what stop it mattering if one ever does. */
+const DIGITS = 6
+
+/** The number a key carries, for putting the pieces back in the order they were
+ *  written. Read as a number rather than compared as text, so a key written by an
+ *  older build - three digits, where this writes six - still sorts where it
+ *  belongs. */
+function numbered(prefix: string, key: string): number {
+  return Number(key.slice(prefix.length)) || 0
+}
+
+/** The stored pieces under one prefix, in the order they were written. */
+function inOrder<T>(prefix: string, held: Map<string, T>): T[] {
+  return [...held.entries()]
+    .sort(([a], [b]) => numbered(prefix, a) - numbered(prefix, b))
+    .map(([, value]) => value)
+}
+
 /** Six digits, so the log sorts in the order it was written. A room that saw a
  *  million updates without ever compacting is not a room. */
 function logKey(at: number): string {
-  return `${LOG}${String(at).padStart(6, '0')}`
+  return `${LOG}${String(at).padStart(DIGITS, '0')}`
 }
 
 function chunk(bytes: Uint8Array): Uint8Array[] {
@@ -75,6 +127,11 @@ export class RoomState {
   private count: Count = { updates: 0, bytes: 0 }
   /** Where the next log entry goes. Reset by every compaction. */
   private next = 0
+  /** How large the document was when it was last written out, in bytes. Taken from
+   *  the encoding a snapshot is made of, which is a pass this was making anyway:
+   *  measuring per update would be an encoding of the whole document per keystroke.
+   *  Stale by at most what is waiting in `count`, which `full` adds back. */
+  private size = 0
   /** Updates that have arrived and not been written down yet; see `record`. */
   private pending: Uint8Array[] = []
   /** Writes run one after another. Two updates landing together would otherwise
@@ -99,11 +156,12 @@ export class RoomState {
       // The snapshot is written in Yjs's second encoding, which is markedly
       // smaller; the log is updates as they came off the wire, which is the
       // first. Which is which is what the key says.
-      const pieces = [...snapshot.entries()].sort(([a], [b]) => a.localeCompare(b))
-      const parts = pieces.map(([, value]) => asUpdate(value)).filter((one) => one !== null)
+      const parts = inOrder(SNAPSHOT, snapshot)
+        .map((value) => asUpdate(value))
+        .filter((one) => one !== null)
       if (parts.length) Y.applyUpdateV2(this.doc, concat(parts))
 
-      for (const [, value] of [...log.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      for (const value of inOrder(LOG, log)) {
         const update = asUpdate(value)
         if (update) Y.applyUpdate(this.doc, update)
       }
@@ -111,6 +169,7 @@ export class RoomState {
 
     this.count = held ?? { updates: log.size, bytes: 0 }
     this.next = log.size
+    this.measure()
     return true
   }
 
@@ -134,6 +193,11 @@ export class RoomState {
    *  keystrokes, and a room that came back without its last few asks for them in
    *  the sync the first socket opens with. */
   record(update: Uint8Array): Promise<void> {
+    // A document at the ceiling takes nothing more. Said here as well as at the door
+    // the update came through, because this is the thing being protected and a
+    // second caller one day would be a second road past it; see `full`.
+    if (this.full()) return Promise.reject(new Error(TOO_LARGE_IN_A_ROOM))
+
     this.pending.push(update)
     this.count = { updates: this.count.updates + 1, bytes: this.count.bytes + update.length }
 
@@ -141,6 +205,19 @@ export class RoomState {
     // whether or not anybody has stopped typing.
     if (this.count.bytes < MAX_BYTES && this.count.updates < MAX_UPDATES) return Promise.resolve()
     return this.flush()
+  }
+
+  /** Whether the document is as large as one may get; see `MOST_DOCUMENT_BYTES`.
+   *
+   *  What was last measured plus what has arrived since, which overstates the
+   *  document - a CRDT's updates are larger than what they add to it - and
+   *  overstating is the safe way round. The slack is at most `MAX_BYTES`, because
+   *  crossing that is what folds the pile into a snapshot and measures it again.
+   *
+   *  Asked before an update is applied rather than after, which is the whole point:
+   *  a document already over the line cannot be brought back under it. */
+  full(): boolean {
+    return this.size + this.count.bytes >= MOST_DOCUMENT_BYTES
   }
 
   /** What has piled up, written down: one entry for the lot, or a fresh snapshot
@@ -189,10 +266,13 @@ export class RoomState {
     // Whatever was still only in memory is in the document already, so a snapshot
     // of the document is a snapshot of all of it.
     this.pending = []
-    const pieces = chunk(Y.encodeStateAsUpdateV2(this.doc))
+    const whole = Y.encodeStateAsUpdateV2(this.doc)
+    this.size = whole.length
+
+    const pieces = chunk(whole)
     const entries: Record<string, unknown> = { [COUNT]: { updates: 0, bytes: 0 } }
     for (const [at, piece] of pieces.entries()) {
-      entries[`${SNAPSHOT}${String(at).padStart(3, '0')}`] = piece
+      entries[`${SNAPSHOT}${String(at).padStart(DIGITS, '0')}`] = piece
     }
 
     // The new snapshot goes in before the old pieces come out, so a room
@@ -207,6 +287,12 @@ export class RoomState {
 
     this.count = { updates: 0, bytes: 0 }
     this.next = 0
+  }
+
+  /** The document's own size, measured once. Called after a load, where there is no
+   *  snapshot to take: `write` measures the encoding it was making anyway. */
+  private measure(): void {
+    this.size = Y.encodeStateAsUpdateV2(this.doc).length
   }
 
   /** How many pieces the room is stored in: the snapshot's chunks and the log

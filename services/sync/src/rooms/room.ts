@@ -54,7 +54,7 @@ import {
   writesOf,
   type RoomKind,
 } from './kind'
-import { RoomState } from './state'
+import { RoomState, TOO_LARGE_IN_A_ROOM } from './state'
 
 /** How long after the last keystroke the words are written into the note store.
  *  The same pause the app waits before it writes a note to disk, so somebody who
@@ -424,6 +424,25 @@ export class NoteRoom implements DurableObject {
     if (!mayWrite(socket) && isEdit(said)) return
 
     await this.woken()
+
+    // And a document at its ceiling takes no more keystrokes from anybody. Refused
+    // before `receive` rather than after: an update applied is in the document and
+    // nothing takes it back out, so the room would be over the line for good - its
+    // snapshot growing on every settle, its every wake reading all of it. See `full`
+    // in state.ts.
+    //
+    // The socket is left open. Closing it would be the honest answer if the client
+    // could hear the reason, and it cannot: the app reads the code and not the
+    // words, and every code it knows means either "come back" or "join another
+    // room" - so a close here is a rejoin, another keystroke, another close. What it
+    // does instead is stop sharing the words while the file itself goes on saving
+    // the ordinary way, where a note past `MAX_NOTE_BYTES` is refused in as many
+    // words. Said in the log once per update rather than counted, because a room
+    // that reaches this is a room worth reading about.
+    if (isEdit(said) && this.state.full()) {
+      noted(`room ${this.held?.noteId ?? 'unknown'}`, new Error(TOO_LARGE_IN_A_ROOM), null)
+      return
+    }
     const answer = receive(said, this.state.doc, this.awareness, socket)
     if (answer) socket.send(answer)
   }
@@ -546,7 +565,13 @@ export class NoteRoom implements DurableObject {
     // each of them pauses.
     if (isSocket(origin)) this.settling = deviceOf(origin, this.awareness)
 
-    await this.state.record(update)
+    // The state refuses an update past the ceiling as well, and reaching that is
+    // this file's mistake rather than a reader's: the message was refused at the
+    // door above, before it was applied. Said in the log rather than left to reject
+    // into `waitUntil`, which the runtime would read as the room having failed.
+    await this.state.record(update).catch((wrong: unknown) => {
+      noted(`room ${this.held?.noteId ?? 'unknown'}`, wrong, null)
+    })
     await this.settleSoon()
   }
 
