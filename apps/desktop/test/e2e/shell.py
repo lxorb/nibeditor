@@ -29,6 +29,8 @@ from pathlib import Path
 
 from playwright.sync_api import sync_playwright
 
+from settling import HIDE_CARET, steady as held
+
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
 
@@ -163,69 +165,13 @@ def dismiss(page) -> None:
         say("a layer would not go")
 
 
-#: What a page has to have stopped doing before its picture is worth keeping.
-#:
-#: The faces first: a shot taken while a face is still arriving is a shot of the
-#: fallback, and the two differ by every glyph on the screen. Then the animations,
-#: asked of the browser itself rather than guessed at with a sleep - `getAnimations`
-#: knows about every transition and keyframe on the page, including the ones a
-#: component started a moment ago. A sheet that is still sliding is the whole
-#: difference between the two runs that disagreed by more than half their pixels.
-#:
-#: And the overlay scrollbar, which is lit while a surface is being scrolled and
-#: dims on a timer of its own afterwards - so whether it is in the picture depends
-#: on how long the step before took. Both states are still, which is why two
-#: matching frames do not catch it: one run had it dim before the first frame and
-#: the next had it dim after the second. It is a class, so it can be waited for.
-STILL = """
-() => document.fonts.status === 'loaded'
-  && document.getAnimations().every((one) => one.playState !== 'running')
-  && !document.querySelector('.nib-scrollbar.is-lit, .nib-scrollbar.is-settling')
-"""
-
-#: And the one thing on the page that is never still: the caret. It blinks, so the
-#: picture of it depends on the millisecond it was taken at and nothing else. Both
-#: spellings - the browser's own caret in a field, and the editor's, which is an
-#: element with a blink of its own.
-NO_CARET = """
-  *, *::before, *::after { caret-color: transparent !important }
-  .cm-cursor, .cm-cursorLayer, .cm-dropCursor { visibility: hidden !important }
-"""
-
-
-def quiet(page) -> None:
-    """Waits until nothing on the page is still moving."""
-    try:
-        page.wait_for_function(STILL, timeout=6000)
-    except Exception:
-        # A page with an animation that never ends - a spinner - is photographed as
-        # it is rather than waited on for ever; the shot says so by being unsteady.
-        pass
-
-
 def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> None:
     shots = out
     shots.mkdir(parents=True, exist_ok=True)
 
-    def steady(take, tries: int = 8) -> bytes:
-        """The same picture twice running, which is a surface that has stopped.
-
-        `getAnimations` covers what the page declares, and this covers everything
-        else: a face that arrived between the two, a scrollbar fading, an image
-        decoding, a shadow settling. Two shots that match byte for byte are a page
-        that did not move between them, whatever it was doing. Eight tries, and then
-        whatever it is doing it is doing for ever."""
-        quiet(page)
-        last = take()
-        for _ in range(tries):
-            page.wait_for_timeout(60)
-            now = take()
-            if now == last:
-                return now
-            last = now
-
-        say(f"[{name}] never held still")
-        return last
+    def steady(take) -> bytes:
+        """The same picture twice running; see settling.py."""
+        return held(page, take, say, f"[{name}]")
 
     def shot(tag: str) -> None:
         picture = steady(lambda: page.screenshot())
@@ -269,14 +215,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
         reduced_motion="reduce",
     )
     page = context.new_page()
-    # A statement rather than a function: an init script is run as a script, so an
-    # arrow expression on its own is an arrow expression nobody called.
-    page.add_init_script(
-        "document.addEventListener('DOMContentLoaded', function () {"
-        " var style = document.createElement('style');"
-        f" style.textContent = {NO_CARET!r};"
-        " document.head.appendChild(style) })"
-    )
+    page.add_init_script(HIDE_CARET)
+
     # A scratch drive should say what it could not reach rather than sit on it.
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))

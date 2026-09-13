@@ -54,6 +54,8 @@ from pathlib import Path
 
 from playwright.sync_api import Browser, sync_playwright
 
+from settling import HIDE_CARET, steady
+
 HERE = Path(__file__).resolve().parent
 APP = HERE.parent.parent
 DIST = APP / os.environ.get("NIB_DIST", "dist")
@@ -428,10 +430,21 @@ class Window:
             has_touch=finger,
             is_mobile=finger,
             color_scheme=scheme,
-            **extra,  # type: ignore[arg-type]
+            # This drive is about what a reader can reach and what the contrast
+            # comes to, not about how a surface arrives. Motion is the one thing a
+            # picture cannot hold still: a sheet caught half way through its slide
+            # differs from the same sheet by more than half the pixels on the screen.
+            # What the motion looks like is touch-move.py and motion.test.ts.
+            #
+            # A default rather than a fixture, because the window that is about
+            # reduced motion already says so for itself; see `still` below.
+            **{"reduced_motion": "reduce", **extra},  # type: ignore[arg-type]
         )
         self.page = self.context.new_page()
         self.page.set_default_timeout(9000)
+        # The caret blinks, so the picture of it depends on the millisecond the shot
+        # was taken at and nothing else; see settling.py.
+        self.page.add_init_script(HIDE_CARET)
         self.listen()
         # Its own patience, because this machine runs more than one suite at a
         # time: the page is a built bundle off a local file server and 9 seconds is
@@ -469,8 +482,16 @@ class Window:
     # ── the three questions ──────────────────────────────────────────
 
     def shot(self, tag: str) -> None:
+        """One picture, once the surface has stopped moving.
+
+        Four things, which are the four `shell.py` needed: motion reduced and the
+        caret hidden above, the page asked whether it has finished anything it
+        declared, and then the same picture twice running - which catches what the
+        page never declared at all, a face that arrived in between or an image
+        decoding. See the Drives section of docs/conventions.md."""
         SHOTS.mkdir(parents=True, exist_ok=True)
-        self.page.screenshot(path=str(SHOTS / f"{self.name}-{tag}.png"))
+        picture = steady(self.page, self.page.screenshot, say, f"[{self.name}] {tag}")
+        (SHOTS / f"{self.name}-{tag}.png").write_bytes(picture)
 
     def axe(self, surface: str) -> dict:
         found = self.page.evaluate(AXE_RUN)

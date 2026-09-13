@@ -57,8 +57,9 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 APP = ROOT / "apps" / "desktop"
 
-#: This file, and anything else that is not a drive.
-NOT_A_DRIVE = {"run-all.py"}
+#: This file, and anything else that is not a drive: a tool two of them use, and
+#: the comparer, which is run by hand over two folders of shots.
+NOT_A_DRIVE = {"run-all.py", "compare.py", "settling.py"}
 
 #: How long one drive may take before it is called hung. The longest of them,
 #: the one that drives two browsers through a shared canvas, takes minutes.
