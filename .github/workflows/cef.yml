@@ -157,17 +157,6 @@ jobs:
         run: |
           cargo build --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --release --locked
 
-      # The flagged package's own tests: the pin is one revision, the ecosystem all
-      # comes from the checkout, the profiles are where the library puts them, and
-      # the library was compiled for an engine it is handed rather than one compiled
-      # into it. The crate's own unit tests run in the default build below, where
-      # they are runtime-independent anyway.
-      - name: Tests under the flag
-        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --locked
-
-      - name: The crate's own tests
-        run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
-
       # Everything Chromium has to find beside the binary, in one folder: that is
       # how a release ships it, it is what the loader looks for on Windows and what
       # `$ORIGIN` means on Linux, and it makes the size rows the bytes a reader
@@ -213,6 +202,18 @@ jobs:
           else
             "${run[@]}"
           fi
+
+      # After the gate, deliberately: the numbers are what this workflow is for, and a
+      # red test should not be the reason a table is missing. The flagged package's
+      # own tests hold the pin and the patch list; the crate's own tests are the same
+      # ones check.yml runs, here to say they still pass beside the other engine.
+      - name: Tests under the flag
+        if: always()
+        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --locked
+
+      - name: The crate's own tests
+        if: always()
+        run: cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
       - name: The gate table
         if: always()
