@@ -413,6 +413,7 @@ is the one that asks for the least.
 | key | |
 | --- | --- |
 | Ctrl+L | the address field, in the pane that has the focus |
+| Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with |
 | Escape in the field | puts the resting face back and lets go of the field |
 
