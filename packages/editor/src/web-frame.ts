@@ -1,12 +1,18 @@
 /** Turning the card a web embed renders as into the frame it stands for, when the
  *  reader asks for it.
  *
- *  One place, because three surfaces show the same card: the editor's live
- *  preview, the reading view, and a canvas card. The markup comes from
- *  @nib/markdown, which knows the provider, the sandbox it needs and the
+ *  One place, because every surface that renders a note shows the same card: the
+ *  editor's live preview, the reading view, a canvas card and a slide. The markup
+ *  comes from @nib/markdown, which knows the provider, the sandbox it needs and the
  *  permissions it is granted; this only builds the element from what the card
  *  already says. Nothing here decides policy - a surface that could loosen a
  *  sandbox would be a surface where the policy is not the policy.
+ *
+ *  Which is also why there is nothing to wire per surface beyond the press: the
+ *  editor's card carries `embedClicks` in the widget that draws it, a canvas card
+ *  carries it on the card, and the reading view and a deck each read a click they
+ *  were already reading. The card is styled by one set of rules for all four; see
+ *  the Embedded pages section of packages/themes/src/document.css.
  *
  *  A published page has none of this and does not want it: there the card is a
  *  link, and a click goes to the page itself. */

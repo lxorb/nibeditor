@@ -8,7 +8,14 @@
  *
  * Loaded by the app, so the reading view looks like the export, and baked into
  * an exported document and a published page, so the export looks like the
- * reading view. One sheet, three places, no drift. */
+ * reading view. One sheet, three places, no drift.
+ *
+ * `#write` is the rendered document, which is Typora's own id and is what the
+ * reading view, a slide and the editor all carry. A canvas card is rendered
+ * markdown too and is not a document, so it carries `.nib-rendered` instead: the
+ * rules a card has to reach are written `:is(#write, .nib-rendered)`, which is the
+ * same specificity as `#write` alone and so changes nothing about which rule wins.
+ * See CanvasNode.svelte. */
 
 /* ── Task lists ──────────────────────────────────────────────────── */
 
@@ -368,8 +375,13 @@
 /* `![](https://youtube.com/watch?v=…)`. A card the size the frame will be, so
    nothing on the page moves when the reader asks for it; see web-embed.ts for why
    it is never the frame itself. A `<span>`, because it lives inside the paragraph
-   the line made. */
-#write .embed-web {
+   the line made.
+
+   Every surface that renders markdown, and not the document alone: the same card
+   stands on a canvas card and on a slide, and a card that was only styled inside
+   `#write` came out on a canvas as a borderless line thirty-seven pixels tall. One
+   card, one design, wherever a note is read. */
+:is(#write, .nib-rendered) .embed-web {
   display: block;
   position: relative;
   margin: 1.5em 0;
@@ -380,13 +392,13 @@
   overflow: hidden;
 }
 
-#write .embed-web.embed-wide {
+:is(#write, .nib-rendered) .embed-web.embed-wide {
   aspect-ratio: 16 / 9;
   height: auto;
 }
 
 /* The whole card is the link, so there is nothing small to hit. */
-#write .embed-play {
+:is(#write, .nib-rendered) .embed-play {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -403,18 +415,18 @@
     color var(--dur-base) var(--ease-out);
 }
 
-#write .embed-play:hover {
+:is(#write, .nib-rendered) .embed-play:hover {
   background: var(--surface-2);
   color: var(--accent);
 }
 
-#write .embed-play .embed-icon {
+:is(#write, .nib-rendered) .embed-play .embed-icon {
   width: 1.15em;
   height: 1.15em;
   color: inherit;
 }
 
-#write .embed-frame {
+:is(#write, .nib-rendered) .embed-frame {
   display: block;
   width: 100%;
   height: 100%;

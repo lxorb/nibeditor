@@ -11,7 +11,7 @@
    *  gestures; this is the card itself. */
 
   import { onDestroy } from 'svelte'
-  import { createEditor, type EditorView, type NoteJump, type Text } from '@nib/editor'
+  import { createEditor, type EditorView, embedClicks, type NoteJump, type Text } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
@@ -194,6 +194,18 @@
     editor = undefined
   })
 
+  /** The one press a rendered card has of its own: a click-to-load embed swaps its
+   *  frame in where the card was, rather than sending the reader out to the page.
+   *
+   *  The same listener the reading view and the editor's live preview use, so what a
+   *  card does is decided in one place and a canvas is not a surface with a bargain
+   *  of its own; see web-frame.ts in @nib/editor. Everything else about a press on a
+   *  card belongs to the surface, which is why this is the card's only handler: a
+   *  card that loaded a frame is still a card that was picked. */
+  function embeds(host: HTMLElement) {
+    return { destroy: embedClicks(host) }
+  }
+
   /** Escape leaves the card. Everything else belongs to the editor inside it,
    *  including the keys that would otherwise reach the canvas: a card being
    *  written in is a text field, and Delete in one deletes a character. */
@@ -230,7 +242,7 @@
       <div class="editor" use:edit onkeydowncapture={onKey}></div>
     {:else}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own note, through the same renderer the reading view uses -->
-      <div class="card page">{@html html}</div>
+      <div class="card page nib-rendered" use:embeds>{@html html}</div>
     {/if}
   {:else if node.type === 'file'}
     {#if isPicture(node.file)}
@@ -249,7 +261,7 @@
       {/if}
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note this card names, through the same renderer the reading view uses -->
-      <div class="card page embed">{@html html}</div>
+      <div class="card page embed nib-rendered" use:embeds>{@html html}</div>
     {:else}
       <p class="missing">{t('Nothing here')}</p>
     {/if}
@@ -300,7 +312,7 @@
       <div class="editor inside" use:edit onkeydowncapture={onKey}></div>
     {:else if html}
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the reader's own words, through the same renderer the reading view uses -->
-      <div class="card page inside">{@html html}</div>
+      <div class="card page inside nib-rendered">{@html html}</div>
     {/if}
   {:else if node.type === 'group' && node.label}
     <span class="label">{node.label}</span>

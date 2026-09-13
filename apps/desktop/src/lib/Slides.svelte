@@ -14,6 +14,7 @@
    */
 
   import { onDestroy, tick } from 'svelte'
+  import { loadEmbed } from '@nib/editor'
   import { claimsGesture } from './swipe'
   import { menu } from './menu.svelte'
   import { overlays } from './overlays'
@@ -362,6 +363,17 @@
 
     // The notes are read, not pressed: a tap in them is not a tap on the deck.
     if (target?.closest('.notes')) return
+
+    // A card standing in for a page somewhere else shows that page here, in the
+    // frame and the sandbox its provider needs, rather than sending the reader out
+    // of the app or turning the slide under them. The card is a link so that a
+    // published deck - which runs no script - still goes somewhere; here there is a
+    // script. The same loader every other surface presses; see web-frame.ts.
+    const card = target?.closest('.embed-web')
+    if (card instanceof HTMLElement && loadEmbed(card)) {
+      event.preventDefault()
+      return
+    }
 
     const href = target?.closest('a')?.getAttribute('href')
     if (href && /^[a-z][a-z\d+.-]*:/i.test(href)) {
