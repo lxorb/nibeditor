@@ -521,6 +521,28 @@ in the same store on disk. On macOS before 14 there is no such API and WKWebView
 falls back to the default store, which is the one case where the two share a
 profile.
 
+**Every web tab shares that one session with the other web tabs, and it outlives
+any of them.** A web note is a browser tab, and a browser tab keeps you logged in
+when you close it and open it again - because the browser process, and the session
+in it, do not die with the tab. Emil, 2026-09-13: *"When I close and then reopen a
+web note, all state is lost. For example, when I log in, then I would be logged
+out. That should not be the case."* It was, because each tab's webview carried a
+`WebView2` environment of its own: closing the note dropped it and took the live
+session with it - the cookies a login holds in memory, and anything on its way to
+disk - leaving only what the `web` folder had already been written. So the run
+builds one environment and hands it to every tab, kept alive on the window's thread
+for as long as the app runs; closing a note and opening it again is the same
+session, not a new one, and a clone held past the last tab's webview keeps the
+browser process from being torn down under it. The store on disk means a login kept
+in a lasting cookie survives a relaunch as well - a fresh session over the same
+`web` folder - which is what a browser does too. See `session` in
+`apps/desktop/src-tauri/src/web_tabs.rs`. On Linux the runtime already keeps the web
+tabs' context alive for the app's life (it has to, to reuse the WebKit network
+process), so the session is shared there without this. On macOS the context is let
+go when the last tab closes, as it was on Windows; a login there rests on the
+persistent data store on disk - a lasting cookie survives, a session-only one does
+not - until the same seam exists for `WKWebView` as for `WebView2`.
+
 **No nib IPC reaches the site**, three times over:
 
 1. The capabilities name the app's own **webviews** rather than the windows they

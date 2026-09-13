@@ -603,6 +603,62 @@ fn opening(place: Option<Place>, url: &str) -> String {
     }
 }
 
+/// The one browser session every web tab shares, kept alive for as long as the app
+/// runs.
+///
+/// A web tab is a browser tab, and a browser tab keeps you logged in across being
+/// closed and opened again because the browser process behind it - and the session in
+/// it - outlives the tab. Emil, 2026-09-13: *"When I close and then reopen a web note,
+/// all state is lost. For example, when I log in, then I would be logged out. That
+/// should not be the case."* It was lost because each tab's webview carried a
+/// `WebView2` environment of its own: closing the tab dropped the environment, and with
+/// it the live session - the cookies a login holds in memory, and anything not yet
+/// flushed. The `web` folder on disk always survived (the environment flushes to it as
+/// it is dropped), but the session did not, so a login kept in a session cookie signed
+/// out. The store on disk was already shared and persistent; the *session* was per tab.
+///
+/// So every tab of the run is built on one environment instead. The first web tab builds
+/// it on whatever folder `engine::web_store` points it at; every later tab is handed the
+/// same one, so all of them share a single browser session exactly as tabs in a browser
+/// do, and closing a note and opening it again is not a new session.
+///
+/// It is a COM object of the window's own thread and may be touched from nowhere else,
+/// so it lives in a thread local on that thread - the shape `ask` uses for the requests
+/// it holds open - and every page is built inside `run_on_main_thread`, which is that
+/// thread. The first environment is captured in `listening`, once, as the page is
+/// built.
+///
+/// The system engine's only: under nib's own Chromium there is nothing to share, because
+/// that runtime is one browser process by construction. See src/engine.rs.
+#[cfg(all(windows, not(feature = "cef")))]
+mod session {
+    use std::cell::RefCell;
+
+    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment;
+
+    thread_local! {
+        /// The shared environment, on the window's own thread and nowhere else. A
+        /// `RefCell` rather than a lock because there is only ever one thread in here.
+        static ENV: RefCell<Option<ICoreWebView2Environment>> = const { RefCell::new(None) };
+    }
+
+    /// The environment every web tab shares, if one has been built yet. `None` before
+    /// the first web tab of the run, which is the tab that builds it.
+    pub fn shared() -> Option<ICoreWebView2Environment> {
+        ENV.with_borrow(Clone::clone)
+    }
+
+    /// Keeps the first environment built, and only the first: every later tab is handed
+    /// this one, so the whole run shares one session. Called as the first page is built.
+    pub fn keep(env: ICoreWebView2Environment) {
+        ENV.with_borrow_mut(|held| {
+            if held.is_none() {
+                *held = Some(env);
+            }
+        });
+    }
+}
+
 /// The webview for one tab, built and attached to the window that asked.
 ///
 /// Async, and the building itself posted to the window's own event loop. Both
@@ -728,6 +784,17 @@ pub async fn web_open(
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 
     let posted = app.run_on_main_thread(move || {
+        // Built on the one session the run shares, so closing a note and opening it
+        // again keeps the login and the cookies the way a browser tab does; see
+        // `session`. The first web tab has none to share yet and builds its own on the
+        // folder the engine seam pointed it at, which `listening` then captures for
+        // every tab after it.
+        #[cfg(all(windows, not(feature = "cef")))]
+        let builder = match session::shared() {
+            Some(env) => builder.with_environment(env),
+            None => builder,
+        };
+
         let made = window
             .add_child(
                 builder,
@@ -774,6 +841,12 @@ fn listening(app: &AppHandle, tab: &str) {
     let asking = app.clone();
     let named = tab.to_string();
     let _ = view.with_webview(move |platform| {
+        // The session every web tab shares is the environment the first page was built
+        // on, captured here once and handed to every tab after it, so a note closed and
+        // opened again keeps its login; see `session`. Kept before `ask` looks at the
+        // page because both want the one thread this runs on.
+        #[cfg(all(windows, not(feature = "cef")))]
+        session::keep(platform.environment());
         ask::listen(&platform, asking, named, window);
     });
 }
