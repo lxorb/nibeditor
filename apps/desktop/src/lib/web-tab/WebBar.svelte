@@ -27,7 +27,7 @@
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
-  import { plainOrigin } from './address'
+  import { dotCom, plainOrigin } from './address'
   import type { Page } from './pages.svelte'
 
   const {
@@ -164,7 +164,12 @@
   function onKeydown(event: KeyboardEvent) {
     if (event.key === 'Enter') {
       event.preventDefault()
-      onaddress(field?.value ?? '')
+      // Ctrl+Enter is the `.com` press every browser has: one word becomes
+      // `https://www.word.com`, and anything that already reads as an address is left
+      // to the ordinary press. See `dotCom` in address.ts.
+      const typed = field?.value ?? ''
+      const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
+      onaddress(dotted ?? typed)
       field?.blur()
       return
     }
