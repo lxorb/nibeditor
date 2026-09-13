@@ -19,7 +19,7 @@
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/legacy-modes": "^6.5.4",
     "@codemirror/search": "^6.7.2",
-    "@codemirror/state": "^6.7.2",
+    "@codemirror/state": "^6.7.4",
     "@codemirror/view": "^6.43.10",
     "@lezer/common": "^1.5.2",
     "@lezer/highlight": "^1.2.3",
@@ -33,7 +33,7 @@
     "codemirror-lang-elixir": "^4.0.1",
     "codemirror-lang-hcl": "^0.2.0",
     "flowchart.js": "^1.18.0",
-    "katex": "^0.18.5",
+    "katex": "^0.18.7",
     "mermaid": "^11.17.2"
   },
   "devDependencies": {

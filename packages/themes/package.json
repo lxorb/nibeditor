@@ -15,6 +15,6 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "katex": "^0.18.5"
+    "katex": "^0.18.7"
   }
 }

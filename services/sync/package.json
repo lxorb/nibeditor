@@ -18,7 +18,7 @@
     "@lezer/css": "^1.3.6",
     "@lezer/go": "^1.0.1",
     "@lezer/html": "^1.3.13",
-    "@lezer/java": "^1.1.3",
+    "@lezer/java": "^1.1.4",
     "@lezer/javascript": "^1.5.4",
     "@lezer/json": "^1.0.3",
     "@lezer/php": "^1.0.6",
@@ -29,14 +29,14 @@
     "@lezer/yaml": "^1.0.4",
     "@nib/markdown": "workspace:*",
     "@nib/rooms": "workspace:*",
-    "hono": "^4.13.5",
+    "hono": "^4.13.7",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.32"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260903.1",
+    "@cloudflare/workers-types": "^5.20260910.1",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0",
-    "wrangler": "^4.128.0"
+    "wrangler": "^4.130.0"
   }
 }
