@@ -5,6 +5,12 @@
 //! browser header and footer, and the paper from the app's own settings. `WebKit`
 //! offers only its print panel, so everywhere else this says it cannot help and
 //! the window falls back to that panel.
+//!
+//! And on nib's own Chromium - the `cef` feature, off in everything that ships -
+//! `WebView2` is not the engine any more, so the one call this module makes into it
+//! is not there to make: the printer here says no and the window falls back to the
+//! panel, exactly as it does on a Mac. Chromium's own `PrintToPDF` is the answer and
+//! it is batch 6's; see docs/browser.md.
 
 use serde::Deserialize;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -33,7 +39,7 @@ static PRINTS: AtomicU32 = AtomicU32::new(0);
 ///
 /// Only `WebView2` reads the fields; elsewhere `print_pdf` is a stub, so the
 /// Linux runner's clippy would otherwise refuse them as dead code.
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Deserialize)]
 pub struct PdfPage {
     /// The width of the sheet, in inches.
@@ -50,7 +56,7 @@ pub struct PdfPage {
 /// without a dialog; `WebKit` only offers its print panel.
 #[tauri::command]
 pub fn pdf_supported() -> bool {
-    cfg!(windows)
+    cfg!(all(windows, not(feature = "cef")))
 }
 
 /// Loads a finished page in a window nobody sees and asks the webview's own print
@@ -144,7 +150,7 @@ fn give_up(window: &tauri::WebviewWindow, error: &str) {
     let _ = window.destroy();
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;
@@ -224,7 +230,7 @@ mod printer {
     }
 }
 
-#[cfg(not(windows))]
+#[cfg(any(not(windows), feature = "cef"))]
 mod printer {
     use super::PdfPage;
     use std::sync::mpsc::Sender;

@@ -30,6 +30,22 @@ pedantic = { level = "warn", priority = -1 }
 # generates against, and taking them by reference is not an option.
 needless_pass_by_value = "allow"
 
+[features]
+# Which engine the app's webviews run on. Off, and off in everything that ships:
+# the release builds, the installers, the phone and every check are the default
+# build, on the system's own engine, and apps/desktop/test/cef.test.ts holds them
+# to it.
+#
+# On, the app is a Chromium app: nib's own interface and every web tab are views
+# in one browser process, through `tauri-runtime-cef`. **The engine is not a
+# dependency of this crate in either build** - naming it here would put a git
+# checkout of Tauri and three hundred megabytes of Chromium in the default
+# build's lock file for nothing. It arrives as an already-configured
+# `tauri::Builder` from the binary in `cef/`, which is its own workspace with the
+# pin in it; the feature only decides what this crate does with the engine it is
+# handed. See src/engine.rs and docs/browser.md.
+cef = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
