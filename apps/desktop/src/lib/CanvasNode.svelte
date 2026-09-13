@@ -199,11 +199,36 @@
    *
    *  The same listener the reading view and the editor's live preview use, so what a
    *  card does is decided in one place and a canvas is not a surface with a bargain
-   *  of its own; see web-frame.ts in @nib/editor. Everything else about a press on a
-   *  card belongs to the surface, which is why this is the card's only handler: a
-   *  card that loaded a frame is still a card that was picked. */
+   *  of its own; see web-frame.ts in @nib/editor.
+   *
+   *  The press has to be taken from the surface to arrive at all. The plane asks to
+   *  be sent the rest of every contact that lands on it - a stroke has to keep
+   *  arriving after the pointer has left the pane - and a browser sends the click
+   *  after a captured contact to whatever is holding it, which is the plane and not
+   *  the card. So a contact that lands on a card with a frame still to load is the
+   *  card's alone, and the plane never hears it: pressing play is pressing play, and
+   *  such a card is dragged by the paper around it. Every other press on a card is
+   *  the surface's, exactly as it was. */
   function embeds(host: HTMLElement) {
-    return { destroy: embedClicks(host) }
+    const held = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+
+      const card = target.closest('.embed-web')
+      if (card instanceof HTMLElement && card.dataset.loaded === undefined) {
+        event.stopPropagation()
+      }
+    }
+
+    host.addEventListener('pointerdown', held)
+    const away = embedClicks(host)
+
+    return {
+      destroy: () => {
+        host.removeEventListener('pointerdown', held)
+        away()
+      },
+    }
   }
 
   /** Escape leaves the card. Everything else belongs to the editor inside it,
