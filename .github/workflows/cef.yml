@@ -193,7 +193,9 @@ jobs:
         continue-on-error: true
         run: |
           $exe = "apps/desktop/src-tauri/cef/target/release/nib-cef.exe"
-          $dumpbin = Get-ChildItem -Path "$env:VCINSTALLDIR" -Filter dumpbin.exe -Recurse -ErrorAction SilentlyContinue |
+          # `VCINSTALLDIR` is only set inside a developer shell, which this is not.
+          $dumpbin = Get-ChildItem -Path 'C:\Program Files\Microsoft Visual Studio', 'C:\Program Files (x86)\Microsoft Visual Studio' `
+            -Filter dumpbin.exe -Recurse -ErrorAction SilentlyContinue |
             Where-Object { $_.FullName -like '*Hostx64*' } | Select-Object -First 1
           if (-not $dumpbin) { Write-Output 'no dumpbin on this image'; exit 0 }
           $imports = & $dumpbin.FullName /imports $exe
