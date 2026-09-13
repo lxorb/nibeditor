@@ -69,6 +69,20 @@ export function webAddress(typed: string): string | null {
 
   return `${SEARCH}${encodeURIComponent(said)}`
 }
+
+/** What Ctrl+Enter means in an address field: the word, as a `.com`.
+ *
+ *  Every browser has done this since Netscape - `svelte` and Ctrl+Enter is
+ *  `https://www.svelte.com` - and a reader who has the habit types it without
+ *  thinking. One word only: something with a dot, a space or a scheme in it already
+ *  means what it says, and this leaves it alone so the ordinary press decides. */
+export function dotCom(typed: string): string | null {
+  const said = typed.trim()
+  if (!said || /[\s/?#@:.]/.test(said)) return null
+
+  const guessed = `https://www.${said}.com`
+  return isWebAddress(guessed) ? guessed : null
+}
 /** The origin, plainly, for the bar to show while nobody is typing in it.
  *
  *  The host and nothing else, because the host is the part that says who is

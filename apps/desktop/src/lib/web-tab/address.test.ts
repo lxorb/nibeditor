@@ -1,5 +1,22 @@
 import { describe, expect, test } from 'vitest'
-import { isWebAddress, plainOrigin, webAddress } from './address'
+import { dotCom, isWebAddress, plainOrigin, webAddress } from './address'
+
+/** Ctrl+Enter in the address field, which every browser has had for thirty years. */
+describe('the dot-com press', () => {
+  test('makes one word a site', () => {
+    expect(dotCom('svelte')).toBe('https://www.svelte.com')
+    expect(dotCom('  example  ')).toBe('https://www.example.com')
+  })
+
+  test('leaves anything that already reads as an address to the ordinary press', () => {
+    expect(dotCom('svelte.dev')).toBe(null)
+    expect(dotCom('https://svelte.dev')).toBe(null)
+    expect(dotCom('localhost:1425')).toBe(null)
+    expect(dotCom('svelte docs')).toBe(null)
+    expect(dotCom('a/b')).toBe(null)
+    expect(dotCom('')).toBe(null)
+  })
+})
 
 describe('what a web tab may open', () => {
   test('takes http and https', () => {
