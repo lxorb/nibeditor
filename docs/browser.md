@@ -1317,7 +1317,37 @@ figures are the resident set of the whole process tree, so Chromium's browser, G
 network and renderer processes are all in them. The engine is CEF 151.3.24, which is
 Chromium 151.0.7922.174, because that is what the pinned revision pins.
 
-THE-TABLE-GOES-HERE
+**What a release would have to carry, measured rather than estimated.** The engine's
+own files, weighed where the gate stages them beside the binary, and then compressed
+with LZMA - which is what an NSIS installer and a deb use, and close enough to a dmg's
+zlib to be worth saying in one row.
+
+| | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
+| --- | --- | --- | --- |
+| the app's own binary | 5.38 MB | 6.06 MB | 7.27 MB |
+| the flagged binary | 11.32 MB | 11.97 MB | 13.75 MB |
+| the engine beside it, unpacked | 394.6 MB | 346.1 MB | **1443.1 MB** |
+| the engine beside it, compressed | 127.9 MB | 118.2 MB | 234.1 MB |
+| **what the download grows by** | **133.8 MB** | **124.1 MB** | 240.5 MB |
+
+Two things to read off that. The Windows and macOS figures are **inside** the band
+Emil was told - 150 to 170 MB on Windows and 120 to 140 on macOS - so the download
+cost of a nib on Chromium is now a measured number rather than a ratio, and it is at
+the good end of the estimate. And the Linux row is the unstripped `libcef.so` the
+research warned about: 1.4 GB of it, where a release has to strip the library first.
+That is packaging work in batch 7 and not an engine cost.
+
+**What the app itself costs on the engine it ships with**, for the control every
+flagged number is read against. The launch is the app's own trace, which counts from
+before nib's first line - so the Windows figure is mostly a runner loading a binary it
+has never seen, and none of the three is a number to compare between platforms.
+
+| | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
+| --- | --- | --- | --- |
+| launch to the window on the system's engine | 6923.9 ms | 2261.5 ms | 1647.5 ms |
+| resident with no web tab, the whole tree | 301.2 MB | 87.6 MB | 525.2 MB |
+
+THE-FLAGGED-RESULT-GOES-HERE
 
 ### Go or no-go for batch 2
 
