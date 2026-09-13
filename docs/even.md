@@ -1440,8 +1440,12 @@ By hand, if CI is not an option:
 
 ```sh
 pnpm --filter @nib/desktop build:even
-npx @evenrealities/evenhub-cli pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
+pnpm even:pack
 ```
+
+`even:pack` runs the packer out of `node_modules`, which is the copy pinned by hash in
+`pnpm-lock.yaml` rather than whatever the registry answers `npx` with today. The CI
+step runs the same script.
 
 About 4 MB, well inside the roughly 10 MB the platform is comfortable with; the
 CLI stamps `min_app_version` from the SDK it reads on npm. Then in the portal:

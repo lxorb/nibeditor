@@ -15,10 +15,12 @@
     "format:check": "prettier --check .",
     "knip": "knip",
     "blog:css": "node scripts/blog-css.ts",
-    "blog:js": "node scripts/site-js.ts"
+    "blog:js": "node scripts/site-js.ts",
+    "even:pack": "evenhub pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@evenrealities/evenhub-cli": "0.1.14",
     "@evenrealities/pretext": "^0.1.4",
     "eslint": "^10.10.0",
     "eslint-plugin-svelte": "^3.23.0",

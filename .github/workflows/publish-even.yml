@@ -137,11 +137,16 @@ jobs:
       - name: Build the plugin
         run: pnpm --filter @nib/desktop build:even
 
-      # Pinned to the version docs/even.md was written against. `npx` with no
-      # version fetches and runs whatever was published this morning, which is
-      # somebody else's code deciding what goes in our package.
+      # Out of the lockfile, which is the difference between a version and a
+      # tarball. `npx --yes @evenrealities/evenhub-cli@0.1.14` named a version and ran
+      # whatever the registry handed back for that name at that moment - one deleted
+      # and republished version, or one registry somebody is in the middle of, and the
+      # code that decides what goes in our package is somebody else's. As a
+      # devDependency it has a hash in pnpm-lock.yaml, and `pnpm install
+      # --frozen-lockfile` above already refused anything that is not it. The command
+      # is a script in the root package.json so this and docs/even.md are one recipe.
       - name: Pack it
-        run: npx --yes @evenrealities/evenhub-cli@0.1.14 pack apps/desktop/even.app.json apps/desktop/dist-even -o nib.ehpk
+        run: pnpm even:pack
 
       # Pinned to a commit and not to `v1`. This is the one step that is handed
       # the Even account's own password rather than a token scoped to anything,

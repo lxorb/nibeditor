@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -16,8 +16,10 @@ import { describe, expect, test } from 'vitest'
  *  compares. What is checked here is that there is one at all, that it is the shape
  *  a digest is, and that it belongs to the version beside it. */
 
-const ROOT = join(fileURLToPath(new URL('../../..', import.meta.url)), 'packaging')
+const HERE = fileURLToPath(new URL('../../..', import.meta.url))
+const ROOT = join(HERE, 'packaging')
 const read = (...parts: string[]) => readFileSync(join(ROOT, ...parts), 'utf8')
+const repo = (...parts: string[]) => readFileSync(join(HERE, ...parts), 'utf8')
 
 describe('the snap', () => {
   const snap = read('snap', 'snapcraft.yaml')
@@ -67,5 +69,64 @@ describe('the workflow that publishes it', () => {
   test('and refuses to build a snap when the release reports no digest', () => {
     expect(workflow).toContain('reports no sha256 for a linux .deb')
     expect(workflow).toContain('exit 1')
+  })
+})
+
+/** The supply the release is built out of: the tools a workflow runs, the pins that
+ *  keep them still, and who has to have read a change to any of it.
+ *
+ *  A release is signed on a runner, out of whatever that runner fetched. Every pin in
+ *  this repository is there because "the version we asked for" and "the bytes we ran"
+ *  are two different things - and a pin nobody updates is its own problem, which is
+ *  what the schedule is for. */
+describe('what a workflow is allowed to fetch', () => {
+  const folder = join(HERE, '.github', 'workflows')
+  const workflows = readdirSync(folder).filter((name) => name.endsWith('.yml'))
+
+  /** `npx --yes some-tool@1.2.3` names a version and runs whatever the registry
+   *  answers with at that moment. A devDependency is a hash in pnpm-lock.yaml, and
+   *  `pnpm install --frozen-lockfile` has already refused anything that is not it - so
+   *  a tool that decides what goes into a package comes from there. The packer for the
+   *  glasses plugin was the last one that did not; see `even:pack`. */
+  test('is nothing it fetches while it runs', () => {
+    const fetching: string[] = []
+
+    for (const name of workflows) {
+      const held = readFileSync(join(folder, name), 'utf8')
+      for (const line of held.split(/\r?\n/)) {
+        // Comments are prose about this very rule in at least one of them.
+        if (/^\s*#/.test(line)) continue
+        if (/\b(?:npx|pnpm dlx|npm exec|yarn dlx|uvx|pipx run)\b/.test(line)) {
+          fetching.push(`${name}: ${line.trim()}`)
+        }
+      }
+    }
+
+    expect(fetching).toEqual([])
+  })
+
+  test('and every ecosystem a release is built out of is kept moving', () => {
+    const held = repo('.github', 'dependabot.yml')
+
+    for (const ecosystem of ['github-actions', 'npm', 'cargo', 'gradle']) {
+      expect(held, ecosystem).toContain(`package-ecosystem: ${ecosystem}`)
+    }
+
+    // Weekly and grouped: one pull request an ecosystem is one thing to read.
+    expect([...held.matchAll(/interval: weekly/g)]).toHaveLength(4)
+    expect([...held.matchAll(/^ {4}groups:$/gm)]).toHaveLength(4)
+  })
+
+  test('and a change to any of it has to have been read', () => {
+    const owners = repo('.github', 'CODEOWNERS')
+
+    for (const path of [
+      '/.github/workflows/**',
+      '/packaging/**',
+      '/apps/desktop/src-tauri/tauri.conf.json',
+      '/pnpm-lock.yaml',
+    ]) {
+      expect(owners, path).toContain(`${path} @`)
+    }
   })
 })

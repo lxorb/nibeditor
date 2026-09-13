@@ -1,0 +1,86 @@
+# What keeps the versions moving, so that a dependency is behind by a week rather
+# than by a year.
+#
+# Everything a release is built out of is pinned - the actions to commit shas, the
+# packer to a hash in pnpm-lock.yaml, the crates and the npm packages to lockfiles,
+# the `.deb` a snap unpacks to a sha256. Pinning is what makes a build the code that
+# was read; it is also what stops a fix arriving on its own. So the pins are updated
+# on a schedule by something that opens a pull request the check workflow runs,
+# rather than by somebody remembering.
+#
+# Weekly, and grouped. One pull request per ecosystem: a week of patches to forty
+# npm packages is one thing to read and one CI run, and fifteen of them is a week of
+# nobody reading any. Minor and patch together, because those are the ones a lockfile
+# bump is; a major version is its own pull request, on purpose, because it is a
+# decision rather than an update.
+version: 2
+
+updates:
+  # The actions every workflow runs, each pinned to a commit sha with the tag beside
+  # it in a comment. This is the ecosystem where a moved tag is the whole attack: an
+  # action that gets the signing key or the store password is code somebody else can
+  # change under a name that does not.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  # The whole pnpm workspace, which is one lockfile at the root.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+    groups:
+      npm:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  # The crate the desktop app is, and everything under it.
+  - package-ecosystem: cargo
+    directory: /apps/desktop/src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+    groups:
+      cargo:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  # Android's own build, which Tauri generates and this repository keeps: the Kotlin
+  # plugins and the libraries the one activity is built against.
+  - package-ecosystem: gradle
+    directory: /apps/desktop/src-tauri/gen/android
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: chore
+    groups:
+      gradle:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch

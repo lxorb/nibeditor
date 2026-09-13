@@ -1,0 +1,31 @@
+# Who has to have read a change before it lands, for the files where a change is a
+# change to what gets shipped rather than to what the app does.
+#
+# A pull request that edits a workflow can print a secret, send an artefact
+# somewhere else, or sign something with the key - and it looks like every other
+# green pull request while doing it. Same for the packaging: those files decide what
+# bytes a package manager hands somebody who types `brew install nib`, and for the
+# Tauri configuration, which is where the capabilities, the updater's public key and
+# the bundle's identity live. Dependabot opens pull requests against the first of
+# these every week (see dependabot.yml), which is exactly why they are listed: a
+# routine bump to an action is the change nobody looks twice at.
+#
+# Nothing else has an owner. The app is reviewed by whoever is reviewing.
+
+# The release machinery, and everything it is handed.
+/.github/ @lxorb
+/.github/workflows/** @lxorb
+
+# What a package manager ships, and the digests that say it is the release's own
+# bytes; see packaging/linux.md and apps/desktop/test/packaging.test.ts.
+/packaging/** @lxorb
+
+# The capabilities the webviews get, the updater's public key, the signing and
+# bundling of the app itself.
+/apps/desktop/src-tauri/tauri.conf.json @lxorb
+/apps/desktop/src-tauri/capabilities/** @lxorb
+/apps/desktop/src-tauri/gen/android/app/build.gradle.kts @lxorb
+
+# The dependency graph the release is built out of, by hash.
+/pnpm-lock.yaml @lxorb
+/apps/desktop/src-tauri/Cargo.lock @lxorb
