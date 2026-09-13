@@ -343,6 +343,15 @@
   stroke-width: 2;
 }
 
+/* A radar's shape: filled faintly and drawn firmly, which is what makes two of them
+   readable over each other - a radar of outlines alone is a tangle, and two solid
+   shapes are one shape. */
+#write .chart-area {
+  fill-opacity: 0.16;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
 #write .chart-keys {
   display: flex;
   flex-wrap: wrap;

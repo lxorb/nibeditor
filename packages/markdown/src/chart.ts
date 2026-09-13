@@ -3,14 +3,19 @@
  *  The shape is the one the Obsidian Charts plugin reads, so a note that carries
  *  a chart opens in either app with the same numbers in it. Its own vocabulary is
  *  Chart.js's, which is a hundred options wide; what a note needs is what a
- *  reader can take in at a glance, so this reads five keys and draws four kinds.
+ *  reader can take in at a glance, so this reads five keys and draws seven kinds.
  *
- *  `type`, `title`, `labels`, `series` with a `title` and `data` each. Left out,
- *  and why:
+ *  `type`, `title`, `labels`, `series` with a `title` and `data` each.
  *
- *  Radar, polar and scatter, because a note is prose and those are instruments -
- *  each needs axes, scales and a legend the reader has to study before the picture
- *  says anything, and none of them says it in a column of text.
+ *  The seven are bar, line, scatter, pie, donut, radar and polar area - which is
+ *  every kind the plugin draws that a column of prose has room for. Three of them
+ *  were left out for a while, on the grounds that a note is prose and a radar is an
+ *  instrument. The grounds were fine and the behaviour was not: a `type: radar`
+ *  came out as a bar chart, silently, which is a picture of the right numbers
+ *  saying the wrong thing about them. A reader cannot see that happen. So they are
+ *  drawn, and a `type` nib has never heard of draws nothing at all - the fence
+ *  stays the characters it is made of, the way a diagram that will not draw does,
+ *  which is a refusal somebody can see and correct.
  *
  *  `stacked`, `tension`, `fill`, `beginAtZero`, `width`, `height` and the rest of
  *  Chart.js's surface. A bar chart always begins at zero, because one that does
@@ -30,7 +35,7 @@
 import { escape } from './html'
 import { flowItems, unquoted } from './yaml'
 
-export type ChartKind = 'bar' | 'line' | 'pie' | 'donut'
+export type ChartKind = 'bar' | 'line' | 'scatter' | 'pie' | 'donut' | 'radar' | 'polar'
 
 export interface Series {
   title: string
@@ -45,13 +50,18 @@ export interface Chart {
 }
 
 /** The kinds, and the names the plugin uses for each. `doughnut` is Chart.js's
- *  own spelling and `donut` is what people type. */
+ *  own spelling and `donut` is what people type; `polarArea` is Chart.js's name for
+ *  the one everybody else calls a polar chart. */
 const KINDS: Readonly<Record<string, ChartKind>> = {
   bar: 'bar',
   line: 'line',
+  scatter: 'scatter',
   pie: 'pie',
   donut: 'donut',
   doughnut: 'donut',
+  radar: 'radar',
+  polar: 'polar',
+  polararea: 'polar',
 }
 
 /** Well past any chart worth reading in a note, and a ceiling so a fence cannot
@@ -102,7 +112,7 @@ function pair(line: string): { indent: number; key: string; value: string } | nu
  *  is invent - a fence with no numbers in it is not a chart, and stays code. */
 export function readChart(source: string): Chart | null {
   const lines = source.split('\n')
-  let kind: ChartKind = 'bar'
+  let kind: ChartKind | null = 'bar'
   let title: string | null = null
   let labels: string[] = []
   const series: Series[] = []
@@ -130,7 +140,11 @@ export function readChart(source: string): Chart | null {
       }
 
       inSeries = false
-      if (found.key === 'type') kind = KINDS[unquoted(found.value).toLowerCase()] ?? kind
+      // A kind nothing knows is null rather than the one it happened to start as:
+      // a fence asking for a picture this cannot draw keeps its own characters, so
+      // the reader can see what they asked for and change it. Silently drawing a bar
+      // chart instead was the right numbers saying the wrong thing.
+      if (found.key === 'type') kind = KINDS[unquoted(found.value).toLowerCase()] ?? null
       else if (found.key === 'title') title = unquoted(found.value) || null
       else if (found.key === 'labels') labels = flowItems(found.value) ?? [unquoted(found.value)]
       continue
@@ -148,7 +162,7 @@ export function readChart(source: string): Chart | null {
   }
 
   const drawn = series.filter((one) => one.data.length > 0)
-  if (drawn.length === 0) return null
+  if (drawn.length === 0 || kind === null) return null
 
   return { kind, title, labels, series: drawn.slice(0, MOST_SERIES) }
 }
@@ -320,7 +334,11 @@ function bars(chart: Chart, low: number, high: number, said: Said): string {
   return out.join('')
 }
 
-function lines(chart: Chart, low: number, high: number, said: Said): string {
+/** A line chart, and a scatter plot, which is the same picture without the line
+ *  through the points: the numbers and where they fall, and no claim about what
+ *  happened between them. One function because they are one drawing - a second copy
+ *  of the arithmetic would be a second place for the scale to drift. */
+function lines(chart: Chart, low: number, high: number, said: Said, joined = true): string {
   const plot = {
     x: PAD.left,
     y: PAD.top,
@@ -339,9 +357,11 @@ function lines(chart: Chart, low: number, high: number, said: Said): string {
     })
     if (drawn.length === 0) continue
 
-    out.push(
-      `<polyline class="chart-line" points="${drawn.join(' ')}" fill="none" stroke="${colour(which)}"/>`,
-    )
+    if (joined) {
+      out.push(
+        `<polyline class="chart-line" points="${drawn.join(' ')}" fill="none" stroke="${colour(which)}"/>`,
+      )
+    }
     for (const [at, value] of series.data.entries()) {
       const x = plot.x + step * (at + 0.5)
       const y = plot.y + plot.h * ((high - value) / (high - low))
@@ -385,6 +405,112 @@ function pie(chart: Chart, hole: number, said: Said): string {
       `<path class="chart-slice" d="${path}" fill="${colour(at)}"><title>${escape(`${name ? `${name}: ` : ''}${said(value)}`)}</title></path>`,
     )
     turned += sweep
+  }
+
+  return out.join('')
+}
+
+/** The middle of a round chart, and how far its rim reaches. Said once, because a
+ *  pie, a radar and a polar area are all drawn into the same circle. */
+function round_middle(): { middle: { x: number; y: number }; radius: number } {
+  return {
+    middle: { x: WIDTH / 2, y: (HEIGHT - PAD.bottom + PAD.top) / 2 },
+    radius: Math.min(WIDTH, HEIGHT - PAD.bottom) / 2 - PAD.top,
+  }
+}
+
+/** Where a point sits on a radar: one axis per label, the first straight up, and
+ *  the rest around clockwise. */
+function spoke(count: number, at: number): number {
+  return -Math.PI / 2 + (at / Math.max(1, count)) * Math.PI * 2
+}
+
+/** A radar: an axis out of the middle for every label, and a closed shape for every
+ *  series.
+ *
+ *  Its own frame rather than the grid the bar and line charts share, because the
+ *  scale runs outwards here: the rings are the value lines and the spokes are the
+ *  labels. A web rather than circles, so a reader can see which ring a corner of a
+ *  shape is sitting on.
+ *
+ *  Each shape is filled faintly as well as drawn, which is what makes two series
+ *  readable over each other - a radar of outlines alone is a tangle. */
+function radar(chart: Chart, low: number, high: number, step: number, said: Said): string {
+  const { middle, radius } = round_middle()
+  const count = Math.max(3, longest(chart))
+  const reach = (value: number) => (radius * (value - low)) / (high - low || 1)
+  const out: string[] = []
+
+  for (let value = low + step; value <= high + step / 2; value += step) {
+    const ring = Array.from({ length: count }, (_one, one) =>
+      at(middle, reach(value), spoke(count, one)),
+    )
+    out.push(`<polygon class="chart-grid" points="${ring.join(' ')}" fill="none"/>`)
+  }
+
+  for (let one = 0; one < count; one++) {
+    const angle = spoke(count, one)
+    const rim = at(middle, radius, angle).split(',')
+    out.push(
+      `<line class="chart-grid" x1="${round(middle.x)}" y1="${round(middle.y)}" x2="${rim[0] ?? 0}" y2="${rim[1] ?? 0}"/>`,
+    )
+
+    const label = chart.labels[one]
+    if (label === undefined) continue
+
+    const away = at(middle, radius + 14, angle).split(',')
+    const across = Math.cos(angle)
+    const anchor = Math.abs(across) < 0.2 ? 'middle' : across > 0 ? 'start' : 'end'
+    out.push(text(label, Number(away[0] ?? 0), Number(away[1] ?? 0) + 4, 'chart-label', anchor))
+  }
+
+  for (const [which, series] of chart.series.entries()) {
+    const corners = Array.from({ length: count }, (_one, one) =>
+      at(middle, reach(series.data[one] ?? low), spoke(count, one)),
+    )
+    out.push(
+      `<polygon class="chart-area" points="${corners.join(' ')}" fill="${colour(which)}" stroke="${colour(which)}"/>`,
+    )
+
+    for (const [one, value] of series.data.slice(0, count).entries()) {
+      const point = at(middle, reach(value), spoke(count, one)).split(',')
+      out.push(
+        `<circle class="chart-dot" cx="${point[0] ?? 0}" cy="${point[1] ?? 0}" r="3" fill="${colour(which)}"><title>${escape(`${series.title ? `${series.title}: ` : ''}${said(value)}`)}</title></circle>`,
+      )
+    }
+  }
+
+  return out.join('')
+}
+
+/** A polar area: a pie whose slices all take the same angle, and reach out as far
+ *  as their number says.
+ *
+ *  Which is the one thing a pie cannot show - how big each part is on its own
+ *  rather than as a share of the whole - and it is the same slice the pie is drawn
+ *  from, turned by an equal step each time. One series only, for the reason a pie is
+ *  one series: two sets of slices over each other is two charts. */
+function polar(chart: Chart, high: number, said: Said): string {
+  const series = chart.series[0]
+  if (!series) return ''
+
+  const { middle, radius } = round_middle()
+  const values = series.data.map((one) => Math.max(0, one))
+  const count = values.length
+  if (count === 0) return ''
+
+  const out: string[] = []
+  const sweep = (Math.PI * 2) / count
+
+  for (const [one, value] of values.entries()) {
+    const reach = high <= 0 ? 0 : (radius * value) / high
+    if (reach <= 0) continue
+
+    const from = -Math.PI / 2 + sweep * one
+    const name = chart.labels[one] ?? ''
+    out.push(
+      `<path class="chart-slice" d="${slice(middle, reach, 0, from, from + sweep)}" fill="${colour(one)}"><title>${escape(`${name ? `${name}: ` : ''}${said(value)}`)}</title></path>`,
+    )
   }
 
   return out.join('')
@@ -445,20 +571,37 @@ function legend(chart: Chart): string {
 export function chartSvg(chart: Chart, options?: ChartOptions): string {
   const { low, high, step } = span(chart)
   const said = sayer(options)
-  const drawn = chart.kind === 'line' ? lines(chart, low, high, said) : bars(chart, low, high, said)
-  const body =
-    chart.kind === 'pie'
-      ? pie(chart, 0, said)
-      : chart.kind === 'donut'
-        ? pie(chart, 0.58, said)
-        : `${frame(chart, low, high, step, said)}${drawn}`
+  const body = roundly(chart, low, high, step, said) ?? squarely(chart, low, high, step, said)
 
   return `<svg class="chart-svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" role="img" preserveAspectRatio="xMidYMid meet">${body}</svg>`
 }
 
+/** The four kinds drawn into a circle, or null for one that is not. */
+function roundly(chart: Chart, low: number, high: number, step: number, said: Said): string | null {
+  if (chart.kind === 'pie') return pie(chart, 0, said)
+  if (chart.kind === 'donut') return pie(chart, 0.58, said)
+  if (chart.kind === 'polar') return polar(chart, high, said)
+  if (chart.kind === 'radar') return radar(chart, low, high, step, said)
+
+  return null
+}
+
+/** And the three drawn against a scale across and up: the grid, and the marks over
+ *  it. A scatter plot is the line chart without the line; see `lines`. */
+function squarely(chart: Chart, low: number, high: number, step: number, said: Said): string {
+  const marks =
+    chart.kind === 'line'
+      ? lines(chart, low, high, said)
+      : chart.kind === 'scatter'
+        ? lines(chart, low, high, said, false)
+        : bars(chart, low, high, said)
+
+  return `${frame(chart, low, high, step, said)}${marks}`
+}
+
 /** The whole block a ` ```chart ` fence becomes, or null when the fence holds no
- *  chart - in which case it stays code, the way a diagram that will not draw
- *  does. */
+ *  chart it can draw - a kind nothing knows, or no numbers at all - in which case
+ *  it stays code, the way a diagram that will not draw does. */
 export function chartFigure(source: string, options?: ChartOptions): string | null {
   const chart = readChart(source)
   if (chart === null) return null

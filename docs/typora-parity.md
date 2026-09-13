@@ -621,13 +621,15 @@ Features Typora does not have, which are the reason this exists.
       never which note
 - [x] ` ```chart ` fences, in the shape the Obsidian Charts plugin reads
       (`type`, `title`, `labels`, and `series` with a `title` and `data` each),
-      drawn as `bar`, `line`, `pie` or `donut`. Built as an SVG out of the
-      numbers with no charting library at all, which is what lets a published
-      page draw one; the colours are the theme's, and the scale rounds to numbers
-      somebody would have chosen. Chart.js's other hundred options are not read:
-      a bar chart always starts at zero and a chart is always the width of the
-      column. A fence holding no chart stays code, and on the glasses a titled
-      chart is its title
+      drawn as `bar`, `line`, `scatter`, `pie`, `donut`, `radar` or `polar`.
+      Built as an SVG out of the numbers with no charting library at all, which is
+      what lets a published page draw one; the colours are the theme's, and the
+      scale rounds to numbers somebody would have chosen. Chart.js's other hundred
+      options are not read: a bar chart always starts at zero and a chart is
+      always the width of the column. A fence holding no chart stays code, and so
+      does one asking for a kind nib does not draw - which used to come out as a
+      bar chart, silently, saying the wrong thing about the right numbers. On the
+      glasses a titled chart is its title
 - [x] A note's front matter drawn as the rows it says: the key on the left, the
       value in the control its shape asks for - a list as chips, a `true` as a
       checkbox, a date as a date - and nib's own `export:` page setup as its

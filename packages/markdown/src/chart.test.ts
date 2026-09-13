@@ -32,8 +32,20 @@ describe('reading a chart out of a fence', () => {
     // Chart.js spells it one way and people type the other.
     expect(readChart('type: doughnut\nseries:\n  - data: [1]\n')?.kind).toBe('donut')
     expect(readChart('type: donut\nseries:\n  - data: [1]\n')?.kind).toBe('donut')
-    // A kind nobody draws is not a reason to refuse the numbers.
-    expect(readChart('type: radar\nseries:\n  - data: [1]\n')?.kind).toBe('bar')
+    expect(readChart('type: scatter\nseries:\n  - data: [1]\n')?.kind).toBe('scatter')
+    expect(readChart('type: radar\nseries:\n  - data: [1]\n')?.kind).toBe('radar')
+    expect(readChart('type: polar\nseries:\n  - data: [1]\n')?.kind).toBe('polar')
+    // Chart.js's own spelling of the last one.
+    expect(readChart('type: polarArea\nseries:\n  - data: [1]\n')?.kind).toBe('polar')
+  })
+
+  /** A kind nothing can draw used to come out as a bar chart, which is the right
+   *  numbers saying the wrong thing about themselves and nothing a reader can see
+   *  happen. Nothing is drawn instead: the fence keeps its own characters, which is
+   *  what a diagram that will not draw does. */
+  test('and nothing at all for a kind nothing here draws', () => {
+    expect(readChart('type: bubble\nseries:\n  - data: [1]\n')).toBeNull()
+    expect(chartFigure('type: candlestick\nseries:\n  - data: [1]\n')).toBeNull()
   })
 
   test('quotes come off, and a key nobody knows is skipped', () => {
@@ -249,5 +261,60 @@ describe('the language the numbers are written in', () => {
   test('and English again when what it is handed is nothing', () => {
     setChartLocale('')
     expect(chartFigure(THOUSANDS)).toContain('1,234.5')
+  })
+})
+
+/** The three kinds that used to be silently drawn as something else: a radar, a
+ *  polar area and a scatter plot. Each of them is a picture a note can hold - the
+ *  grounds for leaving them out were about prose, and a chart somebody asked for by
+ *  name and got a different chart of is worse than any of them. */
+describe('the kinds that were drawn as a bar chart', () => {
+  const THREE = 'labels: [a, b, c]\nseries:\n  - title: One\n    data: [3, 1, 2]\n'
+
+  test('a radar draws its web, its spokes and a shape per series', () => {
+    const svg = chartSvg(readChart(`type: radar\n${THREE}`)!)
+
+    // The rings of the scale as polygons, which is what makes it a web rather than a
+    // set of circles, and one spoke per label with the label at its end.
+    expect(svg).toContain('<polygon class="chart-grid"')
+    expect(svg).toContain('<polygon class="chart-area"')
+    expect(svg.match(/class="chart-label"/g)?.length).toBe(3)
+    // And not the grid a bar chart is drawn against.
+    expect(svg).not.toContain('<line class="chart-grid" x1="48"')
+  })
+
+  test('a radar of two series draws both, in two colours', () => {
+    const two = `type: radar\nlabels: [a, b]\nseries:\n  - data: [1, 2]\n  - data: [2, 1]\n`
+    const svg = chartSvg(readChart(two)!)
+
+    expect(svg.match(/class="chart-area"/g)?.length).toBe(2)
+  })
+
+  test('a polar area draws a slice per number, each reaching as far as it says', () => {
+    const svg = chartSvg(readChart(`type: polar\n${THREE}`)!)
+
+    expect(svg.match(/class="chart-slice"/g)?.length).toBe(3)
+    // Slices of its own rather than a pie's: a pie's three slices all reach the rim.
+    expect(svg).not.toContain('<polygon')
+  })
+
+  test('a scatter draws the points and no line through them', () => {
+    const svg = chartSvg(readChart(`type: scatter\n${THREE}`)!)
+
+    expect(svg.match(/class="chart-dot"/g)?.length).toBe(3)
+    expect(svg).not.toContain('chart-line')
+    // Against the same grid a line chart is drawn against, so the numbers read the
+    // same way.
+    expect(svg).toContain('class="chart-grid"')
+  })
+
+  test('a line still draws its line, which is the whole difference', () => {
+    expect(chartSvg(readChart(`type: line\n${THREE}`)!)).toContain('chart-line')
+  })
+
+  test('and every one of them is the kind the figure says it is', () => {
+    for (const kind of ['radar', 'polar', 'scatter']) {
+      expect(chartFigure(`type: ${kind}\n${THREE}`), kind).toContain(`data-kind="${kind}"`)
+    }
   })
 })
