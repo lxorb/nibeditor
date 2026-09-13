@@ -4,7 +4,7 @@
    *  Chrome's shape, in nib's clothes, because this is a question everybody has already
    *  been asked a hundred times and a new shape for it would only make it harder to
    *  answer: under the address bar, at the left, with the site's own mark, one sentence,
-   *  and Allow or Block. It appears when the page asks - the request is held open in the
+   *  and Chrome's own two answers. It appears when the page asks - the request is held open in the
    *  engine while it is up - and the answer is remembered for that site, so nobody is
    *  asked twice. See permissions.svelte.ts.
    *
@@ -62,8 +62,13 @@
   <p class="which">{WANTS[asking.ask]()}</p>
 
   <div class="rows">
+    <!-- Chrome's own two words for the two answers. "Don't allow" rather than "Block"
+         because the app already has a row called Block - the kind of thing a paragraph
+         is - and one English word cannot be two rows in a catalogue: a German reader
+         would have been offered "Block", the markdown block, as the way to refuse a
+         site the camera. -->
     <button class="nib-button is-quiet" onclick={() => grants.answer(asking, false)}>
-      {t('Block')}
+      {t("Don't allow")}
     </button>
     <button class="nib-button" onclick={() => grants.answer(asking, true)}>{t('Allow')}</button>
   </div>
