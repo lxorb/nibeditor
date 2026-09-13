@@ -15,11 +15,11 @@ popover behind the mark in the bar - the drive opens it over the page, photograp
 window, and counts how much of that colour is left in the pane. A pane still full of it
 is a page drawn over the overlay, which is the bug.
 
-It also drives the one thing no unit test can reach: **a site asking for the camera.**
-The served page calls `getUserMedia` as it loads, the engine raises its own permission
-request, and the bubble under the address bar is what answers it - so the photograph is
-proof that the whole road works, from the engine's event through the crate's deferral to
-the reader's press.
+It also drives the one thing no unit test can reach: **a site asking for something.**
+The served page calls `getCurrentPosition` as it loads, the engine raises its own
+permission request, and the bubble under the address bar is what answers it - so the
+photograph is proof that the whole road works, from the engine's event through the
+crate's deferral to the reader's press.
 
     python scripts/web-overlays-probe.py --exe path/to/nib.exe
 
@@ -34,17 +34,20 @@ import importlib.util
 import json
 import pathlib
 import shutil
-import subprocess
 import sys
 import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 OUT = HERE.parent / "target" / "web-overlays"
 
-# The colour the page is, and how much of the pane has to stop being it for the overlay
-# to count as being in front. A menu is a small thing over a large page, so the test is
-# not "the page is gone" but "the page is no longer all of it".
+# The colour the page is, and how near a pixel has to be to count as it: a screen copy
+# is exact, and this is for the edge of a rounded corner.
 PAGE_COLOUR = (0xFF, 0x00, 0x80)
+NEAR = 40
+
+# How much of the pane may still be the page for an overlay to count as being in front
+# of it. A menu is a small thing over a large page, so the question is not "the page is
+# gone" but "the page is no longer all of it".
 ENOUGH = 0.6
 
 
@@ -83,26 +86,72 @@ PAGES = {
 }
 
 
-def shoot(name: str) -> pathlib.Path:
-    """A photograph of the window, taken by the platform: a webview cannot photograph
-    the window it is drawn in."""
+def shoot(hwnd: int, name: str) -> pathlib.Path:
+    """A photograph of the window itself, not of the screen where it is.
+
+    `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw itself into a
+    bitmap, which is the only capture that works here: a drive cannot bring the window
+    to the front - Windows refuses the foreground to a process that has not had it - so
+    a copy of the screen at the window's rectangle is a copy of whatever is actually in
+    front, which on this machine is the wallpaper. Asking the window instead needs
+    nothing of the window manager."""
+
+    import ctypes
+    from ctypes import wintypes
+
+    from PIL import Image
+
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    gdi32 = ctypes.WinDLL("gdi32", use_last_error=True)
+
+    box = wintypes.RECT()
+    user32.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(box))
+    width = box.right - box.left
+    height = box.bottom - box.top
+
+    window = user32.GetWindowDC(wintypes.HWND(hwnd))
+    made = gdi32.CreateCompatibleDC(window)
+    bitmap = gdi32.CreateCompatibleBitmap(window, width, height)
+    gdi32.SelectObject(made, bitmap)
+
+    # PW_RENDERFULLCONTENT: the flag that makes this work for a window whose content is
+    # composited rather than painted, which is every webview.
+    user32.PrintWindow(wintypes.HWND(hwnd), made, 0x0000_0002)
+
+    class BITMAPINFOHEADER(ctypes.Structure):
+        _fields_ = [
+            ("biSize", wintypes.DWORD),
+            ("biWidth", ctypes.c_long),
+            ("biHeight", ctypes.c_long),
+            ("biPlanes", wintypes.WORD),
+            ("biBitCount", wintypes.WORD),
+            ("biCompression", wintypes.DWORD),
+            ("biSizeImage", wintypes.DWORD),
+            ("biXPelsPerMeter", ctypes.c_long),
+            ("biYPelsPerMeter", ctypes.c_long),
+            ("biClrUsed", wintypes.DWORD),
+            ("biClrImportant", wintypes.DWORD),
+        ]
+
+    header = BITMAPINFOHEADER()
+    header.biSize = ctypes.sizeof(BITMAPINFOHEADER)
+    header.biWidth = width
+    # Negative, so the rows come back the way a picture is read rather than upside down.
+    header.biHeight = -height
+    header.biPlanes = 1
+    header.biBitCount = 32
+    header.biCompression = 0
+
+    bits = ctypes.create_string_buffer(width * height * 4)
+    gdi32.GetDIBits(made, bitmap, 0, height, bits, ctypes.byref(header), 0)
+
+    gdi32.DeleteObject(bitmap)
+    gdi32.DeleteDC(made)
+    user32.ReleaseDC(wintypes.HWND(hwnd), window)
 
     out = OUT / f"{name}.png"
-    subprocess.run(
-        [
-            "powershell",
-            "-NoProfile",
-            "-File",
-            str(HERE / "capture-window.ps1"),
-            "-ProcessName",
-            "nib",
-            "-Out",
-            str(out),
-        ],
-        check=False,
-        capture_output=True,
-        timeout=90,
-    )
+    picture = Image.frombuffer("RGBA", (width, height), bits, "raw", "BGRA", 0, 1)
+    picture.convert("RGB").save(out)
     return out
 
 
@@ -118,9 +167,9 @@ def how_much(shot: pathlib.Path) -> float:
         box = page.crop((width // 3, height // 4, width - 8, height - 8))
         counted = 0
         total = 0
-        for red, green, blue in box.getdata():
+        for seen in box.getdata():
             total += 1
-            if abs(red - 0xFF) < 30 and green < 40 and abs(blue - 0x80) < 40:
+            if all(abs(one - other) <= NEAR for one, other in zip(seen, PAGE_COLOUR)):
                 counted += 1
 
     return counted / max(1, total)
@@ -134,7 +183,10 @@ OVERLAYS = [
         "the site",
         "document.querySelector('.webbar button[aria-label=\"Site information\"]').click()",
     ),
-    ("the palette", "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true }))"),
+    (
+        "the palette",
+        "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true }))",
+    ),
 ]
 
 
@@ -193,31 +245,49 @@ def main() -> int:
         switch.allow_eval(args.identifier)
         time.sleep(1)
 
-        running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
+        running, app, hwnd = switch.launch(args.exe, args.identifier, unlike=app.port)
         app.open("Idea.md", switch.SPACE)
         time.sleep(3)
         app.open("A flat page.url")
         time.sleep(6)
 
-        bare = shoot("page-alone")
+        bare = shoot(hwnd, "page-alone")
         said["the page alone"] = round(how_much(bare), 3)
 
         for name, opens in OVERLAYS:
             app.ask(opens)
             time.sleep(1.2)
-            shot = shoot(name.replace(" ", "-"))
-            left = round(how_much(shot), 3)
-            said[name] = left
+            said[name] = round(how_much(shoot(hwnd, name.replace(" ", "-"))), 3)
+            # And what the pane is holding under it: the still picture of the page, which
+            # is what keeps an overlay from being a flash of empty pane. See `web_shot`.
+            said[f"{name}: the picture under it"] = app.ask(
+                "JSON.stringify((document.querySelector('.hole')?.style?.backgroundImage ?? '')"
+                ".slice(0, 30))"
+            )
             app.ask("window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
             time.sleep(0.8)
 
-        # The one an engine raises for itself: a site asking for the camera.
+        # The one the engine raises for itself: a site asking where you are. Waited for
+        # rather than slept through - the page has to load and ask, and the bubble
+        # arrives on a transition - and photographed once it is really there, because a
+        # photograph taken a moment early is a photograph of nothing.
         app.open("A page that asks.url")
-        time.sleep(6)
-        shot = shoot("a-site-asks")
-        said["a site asks"] = app.ask(
-            "JSON.stringify(document.querySelector('.ask[role=dialog]')?.textContent?.trim() ?? '')"
-        )
+        asked = ""
+        until = time.perf_counter() + 30
+        while not asked and time.perf_counter() < until:
+            said_text = app.ask(
+                "JSON.stringify(document.querySelector('.ask[role=dialog]')?.textContent?.trim()"
+                " ?? '')"
+            )
+            asked = said_text if isinstance(said_text, str) else ""
+            if not asked:
+                time.sleep(1)
+
+        said["a site asks"] = asked
+        time.sleep(0.5)
+        shoot(hwnd, "a-site-asks")
+        if not asked:
+            print("FAIL: a site asked for where you are and no bubble went up")
     finally:
         if running is not None:
             running.terminate()
