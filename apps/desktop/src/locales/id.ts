@@ -1098,6 +1098,8 @@ export const id: Dictionary = {
   '{count} notes went back.': '{count} catatan dikembalikan.',
   'The account keeps a month of versions of every note that syncs.':
     'Akun menyimpan versi sebulan untuk setiap catatan yang tersinkron.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Akun menyimpan versi setahun untuk setiap catatan yang tersinkron.',
   'That did not work.': 'Itu tidak berhasil.',
   'Signing in': 'Masuk',
   'Ask for a code from an app': 'Minta kode dari sebuah aplikasi',

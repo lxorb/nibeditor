@@ -1105,6 +1105,8 @@ export const mr: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'सिंक होणाऱ्या प्रत्येक नोंदीच्या महिनाभराच्या आवृत्त्या खाते ठेवते.',
+  'The account keeps a year of versions of every note that syncs.':
+    'सिंक होणाऱ्या प्रत्येक नोंदीच्या वर्षभराच्या आवृत्त्या खाते ठेवते.',
   'That did not work.': 'ते जमले नाही.',
   'Signing in': 'साइन इन होत आहे',
   'Ask for a code from an app': 'ॲपकडून कोड मागा',

@@ -1109,6 +1109,8 @@ export const te: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక నెల ఉంచుతుంది.',
+  'The account keeps a year of versions of every note that syncs.':
+    'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక సంవత్సరం ఉంచుతుంది.',
   'That did not work.': 'అది పని చేయలేదు.',
   'Signing in': 'సైన్ ఇన్ అవుతోంది',
   'Ask for a code from an app': 'యాప్ నుండి కోడ్ అడుగు',

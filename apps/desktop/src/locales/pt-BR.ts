@@ -1130,6 +1130,8 @@ export const ptBR: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'A conta guarda um mês de versões de cada nota que sincroniza.',
+  'The account keeps a year of versions of every note that syncs.':
+    'A conta guarda um ano de versões de cada nota que sincroniza.',
   'That did not work.': 'Isso não funcionou.',
   'Signing in': 'Entrando',
   'Ask for a code from an app': 'Pedir um código a um app',

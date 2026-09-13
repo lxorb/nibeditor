@@ -1089,6 +1089,8 @@ export const my: Dictionary = {
   '{count} notes went back.': 'မှတ်စု {count} ပြန်သွားပြီ။',
   'The account keeps a month of versions of every note that syncs.':
     'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်လစာ ဗားရှင်းများကို ထားသည်။',
+  'The account keeps a year of versions of every note that syncs.':
+    'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်နှစ်စာ ဗားရှင်းများကို ထားသည်။',
   'That did not work.': 'ထိုအရာ အလုပ်မလုပ်ပါ။',
   'Signing in': 'ဝင်မှု',
   'Ask for a code from an app': 'အက်ပ်မှ ကုဒ်တောင်းပါ',

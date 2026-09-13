@@ -1079,6 +1079,8 @@ export const th: Dictionary = {
   '{count} notes went back.': '{count} โน้ตย้อนกลับแล้ว',
   'The account keeps a month of versions of every note that syncs.':
     'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งเดือนของทุกโน้ตที่ซิงก์',
+  'The account keeps a year of versions of every note that syncs.':
+    'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งปีของทุกโน้ตที่ซิงก์',
   'That did not work.': 'ทำไม่สำเร็จ',
   'Signing in': 'กำลังเข้าสู่ระบบ',
   'Ask for a code from an app': 'ขอรหัสจากแอป',

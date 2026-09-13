@@ -1111,6 +1111,8 @@ export const gsw: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'S Konto behaltet en Monet Fassige vo jedere synchronisierte Notiz.',
+  'The account keeps a year of versions of every note that syncs.':
+    'S Konto behaltet es Jahr Fassige vo jedere synchronisierte Notiz.',
   'That did not work.': 'Das het nöd funktioniert.',
   'Signing in': 'Aamäldig',
   'Ask for a code from an app': 'Code us ere App verlange',

@@ -1171,6 +1171,8 @@ export const ru: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Аккаунт хранит версии за месяц для каждой синхронизируемой заметки.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Аккаунт хранит версии за год для каждой синхронизируемой заметки.',
   'That did not work.': 'Не получилось.',
   'Signing in': 'Вход',
   'Ask for a code from an app': 'Запрашивать код из приложения',

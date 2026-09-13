@@ -1089,6 +1089,8 @@ export const vi: Dictionary = {
   '{count} notes went back.': '{count} ghi chú đã trở về.',
   'The account keeps a month of versions of every note that syncs.':
     'Tài khoản giữ một tháng phiên bản của mọi ghi chú có đồng bộ.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Tài khoản giữ một năm phiên bản của mọi ghi chú có đồng bộ.',
   'That did not work.': 'Không thành công.',
   'Signing in': 'Đang đăng nhập',
   'Ask for a code from an app': 'Xin mã từ một ứng dụng',

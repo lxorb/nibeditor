@@ -1106,6 +1106,8 @@ export const ur: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک ماہ کے ورژن رکھتا ہے۔',
+  'The account keeps a year of versions of every note that syncs.':
+    'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک سال کے ورژن رکھتا ہے۔',
   'That did not work.': 'یہ کام نہیں کر سکا۔',
   'Signing in': 'سائن ان ہو رہا ہے',
   'Ask for a code from an app': 'ایپ سے کوڈ منگوائیں',

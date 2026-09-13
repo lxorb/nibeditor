@@ -1119,6 +1119,8 @@ export const ml: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു മാസത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
+  'The account keeps a year of versions of every note that syncs.':
+    'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു വർഷത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
   'That did not work.': 'അത് പ്രവർത്തിച്ചില്ല.',
   'Signing in': 'സൈൻ ഇൻ ചെയ്യുന്നു',
   'Ask for a code from an app': 'ആപ്പിൽ നിന്ന് ഒരു കോഡ് ചോദിക്കുക',

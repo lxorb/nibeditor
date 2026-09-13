@@ -304,8 +304,13 @@
   {/if}
 </div>
 
+<!-- What the account actually keeps, which is either of the two the row above
+     chose. One sentence per horizon rather than one with a number in it: "a year" is
+     what the setting says and "365 days" is not. -->
 <p class="hint">
-  {t('The account keeps a month of versions of every note that syncs.')}
+  {modes.keepVersions === KEEP_YEAR
+    ? t('The account keeps a year of versions of every note that syncs.')
+    : t('The account keeps a month of versions of every note that syncs.')}
 </p>
 
 <style>

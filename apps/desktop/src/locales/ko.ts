@@ -1086,6 +1086,8 @@ export const ko: Dictionary = {
   '{count} notes went back.': '노트 {count}개를 되돌렸습니다.',
   'The account keeps a month of versions of every note that syncs.':
     '계정은 동기화되는 모든 노트의 한 달 분 버전을 보관합니다.',
+  'The account keeps a year of versions of every note that syncs.':
+    '계정은 동기화되는 모든 노트의 1년 분 버전을 보관합니다.',
   'That did not work.': '되지 않았습니다.',
   'Signing in': '로그인',
   'Ask for a code from an app': '앱에서 코드 받기',

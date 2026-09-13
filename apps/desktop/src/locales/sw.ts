@@ -1121,6 +1121,8 @@ export const sw: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Akaunti huhifadhi matoleo ya mwezi mmoja ya kila dokezo linalosawazishwa.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Akaunti huhifadhi matoleo ya mwaka mmoja ya kila dokezo linalosawazishwa.',
   'That did not work.': 'Hiyo haikufanya kazi.',
   'Signing in': 'Kuingia',
   'Ask for a code from an app': 'Omba kodi kutoka programu',

@@ -1100,6 +1100,8 @@ export const gu: Dictionary = {
   '{count} notes went back.': { one: '{count} નોંધ પાછી ગઈ.', other: '{count} નોંધ પાછી ગઈ.' },
   'The account keeps a month of versions of every note that syncs.':
     'ખાતું સમન્વય થતી દરેક નોંધની એક મહિનાની આવૃત્તિ રાખે છે.',
+  'The account keeps a year of versions of every note that syncs.':
+    'ખાતું સમન્વય થતી દરેક નોંધની એક વર્ષની આવૃત્તિ રાખે છે.',
   'That did not work.': 'એ ચાલ્યું નહીં.',
   'Signing in': 'સાઇન ઇન',
   'Ask for a code from an app': 'એપ પાસેથી કોડ માંગો',

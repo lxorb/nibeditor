@@ -1090,6 +1090,8 @@ export const am: Dictionary = {
   '{count} notes went back.': { one: '{count} ማስታወሻ ተመለሰ።', other: '{count} ማስታወሻዎች ተመለሱ።' },
   'The account keeps a month of versions of every note that syncs.':
     'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ወር ቅጂ ይይዛል።',
+  'The account keeps a year of versions of every note that syncs.':
+    'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ዓመት ቅጂ ይይዛል።',
   'That did not work.': 'ያ አልሠራም።',
   'Signing in': 'መግቢያ',
   'Ask for a code from an app': 'ከመተግበሪያ ኮድ ጠይቅ',

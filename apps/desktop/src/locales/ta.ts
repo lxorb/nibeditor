@@ -1123,6 +1123,8 @@ export const ta: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு மாத பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
+  'The account keeps a year of versions of every note that syncs.':
+    'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு ஆண்டு பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
   'That did not work.': 'அது வேலை செய்யவில்லை.',
   'Signing in': 'உள்நுழைகிறது',
   'Ask for a code from an app': 'செயலியிலிருந்து ஒரு குறியீடு கேள்',

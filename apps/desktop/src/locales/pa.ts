@@ -1110,6 +1110,8 @@ export const pa: Dictionary = {
   '{count} notes went back.': { one: '{count} ਨੋਟ ਵਾਪਸ ਗਈ।', other: '{count} ਨੋਟਾਂ ਵਾਪਸ ਗਈਆਂ।' },
   'The account keeps a month of versions of every note that syncs.':
     'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਮਹੀਨੇ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
+  'The account keeps a year of versions of every note that syncs.':
+    'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਸਾਲ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
   'That did not work.': 'ਉਹ ਨਹੀਂ ਚੱਲਿਆ।',
   'Signing in': 'ਸਾਈਨ ਇਨ',
   'Ask for a code from an app': 'ਐਪ ਤੋਂ ਕੋਡ ਮੰਗੋ',

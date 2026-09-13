@@ -1093,6 +1093,8 @@ export const jv: Dictionary = {
   '{count} notes went back.': '{count} cathetan wis dibalekake.',
   'The account keeps a month of versions of every note that syncs.':
     'Akun nyimpen versi sasi kanggo saben cathetan sing diselarasake.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Akun nyimpen versi taun kanggo saben cathetan sing diselarasake.',
   'That did not work.': 'Kuwi ora kasil.',
   'Signing in': 'Mlebu',
   'Ask for a code from an app': 'Njaluk kode saka aplikasi',

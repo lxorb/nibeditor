@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
 import type { Pane } from './preferences'
 import { type Place, search } from './settings-search'
@@ -124,5 +125,25 @@ describe('searching the settings', () => {
 
     const [field] = search('wait', panes, places)
     expect(field?.kind === 'field' ? field.pane.id : null).toBe('general')
+  })
+})
+
+/** Which of the hand-written panes the search knows about at all.
+ *
+ *  The list is a component's own derived rather than a module, so what is read here is
+ *  the source - the same reading i18n.test.ts does of the tree for the strings the app
+ *  asks for. The search itself is held to its answers above; what goes wrong in
+ *  practice is a row on a hand-written pane that nothing put in the list, which is a
+ *  setting nobody can find by typing its name. */
+describe('the hand-written panes the search knows about', () => {
+  const source = readFileSync(new URL('./SettingsPanel.svelte', import.meta.url), 'utf8')
+
+  test('name how long the account keeps a note’s history', () => {
+    expect(source).toContain("label: t('History on the account')")
+    expect(source).toContain("t('Keep versions')")
+  })
+
+  test('and the rescue under it, which is the one nobody wants to hunt for', () => {
+    expect(source).toContain("label: t('Go back')")
   })
 })

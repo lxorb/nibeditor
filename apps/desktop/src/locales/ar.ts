@@ -1192,6 +1192,8 @@ export const ar: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'يحفظ الحساب نسخ شهر لكل ملاحظة تتزامن.',
+  'The account keeps a year of versions of every note that syncs.':
+    'يحفظ الحساب نسخ سنة لكل ملاحظة تتزامن.',
   'That did not work.': 'لم ينجح ذلك.',
   'Signing in': 'جارٍ تسجيل الدخول',
   'Ask for a code from an app': 'طلب رمز من تطبيق',

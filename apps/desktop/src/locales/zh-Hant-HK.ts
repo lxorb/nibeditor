@@ -1074,6 +1074,8 @@ export const zhHantHK: Dictionary = {
   '{count} notes went back.': '{count}篇筆記已回溯。',
   'The account keeps a month of versions of every note that syncs.':
     '帳戶會為每篇同步的筆記保留一個月的版本。',
+  'The account keeps a year of versions of every note that syncs.':
+    '帳戶會為每篇同步的筆記保留一年的版本。',
   'That did not work.': '沒有成功。',
   'Signing in': '登入',
   'Ask for a code from an app': '要求應用程式提供驗證碼',

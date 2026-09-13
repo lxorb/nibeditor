@@ -1103,6 +1103,8 @@ export const hi: Dictionary = {
   '{count} notes went back.': { one: '{count} नोट पीछे गया।', other: '{count} नोट पीछे गए।' },
   'The account keeps a month of versions of every note that syncs.':
     'खाता हर सिंक होते नोट के एक महीने के वर्शन रखता है।',
+  'The account keeps a year of versions of every note that syncs.':
+    'खाता हर सिंक होते नोट के एक साल के वर्शन रखता है।',
   'That did not work.': 'वह काम नहीं आया।',
   'Signing in': 'साइन इन हो रहा है',
   'Ask for a code from an app': 'ऐप से कोड माँगें',

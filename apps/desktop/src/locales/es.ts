@@ -1140,6 +1140,8 @@ export const es: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'La cuenta guarda un mes de versiones de cada nota que se sincroniza.',
+  'The account keeps a year of versions of every note that syncs.':
+    'La cuenta guarda un año de versiones de cada nota que se sincroniza.',
   'That did not work.': 'Eso no funcionó.',
   'Signing in': 'Iniciando sesión',
   'Ask for a code from an app': 'Pedir un código a una app',

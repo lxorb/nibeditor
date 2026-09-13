@@ -1093,6 +1093,8 @@ export const ja: Dictionary = {
   '{count} notes went back.': '{count} 件のノートを戻しました。',
   'The account keeps a month of versions of every note that syncs.':
     'アカウントは同期する全ノートの版を 1 か月保持します。',
+  'The account keeps a year of versions of every note that syncs.':
+    'アカウントは同期する全ノートの版を 1 年保持します。',
   'That did not work.': 'うまくいきませんでした。',
   'Signing in': 'サインイン',
   'Ask for a code from an app': 'アプリのコードを要求する',

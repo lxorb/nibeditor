@@ -1124,6 +1124,8 @@ export const ha: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Asusu na riƙe sigogin wata ɗaya na kowane bayanin kula da ke daidaitawa.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Asusu na riƙe sigogin shekara ɗaya na kowane bayanin kula da ke daidaitawa.',
   'That did not work.': 'Wannan bai yi aiki ba.',
   'Signing in': 'Shiga',
   'Ask for a code from an app': 'Nemi lamba daga manhaja',

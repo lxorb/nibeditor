@@ -1095,6 +1095,8 @@ export const ms: Dictionary = {
   '{count} notes went back.': '{count} nota telah dikembalikan.',
   'The account keeps a month of versions of every note that syncs.':
     'Akaun menyimpan versi sebulan bagi setiap nota yang disegerakkan.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Akaun menyimpan versi setahun bagi setiap nota yang disegerakkan.',
   'That did not work.': 'Itu tidak berjaya.',
   'Signing in': 'Masuk',
   'Ask for a code from an app': 'Minta kod daripada satu aplikasi',

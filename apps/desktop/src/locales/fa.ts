@@ -1107,6 +1107,8 @@ export const fa: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'حساب یک ماه نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
+  'The account keeps a year of versions of every note that syncs.':
+    'حساب یک سال نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
   'That did not work.': 'آن کار نکرد.',
   'Signing in': 'ورود',
   'Ask for a code from an app': 'خواستن کد از یک برنامه',

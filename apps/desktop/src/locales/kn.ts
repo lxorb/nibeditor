@@ -1114,6 +1114,8 @@ export const kn: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ತಿಂಗಳ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
+  'The account keeps a year of versions of every note that syncs.':
+    'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ವರ್ಷದ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
   'That did not work.': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ.',
   'Signing in': 'ಸೈನ್ ಇನ್ ಆಗುತ್ತಿದೆ',
   'Ask for a code from an app': 'ಅಪ್ಲಿಕೇಶನ್‌ನಿಂದ ಕೋಡ್ ಕೇಳಿ',

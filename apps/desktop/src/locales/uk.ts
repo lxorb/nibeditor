@@ -1168,6 +1168,8 @@ export const uk: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Акаунт зберігає версії за місяць для кожної синхронізованої нотатки.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Акаунт зберігає версії за рік для кожної синхронізованої нотатки.',
   'That did not work.': 'Не вийшло.',
   'Signing in': 'Вхід',
   'Ask for a code from an app': 'Запитувати код із програми',

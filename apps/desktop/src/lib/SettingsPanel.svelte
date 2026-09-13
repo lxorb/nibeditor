@@ -86,6 +86,11 @@
         label: t('When the same note was written twice'),
         text: [t('Keep both copies'), t('Let the newest win'), t('Ask me each time')],
       },
+      {
+        section: 'sync',
+        label: t('History on the account'),
+        text: [t('Keep versions'), t('A month'), t('A year')],
+      },
       { section: 'sync', label: t('What synced'), text: [] },
       { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
       { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },

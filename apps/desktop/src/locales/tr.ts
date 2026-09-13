@@ -1106,6 +1106,8 @@ export const tr: Dictionary = {
   '{count} notes went back.': { one: '{count} not geri döndü.', other: '{count} not geri döndü.' },
   'The account keeps a month of versions of every note that syncs.':
     'Hesap, eşitlenen her notun bir aylık sürümlerini tutar.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Hesap, eşitlenen her notun bir yıllık sürümlerini tutar.',
   'That did not work.': 'Bu işe yaramadı.',
   'Signing in': 'Oturum açma',
   'Ask for a code from an app': 'Bir uygulamadan kod iste',

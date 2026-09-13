@@ -1124,6 +1124,8 @@ export const fil: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Itinatago ng account ang isang buwang bersyon ng bawat talang nagsi-sync.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Itinatago ng account ang isang taong bersyon ng bawat talang nagsi-sync.',
   'That did not work.': 'Hindi umubra.',
   'Signing in': 'Pag-sign in',
   'Ask for a code from an app': 'Humiling ng code mula sa app',

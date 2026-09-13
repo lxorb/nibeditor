@@ -1124,6 +1124,8 @@ export const de: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'Das Konto behält einen Monat Fassungen jeder synchronisierten Notiz.',
+  'The account keeps a year of versions of every note that syncs.':
+    'Das Konto behält ein Jahr Fassungen jeder synchronisierten Notiz.',
   'That did not work.': 'Das hat nicht funktioniert.',
   'Signing in': 'Anmeldung',
   'Ask for a code from an app': 'Code aus einer App verlangen',

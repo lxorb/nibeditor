@@ -1105,6 +1105,8 @@ export const bn: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক মাসের ভার্সন রাখে।',
+  'The account keeps a year of versions of every note that syncs.':
+    'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক বছরের ভার্সন রাখে।',
   'That did not work.': 'এটি কাজ করল না।',
   'Signing in': 'সাইন ইন হচ্ছে',
   'Ask for a code from an app': 'অ্যাপ থেকে কোড চান',

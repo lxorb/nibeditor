@@ -1107,6 +1107,8 @@ export const ps: Dictionary = {
   },
   'The account keeps a month of versions of every note that syncs.':
     'حساب د هرې همغږې يادښت يوه مياشت بڼې ساتي.',
+  'The account keeps a year of versions of every note that syncs.':
+    'حساب د هرې همغږې يادښت يو کال بڼې ساتي.',
   'That did not work.': 'هغه کار ونه کړ.',
   'Signing in': 'ننوتل',
   'Ask for a code from an app': 'له کاريال کوډ غوښتل',
