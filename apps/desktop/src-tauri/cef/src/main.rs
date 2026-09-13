@@ -136,7 +136,13 @@ mod tests {
             .filter(|line| line.contains('='))
             .collect();
 
-        for name in ["tauri ", "tauri-build ", "tauri-plugin ", "tauri-runtime ", "tauri-utils "] {
+        for name in [
+            "tauri ",
+            "tauri-build ",
+            "tauri-plugin ",
+            "tauri-runtime ",
+            "tauri-utils ",
+        ] {
             let line = patched
                 .iter()
                 .find(|line| line.starts_with(name))
