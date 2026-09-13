@@ -1336,4 +1336,7 @@ export const jv: Dictionary = {
   'A year': 'Setaun',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Kabèh saka dina pungkasan, banjur siji saben jam, siji saben dina sawisé sesasi, lan siji saben minggu sawisé telung sasi.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Cathetan iki wis gedhé kaya ukuran paling gedhé cathetan ing sawijining ruang.',
 }

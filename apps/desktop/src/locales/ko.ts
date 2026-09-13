@@ -1321,4 +1321,7 @@ export const ko: Dictionary = {
   'A year': '한 해',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '지난 하루는 모두, 그다음은 시간마다 하나, 한 달 뒤에는 하루에 하나, 세 달 뒤에는 주마다 하나.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    '이 노트는 룸에서 노트가 가질 수 있는 최대 크기입니다.',
 }

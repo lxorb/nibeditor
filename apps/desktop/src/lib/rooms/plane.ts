@@ -31,6 +31,8 @@ export interface Drawing {
   /** The room was thrown away and another will be built out of the file; see
    *  `REBUILT` in door.ts. */
   gone: () => void
+  /** The room will take no more strokes and said why; see `TOO_LARGE` in door.ts. */
+  refused: (said: string) => void
   /** Whether the surface above is still on the file this room was joined for.
    *
    *  A note's room asks the same question and says why at length; see `holds` in
@@ -62,6 +64,7 @@ export class PlaneRoom implements SharedPlane {
       caughtUp: () => this.together(),
       present: () => this.showHands(),
       gone: () => joining.gone(),
+      refused: (said) => joining.refused(said),
     })
 
     this.binding = new PlaneBinding(this.door.doc, joining.surface, () => this.holds())

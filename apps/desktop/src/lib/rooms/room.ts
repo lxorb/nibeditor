@@ -58,6 +58,9 @@ export interface Joining {
    *  `REBUILT` in door.ts. Nothing this room holds can carry on, so what answers is
    *  whoever paired the two: it lets this one go and joins again. */
   gone: () => void
+  /** The room will take no more keystrokes and said why; see `TOO_LARGE` in door.ts.
+   *  This one is let go and not joined again - the words carry on as the file's. */
+  refused: (said: string) => void
   /** Whether the document above is still on the file this room was joined for.
    *
    *  A document outlives the file in it: the one tab that previews a note takes
@@ -95,6 +98,7 @@ export class Room {
       caughtUp: () => this.together(),
       present: () => this.showPeers(),
       gone: () => joining.gone(),
+      refused: (said) => joining.refused(said),
     })
   }
 

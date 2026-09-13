@@ -1341,4 +1341,7 @@ export const ur: Dictionary = {
   'A year': 'ایک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'پچھلے دن کا سب کچھ، پھر ہر گھنٹے ایک، ایک ماہ بعد روز ایک، اور تین ماہ بعد ہفتے میں ایک۔',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'یہ نوٹ اُتنا بڑا ہو گیا ہے جتنا کسی روم میں کوئی نوٹ ہو سکتا ہے۔',
 }

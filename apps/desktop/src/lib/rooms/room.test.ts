@@ -146,6 +146,7 @@ function joining(
       return Promise.resolve(answer)
     },
     gone: () => undefined,
+    refused: () => undefined,
   })
 
   return { note, room, server, asked, socket: socketOf() }

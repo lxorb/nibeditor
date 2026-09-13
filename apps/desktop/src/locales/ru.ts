@@ -1409,4 +1409,7 @@ export const ru: Dictionary = {
   'A year': 'Год',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Всё за последние сутки, затем по одной в час, после месяца по одной в день, после трёх по одной в неделю.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Эта заметка достигла наибольшего размера, который может иметь заметка в комнате.',
 }

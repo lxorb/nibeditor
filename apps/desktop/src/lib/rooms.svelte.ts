@@ -17,6 +17,7 @@
 import { type EditorView, sharedOf } from '@nib/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
+import { busy } from './busy.svelte'
 import { without } from './records'
 import { roomKind } from './rooms/kind'
 import type { PlaneRoom } from './rooms/plane'
@@ -258,13 +259,20 @@ class Rooms {
    *  out of the file; see `REBUILT` in rooms/door.ts. So this one is let go and the
    *  pairing worked out again, which joins a room with a document of its own. */
   private rebuild(key: string) {
+    if (!this.letGo(key)) return
+    this.follow(this.open)
+  }
+
+  /** Lets one room go: left, forgotten, and nobody in it. Answers whether there was
+   *  one, so a caller that goes on to join another does not do it twice. */
+  private letGo(key: string): boolean {
     const joined = this.held.get(key)
-    if (!joined) return
+    if (!joined) return false
 
     joined.room.leave()
     this.held.delete(key)
     this.present = without(this.present, key)
-    this.follow(this.open)
+    return true
   }
 
   private join(key: string, open: Open, token: string) {
@@ -281,6 +289,17 @@ class Rooms {
     // looking. See rooms/peers.ts.
     const who = { name: deviceName(t('Browser')), accent: deviceAccent(), person: personName() }
     const gone = () => this.rebuild(key)
+
+    // The room will take no more keystrokes. Its own sentence is wire text for a
+    // client with nothing better; what a reader is shown is the app's own words, said
+    // once - the room is let go rather than rejoined, so there is no second keystroke
+    // to say it again. The note carries on as a file: what it holds is still this
+    // device's, and the file sync still writes it, which is where a note too large to
+    // save says so. See `refused` in rooms/door.ts.
+    const refused = () => {
+      this.letGo(key)
+      busy.failed(t('This note is as large as a note in a room may get.'))
+    }
 
     // Whether this document is still on the file this room is about. A document
     // outlives the file in it: the one tab that previews a note takes another note on
@@ -304,7 +323,16 @@ class Rooms {
     const arrivals = open.note.arrivals
     const holds = () => open.note.arrivals === arrivals
 
-    const shape = { noteId: open.noteId, token, who, scheme: theme.current, onPeers, gone, holds }
+    const shape = {
+      noteId: open.noteId,
+      token,
+      who,
+      scheme: theme.current,
+      onPeers,
+      gone,
+      refused,
+      holds,
+    }
 
     // Which shape of room this file wants is its name, and nothing about the tab; see
     // rooms/kind.ts, and `ready` above, which is what promises the plane is there.

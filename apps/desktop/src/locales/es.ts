@@ -1387,4 +1387,7 @@ export const es: Dictionary = {
   'A year': 'Un año',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Todo del último día, luego una por hora, una al día después de un mes y una por semana después de tres.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Esta nota es tan grande como puede llegar a ser una nota en una sala.',
 }

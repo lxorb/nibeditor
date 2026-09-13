@@ -184,6 +184,7 @@ function joining(file: Canvas, room: Canvas) {
     scheme: 'dark',
     onPeers: () => undefined,
     gone: () => undefined,
+    refused: () => undefined,
     holds: () => arrivals === 0,
   })
 

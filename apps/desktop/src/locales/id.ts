@@ -1342,4 +1342,7 @@ export const id: Dictionary = {
   'A year': 'Satu tahun',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Semua dari hari terakhir, lalu satu per jam, satu per hari setelah satu bulan, dan satu per minggu setelah tiga.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Catatan ini sudah sebesar ukuran maksimum catatan di sebuah ruang.',
 }

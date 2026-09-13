@@ -1324,4 +1324,7 @@ export const am: Dictionary = {
   'A year': 'አንድ ዓመት',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'የመጨረሻው ቀን ሁሉ፣ ከዚያ በሰዓት አንድ፣ ከወር በኋላ በቀን አንድ፣ ከሦስት ወር በኋላ በሳምንት አንድ።',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ይህ ማስታወሻ በክፍል ውስጥ ማስታወሻ ሊሆን የሚችለውን ከፍተኛ መጠን ደርሷል።',
 }

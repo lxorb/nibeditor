@@ -1330,4 +1330,7 @@ export const my: Dictionary = {
   'A year': 'တစ်နှစ်',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'နောက်ဆုံးတစ်ရက်အားလုံး၊ ထို့နောက် နာရီတစ်ခုလျှင် တစ်ခု၊ တစ်လအကြာတွင် ရက်တစ်ခုလျှင် တစ်ခု၊ သုံးလအကြာတွင် အပတ်တစ်ခုလျှင် တစ်ခု။',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ဤမှတ်စုသည် အခန်းတစ်ခုအတွင်း မှတ်စုတစ်ခု ရှိနိုင်သည့် အကြီးဆုံးအရွယ်အစား ဖြစ်သည်။',
 }

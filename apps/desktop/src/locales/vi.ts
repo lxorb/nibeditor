@@ -1330,4 +1330,7 @@ export const vi: Dictionary = {
   'A year': 'Một năm',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tất cả của ngày cuối, rồi mỗi giờ một bản, sau một tháng mỗi ngày một bản, và sau ba tháng mỗi tuần một bản.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Ghi chú này đã lớn hết mức mà một ghi chú trong một phòng có thể lớn.',
 }

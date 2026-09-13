@@ -1341,4 +1341,7 @@ export const bn: Dictionary = {
   'A year': 'এক বছর',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'শেষ দিনের সবকিছু, তারপর ঘণ্টায় একটি, এক মাস পরে দিনে একটি, আর তিন মাস পরে সপ্তাহে একটি।',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'একটি রুমে একটি নোট যত বড় হতে পারে, এই নোটটি তত বড় হয়ে গেছে।',
 }

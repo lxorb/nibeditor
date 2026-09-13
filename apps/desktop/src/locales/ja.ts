@@ -1337,4 +1337,7 @@ export const ja: Dictionary = {
   'A year': '1 年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '直近 1 日はすべて、その後は 1 時間ごと、1 か月を過ぎると 1 日ごと、3 か月を過ぎると 1 週間ごと。',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'このノートは、ルーム内のノートが取れる最大の大きさです。',
 }

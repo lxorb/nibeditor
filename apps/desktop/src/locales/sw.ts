@@ -1368,4 +1368,7 @@ export const sw: Dictionary = {
   'A year': 'Mwaka mmoja',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Kila kitu cha siku ya mwisho, kisha moja kwa saa, moja kwa siku baada ya mwezi, na moja kwa wiki baada ya miezi mitatu.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Noti hii imefikia ukubwa wa juu kabisa ambao noti katika chumba inaweza kuwa.',
 }

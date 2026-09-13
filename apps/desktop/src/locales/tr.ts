@@ -1346,4 +1346,7 @@ export const tr: Dictionary = {
   'A year': 'Bir yıl',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Son günün tamamı, sonra saatte bir, bir aydan sonra günde bir, üç aydan sonra haftada bir.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Bu not, bir odadaki bir notun olabileceği en büyük boyutta.',
 }

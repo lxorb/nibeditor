@@ -1335,4 +1335,7 @@ export const gu: Dictionary = {
   'A year': 'એક વર્ષ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'છેલ્લા દિવસનું બધું, પછી કલાકે એક, એક મહિના પછી દિવસે એક, અને ત્રણ પછી અઠવાડિયે એક.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'આ નોંધ રૂમમાં કોઈ નોંધ જેટલી મોટી થઈ શકે તેટલી મોટી થઈ ગઈ છે.',
 }

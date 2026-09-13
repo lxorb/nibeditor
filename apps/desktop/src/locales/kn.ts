@@ -1355,4 +1355,7 @@ export const kn: Dictionary = {
   'A year': 'ಒಂದು ವರ್ಷ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'ಕೊನೆಯ ದಿನದ ಎಲ್ಲವೂ, ನಂತರ ಗಂಟೆಗೆ ಒಂದು, ಒಂದು ತಿಂಗಳ ನಂತರ ದಿನಕ್ಕೆ ಒಂದು, ಮೂರು ತಿಂಗಳ ನಂತರ ವಾರಕ್ಕೆ ಒಂದು.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ಈ ನೋಟ್ ಒಂದು ಕೋಣೆಯಲ್ಲಿ ನೋಟ್ ಆಗಬಹುದಾದ ಗರಿಷ್ಠ ಗಾತ್ರವನ್ನು ತಲುಪಿದೆ.',
 }

@@ -25,7 +25,7 @@ const sockets = vi.hoisted(() => {
   interface Wire {
     opened: () => void
     heard: (message: Uint8Array) => void
-    closed: (code: number) => void
+    closed: (code: number, said: string) => void
   }
 
   class FakeSocket {
@@ -50,11 +50,13 @@ const sockets = vi.hoisted(() => {
       this.wire.opened()
     }
 
-    /** The room's end going, with the code it went with. 1012 is what the service
-     *  closes with when it has thrown a room away and will build another. */
-    went(code: number) {
+    /** The room's end going, with the code it went with and whatever it said. 1012
+     *  is what the service closes with when it has thrown a room away and will build
+     *  another; 1009 is what it closes with when the document has reached the size a
+     *  document may be, and then the words are the reason. */
+    went(code: number, said = '') {
       this.up = false
-      this.wire.closed(code)
+      this.wire.closed(code, said)
     }
 
     take(): Uint8Array[] {
@@ -93,6 +95,17 @@ vi.mock('./who', () => ({
 vi.mock('../account.svelte', () => ({ account: { token: 'session', name: null } }))
 vi.mock('../theme.svelte', () => ({ theme: { current: 'dark' } }))
 vi.mock('../i18n.svelte', () => ({ t: (text: string) => text, key: (text: string) => text }))
+
+/** What the line across the top was told, which is the one thing a reader sees when
+ *  a room refuses them. Filled by the mock below. */
+const said: string[] = []
+
+vi.mock('../busy.svelte', () => ({
+  busy: {
+    failed: (reason: string) => said.push(reason),
+    start: () => undefined,
+  },
+}))
 
 const { rooms } = await import('../rooms.svelte')
 const { record } = await import('../sync/record.svelte')
@@ -425,5 +438,55 @@ describe('a room the service threw away and will build again', () => {
     // Which is what hands the file back to the file sync for the moment in
     // between; see `caughtUp` in rooms/door.ts.
     expect(rooms.joined.has('note-1')).toBe(false)
+  })
+})
+
+/** 1009 is the service saying the document has reached the size a document may be,
+ *  and the words it closes with are why. Nothing is retried and nothing is rebuilt:
+ *  reconnecting would be the same refusal on the next keystroke, so the room is let
+ *  go and the note carries on as a file. See `TOO_LARGE` in door.ts and `full` in
+ *  services/sync/src/rooms/state.ts. */
+describe('a room that will take no more keystrokes', () => {
+  const TOO_LARGE = 1009
+  const SAID = 'this note is as large as a note in a room may get'
+
+  beforeEach(() => {
+    said.length = 0
+  })
+
+  test('is let go rather than joined again', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+    expect(rooms.joined.has('note-1')).toBe(true)
+
+    socket.went(TOO_LARGE, SAID)
+
+    // One socket, stopped: a second would be closed again on the next keystroke.
+    expect(socket.stopped).toBe(true)
+    expect(sockets.opened).toHaveLength(1)
+    expect(rooms.joined.has('note-1')).toBe(false)
+  })
+
+  test('and says so once, in the app’s own words', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(TOO_LARGE, SAID)
+
+    expect(said).toEqual(['This note is as large as a note in a room may get.'])
+  })
+
+  test('while the words carry on being written into the file', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(TOO_LARGE, SAID)
+    note.live.replace('# A\nstill typing\n')
+    note.flush()
+
+    expect(words(note)).toBe('# A\nstill typing\n')
   })
 })

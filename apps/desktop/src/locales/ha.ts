@@ -1369,4 +1369,7 @@ export const ha: Dictionary = {
   'A year': 'Shekara daya',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Duk na ranar da ta gabata, sannan daya a kowace awa, daya a kowace rana bayan wata daya, da daya a kowane mako bayan uku.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Wannan rubutu ya kai girman da rubutu zai iya kaiwa a cikin ɗaki.',
 }

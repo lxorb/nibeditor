@@ -1348,4 +1348,7 @@ export const pa: Dictionary = {
   'A year': 'ਇੱਕ ਸਾਲ',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'ਪਿਛਲੇ ਦਿਨ ਦਾ ਸਭ ਕੁਝ, ਫਿਰ ਘੰਟੇ ਵਿੱਚ ਇੱਕ, ਮਹੀਨੇ ਬਾਅਦ ਦਿਨ ਵਿੱਚ ਇੱਕ, ਅਤੇ ਤਿੰਨ ਬਾਅਦ ਹਫ਼ਤੇ ਵਿੱਚ ਇੱਕ।',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ਇਹ ਨੋਟ ਓਨਾ ਵੱਡਾ ਹੋ ਗਿਆ ਹੈ ਜਿੰਨਾ ਇੱਕ ਕਮਰੇ ਵਿੱਚ ਕੋਈ ਨੋਟ ਹੋ ਸਕਦਾ ਹੈ।',
 }

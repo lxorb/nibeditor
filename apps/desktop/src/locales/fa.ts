@@ -1345,4 +1345,7 @@ export const fa: Dictionary = {
   'A year': 'یک سال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'همه‌چیز از روز گذشته، سپس یکی در هر ساعت، پس از یک ماه یکی در روز، و پس از سه ماه یکی در هفته.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'این یادداشت به بزرگ‌ترین اندازه‌ای رسیده که یک یادداشت در یک اتاق می‌تواند داشته باشد.',
 }

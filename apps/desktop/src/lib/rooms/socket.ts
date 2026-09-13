@@ -18,11 +18,13 @@ export interface Wire {
   /** The socket is open and nothing has been said over it yet. */
   opened: () => void
   heard: (message: Uint8Array) => void
-  /** It has gone, and another will be along - with the code it went with, because
-   *  one of them means the room on the other end is not the room this document was
-   *  talking to any more. Whoever is listening may call `stop` from in here, and
-   *  nothing will be reconnected; see door.ts. */
-  closed: (code: number) => void
+  /** It has gone, and another will be along - with the code and the words it went
+   *  with, because two of the codes mean another will not do: one says the room on
+   *  the other end is not the room this document was talking to any more, and one
+   *  says the room will take no more keystrokes and the words are why. Whoever is
+   *  listening may call `stop` from in here, and nothing will be reconnected; see
+   *  door.ts. */
+  closed: (code: number, said: string) => void
 }
 
 /** Where a note's room lives. */
@@ -111,8 +113,10 @@ export class RoomSocket {
 
       this.socket = null
       // Said first, so that a listener which decides this socket is not to come
-      // back can stop it before the wait for the next one is set going.
-      this.wire.closed(event.code)
+      // back can stop it before the wait for the next one is set going. The reason
+      // is the service's own sentence where it sent one; every code but two closes
+      // with none, and those two are the ones a reader hears about.
+      this.wire.closed(event.code, event.reason)
       this.again()
     }
 

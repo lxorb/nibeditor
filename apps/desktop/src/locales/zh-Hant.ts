@@ -1307,4 +1307,7 @@ export const zhHant: Dictionary = {
   'A year': '一年',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     '最近一天的全部，之後每小時一個，一個月後每天一個，三個月後每週一個。',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    '這則筆記已達到房間中筆記可以達到的最大大小。',
 }

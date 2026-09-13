@@ -110,6 +110,11 @@ export interface Joining {
  *  sitting a room stays awake for, and a bound on rows a close never came for. */
 const OPEN_FOR = 24 * 60 * 60 * 1000
 
+/** What a socket is closed with when the room will take no more keystrokes: the web
+ *  socket's own "message too big", which is what this is. The client knows the code
+ *  and shows the reason; see `TOO_LARGE` in apps/desktop/src/lib/rooms/door.ts. */
+const TOO_LARGE = 1009
+
 /** What a room kept about itself, read back. A room written down before there
  *  were two kinds says nothing about which it is, and a note is what it was. */
 function heldIn(value: unknown): Held | null {
@@ -431,16 +436,18 @@ export class NoteRoom implements DurableObject {
     // snapshot growing on every settle, its every wake reading all of it. See `full`
     // in state.ts.
     //
-    // The socket is left open. Closing it would be the honest answer if the client
-    // could hear the reason, and it cannot: the app reads the code and not the
-    // words, and every code it knows means either "come back" or "join another
-    // room" - so a close here is a rejoin, another keystroke, another close. What it
-    // does instead is stop sharing the words while the file itself goes on saving
-    // the ordinary way, where a note past `MAX_NOTE_BYTES` is refused in as many
-    // words. Said in the log once per update rather than counted, because a room
-    // that reaches this is a room worth reading about.
+    // The socket is closed with the reason, which is 1009 - the web socket's own
+    // "message too big". The client stops on that code rather than reconnecting and
+    // says so once; the note then carries on as a file, where a save too large is
+    // refused in as many words. Dropping the update and leaving the socket open was
+    // the first answer here, from before the client could hear a reason: it left
+    // somebody typing into a room that was throwing the keystrokes away without a
+    // word, which is the worst of the three. See `TOO_LARGE` in
+    // apps/desktop/src/lib/rooms/door.ts.
     if (isEdit(said) && this.state.full()) {
       noted(`room ${this.held?.noteId ?? 'unknown'}`, new Error(TOO_LARGE_IN_A_ROOM), null)
+      forget(this.awareness, announcedBy(socket), socket)
+      socket.close(TOO_LARGE, TOO_LARGE_IN_A_ROOM)
       return
     }
     const answer = receive(said, this.state.doc, this.awareness, socket)

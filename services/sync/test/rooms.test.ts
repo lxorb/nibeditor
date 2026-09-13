@@ -6,6 +6,7 @@ import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } fr
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
 import { roomsRevoked } from '../src/rooms'
+import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'
 import { NoteRoom } from '../src/rooms/room'
 import { call, signIn, type ShareView, type TestEnv, testEnv } from './harness'
@@ -1787,6 +1788,66 @@ describe('a file that changed which kind of room it is', () => {
 /** Who a revocation reaches, which is every file they have open rather than the
  *  first fifty rows of them: the checks a socket was let in on are made at the
  *  handshake and never again, so a room nobody told goes on writing. */
+/** A document has a ceiling: past it the room refuses the update before applying it -
+ *  an update applied is in the document for good - and closes the socket with 1009 and
+ *  the reason, which the app reads and says once. See `full` in rooms/state.ts and
+ *  `TOO_LARGE` in apps/desktop/src/lib/rooms/door.ts. */
+describe('a room whose document has reached its ceiling', () => {
+  let env: TestEnv
+  let token: string
+  let spaceId: string
+  let noteId: string
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'writer@example.com')
+
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    spaceId = space.json.space.id
+
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token,
+      body: { path: 'together.md', content: OPENING },
+    })
+    noteId = note.json.note.id
+  })
+
+  afterEach(() => env.close())
+
+  test('closes the socket that typed past it, with the reason', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    // One insert rather than a million keystrokes: the ceiling is about the size of
+    // the document, however it got there. This one is taken - it is what carries the
+    // document over the line - and what follows it is not.
+    await say(made, state, one.socket, one.type(0, 'x'.repeat(MOST_DOCUMENT_BYTES)))
+    expect(one.socket.closed).toBe(false)
+
+    await say(made, state, one.socket, one.type(0, 'one more keystroke'))
+
+    expect(one.socket.closedWith?.code).toBe(1009)
+    expect(one.socket.closedWith?.reason).toBe(TOO_LARGE_IN_A_ROOM)
+  })
+
+  test('and keeps the words it had rather than the ones it refused', async () => {
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+
+    const content = (): Promise<string> =>
+      call(env, `/v1/notes/${noteId}`, { token }).then((read) => read.json.content)
+
+    await say(made, state, one.socket, one.type(0, 'x'.repeat(MOST_DOCUMENT_BYTES)))
+    const held = await content()
+
+    await say(made, state, one.socket, one.type(0, 'refused'))
+
+    // Nothing of the refused keystroke reached the store, and the note is what it
+    // was: a settle past `MAX_NOTE_BYTES` is refused on its own terms.
+    expect(await content()).toBe(held)
+  })
+})
+
 describe('telling the rooms somebody has been taken out of a space', () => {
   let told: TestEnv
 

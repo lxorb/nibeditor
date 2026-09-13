@@ -1364,4 +1364,7 @@ export const ta: Dictionary = {
   'A year': 'ஒரு ஆண்டு',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'கடந்த நாளின் அனைத்தும், பிறகு மணிக்கு ஒன்று, ஒரு மாதத்திற்குப் பிறகு நாளுக்கு ஒன்று, மூன்றுக்குப் பிறகு வாரத்திற்கு ஒன்று.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ஒரு அறையில் ஒரு குறிப்பு எவ்வளவு பெரியதாக இருக்க முடியுமோ அந்த அளவை இந்தக் குறிப்பு அடைந்துவிட்டது.',
 }

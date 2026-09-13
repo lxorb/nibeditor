@@ -1353,4 +1353,7 @@ export const gsw: Dictionary = {
   'A year': 'Es Jahr',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Alles vom letzte Tag, dänn eini pro Stund, nach eim Monet eini pro Tag, nach drü eini pro Wuche.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Die Notiz isch so gross, wie e Notiz in eme Ruum cha wärde.',
 }

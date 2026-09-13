@@ -1345,4 +1345,7 @@ export const te: Dictionary = {
   'A year': 'ఒక సంవత్సరం',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'చివరి రోజు అంతా, తర్వాత గంటకు ఒకటి, ఒక నెల తర్వాత రోజుకు ఒకటి, మూడు నెలల తర్వాత వారానికి ఒకటి.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ఒక గదిలో ఒక నోట్ ఎంత పెద్దదిగా ఉండగలదో ఈ నోట్ అంత పెద్దదైంది.',
 }

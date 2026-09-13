@@ -1345,4 +1345,7 @@ export const ps: Dictionary = {
   'A year': 'یو کال',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'د تېرې ورځې هر څه، بیا هر ساعت یوه، له یوې میاشتې وروسته هره ورځ یوه، او له درېو وروسته هره اونۍ یوه.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'دا یادښت هومره لوی شوی دی چې په یوه کوټه کې یو یادښت کېدای شي.',
 }

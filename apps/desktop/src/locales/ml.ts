@@ -1361,4 +1361,7 @@ export const ml: Dictionary = {
   'A year': 'ഒരു വർഷം',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'കഴിഞ്ഞ ദിവസത്തെ എല്ലാം, പിന്നെ മണിക്കൂറിൽ ഒന്ന്, ഒരു മാസത്തിന് ശേഷം ദിവസത്തിൽ ഒന്ന്, മൂന്നിന് ശേഷം ആഴ്ചയിൽ ഒന്ന്.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'ഒരു റൂമിൽ ഒരു കുറിപ്പിന് ആകാവുന്ന ഏറ്റവും വലിയ വലുപ്പത്തിൽ ഈ കുറിപ്പ് എത്തി.',
 }

@@ -1427,4 +1427,7 @@ export const ar: Dictionary = {
   'A year': 'سنة',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'كل شيء من اليوم الأخير، ثم واحدة كل ساعة، وواحدة كل يوم بعد شهر، وواحدة كل أسبوع بعد ثلاثة.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'وصلت هذه الملاحظة إلى أقصى حجم يمكن أن تبلغه ملاحظة في غرفة.',
 }

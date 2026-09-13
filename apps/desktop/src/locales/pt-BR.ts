@@ -1372,4 +1372,7 @@ export const ptBR: Dictionary = {
   'A year': 'Um ano',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Tudo do último dia, depois uma por hora, uma por dia após um mês e uma por semana após três.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Esta nota está do tamanho máximo que uma nota em uma sala pode ter.',
 }

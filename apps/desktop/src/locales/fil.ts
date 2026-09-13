@@ -1374,4 +1374,7 @@ export const fil: Dictionary = {
   'A year': 'Isang taon',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Lahat mula sa huling araw, pagkatapos isa kada oras, isa kada araw pagkalipas ng isang buwan, at isa kada linggo pagkalipas ng tatlo.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Kasinglaki na ng pinakamalaking posibleng laki ng tala sa isang silid ang talang ito.',
 }

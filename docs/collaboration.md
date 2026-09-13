@@ -172,9 +172,13 @@ Both keys are numbered six digits wide and are put back in the order of the numb
 rather than of the text, so the tenth piece cannot land before the ninth. And the
 document has a ceiling: twice `MAX_NOTE_BYTES`, measured off the encoding a snapshot
 was making anyway, checked before an update is applied because an update applied is
-in the document for good. Past it the room stops taking keystrokes, says so in the
-log, and stays a room that opens - the file itself goes on saving the ordinary way,
-where a note too large is refused in as many words. Nothing else was a ceiling: the
+in the document for good. Past it the room closes that socket with
+1009 - the web socket's own "message too big" - and the sentence as the reason: the
+app knows the code, stops rather than reconnecting, says the sentence once in its own
+words and lets the room go, and the note carries on as a file, where a save too large
+is refused in as many words. Dropping the update and leaving the socket open was the
+first answer, from before the client could read a reason; it left somebody typing into
+a room that was throwing the keystrokes away without a word. Nothing else was a ceiling: the
 settle refuses a file over `MAX_NOTE_BYTES` and the quota counts what the note store
 holds, so a document past either was storage nobody was charged for and nobody could
 read. See `full` in `rooms/state.ts`.

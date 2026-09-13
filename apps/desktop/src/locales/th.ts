@@ -1313,4 +1313,7 @@ export const th: Dictionary = {
   'A year': 'หนึ่งปี',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'ทั้งหมดของวันล่าสุด แล้วชั่วโมงละหนึ่ง หลังหนึ่งเดือนวันละหนึ่ง และหลังสามเดือนสัปดาห์ละหนึ่ง',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'บันทึกนี้ใหญ่ที่สุดเท่าที่บันทึกในห้องจะเป็นได้แล้ว',
 }

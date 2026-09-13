@@ -1344,4 +1344,7 @@ export const mr: Dictionary = {
   'A year': 'एक वर्ष',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'शेवटच्या दिवसाचे सर्व, नंतर तासाला एक, महिन्यानंतर दिवसाला एक, आणि तीन महिन्यांनंतर आठवड्याला एक.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'या नोंदीने रूममधील नोंद जितकी मोठी असू शकते तितका आकार गाठला आहे.',
 }

@@ -1341,4 +1341,7 @@ export const ms: Dictionary = {
   'A year': 'Setahun',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Semua dari hari terakhir, kemudian satu sejam, satu sehari selepas sebulan, dan satu seminggu selepas tiga.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Nota ini sudah sebesar nota dalam sebuah bilik boleh jadi.',
 }

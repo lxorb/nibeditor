@@ -1342,4 +1342,7 @@ export const hi: Dictionary = {
   'A year': 'एक साल',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'पिछले दिन का सब कुछ, फिर हर घंटे एक, एक महीने बाद रोज़ एक, और तीन महीने बाद हफ़्ते में एक।',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'यह नोट उतना बड़ा हो गया है जितना किसी रूम में कोई नोट हो सकता है।',
 }

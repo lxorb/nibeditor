@@ -49,6 +49,18 @@ export const HERE = 'here'
  *  than added together. See `gone` below, and rooms.svelte.ts. */
 const REBUILT = 1012
 
+/** The room will take no more keystrokes: its document has reached the size a
+ *  document may be, and the closing words say so.
+ *
+ *  1009 is the web socket's own "message too big", which is exactly this: the room
+ *  refuses the update rather than applying it, because an update applied is in the
+ *  document for good. Not retried either, for the same reason `REBUILT` is not -
+ *  reconnecting changes nothing, and a socket that came back to be closed on the next
+ *  keystroke would be a room saying the same thing all afternoon. The note itself
+ *  goes on saving the ordinary way, where a file too large is refused in as many
+ *  words; see `full` in services/sync/src/rooms/state.ts. */
+const TOO_LARGE = 1009
+
 /** What this device calls itself in a room, and the colour it wears there. Both
  *  names travel; which one is drawn belongs to whoever is looking. See who.ts. */
 export interface Who {
@@ -71,6 +83,10 @@ export interface Opening {
    *  will be built out of the file. Nothing here can carry on, so whoever joined
    *  this room is asked to let it go and join again; see `REBUILT`. */
   gone: () => void
+  /** The room will take no more keystrokes, and the words it closed with say why.
+   *  Said once rather than on every keystroke: the room is let go rather than
+   *  rejoined, so there is nothing left to refuse. See `TOO_LARGE`. */
+  refused: (said: string) => void
 }
 
 export class RoomDoor {
@@ -98,7 +114,7 @@ export class RoomDoor {
     this.socket = new RoomSocket(opening.noteId, opening.token, {
       opened: () => this.greet(),
       heard: (message) => void this.hear(message),
-      closed: (code) => this.went(code),
+      closed: (code, said) => this.went(code, said),
     })
 
     this.awareness.setLocalStateField('who', this.who)
@@ -199,10 +215,20 @@ export class RoomDoor {
    *  the room having been thrown away, and then there is nothing here to reconnect -
    *  the socket is stopped, which the socket allows from inside this very call, and
    *  whoever joined the room is asked to join another. */
-  private went(code: number) {
+  private went(code: number, said: string) {
     if (code === REBUILT) {
       this.socket.stop()
       this.opening.gone()
+      return
+    }
+
+    // The one close a reader has to hear about. Nothing is retried and nothing is
+    // rebuilt: the words are this device's own from here, and whoever joined the
+    // room is told so once; see `TOO_LARGE`.
+    if (code === TOO_LARGE) {
+      this.socket.stop()
+      this.alone()
+      this.opening.refused(said)
       return
     }
 

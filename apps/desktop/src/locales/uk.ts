@@ -1405,4 +1405,7 @@ export const uk: Dictionary = {
   'A year': 'Рік',
   'Everything from the last day, then one an hour, one a day after a month, one a week after three.':
     'Усе за останню добу, потім по одній на годину, після місяця по одній на день, а після трьох по одній на тиждень.',
+  // A room that will take no more keystrokes; see rooms/door.ts.
+  'This note is as large as a note in a room may get.':
+    'Ця нотатка досягла найбільшого розміру, який може мати нотатка в кімнаті.',
 }
