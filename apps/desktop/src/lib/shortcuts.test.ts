@@ -66,7 +66,14 @@ async function currentModes() {
 /** A keystroke, as the window would hand one over. */
 function press(
   key: string,
-  held: { code?: string; ctrl?: boolean; alt?: boolean; shift?: boolean } = {},
+  held: {
+    code?: string
+    ctrl?: boolean
+    alt?: boolean
+    shift?: boolean
+    /** Whether a surface has already taken it, which the window's handler reads. */
+    answered?: boolean
+  } = {},
 ) {
   return {
     key,
@@ -75,6 +82,7 @@ function press(
     metaKey: false,
     altKey: !!held.alt,
     shiftKey: !!held.shift,
+    defaultPrevented: !!held.answered,
     preventDefault: () => undefined,
   } as unknown as KeyboardEvent
 }
@@ -555,6 +563,26 @@ describe('the keyboard', () => {
     expect(opened).toBe(1)
   })
 
+  /** A press a surface has already answered is spent.
+   *
+   *  The plane takes Ctrl+Alt+0 to fit itself and the app takes Ctrl+0 for the size, so
+   *  those two no longer meet - but the plane, the page column and the editor all hold
+   *  keys the app holds too, and every one of them says it took the press the same way.
+   *  The window's handler is the last one to run, so it stands down. */
+  test('a key a surface has answered is not the app’s as well', () => {
+    const { shortcuts } = registry
+    let opened = 0
+    const context = { palette: () => opened++, fullscreen: () => undefined }
+
+    const answered = press('p', { ctrl: true, code: 'KeyP', answered: true })
+
+    expect(shortcuts.handle(answered, context)).toBe(false)
+    expect(opened).toBe(0)
+    // And one nothing answered still is.
+    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(true)
+    expect(opened).toBe(1)
+  })
+
   test('follows a rebind straight away', () => {
     const { shortcuts } = registry
     let opened = 0
@@ -681,36 +709,57 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
   })
 
-  /** The rule that cost a day.
+  /** The rule that cost a day, in both directions.
    *
-   *  CodeMirror reads a character key held with a modifier twice: once as it
-   *  arrived and once without the shift, because on a great many layouts the shift
-   *  is how you type that character at all. For a letter that is harmless, since
-   *  the shifted letter and the letter are different names for the key. For a
-   *  digit it is not: on AZERTY the digit *is* the shifted character, so
-   *  Ctrl+Shift+3 arrives as Ctrl+Shift+"3", is read a second time as Ctrl+3, and
-   *  fires the heading level as well as whatever the app meant by it.
+   *  A digit held with a modifier is read twice. CodeMirror reads a character key as
+   *  it arrived and again without the shift, because on a great many layouts the shift
+   *  is how that character is typed at all; and the app reads a chord that wants a
+   *  digit and no shift by the key underneath, for the same reason and on purpose -
+   *  that is what makes Ctrl+0 reach the text size on AZERTY. See `matchesCombination`
+   *  in keys.ts.
    *
-   *  So no app key may be Mod+Shift and a digit the editor holds on Mod alone.
-   *  See runHandlers in @codemirror/view. */
-  test.each(PLATFORMS)('never shadow an editor digit through the shift (%s)', (platform) => {
-    const editorDigits = new Set(
-      registry.SHORTCUTS.filter((one) => one.scope === 'editor')
-        .map((one) => defaultKeyFor(one, platform))
-        .filter((key): key is string => !!key)
-        .map((key) => /^Mod-([0-9])$/.exec(key)?.[1])
-        .filter((digit): digit is string => !!digit),
-    )
+   *  Either way round it comes to the same thing: `Mod-Shift-<digit>` and
+   *  `Mod-<digit>` are one press on a keyboard where the digit is the shifted
+   *  character, so nothing may hold one while anything holds the other. Both halves
+   *  are checked, because the pair that bit first was an app key shadowing an editor
+   *  one and the pair that would bite next is the other way about. */
+  test.each(PLATFORMS)('never put two things on one digit through the shift (%s)', (platform) => {
+    const digitsOn = (pattern: RegExp) =>
+      new Map(
+        registry.SHORTCUTS.map((one) => ({ id: one.id, key: defaultKeyFor(one, platform) }))
+          .flatMap((one) => {
+            const digit = one.key === null ? null : (pattern.exec(one.key)?.[1] ?? null)
+            return digit ? [[digit, `${one.id} on ${one.key ?? ''}`] as const] : []
+          })
+          .map(([digit, said]) => [digit, said]),
+      )
 
-    const guilty = registry.SHORTCUTS.filter((one) => one.scope === 'app')
-      .map((one) => ({ id: one.id, key: defaultKeyFor(one, platform) }))
-      .filter((one) => {
-        const digit = one.key === null ? undefined : /^Mod-Shift-([0-9])$/.exec(one.key)?.[1]
-        return !!digit && editorDigits.has(digit)
-      })
-      .map((one) => `${one.id} on ${one.key ?? ''}`)
+    const plain = digitsOn(/^Mod-([0-9])$/)
+    const shifted = digitsOn(/^Mod-Shift-([0-9])$/)
 
-    expect(guilty, `these fire an editor command as well: ${guilty.join(', ')}`).toEqual([])
+    const guilty = [...shifted]
+      .filter(([digit]) => plain.has(digit))
+      .map(([digit, said]) => `${said} fires ${plain.get(digit) ?? ''} as well`)
+
+    expect(guilty, guilty.join(', ')).toEqual([])
+  })
+
+  /** The three keys Emil asked for by name, and what they used to be.
+   *
+   *  Every browser, Obsidian and Typora change the size of the words with these, so a
+   *  reader tries them before they try a shortcut list. Pinned here because moving
+   *  them back would be a decision and not a slip. */
+  test('change the size of the words, the way every browser does', () => {
+    expect(registry.shortcuts.keyFor('app.zoom-in')).toBe('Mod-=')
+    expect(registry.shortcuts.keyFor('app.zoom-out')).toBe('Mod--')
+    expect(registry.shortcuts.keyFor('app.zoom-reset')).toBe('Mod-0')
+  })
+
+  test('and the three that were on them are one modifier over', () => {
+    expect(registry.shortcuts.keyFor('paragraph.heading-up')).toBe('Mod-Shift-=')
+    expect(registry.shortcuts.keyFor('paragraph.heading-down')).toBe('Mod-Shift--')
+    // A letter rather than Ctrl+Shift+0, which on AZERTY is Ctrl+0 all over again.
+    expect(registry.shortcuts.keyFor('paragraph.body')).toBe('Mod-Shift-p')
   })
 })
 

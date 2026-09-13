@@ -125,15 +125,24 @@ export const nibBindings: BindingSpec[] = [
   // left free is a chord somebody can spend on what they do write often.
   { id: 'format.comment', key: null, run: insertComment, preventDefault: true },
 
-  { id: 'paragraph.body', key: 'Mod-0', run: setHeading(0), preventDefault: true },
+  // Ctrl+Shift+P rather than Ctrl+0, and the two below are Ctrl+Shift rather than
+  // Ctrl. Those three keys are the text size now, which is what a browser, Obsidian
+  // and Typora all do with them and what a reader tries first; the levels keep the
+  // digits, because Ctrl+1 to Ctrl+6 are nobody else's.
+  //
+  // Paragraph takes a letter rather than Ctrl+Shift+0, which is where Notion puts it:
+  // on AZERTY the nought needs Shift, so Ctrl+Shift+0 cannot be pressed there without
+  // also being Ctrl+0, and Ctrl+0 is now the size. A letter cannot be read that way
+  // round. See the digit rule in the app's shortcuts.test.ts.
+  { id: 'paragraph.body', key: 'Mod-Shift-p', run: setHeading(0), preventDefault: true },
   { id: 'paragraph.heading-1', key: 'Mod-1', run: setHeading(1), preventDefault: true },
   { id: 'paragraph.heading-2', key: 'Mod-2', run: setHeading(2), preventDefault: true },
   { id: 'paragraph.heading-3', key: 'Mod-3', run: setHeading(3), preventDefault: true },
   { id: 'paragraph.heading-4', key: 'Mod-4', run: setHeading(4), preventDefault: true },
   { id: 'paragraph.heading-5', key: 'Mod-5', run: setHeading(5), preventDefault: true },
   { id: 'paragraph.heading-6', key: 'Mod-6', run: setHeading(6), preventDefault: true },
-  { id: 'paragraph.heading-up', key: 'Mod-=', run: shiftHeading(1), preventDefault: true },
-  { id: 'paragraph.heading-down', key: 'Mod--', run: shiftHeading(-1), preventDefault: true },
+  { id: 'paragraph.heading-up', key: 'Mod-Shift-=', run: shiftHeading(1), preventDefault: true },
+  { id: 'paragraph.heading-down', key: 'Mod-Shift--', run: shiftHeading(-1), preventDefault: true },
 
   // Ctrl+T opens a new note, the way it opens a tab anywhere else; the table
   // keeps a chord of its own.

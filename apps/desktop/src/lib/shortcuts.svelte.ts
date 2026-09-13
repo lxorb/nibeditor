@@ -275,6 +275,15 @@ class Shortcuts {
   /** Runs whatever the keystroke is bound to at app level. True when it did,
    *  which is the caller's signal that the key is spent. */
   handle(event: KeyboardEvent, context: AppContext): boolean {
+    // A press a surface has already answered is spent. This is the window's own
+    // handler and the last one to run, so anything that stopped the default did it
+    // on purpose: the plane takes Ctrl+0 to fit itself, and the same key resets the
+    // text size, and only one of those is what somebody on a plane meant. The rule is
+    // the one the wheel already follows - see `sizeStepFor` in text-size.ts - and it
+    // is what makes a `contextual` binding work as the registry describes it: one that
+    // found nothing to do stops nothing, so the app still gets the key.
+    if (event.defaultPrevented) return false
+
     for (const entry of SHORTCUTS) {
       if (entry.scope !== 'app' || !entry.run) continue
 

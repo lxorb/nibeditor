@@ -1286,10 +1286,11 @@ Features Typora does not have, which are the reason this exists.
       on every platform - changes the app's own text size in steps, and says what
       it has become as a badge that goes on its own. Never the webview's zoom:
       that would scale the panel and the tab strip with the words, would not be
-      remembered, and would not reach the phone or the browser build. The keys
-      stay where Typora's are - Ctrl+Shift+= and Ctrl+Shift+-, with Ctrl+Alt+0 for
-      actual size - because Ctrl+= and Ctrl+- are Heading up and Heading down in
-      the editor and Ctrl+0 is Paragraph
+      remembered, and would not reach the phone or the browser build. The keys are
+      the three every browser and every editor use - Ctrl+=, Ctrl+- and Ctrl+0, and
+      Ctrl+0 by the key underneath so it reads the same on AZERTY. Heading up,
+      heading down and Paragraph, which held them, are one modifier over at
+      Ctrl+Shift+=, Ctrl+Shift+- and Ctrl+Shift+P
 - [x] The bar over the keyboard on a phone holds any command from the app's own
       registry, chosen in Settings > Mobile and kept on the account beside the
       shortcuts. The nine it has always held are the default, so nothing changes

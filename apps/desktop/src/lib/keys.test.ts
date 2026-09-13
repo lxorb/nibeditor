@@ -96,6 +96,69 @@ describe('matching a keystroke against a binding', () => {
     ).toBe(true)
   })
 
+  /** The layout rule this exists for.
+   *
+   *  On AZERTY the digits are the shifted characters of the top row: a French reader
+   *  pressing what is printed as Ctrl+0 is holding Shift down, because Shift is how
+   *  that key makes a nought at all. Matching the modifiers exactly means Ctrl+0 is a
+   *  chord nobody on that keyboard can press - which is what kept the text size from
+   *  resetting there - so a digit is matched by the key underneath rather than by what
+   *  the layout printed on it.
+   *
+   *  Digits only, and only where the chord asks for no Shift. A letter is not read
+   *  this way round: the shifted letter and the letter are two names for one key, so
+   *  relaxing it there would make Ctrl+Shift+E fire Ctrl+E as well. */
+  test('a digit answers to its own key, whatever the layout needs to type it', () => {
+    // A US keyboard, where the nought needs nothing.
+    expect(matchesCombination('Mod-0', press('0', { ctrlKey: true, code: 'Digit0' }), 'win')).toBe(
+      true,
+    )
+    // AZERTY, pressing the same physical key with Shift, which is how a nought is typed.
+    expect(
+      matchesCombination(
+        'Mod-0',
+        press('0', { ctrlKey: true, shiftKey: true, code: 'Digit0' }),
+        'win',
+      ),
+    ).toBe(true)
+    // And AZERTY without the Shift, where the same key makes an à.
+    expect(matchesCombination('Mod-0', press('à', { ctrlKey: true, code: 'Digit0' }), 'win')).toBe(
+      true,
+    )
+  })
+
+  test('but a letter still wants the Shift it was written with', () => {
+    expect(
+      matchesCombination(
+        'Mod-e',
+        press('E', { ctrlKey: true, shiftKey: true, code: 'KeyE' }),
+        'win',
+      ),
+    ).toBe(false)
+    expect(
+      matchesCombination(
+        'Mod-Shift-e',
+        press('E', { ctrlKey: true, shiftKey: true, code: 'KeyE' }),
+        'win',
+      ),
+    ).toBe(true)
+  })
+
+  test('and Shift written into the chord is still wanted exactly', () => {
+    // Ctrl+Shift+0 is not Ctrl+0 with Shift allowed: nothing is bound to it, and a
+    // chord that answered both would be the clash the digit rule is about.
+    expect(
+      matchesCombination('Mod-Shift-0', press('0', { ctrlKey: true, code: 'Digit0' }), 'win'),
+    ).toBe(false)
+    expect(
+      matchesCombination(
+        'Mod-=',
+        press('+', { ctrlKey: true, shiftKey: true, code: 'Equal' }),
+        'win',
+      ),
+    ).toBe(false)
+  })
+
   test('wants the modifiers exactly', () => {
     expect(matchesCombination('Mod-s', press('s', { ctrlKey: true, code: 'KeyS' }), 'win')).toBe(
       true,

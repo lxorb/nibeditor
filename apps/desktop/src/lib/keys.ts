@@ -173,12 +173,30 @@ export function readCombination(event: Keystroke, platform: Platform): string | 
   return writeCombination({ ...down, key }, platform)
 }
 
+/** Whether a chord's key is a digit, which is the one class of key a layout puts
+ *  behind Shift. See `matchesCombination`. */
+function isDigit(key: string): boolean {
+  return key.length === 1 && key >= '0' && key <= '9'
+}
+
 /** Whether a keystroke is the written combination.
  *
  *  Both names of the key are allowed - the character it produced and the key
  *  it was - so `Mod-Shift-3` answers to Ctrl+Shift+3 on a layout where that
  *  makes a `#` and on one where it makes a `§`. The modifiers have to match
- *  exactly: Ctrl+Alt+S is not Ctrl+S with something extra held down. */
+ *  exactly: Ctrl+Alt+S is not Ctrl+S with something extra held down.
+ *
+ *  With one exception, and it is a whole keyboard's worth. On AZERTY the digits are
+ *  the shifted characters of the top row: Shift is how that row makes a nought at
+ *  all, so a French reader pressing what is printed as Ctrl+0 has Shift down, and
+ *  exact modifiers made Ctrl+0 a chord nobody there could press. Every browser reads
+ *  its own Ctrl+0 by the key rather than by the character, and so does this: where
+ *  the chord wants a digit and no Shift, the key underneath decides and the Shift the
+ *  layout needed is forgiven.
+ *
+ *  Digits only. A letter is two names for one key - `E` and `e` - so forgiving Shift
+ *  there would make Ctrl+Shift+E fire Ctrl+E as well, and a chord that asks for Shift
+ *  is still matched exactly, so nothing can be both. */
 export function matchesCombination(text: string, event: Keystroke, platform: Platform): boolean {
   const wanted = parseCombination(text, platform)
   if (!wanted) return false
@@ -187,7 +205,13 @@ export function matchesCombination(text: string, event: Keystroke, platform: Pla
   if (wanted.ctrl !== down.ctrl) return false
   if (wanted.meta !== down.meta) return false
   if (wanted.alt !== down.alt) return false
-  if (wanted.shift !== down.shift) return false
+
+  if (wanted.shift !== down.shift) {
+    // The one forgiveness, and the code has to name the very key: a digit typed on a
+    // layout that needs Shift for it.
+    if (wanted.shift || !isDigit(wanted.key)) return false
+    return wanted.key === unshifted(event)
+  }
 
   return wanted.key === normalizeKey(event.key) || wanted.key === unshifted(event)
 }

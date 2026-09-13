@@ -657,12 +657,17 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'F11',
     run: (context) => context.fullscreen(),
   },
+  // The three keys every browser and every editor changes the size of the words
+  // with. They are the note's own text size here - `--zoom`, never the webview's; see
+  // text-size.ts - and they are these three keys because a reader who wants bigger
+  // words does not read a shortcut list first. Heading up, heading down and Paragraph
+  // used to hold them and are one modifier over now; see keymap.ts in the editor.
   {
     id: 'app.zoom-in',
     label: () => t('Zoom in'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Shift-=',
+    key: 'Mod-=',
     run: () => modes.stepZoom(1),
   },
   {
@@ -670,21 +675,20 @@ const APP_ENTRIES: Shortcut[] = [
     label: () => t('Zoom out'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Shift--',
+    key: 'Mod--',
     run: () => modes.stepZoom(-1),
   },
   {
-    // Not on Ctrl+Shift+0, where the other two zoom keys would put it. Ctrl+0 is
-    // Paragraph in the editor, and on a layout where the digit is the shifted
-    // character - French, and every other AZERTY - the editor reads Ctrl+Shift+0 as
-    // Ctrl+0 as well and flattens the heading the caret is in. So it goes one
-    // modifier over, where it still reads as the 0 every browser resets with.
-    // See the digit rule in shortcuts.test.ts.
+    // A digit, which is the one kind of key a layout puts behind Shift: on AZERTY the
+    // nought is Shift and the top row, so Ctrl+0 arrives with Shift down. It is
+    // matched by the key underneath rather than by the character, which is what every
+    // browser does with its own Ctrl+0; see `matchesCombination` in keys.ts and the
+    // digit rule in shortcuts.test.ts.
     id: 'app.zoom-reset',
     label: () => t('Actual size'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-Alt-0',
+    key: 'Mod-0',
     run: () => modes.resetZoom(),
   },
 ]
@@ -848,7 +852,12 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.ungroup', () => t('Ungroup'), 'u'],
     ['canvas.delete', () => t('Delete what is picked'), 'Delete'],
     ['canvas.duplicate', () => t('Duplicate'), 'Mod-d'],
-    ['canvas.fit', () => t('Fit the canvas'), 'Mod-0'],
+    // One modifier over from the 0 a zoom is reset with everywhere else, because the
+    // app's own text size holds that one now: the press is read off the plane and goes
+    // on to the window afterwards, so leaving both there would fit the plane and resize
+    // the words from one key. The same trade the plane's Ctrl+1 makes under the
+    // Obsidian preset; see presets.ts.
+    ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
     ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],
