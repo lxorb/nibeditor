@@ -118,9 +118,12 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
 ///   by policy lands, and nib's own interface is the named profile beside it; see
 ///   this file's comment.
 #[cfg(all(desktop, not(feature = "cef")))]
-#[allow(
-    dead_code,
-    reason = "web_tabs.rs is being reworked next door and adopts this call there; until then the seam is held by the tests beside it and by the flagged build"
+#[cfg_attr(
+    target_os = "macos",
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "the seam is one signature for every engine and platform; only the Windows and Linux path reaches the disk and can fail, and the caller returns Result either way"
+    )
 )]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
@@ -142,8 +145,8 @@ pub(crate) fn web_store<R: Runtime>(
 /// profile, which is the one line of this seam that is a decision. See above.
 #[cfg(feature = "cef")]
 #[allow(
-    dead_code,
-    reason = "web_tabs.rs is being reworked next door and adopts this call there; the gate goes through the command that file already has"
+    clippy::unnecessary_wraps,
+    reason = "the seam is one signature for every engine and platform; the system engine's path can fail and the caller returns Result either way"
 )]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
