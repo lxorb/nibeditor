@@ -170,13 +170,16 @@ jobs:
 
       # A moved pin is a new resolution: the lock file is regenerated rather than
       # honoured, and the new one is part of what the pull request carries.
+      # Inside the workspace: see cef.yml for why the directory matters.
       - name: The flagged build
+        working-directory: apps/desktop/src-tauri/cef
         run: |
-          cargo generate-lockfile --manifest-path apps/desktop/src-tauri/cef/Cargo.toml
-          cargo build --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --release
+          cargo generate-lockfile
+          cargo build --release
 
       - name: Tests under the flag
-        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml
+        working-directory: apps/desktop/src-tauri/cef
+        run: cargo test
 
       # The same staging cef.yml does: the engine's own files beside the binary,
       # found rather than assumed. See that file for why.

@@ -153,9 +153,13 @@ jobs:
       # `--locked`, because the lock file beside the manifest is part of the pin:
       # it is what fixes the commit of the `winit-gtk4` fork the `dpi` patch points
       # at, which is a branch and therefore moves.
+      # Run from inside the workspace, not with `--manifest-path` from here: the
+      # engine's Windows libraries want the static CRT, and the Cargo config that
+      # asks for it is only read from the directory a build runs in upwards. See
+      # apps/desktop/src-tauri/cef/.cargo/config.toml.
       - name: The flagged build
-        run: |
-          cargo build --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --release --locked
+        working-directory: apps/desktop/src-tauri/cef
+        run: cargo build --release --locked
 
       # Everything Chromium has to find beside the binary, in one folder: that is
       # how a release ships it, it is what the loader looks for on Windows and what
@@ -209,7 +213,8 @@ jobs:
       # ones check.yml runs, here to say they still pass beside the other engine.
       - name: Tests under the flag
         if: always()
-        run: cargo test --manifest-path apps/desktop/src-tauri/cef/Cargo.toml --locked
+        working-directory: apps/desktop/src-tauri/cef
+        run: cargo test --locked
 
       - name: The crate's own tests
         if: always()
