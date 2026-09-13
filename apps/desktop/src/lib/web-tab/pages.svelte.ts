@@ -70,11 +70,12 @@ const LOOK_WAITS = 500
 /** How long the engine is given to photograph itself, for the one caller that has to
  *  wait for it.
  *
- *  A page is normally photographed on the press that is about to open something over
- *  it, which costs the overlay nothing at all. This is the cap for an overlay that
- *  arrived without a press, where the menu is behind the page until the picture lands
- *  and a slow picture would be worse than none. */
-const SHOT_WAITS = 120
+ *  A page is normally photographed on the press that is about to open something over it
+ *  and again as it finishes loading, which costs the overlay nothing at all: the picture
+ *  is already there. This is the cap for the one case that has to wait - the first thing
+ *  ever drawn over a page nothing has photographed - and it is set from what the engine
+ *  actually takes, which is about 105 ms for a pane-sized PNG on this machine. */
+const SHOT_WAITS = 300
 
 /** Where the pane left room for the page, in the window's own pixels. */
 export interface Rect {
@@ -193,6 +194,13 @@ export class Page {
   shot = $state<string | null>(null)
   /** When that picture was taken, so two overlays in a row share one. */
   shotAt = 0
+
+  /** Whether the webview is on screen at this moment.
+   *
+   *  Not drawn and not reactive: it is here so that nothing photographs a page that is
+   *  out of sight. A hidden webview has no composited frame to hand over, and a blank
+   *  picture would be worse than none - it is what the pane holds under the next menu. */
+  shown = false
 
   /** The file this tab is showing, or null for a tab with no file yet. Set by the
    *  pane, because the store keeps what is about the page and the tab keeps what is
@@ -352,10 +360,21 @@ class Pages {
     }
 
     if (!page.live) return
-    if (covering) await this.shoot(tabId)
+
+    // Something is about to be drawn over the page, so the page is photographed first -
+    // and how long that may hold the overlay up depends on whether there is already a
+    // picture. A page with none pays for one, because a menu over an empty pane is what
+    // this is here to stop; a page with one from a moment ago is hidden at once and the
+    // new picture lands under the menu. The engine takes about a tenth of a second over
+    // it, measured; see `SHOT_WAITS`.
+    if (covering) {
+      if (page.shot === null) await this.shoot(tabId)
+      else void this.shoot(tabId)
+    }
 
     try {
       await invoke('web_place', { tab: tabId, pane, visible })
+      page.shown = visible
     } catch {
       // The webview has gone - the window closed under it, or the page was taken
       // down while this was in the air. The next show opens it again.
@@ -441,7 +460,7 @@ class Pages {
    *  it opens share one. */
   async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live) return
+    if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
 
     try {
@@ -624,9 +643,14 @@ class Pages {
       if (said.url && !page.typing) page.url = said.url
       if (said.title) page.title = said.title
       if (said.icon) page.icon = said.icon
+
       // The page has arrived, so the picture of the last one is no longer a picture of
-      // this page. Nothing is drawn from it while the webview is on top.
-      if (!said.loading) page.shot = null
+      // this page - and the new one is taken now rather than when something is waiting
+      // for it. Nothing is drawn from either while the webview is on top.
+      if (!said.loading) {
+        page.shot = null
+        void this.shoot(said.tab)
+      }
     })
   }
 }
