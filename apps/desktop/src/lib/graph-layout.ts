@@ -3,12 +3,13 @@
  *
  *  Three forces, the usual ones. Linked notes are held a fixed distance apart,
  *  every note pushes every other away, and a weak pull towards the middle keeps
- *  the notes nothing links to from drifting off for ever. Two of the three are the
- *  reader's: how hard the notes push, and whether the middle pulls at all. The
- *  third is what a link means and is not up for discussion. A cooling factor
- *  shrinks all three by the same amount each tick, so the picture arrives at an
- *  arrangement and holds it: once the factor is spent, `tick` does nothing at
- *  all, which is what keeps a graph nobody is touching off the processor.
+ *  the notes nothing links to from drifting off for ever. All three are the reader's,
+ *  from one Forces group on the graph's card: how far apart a link holds two notes,
+ *  how hard the notes push, how much more of that push than the arrangement does
+ *  unasked, and whether the middle pulls at all. A cooling factor shrinks all three
+ *  by the same amount each tick, so the picture arrives at an arrangement and holds
+ *  it: once the factor is spent, `tick` does nothing at all, which is what keeps a
+ *  graph nobody is touching off the processor.
  *
  *  Pushing every note away from every other is the expensive half - two thousand
  *  notes are four million pairs a tick, which no frame has room for. So the
@@ -26,10 +27,13 @@
 
 import type { NoteGraph } from './graph'
 
-/** How far apart two linked notes want to sit, in graph units. */
+/** How far apart two linked notes want to sit, in graph units, where the card has
+ *  not said. The card's Link distance dial starts here. */
 const DISTANCE = 36
 /** How hard notes push each other apart, before the reader's own spread is
- *  applied. Negative, being a repulsion. */
+ *  applied, where the card has not said. Negative, being a repulsion; the dial on the
+ *  card says the same number the other way up, because a reader asking for more push
+ *  is asking for a bigger number. */
 const REPULSION = -150
 /** The pull towards the middle, as a fraction of the distance from it. */
 const GRAVITY = 0.055
@@ -97,6 +101,16 @@ export interface LayoutOptions {
    *  drift out as far as the cooling lets them rather than sitting in a ring, which
    *  is what a reader looking at the connected middle of a space wants. */
   gather?: boolean
+  /** How far apart two linked notes want to sit, in graph units. `DISTANCE` where
+   *  nothing says: what a link means, which used to be the one force nobody could
+   *  ask about. A short distance draws the clusters tight and a long one lets a chain
+   *  of notes read as a chain. */
+  distance?: number
+  /** How hard every note pushes every other away, as the positive number the card's
+   *  dial says: the layout turns it round, being a repulsion. `spread` is still a
+   *  multiple of it, so the two compose - this is what the arrangement does unasked,
+   *  and that is how much more of it the reader wants. */
+  push?: number
 }
 
 export class Layout {
@@ -120,17 +134,21 @@ export class Layout {
 
   private readonly count: number
   private warmth = 1
-  /** The two forces a reader can ask about, settled at construction: the layout is
-   *  built afresh when either changes, since an arrangement half laid out under one
+  /** The forces a reader can ask about, settled at construction: the layout is built
+   *  afresh when any of them changes, since an arrangement half laid out under one
    *  spread and half under another is neither. */
   private readonly repulsion: number
   private readonly gravity: number
+  private readonly distance: number
 
   constructor(graph: NoteGraph, options: LayoutOptions = {}) {
     const count = graph.nodes.length
     this.count = count
-    this.repulsion = REPULSION * (options.spread ?? 1)
+    // The card says how hard the notes push as a positive number, and the spread is
+    // still a multiple of it: one is what the arrangement does unasked.
+    this.repulsion = -Math.abs(options.push ?? -REPULSION) * (options.spread ?? 1)
     this.gravity = options.gather === false ? 0 : GRAVITY
+    this.distance = options.distance ?? DISTANCE
 
     this.x = new Float64Array(count)
     this.y = new Float64Array(count)
@@ -223,11 +241,11 @@ export class Layout {
     if (this.warmth < DRAG_WARMTH) this.warmth = DRAG_WARMTH
   }
 
-  /** One spring per link, pulling the two ends towards `DISTANCE` apart. Reads
+  /** One spring per link, pulling the two ends towards `distance` apart. Reads
    *  the speeds as well as the positions, the way Verlet integration wants: the
    *  correction is against where the two ends are about to be. */
   private spring(warmth: number) {
-    const { x, y, vx, vy, from, to, pull, bias } = this
+    const { x, y, vx, vy, from, to, pull, bias, distance } = this
 
     for (let edge = 0; edge < from.length; edge++) {
       const a = from[edge] ?? 0
@@ -237,7 +255,7 @@ export class Layout {
       let dy = (y[b] ?? 0) + (vy[b] ?? 0) - ((y[a] ?? 0) + (vy[a] ?? 0))
       const length = Math.sqrt(dx * dx + dy * dy) || NEAREST_SQUARED
 
-      const force = ((length - DISTANCE) / length) * warmth * (pull[edge] ?? 1)
+      const force = ((length - distance) / length) * warmth * (pull[edge] ?? 1)
       dx *= force
       dy *= force
 

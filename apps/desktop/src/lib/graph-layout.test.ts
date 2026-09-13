@@ -198,7 +198,12 @@ describe('the forces a reader can ask about', () => {
     )
   }
 
-  const settled = (options: { spread?: number; gather?: boolean }) => {
+  const settled = (options: {
+    spread?: number
+    gather?: boolean
+    distance?: number
+    push?: number
+  }) => {
     const layout = new Layout(shape(), options)
     rested(layout)
     return layout
@@ -227,8 +232,42 @@ describe('the forces a reader can ask about', () => {
     expect(outFrom(loose)).toBeGreaterThan(outFrom(gathered))
   })
 
+  /** What a link means, which used to be the one force nobody could ask about: a
+   *  short distance draws the clusters tight, a long one lets a chain read as a
+   *  chain. The defaults are what the arrangement has always done, so a card nobody
+   *  has touched lays out exactly as it did. */
+  test('a longer link holds its two ends further apart', () => {
+    const near = away(settled({ distance: 12 }), 0, 1)
+    const far = away(settled({ distance: 96 }), 0, 1)
+
+    expect(far).toBeGreaterThan(near * 2)
+  })
+
+  test('and a harder push opens the gaps the links are not holding', () => {
+    const apart = (layout: Layout) => away(layout, 7, 8) / away(layout, 0, 1)
+
+    expect(apart(settled({ push: 400 }))).toBeGreaterThan(apart(settled({ push: 40 })) * 1.5)
+  })
+
+  /** The dial says a positive number and the layout is a repulsion, so the sign is
+   *  the layout's business; asking for the push either way round is the same picture. */
+  test('and the push is a size rather than a direction', () => {
+    expect(positions(settled({ push: 220 }))).toEqual(positions(settled({ push: -220 })))
+  })
+
+  /** The spread is still a multiple of the push, so the two compose rather than
+   *  fighting: twice the push is the same arrangement as twice the spread. */
+  test('and the spread is still a multiple of it', () => {
+    expect(positions(settled({ push: 300 }))).toEqual(positions(settled({ spread: 2 })))
+  })
+
+  test('and saying nothing about either is the arrangement the picture always had', () => {
+    expect(positions(settled({}))).toEqual(positions(settled({ distance: 36, push: 150 })))
+  })
+
   test('and both are still arrangements that arrive', () => {
     expect(settled({ spread: 4, gather: false }).settled).toBe(true)
+    expect(settled({ distance: 96, push: 400 }).settled).toBe(true)
   })
 })
 

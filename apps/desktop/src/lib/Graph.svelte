@@ -206,27 +206,29 @@
     current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
   )
 
-  /** What the arrangement is of: the graph itself, and the two forces that decide
-   *  where a note goes.
+  /** What the arrangement is of: the graph itself, and the forces that decide where
+   *  a note goes.
    *
    *  As one string, and that is the point of it. The settings are one object behind
    *  one getter, so reading `spread` off it makes the effect that reads it follow
    *  every setting there is - and an effect that laid five thousand notes out again
    *  because an arrowhead was switched on is four seconds of the picture unforming
    *  and forming. A derived that answers the same string wakes nothing. */
-  const arrangedBy = $derived([settings.spread, settings.gather, shape].join('\n'))
+  const arrangedBy = $derived(
+    [settings.spread, settings.gather, settings.distance, settings.push, shape].join('\n'),
+  )
 
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
   // A different graph is a different arrangement, framed afresh. The same graph
   // handed over again is not, so the view stays where the reader left it. And the
-  // two forces are in the string it follows because they are the only things the
-  // reader can ask for that change where a note goes.
+  // forces are in the string it follows because they are the only things the reader
+  // can ask for that change where a note goes.
   $effect(() => {
     follows(arrangedBy)
     // Untracked, and that is the whole of the guard: `rebuild` reads the graph and
-    // both forces itself, so an effect that simply called it would follow every one
+    // every force itself, so an effect that simply called it would follow every one
     // of them - the graph is handed over afresh whenever anything in the space is
     // saved, and the settings are one object, so a note being written or an
     // arrowhead being switched on would each lay five thousand notes out again. The
@@ -295,7 +297,12 @@
   })
 
   function rebuild() {
-    layout = new Layout(graph, { spread: settings.spread, gather: settings.gather })
+    layout = new Layout(graph, {
+      spread: settings.spread,
+      gather: settings.gather,
+      distance: settings.distance,
+      push: settings.push,
+    })
     lit = new Uint8Array(graph.nodes.length)
     hovered = -1
     remask()

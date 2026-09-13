@@ -36,6 +36,8 @@ const DRAWN = {
   groups: [{ query: 'tag:work', colour: 2 }],
   spread: 1.5,
   gather: false,
+  distance: 60,
+  push: 220,
   arrows: true,
   sized: false,
   lines: 3,
@@ -104,6 +106,13 @@ describe('what a space may say about its graph', () => {
     expect((await put({ lines: 9 })).json.graph).toEqual({ lines: 3 })
     expect((await put({ lines: 0 })).json.graph).toEqual({ lines: 1 })
     expect((await put({ lines: 'thick' })).json.graph).toEqual({})
+  })
+
+  test('and a link distance or a push outside the dials is held to them', async () => {
+    expect((await put({ distance: 900 })).json.graph).toEqual({ distance: 96 })
+    expect((await put({ distance: 1 })).json.graph).toEqual({ distance: 12 })
+    expect((await put({ push: 9000 })).json.graph).toEqual({ push: 400 })
+    expect((await put({ push: 1 })).json.graph).toEqual({ push: 40 })
   })
 
   test('and a text fade outside what the dial offers is held to it', async () => {

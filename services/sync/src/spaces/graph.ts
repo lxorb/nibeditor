@@ -32,6 +32,13 @@ const LONGEST_QUERY = 200
  *  its own. */
 const LEAST_SPREAD = 0.25
 const MOST_SPREAD = 4
+/** How far apart a link may be asked to hold two notes, in graph units, and how hard
+ *  every note may be asked to push every other away. The app's dials go exactly this
+ *  far. */
+const LEAST_DISTANCE = 12
+const MOST_DISTANCE = 96
+const LEAST_PUSH = 40
+const MOST_PUSH = 400
 /** How many links out the picture beside one note may reach; the app's slider goes
  *  exactly this far. */
 const SHALLOWEST = 1
@@ -58,6 +65,8 @@ interface GraphSettings {
   groups?: ColourGroup[]
   spread?: number
   gather?: boolean
+  distance?: number
+  push?: number
   arrows?: boolean
   sized?: boolean
   lines?: number
@@ -140,6 +149,12 @@ function settingsOf(value: object): GraphSettings {
 
   const gather = switched(sent.gather)
   if (gather !== undefined) out.gather = gather
+
+  const distance = held(sent.distance, LEAST_DISTANCE, MOST_DISTANCE)
+  if (distance !== undefined) out.distance = Math.round(distance)
+
+  const push = held(sent.push, LEAST_PUSH, MOST_PUSH)
+  if (push !== undefined) out.push = Math.round(push)
 
   const arrows = switched(sent.arrows)
   if (arrows !== undefined) out.arrows = arrows

@@ -45,6 +45,17 @@ const SETTLING = 700
 export const LEAST_SPREAD = 0.25
 export const MOST_SPREAD = 4
 
+/** How far apart a link may be asked to hold two notes, in graph units. The middle of
+ *  the range is what the arrangement does unasked; short draws the clusters tight and
+ *  long lets a chain of notes read as a chain. See `distance` in graph-layout.ts. */
+export const LEAST_DISTANCE = 12
+export const MOST_DISTANCE = 96
+
+/** How hard every note may be asked to push every other away, before the spread is
+ *  applied. See `push` in graph-layout.ts. */
+export const LEAST_PUSH = 40
+export const MOST_PUSH = 400
+
 /** How many links out the picture beside a note may reach.
  *
  *  One is what it opens at: the notes around this one, which is the question the
@@ -91,6 +102,10 @@ export interface GraphSettings {
   /** Whether the pull towards the middle is on, which is what keeps the notes
    *  nothing links to in a ring rather than letting them drift. */
   gather: boolean
+  /** How far apart a link holds two notes, in graph units. */
+  distance: number
+  /** How hard every note pushes every other away, before the spread. */
+  push: number
   /** Whether a link is drawn with a head saying which note reached for which. */
   arrows: boolean
   /** Whether a note with more links is drawn bigger. */
@@ -115,6 +130,10 @@ export const DEFAULT_GRAPH: GraphSettings = {
   groups: [],
   spread: 1,
   gather: true,
+  // What the arrangement has always done: `DISTANCE` and `REPULSION` in
+  // graph-layout.ts, so a dial nobody has touched changes nothing.
+  distance: 36,
+  push: 150,
   // Off: a graph says "these two are connected", and a space where most links are
   // read both ways is a space full of arrowheads saying nothing. On when the
   // question is which note reached for which.
@@ -168,6 +187,10 @@ export function graphSettingsOf(value: unknown): GraphSettings {
     groups: groupsOf(value.groups),
     spread: held(value.spread, LEAST_SPREAD, MOST_SPREAD, DEFAULT_GRAPH.spread),
     gather: isBoolean(value.gather) ? value.gather : DEFAULT_GRAPH.gather,
+    distance: Math.round(
+      held(value.distance, LEAST_DISTANCE, MOST_DISTANCE, DEFAULT_GRAPH.distance),
+    ),
+    push: Math.round(held(value.push, LEAST_PUSH, MOST_PUSH, DEFAULT_GRAPH.push)),
     arrows: isBoolean(value.arrows) ? value.arrows : DEFAULT_GRAPH.arrows,
     sized: isBoolean(value.sized) ? value.sized : DEFAULT_GRAPH.sized,
     lines: Math.round(held(value.lines, LEAST_LINES, MOST_LINES, DEFAULT_GRAPH.lines)),

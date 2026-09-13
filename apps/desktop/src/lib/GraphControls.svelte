@@ -20,15 +20,20 @@
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
+  import Twist from './Twist.svelte'
   import { workspace } from './workspace.svelte'
   import {
     DEEPEST,
+    LEAST_DISTANCE,
     LEAST_FADE,
     LEAST_LINES,
+    LEAST_PUSH,
     LEAST_SPREAD,
+    MOST_DISTANCE,
     MOST_FADE,
     MOST_GROUPS,
     MOST_LINES,
+    MOST_PUSH,
     MOST_SPREAD,
     SHALLOWEST,
   } from './workspace/graph-settings.svelte'
@@ -64,6 +69,11 @@
 
   const settings = $derived(workspace.graphSettings.here)
   const spread = $derived(settings.spread)
+
+  /** Whether the forces are let out. Here rather than in the space's settings: it is
+   *  a disclosure, not a fact about the picture, and a card that remembered which of
+   *  its groups was open on every machine signed in would be syncing furniture. */
+  let forcing = $state(false)
 
   // Escape closes it, like everything else the app puts over a note; see
   // overlays.ts, which is also what keeps this press from reaching the graph's own
@@ -217,39 +227,86 @@
 
       <div class="rule"></div>
 
-      <!-- The one force worth a dial. Two of the four the layout has are about how
-           it settles rather than about the picture it settles into, and the third
-           is what a link means; this is the ratio a reader can actually feel. See
-           graph-layout.ts.
+      <!-- Everything that decides where a note goes, folded away behind one row.
+           All four of them, because the layout has four and a reader who wants a
+           denser picture of a dense space has no other way to ask: how far apart a
+           link holds two notes, how hard the notes push, how much more of that push
+           than the arrangement does unasked, and whether the middle pulls at all.
+           See graph-layout.ts.
 
-           Named, like the switches under it, rather than a bare slider with a
+           Folded, because these are the four a reader touches once and then leaves,
+           and a card is quiet or it is a settings panel. The twist is the file
+           tree's - one disclosure in the app, one shape; see Twist.svelte.
+
+           Each named, like the switches above, rather than a bare slider with a
            number beside it: a dial in a pen's popover is about the pen, and a dial
-           in a card of six things has to say which of the six it is. -->
-      <div class="dial">
-        <span>{t('Spread')}</span>
-        <input
-          class="nib-slider"
-          type="range"
-          min={LEAST_SPREAD}
-          max={MOST_SPREAD}
-          step="0.25"
-          value={spread}
-          aria-label={t('Spread')}
-          style:--fill="{((spread - LEAST_SPREAD) / (MOST_SPREAD - LEAST_SPREAD)) * 100}%"
-          oninput={(event) =>
-            workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
-        />
-      </div>
-
-      <button
-        class="nib-row"
-        role="switch"
-        aria-checked={settings.gather}
-        onclick={() => workspace.graphSettings.set({ gather: !settings.gather })}
-      >
-        <span class="nib-row-label">{t('Gather')}</span>
-        <span class="nib-switch" class:on={settings.gather} aria-hidden="true"></span>
+           in a card of a dozen things has to say which of them it is. -->
+      <button class="nib-row" aria-expanded={forcing} onclick={() => (forcing = !forcing)}>
+        <span class="nib-row-label">{t('Forces')}</span>
+        <span class="chevron"><Twist open={forcing} /></span>
       </button>
+
+      {#if forcing}
+        <div class="dial">
+          <span>{t('Spread')}</span>
+          <input
+            class="nib-slider"
+            type="range"
+            min={LEAST_SPREAD}
+            max={MOST_SPREAD}
+            step="0.25"
+            value={spread}
+            aria-label={t('Spread')}
+            style:--fill="{((spread - LEAST_SPREAD) / (MOST_SPREAD - LEAST_SPREAD)) * 100}%"
+            oninput={(event) =>
+              workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
+          />
+        </div>
+
+        <div class="dial">
+          <span>{t('Link distance')}</span>
+          <input
+            class="nib-slider"
+            type="range"
+            min={LEAST_DISTANCE}
+            max={MOST_DISTANCE}
+            step="4"
+            value={settings.distance}
+            aria-label={t('Link distance')}
+            style:--fill="{((settings.distance - LEAST_DISTANCE) /
+              (MOST_DISTANCE - LEAST_DISTANCE)) *
+              100}%"
+            oninput={(event) =>
+              workspace.graphSettings.set({ distance: Number(event.currentTarget.value) })}
+          />
+        </div>
+
+        <div class="dial">
+          <span>{t('Push')}</span>
+          <input
+            class="nib-slider"
+            type="range"
+            min={LEAST_PUSH}
+            max={MOST_PUSH}
+            step="10"
+            value={settings.push}
+            aria-label={t('Push')}
+            style:--fill="{((settings.push - LEAST_PUSH) / (MOST_PUSH - LEAST_PUSH)) * 100}%"
+            oninput={(event) =>
+              workspace.graphSettings.set({ push: Number(event.currentTarget.value) })}
+          />
+        </div>
+
+        <button
+          class="nib-row"
+          role="switch"
+          aria-checked={settings.gather}
+          onclick={() => workspace.graphSettings.set({ gather: !settings.gather })}
+        >
+          <span class="nib-row-label">{t('Gather')}</span>
+          <span class="nib-switch" class:on={settings.gather} aria-hidden="true"></span>
+        </button>
+      {/if}
 
       <!-- How wide a link is drawn: thin, the look the picture has always had, and
            thick. Three steps rather than a range, because a stroke wider than one of
@@ -524,6 +581,16 @@
   svg.filled {
     fill: currentColor;
     stroke: none;
+  }
+
+  /* The box the twist on the Forces row fills; the shape, the weight and the turn
+     are Twist.svelte's, the way they are in the two trees. */
+  .chevron {
+    display: block;
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    color: var(--muted);
   }
 
   /* Every dial, laid out as the switches beside them are: the word at the left, the

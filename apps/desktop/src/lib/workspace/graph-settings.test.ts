@@ -3,11 +3,15 @@ import {
   DEEPEST,
   DEFAULT_GRAPH,
   graphSettingsOf,
+  LEAST_DISTANCE,
   LEAST_FADE,
   LEAST_LINES,
+  LEAST_PUSH,
+  MOST_DISTANCE,
   MOST_FADE,
   MOST_GROUPS,
   MOST_LINES,
+  MOST_PUSH,
   sameGraph,
   SpaceGraphSettings,
   STORAGE_KEY,
@@ -140,6 +144,22 @@ describe('what a space says about its graph', () => {
 
     graph.set({ fade: 0 })
     expect(graph.here.fade).toBe(LEAST_FADE)
+  })
+
+  /** The four the layout has, all of them the reader's now. The defaults are what the
+   *  arrangement has always done - `DISTANCE` and `REPULSION` in graph-layout.ts - so
+   *  a card nobody has touched lays a space out exactly as it did. */
+  test('holds the two remaining forces to their dials, at their old values', () => {
+    expect(graph.here.distance).toBe(36)
+    expect(graph.here.push).toBe(150)
+
+    graph.set({ distance: 900, push: 9000 })
+    expect(graph.here.distance).toBe(MOST_DISTANCE)
+    expect(graph.here.push).toBe(MOST_PUSH)
+
+    graph.set({ distance: 0, push: 0 })
+    expect(graph.here.distance).toBe(LEAST_DISTANCE)
+    expect(graph.here.push).toBe(LEAST_PUSH)
   })
 
   test('takes at most one colour group per colour the theme names', () => {

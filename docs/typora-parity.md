@@ -685,9 +685,11 @@ Features Typora does not have, which are the reason this exists.
       notes embed it and by whatever path, which is how a vault names its
       attachments; a `[[shot.png]]` written without the bang is still a link to a
       file rather than a node. Then: up to six colour groups, each a query
-      and one of the six colours the theme names, tapped to change; one Spread
-      dial; a Gather switch; a three-step Lines dial; Arrows; Size by links; the
-      space played through in
+      and one of the six colours the theme names, tapped to change; a Forces group,
+      folded away behind one row, holding all four of the layout's - Spread, Link
+      distance, Push and Gather, each starting where the arrangement has always been
+      so a dial nobody has touched changes nothing; a three-step Lines dial; a Text
+      fade dial; Arrows; Size by links; the space played through in
       the order it was written, with a scrub bar; and Reset. All of it kept per
       space on the account, so the picture is the way you left it on every machine
       you sign in on, which is why there is nothing to bookmark
@@ -717,7 +719,8 @@ Features Typora does not have, which are the reason this exists.
       and the moment the scrub bar is at all arrive as one byte per note, so the
       notes that stay do not move and turning a switch costs one frame rather than
       the five seconds a fresh arrangement of five thousand notes takes. Only the
-      two forces lay it out again, because only they change where a note goes
+      forces and the Attachments switch lay it out again, because only they change
+      where a note goes or how many notes there are
 - [x] Sixty frames a second panning a space of five thousand notes and ten
       thousand links, which came down to one line: a link is drawn one pixel of
       the screen wide rather than one of the page's. Above one device pixel the

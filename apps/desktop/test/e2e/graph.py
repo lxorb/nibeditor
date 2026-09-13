@@ -542,6 +542,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(500)
     shot("card")
 
+    # And the Forces group let out, which is what the card is quiet without.
+    forces = page.locator('.graph .corner .card button:has-text("Forces")').first
+    if forces.count():
+        forces.click(force=True)
+        page.wait_for_timeout(500)
+        shot("card-forces")
+        forces.click(force=True)
+        page.wait_for_timeout(400)
+    else:
+        say(f"[{name}] no Forces row on the card")
+
     # Colour a group, which is what the six colours are for.
     page.evaluate(
         "() => window.nibApp.workspace.graphSettings.set({"
@@ -635,6 +646,20 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(2000)
     shot("spread")
+
+    # And the other two the Forces group holds: what a link means, and how hard the
+    # notes push. Both lay the arrangement out again, which is what they are.
+    page.evaluate(
+        "() => window.nibApp.workspace.graphSettings.set("
+        " { spread: 1, gather: true, distance: 96, push: 40 })"
+    )
+    page.wait_for_timeout(2200)
+    shot("forces-long-links")
+    page.evaluate(
+        "() => window.nibApp.workspace.graphSettings.set({ distance: 12, push: 400 })"
+    )
+    page.wait_for_timeout(2200)
+    shot("forces-hard-push")
 
     page.evaluate("() => window.nibApp.workspace.graphSettings.reset()")
     page.wait_for_timeout(1600)
