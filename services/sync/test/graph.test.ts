@@ -37,6 +37,7 @@ const DRAWN = {
   gather: false,
   arrows: true,
   sized: false,
+  lines: 3,
   depth: 2,
 }
 
@@ -92,6 +93,12 @@ describe('what a space may say about its graph', () => {
     const set = await put({ spread: 400, gather: true, depth: 9 })
 
     expect(set.json.graph).toEqual({ spread: 4, gather: true, depth: 3 })
+  })
+
+  test('and a line width outside the three steps is held to them', async () => {
+    expect((await put({ lines: 9 })).json.graph).toEqual({ lines: 3 })
+    expect((await put({ lines: 0 })).json.graph).toEqual({ lines: 1 })
+    expect((await put({ lines: 'thick' })).json.graph).toEqual({})
   })
 
   test('and a filter longer than a query is refused, so nothing else is lost', async () => {

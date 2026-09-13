@@ -99,6 +99,7 @@ export const ja: Dictionary = {
   Gather: '中央に集める',
   Arrows: '矢印',
   'Size by links': 'リンク数で大きさ',
+  Lines: '線',
   'Over time': '時間の流れ',
   Play: '再生',
   Pause: '一時停止',

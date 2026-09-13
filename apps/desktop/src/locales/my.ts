@@ -99,6 +99,7 @@ export const my: Dictionary = {
   Gather: 'စု',
   Arrows: 'မြားများ',
   'Size by links': 'လင့်အလိုက်အရွယ်',
+  Lines: 'မျဉ်းများ',
   'Over time': 'အချိန်အလိုက်',
   Play: 'စတင်',
   Pause: 'ခေတ္တရပ်',

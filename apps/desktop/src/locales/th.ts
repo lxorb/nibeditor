@@ -99,6 +99,7 @@ export const th: Dictionary = {
   Gather: 'รวบ',
   Arrows: 'ลูกศร',
   'Size by links': 'ขนาดตามลิงก์',
+  Lines: 'เส้น',
   'Over time': 'ตามเวลา',
   Play: 'เล่น',
   Pause: 'หยุดชั่วคราว',

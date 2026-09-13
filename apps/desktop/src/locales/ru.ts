@@ -99,6 +99,7 @@ export const ru: Dictionary = {
   Gather: 'Сближение',
   Arrows: 'Стрелки',
   'Size by links': 'Размер по связям',
+  Lines: 'Линии',
   'Over time': 'Со временем',
   Play: 'Пуск',
   Pause: 'Пауза',

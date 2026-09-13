@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   DEFAULT_GRAPH,
   graphSettingsOf,
+  LEAST_LINES,
   MOST_GROUPS,
+  MOST_LINES,
   sameGraph,
   SpaceGraphSettings,
   STORAGE_KEY,
@@ -89,6 +91,21 @@ describe('what a space says about its graph', () => {
 
     expect(graph.here.spread).toBe(4)
     expect(graph.here.depth).toBe(3)
+  })
+
+  /** Three steps, and the middle one is the look the picture has always had, so a
+   *  dial nobody has touched changes nothing. */
+  test('holds the Lines dial to its three steps, the middle one by default', () => {
+    expect(graph.here.lines).toBe(2)
+
+    graph.set({ lines: 9 })
+    expect(graph.here.lines).toBe(MOST_LINES)
+
+    graph.set({ lines: -4 })
+    expect(graph.here.lines).toBe(LEAST_LINES)
+
+    graph.set({ lines: 2.6 })
+    expect(graph.here.lines).toBe(3)
   })
 
   test('takes at most one colour group per colour the theme names', () => {

@@ -678,7 +678,8 @@ Features Typora does not have, which are the reason this exists.
       Then: a switch for the notes nothing links to, which in a young space are
       most of them and all of the clutter; up to six colour groups, each a query
       and one of the six colours the theme names, tapped to change; one Spread
-      dial; a Gather switch; Arrows; Size by links; the space played through in
+      dial; a Gather switch; a three-step Lines dial; Arrows; Size by links; the
+      space played through in
       the order it was written, with a scrub bar; and Reset. All of it kept per
       space on the account, so the picture is the way you left it on every machine
       you sign in on, which is why there is nothing to bookmark
@@ -706,6 +707,16 @@ Features Typora does not have, which are the reason this exists.
       graphics stack tessellates every stroke into geometry, and ten thousand of
       those measured 1200 ms a frame against 17. The notes' own dots, their names
       and the arrowheads are all free by comparison
+- [x] One three-step Lines dial on the card: thin, the hairline the picture has
+      always had, and thick. The cliff is at one device pixel exactly - measured
+      again for the dial, on the same five thousand notes: 20 ms a frame at one
+      device pixel and 3.6 seconds at one and a quarter - so thick is not a wider
+      stroke. It is the same hairline stroked three times, a device pixel apart in x
+      and in y, which reads as a line two device pixels wide whichever way it runs
+      and measured 20.5 ms a frame against the 19.3 the cleared canvas costs on its
+      own. Four strokes is where it starts to show, at 24 ms, so three is the
+      brush. graph-paint.test.ts holds every step to one device pixel, and graph.py
+      pans at each of the three
 - [x] `task:`, `task-todo:` and `task-done:`: a task item as something to search
       for, held to one item the way `line:` is held to one line, so
       `task-todo:(ledger send)` wants both words in the one task. On its own

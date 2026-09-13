@@ -99,6 +99,7 @@ export const ha: Dictionary = {
   Gather: 'Tattara',
   Arrows: 'Kibiyoyi',
   'Size by links': 'Girma bisa haɗi',
+  Lines: 'Layuka',
   'Over time': 'A cikin lokaci',
   Play: 'Kunna',
   Pause: 'Dakata',

@@ -99,6 +99,7 @@ export const ms: Dictionary = {
   Gather: 'Himpunkan',
   Arrows: 'Anak panah',
   'Size by links': 'Saiz mengikut pautan',
+  Lines: 'Garis',
   'Over time': 'Sepanjang masa',
   Play: 'Main',
   Pause: 'Hentikan sebentar',

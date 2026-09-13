@@ -99,6 +99,7 @@ export const ptPT: Dictionary = {
   Gather: 'Juntar',
   Arrows: 'Setas',
   'Size by links': 'Tamanho pelas ligações',
+  Lines: 'Linhas',
   'Over time': 'Ao longo do tempo',
   Play: 'Reproduzir',
   Pause: 'Pausa',

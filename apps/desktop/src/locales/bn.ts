@@ -99,6 +99,7 @@ export const bn: Dictionary = {
   Gather: 'জড়ো',
   Arrows: 'তীর',
   'Size by links': 'লিংক অনুযায়ী আকার',
+  Lines: 'রেখা',
   'Over time': 'সময় ধরে',
   Play: 'প্লে',
   Pause: 'পজ',

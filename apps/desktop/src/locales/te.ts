@@ -99,6 +99,7 @@ export const te: Dictionary = {
   Gather: 'ఒకచోటికి',
   Arrows: 'బాణాలు',
   'Size by links': 'లింక్‌ల ప్రకారం పరిమాణం',
+  Lines: 'గీతలు',
   'Over time': 'కాలక్రమంలో',
   Play: 'ప్లే చేయి',
   Pause: 'పాజ్ చేయి',

@@ -99,6 +99,7 @@ export const ps: Dictionary = {
   Gather: 'ټولول',
   Arrows: 'غشي',
   'Size by links': 'کچه د تړنو له مخې',
+  Lines: 'کرښې',
   'Over time': 'د وخت په تېرېدو',
   Play: 'چلول',
   Pause: 'درول',

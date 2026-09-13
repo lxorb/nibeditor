@@ -99,6 +99,7 @@ export const id: Dictionary = {
   Gather: 'Kumpulkan',
   Arrows: 'Panah',
   'Size by links': 'Ukuran menurut tautan',
+  Lines: 'Garis',
   'Over time': 'Sepanjang waktu',
   Play: 'Mainkan',
   Pause: 'Jeda',

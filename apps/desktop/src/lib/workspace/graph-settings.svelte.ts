@@ -49,6 +49,13 @@ export const MOST_SPREAD = 4
  *  neighbourhood stops being one: at four, most spaces answer with the space. */
 export const DEEPEST = 3
 
+/** The three widths a link may be drawn at: thin, the look the picture has always
+ *  had, and thick. Three steps rather than a range, because the widths worth having
+ *  are the ones a screen can actually draw as a hairline; see `EDGE_PIXELS` in
+ *  graph-paint.ts, which is where each step is a number of the screen's own pixels. */
+export const LEAST_LINES = 1
+export const MOST_LINES = 3
+
 /** One query and the colour the notes it keeps are drawn in. */
 interface ColourGroup {
   query: string
@@ -71,6 +78,9 @@ export interface GraphSettings {
   arrows: boolean
   /** Whether a note with more links is drawn bigger. */
   sized: boolean
+  /** How wide a link is drawn: 1 thin, 2 the look the picture has always had, 3
+   *  thick. */
+  lines: number
   /** How many links out the picture beside a note reaches, 1 to `DEEPEST`. */
   depth: number
 }
@@ -86,6 +96,9 @@ export const DEFAULT_GRAPH: GraphSettings = {
   // question is which note reached for which.
   arrows: false,
   sized: true,
+  // The middle step, which is the hairline the picture has always been drawn with:
+  // a dial nobody has touched changes nothing.
+  lines: 2,
   depth: 1,
 }
 
@@ -130,6 +143,7 @@ export function graphSettingsOf(value: unknown): GraphSettings {
     gather: isBoolean(value.gather) ? value.gather : DEFAULT_GRAPH.gather,
     arrows: isBoolean(value.arrows) ? value.arrows : DEFAULT_GRAPH.arrows,
     sized: isBoolean(value.sized) ? value.sized : DEFAULT_GRAPH.sized,
+    lines: Math.round(held(value.lines, LEAST_LINES, MOST_LINES, DEFAULT_GRAPH.lines)),
     depth: Math.round(held(value.depth, 1, DEEPEST, DEFAULT_GRAPH.depth)),
   }
 }

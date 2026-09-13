@@ -99,6 +99,7 @@ export const mr: Dictionary = {
   Gather: 'जवळ आणा',
   Arrows: 'बाण',
   'Size by links': 'लिंकनुसार आकार',
+  Lines: 'रेषा',
   'Over time': 'काळानुसार',
   Play: 'चालवा',
   Pause: 'थांबवा',

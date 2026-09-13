@@ -99,6 +99,7 @@ export const vi: Dictionary = {
   Gather: 'Dồn lại',
   Arrows: 'Mũi tên',
   'Size by links': 'Cỡ theo liên kết',
+  Lines: 'Đường kẻ',
   'Over time': 'Theo thời gian',
   Play: 'Chạy',
   Pause: 'Tạm dừng',

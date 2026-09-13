@@ -99,6 +99,7 @@ export const fil: Dictionary = {
   Gather: 'Tipunin',
   Arrows: 'Mga arrow',
   'Size by links': 'Laki ayon sa link',
+  Lines: 'Mga linya',
   'Over time': 'Sa paglipas ng panahon',
   Play: 'I-play',
   Pause: 'I-pause',

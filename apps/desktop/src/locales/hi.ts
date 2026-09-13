@@ -99,6 +99,7 @@ export const hi: Dictionary = {
   Gather: 'पास लाएँ',
   Arrows: 'तीर',
   'Size by links': 'लिंक से आकार',
+  Lines: 'रेखाएँ',
   'Over time': 'समय के साथ',
   Play: 'चलाएँ',
   Pause: 'ठहराएँ',

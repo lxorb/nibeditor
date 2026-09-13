@@ -99,6 +99,7 @@ export const ko: Dictionary = {
   Gather: '모으기',
   Arrows: '화살표',
   'Size by links': '링크 수로 크기',
+  Lines: '선',
   'Over time': '시간에 따라',
   Play: '재생',
   Pause: '일시정지',

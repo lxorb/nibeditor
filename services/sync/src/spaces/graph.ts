@@ -34,6 +34,9 @@ const LEAST_SPREAD = 0.25
 const MOST_SPREAD = 4
 /** How many links out the picture beside one note may reach. */
 const DEEPEST = 3
+/** The three widths a link may be drawn at; the app offers the same three. */
+const LEAST_LINES = 1
+const MOST_LINES = 3
 
 interface ColourGroup {
   query: string
@@ -50,6 +53,7 @@ interface GraphSettings {
   gather?: boolean
   arrows?: boolean
   sized?: boolean
+  lines?: number
   depth?: number
 }
 
@@ -131,6 +135,9 @@ function settingsOf(value: object): GraphSettings {
 
   const sized = switched(sent.sized)
   if (sized !== undefined) out.sized = sized
+
+  const lines = held(sent.lines, LEAST_LINES, MOST_LINES)
+  if (lines !== undefined) out.lines = Math.round(lines)
 
   const depth = held(sent.depth, 1, DEEPEST)
   if (depth !== undefined) out.depth = Math.round(depth)

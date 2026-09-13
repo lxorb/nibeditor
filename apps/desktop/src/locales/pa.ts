@@ -99,6 +99,7 @@ export const pa: Dictionary = {
   Gather: 'ਇਕੱਠਾ ਕਰੋ',
   Arrows: 'ਤੀਰ',
   'Size by links': 'ਕੜੀਆਂ ਮੁਤਾਬਕ ਆਕਾਰ',
+  Lines: 'ਲਾਈਨਾਂ',
   'Over time': 'ਸਮੇਂ ਨਾਲ',
   Play: 'ਚਲਾਓ',
   Pause: 'ਰੋਕੋ',

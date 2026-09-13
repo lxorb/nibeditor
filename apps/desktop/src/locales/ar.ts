@@ -99,6 +99,7 @@ export const ar: Dictionary = {
   Gather: 'تجميع',
   Arrows: 'أسهم',
   'Size by links': 'الحجم حسب الروابط',
+  Lines: 'الخطوط',
   'Over time': 'عبر الزمن',
   Play: 'تشغيل',
   Pause: 'إيقاف مؤقت',

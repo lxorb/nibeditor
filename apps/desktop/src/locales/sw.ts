@@ -99,6 +99,7 @@ export const sw: Dictionary = {
   Gather: 'Kusanya',
   Arrows: 'Mishale',
   'Size by links': 'Ukubwa kwa viungo',
+  Lines: 'Mistari',
   'Over time': 'Kwa muda',
   Play: 'Anza',
   Pause: 'Pumzisha',

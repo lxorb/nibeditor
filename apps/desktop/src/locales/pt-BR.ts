@@ -99,6 +99,7 @@ export const ptBR: Dictionary = {
   Gather: 'Agrupar',
   Arrows: 'Setas',
   'Size by links': 'Tamanho pelos links',
+  Lines: 'Linhas',
   'Over time': 'Ao longo do tempo',
   Play: 'Tocar',
   Pause: 'Pausar',

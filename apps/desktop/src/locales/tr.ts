@@ -99,6 +99,7 @@ export const tr: Dictionary = {
   Gather: 'Topla',
   Arrows: 'Oklar',
   'Size by links': 'Bağlantıya göre boyut',
+  Lines: 'Çizgiler',
   'Over time': 'Zaman içinde',
   Play: 'Oynat',
   Pause: 'Duraklat',

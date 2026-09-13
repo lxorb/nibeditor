@@ -21,7 +21,13 @@
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
   import { workspace } from './workspace.svelte'
-  import { LEAST_SPREAD, MOST_GROUPS, MOST_SPREAD } from './workspace/graph-settings.svelte'
+  import {
+    LEAST_LINES,
+    LEAST_SPREAD,
+    MOST_GROUPS,
+    MOST_LINES,
+    MOST_SPREAD,
+  } from './workspace/graph-settings.svelte'
 
   const {
     open,
@@ -203,6 +209,27 @@
         <span class="nib-row-label">{t('Gather')}</span>
         <span class="nib-switch" class:on={settings.gather} aria-hidden="true"></span>
       </button>
+
+      <!-- How wide a link is drawn: thin, the look the picture has always had, and
+           thick. Three steps rather than a range, because a stroke wider than one of
+           the screen's own pixels is what costs a picture of ten thousand links its
+           frame rate: the thick step is the same hairline drawn three times a pixel
+           apart. See `LINES` in graph-paint.ts. -->
+      <div class="dial">
+        <span>{t('Lines')}</span>
+        <input
+          class="nib-slider"
+          type="range"
+          min={LEAST_LINES}
+          max={MOST_LINES}
+          step="1"
+          value={settings.lines}
+          aria-label={t('Lines')}
+          style:--fill="{((settings.lines - LEAST_LINES) / (MOST_LINES - LEAST_LINES)) * 100}%"
+          oninput={(event) =>
+            workspace.graphSettings.set({ lines: Number(event.currentTarget.value) })}
+        />
+      </div>
 
       <button
         class="nib-row"
@@ -436,7 +463,7 @@
     stroke: none;
   }
 
-  /* The one dial, laid out as the switches under it are: the word at the left, the
+  /* Every dial, laid out as the switches beside them are: the word at the left, the
      control at the right, and the row the height theirs is. */
   .dial {
     display: flex;

@@ -99,6 +99,7 @@ export const gsw: Dictionary = {
   Gather: 'Zämmezieh',
   Arrows: 'Pfyl',
   'Size by links': 'Grössi nach Links',
+  Lines: 'Linie',
   'Over time': 'Über d Zyt',
   Play: 'Abspiele',
   Pause: 'Pause',

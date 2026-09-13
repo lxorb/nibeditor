@@ -99,6 +99,7 @@ export const zhHans: Dictionary = {
   Gather: '聚拢',
   Arrows: '箭头',
   'Size by links': '按链接数定大小',
+  Lines: '连线',
   'Over time': '随时间变化',
   Play: '播放',
   Pause: '暂停',

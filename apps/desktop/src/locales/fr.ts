@@ -99,6 +99,7 @@ export const fr: Dictionary = {
   Gather: 'Rassembler',
   Arrows: 'Flèches',
   'Size by links': 'Taille selon les liens',
+  Lines: 'Lignes',
   'Over time': 'Au fil du temps',
   Play: 'Lecture',
   Pause: 'Pause',

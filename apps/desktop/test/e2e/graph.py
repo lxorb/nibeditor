@@ -249,6 +249,26 @@ async ({ ratio, width, height }) => {
     context.stroke(path)
   }
 
+  // The same hairline stroked more than once, a device pixel apart, which is what
+  // the Lines dial's thick step draws: a line two device pixels wide out of strokes
+  // that are each still a hairline. See `LINES` in graph-paint.ts.
+  const brushed = (offsets) => (shift) => {
+    const hair = 1 / ratio
+    const path = new Path2D()
+    for (const edge of graph.edges) {
+      path.moveTo(x[edge.a] + shift, y[edge.a])
+      path.lineTo(x[edge.b] + shift, y[edge.b])
+    }
+    context.strokeStyle = '#8a9099'
+    context.lineWidth = hair
+    for (const [dx, dy] of offsets) {
+      context.save()
+      context.translate(dx * hair, dy * hair)
+      context.stroke(path)
+      context.restore()
+    }
+  }
+
   const dots = (shift) => {
     const path = new Path2D()
     for (let one = 0; one < count; one++) {
@@ -284,6 +304,21 @@ async ({ ratio, width, height }) => {
   out.push(await measure('a clear and nothing else', () => undefined))
   out.push(await measure('links one page pixel wide', strokeAt(1)))
   out.push(await measure('links one screen pixel wide', strokeAt(1 / ratio)))
+  // The three steps of the Lines dial, and the quarter pixel past the cliff that
+  // says why the thick one is a brush rather than a wider stroke.
+  out.push(await measure('Lines thin: 0.6 screen pixels', strokeAt(0.6 / ratio)))
+  out.push(await measure('Lines normal: one screen pixel', brushed([[0, 0]])))
+  out.push(
+    await measure(
+      'Lines thick: one screen pixel, brushed three ways',
+      brushed([
+        [0, 0],
+        [1, 0],
+        [0, 1],
+      ]),
+    ),
+  )
+  out.push(await measure('and 1.25 screen pixels as one stroke', strokeAt(1.25 / ratio)))
   out.push(await measure('the dots alone', dots))
   out.push(
     await measure('screen hairlines, dots and 400 names', (shift) => {
@@ -392,7 +427,7 @@ async () => {
 VIEW = """
 () => {
   const one = window.nibApp.workspace.graphSettings.here
-  return { filter: one.filter, arrows: one.arrows, depth: one.depth }
+  return { filter: one.filter, arrows: one.arrows, depth: one.depth, lines: one.lines }
 }
 """
 
@@ -514,6 +549,17 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.wait_for_timeout(700)
     shot("groups")
 
+    # How wide a link is drawn: the dial's three steps, thin and thick photographed
+    # either side of the look the picture arrives with.
+    for step, what in ((1, "thin"), (3, "thick")):
+        page.evaluate(
+            f"() => window.nibApp.workspace.graphSettings.set({{ lines: {step} }})"
+        )
+        page.wait_for_timeout(500)
+        shot(f"lines-{what}")
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
+    page.wait_for_timeout(400)
+
     # Arrowheads, which say which note reached for which.
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: true })")
     page.wait_for_timeout(600)
@@ -597,7 +643,8 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.openGraph()")
     page.wait_for_timeout(800)
     page.evaluate(
-        "() => window.nibApp.workspace.graphSettings.set({ filter: 'ink', arrows: true })"
+        "() => window.nibApp.workspace.graphSettings.set("
+        " { filter: 'ink', arrows: true, lines: 3 })"
     )
     page.wait_for_timeout(600)
     say(f"[{name}] the picture now: {page.evaluate(VIEW)}")
@@ -691,6 +738,21 @@ def measure(browser, out: Path, count: int) -> None:
     page.evaluate("() => window.nibApp.workspace.graphSettings.set({ filter: '', arrows: true })")
     page.wait_for_timeout(1200)
     pan("panned with arrowheads")
+
+    # And the Lines dial, at each of its three steps. The whole reason the thick one
+    # is one hairline brushed three times rather than a wider stroke: above one of
+    # the screen's own pixels the graphics stack tessellates every line, and ten
+    # thousand shapes is seconds a frame. See `LINES` in graph-paint.ts.
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ arrows: false })")
+    for step, what in ((1, "thin"), (2, "normal"), (3, "thick")):
+        page.evaluate(
+            f"() => window.nibApp.workspace.graphSettings.set({{ lines: {step} }})"
+        )
+        page.wait_for_timeout(600)
+        pan(f"panned with lines {what}")
+
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ lines: 2 })")
+    page.wait_for_timeout(400)
 
     page.screenshot(path=str(shots / f"{name}-arrows.png"))
     say(f"shot {name}-arrows.png")

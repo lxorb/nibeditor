@@ -45,7 +45,8 @@ const MOST_LABELS = 400
 
 const LABEL_SIZE = 11
 
-/** How wide a link is drawn, in the screen's own pixels rather than in the page's.
+/** How wide a link is drawn, in the screen's own pixels rather than in the page's,
+ *  at each of the three steps the Lines dial offers.
  *
  *  A link is a hairline, and a hairline is one pixel of the screen: at one device
  *  pixel Skia strokes a line by walking it, and above that it tessellates the
@@ -57,10 +58,38 @@ const LABEL_SIZE = 11
  *  ten thousand links wants anyway. See test/e2e/graph.py, which is where those
  *  numbers come from and what measures them again.
  *
+ *  Which is why the thick step is not a wider stroke. The cliff is at one device
+ *  pixel exactly - measured again for the dial, on the same five thousand notes:
+ *  20 ms a frame at one device pixel and 3.6 seconds at one and a quarter - so
+ *  thick is the same hairline stroked three times, a device pixel apart in x and in
+ *  y. A line comes out two device pixels wide whichever way it runs, and every one
+ *  of the three strokes is still a hairline. See `brushed`.
+ *
  *  The lit ones are the handful around whatever the pointer is on, so they can
- *  afford to be twice as wide and say so. */
-const EDGE_PIXELS = 1
-const LIT_EDGE_PIXELS = 2
+ *  afford to be twice as wide and say so: a dozen tessellated lines cost nothing. */
+const LINES: readonly { wide: number; brush: readonly (readonly [number, number])[] }[] = [
+  { wide: 0.6, brush: [[0, 0]] },
+  { wide: 1, brush: [[0, 0]] },
+  {
+    wide: 1,
+    brush: [
+      [0, 0],
+      [1, 0],
+      [0, 1],
+    ],
+  },
+]
+
+/** How wide the handful of lit links are at each step, in the screen's pixels. */
+const LIT_LINES: readonly number[] = [1.2, 2, 4]
+
+/** One device pixel, which is what a ring around a node the space has not got is
+ *  drawn at whatever the dial says: it is a node rather than a link. */
+const HAIRLINE = 1
+
+/** How wide the ring around the note being read is, in the screen's pixels. One
+ *  circle, so nothing about the frame rate turns on it. */
+const RING_PIXELS = 2
 
 /** How close the view has to be before arrowheads are worth drawing. Further out
  *  than this they are a smudge at the end of a line, and ten thousand smudges are
@@ -118,9 +147,12 @@ export interface GraphView {
   tint: Int8Array
   /** Whether a link is drawn with a head saying which note reached for which. */
   arrows: boolean
+  /** How wide a link is drawn: 1 thin, 2 the hairline the picture has always had,
+   *  3 thick. See `LINES`. */
+  lines: number
   /** How many of the screen's pixels one of the page's is worth, which is what the
    *  context has been scaled by. The line widths are stated in the screen's; see
-   *  `EDGE_PIXELS`. */
+   *  `LINES`. */
   ratio: number
 }
 
@@ -131,6 +163,9 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   const highlighting = hovered >= 0
   /** One pixel of the screen, in the units everything here is drawn in. */
   const hair = 1 / Math.max(1, ratio)
+  /** Which of the three widths the dial is on, as an index. */
+  const step = Math.min(LINES.length, Math.max(1, Math.round(view.lines || 2))) - 1
+  const line = LINES[step] ?? LINES[1]
 
   const scale = camera.scale
   const offsetX = width / 2 - camera.x * scale
@@ -171,17 +206,17 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     }
   }
 
-  context.lineWidth = EDGE_PIXELS * hair
+  context.lineWidth = (line?.wide ?? 1) * hair
   context.strokeStyle = colours.edge
   context.globalAlpha = highlighting ? DIMMED : 1
-  context.stroke(edges)
+  brushed(context, edges, line?.brush ?? [[0, 0]], hair)
   if (heads) {
     context.fillStyle = colours.edge
     context.fill(heads)
   }
 
   if (highlighting) {
-    context.lineWidth = LIT_EDGE_PIXELS * hair
+    context.lineWidth = (LIT_LINES[step] ?? 2) * hair
     context.strokeStyle = colours.litEdge
     context.globalAlpha = 1
     context.stroke(litEdges)
@@ -266,7 +301,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
 
     context.globalAlpha = highlighting && lit[current] === 0 ? DIMMED : 1
     context.strokeStyle = colours.current
-    context.lineWidth = Math.max(1.2, LIT_EDGE_PIXELS * hair)
+    context.lineWidth = Math.max(1.2, RING_PIXELS * hair)
     context.beginPath()
     context.arc(px, py, radius + 3.5, 0, Math.PI * 2)
     context.stroke()
@@ -297,6 +332,32 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
 function fill(context: CanvasRenderingContext2D, path: Path2D, colour: string) {
   context.fillStyle = colour
   context.fill(path)
+}
+
+/** The links, stroked once per place the brush puts them.
+ *
+ *  One path moved rather than a second path built: the path is ten thousand lines,
+ *  and the thick step wants the same ten thousand a device pixel over. Which is the
+ *  whole trick - three hairlines a pixel apart read as one line two pixels wide, and
+ *  a stroke wider than a device pixel is what costs three and a half seconds a
+ *  frame. See `LINES`. */
+function brushed(
+  context: CanvasRenderingContext2D,
+  path: Path2D,
+  brush: readonly (readonly [number, number])[],
+  hair: number,
+) {
+  for (const [dx, dy] of brush) {
+    if (!dx && !dy) {
+      context.stroke(path)
+      continue
+    }
+
+    context.save()
+    context.translate(dx * hair, dy * hair)
+    context.stroke(path)
+    context.restore()
+  }
 }
 
 /** Each colour group's notes, one fill per colour. */
@@ -340,6 +401,6 @@ function head(path: Path2D, ax: number, ay: number, bx: number, by: number, radi
  *  nothing here yet" the dotted link in the text says. */
 function outline(context: CanvasRenderingContext2D, path: Path2D, colour: string, hair: number) {
   context.strokeStyle = colour
-  context.lineWidth = EDGE_PIXELS * hair
+  context.lineWidth = HAIRLINE * hair
   context.stroke(path)
 }

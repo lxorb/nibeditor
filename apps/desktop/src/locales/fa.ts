@@ -99,6 +99,7 @@ export const fa: Dictionary = {
   Gather: 'گرد آوردن',
   Arrows: 'پیکان‌ها',
   'Size by links': 'اندازه بر پایه پیوند',
+  Lines: 'خطوط',
   'Over time': 'در گذر زمان',
   Play: 'پخش',
   Pause: 'ایست',

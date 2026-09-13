@@ -99,6 +99,7 @@ export const jv: Dictionary = {
   Gather: 'Klumpukake',
   Arrows: 'Panah',
   'Size by links': 'Ukuran miturut pranala',
+  Lines: 'Garis',
   'Over time': 'Sajrone wektu',
   Play: 'Puter',
   Pause: 'Ngaso',

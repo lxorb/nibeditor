@@ -99,6 +99,7 @@ export const ta: Dictionary = {
   Gather: 'ஒன்றுசேர்',
   Arrows: 'அம்புக்குறிகள்',
   'Size by links': 'இணைப்புகளுக்கேற்ப அளவு',
+  Lines: 'கோடுகள்',
   'Over time': 'காலப்போக்கில்',
   Play: 'இயக்கு',
   Pause: 'இடைநிறுத்து',

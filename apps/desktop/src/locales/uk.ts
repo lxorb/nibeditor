@@ -99,6 +99,7 @@ export const uk: Dictionary = {
   Gather: 'Зближення',
   Arrows: 'Стрілки',
   'Size by links': 'Розмір за зв’язками',
+  Lines: 'Лінії',
   'Over time': 'З часом',
   Play: 'Пуск',
   Pause: 'Пауза',

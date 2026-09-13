@@ -99,6 +99,7 @@ export const ml: Dictionary = {
   Gather: 'ഒരുമിച്ചാക്കുക',
   Arrows: 'അമ്പുകൾ',
   'Size by links': 'ലിങ്കുകൾക്കനുസരിച്ച് വലുപ്പം',
+  Lines: 'വരകൾ',
   'Over time': 'കാലക്രമത്തിൽ',
   Play: 'പ്ലേ ചെയ്യുക',
   Pause: 'നിർത്തിവയ്ക്കുക',

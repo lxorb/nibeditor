@@ -99,6 +99,7 @@ export const kn: Dictionary = {
   Gather: 'ಒಟ್ಟುಗೂಡಿಸಿ',
   Arrows: 'ಬಾಣಗಳು',
   'Size by links': 'ಲಿಂಕ್‌ಗಳ ಪ್ರಕಾರ ಗಾತ್ರ',
+  Lines: 'ಗೆರೆಗಳು',
   'Over time': 'ಕಾಲಕ್ರಮದಲ್ಲಿ',
   Play: 'ಪ್ಲೇ ಮಾಡಿ',
   Pause: 'ವಿರಾಮ',

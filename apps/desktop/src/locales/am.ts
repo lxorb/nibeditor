@@ -99,6 +99,7 @@ export const am: Dictionary = {
   Gather: 'አሰባስብ',
   Arrows: 'ቀስቶች',
   'Size by links': 'መጠን በአገናኞች',
+  Lines: 'መስመሮች',
   'Over time': 'በጊዜ ሂደት',
   Play: 'አጫውት',
   Pause: 'አቁም',

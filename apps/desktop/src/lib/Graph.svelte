@@ -250,10 +250,11 @@
     schedule()
   })
 
-  // An arrowhead changes what is drawn and nothing else, so it asks for a frame and
-  // nothing more.
+  // An arrowhead and the width of a link change what is drawn and nothing else, so
+  // they ask for a frame and nothing more.
   $effect(() => {
     follows(settings.arrows)
+    follows(settings.lines)
     schedule()
   })
 
@@ -543,6 +544,7 @@
       shown: hiding,
       tint,
       arrows: settings.arrows,
+      lines: settings.lines,
       ratio,
     })
   }

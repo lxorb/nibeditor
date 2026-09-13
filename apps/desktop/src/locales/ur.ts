@@ -99,6 +99,7 @@ export const ur: Dictionary = {
   Gather: 'اکٹھا کریں',
   Arrows: 'تیر',
   'Size by links': 'لنکس کے مطابق سائز',
+  Lines: 'لکیریں',
   'Over time': 'وقت کے ساتھ',
   Play: 'پلے',
   Pause: 'پاز',
