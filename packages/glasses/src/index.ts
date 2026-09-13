@@ -32,6 +32,7 @@ export {
   type Marks,
 } from './mark'
 export { type Page, pageAt, pageOfLine, pagesOf, type Paging } from './pages'
+export { drawsScript, type Script, SCRIPTS, scriptsNotDrawn } from './scripts'
 export {
   type Band,
   type BandName,
