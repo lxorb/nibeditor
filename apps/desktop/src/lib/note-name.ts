@@ -8,13 +8,15 @@
  *  The strip, the file list, the palette, the menus and the window title all ask
  *  here, so a document is called one thing wherever it is listed. */
 
-/** The extensions a name is shown without: markdown's four, a canvas, and the two
- *  a website is written as. Those are the documents Nib writes itself, and a
- *  document is known by its title rather than by the file it is kept in. A PDF or a
- *  picture keeps its extension, because that is a file from somewhere else and its
- *  name is the file's own. Which kind a row holds is drawn beside it rather than
- *  spelled out after it; see file-mark.ts. */
-const OWN = /\.(md|markdown|mdown|mkd|canvas|url|webloc)$/i
+/** The extensions a name is shown without: markdown's four, a canvas, a page note,
+ *  the two a website is written as, and a PDF. A document is known by its title, not
+ *  by the file it is kept in, and which kind a row holds is drawn beside it rather
+ *  than spelled out after it; see file-mark.ts. Emil, 2026-09-13: *"I don't want
+ *  filename endings, e.g. .url"* - so no kind wears its ending in the list, the strip
+ *  or the title. A picture keeps its extension, because its name is the file's own and
+ *  there is no title behind it; the file on disk keeps every one of these too, so a
+ *  vault opened next door reads exactly what it wrote. */
+const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|pdf)$/i
 
 /** A document's name as everything that lists one shows it. */
 export function shownName(name: string): string {

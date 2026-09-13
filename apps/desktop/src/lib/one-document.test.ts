@@ -120,7 +120,7 @@ describe('a phone and a tablet', () => {
     expect(open()).toEqual(['Plan'])
 
     workspace.openPdf('/space/Paper.pdf')
-    expect(open()).toEqual(['Paper.pdf'])
+    expect(open()).toEqual(['Paper'])
     expect(workspace.active?.kind).toBe('pdf')
   })
 

@@ -42,6 +42,7 @@
   import { tick } from 'svelte'
   import type { Reference } from './link-index.svelte'
   import { roving } from './roving'
+  import { shownName } from './note-name'
   import { offsetOf, type Rows, windowFor } from './row-window'
   import { ListView, measuredRow } from './row-window.svelte'
 
@@ -176,7 +177,7 @@
       style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}
     >
       <button class="nib-row hit" onclick={() => onpick(one.row)}>
-        <span class="hit-note">{one.row.name}</span>
+        <span class="hit-note">{shownName(one.row.name)}</span>
         <span class="hit-line">{one.row.text}</span>
       </button>
     </li>

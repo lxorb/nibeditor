@@ -135,15 +135,25 @@ describe('the name a document is listed under', () => {
     expect(shownName('Today.MKD')).toBe('Today')
   })
 
-  test('drops a canvas, the way it drops a note', () => {
+  test('drops a canvas and a page note, the way it drops a note', () => {
     expect(shownName('Board.canvas')).toBe('Board')
     expect(shownName('Board.CANVAS')).toBe('Board')
+    expect(shownName('Sketch.pages')).toBe('Sketch')
   })
 
-  /** A paper and a picture are files from somewhere else, and their name is the
-   *  file's. The tree says which kind a row is with the mark beside it. */
-  test('keeps the extension of a file Nib did not write', () => {
-    expect(shownName('Paper.pdf')).toBe('Paper.pdf')
+  /** Emil, 2026-09-13: no filename endings anywhere a name is shown. A website's two
+   *  endings and a PDF's go too, so nothing in the list, the strip or the title wears
+   *  one. */
+  test('drops a website and a PDF as well', () => {
+    expect(shownName('Svelte docs.url')).toBe('Svelte docs')
+    expect(shownName('Page.webloc')).toBe('Page')
+    expect(shownName('Paper.pdf')).toBe('Paper')
+    expect(shownName('Paper.PDF')).toBe('Paper')
+  })
+
+  /** A picture is a file from somewhere else with no title behind it, so its name is
+   *  the file's own. The tree says which kind a row is with the mark beside it. */
+  test('keeps the extension of a picture', () => {
     expect(shownName('shot.png')).toBe('shot.png')
     expect(shownName('notes.txt')).toBe('notes.txt')
   })

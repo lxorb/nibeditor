@@ -2084,9 +2084,9 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  test('is a paper with its extension, because that file is not ours', () => {
+  test('is a paper without its extension too, the way every kind is now', () => {
     workspace.openPdf('/space/paper.pdf')
-    expect(workspace.active?.shown).toBe('paper.pdf')
+    expect(workspace.active?.shown).toBe('paper')
   })
 
   test('is a draft first heading, so two drafts are two names', () => {

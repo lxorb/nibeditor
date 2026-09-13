@@ -133,11 +133,12 @@
   /** How the field arrives, which is one of the three ways select-all.ts has.
    *
    *  A name that is settled takes the caret at the end, with a title to be typed
-   *  after it. A name that carries its own extension - a PDF, the one kind a list
-   *  shows with one - keeps that out of the selection, the way Finder and Explorer
-   *  do. Everything else is selected whole: a note is shown without the extension
-   *  it keeps, so there is nothing to leave out, and the dot in a folder called
-   *  `v1.2` is part of the name rather than in front of an extension. */
+   *  after it. A name that carries its own extension - a picture, whose name is the
+   *  file's own and so shown with the extension on it - keeps that out of the
+   *  selection, the way Finder and Explorer do. Everything else is selected whole: a
+   *  note, a canvas, a page note, a website and a PDF are all shown without the
+   *  extension they keep, so there is nothing to leave out, and the dot in a folder
+   *  called `v1.2` is part of the name rather than in front of an extension. */
   function caret(node: HTMLInputElement) {
     if (appending) return caretAtEnd(node)
 

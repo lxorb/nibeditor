@@ -13,6 +13,7 @@
 
   import { neighbourhood, type NoteGraph, without } from './graph'
   import { graphSurface } from './surfaces.svelte'
+  import { shownName } from './note-name'
   import { t } from './i18n.svelte'
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
@@ -139,7 +140,7 @@
             class:missing={!link.to}
             onclick={() => (link.to ? openTarget(link) : ongoto?.(link.line))}
           >
-            <span class="hit-note">{link.name}</span>
+            <span class="hit-note">{shownName(link.name)}</span>
             <span class="hit-line">{link.text}</span>
           </button>
         </li>
