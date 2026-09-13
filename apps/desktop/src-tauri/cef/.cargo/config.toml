@@ -1,0 +1,22 @@
+# The C runtime the engine's own libraries were built against.
+#
+# CEF's prebuilt Windows binaries link the **static** CRT - `/MT`, which is what
+# CEF's CMake builds `libcef_dll_wrapper` with - and Rust links the dynamic one by
+# default. Mix them and the link fails with `unresolved external symbol memset` and
+# `memmove` a hundred times over, which is that mismatch said in linker terms rather
+# than in English. This is the whole of the fix, and it is here rather than in the
+# workflow so that a person who builds the flagged app by hand gets it too.
+#
+# Only this workspace: a Cargo config is read from the directory a build is run in
+# upwards, so the app's own build next door never sees it. That is also why
+# .github/workflows/cef.yml runs its cargo commands *inside* this directory rather
+# than pointing `--manifest-path` at it from the repository root - a config file that
+# is not on the way up is a config file that does nothing.
+#
+# See apps/desktop/src-tauri/cef/Cargo.toml and docs/browser.md.
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+[target.aarch64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
