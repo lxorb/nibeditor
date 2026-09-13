@@ -1351,9 +1351,15 @@ class Workspace {
     // no stack of paper to read; see surfaces.svelte.ts, where the surface itself comes
     // through.
     const { blankPages } = await import('@nib/markdown/pages')
+    // And the paper the reader chose, which the workspace has no opinion about: A4
+    // outside North America and Letter inside it are both right, so the store is asked
+    // rather than a size assumed. Fetched here rather than imported at the top because
+    // this file is about files and that one is about the reader; see the same move for
+    // the sync pass in workspace/note-text.ts.
+    const { modes } = await import('./modes.svelte')
 
     const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.pages))
-    const content = blankPages()
+    const content = blankPages(modes.pagesPaper)
 
     this.showEntry(this.freshEntry(path, false))
     if (dir !== this.activeSpace?.root) this.device.expand(dir)

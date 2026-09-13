@@ -352,9 +352,11 @@ export function emptyPages(paper: Paper = 'a4'): Canvas {
   return { ...emptyCanvas(), nodes: [newPage(paper)] }
 }
 
-/** And that as a file. */
-export function blankPages(): string {
-  return writeCanvas(emptyPages())
+/** And that as a file. The paper is the reader's to choose - A4 outside North America
+ *  and Letter inside it - so it is asked for rather than assumed; see `pagesPaper` in
+ *  the app's modes store. */
+export function blankPages(paper: Paper = 'a4'): string {
+  return writeCanvas(emptyPages(paper))
 }
 
 /** A page note out of a PDF: one page per page of the paper, all of them showing

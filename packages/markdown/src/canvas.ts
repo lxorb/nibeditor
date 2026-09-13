@@ -152,7 +152,9 @@ export const PAPERS = {
 
 export type Paper = keyof typeof PAPERS
 
-const PAPER_NAMES = Object.keys(PAPERS) as Paper[]
+/** The papers, in the order they are offered: the two sizes, then the page that does
+ *  not end. Read off `PAPERS` so a fourth cannot be added in one place only. */
+export const PAPER_NAMES = Object.keys(PAPERS) as Paper[]
 
 export function isPaper(value: unknown): value is Paper {
   return PAPER_NAMES.some((one) => one === value)

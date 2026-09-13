@@ -15,6 +15,8 @@ What it checks and photographs:
       is the palm rejection, and the one rule a page note must not have its own copy of
     a second finger landing while the nib is down leaves no mark at all
     the four rulings, photographed, in both themes
+    the three papers, chosen from the page's own menu, and the paper a new page note
+      starts on, which is a setting rather than A4 for everybody
     adding, reordering and deleting a page, and what reordering does to the ink on it
     a long page growing past A4 when writing reaches the bottom of it
     the page counter in the status bar, and the thumbnails in the outline panel's slot
@@ -783,6 +785,134 @@ def check_adding(page: Page, label: str) -> None:
     shot(page, f"{label}-reordered")
 
 
+def check_papers(page: Page, label: str) -> None:
+    """The three papers, chosen from the page's own menu, and the one a new note starts on.
+
+    Through the menu rather than the store, because a row somebody can press is the whole
+    of what was missing: `reshaped` could always change a page's paper and nothing in the
+    app ever asked it to. The row for the paper the page already wears is disabled, the
+    way the rulings are.
+
+    A page note used to start on A4 whatever anybody said, which is wrong in North
+    America and wrong for anybody taking notes in a lecture, so the setting is driven
+    too: it is set, a note is made, and the note is the size it asked for.
+    """
+    say("--- the three papers ---")
+
+    # A page note of its own, so this check does not care what the ones above left open
+    # and they do not care what it makes.
+    page.evaluate("async () => window.nibApp.workspace.createPages(undefined, 'Papers.pages')")
+    page.wait_for_timeout(900)
+    page.wait_for_selector(".pages", timeout=15000)
+
+    held = pages_of(page)
+    if not held:
+        fail(f"[{label}] no page note opened for the paper check")
+        return
+
+    first = held[0]
+
+    for paper, width in (("letter", 816), ("long", 794), ("a4", 794)):
+        rows = paper_menu(page, 0)
+        if not rows:
+            fail(f"[{label}] the page menu has no rows at all")
+            return
+
+        wanted = {"letter": "Letter", "long": "Long page", "a4": "A4"}[paper]
+        if wanted not in rows:
+            fail(f"[{label}] the page menu offers no {wanted!r} row: {rows}")
+            return
+
+        pressed = press_menu(page, wanted)
+        if not pressed:
+            fail(f"[{label}] the {wanted!r} row could not be pressed")
+            return
+
+        held = pages_of(page)[0]
+        if held["paper"] != paper:
+            fail(f"[{label}] a page asked for {paper} says {held['paper']}")
+        if held["width"] != width:
+            fail(f"[{label}] a {paper} page is {held['width']} wide rather than {width}")
+        say(f"[{label}] {wanted}: {held['width']}x{held['height']}, called {held['paper']}")
+
+        # The row for the paper it now wears says so by being disabled, which is this
+        # menu's way of showing what is already on.
+        again = paper_menu(page, 0, disabled=True)
+        if wanted not in again:
+            fail(f"[{label}] the {wanted!r} row is offered again on a page that is {paper}")
+
+    if first["id"] != pages_of(page)[0]["id"]:
+        fail(f"[{label}] changing the paper made a different page")
+
+    shot(page, f"{label}-papers")
+
+    # And what a new page note starts on, which is a setting rather than A4 for everyone.
+    made = page.evaluate(
+        """async (paper) => {
+          const app = window.nibApp
+          app.modes.setPagesPaper(paper)
+          await app.workspace.createPages(undefined, 'On Letter.pages')
+          await new Promise((resolve) => setTimeout(resolve, 700))
+          const store = app.pages.current?.store
+          const first = store?.pages[0]
+          return first ? { paper: first.paper, width: first.width, kept: app.modes.pagesPaper } : null
+        }""",
+        "letter",
+    )
+    if not made:
+        fail(f"[{label}] no page note was made for the default-paper check")
+    else:
+        if made["kept"] != "letter":
+            fail(f"[{label}] the setting did not keep Letter: {made}")
+        if made["paper"] != "letter" or made["width"] != 816:
+            fail(f"[{label}] a new page note ignored the setting: {made}")
+        else:
+            say(f"[{label}] a new page note on the chosen paper: {made}")
+
+    shot(page, f"{label}-new-on-letter")
+    page.evaluate("() => window.nibApp.modes.setPagesPaper('a4')")
+
+
+def paper_menu(page: Page, at: int, disabled: bool = False) -> list[str]:
+    """The rows of the menu on one thumbnail, by label.
+
+    `disabled` asks for the greyed-out ones instead, which is how this menu says a row
+    would do nothing: there are no ticks in it.
+    """
+    page.evaluate("() => { window.nibApp.workspace.panel = 'outline' }")
+    page.wait_for_timeout(500)
+
+    thumb = page.locator(".navigator .page").nth(at)
+    if thumb.count() < 1:
+        return []
+
+    thumb.click(button="right")
+    page.wait_for_timeout(350)
+
+    which = "[role=menuitem][disabled]" if disabled else "[role=menuitem]:not([disabled])"
+    rows = page.locator(f"[role=menu] {which}")
+    out = [rows.nth(one).inner_text().strip() for one in range(rows.count())]
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    return out
+
+
+def press_menu(page: Page, label: str) -> bool:
+    """One row of the page menu, pressed the way somebody presses it."""
+    thumb = page.locator(".navigator .page").first
+    thumb.click(button="right")
+    page.wait_for_timeout(350)
+
+    row = page.locator("[role=menu] [role=menuitem]", has_text=label).first
+    if row.count() < 1:
+        page.keyboard.press("Escape")
+        return False
+
+    row.click()
+    page.wait_for_timeout(450)
+    return True
+
+
 def check_counter(page: Page, label: str) -> None:
     """The page counter in the status bar, which shows unasked."""
     say("--- the page counter ---")
@@ -1239,6 +1369,9 @@ def drive(browser, theme: str) -> None:
             check_long_page(page, theme)
             check_file(page, theme)
             check_as_canvas(page, theme)
+            # After those three, because it makes a page note of its own: everything
+            # above is about the note this drive started with.
+            check_papers(page, theme)
         # Last, because it imports a paper and opens the note the import made: every
         # check above is about the note this drive started with.
         check_paper(page, theme)

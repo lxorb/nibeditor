@@ -33,6 +33,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
+import { isPaper, type Paper } from '@nib/markdown/canvas'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import {
@@ -143,6 +144,7 @@ interface Saved {
   glassesEffort: string
   vim: boolean
   attachments: string
+  pagesPaper: string
   conflicts: string
   keepVersions: number
   highlightTone: number | null
@@ -319,6 +321,19 @@ class Modes {
    *  the machine they are at. */
   attachments = $state<AttachmentFolder>('space')
 
+  /** The paper a new page note starts on.
+   *
+   *  A4 outside North America, Letter inside it, and a long page for somebody who takes
+   *  notes in a lecture - and none of the three is something the app can guess. So it is
+   *  a choice, and this machine's own: which paper somebody writes on is a decision
+   *  about the printer in the room and the country it is in, the way the release channel
+   *  is a decision about the machine. Nothing about it is carried up.
+   *
+   *  Only what a page note *starts* as. A page added to a note takes the size of the one
+   *  it follows, and a page already written on is changed from its own menu; see
+   *  `added` and `reshaped` in @nib/markdown/pages. */
+  pagesPaper = $state<Paper>('a4')
+
   /** What a device does when the same note was written in two places. On the
    *  account, because it is a decision about the notes rather than about the
    *  machine; see sync/conflicts.ts. */
@@ -425,6 +440,7 @@ class Modes {
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
+      if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
       if (isNumber(saved.highlightTone) || saved.highlightTone === null) {
         this.highlightTone = highlightTone(saved.highlightTone).tone
       }
@@ -795,6 +811,13 @@ class Modes {
     this.share({ attachments: value })
   }
 
+  setPagesPaper(value: string) {
+    if (!isPaper(value)) return
+
+    this.pagesPaper = value
+    this.persist()
+  }
+
   setConflicts(value: string) {
     const rule = conflictRule(value)
     if (!rule) return
@@ -1156,6 +1179,7 @@ class Modes {
       glassesEffort: this.glassesEffort,
       vim: this.vim,
       attachments: this.attachments,
+      pagesPaper: this.pagesPaper,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,
