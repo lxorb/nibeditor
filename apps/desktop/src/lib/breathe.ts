@@ -31,3 +31,17 @@ export function breathe(): Promise<void> {
 
   return new Promise((go) => setTimeout(go, 0))
 }
+
+/** A task of its own for whatever comes next.
+ *
+ *  `breathe` is the wrong tool where the point is *which task* the work lands in:
+ *  `scheduler.yield` hands input through and then comes back at the front of the
+ *  queue, which is exactly right for a long scan and exactly wrong for this. Asked
+ *  to put a plane's parse in one task and the surface's mount in the next, it put
+ *  both in one frame of a hundred and eighteen milliseconds - the two were still
+ *  adjacent, which the browser's own attribution showed and a clock would not have.
+ *
+ *  A timer is a real task boundary, which is the whole of what is wanted here. */
+export function nextTask(): Promise<void> {
+  return new Promise((go) => setTimeout(go, 0))
+}

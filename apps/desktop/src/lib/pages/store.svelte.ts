@@ -23,7 +23,7 @@ import {
   settled,
 } from '@nib/markdown/pages'
 import { type Camera, clampScale, zoomed } from '../camera'
-import { type Canvas, readCanvas, writeCanvas } from '../canvas/format'
+import { type Canvas, readCanvas, takeParsed, writeCanvas } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'
 import { CanvasStore } from '../canvas/store.svelte'
 
@@ -231,7 +231,7 @@ export class PagesStore extends CanvasStore {
    *  it, so these two are the canvas's own reader and writer with the column laid
    *  out round them, and a `.pages` file renamed to `.canvas` opens in Obsidian. */
   protected override parse(text: string): Canvas {
-    return settled(readCanvas(text))
+    return settled(takeParsed(text) ?? readCanvas(text))
   }
 
   protected override serialise(canvas: Canvas): string {

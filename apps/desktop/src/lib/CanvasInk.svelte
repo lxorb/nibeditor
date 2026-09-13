@@ -216,15 +216,34 @@
   /** Reads a value for its own sake, so the effect around it follows it. */
   const follows = (_value: unknown) => undefined
 
-  // What there is to draw changed, so it is drawn. Never waits: an edit has to
-  // show at once.
+  /** Whether this plane has been rasterised once.
+   *
+   *  A surface's effects flush in the task that mounted it, so a raster here is a
+   *  raster inside the mount - and the first raster of a plane of ten thousand
+   *  strokes is a gather. So the first one is put off to the next frame, which is
+   *  the frame the plane's cards and its paper are already on screen for.
+   *
+   *  Only the first. A pan that reaches plane nobody has gathered yet rasterises in
+   *  the frame it happens in, as it always did, or the ink would blink on every
+   *  drag. */
+  let everDrawn = false
+
+  // What there is to draw changed, so it is drawn. Never waits after the first: an
+  // edit has to show at once.
   $effect(() => {
     follows(ink)
     follows(picked)
     follows(palette)
     follows(wide)
     follows(tall)
-    rasterise()
+
+    if (everDrawn) {
+      rasterise()
+      return
+    }
+
+    everDrawn = true
+    filling ||= requestAnimationFrame(fill)
   })
 
   // The view moved. The pixels move with it and are drawn again once it has

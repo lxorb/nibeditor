@@ -27,7 +27,15 @@
 
 import { type Camera, clampScale, framingBox } from '../camera'
 import { owes } from '../parting'
-import { type Canvas, emptyCanvas, merged, readCanvas, stamped, writeCanvas } from './format'
+import {
+  type Canvas,
+  emptyCanvas,
+  merged,
+  readCanvas,
+  stamped,
+  takeParsed,
+  writeCanvas,
+} from './format'
 import { pickedBox } from './edits'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
@@ -122,7 +130,9 @@ export class CanvasStore implements PlaneSurface {
    *  Both are the canvas format either way round, so a page note and a canvas write
    *  the same bytes and a file renamed across the two loses nothing. */
   protected parse(text: string): Canvas {
-    return readCanvas(text)
+    // Whatever `openCanvas` read a task ago, where it read this one. The parse and
+    // the mount used to be one task; see `parseAhead` in format.ts.
+    return takeParsed(text) ?? readCanvas(text)
   }
 
   protected serialise(canvas: Canvas): string {

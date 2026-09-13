@@ -33,6 +33,7 @@ import type { Change } from './search/apply'
 import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
+import { nextTask } from './breathe'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
@@ -1047,6 +1048,17 @@ class Workspace {
     // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
     // draw on: saving one over it would take the file with it.
     if (text === null) return
+
+    // The plane read here and the thread handed over before the tab is built, so
+    // the parse and the surface's mount are two tasks rather than one. A canvas of
+    // ten thousand strokes is 2.8 MB of JSON, thirty milliseconds of parse, and it
+    // used to land in the same task as the mount. Fetched rather than imported: the
+    // canvas format is not in the graph a window that opens on a note evaluates,
+    // and it is not going in it - see test/weight.test.ts. `parseAhead` says why
+    // this is not a worker.
+    const { parseAhead } = await import('./canvas/format')
+    parseAhead(text)
+    await nextTask()
 
     const file = this.document({
       kind: 'canvas',
