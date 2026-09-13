@@ -28,6 +28,13 @@ export interface MenuItem {
    *  lists that have rows which do. */
   danger?: boolean
   disabled?: boolean
+  /** Whether the menu stays open after this row is pressed.
+   *
+   *  For the handful of rows somebody presses twice in a row and would otherwise have
+   *  to reopen the menu for: a browser's zoom is three of them, `-`, the size, and
+   *  `+`, and every browser keeps its menu up while they are used. Everything else
+   *  closes, which is what a menu does. */
+  keep?: boolean
   // A property rather than a method, so a caller may hand the function on - which
   // is how an export row reaches the app menu.
   run: () => void

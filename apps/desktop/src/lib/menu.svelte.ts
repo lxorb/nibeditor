@@ -50,6 +50,14 @@ class ContextMenu {
     this.open = true
   }
 
+  /** The same menu, with its rows said again. For a row that keeps the menu open and
+   *  changes what its own label should read: a browser's zoom rows say the size, and a
+   *  size that did not follow the press would be a menu lying about the page. See
+   *  `keep` in menu-item.ts. */
+  replace(items: MenuEntry[]) {
+    if (this.open) this.items = trim(items)
+  }
+
   hide() {
     this.open = false
   }

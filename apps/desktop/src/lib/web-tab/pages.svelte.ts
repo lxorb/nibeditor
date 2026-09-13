@@ -31,7 +31,7 @@
 
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
-import { grants, type Grant, siteOf } from './permissions.svelte'
+import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
 /** How long a parked page's webview goes on running after the tab showing it went
@@ -159,11 +159,6 @@ export class Page {
   /** What the pane asked for while the page was being built. */
   wanted: Wanted | null = null
 
-  /** The grant count the live webview was built under, so a change to what this
-   *  site may do is a page built again rather than a page that quietly kept the old
-   *  answer. */
-  builtAt = 0
-
   /** Set while the address field is being typed in, so the page reporting a new
    *  title does not rewrite what somebody is halfway through typing. */
   typing = $state(false)
@@ -245,10 +240,6 @@ class Pages {
 
     await this.listen()
 
-    const site = siteOf(page.url)
-    const stale = page.live && page.builtAt !== grants.changed
-    if (stale) await this.park(tabId)
-
     if (page.live) {
       await this.place(tabId, pane, true)
       return
@@ -261,7 +252,7 @@ class Pages {
       return
     }
 
-    await this.build(tabId, page, site, pane)
+    await this.build(tabId, page, pane)
   }
 
   /** The webview for a tab, and then whatever happened while it was being built.
@@ -271,10 +262,8 @@ class Pages {
    *  to have been switched away from, or for the tab to have been closed. None of
    *  those used to be possible - the command was answered inline, which is what froze
    *  the window - so all three are answered here now. */
-  private async build(tabId: string, page: Page, site: string, pane: Rect): Promise<void> {
+  private async build(tabId: string, page: Page, pane: Rect): Promise<void> {
     page.opening = true
-    page.builtAt = grants.changed
-    const granted: Grant[] = grants.of(site)
 
     // Where this tab was left, if it is the page being opened: a parked tab comes back
     // at the place it was parked at, and a note opened again tomorrow comes back at the
@@ -289,7 +278,6 @@ class Pages {
         tab: tabId,
         url: page.url,
         pane,
-        granted,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
       })
       page.live = true
@@ -502,6 +490,20 @@ class Pages {
     })
   }
 
+  /** How large the page is drawn: a browser's own zoom, on the tab it was asked for.
+   *  See `ZOOMS` in menu.ts for the ladder the rows step along. */
+  async zoom(tabId: string, factor: number): Promise<void> {
+    if (!isDesktop || !this.held.get(tabId)?.live) return
+    await invoke('web_zoom', { tab: tabId, factor }).catch(() => undefined)
+  }
+
+  /** The engine's own print dialog for the page - the one the reader knows from their
+   *  browser, rather than anything of nib's, which is about a note. */
+  async print(tabId: string): Promise<void> {
+    if (!isDesktop || !this.held.get(tabId)?.live) return
+    await invoke('web_print', { tab: tabId }).catch(() => undefined)
+  }
+
   /** The page, read for a clip: where it is, what it is called, and the HTML of the
    *  part worth keeping. Null where there is nothing to read, which is a browser
    *  build - a frame's document belongs to the site and not to us. */
@@ -534,6 +536,7 @@ class Pages {
 
     clearTimeout(page.parking)
     this.held.delete(tabId)
+    grants.dropped(tabId)
     if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
@@ -550,12 +553,22 @@ class Pages {
     }
   }
 
-  /** One listener for the window, started by the first web tab that needs it. */
+  /** Two listeners for the window, started by the first web tab that needs them: where
+   *  every page in the window has got to, and what every site in it has asked for. */
   private async listen(): Promise<void> {
     if (this.listening || !isDesktop) return
     this.listening = true
 
     const { listen } = await import('@tauri-apps/api/event')
+
+    // A site has asked for the camera, the microphone, where you are, notifications or
+    // the clipboard to read. The request is held open in the engine until this is
+    // answered, which is what lets the reader be asked at the moment they pressed
+    // something rather than in a menu beforehand; see permissions.svelte.ts.
+    await listen('nib://web-ask', (event) => {
+      const said = readAsked(event.payload)
+      if (said && this.held.has(said.tab)) grants.heard(said)
+    })
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return
