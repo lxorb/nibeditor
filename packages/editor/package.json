@@ -34,7 +34,7 @@
     "codemirror-lang-hcl": "^0.2.0",
     "flowchart.js": "^1.18.0",
     "katex": "^0.18.5",
-    "mermaid": "^11.17.2"
+    "mermaid": "^12.0.0"
   },
   "devDependencies": {
     "@nib/lang-html": "workspace:*",
