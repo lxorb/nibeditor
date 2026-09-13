@@ -631,33 +631,29 @@ The page on the glasses and the scroll on the phone are one place in the note.
 The two ends would chase each other round the note, so a page turn opens a 500 ms
 window in which a scroll on the phone is the plugin's own doing and is ignored.
 
-**Or the note can scroll instead of turning.** A setting, `paged` or `native`:
+**Nib turns the pages, and that is the only way the glass is fed.** The app cuts the
+note into panels of eight lines, sends one, and a flick of a temple sends the next: a
+section starts at the top of a panel, its heading stays above every page of it, and
+the head says which page of how many.
 
-- `paged`, the default, is all of the above. The app cuts the note into panels of
-  eight lines, sends one, and a flick of a temple sends the next. A section starts at
-  the top of a panel, its heading stays above every page of it, and the head says
-  which page of how many.
-- `native` **scrolls**. The note is cut a line at a time and the panel is filled from
-  wherever the reader is, so a flick moves the note by one of its own lines rather
-  than by a whole panel. There are no pages, so the head says no page number: a note
-  moving a line at a time has no page three of twelve, and a number counting rows
-  would say 41/380 and mean nothing.
+There was a setting here, `paged` or `native`, and it is gone. `native` handed the
+whole note to the firmware to scroll itself, and it is the first thing in this file
+that a device disproved. Emil: *"native glasses scroll mode is broken on the device:
+the bar at the side shows but scrolling does nothing."* The bar was the firmware
+saying the band overflowed its container; nothing scrolled it. There is no call in the
+SDK that does - `TextContainerUpgrade` carries `contentOffset` and `contentLength`,
+both undocumented and inert - and a flick only turned a page the reader could not see.
 
-The second one was written the other way round first - the whole note in one band for
-the firmware to scroll itself - and that is worth writing down, because it is the
-first thing in this file that a device disproved. Emil: *"native glasses scroll mode
-is broken on the device: the bar at the side shows but scrolling does nothing."* The
-bar was the firmware saying the band overflowed its container; nothing scrolled it.
-There is no call in the SDK that does, and a flick only turned a page the reader could
-not see, because the band on the glass was the same band either way.
+So the app scrolled it instead, a line at a time, which is the app turning pages of
+one row: the same mechanism with a worse page, no page number worth showing, and a
+second answer to a question that has one. Emil, on 0.8.1: *"please remove the
+scrolling 'nib turns the pages / glasses scroll' setting from the glasses section of
+the settings. Effectively it should be always nib who turns the pages."* So the row,
+the field, the stored key, the mode and the code path behind it are all out, and the
+page number means something on every page again.
 
-So the app scrolls it, which is one `textContainerUpgrade` of about 83 ms a flick -
-the same as a page turn - and it moves. `TextContainerUpgrade` does carry
-`contentOffset` and `contentLength`, which if the host honours them would make a
-scroll a few bytes instead of a panel of words; both are undocumented, neither is
-used, and that is the one saving left on the table here.
-
-Two things came out of making it work, and both are better everywhere:
+Two things came out of the line-at-a-time attempt, and both are better everywhere and
+have stayed:
 
 - **A row carries the offset of its own line of the file.** Every row of a
   soft-wrapped paragraph used to claim to begin where the paragraph did, so nothing
@@ -1491,7 +1487,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1503,10 +1499,9 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
   never more than eight rows in the body;
 - the note on the phone has **nothing laid over it**: one frame around the words the
   glasses are showing, sized to them, and no element covering the page;
-- the glasses' own scroll mode was chosen from the settings on the glasses, the page
-  number went with the pages, **a flick moved the note by one of its own lines** with
-  everything below it still there, and choosing the paged mode back brought the number
-  back;
+- **Nib turns every page**: the number is in the head, a flick turns a whole page and
+  the number counts it, and there is no scrolling row left in the settings on the
+  glasses to reach;
 - a scroll off a temple turned the page, and **only the bands that changed were
   sent**: three of them, about 249 ms of radio, with the head and the rule left
   alone because the section had not changed;
@@ -1658,10 +1653,10 @@ In rough order of how much rests on it:
     `Glasses microphone` with frames counting up is the second; `Glasses microphone`
     with "no sound yet" after two seconds is `audioControl` having answered true and
     sent nothing, which is the one case that used to look like everything working.
-13. **Whether the firmware scrolls a band longer than its container**, which is the
-    whole of the `native` scroll mode and the one thing here that has never been seen
-    working. If it does not, the reader sees the first panel and `paged` is one
-    setting away.
+13. ~~Whether the firmware scrolls a band longer than its container.~~ Settled, and
+    the answer is no: it draws a bar and ignores every flick. That was the whole of
+    the `native` scroll mode, which is why there is no such mode and no such setting
+    any more.
 14. **That a launch of the plugin no longer writes anything into the account.** The
     welcome note was created on every launch; three separate rules now stop it, and
     the check is that a fresh launch on a signed-in account adds no note at all.

@@ -937,12 +937,17 @@ def main() -> int:
             rows = settings.get("nibBody", "")
             report.ok(
                 "a hold reaches the settings, with every setting and what it says now",
-                "Line numbers" in rows and "Scrolling" in rows and "On" in rows,
+                "Line numbers" in rows and "New page at" in rows and "On" in rows,
                 rows.replace(chr(10), " | "),
             )
+            # Two rows this section has not got: the page number, and who scrolls.
+            # Both were choices about the same thing, and the answer is one behaviour
+            # now - Emil: "effectively it should be always nib who turns the pages."
+            # Every other row is where it was; see the walk below for the whole list.
             report.ok(
-                "and no page-number setting, because the scroll mode decides that",
-                "Page number" not in rows,
+                "and neither a page-number nor a scrolling row, which are one answer now",
+                "Page number" not in rows and "Scrolling" not in rows,
+                rows.replace(chr(10), " | "),
             )
             screens.append({"name": "settings", "lineNumbers": True, **naming(settings)})
 
@@ -981,15 +986,16 @@ def main() -> int:
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(700)
 
-            # The glasses' own scroll mode: the note moves by a line rather than by a
-            # panel, and there is no page of how many to say. Emil, on the device: "the
-            # bar at the side shows but scrolling does nothing" - which is this.
-            #
-            # Against the long note, because a note of one row has nothing to scroll.
+            # Who turns the pages: the app, always. There was a setting offering the
+            # glasses' own scrolling instead, and no firmware ever did it - Emil, on
+            # the device: "the bar at the side shows but scrolling does nothing" - so
+            # Emil asked for the row to go: "effectively it should be always nib who
+            # turns the pages." What is left is one behaviour, and this is it on the
+            # glass: a page number that always means a page, and a flick that turns one.
             open_note(page, "Even Realities glasses")
             paged = page.evaluate("window.__bands()")
             report.ok(
-                "the page number is there while Nib is turning the pages",
+                "the page number is there, because Nib turns every page",
                 re.search(r"\d+/\d+$", paged.get("nibHead", "").rstrip()) is not None,
                 paged.get("nibHead", "").rstrip(),
             )
@@ -1005,56 +1011,33 @@ def main() -> int:
                     page.evaluate("window.__gesture('down')")
                 return False
 
-            def choose_scrolling(word: str):
-                """The Scrolling row, and one of its choices by name. Its list opens with
-                the cursor on the value it already has, so the top is walked to."""
-                open_settings()
-                found = walk_to("Scrolling")
-                page.evaluate("window.__gesture('tap')")
-                page.wait_for_timeout(300)
-                for _one in range(6):
-                    page.evaluate("window.__gesture('up')")
-                chose = walk_to(word)
-                page.evaluate("window.__gesture('tap')")
-                page.wait_for_timeout(400)
-                page.evaluate("window.__gesture('double')")
-                page.evaluate("window.__gesture('double')")
-                page.wait_for_timeout(700)
-                return found and chose
-
+            open_settings()
             report.ok(
-                "the scroll mode is reachable on the glasses, and one of its choices",
-                choose_scrolling("glasses scroll"),
+                "and there is no scrolling row left to reach on the glasses",
+                not walk_to("Scrolling"),
             )
-            rolling = page.evaluate("window.__bands()")
-            report.ok(
-                "no page number where the glasses are scrolling, because there are none",
-                re.search(r"\d+/\d+$", rolling.get("nibHead", "").rstrip()) is None,
-                rolling.get("nibHead", "").rstrip(),
-            )
+            page.evaluate("window.__gesture('double')")
+            page.evaluate("window.__gesture('double')")
+            page.wait_for_timeout(700)
 
-            first = rolling.get("nibBody", "").split(chr(10))
+            def numbered() -> tuple[int, int]:
+                """Which page of how many the head says, as two numbers."""
+                said = page.evaluate("window.__bands()").get("nibHead", "").rstrip()
+                found = re.search(r"(\d+)/(\d+)$", said)
+                return (int(found[1]), int(found[2])) if found else (0, 0)
+
+            first = page.evaluate("window.__bands()")
+            was, count = numbered()
             page.evaluate("window.__gesture('down')")
             page.wait_for_timeout(500)
-            moved = page.evaluate("window.__bands()").get("nibBody", "").split(chr(10))
-
-            # One line of the note, which is one or two rows of the panel where that
-            # line wrapped: the note moves under the reader rather than jumping a panel
-            # at a time. Everything that was below the top is still there, one line up.
-            step = moved[0] in first and first.index(moved[0]) or 0
+            turned = page.evaluate("window.__bands()")
+            now, still = numbered()
             report.ok(
-                "a scroll moves the note by one of its own lines, not by a panel",
-                0 < step <= 2 and first[step:] == moved[: len(first) - step],
-                json.dumps({"step": step, "top": moved[0][:30]}),
-            )
-            screens.append({"name": "rolling", "lineNumbers": True, **naming(page.evaluate("window.__bands()"))})
-
-            choose_scrolling("turns the pages")
-            back = page.evaluate("window.__bands()")
-            report.ok(
-                "and the page number comes back with the pages",
-                re.search(r"\d+/\d+$", back.get("nibHead", "").rstrip()) is not None,
-                back.get("nibHead", "").rstrip(),
+                "a flick turns a whole page, and the number counts it",
+                turned.get("nibBody") != first.get("nibBody")
+                and now == was + 1
+                and still == count,
+                f"{was}/{count} then {now}/{still}",
             )
 
             # Voice, driven through a recogniser of our own: the words arrive exactly
