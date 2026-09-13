@@ -247,6 +247,55 @@ function conflicts(): string[] {
   return [...fake.disk.keys()].filter((path) => path.includes('from another device'))
 }
 
+/** A rename is one file leaving and another arriving, and nothing tells the mirror:
+ *  see `rename` in workspace.svelte.ts. So the pass has to read it off the folder -
+ *  the new name is a note the account has never seen, and the old one is a path the
+ *  mirror holds whose file is gone. Both halves, or the account keeps two live notes
+ *  and every other machine downloads the one nobody has any more. */
+describe('a note renamed on this machine', () => {
+  test('arrives under its new name and goes from under the old one', async () => {
+    const HERE = '# One' + String.fromCharCode(10)
+    const { mirror } = await paired('One.md', HERE)
+
+    fake.disk.delete(`${ROOT}/One.md`)
+    fake.disk.set(`${ROOT}/Two.md`, HERE)
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toContain('createNote Two.md')
+    expect(fake.calls).toContain('deleteNote n-One.md')
+
+    const alive = [...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.path)
+    expect(alive).toEqual(['Two.md'])
+  })
+
+  /** And with the pass in the order the loop runs it. The account's own listing still
+   *  carries the old note - the cursor is behind it until a pass moves it on - so the
+   *  pull sees a note whose file is not here, which is exactly what a rename looks
+   *  like from that side. */
+  test('is not brought back by the pull that runs before the push', async () => {
+    const HERE = '# One' + String.fromCharCode(10)
+    const { mirror, id } = await paired('One.md', HERE)
+
+    fake.disk.delete(`${ROOT}/One.md`)
+    fake.disk.set(`${ROOT}/Two.md`, HERE)
+
+    // The account a version ahead of the entry, which is what a note that was open
+    // in a room looks like - the room wrote it up there, keystroke by keystroke - and
+    // is what makes the pull look at the note again rather than skip it by version.
+    fake.editRemote(id, HERE)
+    mirror.cursor = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect([...fake.disk.keys()].sort()).toEqual([`${ROOT}/Two.md`])
+
+    const alive = [...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.path)
+    expect(alive).toEqual(['Two.md'])
+  })
+})
+
 describe('a note both sides changed', () => {
   test('keeps the other copy beside ours when there is no room', async () => {
     const { mirror, id } = await paired('note.md', 'base\n')

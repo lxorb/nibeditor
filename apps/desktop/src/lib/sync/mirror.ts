@@ -293,6 +293,21 @@ export async function pull(
 
       const local = await invoke<string>('read_note', { path: target }).catch(() => null)
 
+      // A note this machine has an entry for and no longer has a file for is one
+      // that went away here - renamed, moved or deleted - rather than one it has
+      // never seen. Both are "the account has it and the folder does not", and only
+      // the entry tells them apart.
+      //
+      // Writing it down again undoes what somebody did. A rename is the case that
+      // showed it: the file leaves under one name and arrives under another, nothing
+      // tells the mirror, and the pass is what reads it off the folder. The pull put
+      // the old name back on the disk, so the push below found the file present,
+      // skipped its own "a file that vanished locally is a delete" - and the account
+      // was left holding both names alive, with every other machine downloading the
+      // one nobody has any more. The entry is left exactly as it is, so the push sees
+      // the gap and deletes the note the way it always has.
+      if (local === null && tracked !== undefined) continue
+
       // The file and the account already say the same thing, so there is nothing
       // to bring down and nothing to settle: the entry is recorded and the note is
       // done with. This is what mends a mirror that has lost entries - the note is
