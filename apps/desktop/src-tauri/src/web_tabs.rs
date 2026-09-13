@@ -1099,7 +1099,13 @@ fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
 /// * **The window decides.** What a site was allowed lives where the reader's other
 ///   choices live - this device's own storage, per origin - so the crate asks and does
 ///   not remember. See `lib/web-tab/permissions.svelte.ts`.
-#[cfg(windows)]
+//
+// `WebView2`'s own, reached through its controller - so not on nib's own Chromium,
+// where the webview `with_webview` hands out is the runtime's erased one and has no
+// controller to ask. Under that flag the stub below answers instead, the way it does on
+// a Mac, and Chromium's own prompt is what replaces it; see src/engine.rs, and section
+// 5 of docs/browser.md, where a browser asking for the camera is the browser's job.
+#[cfg(all(windows, not(feature = "cef")))]
 mod ask {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -1257,7 +1263,9 @@ mod ask {
     }
 }
 
-#[cfg(not(windows))]
+// Every build but `WebView2`'s: the other two desktops, and nib's own Chromium, where
+// the erased webview has no controller to reach through. See the Windows one above.
+#[cfg(any(not(windows), feature = "cef"))]
 mod ask {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
@@ -1272,7 +1280,11 @@ mod ask {
     pub fn answer(_id: u64, _allow: bool) {}
 }
 
-#[cfg(windows)]
+// `CapturePreview` is `WebView2`'s, reached through its controller, so this is the
+// same story as `ask` above: not on nib's own Chromium, where the stub answers `None`
+// and the window keeps its own ground under an overlay. Chromium can photograph a page
+// over the DevTools Protocol, which is batch 8's; see docs/browser.md.
+#[cfg(all(windows, not(feature = "cef")))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
@@ -1361,7 +1373,8 @@ mod shot {
     }
 }
 
-#[cfg(not(windows))]
+// Every build but `WebView2`'s, nib's own Chromium among them. See the one above.
+#[cfg(any(not(windows), feature = "cef"))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
