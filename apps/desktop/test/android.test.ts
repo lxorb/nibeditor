@@ -27,7 +27,21 @@ const activity = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'MainActivity.kt
 const tiles = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Tiles.kt')
 const widgets = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Widgets.kt')
 const layout = read(ANDROID, 'res', 'layout', 'widget_notes.xml')
+const provider = read(ANDROID, 'res', 'xml', 'widget_notes.xml')
 const proguard = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'proguard-rules.pro')
+
+/** What the phone's own page says, which is where the two surfaces a widget can
+ *  sit on are described. Held here because a comment and a document that
+ *  describe a switch the project does not hold are believed for years. */
+const mobile = read(HERE, '..', '..', '..', 'docs', 'mobile.md')
+
+/** The shorter drawing, read inside the test that wants it: a file that is not
+ *  there yet should fail one test rather than the whole file. */
+const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
+
+/** The row views one layout holds, in the order they are declared. */
+const rowsIn = (text: string) =>
+  [...text.matchAll(/@\+id\/nib_row_(\d+)/g)].map((one) => Number(one[1]))
 
 const commands = read(SOURCE, 'lib', 'commands.ts')
 const bridge = read(SOURCE, 'lib', 'mobile', 'bridge.ts')
@@ -143,6 +157,16 @@ describe('the quick settings tiles', () => {
       expect(body.includes('android:enabled="false"'), name).toBe(false)
     }
   })
+
+  /** And nothing beside them says otherwise. The comment in the manifest, and the
+   *  paragraph in docs/mobile.md, both went on describing the recorder's tile as
+   *  `android:enabled="false"` for as long as the switch had been gone - and a
+   *  comment that describes a switch the file does not hold is a comment that gets
+   *  believed. Neither file may name the attribute while none is declared. */
+  test('and nothing written beside them claims a switch that is not there', () => {
+    expect(manifest).not.toContain('android:enabled')
+    expect(mobile).not.toContain('android:enabled')
+  })
 })
 
 describe('the home screen widget', () => {
@@ -160,10 +184,11 @@ describe('the home screen widget', () => {
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     expect(most).toBeGreaterThan(0)
 
-    const inLayout = [...layout.matchAll(/@\+id\/nib_row_(\d+)/g)].map((one) => Number(one[1]))
     const inProvider = [...widgets.matchAll(/R\.id\.nib_row_(\d+)/g)].map((one) => Number(one[1]))
 
-    expect(inLayout).toEqual([...Array(most).keys()])
+    expect(rowsIn(layout)).toEqual([...Array(most).keys()])
+    // Once, in one list: the shorter drawing takes the first of these rather
+    // than naming ids of its own, so a sixth note is a row in one place.
     expect(inProvider).toEqual([...Array(most).keys()])
   })
 
@@ -177,6 +202,10 @@ describe('the home screen widget', () => {
     }
   })
 
+  test('is offered to the home screen', () => {
+    expect(provider).toContain('home_screen')
+  })
+
   test('says its own words in both languages the app has', () => {
     const english = read(ANDROID, 'res', 'values', 'strings.xml')
     const german = read(ANDROID, 'res', 'values-de', 'strings.xml')
@@ -187,6 +216,53 @@ describe('the home screen widget', () => {
     expect(names(german)).toEqual(
       names(english).filter((one) => one !== 'app_name' && one !== 'main_activity_title'),
     )
+  })
+})
+
+/** The other surface the same widget is offered on. One provider, one drawing,
+ *  one shorter variant of it: a lock screen has a few rows of room rather than
+ *  five, and everything else about it is the home screen's widget. */
+describe('the lock screen widget', () => {
+  test('is the same provider, offered to the keyguard as well', () => {
+    expect(provider).toContain('android:widgetCategory="home_screen|keyguard"')
+    expect(provider).toContain('android:initialKeyguardLayout="@layout/widget_notes_lock"')
+  })
+
+  test('is the same drawing, cut short', () => {
+    const lock = lockLayout()
+
+    // The same card, the same heading, the same two marks, the same words for a
+    // space with nothing in it: one design on both surfaces.
+    for (const id of ['nib_title', 'nib_search', 'nib_new', 'nib_empty']) {
+      expect(lock, id).toContain(`@+id/${id}`)
+    }
+    expect(lock).toContain('@drawable/widget_page')
+    expect(lock).toContain('@style/NibWidgetRow')
+
+    const shorter = rowsIn(lock)
+    expect(shorter.length).toBeGreaterThan(0)
+    expect(shorter.length).toBeLessThan(rowsIn(layout).length)
+    // The first of the home screen's rows rather than a list of its own, which
+    // is what lets the provider hand both surfaces the same notes.
+    expect(shorter).toEqual(rowsIn(layout).slice(0, shorter.length))
+  })
+
+  /** A widget cannot be asked which surface it is on: the host says so in the
+   *  widget's own options, and it says so again when a widget is moved between
+   *  them, which is the only notice there is. */
+  test('is drawn by a provider that asks which surface it is on', () => {
+    expect(widgets).toContain('OPTION_APPWIDGET_HOST_CATEGORY')
+    expect(widgets).toContain('WIDGET_CATEGORY_KEYGUARD')
+    expect(widgets).toContain('R.layout.widget_notes_lock')
+    expect(widgets).toContain('override fun onAppWidgetOptionsChanged')
+  })
+
+  /** Honestly: the surface came in Android 4.2, was taken out in 5.0 and came
+   *  back in 16, and most launchers and lock screens still do not offer it. A
+   *  reader who cannot find the widget should be able to read why. */
+  test('is written down, with which phones actually show it', () => {
+    expect(mobile).toMatch(/lock screen/i)
+    expect(mobile).toContain('keyguard')
   })
 })
 

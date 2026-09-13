@@ -142,10 +142,12 @@
           something slightly different from the row it is named after; see
           Tiles.kt and commands.ts.
 
-          The recorder's is turned off until the command exists. A disabled
-          service is not offered in the tile picker at all, which is a cleaner
-          answer than a tile that does nothing: flip `android:enabled` to true in
-          the same commit that adds `record`.
+          All three are on, and the picker offers all three. The recorder's was
+          held back while `record` was another batch's - a service the picker does
+          not offer is a cleaner answer than a tile that does nothing - and that
+          command landed, so nothing here is switched off any more.
+          test/android.test.ts holds both halves of that: every tile's id is a row
+          the app answers to, and no tile is disabled.
         -->
         <service
             android:name=".NewNoteTile"
@@ -178,8 +180,11 @@
             </intent-filter>
         </service>
 
-        <!-- The home screen's widget: the notes last written in, a new one, and
-             the search. See Widgets.kt. -->
+        <!-- The widget: the notes last written in, a new one, and the search. One
+             receiver for both surfaces a widget can sit on - the home screen and
+             the lock screen - because it is one widget; which of them a copy of it
+             is on decides only how many rows it has room for. See Widgets.kt,
+             res/xml/widget_notes.xml and docs/mobile.md. -->
         <receiver
             android:name=".NotesWidget"
             android:exported="false">

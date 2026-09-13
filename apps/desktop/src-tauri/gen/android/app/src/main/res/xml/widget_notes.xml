@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The one widget. Three cells by three at the size the home screen offers it, and
-  resizable either way: a reader who wants one row has it, and one who wants five
-  has those.
+  The one widget, on both surfaces a widget can sit on.
+
+  Three cells by three at the size the home screen offers it, and resizable
+  either way: a reader who wants one row has it, and one who wants five has
+  those.
+
+  `widgetCategory` names both surfaces, so the lock screen may offer the same
+  widget the home screen does, and `initialKeyguardLayout` is what it is drawn
+  with there: the same card, the same heading, three rows instead of five,
+  because a lock screen has a few rows of room rather than a page. The provider
+  reads the host's own category and draws whichever of the two the widget is on;
+  see Widgets.kt, and docs/mobile.md for which phones show a lock screen widget
+  at all.
 
   `updatePeriodMillis` is nought on purpose. Nothing here polls: the page hands the
   rows over whenever the file list changes, and a launcher keeps the last drawing
@@ -12,6 +22,7 @@
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:initialLayout="@layout/widget_notes"
+    android:initialKeyguardLayout="@layout/widget_notes_lock"
     android:minWidth="180dp"
     android:minHeight="110dp"
     android:minResizeWidth="110dp"
@@ -23,5 +34,5 @@
     android:description="@string/widget_description"
     android:previewLayout="@layout/widget_notes"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:updatePeriodMillis="0" />
