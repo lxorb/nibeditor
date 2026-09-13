@@ -39,11 +39,6 @@ export default tseslint.config(
       // globals are an extension's rather than a page's. Prettier still formats
       // it. See docs/browser.md.
       'spike/**',
-      // And the Tauri checkout the flagged CEF build compiles against, which is
-      // somebody else's repository with its own eslint config in it: without this,
-      // a machine that has run `upstream.py` cannot lint at all. See
-      // apps/desktop/src-tauri/cef and docs/browser.md.
-      'apps/desktop/src-tauri/cef/.upstream/**',
     ],
   },
   js.configs.recommended,

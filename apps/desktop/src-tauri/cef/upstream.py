@@ -34,7 +34,7 @@ Both are reported by the bump workflow, so the day the branch fixes either of
 them the pull request says so - an edit that no longer applies is the good
 outcome, not a failure.
 
-    python upstream.py            # fetch and repair, into .upstream/tauri
+    python upstream.py            # fetch and repair, into target/upstream/tauri
     python upstream.py --print    # say where it is, fetch nothing
 """
 
@@ -49,16 +49,39 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / 'Cargo.toml'
-INTO = HERE / '.upstream' / 'tauri'
+# Inside the build output, and that is the point: every check this repository
+# runs - prettier, eslint, knip, the test walkers - already skips `target`, and a
+# fetched dependency of two hundred megabytes has no business slowing an ordinary
+# `pnpm format` down. `cargo clean` taking it away is correct; this puts it back.
+INTO = HERE / 'target' / 'upstream' / 'tauri'
 
-# The one edit, as the text before and the text after. A replacement and not a
-# patch file, so a moved line fails loudly here rather than producing a checkout
-# that is quietly not what the comment says it is.
+# The edits, as the text before and the text after. Replacements and not a patch
+# file, so a moved line fails loudly here rather than producing a checkout that is
+# quietly not what the comment says it is.
 FEATURE_ANCHOR = 'unstable = []\n'
 FEATURE_ADDED = """unstable = []
 # Kept as an empty name so Tauri's own plugins, which ask for it on iOS, still
 # resolve against this branch. See apps/desktop/src-tauri/cef/upstream.py.
 wry = []
+"""
+
+# The macOS one. The branch calls a winit method that winit 0.31 removed - its own
+# changelog says so: *"On macOS, remove `WindowAttributesMacOS::with_accepts_first_mouse`"*
+# - and it takes `winit` from a fork's `master`, so the branch does not compile on a
+# Mac against the fork as it stands today. Dropping the call is what upstream itself
+# did by the time it published `tauri-runtime-cef 3.0.0-alpha.0`; it costs a window
+# attribute nib does not set.
+FIRST_MOUSE_BEFORE = """      let pl_attrs = (*platform_attrs(&mut builder.attrs.inner))
+        .with_accepts_first_mouse(config.accept_first_mouse);
+
+      builder.attrs.inner = builder
+        .attrs
+        .inner
+        .with_platform_attributes(Box::new(pl_attrs));
+"""
+FIRST_MOUSE_AFTER = """      // `with_accepts_first_mouse` was removed in winit 0.31, which is the winit
+      // this branch resolves to. See apps/desktop/src-tauri/cef/upstream.py.
+      let _ = config.accept_first_mouse;
 """
 
 
@@ -101,22 +124,39 @@ def fetch(repository: str, revision: str) -> None:
     print(f'fetched {revision}')
 
 
-def repair() -> None:
-    """The one edit, applied once."""
-    manifest = INTO / 'crates' / 'tauri' / 'Cargo.toml'
-    text = manifest.read_text(encoding='utf-8')
+def edit(path: Path, before: str, after: str, done: str, what: str) -> None:
+    """One replacement, applied once, or a complaint saying which."""
+    text = path.read_text(encoding='utf-8')
 
-    if 'wry = []' in text:
-        print('the wry feature is already there')
+    if done in text:
+        print(f'{what}: already there')
         return
-    if FEATURE_ANCHOR not in text:
+    if before not in text:
         raise SystemExit(
-            f'{manifest} has no `{FEATURE_ANCHOR.strip()}` line to add the wry feature after; '
-            'the branch has moved, and it may have fixed this itself'
+            f'{path} has nothing to replace for {what}; the branch has moved, '
+            'and it may well have fixed this itself'
         )
 
-    manifest.write_text(text.replace(FEATURE_ANCHOR, FEATURE_ADDED, 1), encoding='utf-8')
-    print('added the wry feature')
+    path.write_text(text.replace(before, after, 1), encoding='utf-8')
+    print(f'{what}: done')
+
+
+def repair() -> None:
+    """Both edits, applied once each."""
+    edit(
+        INTO / 'crates' / 'tauri' / 'Cargo.toml',
+        FEATURE_ANCHOR,
+        FEATURE_ADDED,
+        'wry = []',
+        'the wry feature every plugin asks for',
+    )
+    edit(
+        INTO / 'crates' / 'tauri-runtime-cef' / 'src' / 'window_builder.rs',
+        FIRST_MOUSE_BEFORE,
+        FIRST_MOUSE_AFTER,
+        'let _ = config.accept_first_mouse;',
+        'the winit method macOS no longer has',
+    )
 
 
 def main() -> int:

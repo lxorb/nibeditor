@@ -32,7 +32,7 @@ description = "nib on CEF, behind the app's `cef` feature. A gate, not a release
 #
 # `exclude` is load bearing rather than tidy: a path dependency that lies inside a
 # workspace's own directory is made a member of it automatically, so without this the
-# crates of the Tauri checkout in `.upstream` would be members of *this* workspace and
+# crates of the Tauri checkout under `target` would be members of *this* workspace and
 # would inherit their edition and their versions from this file, which does not have
 # them. Excluded, each of them belongs to the checkout's own workspace, which is where
 # it was written to belong.
@@ -43,7 +43,7 @@ description = "nib on CEF, behind the app's `cef` feature. A gate, not a release
 # them) plus this package's tests, and the crate's own unit tests run in the default
 # build on all three desktops, where they are runtime-independent anyway.
 [workspace]
-exclude = [".upstream"]
+exclude = ["target"]
 
 [[bin]]
 name = "nib-cef"
@@ -62,7 +62,7 @@ tauri = { version = "2", features = ["unstable", "custom-protocol"] }
 # plus the one line it is missing. Pinned by revision and not by branch - a gate
 # has to give the same answer twice, and the branch took three commits on the day
 # it was first read - and the revision is the one below, read by that script.
-tauri-runtime-cef = { path = ".upstream/tauri/crates/tauri-runtime-cef", features = [
+tauri-runtime-cef = { path = "target/upstream/tauri/crates/tauri-runtime-cef", features = [
   "unstable",
 ] }
 # Where the engine's own profiles go, worked out the same way Tauri works out the
@@ -94,12 +94,12 @@ serde_json = "1"
 # `branch` and not `rev`, because it has to be the same checkout `winit` itself
 # resolves to; Cargo.lock beside this file is what pins the commit.
 [patch.crates-io]
-tauri = { path = ".upstream/tauri/crates/tauri" }
-tauri-build = { path = ".upstream/tauri/crates/tauri-build" }
+tauri = { path = "target/upstream/tauri/crates/tauri" }
+tauri-build = { path = "target/upstream/tauri/crates/tauri-build" }
 dpi = { git = "https://github.com/tauri-apps/winit-gtk4", branch = "master" }
 
 # **The pin.** One revision, in one line, and `upstream.py` is what reads it: it
-# fetches exactly this commit into `.upstream/tauri`, adds the one feature the
+# fetches exactly this commit into `target/upstream/tauri`, adds the one feature the
 # branch is missing, and every path above then points into that checkout. The
 # weekly workflow in .github/workflows/cef-bump.yml rewrites this line and nothing
 # else. A checkout and not a git dependency because the repair has to happen
