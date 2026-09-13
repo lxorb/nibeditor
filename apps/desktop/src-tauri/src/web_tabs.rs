@@ -657,6 +657,85 @@ mod session {
             }
         });
     }
+
+    /// What the page that holds the session open is called. Under the same `web-` prefix
+    /// every page in a tab wears, so no capability reaches it either; a tab would have to
+    /// be called `session` for the two to collide, and a tab's id is made rather than
+    /// chosen.
+    const ANCHOR: &str = "web-session";
+
+    /// Opens the page nobody sees, and keeps the environment it was built on.
+    ///
+    /// **Holding the environment is not enough**, which took a measurement to learn.
+    /// `WebView2` ends a profile's session when the last webview on it closes, however
+    /// long the environment object is kept alive - so a clone of it kept here left two
+    /// tabs open at once sharing one session (they do) and the session gone the moment
+    /// the last of them went (it was). Measured both ways by
+    /// scripts/web-session-probe.py: `two tabs share one session` true, `session kept on
+    /// reopen` false. What a browser has and this did not is a process that outlives the
+    /// tabs.
+    ///
+    /// So one webview on the profile is never closed, and the session it holds open is
+    /// the one every tab is built on. It loads `about:blank`, so what it costs is a
+    /// controller and no page; it is a pixel wide, hidden, and never placed again. The
+    /// price is that a run which has opened one website keeps a browser process until the
+    /// app quits, which is what a browser does with its own window.
+    pub fn anchor(window: &tauri::Window, app: &tauri::AppHandle) {
+        use tauri::Manager as _;
+
+        if window.app_handle().get_webview(ANCHOR).is_some() {
+            return;
+        }
+
+        let Ok(blank) = "about:blank".parse::<tauri::Url>() else {
+            return;
+        };
+
+        let builder = tauri::WebviewBuilder::new(ANCHOR, tauri::WebviewUrl::External(blank))
+            .disable_drag_drop_handler();
+
+        // The same store every tab's page is given, through the same seam: which folder
+        // that is belongs to the engine this build runs on and not to this module, and
+        // the session is only shared if both are the one profile. See src/engine.rs.
+        let Ok(builder) = crate::engine::web_store(builder, app) else {
+            return;
+        };
+
+        let made = window.add_child(
+            builder,
+            tauri::LogicalPosition::new(0.0, 0.0),
+            tauri::LogicalSize::new(1.0, 1.0),
+        );
+
+        if let Ok(view) = made {
+            // Out of sight for good: it is a session and not a page.
+            let _ = view.hide();
+            // On the window's own thread already, so this runs inline; a clone of the
+            // environment is what every tab after this is built on.
+            let _ = view.with_webview(|platform| keep(platform.environment()));
+        }
+    }
+}
+
+/// The builder, pointed at the one session this run shares - and that session opened, if
+/// this is the first page of the run.
+///
+/// Both halves are `session`'s: the page nobody sees, which holds the session open past
+/// the last tab closing, and the environment every tab is then built on. On the window's
+/// own thread, because that is where a page is built and the only thread the engine's own
+/// objects may be touched from.
+#[cfg(windows)]
+fn on_shared_session(
+    builder: WebviewBuilder<tauri::Wry>,
+    window: &tauri::Window,
+    app: &AppHandle,
+) -> WebviewBuilder<tauri::Wry> {
+    session::anchor(window, app);
+
+    match session::shared() {
+        Some(env) => builder.with_environment(env),
+        None => builder,
+    }
 }
 
 /// The webview for one tab, built and attached to the window that asked.
@@ -783,17 +862,19 @@ pub async fn web_open(
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 
+    // The handle the page that holds the session open is built through, since the one
+    // below is moved into the closure and this file still needs it afterwards.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let anchoring = app.clone();
+
     let posted = app.run_on_main_thread(move || {
         // Built on the one session the run shares, so closing a note and opening it
-        // again keeps the login and the cookies the way a browser tab does; see
-        // `session`. The first web tab has none to share yet and builds its own on the
-        // folder the engine seam pointed it at, which `listening` then captures for
-        // every tab after it.
+        // again keeps the login and the cookies the way a browser tab does. The session
+        // is held open by a page nobody sees rather than by this tab, because `WebView2`
+        // ends it with the last webview on the profile however long the environment is
+        // kept; see `session::anchor`, which is opened once here and never closed.
         #[cfg(all(windows, not(feature = "cef")))]
-        let builder = match session::shared() {
-            Some(env) => builder.with_environment(env),
-            None => builder,
-        };
+        let builder = on_shared_session(builder, &window, &anchoring);
 
         let made = window
             .add_child(

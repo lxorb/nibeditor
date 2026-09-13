@@ -521,27 +521,50 @@ in the same store on disk. On macOS before 14 there is no such API and WKWebView
 falls back to the default store, which is the one case where the two share a
 profile.
 
-**Every web tab shares that one session with the other web tabs, and it outlives
-any of them.** A web note is a browser tab, and a browser tab keeps you logged in
-when you close it and open it again - because the browser process, and the session
-in it, do not die with the tab. Emil, 2026-09-13: *"When I close and then reopen a
-web note, all state is lost. For example, when I log in, then I would be logged
-out. That should not be the case."* It was, because each tab's webview carried a
-`WebView2` environment of its own: closing the note dropped it and took the live
-session with it - the cookies a login holds in memory, and anything on its way to
-disk - leaving only what the `web` folder had already been written. So the run
-builds one environment and hands it to every tab, kept alive on the window's thread
-for as long as the app runs; closing a note and opening it again is the same
-session, not a new one, and a clone held past the last tab's webview keeps the
-browser process from being torn down under it. The store on disk means a login kept
-in a lasting cookie survives a relaunch as well - a fresh session over the same
-`web` folder - which is what a browser does too. See `session` in
-`apps/desktop/src-tauri/src/web_tabs.rs`. On Linux the runtime already keeps the web
-tabs' context alive for the app's life (it has to, to reuse the WebKit network
-process), so the session is shared there without this. On macOS the context is let
-go when the last tab closes, as it was on Windows; a login there rests on the
-persistent data store on disk - a lasting cookie survives, a session-only one does
-not - until the same seam exists for `WKWebView` as for `WebView2`.
+**Every web tab shares one session with the other web tabs, and a page nobody sees
+holds it open past the last of them.** A web note is a browser tab, and a browser tab
+keeps you logged in when you close it and open it again - because the browser process,
+and the session in it, do not die with the tab. Emil, 2026-09-13: *"When I close and
+then reopen a web note, all state is lost. For example, when I log in, then I would be
+logged out. That should not be the case."*
+
+Two things were wrong and only one of them was the obvious one. Each tab's webview
+carried a `WebView2` environment of its own, so two tabs were two sessions; every tab
+is now built on one environment instead. **But holding that environment is not enough,
+and that took a measurement to learn.** `WebView2` ends a profile's session when the
+last webview on it closes, however long the environment object is kept alive - so a
+clone of it kept on the window's thread left two tabs open at once sharing one session
+and the session gone the moment the last of them went. What a browser has and this did
+not is a process that outlives the tabs. So one webview on the profile - `about:blank`,
+a pixel wide, hidden, never placed again - is opened with the first website of the run
+and never closed, and the session it holds open is the one every tab is built on.
+
+`scripts/web-session-probe.py` is what measured it. It signs in to a page on the
+loopback with a session cookie, a lasting cookie and a `localStorage` token, reads them
+back out of the page, then closes the note, opens it again, and starts the app over.
+With one shared environment and nothing holding it open:
+
+| | |
+| --- | --- |
+| two tabs open at once see one session | **yes** - so the sharing works |
+| the session cookie after closing the note and opening it | **no** - so sharing is not enough |
+| a lasting cookie and `localStorage`, closed and opened | yes |
+| the same, after the app is started again | yes |
+
+The third and fourth rows were always true and are what the `web` folder on disk is for;
+the second is the one Emil met. The page that holds the session open is the answer to it,
+and that row is what the probe is for - run it after any change to this seam. A session
+cookie after the app is started again is gone either way, which is what a browser throws
+away when it quits; a login kept in a lasting cookie or in `localStorage` comes back off
+disk. What holding the session open costs is that a run which has opened one website
+keeps a browser process until the app quits, which is what a browser does with its own
+window. See `session` in `apps/desktop/src-tauri/src/web_tabs.rs`.
+
+On Linux the runtime already keeps the web tabs' context alive for the app's life (it
+has to, to reuse the WebKit network process). On macOS the context is let go when the
+last tab closes, as it was on Windows; a login there rests on the persistent data store
+on disk - a lasting cookie survives, a session-only one does not - until the same seam
+exists for `WKWebView` as for `WebView2`.
 
 **No nib IPC reaches the site**, three times over:
 
@@ -667,6 +690,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
 | `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
 | `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
+| `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page |
 | `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
 | `apps/desktop/test/effects/web-tab.effect.test.ts` | the pane, mounted, which is where a website used to take the window down with it |
