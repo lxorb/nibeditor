@@ -1272,12 +1272,31 @@ built in Rust rather than by `tauri.conf.json`, because a window in the config c
 ask for a profile. `engine::take_ui_window` and `engine::open_ui_window` are that,
 behind the feature, and the config still says what the window looks like.
 
+**6. Two copies of `tauri-utils`, on purpose.** The patch is `tauri` and
+`tauri-build` and nothing else, and that is a finding rather than an omission: the
+branch moved `tauri-utils` to `schemars` 1 without moving its version number, and
+every plugin's build script is written against the 0.8 API - patch it and
+`tauri-plugin-fs` fails to build with *"expected `Schema`, found `RootSchema`"*. So
+the graph holds `tauri-utils 2.9.3` twice, once per source, which is allowed because
+neither copy declares a native library and because no plugin hands one of its types to
+`tauri`. It is the kind of thing that only a build finds, and it is why the patch list
+has a test over it.
+
+**One thing the crate had to give up, and it is one line in `web_tabs.rs`.** The
+closure that answers a page asking for a new window named its own argument's type -
+`NewWindowFeatures` - and on the branch that type carries two type parameters where
+the system engine's carries none. The annotation is redundant in both, so it is gone
+and the closure infers it; that is the only line of the app's own product code that
+batch 1 changed, and the file it is in is being reworked next door.
+
 **One good surprise about this machine.** `cef-dll-sys` resolved
 `cef_binary_151.3.24+g2384915+chromium-151.0.7922.174_windowsarm64_minimal` when the
 flagged workspace was built on Emil's own ARM64 Windows box - so CEF publishes a
 native arm64 Windows distribution and a nib on Chromium is not an x64-only product.
-The gate's runners are x64, so that is a local observation rather than a measured row,
-and it is the reason the batch could be developed here at all.
+What it could not do is finish: `cef-dll-sys` builds a C wrapper with CMake, and CMake
+would not configure clang for arm64 there. So the flagged build is provable on CI and
+not on that machine, which is what this batch was written expecting - the runners are
+x64, and every number below is theirs.
 
 **And two places where the flagged build is deliberately less than the app.** PDF
 export talks to `WebView2`'s print engine directly, which is not the engine any more,
