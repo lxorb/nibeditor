@@ -351,17 +351,55 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     if not clipped:
         failures.append(f"{scheme}: nothing was clipped into the space")
 
-    # 7. The dots: what a browser keeps in the same place, including what this site
-    #    is allowed - which is nothing.
+    # 7. The dots: Chrome's own menu, in Chrome's own order. The rows that are not
+    #    here are the ones the page's own context menu has - back, reload, view source,
+    #    copy, inspect - and the rows that used to be here and must never come back are
+    #    the two that said "Allow the camera" and "Allow the clipboard": a site is asked
+    #    at the moment it asks now. See docs/web-tabs.md.
     page.click('.webbar button[aria-label="More"]')
     page.wait_for_timeout(400)
     rows = page.evaluate(
         "() => [...document.querySelectorAll('.menu .row, .menu button')].map((one) => one.textContent.trim()).filter(Boolean)"
     )
     report[f"{scheme}: the dots"] = rows
+
+    wanted = ["New tab", "Bookmarks", "Zoom out", "Zoom in", "Full screen", "Print"]
+    for row in wanted:
+        if not any(row in one for one in rows):
+            failures.append(f"{scheme}: the dots have no {row!r} row")
+
+    for gone in ["Allow the camera", "Allow the clipboard"]:
+        if any(gone in one for one in rows):
+            failures.append(f"{scheme}: the dots still offer {gone!r}")
+
+    # The zoom rows say the size between them, which is the one number in a menu that
+    # has to be true.
+    if not any("100%" in one for one in rows):
+        failures.append(f"{scheme}: the dots do not say how large the page is drawn")
+
     shots.append(shoot(page, "dots", scheme))
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
+
+    # 8. The site, behind the mark at the left of the field: Chrome's site information
+    #    bubble. What it can say about a page served over `http:` is that the connection
+    #    is not the secure kind, which is the one thing about an address worth warning
+    #    somebody about.
+    site = page.locator('.webbar button[aria-label="Site information"]')
+    if not site.count():
+        failures.append(f"{scheme}: the bar has no mark for the site")
+    else:
+        site.click()
+        page.wait_for_timeout(400)
+        said = page.evaluate(
+            "() => document.querySelector('.site[role=dialog]')?.textContent?.trim() ?? ''"
+        )
+        report[f"{scheme}: what the site says"] = said
+        if "onnection" not in said:
+            failures.append(f"{scheme}: the site bubble says {said!r}")
+        shots.append(shoot(page, "site", scheme, ".web"))
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
 
     report[f"{scheme}: screenshots"] = shots
 
