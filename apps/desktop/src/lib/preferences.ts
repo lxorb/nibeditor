@@ -4,6 +4,8 @@ import { panelDrawable } from './even/panel-words'
 import { glassesGroups, wordFields } from './even/settings'
 import { CATALOGUES_URL, i18n, LANGUAGES, plural, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
+import { PROPERTIES_MODES } from '@nib/markdown/properties'
+import { PROPERTIES_WORDS } from './properties-words'
 import { isPlugin } from './plugin'
 import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './page-setup'
@@ -480,6 +482,24 @@ export function preferences(view?: EditorView): Pane[] {
               initial: false,
               get: () => modes.hardBreaks,
               set: () => modes.toggleHardBreaks(),
+            },
+            {
+              // What a note's front matter is drawn as. Three answers, not two, so a
+              // segmented row rather than a switch - and the same three Obsidian
+              // asks with. Read by the editor and by the reading view, so a note
+              // cannot say one thing written and another read.
+              kind: 'segmented',
+              label: t('Front matter'),
+              hint: t(
+                'Properties draws the rows and edits them in place; Source is the YAML as typed.',
+              ),
+              options: PROPERTIES_MODES.map((one) => ({
+                value: one,
+                label: t(PROPERTIES_WORDS[one]),
+              })),
+              initial: 'properties',
+              get: () => modes.properties,
+              set: (value) => modes.setProperties(value, view),
             },
           ],
         },

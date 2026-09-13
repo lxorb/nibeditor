@@ -775,6 +775,11 @@ export const fr: Dictionary = {
   Footnotes: 'Notes de bas de page',
   'Table of contents': 'Table des matières',
   'Front matter': 'En-tête YAML',
+  'Front matter: {name}': 'Métadonnées : {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Propriétés affiche les lignes et les modifie sur place ; Source est le YAML tel qu’il a été saisi.',
+  Source: 'Source',
+  Hidden: 'Masqué',
   Picture: 'Image',
   Comment: 'Commentaire',
   'Always on top': 'Toujours au premier plan',

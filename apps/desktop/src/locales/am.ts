@@ -750,6 +750,11 @@ export const am: Dictionary = {
   Footnotes: 'የግርጌ ማስታወሻዎች',
   'Table of contents': 'ማውጫ',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'ራስጌ መረጃ: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'ባህሪያት ሰንጠረዙን አሳይቶ በቦታው ያስተካክላል፤ ሶርስ እንደተጻፈው YAML ነው።',
+  Source: 'ሶርስ',
+  Hidden: 'ተደብቋል',
   Picture: 'ምስል',
   Comment: 'አስተያየት',
   'Always on top': 'ዘወትር ከላይ',

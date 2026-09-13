@@ -758,6 +758,11 @@ export const tr: Dictionary = {
   Footnotes: 'Dipnotlar',
   'Table of contents': 'İçindekiler',
   'Front matter': 'Ön bilgi',
+  'Front matter: {name}': 'Ön bilgi: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Özellikler satırları gösterir ve orada düzenler; Kaynak yazıldığı hâliyle YAML’dir.',
+  Source: 'Kaynak',
+  Hidden: 'Gizli',
   Picture: 'Resim',
   Comment: 'Açıklama',
   'Always on top': 'Her zaman üstte',

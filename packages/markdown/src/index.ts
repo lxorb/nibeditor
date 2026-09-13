@@ -2,7 +2,12 @@ import { Marked, Renderer } from 'marked'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
-import { propertiesTable, readProperties } from './properties'
+import {
+  type PropertiesMode,
+  propertiesSource,
+  propertiesTable,
+  readProperties,
+} from './properties'
 import { withoutComments } from './comments'
 import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
@@ -33,11 +38,14 @@ import {
 export interface RenderOptions {
   /** Gather footnote definitions into a list at the end. */
   footnotes?: boolean
-  /** Show the note's front matter as rows above it, the way the editor draws
-   *  one. For the reading view, which is the same note being read inside the
-   *  app; a document that has left is a document, and its metadata is what the
-   *  page furniture was built from rather than a table at the top of it. */
-  properties?: boolean
+  /** What to do with the note's front matter: draw it as the rows it says, draw it
+   *  as the YAML it is written in, or draw neither. Left out it draws neither, which
+   *  is what a document that has left the app wants - its metadata is what the page
+   *  furniture was built from rather than a table at the top of it.
+   *
+   *  For the reading view, which is the same note being read inside the app and so
+   *  answers the reader's own three-way setting; see properties.ts. */
+  properties?: PropertiesMode
   /** Draw the note's cover, where it names one, as a banner above everything else.
    *  Every surface that shows the whole note asks for it - the reading view, the
    *  HTML and ePub exports, a published page - because a cover is the top of the
@@ -504,14 +512,17 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
     )
   }
 
-  if (options.properties) {
-    // Above the note rather than inside it: the block was taken out before the
-    // parse, and what it says is about the note rather than part of it. A block
-    // whose shape cannot be read draws nothing here, the same answer the editor
-    // gives - except that the editor can fall back to the source and a page has
-    // nowhere to fall back to.
+  // Above the note rather than inside it: the block was taken out before the
+  // parse, and what it says is about the note rather than part of it.
+  //
+  // The rows where they can be read, and the block as it was typed where they
+  // cannot - which is the same answer the editor gives, and the reason the reading
+  // view has a `source` of its own to fall back to now rather than nothing.
+  if (options.properties === 'properties') {
     const rows = readProperties(source)
-    if (rows !== null && rows.length > 0) html = propertiesTable(rows) + html
+    html = (rows === null ? propertiesSource(source) : propertiesTable(rows)) + html
+  } else if (options.properties === 'source') {
+    html = propertiesSource(source) + html
   }
 
   // The banner above both, because the cover is the top of the note: what a

@@ -750,6 +750,11 @@ export const my: Dictionary = {
   Footnotes: 'အောက်ခြေမှတ်စုများ',
   'Table of contents': 'မာတိကာ',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'ခေါင်းစီးအချက်အလက်: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'ဂုဏ်သတ္တိများသည် အတန်းများကို ပြပြီး ထိုနေရာတွင်တင် တည်းဖြတ်သည်။ မူရင်းမှာ ရေးထားသည့်အတိုင်း YAML ဖြစ်သည်။',
+  Source: 'မူရင်း',
+  Hidden: 'ဖျောက်ထားသည်',
   Picture: 'ပုံ',
   Comment: 'မှတ်ချက်',
   'Always on top': 'အမြဲအပေါ်တွင်',

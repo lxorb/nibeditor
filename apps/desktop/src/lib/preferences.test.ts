@@ -69,6 +69,7 @@ describe('the sentence behind a setting', () => {
     ['markdown', 'Strict CommonMark'],
     ['markdown', 'Smart punctuation'],
     ['markdown', 'A single newline breaks the line'],
+    ['markdown', 'Front matter'],
     ['markdown', 'Number headings'],
     ['markdown', 'Number equations'],
   ]

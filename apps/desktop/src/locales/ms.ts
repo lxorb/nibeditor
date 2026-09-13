@@ -755,6 +755,11 @@ export const ms: Dictionary = {
   Footnotes: 'Nota kaki',
   'Table of contents': 'Isi kandungan',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'Front matter: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Sifat memaparkan barisnya dan menyuntingnya di situ; Sumber ialah YAML seperti yang ditaip.',
+  Source: 'Sumber',
+  Hidden: 'Tersembunyi',
   Picture: 'Gambar',
   Comment: 'Komen',
   'Always on top': 'Sentiasa di atas',

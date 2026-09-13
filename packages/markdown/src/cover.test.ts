@@ -104,7 +104,7 @@ describe('a rendered note', () => {
   })
 
   test('puts the banner above the properties, which are above the note', () => {
-    const html = renderMarkdown(source, { cover: true, properties: true })
+    const html = renderMarkdown(source, { cover: true, properties: 'properties' })
 
     expect(html.indexOf('nib-cover')).toBeLessThan(html.indexOf('class="property'))
     expect(html.indexOf('class="property')).toBeLessThan(html.indexOf('<h1'))

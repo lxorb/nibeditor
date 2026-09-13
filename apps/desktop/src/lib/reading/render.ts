@@ -12,6 +12,7 @@ import { renderMarkdown, type Wikilink } from '@nib/markdown'
 import { mapSources } from '@nib/markdown/sources'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { modes } from '../modes.svelte'
 import { notePicture } from '../note-images'
 import { queryRowsHtml } from '../query-block'
 import type { Scheme } from '../theme.svelte'
@@ -87,10 +88,11 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean):
   const html = withPictures(
     renderMarkdown(note.text, {
       footnotes: true,
-      // The note's own metadata, as the rows the editor draws. Reading a note is
-      // being in the app looking at it, so it says the same thing either way; a
-      // document that has left does not, and no exporter asks for these.
-      properties: true,
+      // The note's own metadata, the way the reader asked for it in the editor -
+      // rows, source, or neither. Reading a note is being in the app looking at it,
+      // so it says the same thing either way; a document that has left does not, and
+      // no exporter asks for these.
+      properties: modes.properties,
       // And the note's cover, where it names one: the wide picture across the top
       // of it, exactly as the editor's live preview draws it a pane away. See
       // cover.ts in @nib/markdown.

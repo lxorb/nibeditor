@@ -9,6 +9,7 @@ import {
   setLigatures,
   setLineHeight,
   setMeasure,
+  setProperties,
   setReadOnlyMode,
   setRightToLeft,
   setEquationNumbers,
@@ -29,6 +30,7 @@ import {
 } from '@nib/editor'
 import { setHardBreaks } from '@nib/markdown'
 import { highlightTone, type HighlightColour } from '@nib/markdown/highlights'
+import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
@@ -148,6 +150,7 @@ interface Saved {
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
+  properties: PropertiesMode
 }
 
 /** The word the status bar shows for each mode modal editing has, in Vim's own
@@ -357,6 +360,17 @@ class Modes {
    *  Reading both spellings already works either way; see link-format.ts. */
   linkFormat = $state<LinkFormat>('wikilink')
 
+  /** What a note's front matter is drawn as: the rows it says, the YAML it is
+   *  written in, or nothing at all.
+   *
+   *  The rows, which is where every note starts: what a note carries is worth
+   *  reading, and the source is one caret away. Somebody whose metadata holds a
+   *  shape nib cannot read wants the source all the time and says so here, and
+   *  somebody who never looks at it says that. The one answer is read by the editor
+   *  and by the reading view, so a note cannot say one thing written and another
+   *  read; see properties.ts in @nib/markdown. */
+  properties = $state<PropertiesMode>('properties')
+
   constructor() {
     // The editor package reports a view's mode as it changes and null when
     // that view leaves modal editing; see packages/editor/src/vim.ts.
@@ -430,6 +444,7 @@ class Modes {
       }
       this.hardBreaks = saved.hardBreaks === true
       if (isLinkFormat(saved.linkFormat)) this.linkFormat = saved.linkFormat
+      this.properties = propertiesMode(saved.properties)
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
@@ -492,6 +507,7 @@ class Modes {
       words: this.spellWords,
       closeBrackets: this.closeBrackets,
       ligatures: this.ligatures,
+      properties: this.properties,
       vim: this.vim,
     }
   }
@@ -642,6 +658,18 @@ class Modes {
   /** The colour that button writes, as the renderer and the editor know it. */
   get highlight(): HighlightColour {
     return highlightTone(this.highlightTone)
+  }
+
+  /** What a note's front matter is drawn as, everywhere a note is shown. Said
+   *  outright rather than flipped: there are three answers, not two. */
+  setProperties(mode: string, view?: EditorView) {
+    const wanted = propertiesMode(mode)
+    if (wanted === this.properties) return
+
+    this.properties = wanted
+    this.each(view, (one) => setProperties(one, wanted))
+    this.persist()
+    this.share({ properties: wanted })
   }
 
   /** Whether a single newline breaks the line, everywhere a note is read. */
@@ -906,6 +934,16 @@ class Modes {
       this.persist()
     }
 
+    const shown = remote.properties
+    if (typeof shown === 'string' && unheard) {
+      const wanted = propertiesMode(shown)
+      if (wanted !== this.properties) {
+        this.properties = wanted
+        this.each(undefined, (one) => setProperties(one, wanted))
+        this.persist()
+      }
+    }
+
     const spelling = remote.linkFormat
     if (isLinkFormat(spelling) && unheard && spelling !== this.linkFormat) {
       this.linkFormat = spelling
@@ -1160,6 +1198,7 @@ class Modes {
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
+      properties: this.properties,
       linkFormat: this.linkFormat,
     }
     keep(STORAGE_KEY, JSON.stringify(state))

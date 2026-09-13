@@ -64,6 +64,8 @@ import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
+import { PROPERTIES_MODES } from '@nib/markdown/properties'
+import { PROPERTIES_WORDS } from './properties-words'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { invoke, isDesktop, isNative } from './tauri'
@@ -1071,6 +1073,15 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Accent: {name}', { name: t(swatch.name) }),
       checked: swatch.id === theme.accent,
       run: () => theme.setAccent(swatch.id),
+    })),
+    // What a note's front matter is drawn as. A row each, for the same reason the
+    // scheme has one each: the keyboard reaches the same three words the pane
+    // offers, and the one in force is ticked.
+    ...PROPERTIES_MODES.map((mode) => ({
+      id: `properties:${mode}`,
+      label: t('Front matter: {name}', { name: t(PROPERTIES_WORDS[mode]) }),
+      checked: mode === modes.properties,
+      run: () => modes.setProperties(mode, view),
     })),
     ...CODE_PALETTES.map((palette) => ({
       id: `code-theme:${palette.id}`,

@@ -41,6 +41,7 @@
   import { EditorStates, noteKey } from './editor-states'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
+  import { PROPERTY_CHOICES } from './property-choices'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
@@ -112,6 +113,9 @@
       // See composer.ts.
       writeLink: pickedLink,
       ...(onfind ? { onFind: onfind } : {}),
+      // The keys the app has a fixed set of answers for, so a property row offers a
+      // menu rather than a field somebody has to spell a colour into.
+      propertyChoices: PROPERTY_CHOICES,
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,

@@ -796,6 +796,11 @@ export const ar: Dictionary = {
   Footnotes: 'الحواشي',
   'Table of contents': 'جدول المحتويات',
   'Front matter': 'بيانات أولية',
+  'Front matter: {name}': 'البيانات الأولية: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'الخصائص تعرض الصفوف وتحررها في مكانها؛ المصدر هو YAML كما كُتب.',
+  Source: 'المصدر',
+  Hidden: 'مخفي',
   Picture: 'صورة',
   Comment: 'تعليق',
   'Always on top': 'دائمًا في المقدمة',

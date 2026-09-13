@@ -764,6 +764,11 @@ export const sw: Dictionary = {
   Footnotes: 'Tanbihi',
   'Table of contents': 'Yaliyomo',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'Data ya kichwa: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Sifa huonyesha safu na kuzihariri hapo hapo; Chanzo ni YAML kama ilivyoandikwa.',
+  Source: 'Chanzo',
+  Hidden: 'Imefichwa',
   Picture: 'Picha',
   Comment: 'Maoni',
   'Always on top': 'Juu kila wakati',

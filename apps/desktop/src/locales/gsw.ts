@@ -759,6 +759,11 @@ export const gsw: Dictionary = {
   Footnotes: 'Fuessnote',
   'Table of contents': 'Inhaltsverzeichnis',
   'Front matter': 'Chopfdate',
+  'Front matter: {name}': 'Chopfdate: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Eigeschafte zeigt di Zilene und bearbeitet si dört; Quälltext isch s YAML wie tippt.',
+  Source: 'Quälltext',
+  Hidden: 'Versteckt',
   Picture: 'Bild',
   Comment: 'Kommentar',
   'Always on top': 'Immer vorne',

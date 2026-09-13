@@ -125,6 +125,7 @@ describe('a note', () => {
       'Rename',
       'Move',
       'Choose an icon',
+      'Set cover',
       'Bookmark',
       'Leave out of search',
       'Duplicate',
@@ -141,6 +142,7 @@ describe('a note that holds notes', () => {
       'Rename',
       'Move',
       'Choose an icon',
+      'Set cover',
       'Bookmark',
       'Leave out of search',
       'Delete',
@@ -149,8 +151,11 @@ describe('a note that holds notes', () => {
 })
 
 describe('a folder nobody has written a note in', () => {
-  test('offers exactly what a note offers, less the copy', () => {
-    expect(labels(plain)).toEqual(labels(nested))
+  /** The same menu, less the two things that need a file: a copy of itself, and a
+   *  cover. An icon it can still have, because a folder with no note keeps one in the
+   *  space's own map; front matter needs somewhere to be written. */
+  test('offers exactly what a note offers, less the copy and the cover', () => {
+    expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
   })
 })
 
@@ -181,6 +186,7 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Move',
       'Choose an icon',
+      'Set cover',
       'Bookmark',
       'Leave out of search',
       'Share',
@@ -200,6 +206,7 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Move',
       'Choose an icon',
+      'Set cover',
       'Bookmark',
       'Leave out of search',
       'Share',

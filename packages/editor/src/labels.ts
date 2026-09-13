@@ -59,6 +59,9 @@ const DEFAULTS = {
    *  word a new key is named with until it is given a name of its own. */
   addProperty: 'Add a property',
   property: 'property',
+  /** The field at the end of a list property, and the `x` on one of its chips. */
+  addToList: 'Add',
+  removeFromList: 'Remove',
   /** The handle on a note's cover, which drags the band up and down the picture. */
   dragCover: 'Drag to reposition',
 }

@@ -401,6 +401,10 @@ export interface AccountSettings {
   /** How a link to another note is written: a wikilink, or a markdown link with
    *  one of three shapes of target; see link-format.ts. */
   linkFormat?: string
+  /** What a note's front matter is drawn as: its rows, its source, or nothing. On
+   *  the account because it is about how metadata is read rather than about which
+   *  machine is reading it; see properties.ts in @nib/markdown. */
+  properties?: string
 }
 
 /** What any read can say about the account's OpenAI key.

@@ -656,19 +656,29 @@ Features Typora does not have, which are the reason this exists.
       plain text take it as the document's first picture, which is what carries it
       into the file. A slide has no cover: a deck is a poster and has no top to put a
       band across
-- [x] A note's front matter drawn as the rows it says: the key on the left, the
-      value in the control its shape asks for - a list as chips, a `true` as a
-      checkbox, a date as a date - and nib's own `export:` page setup as its
-      pairs. A block like every other block, so the caret going into it shows the
-      YAML, and a click on a row puts the caret on that row's own line. That is
-      why there is no setting for rows or source: the source is the editor, and a
-      second way of editing metadata would be a second thing to keep in step with
-      the file. `Add a property` at the foot writes a new key and leaves the caret
-      on it. One rule for everything else: if any line of the block is a shape nib
-      cannot read - a Dataview query, a comment - the **whole** block stays
-      source, because half a table is a table that lies about the file. The rows
-      show in the reading view too, and nowhere outside the app: front matter is
-      about the note rather than part of it, and every export already leaves it out
+- [x] A real properties UI: a note's front matter drawn as the rows it says, and
+      edited in them. The key on the left, and on the right the control the value's
+      own shape asks for - a field for a word, a number field for a number, the
+      browser's own date picker for a date, a real checkbox for a `true`, chips with
+      an `x` each and a field to add one for a list, and a menu where the key is one
+      the app has a fixed set of answers for: `icon-color` is the accents, `paper`
+      and `orientation` are the page setup's. What every control writes is plain
+      front matter - `tags: [one, two]`, `done: true`, `due: 2026-09-14` - through
+      `frontMatterEdit`, so the file stays a file every other reader can read, and
+      nothing a control writes is a shape the rows cannot read back. One document
+      change per gesture, so a value typed into a row is one thing to undo.
+      `Add a property` at the foot writes a new key and leaves the caret on it.
+      The source is still one caret away: a click on a row's key puts the caret on
+      that row's own line and the block gives way to the YAML. And the reader who
+      wants the source all the time, or none of it, says so once - Front matter in
+      Settings > Editor, and a row each in the palette, with the same three answers
+      Obsidian asks with: Properties, Source, Hidden. The editor and the reading view
+      read the one answer, so a note cannot say one thing written and another read.
+      One rule for everything else: if any line of the block is a shape nib cannot
+      read - a Dataview query, a comment - the **whole** block stays source, because
+      half a table is a table that lies about the file. Nowhere outside the app,
+      whichever answer: front matter is about the note rather than part of it, and
+      every export already leaves it out
 - [x] A dictionary of your own. The menu over a word offers to add it, and from
       then on the wavy line under it is gone, wherever it appears, on every
       device: the list follows the account. Settings has it under Spelling, to

@@ -743,6 +743,11 @@ export const zhHant: Dictionary = {
   Footnotes: '註腳',
   'Table of contents': '目錄',
   'Front matter': '前置資料',
+  'Front matter: {name}': '前置資料：{name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    '屬性以列的形式顯示並就地編輯；原始碼是輸入時的 YAML。',
+  Source: '原始碼',
+  Hidden: '隱藏',
   Picture: '圖片',
   Comment: '註解',
   'Always on top': '永遠在最上層',

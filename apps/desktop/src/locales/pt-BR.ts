@@ -769,6 +769,11 @@ export const ptBR: Dictionary = {
   Footnotes: 'Notas de rodapé',
   'Table of contents': 'Sumário',
   'Front matter': 'Cabeçalho YAML',
+  'Front matter: {name}': 'Metadados: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Propriedades mostra as linhas e as edita ali mesmo; Fonte é o YAML como foi digitado.',
+  Source: 'Fonte',
+  Hidden: 'Oculto',
   Picture: 'Imagem',
   Comment: 'Comentário',
   'Always on top': 'Sempre na frente',

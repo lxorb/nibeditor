@@ -15,7 +15,7 @@ import { readChart } from '@nib/markdown/chart'
 import { htmlBlockCard } from '@nib/markdown/html-block'
 import { type EmbedKind, embedKind } from '@nib/markdown/links'
 import { coverOf } from '@nib/markdown/cover'
-import { readProperties } from '@nib/markdown/properties'
+import { type PropertiesMode, readProperties } from '@nib/markdown/properties'
 import { CoverWidget } from './cover'
 import { PropertiesWidget } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
@@ -47,6 +47,14 @@ import { WebEmbedWidget } from './web'
 /** Whether display equations carry a number on the right. */
 export const numberEquations = Facet.define<boolean, boolean>({
   combine: (values) => values[0] ?? false,
+})
+
+/** What the note's front matter is drawn as: the rows it says, the YAML it is
+ *  written in, or nothing at all. The reader's own answer, asked once in Settings
+ *  and read by the reading view through the same three words; see properties.ts in
+ *  @nib/markdown. The rows are where a note with no answer starts. */
+export const propertiesMode = Facet.define<PropertiesMode, PropertiesMode>({
+  combine: (values) => values[0] ?? 'properties',
 })
 
 /** The longest a `[toc]` line can be, so paragraphs are dismissed on their
@@ -114,6 +122,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
   let toc = false
   const doc = state.doc
   const numbered = state.facet(numberEquations)
+  const shown = state.facet(propertiesMode)
   const revealed = (from: number, to: number) => reveals && overlaps(state, from, to)
   const lineRevealedAt = (pos: number) => reveals && lineRevealed(state, pos)
   // The labels belong to this document, so they are dropped whether or not
@@ -179,6 +188,18 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
               }).range(span.from),
             )
           }
+
+          // Hidden: the metadata is still in the file and still read, it is simply
+          // not on the page. Whatever the caret is doing - a block that came back
+          // because somebody clicked past it would not be hidden.
+          if (shown === 'hidden') {
+            ranges.push(Decoration.replace({ block: true }).range(span.from, span.to))
+            return false
+          }
+
+          // Source: the block is the YAML, always, which is what somebody with a
+          // Dataview query in their metadata asked for.
+          if (shown === 'source') return false
 
           if (revealed(node.from, node.to)) return false
           if (readProperties(source) === null) return false
@@ -431,6 +452,7 @@ function settingsChanged(transaction: Transaction): boolean {
   return (
     before.facet(noReveal) !== after.facet(noReveal) ||
     before.facet(numberEquations) !== after.facet(numberEquations) ||
+    before.facet(propertiesMode) !== after.facet(propertiesMode) ||
     // An embed shows another note, so what that note says decides what is drawn
     // here even though nothing in this document moved.
     before.facet(noteIndex) !== after.facet(noteIndex) ||

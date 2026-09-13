@@ -757,6 +757,11 @@ export const bn: Dictionary = {
   Footnotes: 'ফুটনোট',
   'Table of contents': 'সূচিপত্র',
   'Front matter': 'ফ্রন্ট ম্যাটার',
+  'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'প্রপার্টিজ সারিগুলি দেখায় এবং সেখানেই সম্পাদনা করে; সোর্স হল যেমন লেখা হয়েছে সেই YAML।',
+  Source: 'সোর্স',
+  Hidden: 'লুকানো',
   Picture: 'ছবি',
   Comment: 'মন্তব্য',
   'Always on top': 'সবসময় উপরে',

@@ -759,6 +759,11 @@ export const hi: Dictionary = {
   Footnotes: 'फ़ुटनोट',
   'Table of contents': 'विषय सूची',
   'Front matter': 'फ़्रंट मैटर',
+  'Front matter: {name}': 'फ़्रंट मैटर: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'प्रॉपर्टीज़ पंक्तियाँ दिखाती है और वहीं संपादित करती है; स्रोत जैसा लिखा गया वैसा YAML है.',
+  Source: 'स्रोत',
+  Hidden: 'छिपा',
   Picture: 'चित्र',
   Comment: 'टिप्पणी',
   'Always on top': 'हमेशा ऊपर',

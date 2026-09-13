@@ -767,6 +767,11 @@ export const fil: Dictionary = {
   Footnotes: 'Mga talababa',
   'Table of contents': 'Talaan ng nilalaman',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'Front matter: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Ipinapakita ng Properties ang mga hanay at inieedit ang mga ito doon; ang Source ay ang YAML na gaya ng pagkakasulat.',
+  Source: 'Pinagmulan',
+  Hidden: 'Nakatago',
   Picture: 'Larawan',
   Comment: 'Komento',
   'Always on top': 'Laging nasa itaas',
