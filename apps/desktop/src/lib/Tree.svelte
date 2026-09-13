@@ -54,6 +54,7 @@
   import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
+  import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
   import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
@@ -74,11 +75,6 @@
   /** How long a twist takes to slide what it holds into place. The duration the
    *  wrapper's own `slide` had. */
   const FOLDING = 190
-
-  /** The shortest a row may be taken to be, for a browser that will not say what
-   *  `--row-height` came to. Not a scale of its own - see `tokenHeight`. */
-  const LEAST_ROW = 28
-  const LEAST_TOUCH = 56
 
   /** Whether the name being typed cannot be written, which the row wears as a
    *  hairline in red; the field is what knows why. One flag for the list, because
@@ -108,21 +104,25 @@
    *  desktop are this same component in that same box. */
   let list = $state<HTMLUListElement>()
 
-  /** Not state: nothing is derived from which box this is, and `measure` reading it
-   *  reactively would make the effect that finds it depend on its own answer. */
-  let scroller: HTMLElement | null = null
+  /** Where this list's window is: how far down the scroller has got, how much of
+   *  the list it can show, and how tall one row is. The Links panel's lists hold the
+   *  same three the same way; see row-window.svelte.ts. */
+  const where = new ListView()
 
-  /** How far down the list the scroller has reached and how much of it it can show.
-   *  Read rather than guessed; see `measure`. */
-  let top = $state(0)
-  let room = $state(0)
+  /** How tall one row is: the token, 28 under a pointer and 56 under a thumb. Read
+   *  through `where` so a window resized re-reads it, and off the device class so
+   *  that plugging a mouse into a tablet does too - which changes the row scale
+   *  without resizing anything. */
+  const rowOf = () => tokenRow(viewport.touch)
+  const rowHeight = $derived(where.row || tokenFloor(viewport.touch))
 
-  /** And how tall one row is, which is the token: 28 under a pointer, 56 under a
-   *  thumb. Off the device class, so plugging a mouse into a tablet re-reads it -
-   *  that changes the row scale without resizing anything. The observer below writes
-   *  over it as well, since a window resized is the other moment the tokens may have
-   *  moved underneath. */
-  let rowHeight = $derived(tokenHeight(viewport.touch))
+  // The one thing the observer on the box cannot see: a mouse plugged into a tablet
+  // changes the row scale and resizes nothing.
+  // A mouse plugged into a tablet changes the row scale and resizes nothing, so no
+  // observer on the box can see it: the scale is handed over instead.
+  $effect(() => {
+    where.refresh(tokenRow(viewport.touch))
+  })
 
   /** A twist on the move, or null while the list is still. */
   let fold = $state<Fold | null>(null)
@@ -144,8 +144,8 @@
   const rows = $derived<Rows>({
     count: flat.length,
     height: rowHeight,
-    top,
-    room,
+    top: where.top,
+    room: where.room,
     overscan: OVERSCAN,
     fold,
     pinned,
@@ -249,7 +249,7 @@
     if (!(line instanceof HTMLElement)) return null
 
     line.scrollIntoView({ block: 'nearest' })
-    measure()
+    where.refresh()
 
     // The row inside it, for whoever wants to put the keyboard on it. Null for the
     // row whose name is being typed, which wears a field instead.
@@ -511,91 +511,35 @@
 
   /* ── Where the window is ──────────────────── */
 
-  /** The box this list scrolls in. The panel's body, which also holds the
-   *  bookmarks above and the empty stretch below, so the list's own top is a
-   *  distance into it rather than zero. */
-  function scrollerOf(from: HTMLElement): HTMLElement | null {
-    for (let box = from.parentElement; box; box = box.parentElement) {
-      const flow = getComputedStyle(box).overflowY
-      if (flow === 'auto' || flow === 'scroll') return box
-    }
-
-    return null
-  }
-
-  /** How tall one row is, off the token rather than off a row: `--row-height` is 28
-   *  under a pointer and 56 under a thumb, stated once in the themes package, and a
-   *  label is one line that gives way with an ellipsis - so every row in every list
-   *  is exactly this tall and none of them is ever measured.
-   *
-   *  Which kind of screen this is comes in rather than being read here, so whoever
-   *  asks asks again when a finger replaces a pointer - which changes the row scale
-   *  without resizing anything the observer below is watching. It is only used where
-   *  a browser answers nothing at all, which keeps the arithmetic off nought; it is
-   *  a floor rather than a second statement of the scale. */
-  function tokenHeight(touch: boolean): number {
-    const said = getComputedStyle(document.documentElement).getPropertyValue('--row-height')
-    const px = Number.parseFloat(said)
-
-    return Number.isFinite(px) && px > 0 ? px : touch ? LEAST_TOUCH : LEAST_ROW
-  }
-
-  /** Where the scroller has got to, and how much of the list it can show. Two
-   *  boxes read rather than a scroll offset, so whatever stands above the list -
-   *  the bookmarks, a section label, a group opening - is accounted for without
-   *  this having to know it is there. */
-  function measure() {
-    const ul = list
-    const box = scroller
-    if (!ul || !box) return
-
-    top = box.getBoundingClientRect().top - ul.getBoundingClientRect().top
-    room = box.clientHeight
-  }
-
   $effect(() => {
     const ul = list
     if (!ul) return
-
-    const box = scrollerOf(ul)
-    scroller = box
-    if (!box) return
-
-    measure()
 
     // Where this space was left. Read outside the effect's own reading, or writing
     // it down on every scroll would run this again and put the list back where the
     // scroll started from.
     const root = untrack(() => workspace.activeSpace?.root)
+
+    const stop = where.follow(ul, rowOf, (box) => {
+      if (root !== undefined) workspace.device.setListAt(root, box.scrollTop)
+    })
+
+    const box = where.box
+    if (!box) return stop
+
     if (root !== undefined) {
       const left = untrack(() => workspace.device.listAt(root))
       if (left > 0) box.scrollTop = left
-      measure()
+      where.refresh()
     }
 
-    const onScroll = () => {
-      measure()
-      if (root !== undefined) workspace.device.setListAt(root, box.scrollTop)
-    }
-
-    // One observer, on the scroller: a window resized, a drawer opened, the
-    // keyboard taking half a phone's screen, or a finger changing the row scale
-    // all arrive here.
-    const watch = new ResizeObserver(() => {
-      rowHeight = tokenHeight(viewport.touch)
-      measure()
-    })
-    watch.observe(box)
-
-    box.addEventListener('scroll', onScroll, { passive: true })
     box.addEventListener('dragover', onDragOver)
     box.addEventListener('dragleave', offList)
     box.addEventListener('drop', stopRolling)
     box.addEventListener('dragend', stopRolling)
 
     return () => {
-      watch.disconnect()
-      box.removeEventListener('scroll', onScroll)
+      stop?.()
       box.removeEventListener('dragover', onDragOver)
       box.removeEventListener('dragleave', offList)
       box.removeEventListener('drop', stopRolling)
@@ -613,7 +557,7 @@
   let rolling: number | null = null
 
   function rollOn() {
-    const box = scroller
+    const box = where.box
     if (!box || edgeAt === null) {
       rolling = null
       return
@@ -628,7 +572,7 @@
   }
 
   function onDragOver(event: DragEvent) {
-    const box = scroller
+    const box = where.box
     if (!box || !isTreeDrag(event.dataTransfer)) return
 
     edgeAt = event.clientY - box.getBoundingClientRect().top
@@ -639,7 +583,7 @@
    *  most of them, is not the pointer leaving the list: the events from the rows
    *  arrive here too. The same geometry the rows settle it with; see `stillInside`. */
   function offList(event: DragEvent) {
-    const box = scroller
+    const box = where.box
     if (box && inside(box.getBoundingClientRect(), event.clientX, event.clientY)) return
 
     stopRolling()

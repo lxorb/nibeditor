@@ -18,18 +18,7 @@
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
   import { roving } from './roving'
-
-  /** Every list in this panel walks the same way, so the rules are written once:
-   *  the arrows move, Enter goes to the line and hands the note the keyboard, Space
-   *  goes to it and leaves the keyboard here. See roving.ts. */
-  const WALK = {
-    rows: '.hit',
-    open: (row: HTMLElement) => row.click(),
-    peek: (row: HTMLElement) => {
-      row.click()
-      row.focus()
-    },
-  }
+  import HitList, { HIT_WALK } from './HitList.svelte'
 
   const {
     ongoto,
@@ -142,7 +131,7 @@
          row that can point at a note the space has not got, and that row goes to the
          line in this note instead. The link is what is wrong, so the link is what it
          shows you. -->
-    <ul use:roving={WALK}>
+    <ul use:roving={HIT_WALK}>
       {#each outgoing as link, index (`${link.target}:${link.line}:${index}`)}
         <li>
           <button
@@ -176,19 +165,11 @@
 {/snippet}
 
 <!-- A list of lines: which note, and what it says on the line the name is written
-     on. What the backlinks and the mentions both are, character for character, and
-     the reason they are one snippet is that they were. -->
+     on. What the backlinks and the mentions both are, character for character.
+     A component rather than a snippet because it holds a window of its own now, and
+     there are two of them in one scroller: see HitList.svelte. -->
 {#snippet hits(rows: readonly Reference[])}
-  <ul use:roving={WALK}>
-    {#each rows as reference, index (`${reference.path}:${reference.line}:${index}`)}
-      <li>
-        <button class="nib-row hit" onclick={() => openAt(reference)}>
-          <span class="hit-note">{reference.name}</span>
-          <span class="hit-line">{reference.text}</span>
-        </button>
-      </li>
-    {/each}
-  </ul>
+  <HitList {rows} onpick={openAt} />
 {/snippet}
 
 <style>

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import {
   autoScrollBy,
@@ -231,5 +233,118 @@ describe('a drag held near the edge of the list', () => {
 
   test('and nothing at all over a list with no room to scroll', () => {
     expect(autoScrollBy(0, 0, HEIGHT, HEIGHT / 2)).toBe(0)
+  })
+})
+
+/** The one thing a window has to be right about for the keyboard: the row next to
+ *  the one it is on is in the page.
+ *
+ *  A roving walk moves the focus onto the next row's element, and an element that is
+ *  not in the page cannot take a focus. Where a walk reaches a long way past the
+ *  window the list puts the row there first - `reach` in Tree.svelte and
+ *  HitList.svelte, the `LongList` protocol in roving.ts - but the ordinary step, the
+ *  one that happens four hundred times to walk a space, must need none of that. It
+ *  does not, as long as the window keeps rows beyond either edge: the overscan is
+ *  what makes an arrow at the edge of the view land on a row that already exists.
+ *
+ *  Counted over every row of a long list rather than argued about: stand on each one
+ *  in turn, put the view where a browser would have left it, and ask whether the row
+ *  above and the row below are in the page. */
+describe('walking a long list a row at a time', () => {
+  const OVERSCAN = 6
+
+  /** The window as it is once the row with the keyboard has been scrolled into view,
+   *  which is what `scrollIntoView({ block: 'nearest' })` leaves behind: the row at
+   *  the top edge of the view, or at the bottom of it. */
+  const standing = (index: number, count: number, where: 'top' | 'bottom') => {
+    const at = index * HEIGHT
+    const top = where === 'top' ? at : Math.max(0, at - ROOM + HEIGHT)
+
+    return rows({ count, top, overscan: OVERSCAN, pinned: [index] })
+  }
+
+  test('the row above and the row below are always already in the page', () => {
+    const count = 1000
+    const missing: string[] = []
+
+    for (let index = 0; index < count; index++) {
+      for (const edge of ['top', 'bottom'] as const) {
+        const view = windowFor(standing(index, count, edge))
+        const held = (one: number) =>
+          one < 0 ||
+          one >= count ||
+          (one >= view.first && one <= view.last) ||
+          view.pinned.includes(one)
+
+        if (!held(index - 1)) missing.push(`${index} up at the ${edge}`)
+        if (!held(index + 1)) missing.push(`${index} down at the ${edge}`)
+      }
+    }
+
+    expect(missing).toEqual([])
+  })
+
+  test('and the row it is standing on, wherever the scroll has gone', () => {
+    // The scroll somewhere else entirely, which is what a wheel does while the
+    // keyboard stays where it was: the row is pinned, and is held for it.
+    const away = rows({ count: 1000, top: 400 * HEIGHT, overscan: OVERSCAN, pinned: [7] })
+    const view = windowFor(away)
+
+    expect(view.first).toBeGreaterThan(7)
+    expect(view.pinned).toEqual([7])
+  })
+
+  test('for the cost of the rows in view and the overscan, and no more', () => {
+    // Which is the whole point of a window: a thousand rows, and the page holds the
+    // twenty in view and a few either side. The Links panel drew all thousand.
+    const count = 1000
+    const drawn = mounted({ count, overscan: OVERSCAN, top: 100 * HEIGHT, pinned: [100] })
+
+    expect(drawn).toBe(ROOM / HEIGHT + 2 * OVERSCAN)
+    expect(drawn).toBeLessThan(count / 20)
+  })
+})
+
+/** And which lists in the app actually go through it.
+ *
+ *  The arithmetic above has been right since the file list first used it; what was
+ *  wrong was that the Links panel did not. A note a thousand others point at was a
+ *  thousand buttons and three thousand spans, two hundred and fifteen milliseconds
+ *  after a button press, and none of the tests above could tell - they are about the
+ *  window, and that panel had no window to be about.
+ *
+ *  So this is read off the components' own source, the way
+ *  packages/editor/test/metrics.test.ts reads modes.ts: a list that can be as long as
+ *  its space is has to draw from a window rather than from the whole of what it
+ *  holds. It is the shape of the thing rather than the pixels, which is exactly what
+ *  is easy to lose again - a list added next year will have the same choice to make. */
+describe('the lists that draw through it', () => {
+  const source = (name: string) =>
+    readFileSync(fileURLToPath(new URL(`./${name}`, import.meta.url)), 'utf8')
+
+  /** The two lists in the app whose length is the space's rather than a handful. */
+  const LONG = ['Tree.svelte', 'HitList.svelte']
+
+  for (const name of LONG) {
+    test(`${name} draws a window rather than every row it holds`, () => {
+      const text = source(name)
+
+      expect(text).toContain('windowFor')
+      // The two boxes that stand in for the rows that are not there. Without them a
+      // window is a list that has lost most of its height.
+      expect(text).toContain('view.above')
+      expect(text).toContain('view.below')
+      // And the protocol that lets the keyboard walk past the window's edge.
+      expect(text).toContain('reach')
+    })
+  }
+
+  test('and the Links panel draws its hit lists through one of them', () => {
+    const text = source('Links.svelte')
+
+    // Not an each over everything the index found, which is what it used to be:
+    // `{#each rows as reference}` over a thousand backlinks.
+    expect(text).toContain('HitList')
+    expect(text).not.toMatch(/\{#each\s+rows\s+as/)
   })
 })

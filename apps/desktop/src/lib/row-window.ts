@@ -81,6 +81,23 @@ export interface RowWindow {
   pinned: number[]
 }
 
+/** The box a list scrolls in: the nearest ancestor that scrolls.
+ *
+ *  A list does not own its scroller. The file list shares the panel's body with
+ *  the bookmarks above it, and the Links panel's body holds three lists one after
+ *  another - so where a list's window is depends on a box it does not know about,
+ *  and it finds it by looking up. Here rather than in row-window.svelte.ts because
+ *  it is a walk of parents and a string comparison, which needs no runes and can
+ *  be read without a browser. */
+export function scrollerOf(from: HTMLElement): HTMLElement | null {
+  for (let box = from.parentElement; box; box = box.parentElement) {
+    const flow = getComputedStyle(box).overflowY
+    if (flow === 'auto' || flow === 'scroll') return box
+  }
+
+  return null
+}
+
 /** How far down the list a row's top edge is. */
 export function offsetOf(index: number, rows: Rows): number {
   const { height, fold } = rows
