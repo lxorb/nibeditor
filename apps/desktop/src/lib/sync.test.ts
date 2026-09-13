@@ -351,6 +351,30 @@ beforeEach(async () => {
   ;({ account } = await import('./account.svelte'))
   ;({ sync } = await import('./sync.svelte'))
   ;({ workspace } = await import('./workspace.svelte'))
+
+  // Every test drives the clock from here on, so a timer one test leaves running
+  // - a note's autosave waiting out its pause, the loop's next tick - is one the
+  // afterEach can drop rather than let fire into the test after it. That was the
+  // flake this closed: a note edited in one test scheduled a save on a real timer
+  // that no teardown cancelled, and a second and change later it woke, reached
+  // through the shared fake, and wrote that note's words onto whichever test was
+  // running by then - so the failure moved from one test to another with how the
+  // runner happened to spread the files across its workers. A test that wants the
+  // clock held still - to hold a loop's first tick - says so with its own
+  // useFakeTimers; shouldAdvanceTime keeps a note coming down and a hash being
+  // taken moving as they do on the wall clock. See afterEach.
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+})
+
+afterEach(() => {
+  // Whatever a test scheduled and did not clear is dropped here, before the next
+  // one runs, so nothing a stale timer would do can reach it. Dropping is not
+  // firing: the write a leaked save would have made never happens. A test that
+  // ended on real timers of its own has already let its timers go with them; only
+  // the fake clock this file installs can drop what is still sitting on it. Real
+  // again on the way out, so the next beforeEach waits out a pass in real time.
+  if (vi.isFakeTimers()) vi.clearAllTimers()
+  vi.useRealTimers()
 })
 
 /** A machine with one space and a note open in it, the way a browser starts. */
