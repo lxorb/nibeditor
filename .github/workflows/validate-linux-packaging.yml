@@ -45,6 +45,29 @@ jobs:
           done
           sha256sum dl/*.deb
 
+      # What the snap says those bytes are. The `.deb` is fetched on a runner and
+      # unpacked into a package the Snap Store publishes under this name, so the
+      # digest in snapcraft.yaml is the one thing standing between a tampered asset
+      # and everybody's App Center. Compared here because this is the job that has
+      # the bytes; the unit test beside the app only reads the shape.
+      - name: The digests the snap pins
+        run: |
+          for arch in x64 arm64; do
+            case "$arch" in
+              x64) said=amd64 ;;
+              *) said=arm64 ;;
+            esac
+
+            want="$(sha256sum "dl/Nib-$VERSION-linux-$arch.deb" | cut -d' ' -f1)"
+            held="$(sed -n "s|.*on $said: sha256/\([0-9a-f]*\).*|\1|p" packaging/snap/snapcraft.yaml)"
+
+            echo "$said: snapcraft.yaml says $held"
+            if [ "$want" != "$held" ]; then
+              echo "::error::packaging/snap/snapcraft.yaml pins $held for $said; the release is $want"
+              exit 1
+            fi
+          done
+
       - name: What is inside
         run: |
           for f in dl/*.deb; do

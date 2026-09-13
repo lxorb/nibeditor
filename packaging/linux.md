@@ -268,6 +268,25 @@ helpers from a different WebKit, which is how a Tauri window ends up blank.
 Strict confinement: documents arrive through `home` and `removable-media`, and
 nothing else is needed.
 
+It pins the bytes it unpacks. `source-checksum` carries a `sha256/` per
+architecture, and `publish-linux.yml` rewrites both from what the release page
+reports for `Nib-<version>-linux-x64.deb` and `-arm64.deb` at the same moment it
+rewrites the version and the URL - a release whose page reports no digest fails the
+step rather than building an unchecked snap. Every other path here pins one too
+(scoop and chocolatey a sha256, homebrew a sha256, the AUR a sha256, nix a hash,
+Flathub a commit), and this was the one that did not: what the snap unpacks is a
+file fetched over the network on a runner, and the Snap Store publishes it under the
+product's name. **When a release is made by hand rather than by the workflow, update
+the two digests in `snap/snapcraft.yaml` with it** - `gh release view v<version>
+--json assets --jq '.assets[] | select(.name | test("linux.*deb$")) | "\(.name)
+\(.digest)"'` prints both.
+
+The two digests are written in the same advanced grammar the `source` above them uses
+(`- on amd64:`), which craft-parts applies to a part's `source*` properties together.
+`snapcraft` is Linux-only, so the first proof of that is the snap job on the next
+release: if it rejects the per-architecture form, the fallback is one `source-checksum`
+line that the workflow fills in for whichever architecture the runner is.
+
 Worth doing because Ubuntu's App Center is the first place a great many Linux
 desktop users look for software, and a snap is the only way to be in it.
 

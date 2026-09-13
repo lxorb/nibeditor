@@ -77,6 +77,16 @@ parts:
     source:
       - on amd64: https://github.com/lxorb/nibeditor/releases/download/v0.8.0/Nib-0.8.0-linux-x64.deb
       - on arm64: https://github.com/lxorb/nibeditor/releases/download/v0.8.0/Nib-0.8.0-linux-arm64.deb
+    # The bytes those two names stood for on the day the release was made. Every
+    # other packaging path here pins a digest - scoop, chocolatey, homebrew, the
+    # AUR, nix, and flathub by commit - and this one did not: a tampered release
+    # asset, or a proxy on the runner, went into the snap and to the Snap Store
+    # under this name with nothing to notice it. The publish workflow rewrites both
+    # lines per release from the digests the release page reports; see
+    # packaging/linux.md.
+    source-checksum:
+      - on amd64: sha256/4284fede6d9e6aad8d5a6c398c360517f18a9fa78a9a66fa0ebe0b6e0884c8da
+      - on arm64: sha256/828e659ca983c8ba91c339f1afddf646c76e9a62d0a92db95c0ebd674eccf8b3
     override-build: |
       craftctl default
 
