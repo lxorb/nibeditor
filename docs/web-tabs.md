@@ -181,8 +181,12 @@ handful of methods on the webview it hands back, all in one file, so an upstream
 rename is one file to follow. See `apps/desktop/src-tauri/src/web_tabs.rs` and the
 comment in `Cargo.toml`.
 
-What the window may ask for is deliberately small: make a page, move it, show it,
-hide it, send it to an address, step its history, read it for a clip, close it.
+What the window may ask for is deliberately small, and each of these is one thing:
+make a page (`web_open`), move or hide it (`web_place`), send it to an address
+(`web_navigate`), step its history (`web_step`), read it for a clip (`web_clip`), ask
+where it is (`web_look`), put it back there (`web_scroll`), draw it larger or smaller
+(`web_zoom`), print it (`web_print`), photograph it (`web_shot`), answer what the site
+asked for (`web_answer`), and take it away, parked or closed (`web_close`).
 
 #### Where a page may be built, which is not where the request arrived
 
