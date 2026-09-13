@@ -208,7 +208,10 @@ mod tests {
         )
         .expect("the crate's own manifest");
 
-        assert!(manifest.contains("\ncef = []"), "the feature is not declared");
+        assert!(
+            manifest.contains("\ncef = []"),
+            "the feature is not declared"
+        );
         assert!(
             !manifest.contains("\ndefault = ["),
             "this crate has a default feature list, so something is on that nobody asked for"
