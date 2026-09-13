@@ -1459,4 +1459,6 @@ export const ru: Dictionary = {
   'Reset permissions': 'Сбросить разрешения',
   'Turn into': 'Превратить в',
   'Bookmark these blocks': 'Добавить блоки в закладки',
+  Foldable: 'Сворачиваемый',
+  'Starts folded': 'Открывается свёрнутым',
 }

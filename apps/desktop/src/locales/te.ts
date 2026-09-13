@@ -1395,4 +1395,6 @@ export const te: Dictionary = {
   'Reset permissions': 'అనుమతులను రీసెట్ చేయండి',
   'Turn into': 'గా మార్చు',
   'Bookmark these blocks': 'ఈ బ్లాక్‌లను బుక్‌మార్క్ చేయి',
+  Foldable: 'ముడుచుకోగలదు',
+  'Starts folded': 'ముడుచుకుని మొదలు',
 }

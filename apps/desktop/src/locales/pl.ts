@@ -1460,4 +1460,6 @@ export const pl: Dictionary = {
   'Reset permissions': 'Zresetuj uprawnienia',
   'Turn into': 'Zamień na',
   'Bookmark these blocks': 'Dodaj zakładki do bloków',
+  Foldable: 'Zwijalny',
+  'Starts folded': 'Zaczyna zwinięty',
 }

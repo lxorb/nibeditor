@@ -1432,4 +1432,6 @@ export const de: Dictionary = {
   'Reset permissions': 'Berechtigungen zurücksetzen',
   'Turn into': 'Umwandeln in',
   'Bookmark these blocks': 'Diese Blöcke merken',
+  Foldable: 'Faltbar',
+  'Starts folded': 'Startet zugeklappt',
 }

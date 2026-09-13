@@ -1356,4 +1356,6 @@ export const zhHant: Dictionary = {
   'Reset permissions': '重設權限',
   'Turn into': '轉換為',
   'Bookmark these blocks': '為這些區塊加書籤',
+  Foldable: '可折疊',
+  'Starts folded': '預設折疊',
 }

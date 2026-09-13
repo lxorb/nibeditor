@@ -1,4 +1,11 @@
-import { type ChangeSpec, EditorSelection, type StateCommand } from '@codemirror/state'
+import {
+  type ChangeSpec,
+  type EditorState,
+  EditorSelection,
+  type Line,
+  type StateCommand,
+} from '@codemirror/state'
+import { type Callout, calloutOf } from '@nib/markdown/callouts'
 import { closesFence } from '@nib/markdown/fences'
 import { taskAt } from '@nib/markdown/tasks'
 
@@ -349,8 +356,76 @@ export const insertHorizontalRule = insertBlock(() => ({ text: '---\n', caret: 4
 
 /** A GitHub alert, which is the callout the renderer draws and the editor marks.
  *  `NOTE` because it is the one that says nothing beyond "read this"; the other
- *  four are a word away. See `callouts` in @nib/markdown. */
+ *  twelve are a word away. No fold sign, because most callouts are not folded and a
+ *  sign written into every one of them would be a note full of punctuation nobody
+ *  asked for; the two rows below are how one gets its sign without being typed by
+ *  hand. See `callouts` in @nib/markdown. */
 export const insertCallout = insertBlock(() => ({ text: '> [!NOTE]\n> ', caret: 12 }))
+
+/** The callout the caret is in: its marker line, where in that line the brackets
+ *  start, and what the line says.
+ *
+ *  Walked up from the caret's own line, because a callout is a blockquote and every
+ *  line of one carries the quote marks: the first line going up that also carries a
+ *  `[!type]` is the line that opened it. Nothing above a line that is not quoted at
+ *  all, which is where the callout ends.
+ *
+ *  Read by the one grammar, with the quote marks taken off the front the way every
+ *  other reader of a callout takes them off; see callouts.ts in @nib/markdown. */
+function calloutAt(state: EditorState): { line: Line; at: number; callout: Callout } | null {
+  const doc = state.doc
+
+  for (let number = doc.lineAt(state.selection.main.head).number; number >= 1; number--) {
+    const line = doc.line(number)
+    if (!/^[ \t]*>/.test(line.text)) return null
+
+    const at = line.text.indexOf('[!')
+    if (at < 0 || !/^[ \t>]*$/.test(line.text.slice(0, at))) continue
+
+    const callout = calloutOf(line.text.slice(at))
+    if (callout) return { line, at, callout }
+  }
+
+  return null
+}
+
+/** Whether the callout the caret is in carries a fold sign, and which one - or null
+ *  when the caret is not in a callout at all.
+ *
+ *  What the two rows in the menu are ticked by. A callout folds in nib whatever it
+ *  says, because the chevron in the margin folds any block; the sign is what the file
+ *  carries, which is what Obsidian reads and what says the callout opens shut. */
+export function calloutSign(state: EditorState): '+' | '-' | '' | null {
+  const found = calloutAt(state)
+  if (!found) return null
+
+  return found.callout.foldable ? (found.callout.folded ? '-' : '+') : ''
+}
+
+/** Writes a fold sign on the callout the caret is in, or takes the one that is
+ *  there off again - `+` for a callout that may be folded, `-` for one that opens
+ *  shut. Asking for the sign that is already there takes it off, which is what makes
+ *  each of the two rows a switch rather than a one-way door.
+ *
+ *  The sign goes directly after the `]`, which is where Obsidian writes it and where
+ *  the grammar reads it. Nothing else about the line is touched, title and all. */
+export function setCalloutSign(sign: '+' | '-'): StateCommand {
+  return ({ state, dispatch }) => {
+    const found = calloutAt(state)
+    if (!found) return false
+
+    const { line, at, callout } = found
+    const closed = line.text.indexOf(']', at)
+    if (closed < 0) return false
+
+    const from = line.from + closed + 1
+    const held = callout.foldable ? 1 : 0
+    const insert = callout.foldable && (callout.folded ? '-' : '+') === sign ? '' : sign
+
+    dispatch(state.update({ changes: { from, to: from + held, insert }, userEvent: 'input' }))
+    return true
+  }
+}
 
 /** Typora's `[toc]`: a table of contents that follows the headings. */
 export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))

@@ -4,6 +4,7 @@ export { type Peer, peersOf, remoteCarets, setPeers } from './carets'
 export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export { type AiAsk, type AiRunner, setAiRunner } from './ai/run'
 export {
+  calloutSign,
   clearFormatting,
   insertAiBlock,
   insertCallout,
@@ -19,6 +20,7 @@ export {
   insertSlideBreak,
   insertTable,
   insertToc,
+  setCalloutSign,
   setHeading,
   shiftHeading,
   toggleBulletList,

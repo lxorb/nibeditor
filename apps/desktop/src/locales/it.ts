@@ -1442,4 +1442,6 @@ export const it: Dictionary = {
   'Reset permissions': 'Reimposta le autorizzazioni',
   'Turn into': 'Trasforma in',
   'Bookmark these blocks': 'Segna questi blocchi',
+  Foldable: 'Richiudibile',
+  'Starts folded': 'Inizia richiuso',
 }

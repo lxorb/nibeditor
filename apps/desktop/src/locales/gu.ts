@@ -1384,4 +1384,6 @@ export const gu: Dictionary = {
   'Reset permissions': 'પરવાનગીઓ રીસેટ કરો',
   'Turn into': 'માં ફેરવો',
   'Bookmark these blocks': 'આ બ્લૉકો બુકમાર્ક કરો',
+  Foldable: 'વાળી શકાય',
+  'Starts folded': 'વાળેલું શરૂ થાય',
 }

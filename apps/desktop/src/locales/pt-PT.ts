@@ -1432,4 +1432,6 @@ export const ptPT: Dictionary = {
   'Reset permissions': 'Repor autorizações',
   'Turn into': 'Transformar em',
   'Bookmark these blocks': 'Marcar estes blocos',
+  Foldable: 'Recolhível',
+  'Starts folded': 'Começa recolhido',
 }

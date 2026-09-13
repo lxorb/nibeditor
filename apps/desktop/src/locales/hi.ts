@@ -1391,4 +1391,6 @@ export const hi: Dictionary = {
   'Reset permissions': 'अनुमतियां रीसेट करें',
   'Turn into': 'में बदलें',
   'Bookmark these blocks': 'इन ब्लॉकों को बुकमार्क करें',
+  Foldable: 'मोड़ा जा सकता है',
+  'Starts folded': 'मुड़ा हुआ शुरू',
 }

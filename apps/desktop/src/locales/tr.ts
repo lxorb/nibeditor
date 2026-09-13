@@ -1395,4 +1395,6 @@ export const tr: Dictionary = {
   'Reset permissions': 'İzinleri sıfırla',
   'Turn into': 'Şuna dönüştür',
   'Bookmark these blocks': 'Bu bloklara yer imi koy',
+  Foldable: 'Katlanabilir',
+  'Starts folded': 'Katlı başlar',
 }

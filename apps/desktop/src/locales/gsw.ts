@@ -1403,4 +1403,6 @@ export const gsw: Dictionary = {
   'Reset permissions': 'Brächtigunge zrugsetze',
   'Turn into': 'Umwandle i',
   'Bookmark these blocks': 'Die Block merke',
+  Foldable: 'Zämmefaltbar',
+  'Starts folded': 'Faht zuegfaltet aa',
 }

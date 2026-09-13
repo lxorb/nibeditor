@@ -1424,4 +1424,6 @@ export const fil: Dictionary = {
   'Reset permissions': 'I-reset ang mga pahintulot',
   'Turn into': 'Gawing',
   'Bookmark these blocks': 'I-bookmark ang mga block na ito',
+  Foldable: 'Natitiklop',
+  'Starts folded': 'Nakatiklop sa simula',
 }

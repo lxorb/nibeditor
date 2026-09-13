@@ -1393,4 +1393,6 @@ export const mr: Dictionary = {
   'Reset permissions': 'परवानग्या रीसेट करा',
   'Turn into': 'मध्ये बदला',
   'Bookmark these blocks': 'हे ब्लॉक बुकमार्क करा',
+  Foldable: 'दुमडता येईल',
+  'Starts folded': 'दुमडलेले सुरू',
 }

@@ -1395,4 +1395,6 @@ export const ps: Dictionary = {
   'Reset permissions': 'اجازې بیا تنظیمول',
   'Turn into': 'بدلول په',
   'Bookmark these blocks': 'دې بلاکونو ته نښانه',
+  Foldable: 'د غونډولو وړ',
+  'Starts folded': 'غونډ پیل کیږي',
 }

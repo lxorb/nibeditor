@@ -1387,4 +1387,6 @@ export const ja: Dictionary = {
   'Reset permissions': '権限をリセット',
   'Turn into': '種類を変える',
   'Bookmark these blocks': 'これらのブロックをブックマーク',
+  Foldable: '折りたためる',
+  'Starts folded': '折りたたんで開く',
 }

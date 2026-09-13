@@ -12,6 +12,7 @@ import {
   insertHorizontalRule,
   insertLink,
   insertPageBreak,
+  calloutSign,
   insertTableToEdit,
   isSpellWord,
   moveBlocks,
@@ -19,6 +20,7 @@ import {
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
+  setCalloutSign,
   toggleQuote,
   toggleWrap,
   type Transaction,
@@ -144,6 +146,7 @@ function blockEntries(
     { label: t('Outdent'), run: () => outdentBlocks(view, at) },
     { label: t('Move up'), run: () => moveBlocks(view, at, -1) },
     { label: t('Move down'), run: () => moveBlocks(view, at, 1) },
+    ...calloutEntries(view),
     DIVIDER,
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
@@ -182,6 +185,35 @@ function blockEntries(
     },
     { label: t('Delete'), danger: true, run: () => deleteBlocks(view, at) },
     ...blockBookmark(view, at, path),
+  ]
+}
+
+/** The fold sign on the callout the caret is in, as two switches.
+ *
+ *  Nothing at all anywhere else, because two greyed rows in every menu would be two
+ *  rows about something that is not there.
+ *
+ *  A callout folds in nib whatever it says - the chevron in the margin folds any
+ *  block - so what these write is what the file carries, which is the half Obsidian
+ *  reads and the half nib reads on the way in: `+` says the callout may be folded,
+ *  `-` says it opens shut. Written here rather than typed by hand, which is the whole
+ *  reason for the rows; see callouts.ts in @nib/markdown and fold.ts in @nib/editor. */
+function calloutEntries(view: EditorView): MenuEntry[] {
+  const sign = calloutSign(view.state)
+  if (sign === null) return []
+
+  return [
+    DIVIDER,
+    {
+      label: t('Foldable'),
+      checked: sign !== '',
+      run: () => runCommand(view, setCalloutSign('+')),
+    },
+    {
+      label: t('Starts folded'),
+      checked: sign === '-',
+      run: () => runCommand(view, setCalloutSign('-')),
+    },
   ]
 }
 

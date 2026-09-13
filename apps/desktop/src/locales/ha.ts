@@ -1419,4 +1419,6 @@ export const ha: Dictionary = {
   'Reset permissions': 'Mayar da izini',
   'Turn into': 'Juya zuwa',
   'Bookmark these blocks': 'Sa alamar shafi ga waɗannan sassa',
+  Foldable: 'Mai naɗewa',
+  'Starts folded': 'Yana farawa a naɗe',
 }

@@ -1454,4 +1454,6 @@ export const uk: Dictionary = {
   'Reset permissions': 'Скинути дозволи',
   'Turn into': 'Перетворити в',
   'Bookmark these blocks': 'Додати блоки до закладок',
+  Foldable: 'Згортуваний',
+  'Starts folded': 'Відкривається згорнутим',
 }

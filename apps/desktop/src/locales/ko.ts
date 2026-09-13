@@ -1370,4 +1370,6 @@ export const ko: Dictionary = {
   'Reset permissions': '권한 재설정',
   'Turn into': '형식 바꾸기',
   'Bookmark these blocks': '이 블록들 북마크',
+  Foldable: '접을 수 있음',
+  'Starts folded': '접힌 채로 시작',
 }

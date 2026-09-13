@@ -1788,9 +1788,6 @@
 .cm-line.nib-callout-tip {
   --callout-accent: var(--callout-tip);
 }
-.cm-line.nib-callout-important {
-  --callout-accent: var(--callout-important);
-}
 .cm-line.nib-callout-success {
   --callout-accent: var(--callout-success);
 }
@@ -1799,9 +1796,6 @@
 }
 .cm-line.nib-callout-warning {
   --callout-accent: var(--callout-warning);
-}
-.cm-line.nib-callout-caution {
-  --callout-accent: var(--callout-caution);
 }
 .cm-line.nib-callout-failure {
   --callout-accent: var(--callout-failure);
@@ -2349,9 +2343,13 @@
   border: 1px solid var(--line);
 }
 
-/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: a card that says which file
-   and opens it. The frame an embedded note gets, at the height of one row -
-   neither can be shown here, and pretending otherwise would be the lie. */
+/* `![[paper.pdf#page=3]]` and `![[board.canvas]]`: a card that says which file and
+   opens it. The frame an embedded note gets, at the height of one row.
+
+   One row is what it is until the app draws the page or the plane into it, which it
+   does once the reader scrolls the card into view; the row then becomes the name
+   under the picture. The drawing's own rules are a little further down, and they
+   dress the reading view's card as well as this one. */
 #write .nib-embed-file {
   display: flex;
   align-items: center;
@@ -2397,6 +2395,51 @@
 
 #write .nib-embed-file:hover .nib-embed-icon {
   color: inherit;
+}
+
+/* And the drawing over that card: the page of the paper the link named, or the
+   plane, drawn read-only once the reader has scrolled the card into view. The card
+   stays underneath as the row that names the file, which makes this the frame an
+   embedded note already reads as - something from somewhere else, with its name
+   along the bottom.
+
+   One set of rules for both faces of a note. The editor's card is a button and the
+   reading view's a figure, so the two carry different classes for themselves; the
+   drawing is the app's own element either way, and both surfaces are `#write`, so it
+   is dressed once here rather than twice. See
+   apps/desktop/src/lib/reading/drawn.ts.
+
+   Here rather than in document.css, which is the sheet the reading view shares with
+   an export and a published page: those three run no script and can never draw a
+   page of a paper, so rules for one would be bytes on somebody's blog that nothing
+   on it could ever match. */
+#write :is(.nib-embed-file, .embed-file).embed-drawn {
+  flex-wrap: wrap;
+}
+
+#write .embed-sheet {
+  /* A row of its own, above the name: the card is a flex row, and a drawing that
+     wrapped in beside the icon would be a page in a column an inch wide. */
+  flex: 0 0 100%;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  /* A sheet of paper, which is white whichever way the app is dressed: a paper
+     carries its own colours, and tinting the page would change them. A plane paints
+     its own ground over this. */
+  background: #fff;
+  /* It arrives rather than appearing, so a page drawn a moment after the note reads
+     as the note filling in and not as the note jumping. */
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+/* The page or the plane itself, as wide as the column and no taller than it has to
+   be. A canvas holds device pixels and an SVG its own plane units; both are sized
+   back down to the measure the note is set in. */
+#write .embed-sheet > :is(canvas, svg) {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 /* A note's front matter drawn as its rows. The rows themselves are in

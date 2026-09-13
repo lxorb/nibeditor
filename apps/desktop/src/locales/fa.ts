@@ -1394,4 +1394,6 @@ export const fa: Dictionary = {
   'Reset permissions': 'بازنشانی اجازه‌ها',
   'Turn into': 'تبدیل به',
   'Bookmark these blocks': 'نشانک این بلوک‌ها',
+  Foldable: 'تاشو',
+  'Starts folded': 'تاشده آغاز می‌شود',
 }

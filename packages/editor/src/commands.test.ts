@@ -7,6 +7,7 @@ import {
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import {
+  calloutSign,
   clearFormatting,
   closeFence,
   insertCallout,
@@ -18,6 +19,7 @@ import {
   insertMathBlock,
   insertTable,
   insertToc,
+  setCalloutSign,
   setHeading,
   shiftHeading,
   toggleBulletList,
@@ -77,6 +79,25 @@ function marks(marked: string): { doc: string; from: number; to: number } {
 function run(command: StateCommand, marked: string): string {
   const { doc, from, to } = marks(marked)
   return apply(command, doc, from, to).doc
+}
+
+/** A state with the caret at an offset, for the two things here that read a state
+ *  rather than command one. */
+function stateOf(doc: string, at: number): EditorState {
+  return parsed(
+    EditorState.create({
+      doc,
+      selection: EditorSelection.cursor(at),
+      extensions: [markdown({ base: markdownLanguage })],
+    }),
+  )
+}
+
+/** A command over a document with the caret at an offset. The marked-document
+ *  helpers above cannot be used on a callout: they strip the very brackets a callout
+ *  is written with. */
+function at(command: StateCommand, doc: string, offset: number): string {
+  return apply(command, doc, offset).doc
 }
 
 /** Whether the command took the keystroke at all, which is how one that gives way
@@ -369,5 +390,55 @@ describe('a footnote', () => {
 
   test('never replaces what is selected: a footnote is added to it', () => {
     expect(apply(insertFootnote, 'a claim here\n', 2, 7).doc).toBe('a claim[^1] here\n\n[^1]: ')
+  })
+})
+
+/** The fold sign on a callout, written rather than typed by hand.
+ *
+ *  `insertCallout` writes no sign and should not: most callouts are not folded, and a
+ *  sign in every one of them would be punctuation nobody asked for. So the two rows in
+ *  the menu put one there - `+` for a callout that may be folded, which is what
+ *  Obsidian reads, and `-` for one that opens shut, which nib reads on the way in. See
+ *  callouts.ts in @nib/markdown. */
+describe('a callout is asked to fold', () => {
+  const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
+
+  test('says nothing about folding until it is asked', () => {
+    expect(calloutSign(stateOf(CALLOUT, 4))).toBe('')
+    expect(run(insertCallout, '|')).toBe('> [!NOTE]\n> ')
+  })
+
+  test('and nothing at all where the caret is not in one', () => {
+    expect(calloutSign(stateOf('Plain words.\n', 3))).toBeNull()
+    expect(calloutSign(stateOf('> A plain quote\n', 5))).toBeNull()
+    expect(took(setCalloutSign('-'), 'Plain |words.')).toBe(false)
+  })
+
+  test('takes the sign after the brackets, where Obsidian writes it', () => {
+    expect(at(setCalloutSign('+'), CALLOUT, 4)).toBe('> [!note]+ Mind the gap\n> and the step.\n')
+    expect(at(setCalloutSign('-'), CALLOUT, 4)).toBe('> [!note]- Mind the gap\n> and the step.\n')
+  })
+
+  test('from a caret anywhere in the callout, not only on its first line', () => {
+    expect(at(setCalloutSign('-'), CALLOUT, CALLOUT.indexOf('step'))).toBe(
+      '> [!note]- Mind the gap\n> and the step.\n',
+    )
+  })
+
+  test('asked for the sign it already has, takes it off again', () => {
+    const folded = '> [!note]- Mind the gap\n'
+    expect(at(setCalloutSign('-'), folded, 4)).toBe('> [!note] Mind the gap\n')
+    expect(calloutSign(stateOf(folded, 4))).toBe('-')
+  })
+
+  test('and asked for the other one, trades it', () => {
+    expect(at(setCalloutSign('+'), '> [!note]- Mind the gap\n', 4)).toBe(
+      '> [!note]+ Mind the gap\n',
+    )
+    expect(calloutSign(stateOf('> [!note]+ Mind the gap\n', 4))).toBe('+')
+  })
+
+  test('leaves a callout with no title of its own a callout with no title', () => {
+    expect(at(setCalloutSign('-'), '> [!tip]\n> Below it.\n', 4)).toBe('> [!tip]-\n> Below it.\n')
   })
 })

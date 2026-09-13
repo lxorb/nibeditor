@@ -316,10 +316,18 @@ describe('a published note', () => {
     expect(answer.text).toContain('class="katex-display"')
     expect(answer.text).toContain('<figure class="chart" data-kind="bar">')
     expect(answer.text).toContain('<svg class="chart-svg"')
-    // The thirteen Obsidian has, the two nib had first, and one nobody registered.
+    // The thirteen Obsidian has, two of them written by one of their aliases, and one
+    // nobody registered - which has no look and so no second class.
     expect(answer.text.match(/class="callout callout-/g)).toHaveLength(15)
     expect(answer.text).toContain('data-callout="recipe"')
-    expect(answer.text).toContain('<details class="callout callout-caution"')
+    // `[!caution]` wears `warning`, the way Obsidian folds it in, and still says the
+    // word it was written with. The `-` after it is what makes a callout a `<details>`
+    // that opens shut, here and in the app both; see callouts.ts in @nib/markdown.
+    expect(answer.text).toContain('<details class="callout callout-warning"')
+    expect(answer.text).toContain('data-callout="caution"')
+    expect(answer.text).toContain('data-callout="important"')
+    expect(answer.text).not.toContain('callout-caution')
+    expect(answer.text).not.toContain('callout-important')
     // The note's own markup is shown rather than run, whatever a policy says;
     // what the policy allows is the site's own furniture. See blog.test.ts.
     expect(answer.headers.get('content-security-policy')).toContain("script-src 'self'")

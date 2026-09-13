@@ -1392,4 +1392,6 @@ export const id: Dictionary = {
   'Reset permissions': 'Reset izin',
   'Turn into': 'Ubah menjadi',
   'Bookmark these blocks': 'Markahi blok-blok ini',
+  Foldable: 'Dapat dilipat',
+  'Starts folded': 'Mulai terlipat',
 }

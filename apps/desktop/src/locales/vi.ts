@@ -1380,4 +1380,6 @@ export const vi: Dictionary = {
   'Reset permissions': 'Đặt lại quyền',
   'Turn into': 'Biến thành',
   'Bookmark these blocks': 'Đánh dấu các khối này',
+  Foldable: 'Có thể gập',
+  'Starts folded': 'Mở ra đã gập',
 }

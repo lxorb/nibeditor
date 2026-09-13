@@ -1380,4 +1380,6 @@ export const my: Dictionary = {
   'Reset permissions': 'ခွင့်ပြုချက်များကို ပြင်ဆင်သတ်မှတ်ရန်',
   'Turn into': 'အဖြစ် ပြောင်းပါ',
   'Bookmark these blocks': 'ဤဘလောက်များကိုစာမှတ်ထား',
+  Foldable: 'ချိတ်ခေါက်နိုင်',
+  'Starts folded': 'ခေါက်ပြီး စတင်',
 }

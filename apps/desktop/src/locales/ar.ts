@@ -1477,4 +1477,6 @@ export const ar: Dictionary = {
   'Reset permissions': 'إعادة ضبط الأذونات',
   'Turn into': 'تحويل إلى',
   'Bookmark these blocks': 'إشارة على هذه الكتل',
+  Foldable: 'قابل للطي',
+  'Starts folded': 'يبدأ مطويًا',
 }

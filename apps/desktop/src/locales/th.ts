@@ -1362,4 +1362,6 @@ export const th: Dictionary = {
   'Reset permissions': 'รีเซ็ตสิทธิ์',
   'Turn into': 'เปลี่ยนเป็น',
   'Bookmark these blocks': 'บุ๊กมาร์กบล็อกเหล่านี้',
+  Foldable: 'พับได้',
+  'Starts folded': 'เริ่มแบบพับ',
 }

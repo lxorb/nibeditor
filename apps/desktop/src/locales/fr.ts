@@ -1447,4 +1447,6 @@ export const fr: Dictionary = {
   'Reset permissions': 'Réinitialiser les autorisations',
   'Turn into': 'Transformer en',
   'Bookmark these blocks': 'Marquer ces blocs',
+  Foldable: 'Repliable',
+  'Starts folded': 'Replié au départ',
 }

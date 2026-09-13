@@ -1373,4 +1373,6 @@ export const am: Dictionary = {
   'Reset permissions': 'ፈቃዶችን ዳግም ያቀናብሩ',
   'Turn into': 'ቀይር',
   'Bookmark these blocks': 'እነዚህን ብሎኮች ምልክት አድርግ',
+  Foldable: 'ሊታጠፍ የሚችል',
+  'Starts folded': 'ተጣጥፎ ይጀምራል',
 }

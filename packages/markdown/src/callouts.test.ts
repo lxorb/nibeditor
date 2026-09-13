@@ -26,11 +26,56 @@ describe('a callout’s opening line', () => {
     expect(found?.label).toBe('Recipe')
   })
 
-  test('keeps the two kinds nib had first as looks of their own', () => {
-    // Obsidian folds these into `tip` and `warning`. Notes written here already
-    // wear their colours, so here they answer for themselves.
-    expect(calloutOf('[!important]')?.look).toBe('important')
-    expect(calloutOf('[!caution]')?.look).toBe('caution')
+  /** These two were nib's own looks before nib had any of the others, and an
+   *  `[!important]` came out violet here where Obsidian draws it green. Obsidian's
+   *  thirteen types with Obsidian's aliases is one list, so these are in it: the word
+   *  survives in `data-callout`, and what it wears is what it wears over there. */
+  test('folds the two GitHub alert kinds in, the way Obsidian does', () => {
+    expect(calloutOf('[!important]')?.look).toBe('tip')
+    expect(calloutOf('[!important]')?.type).toBe('important')
+    expect(calloutOf('[!caution]')?.look).toBe('warning')
+    expect(calloutOf('[!caution]')?.type).toBe('caution')
+  })
+
+  /** Thirteen looks and twelve more words for them, which is Obsidian's list
+   *  exactly: a callout written in either app is the same callout in both. */
+  test('knows the thirteen types Obsidian has, and every alias of them', () => {
+    const types = [
+      'note',
+      'abstract',
+      'info',
+      'todo',
+      'tip',
+      'success',
+      'question',
+      'warning',
+      'failure',
+      'danger',
+      'bug',
+      'example',
+      'quote',
+    ]
+    for (const type of types) expect(calloutOf(`[!${type}]`)?.look, type).toBe(type)
+
+    const aliases: Record<string, string> = {
+      summary: 'abstract',
+      tldr: 'abstract',
+      hint: 'tip',
+      important: 'tip',
+      check: 'success',
+      done: 'success',
+      help: 'question',
+      faq: 'question',
+      caution: 'warning',
+      attention: 'warning',
+      fail: 'failure',
+      missing: 'failure',
+      error: 'danger',
+      cite: 'quote',
+    }
+    for (const [word, look] of Object.entries(aliases)) {
+      expect(calloutOf(`[!${word}]`)?.look, word).toBe(look)
+    }
   })
 
   test('says the words that are not words in capitals', () => {

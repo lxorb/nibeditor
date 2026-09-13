@@ -1398,4 +1398,6 @@ export const pa: Dictionary = {
   'Reset permissions': 'ਇਜਾਜ਼ਤਾਂ ਰੀਸੈੱਟ ਕਰੋ',
   'Turn into': 'ਵਿੱਚ ਬਦਲੋ',
   'Bookmark these blocks': 'ਇਹਨਾਂ ਬਲਾਕਾਂ ਨੂੰ ਨਿਸ਼ਾਨੀ ਲਾਓ',
+  Foldable: 'ਮੋੜਿਆ ਜਾ ਸਕਦਾ',
+  'Starts folded': 'ਮੋੜਿਆ ਹੋਇਆ ਸ਼ੁਰੂ',
 }

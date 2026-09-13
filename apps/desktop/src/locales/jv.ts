@@ -1386,4 +1386,6 @@ export const jv: Dictionary = {
   'Reset permissions': 'Balèkaké idin',
   'Turn into': 'Owahi dadi',
   'Bookmark these blocks': 'Tandhani blok-blok iki',
+  Foldable: 'Bisa dilempit',
+  'Starts folded': 'Wiwit kelempit',
 }

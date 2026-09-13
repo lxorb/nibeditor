@@ -1418,4 +1418,6 @@ export const sw: Dictionary = {
   'Reset permissions': 'Badilisha ruhusa',
   'Turn into': 'Badilisha kuwa',
   'Bookmark these blocks': 'Alamisha vizuizi hivi',
+  Foldable: 'Inaweza kukunjwa',
+  'Starts folded': 'Huanza imekunjwa',
 }

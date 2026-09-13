@@ -1390,4 +1390,6 @@ export const bn: Dictionary = {
   'Reset permissions': 'অনুমতি রিসেট করুন',
   'Turn into': 'বদলান',
   'Bookmark these blocks': 'এই ব্লকগুলো বুকমার্ক',
+  Foldable: 'ভাঁজযোগ্য',
+  'Starts folded': 'ভাঁজ করা শুরু',
 }

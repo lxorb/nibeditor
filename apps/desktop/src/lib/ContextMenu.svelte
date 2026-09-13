@@ -225,6 +225,12 @@
             onclick={() => choose(item)}
           >
             <span class="nib-row-label">{item.label}</span>
+            <!-- A row that is a switch says which way it is set. After the label
+                 rather than in front of it: the app menu keeps a slot for a tick in
+                 every row so its labels line up, and a row's own menu keeps none -
+                 so the mark goes where a shortcut would, which a switch never has.
+                 The same glyph the app menu ticks with. -->
+            {#if item.checked}<span class="tick">✓</span>{/if}
             <!-- A shortcut means nothing to a thumb. -->
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
           </button>
@@ -270,6 +276,15 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+
+  /* A switch that is on. Quiet and in the accent, because it is the state of the
+     row rather than a second thing to read. */
+  .tick {
+    flex: none;
+    margin-inline-start: var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--accent);
   }
 
   hr {

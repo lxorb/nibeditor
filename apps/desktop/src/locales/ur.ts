@@ -1390,4 +1390,6 @@ export const ur: Dictionary = {
   'Reset permissions': 'اجازتیں دوبارہ ترتیب دیں',
   'Turn into': 'میں بدلیں',
   'Bookmark these blocks': 'ان بلاکس کو بک مارک کریں',
+  Foldable: 'تہ کیا جا سکتا ہے',
+  'Starts folded': 'تہ شدہ شروع',
 }

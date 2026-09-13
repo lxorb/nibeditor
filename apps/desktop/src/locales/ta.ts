@@ -1415,4 +1415,6 @@ export const ta: Dictionary = {
   'Reset permissions': 'அனுமதிகளை மீட்டமை',
   'Turn into': 'ஆக மாற்று',
   'Bookmark these blocks': 'இந்தத் தொகுதிகளைப் புத்தகக்குறியிடு',
+  Foldable: 'மடக்கக்கூடியது',
+  'Starts folded': 'மடித்த நிலையில் தொடங்கும்',
 }

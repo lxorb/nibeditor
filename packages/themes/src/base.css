@@ -1973,9 +1973,6 @@ select:focus-visible,
 #write .callout-tip {
   --callout-accent: var(--callout-tip);
 }
-#write .callout-important {
-  --callout-accent: var(--callout-important);
-}
 #write .callout-success {
   --callout-accent: var(--callout-success);
 }
@@ -1984,9 +1981,6 @@ select:focus-visible,
 }
 #write .callout-warning {
   --callout-accent: var(--callout-warning);
-}
-#write .callout-caution {
-  --callout-accent: var(--callout-caution);
 }
 #write .callout-failure {
   --callout-accent: var(--callout-failure);

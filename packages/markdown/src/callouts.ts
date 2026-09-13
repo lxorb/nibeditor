@@ -20,13 +20,19 @@
  *  its own and there is no registry anywhere to add it to first. That is
  *  Obsidian's "custom callout types via CSS" without the ceremony.
  *
- *  **Fifteen looks for thirteen types.** Obsidian folds `important` into `tip`
- *  and `caution` into `warning`. Nib had both of those as GitHub alert kinds
- *  before it had any of the others, with colours of their own that people have
- *  notes full of, so here they keep their own look and their own colour token.
- *  Everything else resolves through `ALIASES`, so `[!tldr]` and `[!summary]`
- *  wear `abstract`'s icon and `abstract`'s colour while still saying `tldr` and
- *  `summary` in `data-callout`.
+ *  **Thirteen looks, and every other word an alias of one of them.** Thirteen is
+ *  Obsidian's list, and the aliases are Obsidian's too - which is the whole of the
+ *  reason both are exactly these. `important` and `caution` were the two that were
+ *  not: nib had them as GitHub alert kinds before it had any of the others, so they
+ *  kept looks and colours of their own, and an `[!important]` written here came out
+ *  violet where Obsidian draws it green. A file that reads differently in the editor
+ *  it was written for and in the one it travels to is a file this app got wrong, so
+ *  they fold in with the rest: `important` wears `tip` and `caution` wears `warning`.
+ *
+ *  An alias resolves and the word survives, so `[!tldr]`, `[!summary]` and
+ *  `[!important]` wear another look's icon and colour while still saying `tldr`,
+ *  `summary` and `important` in `data-callout` - which is what lets a theme colour
+ *  one of them differently again without a registry to add it to.
  *
  *  The icons are Lucide's; how one is drawn and how it is written out is
  *  icons.ts beside this. */
@@ -40,8 +46,6 @@ import ClipboardList from 'lucide/dist/esm/icons/clipboard-list.mjs'
 import Flame from 'lucide/dist/esm/icons/flame.mjs'
 import Info from 'lucide/dist/esm/icons/info.mjs'
 import List from 'lucide/dist/esm/icons/list.mjs'
-import MessageSquareWarning from 'lucide/dist/esm/icons/message-square-warning.mjs'
-import OctagonAlert from 'lucide/dist/esm/icons/octagon-alert.mjs'
 import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
 import Quote from 'lucide/dist/esm/icons/quote.mjs'
 import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
@@ -59,11 +63,9 @@ const LOOKS: Record<string, IconNode> = {
   info: Info,
   todo: CircleCheck,
   tip: Flame,
-  important: MessageSquareWarning,
   success: Check,
   question: CircleQuestionMark,
   warning: TriangleAlert,
-  caution: OctagonAlert,
   failure: X,
   danger: Zap,
   bug: Bug,
@@ -71,15 +73,18 @@ const LOOKS: Record<string, IconNode> = {
   quote: Quote,
 }
 
-/** The other words for those, Obsidian's own. */
+/** The other words for those, Obsidian's own - all twelve of them, which is what
+ *  makes a callout written in either app the same callout in both. */
 const ALIASES: Record<string, string> = {
   summary: 'abstract',
   tldr: 'abstract',
   hint: 'tip',
+  important: 'tip',
   check: 'success',
   done: 'success',
   help: 'question',
   faq: 'question',
+  caution: 'warning',
   attention: 'warning',
   fail: 'failure',
   missing: 'failure',

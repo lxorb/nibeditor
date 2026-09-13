@@ -1422,4 +1422,6 @@ export const ptBR: Dictionary = {
   'Reset permissions': 'Redefinir permissões',
   'Turn into': 'Transformar em',
   'Bookmark these blocks': 'Favoritar estes blocos',
+  Foldable: 'Recolhível',
+  'Starts folded': 'Começa recolhido',
 }

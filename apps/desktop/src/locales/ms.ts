@@ -1391,4 +1391,6 @@ export const ms: Dictionary = {
   'Reset permissions': 'Tetapkan semula kebenaran',
   'Turn into': 'Jadikan',
   'Bookmark these blocks': 'Tandakan blok-blok ini',
+  Foldable: 'Boleh dilipat',
+  'Starts folded': 'Mula terlipat',
 }

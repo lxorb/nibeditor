@@ -1356,4 +1356,6 @@ export const zhHans: Dictionary = {
   'Reset permissions': '重置权限',
   'Turn into': '转换为',
   'Bookmark these blocks': '为这些块加书签',
+  Foldable: '可折叠',
+  'Starts folded': '默认折叠',
 }
