@@ -48,10 +48,17 @@ describe('what a program may reach', () => {
     expect(programMayReach('DELETE', '/v1/sessions/abc', false)).toBe(false)
   })
 
-  test('and not a rollback, which is the whole space at once', () => {
-    // Writing one note is what a job needs; writing every note in a space back to
-    // a moment on a bad argument is the thing the delete was left out to avoid.
-    expect(programMayReach('POST', '/v1/spaces/abc/rollback', false)).toBe(false)
+  /** A rollback is an edit rather than a removal: every note it changes keeps what
+   *  it said as a version, so a bad argument is another rollback away from being
+   *  undone. Which is the difference between it and the delete above, and why a
+   *  headless job may reach it. */
+  test('and a rollback, which writes versions rather than taking anything away', () => {
+    expect(programMayReach('POST', '/v1/spaces/abc/rollback', false)).toBe(true)
+    // A token that may only read reaches nothing that writes, this included.
+    expect(programMayReach('POST', '/v1/spaces/abc/rollback', true)).toBe(false)
+    // And nothing that only looks like it.
+    expect(programMayReach('POST', '/v1/spaces/abc/rollback/all', false)).toBe(false)
+    expect(programMayReach('GET', '/v1/spaces/abc/rollback', false)).toBe(false)
   })
 
   test('and no path that only looks like one on the list', () => {
@@ -129,6 +136,52 @@ describe('a token acting for somebody', () => {
 
     const said = await call<ProgramView>(env, `/v1/notes/${note}`, { token })
     expect(said.json.content).toBe('# Two')
+  })
+
+  /** The rescue a headless job needs: a build that wrote a thousand notes wrong is
+   *  not something to undo by hand in a settings pane. `dry` first, because that is
+   *  the shape the pane uses and the shape a job should use. */
+  test('and puts a space back to how it read at a moment', async () => {
+    const before = Date.now()
+
+    // Something to put back, written the way the job that went wrong would have.
+    await call<ProgramView>(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token: program,
+      body: { content: '# Wrong', baseVersion: 1 },
+    })
+
+    const dry = await call<{ notes: number; paths: string[] }>(
+      env,
+      `/v1/spaces/${space}/rollback`,
+      { token: program, body: { at: before, dry: true } },
+    )
+
+    expect(dry.status).toBe(200)
+    expect(dry.json.notes).toBe(1)
+    expect(dry.json.paths).toEqual(['plan.md'])
+
+    const put = await call<{ notes: number; partial: boolean }>(
+      env,
+      `/v1/spaces/${space}/rollback`,
+      { token: program, body: { at: before } },
+    )
+
+    expect(put.status).toBe(200)
+    expect(put.json.notes).toBe(1)
+
+    const said = await call<ProgramView>(env, `/v1/notes/${note}`, { token })
+    expect(said.json.content).toBe('# One')
+  })
+
+  test('and a read-only token cannot, because a rollback writes', async () => {
+    const minted = await call<ProgramView>(env, '/v1/mcp/token', { token, body: {} })
+    const refused = await call<ProgramView>(env, `/v1/spaces/${space}/rollback`, {
+      token: minted.json.token ?? '',
+      body: { at: Date.now(), dry: true },
+    })
+
+    expect(refused.status).toBe(403)
   })
 
   test('and is refused everything else, in as many words', async () => {

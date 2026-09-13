@@ -17,7 +17,7 @@
   import { account } from './account.svelte'
   import { api } from './api'
   import { i18n, plural, t } from './i18n.svelte'
-  import { KEEP_MONTH, KEEP_YEAR, modes } from './modes.svelte'
+  import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
   import { record } from './sync/record.svelte'
@@ -25,11 +25,17 @@
   import { sync } from './sync.svelte'
   import { workspace } from './workspace.svelte'
 
-  /** How far back the rollback offers to go, in days. A month is what the
-   *  account keeps; see services/sync/versions.ts. */
-  const DAYS = [1, 7, 30]
-
   let days = $state(1)
+
+  /** How far back this account can be asked to go, in days: as far as it keeps and
+   *  no further. Setting the horizon above to a year is what puts the year in this
+   *  row; see `rollbackSteps` in modes.svelte.ts. */
+  const back = $derived(rollbackSteps(modes.keepVersions))
+
+  /** Which of them is chosen. Held to the list rather than kept in step by an
+   *  effect: turning the horizon down from a year must not leave the field asking
+   *  for a year, and a derived cannot be out of date the way a written copy can. */
+  const chosen = $derived(back.includes(days) ? days : (back.at(-1) ?? 1))
   let asked = $state<{ notes: number; paths: string[]; more: boolean } | null>(null)
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
@@ -62,7 +68,7 @@
   }
 
   function moment(): number {
-    return Date.now() - days * 24 * 60 * 60 * 1000
+    return Date.now() - chosen * 24 * 60 * 60 * 1000
   }
 
   async function look() {
@@ -250,8 +256,8 @@
     <span class="name">{t('This space, as it was')}</span>
     <div class="pick">
       <Select
-        value={String(days)}
-        options={DAYS.map((one) => ({
+        value={String(chosen)}
+        options={back.map((one) => ({
           value: String(one),
           label: plural(one, { one: '{count} day ago', other: '{count} days ago' }),
         }))}

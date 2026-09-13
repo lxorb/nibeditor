@@ -121,6 +121,13 @@ version of every note that has moved since - so a rollback is an edit like any
 other, undoable the same way, and nothing about it is special except how many
 notes it touches at once.
 
+How far back the row offers to go is how far back the account keeps: a day, a week
+and a month while the horizon is a month, and three, six and twelve months as well
+once it is a year. Not further, because a step asking for a moment before the first
+version there is would answer "nothing has changed since then", which is a wrong
+answer rather than a refusal. Choosing the year above is what puts the year in the
+row; see `rollbackSteps` in `modes.svelte.ts`.
+
 A note written after that moment with no version at or before it is left alone:
 there is nothing to put back. So is one whose body the sweep has already taken -
 a row naming bytes that are gone answers nothing rather than answering with an
@@ -333,10 +340,17 @@ and nothing else: what changed, and a note written back.
 There is already a credential for a program acting for somebody - the `nib_...`
 token in `Settings > LLM access`, hashed at rest, read-only or read and write - and
 it now reaches the sync routes as well as the connector: the change feed, a note's
-words, a note created, a note written, a note's versions. Nothing else. Not the
-account, not the sharing, not the trash, and not a delete: a script that can delete
-is a script that can empty a space on a bad `if`, and nothing about publishing from
-CI needs it.
+words, a note created, a note written, a note's versions, and a rollback. Nothing
+else. Not the account, not the sharing, not the trash, and not a delete: a script
+that can delete is a script that can empty a space on a bad `if`, and nothing about
+publishing from CI needs it.
+
+The rollback is on the list because it is not that. Every note it changes keeps what
+it said as a version, so a bad argument there is another rollback away from being
+undone; `dry` answers what would change without changing anything; and it is bounded
+to four hundred notes a request. Which makes it the one rescue a headless job needs -
+a build that wrote a thousand notes wrong is not something to undo by hand in a
+settings pane. A read-only token still cannot, because a rollback writes.
 
 The list is written as what is allowed rather than what is refused, so a route
 added tomorrow is closed to a token until somebody says otherwise; see
@@ -369,6 +383,10 @@ account does not hold and writing what it holds differently. A file missing from
 folder is never read as "delete it from the account": a checkout that failed half
 way is not an instruction to empty a space.
 
+`back "Work" 7` is the rescue: the space as it read seven days ago, said before it is
+done and stopped there by `--dry`. It loops until there is nothing left, the way the
+pane does, because the service puts back four hundred notes a request.
+
 **What is deliberately missing: a per-space scope.** The token is the account's, so
 a job that can write one space can write them all. Narrowing it means a column and
 a second pane, and that is a decision for whoever wants it rather than something to
@@ -397,8 +415,9 @@ writes rather than rows, because a Worker's ceiling is on writes.
   the abandoned enrolment the nightly job takes away, and the sessions a reader can
   see and end.
 - `services/sync/test/programs.test.ts` - exactly which routes a token acting for
-  somebody reaches, that a read-only one reaches none that write, and that neither
-  the factor, the sessions nor a rollback is one of them.
+  somebody reaches, that a read-only one reaches none that write, that neither the
+  factor nor the sessions is one of them, and that a rollback is: a dry run, the
+  notes put back, and a read-only token refused.
 - `services/sync/test/guests.test.ts` - and the same question for a guest, which
   reaches none of those either.
 - `apps/desktop/src/lib/sync/conflicts.test.ts` - the rule read off the account, and

@@ -62,6 +62,23 @@ export const KEEP_MONTH = 30
 export const KEEP_YEAR = 365
 export const KEEP_VERSIONS: readonly number[] = [KEEP_MONTH, KEEP_YEAR]
 
+/** How far back a bulk restore could offer to go, in days, before the horizon is
+ *  taken into account. */
+const ROLLBACK_STEPS: readonly number[] = [1, 7, 30, 90, 180, 365]
+
+/** The steps the Go back row offers, for a given horizon.
+ *
+ *  As far as the account keeps and no further: a step asking for a moment before the
+ *  first version there is would answer "nothing has changed since then", which is a
+ *  wrong answer rather than a refusal. So a month offers three steps and a year
+ *  offers six - which is what makes choosing the year above put the year in that row.
+ *
+ *  Here rather than in the pane because it is the same fact the horizon is: how far
+ *  back the account can answer for. See SyncPane.svelte, which draws it. */
+export function rollbackSteps(keep: number): number[] {
+  return ROLLBACK_STEPS.filter((one) => one <= keep)
+}
+
 /** Writing column widths, in rem. */
 export const WIDTHS = [32, 38, 42, 50, 60, 80] as const
 

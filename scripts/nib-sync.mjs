@@ -15,6 +15,7 @@
  *
  *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs pull "Work" ./notes
  *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs push "Work" ./notes
+ *    NIB_TOKEN=nib_... node scripts/nib-sync.mjs back "Work" 7 --dry
  *
  *  The token is the one in Settings > LLM access, which is a token for a program
  *  acting for you: read-only, or read and write. `NIB_API` points it somewhere
@@ -150,6 +151,51 @@ async function push(name, folder) {
   say(`pushed ${sent} notes`)
 }
 
+/** How many times a bulk restore will ask. The service puts back four hundred notes
+ *  per request, so this is forty thousand - more than a space holds, and a ceiling
+ *  all the same, because a loop that talks to a server should have one. The app's
+ *  pane loops the same way; see `roll` in SyncPane.svelte. */
+const ROUNDS = 100
+
+/** A space, or one folder of it, back to how it read a number of days ago.
+ *
+ *  The rescue a job needs and the one thing here that undoes rather than sends: a
+ *  build that wrote a thousand notes wrong is not something to undo by hand in a
+ *  settings pane. It says what would change before it changes anything, the way the
+ *  pane does, and `--dry` stops there.
+ *
+ *  Nothing is thrown away by it: every note it changes keeps what it said as a
+ *  version, so a wrong number here is another run of this away from being undone.
+ *  Which is why a token may reach it at all; see services/sync/src/programs.ts. */
+async function back(name, days, options = {}) {
+  const space = await spaceNamed(name)
+  const since = Number(days)
+  if (!Number.isFinite(since) || since <= 0) throw new Error(`${days}: expected a number of days`)
+
+  const at = Date.now() - since * 24 * 60 * 60 * 1000
+  const under = options.under ?? ''
+
+  const would = await ask(`/v1/spaces/${space.id}/rollback`, {
+    body: { at, under, dry: true },
+  })
+  const all = would.notes + (would.left ?? 0)
+  say(`${all} notes would go back to what they said ${since} days ago`)
+  for (const path of would.paths ?? []) say(`  ${path}`)
+  if (would.more) say('  …')
+
+  if (options.dry) return
+  if (!all) return
+
+  let put = 0
+  for (let round = 0; round < ROUNDS; round++) {
+    const done = await ask(`/v1/spaces/${space.id}/rollback`, { body: { at, under } })
+    put += done.notes
+    if (!done.partial || done.notes === 0) break
+  }
+
+  say(`${put} notes went back`)
+}
+
 async function sha256(text) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
@@ -175,16 +221,19 @@ async function walk(root, folder) {
 }
 
 async function main() {
-  const [what, name, folder] = process.argv.slice(2)
+  const args = process.argv.slice(2).filter((one) => !one.startsWith('--'))
+  const flags = new Set(process.argv.slice(2).filter((one) => one.startsWith('--')))
+  const [what, name, third] = args
 
   if (!TOKEN) throw new Error('NIB_TOKEN is not set')
-  if (!what || !name || !folder) {
-    throw new Error('usage: nib-sync.mjs pull|push <space> <folder>')
+  if (!what || !name || !third) {
+    throw new Error('usage: nib-sync.mjs pull|push <space> <folder> | back <space> <days> [--dry]')
   }
 
-  if (what === 'pull') await pull(name, folder)
-  else if (what === 'push') await push(name, folder)
-  else throw new Error(`${what}: expected pull or push`)
+  if (what === 'pull') await pull(name, third)
+  else if (what === 'push') await push(name, third)
+  else if (what === 'back') await back(name, third, { dry: flags.has('--dry') })
+  else throw new Error(`${what}: expected pull, push or back`)
 }
 
 main().catch((error) => {

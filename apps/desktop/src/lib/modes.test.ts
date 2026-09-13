@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@nib/editor'
-import { glassesBreak } from './modes.svelte'
+import { glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
 
 /** The store writes to the browser's storage the moment anything is toggled,
  *  and sets the zoom on the document element. Under node there is neither, so
@@ -682,5 +682,35 @@ describe('where a pasted picture goes', () => {
 
     localStorage.setItem('nib:modes', JSON.stringify({ attachments: 'sideways' }))
     expect((await restarted()).attachments).toBe('space')
+  })
+})
+
+/** The row reaches as far as the account keeps and no further: a step asking for a
+ *  moment before the first version there is would answer "nothing has changed since
+ *  then", which is a wrong answer rather than a refusal. */
+describe('how far back a bulk restore offers to go', () => {
+  test('is three steps while the account keeps a month', () => {
+    expect(rollbackSteps(KEEP_MONTH)).toEqual([1, 7, 30])
+  })
+
+  test('and reaches the year when the account keeps one', () => {
+    expect(rollbackSteps(KEEP_YEAR)).toEqual([1, 7, 30, 90, 180, 365])
+    expect(rollbackSteps(KEEP_YEAR).at(-1)).toBe(KEEP_YEAR)
+  })
+
+  test('and never past the horizon, whatever the horizon is', () => {
+    for (const keep of [1, 7, 29, 30, 100, 365, 4000]) {
+      for (const step of rollbackSteps(keep)) expect(step).toBeLessThanOrEqual(keep)
+    }
+
+    expect(rollbackSteps(0)).toEqual([])
+  })
+
+  test('and follows the setting, which is what puts the year in the row', () => {
+    modes.setKeepVersions(KEEP_YEAR)
+    expect(rollbackSteps(modes.keepVersions)).toContain(365)
+
+    modes.setKeepVersions(KEEP_MONTH)
+    expect(rollbackSteps(modes.keepVersions)).not.toContain(365)
   })
 })
