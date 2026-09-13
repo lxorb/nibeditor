@@ -25,8 +25,11 @@ What it reports:
   the top, asked of the page itself.
 * **the file** - what the `.url` says after the reading moved on, which is what makes
   reopening the note tomorrow open the page that was open.
-* **bytes with ten** and **bytes after parking** - what the pages cost this launch,
-  and what parking gives back.
+* **back is lit** - whether the arrow over the page knows there is somewhere to go
+  back to, before and after the app is started again. The engine will not answer that
+  and a revived page's engine holds no history at all, so it is the trail's answer;
+  the button the reader presses is what the probe reads.
+* **bytes with ten** - what the pages cost this launch, with the cap doing its work.
 
     python scripts/web-switch-probe.py --exe path/to/nib.exe
 
@@ -339,6 +342,16 @@ def scroll(app: App, tab: str, down: int) -> object:
     )
 
 
+def lit(app: App) -> object:
+    """Whether the back arrow is lit, which is the trail's own answer: the engine will
+    not say whether a page can go back, and a revived page's engine has no history at
+    all. The button the reader presses is what this reads."""
+
+    return app.ask(
+        "JSON.stringify(!document.querySelector('.webbar button[aria-label=\"Back\"]').disabled)"
+    )
+
+
 def memory(pid: int) -> int:
     """What this launch's pages cost, in bytes: the processes under the app's own and
     no others, because this machine runs WebView2 for several programs."""
@@ -461,7 +474,21 @@ def main() -> int:
         said["back to the first ms"] = until_live(app, web, 90)
         said["back to the first kept the place"] = place(app, web)
 
-        # 4. ten tabs, and what parking gives back.
+        # 4. a link followed inside the page, so the tab has a trail behind it.
+        #    `web_navigate` is the call the bar makes and the one a link inside the page
+        #    ends in, and it is the only way a drive can follow one.
+        app.ask(
+            "window.__TAURI_INTERNALS__.invoke('web_navigate', { tab: '"
+            + web
+            + "', url: 'http://127.0.0.1:"
+            + str(port)
+            + "/other' })"
+        )
+        time.sleep(4)
+        said["the trail after following a link"] = place(app, web)
+        said["back is lit"] = lit(app)
+
+        # 5. ten tabs, and what parking gives back.
         for index in range(10):
             app.open(f"Site {index}.url")
             time.sleep(1.5)
@@ -471,10 +498,10 @@ def main() -> int:
             "JSON.stringify(nib.workspace.tabs.filter((one) => one.kind === 'web').length)"
         )
 
-        # 5. what the file says now, which is what reopening the note tomorrow reads.
+        # 6. what the file says now, which is what reopening the note tomorrow reads.
         said["the file"] = (made / f"{WEB}.url").read_text(encoding="utf-8").replace("\r\n", " | ")
 
-        # 6. the app again, on the session it was left with, and the note reopened.
+        # 7. the app again, on the session it was left with, and the note reopened.
         running.terminate()
         running.wait(timeout=30)
         time.sleep(2)
@@ -487,8 +514,11 @@ def main() -> int:
         while web is None and time.perf_counter() < until:
             web = tab_of(app, WEB)
         said["relaunch ms"] = until_live(app, web, 90) if web else None
-        time.sleep(2)
+        time.sleep(3)
         said["relaunch kept the place"] = place(app, web) if web else None
+        # The arrows over a revived page are the trail's, because the engine's own
+        # history went with the webview; see `Trail::engine` in web_tabs.rs.
+        said["relaunch: back is lit"] = lit(app)
     finally:
         if running is not None:
             running.terminate()
