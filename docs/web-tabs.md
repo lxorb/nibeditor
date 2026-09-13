@@ -616,7 +616,7 @@ versions and goes to the trash like every other document.
 
 | | |
 | --- | --- |
-| `apps/desktop/src-tauri/src/web_tabs.rs` | the child webview: make, place, show, navigate, step, read, close. Where a page may be built, the guard script, the trail, the address rule. Unit tested |
+| `apps/desktop/src-tauri/src/web_tabs.rs` | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs` | `is_shortcut`, beside the other three kinds |
 | `apps/desktop/src-tauri/src/tree.rs` | the four kinds the file list shows |
 | `apps/desktop/src-tauri/src/search.rs` | a shortcut is searched as the text it is, so a site is found by its address |

@@ -342,24 +342,51 @@ def main() -> int:
         if not asked:
             print("FAIL: a site asked for where you are and no bubble went up")
 
-        # And the far end of it: Allow is pressed, the engine is let go of, and the page's
-        # own callback runs. The page puts what it was told in its title, so `refused 1`
-        # would mean the answer never reached the engine - or reached it as a no.
-        app.ask("document.querySelectorAll('.ask .nib-button')[1].click()")
-        time.sleep(3)
+        # And the far end of it: **Don't allow** is pressed, the request the engine has
+        # been holding open is let go of with that answer, and the page's own callback
+        # runs. `refused 1` is `PERMISSION_DENIED` - the one code that can only come from
+        # the answer actually reaching the engine, with no network and no location
+        # provider involved in saying it. Allow is the other half of the pair and cannot
+        # be read this way on a machine with no location to give: it answers with code 2
+        # after a wait, or not at all.
+        app.ask("document.querySelectorAll('.ask .nib-button')[0].click()")
+
+        told = ""
+        until = time.perf_counter() + 20
+        while "refused" not in told and time.perf_counter() < until:
+            answer = app.ask(
+                "JSON.stringify(document.querySelector('.webbar input.address')?.value ?? '')"
+            )
+            told = answer if isinstance(answer, str) else ""
+            if "refused" not in told:
+                time.sleep(1)
+
         said["the bubble is gone"] = app.ask(
             "JSON.stringify(document.querySelector('.ask[role=dialog]') === null)"
         )
         # Read off the bar, which shows the site and then the page's own title: the page
-        # wrote what it was told into that title, so this is the engine's answer as a
-        # reader would see it.
-        said["what the engine told the page"] = app.ask(
-            "JSON.stringify(document.querySelector('.webbar input.address')?.value ?? '')"
-        )
+        # wrote what the engine told it into that title, so this is the answer arriving
+        # as a reader would see it.
+        said["what the engine told the page"] = told
         said["what the site is allowed now"] = app.ask(
             "JSON.stringify(JSON.parse(localStorage.getItem('nib:web-grants') ?? '{}'))"
         )
-        shoot(hwnd, "a-site-allowed")
+        shoot(hwnd, "a-site-answered")
+        if "refused 1" not in told:
+            print(f"FAIL: the page was told {told!r} rather than that it was refused")
+
+        # And once is once: the page is loaded again, asks again, and is answered from
+        # what the reader said - no bubble, and the same answer in the title.
+        app.ask(
+            "window.__TAURI_INTERNALS__.invoke('web_step', { tab: '"
+            + (switch.tab_of(app, "A page that asks") or "")
+            + "', step: 'reload' })"
+        )
+        time.sleep(6)
+        said["asked again"] = app.ask(
+            "JSON.stringify([document.querySelector('.ask[role=dialog]') === null,"
+            " document.querySelector('.webbar input.address')?.value ?? ''])"
+        )
     finally:
         if running is not None:
             running.terminate()
