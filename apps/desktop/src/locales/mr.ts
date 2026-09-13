@@ -519,6 +519,7 @@ export const mr: Dictionary = {
   Language: 'भाषा',
   'Match the system': 'सिस्टमप्रमाणे',
   'Machine-translated. Corrections welcome.': 'यंत्राने अनुवादित. सुधारणा स्वागतार्ह.',
+  'The glasses show English.': 'चष्मा इंग्रजी दाखवतो.',
   'Match the app': 'ॲपप्रमाणे',
   // Settings
   Settings: 'सेटिंग्ज',

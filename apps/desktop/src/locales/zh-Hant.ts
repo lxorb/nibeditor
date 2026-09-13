@@ -512,6 +512,7 @@ export const zhHant: Dictionary = {
   Language: '語言',
   'Match the system': '與系統相同',
   'Machine-translated. Corrections welcome.': '機器翻譯，歡迎指正。',
+  'The glasses show English.': '眼鏡顯示英文。',
   'Match the app': '與應用程式相同',
   // Settings
   Settings: '設定',

@@ -522,6 +522,7 @@ export const sw: Dictionary = {
   Language: 'Lugha',
   'Match the system': 'Fuata mfumo',
   'Machine-translated. Corrections welcome.': 'Tafsiri ya mashine. Masahihisho yanakaribishwa.',
+  'The glasses show English.': 'Miwani inaonyesha Kiingereza.',
   'Match the app': 'Fuata programu',
   // Settings
   Settings: 'Mipangilio',

@@ -516,6 +516,7 @@ export const my: Dictionary = {
   Language: 'ဘာသာစကား',
   'Match the system': 'စနစ်အတိုင်း',
   'Machine-translated. Corrections welcome.': 'စက်ဖြင့်ဘာသာပြန်။ အမှားပြင်ချက်ကြိုဆို။',
+  'The glasses show English.': 'မျက်မှန်တွင် အင်္ဂလိပ်ဘာသာ ပြသသည်။',
   'Match the app': 'အက်ပ်အတိုင်း',
   // Settings
   Settings: 'ဆက်တင်',

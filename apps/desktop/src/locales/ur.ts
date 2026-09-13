@@ -519,6 +519,7 @@ export const ur: Dictionary = {
   Language: 'زبان',
   'Match the system': 'سسٹم کے مطابق',
   'Machine-translated. Corrections welcome.': 'مشینی ترجمہ۔ تصحیح خوش آمدید۔',
+  'The glasses show English.': 'چشمہ انگریزی دکھاتا ہے۔',
   'Match the app': 'ایپ کے مطابق',
   // Settings
   Settings: 'ترتیبات',

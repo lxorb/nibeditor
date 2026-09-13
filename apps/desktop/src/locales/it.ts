@@ -533,6 +533,7 @@ export const it: Dictionary = {
   Language: 'Lingua',
   'Match the system': 'Come il sistema',
   'Machine-translated. Corrections welcome.': 'Tradotto automaticamente. Correzioni benvenute.',
+  'The glasses show English.': 'Gli occhiali mostrano l’inglese.',
   'Match the app': 'Come l’app',
   // Settings
   Settings: 'Impostazioni',

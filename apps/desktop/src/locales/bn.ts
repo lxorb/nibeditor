@@ -519,6 +519,7 @@ export const bn: Dictionary = {
   Language: 'ভাষা',
   'Match the system': 'সিস্টেম অনুযায়ী',
   'Machine-translated. Corrections welcome.': 'যন্ত্রে অনুবাদ করা। সংশোধন স্বাগত।',
+  'The glasses show English.': 'চশমা ইংরেজিতে দেখায়।',
   'Match the app': 'অ্যাপ অনুযায়ী',
   // Settings
   Settings: 'সেটিংস',

@@ -528,6 +528,7 @@ export const ptBR: Dictionary = {
   Language: 'Idioma',
   'Match the system': 'Como o sistema',
   'Machine-translated. Corrections welcome.': 'Traduzido automaticamente. Correções bem-vindas.',
+  'The glasses show English.': 'Os óculos mostram inglês.',
   'Match the app': 'Como o app',
   // Settings
   Settings: 'Configurações',

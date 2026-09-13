@@ -522,6 +522,7 @@ export const ml: Dictionary = {
   Language: 'ഭാഷ',
   'Match the system': 'സിസ്റ്റം അനുസരിച്ച്',
   'Machine-translated. Corrections welcome.': 'യന്ത്ര വിവർത്തനം. തിരുത്തലുകൾ സ്വാഗതം.',
+  'The glasses show English.': 'കണ്ണട ഇംഗ്ലീഷ് കാണിക്കുന്നു.',
   'Match the app': 'ആപ്പ് അനുസരിച്ച്',
   // Settings
   Settings: 'സെറ്റിംഗ്സ്',

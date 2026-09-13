@@ -512,6 +512,7 @@ export const zhHans: Dictionary = {
   Language: '语言',
   'Match the system': '与系统一致',
   'Machine-translated. Corrections welcome.': '机器翻译，欢迎指正。',
+  'The glasses show English.': '眼镜显示英文。',
   'Match the app': '与应用一致',
   // Settings
   Settings: '设置',

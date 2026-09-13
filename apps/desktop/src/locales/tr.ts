@@ -519,6 +519,7 @@ export const tr: Dictionary = {
   Language: 'Dil',
   'Match the system': 'Sistemle aynı',
   'Machine-translated. Corrections welcome.': 'Makine çevirisi. Düzeltmeler beklenir.',
+  'The glasses show English.': 'Gözlük İngilizce gösterir.',
   'Match the app': 'Uygulamayla aynı',
   // Settings
   Settings: 'Ayarlar',

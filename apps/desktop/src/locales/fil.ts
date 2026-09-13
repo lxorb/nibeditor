@@ -522,6 +522,7 @@ export const fil: Dictionary = {
   Language: 'Wika',
   'Match the system': 'Sundin ang sistema',
   'Machine-translated. Corrections welcome.': 'Salin ng makina. Tanggap ang pagwawasto.',
+  'The glasses show English.': 'Ingles ang ipinapakita ng salamin.',
   'Match the app': 'Sundin ang app',
   // Settings
   Settings: 'Mga setting',

@@ -545,6 +545,7 @@ export const uk: Dictionary = {
   Language: 'Мова',
   'Match the system': 'Як у системі',
   'Machine-translated. Corrections welcome.': 'Машинний переклад. Виправлення вітаються.',
+  'The glasses show English.': 'Окуляри показують англійську.',
   'Match the app': 'Як у програмі',
   // Settings
   Settings: 'Налаштування',

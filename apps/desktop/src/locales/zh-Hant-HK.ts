@@ -512,6 +512,7 @@ export const zhHantHK: Dictionary = {
   Language: '語言',
   'Match the system': '跟隨系統',
   'Machine-translated. Corrections welcome.': '機器翻譯，歡迎指正。',
+  'The glasses show English.': '眼鏡顯示英文。',
   'Match the app': '跟隨應用程式',
   // Settings
   Settings: '設定',

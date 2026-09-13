@@ -515,6 +515,7 @@ export const ko: Dictionary = {
   Language: '언어',
   'Match the system': '시스템에 맞춤',
   'Machine-translated. Corrections welcome.': '기계 번역입니다. 수정을 환영합니다.',
+  'The glasses show English.': '안경에는 영어로 표시됩니다.',
   'Match the app': '앱에 맞춤',
   // Settings
   Settings: '설정',

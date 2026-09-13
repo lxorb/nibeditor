@@ -546,6 +546,7 @@ export const ru: Dictionary = {
   Language: 'Язык',
   'Match the system': 'Как в системе',
   'Machine-translated. Corrections welcome.': 'Машинный перевод. Исправления приветствуются.',
+  'The glasses show English.': 'Очки показывают английский.',
   'Match the app': 'Как в приложении',
   // Settings
   Settings: 'Настройки',

@@ -519,6 +519,7 @@ export const fa: Dictionary = {
   Language: 'زبان',
   'Match the system': 'پیروی از سامانه',
   'Machine-translated. Corrections welcome.': 'ترجمه ماشینی. اصلاح‌ها خوش‌آمدند.',
+  'The glasses show English.': 'عینک انگلیسی نشان می‌دهد.',
   'Match the app': 'پیروی از برنامه',
   // Settings
   Settings: 'تنظیم',

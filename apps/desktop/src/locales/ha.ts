@@ -521,6 +521,7 @@ export const ha: Dictionary = {
   Language: 'Harshe',
   'Match the system': 'Bi tsarin',
   'Machine-translated. Corrections welcome.': 'Fassarar inji. Ana maraba da gyara.',
+  'The glasses show English.': 'Tabarau yana nuna Turanci.',
   'Match the app': 'Bi manhajar',
   // Settings
   Settings: 'Saituna',

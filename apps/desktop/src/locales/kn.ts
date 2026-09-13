@@ -521,6 +521,7 @@ export const kn: Dictionary = {
   Language: 'ಭಾಷೆ',
   'Match the system': 'ಸಿಸ್ಟಂ ಪ್ರಕಾರ',
   'Machine-translated. Corrections welcome.': 'ಯಂತ್ರ ಅನುವಾದ. ತಿದ್ದುಪಡಿಗಳಿಗೆ ಸ್ವಾಗತ.',
+  'The glasses show English.': 'ಕನ್ನಡಕ ಇಂಗ್ಲಿಷ್ ತೋರಿಸುತ್ತದೆ.',
   'Match the app': 'ಅಪ್ಲಿಕೇಶನ್ ಪ್ರಕಾರ',
   // Settings
   Settings: 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು',

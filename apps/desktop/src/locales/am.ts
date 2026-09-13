@@ -516,6 +516,7 @@ export const am: Dictionary = {
   Language: 'ቋንቋ',
   'Match the system': 'ሥርዓቱን ተከተል',
   'Machine-translated. Corrections welcome.': 'በማሽን የተተረጎመ። ማስተካከያ በደስታ ይቀበላል።',
+  'The glasses show English.': 'መነጽሮቹ በእንግሊዝኛ ያሳያሉ።',
   'Match the app': 'መተግበሪያውን ተከተል',
   // Settings
   Settings: 'ማስተካከያ',

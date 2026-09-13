@@ -557,6 +557,7 @@ export const ar: Dictionary = {
   Language: 'اللغة',
   'Match the system': 'مطابقة النظام',
   'Machine-translated. Corrections welcome.': 'ترجمة آلية. التصحيحات مرحّب بها.',
+  'The glasses show English.': 'النظارات تعرض الإنجليزية.',
   'Match the app': 'مطابقة التطبيق',
   // Settings
   Settings: 'الإعدادات',

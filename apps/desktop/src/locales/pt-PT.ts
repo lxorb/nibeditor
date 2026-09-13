@@ -528,6 +528,7 @@ export const ptPT: Dictionary = {
   Language: 'Idioma',
   'Match the system': 'Como o sistema',
   'Machine-translated. Corrections welcome.': 'Traduzido automaticamente. Agradecem-se correções.',
+  'The glasses show English.': 'Os óculos mostram inglês.',
   'Match the app': 'Como a aplicação',
   // Settings
   Settings: 'Definições',

@@ -516,6 +516,7 @@ export const ms: Dictionary = {
   Language: 'Bahasa',
   'Match the system': 'Ikut sistem',
   'Machine-translated. Corrections welcome.': 'Terjemahan mesin. Pembetulan dialu-alukan.',
+  'The glasses show English.': 'Cermin mata memaparkan bahasa Inggeris.',
   'Match the app': 'Ikut aplikasi',
   // Settings
   Settings: 'Tetapan',

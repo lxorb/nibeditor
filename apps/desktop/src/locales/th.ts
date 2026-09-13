@@ -513,6 +513,7 @@ export const th: Dictionary = {
   Language: 'ภาษา',
   'Match the system': 'ตามระบบ',
   'Machine-translated. Corrections welcome.': 'แปลด้วยเครื่อง ยินดีรับการแก้ไข',
+  'The glasses show English.': 'แว่นแสดงเป็นภาษาอังกฤษ',
   'Match the app': 'ตามแอป',
   // Settings
   Settings: 'ตั้งค่า',

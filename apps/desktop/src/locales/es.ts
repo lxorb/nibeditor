@@ -530,6 +530,7 @@ export const es: Dictionary = {
   'Match the system': 'Como el sistema',
   'Machine-translated. Corrections welcome.':
     'Traducido automáticamente. Correcciones bienvenidas.',
+  'The glasses show English.': 'Las gafas muestran inglés.',
   'Match the app': 'Como la app',
   // Settings
   Settings: 'Ajustes',

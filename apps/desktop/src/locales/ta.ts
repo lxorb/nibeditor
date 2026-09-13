@@ -519,6 +519,7 @@ export const ta: Dictionary = {
   'Match the system': 'கணினியின்படி',
   'Machine-translated. Corrections welcome.':
     'இயந்திர மொழிபெயர்ப்பு. திருத்தங்கள் வரவேற்கப்படுகின்றன.',
+  'The glasses show English.': 'கண்ணாடி ஆங்கிலத்தில் காட்டும்.',
   'Match the app': 'செயலியின்படி',
   // Settings
   Settings: 'அமைப்புகள்',

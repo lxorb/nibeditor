@@ -517,6 +517,7 @@ export const te: Dictionary = {
   Language: 'భాష',
   'Match the system': 'సిస్టమ్ ప్రకారం',
   'Machine-translated. Corrections welcome.': 'యంత్ర అనువాదం. సరిదిద్దుబాట్లు స్వాగతం.',
+  'The glasses show English.': 'గ్లాసెస్ ఇంగ్లీష్‌లో చూపుతాయి.',
   'Match the app': 'యాప్ ప్రకారం',
   // Settings
   Settings: 'సెట్టింగ్‌లు',

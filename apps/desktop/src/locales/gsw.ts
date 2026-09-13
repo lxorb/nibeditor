@@ -519,6 +519,7 @@ export const gsw: Dictionary = {
   Language: 'Sprach',
   'Match the system': 'Wie s System',
   'Machine-translated. Corrections welcome.': 'Maschinell übersetzt. Korrekture willkomme.',
+  'The glasses show English.': 'D Brille zeigt Änglisch.',
   'Match the app': 'Wie d App',
   // Settings
   Settings: 'Iistellige',

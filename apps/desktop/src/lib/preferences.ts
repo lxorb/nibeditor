@@ -1,5 +1,6 @@
 import type { EditorView } from '@nib/editor'
 import { CODE_PALETTES } from '@nib/editor'
+import { panelDrawable } from './even/panel-words'
 import { glassesGroups, wordFields } from './even/settings'
 import { CATALOGUES_URL, i18n, LANGUAGES, plural, t } from './i18n.svelte'
 import { modes } from './modes.svelte'
@@ -174,18 +175,20 @@ export function preferences(view?: EditorView): Pane[] {
         },
         {
           title: t('Language'),
-          // Most of the catalogues were written in one pass and never read
-          // through. Saying so is the honest part; the folder they live in is
-          // the useful part, because the reader who can see the wrong word is
-          // the only person who can put it right.
-          ...(i18n.machine
-            ? {
-                caption: {
-                  text: t('Machine-translated. Corrections welcome.'),
-                  url: CATALOGUES_URL,
-                },
-              }
-            : {}),
+          // Two things can be worth saying about a language, and both are one line.
+          //
+          // Most of the catalogues were written in one pass and never read through.
+          // Saying so is the honest part; the folder they live in is the useful part,
+          // because the reader who can see the wrong word is the only person who can
+          // put it right.
+          //
+          // And the glasses have one font baked into the firmware, with no Devanagari,
+          // Arabic, Thai, Burmese or Ethiopic in it at all - so for a reader in one of
+          // those scripts the panel is in English however the app is set. Said here,
+          // where the choice is made, and only to somebody who has a pair: it is the
+          // one place a reader could act on it, and noise to everybody else. The rule
+          // itself is `panelDrawable`; see even/panel-words.ts.
+          ...caption(),
           fields: [
             {
               kind: 'select',
@@ -639,6 +642,21 @@ export function preferences(view?: EditorView): Pane[] {
       ],
     },
   ]
+}
+
+/** What the Language group says under its row, where there is anything to say.
+ *
+ *  One caption, because two sentences about the same choice are one caption; the link
+ *  is the catalogues folder either way, since that is where a correction goes and a
+ *  reader who cannot read the panel may well want to fix the words too. */
+function caption(): { caption?: { text: string; url: string } } {
+  const said = [
+    i18n.machine ? t('Machine-translated. Corrections welcome.') : '',
+    (isPlugin() || modes.glassesSeen) && !panelDrawable() ? t('The glasses show English.') : '',
+  ].filter(Boolean)
+
+  if (!said.length) return {}
+  return { caption: { text: said.join(' '), url: CATALOGUES_URL } }
 }
 
 /** Whether every field in the pane knows what it started as. */

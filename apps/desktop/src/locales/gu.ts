@@ -519,6 +519,7 @@ export const gu: Dictionary = {
   Language: 'ભાષા',
   'Match the system': 'સિસ્ટમ પ્રમાણે',
   'Machine-translated. Corrections welcome.': 'યાંત્રિક અનુવાદ. સુધારા આવકાર્ય.',
+  'The glasses show English.': 'ચશ્માં અંગ્રેજી બતાવે છે.',
   'Match the app': 'એપ પ્રમાણે',
   // Settings
   Settings: 'ગોઠવણ',

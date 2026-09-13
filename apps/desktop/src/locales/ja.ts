@@ -516,6 +516,7 @@ export const ja: Dictionary = {
   Language: '言語',
   'Match the system': 'システムに合わせる',
   'Machine-translated. Corrections welcome.': '機械翻訳です。修正を歓迎します。',
+  'The glasses show English.': 'グラスは英語で表示されます。',
   'Match the app': 'アプリに合わせる',
   // Settings
   Settings: '設定',

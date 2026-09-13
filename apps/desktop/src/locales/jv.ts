@@ -516,6 +516,7 @@ export const jv: Dictionary = {
   Language: 'Basa',
   'Match the system': 'Manut sistem',
   'Machine-translated. Corrections welcome.': 'Terjemahan mesin. Koreksi ditampa.',
+  'The glasses show English.': 'Tesmak nuduhake basa Inggris.',
   'Match the app': 'Manut aplikasi',
   // Settings
   Settings: 'Setelan',

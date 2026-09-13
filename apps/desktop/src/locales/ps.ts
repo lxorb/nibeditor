@@ -519,6 +519,7 @@ export const ps: Dictionary = {
   Language: 'ژبه',
   'Match the system': 'د غونډال سره',
   'Machine-translated. Corrections welcome.': 'ماشيني ژباړه. سمونې ښه راغلاست.',
+  'The glasses show English.': 'عینکې انګلیسي ښيي.',
   'Match the app': 'د کاريال سره',
   // Settings
   Settings: 'امستنې',

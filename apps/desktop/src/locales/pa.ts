@@ -522,6 +522,7 @@ export const pa: Dictionary = {
   Language: 'ਭਾਸ਼ਾ',
   'Match the system': 'ਸਿਸਟਮ ਮੁਤਾਬਕ',
   'Machine-translated. Corrections welcome.': 'ਮਸ਼ੀਨੀ ਅਨੁਵਾਦ। ਸੁਧਾਰ ਜੀ ਆਇਆਂ ਨੂੰ।',
+  'The glasses show English.': 'ਐਨਕਾਂ ਅੰਗਰੇਜ਼ੀ ਦਿਖਾਉਂਦੀਆਂ ਹਨ।',
   'Match the app': 'ਐਪ ਮੁਤਾਬਕ',
   // Settings
   Settings: 'ਸੈਟਿੰਗਾਂ',

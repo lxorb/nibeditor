@@ -515,6 +515,7 @@ export const vi: Dictionary = {
   Language: 'Ngôn ngữ',
   'Match the system': 'Theo hệ thống',
   'Machine-translated. Corrections welcome.': 'Dịch bằng máy. Rất mong được sửa.',
+  'The glasses show English.': 'Kính hiển thị tiếng Anh.',
   'Match the app': 'Theo ứng dụng',
   // Settings
   Settings: 'Cài đặt',
