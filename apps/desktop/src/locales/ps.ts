@@ -1217,10 +1217,7 @@ export const ps: Dictionary = {
   Reload: 'بېرته راوړل',
   'Clip this page': 'دا مخ خوندول',
   'Clip the link': 'تړنه خوندول',
-  'Allow the camera': 'کامرې ته اجازه',
-  'Allow the clipboard': 'د لمېسې تختې ته اجازه',
   'Open in the browser': 'په کوټګر کې پرانيستل',
-  'Copy the address': 'پته لمېسل',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',
@@ -1348,4 +1345,45 @@ export const ps: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'دا یادښت هومره لوی شوی دی چې په یوه کوټه کې یو یادښت کېدای شي.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'نوی ټب',
+  'Full screen': 'بشپړ پرده',
+  'Print…': 'چاپ…',
+  'Save page': 'مخ خوندول',
+  'Share…': 'شريکول…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'غواړي',
+  'Don’t allow': 'اجازه نه ورکول',
+  Allow: 'اجازه ورکول',
+  'Use your camera': 'ستاسو کامرې کارول',
+  'Use your microphone': 'ستاسو مایکروفون کارول',
+  'Know your location': 'ستاسو موقعیت پېژندل',
+  'Show notifications': 'خبرتیاوې ښودل',
+  'See text and images copied to the clipboard':
+    'هغه متن او انځورونه لیدل چې لمېسې تختې ته کاپي شوي',
+  'Use your motion sensors': 'ستاسو د حرکت سنسرونه کارول',
+  'Download multiple files': 'څو دوتنې ښکته کول',
+  'Use fonts installed on your device': 'ستاسو په وسیله کې نصب شوي فونټونه کارول',
+  'Use your MIDI devices': 'ستاسو د MIDI وسیلې کارول',
+  'Manage windows on all your displays': 'ستاسو په ټولو پردو کې کړکیو سمبالول',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'د ټاټوبي معلومات',
+  Camera: 'کامره',
+  Microphone: 'مایکروفون',
+  Location: 'موقعیت',
+  Notifications: 'خبرتیاوې',
+  Clipboard: 'لمېسې تخته',
+  'Motion sensors': 'د حرکت سنسرونه',
+  'Automatic downloads': 'خپلکاره ښکته کول',
+  Fonts: 'فونټونه',
+  'MIDI devices': 'د MIDI وسیلې',
+  'Window management': 'کړکیو سمبالول',
+  'Connection is secure': 'نښلون خوندي دی',
+  'Connection is not secure': 'نښلون خوندي نه دی',
+  Allowed: 'اجازه شوی',
+  Blocked: 'بند شوی',
+  'Reset permissions': 'اجازې بیا تنظیمول',
 }

@@ -1206,10 +1206,7 @@ export const ms: Dictionary = {
   Reload: 'Muat semula',
   'Clip this page': 'Simpan halaman ini',
   'Clip the link': 'Simpan pautan',
-  'Allow the camera': 'Benarkan kamera',
-  'Allow the clipboard': 'Benarkan papan klip',
   'Open in the browser': 'Buka dalam pelayar',
-  'Copy the address': 'Salin alamat',
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
   'Open a website': 'Buka laman web',
@@ -1344,4 +1341,45 @@ export const ms: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Nota ini sudah sebesar nota dalam sebuah bilik boleh jadi.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Tab baharu',
+  'Full screen': 'Skrin penuh',
+  'Print…': 'Cetak…',
+  'Save page': 'Simpan halaman',
+  'Share…': 'Kongsi…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ingin',
+  'Don’t allow': 'Jangan benarkan',
+  Allow: 'Benarkan',
+  'Use your camera': 'Gunakan kamera anda',
+  'Use your microphone': 'Gunakan mikrofon anda',
+  'Know your location': 'Ketahui lokasi anda',
+  'Show notifications': 'Tunjukkan pemberitahuan',
+  'See text and images copied to the clipboard':
+    'Lihat teks dan imej yang disalin ke papan keratan',
+  'Use your motion sensors': 'Gunakan penderia gerakan anda',
+  'Download multiple files': 'Muat turun berbilang fail',
+  'Use fonts installed on your device': 'Gunakan fon yang dipasang pada peranti anda',
+  'Use your MIDI devices': 'Gunakan peranti MIDI anda',
+  'Manage windows on all your displays': 'Urus tetingkap pada semua paparan anda',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Maklumat tapak',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Lokasi',
+  Notifications: 'Pemberitahuan',
+  Clipboard: 'Papan keratan',
+  'Motion sensors': 'Penderia gerakan',
+  'Automatic downloads': 'Muat turun automatik',
+  Fonts: 'Fon',
+  'MIDI devices': 'Peranti MIDI',
+  'Window management': 'Pengurusan tetingkap',
+  'Connection is secure': 'Sambungan selamat',
+  'Connection is not secure': 'Sambungan tidak selamat',
+  Allowed: 'Dibenarkan',
+  Blocked: 'Disekat',
+  'Reset permissions': 'Tetapkan semula kebenaran',
 }

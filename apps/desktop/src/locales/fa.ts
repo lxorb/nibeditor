@@ -1216,10 +1216,7 @@ export const fa: Dictionary = {
   Reload: 'بارگذاری دوباره',
   'Clip this page': 'ذخیره این صفحه',
   'Clip the link': 'ذخیره پیوند',
-  'Allow the camera': 'اجازه دوربین',
-  'Allow the clipboard': 'اجازه تخته‌گیره',
   'Open in the browser': 'گشودن در مرورگر',
-  'Copy the address': 'رونوشت نشانی',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
   'Open a website': 'گشودن وب‌گاه',
@@ -1348,4 +1345,44 @@ export const fa: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'این یادداشت به بزرگ‌ترین اندازه‌ای رسیده که یک یادداشت در یک اتاق می‌تواند داشته باشد.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'زبانه جدید',
+  'Full screen': 'تمام صفحه',
+  'Print…': 'چاپ…',
+  'Save page': 'ذخیره صفحه',
+  'Share…': 'هم‌رسانی…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'می‌خواهد',
+  'Don’t allow': 'اجازه ندادن',
+  Allow: 'اجازه دادن',
+  'Use your camera': 'استفاده از دوربین شما',
+  'Use your microphone': 'استفاده از میکروفون شما',
+  'Know your location': 'دانستن مکان شما',
+  'Show notifications': 'نشان دادن اعلان‌ها',
+  'See text and images copied to the clipboard': 'دیدن نوشتار و تصاویر کپی‌شده در بریده‌دان',
+  'Use your motion sensors': 'استفاده از حسگرهای حرکتی',
+  'Download multiple files': 'بارگیری چندین فایل',
+  'Use fonts installed on your device': 'استفاده از قلم‌های نصب‌شده در دستگاه شما',
+  'Use your MIDI devices': 'استفاده از دستگاه‌های MIDI',
+  'Manage windows on all your displays': 'مدیریت پنجره‌ها در همه نمایشگرهای شما',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'اطلاعات سایت',
+  Camera: 'دوربین',
+  Microphone: 'میکروفن',
+  Location: 'مکان',
+  Notifications: 'اعلان‌ها',
+  Clipboard: 'بریده‌دان',
+  'Motion sensors': 'حسگرهای حرکتی',
+  'Automatic downloads': 'بارگیری‌های خودکار',
+  Fonts: 'قلم‌ها',
+  'MIDI devices': 'دستگاه‌های MIDI',
+  'Window management': 'مدیریت پنجره',
+  'Connection is secure': 'اتصال ایمن است',
+  'Connection is not secure': 'اتصال ایمن نیست',
+  Allowed: 'اجازه داشتن',
+  Blocked: 'مسدود است',
+  'Reset permissions': 'بازنشانی اجازه‌ها',
 }

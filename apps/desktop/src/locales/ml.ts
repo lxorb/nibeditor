@@ -1229,10 +1229,7 @@ export const ml: Dictionary = {
   Reload: 'വീണ്ടും എടുക്കുക',
   'Clip this page': 'ഈ താൾ എടുക്കുക',
   'Clip the link': 'കണ്ണി എടുക്കുക',
-  'Allow the camera': 'ക്യാമറയ്ക്ക് അനുവാദം നൽകുക',
-  'Allow the clipboard': 'ക്ലിപ്പ്ബോർഡിന് അനുവാദം നൽകുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
-  'Copy the address': 'വിലാസം പകർത്തുക',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
@@ -1364,4 +1361,46 @@ export const ml: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ഒരു റൂമിൽ ഒരു കുറിപ്പിന് ആകാവുന്ന ഏറ്റവും വലിയ വലുപ്പത്തിൽ ഈ കുറിപ്പ് എത്തി.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'പുതിയ ടാബ്',
+  'Full screen': 'പൂർണ്ണ സ്ക്രീൻ',
+  'Print…': 'പ്രിന്റ് ചെയ്യുക…',
+  'Save page': 'പേജ് സംരക്ഷിക്കുക',
+  'Share…': 'പങ്കിടുക…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ഇത് ചെയ്യാൻ ആവശ്യപ്പെടുന്നു',
+  'Don’t allow': 'അനുവദിക്കരുത്',
+  Allow: 'അനുവദിക്കുക',
+  'Use your camera': 'നിങ്ങളുടെ ക്യാമറ ഉപയോഗിക്കുക',
+  'Use your microphone': 'നിങ്ങളുടെ മൈക്രോഫോൺ ഉപയോഗിക്കുക',
+  'Know your location': 'നിങ്ങളുടെ ലൊക്കേഷൻ അറിയുക',
+  'Show notifications': 'അറിയിപ്പുകൾ കാണിക്കുക',
+  'See text and images copied to the clipboard':
+    'ക്ലിപ്പ്‌ബോർഡിലേക്ക് പകർത്തിയിട്ടുള്ള ടെക്‌സ്റ്റും ചിത്രങ്ങളും കാണുക',
+  'Use your motion sensors': 'നിങ്ങളുടെ മോഷൻ സെൻസറുകൾ ഉപയോഗിക്കുക',
+  'Download multiple files': 'ഒന്നിലധികം ഫയലുകൾ ഡൗൺലോഡ് ചെയ്യുക',
+  'Use fonts installed on your device':
+    'നിങ്ങളുടെ ഉപകരണത്തിൽ ഇൻസ്റ്റാൾ ചെയ്തിരിക്കുന്ന ഫോണ്ടുകൾ ഉപയോഗിക്കുക',
+  'Use your MIDI devices': 'നിങ്ങളുടെ MIDI ഉപകരണങ്ങൾ ഉപയോഗിക്കുക',
+  'Manage windows on all your displays': 'നിങ്ങളുടെ എല്ലാ ഡിസ്‌പ്ലേകളിലും വിൻഡോകൾ മാനേജ് ചെയ്യുക',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'സൈറ്റ് വിവരങ്ങൾ',
+  Camera: 'ക്യാമറ',
+  Microphone: 'മൈക്രോഫോൺ',
+  Location: 'ലൊക്കേഷൻ',
+  Notifications: 'അറിയിപ്പുകൾ',
+  Clipboard: 'ക്ലിപ്പ്ബോർഡ്',
+  'Motion sensors': 'മോഷൻ സെൻസറുകൾ',
+  'Automatic downloads': 'യാന്ത്രിക ഡൗൺലോഡുകൾ',
+  Fonts: 'ഫോണ്ടുകൾ',
+  'MIDI devices': 'MIDI ഉപകരണങ്ങൾ',
+  'Window management': 'വിൻഡോ മാനേജ് ചെയ്യൽ',
+  'Connection is secure': 'കണക്ഷൻ സുരക്ഷിതമാണ്',
+  'Connection is not secure': 'കണക്ഷൻ സുരക്ഷിതമല്ല',
+  Allowed: 'അനുവദനീയം',
+  Blocked: 'തടഞ്ഞു',
+  'Reset permissions': 'അനുമതികൾ പുനഃസജ്ജീകരിക്കുക',
 }

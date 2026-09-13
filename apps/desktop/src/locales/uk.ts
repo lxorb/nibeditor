@@ -1277,10 +1277,7 @@ export const uk: Dictionary = {
   Reload: 'Оновити',
   'Clip this page': 'Зберегти цю сторінку',
   'Clip the link': 'Зберегти посилання',
-  'Allow the camera': 'Дозволити камеру',
-  'Allow the clipboard': 'Дозволити буфер обміну',
   'Open in the browser': 'Відкрити в браузері',
-  'Copy the address': 'Копіювати адресу',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
   'Open a website': 'Відкрити сайт',
@@ -1408,4 +1405,44 @@ export const uk: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Ця нотатка досягла найбільшого розміру, який може мати нотатка в кімнаті.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Нова вкладка',
+  'Full screen': 'На весь екран',
+  'Print…': 'Друк…',
+  'Save page': 'Зберегти сторінку',
+  'Share…': 'Поділитися…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'хоче',
+  'Don’t allow': 'Не дозволяти',
+  Allow: 'Дозволити',
+  'Use your camera': 'Використовувати вашу камеру',
+  'Use your microphone': 'Використовувати ваш мікрофон',
+  'Know your location': 'Бачити ваше місцезнаходження',
+  'Show notifications': 'Показувати сповіщення',
+  'See text and images copied to the clipboard': 'Переглядати тексти й зображення в буфері обміну',
+  'Use your motion sensors': 'Використовувати датчики руху',
+  'Download multiple files': 'Завантажувати кілька файлів',
+  'Use fonts installed on your device': 'Використовувати шрифти, установлені на пристрої',
+  'Use your MIDI devices': 'Використовувати пристрої MIDI',
+  'Manage windows on all your displays': 'Керувати вікнами на всіх ваших екранах',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Інформація про сайт',
+  Camera: 'Камера',
+  Microphone: 'Мікрофон',
+  Location: 'Місцезнаходження',
+  Notifications: 'Сповіщення',
+  Clipboard: 'Буфер обміну',
+  'Motion sensors': 'Датчики руху',
+  'Automatic downloads': 'Автоматичні завантаження',
+  Fonts: 'Шрифти',
+  'MIDI devices': 'Пристрої MIDI',
+  'Window management': 'Керування вікнами',
+  'Connection is secure': 'З’єднання безпечне',
+  'Connection is not secure': 'З’єднання ненадійне',
+  Allowed: 'Дозволено',
+  Blocked: 'Заблоковано',
+  'Reset permissions': 'Скинути дозволи',
 }

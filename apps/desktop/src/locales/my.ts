@@ -1199,10 +1199,7 @@ export const my: Dictionary = {
   Reload: 'ပြန်ဖွင့်ပါ',
   'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
   'Clip the link': 'လင့်သိမ်းပါ',
-  'Allow the camera': 'ကင်မရာခွင့်ပြုပါ',
-  'Allow the clipboard': 'ကလစ်ဘုတ်ခွင့်ပြုပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
-  'Copy the address': 'လိပ်စာကူးပါ',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
@@ -1333,4 +1330,45 @@ export const my: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ဤမှတ်စုသည် အခန်းတစ်ခုအတွင်း မှတ်စုတစ်ခု ရှိနိုင်သည့် အကြီးဆုံးအရွယ်အစား ဖြစ်သည်။',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'တဘ် အသစ်',
+  'Full screen': 'မျက်နှာပြင် အပြည့်',
+  'Print…': 'ပုံနှိပ်ပါ…',
+  'Save page': 'စာမျက်နှာ သိမ်းရန်',
+  'Share…': 'မျှဝေပါ…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'က ပြုလုပ်လိုသည်မှာ',
+  'Don’t allow': 'ခွင့်မပြုပါ',
+  Allow: 'ခွင့်ပြုရန်',
+  'Use your camera': 'သင့်ကင်မရာအား အသုံးပြုရန်',
+  'Use your microphone': 'သင့်မိုက်ခရိုဖုန်းကို အသုံးပြုရန်',
+  'Know your location': 'သင့်တည်နေရာအား သိရန်',
+  'Show notifications': 'သတိပေးချက်များ ပြရန်',
+  'See text and images copied to the clipboard':
+    'ကလစ်ဘုတ်သို့ မိတ္တူကူးထားသည့် စာသားနှင့် ပုံများအား ကြည့်ရန်',
+  'Use your motion sensors': 'လှုပ်ရှားမှု အာရုံခံစနစ်များ အသုံးပြုရန်',
+  'Download multiple files': 'ဖိုင်များစွာ ဒေါင်းလုဒ်ရယူရန်',
+  'Use fonts installed on your device': 'သင့်စက်တွင် ထည့်သွင်းထားသော ဖောင့်များ အသုံးပြုရန်',
+  'Use your MIDI devices': 'သင့် MIDI စက်များ အသုံးပြုရန်',
+  'Manage windows on all your displays': 'သင့်ဖန်သားပြင်အားလုံးတွင် ဝင်းဒိုးများ စီမံရန်',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'ဆိုက် အချက်အလက်များ',
+  Camera: 'ကင်မရာ',
+  Microphone: 'မိုက်ခရိုဖုန်း',
+  Location: 'တည်နေရာ',
+  Notifications: 'အကြောင်းကြားစာ',
+  Clipboard: 'ကလစ်ဘုတ်',
+  'Motion sensors': 'လှုပ်ရှားမှု အာရုံခံစနစ်များ',
+  'Automatic downloads': 'အလိုအလျောက် ဒေါင်းလုပ်ရယူခြင်း',
+  Fonts: 'ဖောင့်များ',
+  'MIDI devices': 'MIDI စက်များ',
+  'Window management': 'ဝင်းဒိုး စီမံခြင်း',
+  'Connection is secure': 'ချိတ်ဆက်မှုသည် လုံခြုံပါသည်',
+  'Connection is not secure': 'ချိတ်ဆက်မှုသည် မလုံခြုံပါ',
+  Allowed: 'ခွင့်ပြုထား',
+  Blocked: 'ပိတ်ဆို့ထား',
+  'Reset permissions': 'ခွင့်ပြုချက်များကို ပြင်ဆင်သတ်မှတ်ရန်',
 }

@@ -1240,10 +1240,7 @@ export const ptBR: Dictionary = {
   Reload: 'Recarregar',
   'Clip this page': 'Salvar esta página',
   'Clip the link': 'Salvar o link',
-  'Allow the camera': 'Permitir a câmera',
-  'Allow the clipboard': 'Permitir a área de transferência',
   'Open in the browser': 'Abrir no navegador',
-  'Copy the address': 'Copiar o endereço',
   'Show it here': 'Mostrar aqui',
   Website: 'Site',
   'Open a website': 'Abrir um site',
@@ -1375,4 +1372,45 @@ export const ptBR: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Esta nota está do tamanho máximo que uma nota em uma sala pode ter.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Nova guia',
+  'Full screen': 'Tela cheia',
+  'Print…': 'Imprimir…',
+  'Save page': 'Salvar página',
+  'Share…': 'Compartilhar…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'quer',
+  'Don’t allow': 'Não permitir',
+  Allow: 'Permitir',
+  'Use your camera': 'Usar câmera',
+  'Use your microphone': 'Usar microfone',
+  'Know your location': 'Saber sua localização',
+  'Show notifications': 'Mostrar notificações',
+  'See text and images copied to the clipboard':
+    'Ver os textos e imagens copiados para a área de transferência',
+  'Use your motion sensors': 'Usar sensores de movimento',
+  'Download multiple files': 'Fazer o download de vários arquivos',
+  'Use fonts installed on your device': 'Usar as fontes instaladas no dispositivo',
+  'Use your MIDI devices': 'Usar seus dispositivos MIDI',
+  'Manage windows on all your displays': 'Gerenciar janelas em todas as telas',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informações do site',
+  Camera: 'Câmera',
+  Microphone: 'Microfone',
+  Location: 'Local',
+  Notifications: 'Notificações',
+  Clipboard: 'Área de transferência',
+  'Motion sensors': 'Sensores de movimento',
+  'Automatic downloads': 'Downloads automáticos',
+  Fonts: 'Fontes',
+  'MIDI devices': 'Dispositivos MIDI',
+  'Window management': 'Gerenciamento de janelas',
+  'Connection is secure': 'A conexão é segura',
+  'Connection is not secure': 'A conexão não é segura',
+  Allowed: 'Permitido',
+  Blocked: 'Bloqueado',
+  'Reset permissions': 'Redefinir permissões',
 }

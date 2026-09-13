@@ -1198,10 +1198,7 @@ export const am: Dictionary = {
   Reload: 'እንደገና ጫን',
   'Clip this page': 'ይህን ገጽ አስቀምጥ',
   'Clip the link': 'አገናኙን አስቀምጥ',
-  'Allow the camera': 'ካሜራውን ፍቀድ',
-  'Allow the clipboard': 'ቅንጥብ ሰሌዳውን ፍቀድ',
   'Open in the browser': 'በአሳሽ ክፈት',
-  'Copy the address': 'አድራሻውን አባዛ',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',
@@ -1327,4 +1324,44 @@ export const am: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ይህ ማስታወሻ በክፍል ውስጥ ማስታወሻ ሊሆን የሚችለውን ከፍተኛ መጠን ደርሷል።',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'አዲስ ትር',
+  'Full screen': 'ሙሉ ማያ ገፅ',
+  'Print…': 'አትም…',
+  'Save page': 'ገፅ አስቀምጥ',
+  'Share…': 'አጋራ…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'የሚከተሉትን ማድረግ ይፈልጋል',
+  'Don’t allow': 'አትፍቀድ',
+  Allow: 'ፍቀድ',
+  'Use your camera': 'ካሜራዎን ይጠቀማል',
+  'Use your microphone': 'ማይክሮፎንዎን ይጠቀማል',
+  'Know your location': 'የእርስዎን መገኛ አካባቢ ይወቁ',
+  'Show notifications': 'ማሳወቂያዎችን አሳይ',
+  'See text and images copied to the clipboard': 'ወደ ቅንጥብ ሰሌዳው የተቀዱ ጽሁፍ እና ምስሎችን ይመልከቱ',
+  'Use your motion sensors': 'የእንቅስቃሴ ዳሳሾችዎን ይጠቀሙ',
+  'Download multiple files': 'በርካታ ፋይሎችን ያወርዳል',
+  'Use fonts installed on your device': 'በእርስዎ መሣሪያ ላይ የተጫኑ ቅርጸ-ቁምፊዎችን ይጠቀሙ',
+  'Use your MIDI devices': 'የMIDI መሣሪያዎችዎን ይጠቀሙ',
+  'Manage windows on all your displays': 'በሁሉም የእርስዎ ማሳያዎች ላይ መስኮቶችን ማስተዳደር',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'የጣቢያ መረጃ',
+  Camera: 'ካሜራ',
+  Microphone: 'ማይክሮፎን',
+  Location: 'አካባቢ',
+  Notifications: 'ማስታወቂያዎች',
+  Clipboard: 'የቅንጥብ ሰሌዳ',
+  'Motion sensors': 'የእንቅስቃሴ ዳሳሾች',
+  'Automatic downloads': 'ራስ-ሰር ውርዶች',
+  Fonts: 'ቅርጸ-ቁምፊዎች',
+  'MIDI devices': 'የMIDI መሣሪያዎች',
+  'Window management': 'የመስኮት አስተዳደር',
+  'Connection is secure': 'ግንኙነት ደኅንነቱ የተጠበቀ ነው',
+  'Connection is not secure': 'ግንኙነት ደኅንነቱ የተጠበቀ አይደለም',
+  Allowed: 'ተፈቅዷል',
+  Blocked: 'ታግዷል',
+  'Reset permissions': 'ፈቃዶችን ዳግም ያቀናብሩ',
 }

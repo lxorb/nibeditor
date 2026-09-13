@@ -1202,10 +1202,7 @@ export const jv: Dictionary = {
   Reload: 'Emot maneh',
   'Clip this page': 'Simpen kaca iki',
   'Clip the link': 'Simpen pranalane',
-  'Allow the camera': 'Ulehake kamera',
-  'Allow the clipboard': 'Ulehake papan salin',
   'Open in the browser': 'Bukak ing panjelajah',
-  'Copy the address': 'Salin alamate',
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
   'Open a website': 'Bukak situs web',
@@ -1339,4 +1336,45 @@ export const jv: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Cathetan iki wis gedhé kaya ukuran paling gedhé cathetan ing sawijining ruang.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Tab anyar',
+  'Full screen': 'Layar wutuh',
+  'Print…': 'Cetak…',
+  'Save page': 'Simpen kaca',
+  'Share…': 'Bagi…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'pengin',
+  'Don’t allow': 'Aja diulehake',
+  Allow: 'Ulehake',
+  'Use your camera': 'Nganggo kamera sampeyan',
+  'Use your microphone': 'Nganggo mikrofon sampeyan',
+  'Know your location': 'Ngerti lokasi sampeyan',
+  'Show notifications': 'Nuduhake notifikasi',
+  'See text and images copied to the clipboard':
+    'Ndeleng tulisan lan gambar sing disalin menyang papan salin',
+  'Use your motion sensors': 'Nganggo sensor gerakan sampeyan',
+  'Download multiple files': 'Ngundhuh pirang-pirang berkas',
+  'Use fonts installed on your device': 'Nganggo font sing diinstal ing piranti sampeyan',
+  'Use your MIDI devices': 'Nganggo piranti MIDI sampeyan',
+  'Manage windows on all your displays': 'Ngatur jendhela ing kabeh layar sampeyan',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informasi situs',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Lokasi',
+  Notifications: 'Notifikasi',
+  Clipboard: 'Papan salin',
+  'Motion sensors': 'Sensor gerakan',
+  'Automatic downloads': 'Undhuhan otomatis',
+  Fonts: 'Font',
+  'MIDI devices': 'Piranti MIDI',
+  'Window management': 'Manajemen jendhela',
+  'Connection is secure': 'Sambungan iki aman',
+  'Connection is not secure': 'Sambungan iki ora aman',
+  Allowed: 'Diulehake',
+  Blocked: 'Diblokir',
+  'Reset permissions': 'Balèkaké idin',
 }

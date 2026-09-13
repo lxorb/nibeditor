@@ -1182,10 +1182,7 @@ export const zhHantHK: Dictionary = {
   Reload: '重新載入',
   'Clip this page': '儲存此頁',
   'Clip the link': '儲存連結',
-  'Allow the camera': '允許使用相機',
-  'Allow the clipboard': '允許使用剪貼簿',
   'Open in the browser': '在瀏覽器開啟',
-  'Copy the address': '複製網址',
   'Show it here': '在此顯示',
   Website: '網站',
   'Open a website': '開啟網站',
@@ -1310,4 +1307,44 @@ export const zhHantHK: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '這則筆記已達到房間中筆記可以達到的最大大小。',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': '新分頁',
+  'Full screen': '全螢幕',
+  'Print…': '打印…',
+  'Save page': '儲存網頁',
+  'Share…': '分享…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': '要求以下權限',
+  'Don’t allow': '不允許',
+  Allow: '允許',
+  'Use your camera': '使用您的相機',
+  'Use your microphone': '使用您的麥克風',
+  'Know your location': '掌握您的位置',
+  'Show notifications': '顯示通知',
+  'See text and images copied to the clipboard': '查看複製到剪貼簿的文字和圖片',
+  'Use your motion sensors': '使用動作感應器',
+  'Download multiple files': '下載多個檔案',
+  'Use fonts installed on your device': '使用您裝置上安裝的字型',
+  'Use your MIDI devices': '使用您的 MIDI 裝置',
+  'Manage windows on all your displays': '在您所有的顯示屏上管理視窗',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': '網站資料',
+  Camera: '相機',
+  Microphone: '麥克風',
+  Location: '位置',
+  Notifications: '通知',
+  Clipboard: '剪貼簿',
+  'Motion sensors': '動作感應器',
+  'Automatic downloads': '自動下載',
+  Fonts: '字型',
+  'MIDI devices': 'MIDI 裝置',
+  'Window management': '視窗管理',
+  'Connection is secure': '已建立安全連線',
+  'Connection is not secure': '連線不安全',
+  Allowed: '已允許',
+  Blocked: '已封鎖',
+  'Reset permissions': '重設權限',
 }

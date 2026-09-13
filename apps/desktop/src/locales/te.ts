@@ -1217,10 +1217,7 @@ export const te: Dictionary = {
   Reload: 'మళ్ళీ లోడ్ చేయి',
   'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
   'Clip the link': 'లింక్ ఒడిసిపట్టు',
-  'Allow the camera': 'కెమెరాకు అనుమతి ఇవ్వు',
-  'Allow the clipboard': 'క్లిప్‌బోర్డుకు అనుమతి ఇవ్వు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
-  'Copy the address': 'చిరునామా కాపీ చేయి',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',
@@ -1348,4 +1345,45 @@ export const te: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'ఒక గదిలో ఒక నోట్ ఎంత పెద్దదిగా ఉండగలదో ఈ నోట్ అంత పెద్దదైంది.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'కొత్త ట్యాబ్',
+  'Full screen': 'ఫుల్-స్క్రీన్',
+  'Print…': 'ప్రింట్ చేయి…',
+  'Save page': 'పేజీని సేవ్ చేయి',
+  'Share…': 'షేర్ చేయి…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'వీటిని చేయాలనుకుంటోంది',
+  'Don’t allow': 'అనుమతించవద్దు',
+  Allow: 'అనుమతించండి',
+  'Use your camera': 'మీ కెమెరాను ఉపయోగించడం',
+  'Use your microphone': 'మీ మైక్రోఫోన్‌ను ఉపయోగించడం',
+  'Know your location': 'మీ లొకేషన్‌ను తెలుసుకోవడం',
+  'Show notifications': 'నోటిఫికేషన్‌లను చూపడం',
+  'See text and images copied to the clipboard':
+    'క్లిప్‌బోర్డ్‌కు కాపీ చేసిన వచనం, చిత్రాలను చూడడం',
+  'Use your motion sensors': 'మీ మోషన్ సెన్సార్‌లను ఉపయోగించడం',
+  'Download multiple files': 'బహుళ ఫైళ్లను డౌన్‌లోడ్ చేయడం',
+  'Use fonts installed on your device': 'మీ పరికరంలో ఇన్‌స్టాల్ చేసిన ఫాంట్‌లను ఉపయోగించడం',
+  'Use your MIDI devices': 'మీ MIDI పరికరాలను ఉపయోగించడం',
+  'Manage windows on all your displays': 'మీ అన్ని డిస్‌ప్లేలలో విండోలను మేనేజ్ చేయడం',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'సైట్ సమాచారం',
+  Camera: 'కెమెరా',
+  Microphone: 'మైక్రోఫోన్',
+  Location: 'లొకేషన్',
+  Notifications: 'నోటిఫికేషన్‌లు',
+  Clipboard: 'క్లిప్‌బోర్డ్',
+  'Motion sensors': 'మోషన్ సెన్సార్‌లు',
+  'Automatic downloads': 'ఆటోమేటిక్ డౌన్‌లోడ్‌లు',
+  Fonts: 'ఫాంట్‌లు',
+  'MIDI devices': 'MIDI పరికరాలు',
+  'Window management': 'విండో మేనేజ్‌మెంట్',
+  'Connection is secure': 'కనెక్షన్ సురక్షితంగా ఉంది',
+  'Connection is not secure': 'కనెక్షన్ సురక్షితంగా లేదు',
+  Allowed: 'అనుమతించబడింది',
+  Blocked: 'బ్లాక్ అయింది',
+  'Reset permissions': 'అనుమతులను రీసెట్ చేయండి',
 }

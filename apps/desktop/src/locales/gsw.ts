@@ -1221,10 +1221,7 @@ export const gsw: Dictionary = {
   Reload: 'Neu lade',
   'Clip this page': 'Die Siite spichere',
   'Clip the link': 'De Link spichere',
-  'Allow the camera': 'Kamera erlaube',
-  'Allow the clipboard': 'Zwüschenablag erlaube',
   'Open in the browser': 'Im Browser ufmache',
-  'Copy the address': 'Adrässe kopiere',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',
@@ -1356,4 +1353,45 @@ export const gsw: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Die Notiz isch so gross, wie e Notiz in eme Ruum cha wärde.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Nöie Tab',
+  'Full screen': 'Vollbild',
+  'Print…': 'Drucke…',
+  'Save page': 'Siite spichere',
+  'Share…': 'Teile…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'wott',
+  'Don’t allow': 'Nöd erlaube',
+  Allow: 'Erlaube',
+  'Use your camera': 'Dini Kamera bruuche',
+  'Use your microphone': 'Dis Mikrofon bruuche',
+  'Know your location': 'Din Standort wüsse',
+  'Show notifications': 'Mitteilige zeige',
+  'See text and images copied to the clipboard':
+    'Text und Bilder gseh, wo i d Zwüschenablag kopiert worde sind',
+  'Use your motion sensors': 'Dini Bewegigssensore bruuche',
+  'Download multiple files': 'Mehreri Dateie abelade',
+  'Use fonts installed on your device': 'Schriftarte bruuche, wo uf dim Grät installiert sind',
+  'Use your MIDI devices': 'Dini MIDI-Grät bruuche',
+  'Manage windows on all your displays': 'Fänschter uf allne Bildschirm verwalte',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Website-Infos',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Standort',
+  Notifications: 'Mitteilige',
+  Clipboard: 'Zwüschenablag',
+  'Motion sensors': 'Bewegigssensore',
+  'Automatic downloads': 'Automatischi Downloads',
+  Fonts: 'Schriftarte',
+  'MIDI devices': 'MIDI-Grät',
+  'Window management': 'Fänschterverwaltig',
+  'Connection is secure': 'D Verbindig isch sicher',
+  'Connection is not secure': 'D Verbindig isch nöd sicher',
+  Allowed: 'Erlaubt',
+  Blocked: 'Blockiert',
+  'Reset permissions': 'Brächtigunge zrugsetze',
 }

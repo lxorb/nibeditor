@@ -1231,10 +1231,7 @@ export const sw: Dictionary = {
   Reload: 'Pakia tena',
   'Clip this page': 'Hifadhi ukurasa huu',
   'Clip the link': 'Hifadhi kiungo',
-  'Allow the camera': 'Ruhusu kamera',
-  'Allow the clipboard': 'Ruhusu ubao wa kunakili',
   'Open in the browser': 'Fungua kwenye kivinjari',
-  'Copy the address': 'Nakili anwani',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',
@@ -1371,4 +1368,45 @@ export const sw: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Noti hii imefikia ukubwa wa juu kabisa ambao noti katika chumba inaweza kuwa.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Kichupo kipya',
+  'Full screen': 'Skrini nzima',
+  'Print…': 'Chapisha…',
+  'Save page': 'Hifadhi ukurasa',
+  'Share…': 'Shiriki…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'inataka',
+  'Don’t allow': 'Usiruhusu',
+  Allow: 'Ruhusu',
+  'Use your camera': 'Kutumia kamera yako',
+  'Use your microphone': 'Kutumia kipazasauti chako',
+  'Know your location': 'Kujua mahali ulipo',
+  'Show notifications': 'Kuonyesha arifa',
+  'See text and images copied to the clipboard':
+    'Kuona maandishi na picha zilizonakiliwa kwenye ubao wa kunakili',
+  'Use your motion sensors': 'Kutumia vitambuzi vyako vya mwendo',
+  'Download multiple files': 'Kupakua faili nyingi',
+  'Use fonts installed on your device': 'Kutumia fonti zilizosakinishwa kwenye kifaa chako',
+  'Use your MIDI devices': 'Kutumia vifaa vyako vya MIDI',
+  'Manage windows on all your displays': 'Kudhibiti madirisha kwenye skrini zako zote',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Maelezo ya tovuti',
+  Camera: 'Kamera',
+  Microphone: 'Maikrofoni',
+  Location: 'Mahali',
+  Notifications: 'Arifa',
+  Clipboard: 'Ubao wa kunakili',
+  'Motion sensors': 'Vitambuzi vya mwendo',
+  'Automatic downloads': 'Vipakuliwa vya kiotomatiki',
+  Fonts: 'Fonti',
+  'MIDI devices': 'Vifaa vya MIDI',
+  'Window management': 'Udhibiti wa dirisha',
+  'Connection is secure': 'Muunganisho ni salama',
+  'Connection is not secure': 'Muunganisho si salama',
+  Allowed: 'Imeruhusiwa',
+  Blocked: 'Imezuiwa',
+  'Reset permissions': 'Badilisha ruhusa',
 }

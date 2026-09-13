@@ -1279,10 +1279,7 @@ export const pl: Dictionary = {
   Reload: 'Odśwież',
   'Clip this page': 'Zapisz tę stronę',
   'Clip the link': 'Zapisz odnośnik',
-  'Allow the camera': 'Zezwól na kamerę',
-  'Allow the clipboard': 'Zezwól na schowek',
   'Open in the browser': 'Otwórz w przeglądarce',
-  'Copy the address': 'Kopiuj adres',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
   'Open a website': 'Otwórz witrynę',
@@ -1413,4 +1410,45 @@ export const pl: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Ta notatka jest tak duża, jak notatka w pokoju może być.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Nowa karta',
+  'Full screen': 'Pełny ekran',
+  'Print…': 'Drukuj…',
+  'Save page': 'Zapisz stronę',
+  'Share…': 'Udostępnij…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'prosi o pozwolenie na',
+  'Don’t allow': 'Nie zezwalaj',
+  Allow: 'Zezwalaj',
+  'Use your camera': 'Korzystanie z Twojej kamery',
+  'Use your microphone': 'Korzystanie z Twojego mikrofonu',
+  'Know your location': 'Sprawdzanie Twojej lokalizacji',
+  'Show notifications': 'Pokazywanie powiadomień',
+  'See text and images copied to the clipboard':
+    'Dostęp do tekstu i obrazów skopiowanych do schowka',
+  'Use your motion sensors': 'Korzystanie z czujników ruchu',
+  'Download multiple files': 'Pobranie wielu plików',
+  'Use fonts installed on your device': 'Korzystanie z czcionek zainstalowanych na urządzeniu',
+  'Use your MIDI devices': 'Korzystanie z urządzeń MIDI',
+  'Manage windows on all your displays': 'Zarządzanie oknami na wszystkich wyświetlaczach',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Informacje o witrynie',
+  Camera: 'Kamera',
+  Microphone: 'Mikrofon',
+  Location: 'Lokalizacja',
+  Notifications: 'Powiadomienia',
+  Clipboard: 'Schowek',
+  'Motion sensors': 'Czujniki ruchu',
+  'Automatic downloads': 'Pobieranie automatyczne',
+  Fonts: 'Czcionki',
+  'MIDI devices': 'Urządzenia MIDI',
+  'Window management': 'Zarządzanie oknami',
+  'Connection is secure': 'Połączenie jest bezpieczne',
+  'Connection is not secure': 'Połączenie nie jest bezpieczne',
+  Allowed: 'Dozwolone',
+  Blocked: 'Zablokowane',
+  'Reset permissions': 'Zresetuj uprawnienia',
 }

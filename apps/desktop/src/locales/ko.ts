@@ -1194,10 +1194,7 @@ export const ko: Dictionary = {
   Reload: '다시 불러오기',
   'Clip this page': '이 페이지 저장',
   'Clip the link': '링크 저장',
-  'Allow the camera': '카메라 허용',
-  'Allow the clipboard': '클립보드 허용',
   'Open in the browser': '브라우저에서 열기',
-  'Copy the address': '주소 복사',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',
@@ -1324,4 +1321,44 @@ export const ko: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     '이 노트는 룸에서 노트가 가질 수 있는 최대 크기입니다.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': '새 탭',
+  'Full screen': '전체화면',
+  'Print…': '인쇄…',
+  'Save page': '페이지 저장',
+  'Share…': '공유…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': '에서 다음 권한을 요청합니다',
+  'Don’t allow': '허용 안함',
+  Allow: '허용',
+  'Use your camera': '카메라 사용',
+  'Use your microphone': '마이크 사용',
+  'Know your location': '내 위치 확인',
+  'Show notifications': '알림 표시',
+  'See text and images copied to the clipboard': '클립보드에 복사된 텍스트 및 이미지 확인',
+  'Use your motion sensors': '움직임 감지 센서 사용',
+  'Download multiple files': '여러 파일 다운로드',
+  'Use fonts installed on your device': '기기에 설치된 글꼴 사용',
+  'Use your MIDI devices': 'MIDI 기기 사용',
+  'Manage windows on all your displays': '모든 디스플레이의 창 관리',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': '사이트 정보',
+  Camera: '카메라',
+  Microphone: '마이크',
+  Location: '위치',
+  Notifications: '알림',
+  Clipboard: '클립보드',
+  'Motion sensors': '움직임 감지 센서',
+  'Automatic downloads': '자동 다운로드',
+  Fonts: '글꼴',
+  'MIDI devices': 'MIDI 기기',
+  'Window management': '창 관리',
+  'Connection is secure': '이 연결은 안전합니다',
+  'Connection is not secure': '이 연결은 안전하지 않습니다',
+  Allowed: '허용됨',
+  Blocked: '차단됨',
+  'Reset permissions': '권한 재설정',
 }

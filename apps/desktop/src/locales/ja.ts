@@ -1202,10 +1202,7 @@ export const ja: Dictionary = {
   Reload: '再読み込み',
   'Clip this page': 'このページを保存',
   'Clip the link': 'リンクを保存',
-  'Allow the camera': 'カメラを許可',
-  'Allow the clipboard': 'クリップボードを許可',
   'Open in the browser': 'ブラウザーで開く',
-  'Copy the address': 'アドレスをコピー',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
@@ -1340,4 +1337,45 @@ export const ja: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'このノートは、ルーム内のノートが取れる最大の大きさです。',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': '新しいタブ',
+  'Full screen': '全画面表示',
+  'Print…': '印刷…',
+  'Save page': 'ページを保存',
+  'Share…': '共有…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'が次の許可を求めています',
+  'Don’t allow': '許可しない',
+  Allow: '許可する',
+  'Use your camera': 'カメラを使用する',
+  'Use your microphone': 'マイクを使用する',
+  'Know your location': '現在地の認識',
+  'Show notifications': '通知を表示',
+  'See text and images copied to the clipboard':
+    'クリップボードにコピーしたテキストや画像へのアクセス',
+  'Use your motion sensors': 'モーション センサーの使用',
+  'Download multiple files': '複数ファイルのダウンロード',
+  'Use fonts installed on your device': 'デバイスにインストールされたフォントの使用',
+  'Use your MIDI devices': 'MIDI デバイスの使用',
+  'Manage windows on all your displays': '全ディスプレイのウィンドウを管理する',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'サイト情報',
+  Camera: 'カメラ',
+  Microphone: 'マイク',
+  Location: '位置情報',
+  Notifications: '通知',
+  Clipboard: 'クリップボード',
+  'Motion sensors': 'モーション センサー',
+  'Automatic downloads': '自動ダウンロード',
+  Fonts: 'フォント',
+  'MIDI devices': 'MIDI デバイス',
+  'Window management': 'ウィンドウ管理',
+  'Connection is secure': 'この接続は保護されています',
+  'Connection is not secure': 'この接続は保護されていません',
+  Allowed: '許可',
+  Blocked: 'ブロック',
+  'Reset permissions': '権限をリセット',
 }

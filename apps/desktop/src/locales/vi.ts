@@ -1199,10 +1199,7 @@ export const vi: Dictionary = {
   Reload: 'Tải lại',
   'Clip this page': 'Lưu trang này',
   'Clip the link': 'Lưu liên kết',
-  'Allow the camera': 'Cho phép camera',
-  'Allow the clipboard': 'Cho phép bảng tạm',
   'Open in the browser': 'Mở trong trình duyệt',
-  'Copy the address': 'Sao chép địa chỉ',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',
@@ -1333,4 +1330,45 @@ export const vi: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Ghi chú này đã lớn hết mức mà một ghi chú trong một phòng có thể lớn.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Thẻ mới',
+  'Full screen': 'Toàn màn hình',
+  'Print…': 'In…',
+  'Save page': 'Lưu trang',
+  'Share…': 'Chia sẻ…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'muốn',
+  'Don’t allow': 'Không cho phép',
+  Allow: 'Cho phép',
+  'Use your camera': 'Sử dụng camera của bạn',
+  'Use your microphone': 'Sử dụng micrô của bạn',
+  'Know your location': 'Biết vị trí của bạn',
+  'Show notifications': 'Hiện thông báo',
+  'See text and images copied to the clipboard':
+    'Xem văn bản và hình ảnh đã sao chép sang bảng nhớ tạm',
+  'Use your motion sensors': 'Sử dụng cảm biến chuyển động',
+  'Download multiple files': 'Tải xuống nhiều tệp',
+  'Use fonts installed on your device': 'Sử dụng phông chữ đã cài đặt trên thiết bị của bạn',
+  'Use your MIDI devices': 'Sử dụng thiết bị MIDI của bạn',
+  'Manage windows on all your displays': 'Quản lý các cửa sổ trên tất cả màn hình của bạn',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Thông tin trang web',
+  Camera: 'Camera',
+  Microphone: 'Micrô',
+  Location: 'Vị trí',
+  Notifications: 'Thông báo',
+  Clipboard: 'Bảng nhớ tạm',
+  'Motion sensors': 'Cảm biến chuyển động',
+  'Automatic downloads': 'Tự động tải xuống',
+  Fonts: 'Phông chữ',
+  'MIDI devices': 'Thiết bị MIDI',
+  'Window management': 'Quản lý cửa sổ',
+  'Connection is secure': 'Kết nối này an toàn',
+  'Connection is not secure': 'Kết nối này không an toàn',
+  Allowed: 'Được cho phép',
+  Blocked: 'Bị chặn',
+  'Reset permissions': 'Đặt lại quyền',
 }

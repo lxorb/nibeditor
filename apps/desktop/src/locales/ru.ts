@@ -1281,10 +1281,7 @@ export const ru: Dictionary = {
   Reload: 'Обновить',
   'Clip this page': 'Сохранить эту страницу',
   'Clip the link': 'Сохранить ссылку',
-  'Allow the camera': 'Разрешить камеру',
-  'Allow the clipboard': 'Разрешить буфер обмена',
   'Open in the browser': 'Открыть в браузере',
-  'Copy the address': 'Копировать адрес',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',
@@ -1412,4 +1409,45 @@ export const ru: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'Эта заметка достигла наибольшего размера, который может иметь заметка в комнате.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'Новая вкладка',
+  'Full screen': 'Полноэкранный режим',
+  'Print…': 'Печать…',
+  'Save page': 'Сохранить страницу',
+  'Share…': 'Поделиться…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'запрашивает разрешение на',
+  'Don’t allow': 'Запретить',
+  Allow: 'Разрешить',
+  'Use your camera': 'Использование камеры',
+  'Use your microphone': 'Использование микрофона',
+  'Know your location': 'Доступ к данным о вашем местоположении',
+  'Show notifications': 'Показ уведомлений',
+  'See text and images copied to the clipboard':
+    'Просмотр текста и изображений, скопированных в буфер обмена',
+  'Use your motion sensors': 'Использование датчиков движения',
+  'Download multiple files': 'Скачивание нескольких файлов',
+  'Use fonts installed on your device': 'Использование шрифтов, установленных на устройстве',
+  'Use your MIDI devices': 'Использование MIDI-устройств',
+  'Manage windows on all your displays': 'Управление окнами на всех ваших экранах',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'Сведения о сайте',
+  Camera: 'Камера',
+  Microphone: 'Микрофон',
+  Location: 'Местоположение',
+  Notifications: 'Уведомления',
+  Clipboard: 'Буфер обмена',
+  'Motion sensors': 'Датчики движения',
+  'Automatic downloads': 'Автоматическое скачивание',
+  Fonts: 'Шрифты',
+  'MIDI devices': 'MIDI-устройства',
+  'Window management': 'Управление окнами',
+  'Connection is secure': 'Подключение защищено',
+  'Connection is not secure': 'Подключение не защищено',
+  Allowed: 'Разрешено',
+  Blocked: 'Заблокировано',
+  'Reset permissions': 'Сбросить разрешения',
 }

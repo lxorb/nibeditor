@@ -1187,10 +1187,7 @@ export const th: Dictionary = {
   Reload: 'โหลดใหม่',
   'Clip this page': 'เก็บหน้านี้',
   'Clip the link': 'เก็บลิงก์',
-  'Allow the camera': 'อนุญาตกล้อง',
-  'Allow the clipboard': 'อนุญาตคลิปบอร์ด',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
-  'Copy the address': 'คัดลอกที่อยู่',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
   'Open a website': 'เปิดเว็บไซต์',
@@ -1316,4 +1313,44 @@ export const th: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'บันทึกนี้ใหญ่ที่สุดเท่าที่บันทึกในห้องจะเป็นได้แล้ว',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'แท็บใหม่',
+  'Full screen': 'เต็มหน้าจอ',
+  'Print…': 'พิมพ์…',
+  'Save page': 'บันทึกหน้า',
+  'Share…': 'แชร์…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ต้องการที่จะ',
+  'Don’t allow': 'ไม่อนุญาต',
+  Allow: 'อนุญาต',
+  'Use your camera': 'ใช้กล้องถ่ายรูปของคุณ',
+  'Use your microphone': 'ใช้ไมโครโฟนของคุณ',
+  'Know your location': 'ทราบตำแหน่งของคุณ',
+  'Show notifications': 'แสดงการแจ้งเตือน',
+  'See text and images copied to the clipboard': 'ดูข้อความและรูปภาพที่คัดลอกไปที่คลิปบอร์ด',
+  'Use your motion sensors': 'ใช้เซ็นเซอร์ตรวจจับการเคลื่อนไหว',
+  'Download multiple files': 'ดาวน์โหลดหลายไฟล์',
+  'Use fonts installed on your device': 'ใช้แบบอักษรที่ติดตั้งอยู่ในอุปกรณ์ของคุณ',
+  'Use your MIDI devices': 'ใช้อุปกรณ์ MIDI ของคุณ',
+  'Manage windows on all your displays': 'จัดการหน้าต่างบนจอแสดงผลทั้งหมดของคุณ',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'ข้อมูลเว็บไซต์',
+  Camera: 'กล้องถ่ายรูป',
+  Microphone: 'ไมโครโฟน',
+  Location: 'ตำแหน่ง',
+  Notifications: 'การแจ้งเตือน',
+  Clipboard: 'คลิปบอร์ด',
+  'Motion sensors': 'เซ็นเซอร์ตรวจจับการเคลื่อนไหว',
+  'Automatic downloads': 'การดาวน์โหลดโดยอัตโนมัติ',
+  Fonts: 'แบบอักษร',
+  'MIDI devices': 'อุปกรณ์ MIDI',
+  'Window management': 'การจัดการหน้าต่าง',
+  'Connection is secure': 'การเชื่อมต่อปลอดภัย',
+  'Connection is not secure': 'การเชื่อมต่อไม่ปลอดภัย',
+  Allowed: 'อนุญาตแล้ว',
+  Blocked: 'ถูกบล็อก',
+  'Reset permissions': 'รีเซ็ตสิทธิ์',
 }

@@ -1208,10 +1208,7 @@ export const gu: Dictionary = {
   Reload: 'ફરી લાવો',
   'Clip this page': 'આ પાનું સાચવો',
   'Clip the link': 'કડી સાચવો',
-  'Allow the camera': 'કૅમેરાને મંજૂરી આપો',
-  'Allow the clipboard': 'ક્લિપબોર્ડને મંજૂરી આપો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
-  'Copy the address': 'સરનામું નકલ કરો',
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',
@@ -1338,4 +1335,44 @@ export const gu: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'આ નોંધ રૂમમાં કોઈ નોંધ જેટલી મોટી થઈ શકે તેટલી મોટી થઈ ગઈ છે.',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'નવું ટૅબ',
+  'Full screen': 'પૂર્ણ સ્ક્રીન',
+  'Print…': 'છાપો…',
+  'Save page': 'પેજ સાચવો',
+  'Share…': 'વહેંચો…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'ને આ પરવાનગીની જરૂર છે',
+  'Don’t allow': 'મંજૂરી આપશો નહીં',
+  Allow: 'મંજૂરી આપો',
+  'Use your camera': 'તમારા કૅમેરાનો ઉપયોગ કરો',
+  'Use your microphone': 'તમારા માઇક્રોફોનનો ઉપયોગ કરો',
+  'Know your location': 'તમારું સ્થાન જાણો',
+  'Show notifications': 'નોટિફિકેશન દર્શાવો',
+  'See text and images copied to the clipboard': 'ક્લિપબોર્ડ પર કૉપિ કરેલી ટેક્સ્ટ અને છબીઓને જુઓ',
+  'Use your motion sensors': 'તમારા મોશન સેન્સરનો ઉપયોગ કરો',
+  'Download multiple files': 'એકથી વધુ ફાઇલો ડાઉનલોડ કરો',
+  'Use fonts installed on your device': 'તમારા ડિવાઇસમાં ઇન્સ્ટૉલ કરેલા ફૉન્ટનો ઉપયોગ કરો',
+  'Use your MIDI devices': 'તમારા MIDI ડિવાઇસનો ઉપયોગ કરો',
+  'Manage windows on all your displays': 'તમારા બધા ડિસ્પ્લે પર વિન્ડો મેનેજ કરો',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'સાઇટની માહિતી',
+  Camera: 'કૅમેરા',
+  Microphone: 'માઇક્રોફોન',
+  Location: 'સ્થાન',
+  Notifications: 'નોટિફિકેશનો',
+  Clipboard: 'ક્લિપબોર્ડ',
+  'Motion sensors': 'મોશન સેન્સર',
+  'Automatic downloads': 'ઑટોમૅટિક ડાઉનલોડ',
+  Fonts: 'ફૉન્ટ',
+  'MIDI devices': 'MIDI ડિવાઇસ',
+  'Window management': 'વિન્ડો મેનેજમેન્ટ',
+  'Connection is secure': 'કનેક્શન સુરક્ષિત છે',
+  'Connection is not secure': 'કનેક્શન સુરક્ષિત નથી',
+  Allowed: 'મંજૂર',
+  Blocked: 'બ્લૉક કરેલ',
+  'Reset permissions': 'પરવાનગીઓ રીસેટ કરો',
 }

@@ -1213,10 +1213,7 @@ export const hi: Dictionary = {
   Reload: 'फिर लोड करें',
   'Clip this page': 'यह पृष्ठ सहेजें',
   'Clip the link': 'लिंक सहेजें',
-  'Allow the camera': 'कैमरे की अनुमति दें',
-  'Allow the clipboard': 'क्लिपबोर्ड की अनुमति दें',
   'Open in the browser': 'ब्राउज़र में खोलें',
-  'Copy the address': 'पता कॉपी करें',
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',
@@ -1345,4 +1342,44 @@ export const hi: Dictionary = {
   // A room that will take no more keystrokes; see rooms/door.ts.
   'This note is as large as a note in a room may get.':
     'यह नोट उतना बड़ा हो गया है जितना किसी रूम में कोई नोट हो सकता है।',
+
+  // The dots on a web tab's bar: Chrome's own rows, in Chrome's own words.
+  'New tab': 'नया टैब',
+  'Full screen': 'फ़ुल स्क्रीन',
+  'Print…': 'प्रिंट करें…',
+  'Save page': 'पेज सेव करें',
+  'Share…': 'साझा करें…',
+
+  // What a site is asking for, in the bubble under the address field.
+  'wants to': 'को अनुमति चाहिए',
+  'Don’t allow': 'अनुमति न दें',
+  Allow: 'अनुमति दें',
+  'Use your camera': 'अपना कैमरा उपयोग करें',
+  'Use your microphone': 'अपना माइक्रोफ़ोन उपयोग करें',
+  'Know your location': 'आपकी जगह की जानकारी ऐक्सेस करने की',
+  'Show notifications': 'नोटिफ़िकेशन दिखाएं',
+  'See text and images copied to the clipboard': 'क्लिपबोर्ड पर कॉपी किए गए लेख और इमेज देखें',
+  'Use your motion sensors': 'मोशन सेंसर का इस्तेमाल करें',
+  'Download multiple files': 'एकाधिक फ़ाइलें डाउनलोड करें',
+  'Use fonts installed on your device': 'आपके डिवाइस पर इंस्टॉल किए गए फ़ॉन्ट इस्तेमाल करें',
+  'Use your MIDI devices': 'अपने एमआईडीआई डिवाइस इस्तेमाल करें',
+  'Manage windows on all your displays': 'आपके सभी डिसप्ले पर विंडो मैनेज करना',
+
+  // What a site may do, behind the mark at the left of that field.
+  'Site information': 'साइट जानकारी',
+  Camera: 'कैमरा',
+  Microphone: 'माइक्रोफ़ोन',
+  Location: 'जगह की जानकारी',
+  Notifications: 'सूचनाएं',
+  Clipboard: 'क्लिपबोर्ड',
+  'Motion sensors': 'मोशन सेंसर',
+  'Automatic downloads': 'अपने-आप होने वाले डाउनलोड',
+  Fonts: 'फ़ॉन्ट',
+  'MIDI devices': 'एमआईडीआई डिवाइस',
+  'Window management': 'विंडो मैनेजमेंट',
+  'Connection is secure': 'कनेक्शन सुरक्षित है',
+  'Connection is not secure': 'कनेक्शन सुरक्षित नहीं है',
+  Allowed: 'अनुमति है',
+  Blocked: 'ब्लॉक किया गया है',
+  'Reset permissions': 'अनुमतियां रीसेट करें',
 }
