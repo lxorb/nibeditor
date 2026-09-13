@@ -29,9 +29,14 @@ const trustedField = StateField.define<boolean>({
 })
 
 /** Whether this document's raw HTML may run. Read by the live preview, which draws
- *  the card a block of the note's own HTML becomes; see live-preview/decorate.ts. */
+ *  the card a block of the note's own HTML becomes; see live-preview/blocks.ts.
+ *
+ *  Asked without requiring the field, because the live preview is built against
+ *  states this extension was never put into - a test, and the renderer's own
+ *  standalone parse. A state that never heard the question answers no, which is the
+ *  same answer an editor standing on its own gives. */
 export function trustsMarkup(state: EditorState): boolean {
-  return state.field(trustedField)
+  return state.field(trustedField, false) ?? false
 }
 
 export function trustedMarkup(trusted: boolean | undefined): Extension {
@@ -45,7 +50,8 @@ export function trustedMarkupEffect(trusted: boolean): StateEffect<unknown> {
 }
 
 /** Whether the answer changed across an update, which is what says the cards in the
- *  document have to be drawn again. */
+ *  document have to be drawn again. False either way in a state the extension is not
+ *  in; see `trustsMarkup`. */
 export function trustChanged(before: EditorState, after: EditorState): boolean {
-  return before.field(trustedField) !== after.field(trustedField)
+  return before.field(trustedField, false) !== after.field(trustedField, false)
 }

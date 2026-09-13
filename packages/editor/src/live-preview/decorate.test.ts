@@ -41,13 +41,14 @@ function concealed(doc: string, cursor?: number, trusted = false): string[] {
   return out
 }
 
-/** Whole-line constructs replaced by a rendered block: math and diagrams. */
-function blocks(doc: string, cursor?: number): string[] {
+/** Whole-line constructs replaced by a rendered block: math, diagrams, and the card
+ *  a block of the note's own HTML becomes. */
+function blocks(doc: string, cursor?: number, trusted = false): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const pos = cursor ?? full.length
 
   const out: string[] = []
-  buildBlockDecorations(state(full, pos)).between(0, full.length, (from, to) => {
+  buildBlockDecorations(state(full, pos, trusted)).between(0, full.length, (from, to) => {
     out.push(full.slice(from, to))
   })
   return out
@@ -803,26 +804,33 @@ describe('an interactive block of HTML', () => {
   const BLOCK = '<div id="here"></div>\n<script>document.body.textContent = 1</script>'
 
   test('is replaced by the card that stands for it', () => {
-    expect(concealed(BLOCK, undefined, true)).toEqual([BLOCK])
+    expect(blocks(BLOCK, undefined, true)).toEqual([BLOCK])
   })
 
   test('is the markup again while the caret is in it', () => {
-    expect(concealed(BLOCK, 4, true)).toEqual([])
+    expect(blocks(BLOCK, 4, true)).toEqual([])
   })
 
   test('stays the characters it is made of where the HTML is not trusted', () => {
-    expect(concealed(BLOCK)).toEqual([])
+    expect(blocks(BLOCK)).toEqual([])
   })
 
   /** HTML that only shows something needs no card and never did: it goes through the
    *  renderer as markup, and in the editor it is the markup it is. */
   test('leaves a block that only shows something alone', () => {
-    expect(concealed('<div class="card">\n  <p>Wind.</p>\n</div>', undefined, true)).toEqual([])
+    expect(blocks('<div class="card">\n  <p>Wind.</p>\n</div>', undefined, true)).toEqual([])
   })
 
   test('is the card whatever the note wrote around the script', () => {
     const inline = '<div>\n<script>\nlet a = 1\n</script>\n</div>'
 
-    expect(concealed(inline, undefined, true)).toEqual([inline])
+    expect(blocks(inline, undefined, true)).toEqual([inline])
+  })
+
+  /** A block of it is a whole-line construct and is drawn by the block pass, not the
+   *  inline one: CodeMirror accepts a replacement covering a line break only from a
+   *  state field, and a `<div>` with a `<script>` under it is two lines. */
+  test('is not an inline replacement, which the library would refuse', () => {
+    expect(concealed(BLOCK, undefined, true)).toEqual([])
   })
 })

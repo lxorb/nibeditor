@@ -12,10 +12,12 @@ import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { isExternal } from '../external'
 import { fenceCode, fenceLanguage } from '../fence'
 import { readChart } from '@nib/markdown/chart'
+import { htmlBlockCard } from '@nib/markdown/html-block'
 import { type EmbedKind, embedKind } from '@nib/markdown/links'
 import { readProperties } from '@nib/markdown/properties'
 import { PropertiesWidget } from './properties'
 import { embedOfBlock, embedWidget } from '../wikilink/embed'
+import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, type NoteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
@@ -31,6 +33,7 @@ import {
   resetEquationLabels,
 } from './render'
 import { headings, TocWidget } from './toc'
+import { WebEmbedWidget } from './web'
 
 /** CodeMirror only accepts block-level replacements from a state field, so the
  *  constructs that occupy whole lines live here rather than in the
@@ -253,6 +256,39 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           return false
         }
 
+        // A block of the note's own HTML that runs rather than shows: a `<div>` and
+        // the `<script>` that fills it in. The same click-to-load card the reading
+        // view draws for it, out of the same markup - see html-block.ts - and
+        // nothing at all for HTML that only shows something, which goes on through
+        // as the markup it is.
+        //
+        // Here rather than with the inline tags in decorate.ts, which is where the
+        // `<iframe>` card is drawn, for one reason: CodeMirror accepts a
+        // replacement covering a line break only from a state field, and a block
+        // like this is two lines or twenty. It is a whole-line construct like the
+        // maths and the diagrams above it, and this is where those live.
+        //
+        // Only where the app says this document's HTML is markup. What runs, runs
+        // in a frame with an opaque origin and never in the app; see markup.ts and
+        // web-frame.ts.
+        case 'HTMLBlock': {
+          if (!standsAlone(state, node.from) || !trustsMarkup(state)) return false
+
+          const card = htmlBlockCard(doc.sliceString(node.from, node.to))
+          if (card === null) return false
+
+          const span = found(node.from, node.to)
+          if (revealed(node.from, node.to)) return false
+
+          ranges.push(
+            Decoration.replace({ widget: new WebEmbedWidget(card), block: true }).range(
+              span.from,
+              span.to,
+            ),
+          )
+          return false
+        }
+
         case 'Table': {
           // A table with something before its pipes - indented into a list item,
           // or inside a blockquote - is left as source; see `standsAlone`.
@@ -379,7 +415,11 @@ function settingsChanged(transaction: Transaction): boolean {
     before.facet(numberEquations) !== after.facet(numberEquations) ||
     // An embed shows another note, so what that note says decides what is drawn
     // here even though nothing in this document moved.
-    before.facet(noteIndex) !== after.facet(noteIndex)
+    before.facet(noteIndex) !== after.facet(noteIndex) ||
+    // And whether this note's own HTML is markup, which decides whether a block of
+    // it draws its card: a page pasted in or a peer arriving takes the card away
+    // again, and neither touches the document or the caret.
+    trustChanged(before, after)
   )
 }
 
