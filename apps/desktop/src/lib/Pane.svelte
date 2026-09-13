@@ -69,12 +69,17 @@
 
   const tab = $derived(workspace.showing(pane.id))
 
+  /** Whether the card has asked for the files the notes embed. Read into a derived of
+   *  its own, because the settings are one object behind one getter: reading a key off
+   *  it inside the pass below would make that pass follow every setting there is, and
+   *  a filter is typed a letter at a time. A derived that answers the same boolean
+   *  wakes nothing. */
+  const attachments = $derived(workspace.graphSettings.here.attachments)
+
   /** The space as a picture, without the notes it leaves out, and with the files its
    *  notes embed where the card has asked for them. Lazy like the graph itself:
    *  nothing here is worked out until a graph tab is open. */
-  const picture = $derived.by(() =>
-    without(links.pictureOf(workspace.graphSettings.here.attachments), workspace.excluded.here),
-  )
+  const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.excluded.here))
   /** Every note this pane holds. The editor keeps a state for each one it has
    *  shown, and this is what tells it which of them are still open. */
   const strip = $derived(workspace.tabsIn(pane.id).map(noteKey))

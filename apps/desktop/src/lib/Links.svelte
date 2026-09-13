@@ -49,6 +49,15 @@
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
 
+  /** Whether the card has asked for the files the notes embed.
+   *
+   *  Read into a derived of its own rather than inside the walk below: the settings
+   *  are one object behind one getter, so reading a key off it in there would make
+   *  that walk follow every setting there is - and a space of five thousand notes
+   *  would be walked again for every letter typed into the card's filter. A derived
+   *  that answers the same boolean wakes nothing. */
+  const attachments = $derived(workspace.graphSettings.here.attachments)
+
   /** The open note and everything within `depth` links of it. Lazy like the lists
    *  above, so the space is only walked while the picture is the thing showing. */
   const around = $derived.by(() => {
@@ -60,7 +69,7 @@
     // in an archive is not part of what the space says about itself and a picture a
     // note holds either is part of it or is not, on both surfaces.
     return neighbourhood(
-      without(links.pictureOf(workspace.graphSettings.here.attachments), workspace.excluded.here),
+      without(links.pictureOf(attachments), workspace.excluded.here),
       centre,
       depth,
     )
