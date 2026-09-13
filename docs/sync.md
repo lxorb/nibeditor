@@ -317,6 +317,14 @@ Now each session says which device opened it and when it was last seen - written
 most once an hour, because what a reader wants to know is "today" or "in March" -
 and any of them can be ended from `Account`, including every one but this.
 
+Ending one closes the rooms as well. A socket is not a request: the checks it was let
+in on were made at the handshake, so a laptop that has gone missing went on typing
+into whatever it had open long after its session was ended. `roomsSignedOut` in
+`rooms/index.ts` is the second doorway to the same machinery a revocation uses -
+every room of that account rather than of that session, because a room writes itself
+down by who and not by which session, so the account's other devices are closed with
+it and rejoin at once.
+
 ## Syncing without the app
 
 A repository of notes that publishes or mirrors from CI needs what the app needs

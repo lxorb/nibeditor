@@ -1839,3 +1839,49 @@ describe('telling the rooms somebody has been taken out of a space', () => {
     expect(door.asked[0]?.get('x-nib-role')).toBe('read')
   })
 })
+
+/** A session ending has to reach the sockets it opened, for the same reason a
+ *  revocation does: the checks a socket was let in on were made at the handshake and
+ *  never again, so a laptop that has gone missing goes on typing through its room
+ *  long after the session was ended from another device. */
+describe('ending a session', () => {
+  let out: TestEnv
+
+  afterEach(() => out.close())
+
+  /** The account, and one note of one space open in a room. */
+  async function signedIn(door: { ROOMS: DurableObjectNamespace; asked: Headers[] }) {
+    out = testEnv({ ROOMS: door.ROOMS })
+    const token = await signIn(out, 'a@b.dev')
+    const who = (out.db.prepare('select id from users limit 1').get() as { id: string }).id
+
+    out.db
+      .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, ?)')
+      .run('note-a', 's1', who, Date.now())
+
+    return { token, who }
+  }
+
+  test('closes the rooms that session had open', async () => {
+    const door = doorway()
+    const { token, who } = await signedIn(door)
+
+    await call(out, '/v1/auth/signout', { method: 'POST', token })
+
+    expect(door.asked).toHaveLength(1)
+    expect(door.asked[0]?.get('x-nib-revoked')).toBe(who)
+    expect(door.asked[0]?.get('x-nib-role')).toBe('none')
+  })
+
+  test('and so does ending every session but this one', async () => {
+    const door = doorway()
+    const { token, who } = await signedIn(door)
+    // The device that went missing, which is the row this ends.
+    await signIn(out, 'a@b.dev')
+
+    await call(out, '/v1/sessions', { method: 'DELETE', token })
+
+    expect(door.asked).toHaveLength(1)
+    expect(door.asked[0]?.get('x-nib-revoked')).toBe(who)
+  })
+})

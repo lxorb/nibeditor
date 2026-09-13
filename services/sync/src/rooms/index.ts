@@ -312,3 +312,36 @@ export async function roomsRevoked(
     after = results[results.length - 1]?.note_id ?? ''
   }
 }
+
+/** How many of somebody's spaces one sign-out reaches. Well past how many spaces
+ *  anybody has a file open in at once, and a bound on the queries one request
+ *  makes. */
+const MOST_SPACES = 100
+
+/** A session has ended, and whatever it had open is still open.
+ *
+ *  A socket is not a request: the checks it was let in on were made at the
+ *  handshake, so a laptop that has gone missing goes on typing into a note through
+ *  its room long after the session it opened with was ended from another device.
+ *  Ending a session has to reach the sockets the way taking somebody out of a space
+ *  does; this is the other doorway to `roomsRevoked`.
+ *
+ *  Every room of that person rather than of that session, because `room_sockets` is
+ *  keyed by who and not by which session: one account's devices are one row per
+ *  file. So the account's other devices have their sockets closed as well and rejoin
+ *  at once - their sessions are still good and the door lets them back in - which is
+ *  a reconnect nobody sees, against a socket that would otherwise stay open for as
+ *  long as the note stayed open. */
+export async function roomsSignedOut(env: Env, who: string): Promise<void> {
+  if (!env.ROOMS || !who) return
+
+  const { results } = await env.DB.prepare(
+    'select distinct space_id from room_sockets where who = ? limit ?',
+  )
+    .bind(who, MOST_SPACES)
+    .all<{ space_id: string }>()
+
+  for (const { space_id: spaceId } of results) {
+    await roomsRevoked(env, spaceId, who, 'none')
+  }
+}

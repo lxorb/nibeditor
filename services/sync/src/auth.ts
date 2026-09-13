@@ -15,6 +15,7 @@ import { codeMessage, mailer } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
+import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
 import { deviceIn } from './versions'
 import type { Env, User, Variables, Whoever } from './types'
@@ -446,6 +447,10 @@ sessions.delete('/:id', async (context) => {
     .bind(user.id, context.req.param('id'))
     .run()
 
+  // And whatever that device had open, which a deleted row does not reach: a socket
+  // is not a request. See `roomsSignedOut`.
+  if (gone.meta.changes) await roomsSignedOut(context.env, user.id)
+
   return context.json({ ok: !!gone.meta.changes })
 })
 
@@ -461,15 +466,29 @@ sessions.delete('/', async (context) => {
     .bind(user.id, await sha256(mine))
     .run()
 
+  // The rooms as well, which is the whole point of the row for a laptop that has
+  // gone missing: its session is ended and its socket is closed. This device's own
+  // rooms are closed with them and rejoin at once; see `roomsSignedOut`.
+  if (gone.meta.changes) await roomsSignedOut(context.env, user.id)
+
   return context.json({ ended: gone.meta.changes })
 })
 
 auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))
   if (token) {
+    const held = await context.env.DB.prepare('select user_id from sessions where token_hash = ?')
+      .bind(await sha256(token))
+      .first<{ user_id: string }>()
+
     await context.env.DB.prepare('delete from sessions where token_hash = ?')
       .bind(await sha256(token))
       .run()
+
+    // A device signing itself out closes its own rooms rather than leaving them to
+    // notice; see `roomsSignedOut`. The account is read before the row goes, because
+    // this route carries a token and not a session.
+    if (held) await roomsSignedOut(context.env, held.user_id)
   }
   return context.json({ ok: true })
 })
