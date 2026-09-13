@@ -36,7 +36,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
-use tauri::webview::{NewWindowFeatures, NewWindowResponse, PageLoadEvent};
+use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{
     AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Url, Webview, WebviewBuilder,
     WebviewUrl,
@@ -693,7 +693,11 @@ pub async fn web_open(
     }
 
     let opening = app.clone();
-    let builder = builder.on_new_window(move |url: Url, _features: NewWindowFeatures| {
+    // What the page asked for, unnamed: the type is the runtime's, and on nib's
+    // own Chromium it carries two type parameters where the system's engine's
+    // carries none. The closure infers it either way; naming it would compile on
+    // one engine only. See src/engine.rs and docs/browser.md.
+    let builder = builder.on_new_window(move |url: Url, _features| {
         // A window the page asks for leaves the app the way every other link
         // does: the system browser. A second webview over the pane would be a
         // window with no way to close it.
