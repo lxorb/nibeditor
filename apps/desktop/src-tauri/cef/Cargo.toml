@@ -1,0 +1,115 @@
+# nib on its own Chromium: the binary that links CEF and hands the engine to the
+# app. This file is the pin, and it is the only file in the repository that names
+# an upstream revision.
+#
+# **Why a workspace of its own.** The engine cannot be a Cargo feature of the app
+# crate, and that is a fact about Cargo rather than a preference. `tauri-runtime-cef`
+# is a sibling of `tauri` in Tauri's own repository and is built against the
+# unreleased `tauri` beside it, where the runtime is chosen by the application
+# instead of being compiled in - so the whole of the `tauri` ecosystem has to come
+# from that revision, which is a `[patch.crates-io]`, and a patch applies to every
+# build of the workspace it is in. Put it in the app's manifest and the app that
+# ships is built against an unreleased Tauri; put it here and the app that ships is
+# byte for byte the app that shipped. So the app crate carries a feature with no
+# dependencies in it, this workspace carries the engine, and `nib_lib::run_on` is
+# the seam between them. See ../src/engine.rs and docs/browser.md.
+#
+# Nothing in the repository builds this except .github/workflows/cef.yml, which is
+# gated to branches named `ci-check-cef*` and to being asked for by hand - the same
+# gate as the spike, and for the same reason: a check that downloads three hundred
+# megabytes of Chromium has no business on the path of an ordinary contribution.
+
+[package]
+name = "nib-cef"
+version = "0.8.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+publish = false
+description = "nib on CEF, behind the app's `cef` feature. A gate, not a release."
+
+# Its own workspace, deliberately: see the top of this file. The app's manifest next
+# door is its own workspace too, and neither is a member of the other.
+#
+# `exclude` is load bearing rather than tidy: a path dependency that lies inside a
+# workspace's own directory is made a member of it automatically, so without this the
+# crates of the Tauri checkout in `.upstream` would be members of *this* workspace and
+# would inherit their edition and their versions from this file, which does not have
+# them. Excluded, each of them belongs to the checkout's own workspace, which is where
+# it was written to belong.
+#
+# The app's crate is a path dependency and not a member, because Cargo refuses a
+# member that is not below the root - so what runs under the flag is the whole graph
+# compiled and rustc-linted (this crate's own `missing_docs` and `unsafe_code` among
+# them) plus this package's tests, and the crate's own unit tests run in the default
+# build on all three desktops, where they are runtime-independent anyway.
+[workspace]
+exclude = [".upstream"]
+
+[[bin]]
+name = "nib-cef"
+path = "src/main.rs"
+
+[dependencies]
+# The app itself, with the one feature that changes which engine it expects. The
+# package is `nib` and the library it builds is `nib_lib`.
+nib = { path = "..", features = ["cef"] }
+# `custom-protocol` is what makes this a production build rather than a dev one:
+# the frontend is embedded and served from the app's own origin instead of being
+# fetched from a dev server that a runner does not have. `unstable` is what a
+# second webview in a window needs, which the app already asks for.
+tauri = { version = "2", features = ["unstable", "custom-protocol"] }
+# The engine, out of the checkout `upstream.py` makes: the branch as published,
+# plus the one line it is missing. Pinned by revision and not by branch - a gate
+# has to give the same answer twice, and the branch took three commits on the day
+# it was first read - and the revision is the one below, read by that script.
+tauri-runtime-cef = { path = ".upstream/tauri/crates/tauri-runtime-cef", features = [
+  "unstable",
+] }
+# Where the engine's own profiles go, worked out the same way Tauri works out the
+# app's config folder - the same crate it uses, so the two agree. It has to be
+# known before the app exists, which is why it is not read from the app handle.
+dirs = "6"
+serde_json = "1"
+
+# **The whole `tauri` ecosystem, out of the one checkout.** The `tauri` on crates.io
+# compiles the system's webview into itself; the one on this branch takes a runtime
+# from the application, which is the whole shape this batch is measuring, so every
+# crate that names `tauri-utils` or `tauri-plugin` has to agree on which one it got.
+# The versions on the branch are the versions on crates.io -
+# `tauri` 2.11.5, `tauri-utils` 2.9.3, `tauri-runtime` 2.11.3, `tauri-build` and
+# `tauri-plugin` 2.6.3 - so every requirement in the graph, the app's own and the
+# seven plugins', is satisfied by the patch and the graph unifies on one copy.
+#
+# `dpi` is the one-line repair the spike found and the reason batch 1 is a gate:
+# `tauri` takes `dpi` from crates.io while `tauri-runtime-cef` takes `winit` from
+# the `winit-gtk4` fork, which vendors a `dpi` of its own, so without this there
+# are two of them in the graph and `platform/mod.rs` hands the wrong one across.
+# `branch` and not `rev`, because it has to be the same checkout `winit` itself
+# resolves to; Cargo.lock beside this file is what pins the commit.
+[patch.crates-io]
+tauri = { path = ".upstream/tauri/crates/tauri" }
+tauri-build = { path = ".upstream/tauri/crates/tauri-build" }
+tauri-plugin = { path = ".upstream/tauri/crates/tauri-plugin" }
+tauri-runtime = { path = ".upstream/tauri/crates/tauri-runtime" }
+tauri-utils = { path = ".upstream/tauri/crates/tauri-utils" }
+dpi = { git = "https://github.com/tauri-apps/winit-gtk4", branch = "master" }
+
+# **The pin.** One revision, in one line, and `upstream.py` is what reads it: it
+# fetches exactly this commit into `.upstream/tauri`, adds the one feature the
+# branch is missing, and every path above then points into that checkout. The
+# weekly workflow in .github/workflows/cef-bump.yml rewrites this line and nothing
+# else. A checkout and not a git dependency because the repair has to happen
+# between the fetch and the build, and Cargo has nowhere to put it.
+[package.metadata.cef]
+repository = "https://github.com/tauri-apps/tauri"
+branch = "feat/cef"
+revision = "c8c75b1f7f43e7cb1e7d773ed2f6f96fad2fe975"
+
+# The same release profile as the app's, so a size or a launch measured here is
+# comparable with one measured there.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
