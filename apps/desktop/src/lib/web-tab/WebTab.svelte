@@ -302,41 +302,47 @@
 </script>
 
 <div class="web">
-  <WebBar
-    {page}
-    {focused}
-    reads={isDesktop}
-    onstep={(step: Step) => void pages.step(tab.id, step)}
-    onaddress={(typed: string) => {
-      const url = webAddress(typed)
-      if (!url) return
+  <!-- The bar, and the two things a browser hangs under it. They are placed against
+       this box rather than against the pane, because "under the bar" is what they mean:
+       a rectangle the height of the whole pane would put them under the *page*, which is
+       off the bottom of the window. -->
+  <div class="head">
+    <WebBar
+      {page}
+      {focused}
+      reads={isDesktop}
+      onstep={(step: Step) => void pages.step(tab.id, step)}
+      onaddress={(typed: string) => {
+        const url = webAddress(typed)
+        if (!url) return
 
-      void pages.go(tab.id, url)
-      // An address somebody typed is where the document points, and the file says
-      // so. A link followed inside the page is not; see `workspace.webAimed`.
-      void workspace.webAimed(tab, url)
-    }}
-    onclip={clip}
-    onmenu={(event: MouseEvent) =>
-      menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
-    onsite={() => (showingSite = !showingSite)}
-    ontyping={(on: boolean) => {
-      // By id, for the reason the teardown above says: a blur arrives while the pane is
-      // being taken apart, and the page this pane's `$derived` would answer with is a
-      // value nobody is keeping up to date any more.
-      pages.of(tab.id).typing = on
-    }}
-  />
+        void pages.go(tab.id, url)
+        // An address somebody typed is where the document points, and the file says
+        // so. A link followed inside the page is not; see `workspace.webAimed`.
+        void workspace.webAimed(tab, url)
+      }}
+      onclip={clip}
+      onmenu={(event: MouseEvent) =>
+        menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
+      onsite={() => (showingSite = !showingSite)}
+      ontyping={(on: boolean) => {
+        // By id, for the reason the teardown above says: a blur arrives while the pane is
+        // being taken apart, and the page this pane's `$derived` would answer with is a
+        // value nobody is keeping up to date any more.
+        pages.of(tab.id).typing = on
+      }}
+    />
 
-  <!-- What a site asked for, and what a site is. Both hang under the bar at its left
-       edge, where a browser hangs them, and both are on the overlay stack - so the page
-       is out of sight while either is up and the still picture of it stands in; see
-       `covered`. -->
-  {#if asking}
-    <WebAsk {asking} icon={page.icon} />
-  {:else if showingSite && page.url !== null}
-    <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
-  {/if}
+    <!-- What a site asked for, and what a site is: one at a time, because a question
+         waiting to be answered is the only thing worth reading. Both are on the overlay
+         stack, so the page is out of sight while either is up and the still picture of
+         it stands in; see `covered`. -->
+    {#if asking}
+      <WebAsk {asking} icon={page.icon} />
+    {:else if showingSite && page.url !== null}
+      <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
+    {/if}
+  </div>
 
   {#if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it but the last picture of the page: the page
@@ -403,15 +409,22 @@
 </div>
 
 <style>
-  /* Relative, so the two things that hang under the bar - what a site asked for, and
-     what a site is - are placed against this pane rather than against the window. */
   .web {
-    position: relative;
     flex: 1;
     min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
+  }
+
+  /* The bar, and what hangs under it. Relative and above the page's own room, so a
+     bubble is placed against the bar rather than against the pane - and drawn over the
+     hole rather than under it, which matters for the frame between the page being
+     hidden and the picture of it arriving. */
+  .head {
+    position: relative;
+    z-index: 1;
+    flex: none;
   }
 
   /* The page's own room. `--bg` rather than nothing, because for one frame between

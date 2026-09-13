@@ -10,10 +10,15 @@ that actually happens cannot be unit tested and cannot be seen from inside the w
 it is a question about pixels, so this asks the pixels.
 
 The page it opens is one flat colour and nothing else. For each kind of overlay the app
-has - a menu, the palette, a sheet, a dialog, the bubble a site is answered in, the
-popover behind the mark in the bar - the drive opens it over the page, photographs the
-window, and counts how much of that colour is left in the pane. A pane still full of it
-is a page drawn over the overlay, which is the bug.
+has - the dots menu, the popover behind the mark in the bar, the palette - the drive
+opens it over the page, photographs the window, asks the window where that overlay is,
+and counts how much of the overlay's own rectangle is still the page's colour. A
+rectangle full of it is a page drawn in front of the overlay, which is the bug and which
+is what a reader sees as a menu that does not appear.
+
+It cannot be the pane as a whole, because the pane is *meant* to stay the page's colour
+now: what the app holds under an overlay is a still picture of the page, so that nothing
+flashes, and a picture of a magenta page is magenta.
 
 It also drives the one thing no unit test can reach: **a site asking for something.**
 The served page calls `getCurrentPosition` as it loads, the engine raises its own
@@ -155,8 +160,18 @@ def shoot(hwnd: int, name: str) -> pathlib.Path:
     return out
 
 
-def how_much(shot: pathlib.Path) -> float:
-    """How much of the lower half of the window is still the page's own colour."""
+def how_much(shot: pathlib.Path, box: tuple[int, int, int, int] | None = None) -> float:
+    """How much of a rectangle of the window is the page's own colour.
+
+    Given a rectangle, it is the overlay's own - which is the whole test: if the page is
+    drawn in front, every pixel where the menu should be is the page's colour and the
+    menu is invisible; if the overlay is in front, almost none of it is. Given none, it
+    is the pane, which says whether there is a page there at all.
+
+    A rectangle is needed rather than the pane as a whole because the pane is *meant* to
+    stay the page's colour: the still picture of the page is what the app now holds under
+    an overlay, and a picture of a magenta page is magenta. That is the feature, so the
+    measurement cannot be "is there any magenta left"."""
 
     from PIL import Image
 
@@ -164,10 +179,11 @@ def how_much(shot: pathlib.Path) -> float:
         page = picture.convert("RGB")
         width, height = page.size
         # The pane, roughly: below the strip and the bar, and inside the window.
-        box = page.crop((width // 3, height // 4, width - 8, height - 8))
+        cut = box if box else (width // 3, height // 4, width - 8, height - 8)
+        inside = page.crop(cut)
         counted = 0
         total = 0
-        for seen in box.getdata():
+        for seen in inside.getdata():
             total += 1
             if all(abs(one - other) <= NEAR for one, other in zip(seen, PAGE_COLOUR)):
                 counted += 1
@@ -178,16 +194,33 @@ def how_much(shot: pathlib.Path) -> float:
 # Each overlay, and the line that opens it in the window. `commands.run` would reach
 # some of them, but a line of script reaches all of them and says which one it meant.
 OVERLAYS = [
-    ("the dots", "document.querySelector('.webbar button[aria-label=\"More\"]').click()"),
+    (
+        "the dots",
+        "document.querySelector('.webbar button[aria-label=\"More\"]').click()",
+        ".menu, [role=menu]",
+    ),
     (
         "the site",
         "document.querySelector('.webbar button[aria-label=\"Site information\"]').click()",
+        ".site[role=dialog]",
     ),
     (
         "the palette",
         "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true }))",
+        ".palette, [role=dialog]",
     ),
 ]
+
+# Where the overlay is, in the window's own pixels, asked of the window rather than
+# guessed: the drive then looks at exactly the rectangle the overlay claims.
+WHERE = """(() => {
+  const one = document.querySelector('%s')
+  if (!one) return JSON.stringify(null)
+  const box = one.getBoundingClientRect()
+  return JSON.stringify([
+    Math.round(box.x), Math.round(box.y), Math.round(box.right), Math.round(box.bottom),
+  ])
+})()"""
 
 
 def main() -> int:
@@ -254,10 +287,21 @@ def main() -> int:
         bare = shoot(hwnd, "page-alone")
         said["the page alone"] = round(how_much(bare), 3)
 
-        for name, opens in OVERLAYS:
+        for name, opens, drawn in OVERLAYS:
             app.ask(opens)
             time.sleep(1.2)
-            said[name] = round(how_much(shoot(hwnd, name.replace(" ", "-"))), 3)
+
+            shot = shoot(hwnd, name.replace(" ", "-"))
+            where = app.ask(WHERE % drawn)
+            if not isinstance(where, list) or len(where) != 4:
+                said[name] = "the overlay never opened"
+                continue
+
+            # Inside the overlay's own rectangle, in the window's pixels rather than the
+            # page's: a scaled screen would move the crop, so both come from the same
+            # picture. The pane's scale is 1 on this machine and the drive says so by
+            # failing visibly rather than by correcting silently.
+            said[name] = round(how_much(shot, tuple(int(one) for one in where)), 3)
             # And what the pane is holding under it: the still picture of the page, which
             # is what keeps an overlay from being a flash of empty pane. See `web_shot`.
             said[f"{name}: the picture under it"] = app.ask(
