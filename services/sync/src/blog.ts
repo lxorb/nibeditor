@@ -1005,6 +1005,7 @@ function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap
 async function takeAnswer(
   env: Env,
   space: Space,
+  site: Site,
   request: Request,
   noteId: string,
 ): Promise<Response> {
@@ -1014,6 +1015,18 @@ async function takeAnswer(
       headers: { location: where, 'cache-control': 'private, no-store' },
     })
 
+  // A site behind a password takes an answer from a reader who is already through
+  // it and from nobody else: the ticket they are carrying, never a guess at the
+  // password, so sending an answer costs none of their tries and tells a stranger
+  // nothing about the notes. Without one the reader lands on the form again, at
+  // the root, which is where the gate is on every path of the site.
+  if (
+    site.password &&
+    !(await ticketHolds(site.password, ticketIn(request.headers.get('cookie')), Date.now()))
+  ) {
+    return back('/')
+  }
+
   const note = await env.DB.prepare(
     'select * from notes where id = ? and space_id = ? and deleted = 0',
   )
@@ -1022,7 +1035,6 @@ async function takeAnswer(
 
   if (!note) return new Response('Not found', { status: 404 })
 
-  const site = readSite(space.site)
   const front = readFront(note.front)
   if (!publishes(site.rules, note.path, front)) return new Response('Not found', { status: 404 })
 
@@ -1119,11 +1131,13 @@ async function served(
   if (slug === 'robots.txt') return robots(url.origin, !!site.password)
 
   // An answer to a form on one of the pages. Before the password, because a site
-  // behind one still has to let a reader who is through it send an answer; the
-  // ticket is checked below and a post without one lands on the form again.
+  // behind one still has to let a reader who is through it send an answer, and
+  // because the gate below would read the answer as a guess at the password and
+  // spend one of their tries on it. The ticket is checked inside instead, and a
+  // post without one lands on the form again rather than being taken.
   const answering = /^form\/([A-Za-z0-9_-]{1,64})$/.exec(slug)
-  if (answering?.[1] && request.method === 'POST' && !site.password) {
-    return takeAnswer(env, space, request, answering[1])
+  if (answering?.[1] && request.method === 'POST') {
+    return takeAnswer(env, space, site, request, answering[1])
   }
 
   // The password, before anything a reader could read. A site that has none -

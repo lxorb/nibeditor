@@ -349,3 +349,94 @@ describe('a site with forms on it', () => {
     expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
   })
 })
+
+/** A form on a site behind a password. The answer is taken before the gate, so
+ *  that a reader who is through it can send one - and a reader who is not never
+ *  spends one of their tries at the password by sending it. */
+describe('a form on a site behind a password', () => {
+  let env: TestEnv
+  let token: string
+  let space: string
+  let note: string
+
+  const HOST = 'field.nibeditor.com'
+  const PASSWORD = 'the quiet part'
+  const FENCE = ['```form', 'title: Say hello', 'fields:', '  - * Your name', '```'].join('\n')
+
+  const sending = (headers: Record<string, string> = {}) =>
+    call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
+    })
+
+  /** The ticket a reader who typed the password carries. */
+  async function letIn(headers: Record<string, string> = {}) {
+    return call(env, '/hello', {
+      host: HOST,
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded', ...headers },
+    })
+  }
+
+  const answers = async () =>
+    (await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+
+    const made = await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })
+    space = made.json.space.id
+
+    const wrote = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Hello.md', content: `# Hello\n\n${FENCE}\n` },
+    })
+    note = wrote.json.note.id
+
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
+
+    await call(env, `/v1/spaces/${space}/site`, {
+      method: 'PUT',
+      token,
+      body: { password: PASSWORD },
+    })
+  })
+
+  afterEach(() => env.close())
+
+  test('is taken from a reader who is through the gate', async () => {
+    const ticket = ((await letIn()).headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+    const sent = await sending({ cookie: ticket })
+
+    expect(sent.status).toBe(303)
+    expect(sent.headers.get('location')).toBe(`/hello?sent=${note}`)
+    expect(await answers()).toHaveLength(1)
+  })
+
+  test('and a reader who is not lands back on the form', async () => {
+    const sent = await sending()
+
+    expect(sent.status).toBe(303)
+    expect(sent.headers.get('location')).toBe('/')
+    expect(await answers()).toEqual([])
+  })
+
+  test('and sending one is never a guess at the password', async () => {
+    const machine = { 'cf-connecting-ip': '198.51.100.9' }
+    for (let at = 0; at < 20; at++) expect((await sending(machine)).status).toBe(303)
+
+    // Every try at the password is still there: the answers spent none of them.
+    const said = await letIn(machine)
+
+    expect(said.status).toBe(303)
+    expect(said.headers.get('set-cookie')).toContain('nib_site=')
+  })
+})
