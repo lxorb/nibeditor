@@ -1326,14 +1326,14 @@ zlib to be worth saying in one row.
 | --- | --- | --- | --- |
 | the app's own binary | 5.38 MB | 6.06 MB | 7.27 MB |
 | the flagged binary | 11.32 MB | 11.97 MB | 13.75 MB |
-| the engine beside it, unpacked | 394.6 MB | 346.1 MB | **1443.1 MB** |
-| the engine beside it, compressed | 127.9 MB | 118.2 MB | 234.1 MB |
-| **what the download grows by** | **133.8 MB** | **124.1 MB** | 240.5 MB |
+| the engine beside it, unpacked | 394.6 MB | 316.6 MB | **1443.1 MB** |
+| the engine beside it, compressed | 127.9 MB | 96.2 MB | 234.1 MB |
+| **what the download grows by** | **133.8 MB** | **102.1 MB** | 240.5 MB |
 
 Two things to read off that. The Windows and macOS figures are **inside** the band
 Emil was told - 150 to 170 MB on Windows and 120 to 140 on macOS - so the download
-cost of a nib on Chromium is now a measured number rather than a ratio, and it is at
-the good end of the estimate. And the Linux row is the unstripped `libcef.so` the
+cost of a nib on Chromium is now a measured number rather than a ratio, and both are
+better than the estimate: 134 MB and 102 MB. And the Linux row is the unstripped `libcef.so` the
 research warned about: 1.4 GB of it, where a release has to strip the library first.
 That is packaging work in batch 7 and not an engine cost.
 
@@ -1344,11 +1344,11 @@ has never seen, and none of the three is a number to compare between platforms.
 
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
 | --- | --- | --- | --- |
-| launch to the window on the system's engine | 6923.9 ms | 2261.5 ms | 1647.5 ms |
-| resident with no web tab, the whole tree | 301.2 MB | 87.6 MB | 525.2 MB |
+| launch to the window on the system's engine | 7135.9 ms | 2195.1 ms | 680.8 ms |
+| resident with no web tab, the whole tree | 302.8 MB | 87.6 MB | 524.5 MB |
 
 **And the row this batch turns on: the flagged app builds on all three desktops and
-starts on none of them yet.** Six runs of the workflow, each one a different answer,
+starts on none of them yet.** Eight runs of the workflow, each one a different answer,
 and every failure upstream of nib's own code rather than in it:
 
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
@@ -1360,6 +1360,7 @@ and every failure upstream of nib's own code rather than in it:
 | the flagged package's tests pass | yes | yes | yes |
 | **it starts** | **no** | **no** | **no** |
 | how far it got | died in the loader, `STATUS_ENTRYPOINT_NOT_FOUND` (`0xC0000139`), before nib's first line | CEF loaded, then `icudtl.dat not found in bundle` and `SIGTRAP`, 246 ms in | `SIGSEGV`, 264 ms in, with nothing on stderr |
+| what the loader was missing | **not a CEF symbol**: the binary imports 39 and `libcef.dll` exports all 39 of them, so it is further down the chain | - | - |
 
 What each of those means, in the order they will be fixed:
 
@@ -1381,9 +1382,13 @@ What each of those means, in the order they will be fixed:
   are built against the static CRT - and then the loader refuses it before any of our
   code runs, with the sandbox library both in the link and out of it. The gate now
   prints the imports of the binary against the exports of `libcef.dll` when that
-  happens, so the next run names the symbol; the two candidates worth checking first
-  are CEF 151's `bootstrap.exe` DLL-host requirement, which is ship gate 1, and an API
-  version mismatch in cef-rs's bindings.
+  happens, and the first answer is already in: **the CEF C API is not the problem.**
+  The binary imports thirty-nine `cef_*` symbols and `libcef.dll` exports every one of
+  them, so the missing entry point is somewhere else in the loader's chain - most
+  likely something `libcef.dll` itself wants, which is where CEF 151's
+  `bootstrap.exe` DLL-host requirement lives, and that is ship gate 1. The next step is
+  the same check one level down: what `libcef.dll` imports against what `chrome_elf.dll`
+  and the runtime beside it export.
 
 **So the launch, the memory and the one-browser-process rows are empty, and they are
 the rows batch 2 needs.** That is the gate working as intended: it is allowed to say
