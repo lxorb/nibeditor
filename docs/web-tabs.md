@@ -541,22 +541,23 @@ and never closed, and the session it holds open is the one every tab is built on
 
 `scripts/web-session-probe.py` is what measured it. It signs in to a page on the
 loopback with a session cookie, a lasting cookie and a `localStorage` token, reads them
-back out of the page, then closes the note, opens it again, and starts the app over.
-With one shared environment and nothing holding it open:
+back out of the page, then closes the note, opens it again, and starts the app over. Run
+it after any change to this seam.
 
-| | |
-| --- | --- |
-| two tabs open at once see one session | **yes** - so the sharing works |
-| the session cookie after closing the note and opening it | **no** - so sharing is not enough |
-| a lasting cookie and `localStorage`, closed and opened | yes |
-| the same, after the app is started again | yes |
+| | an environment per tab | one shared | shared, and held open |
+| --- | --- | --- | --- |
+| two tabs open at once see one session | no | **yes** | yes |
+| the session cookie after closing the note and opening it | no | **no** | **yes** |
+| a lasting cookie and `localStorage`, closed and opened | yes | yes | yes |
+| the same, after the app is started again | yes | yes | yes |
+| the session cookie after the app is started again | no | no | no |
 
-The third and fourth rows were always true and are what the `web` folder on disk is for;
-the second is the one Emil met. The page that holds the session open is the answer to it,
-and that row is what the probe is for - run it after any change to this seam. A session
-cookie after the app is started again is gone either way, which is what a browser throws
-away when it quits; a login kept in a lasting cookie or in `localStorage` comes back off
-disk.
+The middle column is the whole reason the page that holds the session open exists:
+sharing the environment made two tabs one session and still lost it when the last webview
+went, because that is when `WebView2` ends the profile's session. The third and fourth
+rows were always true and are what the `web` folder on disk is for. The last row is gone
+either way, which is what a browser throws away when it quits; a login kept in a lasting
+cookie or in `localStorage` comes back off disk.
 
 **What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
