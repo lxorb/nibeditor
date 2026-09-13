@@ -21,11 +21,7 @@
   import type { Ask } from './permissions.svelte'
   import { ASKS, grants } from './permissions.svelte'
 
-  const {
-    url,
-    site,
-    onclose,
-  }: { url: string | null; site: string; onclose: () => void } = $props()
+  const { url, site, onclose }: { url: string | null; site: string; onclose: () => void } = $props()
 
   /** What each one is called on a row that says what a site may do. Chrome's words, so
    *  a reader who has turned one of these off in Chrome finds the same name here. */
@@ -42,7 +38,7 @@
     windows: () => t('Window management'),
   }
 
-  const secure = $derived(url !== null && url.startsWith('https:'))
+  const secure = $derived(url?.startsWith('https:') === true)
   const said = $derived(grants.of(site))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 

@@ -37,6 +37,10 @@ import type { Page } from './pages.svelte'
  *  100% is one of the rungs rather than a number somebody has to land on. */
 export const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3]
 
+/** The two ends of the ladder, named so the rows that grey out at them say why. */
+const SMALLEST = ZOOMS[0] ?? 0.25
+const LARGEST = ZOOMS[ZOOMS.length - 1] ?? 3
+
 /** The next rung up or down from wherever the page is now, and the same rung at either
  *  end of the ladder. */
 export function zoomed(from: number, up: boolean): number {
@@ -78,7 +82,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     // does when it is pressed.
     {
       label: t('Zoom out'),
-      disabled: !has || zoom <= ZOOMS[0]!,
+      disabled: !has || zoom <= SMALLEST,
       keep: true,
       run: () => actions.zoom(zoomed(zoom, false)),
     },
@@ -90,7 +94,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     },
     {
       label: t('Zoom in'),
-      disabled: !has || zoom >= ZOOMS[ZOOMS.length - 1]!,
+      disabled: !has || zoom >= LARGEST,
       keep: true,
       run: () => actions.zoom(zoomed(zoom, true)),
     },

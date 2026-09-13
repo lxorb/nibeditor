@@ -70,9 +70,21 @@ test('writes the page the reading got to, and keeps where the note points', asyn
 })
 
 test('a page that moves twice in a moment is one write', async () => {
-  keepPage({ path: PATH, text: FILE, url: 'https://svelte.dev/a', icon: null, wrote: () => {} })
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/a',
+    icon: null,
+    wrote: () => undefined,
+  })
   await vi.advanceTimersByTimeAsync(500)
-  keepPage({ path: PATH, text: FILE, url: 'https://svelte.dev/b', icon: null, wrote: () => {} })
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/b',
+    icon: null,
+    wrote: () => undefined,
+  })
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(1)
@@ -90,7 +102,7 @@ test('the home already in the file is the home that stays', async () => {
     text: moved,
     url: 'https://svelte.dev/docs/two',
     icon: null,
-    wrote: () => {},
+    wrote: () => undefined,
   })
   await vi.advanceTimersByTimeAsync(2500)
 
@@ -99,14 +111,20 @@ test('the home already in the file is the home that stays', async () => {
 })
 
 test('a page that has not moved is not written', async () => {
-  keepPage({ path: PATH, text: FILE, url: 'https://svelte.dev/docs', icon: null, wrote: () => {} })
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/docs',
+    icon: null,
+    wrote: () => undefined,
+  })
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
 })
 
 test('an address that is not the web is never written', async () => {
-  keepPage({ path: PATH, text: FILE, url: 'file:///C:/notes', icon: null, wrote: () => {} })
+  keepPage({ path: PATH, text: FILE, url: 'file:///C:/notes', icon: null, wrote: () => undefined })
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)

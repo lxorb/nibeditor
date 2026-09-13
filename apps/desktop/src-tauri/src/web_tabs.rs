@@ -147,15 +147,15 @@ const PLACE: &str = r"(function () {
 /// the one thing about a web tab the app cannot see - the wheel goes to the webview
 /// and nothing of ours hears it - and asking once, when the tab is left, is the whole
 /// of what is needed to open it again where it was.
+/// The answer is the object itself and not a string of one: what the engine hands back
+/// is already JSON, so a script that stringifies its own answer is an answer wrapped
+/// twice and a `Looked` that will not parse. The reader beside this one has always
+/// returned an object for the same reason.
 const LOOKED: &str = r"(function () {
   try {
-    return JSON.stringify({
-      url: location.href,
-      x: window.scrollX || 0,
-      y: window.scrollY || 0,
-    })
+    return { url: location.href, x: window.scrollX || 0, y: window.scrollY || 0 }
   } catch (error) {
-    return JSON.stringify({ url: '', x: 0, y: 0 })
+    return { url: '', x: 0, y: 0 }
   }
 })()";
 
