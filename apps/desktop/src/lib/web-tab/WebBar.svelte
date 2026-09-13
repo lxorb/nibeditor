@@ -17,7 +17,7 @@
    *
    *  Nothing here decides anything. Every press is handed up to the tab. */
 
-  import { onMount } from 'svelte'
+  import { onMount, untrack } from 'svelte'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
@@ -89,6 +89,19 @@
     if (box && !editing && box.value !== resting) box.value = resting
   })
 
+  /** Whether this tab had nowhere to go when the bar was built, which is the one thing
+   *  `onMount` needs to know and the one moment it cannot ask.
+   *
+   *  Read here, in the instance body, rather than inside `onMount`. A pane is swapped by
+   *  destroying one and building the next, and both happen in the same flush: a read
+   *  from inside the new bar's `onMount` reaches the page through the pane's `$derived`
+   *  at a moment when Svelte has already marked that graph inert, which is
+   *  `derived_inert` and a read of a value nobody is keeping up to date. The instance
+   *  body runs while the parent is building this component, which is the one moment the
+   *  chain is certainly alive - and once is all this wants, which is what `untrack`
+   *  says out loud. */
+  const started = untrack(() => page.url === null)
+
   /** Ctrl+L, read here rather than off the window: an app-level key never reaches
    *  the editor, and this one has to share the chord that selects a line. A pane
    *  showing a page has no editor, so only the bar in the focused pane answers.
@@ -100,7 +113,7 @@
    *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
    *  an address is the only thing to do with an empty tab. */
   onMount(() => {
-    if (page.url === null && focused) take()
+    if (started && focused) take()
 
     const key = (event: KeyboardEvent) => {
       if (!focused || !shortcuts.pressed('web.address', event)) return
@@ -118,7 +131,22 @@
     field?.select()
   }
 
+  /** Whether this bar is still the one on screen.
+   *
+   *  A focus and a blur both arrive from the browser rather than from the app, and a
+   *  pane being swapped takes the keyboard off the field on its way out - so the last
+   *  blur this bar ever gets arrives *during* its own teardown, before any teardown of
+   *  ours could have set a flag. The element's own `isConnected` is the only signal
+   *  that does not depend on the order: a field out of the document is a field whose
+   *  bar has gone, and reading this component's own `$derived` from there is a read of
+   *  a graph Svelte has already marked inert. */
+  function here(): boolean {
+    return field?.isConnected === true
+  }
+
   function onFocus() {
+    if (!here()) return
+
     editing = true
     ontyping(true)
     if (field) field.value = page.url ?? ''
@@ -126,23 +154,11 @@
   }
 
   function onBlur() {
+    if (!here()) return
+
     editing = false
-
-    // A field that is no longer in the page is one the pane has taken away, and this
-    // blur is that removal: swapping the tab under a pane destroys the bar while the
-    // field has the keyboard. Everything below reads something belonging to the pane
-    // - a prop is the parent's derived, read through a getter - and a derived whose
-    // effect is over answers with whatever it last had, which Svelte warns about as
-    // `derived_inert`. So a bar on its way out says nothing at all; what the page
-    // says about typing is put right by the pane itself, in WebTab.svelte.
-    //
-    // Asked of the element rather than kept as a flag, because the order is the
-    // other way round: the blur arrives while the DOM is being taken apart and
-    // before any teardown of ours has run.
-    if (!field?.isConnected) return
-
     ontyping(false)
-    field.value = resting
+    if (field) field.value = resting
   }
 
   function onKeydown(event: KeyboardEvent) {

@@ -70,8 +70,10 @@ PAGES = {
 <body style="margin:0;background:#0080ff;height:100vh">
 <script>
   // The engine raises its own permission request for this, which is the whole point:
-  // nothing in the app asked for it and nothing in the app could have.
-  navigator.mediaDevices.getUserMedia({ video: true }).then(
+  // nothing in the app asked for it and nothing in the app could have. Where you are
+  // rather than the camera, because a machine with no camera answers that one itself
+  // before there is anything to ask about.
+  navigator.geolocation.getCurrentPosition(
     function () {},
     function () {},
   )

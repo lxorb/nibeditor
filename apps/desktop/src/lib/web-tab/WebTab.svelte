@@ -196,6 +196,14 @@
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
 
+      // Nobody is typing in a bar that has gone. The flag is what keeps the page from
+      // rewriting an address somebody is halfway through, and a bar swapped away from
+      // while the field had the keyboard used to leave it set for the tab's whole life:
+      // the tab then took no address from the page it was showing, so the file never
+      // learned where the reading had got to. Asked of the store by id rather than
+      // through the pane's own `$derived`, because that graph is inert by here.
+      pages.of(tab.id).typing = false
+
       // The tab is no longer the one showing. The page goes out of sight and goes on
       // running: a web note is a browser tab, so coming back to it is not a load. The
       // rectangle is the one the page was last placed at rather than one measured now,
@@ -209,22 +217,6 @@
   // rather than at the site's front door.
   $effect(() => {
     if (page.url !== null && page.url !== tab.address) workspace.webWalked(tab, page.url)
-  })
-
-  // Nobody is typing in a bar that is not there.
-  //
-  // The field may well have had the keyboard when the pane went - swapping the tab
-  // under it is exactly that, and so is closing it - and the blur that would have
-  // said so never comes, because the listener goes with the component. A page left
-  // saying somebody is typing takes no further address from the page it is showing
-  // (see `heard` in pages.svelte.ts), so its bar would show where the reader was
-  // when they last touched it and nothing they clicked afterwards.
-  $effect(() => {
-    const id = tab.id
-
-    return () => {
-      pages.of(id).typing = false
-    }
   })
 
   // A website in the space keeps itself, the way a note in a space does: as soon as
@@ -329,11 +321,9 @@
       menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
     onsite={() => (showingSite = !showingSite)}
     ontyping={(on: boolean) => {
-      // The store rather than `page` above. This arrives from the field's own blur,
-      // which is exactly the event a pane fires while it is swapping the tab under
-      // it: by then the derived belongs to an effect that is gone, and Svelte says
-      // so - `derived_inert`, and the page it would hand back may be the tab
-      // before this one's. The tab's id is a prop and is true whenever this runs.
+      // By id, for the reason the teardown above says: a blur arrives while the pane is
+      // being taken apart, and the page this pane's `$derived` would answer with is a
+      // value nobody is keeping up to date any more.
       pages.of(tab.id).typing = on
     }}
   />
