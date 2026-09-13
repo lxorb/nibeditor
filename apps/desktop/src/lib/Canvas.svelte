@@ -667,9 +667,15 @@
     // the reader's from the first frame on, and a window being resized is no
     // reason at all to move the plane out from under them.
     if (placed) return
-
     placed = true
-    store.fit(width, height)
+
+    // Unless the reader already has a view of their own. A canvas surface is torn
+    // down and built again when its tab is switched away from and back, and when the
+    // note is opened again, and the camera is kept across all of those - on the tab
+    // for a switch, on this device for a reopen - so a plane that is already framed is
+    // left exactly where the reading was. Fitting it here is what used to lose the
+    // place on a switch back. See `framed`, and canvas/place.ts.
+    if (!store.framed) store.fit(width, height)
   }
 
   function planeAt(event: { clientX: number; clientY: number }): Point {

@@ -37,6 +37,7 @@ import {
   writeCanvas,
 } from './format'
 import { pickedBox } from './edits'
+import { viewKept, viewOf } from './place'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
 import { afterQuiet } from '../timing'
@@ -114,6 +115,18 @@ export class CanvasStore implements PlaneSurface {
     this.tab = tab
     this.note = tab.note
     this.read()
+
+    // Where this device left the plane, so opening the canvas again - tomorrow, or
+    // after the app is started again - lands where the reading was rather than fitting
+    // the whole plane. Only for a tab with no view of its own yet: a tab still open has
+    // kept its camera across the switch away and back (the camera lives on the tab, not
+    // here), and that one is newer than anything written down. The `!store.framed` guard
+    // in Canvas.svelte keeps the opening fit off a view restored this way. See place.ts.
+    if (this.tab.camera === undefined) {
+      const kept = viewOf(this.tab.path)
+      if (kept) this.tab.camera = kept
+    }
+
     drawn.add(new WeakRef(this))
   }
 
@@ -281,6 +294,11 @@ export class CanvasStore implements PlaneSurface {
    *  plane is closing. */
   part() {
     this.writing.flush()
+
+    // Where the reading was left, for this device: coming back to the plane, or opening
+    // it again, lands here. Only once it has been framed, so an empty plane nobody moved
+    // is not written down as the origin over a view it might have had. See place.ts.
+    if (this.framed) viewKept(this.tab.path, this.camera)
   }
 
   /** Brings the surface up to words that changed under it: a version restored, a
