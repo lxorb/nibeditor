@@ -378,6 +378,10 @@ settings.get('/', async (context) => {
   })
 })
 
+/** How much of an unknown name the answer says back. A setting is named by a word,
+ *  so anything past this is not a name; see the refusal below. */
+const NAMED = 64
+
 /** Changes what is sent and leaves the rest as it was. */
 settings.patch('/', async (context) => {
   const user = context.get('user')
@@ -388,7 +392,11 @@ settings.patch('/', async (context) => {
     // Asked of the map itself, never through it: `KNOWN['__proto__']` reaches
     // Object's own and would be called as though it were a check.
     const check = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined
-    if (!check) return context.json({ error: `unknown setting ${name}` }, 400)
+    // As much of the name as is worth saying back. Enough to recognise a typo, and
+    // a bound on a string that arrived from outside and goes back out in an answer:
+    // the app shows an error, the log keeps it, and neither wants a kilobyte of
+    // somebody's own text because they wrote it as a field name.
+    if (!check) return context.json({ error: `unknown setting ${name.slice(0, NAMED)}` }, 400)
 
     const wrong = check(value)
     if (wrong) return context.json({ error: wrong }, 400)

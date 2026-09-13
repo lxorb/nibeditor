@@ -325,6 +325,24 @@ describe('a name that is not a setting', () => {
     }
   })
 
+  /** The name goes back out in the answer, and an answer is shown, logged and kept.
+   *  A field name is a word, so there is no honest reason for one to be a kilobyte of
+   *  somebody else's text - and every reason not to carry one back. */
+  test('says back as much of it as is worth saying and no more', async () => {
+    const long = `weather${'A'.repeat(5000)}`
+    const response = await call(env, '/v1/settings', {
+      method: 'PATCH',
+      token,
+      raw: JSON.stringify({ [long]: true }),
+      headers: { 'content-type': 'application/json' },
+    })
+
+    expect(response.status).toBe(400)
+    // Enough to recognise the typo that caused it.
+    expect(response.json.error).toContain('unknown setting weather')
+    expect(response.json.error.length).toBeLessThanOrEqual('unknown setting '.length + 64)
+  })
+
   test('leaves the settings as they were', async () => {
     await patch({ ligatures: true })
     await call(env, '/v1/settings', {
