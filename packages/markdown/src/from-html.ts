@@ -19,6 +19,7 @@
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
+import { safeHref, safeSrc } from './html'
 import { asWords } from './words'
 
 /** What a note never contains.
@@ -165,6 +166,35 @@ function fenceFor(code: string): string {
   return '`'.repeat(Math.max(3, longest + 1))
 }
 
+/** What a fence's language may look like: a word, a version, a `c++` or a `c#`.
+ *  Anything else a page wrote in the attribute is not a language. */
+const A_LANGUAGE = /^[\w+#.-]{1,24}$/
+
+/** The two languages a page does not get to choose for somebody's note.
+ *
+ *  A fence's language comes off the page's own markup, so a clipped article decides
+ *  what kind of block the note holds - and these two are not blocks that show
+ *  something. ` ```query ` runs a search over the reader's own space the moment the
+ *  note is rendered, with nothing pressed; ` ```ai ` reads its own body as a prompt
+ *  and puts an Ask glyph on the fence, so the body a page wrote is a question the
+ *  reader is invited to send, with their note attached. Neither is a page's decision
+ *  about somebody's note, so a clip naming one arrives as a fence with no language at
+ *  all - the characters, which is what a clip is.
+ *
+ *  What is deliberately *not* here: `js` and its spellings, and the drawn ones -
+ *  `mermaid`, `chart`, `flow`, `sequence`. A clipped page of developer documentation
+ *  is the commonest clip there is, and its fences say `js` and `mermaid`; taking the
+ *  language off them would cost the highlighting and the diagram on every one of them
+ *  to prevent a glyph the reader has to press, which runs in a frame sandboxed with
+ *  `allow-scripts` and nothing else (see packages/editor/src/run/run.ts) - the same
+ *  thing that happens when somebody types a fence themselves. A page writing the
+ *  characters of a `js` block into a note it was clipped from is the clip working.
+ *
+ *  Written here rather than imported because the editor owns the runners and it is
+ *  this package's dependent, not its dependency; `packages/editor`'s languages.test.ts
+ *  is what holds the two sides to each other. */
+const THE_APP_S_OWN = new Set(['ai', 'query'])
+
 /** The language a code block names, from the class or the attribute either half
  *  of it carries.
  *
@@ -179,11 +209,18 @@ function languageOf(pre: Element): string {
   for (const one of [pre, code]) {
     const named = one?.getAttribute('data-language') ?? one?.getAttribute('data-lang') ?? ''
     const first = named.trim().split(/\s+/)[0]
-    if (first) return first
+    if (first) return named_(first)
   }
 
   const classes = `${pre.className} ${code?.className ?? ''}`
-  return /(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? ''
+  return named_(/(?:language|lang)-(\S+)/.exec(classes)?.[1] ?? '')
+}
+
+/** The language as the note may write it, or nothing at all: a word of the shape a
+ *  language has, and not one of the app's own. */
+function named_(said: string): string {
+  const language = said.toLowerCase()
+  return A_LANGUAGE.test(language) && !THE_APP_S_OWN.has(language) ? said : ''
 }
 
 /** What numbering the lists of a conversion did, counted.
@@ -519,8 +556,16 @@ function converter(options: FromHtmlOptions): TurndownService {
   // backslash and the brackets are already dealt with.
   service.addRule('link', {
     filter: (node) => node.nodeName === 'A' && !!node.getAttribute('href'),
-    replacement: (content, node) =>
-      `[${content}](${destination(node.getAttribute('href') ?? '')}${titleOf(node)})`,
+    replacement: (content, node) => {
+      const href = node.getAttribute('href') ?? ''
+      // A page's link may name `javascript:` or a `data:` document, and a note is a
+      // file that outlives the page it came from: every surface refuses such a
+      // target when it renders one - see `safeHref` - so the note does not carry it
+      // either. The words stay, which is what an unresolvable link is anywhere.
+      if (!safeHref(href)) return content
+
+      return `[${content}](${destination(href)}${titleOf(node)})`
+    },
   })
 
   // The two things a picture says, and no `title`, which is the one place it
@@ -533,7 +578,10 @@ function converter(options: FromHtmlOptions): TurndownService {
     filter: 'img',
     replacement: (_content, node) => {
       const source = node.getAttribute('src') ?? ''
-      if (!source) return ''
+      // The same rule a link goes through, and the one difference `safeSrc` makes:
+      // a small picture may travel inside the document as a `data:` image, and an
+      // SVG is a document rather than a picture so it is not one of those.
+      if (!source || !safeSrc(source)) return ''
 
       const alt = altOf(node)
       return `![${alt}](${destination(options.image ? options.image(source, alt) : source)})`

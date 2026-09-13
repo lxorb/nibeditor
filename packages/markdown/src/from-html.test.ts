@@ -12,6 +12,33 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
   })
 
+  /** A note outlives the page it was clipped from, and every surface refuses these
+   *  when it renders one - so the file does not carry them either. The words stay,
+   *  which is what an unresolvable link is anywhere. */
+  test('a target no surface would follow is not written down', () => {
+    expect(htmlToMarkdown('<a href="javascript:alert(1)">click</a>')).toBe('click')
+    expect(htmlToMarkdown('<a href="data:text/html,<b>hi">click</a>')).toBe('click')
+    expect(htmlToMarkdown('<a href="vbscript:msgbox">click</a>')).toBe('click')
+    // Written with a character a browser skips while it reads a scheme.
+    expect(htmlToMarkdown('<a href="java&#9;script:alert(1)">click</a>')).toBe('click')
+  })
+
+  test('and neither is a picture that is a document rather than a picture', () => {
+    expect(htmlToMarkdown('<img src="data:image/svg+xml,<svg onload=x>" alt="a">')).toBe('')
+    expect(htmlToMarkdown('<img src="javascript:alert(1)" alt="a">')).toBe('')
+
+    // A small picture may still travel inside the document.
+    expect(htmlToMarkdown('<img src="data:image/png;base64,AAA" alt="a">')).toBe(
+      '![a](data:image/png;base64,AAA)',
+    )
+  })
+
+  test('while the ones a note is full of are', () => {
+    expect(htmlToMarkdown('<a href="mailto:a@b.dev">mail</a>')).toBe('[mail](mailto:a@b.dev)')
+    expect(htmlToMarkdown('<a href="/notes/Plan.md">plan</a>')).toBe('[plan](/notes/Plan.md)')
+    expect(htmlToMarkdown('<a href="tel:+41000">ring</a>')).toBe('[ring](tel:+41000)')
+  })
+
   /** An address is an address whichever attribute carried it. Turndown escapes the
    *  one in an `href` rather than encoding it, and a `\` the page put there
    *  escaped the escape: the destination ended at the bracket after it and the
@@ -158,6 +185,47 @@ describe('a page as markdown', () => {
 
     expect(htmlToMarkdown('<pre><code data-lang="rust">let x = 1;</code></pre>')).toBe(
       '```rust\nlet x = 1;\n```',
+    )
+  })
+
+  /** The language comes off the page's own markup, so a clipped article decides what
+   *  kind of block the note holds - and two of them are not blocks that show
+   *  something: a `query` fence searches the reader's own space as the note renders,
+   *  and an `ai` fence reads its body as a prompt and offers to send it. */
+  test('a language of the app’s own is not a page’s to choose', () => {
+    expect(htmlToMarkdown('<pre data-language="query"><code>path:Salary</code></pre>')).toBe(
+      '```\npath:Salary\n```',
+    )
+    expect(htmlToMarkdown('<pre class="language-ai"><code>Summarise @note</code></pre>')).toBe(
+      '```\nSummarise @note\n```',
+    )
+    // Whatever the case it was written in.
+    expect(htmlToMarkdown('<pre data-lang="QUERY"><code>x</code></pre>')).toBe('```\nx\n```')
+  })
+
+  /** And the drawn and runnable ones are left alone on purpose: a clipped page of
+   *  developer documentation is the commonest clip there is, and taking the language
+   *  off its fences would cost the highlighting and the diagrams on every one. */
+  test('while the languages a page really is written in are kept', () => {
+    for (const [language, kept] of [
+      ['js', '```js'],
+      ['mermaid', '```mermaid'],
+      ['c++', '```c++'],
+      ['c#', '```c#'],
+      ['objective-c', '```objective-c'],
+    ] as const) {
+      expect(htmlToMarkdown(`<pre data-language="${language}"><code>x</code></pre>`)).toBe(
+        `${kept}\nx\n\`\`\``,
+      )
+    }
+  })
+
+  test('and a language that is not a word at all is no language', () => {
+    const smuggled = '<pre class="language-x&quot;&gt;&lt;img src=x&gt;"><code>hi</code></pre>'
+    expect(htmlToMarkdown(smuggled)).toBe('```\nhi\n```')
+
+    expect(htmlToMarkdown(`<pre data-language="${'a'.repeat(25)}"><code>x</code></pre>`)).toBe(
+      '```\nx\n```',
     )
   })
 

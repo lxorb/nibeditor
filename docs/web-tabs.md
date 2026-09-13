@@ -341,6 +341,14 @@ functions the clipper extension uses: `@nib/markdown/from-html` for the words an
 extension writes them. A page clipped from a tab, the same page clipped from the
 extension and a page pasted into a note come out as the same markdown.
 
+What none of the three carries out of a page: a link or a picture whose target no
+surface would follow anyway - `javascript:`, a `data:` document, an SVG standing in
+for an image - which the converter now drops rather than writing into a file that
+outlives the page; and a fence saying `query` or `ai`, which are the two fence
+languages that do something rather than show something. Every other language a page
+names is kept, `js` and `mermaid` included: a clipped page of documentation is the
+commonest clip there is. See `THE_APP_S_OWN` in `packages/markdown/src/from-html.ts`.
+
 On a desktop the crate reads the page with a script in the site's own document, so
 what is clipped is what the reader can see rather than what the server sent. What
 somebody has selected wins; with nothing selected it takes the article - the

@@ -75,6 +75,12 @@ const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
 const MARKDOWN_LINK =
   /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))\s*(?:"[^"\n]*"|'[^'\n]*')?\s*\)/g
 
+/** How many links one note is read for. Far past any note anybody writes - a map of
+ *  content points at a few hundred things - and a bound on what one file can cost
+ *  every surface that renders it. The crate keeps the same number; see `MOST_LINKS`
+ *  in apps/desktop/src-tauri/src/links.rs. */
+export const MOST_LINKS = 5000
+
 /** A block's name: `^abc123` at the end of it, on its own or after a space. */
 const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*$/
 
@@ -347,10 +353,17 @@ export function findLinks(text: string): FoundLink[] {
   const found: FoundLink[] = []
 
   for (const row of lines(text)) {
+    // A note that says where it points five thousand times has said it; see
+    // `MOST_LINKS`. The reading stops rather than the walk, because every caller
+    // holds what comes back: a note arrives from a share, a room, a folder somebody
+    // synced or a page somebody clipped, and one megabyte of `[[A]]` is two hundred
+    // thousand of these objects for one file. The same ceiling the space-wide index
+    // in src-tauri/src/links.rs keeps, for the same reason.
+    if (found.length >= MOST_LINKS) break
     if (!row.code) collect(withoutCode(row.text), row.from, row.line, found)
   }
 
-  return found
+  return found.length > MOST_LINKS ? found.slice(0, MOST_LINKS) : found
 }
 
 /** One line of some markdown, and whether it is code. */

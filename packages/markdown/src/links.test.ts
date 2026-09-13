@@ -14,6 +14,7 @@ import {
   isTabFile,
   isVideoTarget,
   isWebTarget,
+  MOST_LINKS,
   linkTarget,
   pageFragment,
   parseWikilink,
@@ -471,5 +472,26 @@ describe('the part of a note a link points into', () => {
 
   test('and a note with no heading named is the whole of it', () => {
     expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
+  })
+})
+
+/** A note arrives from a share, a room, a folder somebody synced or a page somebody
+ *  clipped, and every surface that renders one holds what this answers. */
+describe('how many links one note is read for', () => {
+  test('is the same ceiling the crate keeps', () => {
+    expect(MOST_LINKS).toBe(5000)
+  })
+
+  test('and a note that says it more often than that is read to the ceiling', () => {
+    const many = findLinks(['[[A]] '.repeat(4000), '[[B]] '.repeat(4000), ''].join('\n'))
+
+    expect(many).toHaveLength(MOST_LINKS)
+    // What is there is still read properly: the ceiling stops the reading rather
+    // than changing it.
+    expect(many[0]?.target).toBe('A')
+  })
+
+  test('while a note anybody wrote is read whole', () => {
+    expect(findLinks('see [[A]] and [[B]]')).toHaveLength(2)
   })
 })
