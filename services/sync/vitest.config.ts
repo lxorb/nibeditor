@@ -1,6 +1,14 @@
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  /** What a recovery code costs to hash, turned down for the tests and nowhere else.
+   *
+   *  The number the Worker uses is a constant in src/second.ts and a test asserts it;
+   *  this is how the file that enrols a hundred times over runs in seconds rather than
+   *  minutes. Here rather than in the source because a build is the one thing a running
+   *  Worker cannot talk to: wrangler defines nothing, so the name does not exist in a
+   *  deployed bundle. See `recoveryCost`. */
+  define: { __TESTING__: 'true' },
   test: {
     // Vitest's default is five seconds, which is a wall-clock budget and nothing
     // else. A handful of these tests do a great deal of honest work against the

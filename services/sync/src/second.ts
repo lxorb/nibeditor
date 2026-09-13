@@ -66,24 +66,35 @@ const RECOVERY_BYTES = 10
  *  can migrate, and the bare digests written before this still have to work. */
 const RECOVERY_VERSION = '2'
 /** What hashing one recovery code costs, in PBKDF2 rounds. A hundred thousand is the
- *  number, and the only reason it is not written straight into the call below is the
- *  knob under it. */
+ *  number, and the only reason it is not written straight into the derivation below is
+ *  the cost of running the tests; see `recoveryCost`. */
 export const RECOVERY_ROUNDS = 100_000
-let rounds: number = RECOVERY_ROUNDS
 
-/** Turns the cost down. For tests, and for nothing else.
+/** What the tests hash at. What a test about the ceiling on guesses counts is tries,
+ *  not seconds: the file spends a hundred derivations, which at the real cost is two
+ *  and a half minutes of a machine doing arithmetic nothing is measuring, and on a
+ *  loaded one a timeout. */
+const ROUNDS_UNDER_TEST = 200
+
+/** Whether the test runner built this. Defined by services/sync/vitest.config.ts and
+ *  by nothing else - wrangler defines nothing - so in a deployed Worker the name does
+ *  not exist at all and `typeof` is what says so. */
+declare const __TESTING__: boolean | undefined
+
+/** What a recovery code is hashed at here.
  *
- *  What a test about the ceiling on guesses counts is tries, not seconds: spending a
- *  ceiling of twenty from four accounts is sixty derivations plus the forty that
- *  writing the lists cost, and at production cost that is half a minute of a machine
- *  doing arithmetic nothing is measuring. A test asserts the number above is still a
- *  hundred thousand, so turning it down here cannot quietly become the default.
+ *  A question about the build and about nothing that runs. This replaced an exported
+ *  setter over a module `let`: anything in the bundle could have called it at any
+ *  moment, and every code written afterwards - for the life of the isolate, for any
+ *  account that enrolled - would have been hashed at whatever it said. Nothing called
+ *  it, and a deploy carried it anyway, which is the part worth removing rather than
+ *  the part worth trusting.
  *
- *  A function rather than a binding on the environment: a binding is configuration,
- *  and a deploy that mistyped one would weaken every code at rest without anybody
- *  writing a line of code. Nothing in the Worker calls this. */
-export function costRecoveryLess(count: number): void {
-  rounds = count
+ *  Not a binding on the environment either: a binding is configuration, and a deploy
+ *  that mistyped one would weaken every code at rest without anybody writing a line
+ *  of code. A cost is not configuration. */
+export function recoveryCost(): number {
+  return typeof __TESTING__ !== 'undefined' && __TESTING__ ? ROUNDS_UNDER_TEST : RECOVERY_ROUNDS
 }
 
 /** RFC 4648 base32, unpadded, which is the only way an authenticator app takes a
@@ -216,8 +227,12 @@ export function recoveryCodes(): string[] {
 }
 
 /** One recovery code as it is stored: derived, not digested. See the constants
- *  above for why, and for what the version in front of it is for. */
-async function recoveryHash(userId: string, code: string): Promise<string> {
+ *  above for why, and for what the version in front of it is for.
+ *
+ *  The cost is an argument, so that what a row was written at is something a caller
+ *  said rather than something the module was holding; every caller here says
+ *  `recoveryCost()`. */
+export async function recoveryHash(userId: string, code: string, rounds: number): Promise<string> {
   const material = await crypto.subtle.importKey('raw', encoder.encode(code), 'PBKDF2', false, [
     'deriveBits',
   ])
@@ -250,7 +265,7 @@ async function writeRecovery(env: Env, userId: string): Promise<string[]> {
     await env.DB.prepare(
       'insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)',
     )
-      .bind(userId, await recoveryHash(userId, code))
+      .bind(userId, await recoveryHash(userId, code, recoveryCost()))
       .run()
   }
 
@@ -316,7 +331,7 @@ export async function accepted(
     `update recovery_codes set used_at = ?1
       where user_id = ?2 and code_hash in (?3, ?4) and used_at is null`,
   )
-    .bind(now(), userId, await recoveryHash(userId, tidied), await sha256(tidied))
+    .bind(now(), userId, await recoveryHash(userId, tidied, recoveryCost()), await sha256(tidied))
     .run()
 
   return !!spent.meta.changes

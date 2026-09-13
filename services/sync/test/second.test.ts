@@ -6,22 +6,14 @@ import { sha256 } from '../src/crypto'
 import {
   base32,
   codeAt,
-  costRecoveryLess,
   matches,
   newSecret,
   otpauth,
   RECOVERY_ROUNDS,
   recoveryCodes,
+  recoveryCost,
+  recoveryHash,
 } from '../src/second'
-
-/** What a recovery code costs to hash, turned down for this file.
- *
- *  Every enrolment here writes ten hashed codes and every wrong guess reads one, so
- *  the tests about the ceiling on guesses spend a hundred derivations - which at the
- *  real cost is most of a minute of arithmetic no test is measuring, and on a loaded
- *  machine a timeout. What they count is tries. The number the Worker actually uses is
- *  asserted below, so this cannot become the default by being forgotten. */
-costRecoveryLess(200)
 
 /** The nightly job, run to the end: what it hands to `waitUntil` is what it is
  *  doing, so a test that wants the sweep awaits those. */
@@ -59,10 +51,25 @@ const KEPT = { OPENAI_KEY_SECRET: 'a secret for the tests' }
 describe('what a recovery code costs to hash', () => {
   /** The cost is the whole of what hashing them buys: ten bytes behind a hundred
    *  thousand rounds is not a table a leaked database hands anybody. Asserted here
-   *  because this file turns the cost down to run, and a default that quietly became
-   *  two hundred rounds would be the one change nobody would notice. */
+   *  because the test build turns the cost down to run, and a default that quietly
+   *  became two hundred rounds would be the one change nobody would notice. */
   test('is a hundred thousand rounds, whatever a test asks for', () => {
     expect(RECOVERY_ROUNDS).toBe(100_000)
+  })
+
+  /** The cost used to be a module `let` behind an exported setter, which anything in
+   *  the bundle could call at any moment - and a deploy carried it whether or not
+   *  anything did. Now it is a question about the build, so there is nothing to call. */
+  test('and nothing a running Worker can reach says otherwise', async () => {
+    const module: Record<string, unknown> = await import('../src/second')
+
+    expect(Object.keys(module)).not.toContain('costRecoveryLess')
+    // Nothing exported takes a cost and answers nothing, which is the shape a setter
+    // has: what is exported are two constants' worth of answers and the derivation.
+    const setters = Object.entries(module).filter(
+      ([name, held]) => typeof held === 'function' && /^(?:set|cost)/i.test(name),
+    )
+    expect(setters).toEqual([])
   })
 })
 
@@ -311,6 +318,28 @@ describe('signing in with it on', () => {
 
     expect(done.status).toBe(200)
     expect(done.json.token).toBeTruthy()
+  })
+
+  test('and the list a route wrote was hashed at the cost this build hashes at', async () => {
+    const token = await signInWith(env, secret)
+    const made = await call<SecondView>(env, '/v1/second/recovery', {
+      token,
+      body: { code: await codeAt(secret, step() + 1) },
+    })
+    // As it was handed over, dashes and all: that is the string that was hashed.
+    const code = made.json.recovery?.[0] ?? ''
+
+    const user = env.db.prepare("select id from users where email = 'a@b.dev'").get() as {
+      id: string
+    }
+    const held = (
+      env.db.prepare('select code_hash from recovery_codes').all() as { code_hash: string }[]
+    ).map((one) => one.code_hash)
+
+    // The cost is part of what the row says, and the row says what this build hashes
+    // at - so a cost nothing can change at runtime is a cost the rows are proof of.
+    expect(held).toContain(await recoveryHash(user.id, code, recoveryCost()))
+    expect(held).not.toContain(await recoveryHash(user.id, code, recoveryCost() + 1))
   })
 
   test('and a recovery code is not a bare digest of five bytes at rest', async () => {
