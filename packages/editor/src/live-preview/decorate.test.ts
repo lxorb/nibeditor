@@ -8,27 +8,31 @@ import '@nib/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
+import { trustedMarkup } from '../markup'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
 
 /** Somewhere to park the caret that is outside every construct under test. */
 const PARK = '\n\nx'
 
-function state(doc: string, cursor: number) {
+function state(doc: string, cursor: number, trusted = false) {
   return parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        trustedMarkup(trusted),
+      ],
     }),
   )
 }
 
 /** Text the reader never sees. Without a cursor, the caret parks off the sample. */
-function concealed(doc: string, cursor?: number): string[] {
+function concealed(doc: string, cursor?: number, trusted = false): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const pos = cursor ?? full.length
-  const { atomic } = buildDecorations(state(full, pos))
+  const { atomic } = buildDecorations(state(full, pos, trusted))
 
   const out: string[] = []
   atomic.between(0, full.length, (from, to) => {
@@ -784,5 +788,41 @@ describe('what a keystroke in a note full of code costs', () => {
     const other = headers('```ts setup\nlet a = 1\n```\n\nx', 28)[0]
 
     expect(one && other && one.eq(other)).toBe(false)
+  })
+})
+
+/** A block of the note's own HTML that runs rather than shows: a `<div>` and the
+ *  `<script>` that fills it in.
+ *
+ *  The reading view has drawn the sandboxed click-to-load card for one of these all
+ *  along and the editor drew nothing at all, so half a note was invisible while it
+ *  was being written. The same card here, out of the same markup - see
+ *  html-block.ts - and only where the app says this document's HTML is markup;
+ *  markup.ts is what carries that answer in. */
+describe('an interactive block of HTML', () => {
+  const BLOCK = '<div id="here"></div>\n<script>document.body.textContent = 1</script>'
+
+  test('is replaced by the card that stands for it', () => {
+    expect(concealed(BLOCK, undefined, true)).toEqual([BLOCK])
+  })
+
+  test('is the markup again while the caret is in it', () => {
+    expect(concealed(BLOCK, 4, true)).toEqual([])
+  })
+
+  test('stays the characters it is made of where the HTML is not trusted', () => {
+    expect(concealed(BLOCK)).toEqual([])
+  })
+
+  /** HTML that only shows something needs no card and never did: it goes through the
+   *  renderer as markup, and in the editor it is the markup it is. */
+  test('leaves a block that only shows something alone', () => {
+    expect(concealed('<div class="card">\n  <p>Wind.</p>\n</div>', undefined, true)).toEqual([])
+  })
+
+  test('is the card whatever the note wrote around the script', () => {
+    const inline = '<div>\n<script>\nlet a = 1\n</script>\n</div>'
+
+    expect(concealed(inline, undefined, true)).toEqual([inline])
   })
 })

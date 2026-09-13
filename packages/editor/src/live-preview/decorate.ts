@@ -23,11 +23,13 @@ import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
 import { onEngines } from '@nib/markdown/engines'
 import { readHighlight } from '@nib/markdown/highlights'
+import { htmlBlockCard } from '@nib/markdown/html-block'
 import { blockIdOf, embedKind, linkTarget } from '@nib/markdown/links'
 import { readProperties } from '@nib/markdown/properties'
 import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
+import { trustChanged, trustsMarkup } from '../markup'
 import { noteIndex, resolves } from '../wikilink/notes'
 import { iframeCard, webCard } from '@nib/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
@@ -619,6 +621,18 @@ class Decorator {
       return false
     }
 
+    // A block of the note's own HTML that runs rather than shows: the same
+    // click-to-load card the reading view draws for it, and only where this
+    // document's markup is markup. What runs, runs in a frame with an opaque
+    // origin and never in the app; see html-block.ts and web-frame.ts.
+    const own = trustsMarkup(this.state) ? htmlBlockCard(tag) : null
+    if (own) {
+      if (overlaps(this.state, node.from, node.to)) return true
+
+      this.inlineWidget(node, new WebEmbedWidget(own), false)
+      return false
+    }
+
     return this.image(node)
   }
 
@@ -819,7 +833,10 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
       const sealed =
         update.startState.facet(noReveal) !== update.state.facet(noReveal) ||
         update.startState.facet(numberEquations) !== update.state.facet(numberEquations) ||
-        update.startState.facet(noteIndex) !== update.state.facet(noteIndex)
+        update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
+        // Whether the note's own HTML is markup: a paste or a peer arriving takes
+        // the card an interactive block draws away again, and puts it back.
+        trustChanged(update.startState, update.state)
       const landed = update.transactions.some((one) =>
         one.effects.some((effect) => effect.is(enginesLanded)),
       )

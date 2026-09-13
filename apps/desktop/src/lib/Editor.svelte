@@ -34,6 +34,7 @@
     type StateEffect,
     type StateOptions,
     shortcutEffect,
+    trustedMarkupEffect,
   } from '@nib/editor'
   import { pickedLink } from './composer'
   import { EditorStates, noteKey } from './editor-states'
@@ -41,6 +42,7 @@
   import { modes } from './modes.svelte'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
+  import { trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
   import type { Tab } from './workspace.svelte'
 
@@ -112,6 +114,9 @@
       // The keys the reader chose, so the first keystroke in a note that has
       // just opened is already theirs.
       shortcuts: shortcuts.forEditor,
+      // Whether this note's own HTML is markup, which is what decides whether an
+      // interactive block draws its card; see trust.ts.
+      trustedMarkup: trustsHtmlIn(one.note),
       // What was folded here last time, in the state for the same reason the
       // caret is: folded a frame later is a frame spent looking at the note
       // unfolded. See fold.ts in the editor package.
@@ -143,13 +148,21 @@
    *  The modes and the keys go on only when they are not what the state was built
    *  or last shown for: each of those is a reconfiguration, and reconfiguring
    *  throws away the parse and every decoration on screen. */
-  function fitting(key: string, index: NoteIndex | undefined): StateEffect<unknown>[] {
+  function fitting(
+    key: string,
+    index: NoteIndex | undefined,
+    trusted: boolean,
+  ): StateEffect<unknown>[] {
     const stamp = dressing()
     const dressed = states.fitted(key) === stamp
     states.fit(key, stamp)
 
     return [
       ...(index ? [noteIndexEffect(index)] : []),
+      // Every time, like the index: a page pasted into the note or somebody else
+      // arriving in it takes an interactive block's card away again, and neither
+      // touches anything else in this state.
+      trustedMarkupEffect(trusted),
       ...(dressed ? [] : modeEffects(modes.settings)),
       ...(dressed ? [] : [shortcutEffect(shortcuts.forEditor)]),
     ]
@@ -215,10 +228,14 @@
 
     const key = noteKey(showing)
     const index = notes?.(showing)
+    // Read for its own sake, like the index: whether this note's HTML is markup
+    // changes while it is open - a paste, a peer - and the cards in it have to be
+    // drawn again when it does.
+    const trusted = trustsHtmlIn(showing.note)
 
     untrack(() => {
       const switching = states.current !== key
-      states.show(current, key, () => build(showing), fitting(key, index))
+      states.show(current, key, () => build(showing), fitting(key, index, trusted))
 
       // Another note is another length and another place in it, so the bar
       // shapes itself into its new size rather than appearing in it.

@@ -22,6 +22,7 @@
     "./from-html": "./src/from-html.ts",
     "./highlight": "./src/highlight.ts",
     "./highlights": "./src/highlights.ts",
+    "./html-block": "./src/html-block.ts",
     "./links": "./src/links.ts",
     "./pages": "./src/pages.ts",
     "./paths": "./src/paths.ts",

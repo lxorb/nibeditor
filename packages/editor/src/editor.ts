@@ -18,6 +18,7 @@ import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { linkClicks, linkOpener } from './links'
+import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
 import {
@@ -93,6 +94,10 @@ export interface StateOptions {
    *  when something closed it. The bar is the app's, so the keys can only ask;
    *  see find.ts. */
   onFind?: (ask: FindAsk | null) => void
+  /** Whether the raw HTML in this document is markup rather than the characters it
+   *  is made of, which is the app's answer and nobody else's; see markup.ts. False
+   *  without one, and an interactive block then stays the markup it is. */
+  trustedMarkup?: boolean
 }
 
 export interface EditorOptions extends StateOptions {
@@ -172,6 +177,7 @@ export function editorState(options: StateOptions): EditorState {
       // notes there are comes from the app; see wikilink/index.ts.
       wikilinks(),
       noteIndexExtension(options.notes),
+      trustedMarkup(options.trustedMarkup),
       ...(openNote ? [noteOpener.of(openNote)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
       ...(writeLink ? [linkWriter.of(writeLink)] : []),

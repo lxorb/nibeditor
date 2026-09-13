@@ -171,6 +171,9 @@
       // A `[[` picked in a card is spelled the way one picked in a note is; see
       // composer.ts.
       writeLink: pickedLink,
+      // The plane's own answer about its HTML, which is the surface's; see
+      // trust.ts.
+      trustedMarkup: trusted,
       ...(onfollow ? { openNote: onfollow } : {}),
       openLink: (href: string) => void openExternal(href),
       shortcuts: shortcuts.forEditor,
