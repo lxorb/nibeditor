@@ -96,7 +96,7 @@ describe('how large a room’s document may get', () => {
 
     const again = new RoomState(kept)
     expect(await again.load()).toBe(true)
-    expect(again.doc.getText(TEXT).toString()).toBe(words)
+    expect(again.doc.getText(TEXT).toJSON()).toBe(words)
     // Measured on the way in, so a room woken at the ceiling is still at it.
     expect(again.full()).toBe(true)
   })
@@ -126,7 +126,7 @@ describe('the pieces a room is stored in', () => {
 
     const state = new RoomState(kept)
     expect(await state.load()).toBe(true)
-    expect(state.doc.getText(TEXT).toString()).toBe(doc.getText(TEXT).toString())
+    expect(state.doc.getText(TEXT).toJSON()).toBe(doc.getText(TEXT).toJSON())
   })
 
   test('and are written six digits wide', async () => {
