@@ -3,9 +3,11 @@ package ch.emilvinu.nib
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.appwidget.AppWidgetProviderInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.RemoteViews
@@ -24,10 +26,30 @@ import org.json.JSONObject
  * A note pinned in the app comes first, which is what "open a chosen note" means
  * here. A picker of its own would be a second file list written in a second
  * language, and the app already has the one gesture for keeping a note to hand.
+ *
+ * The same widget is offered to the lock screen as well as the home screen - one
+ * provider, one drawing - and the only difference there is how much room it has:
+ * three rows rather than five, out of the same list of rows. Which surface a
+ * widget is on is something only the host knows, and it says so in that widget's
+ * own options; see `onKeyguard`.
  */
 class NotesWidget : AppWidgetProvider() {
   override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-    for (id in ids) manager.updateAppWidget(id, drawn(context))
+    val state = read(context)
+    for (id in ids) manager.updateAppWidget(id, drawn(context, state, onKeyguard(manager, id)))
+  }
+
+  /** A widget moved between the two surfaces, or resized on either. The host's
+   *  category arrives here and nowhere else: there is no second update for it, so
+   *  a widget dropped on a lock screen would keep the home screen's five rows
+   *  until something else happened to redraw it. */
+  override fun onAppWidgetOptionsChanged(
+    context: Context,
+    manager: AppWidgetManager,
+    id: Int,
+    options: Bundle?,
+  ) {
+    manager.updateAppWidget(id, drawn(context, read(context), onKeyguard(manager, id)))
   }
 
   companion object {
@@ -36,27 +58,50 @@ class NotesWidget : AppWidgetProvider() {
     private val ROWS =
       intArrayOf(R.id.nib_row_0, R.id.nib_row_1, R.id.nib_row_2, R.id.nib_row_3, R.id.nib_row_4)
 
-    /** Draws every widget on the home screen again. Called when the page says the
-     *  rows have changed, and by the launcher on its own schedule. */
+    /** What the lock screen's shorter card holds: the first of the same rows, so
+     *  a sixth note is a row added in one place. Held to `widget_notes_lock.xml`
+     *  by test/android.test.ts. */
+    private val LOCK_ROWS = ROWS.copyOfRange(0, 3)
+
+    /** Draws every widget again, wherever each of them sits. Called when the page
+     *  says the rows have changed, and by the host on its own schedule. */
     fun refresh(context: Context) {
       val manager = AppWidgetManager.getInstance(context) ?: return
       val ids = manager.getAppWidgetIds(ComponentName(context, NotesWidget::class.java))
       if (ids == null || ids.isEmpty()) return
 
-      val views = drawn(context)
-      for (id in ids) manager.updateAppWidget(id, views)
+      val state = read(context)
+      for (id in ids) manager.updateAppWidget(id, drawn(context, state, onKeyguard(manager, id)))
     }
 
-    private fun drawn(context: Context): RemoteViews {
-      val views = RemoteViews(context.packageName, R.layout.widget_notes)
-      val state = read(context)
+    /** Whether one widget is on a lock screen rather than a home screen. The host
+     *  puts its own category in the widget's options; a host that says nothing is
+     *  a home screen, which is what every host before Android 4.2 was. */
+    private fun onKeyguard(manager: AppWidgetManager, id: Int): Boolean {
+      val options = manager.getAppWidgetOptions(id) ?: return false
+      val category =
+        options.getInt(
+          AppWidgetManager.OPTION_APPWIDGET_HOST_CATEGORY,
+          AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN,
+        )
+
+      return category == AppWidgetProviderInfo.WIDGET_CATEGORY_KEYGUARD
+    }
+
+    private fun drawn(context: Context, state: Rows, lock: Boolean): RemoteViews {
+      val views =
+        RemoteViews(
+          context.packageName,
+          if (lock) R.layout.widget_notes_lock else R.layout.widget_notes,
+        )
+      val rows = if (lock) LOCK_ROWS else ROWS
 
       views.setTextViewText(R.id.nib_title, state.title)
       views.setOnClickPendingIntent(R.id.nib_title, command(context, "", 1))
       views.setOnClickPendingIntent(R.id.nib_new, command(context, "new", 2))
       views.setOnClickPendingIntent(R.id.nib_search, command(context, "search-space", 3))
 
-      for ((at, row) in ROWS.withIndex()) {
+      for ((at, row) in rows.withIndex()) {
         val note = state.notes.getOrNull(at)
         if (note == null) {
           views.setViewVisibility(row, View.GONE)

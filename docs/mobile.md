@@ -252,16 +252,50 @@ mean something slightly different from the row it is named after, and an id
 nothing answers to does nothing at all.
 
 **Quick settings**: New note (`new`), Search (`search-space`), and Record
-(`record`), which is another batch's. The recorder's tile is declared with
-`android:enabled="false"`, so the tile picker does not offer it: a row that does
-nothing is worse than a row that is not there. Turn it on in the same commit that
-adds the command; `test/android.test.ts` fails as soon as the command exists and
-the tile is still off.
+(`record`). All three are on and the picker offers all three. The recorder's was
+held back while its command was another batch's - a service the picker does not
+offer is a better answer than a tile that does nothing - and the command landed, so
+no tile is switched off now. `test/android.test.ts` holds both halves: every tile's
+id is a row the app answers to, and no tile is disabled.
 
 **The home screen** has one widget: the space's name and two marks along the top -
 search, and a new note - and then the notes last written in, one per row, each
 opening that note. Five rows, because five is what the layout has; it resizes
 either way and the launcher crops what it was given.
+
+**The lock screen** is offered the same widget. `res/xml/widget_notes.xml` names
+both surfaces in one `android:widgetCategory="home_screen|keyguard"`, and
+`android:initialKeyguardLayout` points at `layout/widget_notes_lock.xml`: the same
+card, the same heading, the same two marks, three rows instead of five, because a
+lock screen offers a card a few rows tall and a row the host crops is a note nobody
+reads. The row ids there are the first three of the home layout's, so the provider
+serves both out of one list and a sixth note stays a row added in one place.
+
+Which surface a copy of the widget is on is something only the host knows: it puts
+its own category into that widget's options, and `onKeyguard` in `Widgets.kt` reads
+`OPTION_APPWIDGET_HOST_CATEGORY` to pick the layout. `onAppWidgetOptionsChanged` is
+the only notice a move between the two surfaces gives, so it redraws; a host that
+says nothing at all is treated as a home screen, which is what every host before
+Android 4.2 was.
+
+Honestly, about where this actually appears. Lock screen widgets arrived in Android
+4.2 (API 17, which is where `keyguard` and `initialKeyguardLayout` come from), were
+taken out of the lock screen again in Android 5.0, and came back in Android 16 -
+first on tablets, where the lock screen has room for a card. So on most phones
+running anything between those, declaring the category changes nothing visible: the
+home screen still offers the widget, the lock screen has nowhere to put one, and
+nothing is broken by asking. Where a surface does exist it is the system's lock
+screen or a manufacturer's - Samsung's One UI has offered its own lock screen
+panel - and the reader adds the widget there rather than in the launcher. A
+launcher's own widget picker never shows the keyguard variant; that picker is the
+home screen's.
+
+None of this has been seen on a device. No emulator runs on Windows on ARM and
+there is no Android phone on the machine this was written on, so what is proven is
+the source and the build: `test/android.test.ts` holds the two layouts, the
+provider and this page to each other, and the `android-check` job assembles the
+release APK with R8 over it. The one thing nobody here has done is watch it appear
+on a lock screen.
 
 A note pinned in the app comes first. That is what "open a chosen note" means
 here: the app already has one gesture for keeping a note to hand, and a picker

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The same widget on a lock screen: the space's name and two marks along the top,
+  then the notes last written in, one per row.
+
+  Every part of it is the home screen's, at the same sizes and in the same
+  colours - see layout/widget_notes.xml, which is the drawing this is a shorter
+  cut of. Three rows rather than five, because a lock screen offers a card a few
+  rows tall and a row the host crops is a note nobody reads. The row ids are the
+  first three of the home layout's, so the provider hands both surfaces the same
+  notes out of one list; see Widgets.kt.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_page"
+    android:orientation="vertical"
+    android:paddingTop="10dp"
+    android:paddingBottom="6dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp">
+
+        <TextView
+            android:id="@+id/nib_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/widget_muted"
+            android:textSize="13sp"
+            android:text="@string/app_name" />
+
+        <ImageView
+            android:id="@+id/nib_search"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_search"
+            android:tint="@color/widget_text"
+            android:contentDescription="@string/widget_search" />
+
+        <ImageView
+            android:id="@+id/nib_new"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="9dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_new"
+            android:tint="@color/widget_text"
+            android:contentDescription="@string/widget_new" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/nib_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingTop="10dp"
+        android:textColor="@color/widget_muted"
+        android:textSize="15sp"
+        android:visibility="gone"
+        android:text="@string/widget_empty" />
+
+    <TextView
+        android:id="@+id/nib_row_0"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_1"
+        style="@style/NibWidgetRow" />
+
+    <TextView
+        android:id="@+id/nib_row_2"
+        style="@style/NibWidgetRow" />
+</LinearLayout>
