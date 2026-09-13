@@ -48,6 +48,7 @@ interface ColourGroup {
 interface GraphSettings {
   filter?: string
   orphans?: boolean
+  attachments?: boolean
   groups?: ColourGroup[]
   spread?: number
   gather?: boolean
@@ -120,6 +121,9 @@ function settingsOf(value: object): GraphSettings {
 
   const orphans = switched(sent.orphans)
   if (orphans !== undefined) out.orphans = orphans
+
+  const attachments = switched(sent.attachments)
+  if (attachments !== undefined) out.attachments = attachments
 
   const groups = groupsOf(sent.groups)
   if (groups !== undefined) out.groups = groups

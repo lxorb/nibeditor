@@ -6,9 +6,10 @@
  *
  *  Everything of one colour is collected into one path and filled once, which is
  *  what keeps the whole picture to a handful of drawing calls however many notes
- *  are in it: six for the nodes, one more per colour group in use, two for the lines
- *  and one for every arrowhead together. Colours come in from the stylesheet, so the
- *  graph is whatever the theme says it is.
+ *  are in it: eight for the nodes - the four kinds, each faint or not - one more per
+ *  colour group in use, a handful for the lines and one for every arrowhead
+ *  together. Colours come in from the stylesheet, so the graph is whatever the theme
+ *  says it is.
  *
  *  What is hidden is hidden here rather than taken out of the graph. A filter, the
  *  orphan switch and the time being scrubbed to all arrive as one byte per node, so
@@ -30,6 +31,11 @@ export function radiusOf(degree: number): number {
 
 /** How faint everything that is not being pointed at goes. */
 const DIMMED = 0.16
+
+/** Half the side of the square a file a note embeds is drawn as, as a fraction of
+ *  the radius a note of the same size would have: close enough in area that a
+ *  picture among notes reads as another shape rather than as a bigger thing. */
+const SQUARE = 0.88
 
 /** How close the view has to be before the names appear, and where they are fully
  *  there. Below the first a label would be smaller than the gaps between the notes;
@@ -229,6 +235,9 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   const litHollow = new Path2D()
   const here = new Path2D()
   const litHere = new Path2D()
+  /** The files the notes embed, which are squares rather than dots. */
+  const files = new Path2D()
+  const litFiles = new Path2D()
   /** Which nodes are on screen and close enough to name, gathered on the way
    *  past so the labels do not walk the whole graph again. */
   const naming: number[] = []
@@ -252,19 +261,28 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
     const brought = highlighting && lit[one] !== 0
     const group = tint[one] ?? -1
 
-    const path =
-      one === current
+    const node = graph.nodes[one]
+    // A file a note embeds is a square rather than a dot, which is the same way the
+    // picture already says a thing is not what its neighbours are: a note the space
+    // has not got is a ring, and a picture is a square.
+    const attached = node?.attachment === true
+
+    const path = attached
+      ? brought
+        ? litFiles
+        : files
+      : one === current
         ? brought
           ? litHere
           : here
         : // A note in a colour group wears its group's colour rather than the plain
           // one, and a note the space does not hold is still a ring: a group says
           // which notes these are, not whether they exist.
-          group >= 0 && graph.nodes[one]?.path !== null
+          group >= 0 && node?.path !== null
           ? brought
             ? (litGrouped[group] ??= new Path2D())
             : (grouped[group] ??= new Path2D())
-          : graph.nodes[one]?.path === null
+          : node?.path === null
             ? brought
               ? litHollow
               : hollow
@@ -272,14 +290,22 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
               ? litPlain
               : plain
 
-    path.moveTo(px + radius, py)
-    path.arc(px, py, radius, 0, Math.PI * 2)
+    if (attached) {
+      // A square of about a dot's area, so a picture among notes is a different
+      // shape rather than a bigger thing.
+      const side = radius * SQUARE
+      path.rect(px - side, py - side, side * 2, side * 2)
+    } else {
+      path.moveTo(px + radius, py)
+      path.arc(px, py, radius, 0, Math.PI * 2)
+    }
 
     if (labelling && naming.length < MOST_LABELS) naming.push(one)
   }
 
   context.globalAlpha = highlighting ? DIMMED : 1
   fill(context, plain, colours.node)
+  fill(context, files, colours.node)
   fill(context, here, colours.current)
   outline(context, hollow, colours.hollow, hair)
   fillGroups(context, grouped, colours.groups)
@@ -287,6 +313,7 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   if (highlighting) {
     context.globalAlpha = 1
     fill(context, litPlain, colours.node)
+    fill(context, litFiles, colours.node)
     fill(context, litHere, colours.current)
     outline(context, litHollow, colours.hollow, hair)
     fillGroups(context, litGrouped, colours.groups)

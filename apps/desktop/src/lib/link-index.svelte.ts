@@ -198,6 +198,22 @@ class Links {
     buildGraph(this.notes, (from, link) => this.resolveFrom(from, link)),
   )
 
+  /** The same space with the files its notes embed in it as nodes of their own.
+   *
+   *  A second derived rather than an argument, because both of these are lazy: a
+   *  space whose card never asks for attachments never builds this one, and a space
+   *  that does asks for it once per change to the index rather than once per frame.
+   *  Which of the two a surface reads is the `attachments` switch; see
+   *  workspace/graph-settings.svelte.ts. */
+  readonly graphWithFiles = $derived.by((): NoteGraph =>
+    buildGraph(this.notes, (from, link) => this.resolveFrom(from, link), { attachments: true }),
+  )
+
+  /** Whichever of the two the card is asking for. */
+  pictureOf(attachments: boolean): NoteGraph {
+    return attachments ? this.graphWithFiles : this.graph
+  }
+
   /** Reads a whole space. Called when a space opens; everything after that is
    *  `noteSaved`.
    *

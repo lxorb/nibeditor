@@ -24,6 +24,9 @@ class FakePath {
   arc() {
     this.steps.push('arc')
   }
+  rect() {
+    this.steps.push('rect')
+  }
   closePath() {
     this.steps.push('closePath')
   }
@@ -38,10 +41,26 @@ interface Stroke {
   colour: string
   dx: number
   dy: number
+  /** The shapes in the path it stroked, so an empty path reads as the nothing it
+   *  is: the drawing hands the card one path per kind whether that kind is in the
+   *  picture or not. */
+  shapes: string[]
 }
 
-function context(): { strokes: Stroke[]; context: CanvasRenderingContext2D } {
+/** One fill, as the context was asked for it: in what colour, and what shapes were
+ *  in the path it filled. */
+interface Fill {
+  colour: string
+  shapes: string[]
+}
+
+function context(): {
+  strokes: Stroke[]
+  fills: Fill[]
+  context: CanvasRenderingContext2D
+} {
   const strokes: Stroke[] = []
+  const fills: Fill[] = []
   let dx = 0
   let dy = 0
   const saved: [number, number][] = []
@@ -57,7 +76,11 @@ function context(): { strokes: Stroke[]; context: CanvasRenderingContext2D } {
     clearRect: () => undefined,
     beginPath: () => undefined,
     arc: () => undefined,
-    fill: () => undefined,
+    fill: (path?: Path2D) =>
+      fills.push({
+        colour: String(fake.fillStyle),
+        shapes: path ? [...(path as unknown as FakePath).steps] : [],
+      }),
     fillText: () => undefined,
     save: () => saved.push([dx, dy]),
     restore: () => {
@@ -69,10 +92,17 @@ function context(): { strokes: Stroke[]; context: CanvasRenderingContext2D } {
       dx += x
       dy += y
     },
-    stroke: () => strokes.push({ wide: fake.lineWidth, colour: String(fake.strokeStyle), dx, dy }),
+    stroke: (path?: Path2D) =>
+      strokes.push({
+        wide: fake.lineWidth,
+        colour: String(fake.strokeStyle),
+        dx,
+        dy,
+        shapes: path ? [...(path as unknown as FakePath).steps] : [],
+      }),
   }
 
-  return { strokes, context: fake as unknown as CanvasRenderingContext2D }
+  return { strokes, fills, context: fake as unknown as CanvasRenderingContext2D }
 }
 
 /** Two notes and the link between them, which is all a width needs. */
@@ -87,12 +117,16 @@ const GRAPH: NoteGraph = {
 const EDGE = '#111'
 const LIT_EDGE = '#222'
 
-/** Every stroke the drawing asked for, at one line width and one device ratio. */
-function all(lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] {
-  const { strokes, context: fake } = context()
+/** Everything the drawing asked for, at one line width and one device ratio. */
+function painted(
+  lines: number,
+  ratio: number,
+  over: Record<string, unknown> = {},
+): { strokes: Stroke[]; fills: Fill[] } {
+  const { strokes, fills, context: fake } = context()
 
   paint(fake, {
-    graph: GRAPH,
+    graph: (over.graph as NoteGraph | undefined) ?? GRAPH,
     x: Float64Array.from([-20, 20]),
     y: Float64Array.from([0, 0]),
     radii: Float64Array.from([4, 4]),
@@ -120,8 +154,11 @@ function all(lines: number, ratio: number, over: Record<string, unknown> = {}): 
     ...over,
   })
 
-  return strokes
+  return { strokes, fills }
 }
+
+const all = (lines: number, ratio: number, over: Record<string, unknown> = {}): Stroke[] =>
+  painted(lines, ratio, over).strokes
 
 /** The strokes of the links themselves, told apart from the node rings by the colour
  *  they are drawn in: the drawing hands the card one path per kind. */
@@ -187,5 +224,40 @@ describe('how wide a link is drawn', () => {
     const lit = all(2, 2, { hovered: 0, lit: Uint8Array.from([2, 1]) })
 
     expect(lit.filter((one) => one.colour === LIT_EDGE).map((one) => one.wide)).toEqual([1])
+  })
+})
+
+/** A file a note embeds is a square rather than a dot, which is how the picture
+ *  already says a thing is not what its neighbours are: a note the space has not got
+ *  is a ring. See `attachment` in graph.ts. */
+describe('a file a note embeds', () => {
+  const EMBEDS: NoteGraph = {
+    nodes: [
+      { id: 'A.md', name: 'A', path: 'A.md', degree: 1, tags: [] },
+      { id: '!shot.png', name: 'shot.png', path: null, degree: 1, tags: [], attachment: true },
+    ],
+    edges: [{ a: 0, b: 1, both: false }],
+  }
+
+  test('is drawn as a square, where a note is drawn as a dot', () => {
+    const { fills } = painted(2, 2, { graph: EMBEDS })
+
+    expect(fills.map((one) => one.shapes)).toContainEqual(['rect'])
+    expect(fills.map((one) => one.shapes)).toContainEqual(['moveTo', 'arc'])
+  })
+
+  test('and never as the ring a note the space has not got wears', () => {
+    const { strokes } = painted(2, 2, { graph: EMBEDS })
+    const rings = strokes.filter((one) => one.colour === '#444')
+
+    // The path for those is handed over whether anything is in it or not, so what
+    // says the square was not one is that it holds no shape at all.
+    expect(rings.flatMap((one) => one.shapes)).toEqual([])
+  })
+
+  test('while a space with none of them asks for no square at all', () => {
+    const { fills } = painted(2, 2)
+
+    expect(fills.map((one) => one.shapes)).not.toContainEqual(['rect'])
   })
 })

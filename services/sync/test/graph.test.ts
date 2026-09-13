@@ -32,6 +32,7 @@ function column(raw: string) {
 const DRAWN = {
   filter: 'tag:work -path:archive',
   orphans: false,
+  attachments: true,
   groups: [{ query: 'tag:work', colour: 2 }],
   spread: 1.5,
   gather: false,

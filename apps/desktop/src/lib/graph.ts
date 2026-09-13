@@ -13,13 +13,14 @@
  *  Pure, so the shape of a graph is a thing tests can state. Where the nodes end
  *  up is `graph-layout.ts`. */
 
-import type { LinkKind } from '@nib/markdown/links'
+import { embedKind, type LinkKind } from '@nib/markdown/links'
 import type { ScannedNote } from './scan-note'
 
 export interface GraphNode {
-  /** A note's path relative to the space, or `?name` for a target the space
-   *  holds no note for. Stable across a rebuild, which is what lets the view
-   *  keep saying "this one" while the index changes underneath it. */
+  /** A note's path relative to the space, `?name` for a target the space holds no
+   *  note for, or `!name` for a file a note embeds. Stable across a rebuild, which
+   *  is what lets the view keep saying "this one" while the index changes
+   *  underneath it. */
   id: string
   /** What the label says: the note's name, or the target as it was written. */
   name: string
@@ -31,6 +32,12 @@ export interface GraphNode {
    *  filter and a colour group ask about. Empty for a note the space does not
    *  hold, since there is nothing to read them out of. */
   tags: string[]
+  /** A picture, a PDF, a sound or a film a note embeds, rather than a note. Absent
+   *  for every ordinary node, so the shape on the wire is what it was; the picture
+   *  draws one as a square rather than a dot, which is how it says a file is not a
+   *  note. See `attachments` in workspace/graph-settings.svelte.ts, which is the
+   *  switch that asks for these at all. */
+  attachment?: true
 }
 
 /** One connection: the note the link was written in, and the note it named.
@@ -113,9 +120,10 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 const CANVAS = /\.canvas$/i
 const EXTENSION = /\.[A-Za-z0-9]{1,8}$/
 
-/** What marks an id as a target nothing answers. A path never starts with it,
- *  so the two kinds of node cannot collide. */
+/** What marks an id as a target nothing answers, and what marks one as a file a
+ *  note embeds. A path never starts with either, so no two kinds of node collide. */
 const MISSING = '?'
+const EMBEDDED = '!'
 
 /** Whether a target names something the space draws as a node.
  *
@@ -127,6 +135,42 @@ const MISSING = '?'
 function namesNote(target: string): boolean {
   const last = target.split('/').pop() ?? target
   return !EXTENSION.test(last) || MARKDOWN.test(last) || CANVAS.test(last)
+}
+
+/** Whether an embed names a file the picture can draw as a node of its own: a
+ *  picture, a PDF, a sound or a film.
+ *
+ *  Only an embed. `[[shot.png]]` written without the bang is a link to a file the
+ *  app opens, and the index already answers for those; what this is about is the
+ *  `![[…]]` and `![](…)` that put a file inside a note, which is how a vault names
+ *  its attachments. A canvas is left to `namesNote` above, which has always read one
+ *  as the note it is.
+ *
+ *  `embedKind` is markdown's own reading of a name, so a picture here is a picture
+ *  everywhere: the editor drawing an embed, the renderer writing the markup and this
+ *  agree by construction. */
+function namesFile(link: { target: string; embed?: boolean }): boolean {
+  if (!link.embed) return false
+
+  const kind = embedKind(link.target)
+  return kind === 'image' || kind === 'audio' || kind === 'video' || kind === 'pdf'
+}
+
+/** The node a file a note embeds gets, made once however many notes embed it.
+ *
+ *  Keyed by the file's own name, folded, so `![[shot.png]]` and `![](assets/shot.png)`
+ *  are the one picture rather than two - which is how a vault's attachments are
+ *  named, and the same reading `missing` gives a name nothing answers. */
+function embedded(nodes: GraphNode[], at: Map<string, number>, target: string): number {
+  const name = target.replace(/\\/g, '/').split('/').pop() ?? target
+  const id = EMBEDDED + name.toLowerCase()
+
+  const held = at.get(id)
+  if (held !== undefined) return held
+
+  at.set(id, nodes.length)
+  nodes.push({ id, name, path: null, degree: 0, tags: [], attachment: true })
+  return nodes.length - 1
 }
 
 /** The node a target with nowhere to go gets, made once however many notes
@@ -144,8 +188,23 @@ function missing(nodes: GraphNode[], at: Map<string, number>, target: string): n
   return nodes.length - 1
 }
 
+/** What a graph is built of besides the notes. */
+export interface GraphOptions {
+  /** Whether the files the notes embed - pictures, PDFs, sounds, films - are nodes
+   *  of their own, each joined to the notes that embed it.
+   *
+   *  Off unless something asks, and that is the point: an attachment is a node the
+   *  arrangement has to make room for, so turning this on is a different picture of
+   *  the space rather than the same one with more drawn on it. See `namesFile`. */
+  attachments?: boolean
+}
+
 /** Every note and every link between two of them. */
-export function buildGraph(notes: readonly ScannedNote[], resolve: Resolve): NoteGraph {
+export function buildGraph(
+  notes: readonly ScannedNote[],
+  resolve: Resolve,
+  options: GraphOptions = {},
+): NoteGraph {
   const nodes: GraphNode[] = notes.map((note) => ({
     id: note.path,
     name: note.name,
@@ -164,10 +223,20 @@ export function buildGraph(notes: readonly ScannedNote[], resolve: Resolve): Not
     if (from === undefined) continue
 
     for (const link of note.links) {
-      if (!link.target || !namesNote(link.target)) continue
+      if (!link.target) continue
 
-      const found = resolve(note.path, link)
-      const to = found === null ? missing(nodes, at, link.target) : at.get(found)
+      // A file a note embeds, when the picture has been asked for them: its own
+      // node, joined to the note that put it there. Before the question below,
+      // because `namesNote` is what says an attachment is not one.
+      const file = options.attachments && namesFile(link)
+      if (!file && !namesNote(link.target)) continue
+
+      const found = file ? null : resolve(note.path, link)
+      const to = file
+        ? embedded(nodes, at, link.target)
+        : found === null
+          ? missing(nodes, at, link.target)
+          : at.get(found)
       // A link into the note it is written in joins nothing.
       if (to === undefined || to === from) continue
 

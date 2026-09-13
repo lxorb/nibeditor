@@ -144,6 +144,79 @@ describe('the space as a graph', () => {
   })
 })
 
+/** What the Attachments switch asks for: the files the notes embed, in the picture
+ *  as nodes of their own. A second graph rather than a mask, because a picture the
+ *  notes have to make room for is a different arrangement; see `GraphOptions`. */
+describe('the files a space embeds', () => {
+  const withFiles = (notes: Record<string, string>) =>
+    buildGraph(scan(notes), () => null, { attachments: true })
+
+  test('are nodes of their own, joined to the notes that embed them', () => {
+    const graph = withFiles({ 'One.md': 'a picture: ![[shot.png]] and ![](assets/other.png)' })
+
+    expect(named(graph).sort()).toEqual(['One', 'other.png', 'shot.png'])
+    expect(joins(graph)).toEqual(['One - other.png', 'One - shot.png'])
+  })
+
+  test('and say so, so the picture can draw one as something other than a note', () => {
+    const graph = withFiles({ 'One.md': '![[shot.png]]' })
+    const file = graph.nodes.find((node) => node.name === 'shot.png')
+
+    expect(file?.attachment).toBe(true)
+    expect(file?.path).toBeNull()
+    expect(graph.nodes.find((node) => node.name === 'One')?.attachment).toBeUndefined()
+  })
+
+  test('a picture, a PDF, a sound and a film, and nothing else', () => {
+    const graph = withFiles({
+      'One.md': '![[shot.png]] ![[paper.pdf]] ![[voice.m4a]] ![[clip.mp4]] ![[Board.canvas]]',
+    })
+
+    // The canvas is a note to the index and always was a node, so it is not one of
+    // these; it is in the picture either way, here as the one this space has not got.
+    expect(named(graph).sort()).toEqual([
+      'Board.canvas',
+      'One',
+      'clip.mp4',
+      'paper.pdf',
+      'shot.png',
+      'voice.m4a',
+    ])
+    expect(
+      graph.nodes
+        .filter((node) => node.attachment)
+        .map((node) => node.name)
+        .sort(),
+    ).toEqual(['clip.mp4', 'paper.pdf', 'shot.png', 'voice.m4a'])
+  })
+
+  /** A file is named by its own name in a vault, so two notes reaching for it by
+   *  different paths are reaching for the one picture. */
+  test('one node per file, however many notes embed it and by whatever path', () => {
+    const graph = withFiles({
+      'One.md': '![[shot.png]]',
+      'Two.md': '![](assets/shot.png)',
+      'Three.md': '![[SHOT.PNG]]',
+    })
+
+    expect(graph.nodes.filter((node) => node.attachment)).toHaveLength(1)
+    expect(joins(graph)).toEqual(['One - shot.png', 'Three - shot.png', 'Two - shot.png'])
+  })
+
+  test('a link to a file rather than an embed of it is still not a node', () => {
+    const graph = withFiles({ 'One.md': 'see [[shot.png]] and [it](assets/other.png)' })
+
+    expect(named(graph)).toEqual(['One'])
+  })
+
+  test('and nothing at all where the switch is off, which is the picture as it was', () => {
+    const graph = space({ 'One.md': '![[shot.png]] and ![](assets/other.png)' })
+
+    expect(named(graph)).toEqual(['One'])
+    expect(graph.edges).toEqual([])
+  })
+})
+
 /** A line of five notes, each linking to the next: One - Two - Three - Four -
  *  Five, plus one note off to the side of Two. */
 const line = () =>

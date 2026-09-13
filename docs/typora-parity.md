@@ -676,7 +676,15 @@ Features Typora does not have, which are the reason this exists.
       the note's own lines, so they narrow nothing rather than quietly emptying the
       view.
       Then: a switch for the notes nothing links to, which in a young space are
-      most of them and all of the clutter; up to six colour groups, each a query
+      most of them and all of the clutter; a switch for the files the notes embed -
+      pictures, PDFs, sounds, films - as nodes of their own, each joined to the notes
+      that embed it and drawn as a square where a note is a dot. Off by default,
+      because unlike every other switch on the card that one is a different graph
+      rather than a different drawing of one: the notes have to make room for the
+      pictures, so the arrangement is made again. One node per file however many
+      notes embed it and by whatever path, which is how a vault names its
+      attachments; a `[[shot.png]]` written without the bang is still a link to a
+      file rather than a node. Then: up to six colour groups, each a query
       and one of the six colours the theme names, tapped to change; one Spread
       dial; a Gather switch; a three-step Lines dial; Arrows; Size by links; the
       space played through in

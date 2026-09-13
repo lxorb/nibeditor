@@ -68,6 +68,7 @@ async () => {
   await note('# Kestrel\\n\\n#later\\n\\nA kestrel over the field, and the [[Weather]].')
   await note('# Weather\\n\\n#later\\n\\nAbout the [[Kestrel]].')
   await note('# Ledger\\n\\n#money\\n\\nNothing points here and it points nowhere.')
+  await note('# Shots\\n\\n#work\\n\\nA picture: ![[shot.png]] and ![](assets/other.png), and a paper ![[paper.pdf]].')
   await note('# Standup\\n\\n#work\\n\\nMonday: [[Wind]]. Tuesday: [[Ink]].')
 
   await ws.loadTree()
@@ -548,6 +549,29 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     )
     page.wait_for_timeout(700)
     shot("groups")
+
+    # The files the notes embed, as nodes of their own. Off in the picture above, so
+    # what this says is how many nodes the switch adds and that they say what they
+    # are: the drawing takes a square for one where a note is a dot.
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: true })")
+    page.wait_for_timeout(1600)
+    shot("attachments")
+    files = page.evaluate(
+        """() => {
+          const nodes = window.nibApp.links.graphWithFiles.nodes
+          return {
+            all: nodes.length,
+            files: nodes.filter((one) => one.attachment).map((one) => one.name).sort(),
+            without: window.nibApp.links.graph.nodes.length,
+          }
+        }"""
+    )
+    say(
+        f"[{name}] {files['without']} nodes without the attachments and {files['all']} with:"
+        f" {files['files']}"
+    )
+    page.evaluate("() => window.nibApp.workspace.graphSettings.set({ attachments: false })")
+    page.wait_for_timeout(1400)
 
     # How wide a link is drawn: the dial's three steps, thin and thick photographed
     # either side of the look the picture arrives with.

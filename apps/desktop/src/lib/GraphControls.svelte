@@ -134,6 +134,22 @@
         <span class="nib-switch" class:on={settings.orphans} aria-hidden="true"></span>
       </button>
 
+      <!-- The files the notes embed, as nodes of their own. Off unless it is asked
+           for, and beside the orphans switch because it is the same question: which
+           things are in the picture at all. Unlike every switch below it this one is
+           a different graph rather than a different drawing of one, so the
+           arrangement is made again - which is honest, since the notes have to make
+           room for the pictures. See `namesFile` in graph.ts. -->
+      <button
+        class="nib-row"
+        role="switch"
+        aria-checked={settings.attachments}
+        onclick={() => workspace.graphSettings.set({ attachments: !settings.attachments })}
+      >
+        <span class="nib-row-label">{t('Attachments')}</span>
+        <span class="nib-switch" class:on={settings.attachments} aria-hidden="true"></span>
+      </button>
+
       <div class="rule"></div>
 
       {#each settings.groups as group, index (index)}

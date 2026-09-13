@@ -69,6 +69,9 @@ export interface GraphSettings {
   filter: string
   /** Whether notes nothing links to are in the picture. */
   orphans: boolean
+  /** Whether the files the notes embed - pictures, PDFs, sounds, films - are in the
+   *  picture as nodes of their own. */
+  attachments: boolean
   groups: ColourGroup[]
   spread: number
   /** Whether the pull towards the middle is on, which is what keeps the notes
@@ -88,6 +91,9 @@ export interface GraphSettings {
 export const DEFAULT_GRAPH: GraphSettings = {
   filter: '',
   orphans: true,
+  // Off: an attachment is a node the arrangement has to make room for, so the
+  // picture a space arrives with is the picture of its notes.
+  attachments: false,
   groups: [],
   spread: 1,
   gather: true,
@@ -138,6 +144,7 @@ export function graphSettingsOf(value: unknown): GraphSettings {
   return {
     filter: isString(value.filter) ? value.filter.slice(0, LONGEST_QUERY) : DEFAULT_GRAPH.filter,
     orphans: isBoolean(value.orphans) ? value.orphans : DEFAULT_GRAPH.orphans,
+    attachments: isBoolean(value.attachments) ? value.attachments : DEFAULT_GRAPH.attachments,
     groups: groupsOf(value.groups),
     spread: held(value.spread, LEAST_SPREAD, MOST_SPREAD, DEFAULT_GRAPH.spread),
     gather: isBoolean(value.gather) ? value.gather : DEFAULT_GRAPH.gather,

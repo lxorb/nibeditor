@@ -55,10 +55,15 @@
     const centre = workspace.panelNote
     if (centre === null) return NOTHING
 
-    // Without the notes the space leaves out, which is the same picture the tab
-    // shows: a note in an archive is not part of what the space says about itself,
-    // so it is not part of the neighbourhood either.
-    return neighbourhood(without(links.graph, workspace.excluded.here), centre, depth)
+    // Without the notes the space leaves out, and with the files its notes embed
+    // where the card has asked for them: the same picture the tab shows, since a note
+    // in an archive is not part of what the space says about itself and a picture a
+    // note holds either is part of it or is not, on both surfaces.
+    return neighbourhood(
+      without(links.pictureOf(workspace.graphSettings.here.attachments), workspace.excluded.here),
+      centre,
+      depth,
+    )
   })
 
   /** Reads a value for its own sake, so the effect around it follows it. */
