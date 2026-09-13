@@ -1,11 +1,18 @@
-/** The drawer follows a finger, and has to decide three things about it: whether
- *  the gesture is the drawer's at all, whether a movement has become a drag, and
- *  where the drawer should land when the finger lifts.
+/** A drawer follows a finger, and there are three things to decide about one:
+ *  whether the gesture is a drawer's at all, whether a movement has become a
+ *  drag, and where the drawer should land when the finger lifts.
  *
  *  Kept apart from the DOM wiring because these are the parts with rules in
  *  them: a flick should win over position, so a short fast swipe opens the
  *  drawer even though the finger never crossed the halfway mark - and a pen
- *  should never win at all. */
+ *  should never win at all.
+ *
+ *  Every rule here is written about one drawer coming out of its own edge, and
+ *  nothing in it names a side or a direction: `fromEdge` turns a screen position
+ *  into a distance from whichever edge is being asked about, and a drag's own
+ *  distance is signed the same way. That is what lets the two drawers - the file
+ *  list on the side the lines start at, and the other side's panel - be one
+ *  engine rather than two. */
 
 /** Pixels the finger must travel before the gesture is treated as horizontal
  *  rather than a scroll. Below this the drawer stays out of the way. */
@@ -54,9 +61,23 @@ export function isFinger(pointer: string): boolean {
  *
  *  Everything below it is written in reading terms rather than screen terms, so
  *  one set of rules covers both directions and no rule mentions a side. `factor`
- *  is 1 or -1; see direction.ts. */
-export function alongLine(x: number, factor: number): number {
+ *  is 1 or -1; see direction.ts.
+ *
+ *  Nobody outside asks this: `fromEdge` below is what a drawer wants, because a
+ *  drawer has an edge of its own rather than a direction. */
+function alongLine(x: number, factor: number): number {
   return factor === 1 ? x : window.innerWidth - x
+}
+
+/** How far a touch is from the edge one drawer comes out of.
+ *
+ *  `sign` is 1 for the drawer on the side the lines start at - the file list - and
+ *  -1 for the one on the other side, so multiplying the reading direction by it
+ *  measures from that drawer's own edge. Under a mirrored interface both edges
+ *  swap with the reading, which they must: a drawer comes out of the side its
+ *  panel is on, and that side is the reading's. */
+export function fromEdge(x: number, factor: number, sign: number): number {
+  return alongLine(x, factor * sign)
 }
 
 /** Whether a finger put down this far along the line may pull the drawer out.
@@ -67,8 +88,9 @@ export function alongLine(x: number, factor: number): number {
  *  drawn on across its whole width, so only a drag beginning within the edge
  *  strip is the sidebar's, which is how tablet apps have always read.
  *
- *  `x` is the distance along the line from `alongLine` above, not a screen
- *  coordinate: a mirrored interface has the strip on its other edge. */
+ *  `x` is the distance from that drawer's own edge, from `fromEdge` above, not a
+ *  screen coordinate: a mirrored interface has the strip on its other edge, and
+ *  the other side's drawer has its strip at the other end. */
 export function opensDrawer(x: number, edge: number, anywhere: boolean): boolean {
   return anywhere || x <= edge
 }

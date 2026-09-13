@@ -29,15 +29,17 @@
   const label = $derived(open ? t('Hide sidebar') : t('Show sidebar'))
 
   /** The one on the right shuts whatever is open there and opens whatever was
-   *  last open - which, on a side that holds one panel, is that panel. The left
-   *  one keeps the method it has always called. */
+   *  last open - which, on a side that holds one panel, is that panel. That rule
+   *  is `nextRight` on the workspace, because the thumb drag that pulls the same
+   *  drawer out follows it too. The left one keeps the method it has always
+   *  called. */
   function press() {
     if (side === 'left') {
       workspace.toggleSidebar()
       return
     }
 
-    const first = workspace.rightPanel ?? workspace.right[0]
+    const first = workspace.nextRight
     if (first) workspace.showPanel(first)
   }
 </script>

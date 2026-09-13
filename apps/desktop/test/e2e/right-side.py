@@ -276,7 +276,101 @@ def onPhone(browser) -> None:
     say(f"the left drawer still opens: {page.evaluate(SIDES)}")
     shot("left-drawer")
 
+    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.wait_for_timeout(700)
+
+    say("--- and a thumb drags it out ---")
+    # A finger in from the right edge, stopped half way across with the finger
+    # still down: the panel has to be part way out, not waiting for the lift.
+    held = page.evaluate(DRAG, {"from": 380, "to": 200, "y": 420, "steps": 9, "hold": True})
+    for one in held[::3]:
+        say(f"    at x={one['x']}: right edge {one['right']}, scrim {one['scrim']:.2f}")
+    say(f"the sides mid-drag: {page.evaluate(SIDES)}")
+    shot("drag-half-way")
+
+    # The rest of the way and off: past halfway it settles open.
+    page.evaluate(DRAG, {"from": 200, "to": 60, "y": 420, "steps": 6, "hold": False})
+    page.wait_for_timeout(700)
+    say(f"after the drag: {page.evaluate(SIDES)}")
+    say(f"and where it landed: {page.evaluate(DRAWER)}")
+    shot("drag-open")
+
+    # Back the other way, which is how a thumb puts it away.
+    back = page.evaluate(DRAG, {"from": 120, "to": 380, "y": 420, "steps": 9, "hold": False})
+    say(f"pushing it back: {[one['right'] for one in back]}")
+    page.wait_for_timeout(700)
+    say(f"after pushing it back: {page.evaluate(SIDES)}")
+    shot("drag-shut")
+
+    # The left drawer's own drag, with the note it moves at the narrow end: the
+    # numbers here are what "the left drawer is untouched" is measured against, so
+    # both sides are put back to shut first and the run is comparable against a
+    # build without any of this in it.
+    say("--- the left drawer's drag is what it was ---")
+    page.evaluate("() => window.nibApp.workspace.closePanel()")
+    page.evaluate("() => window.nibApp.workspace.closePanel('right')")
+    page.wait_for_timeout(700)
+    say(f"from shut: {page.evaluate(SIDES)}")
+    left = page.evaluate(DRAG, {"from": 30, "to": 300, "y": 420, "steps": 9, "hold": True})
+    say(f"the note follows: {[one['note'] for one in left]}")
+    say(f"the sides mid-drag: {page.evaluate(SIDES)}")
+    shot("left-drag-half-way")
+    page.evaluate(DRAG, {"from": 300, "to": 380, "y": 420, "steps": 3, "hold": False})
+    page.wait_for_timeout(700)
+    say(f"after the left drag: {page.evaluate(SIDES)}")
+
     context.close()
+
+
+# A thumb, dragged across the glass a frame at a time, answering where both
+# drawers are at every step of it.
+#
+# Real touch events dispatched in the page: the drag listens for touches and a
+# synthesised mouse is not one. The frames matter as much as the ends - what is
+# under test is that the panel follows the finger rather than arriving when it
+# lifts - so every move reports both layers and the scrim with it.
+DRAG = """
+async (plan) => {
+  const target = document.elementFromPoint(plan.from, plan.y) ?? document.body
+  const fire = (kind, x) => {
+    const touch = new Touch({ identifier: 1, target, clientX: x, clientY: plan.y })
+    target.dispatchEvent(
+      new TouchEvent(kind, {
+        touches: kind === 'touchend' ? [] : [touch],
+        targetTouches: kind === 'touchend' ? [] : [touch],
+        changedTouches: [touch],
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+  }
+
+  const edge = (what) => {
+    const one = document.querySelector(what)
+    if (!one) return null
+    return Math.round(one.getBoundingClientRect().left)
+  }
+
+  const seen = () => ({
+    right: edge('.panels.right'),
+    left: edge('.panels:not(.right)'),
+    note: edge('.document'),
+    scrim: Number(getComputedStyle(document.querySelector('.scrim') ?? document.body).opacity),
+  })
+
+  fire('touchstart', plan.from)
+  const frames = []
+  for (let step = 1; step <= plan.steps; step += 1) {
+    const x = Math.round(plan.from + ((plan.to - plan.from) * step) / plan.steps)
+    await new Promise((go) => requestAnimationFrame(go))
+    fire('touchmove', x)
+    frames.push({ x, ...seen() })
+  }
+
+  if (!plan.hold) fire('touchend', plan.to)
+  return frames
+}
+"""
 
 
 # Where the right drawer is, and whether it is over the note rather than beside

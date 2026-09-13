@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import {
   claimsGesture,
+  fromEdge,
   isFinger,
   opensDrawer,
   ownsEveryTouch,
@@ -15,6 +16,10 @@ vi.stubGlobal('getComputedStyle', (node: { overflowX: string; touchAction: strin
   overflowX: node.overflowX,
   touchAction: node.touchAction,
 }))
+
+/** A screen, for the two rules that measure from an edge of one. */
+const SCREEN = 1280
+vi.stubGlobal('window', { innerWidth: SCREEN })
 
 /** A box the walk can read. Cast because only the members it looks at are worth
  *  writing, and a whole Element would say nothing more. */
@@ -130,6 +135,29 @@ describe('where a drag may start', () => {
   test('on a phone, anywhere: the screen is the width of a thumb', () => {
     expect(opensDrawer(400, 32, true)).toBe(true)
     expect(opensDrawer(8, 32, true)).toBe(true)
+  })
+})
+
+/** The one number that lets the rules above serve both drawers: a distance
+ *  measured from the edge the drawer in question comes out of, so no rule has to
+ *  mention a side or a direction. `sign` is 1 for the drawer on the side the lines
+ *  start at and -1 for the other side's. */
+describe('how far a touch is from a drawer’s own edge', () => {
+  test('reading one way: the near drawer counts from the left, the far one from the right', () => {
+    expect(fromEdge(40, 1, 1)).toBe(40)
+    expect(fromEdge(40, 1, -1)).toBe(SCREEN - 40)
+  })
+
+  test('and the other way round, both edges swap with the reading', () => {
+    expect(fromEdge(40, -1, 1)).toBe(SCREEN - 40)
+    expect(fromEdge(40, -1, -1)).toBe(40)
+  })
+
+  /** Which is the whole of what the edge rule needs: a tablet's trailing strip is
+   *  as near its own edge as the leading one is to the other. */
+  test('so one edge rule covers both sides of a tablet', () => {
+    expect(opensDrawer(fromEdge(SCREEN - 8, 1, -1), 32, false)).toBe(true)
+    expect(opensDrawer(fromEdge(SCREEN / 2, 1, -1), 32, false)).toBe(false)
   })
 })
 
