@@ -452,3 +452,33 @@ describe('a note with nothing much in it', () => {
     expect(core).toContain('Untitled')
   })
 })
+
+/** The six colours a `==highlight==` can be, each mapped to the nearest of the
+ *  seventeen Word's own highlight attribute allows. Word has no palette of its
+ *  own to mix, so this is as near as a highlight can come; what matters is that
+ *  a red one and a green one do not both arrive yellow. */
+describe('a coloured highlight', () => {
+  const TONES = `==plain==, ==🔴 red==, ==🟠 orange==, ==🟢 green==, ==🔵 blue==, ==🟣 violet==\n`
+
+  let xml: string
+
+  beforeAll(async () => {
+    const zip = await JSZip.loadAsync(await toDocx(documentOf(TONES, 'Tones.md'), []))
+    xml = await zip.file('word/document.xml')!.async('string')
+  })
+
+  test('wears the colour it was written in, and no two the same', () => {
+    const used = [...xml.matchAll(/<w:highlight w:val="([a-zA-Z]+)"\/>/g)].map(([, one]) => one)
+
+    expect(used).toEqual(['yellow', 'red', 'darkYellow', 'green', 'cyan', 'magenta'])
+    expect(new Set(used).size).toBe(6)
+  })
+
+  test('keeps the plain highlight yellow, which is what it always was', () => {
+    expect(xml).toContain('<w:highlight w:val="yellow"/>')
+  })
+
+  test('never carries the colour emoji into the words', () => {
+    for (const emoji of ['🔴', '🟠', '🟢', '🔵', '🟣']) expect(xml).not.toContain(emoji)
+  })
+})

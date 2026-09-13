@@ -77,9 +77,14 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       colour chosen sticks: that button, the shortcut and the table's own `h` all
       write it from then on. Drawn from `--canvas-1` and its
       neighbours, the six tones the canvas and the charts already use, so the
-      editor, the reading view, every export and a published page all tint one
-      highlight the same. The emoji itself never reaches a page, an export, a
-      search or the glasses: it is the colour, not a word of the note
+      editor, the reading view, a page and every export tint one highlight the
+      same. The blocks Word, RTF and plain text are written from carry the tone,
+      not just the fact of a highlight: RTF has a colour table of its own and
+      states the six washes exactly, and Word's `w:highlight` takes one of a fixed
+      seventeen names, so there each tone is the nearest of those - red, amber,
+      green, cyan, magenta, and yellow for the plain one. The emoji itself never
+      reaches a page, an export, a search or the glasses: it is the colour, not a
+      word of the note
 - [x] Underline via `<u>`
 - [x] Smart punctuation (curly quotes, en/em dashes, ellipsis), off by default
 - [x] Ligatures: `->`, `<=`, `!=` and the like shown as arrows and signs, in prose and code, text untouched (off by default; the choice follows the account)
@@ -297,7 +302,10 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       is what the sentence under the switch says. The one renderer answers it, so
       the reading view, every export, a card on a canvas, the clipboard HTML
       flavour, a hover preview and a published page cannot disagree about the same
-      note - a published page reads its author's answer off the account. A deck
+      note - a published page reads its author's answer off the account. The
+      blocks Word, RTF and plain text are written from read the same answer from
+      the same place, and a break kept there is Word's own `<w:br/>`, RTF's `\line`
+      and a newline in the text file. A deck
       keeps its single breaks whatever the switch says, because a slide is a poster
       and its lines are placed rather than flowed
 - [x] One setting for how a link to a note is written: `[[wikilinks]]`, which is

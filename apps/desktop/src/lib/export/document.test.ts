@@ -90,6 +90,45 @@ describe('the marks on a run', () => {
   })
 })
 
+/** A `==highlight==` is one of six colours - the plain one and the five Obsidian
+ *  writes an emoji for - and the blocks every document format is written from have
+ *  to say which, or Word and RTF can only guess. See highlights.ts in
+ *  @nib/markdown, the one place that knows the six. */
+describe('the colour a highlight was written in', () => {
+  const marks = (source: string) =>
+    documentOf(source, 'Note.md')
+      .blocks.flatMap((block) => ('spans' in block ? block.spans : []))
+      .filter((span) => span.mark === true)
+
+  test('is absent for a highlight that named no colour of its own', () => {
+    expect(marks('==marked==\n')).toEqual([{ mark: true, text: 'marked' }])
+  })
+
+  test('is the palette tone the emoji names', () => {
+    expect(marks('==🔴 careful==\n')).toEqual([{ mark: true, tone: 1, text: 'careful' }])
+    expect(marks('==🟠 warm==\n')).toEqual([{ mark: true, tone: 2, text: 'warm' }])
+    expect(marks('==🟢 good==\n')).toEqual([{ mark: true, tone: 4, text: 'good' }])
+    expect(marks('==🔵 cool==\n')).toEqual([{ mark: true, tone: 5, text: 'cool' }])
+    expect(marks('==🟣 odd==\n')).toEqual([{ mark: true, tone: 6, text: 'odd' }])
+  })
+
+  test('reaches every run inside the highlight', () => {
+    expect(marks('==🟢 a **b** c==\n').map((span) => [span.text, span.tone])).toEqual([
+      ['a ', 4],
+      ['b', 4],
+      [' c', 4],
+    ])
+  })
+
+  test('never reaches the document as the emoji itself', () => {
+    expect(
+      marks('==🔴 careful==\n')
+        .map((span) => span.text)
+        .join(''),
+    ).not.toContain('🔴')
+  })
+})
+
 describe('footnotes', () => {
   test('are gathered out of the flow, with their own words', () => {
     expect(doc.notes).toHaveLength(1)

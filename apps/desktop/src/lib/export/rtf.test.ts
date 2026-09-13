@@ -554,3 +554,34 @@ describe('pictures', () => {
     expect(rtf).not.toContain('\\pict')
   })
 })
+
+/** The six colours a `==highlight==` can be. RTF has a colour table of the
+ *  document's own, so each tone is the wash the app draws it in rather than the
+ *  nearest of a fixed few, and the plain one keeps the index it always had. */
+describe('a coloured highlight', () => {
+  const TONES = `==plain==, ==🔴 red==, ==🟠 orange==, ==🟢 green==, ==🔵 blue==, ==🟣 violet==\n`
+  const COLOURED = toRtf(documentOf(TONES, 'Tones.md'), [])
+
+  test('names a colour of its own for each of the six', () => {
+    const used = [...COLOURED.matchAll(/\\highlight(\d+) /g)].map(([, one]) => Number(one))
+
+    expect(used).toEqual([5, 6, 7, 8, 9, 10])
+    expect(new Set(used).size).toBe(6)
+  })
+
+  test('puts every one of them in the colour table', () => {
+    const table = /\{\\colortbl;([^}]*)\}/.exec(COLOURED)?.[1] ?? ''
+
+    expect(table.split(';').filter((one) => one.trim() !== '')).toHaveLength(10)
+    expect(table).toContain('\\red250\\green210\\blue215')
+    expect(table).toContain('\\red225\\green217\\blue251')
+  })
+
+  test('closes each of them again', () => {
+    expect(count(COLOURED, /\\highlight0/g)).toBe(6)
+  })
+
+  test('never carries the colour emoji into the words', () => {
+    for (const emoji of ['🔴', '🟠', '🟢', '🔵', '🟣']) expect(COLOURED).not.toContain(emoji)
+  })
+})
