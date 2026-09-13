@@ -141,6 +141,10 @@ pub(crate) fn web_store<R: Runtime>(
 /// Where a web tab's site data goes on nib's own Chromium: the engine's own primary
 /// profile, which is the one line of this seam that is a decision. See above.
 #[cfg(feature = "cef")]
+#[allow(
+    dead_code,
+    reason = "web_tabs.rs is being reworked next door and adopts this call there; the gate goes through the command that file already has"
+)]
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     _app: &AppHandle,

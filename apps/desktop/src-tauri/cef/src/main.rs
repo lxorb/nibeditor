@@ -128,8 +128,10 @@ mod tests {
     #[test]
     fn the_engine_and_its_codegen_come_from_the_checkout() {
         let manifest = include_str!("../Cargo.toml");
+        // The table and not the comment above it that names the same thing, which is
+        // what the first version of this test found instead.
         let patched: Vec<&str> = manifest
-            .split("[patch.crates-io]")
+            .split("\n[patch.crates-io]\n")
             .nth(1)
             .expect("a patch section")
             .lines()
@@ -143,7 +145,7 @@ mod tests {
                 .find(|line| line.starts_with(name))
                 .unwrap_or_else(|| panic!("{name} is not patched"));
             assert!(
-                line.contains(".upstream/tauri/crates/"),
+                line.contains("target/upstream/tauri/crates/"),
                 "{name} does not come from the checkout"
             );
         }
