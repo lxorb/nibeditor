@@ -757,6 +757,11 @@ export const gu: Dictionary = {
   Footnotes: 'તળટીપ',
   'Table of contents': 'અનુક્રમણિકા',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'ફ્રન્ટ મેટર: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'પ્રોપર્ટીઝ પંક્તિઓ બતાવે છે અને ત્યાં જ સંપાદિત કરે છે; સોર્સ એ લખાયેલું YAML છે.',
+  Source: 'સોર્સ',
+  Hidden: 'છુપાયેલું',
   Picture: 'ચિત્ર',
   Comment: 'ટિપ્પણી',
   'Always on top': 'હંમેશાં ઉપર',

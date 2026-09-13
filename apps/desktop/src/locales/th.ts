@@ -746,6 +746,11 @@ export const th: Dictionary = {
   Footnotes: 'เชิงอรรถ',
   'Table of contents': 'สารบัญ',
   'Front matter': 'ส่วนหัวเอกสาร',
+  'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'คุณสมบัติแสดงแถวและแก้ไขได้ที่นั่น ส่วนต้นฉบับคือ YAML ตามที่พิมพ์ไว้',
+  Source: 'ต้นฉบับ',
+  Hidden: 'ซ่อน',
   Picture: 'รูป',
   Comment: 'ความคิดเห็น',
   'Always on top': 'อยู่บนสุดเสมอ',

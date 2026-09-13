@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { propertiesTable, readProperties } from './properties'
+import { renderMarkdown } from './index'
+import { PROPERTIES_MODES, propertiesMode, propertiesTable, readProperties } from './properties'
 
 const said = (source: string) =>
   readProperties(source)?.map((one) => ({
@@ -176,5 +177,58 @@ describe('the rows as markup', () => {
 
   test('and a hostile key cannot either', () => {
     expect(table('---\ntags: ["<b>bold</b>"]\n---\n')).not.toContain('<b>')
+  })
+})
+
+/** The three answers a surface gives about a note's front matter, which is one
+ *  setting read by the editor and by the reading view. */
+describe('the three answers', () => {
+  const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
+
+  test('are the words every reader of the setting knows', () => {
+    expect(PROPERTIES_MODES).toEqual(['properties', 'source', 'hidden'])
+  })
+
+  test('read a saved or shared answer, and the rows for anything else', () => {
+    expect(propertiesMode('source')).toBe('source')
+    expect(propertiesMode('hidden')).toBe('hidden')
+    for (const said of [undefined, null, '', 'rows', true]) {
+      expect(propertiesMode(said), String(said)).toBe('properties')
+    }
+  })
+
+  test('draw the rows, the block as typed, or neither', () => {
+    expect(renderMarkdown(NOTE, { properties: 'properties' })).toContain('class="property ')
+    expect(renderMarkdown(NOTE, { properties: 'source' })).toContain(
+      '<pre class="properties-source">',
+    )
+    const nothing = renderMarkdown(NOTE, { properties: 'hidden' })
+    expect(nothing).not.toContain('property')
+    expect(nothing).not.toContain('properties-source')
+  })
+
+  test('draw nothing at all where the caller did not ask', () => {
+    expect(renderMarkdown(NOTE)).not.toContain('property')
+  })
+
+  test('fall back to the source for a block the rows cannot read', () => {
+    // Which is the answer the editor already gives, and the reason the reading view
+    // has a source of its own to fall back to now rather than nothing.
+    const query = '---\ntitle: A note\n# a comment\n---\n\n# Head\n'
+    expect(readProperties(query)).toBeNull()
+    expect(renderMarkdown(query, { properties: 'properties' })).toContain(
+      '<pre class="properties-source">',
+    )
+  })
+
+  test('escape the block, because a note may hold anything', () => {
+    const hostile = '---\ntitle: <script>bad()</script>\n---\n\n# Head\n'
+    expect(renderMarkdown(hostile, { properties: 'source' })).not.toContain('<script>')
+  })
+
+  test('leave the block out of the note either way', () => {
+    for (const mode of PROPERTIES_MODES) {
+      expect(renderMarkdown(NOTE, { properties: mode }), mode).toContain('<h1>Head</h1>')
+    }
   })
 })

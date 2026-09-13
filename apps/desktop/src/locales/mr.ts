@@ -757,6 +757,11 @@ export const mr: Dictionary = {
   Footnotes: 'तळटिपा',
   'Table of contents': 'अनुक्रमणिका',
   'Front matter': 'फ्रंट मॅटर',
+  'Front matter: {name}': 'शीर्षमाहिती: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'गुणधर्म ओळी दाखवतो आणि तिथेच संपादित करतो; स्रोत म्हणजे लिहिल्याप्रमाणे YAML.',
+  Source: 'स्रोत',
+  Hidden: 'लपवलेले',
   Picture: 'चित्र',
   Comment: 'टिप्पणी',
   'Always on top': 'नेहमी वर',

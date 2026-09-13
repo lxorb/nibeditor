@@ -167,6 +167,10 @@ const CONFLICT_RULES = ['both', 'newest', 'ask']
  *  app, which is where the writing itself is decided. */
 const LINK_FORMATS = ['wikilink', 'shortest', 'relative', 'absolute']
 
+/** What a note's front matter is drawn as, which the app asks with three words;
+ *  see properties.ts in @nib/markdown. */
+const PROPERTIES_MODES = ['properties', 'source', 'hidden']
+
 /** One of a list of numbers, said the way the app would say it. */
 function oneOf(name: string, allowed: readonly number[]): Check {
   return (value) =>
@@ -232,6 +236,7 @@ const KNOWN: Record<string, Check> = {
   // app, so a published note reads the way its author reads it; see blog.ts.
   hardBreaks: switched('hardBreaks'),
   linkFormat: wordOf('linkFormat', LINK_FORMATS),
+  properties: wordOf('properties', PROPERTIES_MODES),
 }
 
 /** How much of any of this an account may hold.

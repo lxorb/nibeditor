@@ -749,6 +749,11 @@ export const ko: Dictionary = {
   Footnotes: '각주',
   'Table of contents': '목차',
   'Front matter': '프런트 매터',
+  'Front matter: {name}': '프런트 매터: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    '속성은 행을 보여 주고 그 자리에서 편집합니다. 원본은 입력한 그대로의 YAML입니다.',
+  Source: '원본',
+  Hidden: '숨김',
   Picture: '그림',
   Comment: '주석',
   'Always on top': '항상 위에',

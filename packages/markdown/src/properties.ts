@@ -13,15 +13,34 @@
  *  whose front matter holds a Dataview query gets their YAML, which is always
  *  right, and everybody else gets rows.
  *
- *  Nothing here writes. The rows are what the block says, and the way to change
- *  one is the way to change anything else in a note: put the caret in it and
- *  type. `frontMatterEdit` next door is for the app setting a key of its own -
- *  an icon, a title - which is a different thing from a reader editing their own
- *  metadata. */
+ *  Nothing here writes. What a row's control writes back is property-edits.ts next
+ *  door, which is built on `frontMatterEdit` so that whatever a control does to a
+ *  note, the note stays plain front matter that every other reader can read. */
 
 import { frontMatterBlock } from './front-matter'
 import { escape } from './html'
 import { flowItems, listItem, unquoted } from './yaml'
+
+/** What a surface does with a note's front matter. Three answers, and every
+ *  surface that shows a whole note reads the same one, so a reader who asked for
+ *  the YAML gets the YAML in the pane and a reader who asked for nothing gets
+ *  nothing in either.
+ *
+ *  `properties` draws the rows, which is where a value is changed in the control
+ *  its shape asks for. `source` draws the block as it was typed, which is what
+ *  somebody with a Dataview query in their metadata wants all the time rather than
+ *  only while the caret is in it. `hidden` draws neither: the metadata is still in
+ *  the file and still read, it is simply not on the page. Obsidian asks the same
+ *  question with the same three answers. */
+export type PropertiesMode = 'properties' | 'source' | 'hidden'
+
+/** The three, in the order they are offered, which is most shown to least. */
+export const PROPERTIES_MODES: readonly PropertiesMode[] = ['properties', 'source', 'hidden']
+
+/** The mode a saved or shared answer names, or the rows for anything else. */
+export function propertiesMode(value: unknown): PropertiesMode {
+  return PROPERTIES_MODES.find((one) => one === value) ?? 'properties'
+}
 
 /** What a value looks like it is, which decides what it is drawn as. */
 export type PropertyKind = 'text' | 'list' | 'number' | 'date' | 'checkbox' | 'map'
@@ -203,6 +222,19 @@ function row(property: Property): string {
     `<span class="property-value" role="cell">${value(property)}</span>` +
     `</div>`
   )
+}
+
+/** The block as it was typed, for a reader who asked for the source and for a block
+ *  whose shape the rows cannot read. Empty where the note has no block at all.
+ *
+ *  A `<pre>` of the characters: the point of asking for the source is that it is the
+ *  file, so nothing here reflows it, colours it or sorts it. Escaped, because a note
+ *  whose metadata holds a `<script>` is a note like any other. */
+export function propertiesSource(source: string): string {
+  const block = frontMatterBlock(source)
+  if (!block) return ''
+
+  return `<pre class="properties-source">${escape(source.slice(block.body.from, block.body.to))}</pre>`
 }
 
 function value(property: Property): string {

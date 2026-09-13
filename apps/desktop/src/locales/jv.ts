@@ -754,6 +754,11 @@ export const jv: Dictionary = {
   Footnotes: 'Cathetan sikil',
   'Table of contents': 'Daftar isi',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'Front matter: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Properti nuduhake larikane lan nyunting ing kono; Sumber yaiku YAML kaya sing ditulis.',
+  Source: 'Sumber',
+  Hidden: 'Didhelikake',
   Picture: 'Gambar',
   Comment: 'Komentar',
   'Always on top': 'Tansah ing ndhuwur',

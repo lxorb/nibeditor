@@ -759,6 +759,11 @@ export const fa: Dictionary = {
   Footnotes: 'پانویس‌ها',
   'Table of contents': 'فهرست مطالب',
   'Front matter': 'پیش‌داده',
+  'Front matter: {name}': 'فرامتن: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'ویژگی‌ها سطرها را نشان می‌دهد و همان‌جا ویرایش می‌کند؛ منبع همان YAML تایپ‌شده است.',
+  Source: 'منبع',
+  Hidden: 'پنهان',
   Picture: 'تصویر',
   Comment: 'یادداشت کنار',
   'Always on top': 'همیشه رو',

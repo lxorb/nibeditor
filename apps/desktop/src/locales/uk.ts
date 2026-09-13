@@ -788,6 +788,11 @@ export const uk: Dictionary = {
   Footnotes: 'Виноски',
   'Table of contents': 'Зміст',
   'Front matter': 'Метадані',
+  'Front matter: {name}': 'Метадані: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Властивості показують рядки й правлять їх на місці; Джерело це YAML так, як його набрано.',
+  Source: 'Джерело',
+  Hidden: 'Приховано',
   Picture: 'Малюнок',
   Comment: 'Коментар',
   'Always on top': 'Поверх усіх вікон',

@@ -743,6 +743,11 @@ export const zhHans: Dictionary = {
   Footnotes: '脚注',
   'Table of contents': '目录',
   'Front matter': '前置元数据',
+  'Front matter: {name}': '前置数据：{name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    '属性以行的形式显示并就地编辑；源码是键入时的 YAML。',
+  Source: '源码',
+  Hidden: '隐藏',
   Picture: '图片',
   Comment: '注释',
   'Always on top': '始终置顶',

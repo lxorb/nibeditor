@@ -20,6 +20,7 @@ import { COVER_MIDDLE, COVER_POSITION_KEY, type Cover, coverOf } from '@nib/mark
 import { frontMatterEdit } from '@nib/markdown/front-matter'
 import { imageResolver } from '../images'
 import { label } from '../labels'
+import { applied, clearOfBlock } from './front-matter'
 import { NibWidget } from './widget'
 
 /** How far one arrow key moves the band, in percent. Five is a nudge you can see
@@ -36,10 +37,20 @@ function inside(value: number): number {
  *  back to the middle asked for the middle, and taking the key away again would be
  *  the app deciding the gesture did not happen. */
 function writePosition(view: EditorView, position: number) {
-  const edit = frontMatterEdit(view.state.doc.toString(), COVER_POSITION_KEY, String(position))
+  const source = view.state.doc.toString()
+  const edit = frontMatterEdit(source, COVER_POSITION_KEY, String(position))
   if (!edit) return
 
-  view.dispatch({ changes: edit, userEvent: 'input.cover.position' })
+  // And the caret out of the metadata, for the reason the rows beside this need the
+  // same: a note opened at the top has a caret at 0, and the first thing written from
+  // a widget would otherwise turn the rows under the band into YAML. See
+  // front-matter.ts.
+  const keep = clearOfBlock(view, applied(source, edit))
+  view.dispatch({
+    changes: edit,
+    ...(keep ? { selection: keep } : {}),
+    userEvent: 'input.cover.position',
+  })
 }
 
 export class CoverWidget extends NibWidget {
@@ -70,11 +81,22 @@ export class CoverWidget extends NibWidget {
 
     // A handle rather than the picture itself, so a drag over a cover is a drag of
     // the cover and never a selection of the text under it.
-    const handle = document.createElement('button')
-    handle.type = 'button'
+    //
+    // A slider and not a button: what it does has a value - how far down the picture
+    // the band is taken from - rather than a press, and a slider is the one thing in
+    // the tab order that says so and that a keyboard already knows the arrow keys for.
+    // A button here would be a promise that Enter does something, and Enter has
+    // nothing to do with placing a picture.
+    const handle = document.createElement('div')
     handle.className = 'nib-cover-drag'
+    handle.tabIndex = 0
+    handle.setAttribute('role', 'slider')
     handle.title = label('dragCover')
     handle.setAttribute('aria-label', label('dragCover'))
+    handle.setAttribute('aria-valuemin', '0')
+    handle.setAttribute('aria-valuemax', '100')
+    handle.setAttribute('aria-orientation', 'vertical')
+    handle.setAttribute('aria-valuenow', String(this.cover.position))
     host.append(handle)
 
     let from = this.cover.position
@@ -85,6 +107,7 @@ export class CoverWidget extends NibWidget {
      *  would be one undo step per pointer event. */
     const show = (position: number) => {
       picture.style.objectPosition = `50% ${position}%`
+      handle.setAttribute('aria-valuenow', String(position))
     }
 
     const moved = (event: PointerEvent) => {

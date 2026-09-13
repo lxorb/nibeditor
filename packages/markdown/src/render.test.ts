@@ -34,7 +34,7 @@ describe('front matter', () => {
    *  what the fixture is for: three readers, one answer. */
   test('a block nobody closed is the note’s own words', () => {
     const open = '---\nstatus: done\n\n# Plan\n'
-    const html = renderMarkdown(open, { properties: true })
+    const html = renderMarkdown(open, { properties: 'properties' })
 
     expect(frontMatter(open)).toBeNull()
     expect(stripFrontMatter(open)).toBe(open)

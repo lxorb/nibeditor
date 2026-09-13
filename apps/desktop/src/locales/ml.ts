@@ -767,6 +767,11 @@ export const ml: Dictionary = {
   Footnotes: 'അടിക്കുറിപ്പുകൾ',
   'Table of contents': 'ഉള്ളടക്കം',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
+  'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'പ്രോപ്പർട്ടീസ് വരികൾ കാണിക്കുകയും അവിടെത്തന്നെ തിരുത്തുകയും ചെയ്യുന്നു; സോഴ്സ് എഴുതിയതുപോലുള്ള YAML ആണ്.',
+  Source: 'സോഴ്സ്',
+  Hidden: 'മറച്ചത്',
   Picture: 'ചിത്രം',
   Comment: 'കമന്റ്',
   'Always on top': 'എപ്പോഴും മുകളിൽ',

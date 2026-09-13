@@ -755,6 +755,11 @@ export const id: Dictionary = {
   Footnotes: 'Catatan kaki',
   'Table of contents': 'Daftar isi',
   'Front matter': 'Front matter',
+  'Front matter: {name}': 'Front matter: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Properti menampilkan barisnya dan menyuntingnya di sana; Sumber adalah YAML seperti yang ditulis.',
+  Source: 'Sumber',
+  Hidden: 'Tersembunyi',
   Picture: 'Gambar',
   Comment: 'Komentar',
   'Always on top': 'Selalu di atas',

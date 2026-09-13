@@ -334,6 +334,22 @@
   content: '';
 }
 
+/* The block as it was typed, for a reader who asked for the source rather than for
+   the rows - and for a block holding a shape nib will not guess at. The characters,
+   set the way code is set, because the point of asking for the source is that it is
+   the file: nothing here reflows it, colours it or sorts it. In the editor the source
+   is the document itself and this is never drawn. */
+#write .properties-source {
+  margin: 0 0 1.6em;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--muted-strong);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  white-space: pre-wrap;
+}
+
 /* ── Charts ──────────────────────────────────────────────────────── */
 
 /* A ` ```chart ` fence. The same frame a diagram sits in, since both are a picture

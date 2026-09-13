@@ -778,6 +778,11 @@ export const it: Dictionary = {
   Footnotes: 'Note a piè di pagina',
   'Table of contents': 'Indice',
   'Front matter': 'Intestazione YAML',
+  'Front matter: {name}': 'Front matter: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Proprietà mostra le righe e le modifica lì; Sorgente è lo YAML come è stato scritto.',
+  Source: 'Sorgente',
+  Hidden: 'Nascosto',
   Picture: 'Immagine',
   Comment: 'Commento',
   'Always on top': 'Sempre in primo piano',

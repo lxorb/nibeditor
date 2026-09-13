@@ -121,6 +121,7 @@ export {
   tooLongToParse,
   setLigatures,
   setLineHeight,
+  setProperties,
   setMeasure,
   remeasure,
   setReadOnlyMode,

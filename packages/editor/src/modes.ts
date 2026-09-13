@@ -17,9 +17,10 @@ import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { isExternal } from './external'
 import { fenceLanguage } from './languages'
+import type { PropertiesMode } from '@nib/markdown/properties'
 import { livePreview } from './live-preview'
 import { noReveal } from './live-preview/reveal'
-import { numberEquations } from './live-preview/blocks'
+import { numberEquations, propertiesMode } from './live-preview/blocks'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
@@ -40,6 +41,9 @@ const typewriter = new Compartment()
 const punctuation = new Compartment()
 const language = new Compartment()
 const equations = new Compartment()
+/** Which of the three answers the note's front matter gets; see properties.ts in
+ *  @nib/markdown and live-preview/properties.ts here. */
+const metadata = new Compartment()
 const spelling = new Compartment()
 const spellWords = new Compartment()
 const brackets = new Compartment()
@@ -289,6 +293,9 @@ export function modeExtensions(length = 0): Extension {
     typewriter.of(typewriterFor(false)),
     punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
+    // The rows, which is where every note starts: the metadata a note carries is
+    // worth reading, and the source is one caret away.
+    metadata.of(propertiesMode.of('properties')),
     // Off until asked for: a checker's wavy lines under prose that is not in
     // its dictionary's language are noise, and most notes start that way.
     spelling.of(spellingFor(false)),
@@ -456,6 +463,8 @@ export interface ModeSettings {
   rtl: boolean
   strict: boolean
   equationNumbers: boolean
+  /** What the note's front matter is drawn as: its rows, its source, or nothing. */
+  properties: PropertiesMode
   spellcheck: boolean
   /** Which dictionary to check against. Absent leaves the choice to the
    *  browser. */
@@ -494,6 +503,7 @@ export function modeEffects(settings: ModeSettings): StateEffect<unknown>[] {
     typewriter.reconfigure(typewriterFor(settings.typewriter)),
     punctuation.reconfigure(punctuationFor(settings.punctuation)),
     equations.reconfigure(numberEquations.of(settings.equationNumbers)),
+    metadata.reconfigure(propertiesMode.of(settings.properties)),
     spelling.reconfigure(spellingFor(settings.spellcheck, settings.dictionary)),
     spellWords.reconfigure(spellWordsFor(joined(settings.words))),
     brackets.reconfigure(bracketsFor(settings.closeBrackets)),
@@ -528,6 +538,11 @@ export function parsedFully(state: EditorState): boolean {
 }
 
 /** Numbers display equations and lets `\eqref` point at them. */
+/** What a note's front matter is drawn as, from now on, in every pane. */
+export function setProperties(view: EditorView, mode: PropertiesMode) {
+  view.dispatch({ effects: metadata.reconfigure(propertiesMode.of(mode)) })
+}
+
 export function setEquationNumbers(view: EditorView, on: boolean) {
   view.dispatch({ effects: equations.reconfigure(numberEquations.of(on)) })
 }

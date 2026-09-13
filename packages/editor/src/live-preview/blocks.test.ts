@@ -1,7 +1,8 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
+import type { PropertiesMode } from '@nib/markdown/properties'
 import { describe, expect, test } from 'vitest'
-import { blockDecorations } from './blocks'
+import { blockDecorations, propertiesMode } from './blocks'
 import { dragFreeze, setDragging } from './dragging'
 import { external } from '../external'
 import { nibMarkdownExtensions } from '../markdown/extensions'
@@ -38,6 +39,9 @@ function spans(doc: string, cursor = 0): string[] {
     .field(blockDecorations)
     .spans.map((span) => doc.slice(span.from, span.to))
 }
+
+/** The compartment the app holds the answer in; see `modeExtensions` in modes.ts. */
+const asked = new Compartment()
 
 const TABLE = '| a | b |\n| - | - |\n| 1 | 2 |'
 const PROSE = 'one **two** three [four](five) `six`\n\nseven eight nine\n\n'
@@ -414,5 +418,73 @@ describe('a note cover', () => {
     // Which is where the rows give way to the YAML: the properties go, the band
     // stays.
     expect(covers(COVERED, COVERED.indexOf('cover:') + 3)).toBe(1)
+  })
+})
+
+/** The three answers a reader can give about a note's front matter, asked once in
+ *  Settings and read here; see properties.ts in @nib/markdown. */
+describe('what the front matter is drawn as', () => {
+  const NOTE = '---\ntitle: A note\ntags: [one]\n---\n\n# Head\n'
+
+  const built = (mode: PropertiesMode, cursor = NOTE.length - 1) =>
+    parsed(
+      EditorState.create({
+        doc: NOTE,
+        selection: EditorSelection.cursor(cursor),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          dragFreeze,
+          propertiesMode.of(mode),
+          blockDecorations,
+        ],
+      }),
+    ).field(blockDecorations)
+
+  const widgets = (mode: PropertiesMode, cursor?: number) => {
+    const names: (string | null)[] = []
+    built(mode, cursor).decorations.between(0, NOTE.length, (_from, _to, value) => {
+      names.push(value.spec.widget?.constructor.name ?? null)
+    })
+    return names
+  }
+
+  test('is the rows, which is where a note with no answer starts', () => {
+    expect(widgets('properties')).toEqual(['PropertiesWidget'])
+  })
+
+  test('is the source, always, where the reader asked for the source', () => {
+    expect(widgets('source')).toEqual([])
+    // And the caret being elsewhere does not bring the rows back.
+    expect(widgets('source', 0)).toEqual([])
+  })
+
+  test('is nothing at all where the reader asked for nothing', () => {
+    // A replacement with no widget in it: the block is still in the file and still
+    // read, it is simply not on the page.
+    expect(widgets('hidden')).toEqual([null])
+  })
+
+  test('and changing the answer redraws without the note or the caret moving', () => {
+    const state = parsed(
+      EditorState.create({
+        doc: NOTE,
+        selection: EditorSelection.cursor(NOTE.length - 1),
+        extensions: [
+          markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+          dragFreeze,
+          asked.of(propertiesMode.of('properties')),
+          blockDecorations,
+        ],
+      }),
+    )
+
+    expect(state.field(blockDecorations).decorations.size).toBe(1)
+    const after = state.update({ effects: asked.reconfigure(propertiesMode.of('hidden')) }).state
+    const names: (string | null)[] = []
+    after.field(blockDecorations).decorations.between(0, NOTE.length, (_f, _t, value) => {
+      names.push(value.spec.widget?.constructor.name ?? null)
+    })
+
+    expect(names).toEqual([null])
   })
 })

@@ -758,6 +758,11 @@ export const te: Dictionary = {
   Footnotes: 'ఫుట్‌నోట్‌లు',
   'Table of contents': 'విషయసూచిక',
   'Front matter': 'ఫ్రంట్ మేటర్',
+  'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'ప్రాపర్టీస్ వరుసలను చూపి అక్కడే సవరిస్తుంది; మూలం అంటే రాసినట్టే YAML.',
+  Source: 'మూలం',
+  Hidden: 'దాచినది',
   Picture: 'చిత్రం',
   Comment: 'వ్యాఖ్య',
   'Always on top': 'ఎప్పుడూ పైన',

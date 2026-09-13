@@ -750,6 +750,11 @@ export const vi: Dictionary = {
   Footnotes: 'Chú thích',
   'Table of contents': 'Mục lục',
   'Front matter': 'Phần đầu tệp',
+  'Front matter: {name}': 'Siêu dữ liệu: {name}',
+  'Properties draws the rows and edits them in place; Source is the YAML as typed.':
+    'Thuộc tính hiện các dòng và sửa ngay tại đó; Nguồn là YAML đúng như đã gõ.',
+  Source: 'Nguồn',
+  Hidden: 'Ẩn',
   Picture: 'Ảnh',
   Comment: 'Bình luận',
   'Always on top': 'Luôn ở trên',

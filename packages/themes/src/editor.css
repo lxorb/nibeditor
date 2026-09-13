@@ -2525,6 +2525,96 @@
   opacity: 1;
 }
 
+/* The controls a row is edited in. Each of them is the value rather than something
+   beside it: a field with no border until it is pointed at, a real checkbox, the
+   browser's own date picker, a menu where the answers are fixed. The row has to go on
+   reading as a row of metadata, so nothing here is drawn as a form - the box comes
+   out when a pointer or a keyboard arrives, and goes away again. */
+#write .property-field,
+#write .property-menu,
+#write .property-add {
+  min-width: 0;
+  padding: 0.05em 0.35em;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-family: var(--font-ui);
+}
+
+#write .property-field {
+  flex: 1;
+  width: 100%;
+}
+
+/* The field at the end of a list: as wide as the words in it and no wider, so it
+   reads as the gap after the last chip rather than as a box of its own. */
+#write .property-add {
+  flex: 0 1 7em;
+  min-width: 4em;
+  color: var(--muted);
+}
+
+@media (hover: hover) {
+  #write .property-field:hover,
+  #write .property-menu:hover,
+  #write .property-add:hover {
+    border-color: var(--line);
+  }
+}
+
+#write .property-field:focus,
+#write .property-menu:focus,
+#write .property-add:focus {
+  border-color: var(--accent-line);
+  background: var(--bg);
+  outline: none;
+}
+
+#write .property-field[type='number'],
+#write .property-field[type='date'],
+#write .property-field[type='datetime-local'] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The `x` on a chip. Inside the chip rather than beside it, so a tag and the way to
+   take it off are one thing to reach for; quiet until the chip is pointed at, because
+   a list of eight tags with eight crosses on it is a row of crosses. */
+#write .property-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+}
+
+#write .property-chip-off {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  #write .property-chip:hover .property-chip-off {
+    opacity: 1;
+  }
+}
+
+/* A finger has no hover, and a keyboard says where it is. */
+[data-touch] #write .property-chip-off,
+#write .property-chip-off:focus-visible {
+  opacity: 1;
+}
+
+#write .property-chip-off:hover {
+  color: var(--danger);
+}
+
 /* A drawn ` ```chart ` fence. The picture and its frame are in document.css, which
    the app loads too; this is only what the writing surface adds. */
 .nib-chart {

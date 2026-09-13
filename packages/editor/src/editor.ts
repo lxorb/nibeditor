@@ -17,6 +17,7 @@ import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
+import { propertyChoices } from './live-preview/properties'
 import { linkClicks, linkOpener } from './links'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
@@ -66,6 +67,10 @@ export interface StateOptions {
   onImage?: ImageSink
   /** Maps a document-relative image path to a URL the view can load. */
   resolveImage?: (src: string) => string
+  /** The keys the app has a fixed set of answers for, so a property row offers a
+   *  menu rather than a field: the accent names under `icon-color`, the paper sizes.
+   *  Which answers are fixed is the app's business; see live-preview/properties.ts. */
+  propertyChoices?: Record<string, readonly string[]>
   /** Fires when the selection moves, so a toolbar can follow it. */
   onSelection?: (view: EditorView) => void
   /** Which palette colours code fences. Defaults to following the app theme. */
@@ -178,6 +183,7 @@ export function editorState(options: StateOptions): EditorState {
       // A click in the space under whatever block ends the note.
       openTail(),
       ...(resolveImage ? [imageResolver.of(resolveImage)] : []),
+      ...(options.propertyChoices ? [propertyChoices.of(options.propertyChoices)] : []),
       linkClicks,
       ...(openLink ? [linkOpener.of(openLink)] : []),
       // Links between notes: drawn, followed, completed and previewed. What
