@@ -265,17 +265,27 @@ tab still has a page:
 | | before | after |
 | --- | --- | --- |
 | the page is still there after a switch to a note | **no** | **yes** |
-| note to web | 293 ms, and a load of the site | 21 ms, and no load at all |
-| web to web | 147 ms, and a load of the site | 19 ms |
-| the page comes back where it was left | no | yes |
+| note to web, until the tab has a page again | 293 ms, and a load of the site | 108 ms, and no load at all |
+| back to a web tab from another web tab | 107 ms, and a load of the site | 33 ms |
+| the page comes back where the reading left it | no | yes |
+| the same, after the app is started again | no | yes |
+| what the pages cost, with twelve web tabs open | 894 MB - because only one or two were ever alive | 1.29 GB for the six that are |
+
+Those are a local page on this machine, which is the fairest measure of the app's own
+cost and the *kindest* possible reading of the old behaviour: the site the before column
+reloaded came off `127.0.0.1` in a millisecond. Emil's eternity was a real site over a
+real network, loaded again every single time, and - when no other web tab was left alive
+to keep the engine warm - behind a cold WebView2 environment as well.
 
 So the rectangle the page was last placed at is kept by the pane rather than
 measured when it is wanted, and the tab's departure hides the page and starts a
 clock. **Parking** is the only thing that closes a webview: half an hour of nobody
-looking, or being the least recently looked at page when nine are running - Chrome's
-own memory saver waits about as long and discards for the same reason. A parked tab
-keeps its address, its place on the page and its trail, so reviving it is a load and
-not a loss. Closing the tab takes the webview and the trail with it.
+looking, or being the least recently looked at page when a seventh is opened - Chrome's
+own memory saver waits about as long and discards for the same reason. One open page is
+about 180 MB on this machine, so six is a working set at a bit over a gigabyte, which is
+what a browser with six tabs in it costs and is the honest price of never reloading one.
+A parked tab keeps its address, its place on the page and its trail, so reviving it is a
+load and not a loss. Closing the tab takes the webview and the trail with it.
 
 **A native webview draws above every pixel of HTML in the window.** So while
 anything of the app's is over the page - a menu, a sheet, the palette, the settings,
@@ -293,12 +303,20 @@ no list in the web tab to keep in step with the app. The document is still asked
 well, at nine points rather than one, for the few things over the page that Escape
 does not close.
 
-**And the page does not blink out any more.** Before it is hidden, the engine is
-asked to photograph itself - `CapturePreview`, which is the only way to those pixels
-- and the still picture is what the pane holds under the menu. It is also what
-stands in while a parked page loads again, so neither an overlay nor a revival is a
-flash of empty pane. On macOS and Linux there is no snapshot to be had through what
-wry hands out, and the hole keeps its own ground there.
+**And the page does not blink out any more.** The engine is asked to photograph itself -
+`CapturePreview`, which is the only way to those pixels - and the still picture is what
+the pane holds while the webview is out of sight: under a menu, and while a parked page
+is loading again, so neither an overlay nor a revival is a flash of empty pane.
+
+**When** it is taken is the whole of making that free. A pane-sized PNG costs the engine
+about 105 milliseconds, measured, which is far too long to hold a menu up for - so the
+picture is taken on the press that is about to open something over the page, and again as
+a page finishes loading, and the overlay then finds one already there. The one case that
+waits is the first thing ever drawn over a page nothing has photographed yet, and that
+wait is capped; a picture from a moment ago is used at once and refreshed behind the
+menu. Nothing photographs a page that is already hidden, because a hidden webview has no
+frame to hand over and a blank picture is worse than none. On macOS and Linux there is no
+snapshot to be had through what wry hands out, and the hole keeps its own ground there.
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
