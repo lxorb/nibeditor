@@ -13,6 +13,7 @@ export const mr: Dictionary = {
   'Add a page after this': 'याच्या नंतर पान जोडा',
   'Delete this page': 'हे पान काढा',
   'Page {number}': 'पान {number}',
+  'The paper could not be read': 'कागद वाचता आला नाही',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'कॅनव्हास',
   Card: 'कार्ड',

@@ -189,9 +189,12 @@
   // ask for again. Read once, on the way out, so a page added or removed while the tab
   // is open does not tear the paper down under it.
   $effect(() => {
+    const note = tab.note.path
+    const root = workspace.activeSpace?.root ?? null
+
     return () => {
-      for (const path of new Set(pages.map((page) => page.file).filter(Boolean))) {
-        if (path) forgetPaper(path)
+      for (const file of new Set(pages.map((page) => page.file).filter(Boolean))) {
+        if (file) forgetPaper({ file, note, root })
       }
     }
   })
@@ -593,7 +596,14 @@
       camera.y * camera.scale}px) scale({camera.scale})"
   >
     {#each pages as page, at (page.id)}
-      <PagesPage {page} number={at + 1} />
+      <!-- The note and the space, so a page can find the paper its `file` names: the
+           same two the cards below are given, for the same reason. -->
+      <PagesPage
+        {page}
+        number={at + 1}
+        notePath={tab.note.path}
+        root={workspace.activeSpace?.root ?? null}
+      />
     {/each}
 
     {#each cards as node (node.id)}

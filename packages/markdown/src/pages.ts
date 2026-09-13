@@ -29,6 +29,7 @@ import {
   type PageNode,
   PAPERS,
   type Paper,
+  paperSized,
   type Pattern,
   writeCanvas,
 } from './canvas'
@@ -122,6 +123,11 @@ export function newPage(paper: Paper = 'a4', pattern: Pattern = 'blank'): PageNo
  *  viewer reports - so a page imported from an A4 paper is A4 and one from a US
  *  brief is the size of the brief.
  *
+ *  And it is called what it is: a Letter page says `letter`, which is what the page
+ *  menu ticks and what a reshape back to its own size reads. Every page used to say
+ *  `a4` however big it was, so a Letter scan was a Letter-sized page that called
+ *  itself A4 and snapped to A4 the moment anybody changed its ruling.
+ *
  *  No ruling, because the paper already has whatever the paper has: lines drawn
  *  over a printed page are lines drawn over a printed page. */
 export function pdfPage(file: string, page: number, width: number, height: number): PageNode {
@@ -135,7 +141,7 @@ export function pdfPage(file: string, page: number, width: number, height: numbe
     y: 0,
     width: wide,
     height: tall,
-    paper: 'a4',
+    paper: paperSized(wide, tall),
     pattern: 'blank',
     file,
     page,

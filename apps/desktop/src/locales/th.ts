@@ -13,6 +13,7 @@ export const th: Dictionary = {
   'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
   'Delete this page': 'ลบหน้านี้',
   'Page {number}': 'หน้า {number}',
+  'The paper could not be read': 'อ่านกระดาษไม่ได้',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',

@@ -13,6 +13,7 @@ export const ja: Dictionary = {
   'Add a page after this': 'この後にページを追加',
   'Delete this page': 'このページを削除',
   'Page {number}': '{number} ページ',
+  'The paper could not be read': '用紙を読み込めませんでした',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'キャンバス',
   Card: 'カード',

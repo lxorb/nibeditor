@@ -22,8 +22,10 @@
  *  scan would otherwise hold four hundred bitmaps the moment somebody scrolled to
  *  the end of it, and the pages nobody is looking at are the ones to let go of. */
 
+import type { OpenPdf } from '../pdf/document'
 import { openDocument } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
+import { placesOf } from '../space-paths'
 
 /** How much bigger than the page itself a background is drawn. */
 const SCALE = 2
@@ -50,7 +52,7 @@ export interface Paper {
  *  worker and a copy of the bytes, and a note of four hundred pages is four hundred
  *  pages of one paper. */
 interface Held {
-  open: ReturnType<typeof openDocument>
+  open: Promise<OpenPdf>
   drawn: Map<number, Promise<Paper | null>>
   /** Which pages were asked for most recently, oldest first, so the ones nobody is
    *  looking at are the ones let go. */
@@ -59,17 +61,46 @@ interface Held {
 
 const held = new Map<string, Held>()
 
+/** A paper a page names, and the two things its name is relative to.
+ *
+ *  A page holds the path the way a JSON Canvas file node holds one, which is to say
+ *  relative. What it is relative to is the note, or the space the note is in, and only
+ *  the surface knows either - so the surface says, and `placesOf` decides where to
+ *  look. Handing the bare name to the reader is what made every page of an imported
+ *  PDF a blank sheet: nothing in the app can read `Lecture 4.pdf`. */
+export interface PaperAt {
+  /** What the page says: the path as the file holds it. */
+  file: string
+  /** The note's own path, or null for a note that has none. */
+  note: string | null
+  /** The root of the space it is in, or null when it is in none. */
+  root: string | null
+}
+
+/** One paper, named the same way twice, so two pages of it are one document.
+ *
+ *  The places rather than the path, because which of them answers is not known until
+ *  one of them is opened. Two notes in one folder therefore share a paper; two notes
+ *  in different folders naming the same paper under the space's root open it twice,
+ *  which is a worker apiece and rare enough to leave alone. */
+function keyOf(at: PaperAt): string {
+  return placesOf(at.file, at.note, at.root).join('\n')
+}
+
 /** One page of a paper as a picture, drawn now or already drawn.
  *
- *  Null where the paper is not there any more, cannot be read, or has no such page:
- *  a page note whose PDF somebody deleted is a note you can still read your own ink
- *  on, and a missing background is a blank sheet rather than an error over the
- *  writing. */
-export function paperOf(path: string, number: number): Promise<Paper | null> {
-  let one = held.get(path)
+ *  Null where the paper is not there any more, cannot be read, or has no such page.
+ *  The sheet still draws and the ink on it is still readable - a page note whose PDF
+ *  somebody deleted is a note you can still read your own writing on - but the sheet
+ *  says so rather than coming out silently blank; see PagesPage.svelte. */
+export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
+  const key = keyOf(at)
+  if (!key) return Promise.resolve(null)
+
+  let one = held.get(key)
   if (!one) {
-    one = { open: openDocument(path), drawn: new Map(), recent: [] }
-    held.set(path, one)
+    one = { open: opened(at), drawn: new Map(), recent: [] }
+    held.set(key, one)
   }
 
   const already = one.drawn.get(number)
@@ -84,6 +115,30 @@ export function paperOf(path: string, number: number): Promise<Paper | null> {
   forgetOldest(one)
 
   return drawing
+}
+
+/** The paper itself, opened at the first place that answers.
+ *
+ *  Tried in order rather than asked about first: opening it is the only question worth
+ *  asking, and the answer to it is the document. A place that is not there costs a
+ *  refusal from the reader and nothing else, and it is asked once per paper because
+ *  the document is kept.
+ *
+ *  The last refusal is what comes back out, so the sheet can say the paper could not
+ *  be read rather than nothing at all. */
+async function opened(at: PaperAt): Promise<OpenPdf> {
+  const places = placesOf(at.file, at.note, at.root)
+  let last: unknown = new Error(`${at.file} is nowhere this space can read`)
+
+  for (const path of places) {
+    try {
+      return await openDocument(path)
+    } catch (error) {
+      last = error
+    }
+  }
+
+  throw last instanceof Error ? last : new Error(String(last))
 }
 
 function touch(one: Held, number: number) {
@@ -146,11 +201,12 @@ async function draw(one: Held, number: number): Promise<Paper | null> {
  *  a worker and a read; holding one is a worker and however many bitmaps were drawn,
  *  for as long as the window is open, which is the wrong way round for a paper nobody
  *  is looking at. */
-export function forgetPaper(path: string) {
-  const one = held.get(path)
+export function forgetPaper(at: PaperAt) {
+  const key = keyOf(at)
+  const one = held.get(key)
   if (!one) return
 
-  held.delete(path)
+  held.delete(key)
   for (const drawing of one.drawn.values()) void drawing.then((paper) => paper?.image.close())
   void one.open.then((opened) => opened.close()).catch(() => undefined)
 }

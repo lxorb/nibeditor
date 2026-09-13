@@ -152,6 +152,16 @@ export class CanvasStore implements PlaneSurface {
     return writeCanvas(canvas)
   }
 
+  /** Where the file is, or null for a plane that has none.
+   *
+   *  Read by anything holding the store rather than the tab, which is what the
+   *  outline panel's thumbnails are: a page's `file` is relative to the note, so a
+   *  thumbnail cannot find the paper behind a page without knowing which note it is
+   *  a page of. See pages/paper.ts. */
+  get path(): string | null {
+    return this.note.path
+  }
+
   get camera(): Camera {
     return this.tab.camera ?? { x: 0, y: 0, scale: 1 }
   }

@@ -13,6 +13,7 @@ export const it: Dictionary = {
   'Add a page after this': 'Aggiungi una pagina dopo questa',
   'Delete this page': 'Elimina questa pagina',
   'Page {number}': 'Pagina {number}',
+  'The paper could not be read': 'Non è stato possibile leggere la carta',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Tela',
   Card: 'Scheda',

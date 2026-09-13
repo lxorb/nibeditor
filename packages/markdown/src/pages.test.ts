@@ -371,6 +371,28 @@ describe('a page out of a PDF', () => {
     expect(pages[1]).toMatchObject({ width: 800, height: 600, file: 'Paper.pdf', page: 2 })
   })
 
+  test('says which paper each page is, so a Letter paper is not called A4', () => {
+    const canvas = pagesFromPdf('Paper.pdf', [
+      { width: PAPERS.letter.width, height: PAPERS.letter.height },
+      { width: PAPERS.a4.width, height: PAPERS.a4.height },
+      // Neither, which is most of the papers in the world: the page is its own size
+      // and the name falls back to the one every other page note starts as.
+      { width: 400, height: 1200 },
+    ])
+    const pages = pagesOf(canvas)
+
+    expect(pages.map((one) => one.paper)).toEqual(['letter', 'a4', 'a4'])
+    // And the size is still the paper's own, whatever it is called.
+    expect(pages[2]).toMatchObject({ width: 400, height: 1200 })
+  })
+
+  test('a page named Letter keeps Letter when the file is read back', () => {
+    const once = pagesFromPdf('Paper.pdf', [
+      { width: PAPERS.letter.width, height: PAPERS.letter.height },
+    ])
+    expect(pagesOf(readCanvas(writeCanvas(once)))[0]?.paper).toBe('letter')
+  })
+
   test('a paper with no pages still gives somewhere to write', () => {
     expect(pagesOf(pagesFromPdf('Paper.pdf', []))).toHaveLength(1)
   })

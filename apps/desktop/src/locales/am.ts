@@ -13,6 +13,7 @@ export const am: Dictionary = {
   'Add a page after this': 'ከዚህ በኋላ ገጽ ጨምር',
   'Delete this page': 'ይህን ገጽ አጥፋ',
   'Page {number}': 'ገጽ {number}',
+  'The paper could not be read': 'ወረቀቱን ማንበብ አልተቻለም',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'ሸራ',
   Card: 'ካርድ',

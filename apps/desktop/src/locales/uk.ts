@@ -13,6 +13,7 @@ export const uk: Dictionary = {
   'Add a page after this': 'Додати сторінку після цієї',
   'Delete this page': 'Видалити цю сторінку',
   'Page {number}': 'Сторінка {number}',
+  'The paper could not be read': 'Не вдалося прочитати папір',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Полотно',
   Card: 'Картка',

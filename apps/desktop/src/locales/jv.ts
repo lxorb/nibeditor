@@ -13,6 +13,7 @@ export const jv: Dictionary = {
   'Add a page after this': 'Tambah kaca sawise iki',
   'Delete this page': 'Busak kaca iki',
   'Page {number}': 'Kaca {number}',
+  'The paper could not be read': 'Kertas ora bisa diwaca',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanvas',
   Card: 'Kartu',

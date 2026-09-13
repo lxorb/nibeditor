@@ -13,6 +13,7 @@ export const pa: Dictionary = {
   'Add a page after this': 'ਇਸ ਤੋਂ ਬਾਅਦ ਸਫ਼ਾ ਜੋੜੋ',
   'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',
   'Page {number}': 'ਸਫ਼ਾ {number}',
+  'The paper could not be read': 'ਕਾਗਜ਼ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',

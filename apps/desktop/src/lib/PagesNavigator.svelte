@@ -30,6 +30,7 @@
   import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import { paperOf } from './pages/paper'
   import { pages as showing } from './pages/showing.svelte'
+  import { workspace } from './workspace.svelte'
 
   /** How wide a thumbnail is, in pixels. Narrow enough that a panel holds six or
    *  seven of them and wide enough that a page of handwriting is recognisable as the
@@ -46,6 +47,8 @@
 
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
+  /** The space the note is in, which is the other place a page's `file` can point. */
+  const spaceRoot = $derived(workspace.activeSpace?.root ?? null)
   /** Which page is being looked at, read off the store the way the status bar reads it. */
   const on = $derived(store?.showing ?? 0)
 
@@ -100,7 +103,12 @@
       ratio,
     }
 
-    const paper = page.file && page.page ? await paperOf(page.file, page.page) : null
+    // The same paper the sheet in the pane draws, asked for the same way: the page's
+    // `file` is relative to the note, and the store is what knows which note that is.
+    const paper =
+      page.file && page.page
+        ? await paperOf({ file: page.file, note: store.path, root: spaceRoot }, page.page)
+        : null
 
     // The ink through the same painter the surface uses, pointed at this page: one
     // description of what a stroke looks like, here as well. Onto a layer of its own

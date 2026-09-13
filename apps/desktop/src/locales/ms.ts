@@ -13,6 +13,7 @@ export const ms: Dictionary = {
   'Add a page after this': 'Tambah halaman selepas ini',
   'Delete this page': 'Hapuskan halaman ini',
   'Page {number}': 'Halaman {number}',
+  'The paper could not be read': 'Kertas tidak dapat dibaca',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Kanvas',
   Card: 'Kad',

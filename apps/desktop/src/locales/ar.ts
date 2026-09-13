@@ -13,6 +13,7 @@ export const ar: Dictionary = {
   'Add a page after this': 'إضافة صفحة بعد هذه',
   'Delete this page': 'حذف هذه الصفحة',
   'Page {number}': 'الصفحة {number}',
+  'The paper could not be read': 'تعذّر قراءة الورق',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'لوحة',
   Card: 'بطاقة',

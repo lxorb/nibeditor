@@ -13,6 +13,7 @@ export const ptPT: Dictionary = {
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Eliminar esta página',
   'Page {number}': 'Página {number}',
+  'The paper could not be read': 'O papel não pôde ser lido',
   '{at} / {count}': '{at} / {count}',
   Canvas: 'Tela',
   Card: 'Cartão',
