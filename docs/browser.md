@@ -1220,7 +1220,7 @@ workflow that follows upstream. Eight files and one feature:
 | `.github/workflows/cef-bump.yml` | weekly, and a draft pull request with the table. Section 7 |
 | `apps/desktop/test/cef.test.ts` | the promise, held: no default features, no patch in the app's manifest, and no workflow, script or bundle config that ships anything ever naming the flag |
 
-**Five things were found, and two of them change what a later batch has to do.**
+**Six things were found, and two of them change what a later batch has to do.**
 
 **1. The engine cannot be a feature of the app's own crate, and that is a fact about
 Cargo.** `tauri-runtime-cef` is built against the `tauri` beside it in Tauri's
