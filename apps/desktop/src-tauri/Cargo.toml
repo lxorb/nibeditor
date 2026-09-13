@@ -120,7 +120,7 @@ windows = { version = "0.58", features = [
 # engine to photograph itself. The versions are the ones tauri itself is built
 # against, so the handles it hands out line up.
 webview2-com = "0.38"
-windows-core = "0.61"
+windows-core = "0.62"
 # The COM stream `CapturePreview` writes a page's picture into; see `web_shot` in
 # web_tabs.rs. It has to be the same `windows` crate webview2-com's own signature
 # names, which is 0.61 and not the 0.58 above - two versions of it are already in
