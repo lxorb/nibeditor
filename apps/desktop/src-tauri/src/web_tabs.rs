@@ -724,7 +724,11 @@ mod session {
 /// the last tab closing, and the environment every tab is then built on. On the window's
 /// own thread, because that is where a page is built and the only thread the engine's own
 /// objects may be touched from.
-#[cfg(windows)]
+///
+/// The system engine's only, like `session` itself: under nib's own Chromium there is no
+/// environment to hand round - that runtime is one browser process by construction - and
+/// `tauri::Wry` is not even a type there. See src/engine.rs.
+#[cfg(all(windows, not(feature = "cef")))]
 fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
     window: &tauri::Window,
