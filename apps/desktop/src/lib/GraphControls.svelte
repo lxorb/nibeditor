@@ -22,11 +22,13 @@
   import { overlays } from './overlays'
   import { workspace } from './workspace.svelte'
   import {
+    DEEPEST,
     LEAST_LINES,
     LEAST_SPREAD,
     MOST_GROUPS,
     MOST_LINES,
     MOST_SPREAD,
+    SHALLOWEST,
   } from './workspace/graph-settings.svelte'
 
   const {
@@ -149,6 +151,27 @@
         <span class="nib-row-label">{t('Attachments')}</span>
         <span class="nib-switch" class:on={settings.attachments} aria-hidden="true"></span>
       </button>
+
+      <!-- How far the picture beside a note reaches: one link out, or five. Here
+           rather than only beside the panel it draws, because it is a fact about this
+           space's picture like everything else on the card, and it travels with the
+           space. The stepper in the Links panel writes the same setting, so the two
+           are never out of step; see Sidebar.svelte. -->
+      <div class="dial">
+        <span>{t('Depth')}</span>
+        <input
+          class="nib-slider"
+          type="range"
+          min={SHALLOWEST}
+          max={DEEPEST}
+          step="1"
+          value={settings.depth}
+          aria-label={t('Depth')}
+          style:--fill="{((settings.depth - SHALLOWEST) / (DEEPEST - SHALLOWEST)) * 100}%"
+          oninput={(event) =>
+            workspace.graphSettings.set({ depth: Number(event.currentTarget.value) })}
+        />
+      </div>
 
       <div class="rule"></div>
 

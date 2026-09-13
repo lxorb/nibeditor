@@ -93,7 +93,10 @@ describe('what a space may say about its graph', () => {
   test('and a spread or a depth outside what the app offers is held to it', async () => {
     const set = await put({ spread: 400, gather: true, depth: 9 })
 
-    expect(set.json.graph).toEqual({ spread: 4, gather: true, depth: 3 })
+    expect(set.json.graph).toEqual({ spread: 4, gather: true, depth: 5 })
+    // And the whole of what the card's slider reaches is kept as it arrived.
+    expect((await put({ depth: 4 })).json.graph).toEqual({ depth: 4 })
+    expect((await put({ depth: 0 })).json.graph).toEqual({ depth: 1 })
   })
 
   test('and a line width outside the three steps is held to them', async () => {

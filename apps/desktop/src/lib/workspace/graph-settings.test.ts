@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
+  DEEPEST,
   DEFAULT_GRAPH,
   graphSettingsOf,
   LEAST_LINES,
@@ -90,7 +91,23 @@ describe('what a space says about its graph', () => {
     graph.set({ spread: 99, depth: 9 })
 
     expect(graph.here.spread).toBe(4)
-    expect(graph.here.depth).toBe(3)
+    expect(graph.here.depth).toBe(DEEPEST)
+  })
+
+  /** The card's slider reaches five, where the panel's stepper used to stop at
+   *  three: past three most spaces answer with the space, but which spaces those are
+   *  is the reader's to find out. */
+  test('and the depth reaches five, one link at a step', () => {
+    expect(DEEPEST).toBe(5)
+
+    graph.set({ depth: 4 })
+    expect(graph.here.depth).toBe(4)
+
+    graph.set({ depth: 5 })
+    expect(graph.here.depth).toBe(5)
+
+    graph.set({ depth: 0 })
+    expect(graph.here.depth).toBe(1)
   })
 
   /** Three steps, and the middle one is the look the picture has always had, so a

@@ -34,7 +34,7 @@
   import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
-  import { DEEPEST } from './workspace/graph-settings.svelte'
+  import { DEEPEST, SHALLOWEST } from './workspace/graph-settings.svelte'
   import { search, type SearchSort } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
@@ -588,14 +588,19 @@
     {#if showing === 'links'}
       <div class="tools">
         {#if graphing}
-          <!-- One link out, two, or three. Not four: at four most spaces answer
-               with the space, and the picture of the whole space is a tab away. -->
+          <!-- How far out the picture reaches, one link at a press and round again.
+               The same setting the slider on the graph's own card writes, so the two
+               are never out of step; see GraphControls.svelte, which is where the
+               whole range is. A stepper here rather than a second slider: this is one
+               glyph in a row of them, and the panel's tools are all presses. -->
           <button
             class="nib-glyph depth"
             title={t('Depth')}
             aria-label={t('Depth')}
             onclick={() =>
-              workspace.graphSettings.set({ depth: depth === DEEPEST ? 1 : depth + 1 })}
+              workspace.graphSettings.set({
+                depth: depth >= DEEPEST ? SHALLOWEST : depth + 1,
+              })}
             transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
           >
             {depth}

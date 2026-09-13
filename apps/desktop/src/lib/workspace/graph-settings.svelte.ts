@@ -45,9 +45,15 @@ const SETTLING = 700
 export const LEAST_SPREAD = 0.25
 export const MOST_SPREAD = 4
 
-/** How many links out the picture beside a note may reach. Three is where a
- *  neighbourhood stops being one: at four, most spaces answer with the space. */
-export const DEEPEST = 3
+/** How many links out the picture beside a note may reach.
+ *
+ *  One is what it opens at: the notes around this one, which is the question the
+ *  panel is opened for. Five is as far as the slider goes, because past three most
+ *  spaces answer with the space - but which spaces those are is the reader's to
+ *  find out, and a dial that stops before the answer is a dial that decided for
+ *  them. See `depth` on the card in GraphControls.svelte. */
+export const SHALLOWEST = 1
+export const DEEPEST = 5
 
 /** The three widths a link may be drawn at: thin, the look the picture has always
  *  had, and thick. Three steps rather than a range, because the widths worth having
@@ -84,7 +90,8 @@ export interface GraphSettings {
   /** How wide a link is drawn: 1 thin, 2 the look the picture has always had, 3
    *  thick. */
   lines: number
-  /** How many links out the picture beside a note reaches, 1 to `DEEPEST`. */
+  /** How many links out the picture beside a note reaches, `SHALLOWEST` to
+   *  `DEEPEST`. */
   depth: number
 }
 
@@ -151,7 +158,7 @@ export function graphSettingsOf(value: unknown): GraphSettings {
     arrows: isBoolean(value.arrows) ? value.arrows : DEFAULT_GRAPH.arrows,
     sized: isBoolean(value.sized) ? value.sized : DEFAULT_GRAPH.sized,
     lines: Math.round(held(value.lines, LEAST_LINES, MOST_LINES, DEFAULT_GRAPH.lines)),
-    depth: Math.round(held(value.depth, 1, DEEPEST, DEFAULT_GRAPH.depth)),
+    depth: Math.round(held(value.depth, SHALLOWEST, DEEPEST, DEFAULT_GRAPH.depth)),
   }
 }
 

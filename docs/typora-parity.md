@@ -700,10 +700,14 @@ Features Typora does not have, which are the reason this exists.
 - [x] Names that fade in as the view comes in, rather than four hundred of them
       appearing at once on one notch of the wheel. A threshold that follows the
       zoom, so there is nothing to set
-- [x] One link out from the open note, two, or three, as a stepper beside the
-      picture switch in the Links panel, remembered with the rest of the space's
-      graph. Not four: at four most spaces answer with the space, and the space is
-      a tab away
+- [x] How far the picture beside a note reaches, as a slider on the graph's own card
+      and as a stepper beside the picture switch in the Links panel - one setting, so
+      the two are never out of step, and remembered with the rest of the space's
+      graph. One to five: past three most spaces answer with the space, and which
+      spaces those are is the reader's to find out rather than the app's to decide.
+      The stepper is a press and rounds back to one, because it is one glyph in a row
+      of glyphs; the whole range is on the card, which is where the rest of the dials
+      are. shell.py photographs that card on every device and in both schemes
 - [x] Hiding a note is not re-arranging the space. The filter, the orphan switch
       and the moment the scrub bar is at all arrive as one byte per note, so the
       notes that stay do not move and turning a switch costs one frame rather than

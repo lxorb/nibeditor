@@ -656,6 +656,19 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
                 f"[{name}] the stepper reads "
                 f"{page.evaluate('() => window.nibApp.workspace.graphSettings.here.depth')}"
             )
+
+            # The card's own slider reaches five, and the stepper follows it: one
+            # setting, so the two cannot disagree. Written the way the slider writes
+            # it, since the card is on the graph tab rather than on this panel.
+            page.evaluate("() => window.nibApp.workspace.graphSettings.set({ depth: 5 })")
+            page.wait_for_timeout(1600)
+            shot("panel-depth-5")
+            say(
+                f"[{name}] and at the far end of the slider it reads "
+                f"{page.evaluate('() => window.nibApp.workspace.graphSettings.here.depth')}"
+            )
+            page.evaluate("() => window.nibApp.workspace.graphSettings.set({ depth: 1 })")
+            page.wait_for_timeout(1000)
         else:
             say(f"[{name}] no depth stepper")
     else:

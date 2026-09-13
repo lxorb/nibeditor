@@ -309,6 +309,36 @@ def drive(browser, out: Path, name, width, height, agent, finger, scheme) -> Non
     page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_timeout(500)
 
+    # The picture of the space, and the card in its corner: every dial and every
+    # switch the card holds, on this device and in this scheme. Close up as well as
+    # whole, because a card of a dozen rows is where a row that has drifted off the
+    # grid shows and a whole phone screen is not.
+    page.evaluate("() => window.nibApp.workspace.openGraph()")
+    try:
+        page.wait_for_selector(".graph", timeout=20000)
+        page.wait_for_timeout(1400)
+        card = page.locator(".graph .corner > button").last
+        if card.count():
+            card.click(force=True)
+            page.wait_for_timeout(600)
+            shot("graph-card")
+            strip("graph-card-close", ".graph .corner .card")
+        else:
+            say(f"[{name}] no card on the graph")
+    except Exception as why:
+        say(f"[{name}] no graph: {why}")
+
+    # And back to the note, so everything below is photographed over what it was
+    # photographed over before the card was here.
+    page.evaluate(
+        """async () => {
+          const ws = window.nibApp.workspace
+          const first = ws.notes.find((one) => one.name.startsWith('Kestrel'))
+          if (first) await ws.openEntry(first.path, { activate: true })
+        }"""
+    )
+    page.wait_for_timeout(700)
+
     # The layers over the note.
     page.keyboard.press("Control+KeyP")
     try:

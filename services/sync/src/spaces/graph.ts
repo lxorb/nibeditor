@@ -32,8 +32,10 @@ const LONGEST_QUERY = 200
  *  its own. */
 const LEAST_SPREAD = 0.25
 const MOST_SPREAD = 4
-/** How many links out the picture beside one note may reach. */
-const DEEPEST = 3
+/** How many links out the picture beside one note may reach; the app's slider goes
+ *  exactly this far. */
+const SHALLOWEST = 1
+const DEEPEST = 5
 /** The three widths a link may be drawn at; the app offers the same three. */
 const LEAST_LINES = 1
 const MOST_LINES = 3
@@ -143,7 +145,7 @@ function settingsOf(value: object): GraphSettings {
   const lines = held(sent.lines, LEAST_LINES, MOST_LINES)
   if (lines !== undefined) out.lines = Math.round(lines)
 
-  const depth = held(sent.depth, 1, DEEPEST)
+  const depth = held(sent.depth, SHALLOWEST, DEEPEST)
   if (depth !== undefined) out.depth = Math.round(depth)
 
   return out
