@@ -34,6 +34,7 @@ import { DIAGRAM_SCHEMES, type DiagramScheme, diagramKey, isDiagram } from '@nib
 import { api } from './api'
 import { drawDiagram } from './diagrams'
 import { keep, stored } from './stored'
+import { shapesOnly } from './svg-file'
 import { invoke } from './tauri'
 import type { Entry } from './workspace.svelte'
 
@@ -76,7 +77,8 @@ export function diagramFences(sources: Iterable<string>): DiagramFence[] {
  *  It has to be safe to open on its own. An SVG is a document, and this one is
  *  built by a drawing library out of text somebody wrote; on a published page it is
  *  only ever an `<img>`, where nothing runs, but its address is a link like any
- *  other. So the scripts, the handlers and anything pointing outward go. The store
+ *  other. So what it may hold is the shapes and the text and nothing else; see
+ *  `shapesOnly`, which reads the tags rather than sweeping the markup. The store
  *  sandboxes it on the way out as well, which is the half that does not depend on
  *  which version of this app drew it; see services/sync/src/blobs.ts.
  *
@@ -91,17 +93,8 @@ export function asFile(svg: string): string | null {
   const opens = svg.indexOf('<svg')
   if (opens === -1) return null
 
-  let out = svg
-    .slice(opens)
-    // A `<script>` and everything in it, then anything left that opens one.
-    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, '')
-    .replace(/<\/?script\b[^>]*>/gi, '')
-    // Every `on…` handler, quoted either way.
-    .replace(/\son[a-z]+\s*=\s*"[^"]*"/gi, '')
-    .replace(/\son[a-z]+\s*=\s*'[^']*'/gi, '')
-    // And anything that would reach off the page. A picture in an `<img>` fetches
-    // nothing whatever it says, so this is about the file opened on its own.
-    .replace(/\s(?:xlink:)?href\s*=\s*"(?!#)[^"]*"/gi, '')
+  let out = shapesOnly(svg.slice(opens))
+  if (!out.startsWith('<svg')) return null
 
   const box = /\bviewBox="([\d.\-+eE]+)\s+([\d.\-+eE]+)\s+([\d.\-+eE]+)\s+([\d.\-+eE]+)"/.exec(out)
   const width = Number(box?.[3])
