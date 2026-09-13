@@ -124,6 +124,24 @@ async function preview(path: string) {
   return tab
 }
 
+// Every test drives the clock, so the writes the workspace waits out - the session
+// four hundred milliseconds after a tab moves, a note's autosave a second after a
+// keystroke, both of which end in a write to storage - land on a clock the afterEach
+// drops rather than on real timers that wake in a later test and write over what it
+// set up. The describes that time one of those writes themselves say so with their
+// own useFakeTimers, which this leaves to them. See afterEach.
+beforeEach(() => {
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+})
+
+afterEach(() => {
+  // Drop whatever a test left waiting before the next one runs; dropping is not
+  // firing, so a stale write never lands. Real again on the way out, and a test's
+  // own useRealTimers has run before this, so this only tidies what it left.
+  if (vi.isFakeTimers()) vi.clearAllTimers()
+  vi.useRealTimers()
+})
+
 describe('keeping a preview tab', () => {
   beforeEach(() => {
     workspace.tabs = []

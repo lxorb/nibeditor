@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** The disk, as far as this test is concerned: what each file says and what its
  *  stamp is. The store reads notes and stamps through the platform shim, so the
@@ -65,6 +65,13 @@ function open() {
 }
 
 beforeEach(async () => {
+  // On the clock from here on, so that a debounce this test's editing schedules -
+  // the session persist a note's `edited` sets going - lands on a clock the
+  // afterEach can drop rather than a real timer that wakes two tests later and
+  // writes over what it finds. Installed before the note is opened below, which is
+  // itself one of the things that schedules that write. See afterEach.
+  vi.useFakeTimers({ shouldAdvanceTime: true })
+
   for (const tab of [...workspace.tabs]) workspace.close(tab.id)
   disk.clear()
   sync.status = 'off'
@@ -74,6 +81,13 @@ beforeEach(async () => {
   await workspace.open(PATH)
   // The first look is what the file looks like rather than news about it.
   await watch.look()
+})
+
+afterEach(() => {
+  // Drop whatever this test left on the clock before the next one runs; dropping
+  // is not firing, so a stale write never happens. Real again on the way out.
+  if (vi.isFakeTimers()) vi.clearAllTimers()
+  vi.useRealTimers()
 })
 
 describe('a file that changes under a note nobody has edited', () => {

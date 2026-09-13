@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   DEFAULT_GRAPH,
   graphSettingsOf,
@@ -50,8 +50,21 @@ const ROOT = '/space'
 let graph: SpaceGraphSettings
 
 beforeEach(() => {
+  // On the clock from here on, so the write `set` waits out - a couple of seconds
+  // after the last letter; see `soon` - lands on a clock the afterEach can drop
+  // rather than a real timer that wakes in a later test and writes these settings
+  // over whatever that test had put in storage. A test timing the write itself
+  // says so with its own useFakeTimers. See afterEach.
+  vi.useFakeTimers({ shouldAdvanceTime: true })
   localStorage.clear()
   graph = new SpaceGraphSettings(() => ROOT)
+})
+
+afterEach(() => {
+  // Drop whatever this test left waiting before the next one runs; dropping is not
+  // firing, so the write never lands late. Real again on the way out.
+  if (vi.isFakeTimers()) vi.clearAllTimers()
+  vi.useRealTimers()
 })
 
 describe('what a space says about its graph', () => {
