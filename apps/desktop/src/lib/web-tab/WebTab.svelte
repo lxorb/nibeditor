@@ -167,6 +167,12 @@
     // Anything the app opens over the page is opened by a press: after one, look
     // again at what is on top. Twice, because a sheet arrives over a transition.
     const pressed = () => {
+      // The press is also the last moment the page is both current and on screen, and
+      // whatever it opens is about to hide it - so this is where the page is
+      // photographed. Nothing waits for the picture: it is there by the time the
+      // overlay is, and the pane keeps the one from a moment ago either way. See
+      // `shoot` in pages.svelte.ts.
+      void pages.shoot(tab.id)
       follow()
       // Again after the transition an overlay arrives on, and only once however
       // many keys were pressed while it was on its way.

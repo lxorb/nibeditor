@@ -83,6 +83,7 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
 // the topmost element at the middle of the hole is the hole.
 document.elementFromPoint = () => document.querySelector('.hole')
 
+const { overlays } = await import('../../src/lib/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
@@ -147,4 +148,46 @@ test('switching away from a web tab keeps the page and switching back does not b
   expect(asked.map((one) => one.command)).toContain('web_place')
 
   unmount(second)
+})
+
+/** A native webview draws above every pixel of HTML in the window, so anything the app
+ *  opens over the page has to be answered by hiding the page - and it has to be answered
+ *  the moment the overlay opens rather than at the next press, because a palette row
+ *  opens the next overlay and Escape closes one. What it used to ask instead was which
+ *  element was on top at the middle of the hole, which left a menu over a corner of the
+ *  page drawn behind the page. See `covered` in WebTab.svelte and overlays.ts. */
+test('the page is hidden while anything of the app is over it, and comes back when it goes', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/over'
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).live).toBe(true)
+
+  // A menu, a sheet, the palette: whatever it is, it is on the overlay stack.
+  asked.length = 0
+  const off = overlays.show(() => undefined)
+  await frames()
+
+  const hidden = asked.filter((one) => one.command === 'web_place').at(-1)
+  expect(hidden?.args.visible).toBe(false)
+  // And the page was photographed first, so the pane holds the page rather than nothing
+  // while the menu is over it.
+  expect(asked.map((one) => one.command)).toContain('web_shot')
+
+  asked.length = 0
+  off()
+  await frames()
+
+  const shown = asked.filter((one) => one.command === 'web_place').at(-1)
+  expect(shown?.args.visible).toBe(true)
+
+  unmount(app)
 })

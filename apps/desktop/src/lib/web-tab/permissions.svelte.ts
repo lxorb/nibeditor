@@ -177,6 +177,15 @@ class Grants {
     for (const one of same) void this.tell(one.id, allow)
   }
 
+  /** The bubble was dismissed rather than answered - Escape, or the tab going away
+   *  under it. The site is told no and **nothing is remembered**, which is what Chrome
+   *  does with a dismissal: somebody who pressed Escape has not decided about the site,
+   *  and the next time it asks is a fair time to ask them again. */
+  dismiss(said: Asking) {
+    this.asking = this.asking.filter((one) => one.id !== said.id)
+    void this.tell(said.id, false)
+  }
+
   /** The tab has gone, so its questions have. A request nobody let go of is a promise
    *  the page is still waiting on, which is what a browser leaves behind for a bubble
    *  somebody dismissed - but a closed tab has no page to wait. */

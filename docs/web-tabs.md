@@ -23,9 +23,11 @@ Safari behaves.
 
 ```ini
 [InternetShortcut]
-URL=https://svelte.dev/docs
+URL=https://svelte.dev/docs/svelte/what-are-runes
 Title=Svelte docs
 Nib-Added=2026-09-12T08:30:00.000Z
+Nib-Home=https://svelte.dev/docs
+Nib-Icon=https://svelte.dev/favicon.png
 ```
 
 The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
@@ -35,12 +37,43 @@ has never heard of nib. It is an INI file, so a reader for it is twenty lines, a
 every program that reads one steps over a key it has no use for - which is why nib's
 own two keys sit in the same block rather than in a section of their own.
 
-Three keys is the whole file. `URL` is the format's own and the only one it
-requires. `Title` is here rather than taken from the file name because a name on
-disk cannot hold `?`, `:` or `/` and a page's title often does. `Nib-Added` is the
-day, which is what `date:` was. Nothing else: a favicon would be a picture inside a
-text file, and `IconFile` in this format names an `.ico` on this machine, which is
-not a thing that travels.
+`URL` is the format's own key and the only one it requires. `Title` is here rather
+than taken from the file name because a name on disk cannot hold `?`, `:` or `/` and
+a page's title often does. `Nib-Added` is the day, which is what `date:` was. The
+last two are what makes a web note a browser tab, and a file with nothing to say in
+them does not carry them at all - a note nobody has followed a link out of is the
+three lines it always was.
+
+**`URL` is where the reading has got to, not where the note was pointed.** Emil,
+2026-09-13: *"I believe currently it resets the page every time you reopen it. That
+is extremely annoying and should not be. It should basically reopen the exact same
+page you had open last time when you open that page. So a web note should
+essentially correspond to what is otherwise a browser tab."* So following a link
+inside the page moves `URL`, a couple of seconds after the reading settles, and
+opening the note tomorrow - or on another machine the space syncs to, because the
+file is what syncs - opens the page that was open. Double-clicking the file in
+Explorer lands there too, which is the behaviour anybody would expect of a shortcut
+to a page they were reading.
+
+**`Nib-Home` is where the note points**: the address somebody typed into the bar, or
+the one the note was made with. It is kept because a note whose address had quietly
+become the eighth page of somebody's browsing is a note no link could point at, and
+because "take me back to the site" is worth being able to answer. Absent means it is
+the same as `URL`.
+
+**`Nib-Icon` is the site's own mark, as an address.** A picture inside a text file is
+a text file nothing else will read, and `IconFile` in this format names an `.ico` on
+this machine, which is not a thing that travels - but the one thing a favicon always
+has is somewhere to be fetched from. It is here so the tab strip and the file list
+have the site's mark before the page has loaded and on a machine that has never
+opened it; a machine with no network falls back to the generic web mark.
+
+**What is *not* in the file is where the reading was on the page, or the trail behind
+the tab.** A scroll offset is about this screen at this width and a trail is a
+session's own walk, so both live in this device's own storage, keyed by the file's
+path - `nib:web-places`, beside the other things a device decides for itself. See
+`lib/web-tab/place.ts`. The rule in one line: **the address is the document, and the
+place is the device's.**
 
 **`.webloc` is read too, and never written.** That is the same idea on macOS - a
 plist with a `URL` string in it - and it is what Safari makes when a page is dragged
@@ -116,11 +149,11 @@ goes **in** the note being written: every row of it puts a block on the page, an
 website is a file beside the note rather than something in it. The two menus that
 make files - the file list's and the tab strip's - are where it belongs.
 
-**Following a link inside the page does not rewrite the file.** The file says where
-the document points; where the reader has got to is the tab's, kept in the session
-so a restart comes back on the page they were reading. A file that moved under every
-click would be a file no link could point at. An address **typed into the bar** does
-rewrite it, because that is somebody saying where the document points.
+**Following a link inside the page moves `URL`, and `Nib-Home` keeps where the note
+points.** A web note is a browser tab, so the file says where the reading has got to
+and opening the note again opens that page; see "The file" above. An address typed
+into the bar moves both, because that is somebody saying where the document itself
+points.
 
 ## The tab, per platform
 
@@ -210,28 +243,75 @@ the window's own resize, and a look after any press - and the crate is only told
 when the answer has changed, so a keystroke in a note beside the page costs one
 layout read and no IPC.
 
-**Hidden when the tab is not showing, and taken down when nobody comes back.**
-Switching tabs hides the page rather than closing it, because coming back to a tab
-should not be a reload. After five minutes hidden the webview is closed and the
-tab keeps its address: a window left open overnight with eight sites in it is
-holding no browsers. Looking at the tab again opens the page where it was. Closing
-the tab takes the webview with it.
+**Hidden when the tab is not showing, and never closed for it.** This is the one
+thing in this file that shipped wrong twice. Emil, 2026-09-13: *"if I switch between
+web windows then it has decent speed, but if I switch between a note and then back
+then it loads for an eternity till the web window shows the website."*
+
+The pane's teardown asked the document where the hole had been, so that it could
+hide the page there - and closed the page outright when the answer was nothing.
+**The answer was always nothing.** Svelte's `destroy_effect` takes the DOM out of
+the document and *then* runs the teardowns, so an element measured from there is a
+box of zeroes; every switch away from a web tab closed the webview. Coming back was
+a fresh `add_child`, a fresh WebView2 environment where no other web tab was left
+alive to keep one warm - the profile is the app's own `web` folder, which is a
+browser process group of its own - and a fresh load of the site over the network.
+Web to web was quicker only because the tab being left behind kept the engine warm
+for the one arriving.
+
+Measured with `scripts/web-switch-probe.py`, which asks the crate itself whether the
+tab still has a page:
+
+| | before | after |
+| --- | --- | --- |
+| the page is still there after a switch to a note | **no** | **yes** |
+| note to web | 293 ms, and a load of the site | 21 ms, and no load at all |
+| web to web | 147 ms, and a load of the site | 19 ms |
+| the page comes back where it was left | no | yes |
+
+So the rectangle the page was last placed at is kept by the pane rather than
+measured when it is wanted, and the tab's departure hides the page and starts a
+clock. **Parking** is the only thing that closes a webview: half an hour of nobody
+looking, or being the least recently looked at page when nine are running - Chrome's
+own memory saver waits about as long and discards for the same reason. A parked tab
+keeps its address, its place on the page and its trail, so reviving it is a load and
+not a loss. Closing the tab takes the webview and the trail with it.
 
 **A native webview draws above every pixel of HTML in the window.** So while
-anything of the app's is over the page - a menu, a sheet, the palette, the
-settings - the page is hidden, or the menu would come up behind it. The app asks
-the document which element is on top at the middle of the hole rather than keeping
-a list of everything that can open, so a new kind of overlay is covered the day it
-is written. The cost is that the page blinks out while a menu is open over it,
-which is the honest trade: see "What is left" below.
+anything of the app's is over the page - a menu, a sheet, the palette, the settings,
+a permission bubble - the page is hidden, or the menu comes up *behind* it and
+nobody can see it. That was the second half of what Emil called "very fucked up":
+the app asked the document which element was on top **at the middle of the hole**,
+so a menu that covered a corner of the page was a menu drawn behind it, and the
+question was only asked again after a press - a palette row that opens the next
+overlay is not a press.
 
-**Back and forward are the page's own history.** Neither WebView2 nor WKWebView
-hands Tauri a Go Back, so the step is `history.back()` in the page, which is what
-a browser's own button calls. Whether there is anywhere to step is kept by the
-crate as a trail of addresses, because the engine will not answer that either, and
-a back arrow that is always lit is an arrow that lies half the time. A redirect
-can leave an extra entry in the trail; that is the price of not having the engine's
-own answer.
+It is now asked once, of the overlay stack, which every menu, sheet, dropdown and
+popover in the app already puts itself on because that is what Escape closes. A kind
+of overlay nobody has written yet is covered on the day it is written, and there is
+no list in the web tab to keep in step with the app. The document is still asked as
+well, at nine points rather than one, for the few things over the page that Escape
+does not close.
+
+**And the page does not blink out any more.** Before it is hidden, the engine is
+asked to photograph itself - `CapturePreview`, which is the only way to those pixels
+- and the still picture is what the pane holds under the menu. It is also what
+stands in while a parked page loads again, so neither an overlay nor a revival is a
+flash of empty pane. On macOS and Linux there is no snapshot to be had through what
+wry hands out, and the hole keeps its own ground there.
+
+**Back and forward are the page's own history, until they cannot be.** Neither
+WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
+all along the step is `history.back()` in the page, which is what a browser's own
+button calls - and it takes the place on the page and the half-filled form back with
+it, which no navigation can. A page that has just been revived has no history in the
+engine at all: the webview is a minute old and the trail behind the tab is half an
+hour of reading. So the step is an address off the trail the crate keeps, and from
+the first of those the tab steps that way for good, because a `history.back()` after
+one of them would go the wrong way. Whether there is anywhere to step is the trail's
+answer either way, because the engine will not give one and a back arrow that is
+always lit is an arrow that lies half the time. A redirect can leave an extra entry
+in the trail; that is the price of not having the engine's own answer.
 
 ### The browser build: a card, and a frame when asked
 
@@ -330,8 +410,30 @@ into a site, Ctrl+L is that site's shortcut and the app never sees the press: th
 is what a webview of its own means, and the alternative would be registering an
 accelerator with the operating system. The bar is one click away.
 
-The dots hold what a browser keeps in the same place: open in the browser, copy
-the address, clip the page, and what this site is allowed.
+The mark at the left of the field is the site: the page's own favicon, and a lock for
+a site that has none - or a warning for an `http:` page. Pressing it says what this
+site is and what it has been allowed, which is Chrome's site information bubble; see
+"What a site may do" below.
+
+**The dots hold Chrome's menu, in Chrome's order and Chrome's words**, because Emil
+asked for exactly that: *"Our browser related menu structure should be very similar
+to that of chrome. And in general we don't want to reinvent how a browser works."*
+New tab, Bookmarks, Zoom out / the size / Zoom in, Full screen, Print, Save page,
+Share, Copy link, Open in the browser, Settings - each bent onto what nib has where
+the two differ: a bookmark here is the space's own kept files, Save page is the
+clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
+way a browser's do, which is the one thing a row in this app may now ask for; see
+`keep` in `lib/menu-item.ts`.
+
+**What the menu does not hold is what the page's own menu already has.** Back,
+forward, reload, save as, print, view page source, inspect; open a link in a new tab,
+copy a link address; open an image in a new tab, copy an image, save an image as;
+copy a selection and search the web for it. Those are the engine's own context menus -
+Chromium's on Windows, `WebKit`'s elsewhere - in the reader's own language, with the
+engine's own behaviour behind every row, and a second copy written in this app would
+be worse at every one of them. Inspect is how the developer tools are reached, which
+is why there is no More tools row. What is still missing against Chrome's menu is
+listed under "What is left".
 
 ## Clipping the page
 
@@ -408,16 +510,58 @@ profile.
 3. The globals that reach the crate are deleted before the page's first script
    runs.
 
-**Every permission is refused, and refused by not being there.** The camera and
-the microphone, the clipboard, where you are, and the buses a page can reach
-hardware over: the APIs are taken off `Navigator.prototype` in the same script, so
-the engine never has a request to prompt about. Two of them can be allowed by
-hand, per site, from the dots menu - the camera, which stands for the microphone
-because they are one API and a page that may watch you may hear you, and the
-clipboard. Nothing else can be allowed at all: a note-taking app has no reason to
-let a page talk to a USB device. Grants live on the device, never on the account,
-and changing one builds the page again, because the guard runs once and a page
-already running was built under the old answer.
+### What a site may do
+
+**A site is asked about at the moment it asks, in a bubble under the address bar.**
+Emil, 2026-09-13: *"a lot of stuff is still done extremely bad, e.g. having explicit
+buttons for allow clipboard or allow camera. I don't think chrome does it like
+this."*
+
+He is right, and what was here before was exactly that. The camera, the microphone,
+the clipboard, where you are and `Notification` were taken off `Navigator.prototype`
+before the page's first script, so the engine never had a request to raise - and the
+only way to give a site the camera was a row in a menu saying "Allow the camera",
+which nobody goes looking for, which has to be pressed *before* the site asks rather
+than when it does, and which cost the page being rebuilt because the guard script
+runs once.
+
+So the APIs are left where they are, and the engine's own request is what the window
+answers. `ICoreWebView2::add_PermissionRequested` raises one when the page calls the
+API - which is the only honest moment to ask, because it is the moment the reader
+pressed something on the site - and the request is **held open** with a deferral
+while the bubble is up: `example.com wants to / Use your camera`, with the site's own
+mark, and Block or Allow. The answer is remembered for that origin, so a site is
+asked once; the next request from it is answered before anything appears on screen.
+Escape is Block, because a permission bubble nobody answered is a request that was
+refused.
+
+Three things make that work, and each is load bearing: the deferral, because deciding
+inside the engine's own event handler would mean either refusing everything or running
+a nested message loop - which is the freeze this file spent a day on; **one thread**,
+because everything the engine hands out there belongs to the window's thread, so the
+requests waiting for an answer live in a thread local on it and `web_answer` posts
+itself there; and the window deciding, because what a site was allowed belongs where
+the reader's other choices live. Grants are per origin and per kind, on the device and
+never on the account, in `nib:web-grants`.
+
+**Clipboard write and paste need no prompt**, because they need none in Chrome: a
+page may write to the clipboard on a gesture, and a paste is the reader pressing
+paste. Only reading the clipboard without one is a request, and the engine raises
+that itself.
+
+**The lock at the left of the address field says what a site has.** Chrome's site
+information bubble: whether the connection is the secure kind, every kind this site
+was allowed or refused with the answer on a button that gives the other one, and
+Reset permissions, which forgets all of it. A site that has never asked for anything
+shows the first line and nothing else.
+
+**What is still refused outright** is the buses a page can reach hardware over -
+Bluetooth, USB, serial, HID - and the credential store. Those are taken off
+`Navigator.prototype` before the page's first script, because a note-taking app has no
+business handing them to a page and because no sentence in a bubble would help anybody
+decide. **On macOS and Linux** the engine's own prompt is what a site gets: the same
+event exists there - a capture delegate and WebKitGTK's `permission-request` signal -
+and neither is reachable through what wry hands out.
 
 **Only http and https, and never the app itself.** `file:` would read this
 machine, a scheme the system knows would hand the page to another application, and
@@ -452,12 +596,16 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/note.ts` | what a clip says, and what the old format said. Pure, tested |
 | `apps/desktop/src/lib/web-tab/address.ts` | what somebody typed, and the origin plainly. Pure, tested |
 | `apps/desktop/src/lib/web-tab/frame.ts` | what a frame may do, and the measurements behind asking first |
-| `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, the five-minute sleep. Tested |
-| `apps/desktop/src/lib/web-tab/permissions.svelte.ts` | what each site is allowed, which is nothing |
+| `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, parking, the still picture. Tested |
+| `apps/desktop/src/lib/web-tab/place.ts` | where each note was left, per device: the offset and the trail. Tested |
+| `apps/desktop/src/lib/web-tab/keep.ts` | the file keeping up with the page, debounced. Tested |
+| `apps/desktop/src/lib/web-tab/permissions.svelte.ts` | what each site was told, and the requests waiting for an answer. Tested |
+| `apps/desktop/src/lib/web-tab/WebAsk.svelte` | the bubble a site is answered in |
+| `apps/desktop/src/lib/web-tab/WebSite.svelte` | what a site is, behind the mark in the bar |
 | `apps/desktop/src/lib/web-tab/clip.ts` | where the HTML comes from |
 | `apps/desktop/src/lib/web-tab/WebTab.svelte` | the pane: the hole, the frame, the card |
 | `apps/desktop/src/lib/web-tab/WebBar.svelte` | the bar |
-| `apps/desktop/src/lib/web-tab/menu.ts` | the dots |
+| `apps/desktop/src/lib/web-tab/menu.ts` | the dots: Chrome's rows, and the zoom ladder. Tested |
 | `apps/desktop/src/lib/file-mark.ts` | the globe, off the name like every other mark |
 | `packages/markdown/src/links.ts` | `isWebTarget`, and a website among the files a link resolves through |
 | `packages/editor/src/wikilink/notes.ts` | `[[Svelte docs]]` with the extension left out |
@@ -466,14 +614,28 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `createWebsite`, `openWebsite`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry` |
 | `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
 | `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
+| `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
+| `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
+| `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
 | `apps/desktop/test/effects/web-tab.effect.test.ts` | the pane, mounted, which is where a website used to take the window down with it |
 
 ## What is left
 
-- **The page blinks while something is over it.** A native webview cannot be drawn
-  under the window's own HTML, so an overlay means hiding the page. The fix if it
-  ever grates is the one reactive flag every overlay already could bump, rather
-  than the element test the app makes now.
+- **Five of Chrome's menu rows are not here, because nothing is behind them yet.**
+  History and Downloads want surfaces nib does not have - a list of every page a
+  window has been through, and where the engine put what it saved; Find wants an
+  in-page find bar of its own, which is not the one a note has; Copy and Paste are
+  the page's own context menu already; and More tools' developer tools are reached by
+  Inspect in that same menu. Each is a row the day the thing behind it exists.
+- **A page's still picture is Windows only.** `CapturePreview` is WebView2's own;
+  `WKWebView`'s `takeSnapshot` and WebKitGTK's equivalent are not reachable through
+  what wry hands out, so an overlay over a page on a Mac still blinks the pane.
+- **A permission on macOS and Linux is the engine's own prompt**, for the same
+  reason: the event that would let the app ask is not reachable there.
+- **The place a page is put back at is the offset it was left at**, not the element
+  that was under the reader's eye. A site that lays itself out differently at another
+  width comes back near where it was rather than exactly on it, which is what a
+  browser does too.
 - **A browser build asks before it frames a page.** Nothing on the page can tell a
   framed site from a refused one, so the card asks; the Worker route above is what
   would remove the press.

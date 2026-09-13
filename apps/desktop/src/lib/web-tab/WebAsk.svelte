@@ -41,9 +41,10 @@
 
   let marked = $state(true)
 
-  // Escape is Block, which is what dismissing a permission bubble means: the page asked
-  // and nobody said yes.
-  $effect(() => overlays.show(() => grants.answer(asking, false)))
+  // Escape tells the site no and remembers nothing, which is what Chrome does with a
+  // bubble somebody dismissed: they have not decided about the site, so the next time it
+  // asks is a fair time to ask them again.
+  $effect(() => overlays.show(() => grants.dismiss(asking)))
 </script>
 
 <div

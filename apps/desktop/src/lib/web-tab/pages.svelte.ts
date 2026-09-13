@@ -57,6 +57,15 @@ const LIVE_AT_MOST = 8
  *  photographed again. */
 const SHOT_KEEPS = 400
 
+/** How long the engine is given to photograph itself, for the one caller that has to
+ *  wait for it.
+ *
+ *  A page is normally photographed on the press that is about to open something over
+ *  it, which costs the overlay nothing at all. This is the cap for an overlay that
+ *  arrived without a press, where the menu is behind the page until the picture lands
+ *  and a slow picture would be worse than none. */
+const SHOT_WAITS = 120
+
 /** Where the pane left room for the page, in the window's own pixels. */
 export interface Rect {
   x: number
@@ -401,16 +410,28 @@ class Pages {
     }
   }
 
-  /** A still picture of the page as it is now, kept on the page's state for the hole
-   *  to hold while the webview is out of sight. One picture per few hundred
-   *  milliseconds, so a menu and the sheet it opens share one. */
-  private async shoot(tabId: string): Promise<void> {
+  /** A still picture of the page as it is now, kept on the page's state for the hole to
+   *  hold while the webview is out of sight.
+   *
+   *  Taken on the press that is about to open something over the page - which is what
+   *  the pane calls this on, and the last moment at which the page is both current and
+   *  visible - and once more, with a cap on the wait, for an overlay that arrived
+   *  without a press. One picture per few hundred milliseconds, so a menu and the sheet
+   *  it opens share one. */
+  async shoot(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
 
     try {
-      const said = await invoke<string | null>('web_shot', { tab: tabId })
+      // Raced against a clock, because the overlay is behind the page until this
+      // answers: the engine photographs itself in a handful of milliseconds or it is
+      // not going to, and a menu waiting on a picture is worse than a menu over an
+      // empty pane.
+      const said = await Promise.race([
+        invoke<string | null>('web_shot', { tab: tabId }),
+        new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS)),
+      ])
       if (said) {
         page.shot = said
         page.shotAt = Date.now()
