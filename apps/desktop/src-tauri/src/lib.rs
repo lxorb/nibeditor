@@ -263,6 +263,11 @@ pub fn run() {
         web_tabs::web_step,
         web_tabs::web_clip,
         web_tabs::web_close,
+        web_tabs::web_look,
+        web_tabs::web_scroll,
+        web_tabs::web_zoom,
+        web_tabs::web_print,
+        web_tabs::web_shot,
     ]);
 
     #[cfg(mobile)]

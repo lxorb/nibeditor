@@ -34,7 +34,40 @@ describe('the file a website is written as', () => {
       url: 'https://svelte.dev/docs',
       title: 'Svelte docs',
       added: '2026-09-12T08:30:00.000Z',
+      home: null,
+      icon: null,
     })
+  })
+
+  // A web note is a browser tab: `URL` is the page the reading has got to, so that
+  // opening the note again opens that page, and the address the note points at is kept
+  // beside it. See keep.ts and docs/web-tabs.md.
+  test('keeps where the note points when the reading has moved on', () => {
+    const written = writeShortcut(
+      'https://svelte.dev/docs/svelte/what-are-runes',
+      'Svelte docs',
+      WHEN,
+      'https://svelte.dev/docs',
+      'https://svelte.dev/favicon.png',
+    )
+
+    expect(written).toContain('URL=https://svelte.dev/docs/svelte/what-are-runes')
+    expect(written).toContain('Nib-Home=https://svelte.dev/docs')
+    expect(written).toContain('Nib-Icon=https://svelte.dev/favicon.png')
+
+    const said = readShortcut(written)
+    expect(said?.url).toBe('https://svelte.dev/docs/svelte/what-are-runes')
+    expect(said?.home).toBe('https://svelte.dev/docs')
+    expect(said?.icon).toBe('https://svelte.dev/favicon.png')
+  })
+
+  // The ordinary file is the three lines it always was: a note nobody has followed a
+  // link out of says nothing it has nothing to say.
+  test('says nothing about home when the reading is where the note points', () => {
+    const written = writeShortcut('https://a.example/', 'A', WHEN, 'https://a.example/', null)
+    expect(written).not.toContain('Nib-Home')
+    expect(written).not.toContain('Nib-Icon')
+    expect(written.split('\r\n')).toHaveLength(5)
   })
 })
 

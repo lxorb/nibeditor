@@ -116,10 +116,22 @@ windows = { version = "0.58", features = [
   # the binary. See trace.rs.
   "Win32_System_Threading",
 ] }
-# PDF export talks to WebView2's print engine directly. The versions are the
-# ones tauri itself is built against, so the handles it hands out line up.
+# PDF export talks to WebView2's print engine directly, and a web tab asks the
+# engine to photograph itself. The versions are the ones tauri itself is built
+# against, so the handles it hands out line up.
 webview2-com = "0.38"
 windows-core = "0.61"
+# The COM stream `CapturePreview` writes a page's picture into; see `web_shot` in
+# web_tabs.rs. It has to be the same `windows` crate webview2-com's own signature
+# names, which is 0.61 and not the 0.58 above - two versions of it are already in
+# the lock file for that reason - so it comes in under a name of its own rather
+# than as a second `windows`. Nothing else in the crate uses it: the five calls
+# that reach Windows directly are all on 0.58, and moving them is a change to
+# five unsafe functions for no gain.
+windows_com = { package = "windows", version = "0.61", features = [
+  "Win32_System_Com",
+  "Win32_System_Com_StructuredStorage",
+] }
 
 [dev-dependencies]
 # The tests that touch the disk do it in a folder that cleans itself up. Already

@@ -19,6 +19,7 @@
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
+  import { overlays } from '../overlays'
   import { startup } from '../startup.svelte'
   import { isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
@@ -26,6 +27,7 @@
   import { plainOrigin, webAddress } from './address'
   import { clipPage } from './clip'
   import { ALLOW, SANDBOX } from './frame'
+  import { keepPage } from './keep'
   import { webRows } from './menu'
   import { pages, type Rect, type Step } from './pages.svelte'
   import WebBar from './WebBar.svelte'
@@ -48,17 +50,40 @@
     return { x: box.x, y: box.y, width: box.width, height: box.height }
   }
 
-  /** Whether something of the app's is over the middle of the hole.
+  /** Whether the page has to be out of sight, because something of the app's is over
+   *  it.
    *
-   *  Asked of the document rather than of a list of everything that can be opened: a
-   *  menu, a sheet, the palette and the settings are all just the topmost element at
-   *  a point, and the browser already knows which that is. */
-  function under(): boolean {
+   *  A native webview draws above every pixel of HTML in the window: nothing of nib's
+   *  can be drawn on top of a page, so while anything is over the note the page is
+   *  hidden and the still picture of it stands in - see `shot` in pages.svelte.ts.
+   *
+   *  Asked once, of the overlay stack, rather than of each kind of overlay in turn:
+   *  every menu, sheet, dropdown, the palette, the theme store and the settings put
+   *  themselves on that stack already, because that is what Escape closes. So a kind
+   *  of overlay nobody has written yet is covered on the day it is written, and there
+   *  is no list here to keep in step with the app. See overlays.ts.
+   *
+   *  The document is asked as well, for the few things that are over the page without
+   *  being something Escape closes - a drag preview, a bubble that follows the
+   *  pointer - and at nine points rather than at the middle, because a menu that
+   *  covers a corner of the page is just as much in front of it as one that covers the
+   *  middle. That was the bug: the page went on being drawn over a menu it did not
+   *  happen to cover the centre of, and a menu behind a page is a menu nobody can
+   *  see. */
+  function covered(): boolean {
+    if (overlays.depth > 0) return true
+
     const box = hole?.getBoundingClientRect()
     if (!box || !hole) return false
 
-    const on = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
-    return on !== null && on !== hole && !hole.contains(on)
+    for (const x of [0.08, 0.5, 0.92]) {
+      for (const y of [0.08, 0.5, 0.92]) {
+        const on = document.elementFromPoint(box.x + box.width * x, box.y + box.height * y)
+        if (on !== null && on !== hole && !hole.contains(on)) return true
+      }
+    }
+
+    return false
   }
 
   let scheduled = 0
@@ -67,6 +92,18 @@
    *  anywhere in the window asks this question, and most presses have not moved
    *  anything. */
   let told = ''
+
+  /** Where the hole was, the last time anybody looked.
+   *
+   *  Kept here rather than measured when it is wanted, because the one moment it is
+   *  wanted most is the moment it cannot be measured: Svelte takes the element out of
+   *  the document before it runs this component's teardown - `destroy_effect` removes
+   *  the DOM and then calls the teardowns - so a box read from there is a box of
+   *  zeroes, and a pane that read zeroes had no rectangle to hide its page at and
+   *  closed the page instead. Every switch away from a web tab closed the webview, and
+   *  coming back was a fresh browser process and a fresh load of the site: that is
+   *  what "it loads for an eternity" was. See test/effects/web-switch.effect.test.ts. */
+  let last: Rect | null = null
 
   /** Whether a page may be asked for yet.
    *
@@ -89,18 +126,23 @@
       const box = rect()
       if (!box) return
 
-      const visible = !under()
+      last = box
+      const visible = !covered()
       const said = `${box.x},${box.y},${box.width},${box.height},${String(visible)}`
       if (said === told) return
 
       told = said
       if (visible) void pages.show(tab.id, address, box)
-      else void pages.place(tab.id, box, false)
+      // The tab is the one showing and something of the app's is over it, which is the
+      // one case where the page is photographed before it goes: what the pane holds
+      // under a menu is then the page rather than nothing. See `covered`.
+      else void pages.place(tab.id, box, false, true)
     })
   }
 
   /** Where this tab points: the address the page is on, else the one the session
-   *  remembered, else what the file says. */
+   *  remembered, else what the file says - which is where the reading got to, because
+   *  a web note is a browser tab and the file says so. See web-tab/keep.ts. */
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
   onMount(() => {
@@ -128,19 +170,26 @@
     window.addEventListener('pointerdown', pressed, true)
     window.addEventListener('keydown', pressed, true)
 
+    // Something opened over the note, or the last thing over it closed. Neither is a
+    // press - a command from the palette opens the next overlay, and Escape closes one
+    // - so the page cannot wait for a press to find out; see `covered`.
+    const unwatch = overlays.watch(follow)
+
     return () => {
       cancelAnimationFrame(scheduled)
       clearTimeout(late)
       watching.disconnect()
+      unwatch()
       window.removeEventListener('resize', follow)
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
 
-      // The tab is no longer the one showing. The page goes out of sight and, if
-      // nobody comes back to it, is taken down; see pages.svelte.ts.
-      const last = rect()
+      // The tab is no longer the one showing. The page goes out of sight and goes on
+      // running: a web note is a browser tab, so coming back to it is not a load. The
+      // rectangle is the one the page was last placed at rather than one measured now,
+      // because by here the hole is out of the document and measures nothing; see
+      // `last`. A tab nothing ever placed has no page to hide.
       if (last) pages.hide(tab.id, last)
-      else void pages.sleep(tab.id)
     }
   })
 
@@ -174,6 +223,32 @@
     if (url === null) return
 
     void untrack(() => workspace.keepWeb(tab, url, title))
+  })
+
+  // Which file this tab is showing, so the store can write down where the reading got
+  // to under the note rather than under this visit to it; see place.ts.
+  $effect(() => {
+    page.path = tab.path
+  })
+
+  // Where the reading has got to, in the file. That is what makes reopening the note -
+  // tomorrow, or on another machine the space syncs to - open the page that was open;
+  // see keep.ts. The home the file keeps beside it is the address the note points at.
+  $effect(() => {
+    const url = page.url
+    const icon = page.icon
+    const path = tab.path
+    if (url === null || path === null) return
+
+    untrack(() =>
+      keepPage({
+        path,
+        text: tab.doc,
+        url,
+        icon,
+        wrote: (text: string) => tab.note.replace(text, false),
+      }),
+    )
   })
 
   function clip() {
@@ -214,10 +289,18 @@
   />
 
   {#if isDesktop && page.openable}
-    <!-- The hole. Nothing is drawn in it: the page is a webview over this box, and
-         anything here would be under it. Its colour is the page's own background
-         while a page is loading, so the pane does not flash. -->
-    <div class="hole" bind:this={hole}></div>
+    <!-- The hole. Nothing is drawn in it but the last picture of the page: the page
+         itself is a webview over this box, and anything here would be under it. The
+         picture is what the pane holds while the webview is out of sight - under a
+         menu, and while a parked page is loading again - so neither of those is a
+         flash of empty pane. Its colour underneath is the app's own ground, for the
+         first page in a tab, which nothing has photographed yet. -->
+    <div
+      class="hole"
+      class:still={page.shot !== null}
+      style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
+      bind:this={hole}
+    ></div>
   {:else if page.framing === 'frame' && address}
     <iframe
       class="framed"
@@ -284,6 +367,15 @@
     flex: 1;
     min-height: 0;
     background: var(--bg);
+  }
+
+  /* The still picture of the page, from the top left corner at its own size: it was
+     photographed at exactly this rectangle, and a picture that stretched would read
+     as the page having moved. */
+  .hole.still {
+    background-repeat: no-repeat;
+    background-position: top left;
+    background-size: 100% auto;
   }
 
   .framed {
