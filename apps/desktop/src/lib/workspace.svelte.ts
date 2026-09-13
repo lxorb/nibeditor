@@ -10,19 +10,12 @@ import {
   isWebTarget,
 } from '@nib/markdown/links'
 import { freePath } from '@nib/markdown/paths'
+import { openerFor } from './openers'
 import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
-import {
-  folderOf,
-  insideSpace,
-  isMarkdownPath,
-  nameOf,
-  noteName,
-  relativeTo,
-  withoutExtension,
-} from './space-paths'
+import { folderOf, insideSpace, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
 import { nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
@@ -80,7 +73,7 @@ import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
-import { keptBody, webTitleOf, webUrlOf } from './web-tab/note'
+import { asShortcut, convertWebsites } from './web-tab/convert'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 
@@ -1106,7 +1099,7 @@ class Workspace {
     // A website written when a website was a note becomes a shortcut the first time
     // it is opened, and it is the shortcut that opens. A note that turns out not to
     // be one - somebody took the line out - opens as the note it is.
-    const opening = isWebTarget(path) ? path : await this.asShortcut(path)
+    const opening = isWebTarget(path) ? path : await asShortcut(this, path)
     if (opening === null) {
       await this.open(path)
       return
@@ -1148,83 +1141,10 @@ class Workspace {
     this.persist()
   }
 
-  /** A note that says `url:` in its front matter, as a shortcut file. Answers where
-   *  the website now lives, or null for a note that is not one after all.
-   *
-   *  A website used to be a note, and some spaces are full of those. Rather than two
-   *  formats to read for ever, a note becomes a shortcut the first time anybody opens
-   *  it: `Svelte docs.md` is read, `Svelte docs.url` is written beside it, and the
-   *  note goes.
-   *
-   *  Unless the note had something to say. What the old format wrote was a heading
-   *  and the address as a link, and nothing of that is worth keeping; a note somebody
-   *  had written into as well is a note, and it stays where it is with the `url:`
-   *  line taken out of it. So a shortcut and a note of the same name can both come
-   *  out of this, which is exactly what was in the file.
-   *
-   *  The palette can do the whole space at once; see `convertWebsites`. */
-  private async asShortcut(path: string): Promise<string | null> {
-    const text = await invoke<string>('read_note', { path }).catch(() => null)
-    const url = webUrlOf(text)
-    if (text === null || url === null) return null
-
-    const title = webTitleOf(text) ?? shownName(nameOf(path))
-    const written = writeShortcut(url, title, new Date())
-    const shortcut = `${withoutExtension(path)}.url`
-
-    // A name that is taken is a website that has already been converted, or a file
-    // somebody else put there. Either way this one keeps its own name.
-    const free = this.entryAt(shortcut) ? this.freeName(folderOf(path), nameOf(shortcut)) : null
-    const target = free === null ? shortcut : joinPath(folderOf(path), free)
-
-    this.showEntry(this.freshEntry(target, false))
-    await invoke('write_note', { path: target, content: written })
-
-    const kept = keptBody(text)
-    if (kept === null) await this.oldNoteGone(path)
-    else await invoke('write_note', { path, content: kept }).catch(() => undefined)
-
-    links.noteGone(path)
-    await this.loadTree()
-    return target
-  }
-
-  /** The note a website used to be, put where a deleted note goes.
-   *
-   *  Nothing is lost and nothing is recorded: a conversion is not a delete somebody
-   *  asked for, so there is no undo step for it, but the file is in Recently deleted
-   *  for anybody who wants it back. A file that will not go is a file left beside its
-   *  shortcut, which breaks nothing: the shortcut is what its name opens now. */
-  private async oldNoteGone(path: string) {
-    try {
-      if (account.signedIn) await invoke('delete_note', { path })
-      else await invoke('trash_item', { path, kind: 'note' })
-    } catch {
-      // Said above: a note that stays is a note beside a shortcut, and harmless.
-    }
-  }
-
-  /** Every website still written as a note, converted where it stands. Answers how
-   *  many there were, so the palette can say what it did.
-   *
-   *  One row rather than a wait for each file to be opened: a space that came from an
-   *  older nib has all of its websites in the old format, and a reader who wants them
-   *  all as shortcuts should not have to open each one. */
+  /** Every website still written as a note, converted where it stands; see
+   *  web-tab/convert. Answers how many there were, for the palette. */
   async convertWebsites(): Promise<number> {
-    const root = this.activeSpace?.root
-    if (!root) return 0
-
-    const notes = this.notes.filter(
-      (one) => isMarkdownPath(one.name) && links.urlOf(one.path) !== null,
-    )
-
-    let done = 0
-    for (const note of notes) {
-      if ((await this.asShortcut(note.path)) !== null) done += 1
-    }
-
-    if (done) await this.loadTree()
-    return done
+    return convertWebsites(this)
   }
 
   /** A web tab with nowhere to go yet: what "Open a website" makes. The address
@@ -1493,55 +1413,33 @@ class Workspace {
   }
 
   async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
-    if (isPdfTarget(path)) {
-      // Not in front of a pair of glasses, for the reason a canvas is not: the
-      // panel cannot show a page of one, and the viewer that would draw it is not
-      // in the plugin's build at all. See vite.even.config.ts.
-      if (__EVEN_PLUGIN__) return
+    // Which kind of tab this path is for, or null where this build has no surface
+    // for it - a PDF, a canvas or a page note in the plugin. Every reason is in
+    // `openerFor`; making the tab is the class's own, below.
+    const opener = openerFor(path, (one) => links.urlOf(one) !== null, {
+      evenBuild: __EVEN_PLUGIN__,
+      isPlugin: isPlugin(),
+    })
 
-      this.openPdf(path)
-      return
+    switch (opener) {
+      case null:
+        return
+      case 'pdf':
+        this.openPdf(path)
+        return
+      case 'web':
+        await this.openWeb(path)
+        return
+      case 'pages':
+        await this.openPages(path)
+        return
+      case 'canvas':
+        await this.openCanvas(path)
+        return
+      case 'note':
+        await this.open(path, options)
+        return
     }
-
-    // A website: a shortcut file, which its name says outright. A row in the file
-    // list, a bookmark, a link and the palette all open the page, and none of them
-    // has to read the file or wait for an index to have read it.
-    if (isWebTarget(path)) {
-      await this.openWeb(path)
-      return
-    }
-
-    // A website written when a website was a note. The index is what knows - the
-    // pass that reads every note for its icon and its aliases reads `url:` too - and
-    // opening it converts it to a shortcut first; see `asShortcut`. A note the index
-    // has not reached yet opens as the note it also is, and the next pass settles it.
-    if (isMarkdownPath(path) && links.urlOf(path) !== null) {
-      await this.openWeb(path)
-      return
-    }
-
-    if (isPagesTarget(path)) {
-      // Not in front of a pair of glasses either, and for the same reason a canvas
-      // is not: a page of handwriting has nothing the panel could put on its seven
-      // lines.
-      if (isPlugin()) return
-
-      await this.openPages(path)
-      return
-    }
-
-    if (isCanvasTarget(path)) {
-      // Not in front of a pair of glasses. A canvas is a plane of cards and the
-      // panel is one font on seven lines, so a canvas open in the plugin is a tab
-      // the glasses cannot follow and a reader cannot get out of by looking up.
-      // The glasses' own lists never name one either; see lib/even/bridge.
-      if (isPlugin()) return
-
-      await this.openCanvas(path)
-      return
-    }
-
-    await this.open(path, options)
   }
 
   /** Drops the blank untitled tab a window starts with, now that something real
@@ -2355,7 +2253,7 @@ class Workspace {
     this.clearSelection()
   }
 
-  private entryAt(path: string): Entry | null {
+  entryAt(path: string): Entry | null {
     const found = entryAt(this.tree, path)
     return found && found.path !== this.tree?.path ? found : null
   }
@@ -2366,7 +2264,7 @@ class Workspace {
    *  the same frame it happened, rather than after a round trip and a re-read
    *  of the whole folder. An operation that fails undoes itself when the
    *  listing arrives. */
-  private showEntry(entry: Entry) {
+  showEntry(entry: Entry) {
     if (this.tree) this.tree = withEntry(this.tree, entry, this.treeOptions)
   }
 
@@ -2380,7 +2278,7 @@ class Workspace {
 
   /** A row for something that is about to exist. The times are now, which is
    *  what sorting by "created" or "modified" would put it under anyway. */
-  private freshEntry(path: string, isFolder: boolean): Entry {
+  freshEntry(path: string, isFolder: boolean): Entry {
     const at = Date.now()
     return {
       name: nameOf(path),

@@ -66,18 +66,31 @@ tree, the tabs and the panes. What has a rule of its own lives in
 | `panels.ts` | Which side a panel sits on. Pure: it answers what the three fields would be, and the store writes them. |
 | the rest | One store each: `bookmarks`, `closed`, `device`, `documents`, `excluded`, `folder-icons`, `graph-settings`, `layouts`, `pane-tree`, `panes`, `positions`, `selection`, `session`, `zones`. |
 
-Seven members of the class are not `private` because those modules read them:
+Members of the class are not `private` because those modules read them:
 `documents`, `positions`, `reload`, `retarget`, `persist`, `scheduleSession`,
-`freeName`. They are the store's own rather than the app's - nothing outside
-`lib/workspace` touches them.
+`freeName`, and the tree-edit trio `entryAt`, `showEntry`, `freshEntry`. They are
+the store's own rather than the app's - nothing outside `lib/workspace` touches
+them.
 
-Two clusters stayed in the class on purpose. **Naming and creating** -
-`createNote`, `startRenaming`, `rename`, `remove` - needs fourteen of the
-class's internals, because a row appears in the tree before the file exists;
-that is the same responsibility as putting a tab on screen, not a separate one.
-**Opening** - `openEntry`, `openPdf`, `openCanvas`, `openWeb`, `openPages` - is
-the routing every kind of document shares. Separating either is a design change
-rather than a move.
+Two decisions inside opening. The routing - which kind of tab a path is for - is a
+decision rather than machinery, so it is `apps/desktop/src/lib/openers.ts`: a pure
+`openerFor` with a branch for every kind and every build, tested apart from any
+tab. And a website written as a note becoming a `.url` shortcut is a migration in
+the browser's own domain, so it is `apps/desktop/src/lib/web-tab/convert.ts`, taking
+the tree-edit trio as an interface.
+
+What did **not** come out is the rest of opening - `openPdf`, `openCanvas`,
+`openWeb`, `openPages`, `open` - and the reason is worth stating, because it is the
+same reason **naming and creating** (`createNote`, `startRenaming`, `rename`,
+`remove`) stayed. Both are consumers of one core loop: `document` builds a
+document, `add` puts it in a pane, `dropScaffolding`, `showNote`, `remember`,
+`walked`, `placeAt`. Those seven are each called a dozen-plus times, spread across
+opening, creating, `restore`/`applyLayout`, and `split` - so the loop is owned by
+no one cluster. A module that opened tabs would take twenty-odd of the class's
+members as an interface, most of them that loop, and the same loop would still be
+reached as `this.` by the creating and restoring code that stays. That is not a
+seam; it is the class turned inside out. So the loop, and the two clusters built on
+it, stay in the class.
 
 ### The theme package is the vocabulary
 
