@@ -7,6 +7,7 @@ import {
   type FoldLines,
   foldLines,
   foldMore,
+  foldOpenedBy,
   folding,
   sameFolds,
   toggleFold,
@@ -397,5 +398,91 @@ describe('two sets of folds', () => {
         ],
       ),
     ).toBe(false)
+  })
+})
+
+/** An indented block: a paragraph or a run of code that starts two spaces or a tab
+ *  in, which Obsidian folds the way it folds a list item's children.
+ *
+ *  The language already answers for one - it has a fold prop for every block that
+ *  is not a heading or a list - so the whole of this is which lines get asked; see
+ *  `foldOpenedBy`. The chevron, the two levels and the toggle all ask that one
+ *  question, which is why folding one line proves all three. */
+describe('an indented block', () => {
+  const INDENTED =
+    '# Notes\n\nPlain.\n\n  an indented block\n  a second line\n  a third\n\nAfter.\n'
+  const TABBED = '# Notes\n\n\tcode one\n\tcode two\n\nAfter.\n'
+
+  test('owns a fold, so the chevron in the margin has one to draw', () => {
+    const built = state(INDENTED)
+
+    expect(foldOpenedBy(built, built.doc.line(5))).toEqual({
+      from: built.doc.line(5).to,
+      to: built.doc.line(7).to,
+    })
+    // The lines under it are the fold's, not folds of their own.
+    expect(foldOpenedBy(built, built.doc.line(6))).toBe(null)
+    expect(foldOpenedBy(built, built.doc.line(3))).toBe(null)
+  })
+
+  test('folds from the caret on its first line, and opens again', () => {
+    const on = state(INDENTED, INDENTED.indexOf('an indented'))
+    const folded = ran(toggleFold, on)
+
+    expect(folded.ok).toBe(true)
+    expect(foldLines(folded.state)).toEqual([[5, 7]])
+
+    const back = ran(toggleFold, folded.state)
+    expect(foldLines(back.state)).toEqual([])
+  })
+
+  test('folds from a caret anywhere inside it', () => {
+    const inside = state(INDENTED, INDENTED.indexOf('a third'))
+
+    expect(foldLines(ran(toggleFold, inside).state)).toEqual([[5, 7]])
+  })
+
+  test('folds when it is a tab in, which is a run of code', () => {
+    const on = state(TABBED, TABBED.indexOf('code one'))
+
+    expect(foldLines(ran(toggleFold, on).state)).toEqual([[3, 4]])
+  })
+
+  test('is a level of its own for fold more and fold less', () => {
+    const more = ran(foldMore, state(INDENTED))
+    expect(more.ok).toBe(true)
+    expect(foldLines(more.state)).toEqual([[5, 7]])
+
+    const less = ran(foldLess, more.state)
+    expect(foldLines(less.state)).toEqual([])
+  })
+
+  test('is content rather than map, so folding everything leaves it alone', () => {
+    const all = ran(foldHeadings, state(INDENTED))
+
+    expect(foldLines(all.state)).toEqual([[1, 9]])
+  })
+
+  test('is written down and put back like any other fold', () => {
+    const folded = ran(toggleFold, state(INDENTED, INDENTED.indexOf('an indented')))
+    const again = withFolds(state(INDENTED), foldLines(folded.state))
+
+    expect(foldLines(again)).toEqual([[5, 7]])
+  })
+
+  /** A plain paragraph is not an indented block, whatever the library would fold:
+   *  a note is read down its left edge, and a chevron beside every paragraph of it
+   *  is a map of nothing. */
+  test('leaves an unindented paragraph alone', () => {
+    const plain = state('# Notes\n\none line\nand another\n\nAfter.\n')
+
+    expect(foldOpenedBy(plain, plain.doc.line(3))).toBe(null)
+  })
+
+  /** The line under a list item's marker belongs to the item's own fold. */
+  test('leaves what a list item already folds alone', () => {
+    const listed = state('- item\n  continued\n- another\n')
+
+    expect(foldOpenedBy(listed, listed.doc.line(2))).toBe(null)
   })
 })

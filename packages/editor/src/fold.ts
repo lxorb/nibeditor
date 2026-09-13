@@ -73,15 +73,43 @@ import { NibWidget } from './live-preview/widget'
 export type FoldLines = readonly [head: number, last: number]
 
 /** Which lines could open a fold, judged on their first characters: a heading, a
- *  quote or callout, a list item, a fence. `foldable` resolves the syntax tree,
- *  so it is only asked about a line that could plausibly answer yes. */
-const COULD_FOLD = /^[ \t]*(?:#{1,6}[ \t]|>|[-*+][ \t]|\d+[.)][ \t]|```|~~~)/
+ *  quote or callout, a list item, a fence - or an indented block, which is any line
+ *  that starts two spaces or a tab in. `foldable` resolves the syntax tree, so it
+ *  is only asked about a line that could plausibly answer yes.
+ *
+ *  The indent is the whole of what says an indented block: a paragraph or a run of
+ *  code set in from the margin, which Obsidian folds the way it folds a list item's
+ *  children. What the markdown around those lines makes of them - an indented code
+ *  block, a paragraph continued, a second paragraph inside a list item - is the
+ *  language's answer rather than this pattern's, and a line that opens no block of
+ *  its own is asked and says no.
+ *
+ *  Two spaces and not four, because four is only where a code block starts and a
+ *  reader who set a thought in by two meant it to be under the thing above. An
+ *  unindented paragraph is deliberately left out even though the language would
+ *  fold one: a note is read down its left edge, and a chevron beside every
+ *  paragraph in it draws a map of nothing. */
+const COULD_FOLD =
+  /^(?:[ \t]*(?:#{1,6}[ \t]|>|[-*+][ \t]|\d+[.)][ \t]|```|~~~)|(?: {2}|\t)[ \t]*\S)/
 
 const HEADING = /^[ \t]*#{1,6}[ \t]/
 
 /** The fold a line opens, or nothing. */
 function foldAtLine(state: EditorState, line: Line): FoldRange | null {
   return foldable(state, line.from, line.to) ?? null
+}
+
+/** The fold one line owns, or nothing - the one question every part of folding
+ *  asks, asked in one place.
+ *
+ *  Which lines are worth asking the language about is the cheap half and is
+ *  `COULD_FOLD`; what a fold covers is the language's answer. Asked by the chevron
+ *  in the margin for every line on screen, by the toggle walking up from the caret,
+ *  and by the two levels walking the whole note - so a chevron, a chord and a
+ *  restored fold can never disagree about which lines fold at all. Exported for the
+ *  tests, which have no margin to mount. */
+export function foldOpenedBy(state: EditorState, line: Line): FoldRange | null {
+  return COULD_FOLD.test(line.text) ? foldAtLine(state, line) : null
 }
 
 /** The folded range a line already owns, or nothing. */
@@ -100,10 +128,7 @@ function enclosingFold(state: EditorState, pos: number): FoldRange | null {
   const start = state.doc.lineAt(pos)
 
   for (let number = start.number; number >= 1; number--) {
-    const line = state.doc.line(number)
-    if (!COULD_FOLD.test(line.text)) continue
-
-    const range = foldAtLine(state, line)
+    const range = foldOpenedBy(state, state.doc.line(number))
     if (range && range.to >= pos) return range
   }
 
@@ -227,10 +252,7 @@ function foldableBlocks(state: EditorState): Block[] {
   const holding: FoldRange[] = []
 
   for (let number = 1; number <= state.doc.lines; number++) {
-    const line = state.doc.line(number)
-    if (!COULD_FOLD.test(line.text)) continue
-
-    const range = foldAtLine(state, line)
+    const range = foldOpenedBy(state, state.doc.line(number))
     if (!range) continue
 
     while (holding.length && (holding.at(-1)?.to ?? 0) < range.to) holding.pop()
@@ -549,17 +571,13 @@ function build(view: EditorView): DecorationSet {
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to;) {
       const line = state.doc.lineAt(pos)
+      // A fold on its way shut counts as shut: the chevron turns as the lines
+      // start to go rather than once they have gone, so the mark leads the
+      // movement instead of catching up with it.
+      const folded = !!foldedAtLine(state, line) || shuttingAt(state, line.from, line.to)
 
-      if (COULD_FOLD.test(line.text)) {
-        // A fold on its way shut counts as shut: the chevron turns as the lines
-        // start to go rather than once they have gone, so the mark leads the
-        // movement instead of catching up with it.
-        const folded = !!foldedAtLine(state, line) || shuttingAt(state, line.from, line.to)
-        if (folded || foldAtLine(state, line)) {
-          marks.push(
-            Decoration.widget({ widget: new FoldWidget(folded), side: -1 }).range(line.from),
-          )
-        }
+      if (folded || foldOpenedBy(state, line)) {
+        marks.push(Decoration.widget({ widget: new FoldWidget(folded), side: -1 }).range(line.from))
       }
 
       if (line.to >= state.doc.length) break
