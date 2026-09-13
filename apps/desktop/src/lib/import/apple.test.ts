@@ -164,4 +164,35 @@ describe('a folder an Apple Notes exporter wrote', () => {
 
     expect(note?.kind === 'note' && note.text).toContain('file:///Users/emil/elsewhere.png')
   })
+
+  /** Notes writes its own scheme for a link between two notes, and an exporter hands
+   *  that scheme over as it stands. It is a fact about where the note used to live, so
+   *  it stays a link rather than arriving as the words with the address thrown away;
+   *  see `appTargets` in @nib/markdown. */
+  test("a link in Apple's own scheme stays a link", async () => {
+    const plan = await readAs('apple-notes', [
+      file(
+        'Notes/Only.html',
+        `<html><head><meta name="Generator" content="Cocoa HTML Writer"></head>
+         <body><p><a href="applenotes:note/ideas">Ideas</a></p></body></html>`,
+      ),
+    ])
+    const note = plan.files[0]
+
+    expect(note?.kind === 'note' && note.text).toContain('[Ideas](applenotes:note/ideas)')
+  })
+
+  test('and a scheme that runs code is still only the words', async () => {
+    const plan = await readAs('apple-notes', [
+      file(
+        'Notes/Only.html',
+        `<html><head><meta name="Generator" content="Cocoa HTML Writer"></head>
+         <body><p><a href="javascript:alert(1)">Ideas</a></p></body></html>`,
+      ),
+    ])
+    const note = plan.files[0]
+
+    expect(note?.kind === 'note' && note.text).toContain('Ideas')
+    expect(note?.kind === 'note' && note.text).not.toContain('javascript:')
+  })
 })

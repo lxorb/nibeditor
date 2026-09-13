@@ -23,6 +23,53 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="java&#9;script:alert(1)">click</a>')).toBe('click')
   })
 
+  /** An address into the app a note came from is a fact about where the note used to
+   *  live. Only for an import, which is the one caller reading an export; see
+   *  `appTargets`. */
+  describe('a link into the app the note came from', () => {
+    test('is words for a clip and a paste, which have no app to point back at', () => {
+      expect(htmlToMarkdown('<a href="applenotes:note/ideas">Ideas</a>')).toBe('Ideas')
+    })
+
+    test('and stays a link for an import, exactly as it was written', () => {
+      const kept = { appTargets: true }
+
+      expect(htmlToMarkdown('<a href="applenotes:note/ideas">Ideas</a>', kept)).toBe(
+        '[Ideas](applenotes:note/ideas)',
+      )
+      expect(htmlToMarkdown('<a href="bear://x-callback-url/open-note?id=1">Plan</a>', kept)).toBe(
+        '[Plan](bear://x-callback-url/open-note?id=1)',
+      )
+      expect(htmlToMarkdown('<a href="evernote:///view/1/s1/abc/abc/">Note</a>', kept)).toBe(
+        '[Note](evernote:///view/1/s1/abc/abc/)',
+      )
+    })
+
+    test('and never one that runs code, whoever is asking', () => {
+      const kept = { appTargets: true }
+
+      expect(htmlToMarkdown('<a href="javascript:alert(1)">click</a>', kept)).toBe('click')
+      expect(htmlToMarkdown('<a href="vbscript:msgbox">click</a>', kept)).toBe('click')
+      expect(htmlToMarkdown('<a href="data:text/html,<b>hi">click</a>', kept)).toBe('click')
+      expect(htmlToMarkdown('<a href="blob:https://x.dev/abc">click</a>', kept)).toBe('click')
+      expect(htmlToMarkdown('<a href="java&#9;script:alert(1)">click</a>', kept)).toBe('click')
+    })
+
+    test('and a picture is still only ever a picture', () => {
+      expect(
+        htmlToMarkdown('<img src="applenotes:note/ideas" alt="a">', { appTargets: true }),
+      ).toBe('')
+    })
+
+    test('while http, a path and a fragment are what they always were', () => {
+      const kept = { appTargets: true }
+
+      expect(htmlToMarkdown('<a href="https://x.dev">site</a>', kept)).toBe('[site](https://x.dev)')
+      expect(htmlToMarkdown('<a href="notes/plan.md">plan</a>', kept)).toBe('[plan](notes/plan.md)')
+      expect(htmlToMarkdown('<a href="#later">later</a>', kept)).toBe('[later](#later)')
+    })
+  })
+
   test('and neither is a picture that is a document rather than a picture', () => {
     expect(htmlToMarkdown('<img src="data:image/svg+xml,<svg onload=x>" alt="a">')).toBe('')
     expect(htmlToMarkdown('<img src="javascript:alert(1)" alt="a">')).toBe('')

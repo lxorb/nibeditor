@@ -71,7 +71,13 @@ link with a relative path, which is what the app writes when a picture is pasted
 and what keeps the folder readable in another editor.
 
 A link to something that was not in the export is left exactly as it was. An
-address into the app it came from is a fact about where the note used to live.
+address into the app it came from is a fact about where the note used to live -
+`applenotes:note/…`, `bear://x-callback-url/…`, `evernote:///view/…` - so it stays a
+link rather than arriving as the words with the address thrown away. Nothing renders
+one as a link, because nothing should: what survives is the address in the file,
+which is where the reader can see it and another app can read it. The two schemes
+that run code and the three that serve a document of their own are dropped whoever is
+asking; see `appHref` in @nib/markdown.
 
 ## What each format becomes
 

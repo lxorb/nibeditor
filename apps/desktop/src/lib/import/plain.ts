@@ -51,7 +51,10 @@ export async function readPlain(
         html += 1
         return {
           to: names.free(path.replace(HTML, '.md')),
-          read: (text) => ({ text: htmlToMarkdown(text, { fileTargets: true }), title: null }),
+          read: (text) => ({
+            text: htmlToMarkdown(text, { fileTargets: true, appTargets: true }),
+            title: null,
+          }),
         }
       }
 

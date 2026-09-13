@@ -62,6 +62,28 @@ export function safeSrc(target: string): boolean {
   return safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
 }
 
+/** The schemes nothing may name, whoever is asking: the two that run code, and the
+ *  three that serve a document of the author's own inside the reader's origin. */
+const CODE_SCHEMES = new Set(['javascript', 'vbscript', 'data', 'blob', 'filesystem'])
+
+/** Whether a target names another app rather than the web, and is safe to write into
+ *  a note as it stands.
+ *
+ *  For an import and for nothing else. `applenotes:note/ideas`, `bear://x-callback-url/…`,
+ *  `evernote:///view/…`, `obsidian://open?…`: a link to something an export did not
+ *  carry is a fact about where the note used to live, and dropping it loses the one
+ *  thing the note still said about that. It is not rendered as a link by anything -
+ *  `safeHref` above still refuses it - so what this allows is the address surviving in
+ *  the file, which is where the reader can see it and another app can read it.
+ *
+ *  A scheme that names none is not one of these: a relative path is `safeHref`'s
+ *  business, and answering yes to it here would let this stand in for that. See
+ *  `appTargets` in from-html.ts. */
+export function appHref(target: string): boolean {
+  const scheme = schemeOf(target)
+  return scheme !== '' && !CODE_SCHEMES.has(scheme)
+}
+
 /** A target ready for an attribute: percent-encoded the way marked's own
  *  renderer does it, and then with *every* ampersand written as an entity.
  *

@@ -91,7 +91,7 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
       // the markup it arrived as.
       // The addresses in an export are the export's own to resolve; see
       // `fileTargets` and rewrite.ts.
-      const words = htmlToMarkdown(enml.html, { fileTargets: true })
+      const words = htmlToMarkdown(enml.html, { fileTargets: true, appTargets: true })
       const said = textOf(note.inner, 'title')?.trim()
       const title = (said ? safeName(said) : titleFrom(words)) ?? 'Untitled'
       const path = names.free(`${notebook ? `${notebook}/` : ''}${title}.md`)

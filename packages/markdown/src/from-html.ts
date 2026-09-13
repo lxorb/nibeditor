@@ -19,7 +19,7 @@
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
-import { safeHref, safeSrc } from './html'
+import { appHref, safeHref, safeSrc } from './html'
 import { asWords } from './words'
 
 /** What a note never contains.
@@ -66,6 +66,20 @@ export interface FromHtmlOptions {
    *  export. See `isAddress` in apps/desktop/src/lib/import/rewrite.ts, which is the
    *  other half of this. */
   fileTargets?: boolean
+
+  /** Whether a link into the app the note came from is kept as it was written.
+   *
+   *  Off by default, which is what a clip and a paste want: a scheme the app has
+   *  never heard of is noise in a note written from a web page.
+   *
+   *  On for the imports, where the address is the note's own history. Apple Notes
+   *  writes `applenotes:note/…` for a link between two notes, Bear writes `bear://`,
+   *  Evernote `evernote:///` - and a link to something the export did not carry is a
+   *  fact about where the note used to live rather than something to throw away. See
+   *  docs/import.md, which promises exactly that, and `appHref` in html.ts, which is
+   *  what the schemes are held to: the ones that run code or serve a document of the
+   *  author's own are refused whoever is asking. */
+  appTargets?: boolean
 }
 
 /** The TeX a formula carries about itself.
@@ -377,11 +391,15 @@ function titleOf(link: Element): string {
  *  The same question `safeHref` and `safeSrc` answer for a renderer, asked before the
  *  file is written rather than after: a note outlives the page it came from, so a
  *  `javascript:` or a `data:` document in one is a target nothing will ever follow
- *  and every surface has to refuse again. The exception is a caller resolving its
- *  own `file:` addresses; see `fileTargets`. */
+ *  and every surface has to refuse again. The exceptions are a caller resolving its
+ *  own `file:` addresses and an import keeping a link into the app the note came from;
+ *  see `fileTargets` and `appTargets`. Neither of them reaches the schemes that run
+ *  code, which is the whole of what this is for. */
 function mayPointAt(said: string, options: FromHtmlOptions, picture = false): boolean {
   if (options.fileTargets === true && /^file:/i.test(said.trim())) return true
-  return picture ? safeSrc(said) : safeHref(said)
+  if (picture) return safeSrc(said)
+  if (options.appTargets === true && appHref(said)) return true
+  return safeHref(said)
 }
 
 function converter(options: FromHtmlOptions): TurndownService {
