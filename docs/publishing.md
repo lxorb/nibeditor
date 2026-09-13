@@ -289,6 +289,14 @@ room knows is one password somebody forwards, so it keeps a site out of a search
 engine and out of a stranger's hands, and that is the whole of the claim.
 Anything that must not leave is not published.
 
+How many tries: twenty an hour from one machine at one site, and five hundred an
+hour at the site whatever the machine - counted before the rounds are spent, because
+a guess costs the reader nothing and costs the service a hundred thousand rounds of
+PBKDF2, which is both how a short password is guessed and how somebody spends
+somebody else's CPU with a loop. A try past either ceiling is answered exactly as a
+wrong password is: a door that said "too many tries" would have told a guesser that
+the tries are being counted. See `mayGuess` in `limits.ts`.
+
 How it is kept: PBKDF2 with a hundred thousand rounds and a salt of its own, so
 the column is not a password. What a reader carries afterwards is a ticket signed
 with a key made when the password was set - not the password, and not a session

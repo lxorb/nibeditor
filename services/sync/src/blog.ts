@@ -31,7 +31,7 @@ import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
-import { machineOf, maySendAnswer, mayTakeAnswer } from './limits'
+import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { newId } from './crypto'
 import { noteKey } from './notes'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
@@ -754,6 +754,13 @@ function firstPicture(html: string, origin: string): string | undefined {
 }
 
 /** Whoever is asking has typed the password. */
+/** Which machine a request came from, as the ceilings count one. A `Request` says
+ *  its headers one way and `machineOf` asks for them another, and two callers had
+ *  written the bridge between them out. */
+function machineIn(request: Request): string | null {
+  return machineOf({ header: (name) => request.headers.get(name) ?? undefined })
+}
+
 async function answered(request: Request, held: SitePassword): Promise<boolean> {
   const form = await request.formData().catch(() => null)
   const said = form?.get('password')
@@ -1032,7 +1039,7 @@ async function takeAnswer(
   // Counting, which is the whole of what is done about spam here: no captcha,
   // because that is a third party watching the reader, and nothing about them is
   // kept. See limits.ts.
-  const machine = machineOf({ header: (name) => request.headers.get(name) ?? undefined })
+  const machine = machineIn(request)
   if (!(await maySendAnswer(env, machine)) || !(await mayTakeAnswer(env, space.id))) {
     return back(`${where}?wrong=${encodeURIComponent('Too many just now. Try later.')}`)
   }
@@ -1123,7 +1130,16 @@ async function served(
   // which is every site until somebody sets one - pays nothing for this.
   if (site.password) {
     const held = site.password
-    const said = request.method === 'POST' ? await answered(request, held) : false
+    // Counted before it is checked: a guess costs the reader nothing and costs this
+    // a hundred thousand rounds of PBKDF2, which is both how a short password is
+    // guessed and how somebody spends the service's CPU with a loop. A try past the
+    // ceiling is answered the way a wrong password is - saying "too many tries"
+    // would tell a guesser that the tries are being counted - so it falls through to
+    // the form below, which is where a wrong one lands. See `mayGuess`.
+    const said =
+      request.method === 'POST' &&
+      (await mayGuess(env, space.id, machineIn(request))) &&
+      (await answered(request, held))
 
     if (said) {
       // Back to the page that was asked for, as a GET, carrying the ticket. A

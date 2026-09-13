@@ -468,6 +468,40 @@ describe('a site behind a password', () => {
     expect(policy).toContain("connect-src 'none'")
   })
 
+  /** A guess costs the reader nothing and costs the service a hundred thousand
+   *  rounds of PBKDF2. Counted per machine at this site, and answered the way a
+   *  wrong password is: saying "too many tries" would tell a guesser that the tries
+   *  are being counted. */
+  test('and a machine that keeps guessing stops being answered', async () => {
+    const guess = (password: string) =>
+      page('/plan', {
+        method: 'POST',
+        raw: `password=${encodeURIComponent(password)}`,
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'cf-connecting-ip': '198.51.100.7',
+        },
+      })
+
+    for (let at = 0; at < 20; at++) expect((await guess('wrong')).status).toBe(401)
+
+    // The right one, from the machine that has spent its tries.
+    const refused = await guess(PASSWORD)
+    expect(refused.status).toBe(401)
+    expect(refused.headers.get('set-cookie')).toBeNull()
+
+    // And somebody else at the same site is unaffected: the ceiling is theirs.
+    const other = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'cf-connecting-ip': '198.51.100.8',
+      },
+    })
+    expect(other.status).toBe(303)
+  })
+
   test('a wrong password says so and lets nobody in', async () => {
     const answer = await page('/plan', {
       method: 'POST',

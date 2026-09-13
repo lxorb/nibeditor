@@ -187,6 +187,33 @@ export function mayTakeAnswer(env: Env, spaceId: string): Promise<boolean> {
   return within(env, 'answers', spaceId, ANSWERS_TO_ONE_SITE, AN_HOUR)
 }
 
+/** How many passwords one machine may try at one site in an hour, and how many
+ *  tries any one site answers.
+ *
+ *  A guess costs the reader nothing and costs the service a hundred thousand rounds
+ *  of PBKDF2, which is the point of a hundred thousand rounds - and an unmetered
+ *  door is both a way to guess a short password and a way to spend somebody else's
+ *  CPU with a loop. Twenty is far past somebody typing the word they were sent and
+ *  mistyping it; the site's own ceiling is what a roomful of readers on one office
+ *  address share, and it is generous for the same reason.
+ *
+ *  What a refused try is told is what a wrong password is told, which is the point:
+ *  a door that says "too many tries" to a guesser has confirmed that the tries are
+ *  being counted, and the reader who mistyped theirs waits either way. */
+const GUESSES_FROM_ONE_MACHINE = 20
+const GUESSES_AT_ONE_SITE = 500
+
+export async function mayGuess(
+  env: Env,
+  spaceId: string,
+  machine: string | null,
+): Promise<boolean> {
+  if (!(await within(env, 'guesses', spaceId, GUESSES_AT_ONE_SITE, AN_HOUR))) return false
+  if (!machine) return true
+
+  return within(env, 'guess-from', `${spaceId}:${machine}`, GUESSES_FROM_ONE_MACHINE, AN_HOUR)
+}
+
 /** Whether a message may go now, and what to say when it may not.
  *
  *  Null is the answer that means yes, so that a caller writes
