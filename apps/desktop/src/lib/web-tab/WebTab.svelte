@@ -19,6 +19,7 @@
   import { onMount, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
+  import { startup } from '../startup.svelte'
   import { isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
@@ -67,10 +68,21 @@
    *  anything. */
   let told = ''
 
+  /** Whether a page may be asked for yet.
+   *
+   *  A page is the most expensive thing a tab can hold, and a window restored with
+   *  one in front should not pay for it before it has finished coming up: the bar is
+   *  on screen with the address and the title the file says, which is everything the
+   *  file says, and the page fills in after the stages that read the space have had
+   *  their turn. For a tab opened by hand every turn has passed and the wait is one
+   *  painted frame - which is what puts the bar up before the page is asked for. See
+   *  startup.svelte.ts. */
+  let ready = false
+
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
    *  dragged reports every pixel, and silent when nothing has changed. */
   function follow() {
-    if (!isDesktop) return
+    if (!isDesktop || !ready) return
 
     cancelAnimationFrame(scheduled)
     scheduled = requestAnimationFrame(() => {
@@ -92,8 +104,13 @@
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
   onMount(() => {
-    const box = rect()
-    if (box && address) void pages.show(tab.id, address, box)
+    // The page is the last thing the launch does, and one painted frame after that.
+    // Everything below is watching for the hole to move, and none of it says anything
+    // to the crate until this has come round; see `ready` and `follow`.
+    void startup.turn('rooms').then(() => {
+      ready = true
+      follow()
+    })
 
     const watching = new ResizeObserver(follow)
     if (hole) watching.observe(hole)

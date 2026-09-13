@@ -21,7 +21,7 @@
 //! before the page's first script runs, along with the devices nobody asked to
 //! hand over. See `GUARD`.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
@@ -206,9 +206,44 @@ impl Trail {
     }
 }
 
-/// Every web tab this app has open, by tab id.
+/// Every web tab this app has open: where each of them has been, and which of them
+/// is in the middle of being given a page.
 #[derive(Default)]
-pub struct WebTabs(Mutex<HashMap<String, Trail>>);
+pub struct WebTabs {
+    trails: Mutex<HashMap<String, Trail>>,
+    /// The tabs whose webview is being built at this moment.
+    ///
+    /// A page is no longer built on the thread the request arrived on, so two
+    /// placements a frame apart are two calls in the air at once - and the label
+    /// both of them would build a webview under is the same label. The first to
+    /// arrive takes the tab; the second is told the tab is busy, which is what it
+    /// would have been told a moment later anyway.
+    opening: Mutex<HashSet<String>>,
+}
+
+impl WebTabs {
+    /// Takes a tab for one build, or says that somebody already has it.
+    fn claim(&self, tab: &str) -> bool {
+        self.opening
+            .lock()
+            .map(|mut busy| busy.insert(tab.to_string()))
+            .unwrap_or(false)
+    }
+
+    /// Gives it back, whether the page arrived or not.
+    fn built(&self, tab: &str) {
+        if let Ok(mut busy) = self.opening.lock() {
+            busy.remove(tab);
+        }
+    }
+
+    /// A page a tab has arrived on, on the trail kept for that tab.
+    fn walked(&self, tab: &str, url: &str) {
+        if let Ok(mut trails) = self.trails.lock() {
+            trails.entry(tab.to_string()).or_default().visited(url);
+        }
+    }
+}
 
 /// Where the pane is, in the window's own coordinates, as the window measured it.
 #[derive(Deserialize)]
@@ -333,8 +368,29 @@ fn store(app: &AppHandle) -> Result<std::path::PathBuf, String> {
 const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 
 /// The webview for one tab, built and attached to the window that asked.
+///
+/// Async, and the building itself posted to the window's own event loop. Both
+/// halves are the fix for a freeze that took the whole app with it, and both are
+/// needed:
+///
+/// A command that is not `async` runs inline inside the callback WebView2 hands the
+/// app its IPC in. Building a child webview from in there is a deadlock, not a
+/// stall: the platform creates a `WebView2` controller asynchronously, wry waits for
+/// it by running a nested message loop (`webview2_com::wait_with_pump`), and the
+/// engine will not deliver a completion callback to a thread that is already inside
+/// one of its own event handlers. So the pump spins, the handler never returns, the
+/// request that started it is never answered, and the window's thread is gone: no
+/// menu opens, no key answers, nothing repaints. That is what "nib freezes and the
+/// buttons do nothing" was.
+///
+/// `async` alone moves the command off that callback and onto the async runtime.
+/// The nested wait then has to happen somewhere the engine is not inside a handler,
+/// and that place is the event loop's own turn: `run_on_main_thread`, with the
+/// answer coming back over a channel once the controller exists. Calling `add_child`
+/// straight from this thread would post the same message without waiting, which
+/// loses the one thing the window needs to know - whether there is a page to place.
 #[tauri::command]
-pub fn web_open(
+pub async fn web_open(
     webview: Webview,
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
@@ -348,6 +404,10 @@ pub fn web_open(
 
     if app.get_webview(&label).is_some() {
         return Err("that tab already has a page".into());
+    }
+
+    if !tabs.claim(&tab) {
+        return Err("that tab is already opening a page".into());
     }
 
     #[allow(
@@ -400,19 +460,38 @@ pub fn web_open(
         say(&naming, &view, &titled, &url, Some(title), false);
     });
 
-    webview
-        .window()
-        .add_child(
-            builder,
-            LogicalPosition::new(pane.x, pane.y),
-            LogicalSize::new(pane.width, pane.height),
-        )
-        .map_err(|error| format!("that page could not be opened: {error}"))?;
+    let window = webview.window();
+    let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
 
-    if let Ok(mut open) = tabs.0.lock() {
-        open.entry(tab).or_default().visited(&url);
-    }
+    let posted = app.run_on_main_thread(move || {
+        let made = window
+            .add_child(
+                builder,
+                LogicalPosition::new(pane.x, pane.y),
+                LogicalSize::new(pane.width, pane.height),
+            )
+            .map(|_| ())
+            .map_err(|error| format!("that page could not be opened: {error}"));
 
+        // One build, one answer: a full channel would be an answer already sent.
+        let _ = sending.try_send(made);
+    });
+
+    let made = match posted {
+        // The window's thread is the only one that may build a page, so a window
+        // that cannot be reached is a tab with no page rather than an error worth
+        // a message: the pane shows the card, which offers the site in a browser.
+        Err(error) => Err(format!("that page could not be opened: {error}")),
+        Ok(()) => waiting
+            .recv()
+            .await
+            .unwrap_or_else(|| Err("that page was never built".to_string())),
+    };
+
+    tabs.built(&tab);
+    made?;
+
+    tabs.walked(&tab, &url);
     Ok(())
 }
 
@@ -426,7 +505,7 @@ fn say(
     loading: bool,
 ) {
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
-        tabs.0.lock().ok().map(|mut open| {
+        tabs.trails.lock().ok().map(|mut open| {
             let trail = open.entry(tab.to_string()).or_default();
             if !loading && !url.is_empty() {
                 trail.visited(url);
@@ -456,6 +535,16 @@ fn say(
 /// is not the one on top has no bounds worth setting, and a tab that has just come
 /// forward has to be placed before it is shown, or it appears for a frame where the
 /// last one was.
+///
+/// This one and the three under it stay on the window's own thread - not `async`,
+/// which is what moves a command off it - because each is a single call into the
+/// engine and the engine takes them nowhere else: bounds, visibility, an address, a
+/// line of script, a controller closed. None of them waits for the platform to
+/// answer, so none of them runs a nested message loop, which is the one thing that
+/// cannot be done from inside WebView2's own callback. `web_open` is the one that
+/// waits, and it is the one that had to move; see the note above it. A placement is
+/// also asked for on every drag of a pane divider, where a hop onto the async
+/// runtime and back would be two hops for one `SetBounds`.
 #[tauri::command]
 pub fn web_place(app: AppHandle, tab: String, pane: Pane, visible: bool) -> Result<(), String> {
     let view = found(&app, &tab)?;
@@ -530,7 +619,7 @@ pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String) {
         let _ = view.close();
     }
 
-    if let Ok(mut open) = tabs.0.lock() {
+    if let Ok(mut open) = tabs.trails.lock() {
         open.remove(&tab);
     }
 }
@@ -545,7 +634,7 @@ fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed, guard, reader, Trail};
+    use super::{allowed, guard, reader, Trail, WebTabs};
     use tauri::Url;
 
     fn at(url: &str) -> Url {
@@ -638,6 +727,44 @@ mod tests {
         let script = guard(&["usb".to_string(), "bluetooth".to_string()]);
         assert!(script.contains("'usb'"));
         assert!(script.contains("'bluetooth'"));
+    }
+
+    #[test]
+    fn one_tab_builds_one_page_at_a_time() {
+        let tabs = WebTabs::default();
+
+        assert!(tabs.claim("a"));
+        // The second placement of the same tab, a frame later, while the first is
+        // still waiting for its controller. Two builds would be two webviews under
+        // one label.
+        assert!(!tabs.claim("a"));
+        // Another tab is another page and is nobody's business.
+        assert!(tabs.claim("b"));
+
+        tabs.built("a");
+        assert!(tabs.claim("a"));
+    }
+
+    #[test]
+    fn a_page_that_could_not_be_built_gives_the_tab_back() {
+        let tabs = WebTabs::default();
+
+        assert!(tabs.claim("a"));
+        tabs.built("a");
+        assert!(tabs.claim("a"));
+    }
+
+    #[test]
+    fn the_trail_is_kept_for_the_tab_that_walked_it() {
+        let tabs = WebTabs::default();
+
+        tabs.walked("a", "https://a.example/");
+        tabs.walked("a", "https://b.example/");
+        tabs.walked("b", "https://c.example/");
+
+        let trails = tabs.trails.lock().expect("the trails");
+        assert!(trails["a"].back());
+        assert!(!trails["b"].back());
     }
 
     #[test]
