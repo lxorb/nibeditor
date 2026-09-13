@@ -240,10 +240,15 @@ const SHAPES: readonly { shape: BlockShape; label: () => string }[] = [
  *
  *  The sheet is fetched rather than imported: it is the app's short-question surface
  *  and carries its own drawing, and the menu row is already a press by the time this
- *  runs. The same shape the rewrite sheet is opened with; see `rewrite` below. */
+ *  runs. The same shape the rewrite sheet is opened with; see `rewrite` below.
+ *
+ *  A list with a field over it rather than a row of buttons, which is what the sheet
+ *  offers for a question with more than a handful of answers: eight buttons across a
+ *  sheet is a row nobody reads, and three letters reach any of these. It is also the
+ *  same list under a thumb as under a pointer. */
 async function turnInto(view: EditorView, at: number) {
   const { prompt } = await import('./prompt.svelte')
-  const chosen = await prompt.choose({
+  const chosen = await prompt.find({
     title: t('Turn into'),
     options: SHAPES.map((one) => ({ id: one.shape, label: one.label() })),
   })
