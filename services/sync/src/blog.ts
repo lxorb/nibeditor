@@ -18,7 +18,7 @@ import '@nib/markdown/eager'
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { deckOf, isDeck } from '@nib/markdown/slides'
 import { blogFence } from './blog/code'
-import { feed, type FeedPage, newestFirst, robots, sitemap } from './blog/feed'
+import { feed, type FeedPage, newestFirst, robots, rss, sitemap } from './blog/feed'
 import { answersFrom, formHtml, formOf } from './blog/form'
 import { type NoteFront, readFront } from './blog/front'
 import { gateBody, matches, newTicket, ticketCookie, ticketHolds, ticketIn } from './blog/gate'
@@ -1297,14 +1297,35 @@ async function served(
   // list above in another shape, so neither can disagree with the site about
   // what is on it.
   if (slug === 'sitemap.xml') {
+    // The two feeds are in it as well as the pages: a crawler that found the sitemap
+    // has found every way of following the site, and Google reads a feed as a sitemap
+    // of its own. Both dated by the newest page in them, which is what they say.
+    const written = feedPages(pageList, url.origin)
+    const newest = newestFirst(written)[0]
+    const both = ['feed.xml', 'rss.xml'].map((name) => ({
+      url: `${url.origin}/${name}`,
+      title: heading,
+      updated: newest?.updated ?? space.updated_at,
+      date: newest?.date,
+    }))
+
     return sitemap([
       { url: `${url.origin}/`, title: heading, updated: space.updated_at },
-      ...feedPages(pageList, url.origin),
+      ...written,
+      ...both,
     ])
   }
 
-  if (slug === 'feed.xml') {
-    return feed(feedPages(pageList, url.origin), { title: heading, url: url.origin, author })
+  if (slug === 'feed.xml' || slug === 'rss.xml') {
+    const about = {
+      title: heading,
+      url: url.origin,
+      author,
+      description: site.description,
+    }
+
+    const written = feedPages(pageList, url.origin)
+    return slug === 'rss.xml' ? rss(written, about) : feed(written, about)
   }
 
   /** The search. Answered by the index, filtered to the pages the site

@@ -1,19 +1,23 @@
-/** The three files a site is read by something other than a person.
+/** The files a site is read by something other than a person.
  *
  *  A sitemap so a search engine knows what is there without guessing at paths;
  *  a feed so a reader can follow the writing without coming back to look; a
  *  robots.txt that says what is true, which for a site behind a password is
  *  "none of this".
  *
- *  All three are the same list the index is drawn from, in a different shape, so
+ *  All of them are the same list the index is drawn from, in a different shape, so
  *  nothing here decides what is published; see spaces/site.ts. They are built
  *  per request and cached for an hour: a blog that is written in twice a week
  *  does not need a build step, and a feed reader that asks every hour gets the
  *  hour's answer.
  *
- *  Atom rather than RSS, and one feed rather than both. Atom says what a date
- *  means and what a summary is made of; RSS leaves both to the reader, and every
- *  reader that reads RSS reads Atom. */
+ *  Two feeds, not one. Atom is the better document - it says what a date means and
+ *  what a summary is made of, where RSS leaves both to the reader - and every reader
+ *  that reads RSS reads Atom, which is why it was the only one here for a while. But
+ *  "RSS" is the word a reader pastes into a reader, several of them still ask for a
+ *  file by that name, and a site answering 404 at /rss.xml reads as a site with no
+ *  feed at all. So both, out of one list: the same entries, the same dates and the
+ *  same summaries, so neither can say something the other does not. */
 
 import { escape } from './head'
 
@@ -73,15 +77,27 @@ export function sitemap(pages: readonly FeedPage[]): Response {
   )
 }
 
+/** What a site says about itself to a feed reader. */
+export interface FeedSite {
+  title: string
+  url: string
+  author: string | null
+  /** What the site says it is, for the one place RSS asks and Atom does not. */
+  description?: string | undefined
+}
+
+/** The entries both feeds carry: the same pages, in the same order, cut to the
+ *  same length. One list, so the two documents cannot drift. */
+function entriesOf(pages: readonly FeedPage[]): FeedPage[] {
+  return newestFirst(pages).slice(0, MOST_ENTRIES)
+}
+
 /** The writing, newest first, with as much of each page as a reader needs to
  *  decide whether to open it: the description the note gave, or its first words.
  *  Never the whole note - a feed is a table of contents, and a page that is
  *  read in a feed reader is a page nobody visits. */
-export function feed(
-  pages: readonly FeedPage[],
-  site: { title: string; url: string; author: string | null },
-): Response {
-  const ordered = newestFirst(pages).slice(0, MOST_ENTRIES)
+export function feed(pages: readonly FeedPage[], site: FeedSite): Response {
+  const ordered = entriesOf(pages)
   const newest = ordered[0]
   const updated = new Date(newest ? moment(newest) : Date.now()).toISOString()
 
@@ -108,6 +124,50 @@ ${page.summary ? `<summary>${escape(page.summary)}</summary>` : ''}
 ${site.author ? `<author><name>${escape(site.author)}</name></author>` : ''}${entries}
 </feed>`,
     'application/atom+xml',
+  )
+}
+
+/** The same writing as RSS 2.0.
+ *
+ *  The same entries out of `entriesOf`, so this and the Atom feed above are one list
+ *  in two shapes. What differs is only how the shape spells things: a date as RFC 822
+ *  rather than ISO 8601 - the same moment, and `toUTCString` is exactly that spelling
+ *  - and the summary under `description`, which is the tag RSS has for it.
+ *
+ *  `atom:link rel="self"` because RSS has no way of its own to say where a feed
+ *  lives, and every validator asks for it. The channel's `description` is the one
+ *  thing RSS requires that Atom does not, so the site's own words go there and its
+ *  name stands in where it has none. */
+export function rss(pages: readonly FeedPage[], site: FeedSite): Response {
+  const ordered = entriesOf(pages)
+  const newest = ordered[0]
+  const built = new Date(newest ? moment(newest) : Date.now()).toUTCString()
+
+  const items = ordered
+    .map(
+      (page) => `<item>
+<title>${escape(page.title)}</title>
+<link>${escape(page.url)}</link>
+<guid isPermaLink="true">${escape(page.url)}</guid>
+<pubDate>${new Date(moment(page)).toUTCString()}</pubDate>
+${page.summary ? `<description>${escape(page.summary)}</description>` : ''}
+</item>`,
+    )
+    .join('')
+
+  return xml(
+    `<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>${escape(site.title)}</title>
+<link>${escape(`${site.url}/`)}</link>
+<description>${escape(site.description ?? site.title)}</description>
+<lastBuildDate>${built}</lastBuildDate>
+<atom:link rel="self" type="application/rss+xml" href="${escape(`${site.url}/rss.xml`)}"/>
+${site.author ? `<managingEditor>${escape(site.author)}</managingEditor>` : ''}${items}
+</channel>
+</rss>`,
+    'application/rss+xml',
   )
 }
 

@@ -1,7 +1,25 @@
+import { parser as xml } from '@lezer/xml'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { frontOf } from '../src/blog/front'
 import { publishes } from '../src/blog/site'
 import { call, type ShareView, signIn, testEnv, type TestEnv } from './harness'
+
+/** Whatever an XML parser could not read in a document, by name and place, and an
+ *  empty list for one it read whole.
+ *
+ *  Lezer's XML grammar, which the service already carries for the code fences on a
+ *  published page: it never throws, it marks what it could not make sense of, and a
+ *  feed a reader cannot parse is a feed nobody has. */
+function broken(text: string): string[] {
+  const found: string[] = []
+  xml.parse(text).iterate({
+    enter: (node) => {
+      if (node.type.isError) found.push(`${node.from}: ${text.slice(node.from, node.from + 40)}`)
+    },
+  })
+
+  return found
+}
 
 /** A site of a few notes, published on a name, so that everything below can ask
  *  the hostname what it serves. */
@@ -368,6 +386,15 @@ describe('what the machines read', () => {
     expect(said).toContain(`<loc>https://${HOST}/two</loc>`)
   })
 
+  /** And both feeds, so a crawler that found the sitemap has found every way of
+   *  following the site. */
+  test('and the two feeds as well', async () => {
+    const said = (await page('/sitemap.xml')).text
+
+    expect(said).toContain(`<loc>https://${HOST}/feed.xml</loc>`)
+    expect(said).toContain(`<loc>https://${HOST}/rss.xml</loc>`)
+  })
+
   test('the feed is newest first, with what each page says of itself', async () => {
     const answer = await page('/feed.xml')
 
@@ -379,11 +406,49 @@ describe('what the machines read', () => {
     expect(answer.text).toContain('<summary>The second one.</summary>')
   })
 
+  /** Two feeds out of one list: "RSS" is the word a reader pastes into a reader, and
+   *  several readers still ask for a file by that name. What they must not be is two
+   *  answers, so this holds them to the same entries, dates and summaries. */
+  test('and the RSS feed says the same thing in RSS', async () => {
+    const answer = await page('/rss.xml')
+
+    expect(answer.headers.get('content-type')).toContain('application/rss+xml')
+    expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(
+      answer.text.indexOf('<title>One</title>'),
+    )
+    expect(answer.text).toContain('<description>The first.</description>')
+    expect(answer.text).toContain('<description>The second one.</description>')
+    // The day the note says it is about, spelled the way RSS spells a date.
+    expect(answer.text).toContain('<pubDate>Fri, 02 Jan 2026 00:00:00 GMT</pubDate>')
+    expect(answer.text).toContain('<pubDate>Wed, 06 May 2026 00:00:00 GMT</pubDate>')
+    expect(answer.text).toContain(`<guid isPermaLink="true">https://${HOST}/one</guid>`)
+    expect(answer.text).toContain(`href="https://${HOST}/rss.xml"`)
+  })
+
+  /** A feed a reader cannot parse is a feed nobody has. Read with the XML grammar the
+   *  service already carries for the code fences, which marks what it could not
+   *  read. */
+  test('and both of them are XML a parser can read', async () => {
+    for (const path of ['/feed.xml', '/rss.xml', '/sitemap.xml']) {
+      expect(broken((await page(path)).text), path).toEqual([])
+    }
+  })
+
+  test('every page names both feeds, so a reader finds whichever it reads', async () => {
+    const said = (await page('/one')).text
+
+    expect(said).toContain('<link rel="alternate" type="application/atom+xml"')
+    expect(said).toContain('href="/feed.xml"')
+    expect(said).toContain('<link rel="alternate" type="application/rss+xml"')
+    expect(said).toContain('href="/rss.xml"')
+  })
+
   test('a note the rules leave out is in neither', async () => {
     await setSite({ rules: { exclude: ['One.md'], otherwise: 'all' } })
 
     expect((await page('/sitemap.xml')).text).not.toContain('/one<')
     expect((await page('/feed.xml')).text).not.toContain('<title>One</title>')
+    expect((await page('/rss.xml')).text).not.toContain('<title>One</title>')
   })
 
   test('robots points at the sitemap', async () => {

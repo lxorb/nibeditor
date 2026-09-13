@@ -11,7 +11,7 @@ for is the site the first half published.
     the sheet     a folder made private, and what the sheet says will change
     the pages     what the hostname serves and what it does not
     the paths     a permalink, an alias, and the redirect a rename leaves
-    the machines  the sitemap, the feed, robots and the favicon
+    the machines  the sitemap, both feeds, robots and the favicon
     the way round the tree, the contents, what links here, previous and next
     the searching a word, a phrase, a refusal, a tag, a folder, and a draft
     the forms     an answer taken on the page and read back on the account
@@ -40,6 +40,7 @@ import urllib.error
 import urllib.request
 import uuid
 from pathlib import Path
+from xml.etree import ElementTree
 
 from playwright.sync_api import sync_playwright
 
@@ -527,8 +528,30 @@ def pages(worker: Worker, token: str, space: str) -> None:
     say(f"the feed is {feed.headers.get('content-type')} and reads {order}")
     say(f"it carries the summaries: {'<summary>The second one.</summary>' in feed.text}")
 
+    # And the same writing as RSS, which is the word a reader pastes into a reader.
+    # Both parsed rather than grepped: a feed a reader cannot parse is a feed nobody
+    # has, and Python has an XML parser in the standard library.
+    rss = site("/rss.xml")
+    order = [one for one in ["<title>Two</title>", "<title>One</title>"] if one in rss.text]
+    say(f"the RSS feed is {rss.headers.get('content-type')} and reads {order}")
+    say(f"it carries the summaries: {'<description>The second one.</description>' in rss.text}")
+
+    for what, said in (("the feed", feed.text), ("the RSS feed", rss.text)):
+        try:
+            ElementTree.fromstring(said)
+            say(f"{what} parses as XML")
+        except ElementTree.ParseError as why:
+            say(f"{what} does NOT parse: {why}")
+
+    one = site("/public/one")
+    say(
+        "a page names both feeds:"
+        f" {'type=\"application/atom+xml\"' in one.text and 'href=\"/rss.xml\"' in one.text}"
+    )
+
     sitemap = site("/sitemap.xml")
     say(f"the sitemap lists {sitemap.text.count('<loc>')} pages and no drafts: {'/drafts/' not in sitemap.text}")
+    say(f"and both feeds: {'/feed.xml</loc>' in sitemap.text and '/rss.xml</loc>' in sitemap.text}")
 
     robots = site("/robots.txt")
     say(f"robots says: {robots.text.strip().splitlines()}")

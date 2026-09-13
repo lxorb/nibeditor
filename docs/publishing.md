@@ -258,23 +258,32 @@ description has no description tag rather than an empty one. See `blog/head.ts`.
 
 ## What the machines read
 
-`sitemap.xml` lists every page and the site's own front. No priorities and no
-change frequencies: both are guesses no search engine has read since 2015, and a
-wrong guess is worse than none.
+`sitemap.xml` lists every page, the site's own front, and both feeds. No priorities
+and no change frequencies: both are guesses no search engine has read since 2015, and
+a wrong guess is worse than none. The feeds are in it so that a crawler which found
+the sitemap has found every way of following the site.
 
 `feed.xml` is the writing, newest first by the note's `date:` and otherwise by
 when it was last written, thirty entries, each with the description the note gave
 or its first words. Never the whole note: a feed is a table of contents, and a
 page read in a feed reader is a page nobody visits.
 
-Atom rather than RSS, and one rather than both. Atom says what a date means and
-what a summary is made of; RSS leaves both to the reader, and every reader that
-reads RSS reads Atom.
+`rss.xml` is the same writing as RSS 2.0: the same entries in the same order, the
+same dates, the same summaries. Both, not one. Atom is the better document - it says
+what a date means and what a summary is made of, where RSS leaves both to the reader
+- and every reader that reads RSS reads Atom, which is why Atom was the only one here
+for a while. But "RSS" is the word a reader pastes into a reader, several readers
+still ask for a file by that name, and a site answering 404 at `/rss.xml` reads as a
+site with no feed at all. The two are built from one list, so neither can say
+something the other does not; what differs is only the spelling - RFC 822 dates
+rather than ISO 8601, and `description` where Atom writes `summary`. Every page of a
+site names both in its head as alternates, so a reader handed the address of a page
+finds whichever of the two it reads.
 
 `robots.txt` points at the sitemap, and says `Disallow: /` while the site has a
 password - because everything a crawler would be shown then is the password form.
 
-All three are built per request from the same list the index is drawn from, and
+All of them are built per request from the same list the index is drawn from, and
 cached for an hour. A blog written in twice a week does not need a build step.
 
 ## A site behind a password
@@ -629,16 +638,20 @@ because the drawing is a publish-time pass over the space.
 
 - `services/sync/test/site.test.ts` - what a note says about itself, which notes
   the rules publish, what a preview says before anything changes, permalinks,
-  aliases, the redirect a rename leaves, the head of a page, the sitemap, the
-  feed, robots, the favicon, and the password from both sides of the form.
+  aliases, the redirect a rename leaves, the head of a page, the sitemap, both
+  feeds and that an XML parser reads either whole, robots, the favicon, and the
+  password from both sides of the form.
 - `apps/desktop/src/lib/publishing.test.ts` - the rules read off the listing, a
   folder in one list or the other, the preview asked of the server, and a password
   that is never handed back.
 - `services/sync/test/site-parts.test.ts` - the search grammar, the words a note
   is indexed by, the navigation's order, a folder open where the reader is inside
   it, what links to a page, a form read from a fence and an answer read against
-  it, the spreadsheet the answers become, and the theme the author chose linked
-  after the site's own sheet.
+  it, the spreadsheet the answers become, the theme the author chose linked
+  after the site's own sheet, and a form on a site behind a password: the answer is
+  taken from a reader who is through the gate, a reader who is not lands back on the
+  form rather than losing it, and sending one is never counted as a guess at the
+  password.
 - `services/sync/test/site-script.test.ts` - that the script a page runs is still
   the one the app's own modules make, which is what catches a forgotten
   `pnpm blog:js`.

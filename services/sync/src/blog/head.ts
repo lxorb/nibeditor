@@ -90,8 +90,12 @@ export function headOf(head: Head, sheets: readonly string[]): string {
     tag('twitter:title', head.title),
     tag('twitter:description', description),
     tag('twitter:image', head.image),
+    // Both feeds, because a reader pastes the address of a page into a reader and
+    // lets it find the feed: one that only reads RSS and found only Atom would have
+    // found nothing. The same writing either way; see blog/feed.ts.
     head.feed
-      ? `<link rel="alternate" type="application/atom+xml" title="${escape(head.site)}" href="/feed.xml">`
+      ? `<link rel="alternate" type="application/atom+xml" title="${escape(head.site)}" href="/feed.xml">
+<link rel="alternate" type="application/rss+xml" title="${escape(head.site)}" href="/rss.xml">`
       : '',
     head.icon
       ? '<link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="apple-touch-icon" href="/favicon.svg">'
