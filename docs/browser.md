@@ -1190,7 +1190,7 @@ means a week of one agent's attention, not an afternoon.
 
 | | what it does | what it proves | size |
 | --- | --- | --- | --- |
-| **1** | **The gate. Done, and its answer is below.** Build nib against `tauri-runtime-cef` behind a Cargo feature, both runtimes selectable, no product change. Run every test the app has under both, on all three desktops. Measure launch, memory and the installer delta against today | that the app runs on Chromium at all, and what it costs. This batch is allowed to end in "not yet" | large |
+| **1** | **The gate. Done, and its answer is "not yet, and here is exactly why".** nib builds against `tauri-runtime-cef` behind a Cargo feature on all three desktops and starts on none of them; the download cost is measured and inside what Emil was told. See below | that the app can be built on Chromium at all, what it would cost, and which four upstream things stand between the build and a window | large |
 | **2** | **Web tabs on the new engine.** `web_tabs.rs` onto CEF webviews: place, show, hide, navigate, real back and forward, the `.url` file untouched, the bar untouched. Delete the address trail and the guard's permission half; keep the globals half. The two profiles | that a web tab is the same three calls, that one browser process serves them all, and that nothing about the file or the bar changed | large |
 | **3** | **Chromium's own pages.** `chrome://settings`, `extensions`, `history`, `downloads`, `password-manager` as tabs, with the gear and puzzle marks, never files in the space. The ⋮ menu's twenty-one rows into nib's menus. The search engine through the preference tree | that Emil's *"chrome://settings will work for us"* is true, and that no new surface was needed to reach any of it | medium |
 | **4** | **Extensions.** The CRX fetch, the external-extension declaration, install, enable, disable, remove, and `chrome://extensions` as the management surface. The puzzle glyph in the tab's bar for an extension's action | that a reader can install any MV3 extension and take it away again, which is the ask with the least documented support behind it | large |
@@ -1347,7 +1347,48 @@ has never seen, and none of the three is a number to compare between platforms.
 | launch to the window on the system's engine | 6923.9 ms | 2261.5 ms | 1647.5 ms |
 | resident with no web tab, the whole tree | 301.2 MB | 87.6 MB | 525.2 MB |
 
-THE-FLAGGED-RESULT-GOES-HERE
+**And the row this batch turns on: the flagged app builds on all three desktops and
+starts on none of them yet.** Six runs of the workflow, each one a different answer,
+and every failure upstream of nib's own code rather than in it:
+
+| | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
+| --- | --- | --- | --- |
+| Cargo resolves the graph | yes, with the `wry` repair | yes | yes |
+| `tauri-runtime-cef` compiles | yes | yes, with the winit repair | yes |
+| nib's own crate compiles against it | yes | yes | yes |
+| the flagged binary links | yes, with the static CRT | yes | yes |
+| the flagged package's tests pass | yes | yes | yes |
+| **it starts** | **no** | **no** | **no** |
+| how far it got | died in the loader, `STATUS_ENTRYPOINT_NOT_FOUND` (`0xC0000139`), before nib's first line | CEF loaded, then `icudtl.dat not found in bundle` and `SIGTRAP`, 246 ms in | `SIGSEGV`, 264 ms in, with nothing on stderr |
+
+What each of those means, in the order they will be fixed:
+
+- **macOS is the closest and the clearest.** CEF's own loader looks for the framework
+  at `../Frameworks` relative to the executable and the gate now puts it there, so the
+  engine loads; the next thing Chromium wants is the *bundle* - `icudtl.dat` out of
+  `Contents/Frameworks/.../Resources` - because a CEF application on a Mac is an app
+  bundle with five helper bundles in it and not an executable. That is exactly the
+  packaging work batch 7 already owns, and it is now a measured requirement rather than
+  a paragraph.
+- **Linux dies without a word, at 264 ms, and the most likely reason is the toolkit.**
+  nib links GTK 3 - through `tauri-plugin-dialog`'s `rfd`, and through the tray, `xdo`
+  and `rsvg` libraries beside it - and `tauri-runtime-cef` is GTK 4, which is a pair
+  the runtime's own comment says cannot share a process. `spike/shell`, which links no
+  GTK 3 at all, brought the same engine up on the same runner in 264 ms. So this is the
+  GTK 4 migration in batch 7's Linux row, arriving early.
+- **Windows is the one that is not yet explained**, and it is the platform Emil is on.
+  The binary links - with `-C target-feature=+crt-static`, because CEF's own libraries
+  are built against the static CRT - and then the loader refuses it before any of our
+  code runs, with the sandbox library both in the link and out of it. The gate now
+  prints the imports of the binary against the exports of `libcef.dll` when that
+  happens, so the next run names the symbol; the two candidates worth checking first
+  are CEF 151's `bootstrap.exe` DLL-host requirement, which is ship gate 1, and an API
+  version mismatch in cef-rs's bindings.
+
+**So the launch, the memory and the one-browser-process rows are empty, and they are
+the rows batch 2 needs.** That is the gate working as intended: it is allowed to say
+"not yet", the reasons are precise, three of the four are somebody else's to fix, and
+none of them is evidence against the design.
 
 ### Go or no-go for batch 2
 
@@ -1356,12 +1397,16 @@ whose shape depends on where the engine lives - so it is the one batch that must
 start on a guess. These are the criteria, and every one of them is a row the gate
 already prints, so the answer is a workflow run and not a conversation.
 
-**Go needs all six.**
+**Go needs all six, and the first one is the one batch 1 did not get.**
 
-1. **The flagged build compiles and runs on Windows and on macOS**, from a clean
-   runner, with `--locked`. Linux may lag on the GTK 3 dialog question above without
-   holding batch 2 up, because nothing about a web tab depends on the answer - but it
-   has to be a known lag with an owner, not a red square nobody read.
+1. **The flagged build starts on Windows and on macOS**, from a clean runner, with
+   `--locked`, and stays up long enough to show a window. It *builds* on all three
+   today and starts on none, and the three reasons are in the table above: a bundle on
+   macOS, GTK 4 on Linux, an unexplained loader refusal on Windows. Until at least two
+   of those are shut there is nothing for batch 2 to build on, and the honest thing is
+   to keep pressing the gate rather than to start. Linux may lag without holding batch
+   2 up - nothing about a web tab depends on the toolkit - but it has to be a known lag
+   with an owner, not a red square nobody read.
 2. **One browser process serves two web tabs**, counted off `--type=` on the process
    tree rather than asserted. More than one and the premise of the whole design is
    wrong and B′ is the shape.
@@ -1565,6 +1610,10 @@ shape that will actually ship rather than in a standalone program.
   change it.
 - **No sandbox in an AppImage or a snap**, so the browser should not be offered in
   those builds. Section 7.
+- **The flagged build starts on no desktop yet.** It compiles and links on all three;
+  macOS wants the app bundle, Linux dies where GTK 3 and GTK 4 meet, and Windows is
+  refused by the loader for a reason not yet named. Section 8's gate table, and the
+  first criterion batch 2 waits on.
 - **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
   one that supports iOS asks for a `wry` feature the branch removed. One empty
   feature repairs it and batch 1 carries the repair in
