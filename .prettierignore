@@ -15,3 +15,7 @@ apps/desktop/src-tauri/icons
 # Written by scripts/blog-css.ts from the themes and katex packages, not by hand
 services/sync/src/blog/style.ts
 services/sync/src/blog/math.ts
+
+# The Tauri checkout the flagged CEF build compiles against; somebody else's source,
+# made by apps/desktop/src-tauri/cef/upstream.py. See docs/browser.md.
+apps/desktop/src-tauri/cef/.upstream
