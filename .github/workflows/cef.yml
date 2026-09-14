@@ -70,8 +70,6 @@ jobs:
       # like a run that said nothing, which is how batch 1 read all three platforms.
       NIB_CEF_ARGS: enable-logging=stderr
       CEF_DIR: ${{ github.workspace }}/.cef
-      # No run of a built app ever touches a real space, on any runner.
-      NIB_SPACES_DIR: ${{ runner.temp }}/nib-spaces
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -165,6 +163,12 @@ jobs:
           echo "LD_LIBRARY_PATH=$CEF_DIR:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
           echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_DIR:$CEF_DIR/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
           echo "$CEF_DIR" >>"$GITHUB_PATH"
+
+      # No run of a built app ever touches a real space, on any runner. A step rather
+      # than a job-level `env:`, because `runner.temp` is a step-level context and a
+      # job's environment cannot read it.
+      - name: Where a run's spaces go
+        run: echo "NIB_SPACES_DIR=${{ runner.temp }}/nib-spaces" >>"$GITHUB_ENV"
 
       - name: Format
         run: |
