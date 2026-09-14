@@ -1,21 +1,22 @@
 import katex from 'katex/dist/katex.min.css?raw'
 import base from './base.css?raw'
-import contrast from './contrast.css?raw'
 import note from './document.css?raw'
 import exported from './export.css?raw'
 import stage from './slides.css?raw'
 import tokens from './tokens.css?raw'
 
-/** The stylesheet as text, for baking into an exported document.
+/** Every sheet the app writes out rather than wears, in one module - which is what
+ *  keeps it out of a launch. A bundler chunks by module, so anything that imports one
+ *  of these exports has imported all the text below; that is fine for an export, a
+ *  deck or a theme card, which are all asked for by a reader and all behind a dynamic
+ *  import. It would not be fine for the shell, so the one sheet the shell needs is in
+ *  contrast.ts beside this and not in here. See test/weight.test.ts.
+ *
  *  Relative `?raw` imports resolve reliably; the same imports made through the
- *  package's exports map from another package come back empty. */
+ *  package's exports map from another package come back empty.
+ *
+ *  The stylesheet as text, for baking into an exported document. */
 export const themeCss = [tokens, base].join('\n')
-
-/** The high contrast theme, which is the second theme the app ships with: a whole
- *  palette of its own on both sides, stated in the tokens any other theme states. The
- *  app injects it the way it injects a theme read from a file, so a built-in theme and
- *  an installed one are applied by one road. See contrast.css, and theme.svelte.ts. */
-export const contrastCss = contrast
 
 /** The tokens alone. The theme gallery re-scopes the scheme-independent blocks
  *  of these onto its miniatures: the Typora aliases are written in terms of

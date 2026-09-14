@@ -140,11 +140,60 @@ function asked(file: string): string[] {
   return found
 }
 
-/** Every file the entry reaches without crossing a dynamic import, and every package
- *  any of them asks for. */
-function eagerGraph(entry: string): { files: string[]; packages: Set<string>; bytes: number } {
+/** A file asked for as text rather than as itself: `?raw` hands the module a string of
+ *  the whole file, `?inline` a data URI of it. Either way the bytes are in the chunk of
+ *  whoever asked, and no bundler can shake out the part that is not read - a string is
+ *  a string.
+ *
+ *  `?url` is deliberately not here. It yields an address, and the file it names is
+ *  fetched when something uses it, which is a door like any other; the PDF worker is
+ *  asked for that way.
+ *
+ *  This is where a hundred and twenty-six kilobytes were hiding. `raw.ts` in
+ *  @nib/themes holds seven stylesheets as text for what an export and a deck bake into
+ *  the file they write, the shell wanted one of them - the high contrast palette, three
+ *  kilobytes - and a module is the unit a chunk is made of, so the shell got all seven.
+ *  The module's own source is a dozen lines of comment, so the budget above saw nothing
+ *  at all: 1.21 megabytes of built JavaScript in front of the first paint measured on
+ *  2026-09-13, 1.41 measured on 2026-09-14, and no test between the two. See
+ *  packages/themes/src/contrast.ts, which is the one sheet the shell may have. */
+const TEXT = /\?(?:raw|inline)$/
+
+/** Where a specifier asked for as text lands, whether it is ours or a library's.
+ *
+ *  A library's is looked for the way a bundler looks: every `node_modules` from the
+ *  asking file up to the root, because a workspace package keeps its own dependencies
+ *  beside itself and KaTeX's stylesheet is one of those. */
+function assetFile(from: string, specifier: string): string | null {
+  const bare = specifier.replace(/\?.*$/, '')
+  const tries: string[] = []
+
+  if (bare.startsWith('.')) tries.push(resolve(dirname(from), bare))
+  else {
+    let folder = dirname(from)
+    for (;;) {
+      tries.push(join(folder, 'node_modules', bare))
+      const up = dirname(folder)
+      if (up === folder || !folder.startsWith(ROOT.replace(/[\\/]$/, ''))) break
+      folder = up
+    }
+  }
+
+  return tries.find((one) => existsSync(one) && statSync(one).isFile()) ?? null
+}
+
+/** Every file the entry reaches without crossing a dynamic import, every package any of
+ *  them asks for, and every file any of them asks for as text. */
+function eagerGraph(entry: string): {
+  files: string[]
+  packages: Set<string>
+  bytes: number
+  assets: string[]
+  assetBytes: number
+} {
   const files: string[] = []
   const packages = new Set<string>()
+  const assets: string[] = []
   const queue = [entry]
 
   while (queue.length) {
@@ -153,6 +202,12 @@ function eagerGraph(entry: string): { files: string[]; packages: Set<string>; by
     files.push(file)
 
     for (const specifier of asked(file)) {
+      if (TEXT.test(specifier)) {
+        const text = assetFile(file, specifier)
+        if (text && !assets.includes(text)) assets.push(text)
+        continue
+      }
+
       // A stylesheet is not a module graph: it is a rule, and the faces inside it are
       // fetched only once something on the page wears one.
       if (specifier.endsWith('.css')) continue
@@ -166,8 +221,9 @@ function eagerGraph(entry: string): { files: string[]; packages: Set<string>; by
   }
 
   const bytes = files.reduce((sum, one) => sum + statSync(one).size, 0)
+  const assetBytes = assets.reduce((sum, one) => sum + statSync(one).size, 0)
 
-  return { files, packages, bytes }
+  return { files, packages, bytes, assets, assetBytes }
 }
 
 /** Every file of ours under a folder, for the tests that ask a question of the whole
@@ -194,9 +250,11 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,088,857 bytes over 372 files, measured on 2026-09-15, against 1,206,912 bytes of
+ *  3,088,857 bytes over 372 files, measured on 2026-09-15, against 1,264,446 bytes of
  *  built JavaScript in the chunks `index.html` preloads - source counts the comments,
- *  and this repository has a great many of them.
+ *  and this repository has a great many of them. The built figure was 1,412,342 earlier
+ *  the same day: the difference is one module split in two, and the test below that
+ *  would have caught it in the first place.
  *
  *  This ceiling is one per cent over what was measured, where it used to be ten. The
  *  app opens in under a second and that is a rule rather than an aspiration, so the
@@ -245,6 +303,17 @@ function holds(tail: string): boolean {
 const BUDGET = 3_148_000
 const MOST_FILES = 386
 
+/** And how much of the first paint's weight is not code at all but a file quoted into a
+ *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
+ *
+ *  A ceiling of its own rather than a share of `BUDGET`, because these bytes are
+ *  invisible to it - the module that quotes a file is a line long whatever the file
+ *  weighs - and because one stylesheet is the whole of what the shell has any business
+ *  quoting. Anything that lands here is a subsystem's text arriving for a window that
+ *  is not showing that subsystem, which is the same mistake as an eager import and the
+ *  budget above cannot see it. Twice what is measured, so the sheet may grow. */
+const MOST_TEXT = 6_500
+
 describe('what the app evaluates before it draws anything', () => {
   test('is under the budget, in bytes of our own source', () => {
     expect(graph.bytes).toBeLessThan(BUDGET)
@@ -252,6 +321,16 @@ describe('what the app evaluates before it draws anything', () => {
 
   test('and under it in modules, which is what the parsing costs', () => {
     expect(graph.files.length).toBeLessThan(MOST_FILES)
+  })
+
+  test('and quotes almost no file into a chunk as text', () => {
+    expect(graph.assetBytes, graph.assets.join(', ')).toBeLessThan(MOST_TEXT)
+  })
+
+  test('which for the one sheet it does quote is the contrast palette', () => {
+    expect(
+      graph.assets.map((one) => one.replace(/\\/g, '/').replace(/.*\/packages\//, '')),
+    ).toEqual(['themes/src/contrast.css'])
   })
 
   /** Every one of these was in the first paint's graph before batch 109, and each is
@@ -663,7 +742,13 @@ describe('what reading a note fetches', () => {
       // The stylesheets are the largest single thing in it and the plainest to name:
       // an export carries its own CSS because it lands in a file somebody else opens,
       // and a surface on screen is already wearing the app's.
-      expect([...ahead.packages]).not.toContain('@nib/themes/raw')
+      //
+      // By the file rather than by the specifier: `@nib/themes/raw` is one of ours and
+      // resolves through the package's own exports map, so it is a module in the graph
+      // and never a name in `packages`. Asked the other way this read as green whatever
+      // the surface imported.
+      expect(reached.filter((one) => one.endsWith('/themes/src/raw.ts'))).toEqual([])
+      expect(ahead.assets, 'stylesheets quoted into the surface').toEqual([])
 
       for (const heavy of [
         '/export.ts',
