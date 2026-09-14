@@ -32,6 +32,15 @@ class BackStack {
       if (at < 0) return
 
       this.layers.splice(at, 1)
+
+      // Only ever out of an entry of ours. The pair above is a push now and a back
+      // a turn later, so a caller that closes and opens in one turn can leave the
+      // top of the history somebody else's - and backing out of that is the window
+      // leaving the page, which takes the whole app with it and says nothing. The
+      // entry says whose it is, so this asks rather than counting on the count.
+      const ours = (history.state as { nibLayer?: number } | null)?.nibLayer
+      if (typeof ours !== 'number') return
+
       this.pending++
       history.back()
     }

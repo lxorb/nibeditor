@@ -281,8 +281,21 @@
 
   // On a phone each of these is a screen of its own, so back closes it rather
   // than leaving the app - newest first, the way Android expects.
-  $effect(() => closeOnBack(!!workspace.panel, () => workspace.closePanel()))
-  $effect(() => closeOnBack(!!workspace.rightPanel, () => workspace.closePanel('right')))
+  //
+  // Whether a side is covered, worked out before the effect reads it. A `!!` does
+  // not narrow what an effect depends on: written inline, these two read `panel`
+  // itself, so asking for another panel while the drawer stood re-ran the effect -
+  // its teardown gave the history entry back and its body took a new one, in one
+  // turn, with `history.back()` answered a turn later. The count drifted, and the
+  // third panel in a row walked the window off the end of its own history and out
+  // of the app: the drawer went, and `window.nibApp` with it, silently. A derived
+  // only wakes what reads it when its own value changes, so a drawer that stays
+  // open through three panels is one layer and one entry.
+  const covered = $derived(!!workspace.panel)
+  const coveredRight = $derived(!!workspace.rightPanel)
+
+  $effect(() => closeOnBack(covered, () => workspace.closePanel()))
+  $effect(() => closeOnBack(coveredRight, () => workspace.closePanel('right')))
   $effect(() =>
     closeOnBack(palette, () => {
       palette = false
