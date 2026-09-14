@@ -41,6 +41,11 @@ import urllib.error
 import urllib.request
 
 SPACES_DIR = "NIB_SPACES_DIR"
+# What a reader does to a window. Asked for rather than killed, because a WebView
+# writes its local storage to disk on its own schedule and on a clean shutdown: a
+# process ended outright loses the last of what the app wrote down, which is exactly
+# what a drive about what survives a relaunch must not do.
+WM_CLOSE = 0x0010
 SPACE = "Order"
 SHOTS = pathlib.Path(__file__).resolve().parents[1] / "target" / "order-probe"
 
@@ -225,6 +230,12 @@ class App:
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
+    """The app started, and the endpoint it wrote for this launch.
+
+    `unlike` is the port the launch before it used: the file is rewritten every
+    launch, and a read that arrives before the rewrite hands back a port nothing is
+    listening on any more. Waiting for a port that is not the old one is what tells
+    the two apart; see docs/automation.md."""
     app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret = endpoint(identifier, 120, unlike)
 
@@ -243,9 +254,24 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     return app, App(port, secret), hwnd
 
 
-def stop(app: subprocess.Popen) -> None:
-    """Only the process this drive started, by its pid, and never by name: the
+def stop(app: subprocess.Popen, hwnd: int = 0) -> None:
+    """The window asked to close, and the process killed only if it will not.
+
+    Asked rather than killed, because what this drive is about is what survives the
+    app ending: a WebView flushes its local storage on a clean shutdown, and a process
+    ended outright loses the last of it - which is what made this run say an order had
+    not survived when it had.
+
+    Only ever the process this drive started, by its pid, and never by name: the
     reader's own app is running."""
+    if hwnd and user32 is not None:
+        user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
+        try:
+            app.wait(timeout=40)
+            return
+        except subprocess.TimeoutExpired:
+            say("the window would not close when it was asked, so it is being ended")
+
     subprocess.run(
         ["taskkill", "/T", "/F", "/PID", str(app.pid)], capture_output=True, check=False
     )
@@ -316,12 +342,13 @@ def main() -> int:
 
     # The first launch only writes automation.json; `eval` is read when the socket
     # opens, so it is turned on between two launches.
-    app, _talk, _hwnd = launch(args.exe, args.identifier)
-    stop(app)
+    app, first, hwnd = launch(args.exe, args.identifier)
+    stop(app, hwnd)
     allow_eval(args.identifier)
-    say("eval is on for the probe identifier")
+    say(f"eval is on for the probe identifier, whose first launch listened on {first.port}")
 
-    app, talk, hwnd = launch(args.exe, args.identifier)
+    app, talk, hwnd = launch(args.exe, args.identifier, first.port)
+    was_on = talk.port
     arranged_order: list[str] = []
     try:
         ready(talk)
@@ -377,13 +404,16 @@ def main() -> int:
         say(f"kept: {json.dumps(kept, ensure_ascii=False)}")
         if not isinstance(kept, dict) or not kept.get("arranged"):
             wrong(f"nothing was written down for the space: {kept}")
+
+        # A moment for the store's own settling timer, so what reaches the disk is
+        # everything the gesture wrote; see SETTLING in workspace/arranged.svelte.ts.
+        time.sleep(1.5)
     finally:
-        stop(app)
+        stop(app, hwnd)
 
     # And again, from cold: both halves of what is remembered are read off this
     # machine rather than held in a store that never went away.
-    port_was = 0
-    app, talk, hwnd = launch(args.exe, args.identifier, port_was)
+    app, talk, hwnd = launch(args.exe, args.identifier, was_on)
     try:
         ready(talk)
         talk.ask("nib.workspace.showPanel('tree')")
@@ -400,7 +430,7 @@ def main() -> int:
             wrong(f"the arranged order did not survive:\n  was {arranged_order}\n  now {names}")
         shot(app.pid, "order-relaunched")
     finally:
-        stop(app)
+        stop(app, hwnd)
 
     if problems:
         print("\n%d thing(s) were wrong:" % len(problems), flush=True)

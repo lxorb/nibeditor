@@ -232,6 +232,13 @@ order keeps no entry at all. Which is also why Manual starts out identical to Na
 A to Z instead of freezing today's listing into the space; see `trimmed` in
 `tree-order.ts`.
 
+The saving is at the front, and only at the front: the list is read from the
+beginning, so saying that one row sits second from the bottom means naming every row
+above it. Nudging the last note up by one in a folder of sixty writes sixty names,
+where pulling it to the top writes one. That is the price of the rule that makes the
+common case free, and it is bounded rather than unbounded: two hundred folders and
+five hundred names each, against a column of thirty-two kilobytes.
+
 A rename rewrites the name in place, so the row keeps where it was arranged to. A
 move takes it out of the list it was in and leaves it at the end of the one it
 arrives in. A folder that moves takes its own list and every list under it along,
