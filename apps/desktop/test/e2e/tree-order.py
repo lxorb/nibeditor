@@ -272,14 +272,19 @@ def desktop(playwright, profile: Path) -> list[str]:
         held = page.evaluate(
             SEED,
             {
-                "Reading": ["Chapter two", "Chapter one", "Notes on it"],
-                "Reading/Deep": ["Attention", "Residuals"],
-                "Work": ["Q3 plan", "Budget", "Hiring", "Retro"],
-                "Work/Q3": ["Week 2", "Week 10", "Week 1"],
-                "Archive": ["Last year", "Older still"],
+                "Reading": ["Chapter two", "Chapter one", "Notes on it", "Later", "Earlier"],
+                "Reading/Deep": ["Attention", "Residuals", "Scaling", "Tokens"],
+                "Work": ["Q3 plan", "Budget", "Hiring", "Retro", "Offsite", "Standup"],
+                "Work/Q3": ["Week 2", "Week 10", "Week 1", "Week 20"],
+                "Archive": ["Last year", "Older still", "Oldest of all"],
+                # Enough to fill the window and then some: a panel shows about twenty
+                # rows, so what is measured is a list the window is a slice of.
+                "Archive/2025": [f"Day {index + 1}" for index in range(28)],
             },
         )
-        say(f"the space holds {held} files in five folders")
+        say(f"the space holds {held} files in six folders")
+        if held < 55:
+            wrong(f"the seed made only {held} files, which is not a list worth windowing")
 
         written = page.evaluate(TOUCH, ["Note 12", "Alpha"])
         say(f"written in again, so the modified order is not the created one: {written}")
@@ -443,16 +448,26 @@ def phone(playwright, profile: Path) -> None:
         # Past the short hold that lifts the row, and not past the half second the
         # row's own menu waits.
         page.wait_for_timeout(320)
-        lifted = page.evaluate("() => !!document.querySelector('.row.carried')")
-        if not lifted:
+        if not page.evaluate("() => !!document.querySelector('.row.carried')"):
             wrong("[phone] the hold did not lift the row")
-        else:
-            page.screenshot(path=str(SHOTS / "order-phone-lifted.png"))
 
         steps = 14
         for step in range(1, steps + 1):
             touch("touchMove", start_x, start_y + (end_y - start_y) * step / steps)
             page.wait_for_timeout(20)
+            # Half way, which is where a picture of a lift is worth taking: the copy is
+            # under the finger, the row it came from is hollow where it was, and the gap
+            # has opened where it would land.
+            if step == steps // 2:
+                page.wait_for_timeout(220)
+                page.screenshot(path=str(SHOTS / "order-phone-lifted.png"))
+                held = page.evaluate(
+                    "() => ({ carried: !!document.querySelector('.row.carried'),"
+                    " hollow: document.querySelectorAll('.row.is-lifted').length })"
+                )
+                say(f"[phone] in the air: {held}")
+                if not held["carried"] or not held["hollow"]:
+                    wrong(f"[phone] the lift was not drawn as one: {held}")
 
         page.wait_for_timeout(200)
         touch("touchEnd", start_x, end_y)

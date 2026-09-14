@@ -16,8 +16,12 @@ Windows only, and a probe build only: `--exe` must be a build made under its own
 identifier, because the notes it writes go wherever `NIB_SPACES_DIR` says and the
 settings folder it wipes is that identifier's.
 
-    pnpm --dir apps/desktop tauri build --no-bundle --config '{"identifier":"ch.emilvinu.nib.probe"}'
+    pnpm --dir apps/desktop tauri build --no-bundle --config '{"identifier":"ch.emilvinu.nib.probe.order"}'
     python scripts/order-probe.py --exe "<the built exe>"
+
+An identifier of its own rather than the shared `ch.emilvinu.nib.probe`, because the
+single-instance plugin keys on it: two drives holding probe builds under one
+identifier hand off to each other, and the second one never gets a window.
 """
 
 from __future__ import annotations
@@ -296,7 +300,10 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe")
+    # An identifier of this drive's own rather than the shared `ch.emilvinu.nib.probe`:
+    # the single-instance plugin keys on it, so two drives running probe builds under
+    # one identifier hand off to each other and the second never gets a window.
+    parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.order")
     args = parsed.parse_args()
 
     if not args.exe.exists():
