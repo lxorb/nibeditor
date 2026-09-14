@@ -505,10 +505,16 @@ class Workspace {
         ? this.tree
         : withComing(this.tree, [...arriving.coming], this.treeOptions)
 
-    // And what the space is not showing, which for the file list means the archive: a
-    // row that is not here is not walked by the keys either, because the keys read this
-    // same tree. One filter and not two; see workspace/left-out and tree-edits.ts.
-    return withoutLeftOut(coming, (path) => this.leftOut.isArchived(path))
+    // And what the space is not showing, which for the file list means the archive: a row
+    // that is not here is not walked by the keys either, because the keys read this same
+    // tree. One filter and not two; see workspace/left-out and tree-edits.ts.
+    //
+    // A row is asked about by the file its mark is kept in. For a note that holds notes that
+    // is the note - `A/A.md` and `A/` are one row - so archiving it takes the row away with
+    // everything nested under it, which is what a folder being put away does too.
+    return withoutLeftOut(coming, (entry) =>
+      this.leftOut.isArchived((folderNote(entry) ?? entry).path),
+    )
   })
 
   /** Whether an account's first pass is running and there is still nothing of

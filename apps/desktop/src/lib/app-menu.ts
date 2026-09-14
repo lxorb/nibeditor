@@ -30,6 +30,7 @@ import { EXPORT_EXTRAS } from './export/offer'
 import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
+import { archiveEntry } from './menu.svelte'
 import { modes } from './modes.svelte'
 import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
@@ -210,6 +211,11 @@ export function appMenu(context: Context): MenuGroup[] {
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
         { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
         DIVIDER,
+        // Putting the open document away. This menu is the ⋮ on a phone and a tablet,
+        // where there is no strip of tabs and so no tab menu to reach it from - so without
+        // this row the only way to archive what is open on a handheld would be the file
+        // list, and the reader is not in the file list. See archive.ts and docs/archive.md.
+        ...archiveEntry(workspace.active?.path),
         {
           label: t('Close note'),
           hint: shortcuts.hint('app.close'),

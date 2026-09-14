@@ -99,10 +99,17 @@ async function write(kept: Kept, home: string | null, icon: string | null): Prom
     Number.isNaN(when.getTime()) ? new Date() : when,
     home,
     icon,
-    // Handed straight back, because this writes the whole file: a website archived
-    // last week that the reader then opened from the archive would come back
-    // unarchived the moment the page moved. See writeShortcut.
-    said?.archived ?? null,
+    // Handed straight back, because this writes the whole file: a website archived last
+    // week that the reader then opened from the archive would come back unarchived the
+    // moment the page moved. See writeShortcut.
+    //
+    // Off the index rather than off `kept.text`, which is the file as the tab last saw it
+    // and is exactly one write out of date at the moment that matters: archiving a website
+    // writes the mark and then closes the tab, and closing a tab writes where the reading
+    // got to - so the closing write would have carried a copy of the file from before the
+    // mark and put the website straight back in the file list. The index is told what the
+    // file says as it is written; see `noteSaved` in link-index.svelte.ts.
+    links.archivedOf(kept.path),
   )
   if (content === kept.text) return
 

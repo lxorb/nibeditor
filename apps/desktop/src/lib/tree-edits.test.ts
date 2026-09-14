@@ -239,19 +239,19 @@ describe('rows for notes the account has named and not sent yet', () => {
  *  one; see `shownTree` in workspace.svelte.ts and docs/archive.md. */
 describe('the rows the space is not showing', () => {
   test('are gone from the tree', () => {
-    const kept = withoutLeftOut(root(), (path) => path === '/N/a.md')
+    const kept = withoutLeftOut(root(), (entry) => entry.path === '/N/a.md')
 
     expect(shape(kept ?? root())).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/c.md'])
   })
 
   test('and a folder that is left out goes with everything under it', () => {
-    const kept = withoutLeftOut(root(), (path) => path === '/N/Deep')
+    const kept = withoutLeftOut(root(), (entry) => entry.path === '/N/Deep')
 
     expect(shape(kept ?? root())).toEqual(['/N/a.md', '/N/c.md'])
   })
 
   test('a row nested deep is taken out on its own', () => {
-    const kept = withoutLeftOut(root(), (path) => path === '/N/Deep/inner.md')
+    const kept = withoutLeftOut(root(), (entry) => entry.path === '/N/Deep/inner.md')
 
     expect(shape(kept ?? root())).toEqual(['/N/Deep', '/N/a.md', '/N/c.md'])
   })
@@ -274,12 +274,20 @@ describe('the rows the space is not showing', () => {
 
   test('filtering never changes the tree it was given', () => {
     const tree = root()
-    withoutLeftOut(tree, (path) => path === '/N/a.md')
+    withoutLeftOut(tree, (entry) => entry.path === '/N/a.md')
 
     expect(shape(tree)).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/a.md', '/N/c.md'])
   })
 
   test('and no tree at all is no tree', () => {
     expect(withoutLeftOut(null, () => true)).toBeNull()
+  })
+
+  test('the whole entry is offered, because a row is not always the file it is about', () => {
+    // A folder that holds a note of its own name is drawn as that note, and whether the row
+    // is left out is a question about the note. Only the caller knows that rule.
+    const kept = withoutLeftOut(root(), (entry) => entry.is_dir && entry.name === 'Deep')
+
+    expect(shape(kept ?? root())).toEqual(['/N/a.md', '/N/c.md'])
   })
 })

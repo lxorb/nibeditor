@@ -72,14 +72,18 @@ export function withEntry(tree: Entry, entry: Entry, options: TreeOptions): Entr
  *  neither knows anything about it.
  *
  *  A folder that is left out goes with everything under it, which needs no saying here:
- *  the branch is dropped, so nothing inside it is walked. `leaving` answers about the
- *  path as the app holds one, since that is what an entry carries.
+ *  the branch is dropped, so nothing inside it is walked.
+ *
+ *  `leaving` is handed the whole entry rather than its path, because a row is not always
+ *  the file it is about: a folder that holds a note of its own name is drawn as that note,
+ *  and whether that row is left out is a question about the note. Only the caller knows
+ *  that rule, so only the caller is asked.
  *
  *  The tree itself is never dropped, whatever it says: the space's own folder is the
  *  list, not a row in it. See workspace/left-out.svelte.ts for what does the leaving. */
 export function withoutLeftOut(
   tree: Entry | null,
-  leaving: (path: string) => boolean,
+  leaving: (entry: Entry) => boolean,
 ): Entry | null {
   if (!tree) return null
 
@@ -89,12 +93,12 @@ export function withoutLeftOut(
 
 /** One folder's children, filtered, and the same array back where nothing changed - so
  *  a space with nothing archived in it is not rebuilt on every keystroke. */
-function pruned(children: readonly Entry[], leaving: (path: string) => boolean): Entry[] {
+function pruned(children: readonly Entry[], leaving: (entry: Entry) => boolean): Entry[] {
   let touched = false
   const out: Entry[] = []
 
   for (const child of children) {
-    if (leaving(child.path)) {
+    if (leaving(child)) {
       touched = true
       continue
     }

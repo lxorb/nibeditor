@@ -7,6 +7,7 @@
   import { archiveList } from './archive-list.svelte'
   import { archiveGroups } from './archive-rows'
   import { fileMark, type FileMark as Mark } from './file-mark'
+  import { isFolderNote } from './folder-notes'
   import FileMark from './FileMark.svelte'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
@@ -14,7 +15,7 @@
   import { dur } from './motion'
   import { shownName } from './note-name'
   import { roving } from './roving'
-  import { insideSpace, nameOf } from './space-paths'
+  import { folderOf, insideSpace, nameOf } from './space-paths'
   import Twist from './Twist.svelte'
   import { workspace } from './workspace.svelte'
 
@@ -53,7 +54,17 @@
     const here = root
     if (here === null) return []
 
-    return workspace.leftOut.archived.map((at) => {
+    return workspace.leftOut.archived.map((marked) => {
+      // A note that holds notes is drawn as its folder in the file list, and is drawn as
+      // its folder here: the mark is kept in `Ideas/Ideas.md` and the row a reader put
+      // away was `Ideas`, so listing the file would be the archive naming something the
+      // tree never showed. Pressing it still opens the note, which is what the row did
+      // there too.
+      //
+      // `folderOf` and not `folderFor`: the folder a folder note belongs to is the one it
+      // sits in, where `folderFor` answers the folder a note would become if it were
+      // nested - `Ideas/Ideas` rather than `Ideas`.
+      const at = isFolderNote(marked) ? folderOf(marked) : marked
       const path = insideSpace(here, at)
       const folder = workspace.entryAt(path)?.is_dir ?? false
 
@@ -80,9 +91,11 @@
    *  heading says how much is put away, and the narrowing is a state of the list under it. */
   const count = $derived(rows.length)
 
+  /** What a row means when it is pressed: exactly what the same row means in the file list.
+   *  `openRow` is that meaning - a file opens itself, and a row that is a folder opens the
+   *  note it is drawn as, written or not - so the archive needs no rule of its own. */
   function open(row: Row) {
-    if (row.folder) workspace.revealFolder(row.path)
-    else void workspace.openEntry(row.path, { preview: true })
+    void workspace.openRow(row.path, { preview: true })
   }
 
   function rowMenu(row: Row): MenuEntry[] {

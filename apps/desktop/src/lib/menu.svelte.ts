@@ -1,6 +1,6 @@
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
-import { archive, canArchive, unarchive } from './archive'
+import { archive, archiveTarget, canArchive, unarchive } from './archive'
 import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -133,13 +133,16 @@ export function excludeEntry(path: string | null | undefined): MenuEntry[] {
 export function archiveEntry(path: string | null | undefined): MenuEntry[] {
   if (!path || !canArchive(path)) return []
 
-  const archived = workspace.leftOut.isArchived(path)
-  if (archived && !workspace.leftOut.namesArchived(path)) return []
+  // The file the row's mark is kept in, which for a note that holds notes is the note and
+  // not the folder it is drawn as; see `archiveTarget`.
+  const at = archiveTarget(path).path
+  const archived = workspace.leftOut.isArchived(at)
+  if (archived && !workspace.leftOut.namesArchived(at)) return []
 
   return [
     {
       label: archived ? t('Unarchive') : t('Archive'),
-      run: () => void (archived ? unarchive(path) : archive(path)),
+      run: () => void (archived ? unarchive(at) : archive(at)),
     },
   ]
 }

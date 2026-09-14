@@ -96,8 +96,8 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // happen first and a greyed Delete would not have said so. A folder with something
     // archived inside it keeps its Delete: pressing it says what is in the way, and the
     // sheet offers to show it. See `refusesDeleting` in workspace.svelte.ts.
-    ...(workspace.leftOut.isArchived(entry.path)
-      ? archiveEntry(archivedRow(entry))
+    ...(workspace.leftOut.isArchived(marked.path)
+      ? archiveEntry(archivedRow(marked))
       : [{ label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) }]),
     ...undoEntry(),
   ]

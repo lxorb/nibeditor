@@ -44,7 +44,7 @@ import { workspace } from './workspace.svelte'
  *  sees is one thing to archive. A folder without one answers as a folder, and the
  *  space's map is what says so. The same question `mapKey` in chosen-icon.ts answers
  *  for the same pair of rows. */
-function archiveTarget(path: string): { path: string; folder: boolean } {
+export function archiveTarget(path: string): { path: string; folder: boolean } {
   const entry = workspace.entryAt(path)
   if (!entry?.is_dir) return { path, folder: false }
 
@@ -150,23 +150,28 @@ function editFor(path: string, before: string, when: string | null) {
  *  A website's live page goes with its tab, which is what `close` already does for one:
  *  archiving it is the reader saying they are done reading it. */
 export async function archive(path: string): Promise<void> {
-  if (!canArchive(path) || workspace.leftOut.isArchived(path)) return
+  // The row's mark, which for a note that holds notes is the note's own file rather than the
+  // folder it is drawn as: `A/A.md` and `A/` are one row, and one row is one thing to put
+  // away. Everything else answers as itself.
+  const at = archiveTarget(path).path
+  if (!canArchive(at) || workspace.leftOut.isArchived(at)) return
 
-  await setArchived(path, archivedNow())
-  closeTabsUnder(archiveTarget(path).path)
+  await setArchived(at, archivedNow())
+  closeTabsUnder(at)
 
-  toast.show(t('Archived'), t('Undo'), () => void unarchive(path))
+  toast.show(t('Archived'), t('Undo'), () => void unarchive(at))
 }
 
 /** And takes it back out, where it was. Nothing is put anywhere: the mark goes, and the
  *  row is in the list it was in, in the place it was in, because it never left. */
 export async function unarchive(path: string): Promise<void> {
-  if (!workspace.leftOut.isArchived(path)) return
+  const marked = archiveTarget(path).path
+  if (!workspace.leftOut.isArchived(marked)) return
 
-  // The exact row, or the archived folder above it: taking back a note inside an
-  // archived folder means taking back the folder, because the note's own mark is not
-  // what is hiding it.
-  const at = workspace.leftOut.namesArchived(path) ? path : (archivedAbove(path) ?? path)
+  // The exact row, or the archived folder above it: taking back a note inside an archived
+  // folder means taking back the folder, because the note's own mark is not what is hiding
+  // it.
+  const at = workspace.leftOut.namesArchived(marked) ? marked : (archivedAbove(marked) ?? marked)
 
   await setArchived(at, null)
 
@@ -187,11 +192,13 @@ function archivedAbove(path: string): string | null {
   return above.length ? insideRoot(root, longest(above)) : null
 }
 
-/** Whether a path sits inside an archived row, either separator: a listing off a Windows
- *  disk speaks backslashes and the browser build's speaks slashes. */
+/** Whether a path sits inside an archived row. Both sides are read with slashes, because a
+ *  listing off a Windows disk speaks backslashes and the browser build's speaks slashes -
+ *  and the same row can arrive spelled either way. */
 function isUnder(root: string, folder: string, path: string): boolean {
   const at = insideRoot(root, folder)
-  return path === at || path.startsWith(`${at}/`) || path.startsWith(`${at}\\`)
+  const said = path.replace(/\\/g, '/')
+  return said === at || said.startsWith(`${at}/`)
 }
 
 function insideRoot(root: string, relative: string): string {
