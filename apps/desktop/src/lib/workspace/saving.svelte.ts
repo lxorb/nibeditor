@@ -59,6 +59,10 @@ export interface Writes {
    *  file is not its own words, so the workspace writes it rather than this; see
    *  `keepWeb` in workspace.svelte.ts. */
   keepWeb(tab: Tab, path: string): Promise<void>
+  /** The name a folder will take: the wanted one, or the next number after it where the
+   *  folder already holds that name. The rule the file list follows for a duplicate, so
+   *  a save can never write over anything. */
+  freeName(folder: string, name: string): string
 }
 
 /** The ending each kind of document is written under, and how a name that already
@@ -92,6 +96,13 @@ const FOLDER_KEY = 'nib:save-folder'
  *  call it and where to keep it. The folder starts at the one used last, so a run of
  *  drafts is one press each after the first.
  *
+ *  **Nothing is ever replaced.** A name the chosen folder already holds steps aside by
+ *  number - `Plan` becomes `Plan 2` - which is the rule the file list already follows
+ *  for a duplicate, out of the same helper. The field starts on a free name, the sheet
+ *  says so while a taken one is typed, and the path that comes back is free whatever was
+ *  typed: a save that quietly wrote over somebody's note was the one thing this could get
+ *  wrong.
+ *
  *  Null where the question was dismissed, which always means "do nothing". */
 async function pickSavePath(ask: {
   kind: Savable
@@ -100,6 +111,9 @@ async function pickSavePath(ask: {
   spaces: Space[]
   activeId: string | null
   tree: Entry | null
+  /** The name that folder will take, which is the wanted one or the next free number
+   *  after it; see `freeName` in workspace.svelte.ts. */
+  freeName: (folder: string, name: string) => string
 }): Promise<{ path: string; name: string } | null> {
   const here = ask.spaces.find((one) => one.id === ask.activeId) ?? ask.spaces[0]
   if (!here) return null
@@ -119,16 +133,24 @@ async function pickSavePath(ask: {
   const last = storedText(FOLDER_KEY)
   const start = folders.some((one) => one.id === last) ? last : here.root
 
+  /** The file that name would be, free of anything already there: the name itself, or
+   *  the next number after it. The name as the field holds it - without the ending,
+   *  which a reader never types and never reads; see note-name.ts. */
+  const freeIn = (folder: string | null, name: string): string =>
+    shownName(ask.freeName(folder ?? here.root, fileNamed(name.trim() || UNTITLED, ask.kind)))
+
+  // The name it has, else the words at the top of it - which only a note has; a plane
+  // and a deck of pages hold JSON, and the first line of that is not a name. A website
+  // arrives here already called what the page calls itself.
+  const wanted =
+    (ask.name !== UNTITLED ? shownName(ask.name) : null) ??
+    (ask.kind === 'note' ? nameFromContent(ask.doc) : null) ??
+    UNTITLED
+
   const { prompt } = await import('../prompt.svelte')
   const answer = await prompt.askName({
     title: t('Save'),
-    // The name it has, else the words at the top of it - which only a note has; a plane
-    // and a deck of pages hold JSON, and the first line of that is not a name. A website
-    // arrives here already called what the page calls itself.
-    value:
-      (ask.name !== UNTITLED ? ask.name : null) ??
-      (ask.kind === 'note' ? nameFromContent(ask.doc) : null) ??
-      UNTITLED,
+    value: freeIn(start, wanted),
     placeholder: t('Untitled'),
     confirmLabel: key('Save'),
     // A folder says which space it is in, so the spaces are not asked about twice.
@@ -136,6 +158,11 @@ async function pickSavePath(ask: {
     space: null,
     folders: folders.map((one) => ({ id: one.id, label: one.label })),
     folder: start,
+    // What the sheet says under the field while the name is one the folder already has.
+    // Asked of the sheet's own two values, so it answers the folder being changed as
+    // well as the name being typed.
+    taken: (name, folder) =>
+      freeIn(folder, name) === name.trim() ? null : t('That name is taken'),
   })
 
   if (!answer?.name) return null
@@ -146,7 +173,9 @@ async function pickSavePath(ask: {
   const clean = answer.name.replace(/[\\/]/g, ' ').trim()
   if (!clean) return null
 
-  const named = fileNamed(clean, ask.kind)
+  // Free again, at the moment of writing: the sheet said what was taken, and this is
+  // what makes it true whatever was typed over it.
+  const named = ask.freeName(folder, fileNamed(clean, ask.kind))
   return { path: joinPath(folder, named), name: shownName(named) }
 }
 
@@ -317,6 +346,7 @@ export class Saving {
         spaces: this.ws.spaces,
         activeId: this.ws.activeSpaceId,
         tree: this.ws.tree,
+        freeName: (folder, name) => this.ws.freeName(folder, name),
       })
       if (!picked) return
 
@@ -364,6 +394,7 @@ export class Saving {
         spaces: this.ws.spaces,
         activeId: this.ws.activeSpaceId,
         tree: this.ws.tree,
+        freeName: (folder, name) => this.ws.freeName(folder, name),
       })
       if (!picked) return
       path = picked.path

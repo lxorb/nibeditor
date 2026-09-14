@@ -321,6 +321,35 @@ def saving(page) -> None:
     else:
         say("the space              -> holds Plan.canvas")
 
+    # And the same name again, which must never replace the first: the sheet says the
+    # name is taken and the save steps it aside by number, the way the file list does
+    # for a duplicate.
+    page.evaluate("async () => window.nibApp.workspace.newCanvas()")
+    page.wait_for_timeout(500)
+    page.keyboard.press("Control+KeyS")
+    page.wait_for_timeout(700)
+
+    offered = page.locator(".sheet input").first.input_value()
+    said = page.locator(".sheet .collides").count()
+    page.locator(".sheet input").first.fill("Plan")
+    page.wait_for_timeout(250)
+    if not page.locator(".sheet .collides").count():
+        wrong("the sheet said nothing about a name the folder already has")
+    else:
+        say(f"typing Plan again      -> {page.locator('.sheet .collides').first.text_content()!r}")
+    say(f"the field offered      -> {offered!r} (collision line at once: {bool(said)})")
+    page.screenshot(path=str(SHOTS / "taken.png"))
+
+    page.keyboard.press("Enter")
+    page.wait_for_timeout(1000)
+    state = page.evaluate(STATE)
+    if (state["active"] or {}).get("path") != "/Notes/Plan 2.canvas":
+        wrong(f"a second Plan replaced the first: {state['active']}")
+    else:
+        say("saved again            -> /Notes/Plan 2.canvas, nothing replaced")
+    if "Plan.canvas" not in state["files"]:
+        wrong(f"the first Plan.canvas is gone: {state['files']}")
+
 
 def nothing_open(page) -> None:
     """Closing everything, and the buttons that answer."""

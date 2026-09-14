@@ -61,6 +61,10 @@ interface AskName extends Ask {
    *  folder already says which space it is in. See move-targets.ts. */
   folders?: FolderOption[]
   folder?: string | null
+  /** What is wrong with the name typed, in the place chosen, or null while nothing is:
+   *  the one thing the sheet cannot work out for itself is what a folder already holds.
+   *  Asked of both values, so changing the folder answers as well as typing. */
+  taken?: (name: string, folder: string | null) => string | null
 }
 
 interface FolderOption {
@@ -95,6 +99,7 @@ class Prompt {
   space = $state<string | null>(null)
   folders = $state<FolderOption[]>([])
   folder = $state<string | null>(null)
+  taken = $state<((name: string, folder: string | null) => string | null) | null>(null)
 
   private pending: Pending = null
 
@@ -117,6 +122,7 @@ class Prompt {
     this.space = null
     this.folders = []
     this.folder = null
+    this.taken = null
     this.naming = false
 
     return this.show() as Promise<string | null>
@@ -135,6 +141,7 @@ class Prompt {
     this.space = options.space ?? options.spaces[0]?.id ?? null
     this.folders = options.folders ?? []
     this.folder = options.folder ?? this.folders[0]?.id ?? null
+    this.taken = options.taken ?? null
     this.naming = true
 
     return this.show() as Promise<NamedIn | null>
@@ -162,6 +169,7 @@ class Prompt {
     this.options = options.options
     this.spaces = []
     this.folders = []
+    this.taken = null
     this.naming = false
 
     return this.show() as Promise<string | null>
@@ -181,6 +189,7 @@ class Prompt {
     this.options = options.options
     this.spaces = []
     this.folders = []
+    this.taken = null
     this.naming = false
 
     return this.show() as Promise<string | null>

@@ -22,6 +22,11 @@
 
   let cursor = $state(0)
 
+  /** What the place already holds, while the name typed is one of them. Asked of the
+   *  caller, which is the only one that knows what is in a folder; null while nothing is
+   *  wrong and for every question that is not a save. See `taken` in prompt.svelte.ts. */
+  const collides = $derived(prompt.taken?.(prompt.value, prompt.folder) ?? null)
+
   /** The answers that match what has been typed, best first. */
   const matches = $derived(
     prompt.mode === 'find'
@@ -98,6 +103,14 @@
           spellcheck="false"
           use:selectAll
         />
+
+        <!-- What the place already holds, while it holds this name: said under the field
+             rather than refused at the button, because the name is free to type and the
+             save steps it aside by number either way - `Plan` becomes `Plan 2`. Nothing a
+             save writes ever replaces a file; see `pickSavePath`. -->
+        {#if collides}
+          <p class="collides" role="status">{collides}</p>
+        {/if}
 
         <!-- Where the file goes, for a save: a space, or a note in it - a note that holds
              notes is what nib has instead of folders, so the word is never used; see
@@ -269,6 +282,14 @@
      column of names, and the letter a space falls back to set at the size of the
      marks beside it. The badge the switcher draws is not this - that is a place
      with a name of its own, and this is a row in a list of rows. */
+  /* Said quietly under the field: it is a fact about the place, not a refusal - the
+     button stays live and the save steps the name aside by number. */
+  .collides {
+    margin: calc(var(--space-2) * -1) 0 0;
+    color: var(--muted);
+    font-size: var(--text-row);
+  }
+
   .space {
     display: grid;
     place-items: center;

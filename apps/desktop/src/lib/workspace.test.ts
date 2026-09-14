@@ -1734,6 +1734,41 @@ describe('a tab nobody has saved', () => {
     expect(workspace.active?.path).toBe('/space/Example.url')
   })
 
+  /** A save must never write over a file, and the sheet is the only place that could:
+   *  the reader types a name, and a name is easy to type twice. So the name steps aside
+   *  by number, out of the same helper the file list uses for a duplicate - and it does
+   *  so at the moment of writing, whatever was typed over the free name the field
+   *  offered. This was real data loss: the draft prompt wrote over a note of the same
+   *  name without a word. */
+  test('never writes over a file the folder already has', async () => {
+    workspace.tree = {
+      name: 'space',
+      path: '/space',
+      is_dir: true,
+      modified: 0,
+      created: 0,
+      children: [
+        {
+          name: 'Plan.canvas',
+          path: '/space/Plan.canvas',
+          is_dir: false,
+          modified: 0,
+          created: 0,
+          children: [],
+        },
+      ],
+    }
+
+    await workspace.newCanvas()
+    sheet.name = 'Plan'
+
+    await workspace.save()
+
+    expect(written().map((one) => one.path)).toEqual(['/space/Plan 2.canvas'])
+    expect(workspace.active?.path).toBe('/space/Plan 2.canvas')
+    workspace.tree = null
+  })
+
   test('is left where it was when the sheet is dismissed', async () => {
     await workspace.newCanvas()
     sheet.name = null
