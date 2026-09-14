@@ -636,6 +636,29 @@ was allowed or refused with the answer on a button that gives the other one, and
 Reset permissions, which forgets all of it. A site that has never asked for anything
 shows the first line and nothing else.
 
+**The window's own page has the same listener, and this is why it must.** A `WebView2`
+webview with nothing registered for `PermissionRequested` answers such a request with
+neither an allow nor a deny: `getUserMedia` there does not fail, it never settles. Every
+web tab has had this listener from the first version and the window's own page had none,
+so the app's own microphone request waited for ever - the recording pill sat at 0:00, no
+file was written and nothing was said, because by the app's lights nothing had gone wrong
+yet. Dictation was the same press and the same silence.
+
+`hearing` in `web_tabs.rs` attaches it at setup, before the window is shown, and the
+answer there is not a bubble: the app's own origin is allowed outright for the microphone
+and the camera, because pressing Record *is* the answer and a second bubble inside nib
+asking whether nib may use the microphone would be the app asking somebody to confirm
+what they just pressed. The permission that matters - the one the system keeps - is not
+this one. Every other origin in that webview is refused, which is what the whole webview
+did before: a site inside a note is an iframe there rather than a tab of its own, and a
+frame in somebody's note is not the thing to hand a camera to. A site that wants one
+opens in a web tab, where it is asked about properly.
+
+The recorder no longer trusts any of this to be true, either: it waits twenty seconds for
+the microphone and then says it could not be opened. A promise that can hang for ever is
+a clock that never moves, and that is the worst way for an app to be wrong. See
+`PATIENCE` in `recorder/microphone.ts`.
+
 **What is still refused outright** is the buses a page can reach hardware over -
 Bluetooth, USB, serial, HID - and the credential store. Those are taken off
 `Navigator.prototype` before the page's first script, because a note-taking app has no

@@ -17,6 +17,7 @@
  *  it answers with a file when it is stopped, and it calls back with a piece of sound
  *  every so often while it runs. */
 
+import { key } from '../i18n.svelte'
 import { bestContainer, extensionOf } from './container'
 import { spoken } from './wav'
 
@@ -33,6 +34,48 @@ const BLOCK = 16_384
  *  engine; asked as it goes, the pieces are ours and the ceiling below can be
  *  measured against them. */
 const HANDOVER = 5_000
+
+/** How long the microphone is waited for before the recorder gives up on it.
+ *
+ *  `getUserMedia` is documented to resolve or to reject, and there is one case where it
+ *  does neither: a `WebView2` webview with nothing listening for `PermissionRequested`
+ *  answers a request with neither an allow nor a deny, and the promise simply never
+ *  settles. That is a bug and it is fixed on the other side of the bridge - the window's
+ *  own page has that listener now; see `hearing` in web_tabs.rs - and this is here
+ *  because a recorder that can hang for ever is a pill stuck at 0:00 with nothing said
+ *  and nothing written, which is the worst way to be wrong. Whatever the reason, after
+ *  this the reader is told.
+ *
+ *  Twenty seconds. Long enough for a system prompt somebody has to find and press, and
+ *  short enough that nobody sits watching a clock that will never move. */
+const PATIENCE = 20_000
+
+/** The microphone, or a refusal, but never neither.
+ *
+ *  Races the platform's own promise against a clock. The timer is cleared either way, so
+ *  a recording that started does not carry a pending timeout for twenty seconds. */
+async function opened(): Promise<MediaStream> {
+  let ran = 0
+
+  try {
+    return await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        // What the browser's own processing is for. A recording of a meeting is a room
+        // and several voices, and the three of these together are the difference between
+        // a transcript and a guess.
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      }),
+      new Promise<never>((_resolve, reject) => {
+        ran = window.setTimeout(
+          () => reject(new Error(key('That microphone could not be opened.'))),
+          PATIENCE,
+        )
+      }),
+    ])
+  } finally {
+    window.clearTimeout(ran)
+  }
+}
 
 /** What a recording may grow to.
  *
@@ -69,17 +112,13 @@ export interface Listening {
  *
  *  Throws where there is no microphone or the reader said no, with the browser's own
  *  error: "permission denied" and "no device" are two different things to be told,
- *  and only the platform knows which happened. */
+ *  and only the platform knows which happened. And throws where the platform answers
+ *  nothing at all, which is what `PATIENCE` is about: this never hangs. */
 export async function record(listening: Listening = {}): Promise<Recording> {
   const type = bestContainer()
   if (type === null) throw new Error('this build cannot record')
 
-  const stream = await navigator.mediaDevices.getUserMedia({
-    // What the browser's own processing is for. A recording of a meeting is a room
-    // and several voices, and the three of these together are the difference between
-    // a transcript and a guess.
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-  })
+  const stream = await opened()
 
   const recorder = new MediaRecorder(stream, type ? { mimeType: type } : {})
   const chunks: Blob[] = []

@@ -48,6 +48,9 @@ use tauri_plugin_opener::OpenerExt;
 /// mistaken for one.
 const LABEL: &str = "web-";
 
+/// The window's own page, which shares its label with the window it is in.
+const MAIN: &str = "main";
+
 /// The event the window hears whenever a page moves: which tab, where it is, what
 /// it calls itself, and whether there is anywhere to step.
 const MOVED: &str = "nib://web-tab";
@@ -936,6 +939,63 @@ fn listening(app: &AppHandle, tab: &str) {
     });
 }
 
+/// Starts listening on the window's own page, which is the app itself.
+///
+/// The other half of `listening`, and the reason it exists: a `WebView2` webview with
+/// nothing listening for `PermissionRequested` answers such a request with neither an
+/// allow nor a deny, and `getUserMedia` there does not fail - it never settles at all.
+/// Every web tab had this listener from the first version; the window's own page never
+/// did, so the app's own microphone request waited for ever. The pill sat at 0:00, no
+/// file was written, and nothing was said, because nothing had gone wrong yet.
+///
+/// The app's own page is allowed outright. Pressing Record *is* the answer: a second
+/// bubble inside nib asking whether nib may use the microphone would be the app asking
+/// the reader to confirm what they just pressed, and the permission that matters - the
+/// one the system keeps - is not this one. Anything else in this webview is refused,
+/// which is what the whole webview did before: a site inside a note is in an iframe
+/// here rather than in a tab of its own, and a frame in somebody's note is not the
+/// thing to hand a camera to. A site in a web tab is asked about properly, in its own
+/// webview, through `listening`.
+///
+/// Once, at setup, before the window is shown; see `ready` in lib.rs.
+pub fn hearing(app: &AppHandle) {
+    // The webview by label rather than the webview-window: they share the label `main`,
+    // and this one keeps answering after a web tab has put a second webview in the
+    // window. See the note at the top of this file.
+    let Some(view) = app.get_webview(MAIN) else {
+        return;
+    };
+
+    // What the page is, for the one question the handler asks of a request. Read here
+    // rather than in the handler because the handler runs on the engine's thread and
+    // this is a fact about the window, settled before it is shown.
+    let page = view.url().map(|url| url.to_string()).unwrap_or_default();
+
+    let _ = view.with_webview(move |platform| {
+        ask::own(&platform, page);
+    });
+}
+
+/// Whether two addresses are the same origin: the same scheme, host and port.
+///
+/// Written out rather than parsed, because what is compared is a prefix and both sides
+/// arrive as strings the engine wrote. Everything from the third slash on is the path,
+/// which an origin is not.
+fn same_origin(page: &str, asked: &str) -> bool {
+    let origin = |url: &str| -> String {
+        match url.find("://") {
+            Some(at) => match url[at + 3..].find('/') {
+                Some(end) => url[..at + 3 + end].to_lowercase(),
+                None => url.to_lowercase(),
+            },
+            None => String::new(),
+        }
+    };
+
+    let ours = origin(page);
+    !ours.is_empty() && ours == origin(asked)
+}
+
 /// Says where a page is, to the window that holds it and to nothing else.
 fn say(
     app: &AppHandle,
@@ -1395,6 +1455,67 @@ mod ask {
         }
     }
 
+    /// Starts listening on the window's own page, where the page is the app.
+    ///
+    /// The same event and the same one call to register for it; what differs is the
+    /// answer. There is nobody to ask: the reader pressed Record, and this is that press
+    /// arriving at the engine. So the app's own origin is allowed on the spot - no
+    /// deferral, nothing held, nothing emitted - and every other origin in this webview
+    /// is refused, which is what the whole webview did before this listener existed. A
+    /// site in a web tab has a webview of its own and is asked about properly there.
+    ///
+    /// Camera as well as microphone, because dictation and a recording are the same
+    /// press to the engine and a reader who has been asked once has been asked.
+    #[allow(
+        unsafe_code,
+        reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
+    )]
+    pub fn own(webview: &PlatformWebview, page: String) {
+        // Safe: the controller is this window's, the handler is used only on this
+        // thread, and WebView2 holds it for as long as the webview lives.
+        unsafe {
+            let Ok(core) = webview.controller().CoreWebView2() else {
+                return;
+            };
+
+            let handler =
+                PermissionRequestedEventHandler::create(Box::new(move |_sender, args| {
+                    let Some(args) = args else {
+                        return Ok(());
+                    };
+
+                    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
+                    if args.PermissionKind(&raw mut kind).is_err() {
+                        return Ok(());
+                    }
+
+                    let mut uri = windows_core::PWSTR::null();
+                    if args.Uri(&raw mut uri).is_err() {
+                        return Ok(());
+                    }
+                    let origin = webview2_com::take_pwstr(uri);
+
+                    let ours = super::same_origin(&page, &origin);
+                    let asked_for = matches!(
+                        kind,
+                        COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
+                            | COREWEBVIEW2_PERMISSION_KIND_CAMERA
+                    );
+
+                    let _ = args.SetState(if ours && asked_for {
+                        COREWEBVIEW2_PERMISSION_STATE_ALLOW
+                    } else {
+                        COREWEBVIEW2_PERMISSION_STATE_DENY
+                    });
+
+                    Ok(())
+                }));
+
+            let mut token = 0i64;
+            let _ = core.add_PermissionRequested(&handler, &raw mut token);
+        }
+    }
+
     /// The answer, given to the engine. On the window's own thread, which is where the
     /// request has been waiting.
     #[allow(
@@ -1433,6 +1554,12 @@ mod ask {
     /// through what wry hands out. Until it is, a site on those platforms is answered
     /// by the engine's own prompt; said out loud in docs/web-tabs.md.
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _tab: String, _window: String) {}
+
+    /// And the window's own page is answered by whatever the platform does on its own,
+    /// which on both of these is a prompt the engine puts up itself. Nothing to attach,
+    /// and nothing that hangs for want of it: it is `WebView2` that waits for ever when
+    /// nothing is listening.
+    pub fn own(_webview: &PlatformWebview, _page: String) {}
 
     /// Nothing was ever asked here, so nothing is ever answered.
     pub fn answer(_id: u64, _allow: bool) {}
@@ -1559,11 +1686,54 @@ mod shot {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed, guard, handed_over, opening, reader, Place, Trail, WebTabs};
+    use super::{allowed, guard, handed_over, opening, reader, same_origin, Place, Trail, WebTabs};
     use tauri::Url;
 
     fn at(url: &str) -> Url {
         Url::parse(url).expect("an address")
+    }
+
+    /// Who the window's own page will be given the microphone for.
+    ///
+    /// One question, asked of the address the request carried: the app's own page is the
+    /// reader pressing Record, and everything else in that webview is a frame inside
+    /// somebody's note. A frame in a note is not the thing to hand a camera to, and a
+    /// site that wants one opens in a web tab, where it is asked about properly.
+    #[test]
+    fn the_window_own_page_is_its_own_origin() {
+        // What Windows serves the app from, and what a Mac and Linux do.
+        assert!(same_origin(
+            "http://tauri.localhost/index.html",
+            "http://tauri.localhost/"
+        ));
+        assert!(same_origin(
+            "tauri://localhost/",
+            "tauri://localhost/index.html"
+        ));
+        // A development build, which is a dev server on this machine.
+        assert!(same_origin(
+            "http://localhost:1420/",
+            "http://localhost:1420/x"
+        ));
+    }
+
+    #[test]
+    fn and_nothing_else_is() {
+        let page = "http://tauri.localhost/index.html";
+
+        assert!(!same_origin(page, "https://tauri.localhost/"));
+        assert!(!same_origin(page, "http://tauri.localhost.example.com/"));
+        assert!(!same_origin(page, "http://evil.example/"));
+        // A port is part of an origin: a dev server and something else on this machine
+        // are two different places.
+        assert!(!same_origin(
+            "http://localhost:1420/",
+            "http://localhost:8080/"
+        ));
+        // Nothing at all is nobody, whichever side of the question it is on.
+        assert!(!same_origin("", "http://tauri.localhost/"));
+        assert!(!same_origin(page, ""));
+        assert!(!same_origin(page, "about:blank"));
     }
 
     #[test]
