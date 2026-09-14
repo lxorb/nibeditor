@@ -1400,6 +1400,18 @@ def table(report: dict) -> str:
                 'decided was not under the cache root |'
             )
 
+    # A run that came up and then died: the signal, and the last thing it said before it
+    # went. The crash report itself is in report.json rather than in a table.
+    died = report.get('died') or {}
+    if died:
+        last = died.get('last') or {}
+        out.append('')
+        out.append(
+            f'**It started and then died on signal {died.get("signal")}.** The last line '
+            f'of the run was `{json.dumps(last)[:200]}`; the crash report is in '
+            '`report.json` under `died`.'
+        )
+
     return '\n'.join(out)
 
 
@@ -1478,6 +1490,20 @@ def main() -> int:
     if launch_ms(cef) is None:
         print('== no window, so: why ==')
         report['why'] = diagnose(flagged, payload, env)
+
+    # **And a run that came up and then died on a signal, which is its own question.** A
+    # negative exit code on a Unix is the signal that killed the process, and a run that
+    # measured half a table and then took `SIGSEGV` leaves the same question as one that
+    # never started: where. The crash report on a Mac names the signal and the frame, so
+    # it is worth the two seconds it costs - and the run's own last line says which call
+    # the process was inside when it went.
+    elif isinstance(cef.get('exit'), int) and cef['exit'] < 0:
+        print(f'== it started and then died on signal {-cef["exit"]}, so: where ==')
+        report['died'] = {
+            'signal': -cef['exit'],
+            'last': (cef.get('events') or [{}])[-1],
+            'crash': crash_reports(flagged.name) if MACOS else cef_log(),
+        }
 
     # **And once more, which is batch 2's session row.** A login that survives a relaunch
     # is a value in a profile on disk being read by a *different process*, so the only

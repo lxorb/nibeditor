@@ -696,8 +696,16 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     // closed and opened again is a new webview on the same profile, and what it can read
     // is what a login is. The tab is taken away with `keep`, which is what the window
     // does when a pane goes, and then opened again at the same address.
+    //
+    // Said on both sides of each call, because this is where a Mac stopped: the run's
+    // last line was the mark above and the process was gone with `SIGSEGV` before
+    // anything else was written, which leaves *closing a page* and *opening one again*
+    // as the two candidates and no way to choose. One line each is the difference
+    // between a crash with an address and a crash with a neighbourhood.
     let at = 0;
+    say("\"event\":\"closing\",\"tab\":0");
     crate::web_tabs::web_close(app.clone(), app.state(), tab.clone(), true);
+    say("\"event\":\"closed\",\"tab\":0");
     std::thread::sleep(Duration::from_secs(2));
     // Through the same patience the first one was opened with: on Windows the *second*
     // webview of a run has been the call that never comes back, and this is the second
