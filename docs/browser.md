@@ -1561,24 +1561,31 @@ on all three. What changed is the row under them:
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
 | --- | --- | --- | --- |
 | **it starts** | **yes**, with the manifest | **yes**, with the bundle | **no** |
-| launch to the window, the flagged build | 1402.0 ms | 804.7 ms | - |
-| the same build on the system's engine, same runner | 4685.4 ms | 1102.9 ms | 2429.3 ms |
-| resident, no web tab, the whole tree | 478.1 MB | 897.2 MB | - |
-| resident, one web tab | 691.3 MB | 1205.4 MB | - |
-| resident, two web tabs | - | 1478.2 MB | - |
+| launch to the window, the flagged build | 1676.6 ms | 1928.3 ms | - |
+| the same app on the system's engine, same runner | 5230.0 ms | 2881.8 ms | 1563.2 ms |
+| resident, no web tab, the whole tree | 477.6 MB | 849.9 MB | - |
+| resident, one web tab | 688.3 MB | 1049.2 MB | - |
+| resident, two web tabs | - | 1250.0 MB | - |
 | **browser processes for two web tabs** | - | **1** | - |
-| a second web tab | never came back, and the main thread stopped answering from that call on | opened, 150 ms | - |
-| `chrome://settings` in a pane of nib's own window | - | **refused: Alloy style** | - |
-| an extension's content script in nib's own interface | - | **reached it** | - |
-| how far it got | two web tabs asked for, one opened | every row above, then `SIGSEGV` on the refused `chrome://` page | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
+| the tree with two web tabs | - | 1 browser, 1 GPU, 2 utility, 6 renderers | - |
+| a second web tab | never came back, and the main thread stopped answering from that call on | opened, 166 ms | - |
+| `chrome://settings` in a pane of nib's own window | not reached | **refused: Alloy style** | - |
+| an extension's content script in nib's own interface | **reached it** | **reached it** | - |
+| how far it got | two web tabs asked for, one opened | every row above, then the main thread stopped after the `chrome://` pages | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
 
-The Windows column is run `34812662525` and the other two are run `34858474457`; the
-second-tab hang is why Windows has no two-tab row yet, and the gate now gives a tab
-ninety seconds rather than the whole run. The two launch rows are the same instrument
-on the same runner, minutes apart - and the flagged build being *faster* than the
-control on both is a statement about a cold runner loading `WebView2` and `WKWebView`
-for the first time, not a promise about anybody's machine. Emil's own is where that
-number means something.
+The Windows column is run `34858474457` and the other two are run `34863736033`. Three
+things to read carefully. **The browser-process row is the design's premise and it
+holds**: one browser process, one renderer per web tab, on a Mac - a renderer arrived
+with each tab and the browser count never moved off one. **The launch rows are the same
+instrument on the same runner minutes apart**, and the flagged build coming up *faster*
+than the app on the system's own engine on both is a statement about a cold runner
+loading `WebView2` and `WKWebView` for the first time rather than a promise about
+anybody's machine; Emil's own is where that number will mean something. And **no remote
+page has been seen to paint on a runner yet**: every title the gate was told about came
+from nib's own document, the tabs' titles arrive through an event that carried none on
+either engine, and the screenshots show blank panels behind a system permission dialog.
+A renderer per tab is what the process tree proves; a rendered page is not, and the two
+should not be confused.
 
 What each of the three meant, and what became of it: the three paragraphs above - the
 manifest, the bundle, the two toolkits. Batch 1 named none of them and guessed wrong
