@@ -1332,11 +1332,11 @@ pub fn web_step(
 /// A page that is going to answer answers in a millisecond or two, so this is not a
 /// budget: it is an end. **The wait used to have none**, and two commands did it - the
 /// place a tab was left at, and the text of a clip. Under nib's own Chromium the answer
-/// comes back over the engine's own DevTools channel, which that runtime pins off by
-/// default, and the engine drops a message addressed to a webview it can no longer find;
-/// so "the page never answers" is a state that exists rather than a worry. The gate's own
-/// walk sat inside `web_look` on a Mac until the harness killed the process seven minutes
-/// later. A command that cannot be answered has to say so instead.
+/// comes back over the engine's own `DevTools` channel, and the engine drops a message
+/// addressed to a webview it can no longer find - so "the page never answers" is a state
+/// that exists rather than a worry. The gate's own walk sat inside `web_look` on a Mac
+/// until the harness killed the process seven minutes later. A command that cannot be
+/// answered has to say so instead.
 const ANSWER: Duration = Duration::from_secs(8);
 
 /// One script run in the page, and the answer it gave.

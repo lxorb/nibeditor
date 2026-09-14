@@ -511,12 +511,17 @@ fn pane(at: usize) -> Result<crate::web_tabs::Pane, String> {
 /// **Batch 2's own rows.** What a web tab on nib's own Chromium has to do, measured by
 /// the app on itself rather than claimed in a table.
 ///
-/// Five things, in the order a reader would do them, and every one of them through the
-/// command that ships rather than beside it:
+/// In the order a reader would do them, and every one of them through the command that
+/// ships rather than beside it:
 ///
 /// * **the switch**, which is the row the round-six drive turned on WebView2: hiding a
 ///   page and showing another is two calls into the engine and no rebuild, so it has to
 ///   be milliseconds and the webview has to still be there afterwards. Both are asked.
+/// * **the two channels to a page**, asked apart, because they fail apart: a script the
+///   app runs in a page needs nothing but the engine's message queue, and an *answer* out
+///   of one travels the engine's `DevTools` protocol. `web_look` and the favicon are the
+///   second kind, so a build where only the first works is a finding worth a row of its
+///   own rather than two mysterious noes.
 /// * **back and forward**, which under this engine are the engine's own: a tab sent
 ///   somewhere new can go back, and after the step it is where it was.
 /// * **the place**, scrolled and read back, which is what keeps a revived tab where the

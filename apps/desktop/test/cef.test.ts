@@ -94,17 +94,18 @@ describe('the app that ships', () => {
     const asked = new Set<string>()
     let table = ''
     for (const line of cargo.split('\n')) {
-      const header = line.match(/^\[([^\]]+)\]/)
+      const header = /^\[([^\]]+)\]/.exec(line)
       if (header) {
-        table = header[1]
+        table = header[1] ?? ''
         continue
       }
       if (!table.endsWith('dependencies')) continue
 
-      const named = line.match(/^([a-z0-9_-]+) = [{"]/)
+      const named = /^([a-z0-9_-]+) = [{"]/.exec(line)
       if (!named) continue
-      const renamed = line.match(/package = "([a-z0-9_-]+)"/)
-      asked.add(renamed ? renamed[1] : named[1])
+      const renamed = /package = "([a-z0-9_-]+)"/.exec(line)
+      const name = renamed?.[1] ?? named[1]
+      if (name) asked.add(name)
     }
 
     expect(asked.size).toBeGreaterThan(10)

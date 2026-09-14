@@ -1794,6 +1794,28 @@ Two things came out of it, and the cheap one is the better one:
   the repository is stale. The fix is a one-line commit of that file; the alternative -
   dropping `--locked` - would make every round a different build.
 
+**And one bug that was nib's own, found by the gate and fixed in the app rather than in
+the gate.** Two commands ask a page a question and wait for the answer: `web_look`, which
+reads how far down the page the reading has got when a tab is left, and `web_clip`. The
+wait had **no end** - a channel `recv` with nothing beside it - which is fine on an engine
+whose answers always come back and is a hang on one where they might not. Under nib's own
+Chromium an answer travels the engine's own `DevTools` channel, and the engine drops a
+message addressed to a webview it can no longer find, so a page that never answers is a
+state that exists. The first flagged run to reach batch 2's rows proved it: the walk went
+into `web_look` and stayed there until the harness killed the process seven minutes later,
+and every row after it - the profiles, the engine's own pages - went unmeasured with it.
+So the two commands share one `asked` helper with a deadline on it, a page that says
+nothing is an error rather than a wait, and the gate's own rows each have an end too.
+
+**What a reader gets from Chromium without nib doing anything, and what that is worth.**
+Nothing in `web_tabs.rs` asks for a context menu, so the menu over a page is the engine's
+own on both builds - which under the flag means Chromium's, with *Back*, *Reload*,
+*Open link in new tab*, *Inspect* where DevTools are allowed, and the spelling suggestions
+a text box gets. The same is true of the permission bubble (section 6), the picker a file
+input opens, the find bar a page's own `Ctrl+F` reaches and the zoom a `Ctrl+scroll`
+applies. That is the batch's principle paying for itself: **where Chromium already does
+something, nib stops doing it.**
+
 MEASURED-ROWS-GO-HERE
 
 ---
