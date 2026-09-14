@@ -1268,9 +1268,9 @@ export const sw: Dictionary = {
   'Written by {model}': 'Imeandikwa na {model}',
   'Saving the recording': 'Inahifadhi rekodi',
   'Turning the recording into words': 'Inabadilisha rekodi kuwa maneno',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Ongeza mtoa AI au ingia ili kubadilisha usemi kuwa maandishi.',
   'Open a space to record into.': 'Fungua nafasi ya kurekodi ndani yake.',
-  'Sign in to take meeting notes.': 'Ingia ili kuandika madokezo ya mkutano.',
-  'Sign in to turn a recording into words.': 'Ingia ili kubadilisha rekodi kuwa maneno.',
   'That microphone could not be opened.': 'Maikrofoni hiyo haikuweza kufunguliwa.',
   'That recording could not be saved.': 'Rekodi hiyo haikuweza kuhifadhiwa.',
   'That recording could not be turned into words.':

@@ -1273,9 +1273,9 @@ export const de: Dictionary = {
   'Written by {model}': 'Geschrieben von {model}',
   'Saving the recording': 'Aufnahme wird gespeichert',
   'Turning the recording into words': 'Aufnahme wird in Text umgewandelt',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Füge einen KI-Anbieter hinzu oder melde dich an, um Sprache in Text umzuwandeln.',
   'Open a space to record into.': 'Öffne einen Bereich, um darin aufzunehmen.',
-  'Sign in to take meeting notes.': 'Zum Protokollieren anmelden.',
-  'Sign in to turn a recording into words.': 'Zum Umwandeln einer Aufnahme in Text anmelden.',
   'That microphone could not be opened.': 'Dieses Mikrofon konnte nicht geöffnet werden.',
   'That recording could not be saved.': 'Diese Aufnahme konnte nicht gespeichert werden.',
   'That recording could not be turned into words.':

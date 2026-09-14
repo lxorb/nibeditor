@@ -1224,9 +1224,9 @@ export const th: Dictionary = {
   'Written by {model}': '{model} เขียน',
   'Saving the recording': 'กำลังบันทึกไฟล์เสียง',
   'Turning the recording into words': 'กำลังเปลี่ยนเสียงเป็นข้อความ',
+  'Add an AI provider or sign in to turn speech into words.':
+    'เพิ่มผู้ให้บริการ AI หรือลงชื่อเข้าใช้เพื่อแปลงเสียงพูดเป็นข้อความ',
   'Open a space to record into.': 'เปิดสเปซเพื่อบันทึกลงไป',
-  'Sign in to take meeting notes.': 'เข้าสู่ระบบเพื่อจดบันทึกการประชุม',
-  'Sign in to turn a recording into words.': 'เข้าสู่ระบบเพื่อเปลี่ยนเสียงเป็นข้อความ',
   'That microphone could not be opened.': 'เปิดไมโครโฟนนั้นไม่ได้',
   'That recording could not be saved.': 'บันทึกไฟล์เสียงนั้นไม่ได้',
   'That recording could not be turned into words.': 'เปลี่ยนเสียงนั้นเป็นข้อความไม่ได้',

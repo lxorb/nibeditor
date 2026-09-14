@@ -1236,9 +1236,9 @@ export const vi: Dictionary = {
   'Written by {model}': '{model} viết',
   'Saving the recording': 'Đang lưu bản ghi',
   'Turning the recording into words': 'Đang chuyển bản ghi thành chữ',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Thêm một nhà cung cấp AI hoặc đăng nhập để chuyển lời nói thành chữ.',
   'Open a space to record into.': 'Hãy mở một không gian để ghi vào.',
-  'Sign in to take meeting notes.': 'Hãy đăng nhập để ghi chú cuộc họp.',
-  'Sign in to turn a recording into words.': 'Hãy đăng nhập để chuyển bản ghi thành chữ.',
   'That microphone could not be opened.': 'Không mở được micrô đó.',
   'That recording could not be saved.': 'Không lưu được bản ghi đó.',
   'That recording could not be turned into words.': 'Không chuyển được bản ghi đó thành chữ.',

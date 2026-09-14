@@ -1236,9 +1236,9 @@ export const my: Dictionary = {
   'Written by {model}': '{model} ရေးသည်',
   'Saving the recording': 'အသံဖိုင်သိမ်းနေသည်',
   'Turning the recording into words': 'အသံဖိုင်ကို စာအဖြစ် ပြောင်းနေသည်',
+  'Add an AI provider or sign in to turn speech into words.':
+    'စကားကို စာအဖြစ် ပြောင်းရန် AI ပေးသူ ထည့်ပါ သို့မဟုတ် ဝင်ပါ။',
   'Open a space to record into.': 'သွင်းမည့်နေရာကို ဖွင့်ပါ။',
-  'Sign in to take meeting notes.': 'အစည်းအဝေးမှတ်စုရေးရန် ဝင်ပါ။',
-  'Sign in to turn a recording into words.': 'အသံဖိုင်ကို စာအဖြစ်ပြောင်းရန် ဝင်ပါ။',
   'That microphone could not be opened.': 'ထိုမိုက်ခရိုဖုန်းကို ဖွင့်မရပါ။',
   'That recording could not be saved.': 'ထိုအသံဖိုင်ကို သိမ်းမရပါ။',
   'That recording could not be turned into words.': 'ထိုအသံဖိုင်ကို စာအဖြစ် ပြောင်းမရပါ။',

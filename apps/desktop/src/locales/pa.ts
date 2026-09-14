@@ -1257,9 +1257,9 @@ export const pa: Dictionary = {
   'Written by {model}': '{model} ਨੇ ਲਿਖਿਆ',
   'Saving the recording': 'ਰਿਕਾਰਡਿੰਗ ਸਾਂਭ ਰਿਹਾ ਹੈ',
   'Turning the recording into words': 'ਰਿਕਾਰਡਿੰਗ ਨੂੰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲ ਰਿਹਾ ਹੈ',
+  'Add an AI provider or sign in to turn speech into words.':
+    'ਬੋਲ ਨੂੰ ਲਿਖਤ ਵਿੱਚ ਬਦਲਣ ਲਈ AI ਪ੍ਰਦਾਤਾ ਜੋੜੋ ਜਾਂ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Open a space to record into.': 'ਰਿਕਾਰਡ ਕਰਨ ਲਈ ਇੱਕ ਥਾਂ ਖੋਲ੍ਹੋ।',
-  'Sign in to take meeting notes.': 'ਮੀਟਿੰਗ ਦੀਆਂ ਨੋਟਾਂ ਲੈਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
-  'Sign in to turn a recording into words.': 'ਰਿਕਾਰਡਿੰਗ ਨੂੰ ਸ਼ਬਦਾਂ ਵਿੱਚ ਬਦਲਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'That microphone could not be opened.': 'ਉਹ ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਖੁੱਲ੍ਹ ਨਹੀਂ ਸਕਿਆ।',
   'That recording could not be saved.': 'ਉਹ ਰਿਕਾਰਡਿੰਗ ਸਾਂਭੀ ਨਹੀਂ ਜਾ ਸਕੀ।',
   'That recording could not be turned into words.': 'ਉਹ ਰਿਕਾਰਡਿੰਗ ਸ਼ਬਦਾਂ ਵਿੱਚ ਨਹੀਂ ਬਦਲੀ ਜਾ ਸਕੀ।',

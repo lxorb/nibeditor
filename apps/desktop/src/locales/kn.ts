@@ -1260,9 +1260,9 @@ export const kn: Dictionary = {
   'Written by {model}': '{model} ಬರೆದದ್ದು',
   'Saving the recording': 'ಧ್ವನಿಮುದ್ರಣ ಉಳಿಸುತ್ತಿದೆ',
   'Turning the recording into words': 'ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡುತ್ತಿದೆ',
+  'Add an AI provider or sign in to turn speech into words.':
+    'ಮಾತನ್ನು ಪಠ್ಯವಾಗಿಸಲು AI ಪೂರೈಕೆದಾರರನ್ನು ಸೇರಿಸಿ ಅಥವಾ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'Open a space to record into.': 'ಧ್ವನಿಮುದ್ರಿಸಲು ಒಂದು ಸ್ಪೇಸ್ ತೆರೆ.',
-  'Sign in to take meeting notes.': 'ಸಭೆಯ ಟಿಪ್ಪಣಿ ತೆಗೆದುಕೊಳ್ಳಲು ಸೈನ್ ಇನ್ ಆಗು.',
-  'Sign in to turn a recording into words.': 'ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡಲು ಸೈನ್ ಇನ್ ಆಗು.',
   'That microphone could not be opened.': 'ಆ ಮೈಕ್ರೊಫೋನ್ ತೆರೆಯಲಾಗಲಿಲ್ಲ.',
   'That recording could not be saved.': 'ಆ ಧ್ವನಿಮುದ್ರಣ ಉಳಿಸಲಾಗಲಿಲ್ಲ.',
   'That recording could not be turned into words.': 'ಆ ಧ್ವನಿಮುದ್ರಣವನ್ನು ಪದಗಳಾಗಿ ಮಾಡಲಾಗಲಿಲ್ಲ.',

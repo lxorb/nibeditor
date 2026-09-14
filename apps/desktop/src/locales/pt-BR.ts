@@ -1277,9 +1277,9 @@ export const ptBR: Dictionary = {
   'Written by {model}': 'Escrito por {model}',
   'Saving the recording': 'Salvando a gravação',
   'Turning the recording into words': 'Transformando a gravação em palavras',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Adicione um provedor de IA ou entre para transformar fala em texto.',
   'Open a space to record into.': 'Abra um espaço para gravar dentro.',
-  'Sign in to take meeting notes.': 'Entre para fazer notas de reunião.',
-  'Sign in to turn a recording into words.': 'Entre para transformar uma gravação em palavras.',
   'That microphone could not be opened.': 'Não foi possível abrir esse microfone.',
   'That recording could not be saved.': 'Não foi possível salvar essa gravação.',
   'That recording could not be turned into words.':

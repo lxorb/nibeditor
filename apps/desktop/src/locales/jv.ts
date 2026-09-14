@@ -1239,9 +1239,9 @@ export const jv: Dictionary = {
   'Written by {model}': 'Ditulis {model}',
   'Saving the recording': 'Nyimpen rekaman',
   'Turning the recording into words': 'Ngowahi rekaman dadi tembung',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Tambahna panyedhiya AI utawa mlebu supaya swara dadi tulisan.',
   'Open a space to record into.': 'Bukak papan kanggo ngrekam.',
-  'Sign in to take meeting notes.': 'Mlebu kanggo nggawe cathetan rapat.',
-  'Sign in to turn a recording into words.': 'Mlebu kanggo ngowahi rekaman dadi tembung.',
   'That microphone could not be opened.': 'Mikrofon kuwi ora bisa dibukak.',
   'That recording could not be saved.': 'Rekaman kuwi ora bisa disimpen.',
   'That recording could not be turned into words.': 'Rekaman kuwi ora bisa diowahi dadi tembung.',

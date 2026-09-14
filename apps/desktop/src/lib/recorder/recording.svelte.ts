@@ -44,7 +44,7 @@ import {
 import { spaceRelative } from './paths'
 import { recordingPill } from '../surfaces.svelte'
 import { canSummarise, summaryOf } from './summarise'
-import { canTranscribe, heardPiece, LIVE_SECONDS } from './transcribe'
+import { canTranscribe, heardPiece, LIVE_SECONDS, transcribedBy } from './transcribe'
 import {
   embedFor,
   languageName,
@@ -383,14 +383,16 @@ class Recorder {
 
   /** A meeting's note: made, then shaped. */
   private async openMeeting(): Promise<string | null> {
-    if (!canTranscribe()) throw new Error(key('Sign in to take meeting notes.'))
+    if (!canTranscribe()) {
+      throw new Error(key('Add an AI provider or sign in to turn speech into words.'))
+    }
     if (!workspace.activeSpace) return null
 
     await workspace.createNote(undefined, `${meetingName(this.started)}.md`)
     const path = workspace.active?.path ?? null
     if (!path) return null
 
-    replaceAll(path, meetingNote(meetingName(this.started), this.started, WHISPER))
+    replaceAll(path, meetingNote(meetingName(this.started), this.started, transcribedBy()))
     return path
   }
 
@@ -405,14 +407,6 @@ class Recorder {
     busy.failed(reason)
   }
 }
-
-/** What wrote a transcript, as the note says it.
- *
- *  The name of the model rather than "AI", and Whisper whichever of the two behind the
- *  route answered: both are Whisper, one on Workers AI and one at OpenAI, and the
- *  route does not say which listened because a reader has no use for the difference.
- *  See services/sync/src/ask/heard.ts. */
-export const WHISPER = 'whisper'
 
 /** Replaces the first line that reads exactly `line` with `insert`. Used once: the
  *  transcript's heading, once the models have said what language they heard. */

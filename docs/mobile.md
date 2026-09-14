@@ -647,7 +647,7 @@ been walked on a device yet; it is the one thing in this batch a phone has to co
 
 **Where the command is.** The plus at the top of the list panel is the only one a
 thumb can reach, so a held finger on it offers `Record` beside New note and New
-canvas, and `Meeting notes` where the account can transcribe. Both make a note of
+canvas, and `Meeting notes` where there is anything that can transcribe. Both make a note of
 their own when there is none, which is what a command pressed in a hurry has to do.
 The same two rows are in the palette and in the Paragraph menu, out of one list, by
 one id each - `record` and `meeting` - which is also what the Android quick settings
@@ -661,9 +661,11 @@ other floating bar, so its stop is a thumb's width there without a number of its
 
 **What needs the network.** The recording does not: it is the platform's own
 `MediaRecorder` writing a file into the space, and it works with no signal. The
-transcript and the summary do, because the speech models are on the Worker and the
-key they spend is the account's. See `docs/even.md` for that route and
-`docs/typora-parity.md` for the whole of what the two commands write into a note.
+transcript and the summary do - unless the transcriber is on this machine, which is one
+of the two roads either of them can take: a provider the reader set up themselves, or
+the account's own route with the account's key. See `recorder/transcribe.ts`,
+`docs/even.md` for that route and `docs/typora-parity.md` for the whole of what the two
+commands write into a note.
 
 ## What the phone build does not have
 

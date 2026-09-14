@@ -1287,10 +1287,9 @@ export const es: Dictionary = {
   'Written by {model}': 'Escrito por {model}',
   'Saving the recording': 'Guardando la grabación',
   'Turning the recording into words': 'Convirtiendo la grabación en palabras',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Añade un proveedor de IA o inicia sesión para convertir voz en texto.',
   'Open a space to record into.': 'Abrir un espacio donde grabar.',
-  'Sign in to take meeting notes.': 'Iniciar sesión para tomar notas de reunión.',
-  'Sign in to turn a recording into words.':
-    'Iniciar sesión para convertir una grabación en palabras.',
   'That microphone could not be opened.': 'No se pudo abrir ese micrófono.',
   'That recording could not be saved.': 'No se pudo guardar esa grabación.',
   'That recording could not be turned into words.':

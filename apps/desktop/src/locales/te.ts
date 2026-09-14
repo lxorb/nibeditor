@@ -1254,9 +1254,9 @@ export const te: Dictionary = {
   'Written by {model}': '{model} రాసింది',
   'Saving the recording': 'రికార్డింగ్ భద్రపరుస్తోంది',
   'Turning the recording into words': 'రికార్డింగ్‌ను మాటలుగా మారుస్తోంది',
+  'Add an AI provider or sign in to turn speech into words.':
+    'మాటను రాతగా మార్చడానికి AI ప్రొవైడర్‌ను జోడించండి లేదా సైన్ ఇన్ అవ్వండి.',
   'Open a space to record into.': 'రికార్డు చేయడానికి ఒక స్పేస్ తెరువు.',
-  'Sign in to take meeting notes.': 'సమావేశ నోట్లు తీసుకోడానికి సైన్ ఇన్ అవ్వు.',
-  'Sign in to turn a recording into words.': 'రికార్డింగ్‌ను మాటలుగా మార్చడానికి సైన్ ఇన్ అవ్వు.',
   'That microphone could not be opened.': 'ఆ మైక్రోఫోన్ తెరవలేకపోయాం.',
   'That recording could not be saved.': 'ఆ రికార్డింగ్ భద్రపరచలేకపోయాం.',
   'That recording could not be turned into words.': 'ఆ రికార్డింగ్‌ను మాటలుగా మార్చలేకపోయాం.',

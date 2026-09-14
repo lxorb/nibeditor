@@ -11,7 +11,7 @@
  *  and the address. So the list is a list and the ids are handed out here. */
 
 import { isRecord, isString, keep, stored } from '../stored'
-import { type Provider, type ProviderKind, usable } from './providers'
+import { type Provider, type ProviderKind, transcribes, usable } from './providers'
 
 const STORAGE_KEY = 'nib:ai'
 
@@ -58,6 +58,19 @@ class Ai {
   /** Whether anything is set up well enough to be asked. What the rewrite menu and
    *  the block's failure sentence read. */
   readonly ready = $derived(this.chosen !== null)
+
+  /** The provider that turns sound into words, or null where none can.
+   *
+   *  The same reading as `chosen` - the default one if it can, else the first that
+   *  can - but a different question: transcribing wants an address and a route, not a
+   *  chat model, so a local whisper server with no chat model set is still a
+   *  transcriber. Claude serves no such route and is never this. See `transcribes` in
+   *  providers.ts and recorder/transcribe.ts, which is what asks. */
+  readonly transcriber = $derived<Provider | null>(
+    this.providers.find((one) => one.id === this.defaultId && transcribes(one)) ??
+      this.providers.find((one) => transcribes(one)) ??
+      null,
+  )
 
   restore() {
     const saved = stored(STORAGE_KEY)

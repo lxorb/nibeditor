@@ -1243,9 +1243,9 @@ export const ms: Dictionary = {
   'Written by {model}': 'Ditulis oleh {model}',
   'Saving the recording': 'Menyimpan rakaman',
   'Turning the recording into words': 'Menukar rakaman menjadi perkataan',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Tambah penyedia AI atau masuk untuk menukar pertuturan menjadi teks.',
   'Open a space to record into.': 'Buka satu ruang untuk merakam ke dalamnya.',
-  'Sign in to take meeting notes.': 'Masuk untuk membuat nota mesyuarat.',
-  'Sign in to turn a recording into words.': 'Masuk untuk menukar rakaman menjadi perkataan.',
   'That microphone could not be opened.': 'Mikrofon itu tidak dapat dibuka.',
   'That recording could not be saved.': 'Rakaman itu tidak dapat disimpan.',
   'That recording could not be turned into words.':

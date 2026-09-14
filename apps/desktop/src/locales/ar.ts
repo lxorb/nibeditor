@@ -1337,9 +1337,9 @@ export const ar: Dictionary = {
   'Written by {model}': 'كتبه {model}',
   'Saving the recording': 'جارٍ حفظ التسجيل',
   'Turning the recording into words': 'جارٍ تحويل التسجيل إلى كلمات',
+  'Add an AI provider or sign in to turn speech into words.':
+    'أضف مزوّد ذكاء اصطناعي أو سجّل الدخول لتحويل الكلام إلى نص.',
   'Open a space to record into.': 'افتح مساحة للتسجيل فيها.',
-  'Sign in to take meeting notes.': 'سجّل الدخول لتدوين ملاحظات الاجتماع.',
-  'Sign in to turn a recording into words.': 'سجّل الدخول لتحويل تسجيل إلى كلمات.',
   'That microphone could not be opened.': 'تعذّر فتح ذلك الميكروفون.',
   'That recording could not be saved.': 'تعذّر حفظ ذلك التسجيل.',
   'That recording could not be turned into words.': 'تعذّر تحويل ذلك التسجيل إلى كلمات.',

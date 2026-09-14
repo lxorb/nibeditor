@@ -1250,9 +1250,9 @@ export const hi: Dictionary = {
   'Written by {model}': '{model} द्वारा लिखा',
   'Saving the recording': 'रिकॉर्डिंग सहेजी जा रही है',
   'Turning the recording into words': 'रिकॉर्डिंग को शब्दों में बदला जा रहा है',
+  'Add an AI provider or sign in to turn speech into words.':
+    'बोली को लिखाई में बदलने के लिए एक AI प्रदाता जोड़ें या साइन इन करें।',
   'Open a space to record into.': 'रिकॉर्ड करने के लिए एक स्पेस खोलें।',
-  'Sign in to take meeting notes.': 'बैठक के नोट लेने के लिए साइन इन करें।',
-  'Sign in to turn a recording into words.': 'रिकॉर्डिंग को शब्दों में बदलने के लिए साइन इन करें।',
   'That microphone could not be opened.': 'वह माइक्रोफ़ोन खोला नहीं जा सका।',
   'That recording could not be saved.': 'वह रिकॉर्डिंग सहेजी नहीं जा सकी।',
   'That recording could not be turned into words.': 'वह रिकॉर्डिंग शब्दों में नहीं बदली जा सकी।',

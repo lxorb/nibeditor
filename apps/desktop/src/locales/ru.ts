@@ -1318,9 +1318,9 @@ export const ru: Dictionary = {
   'Written by {model}': 'Написано {model}',
   'Saving the recording': 'Сохранение записи',
   'Turning the recording into words': 'Превращение записи в слова',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Добавьте ИИ-провайдера или войдите, чтобы превращать речь в текст.',
   'Open a space to record into.': 'Откройте пространство, куда записывать.',
-  'Sign in to take meeting notes.': 'Войдите, чтобы вести заметки встречи.',
-  'Sign in to turn a recording into words.': 'Войдите, чтобы превратить запись в слова.',
   'That microphone could not be opened.': 'Этот микрофон не удалось открыть.',
   'That recording could not be saved.': 'Эту запись не удалось сохранить.',
   'That recording could not be turned into words.': 'Эту запись не удалось превратить в слова.',

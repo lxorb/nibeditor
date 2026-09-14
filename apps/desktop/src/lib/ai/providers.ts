@@ -128,6 +128,25 @@ export function askUrl(provider: Provider): string {
     : `${apiRoot(provider)}/chat/completions`
 }
 
+/** Where sound goes to come back as words.
+ *
+ *  OpenAI's own route, and the one every server that speaks the OpenAI shape and
+ *  transcribes at all serves under the same name - whisper.cpp's server, faster-whisper,
+ *  LM Studio. So a local transcriber is the same two fields in the same pane as a local
+ *  model, and nothing above here has to know which. */
+export function heardUrl(provider: Provider): string {
+  return `${apiRoot(provider)}/audio/transcriptions`
+}
+
+/** Whether this provider can be asked to turn sound into words at all.
+ *
+ *  Anthropic cannot: Claude reads text and images and there is no audio route to ask.
+ *  The other two can, so a reader who has set either up has a transcriber already and
+ *  needs no account for it. */
+export function transcribes(provider: Provider): boolean {
+  return provider.kind !== 'anthropic' && !!apiRoot(provider)
+}
+
 /** What the request carries besides its body. `key` may be empty, which is a local
  *  model: it gets no authorisation header at all rather than an empty one, which
  *  some servers refuse. */
@@ -150,6 +169,19 @@ export function headersFor(provider: Provider, apiKey: string): Record<string, s
     'content-type': 'application/json',
     ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
   }
+}
+
+/** The same headers with the content type left off, for a body that names its own.
+ *
+ *  A multipart form has a boundary in its content type and only the browser knows what
+ *  the boundary is, so a request that named the type itself would be describing a body
+ *  it no longer has - and the server would read none of it. Built off `headersFor` so
+ *  the authorisation is the one every other request carries. */
+export function headersWithoutType(provider: Provider, apiKey: string): Record<string, string> {
+  const headers = { ...headersFor(provider, apiKey) }
+  delete headers['content-type']
+
+  return headers
 }
 
 /** Reading the list of models is one line either way: both shapes answer with

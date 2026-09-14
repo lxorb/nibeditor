@@ -1239,9 +1239,9 @@ export const ja: Dictionary = {
   'Written by {model}': '{model} が書いたもの',
   'Saving the recording': '録音を保存中',
   'Turning the recording into words': '録音を文字に変換中',
+  'Add an AI provider or sign in to turn speech into words.':
+    '音声を文字にするには AI プロバイダーを追加するかサインインしてください。',
   'Open a space to record into.': '録音するスペースを開いてください。',
-  'Sign in to take meeting notes.': '議事録を取るにはサインインしてください。',
-  'Sign in to turn a recording into words.': '録音を文字にするにはサインインしてください。',
   'That microphone could not be opened.': 'そのマイクを開けませんでした。',
   'That recording could not be saved.': 'その録音を保存できませんでした。',
   'That recording could not be turned into words.': 'その録音を文字にできませんでした。',

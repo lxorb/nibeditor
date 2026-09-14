@@ -1231,9 +1231,9 @@ export const ko: Dictionary = {
   'Written by {model}': '{model} 작성',
   'Saving the recording': '녹음 저장 중',
   'Turning the recording into words': '녹음을 글로 옮기는 중',
+  'Add an AI provider or sign in to turn speech into words.':
+    '말을 글로 바꾸려면 AI 공급자를 추가하거나 로그인하세요.',
   'Open a space to record into.': '녹음할 공간을 여세요.',
-  'Sign in to take meeting notes.': '회의 노트를 쓰려면 로그인하세요.',
-  'Sign in to turn a recording into words.': '녹음을 글로 옮기려면 로그인하세요.',
   'That microphone could not be opened.': '그 마이크를 열 수 없었습니다.',
   'That recording could not be saved.': '그 녹음을 저장할 수 없었습니다.',
   'That recording could not be turned into words.': '그 녹음을 글로 옮길 수 없었습니다.',

@@ -1294,9 +1294,9 @@ export const it: Dictionary = {
   'Written by {model}': 'Scritto da {model}',
   'Saving the recording': 'Salvataggio della registrazione',
   'Turning the recording into words': 'Conversione della registrazione in parole',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Aggiungi un provider di IA o accedi per trasformare la voce in testo.',
   'Open a space to record into.': 'Aprire uno spazio in cui registrare.',
-  'Sign in to take meeting notes.': 'Accedere per prendere note della riunione.',
-  'Sign in to turn a recording into words.': 'Accedere per convertire una registrazione in parole.',
   'That microphone could not be opened.': 'Non è stato possibile aprire quel microfono.',
   'That recording could not be saved.': 'Non è stato possibile salvare quella registrazione.',
   'That recording could not be turned into words.':

@@ -12,6 +12,9 @@ Three surfaces use it, and they all go through one module:
 - the four rewrites on a selection,
 - and, later, a panel to talk in. Not in this batch.
 
+A fourth surface asks a different question of the same providers: a recording, as words.
+See **Sound, as words** below.
+
 ## What nib cannot offer
 
 Neither Anthropic nor OpenAI lets a third-party app sign you in with a Claude or
@@ -194,6 +197,41 @@ have read what an undo would put back, the paragraph is off the screen.
 Only on a selection. The row is not in the menu otherwise, because four verbs
 greyed out in every other menu in the app is four rows of nothing.
 
+## Sound, as words
+
+A recording is transcribed by whichever road the reader has, and their own comes first.
+
+`POST /v1/audio/transcriptions` is OpenAI's route and the one every OpenAI-compatible
+transcriber serves under the same name - whisper.cpp's server, faster-whisper, LM Studio -
+so a transcriber on this machine is the same two fields in the same pane as a model on it,
+and nothing leaves the machine at all. That is the whole reason somebody runs one.
+
+The model is not the chat model. OpenAI is asked for `gpt-4o-mini-transcribe` and then
+`whisper-1`; a server on this machine is asked for `whisper-1` and then for whatever model
+the provider itself names, so somebody whose server wants
+`Systran/faster-whisper-small` has a way to say so. A name the server has never heard of
+is the one refusal worth trying the next name for - the list is a guess about somebody
+else's server - and whichever answered is remembered, because a meeting sends a piece
+every twenty seconds and must not spend a request finding that out again. A key refused
+is said out loud rather than walked past.
+
+`whisper-1` also says which language it heard, under `verbose_json`; the newer models
+answer plain JSON and say nothing about it, which is a transcript heading with no language
+in it rather than a failure.
+
+**Claude is never this.** There is no audio route to ask, so a reader who has set up only
+Claude has no transcriber, and the Transcribe row stays out of the menu rather than
+appearing and failing.
+
+**The account is the other road**, and the one most readers are on: `POST /v1/ask/heard`,
+Whisper on Workers AI with the account's own OpenAI key behind it. It is what transcribing
+does when no provider is set up. A provider that *is* set up and refuses is a failure
+rather than a reason to send the recording somewhere else - the reader chose that server.
+
+The note says which of them wrote it: the model's own name, or `whisper` for the account's
+road. See `apps/desktop/src/lib/recorder/transcribe.ts`, and `docs/mobile.md` for what
+this means with no signal.
+
 ## Costs
 
 nib charges nothing and knows nothing about your bill. What it does do is make
@@ -233,6 +271,7 @@ only the provider knows.
 | `apps/desktop/src/lib/ai/ask.ts` | What the block asks, and who answers |
 | `apps/desktop/src/lib/ai/rewrite.ts` | The four verbs, and what each sends |
 | `apps/desktop/src/lib/ai/rewriting.svelte.ts` | One rewrite, start to accepted |
+| `apps/desktop/src/lib/recorder/transcribe.ts` | Sound as words, by either road |
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |
 | `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain |
