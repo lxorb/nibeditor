@@ -1,0 +1,20 @@
+-- Which folders of a space have been put away, and when: one JSON map keyed by the
+-- folder's path relative to the space, the way the folder icons of 0023 are.
+--
+-- Only the folders that have no note of their own. A note keeps its mark in its own
+-- front matter and carries it wherever the file goes, into another vault and into
+-- Obsidian, and a folder drawn as a note is put away through that note. What is left
+-- is a folder that is only a name in a path, with no file anywhere to write a mark
+-- into, so the space holds the mark and the path says whose it is.
+--
+-- On the space rather than on the account, for the reason the icons and the excluded
+-- list are: a path is inside one space, and a folder put away means nothing in a
+-- space that has no such folder. So it travels with the space to every device signed
+-- in, goes with it when it is deleted and comes back with it when it is restored.
+--
+-- The value is when the folder went rather than a flag, which is the one decision
+-- worth writing down here. A map with only keys is already a flag - a folder named
+-- here is away - and the date costs nothing on top of the key it hangs from, while it
+-- is what lets what has been archived be shown newest first without a column of its
+-- own.
+alter table spaces add column archived_folders text not null default '{}';

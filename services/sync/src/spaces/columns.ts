@@ -1,10 +1,11 @@
 /** The columns of a space that a client writes whole, and what each of them holds.
  *
- *  Six of them: the bookmarks, the paths the space leaves out, what it keeps about
- *  its graph, the files beside its notes, the icons its folders wear, and what it
- *  says about its published site. Each is a JSON document the app writes in one
- *  request and reads back off the space listing, so each has the same two things to
- *  settle - how much of it a space may hold, and the write itself.
+ *  Seven of them: the bookmarks, the paths the space leaves out, what it keeps about
+ *  its graph, the files beside its notes, the icons its folders wear, which of its
+ *  folders have been put away, and what it says about its published site. Each is a
+ *  JSON document the app writes in one request and reads back off the space listing,
+ *  so each has the same two things to settle - how much of it a space may hold, and
+ *  the write itself.
  *
  *  The ceilings were six constants in six files, all called `MOST_BYTES`, and
  *  nothing showed them together: whether the bookmarks may be larger than the graph
@@ -21,7 +22,7 @@ import type { Env } from '../types'
 
 /** A column a client writes whole. `icons` writes a second column beside it - the
  *  tints - so it has a statement of its own; see ./icons. */
-export type Column = 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
+export type Column = 'archived_folders' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
 
 /** How many bytes each column may hold, once written down.
  *
@@ -33,14 +34,16 @@ export type Column = 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
  *  They differ because what they hold differs. The graph keeps a handful of
  *  switches. The bookmarks are a list somebody arranged by hand, so a long one is
  *  still a few hundred entries. The exclusions and the site's rules are lists of
- *  paths, which run longer. The files and the icons are keyed by path, one entry per
- *  file or folder, so they are the two that scale with the space - four times what
- *  the bookmarks are allowed, because four hundred folder paths is that much more
- *  than sixty bookmarks, and a map the app considers legal has to be one this takes
- *  or an icon somebody chose would vanish on the way up.
+ *  paths, which run longer. The files, the icons and the folders put away are keyed by
+ *  path, one entry per file or folder, so they are the three that scale with the
+ *  space - four times what the bookmarks are allowed, because four hundred folder
+ *  paths is that much more than sixty bookmarks, and a map the app considers legal has
+ *  to be one this takes or an icon somebody chose would vanish on the way up.
  *
  *  `icons` covers both of its columns together, since the colours are the same paths
  *  again with an accent's name on each and the pair is what a listing carries.
+ *  `archived_folders` is those paths a third time with a written moment on each, so it
+ *  is allowed what they are.
  *
  *  All of them are also bounded the other way, by that listing: every space's
  *  columns ride along with its name on every read, so a ceiling here is a ceiling
@@ -52,6 +55,7 @@ export const MOST_BYTES: Record<Column | 'icons', number> = {
   site: 24 * 1024,
   files: 32 * 1024,
   icons: 32 * 1024,
+  archived_folders: 32 * 1024,
 }
 
 /** Whether what is about to be written fits in its column. */

@@ -160,7 +160,10 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/notes$/ },
-  { method: 'PUT', path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|files|graph|excluded)$/ },
+  {
+    method: 'PUT',
+    path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|files|graph|excluded|archived-folders)$/,
+  },
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },

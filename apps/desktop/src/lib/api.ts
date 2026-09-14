@@ -183,6 +183,10 @@ export interface RemoteSpace {
    *  unlinked mentions, relative to the space. `[]` until one is; see
    *  workspace/excluded.svelte.ts. */
   excluded: unknown
+  /** The folders of the space that have been put away, where those folders have no
+   *  note of their own to say so, by path relative to the space. `{}` until one is;
+   *  see workspace/archived-folders.svelte.ts. */
+  archivedFolders: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -759,6 +763,16 @@ export const api = {
       method: 'PUT',
       token,
       body: { excluded },
+    }),
+
+  /** The whole map, for the reason the excluded list goes whole: a folder renamed is
+   *  every key under it leaving one name and arriving at another, which is one request
+   *  only in this shape. */
+  saveArchivedFolders: (token: string, id: string, archivedFolders: Record<string, string>) =>
+    request<{ archivedFolders: Record<string, string> }>(`/v1/spaces/${id}/archived-folders`, {
+      method: 'PUT',
+      token,
+      body: { archivedFolders },
     }),
 
   deleteSpace: (token: string, id: string) =>

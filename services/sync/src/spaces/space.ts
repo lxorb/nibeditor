@@ -12,6 +12,7 @@ import type { Context, MiddlewareHandler } from 'hono'
 import { askInChunks, AT_A_TIME, places } from '../bound'
 import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
+import { readArchivedFolders } from './archived-folders'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
@@ -106,6 +107,7 @@ export async function addSpace(
     tints: '{}',
     graph: '{}',
     excluded: '[]',
+    archived_folders: '{}',
     site: '{}',
   }
 
@@ -398,6 +400,10 @@ export function presentSpace(
     // And again: the search, the picture and the mentions all read this, and all
     // three are drawn from what the listing already brought down.
     excluded: readExcluded(space.excluded),
+    // And which of its folders have been put away, beside the icons those folders
+    // wear, for the reason the icons are here: the tree is drawn on every reconcile
+    // pass, and a folder that is away is a row that is not drawn at all.
+    archivedFolders: readArchivedFolders(space.archived_folders),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

@@ -70,6 +70,12 @@ const ROUTES: { name: string; path: () => string; method: string; older: unknown
     older: { icons: { Archive: '📦' } },
   },
   {
+    name: 'PUT /v1/spaces/:id/archived-folders',
+    path: () => `/v1/spaces/${space}/archived-folders`,
+    method: 'PUT',
+    older: { archivedFolders: { Archive: '2026-09-14T08:30:00.000Z' } },
+  },
+  {
     name: 'PUT /v1/spaces/:id/site',
     path: () => `/v1/spaces/${space}/site`,
     method: 'PUT',

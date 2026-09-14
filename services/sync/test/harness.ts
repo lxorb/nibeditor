@@ -235,6 +235,8 @@ interface SpaceView {
   tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
+  /** Which of its folders have been put away, and when; see 0037. */
+  archivedFolders: Record<string, string>
   createdAt: number
   updatedAt: number
   blog: {
@@ -333,6 +335,7 @@ export interface Reply {
   tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
+  archivedFolders: Record<string, string>
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

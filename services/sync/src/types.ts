@@ -131,6 +131,11 @@ export interface Space {
    *  unlinked mentions, as a JSON array of paths; see spaces/excluded.ts. `[]`
    *  until one is. */
   excluded: string
+  /** Which folders of the space have been put away, as a JSON map from the folder's
+   *  path to when it went; see spaces/archived-folders.ts. Only the folders that
+   *  have no note of their own: a note keeps its own mark in its front matter and
+   *  carries it wherever the file goes. `{}` until one has. */
+  archived_folders: string
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string
