@@ -438,7 +438,6 @@
       if (!takesOver(one, driver.since, event.timeStamp)) return
 
       store.halt()
-      endPull()
       predicted = []
       gesture = {
         kind: 'pinch',
@@ -568,16 +567,37 @@
         y: (one.screens[0].y + one.screens[1].y) / 2,
       }
 
+      const wanted = camera.y - (middle.y - was.y) / camera.scale
+      const bottom = store.bottom
       store.camera = store.held({
         ...camera,
         x: camera.x - (middle.x - was.x) / camera.scale,
-        y: camera.y - (middle.y - was.y) / camera.scale,
+        y: wanted,
       })
       // Two fingers that stay the same distance apart are a pan, and a zoom of
       // exactly one is not worth a camera write.
       if (one.apart > 0 && Math.abs(apart - one.apart) > 0.5) {
         store.zoomAt(middle, apart / one.apart)
       }
+
+      // And two fingers past the end of the column pull the next page, like one.
+      // On a phone that has never seen a pen the finger draws, so two fingers are
+      // how a page note is scrolled at all - which would have been the one device
+      // where the gesture could not be made.
+      //
+      // Added up rather than measured from where the gesture began, because a pinch
+      // moves the paper and changes its scale at once: there is no fixed origin on
+      // the plane to measure against. A drag back up takes it off again, since the
+      // steps are signed and nothing below nought is a pull.
+      const answer = dragged(pull, {
+        raw: pull.raw + Math.max(0, wanted - bottom) * camera.scale,
+        reach,
+        now: Date.now(),
+        still: stillness(),
+      })
+      pull = answer.pull
+      rise = riseOf(pull, reach, Date.now(), stillness())
+      if (answer.makes) madePage()
 
       gesture = { ...one, screens, apart }
       return
@@ -677,7 +697,6 @@
 
       gesture = { kind: 'pan', id, screen, from: camera, moved: true, onSlot: false }
       driver = { id, touch: true, screen, since: event.timeStamp }
-      pull = began(pull, startedNearEnd(store.viewBottom, store.last), Date.now())
       return
     }
 
@@ -706,7 +725,7 @@
     predicted = []
     if (!one) return
 
-    if (one.kind === 'pan') {
+    if (one.kind === 'pan' || one.kind === 'pinch') {
       // The pull let go of. Past the threshold it makes a page; short of it
       // everything springs back.
       const answer = lifted(pull, { reach, now: Date.now(), still: stillness() })
@@ -716,7 +735,7 @@
 
       // A press on the silhouette that went nowhere is a press on a button: the
       // same page the pull would have made, without the pull.
-      if (one.onSlot && !one.moved) madePage()
+      if (one.kind === 'pan' && one.onSlot && !one.moved) madePage()
       return
     }
 
