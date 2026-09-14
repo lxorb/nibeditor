@@ -396,6 +396,12 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     trace::mark("launch arguments");
 
+    // What the window's own page may be given: the microphone the moment somebody
+    // presses Record, and nothing else. Before the window is shown, because a page that
+    // asked before anything was listening waits for ever; see `hearing` in web_tabs.rs.
+    #[cfg(desktop)]
+    web_tabs::hearing(handle);
+
     // Built hidden, so nobody watches the window paint itself.
     // The window, not the webview window; see web_tabs.rs.
     if let Some(window) = app.get_window("main") {
