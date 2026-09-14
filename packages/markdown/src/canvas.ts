@@ -136,14 +136,7 @@ interface ShapeNode extends NodeBase {
  *  `isPaper` about a setting, and that store is in front of the first paint where this
  *  format deliberately is not. Re-exported here, so every reader of the format still
  *  finds them where they were. See papers.ts and test/weight.test.ts in the app. */
-export {
-  endless,
-  isPaper,
-  type Paper,
-  PAPER_NAMES,
-  PAPERS,
-  paperSized,
-} from './papers'
+export { endless, isPaper, type Paper, PAPER_NAMES, PAPERS, paperSized } from './papers'
 
 /** What is ruled on a page under everything written on it. The four the canvas's
  *  own background already offers, named the same, because it is the same drawing
