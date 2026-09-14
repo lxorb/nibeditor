@@ -702,14 +702,22 @@ def loader_chain(binary: Path) -> dict:
     }
 
 
-def windows_errors() -> list[str]:
-    """What Windows Error Reporting wrote about the last few minutes, if anything."""
+def windows_errors(name: str) -> list[str]:
+    """What Windows Error Reporting wrote about *this* binary, if anything.
+
+    Narrowed to the binary by name and to the first line of each report, because the
+    Application log on any Windows machine is mostly somebody else's kernel dumps and a
+    diagnosis nobody can read is not a diagnosis.
+    """
     script = (
-        "Get-WinEvent -LogName Application -MaxEvents 40 -ErrorAction SilentlyContinue | "
-        "Where-Object { $_.Id -in 1000,1001,1026 } | "
-        'Select-Object -First 4 | ForEach-Object { $_.TimeCreated.ToString() + " " + $_.Message }'
+        'Get-WinEvent -LogName Application -MaxEvents 120 -ErrorAction SilentlyContinue | '
+        f'Where-Object {{ $_.Message -like "*{name}*" }} | Select-Object -First 4 | '
+        # `-join` rather than `Join-String`, which is PowerShell 7 and a runner's
+        # `powershell` is 5.1.
+        'ForEach-Object { $_.TimeCreated.ToString() + " " + '
+        '((($_.Message -split "\\r?\\n") | Select-Object -First 3) -join " ") }'
     )
-    return ran(['powershell', '-NoProfile', '-NonInteractive', '-Command', script]).splitlines()[:40]
+    return ran(['powershell', '-NoProfile', '-NonInteractive', '-Command', script]).splitlines()[:12]
 
 
 def crash_reports(name: str) -> list[str]:
@@ -738,7 +746,7 @@ def diagnose(binary: Path, payload: Path, env: dict[str, str]) -> dict:
 
     if WINDOWS:
         found['loader'] = loader_chain(binary)
-        found['events'] = windows_errors()
+        found['events'] = windows_errors(binary.name)
         return found
 
     if MACOS:
@@ -932,7 +940,7 @@ def run(binary: Path, env: dict[str, str], out_dir: Path, timeout: int, measured
 
 
 def at(result: dict, event: str) -> float | None:
-    for one in result['events']:
+    for one in result.get('events') or []:
         if one.get('event') == event:
             return one.get('at')
     return None
@@ -1261,10 +1269,12 @@ def main() -> int:
         (one.get('cef_api') for one in cef['events'] if one.get('event') == 'engine'), None
     )
 
-    # And if it never said anything at all, why. The one case the numbers cannot
-    # describe, so it is the one case with a diagnosis instead.
-    if not cef['events']:
-        print('== it said nothing, so: why ==')
+    # And if it never got a window up, why. That is the one case the numbers cannot
+    # describe, so it is the one case with a diagnosis instead - and the test is the
+    # window rather than the first line, because all three platforms printed *something*
+    # and then died: the engine line is the first thing `main` does.
+    if launch_ms(cef) is None:
+        print('== no window, so: why ==')
         report['why'] = diagnose(flagged, payload, env)
         print(json.dumps({key: report['why'][key] for key in report['why']}, indent=2)[:8000])
 
