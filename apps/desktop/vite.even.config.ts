@@ -121,8 +121,8 @@ const CATALOGUE = /\/locales\/([\w-]+)\.ts$/
 
 /** The catalogues the firmware has no glyphs for.
  *
- *  The app has thirty-nine interface catalogues, one lazily loaded chunk each. A
- *  reader loads one of them; the store packs all thirty-nine, which took this package
+ *  The app has forty interface catalogues, one lazily loaded chunk each. A
+ *  reader loads one of them; the store packs all forty, which took this package
  *  from 6.8 MB to 8.68 MB. And the firmware has one font: it draws Latin, Cyrillic,
  *  Greek, CJK and emoji, so these fifteen scripts - Devanagari (`hi`, `mr`), Bengali,
  *  Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Arabic, Persian, Pashto,

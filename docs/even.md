@@ -249,7 +249,7 @@ what every construct in a note *is*. Section 3 is that mapping.
 
 ### Which language the panel is in
 
-The app's interface is in thirty-nine languages, one lazily loaded catalogue each.
+The app’s interface is in forty languages, one lazily loaded catalogue each.
 The firmware's font draws **Latin, Cyrillic, Greek, CJK and emoji**, and nothing
 else. A reader in one of the other scripts got a menu of perfectly correct words
 drawn as a row of boxes, which is the one way of being wrong text mode cannot afford.
@@ -290,11 +290,11 @@ measurement is cut at is nowhere near either.
 
 And it is said once where the choice is made: for a reader whose script the glass
 cannot draw, the Language row says **"The glasses show English."** - only where a pair
-has been seen, because it is noise to anybody else, and in all thirty-nine catalogues
+has been seen, because it is noise to anybody else, and in all forty catalogues
 because a string the reader sees is a row in every one of them.
 
 The same list decides what is *packed*. A reader loads one catalogue and the store
-fetches the package whole, so all thirty-nine were paid for by everybody: the sixteen
+fetches the package whole, so all forty are paid for by everybody: the sixteen
 catalogues in those twelve scripts are left out of the plugin build, which on
 2026-09-13 is **8.80 MB with them and 7.53 MB without**, and the bundle test's ceiling
 sits a quarter of a megabyte over that. Those readers get an English plugin rather than a
@@ -1302,7 +1302,7 @@ The reduction, measured: **11.8 MB in 270 chunks became 6.0 MB in 162**, and the
 packed `.ehpk` went from 4.4 MB to 2.7 MB. Half of what a phone downloads was
 libraries it had no way to use.
 
-It has grown since, and been cut again. The interface's thirty-nine catalogues took
+It has grown since, and been cut again. The interface’s catalogues took
 it to 8.59 MB; leaving out the sixteen whose scripts the firmware has no glyphs for
 brought it to **7.36 MB**, measured on 2026-09-12. What is left that is not the app
 is node-emoji's table, 1.1 MB, which is what writes an emoji the font cannot draw as

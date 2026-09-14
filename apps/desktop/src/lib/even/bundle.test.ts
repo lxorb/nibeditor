@@ -260,9 +260,9 @@ describe('the bundle a package is made of', () => {
 
   /** The catalogues, held to what the font can draw.
    *
-   *  The app has 39 of them, one lazily loaded chunk each, and the package is fetched
-   *  whole: a reader loads one and pays for all 39. The firmware's one font draws
-   *  Latin, Cyrillic, Greek, CJK and emoji, so fifteen scripts among those 39 would
+   *  The app has 40 of them, one lazily loaded chunk each, and the package is fetched
+   *  whole: a reader loads one and pays for all 40. The firmware's one font draws
+   *  Latin, Cyrillic, Greek, CJK and emoji, so fifteen scripts among those 40 would
    *  put a row of boxes on the glass - and `undrawable` in the glasses package is
    *  what says which, by measuring rather than by listing. The build carries the list
    *  because a Vite config cannot import the metrics; this is what keeps the two

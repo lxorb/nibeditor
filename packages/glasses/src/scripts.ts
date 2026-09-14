@@ -4,7 +4,7 @@
  *  carries Latin, Cyrillic, Greek, CJK and emoji; it has no Devanagari, no Bengali,
  *  no Tamil, no Telugu, no Kannada, no Malayalam, no Gurmukhi, no Gujarati, no
  *  Arabic, no Thai, no Burmese and no Ethiopic - not one glyph. The app's interface
- *  is in thirty-nine languages, so a reader in one of those scripts had a menu of
+ *  is in forty languages, so a reader in one of those scripts had a menu of
  *  perfectly correct words drawn as a row of boxes.
  *
  *  This is that fact as data: one row per script, with a sample of it, and what the
@@ -93,7 +93,9 @@ export const SCRIPTS: readonly Script[] = [
     name: 'Chinese, traditional',
     sample: '設定',
     draws: true,
-    languages: ['zh-Hant', 'zh-Hant-HK'],
+    // Cantonese is written in Traditional characters, which is what `Intl` answers
+    // for `yue` as well: one script, one question, whatever the language.
+    languages: ['yue', 'zh-Hant', 'zh-Hant-HK'],
   },
   {
     code: 'Jpan',

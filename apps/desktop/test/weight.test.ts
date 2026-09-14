@@ -463,7 +463,7 @@ describe('what the app evaluates before it draws anything', () => {
     expect(holds(tail), tail).toBe(true)
   })
 
-  /** The thirty-nine catalogues, which are the other side of the same bargain: one
+  /** The forty catalogues, which are the other side of the same bargain: one
    *  chunk per language, fetched when a reader chooses one. Between them they are
    *  larger than everything else this test is about, and a single static import of any
    *  of them would put every row of every language in front of the first paint. See
