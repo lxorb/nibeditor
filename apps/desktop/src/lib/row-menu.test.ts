@@ -128,6 +128,7 @@ describe('a note', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Duplicate',
       'Delete',
     ])
@@ -145,6 +146,7 @@ describe('a note that holds notes', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Delete',
     ])
   })
@@ -169,6 +171,7 @@ describe('a paper', () => {
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Delete',
     ])
   })
@@ -189,6 +192,7 @@ describe('a file the account has a copy of', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Duplicate',
       'Delete',
@@ -209,6 +213,7 @@ describe('a file the account has a copy of', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Delete',
     ])
@@ -223,6 +228,7 @@ describe('a file the account has a copy of', () => {
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Delete',
     ])

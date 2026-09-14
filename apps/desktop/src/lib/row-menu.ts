@@ -20,6 +20,7 @@ import { isPdfTarget } from '@nib/markdown/links'
 import { folderNote, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
 import {
+  archiveEntry,
   bookmarkEntry,
   coverEntries,
   DIVIDER,
@@ -30,7 +31,7 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget } from './move-targets'
 import { rowName } from './note-name'
-import { isMarkdownPath } from './space-paths'
+import { isMarkdownPath, relativeTo } from './space-paths'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -72,6 +73,11 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // everything under it, so leaving it out leaves out what is nested in it. See
     // workspace/excluded.svelte.ts.
     ...excludeEntry(entry.path),
+    // Putting the row away, on its own path for the same reason: a folder stands for
+    // everything under it. A folder that holds a note of its own name is archived through
+    // that note, which is `archiveTarget`'s business rather than this menu's. See
+    // archive.ts.
+    ...archiveEntry(entry.path),
     // Who else may have this one file, in the same word the space uses. On the
     // note the row is drawn as, because a share names a file the account has a
     // copy of: a folder is not one, and a folder with no note has nothing to
@@ -85,21 +91,42 @@ export function rowMenu(entry: Entry): MenuEntry[] {
       ? []
       : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
     DIVIDER,
-    { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
+    // And nothing archived is deleted, which is the whole of what archiving promises. The
+    // row that would have said Delete says Unarchive instead, because that is what has to
+    // happen first and a greyed Delete would not have said so. A folder with something
+    // archived inside it keeps its Delete: pressing it says what is in the way, and the
+    // sheet offers to show it. See `refusesDeleting` in workspace.svelte.ts.
+    ...(workspace.leftOut.isArchived(entry.path)
+      ? archiveEntry(archivedRow(entry))
+      : [{ label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) }]),
     ...undoEntry(),
   ]
+}
+
+/** Which row to offer Unarchive on, for a row that is hiding: itself where its own mark
+ *  is what put it away, and nothing at all where it is inside an archived folder - the
+ *  folder's own row is where that is taken back. `archiveEntry` reads the same rule; this
+ *  is only which path to hand it. */
+function archivedRow(entry: Entry): string | null {
+  return workspace.leftOut.namesArchived(entry.path) ? entry.path : null
 }
 
 /** A row that is part of a selection of several stands for all of them: its menu
  *  acts on the lot, and offers only what makes sense for a lot. */
 function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
-  const count = workspace.selection.length
+  const deletable = workspace.deletable(workspace.selection)
 
   return [
     {
-      label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
+      // The rows that can actually go. A count that included an archived row would be a
+      // menu promising to delete something it is going to leave exactly where it is.
+      label: plural(deletable.length, {
+        one: 'Delete {count} item',
+        other: 'Delete {count} items',
+      }),
       danger: true,
+      disabled: deletable.length === 0,
       run: () => void workspace.removeMany(workspace.selection),
     },
     ...undoEntry(),
@@ -134,11 +161,41 @@ async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
   if (into) await workspace.moveMany([entry.path], into)
 }
 
+/** A row's path as the space speaks of it, which is how the archive keys its rows. */
+function relative(entry: Entry): string | null {
+  const root = workspace.activeSpace?.root ?? null
+  return root === null ? null : relativeTo(root, entry.path)
+}
+
 /** Deleting a row that holds rows takes all of them with it, so it asks first: the
  *  row is drawn as the one note it is, and a note does not look like something
  *  that holds anything. A row with nothing under it goes the way deleting one note
  *  has always gone, which is without a question. */
 async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
+  // Something archived is in the way, so nothing is deleted and the sheet says what and
+  // offers to show it. A count rather than a list of names: the reader is about to go and
+  // look, and the number is what tells them whether they meant to. See `refusesDeleting`
+  // in workspace.svelte.ts, which is what actually refuses.
+  const refused = workspace.refusesDeleting(entry.path)
+  if (refused) {
+    const { prompt } = await import('./prompt.svelte')
+    const show = await prompt.confirm({
+      title: t('Archived'),
+      detail: plural(refused.inside.length || 1, {
+        one: '{count} archived note inside',
+        other: '{count} archived notes inside',
+      }),
+      confirmLabel: key('Show them'),
+    })
+
+    if (show) {
+      const { archiveList } = await import('./archive-list.svelte')
+      archiveList.show(workspace.leftOut.archivedInside(entry.path).length ? relative(entry) : null)
+    }
+
+    return
+  }
+
   if (!inside) {
     await workspace.remove(entry.path, entry.is_dir)
     return
