@@ -247,6 +247,44 @@ a folder out of somebody's vault, which nib draws as the note nobody has written
 That the list has one kind of row at all, and what a click, a twist and a drag on
 it each mean, is `docs/tree.md`.
 
+### The window's own edges
+
+Two things about the window are the reader's, and both live in Settings ▸ Appearance ▸
+Window. They are this machine's rather than the account's: which titlebar somebody wants
+is a question about the desk the window is on, and Mica exists on one of their machines
+and not the other.
+
+**Frame.** Nib's own, or the system's. Nib's own is the default and stays the default -
+`--titlebar-height` is the measurement the whole shell is taken from, and the bar it
+names holds the menu, the sidebar toggle, the tabs and the window's three buttons. Under
+the system's frame that bar stays exactly where it is and loses only the three buttons,
+because the titlebar above it already has them; two sets of window buttons is one set
+lying about which window it belongs to. `set_decorations` at runtime, so nothing
+restarts.
+
+**Translucency.** Off, or the material the platform composites behind a window: Mica on
+Windows 11, Acrylic on Windows 10, a vibrancy view on macOS, and nothing on Linux, where
+no two desktops agree how to ask - there the switch says so rather than doing nothing.
+
+One token carries it. `--window-ground` is `--bg` in every window there has ever been,
+and `transparent` when translucency is on; `html`, `body` and the shell's own `main` are
+the three things painted with it. Nothing else changes, and that is the whole of the
+design decision: every surface above the ground keeps the token it was measured at, so a
+row, a card, a sheet and a menu are the colours the contrast pass measured. A translucent
+window must not become a window whose words sit on somebody's wallpaper.
+
+The material needs something to be seen through, so the window is created transparent -
+`transparent: true` in `tauri.conf.json`. With translucency off the page paints an opaque
+ground over every pixel, which is exactly what it painted before. On macOS transparency
+is behind Tauri's `macos-private-api`, which is not turned on: the material is applied
+and will show the day that flag is, and that is a decision about the App Store rather
+than about this feature.
+
+`apps/desktop/src-tauri/src/appearance.rs` is both commands, `window-vibrancy` is what
+they ask, and `scripts/appearance-e2e.py` drives them: it reads the frame back off the
+window rect against the client rect, and the material back off DWM, rather than off the
+app's own opinion of what it did.
+
 ### Header rows
 
 `--header-height` is `--titlebar-height` (38px), and it is what the title bar,

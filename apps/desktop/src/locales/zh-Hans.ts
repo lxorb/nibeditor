@@ -408,6 +408,12 @@ export const zhHans: Dictionary = {
   'Switch theme': '切换主题',
   Style: '样式',
   Mode: '模式',
+  // The window's own edges; see appearance.rs
+  Window: '窗口',
+  'Nib’s own': 'Nib 自己的',
+  'The system’s': '系统的',
+  Translucency: '半透明',
+  'Window frame': '窗口边框',
   System: '系统',
   'Mode: {name}': '模式：{name}',
   'Open themes folder': '打开主题文件夹',

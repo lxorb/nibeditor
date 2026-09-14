@@ -411,6 +411,12 @@ export const ms: Dictionary = {
   'Switch theme': 'Tukar tema',
   Style: 'Gaya',
   Mode: 'Mod',
+  // The window's own edges; see appearance.rs
+  Window: 'Tetingkap',
+  'Nib’s own': 'Milik Nib',
+  'The system’s': 'Milik sistem',
+  Translucency: 'Kelegapan',
+  'Window frame': 'Bingkai tetingkap',
   System: 'Sistem',
   'Mode: {name}': 'Mod: {name}',
   'Open themes folder': 'Buka folder tema',

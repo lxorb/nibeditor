@@ -414,6 +414,12 @@ export const pa: Dictionary = {
   'Switch theme': 'ਥੀਮ ਬਦਲੋ',
   Style: 'ਸ਼ੈਲੀ',
   Mode: 'ਰੂਪ',
+  // The window's own edges; see appearance.rs
+  Window: 'ਵਿੰਡੋ',
+  'Nib’s own': 'Nib ਦਾ ਆਪਣਾ',
+  'The system’s': 'ਸਿਸਟਮ ਦਾ',
+  Translucency: 'ਅਰਧ-ਪਾਰਦਰਸ਼ਤਾ',
+  'Window frame': 'ਵਿੰਡੋ ਦਾ ਫ਼ਰੇਮ',
   System: 'ਸਿਸਟਮ',
   'Mode: {name}': 'ਰੂਪ: {name}',
   'Open themes folder': 'ਥੀਮ ਫੋਲਡਰ ਖੋਲ੍ਹੋ',

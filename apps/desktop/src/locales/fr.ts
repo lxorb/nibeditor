@@ -419,6 +419,12 @@ export const fr: Dictionary = {
   'Switch theme': 'Changer de thème',
   Style: 'Style',
   Mode: 'Mode',
+  // The window's own edges; see appearance.rs
+  Window: 'Fenêtre',
+  'Nib’s own': 'Celui de Nib',
+  'The system’s': 'Celui du système',
+  Translucency: 'Translucidité',
+  'Window frame': 'Cadre de la fenêtre',
   System: 'Système',
   'Mode: {name}': 'Mode : {name}',
   'Open themes folder': 'Ouvrir le dossier des thèmes',

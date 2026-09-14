@@ -411,6 +411,12 @@ export const fa: Dictionary = {
   'Switch theme': 'تغییر پوسته',
   Style: 'سبک',
   Mode: 'حالت',
+  // The window's own edges; see appearance.rs
+  Window: 'پنجره',
+  'Nib’s own': 'خودِ Nib',
+  'The system’s': 'سیستم',
+  Translucency: 'نیم‌شفافی',
+  'Window frame': 'قاب پنجره',
   System: 'سامانه',
   'Mode: {name}': 'حالت: {name}',
   'Open themes folder': 'گشودن پوشه پوسته‌ها',

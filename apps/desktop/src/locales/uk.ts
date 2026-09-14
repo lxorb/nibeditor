@@ -430,6 +430,12 @@ export const uk: Dictionary = {
   'Switch theme': 'Змінити тему',
   Style: 'Стиль',
   Mode: 'Режим',
+  // The window's own edges; see appearance.rs
+  Window: 'Вікно',
+  'Nib’s own': 'Nib',
+  'The system’s': 'Системна',
+  Translucency: 'Напівпрозорість',
+  'Window frame': 'Рамка вікна',
   System: 'Системна',
   'Mode: {name}': 'Режим: {name}',
   'Open themes folder': 'Відкрити папку тем',

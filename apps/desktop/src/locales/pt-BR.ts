@@ -419,6 +419,12 @@ export const ptBR: Dictionary = {
   'Switch theme': 'Trocar de tema',
   Style: 'Estilo',
   Mode: 'Modo',
+  // The window's own edges; see appearance.rs
+  Window: 'Janela',
+  'Nib’s own': 'Do Nib',
+  'The system’s': 'Do sistema',
+  Translucency: 'Translucidez',
+  'Window frame': 'Moldura da janela',
   System: 'Sistema',
   'Mode: {name}': 'Modo: {name}',
   'Open themes folder': 'Abrir a pasta de temas',

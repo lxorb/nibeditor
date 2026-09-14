@@ -439,6 +439,12 @@ export const ar: Dictionary = {
   'Switch theme': 'تبديل السمة',
   Style: 'النمط',
   Mode: 'الوضع',
+  // The window's own edges; see appearance.rs
+  Window: 'النافذة',
+  'Nib’s own': 'الخاص بـ Nib',
+  'The system’s': 'الخاص بالنظام',
+  Translucency: 'الشفافية',
+  'Window frame': 'إطار النافذة',
   System: 'النظام',
   'Mode: {name}': 'الوضع: {name}',
   'Open themes folder': 'فتح مجلد السمات',

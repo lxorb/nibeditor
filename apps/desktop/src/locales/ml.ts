@@ -414,6 +414,12 @@ export const ml: Dictionary = {
   'Switch theme': 'തീം മാറ്റുക',
   Style: 'ശൈലി',
   Mode: 'മോഡ്',
+  // The window's own edges; see appearance.rs
+  Window: 'വിൻഡോ',
+  'Nib’s own': 'Nib-ന്റെ സ്വന്തം',
+  'The system’s': 'സിസ്റ്റത്തിന്റെ',
+  Translucency: 'അർധസുതാര്യത',
+  'Window frame': 'വിൻഡോയുടെ ചട്ടക്കൂട്',
   System: 'സിസ്റ്റം',
   'Mode: {name}': 'മോഡ്: {name}',
   'Open themes folder': 'തീം ഫോൾഡർ തുറക്കുക',

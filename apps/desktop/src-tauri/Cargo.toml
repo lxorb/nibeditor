@@ -112,6 +112,13 @@ keyring = { version = "3", default-features = false, features = [
 # Already in the lock file as something tauri builds with, so this adds nothing to
 # the build. Desktop only, because only a desktop has the endpoint.
 getrandom = "0.3"
+# What a platform composites behind a window: Mica, Acrylic, vibrancy. Also already
+# in the lock file as something tauri builds with, and asked for here by name rather
+# than through tauri's own `set_effects` for one reason: that wrapper applies the
+# first effect it is handed instead of the first the platform supports, and the whole
+# question on Windows is Mica or Acrylic depending on which Windows this is. See
+# appearance.rs.
+window-vibrancy = "0.6"
 
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
 # the only way into them: Notes has no export. Bundled so the read does not depend

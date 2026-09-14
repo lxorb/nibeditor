@@ -411,6 +411,12 @@ export const ur: Dictionary = {
   'Switch theme': 'تھیم بدلیں',
   Style: 'انداز',
   Mode: 'موڈ',
+  // The window's own edges; see appearance.rs
+  Window: 'ونڈو',
+  'Nib’s own': 'Nib کا اپنا',
+  'The system’s': 'سسٹم کا',
+  Translucency: 'نیم شفافیت',
+  'Window frame': 'ونڈو کا فریم',
   System: 'سسٹم',
   'Mode: {name}': 'موڈ: {name}',
   'Open themes folder': 'تھیمز فولڈر کھولیں',

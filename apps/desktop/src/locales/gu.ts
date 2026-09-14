@@ -411,6 +411,12 @@ export const gu: Dictionary = {
   'Switch theme': 'થીમ બદલો',
   Style: 'શૈલી',
   Mode: 'રીત',
+  // The window's own edges; see appearance.rs
+  Window: 'વિન્ડો',
+  'Nib’s own': 'Nib નું પોતાનું',
+  'The system’s': 'સિસ્ટમનું',
+  Translucency: 'અર્ધપારદર્શકતા',
+  'Window frame': 'વિન્ડોની ફ્રેમ',
   System: 'સિસ્ટમ',
   'Mode: {name}': 'રીત: {name}',
   'Open themes folder': 'થીમ ફોલ્ડર ખોલો',

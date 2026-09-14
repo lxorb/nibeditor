@@ -411,6 +411,12 @@ export const tr: Dictionary = {
   'Switch theme': 'Temayı değiştir',
   Style: 'Stil',
   Mode: 'Kip',
+  // The window's own edges; see appearance.rs
+  Window: 'Pencere',
+  'Nib’s own': 'Nib’in kendi',
+  'The system’s': 'Sistemin',
+  Translucency: 'Yarı saydamlık',
+  'Window frame': 'Pencere çerçevesi',
   System: 'Sistem',
   'Mode: {name}': 'Kip: {name}',
   'Open themes folder': 'Tema klasörünü aç',

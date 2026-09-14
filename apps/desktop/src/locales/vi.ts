@@ -410,6 +410,12 @@ export const vi: Dictionary = {
   'Switch theme': 'Đổi chủ đề',
   Style: 'Kiểu',
   Mode: 'Chế độ',
+  // The window's own edges; see appearance.rs
+  Window: 'Cửa sổ',
+  'Nib’s own': 'Của Nib',
+  'The system’s': 'Của hệ thống',
+  Translucency: 'Độ trong mờ',
+  'Window frame': 'Khung cửa sổ',
   System: 'Hệ thống',
   'Mode: {name}': 'Chế độ: {name}',
   'Open themes folder': 'Mở thư mục chủ đề',

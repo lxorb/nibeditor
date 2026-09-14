@@ -431,6 +431,12 @@ export const pl: Dictionary = {
   'Switch theme': 'Zmień motyw',
   Style: 'Styl',
   Mode: 'Tryb',
+  // The window's own edges; see appearance.rs
+  Window: 'Okno',
+  'Nib’s own': 'Nib',
+  'The system’s': 'Systemowa',
+  Translucency: 'Przezroczystość',
+  'Window frame': 'Ramka okna',
   System: 'Systemowy',
   'Mode: {name}': 'Tryb: {name}',
   'Open themes folder': 'Otwórz folder motywów',

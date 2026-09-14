@@ -414,6 +414,12 @@ export const sw: Dictionary = {
   'Switch theme': 'Badili mandhari',
   Style: 'Mtindo',
   Mode: 'Hali',
+  // The window's own edges; see appearance.rs
+  Window: 'Dirisha',
+  'Nib’s own': 'Ya Nib',
+  'The system’s': 'Ya mfumo',
+  Translucency: 'Uwazi',
+  'Window frame': 'Fremu ya dirisha',
   System: 'Mfumo',
   'Mode: {name}': 'Hali: {name}',
   'Open themes folder': 'Fungua folda ya mandhari',

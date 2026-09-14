@@ -410,6 +410,12 @@ export const ko: Dictionary = {
   'Switch theme': '테마 바꾸기',
   Style: '스타일',
   Mode: '모드',
+  // The window's own edges; see appearance.rs
+  Window: '창',
+  'Nib’s own': 'Nib의 것',
+  'The system’s': '시스템의 것',
+  Translucency: '반투명',
+  'Window frame': '창 테두리',
   System: '시스템',
   'Mode: {name}': '모드: {name}',
   'Open themes folder': '테마 폴더 열기',

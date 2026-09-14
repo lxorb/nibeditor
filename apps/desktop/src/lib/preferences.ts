@@ -603,6 +603,48 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+
+        // The window itself: who draws its frame, and whether the desk shows through
+        // it. Desktop only, because a browser tab has neither - and on a phone the
+        // system draws everything. Nib's own frame stays the default: the bar it draws
+        // holds the menu, the sidebar toggle, the tabs and the window's three buttons,
+        // and it is the shape the whole shell is measured from. See appearance.rs.
+        ...(isDesktop
+          ? ([
+              {
+                title: t('Window'),
+                fields: [
+                  {
+                    kind: 'segmented',
+                    label: t('Frame'),
+                    options: [
+                      { value: 'nib', label: t('Nib’s own') },
+                      { value: 'system', label: t('The system’s') },
+                    ],
+                    initial: 'nib',
+                    get: () => modes.frame,
+                    set: (value) => modes.setFrame(value),
+                  },
+                  {
+                    // A switch would read as "Translucency: on", which is the same two
+                    // words in a shape that says less; the row beside it is a choice of
+                    // two and these read as a pair. Where the platform has nothing to
+                    // turn on, turning it on says so and comes back off; see
+                    // `applyTranslucency` in modes.svelte.ts.
+                    kind: 'segmented',
+                    label: t('Translucency'),
+                    options: [
+                      { value: 'off', label: t('Off') },
+                      { value: 'on', label: t('On') },
+                    ],
+                    initial: 'off',
+                    get: () => (modes.translucent ? 'on' : 'off'),
+                    set: (value) => modes.setTranslucent(value === 'on'),
+                  },
+                ],
+              },
+            ] satisfies Group[])
+          : []),
       ],
     },
 
