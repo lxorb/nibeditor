@@ -71,6 +71,13 @@ export const pdfSurface = held(() => import('./Pdf.svelte'))
 /** A website in a tab. See docs/web-tabs.md. */
 export const webSurface = held(() => import('./web-tab/WebTab.svelte'))
 
+/** A pane with nothing open, which is the kinds a new tab can be as buttons. Fetched
+ *  like the surfaces above it and for the same reason: a window that opens on a note -
+ *  which is nearly every window - should not carry the answer to a pane that has
+ *  nothing in it. A pane that is empty has nothing else to draw while this arrives, and
+ *  a fetch that has already happened renders in the same pass. See NewHere.svelte. */
+export const emptySurface = held(() => import('./NewHere.svelte'))
+
 /** The note through the renderer rather than in the editor, which is a face a tab
  *  wears and not a window the app opens in: a reader who never presses it never
  *  fetches the renderer's own side of the app. See Pane.svelte, where the tab's own

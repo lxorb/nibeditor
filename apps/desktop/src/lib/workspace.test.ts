@@ -807,7 +807,10 @@ describe('closing what is in a pane', () => {
     expect(workspace.tabs).toHaveLength(1)
   })
 
-  test('the last pane stays, with a blank note in it', async () => {
+  /** Emil, 2026-09-14: *"it should be possible to have no note open (there should not
+   *  always open a new one)."* So the last pane stays and stays empty; what fills it is
+   *  the kinds a new tab could be, as buttons. See NewHere.svelte. */
+  test('the last pane stays, and nothing is made to fill it', async () => {
     await workspace.open('/space/a.md')
     const only = workspace.active
     if (!only) throw new Error('nothing opened')
@@ -815,8 +818,8 @@ describe('closing what is in a pane', () => {
     workspace.close(only.id)
 
     expect(workspace.panes.count).toBe(1)
-    expect(workspace.tabs).toHaveLength(1)
-    expect(workspace.active.path).toBeNull()
+    expect(workspace.tabs).toEqual([])
+    expect(workspace.active).toBeNull()
   })
 
   test('closing a pane closes everything in it', async () => {
@@ -845,6 +848,63 @@ describe('closing what is in a pane', () => {
       '/space/a.md',
       '/space/b.md',
     ])
+  })
+})
+
+/** Nothing open is a state the window is allowed to be in.
+ *
+ *  Emil, 2026-09-14: *"it should be possible to have no note open (there should not
+ *  always open a new one). Cause then there should just be options between the
+ *  different note types which would then create the corresponding note if clicked."*
+ *  Four places used to make a blank note rather than leave the window empty; the
+ *  buttons a pane shows instead are NewHere.svelte, and what they make is the one list
+ *  the plus and Ctrl+T read. */
+describe('a window with nothing open', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  /** An arrangement remembers paths, and a note can be gone by the time it is read
+   *  back. What used to happen then was a blank note nobody asked for. */
+  test('is what an arrangement whose notes have all gone leaves behind', async () => {
+    await workspace.applyLayout({
+      frame: {
+        kind: 'pane',
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: [
+            {
+              kind: 'note',
+              path: '/space/gone.md',
+              name: 'gone.md',
+              doc: '',
+              dirty: false,
+              cursor: 0,
+              scroll: 0,
+            },
+          ],
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    })
+
+    expect(workspace.tabs).toEqual([])
+    expect(workspace.active).toBeNull()
+  })
+
+  test('and closing the notes one by one never makes a new one', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+
+    for (const tab of [...workspace.tabs]) workspace.close(tab.id)
+
+    expect(workspace.tabs).toEqual([])
+    expect(workspace.panes.count).toBe(1)
   })
 })
 

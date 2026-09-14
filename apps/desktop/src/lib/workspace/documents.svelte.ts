@@ -152,10 +152,12 @@ export class NoteDoc {
    *  saying which part of it the paste became. */
   pasted = $state(false)
 
-  /** Whether nobody has given this note a name: no file, and the placeholder
-   *  `openBlank` hands out. Such a note is called after its own first words. */
+  /** Whether nobody has given this document a name: no file, and the placeholder the
+   *  openers hand out. A note like that is called after its own first words; a plane or
+   *  a deck of pages is called Untitled, because what is in one of those is not words
+   *  to read a title off. */
   private get unnamed(): boolean {
-    return this.kind === 'note' && this.path === null && this.name === UNTITLED
+    return this.path === null && this.name === UNTITLED
   }
 
   /** The words at the top of an unnamed note: its first heading, else its first
@@ -172,7 +174,9 @@ export class NoteDoc {
    *  or, for a note nobody has named, the words at the top of it, so three drafts
    *  open at once read as three notes rather than three Untitleds. */
   readonly shown = $derived(
-    this.unnamed ? (this.firstWords ?? t('Untitled')) : shownName(this.name),
+    this.unnamed
+      ? ((this.kind === 'note' ? this.firstWords : null) ?? t('Untitled'))
+      : shownName(this.name),
   )
 
   /** Whether this note keeps itself, which is to say something other than

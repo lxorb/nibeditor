@@ -543,7 +543,9 @@ class Workspace {
         if (first) await this.openEntry(first.path)
       }
 
-      if (!this.tabs.length) this.openBlank()
+      // Nothing to open, and nothing is made up: a pane with no tab shows the kinds
+      // a new one could be, which is a choice rather than a note nobody asked for.
+      // See NewHere.svelte.
       return
     }
 
@@ -589,7 +591,6 @@ class Workspace {
     // A phone and a tablet show one document at a time, so a session written on
     // a desktop arrives as the one that had the focus; see `oneDocument`.
     this.oneDocument()
-    if (!this.tabs.length) this.openBlank()
   }
 
   /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made
@@ -738,8 +739,7 @@ class Workspace {
       (this.tabs.includes(inFront) ? inFront : this.tabs.find((one) => one.note === inFront.note))
 
     if (still) this.activeTabId = still.id
-    else if (!this.tabs.length) this.openBlank()
-    else if (!this.active) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
+    else if (this.tabs.length) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
 
     // A phone and a tablet show one document at a time.
     this.oneDocument()
@@ -2098,10 +2098,12 @@ class Workspace {
 
     const left = this.tabsIn(paneId)
 
-    // The last tab of a pane takes the pane with it, and the pane beside it
-    // takes the room. The last pane of all stays, with a blank note in it.
+    // The last tab of a pane takes the pane with it, and the pane beside it takes the
+    // room. The last pane of all stays, and stays empty: what it shows is the kinds a
+    // new tab could be, which is what Emil asked for - "it should be possible to have
+    // no note open (there should not always open a new one)". See NewHere.svelte.
     if (!left.length) {
-      if (!this.panes.close(paneId)) this.openBlank()
+      this.panes.close(paneId)
       this.persist()
       return
     }

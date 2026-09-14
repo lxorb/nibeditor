@@ -267,6 +267,8 @@ stops nothing, and the app still gets the key.
 
 | | |
 | --- | --- |
+| Ctrl+N | a new note |
+| Ctrl+T | **what kind**: the chooser the plus hangs - a note, a canvas, a website, a page note - under the plus of the pane that has the keyboard, on its first row, so Ctrl+T then Enter is still a new note |
 | Ctrl+Tab, Ctrl+Shift+Tab | round the strip (already there) |
 | Ctrl+Alt+1 to 9 | the note at that place (already there) |
 | Ctrl+W | close (already there) |
@@ -276,6 +278,24 @@ stops nothing, and the app still gets the key.
 
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.
+
+**Ctrl+T presses the plus**, rather than holding a copy of its list: the key finds the
+plus of the pane that has the keyboard - it is named after that pane - and clicks it at
+its own corner, so the chooser arrives where a pointer would have put it. Which kinds
+are offered is written once, in `new-kinds.ts`, and read by the plus, by this key and by
+the buttons a pane with nothing open shows. Where there is no plus - a phone, a tablet,
+the app in full screen - the chooser opens in the middle of the window, which on a touch
+screen is the sheet every menu there is.
+
+The chooser is the app's one menu, so it is walked like every other: the arrows move,
+letters spell a row's name, Enter and Space choose, Escape closes, and the keyboard
+lands on the first row when it opens.
+
+**A pane with nothing open is a state the window is allowed to be in.** Closing the
+last note used to make a blank one; now the pane shows those same kinds as buttons and
+makes nothing until one is pressed. The keyboard lands on the first button, the arrows
+walk them, and Ctrl+T there only puts the keyboard back on them rather than hanging a
+second copy of the list over them. See `NewHere.svelte`.
 
 **A web tab**
 

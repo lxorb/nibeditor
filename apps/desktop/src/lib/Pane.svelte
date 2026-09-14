@@ -48,6 +48,7 @@
   import { settings } from './settings.svelte'
   import {
     canvasSurface,
+    emptySurface,
     findBar,
     graphSurface,
     pagesSurface,
@@ -391,6 +392,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
   class="pane"
+  data-pane={pane.id}
   onpointerdowncapture={() => workspace.focusPane(pane.id)}
   ondragover={over}
   ondragleave={(event) => {
@@ -593,6 +595,13 @@
         }}
       />
     </div>
+  {:else}
+    <!-- Nothing open. The kinds a new tab can be, as buttons, rather than a note nobody
+         asked for; see NewHere.svelte. Fetched like every other surface here: a window
+         that opens on a note never asks for it. -->
+    {#await emptySurface() then NewHere}
+      <NewHere paneId={pane.id} />
+    {/await}
   {/if}
 
   <!-- Five places a drop can land: the pane itself, and each of its four sides,
