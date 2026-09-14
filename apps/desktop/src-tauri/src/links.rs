@@ -192,9 +192,10 @@ fn note_at(relative: String, body: &str) -> Note {
 
     let read = prose(body);
 
-    // Where the note's metadata sits, found once for the four keys read out of it: a
-    // note that opens with a fence nothing closes is a note whose whole body the
-    // search for that block reads, and four keys were four of those.
+    // Where the note's metadata sits, found once for every key read out of it - the
+    // icon, its colour, the aliases, `url:` and `cover:`: a note that opens with a
+    // fence nothing closes is a note whose whole body the search for that block
+    // reads, and a key each would have been one of those each.
     let block = front_matter::block(body);
     let said = |key: &str| {
         block
@@ -924,6 +925,31 @@ mod tests {
         );
 
         assert_eq!(read.url.as_deref(), Some("https://svelte.dev/docs"));
+    }
+
+    /// The picture across the top of a note, read on the same pass as the icon: the
+    /// row's own menu has to know whether there is a cover to change or to take away,
+    /// and asking the disk per row would be a read per row. The twin of `scanNote` in
+    /// the app; see cover.ts in @nib/markdown for what the key means.
+    #[test]
+    fn a_note_says_which_picture_is_across_the_top_of_it() {
+        let read = note_at(
+            "Trips/Iceland.md".to_string(),
+            "---\ncover: assets/wide.jpg\ncover-position: 20\n---\n\n# Iceland\n",
+        );
+
+        assert_eq!(read.cover.as_deref(), Some("assets/wide.jpg"));
+        // Where the band is taken from is nobody's business here: no list asks it, and
+        // the surface that draws the banner reads it out of the note itself.
+        assert!(read.icon.is_none());
+    }
+
+    /// And a note that names none says so, which is almost every note.
+    #[test]
+    fn and_a_note_with_no_cover_carries_none() {
+        let read = note_at("Trips/Plan.md".to_string(), "# Plan\n\nWords.\n");
+
+        assert!(read.cover.is_none());
     }
 
     /// A website carries the site's own mark for the file list, out of its `Nib-Icon`
