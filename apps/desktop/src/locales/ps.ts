@@ -755,6 +755,7 @@ export const ps: Dictionary = {
   Footnote: 'پښليک',
   Footnotes: 'پښليکونه',
   'Table of contents': 'د منځپانګې لړ',
+  'High contrast': 'لوړ تضاد',
   'Front matter': 'سرمنځپانګه',
   'Front matter: {name}': 'سرلیک معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -757,6 +757,7 @@ export const tr: Dictionary = {
   Footnote: 'Dipnot',
   Footnotes: 'Dipnotlar',
   'Table of contents': 'İçindekiler',
+  'High contrast': 'Yüksek karşıtlık',
   'Front matter': 'Ön bilgi',
   'Front matter: {name}': 'Ön bilgi: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

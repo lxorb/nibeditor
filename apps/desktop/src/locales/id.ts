@@ -754,6 +754,7 @@ export const id: Dictionary = {
   Footnote: 'Catatan kaki',
   Footnotes: 'Catatan kaki',
   'Table of contents': 'Daftar isi',
+  'High contrast': 'Kontras tinggi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

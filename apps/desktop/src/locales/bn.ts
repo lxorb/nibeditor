@@ -756,6 +756,7 @@ export const bn: Dictionary = {
   Footnote: 'ফুটনোট',
   Footnotes: 'ফুটনোট',
   'Table of contents': 'সূচিপত্র',
+  'High contrast': 'উচ্চ বৈসাদৃশ্য',
   'Front matter': 'ফ্রন্ট ম্যাটার',
   'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

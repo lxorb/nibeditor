@@ -749,6 +749,7 @@ export const my: Dictionary = {
   Footnote: 'အောက်ခြေမှတ်စု',
   Footnotes: 'အောက်ခြေမှတ်စုများ',
   'Table of contents': 'မာတိကာ',
+  'High contrast': 'အရောင်ကွာဟမှု မြင့်',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ခေါင်းစီးအချက်အလက်: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -1,19 +1,19 @@
-"""Contrast, measured: the theme, on both of its sides.
+"""Contrast, measured: the high contrast theme the app ships with, on both of its sides.
 
-Contrast was a switch beside the mode, and what it did was restate the palette
-over whichever theme was in force. It is a theme now, `contrast` in the store, so
-what is measured here is a theme: every colour that has to be read, against the
-page it is read on, in the dark and in the light, plus the syntax inside a code
-fence - which no theme could reach at all until the four `--syntax-*` tokens
-existed, and which is the reason the switch existed in the first place.
+Contrast was a switch beside the mode, and what it did was restate the palette over
+whichever theme was in force. It is a theme now - one of the two the app ships with,
+`High contrast` in the Style row and `contrast` in the palette - so what is measured
+here is a theme: every colour that has to be read, against the page it is read on, in
+the dark and in the light, plus the syntax inside a code fence, which no theme could
+reach at all until the four `--syntax-*` tokens existed and which is the reason the
+switch existed in the first place.
 
-The drive carries the theme's stylesheet below instead of installing it. A browser
-build has a themes folder only in name, the catalogue lives behind nibeditor.com,
-and a drive that fetched it would be measuring whatever the network answered that
-day. So THEME is the palette published as `contrast` in lxorb/nib-themes, applied
-where `store.install` leaves it: the stylesheet in the head under the app's own
-id, and the reader's accent taken back off the root, which is exactly what
-`paintAccent` does for a theme that brings an accent of its own.
+The theme is chosen through the app itself, `theme.select('contrast')`, because it is
+built in: nothing is fetched, nothing is installed, and a first launch with no network
+at all is answered with it. The same palette is published as `contrast` in
+lxorb/nib-themes for a reader who wants to update it separately, and installing that
+copy still works; what this drive measures is the copy that is always there. See
+contrast.css in @nib/themes.
 
 Serves the built web app and drives it in the machine's own Chrome. The build has
 to be a development one or `window.nib` and `window.nibApp` are not there.
@@ -75,105 +75,6 @@ async ([note]) => {
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
   return ws.notes.map((one) => one.path)
-}
-"""
-
-# The contrast theme as the registry publishes it: both schemes, the four syntax
-# colours included. Kept here in full rather than fetched, so what this run
-# measures is the palette and not the day's network. See the module docstring.
-THEME = """
-[data-theme='light'] {
-  color-scheme: light;
-
-  --bg: #ffffff;
-  --surface: #f2f4f7;
-  --surface-2: #e6eaf0;
-  --surface-3: #d7dde6;
-  --press: #c6cede;
-
-  --line: #7c8593;
-  --line-strong: #5c6472;
-
-  --muted: #4a515c;
-  --muted-strong: #2b3038;
-  --text: #000000;
-  --text-strong: #000000;
-
-  --accent: #3a25c9;
-  --accent-hover: #2e1cae;
-  --accent-press: #24148f;
-  --accent-soft: rgb(58 37 201 / 0.14);
-  --accent-line: rgb(58 37 201 / 0.6);
-  --selection: rgb(58 37 201 / 0.24);
-
-  --danger: #b3121b;
-  /* 7.75:1 on the white above. It was #0a7a4e, which cleared the registry's own
-     4.5 bar and was still under the 5.73:1 the app's built-in light theme has for
-     the same token: More contrast made one colour worse, which is what the
-     comparison below catches. Published as contrast 2.0.1. */
-  --success: #065f3c;
-
-  --syntax-number: #8a4b00;
-  --syntax-function: #0b4fbe;
-  --syntax-type: #0a7a4e;
-  --syntax-property: #6a1fb0;
-
-  --scrollbar: #9aa3b2;
-  --scrollbar-hover: #6b7480;
-}
-
-[data-theme='dark'] {
-  color-scheme: dark;
-
-  --bg: #000000;
-  --surface: #101318;
-  --surface-2: #191d24;
-  --surface-3: #232830;
-  --press: #2d333d;
-
-  --line: #5d6673;
-  --line-strong: #7e8898;
-
-  --muted: #b9c0cb;
-  --muted-strong: #d8dee6;
-  --text: #ffffff;
-  --text-strong: #ffffff;
-
-  --accent: #9d90ff;
-  --accent-hover: #b3a8ff;
-  --accent-press: #8b7bff;
-  --accent-soft: rgb(157 144 255 / 0.22);
-  --accent-line: rgb(157 144 255 / 0.7);
-  --selection: rgb(157 144 255 / 0.4);
-
-  --danger: #ff6b70;
-  --success: #4ee39f;
-
-  --syntax-number: #ffc861;
-  --syntax-function: #79b8ff;
-  --syntax-type: #5ef2b0;
-  --syntax-property: #d0a6ff;
-
-  --scrollbar: #5b6470;
-  --scrollbar-hover: #7d8794;
-}
-"""
-
-# What installing this theme leaves behind, and nothing else.
-APPLY = """
-(css) => {
-  const style = document.createElement('style')
-  // The id the app puts a theme file's stylesheet in, so this sits exactly where
-  // an installed theme sits in the cascade.
-  style.id = 'nib-user-theme'
-  style.textContent = css
-  document.head.append(style)
-
-  // A theme that states an accent keeps it: the app lifts its own accent tokens
-  // off the root rather than painting over the picture the card showed. See
-  // paintAccent in theme.svelte.ts.
-  const own = ['--accent', '--accent-hover', '--accent-soft', '--accent-line', '--selection']
-  for (const token of own) document.documentElement.style.removeProperty(token)
 }
 """
 
@@ -397,11 +298,13 @@ def ratios(page: Page) -> dict:
 
 
 def wear_the_theme(page: Page) -> None:
-    """Installs the contrast theme, as far as a browser can. Called after the
-    scheme is settled: the app takes its own theme stylesheet off the page every
-    time it applies a theme, and this one is standing in for that stylesheet."""
-    page.evaluate(APPLY, THEME)
+    """Chooses the built-in high contrast theme, which is all it takes: the palette
+    ships with the app, so nothing is fetched and nothing is installed."""
+    page.evaluate("() => window.nibApp.theme.select('contrast')")
     page.wait_for_timeout(400)
+
+    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+        wrong("the built-in contrast theme could not be chosen")
 
 
 def scheme(page: Page, which: str) -> None:
@@ -479,36 +382,44 @@ def drive_settings(browser: Browser) -> None:
 
     if not rows:
         wrong("the appearance pane is empty, so what it offers cannot be read")
-    if any("contrast" in row.lower() for row in rows):
-        wrong("the appearance pane still offers a contrast row")
+    # Still not a third row: contrast is one of the answers to "which theme", which is
+    # the first of the two questions rather than a question of its own.
     if page.locator("[role='switch']", has_text="More contrast").count():
-        wrong("the More contrast switch is still there")
+        wrong("the More contrast switch is back")
+
+    offered = page.evaluate("() => window.nibApp.theme.all.map((one) => one.id)")
+    say(f"[settings] the Style row offers {json.dumps(offered)}")
+    if offered[:2] != ["default", "contrast"]:
+        wrong(f"the two the app ships with are not the first two offered: {offered}")
 
     page.context.close()
 
 
 def drive_offered(browser: Browser) -> None:
-    """A system that asks for more contrast is shown the theme that answers it,
-    once, on the card it would be installed from. Nothing is installed for the
-    reader and nothing is asked twice."""
+    """A first launch on a system that asks for more contrast is answered with the
+    theme that answers it: chosen, with nothing fetched, and shown where it was chosen
+    from so putting it back is one press. Once, and never asked again."""
     page = launched(browser, "offered", forced=True)
     page.wait_for_timeout(800)
 
     if not page.evaluate("() => window.nibApp.theme.offerContrast"):
-        wrong("a system asking for more contrast was not offered the theme")
-    if not page.evaluate("() => window.nibApp.themeStore.open"):
-        wrong("the theme store did not open on the offer")
-    if page.evaluate("() => window.nibApp.themeStore.opened") != "contrast":
-        wrong("the store opened on something other than the contrast theme")
+        wrong("a system asking for more contrast was not answered")
+    # The theme itself, not a card to fetch one from: it ships with the app.
+    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+        wrong("the launch did not choose the high contrast theme")
+    if page.evaluate("() => localStorage.getItem('nib:theme')") != "contrast":
+        wrong("the choice was not written down, so the next launch would forget it")
     if page.evaluate("() => window.nibApp.settings.section") != "appearance":
-        wrong("the offer did not arrive through Appearance, where the store lives")
+        wrong("Appearance did not open on the row the theme was chosen from")
     if page.evaluate("() => localStorage.getItem('nib:contrast-offered')") != "yes":
-        wrong("the offer was not written down, so it would be made again")
-    # Offered, not applied: the theme in force is whatever it was.
-    if page.evaluate("() => window.nibApp.theme.id") != "default":
-        wrong("the offer chose a theme instead of offering one")
-    say(f"[offered] the card is {page.evaluate('() => !!window.nibApp.themeStore.chosen')}")
-    shot(page, "30-offered")
+        wrong("the answer was not written down, so it would be given again")
+    # And the palette is really on the page, offline, on the first frame there was one.
+    said = ratios(page)
+    say(f"[offered] {json.dumps(said)}")
+    for token, floor in FLOORS.items():
+        if said.get(token, 0) < floor:
+            wrong(f"[offered] {token} is {said.get(token)}:1 against the page, under {floor}:1")
+    shot(page, "30-answered")
 
     # The same machine, launched again. Still asking for more contrast, and this
     # time it is not asked back.
@@ -517,9 +428,9 @@ def drive_offered(browser: Browser) -> None:
     page.wait_for_timeout(800)
 
     if page.evaluate("() => window.nibApp.theme.offerContrast"):
-        wrong("the offer was made a second time")
-    if page.evaluate("() => window.nibApp.themeStore.open"):
-        wrong("the theme store opened a second time")
+        wrong("the answer was given a second time")
+    if page.evaluate("() => window.nibApp.theme.id") != "contrast":
+        wrong("the theme chosen by the first launch did not survive the second")
     shot(page, "31-not-asked-again")
 
     page.context.close()

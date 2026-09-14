@@ -766,6 +766,7 @@ export const fil: Dictionary = {
   Footnote: 'Talababa',
   Footnotes: 'Mga talababa',
   'Table of contents': 'Talaan ng nilalaman',
+  'High contrast': 'Mataas na kontrast',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

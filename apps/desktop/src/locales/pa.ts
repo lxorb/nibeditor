@@ -761,6 +761,7 @@ export const pa: Dictionary = {
   Footnote: 'ਪਦ-ਟਿੱਪਣੀ',
   Footnotes: 'ਪਦ-ਟਿੱਪਣੀਆਂ',
   'Table of contents': 'ਤਤਕਰਾ',
+  'High contrast': 'ਉੱਚ ਕੰਟਰਾਸਟ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ਮੁੱਖ ਜਾਣਕਾਰੀ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

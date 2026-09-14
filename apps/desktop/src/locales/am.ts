@@ -749,6 +749,7 @@ export const am: Dictionary = {
   Footnote: 'የግርጌ ማስታወሻ',
   Footnotes: 'የግርጌ ማስታወሻዎች',
   'Table of contents': 'ማውጫ',
+  'High contrast': 'ከፍተኛ ንፅፅር',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ራስጌ መረጃ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

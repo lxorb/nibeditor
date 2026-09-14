@@ -333,15 +333,21 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Custom fonts (via a theme)
 - [x] Custom CSS injection separate from themes
 - [x] Code block themes
-- [x] More contrast, as a theme. Asking for more contrast asks for a different
-      look, so it is the `contrast` theme in the store rather than a switch beside
-      the mode: one palette per look, measured against the page it is read on,
-      with text at 21:1 in both schemes, the muted words and the hairlines far
-      enough up to be read and seen, and an accent of its own. It is installed,
-      updated and taken off like any other theme. A theme states the four
-      `--syntax-*` tokens as well, so the syntax in a fence is a theme's to answer
-      too. A system asking for more contrast is shown that theme once, on a fresh
-      install, and never asked again
+- [x] A high contrast mode, which is a theme the app ships with. Asking for more
+      contrast asks for a different look, so it is a whole palette rather than a
+      switch beside the mode: `High contrast` in the Style row and `Theme: High
+      contrast` in the palette, one of the two themes that are always there, with no
+      file to fetch and nothing to install. Measured against the page it is read on -
+      text at 21:1 in both schemes, the muted words at 8 and 11.5, the hairlines at
+      3.6 and up, an accent of its own at 7.9 and 9.2 - and measured by a drive that
+      reads the ratios back off the real page rather than by a claim in a file; see
+      apps/desktop/test/e2e/contrast.py. It states the four `--syntax-*` tokens too,
+      so the syntax inside a fence is a theme's to answer as well. The same palette
+      is published as `contrast` in the theme store for anybody who wants to update it
+      separately, and installing that copy still works. A fresh install whose system
+      asks for more contrast is answered with the theme itself, chosen there and then
+      and shown in Appearance so putting it back is one press - once, and never asked
+      again; a reader who has already chosen a theme is not overruled by their system
 
 ## 14. Export
 

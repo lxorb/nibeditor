@@ -41,6 +41,8 @@ const media = {
 /** What the page says it is wearing. Held here rather than reached for through
  *  the stubbed document, so a test can read it the way it reads the storage. */
 let dataset: Record<string, string> = {}
+/** The last `<style>` the app made, so a test can read what it put on the page. */
+let style: { id: string; textContent: string; remove: () => void } | null = null
 
 /** The system changes its mind, which is what following it has to notice. */
 function systemPrefers(light: boolean) {
@@ -54,6 +56,7 @@ function stubs() {
   media.contrast = false
   media.listeners = []
   dataset = {}
+  style = null
 
   vi.stubGlobal('localStorage', kept)
   vi.stubGlobal('window', {
@@ -75,9 +78,18 @@ function stubs() {
     },
     querySelector: () => null,
     getElementById: () => null,
-    createElement: () => ({ id: '', textContent: '', remove: () => undefined }),
+    createElement: () => {
+      style = { id: '', textContent: '', remove: () => undefined }
+      return style
+    },
     head: { append: () => undefined, insertBefore: () => undefined },
   })
+}
+
+/** The stylesheet the app put on the page, which is how a built-in theme that brings
+ *  its own palette is told from one that has a file to read. */
+function injected(): string {
+  return style?.textContent ?? ''
 }
 
 stubs()
@@ -145,13 +157,19 @@ beforeEach(() => {
 })
 
 describe('what the dropdown offers', () => {
-  test('is one built-in theme named Default, and then what is installed', async () => {
+  test('is the two the app ships with, and then what is installed', async () => {
     installed('rose', 'Rose', PAIR)
     installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
     await theme.reload()
 
-    expect(theme.all.map((one) => one.id)).toEqual(['default', 'file:rose', 'file:warm-paper'])
+    expect(theme.all.map((one) => one.id)).toEqual([
+      'default',
+      'contrast',
+      'file:rose',
+      'file:warm-paper',
+    ])
     expect(theme.all[0]?.name).toBe('Default')
+    expect(theme.all[1]?.name).toBe('High contrast')
   })
 
   test('and never a Dark or a Light, which were the scheme wearing a theme name', async () => {
@@ -159,7 +177,30 @@ describe('what the dropdown offers', () => {
 
     expect(theme.all.map((one) => one.id)).not.toContain('dark')
     expect(theme.all.map((one) => one.id)).not.toContain('light')
-    expect(theme.all).toHaveLength(1)
+    expect(theme.all).toHaveLength(2)
+  })
+
+  /** High contrast is a mode in every sense that matters and a theme in the way it is
+   *  built, which is what keeps it out of every other theme's way. It carries its own
+   *  stylesheet, so a first launch with no network can still be answered with it. */
+  test('the built-in contrast theme brings its own palette rather than a file', () => {
+    const found = theme.all.find((one) => one.id === 'contrast')
+
+    expect(found?.path).toBeUndefined()
+    expect(found?.css).toContain("[data-theme='light']")
+    expect(found?.css).toContain("[data-theme='dark']")
+    expect(found?.variants).toEqual(['dark', 'light'])
+    // Its own accent, so the reader's colour is not painted over the palette the row
+    // showed; see `paintAccent`.
+    expect(found?.ownAccent).toBe(true)
+  })
+
+  test('and choosing it puts its palette on the page with nothing to fetch', () => {
+    theme.select('contrast')
+
+    expect(theme.id).toBe('contrast')
+    expect(injected()).toContain('--text: #ffffff')
+    expect(theme.accentIsTheme).toBe(true)
   })
 
   test('the built-in carries both schemes, so it is one theme and not two', () => {
@@ -376,7 +417,7 @@ describe('a folder that will not answer', () => {
     await theme.reload()
 
     expect(theme.files.map((one) => one.name)).toEqual(['Rose', 'Warm Paper'])
-    expect(theme.all).toHaveLength(3)
+    expect(theme.all).toHaveLength(4)
   })
 
   test('does not write the chosen theme away as though it had been deleted', async () => {
@@ -426,7 +467,7 @@ describe('an installed theme across a restart', () => {
     theme.init()
     await theme.reload()
 
-    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'Rose'])
+    expect(theme.all.map((one) => one.name)).toEqual(['Default', 'High contrast', 'Rose'])
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
@@ -434,11 +475,11 @@ describe('an installed theme across a restart', () => {
 })
 
 /** Contrast was a switch beside the mode, with a palette of its own painted over
- *  whichever theme was in force. It is a theme now, which leaves the launch one
- *  thing to do about it: a reader whose system asks for more contrast is shown the
- *  theme that answers the ask, once. Nothing here installs or selects anything -
- *  a theme is a file that has to be fetched, and a launch cannot promise that. */
-describe('the offer of the contrast theme', () => {
+ *  whichever theme was in force. It is a theme the app ships with now, which leaves
+ *  the launch one thing to do about it: a reader whose system asks for more contrast is
+ *  answered with it, once, and shown where it was chosen so putting it back is one
+ *  press. Nothing is fetched, because the launch that needs it most is a first one. */
+describe('answering a system that asks for more contrast', () => {
   test('is made to a fresh install whose system asks for more contrast', () => {
     media.contrast = true
     theme.init()
@@ -487,7 +528,19 @@ describe('the offer of the contrast theme', () => {
     expect(kept.getItem('nib:contrast-offered')).toBe('yes')
   })
 
-  test('without choosing anything, so a reader who walks past it keeps their theme', async () => {
+  test('with the theme itself, chosen and written down', () => {
+    media.contrast = true
+    theme.init()
+
+    expect(theme.id).toBe('contrast')
+    expect(kept.getItem('nib:theme')).toBe('contrast')
+    expect(injected()).toContain('--text: #ffffff')
+  })
+
+  test('and never over a theme the reader had already chosen for themselves', async () => {
+    // A reader who has a theme has answered the question about how their screen looks.
+    // The offer is for a fresh install, and a launch that repainted somebody's chosen
+    // look because their system asks for contrast would be the app overruling them.
     installed('rose', 'Rose', PAIR)
     await theme.reload()
     theme.select('file:rose')
@@ -495,7 +548,7 @@ describe('the offer of the contrast theme', () => {
 
     theme.init()
 
-    expect(theme.offerContrast).toBe(true)
+    expect(theme.offerContrast).toBe(false)
     expect(theme.id).toBe('file:rose')
   })
 

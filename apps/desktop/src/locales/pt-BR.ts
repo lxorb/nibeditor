@@ -768,6 +768,7 @@ export const ptBR: Dictionary = {
   Footnote: 'Nota de rodapé',
   Footnotes: 'Notas de rodapé',
   'Table of contents': 'Sumário',
+  'High contrast': 'Alto contraste',
   'Front matter': 'Cabeçalho YAML',
   'Front matter: {name}': 'Metadados: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

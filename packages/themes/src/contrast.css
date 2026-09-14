@@ -1,0 +1,99 @@
+/* High contrast: the second theme the app ships with, and the one it reaches for
+   when the system asks for more contrast.
+
+   A theme and not a switch. Contrast was a switch beside the mode once, with a
+   palette painted over whichever theme was in force, and painting a third of
+   somebody's theme is how a theme stops being the thing they chose. So this is a
+   whole palette of its own, on both sides, stated in exactly the tokens any other
+   theme states - which is also why it can sit in the theme registry as `contrast`
+   and be installed there by a reader who wants to update it separately.
+
+   Built in rather than fetched, because the one launch that needs it most is a
+   first launch: a reader whose system asks for more contrast should not have to be
+   online to be answered. The registry copy still works and still updates; this is
+   the copy that is always there.
+
+   Every colour here clears a floor the built-in theme does not have to: the text
+   and its strong form at 15:1 against the page, the muted greys at 7 and 9, the
+   accent at 5.5, the rules at 3 and 4.5, and the two state colours at 4.5. Which is
+   measured rather than claimed - see apps/desktop/test/e2e/contrast.py, which reads
+   the ratios back off the real page and fails on any that slipped.
+
+   Published as contrast 2.0.1 in lxorb/nib-themes, and byte for byte the palette
+   that drive already measured. */
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --surface: #f2f4f7;
+  --surface-2: #e6eaf0;
+  --surface-3: #d7dde6;
+  --press: #c6cede;
+
+  --line: #7c8593;
+  --line-strong: #5c6472;
+
+  --muted: #4a515c;
+  --muted-strong: #2b3038;
+  --text: #000000;
+  --text-strong: #000000;
+
+  --accent: #3a25c9;
+  --accent-hover: #2e1cae;
+  --accent-press: #24148f;
+  --accent-soft: rgb(58 37 201 / 0.14);
+  --accent-line: rgb(58 37 201 / 0.6);
+  --selection: rgb(58 37 201 / 0.24);
+
+  --danger: #b3121b;
+  /* 7.75:1 on the white above. It was #0a7a4e, which cleared the registry's own
+     4.5 bar and was still under the 5.73:1 the app's built-in light theme has for
+     the same token: More contrast made one colour worse, which is what the drive's
+     comparison catches. */
+  --success: #065f3c;
+
+  --syntax-number: #8a4b00;
+  --syntax-function: #0b4fbe;
+  --syntax-type: #0a7a4e;
+  --syntax-property: #6a1fb0;
+
+  --scrollbar: #9aa3b2;
+  --scrollbar-hover: #6b7480;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #000000;
+  --surface: #101318;
+  --surface-2: #191d24;
+  --surface-3: #232830;
+  --press: #2d333d;
+
+  --line: #5d6673;
+  --line-strong: #7e8898;
+
+  --muted: #b9c0cb;
+  --muted-strong: #d8dee6;
+  --text: #ffffff;
+  --text-strong: #ffffff;
+
+  --accent: #9d90ff;
+  --accent-hover: #b3a8ff;
+  --accent-press: #8b7bff;
+  --accent-soft: rgb(157 144 255 / 0.22);
+  --accent-line: rgb(157 144 255 / 0.7);
+  --selection: rgb(157 144 255 / 0.4);
+
+  --danger: #ff6b70;
+  --success: #4ee39f;
+
+  --syntax-number: #ffc861;
+  --syntax-function: #79b8ff;
+  --syntax-type: #5ef2b0;
+  --syntax-property: #d0a6ff;
+
+  --scrollbar: #5b6470;
+  --scrollbar-hover: #7d8794;
+}

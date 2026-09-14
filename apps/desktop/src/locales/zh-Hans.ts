@@ -742,6 +742,7 @@ export const zhHans: Dictionary = {
   Footnote: '脚注',
   Footnotes: '脚注',
   'Table of contents': '目录',
+  'High contrast': '高对比度',
   'Front matter': '前置元数据',
   'Front matter: {name}': '前置数据：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

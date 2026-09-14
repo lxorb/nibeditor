@@ -758,6 +758,7 @@ export const gsw: Dictionary = {
   Footnote: 'Fuessnote',
   Footnotes: 'Fuessnote',
   'Table of contents': 'Inhaltsverzeichnis',
+  'High contrast': 'Hohe Kontrascht',
   'Front matter': 'Chopfdate',
   'Front matter: {name}': 'Chopfdate: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

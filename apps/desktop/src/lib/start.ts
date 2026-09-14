@@ -22,9 +22,8 @@ import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { mark } from './trace'
-import { CONTRAST_THEME, theme } from './theme.svelte'
+import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
-import { store as themeStore } from './themes/store.svelte'
 import { toolbar } from './toolbar.svelte'
 import { trash } from './trash.svelte'
 import { installStaged, ready } from './updater'
@@ -66,20 +65,15 @@ export function start(): () => void {
 
   mark('stores restored')
 
-  // A system that asks for more contrast is shown the theme that answers it, on
-  // the card it would be installed from. Contrast is a theme, and a theme is a
-  // file that has to be fetched and written, so the most a launch can honestly do
-  // is put it in front of the reader; whether they take it is theirs. Asked once
-  // and never again - see offerTheContrastTheme in theme.svelte.ts.
+  // A system that asks for more contrast is answered with the theme that answers it,
+  // which the app ships with: chosen by the launch itself, with nothing to fetch. See
+  // offerTheContrastTheme in theme.svelte.ts, which does the choosing and writes down
+  // that it happened, once and never again.
   //
-  // Through Appearance, because that is where the store lives: it sits over the
-  // settings sheet and closes with it, so opening one means opening both. Which
-  // is also where somebody would have gone looking.
-  if (theme.offerContrast) {
-    settings.show('appearance')
-    themeStore.show()
-    themeStore.opened = CONTRAST_THEME
-  }
+  // Appearance opens on the row it was chosen from, so nothing has silently changed
+  // and putting it back is one press. Which is also where somebody would have gone
+  // looking for it.
+  if (theme.offerContrast) settings.show('appearance')
 
   // The blocks the editor's `/` menu offers, which are the app's rows rather
   // than a list the editor keeps: handed over as a function so the words follow

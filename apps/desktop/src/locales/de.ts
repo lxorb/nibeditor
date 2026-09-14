@@ -766,6 +766,7 @@ export const de: Dictionary = {
   Footnote: 'Fußnote',
   Footnotes: 'Fußnoten',
   'Table of contents': 'Inhaltsverzeichnis',
+  'High contrast': 'Hoher Kontrast',
   'Front matter': 'Kopfdaten',
   'Front matter: {name}': 'Kopfdaten: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -753,6 +753,7 @@ export const jv: Dictionary = {
   Footnote: 'Cathetan sikil',
   Footnotes: 'Cathetan sikil',
   'Table of contents': 'Daftar isi',
+  'High contrast': 'Kontras dhuwur',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

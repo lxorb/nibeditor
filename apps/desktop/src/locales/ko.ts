@@ -748,6 +748,7 @@ export const ko: Dictionary = {
   Footnote: '각주',
   Footnotes: '각주',
   'Table of contents': '목차',
+  'High contrast': '고대비',
   'Front matter': '프런트 매터',
   'Front matter: {name}': '프런트 매터: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -753,6 +753,7 @@ export const ja: Dictionary = {
   Footnote: '脚注',
   Footnotes: '脚注',
   'Table of contents': '目次',
+  'High contrast': 'ハイコントラスト',
   'Front matter': 'フロントマター',
   'Front matter: {name}': 'フロントマター: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

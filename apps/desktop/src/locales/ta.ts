@@ -765,6 +765,7 @@ export const ta: Dictionary = {
   Footnote: 'அடிக்குறிப்பு',
   Footnotes: 'அடிக்குறிப்புகள்',
   'Table of contents': 'உள்ளடக்கம்',
+  'High contrast': 'உயர் மாறுபாடு',
   'Front matter': 'முன்தகவல்',
   'Front matter: {name}': 'முன்தகவல்: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
