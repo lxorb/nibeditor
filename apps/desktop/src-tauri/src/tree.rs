@@ -134,7 +134,24 @@ fn walk(
                     continue;
                 }
 
-                if child.is_dir() {
+                // A folder, or a link that leads to one.
+                //
+                // Off the listing rather than off the disk: `DirEntry` carries what the
+                // directory read already handed back, and `Path::is_dir` is a `stat` of
+                // its own - five thousand of them, in a space of five thousand notes,
+                // for an answer that was in hand. A link is the one case that has to be
+                // followed, because `file_type` says "symlink" and nothing about what is
+                // at the other end, and a folder somebody linked into their space is a
+                // folder in their space; see the tests below, which read one. That is
+                // one `stat` per link and no more.
+                let listing = entry.file_type().ok();
+                let directory = match listing {
+                    Some(kind) if kind.is_symlink() => child.is_dir(),
+                    Some(kind) => kind.is_dir(),
+                    None => child.is_dir(),
+                };
+
+                if directory {
                     room(left)?;
                     children.push(if in_the_space(space, &child) {
                         walk(space, &child, options, depth + 1, seen, left)?

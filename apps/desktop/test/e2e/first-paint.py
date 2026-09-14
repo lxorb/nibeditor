@@ -26,8 +26,11 @@ stores this reads. From the repository root, with the change in place:
     cd apps/desktop
     NODE_ENV=development pnpm exec vite build --mode development
 
-and then, with it out of the way (`git stash`, or a checkout of the commit before
-it), the same again into a folder of its own:
+and then the same again from the commit before it, into a folder of its own. A
+worktree rather than a stash: the stash stack belongs to the whole repository, so a
+`git stash pop` in one worktree can restore whatever another one pushed last, and two
+sets of changes swap owners with nothing said. `git worktree add <path> <sha>` gives
+the other build a checkout of its own and costs nothing but disk.
 
     NODE_ENV=development pnpm exec vite build --mode development --outDir dist-before
 
