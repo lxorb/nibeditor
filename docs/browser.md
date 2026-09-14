@@ -1508,6 +1508,14 @@ better than the estimate: 134 MB and 102 MB. And the Linux row is the unstripped
 research warned about: 1.4 GB of it, where a release has to strip the library first.
 That is packaging work in batch 7 and not an engine cost.
 
+**One thing a Mac's row does not include yet**, said here rather than found later: a
+CEF application there carries five helper bundles, and the gate makes each of them a
+copy of the flagged binary because that binary's own entry point already answers as a
+helper. Five copies of twelve megabytes is sixty megabytes a release must not pay - so
+a release carries one small helper that does nothing else, which is what the `cef`
+crate's own bundler builds and what batch 7 owns. The engine row above is the engine;
+the helper question is a binary layout, and the answer is known.
+
 **What the app itself costs on the engine it ships with**, for the control every
 flagged number is read against. The launch is the app's own trace, which counts from
 before nib's first line - so the Windows figure is mostly a runner loading a binary it
