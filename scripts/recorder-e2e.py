@@ -66,6 +66,17 @@ def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
 
+def profile_of(identifier: str) -> pathlib.Path:
+    """Where this build keeps its webview's own store.
+
+    Wiped before the run, and that is not tidiness: `WebView2` remembers what a
+    permission request was answered for an origin, so a refusal from an earlier run is a
+    refusal this run would inherit without the engine ever raising the request again.
+    Only this probe's own folder, never anybody's real profile.
+    """
+    return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
+
+
 def allow_eval(path: pathlib.Path) -> None:
     """`eval` turned on in the endpoint file, which is the only way it can be."""
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -197,6 +208,7 @@ OPENS = """
 def drive(app: pathlib.Path) -> None:
     identifier = identifier_of(app)
     endpoint = endpoint_of(identifier)
+    shutil.rmtree(profile_of(identifier), ignore_errors=True)
     allow_eval(endpoint)
 
     process = started(app)
@@ -241,6 +253,20 @@ def drive(app: pathlib.Path) -> None:
             wrong(f"opening the microphone took {opened['ms']}ms, which is a reader waiting")
 
         # ── and the recorder around it ─────────────────────────────────────
+        # A space first. `NIB_SPACES_DIR` points at an empty folder, which is a first
+        # run: there is nowhere to write a note and the Record row says so rather than
+        # recording into nothing. So the drive does what a reader does on that screen.
+        space = ran(
+            held,
+            "nib.workspace.activeSpace"
+            " ? nib.workspace.activeSpace.name"
+            " : nib.workspace.addSpace('Recordings').then(() => nib.workspace.activeSpace?.name ?? null)",
+        )
+        say(f"the space is {space!r}")
+        if not space:
+            wrong("no space could be made, so there is nowhere to record into")
+            return
+
         note = ran(held, "nib.workspace.createNote().then(() => nib.workspace.active?.path ?? null)")
         say(f"recording into {note!r}")
 
