@@ -1662,7 +1662,12 @@ more.**
    by *every* profile's extension service. So the profile boundary is not what failed;
    the only install mechanism available today ignores it. Batch 4's install has to be
    the per-profile preference tree, and until something can put an extension in one
-   profile only, this criterion cannot be answered yes by any run.
+   profile only, this criterion cannot be answered yes by any run. (Batch 2 found the
+   *other* half of this row was read too kindly: the gate's own website "was not
+   renamed" on a Mac because that page had never loaded at all, not because the
+   extension was missing from its profile. The no above stands on the first half, which
+   is a mark that *is* in the interface's title; the second half is unanswered there.
+   See section 10.)
 5. **The launch stays inside what Emil was told.** The flagged build's time to a
    window, on the same runner as the control: no more than **+250 ms on Windows** and
    no more than **+1.2 s on macOS**. **Met, and by a distance that should be read with
@@ -1996,10 +2001,25 @@ shape that will actually ship rather than in a standalone program.
   than a switch. Section 8.
 - **A webview's own title handler is never called under `tauri-runtime-cef`**, where a
   window's is. To report upstream; the gate reads titles off a window because of it.
-- **A second web tab hangs on Windows under the flag.** The first opens; the second
-  never returns from `add_child`, with CEF's *"Timeout of new browser info response for
-  frame"* before it. Upstream's, and the same runtime opens five webviews in one window
-  on a Mac.
+- **The third browser in the process hangs the main thread on Windows under the flag.**
+  Batch 1.5 read this as "a second web tab": the first tab opens, the second never
+  returns from `add_child`, with CEF's *"Timeout of new browser info response for frame"*
+  before it. Batch 2 saw it once more with **one** tab open, where the browser that
+  never came back was a *window* the gate opened - so what it counts is browsers in the
+  process rather than tabs, and the interface is the first of them. The main thread
+  answers nothing from that call on, which is why the gate now measures a web tab before
+  it opens anything else. Upstream's.
+- **A web tab never loads its page on macOS under the flag.** The browser is made, the
+  call comes back, `add_child` succeeds, the webview is where it should be - and the
+  page is never navigated to: the engine says its main frame has **no address at all**, no
+  title ever arrives, a script the app runs in it does nothing, and `localStorage` is
+  empty on a site whose own `localStorage` a moment earlier was written. Batch 2's rows
+  are what found it, and batch 1.5's macOS screenshots have it too - two white rectangles
+  where the panes are - so it is not new and nothing in nib caused it. It is why
+  everything batch 2 claims about a *page* is measured on Windows: on a Mac there is no
+  page to measure. Upstream's, and the first thing to ask about is the deferred initial
+  navigation the runtime holds until a `DevTools` round trip answers, which is also the
+  one mechanism that would fail silently.
 - **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
   one that supports iOS asks for a `wry` feature the branch removed. One empty
   feature repairs it and batch 1 carries the repair in
