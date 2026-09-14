@@ -178,9 +178,12 @@ Three things the Windows capture is careful about, and each of them was wrong:
   `SetForegroundWindow` and waited 700ms for it, which took the keyboard off whatever
   was being typed in. A screenshot is a question, not an interruption.
 
-`scripts/capture-e2e.py` drives it against two nibs running at once: each is asked for
-a picture, each picture is the size of its own window, the two are not the same picture,
-and the window in front is the same one before and after.
+`scripts/capture-e2e.py` drives it against two nibs running at once. The two windows are
+given different sizes and put one over the other; each app is then asked for a picture,
+and each picture comes back the size of its own window - which no picture of the other
+could be. The same rectangle copied off the screen is a different picture, which is the
+difference between photographing a window and photographing whatever is in front of it.
+And the window in front is the same one before and after.
 
 ## Security
 

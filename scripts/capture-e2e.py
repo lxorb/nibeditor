@@ -3,12 +3,12 @@
 What it proves, and each of the three was wrong before:
 
     the picture is of the window that answered, not of whichever process Windows
-      listed first - each app is asked for one, and each picture is the size of its
-      own window
-    the picture is the window and not the screen in front of it - the two windows are
-      put one over the other and the one underneath still photographs as itself
+      listed first. The two windows are given different sizes, and each picture comes
+      back the size of its own window - which no picture of the other could be
+    the picture is the window drawing itself and not a copy of the screen: the same
+      rectangle, copied off the screen, is a different picture
     nothing is raised or focused - the window in front is the same one before and
-      after, and so is the app holding the keyboard
+      after
 
 Two nibs means two identifiers: the single instance plugin hands a second copy of the
 same app over to the first, and rightly. So this wants two probe builds, each with an
@@ -107,6 +107,53 @@ def moved(hwnd: int, x: int, y: int) -> None:
     """A window put somewhere, without touching which one is in front or has focus."""
     assert user32
     user32.SetWindowPos(hwnd, None, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)
+
+
+def sized(hwnd: int, x: int, y: int, wide: int, tall: int) -> None:
+    """A window put somewhere and given a size, and still not raised or focused.
+
+    The size is what makes the two windows tell each other apart in a picture: a capture
+    of the wrong one is the wrong shape, whatever is drawn in it.
+    """
+    assert user32
+    user32.SetWindowPos(hwnd, None, x, y, wide, tall, SWP_NOZORDER | SWP_NOACTIVATE)
+
+
+def off_the_screen(hwnd: int, out: pathlib.Path) -> bool:
+    """The same rectangle copied off the screen, which is what the capture used to do.
+
+    True where it came out as something other than the window: a menu in front of it, a
+    notification over the corner, or - as on a machine with no desk in front of it at all
+    - one flat colour. Either way it is not a picture of the app, which is the whole
+    reason the capture asks the window to draw itself instead.
+    """
+    ran = subprocess.run(
+        [
+            shutil.which("powershell") or "powershell",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "Add-Type -AssemblyName System.Drawing;"
+            "Add-Type @'\nusing System;using System.Runtime.InteropServices;\n"
+            "public class Grab{[StructLayout(LayoutKind.Sequential)]public struct RECT"
+            "{public int Left,Top,Right,Bottom;}"
+            '[DllImport("user32.dll")]public static extern bool GetWindowRect(IntPtr h,out RECT r);}\n'
+            "'@;"
+            f"$r=New-Object Grab+RECT;[void][Grab]::GetWindowRect([IntPtr]{hwnd},[ref]$r);"
+            "$b=New-Object System.Drawing.Bitmap ($r.Right-$r.Left),($r.Bottom-$r.Top);"
+            "$g=[System.Drawing.Graphics]::FromImage($b);"
+            "$g.CopyFromScreen($r.Left,$r.Top,0,0,$b.Size);"
+            f'$b.Save("{out.as_posix()}",[System.Drawing.Imaging.ImageFormat]::Png);'
+            "$g.Dispose();$b.Dispose();'copied'",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=120,
+    )
+
+    return out.exists() and ran.returncode == 0
 
 
 # ── the app, and the endpoint it writes ─────────────────────────────────────
@@ -239,17 +286,19 @@ def drive(apps: list[pathlib.Path]) -> None:
 
         time.sleep(2.5)
 
-        # One window put over the other, so the one underneath is the case the old
-        # capture got wrong: it copied the screen, and the screen there is the other app.
+        # One window over the other, and each a size of its own. Over, because that is
+        # the case the old capture got wrong - it copied the screen, and the screen there
+        # is the other app; a size of its own, because that is what a picture of the wrong
+        # window cannot fake.
         first = windows_of(running[0][1].pid)
         second = windows_of(running[1][1].pid)
         if not first or not second:
             wrong(f"a window is missing: {len(first)} and {len(second)}")
             return
 
-        moved(first[0][0], 80, 80)
-        moved(second[0][0], 110, 110)
-        time.sleep(1.0)
+        sized(first[0][0], 80, 80, 1000, 700)
+        sized(second[0][0], 110, 110, 760, 560)
+        time.sleep(1.5)
 
         before = in_front()
         SHOTS.mkdir(parents=True, exist_ok=True)
@@ -277,10 +326,21 @@ def drive(apps: list[pathlib.Path]) -> None:
         else:
             say("the window in front is the same one before and after")
 
-        if len(pictures) == 2 and ink_of(pictures["a"]) == ink_of(pictures["b"]):
-            wrong("both pictures are the same file, so one window was photographed twice")
+        if len(pictures) == 2 and size_of(pictures["a"]) == size_of(pictures["b"]):
+            wrong("both pictures are the same shape, so one window was photographed twice")
         elif len(pictures) == 2:
-            say("the two pictures are two different windows")
+            say("the two pictures are two different windows, by their own two shapes")
+
+        # And the picture is the window rather than the screen. The same rectangle off
+        # the screen is a different picture: what is in front of a window is not what a
+        # screenshot of the app should hold.
+        screen = SHOTS / "a-off-the-screen.png"
+        if not off_the_screen(first[0][0], screen):
+            say("the screen could not be copied here, which is answer enough on its own")
+        elif ink_of(screen) == ink_of(pictures["a"]):
+            wrong("the capture is the same as a copy of the screen, so it is not the window")
+        else:
+            say(f"a copy of the screen is a different picture ({screen.stat().st_size} bytes)")
 
     finally:
         for _label, process, _held in running:

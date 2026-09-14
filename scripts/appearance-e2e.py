@@ -148,6 +148,14 @@ def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
 
+def profile_of(identifier: str) -> pathlib.Path:
+    """Where this build keeps its webview's own store, which is where the two settings
+    are remembered: the app's `localStorage`, inside the `EBWebView` folder Tauri gives
+    each identifier. Wiped before the run, so the drive starts where a fresh install
+    does - and only this probe's own, never anybody's real profile."""
+    return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
+
+
 def allow_eval(path: pathlib.Path) -> None:
     """`eval` turned on in the endpoint file, which is the only way it can be.
 
@@ -200,13 +208,54 @@ def asked(held: dict, verb: str, args: dict) -> dict:
 
 
 def ran(held: dict, code: str) -> object:
-    """One line of JavaScript, inside the window."""
+    """One line of JavaScript, inside the window.
+
+    For reading only. A built app is not a development build, so `window.nibApp` - the
+    handle every drive of the web build reaches the stores through - is not there: it is
+    behind `import.meta.env.DEV`. What is there is the page, which is what this asks.
+    """
     answer = asked(held, "eval", {"code": code, "yes": True})
     if not answer.get("ok"):
         wrong(f"the window would not run {code!r}: {answer.get('error')}")
         return None
 
     return answer.get("value")
+
+
+def pressed(held: dict, command: str) -> None:
+    """One row of the palette, run by its own id.
+
+    Which is how the two settings are changed here, and it is better evidence than a
+    store poked from outside: it is the row a reader presses. `byHand` keeps a row out of
+    a *link's* reach and not out of the command line's; see `runCommand` in
+    automation/acts.ts.
+    """
+    answer = asked(held, "commands.run", {"id": command})
+    if not answer.get("ok"):
+        wrong(f"the {command} command would not run: {answer.get('error')}")
+        return
+
+    time.sleep(1.5)
+
+
+def frame_said(held: dict) -> str:
+    """Which frame the page says is on, which is what the shell's own bar reads."""
+    return str(ran(held, "document.documentElement.dataset.frame") or "")
+
+
+def translucent_said(held: dict) -> bool:
+    return bool(ran(held, "document.documentElement.hasAttribute('data-translucent')"))
+
+
+def framed_as(held: dict, wanted: str) -> None:
+    """The frame put where this check wants it, whichever it was."""
+    if frame_said(held) != wanted:
+        pressed(held, "window-frame")
+
+
+def translucent_as(held: dict, wanted: bool) -> None:
+    if translucent_said(held) != wanted:
+        pressed(held, "translucency")
 
 
 def shot(pid: int, name: str) -> None:
@@ -235,6 +284,10 @@ def shot(pid: int, name: str) -> None:
 def drive(app: pathlib.Path) -> None:
     identifier = identifier_of(app)
     endpoint = endpoint_of(identifier)
+
+    # Both of the settings under test are remembered, which is half of what this checks -
+    # so the run starts from nothing remembered at all.
+    shutil.rmtree(profile_of(identifier), ignore_errors=True)
     allow_eval(endpoint)
 
     process = started(app)
@@ -247,28 +300,34 @@ def drive(app: pathlib.Path) -> None:
         say(f"its window is {hwnd}")
 
         # ── as it comes up ─────────────────────────────────────────────────
+        # What the window measures with nib's own frame on it. Not nought: an undecorated
+        # window still has the invisible border the compositor gives every window to grab,
+        # which is a few pixels the app neither draws nor sees. It is the *difference* a
+        # titlebar makes that says whether the system is drawing one.
         bare = frame_of(hwnd)
-        if bare != 0:
-            wrong(f"a window with nib's own frame has {bare}px of the system's on it")
+        if frame_said(held) != "nib":
+            wrong(f"a window came up saying its frame is {frame_said(held)!r}")
         else:
-            say("nib's own frame: the window is all client area")
+            say(f"nib's own frame: {bare}px between the window and its client area")
+
+        if not ran(held, "!!document.querySelector('header .controls')"):
+            wrong("nib draws its own frame and none of its own window buttons")
 
         if backdrop_of(hwnd) == DWMSBT_MAINWINDOW:
             wrong("the window came up with a material behind it, which is not the default")
         shot(process.pid, "01-nib-frame")
 
         # ── the system's frame ─────────────────────────────────────────────
-        ran(held, "window.nibApp.modes.setFrame('system')")
-        time.sleep(1.5)
+        pressed(held, "window-frame")
 
         framed = frame_of(hwnd)
-        if framed <= bare:
-            wrong(f"the system's frame added {framed - bare}px, which is no frame at all")
+        if framed - bare < 20:
+            wrong(f"the system's frame added {framed - bare}px, which is no titlebar")
         else:
-            say(f"the system's frame: {framed}px of titlebar and border the app does not draw")
+            say(f"the system's frame: {framed - bare}px more than before, which is its titlebar")
 
         # And the app's own three buttons stand down, because the system draws them now.
-        if ran(held, "document.documentElement.dataset.frame") != "system":
+        if frame_said(held) != "system":
             wrong("the root does not say which frame is on, so the shell cannot read it")
         if ran(held, "!!document.querySelector('header .controls')"):
             wrong("nib is still drawing its own window buttons under the system's titlebar")
@@ -277,14 +336,12 @@ def drive(app: pathlib.Path) -> None:
 
         shot(process.pid, "02-system-frame")
 
-        ran(held, "window.nibApp.modes.setFrame('nib')")
-        time.sleep(1.5)
-        if frame_of(hwnd) != 0:
-            wrong("going back to nib's own frame left the system's on")
+        framed_as(held, "nib")
+        if frame_of(hwnd) != bare:
+            wrong(f"going back to nib's own frame left {frame_of(hwnd) - bare}px of the system's")
 
         # ── translucency ───────────────────────────────────────────────────
-        ran(held, "window.nibApp.modes.setTranslucent(true)")
-        time.sleep(1.5)
+        translucent_as(held, True)
 
         behind = backdrop_of(hwnd)
         if behind != DWMSBT_MAINWINDOW:
@@ -292,7 +349,7 @@ def drive(app: pathlib.Path) -> None:
         else:
             say("translucency on: the compositor is drawing the window's own material")
 
-        if not ran(held, "document.documentElement.hasAttribute('data-translucent')"):
+        if not translucent_said(held):
             wrong("the root does not say so, so the app's own ground is still opaque")
         ground = ran(held, "getComputedStyle(document.documentElement).getPropertyValue('--window-ground').trim()")
         if ground != "transparent":
@@ -302,23 +359,29 @@ def drive(app: pathlib.Path) -> None:
 
         shot(process.pid, "03-translucent")
 
-        ran(held, "window.nibApp.modes.setTranslucent(false)")
-        time.sleep(1.5)
+        translucent_as(held, False)
         if backdrop_of(hwnd) == DWMSBT_MAINWINDOW:
             wrong("turning translucency off left the material behind the window")
         else:
             say("off again: the material is cleared")
 
         # ── and both of them are remembered ────────────────────────────────
-        ran(held, "window.nibApp.modes.setFrame('system')")
-        ran(held, "window.nibApp.modes.setTranslucent(true)")
-        time.sleep(1.5)
+        framed_as(held, "system")
+        translucent_as(held, True)
 
     finally:
         # Only this drive's own process, by its pid. Never by name: somebody's own nib
         # may be running, and it is not this drive's to close.
         process.terminate()
-        time.sleep(2.0)
+        process.wait(timeout=30)
+
+    # The endpoint file taken away, so what is waited for below is the *next* launch's
+    # port rather than the one that has just gone with the process that wrote it. Written
+    # again rather than only deleted: `eval` is off in a file the app wrote itself, and it
+    # is what this drive reads the page through.
+    endpoint.unlink(missing_ok=True)
+    allow_eval(endpoint)
+    time.sleep(1.5)
 
     process = started(app)
     try:
@@ -326,8 +389,8 @@ def drive(app: pathlib.Path) -> None:
         time.sleep(3.5)
         hwnd = window_of(process.pid)
 
-        if frame_of(hwnd) <= 0:
-            wrong("the system's frame was not there after a restart")
+        if frame_said(held) != "system" or frame_of(hwnd) - bare < 20:
+            wrong(f"the system's frame was not there after a restart: {frame_of(hwnd)}px")
         else:
             say("after a restart the system's frame is still on")
 
@@ -339,12 +402,11 @@ def drive(app: pathlib.Path) -> None:
         shot(process.pid, "04-remembered")
 
         # Left as it was found, so the next run of this starts where this one did.
-        ran(held, "window.nibApp.modes.setFrame('nib')")
-        ran(held, "window.nibApp.modes.setTranslucent(false)")
-        time.sleep(1.0)
+        framed_as(held, "nib")
+        translucent_as(held, False)
     finally:
         process.terminate()
-        time.sleep(1.0)
+        process.wait(timeout=30)
 
 
 def main() -> int:
