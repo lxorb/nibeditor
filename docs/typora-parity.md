@@ -545,10 +545,15 @@ Features Typora does not have, which are the reason this exists.
       outline to read down on the left, the note it is about on the right. One press
       in the panel's own row holds it and lets it go, the note it is held on is named
       quietly over it, and pressing a row takes you to that note wherever it is open.
-      It lasts the sitting - a
-      panel held on a note nobody remembers holding it on is worse than one that
-      simply follows - and it is not offered on a handheld, which has one document
-      and so nothing to hold a panel against
+      It lasts the sitting - a panel held on a note nobody remembers holding it on is
+      worse than one that simply follows - and it is not offered on a handheld, which
+      has one document
+      and so nothing to hold a panel against. A handheld is the machine and not the
+      size of the window: a finger and a mobile user agent, which is what
+      `viewport.touch` answers, so a desktop window narrowed to the width of a phone
+      still offers the hold and still has two panes to use it in. One row in the
+      palette says which way it is, greyed out where there is nothing to hold, and it
+      reads the same rule the button does rather than a copy of it
 - [x] Bookmarks in groups. A group is a name with a twist in front of it, holding
       whatever is dragged onto it, nested as deep as it is useful, and it opens
       and shuts on this machine while the group itself travels with the account.

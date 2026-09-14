@@ -405,6 +405,36 @@ class Workspace {
     this.heldTabId = tabId
   }
 
+  /** Whether the panels are held on a tab rather than following the pane. */
+  readonly held = $derived(!!this.heldTabId && this.panelTab?.id === this.heldTabId)
+
+  /** Whether a panel is one that can be held: the three that are about one note. The
+   *  files are the space's and a search is the space's, so neither has a note to be held
+   *  on.
+   *
+   *  Not on a handheld, which holds one document at a time: there is nothing to hold a
+   *  panel against, and opening another note closes the tab the panel would have been
+   *  held on. What decides a handheld is the machine - a finger and a mobile user agent -
+   *  rather than the width of the window, so a narrow window on a desktop still offers it
+   *  and still means something. See `deviceFor` in viewport.svelte.ts and docs/mobile.md.
+   *
+   *  Here rather than in the panel that draws the button, because the palette asks the
+   *  same question and two copies of one rule is one of them going stale. */
+  holdable(panel: Panel | null): boolean {
+    return !viewport.touch && (panel === 'outline' || panel === 'links' || panel === 'footnotes')
+  }
+
+  /** The panel a hold would be about: whichever side has one that can be held, the left
+   *  first. Null where neither has, which is what the palette's row reads to know there
+   *  is nothing to hold. */
+  readonly holdablePanel = $derived.by((): Panel | null => {
+    for (const panel of [this.panel, this.rightPanel]) {
+      if (this.holdable(panel)) return panel
+    }
+
+    return null
+  })
+
   /** Reading it walks the whole note, so it deliberately follows `tab.doc` and
    *  not the editor: that one only catches up when the typing pauses, which is
    *  as often as an outline needs to move. Lazy as every derived is, so a
