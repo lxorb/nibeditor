@@ -428,9 +428,14 @@ def onto_the_screen(hwnd: int) -> None:
     time.sleep(1.0)
 
 
-def picture(out: pathlib.Path) -> None:
+def picture(pid: int, out: pathlib.Path) -> None:
     """A photograph of the window, taken by the platform: a webview cannot photograph
-    the window it is drawn in. The same script `nib screenshot` shells out to."""
+    the window it is drawn in. The same script `nib screenshot` shells out to.
+
+    By pid, which is the only thing the script takes. It used to be asked by name, and
+    on a machine that is building nib there is more than one process called that - so
+    what came back was another application's window, which is worse than no picture at
+    all. The pid here is the app this probe launched."""
 
     here = pathlib.Path(__file__).resolve().parent / "capture-window.ps1"
     try:
@@ -440,8 +445,8 @@ def picture(out: pathlib.Path) -> None:
                 "-NoProfile",
                 "-File",
                 str(here),
-                "-ProcessName",
-                "Nib",
+                "-Pid",
+                str(pid),
                 "-Out",
                 str(out),
             ],
@@ -555,7 +560,7 @@ def main() -> int:
     if len(said) < 2:
         print("  and did not answer the second time it was asked")
     onto_the_screen(hwnd)
-    picture(shots / "web-freeze-open.png")
+    picture(app.pid, shots / "web-freeze-open.png")
 
     beating.stop()
 
@@ -576,7 +581,7 @@ def main() -> int:
         measure(hwnd, args.watch, began, restored)
         beats.stop()
         onto_the_screen(hwnd)
-        picture(shots / "web-freeze-restored.png")
+        picture(app.pid, shots / "web-freeze-restored.png")
     else:
         print("  the window never appeared on the second launch")
 

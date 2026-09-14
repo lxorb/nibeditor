@@ -3,12 +3,15 @@
 #
 # Three things it is careful about, and each of them was wrong before:
 #
-#   - WHICH window. `-ProcessId` names the process to photograph, and `nib screenshot`
-#     passes the pid the app itself wrote beside its port - so the window that answered
-#     the request is the window in the picture. Two nibs can be running, a build somebody
-#     is working on beside the one they use, and going by name photographed whichever
-#     Windows listed first. `-ProcessName` is the fallback for a caller that has no pid,
-#     and it says out loud when there is more than one.
+#   - WHICH window. A pid, and nothing else. `-Pid` (spelled `-ProcessId` as well) is
+#     the process to photograph, and every caller has one: `nib screenshot` passes the
+#     pid the app wrote beside its port, and a drive passes the pid of the app it
+#     launched - so the window that answered the request is the window in the picture.
+#     A name used to be taken as a fallback, and it photographed somebody's own browser
+#     window: a machine that is building nib has several processes called nib, and
+#     Windows lists whichever it lists. A picture of the wrong window is worse than no
+#     picture - it can hold a stranger's screen and nothing in the file says it is not
+#     ours - so a name is refused outright rather than guessed from.
 #   - WHAT is in it. `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw
 #     itself, so what lands in the file is the window and not the screen in front of it:
 #     a menu, a notification or another app over the corner used to be part of the
@@ -18,11 +21,18 @@
 #     SetForegroundWindow and waited 700ms for it, which took the keyboard away from
 #     whatever somebody was typing in - a screenshot is a question, not an interruption.
 param(
+  [Alias('Pid')]
   [int]$ProcessId = 0,
-  [string]$ProcessName = 'nib',
   [string]$Out = "$env:TEMP\nib-window.png",
   [switch]$ListOnly
 )
+
+# One sentence, and a non-zero exit. Said before anything is loaded, because the
+# alternative to stopping here is a photograph of a window nobody asked for.
+if ($ProcessId -le 0) {
+  [Console]::Error.WriteLine('capture-window.ps1 needs -Pid <process id>: a window is photographed by pid, never by name.')
+  exit 2
+}
 
 Add-Type -AssemblyName System.Drawing
 
@@ -70,17 +80,9 @@ public class NibCapture {
 }
 "@
 
-# Which process. A pid is what the app itself said; a name is a guess, and a guess with
-# more than one answer is worth saying out loud rather than picking from.
-if ($ProcessId -gt 0) {
-  $process = Get-Process -Id $ProcessId -ErrorAction Stop
-} else {
-  $every = @(Get-Process -Name $ProcessName -ErrorAction Stop)
-  if ($every.Count -gt 1) {
-    Write-Error "$($every.Count) processes are called '$ProcessName'; pass -ProcessId to say which" -ErrorAction Continue
-  }
-  $process = $every | Select-Object -First 1
-}
+# The process the caller named. A pid nothing answers to is a window that has closed,
+# which is an error rather than a reason to look for another one.
+$process = Get-Process -Id $ProcessId -ErrorAction Stop
 
 $rows = [NibCapture]::Windows($process.Id) | ForEach-Object {
   $parts = $_ -split '\|'

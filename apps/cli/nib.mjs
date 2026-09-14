@@ -255,6 +255,12 @@ async function screenshot(asked) {
       '../../scripts/capture-window.ps1',
     )
     const { pid } = await endpoint()
+    // A pid or nothing. The script photographs a window by pid and refuses a name,
+    // because a name once matched another application's window entirely; an endpoint
+    // file with no pid in it is an app too old to say which window is its own.
+    if (!pid)
+      throw new Error('this app did not say which process it is, so it cannot be photographed')
+
     const ran = spawnSync(
       'powershell',
       [
@@ -265,7 +271,8 @@ async function screenshot(asked) {
         script,
         '-Out',
         out,
-        ...(pid ? ['-ProcessId', String(pid)] : []),
+        '-Pid',
+        String(pid),
       ],
       { encoding: 'utf8' },
     )

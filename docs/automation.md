@@ -163,11 +163,18 @@ capture tool, and it says so.
 
 Three things the Windows capture is careful about, and each of them was wrong:
 
-- **Which window.** The script is handed `-ProcessId`, and the pid comes out of
-  `automation.json` - written by the process that opened the socket, so it is the app
-  that answered the request by construction. Going by name photographed whichever
-  process Windows listed first, which is a coin toss the moment somebody runs a build
-  they are working on beside the one they use.
+- **Which window.** The script is handed `-Pid` (`-ProcessId` is the same parameter),
+  and the pid comes out of `automation.json` - written by the process that opened the
+  socket, so it is the app that answered the request by construction. **A name is
+  refused outright**, and a call with no pid stops with one sentence and a non-zero
+  exit before anything is loaded. Going by name photographed whichever process Windows
+  listed first, which is a coin toss the moment somebody runs a build they are working
+  on beside the one they use - and on the machine this was written on it went further
+  than that and photographed another application's window, into a file named after
+  nib's own overlay. A picture of the wrong window is worse than no picture: it can
+  hold a stranger's screen, and nothing in the file says it is not ours. Every caller
+  passes a pid, and `apps/desktop/test/capture-by-pid.test.ts` is what keeps it that
+  way.
 - **What is in it.** `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw
   itself. Copying the screen region put whatever was in front of the window into the
   picture - a menu, a notification, another app over the corner - and a screenshot of
