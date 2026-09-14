@@ -493,7 +493,7 @@ Discord's channel list has, at the touch scale:
 
 | | |
 | --- | --- |
-| The head | The sidebar button, then the space at `--text-head` with a chevron beside the word, then the one plus. The name is what says where you are, and it is the switcher: pressing it drops the other spaces out of the header as rows inside the panel, each with its own mark, and making one is a row at the foot of that list |
+| The head | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - then the one plus. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
 | The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking |
 | The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
 

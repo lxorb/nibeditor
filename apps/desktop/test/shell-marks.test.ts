@@ -80,6 +80,23 @@ describe('a mark that fills the box it was given', () => {
     // word: a letter with no badge around it reads as part of the name.
     expect(bar.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
   })
+
+  /** And the header over the file list, which is the list of spaces shut. Both
+   *  places the switcher names a space render one badge written once, rather than
+   *  two that look alike: a mark the header drew for itself is a second design for
+   *  the same object, and it drifts. See docs/design.md. */
+  test('and so does the space named over the file list, out of the one badge', () => {
+    const switcher = named('lib/SpaceSwitcher.svelte')
+
+    expect(switcher.text).toMatch(/\{#snippet badge\(/)
+    expect(switcher.text.match(/<SpaceMark /g)).toHaveLength(1)
+    expect(switcher.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
+    // Rendered twice: by the row for each space in the list, and by the mark the
+    // header wears - which the header itself asks for in both of its states, the
+    // name read and the name being typed.
+    expect(switcher.text.match(/\{@render badge\(/g)).toHaveLength(2)
+    expect(switcher.text.match(/\{@render mark\(\)/g)).toHaveLength(2)
+  })
 })
 
 describe('the mark that says shared', () => {

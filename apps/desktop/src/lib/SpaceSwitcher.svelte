@@ -80,11 +80,46 @@
   // Icon.svelte draws whichever of the three kinds it is.
 </script>
 
+<!-- The mark a space is known by, in the badge every surface that names a space
+     puts it in. Written once and rendered by both of the places this component
+     names a space: the header, and the row for each space in the list it opens.
+     So the space you are in cannot come to wear something its own row does not -
+     it is the same drawing, the same badge and the same size either way. -->
+{#snippet badge(space: Space, on: boolean)}
+  <span class="nib-badge" class:is-on={on} aria-hidden="true">
+    <SpaceMark id={space.id} name={space.name} />
+  </span>
+{/snippet}
+
+<!-- The mark of the space you are in, for the header over the file list. Plain
+     rather than `is-on`: this is where you are, said quietly, not a row to pick
+     out of a list of them.
+
+     Keyed on the space, so changing space crosses one mark into the next rather
+     than swapping the drawing between two frames - `arrive` and `leave` with
+     nothing to slip, which is the app's own fade and is nothing at all for a
+     reader who asked for less movement; see slide.ts and motion.ts. Both marks
+     are in the page while they cross, which is what the box they share is for:
+     the name beside them must not move. -->
+{#snippet mark()}
+  {#if here}
+    {@const space = here}
+    <span class="mark">
+      {#key space.id}
+        <span class="fade" in:arrive={{ y: 0 }} out:leave={{ y: 0 }}>
+          {@render badge(space, false)}
+        </span>
+      {/key}
+    </span>
+  {/if}
+{/snippet}
+
 {#if here && workspace.naming?.path === here.root}
   <!-- Renaming a space happens where its name is written, in the same field a row
        in the list uses: the header keeps its height, its weight and its chevron,
        and only the name becomes editable. See NameField.svelte. -->
   <div class="name" class:is-wrong={wrong}>
+    {@render mark()}
     <NameField
       value={here.name}
       taken={otherSpaces}
@@ -103,6 +138,7 @@
     aria-expanded={open}
     onclick={() => (open = !open)}
   >
+    {@render mark()}
     <span class="nib-row-label">{name}</span>
     <!-- Said on the header as well as on the row, so a space being shared is a
          fact you can see without opening the list of spaces to look for it. -->
@@ -158,13 +194,7 @@
           oncontextmenu={(event) => about(event, space)}
           use:longPress={(event) => about(event, space)}
         >
-          <span
-            class="nib-badge"
-            class:is-on={space.id === workspace.activeSpaceId}
-            aria-hidden="true"
-          >
-            <SpaceMark id={space.id} name={space.name} />
-          </span>
+          {@render badge(space, space.id === workspace.activeSpaceId)}
 
           <span class="nib-row-label">{space.name}</span>
 
@@ -316,6 +346,24 @@
   .name:active,
   .name.open {
     background: var(--surface-press);
+  }
+
+  /* The box the space's mark sits in, in front of its name. A box of its own
+     because the two marks cross inside it: both are in the page for the length of
+     the crossing, one over the other in the single cell of a grid, so the name
+     beside them never moves. Nothing here draws the badge - that is `.nib-badge`
+     in the themes package - only where it sits. */
+  .mark {
+    flex: none;
+    display: grid;
+    /* The name starts beside its mark at the distance every other row in the
+       panel puts between the two, while what follows the name - the shared mark,
+       the chevron - keeps the header's own tighter gap. */
+    margin-inline-end: calc(var(--row-gap) - var(--space-1));
+  }
+
+  .mark > .fade {
+    grid-area: 1 / 1;
   }
 
   /* Beside the word rather than at the far end of the panel: the two are one

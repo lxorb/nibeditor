@@ -188,3 +188,63 @@ describe('the button that holds a panel on a note', () => {
     }
   })
 })
+
+/** The space in the panel's header, which is the list of spaces shut.
+ *
+ *  A space is named with its mark everywhere else it is named - its row in the
+ *  switcher, the title bar while the panel is away - and the header over the file
+ *  list is where it is named most. That header said the word alone, so the one place
+ *  a space is always written was the one place it was never drawn. Emil: *"in the top
+ *  left in the space select, you should see the icon of the current space."*
+ *
+ *  Asked with emoji, which are the one kind of icon that needs no set fetched: the
+ *  platform's own colour font is already here. Which icon a space wears, and the
+ *  letter it falls back to wherever the drawing cannot be had, is SpaceMark.test.ts
+ *  beside this one. */
+describe('the space in the header', () => {
+  /** Two spaces, each with a mark of its own, the first of them open. */
+  function two() {
+    open('# Head\n')
+    workspace.spaces = [
+      { id: 'work', name: 'Work', root: '/work' },
+      { id: 'play', name: 'Play', root: '/play' },
+    ]
+    workspace.applyIcon('/work', '📓')
+    workspace.applyIcon('/play', '🚀')
+    workspace.activeSpaceId = 'work'
+  }
+
+  test('wears the mark of the space you are in, in front of its name', () => {
+    two()
+    const html = drawn('tree')
+
+    expect(html).toContain('📓')
+    // In the badge every surface that names a space puts its mark in, rather than
+    // loose beside the word where a letter would read as part of the name.
+    expect(html).toMatch(/class="nib-badge[^"]*"[^>]*>[\s\S]{0,300}📓/)
+    // And in front of the name: the first label in the panel is the header's own.
+    expect(html.indexOf('📓')).toBeLessThan(html.indexOf('nib-row-label'))
+  })
+
+  test('and the mark changes with the space', () => {
+    two()
+    expect(drawn('tree')).not.toContain('🚀')
+
+    workspace.activeSpaceId = 'play'
+    const html = drawn('tree')
+
+    expect(html).toContain('🚀')
+    expect(html).not.toContain('📓')
+  })
+
+  /** What a reader who dresses a space in Settings sees: the header is drawn from
+   *  what the space wears rather than from a copy taken when it was opened. */
+  test('and follows the icon the space is given', () => {
+    two()
+    workspace.applyIcon('/work', '📌')
+    const html = drawn('tree')
+
+    expect(html).toContain('📌')
+    expect(html).not.toContain('📓')
+  })
+})
