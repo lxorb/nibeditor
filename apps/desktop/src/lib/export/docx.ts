@@ -17,11 +17,14 @@ import {
   Document,
   ExternalHyperlink,
   type FileChild,
+  Footer,
   FootnoteReferenceRun,
+  Header,
   HeadingLevel,
   HighlightColor,
   type INumberingOptions,
   type IParagraphPropertiesOptions,
+  type ISectionPropertiesOptions,
   type IRunPropertiesOptions,
   type IStylesOptions,
   ImageRun,
@@ -31,6 +34,7 @@ import {
   // element comes in under the name the rest of this codebase gives the subject.
   Math as Maths,
   PageBreak,
+  PageOrientation,
   Packer,
   Paragraph,
   type ParagraphChild,
@@ -41,6 +45,7 @@ import {
   WidthType,
 } from 'docx'
 import { fromBase64 } from '../bytes'
+import { type PaperTwips, TWIPS_PER_INCH } from '../page-setup'
 import type { Align, Block, Doc, Entry, Item, Span } from './document'
 import { ommlFor } from './omml'
 import type { Picture } from './pictures'
@@ -66,11 +71,8 @@ const ORDERED = 'nib-ordered'
  *  and Word wants each rung declared before a paragraph may sit on it. */
 const RUNGS = [0, 1, 2, 3, 4]
 
-/** How wide a picture may be drawn, in pixels at the 96 to the inch Word counts
- *  a drawing in. The text column of a letter page with an inch of margin each
- *  side is 624 of them, so 600 keeps a picture inside the column with room to
- *  spare whatever the margins turn out to be. */
-const MAX_PICTURE = 600
+/** Pixels to the inch, which is what Word counts a drawing in. */
+const PER_INCH = 96
 
 /** An open box and a ticked one. Word has a content control that draws a real
  *  checkbox, but it survives almost nothing it is handed to - another reader, a
@@ -280,10 +282,10 @@ function sizeOf(bytes: Uint8Array, mime: string): Size | null {
 /** The size a picture is drawn at: its own, or as much of it as the text column
  *  takes, in proportion. Word stretches a drawing to whatever it is told, so a
  *  size guessed rather than read is a squashed picture. */
-function fitted(size: Size): Size {
-  if (size.width <= MAX_PICTURE) return size
+function fitted(size: Size, column: number): Size {
+  if (size.width <= column) return size
 
-  return { width: MAX_PICTURE, height: Math.round((size.height * MAX_PICTURE) / size.width) }
+  return { width: column, height: Math.round((size.height * column) / size.width) }
 }
 
 interface Drawn {
@@ -299,6 +301,10 @@ interface Writer {
   readonly pictures: ReadonlyMap<string, Picture>
   readonly notes: ReadonlyMap<string, number>
   lists: number
+  /** The text column in pixels, which the paper decides. A picture is brought down
+   *  to it, so an A5 page with a wide margin gets a drawing that fits on it rather
+   *  than one off the edge of it. */
+  readonly column: number
 }
 
 /** What a block inherits from whatever it sits inside: the rung of the list it is
@@ -327,7 +333,7 @@ function drawnPicture(src: string, writer: Writer): Drawn | null {
   const size = sizeOf(picture.bytes, picture.mime)
   if (size === null || size.width <= 0 || size.height <= 0) return null
 
-  return { picture, type, size: fitted(size) }
+  return { picture, type, size: fitted(size, writer.column) }
 }
 
 /** What a picture falls back to, in brackets, exactly as the plain text export
@@ -659,12 +665,82 @@ function footnotesOf(doc: Doc, writer: Writer): Record<string, { children: Parag
   )
 }
 
-/** The whole note as the bytes of a `.docx`. */
-export async function toDocx(doc: Doc, pictures: readonly Picture[]): Promise<Uint8Array> {
+/** The page, as Word's own section properties.
+ *
+ *  Word takes the sheet upright and turns it itself for a landscape section, which is
+ *  the shape `paperTwips` hands over; see page-setup.ts. The margin is one number on
+ *  all four sides, which is the one number the settings and the front matter ask for.
+ *
+ *  Nothing here was written at all before: the section went out with no properties, and
+ *  a Word document with no page properties is a Word document on US Letter with an inch
+ *  of margin. So a reader on nib's A4 default got Letter, and A5, landscape and a 33 mm
+ *  margin were dropped in silence. */
+/** The text column in pixels: the sheet as it is printed, less both margins. An
+ *  inch at the very least, so a setup with a margin wider than its own paper still
+ *  leaves something a picture can be drawn in. */
+function columnPixels(paper: PaperTwips): number {
+  const width = paper.landscape ? paper.height : paper.width
+
+  return Math.max(PER_INCH, Math.round(((width - 2 * paper.margin) * PER_INCH) / TWIPS_PER_INCH))
+}
+
+function pageOf(paper: PaperTwips): ISectionPropertiesOptions {
+  return {
+    page: {
+      size: {
+        width: paper.width,
+        height: paper.height,
+        orientation: paper.landscape ? PageOrientation.LANDSCAPE : PageOrientation.PORTRAIT,
+      },
+      margin: {
+        top: paper.margin,
+        right: paper.margin,
+        bottom: paper.margin,
+        left: paper.margin,
+      },
+    },
+  }
+}
+
+/** The running text, as the header and footer parts Word repeats on every sheet. One
+ *  paragraph of words each, centred and quiet, which is what a running head is.
+ *
+ *  Only where there is something to run: a part per section costs a file in the package
+ *  and a reference to it, and an empty one is a blank line at the top of every page.
+ *  The placeholders are already filled by the time this sees them. */
+function runningOf(paper: PaperTwips) {
+  const line = (text: string) =>
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text, size: 18, color: CODE_INK })],
+    })
+
+  return {
+    ...(paper.header
+      ? { headers: { default: new Header({ children: [line(paper.header)] }) } }
+      : {}),
+    ...(paper.footer
+      ? { footers: { default: new Footer({ children: [line(paper.footer)] }) } }
+      : {}),
+  }
+}
+
+/** The whole note as the bytes of a `.docx`.
+ *
+ *  `paper` is the page the note is going on, resolved once by the caller: the settings,
+ *  the note's own `export:` front matter over them, and the running text with its
+ *  placeholders filled. Required rather than defaulted, because the whole of this bug
+ *  was a silent default - a writer that can fall back to Letter is a writer that will. */
+export async function toDocx(
+  doc: Doc,
+  pictures: readonly Picture[],
+  paper: PaperTwips,
+): Promise<Uint8Array> {
   const writer: Writer = {
     pictures: new Map(pictures.map((picture) => [picture.src, picture])),
     notes: new Map(doc.notes.map((note, at) => [note.label, at + 1])),
     lists: 0,
+    column: columnPixels(paper),
   }
 
   const file = new Document({
@@ -673,7 +749,13 @@ export async function toDocx(doc: Doc, pictures: readonly Picture[]): Promise<Ui
     styles: STYLES,
     numbering: NUMBERING,
     footnotes: footnotesOf(doc, writer),
-    sections: [{ children: [...titleChildren(doc), ...childrenOf(doc.blocks, writer, OUTERMOST)] }],
+    sections: [
+      {
+        properties: pageOf(paper),
+        ...runningOf(paper),
+        children: [...titleChildren(doc), ...childrenOf(doc.blocks, writer, OUTERMOST)],
+      },
+    ],
   })
 
   // Base64 rather than `toBuffer` or `toBlob`: the first is Node's alone and the

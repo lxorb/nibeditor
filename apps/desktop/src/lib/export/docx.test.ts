@@ -1,9 +1,15 @@
 import JSZip from 'jszip'
 import { beforeAll, describe, expect, test } from 'vitest'
+import { DEFAULT_PAGE_SETUP, paperTwips } from '../page-setup'
 import { CORPUS, CORPUS_NAME } from './corpus'
 import { documentOf } from './document'
 import { toDocx } from './docx'
 import type { Picture } from './pictures'
+
+/** The page every test here goes on unless it says otherwise: the A4 the app
+ *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
+ *  this is where the page itself is measured. */
+const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Corpus', '2026-09-14')
 
 /** A real PNG, twenty four by sixteen: header, one stored deflate block, end.
  *  Built by hand so the test knows the size the writer should read back. */
@@ -97,7 +103,7 @@ let rels: string
 beforeAll(async () => {
   // Built once: packing a document is the slow part, and every test below reads
   // the same package.
-  zip = await JSZip.loadAsync(await toDocx(doc, PICTURES))
+  zip = await JSZip.loadAsync(await toDocx(doc, PICTURES, PAPER))
   const read = async (path: string) => {
     const file = zip.file(path)
     expect(file, path).not.toBeNull()
@@ -326,7 +332,7 @@ describe('maths', () => {
 
   test('a formula the translator does not know falls back to its source', async () => {
     const odd = documentOf('$$\n\\begin{matrix} a \\end{matrix}\n$$\n', 'N.md')
-    const xml = await JSZip.loadAsync(await toDocx(odd, [])).then((one) =>
+    const xml = await JSZip.loadAsync(await toDocx(odd, [], PAPER)).then((one) =>
       one.file('word/document.xml')!.async('string'),
     )
 
@@ -350,7 +356,7 @@ describe('footnotes', () => {
 
   test('a reference to a footnote nobody defined is written as its label', async () => {
     const orphan = documentOf('Words[^gone] and no definition.\n', 'N.md')
-    const xml = await JSZip.loadAsync(await toDocx(orphan, [])).then((one) =>
+    const xml = await JSZip.loadAsync(await toDocx(orphan, [], PAPER)).then((one) =>
       one.file('word/document.xml')!.async('string'),
     )
 
@@ -409,17 +415,28 @@ describe('pictures', () => {
   })
 
   test('a picture wider than the text column is scaled, keeping its shape', () => {
-    // 1200 by 600 does not fit, so it comes down to the column's 600 and takes
-    // its height with it.
-    expect(extents()[1]).toEqual([600, 300])
+    // The column is the A4 sheet less both 20 mm margins, which is 643 pixels at
+    // the 96 to the inch Word counts a drawing in; it used to be a flat 600 picked
+    // to be safe on a letter page. 1200 by 600 does not fit, so it comes down to
+    // the column and takes its height with it.
+    expect(extents()[1]).toEqual([643, 322])
   })
 
   test('one whose bytes say nothing is written as its words instead', async () => {
     const broken = documentOf('![A picture](broken.png)\n', 'N.md')
     const xml = await JSZip.loadAsync(
-      await toDocx(broken, [
-        { src: 'broken.png', name: 'broken.png', mime: 'image/png', bytes: new Uint8Array([1, 2]) },
-      ]),
+      await toDocx(
+        broken,
+        [
+          {
+            src: 'broken.png',
+            name: 'broken.png',
+            mime: 'image/png',
+            bytes: new Uint8Array([1, 2]),
+          },
+        ],
+        PAPER,
+      ),
     ).then((one) => one.file('word/document.xml')!.async('string'))
 
     expect(xml).toContain('[A picture]')
@@ -428,7 +445,7 @@ describe('pictures', () => {
 
   test('one the caller never managed to read is written as its words too', async () => {
     const missing = documentOf('![Gone](gone.png)\n', 'N.md')
-    const xml = await JSZip.loadAsync(await toDocx(missing, [])).then((one) =>
+    const xml = await JSZip.loadAsync(await toDocx(missing, [], PAPER)).then((one) =>
       one.file('word/document.xml')!.async('string'),
     )
 
@@ -438,7 +455,7 @@ describe('pictures', () => {
 
 describe('a note with nothing much in it', () => {
   test('still packs a document that opens', async () => {
-    const bare = await JSZip.loadAsync(await toDocx(documentOf('', 'Empty.md'), []))
+    const bare = await JSZip.loadAsync(await toDocx(documentOf('', 'Empty.md'), [], PAPER))
     const xml = await bare.file('word/document.xml')!.async('string')
 
     wellFormed(xml)
@@ -446,7 +463,9 @@ describe('a note with nothing much in it', () => {
   })
 
   test('takes its title from the file when the note names none', async () => {
-    const bare = await JSZip.loadAsync(await toDocx(documentOf('words\n', 'Untitled.md'), []))
+    const bare = await JSZip.loadAsync(
+      await toDocx(documentOf('words\n', 'Untitled.md'), [], PAPER),
+    )
     const core = await bare.file('docProps/core.xml')!.async('string')
 
     expect(core).toContain('Untitled')
@@ -463,7 +482,7 @@ describe('a coloured highlight', () => {
   let xml: string
 
   beforeAll(async () => {
-    const zip = await JSZip.loadAsync(await toDocx(documentOf(TONES, 'Tones.md'), []))
+    const zip = await JSZip.loadAsync(await toDocx(documentOf(TONES, 'Tones.md'), [], PAPER))
     xml = await zip.file('word/document.xml')!.async('string')
   })
 

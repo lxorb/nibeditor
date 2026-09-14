@@ -20,7 +20,14 @@ import {
   renderNote,
 } from '../export'
 import { t } from '../i18n.svelte'
-import { DEFAULT_PAGE_SETUP, pageSetupFor, paperInches } from '../page-setup'
+import {
+  DEFAULT_PAGE_SETUP,
+  pageSetupFor,
+  paperInches,
+  type PaperTwips,
+  paperTwips,
+  runningDate,
+} from '../page-setup'
 import { invoke, isDesktop, isNative } from '../tauri'
 import { documentOf, picturesIn } from './document'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from './formats'
@@ -83,6 +90,16 @@ async function partsOf(note: Note, options: RunOptions) {
 /** The pictures a document names, read. */
 function picturesOf(sources: readonly string[], options: RunOptions) {
   return readPictures(sources, options.resolveImage ?? ((src) => src))
+}
+
+/** The page the settings ask for, with the note's own `export:` front matter over
+ *  the top of it, in the twips a Word document and an RTF are both measured in.
+ *  The same resolution the printed page and the HTML road use, so one note comes
+ *  out on one size of paper whichever road it takes. */
+function paperFor(note: Note, options: RunOptions, title: string): PaperTwips {
+  const setup = pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP)
+
+  return paperTwips(setup, title, runningDate(note.source, options.date))
 }
 
 /** Writes a PDF. On a desktop whose webview can print to a file it goes straight
@@ -216,7 +233,11 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
       const { toRtf } = await import('./rtf')
       const doc = documentOf(note.source, note.name)
       return {
-        text: toRtf(doc, await picturesOf(picturesIn(doc), options)),
+        text: toRtf(
+          doc,
+          await picturesOf(picturesIn(doc), options),
+          paperFor(note, options, doc.title),
+        ),
         mime: 'application/rtf',
       }
     }
@@ -224,7 +245,11 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
     case 'docx': {
       const { toDocx } = await import('./docx')
       const doc = documentOf(note.source, note.name)
-      const bytes = await toDocx(doc, await picturesOf(picturesIn(doc), options))
+      const bytes = await toDocx(
+        doc,
+        await picturesOf(picturesIn(doc), options),
+        paperFor(note, options, doc.title),
+      )
       return {
         bytes,
         mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',

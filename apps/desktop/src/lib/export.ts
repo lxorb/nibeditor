@@ -15,6 +15,7 @@ import {
   type PageSetup,
   pageCss,
   pageSetupFor,
+  runningDate,
   withRunningText,
 } from './page-setup'
 import { assetPath, invoke, isDesktop } from './tauri'
@@ -138,8 +139,7 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 
   const scheme = options.scheme ?? 'light'
   const setup = pageSetupFor(source, options.page ?? DEFAULT_PAGE_SETUP)
-  const date =
-    options.date ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
+  const date = runningDate(source, options.date)
 
   const styles = buildStyles(body, source, options)
   const page = withRunningText(`<div id="write">\n${body}</div>\n`, setup, title, date)

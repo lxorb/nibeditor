@@ -369,7 +369,10 @@ settings. None of them needs anything installed.
 - [x] Print styles, and a page break before a second top-level heading
 - [x] Print, through the platform's own dialog, off the same page an export writes
 - [x] Pictures carried into every format, off the disk and off the network
-- [x] Export settings (paper size, orientation, margins, header/footer)
+- [x] Export settings (paper size, orientation, margins, header/footer), on every road
+      that has a page: the printed page, the PDF, the published HTML, the Word document
+      and the RTF. Word and RTF ignored all four until the page was threaded into both
+      writers; the picture and table widths follow the text column the paper leaves.
 - [x] Per-file export config in YAML front matter (`export:`)
 - [x] A remembered target folder, and the finished file revealed
 

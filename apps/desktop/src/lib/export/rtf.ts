@@ -10,6 +10,7 @@
  *  their own bytes, so a picture goes onto the page in the shape it has rather
  *  than in a shape guessed for it. */
 
+import type { PaperTwips } from '../page-setup'
 import type { Align, Block, Doc, Item, Span } from './document'
 import type { Picture } from './pictures'
 
@@ -58,15 +59,6 @@ const HEADER = [
   '\\red238\\green238\\blue238;\\red255\\green242\\blue160;',
   `${TONE_WASHES};}`,
 ].join('')
-
-/** Letter paper with an inch of margin all round, which is what leaves the
- *  9360 twips a table and a wide picture are measured against. `\ftnbj` puts
- *  the footnotes at the foot of their page, where a reader looks for them. */
-const PAGE = '\\paperw12240\\paperh15840\\margl1440\\margr1440\\margt1440\\margb1440\\ftnbj'
-
-/** Six and a half inches: the text column, and so the width of a table and the
- *  most a picture may be drawn at. */
-const COLUMN = 9360
 
 /** One rung of indent, half an inch, the same step a list takes per level. */
 const STEP = 720
@@ -125,6 +117,43 @@ function escaped(text: string): string {
   }
 
   return out
+}
+
+/** The sheet, its margins, and which way round it is printed. RTF says the page
+ *  as it comes off the printer, so a turned sheet is the wide way round here -
+ *  the other way from Word, which takes the sheet upright and turns it with an
+ *  `orient` of its own. `\ftnbj` puts the footnotes at the foot of their page,
+ *  where a reader looks for them. */
+function page(paper: PaperTwips): string {
+  const width = paper.landscape ? paper.height : paper.width
+  const height = paper.landscape ? paper.width : paper.height
+  const margin = `\\margl${paper.margin}\\margr${paper.margin}\\margt${paper.margin}\\margb${paper.margin}`
+
+  return `\\paperw${width}\\paperh${height}${margin}${paper.landscape ? '\\landscape' : ''}\\ftnbj`
+}
+
+/** The running text across the top and the bottom of every page, each its own
+ *  group at the head of the section. Small, grey and centred, which is how the
+ *  printed page and the HTML road draw the same two lines. A setup that asks
+ *  for neither gets neither group, so a plain export stays a plain document. */
+function running(paper: PaperTwips): string {
+  const line = (word: string, text: string) =>
+    `{\\${word}\\pard\\plain\\qc\\f0\\fs18\\cf${GREY} ${escaped(text)}\\par}`
+
+  return (
+    (paper.header ? line('header', paper.header) : '') +
+    (paper.footer ? line('footer', paper.footer) : '')
+  )
+}
+
+/** The text column: the sheet as it is printed, less both margins. It is what a
+ *  table is measured against and the most a picture may be drawn at, so an A5
+ *  page with a wide margin gets a table that fits it rather than one off the
+ *  edge of it. */
+function columnOf(paper: PaperTwips): number {
+  const width = paper.landscape ? paper.height : paper.width
+
+  return Math.max(STEP, width - 2 * paper.margin)
 }
 
 interface Mark {
@@ -198,6 +227,8 @@ interface Sheet {
   /** The footnotes being written at this moment, so a note that refers to
    *  itself stops instead of going round for ever. */
   open: Set<string>
+  /** The text column in twips, which the paper decides. */
+  column: number
 }
 
 /** A footnote where it is referred to, which is where RTF keeps them: the
@@ -314,12 +345,12 @@ const PER_PIXEL = 1440 / 96
 /** What the picture is drawn at: its own size, until that is wider than the
  *  column, and then the column's width with the height brought down with it so
  *  nothing is squashed. */
-function goal(size: Size): Size {
+function goal(size: Size, column: number): Size {
   const width = Math.round(size.width * PER_PIXEL)
   const height = Math.round(size.height * PER_PIXEL)
-  if (width <= COLUMN) return { width, height }
+  if (width <= column) return { width, height }
 
-  return { width: COLUMN, height: Math.round((height * COLUMN) / width) }
+  return { width: column, height: Math.round((height * column) / width) }
 }
 
 /** How much hex goes on one line. A reader skips the breaks inside a picture,
@@ -349,7 +380,7 @@ function pictureRun(span: Span, sheet: Sheet): string {
 
   if (!found || !blip || !size) return `[${escaped(span.text === '' ? 'picture' : span.text)}]`
 
-  const drawn = goal(size)
+  const drawn = goal(size, sheet.column)
   const props = `${blip.word}\\picw${size.width}\\pich${size.height}`
 
   return `{\\pict${props}\\picwgoal${drawn.width}\\pichgoal${drawn.height}\n${hex(found.bytes)}}`
@@ -481,7 +512,7 @@ function tableRtf(block: Extract<Block, { kind: 'table' }>, sheet: Sheet, frame:
   const columns = Math.max(1, ...rows.map((row) => row.length))
   const edges = Array.from(
     { length: columns },
-    (_, at) => frame.indent + Math.round((COLUMN * (at + 1)) / columns),
+    (_, at) => frame.indent + Math.round((sheet.column * (at + 1)) / columns),
   )
 
   const definition = (head: boolean) =>
@@ -612,15 +643,21 @@ function info(doc: Doc): string {
 
 /** The whole note as one RTF file. `pictures` are the ones already read, keyed
  *  by the `src` the note wrote for them; a picture that is not in the list, or
- *  that is in a format RTF has no blip for, comes out as the words under it. */
-export function toRtf(doc: Doc, pictures: readonly Picture[]): string {
+ *  that is in a format RTF has no blip for, comes out as the words under it.
+ *
+ *  `paper` is the page the note is going on, resolved once by the caller: the
+ *  settings, the note's own `export:` front matter over them, and the running text
+ *  with its placeholders filled. Required rather than defaulted, because a Letter
+ *  page written in by hand is the whole of the bug this argument closes. */
+export function toRtf(doc: Doc, pictures: readonly Picture[], paper: PaperTwips): string {
   const sheet: Sheet = {
     doc,
     pictures: new Map(pictures.map((picture) => [picture.src, picture])),
     open: new Set(),
+    column: columnOf(paper),
   }
 
-  const head = `${HEADER}\\deflang${langOf(doc.lang)}${PAGE}${info(doc)}`
+  const head = `${HEADER}\\deflang${langOf(doc.lang)}${page(paper)}${info(doc)}${running(paper)}`
 
   return `${head}\n${blocksRtf(doc.blocks, sheet, ROOT)}}`
 }

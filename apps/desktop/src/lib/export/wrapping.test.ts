@@ -1,10 +1,16 @@
 import JSZip from 'jszip'
 import { setHardBreaks } from '@nib/markdown'
 import { afterEach, describe, expect, test } from 'vitest'
+import { DEFAULT_PAGE_SETUP, paperTwips } from '../page-setup'
 import { documentOf } from './document'
 import { toDocx } from './docx'
 import { toRtf } from './rtf'
 import { toPlainText } from './text'
+
+/** The page every test here goes on unless it says otherwise: the A4 the app
+ *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
+ *  this is where the page itself is measured. */
+const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Note', '2026-09-14')
 
 /** A paragraph hard wrapped in the file is one paragraph. A single newline in
  *  the middle of it is a space, which is what CommonMark says, what the reading
@@ -81,14 +87,14 @@ describe('a single newline, when the switch says it breaks the line', () => {
   })
 
   test('is a \\line in the RTF file', () => {
-    const rtf = toRtf(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [])
+    const rtf = toRtf(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [], PAPER)
 
     expect(rtf).toContain('one\\line two')
     expect(rtf).not.toContain('one two')
   })
 
   test('is a real break in the Word document', async () => {
-    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [])
+    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: true }), [], PAPER)
     const zip = await JSZip.loadAsync(bytes)
     const file = zip.file('word/document.xml')
     expect(file).not.toBeNull()
@@ -100,7 +106,7 @@ describe('a single newline, when the switch says it breaks the line', () => {
   })
 
   test('leaves the fence and the wrapped paragraph alone when the switch is off', async () => {
-    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: false }), [])
+    const bytes = await toDocx(documentOf(WRAPPED, 'Note.md', { hardBreaks: false }), [], PAPER)
     const zip = await JSZip.loadAsync(bytes)
     const file = zip.file('word/document.xml')
     expect(file).not.toBeNull()

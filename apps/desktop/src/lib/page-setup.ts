@@ -1,4 +1,4 @@
-import { frontMatter } from '@nib/markdown'
+import { frontMatter, frontMatterValue } from '@nib/markdown'
 
 /** Paper the print dialog understands, in `@page size` spelling. */
 export const PAPER_SIZES = ['A3', 'A4', 'A5', 'Letter', 'Legal'] as const
@@ -159,6 +159,10 @@ export function withRunningText(
   return `<table class="sheet">\n${header}<tbody><tr><td>\n${body}</td></tr></tbody>\n</table>\n${footer}`
 }
 
+/** How many twips make an inch: a twip is a twentieth of a point, which is the unit
+ *  both Word and RTF count a page in. */
+export const TWIPS_PER_INCH = 1440
+
 /** Paper in inches, the unit a native print engine takes. */
 const PAPER_INCHES: Record<Paper, [number, number]> = {
   A3: [11.69, 16.54],
@@ -166,6 +170,13 @@ const PAPER_INCHES: Record<Paper, [number, number]> = {
   A5: [5.83, 8.27],
   Letter: [8.5, 11],
   Legal: [8.5, 14],
+}
+
+/** The date the running text says: what the caller asked for, else the note's own
+ *  `date`, else today. One rule, so the footer of a printed page and the footer of
+ *  a Word document never disagree about what day it is. */
+export function runningDate(source: string, given?: string): string {
+  return given ?? frontMatterValue(source, 'date') ?? new Date().toISOString().slice(0, 10)
 }
 
 export interface PaperInches {
@@ -186,5 +197,54 @@ export function paperInches(setup: PageSetup): PaperInches {
     height,
     margin: Math.round((Number(margin.amount) / PER_INCH[margin.unit]) * 1000) / 1000,
     landscape: setup.orientation === 'landscape',
+  }
+}
+
+/** The same setup as a document writer needs it: the sheet and its margin in twips,
+ *  which is what Word and RTF count a page in, and the running text with its
+ *  placeholders already filled.
+ *
+ *  Here beside `paperInches` rather than in either writer, because the two writers
+ *  would otherwise each hold a copy of the same three things - the table of paper
+ *  sizes, the arithmetic from a CSS length to a printer's unit, and what `${title}`
+ *  stands for - and two copies of a page size is one of them being Letter when the
+ *  other is A4. Which is exactly what this is here to fix: Word and RTF ignored the
+ *  page setup altogether, so a reader on the A4 default got US Letter with an inch of
+ *  margin and A5, landscape and 33mm were dropped without a word.
+ *
+ *  The sheet is given upright, the way `paperInches` gives it, and `landscape` says to
+ *  turn it: Word swaps the two itself for a landscape section, and RTF is written the
+ *  other way round, so each writer says what its own format says rather than being
+ *  handed a shape that suits one of them.
+ *
+ *  A length the settings could not read falls back to the default margin, the same
+ *  answer `pageCss` gives the stylesheet. */
+export interface PaperTwips {
+  /** The upright sheet, in twips. */
+  width: number
+  height: number
+  margin: number
+  landscape: boolean
+  /** The running text, with `${title}` and `${date}` already filled in. Empty for a
+   *  setup that asks for none. */
+  header: string
+  footer: string
+}
+
+export function paperTwips(setup: PageSetup, title: string, date: string): PaperTwips {
+  const [width, height] = PAPER_INCHES[setup.paper]
+  const margin = parseLength(setup.margin) ?? DEFAULT_MARGIN
+  const twips = (value: number) => Math.round(value * TWIPS_PER_INCH)
+
+  return {
+    width: twips(width),
+    height: twips(height),
+    // From the length itself rather than from `paperInches`, which rounds to the
+    // thousandth of an inch a print engine is given: 20 mm is 1134 twips, and
+    // 1133 is what that rounding would have made of it.
+    margin: twips(Number(margin.amount) / PER_INCH[margin.unit]),
+    landscape: setup.orientation === 'landscape',
+    header: setup.header ? fill(setup.header, title, date) : '',
+    footer: setup.footer ? fill(setup.footer, title, date) : '',
   }
 }

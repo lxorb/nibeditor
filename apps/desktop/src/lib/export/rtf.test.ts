@@ -1,7 +1,13 @@
 import { describe, expect, test } from 'vitest'
+import { DEFAULT_PAGE_SETUP, paperTwips } from '../page-setup'
 import { documentOf, type Doc } from './document'
 import type { Picture } from './pictures'
 import { toRtf } from './rtf'
+
+/** The page every test here goes on unless it says otherwise: the A4 the app
+ *  defaults to, with its 20 mm margin and no running text. paper.test.ts beside
+ *  this is where the page itself is measured. */
+const PAPER = paperTwips(DEFAULT_PAGE_SETUP, 'Corpus', '2026-09-14')
 
 /** One of everything the document model knows, so the whole writer is measured
  *  against a single document rather than a fixture per feature. */
@@ -269,7 +275,7 @@ const PICTURES = [
 // Written once: every test below reads the same document, and lexing it per test
 // would be the slowest thing in the file.
 const DOC = documentOf(NOTE, 'Corpus.md')
-const RTF = toRtf(DOC, PICTURES)
+const RTF = toRtf(DOC, PICTURES, PAPER)
 
 describe('the file', () => {
   test('opens as RTF, balances its braces and closes at the end', () => {
@@ -289,7 +295,7 @@ describe('the file', () => {
   test('carries the title, the author and the language', () => {
     expect(RTF).toContain('{\\info{\\title Corpus}{\\author Ada Lovelace}}')
     expect(RTF).toContain('\\deflang1031')
-    expect(toRtf(made([]), [])).toContain('\\deflang1033')
+    expect(toRtf(made([]), [], PAPER)).toContain('\\deflang1033')
   })
 })
 
@@ -297,6 +303,7 @@ describe('headings', () => {
   const LEVELS = toRtf(
     documentOf('# One\n\n## Two\n\n### Three\n\n#### Four\n\n##### Five\n\n###### Six\n', 'L.md'),
     [],
+    PAPER,
   )
 
   test('steps the size down and names the outline level', () => {
@@ -350,7 +357,7 @@ describe('runs', () => {
       ],
     }
 
-    const out = toRtf(doc, [])
+    const out = toRtf(doc, [], PAPER)
     expect(out).toContain('HYPERLINK "https://nib.dev/a%22 \\\\l %22x"')
   })
 
@@ -360,15 +367,16 @@ describe('runs', () => {
    *  document.ts. */
   test('flows a wrapped line, and keeps a break that was asked for', () => {
     expect(RTF).not.toContain(', a\\line ')
-    expect(toRtf(documentOf('one  \ntwo\n', 'Break.md'), [])).toContain('one\\line two')
+    expect(toRtf(documentOf('one  \ntwo\n', 'Break.md'), [], PAPER)).toContain('one\\line two')
   })
 })
 
 describe('escaping', () => {
-  const ODD = toRtf(documentOf('Braces {like} this and a back\\\\slash.\n', 'O.md'), [])
+  const ODD = toRtf(documentOf('Braces {like} this and a back\\\\slash.\n', 'O.md'), [], PAPER)
   const WIDE = toRtf(
     documentOf('ü → 日本語 \u{1f600}\n\nTabbed:\there.\n\nNo\u00a0gap.\n', 'W.md'),
     [],
+    PAPER,
   )
 
   test('escapes the braces and the backslash', () => {
@@ -401,9 +409,12 @@ describe('tables', () => {
   })
 
   test('splits the text column evenly and draws all four borders', () => {
-    expect(RTF).toContain('\\cellx3120')
-    expect(RTF).toContain('\\cellx6240')
-    expect(RTF).toContain('\\cellx9360')
+    // Three columns across the A4 text column, which is the sheet less both 20 mm
+    // margins: 9641 twips. It was 9360 - a letter page with an inch each side -
+    // whatever paper the export was going on.
+    expect(RTF).toContain('\\cellx3214')
+    expect(RTF).toContain('\\cellx6427')
+    expect(RTF).toContain('\\cellx9641')
     expect(RTF).toContain('\\clbrdrt\\brdrs\\brdrw10\\clbrdrl\\brdrs\\brdrw10')
     expect(RTF).toContain('\\clbrdrb\\brdrs\\brdrw10\\clbrdrr\\brdrs\\brdrw10')
   })
@@ -485,7 +496,7 @@ describe('footnotes', () => {
     [{ label: 'one', spans: [{ text: 'The note itself.' }] }],
   )
 
-  const NOTED_RTF = toRtf(NOTED, [])
+  const NOTED_RTF = toRtf(NOTED, [], PAPER)
 
   test('writes the definition at the reference point', () => {
     expect(NOTED_RTF).toContain('{\\super\\chftn}{\\footnote')
@@ -525,8 +536,11 @@ describe('pictures', () => {
     const wide = made([{ kind: 'paragraph', spans: [{ text: 'Wide', picture: 'a/wide.png' }] }])
     const bytes = new Uint8Array(pngHeader(1000, 500))
 
-    expect(toRtf(wide, [picture('a/wide.png', 'image/png', bytes)])).toContain(
-      '\\picw1000\\pich500\\picwgoal9360\\pichgoal4680',
+    // The column is the A4 sheet less both 20 mm margins: 11909 - 2268 twips. It
+    // used to be the 9360 of a letter page with an inch each side, whatever paper
+    // the export was actually going on.
+    expect(toRtf(wide, [picture('a/wide.png', 'image/png', bytes)], PAPER)).toContain(
+      '\\picw1000\\pich500\\picwgoal9641\\pichgoal4821',
     )
   })
 
@@ -542,11 +556,15 @@ describe('pictures', () => {
       },
     ])
 
-    const rtf = toRtf(doc, [
-      picture('a/one.gif', 'image/gif', new Uint8Array([0x47, 0x49, 0x46, 0x38])),
-      // A PNG signature and nothing behind it: no IHDR, so no size to be had.
-      picture('a/two.png', 'image/png', new Uint8Array([0x89, 0x50, 0x4e, 0x47])),
-    ])
+    const rtf = toRtf(
+      doc,
+      [
+        picture('a/one.gif', 'image/gif', new Uint8Array([0x47, 0x49, 0x46, 0x38])),
+        // A PNG signature and nothing behind it: no IHDR, so no size to be had.
+        picture('a/two.png', 'image/png', new Uint8Array([0x89, 0x50, 0x4e, 0x47])),
+      ],
+      PAPER,
+    )
 
     expect(rtf).toContain('[A drawing]')
     expect(rtf).toContain('[A photo]')
@@ -560,7 +578,7 @@ describe('pictures', () => {
  *  nearest of a fixed few, and the plain one keeps the index it always had. */
 describe('a coloured highlight', () => {
   const TONES = `==plain==, ==🔴 red==, ==🟠 orange==, ==🟢 green==, ==🔵 blue==, ==🟣 violet==\n`
-  const COLOURED = toRtf(documentOf(TONES, 'Tones.md'), [])
+  const COLOURED = toRtf(documentOf(TONES, 'Tones.md'), [], PAPER)
 
   test('names a colour of its own for each of the six', () => {
     const used = [...COLOURED.matchAll(/\\highlight(\d+) /g)].map(([, one]) => Number(one))
