@@ -144,10 +144,20 @@ def published(missed: list[str]) -> str | None:
 
 
 def write(revision: str) -> None:
+    """Move the one line, and leave every other line exactly as it was.
+
+    `newline='\\n'` is load bearing on Windows, where Python's text mode would
+    otherwise translate every line ending on the way out and turn a one-line edit into
+    a whole-file rewrite. The flagged package's own test reads this manifest with
+    `include_str!` and splits it on `"\\n[patch.crates-io]\\n"`, so a file that came back
+    with CRLF failed a test about the patch list on the only platform that does that -
+    which is what a dispatch of cef-bump.yml on a Windows runner found.
+    """
     text = MANIFEST.read_text(encoding='utf-8')
     MANIFEST.write_text(
         re.sub(r'^revision = "[0-9a-f]+"', f'revision = "{revision}"', text, count=1, flags=re.M),
         encoding='utf-8',
+        newline='\n',
     )
 
 

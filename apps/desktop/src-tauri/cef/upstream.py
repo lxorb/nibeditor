@@ -62,6 +62,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+# What a line ends with, written out rather than left to the platform: see `edit`.
+NEWLINE = '\n'
+
 HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / 'Cargo.toml'
 # Inside the build output, and that is the point: every check this repository
@@ -171,7 +174,10 @@ def edit(path: Path, before: str, after: str, done: str, what: str) -> None:
             'and it may well have fixed this itself'
         )
 
-    path.write_text(text.replace(before, after, 1), encoding='utf-8')
+    # A one-line edit must not rewrite every line ending in a checkout somebody
+    # else wrote, which is what Python's text mode does on Windows; hence the
+    # explicit newline.
+    path.write_text(text.replace(before, after, 1), encoding='utf-8', newline=NEWLINE)
     print(f'{what}: done')
 
 
