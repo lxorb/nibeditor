@@ -55,6 +55,19 @@ pub fn set_translucency(app: AppHandle, on: bool) -> Result<(), String> {
 
     for window in ours(&app) {
         if on {
+            // The colour the window opened on goes first. A launch that had a ground
+            // remembered painted it on the window's own layer so that the window could be
+            // on screen before there was anything in it, and a material composited behind
+            // an opaque window is a material nobody can see. Both layers, because the
+            // colour was set on both: the window's is what the platform draws behind, and
+            // the webview's is what shows wherever the page is transparent - which, with
+            // the material on, is everywhere. See ground.rs, which is also why a window
+            // that was already translucent never remembers a colour to begin with.
+            let _ = window.set_background_color(None);
+            if let Some(view) = app.get_webview_window(window.label()) {
+                let _ = view.set_background_color(None);
+            }
+
             if let Err(reason) = material::apply(&window) {
                 trouble = Some(reason);
             }

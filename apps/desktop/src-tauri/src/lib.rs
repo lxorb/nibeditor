@@ -56,6 +56,8 @@ mod endpoint;
 mod engine;
 mod front_matter;
 mod fuzzy;
+#[cfg(desktop)]
+mod ground;
 mod highlights;
 mod history;
 #[cfg(desktop)]
@@ -281,6 +283,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         endpoint::automation_result,
         appearance::set_frame,
         appearance::set_translucency,
+        ground::remember_ground,
         apple_notes::read_apple_notes,
         apple_notes::open_full_disk_access,
         launch::take_startup_files,
@@ -315,30 +318,39 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
 
-    // The window comes out of the config, except on nib's own Chromium, where the
-    // interface needs a profile of its own and a profile is asked for when a webview
-    // is built. The config still says what the window looks like; see engine.rs.
+    // The window is taken out of the config on every desktop, and built by `ready`
+    // instead. Two reasons, one per engine, and the config still says what the window
+    // looks like either way; see engine.rs.
+    //
+    // On nib's own Chromium, because the interface needs a profile of its own and a
+    // profile is asked for when a webview is built. On the system's, because a window
+    // the runtime builds is built around its webview - so there is nothing on screen
+    // until the webview runtime has started, which on Windows is between a third and
+    // half of a launch with the screen empty for all of it. Built here, the window is up
+    // in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg_attr(
-        not(feature = "cef"),
+        not(desktop),
         allow(
             unused_mut,
-            reason = "only nib's own Chromium takes the window out of the config"
+            reason = "a phone has no window in the config to take out of it"
         )
     )]
     let mut context = tauri::generate_context!();
-    #[cfg(feature = "cef")]
+    #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
-    #[cfg(not(feature = "cef"))]
-    let builder = builder.setup(ready);
-    #[cfg(feature = "cef")]
+    #[cfg(all(desktop, not(feature = "cef")))]
+    let builder = builder.setup(move |app| ready(app, ui.as_ref()));
+    #[cfg(all(desktop, feature = "cef"))]
     let builder = builder.setup(move |app| {
         engine::gate::say("\"event\":\"cef-initialised\"");
         if let Some(ui) = &ui {
             engine::open_ui_window(app, ui)?;
         }
-        ready(app)
+        ready(app, None)
     });
+    #[cfg(not(desktop))]
+    let builder = builder.setup(|app| ready(app, None));
 
     builder.run(context).unwrap_or_else(|error| {
         eprintln!("Nib could not start: {error}");
@@ -349,7 +361,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
 /// Everything that has to happen once, after the app is built and before the
 /// window is seen: what the webview may load, what the app was launched with, and
 /// then showing the window that was built hidden.
-fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+fn ready(
+    app: &mut tauri::App,
+    ui: Option<&tauri::utils::config::WindowConfig>,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Everything between the last mark and this one is Tauri's own: the context,
     // the window and - on Windows, where it is most of a launch - the webview
     // runtime being started and pointed at the page.
@@ -402,10 +417,40 @@ fn ready(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(desktop)]
     web_tabs::hearing(handle);
 
-    // Built hidden, so nobody watches the window paint itself.
+    // And the window on screen, which is the last thing this does and the first thing
+    // anybody sees. Everything above it costs under two milliseconds together and has to
+    // be in place first: the microphone above all, because a page that asked before
+    // anything was listening waits for ever.
+    //
+    // Built here rather than by the runtime, and opened in the colour it was last seen
+    // in, which is what lets it be on screen before there is anything in it: the webview
+    // runtime starts behind a window somebody can already see. A machine with no colour
+    // remembered yet, and a reader whose ground is the platform's own material rather
+    // than a colour, get what they always got - built hidden, shown once the webview is
+    // there. See ground.rs, which says why that is right rather than merely careful.
+    //
     // The window, not the webview window; see web_tabs.rs.
-    if let Some(window) = app.get_window("main") {
-        window.show()?;
+    #[cfg(all(desktop, not(feature = "cef")))]
+    if let Some(config) = ui {
+        let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
+        match ground::remembered(handle) {
+            Some(colour) => {
+                building.visible(true).background_color(colour).build()?;
+            }
+            None => {
+                building.build()?.show()?;
+            }
+        }
+    }
+
+    // Nib's own Chromium builds it in `setup`, in a profile of its own, and it is built
+    // hidden there; and a phone's window is the activity's and is in neither place.
+    #[cfg(any(not(desktop), feature = "cef"))]
+    {
+        let _ = ui;
+        if let Some(window) = app.get_window("main") {
+            window.show()?;
+        }
     }
 
     trace::mark("window shown");

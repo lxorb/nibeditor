@@ -155,14 +155,17 @@ pub(crate) fn web_store<R: Runtime>(
     Ok(builder)
 }
 
-/// The window the config describes, taken out of it so it is built here instead.
+/// The window the config describes, taken out of it so it is built by our own code
+/// instead. The config keeps saying what the window looks like; only who builds it
+/// changes.
 ///
-/// Only nib's own Chromium needs this, and it needs it for one reason: the
-/// interface has to be in a profile of its own, a profile is asked for when a
-/// webview is built, and a window in `tauri.conf.json` is built by the runtime
-/// before any of our own code runs. So the config keeps saying what the window
-/// looks like and this takes over saying it.
-#[cfg(feature = "cef")]
+/// One reason per engine, and the same mechanism for both. Nib's own Chromium needs
+/// the interface in a profile of its own, and a profile is asked for when a webview is
+/// built. The system's webview needs the window on screen before the webview inside it
+/// exists, and a window the runtime builds cannot be: it is built around its webview,
+/// so nothing is visible until the webview runtime has started - between a third and
+/// half of a launch on Windows. Either way a window in `tauri.conf.json` is built
+/// before any of our own code runs, and this is what takes that over.
 pub(crate) fn take_ui_window(
     context: &mut tauri::Context,
 ) -> Option<tauri::utils::config::WindowConfig> {

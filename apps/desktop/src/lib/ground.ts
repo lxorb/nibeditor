@@ -18,6 +18,7 @@
  */
 
 import { keep } from './stored'
+import { invoke, isDesktop } from './tauri'
 
 /** Where it is kept. The same string is in index.html, which is read before any module
  *  of ours exists and so cannot import this; ground.test.ts holds the two together. */
@@ -47,10 +48,20 @@ export function rememberGround(): void {
     // below has to be the sheet's, not the hint's.
     document.documentElement.style.removeProperty('background')
 
-    const ground = getComputedStyle(document.documentElement)
-      .getPropertyValue('--window-ground')
-      .trim()
+    // The resolved colour rather than the token: `--window-ground` is a custom property
+    // and what it holds is whatever was written there, while a background colour read
+    // off an element is always `rgb(…)` or `rgba(…)` - one shape, with the alpha in it,
+    // which is what both readers of this need. A translucent window comes back as
+    // `rgba(0, 0, 0, 0)`, and that is the answer, not a missing one.
+    const ground = getComputedStyle(document.body).backgroundColor.trim()
+    if (!ground) return
 
-    if (ground) keep(KEY, ground)
+    keep(KEY, ground)
+
+    // And the same value where the crate can reach it, because the crate cannot read
+    // local storage and it is the crate that opens the window. Nothing waits for this
+    // and nothing depends on it: a launch whose file is missing opens the way it always
+    // did. See src-tauri/src/ground.rs.
+    if (isDesktop) void invoke('remember_ground', { colour: ground }).catch(() => undefined)
   })
 }
