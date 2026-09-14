@@ -62,9 +62,10 @@ const MOVED: &str = "nib://web-tab";
 /// The event the window hears when a site asks for something it has to be given: the
 /// camera, the microphone, where you are, notifications, the clipboard to read.
 ///
-/// Only `WebView2` raises the request this carries, so off Windows nothing emits it;
-/// the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Only `WebView2` raises the request this carries, so nothing emits it off Windows -
+/// nor under nib's own Chromium on Windows, where Chromium asks for itself and the ask
+/// module is the same stub it is on a Mac. The `cfg_attr` names that one build.
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
@@ -662,9 +663,10 @@ struct Looked {
 /// while the reader decides, and the only thing either side needs to agree on is which
 /// request is being answered.
 ///
-/// Built only where a permission request is raised, which is Windows; off it the ask
-/// module is a stub and nothing constructs this, so it is allowed to be dead there.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Built only where a permission request is raised, which is `WebView2` on Windows;
+/// everywhere else - the other two desktops, and nib's own Chromium, which asks for
+/// itself - the ask module is a stub and nothing constructs this.
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,

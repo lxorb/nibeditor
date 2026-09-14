@@ -1747,6 +1747,43 @@ webview API is what `tauri-runtime-cef` implements. And the default build: the f
 is off, the trail is compiled, `BUSES` is in the guard, and every `WebView2`-only path
 is still behind `cfg(all(windows, not(feature = "cef")))`.
 
+**And a way to compile the flagged build's own code without Chromium, which batch 2
+found by needing it.** A round of `cef.yml` is forty-five minutes, and until batch 2
+every compile error in the flagged half of the crate cost one. It does not have to: the
+three hundred megabytes are `cef-dll-sys`'s, and **nib's own crate does not depend on
+it** - only `nib-cef` does. So a throwaway package that depends on the app crate with
+the feature on, carrying the same two patches, checks the whole flagged half of the app
+in about a minute and needs no CEF, no CMake and no runner:
+
+```toml
+[dependencies]
+nib = { path = "<the app crate>", features = ["cef"] }
+tauri = { version = "2", features = ["unstable"] }
+
+[patch.crates-io]
+tauri = { path = "<the app crate>/cef/target/upstream/tauri/crates/tauri" }
+tauri-build = { path = "<the app crate>/cef/target/upstream/tauri/crates/tauri-build" }
+dpi = { git = "https://github.com/tauri-apps/winit-gtk4", branch = "master" }
+```
+
+`cargo check` there is the check that `cargo clippy --features cef` cannot be - the
+app's own manifest carries no patch, on purpose - and it is how two dead-code
+allowances in `web_tabs.rs` were found to be wrong: they said `not(windows)` where the
+only build that raises a permission request is `all(windows, not(feature = "cef"))`.
+
+**And one thing that broke on the way, which is worth more than the fix.** The flagged
+build stopped compiling between one round and the next with
+`cannot update the lock file ... because --locked was passed` - no change of nib's, and
+nothing wrong with the code. The `dpi` patch points at a **branch** of somebody else's
+fork (`winit-gtk4`'s `master`, which has to be the same checkout `winit` itself
+resolves to), the lock beside the manifest pins the commit that branch was at, and the
+day the branch moves the lock is out of date. `--locked` then refuses before a line is
+compiled. So `cef.yml` now catches that one failure: it regenerates the lock, carries on
+and measures, leaves the new lock in the run's artefact and says out loud that the one
+in the repository is stale - because the fix is a one-line commit of that file, and the
+alternative, dropping `--locked`, would make every round a different build. It is the
+same fact section 7 records about the pin, arriving through the lock instead.
+
 MEASURED-ROWS-GO-HERE
 
 ---
@@ -1912,6 +1949,15 @@ shape that will actually ship rather than in a standalone program.
   give this binary, a Mac wanted a real bundle with the framework and the helpers in
   it, and Linux has GTK 3 and GTK 4 in one process. The first two are fixed and
   measured; the third is the row below and Emil's.
+- **On macOS a site in a web tab is handed the camera and the microphone without being
+  asked**, and that is the runtime's policy rather than nib's: a webview with a native
+  parent is forced to Alloy style there (#3294), Alloy has no permission UI, and
+  `tauri-runtime-cef` grants media capture itself rather than let CEF's default refuse
+  it - recording a content setting as it goes, so `enumerateDevices` is not redacted. On
+  Windows and Linux the same request is Chromium's own prompt, remembered per origin,
+  which is what section 6 describes. Batch 2 measured the difference and changed
+  nothing: nib *can* pass a permission handler of its own, and whether a Mac should get
+  a silent grant, a silent refusal or nib's own bubble is Emil's call.
 - **An extension installed on the command line lands in *every* profile**, so two
   profiles are necessary and not sufficient. It is the one batch 2 criterion still
   answered no, and it makes batch 4's install the per-profile preference tree rather

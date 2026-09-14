@@ -561,13 +561,22 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     // The place: scrolled, then read out of the page the way `web_look` does when a tab
     // is left. A number rather than a yes, because "the place is kept" is a claim about
     // a number being the same twice.
+    //
+    // The page is made tall first, and that is not cheating: `example.com` is one screen
+    // high and a scroll to 900 on a page with nowhere to go is a scroll to 0, which
+    // would have measured the site rather than the mechanism. What is being asked is
+    // whether an offset set in the page comes back through `web_look`.
+    if let Some(view) = app.get_webview(first) {
+        let _ = view.eval("document.documentElement.style.minHeight = '4000px'");
+    }
+    std::thread::sleep(Duration::from_secs(1));
     let scrolled = crate::web_tabs::web_scroll(app.clone(), tab.clone(), 0.0, 900.0);
     std::thread::sleep(Duration::from_secs(2));
     let (_, y) = looked(app, &tab);
     check(
         "the place on the page is read back out of it",
         scrolled.is_ok() && y > 0.0,
-        &format!("the reading is {y} down the page"),
+        &format!("the reading is {y} down the page, where 900 was asked for"),
     );
 
     // What the bar over the tab is drawn from: the page's own name and the site's own
