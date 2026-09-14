@@ -45,6 +45,7 @@
   import { search, type SearchSort } from './search.svelte'
   import { SidebarWidth } from './sidebar-width.svelte'
   import { viewport } from './viewport.svelte'
+  import Archive from './Archive.svelte'
   import Bookmarks from './Bookmarks.svelte'
   import Links from './Links.svelte'
   import SidebarFoot from './SidebarFoot.svelte'
@@ -694,6 +695,12 @@
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
               {/if}
+
+              <!-- And what the space has put away, at the foot of the list the way the
+                   bookmarks sit at its head: the two sections bracket the files, and the
+                   archive is shut and absent until there is something in it. See
+                   Archive.svelte and docs/archive.md. -->
+              <Archive />
 
               <!-- The space below the last row still belongs to the space, so it
              takes the same menu instead of swallowing the click, and accepts a
