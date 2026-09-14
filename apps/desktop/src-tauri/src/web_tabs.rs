@@ -981,6 +981,14 @@ pub fn hearing(app: &AppHandle) {
 /// Written out rather than parsed, because what is compared is a prefix and both sides
 /// arrive as strings the engine wrote. Everything from the third slash on is the path,
 /// which an origin is not.
+///
+/// Only `WebView2`'s own handler asks it, and the tests. Under nib's own Chromium the
+/// engine puts its own prompt up and nothing here is called; the same `cfg_attr` this
+/// file already wears over `Asked`, for the same reason.
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only the WebView2 handler asks this; see above")
+)]
 fn same_origin(page: &str, asked: &str) -> bool {
     let origin = |url: &str| -> String {
         match url.find("://") {
