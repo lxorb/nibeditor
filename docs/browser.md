@@ -990,6 +990,29 @@ would put nib inside a tab with the site's script beside it.
 signing out of the nib account still empties the vault, and the two are separate on
 purpose - somebody may well want one without the other.
 
+**And everything a browser keeps, nib keeps - on this device, and only on this
+device.** Emil, on batch 2: *"when I close and reopen nib then for web notes the state
+(e.g. cookies etc. also including general application data that would normally be saved
+by browsers) should be saved by nib as well even across application restarts... all the
+cookies and data etc. should be on a per device basis (for each website)."* So the
+browsing profile is a real Chromium profile on disk at
+`<config>/<identifier>/web/Default`, and what lives in it is what lives in a browser
+profile: persistent cookies, `localStorage` and `sessionStorage`, IndexedDB, service
+workers and their caches, the HTTP cache, a permission somebody granted, a per-site
+zoom. **Session cookies too**, which is the one that had to be asked for: CEF drops
+those when the process exits the way a browser drops them when the browser quits, most
+logins are session cookies, and `persist_session_cookies` is the switch that writes them
+to the profile instead - so closing nib is Chrome's *continue where you left off* rather
+than a sign-out. (CEF 151 has no switch for the rest: `persist_user_preferences` is not
+a field of its settings any more, because preferences are persisted for every profile
+with a cache path.)
+
+**None of it syncs, and that is the whole of the per-device rule.** The profile is a
+folder on the machine it was made on; nib's account carries notes, the extension list of
+section 5 and nothing else. A cookie is not a note. Signing in on another machine opens
+the same web note at the same address and asks that site to log you in there, exactly as
+a second computer with the same browser would.
+
 ---
 
 ## 7. Keeping up with Chromium
@@ -1697,6 +1720,34 @@ hosts on Windows, with its views parented into nib's window - and the plan is on
 batch longer and one engine less consistent. That is a worse product, which is why B
 is the recommendation; it is not a dead end, which is why waiting on the gate is
 safe.
+
+### What batch 2 delivered
+
+Emil gave batch 2 its go with one sentence about the shape of it: *"chrome://settings
+should be for the chrome settings. This makes stuff easier for us. We keep the chrome
+settings in chrome. Then we don't have to be scared of updates / changes from their
+side."* That is the whole principle of this batch applied to more than one page -
+**where Chromium already does something, nib stops doing it** - and it decided every
+line below.
+
+**One file of the app's own changed, and two things in it.**
+
+| | |
+| --- | --- |
+| `web_tabs.rs`, the stepping seam | Back and forward are the engine's own history under the flag - `go_back`, `can_go_back`, four calls the released Tauri does not have at all - so the trail of addresses this crate kept is *not kept, not written down and not walked* there. `arrows` and `stepped` are the two `cfg` pairs that say it, and every command around them is the same on both engines |
+| `web_tabs.rs`, the guard | Split in two. The app's own globals are taken away from a page on every engine, because that is the lock that does not depend on a list of labels being right. The hardware buses - Bluetooth, USB, serial, HID, the credential store - are taken away only on the system's engines: there a request for one is refused in silence or answered by a prompt that cannot name the device, and under Chromium it is Chromium that asks, with the picker a reader knows |
+
+**And what did not change, which is most of it.** The `.url` file: the address was
+always the document and the place and the trail always lived in this device's own
+storage, so a file two dozen other programs read is untouched by an engine. The bar,
+the plus chooser, the pane, the overlay logic, the sidebar: no frontend file was opened
+for this batch. `place`, `show`, `hide`, `navigate`, `reload`, `zoom`, `print`, the
+clip, the close - one call each, the same call on both engines, because Tauri's own
+webview API is what `tauri-runtime-cef` implements. And the default build: the feature
+is off, the trail is compiled, `BUSES` is in the guard, and every `WebView2`-only path
+is still behind `cfg(all(windows, not(feature = "cef")))`.
+
+MEASURED-ROWS-GO-HERE
 
 ---
 

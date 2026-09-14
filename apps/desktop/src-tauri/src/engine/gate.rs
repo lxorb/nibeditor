@@ -589,13 +589,22 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     // this binary there is nothing to find, and on the second there is - which is what
     // "a login survives a relaunch" means when the login is a value in a profile on
     // disk.
-    let found = read_mark(app, &tab);
+    let (kept, baked) = read_mark(app, &tab);
     write_mark(app, &tab);
     check(
         "localStorage from an earlier run of the app is still there",
-        found.as_deref() == Some(MARK),
-        &match found {
+        kept.as_deref() == Some(MARK),
+        &match kept {
             Some(one) if one == MARK => "the mark this binary wrote last time".to_string(),
+            Some(one) => format!("something else was there: {one}"),
+            None => "nothing yet, which is what a first run says".to_string(),
+        },
+    );
+    check(
+        "a session cookie from an earlier run of the app is still there",
+        baked.as_deref() == Some(MARK),
+        &match baked {
+            Some(one) if one == MARK => "the session cookie this binary set last time".to_string(),
             Some(one) => format!("something else was there: {one}"),
             None => "nothing yet, which is what a first run says".to_string(),
         },
@@ -610,14 +619,24 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     std::thread::sleep(Duration::from_secs(2));
     let again = web_tab(app, at, SITES[0]);
     std::thread::sleep(SETTLE);
-    let kept = again.is_ok().then(|| read_mark(app, &tab)).flatten();
+    let (over, cooked) = if again.is_ok() {
+        read_mark(app, &tab)
+    } else {
+        (None, None)
+    };
     check(
-        "localStorage survives the tab being closed and opened again",
-        kept.as_deref() == Some(MARK),
-        &match (&again, &kept) {
-            (Err(error), _) => format!("the tab did not open again: {error}"),
-            (Ok(_), Some(one)) if one == MARK => "the mark is still there".to_string(),
-            _ => "the mark was gone".to_string(),
+        "the site's own storage survives the tab being closed and opened again",
+        over.as_deref() == Some(MARK) && cooked.as_deref() == Some(MARK),
+        &match (&again, &over, &cooked) {
+            (Err(error), _, _) => format!("the tab did not open again: {error}"),
+            (Ok(_), Some(one), Some(two)) if one == MARK && two == MARK => {
+                "the value and the cookie are both still there".to_string()
+            }
+            (Ok(_), one, two) => format!(
+                "localStorage {}, the cookie {}",
+                if one.is_some() { "kept" } else { "**gone**" },
+                if two.is_some() { "kept" } else { "**gone**" }
+            ),
         },
     );
 
@@ -672,30 +691,66 @@ fn looked(app: &AppHandle, tab: &str) -> (String, f64) {
     )
 }
 
-/// The mark an earlier run of this binary left in the site's own storage, if any.
-fn read_mark(app: &AppHandle, tab: &str) -> Option<String> {
-    let view = app.get_webview(&format!("web-{tab}"))?;
-    let (sending, waiting) = std::sync::mpsc::channel::<String>();
-    view.eval_with_callback(
-        format!("(function () {{ try {{ return localStorage.getItem('{MARK}') || '' }} catch (error) {{ return '' }} }})()"),
-        move |answer| {
-            let _ = sending.send(answer);
-        },
+/// What an earlier run of this binary left behind in the site's own storage: the value
+/// in `localStorage`, and the **session cookie** beside it.
+///
+/// Two of them because they are kept by two different mechanisms and only one of them
+/// is a switch. `localStorage` is on disk because the profile is; a session cookie is
+/// dropped when the process exits unless `persist_session_cookies` is on, and most
+/// logins are session cookies - which is the half of Emil's *"cookies etc. ... even
+/// across application restarts"* that had to be asked for. See `cef/src/main.rs`.
+fn read_mark(app: &AppHandle, tab: &str) -> (Option<String>, Option<String>) {
+    let said = ask_page(
+        app,
+        tab,
+        &format!(
+            "(function () {{ \
+               var kept = ''; var baked = ''; \
+               try {{ kept = localStorage.getItem('{MARK}') || '' }} catch (error) {{}} \
+               try {{ \
+                 var found = document.cookie.split('; ').find(function (one) {{ \
+                   return one.indexOf('{MARK}=') === 0 \
+                 }}); \
+                 baked = found ? found.slice('{MARK}='.length) : '' \
+               }} catch (error) {{}} \
+               return kept + '|' + baked \
+             }})()"
+        ),
     )
-    .ok()?;
+    .unwrap_or_default();
 
-    let answer = waiting.recv_timeout(Duration::from_secs(10)).ok()?;
-    let said = serde_json::from_str::<String>(&answer).unwrap_or_default();
-    (!said.is_empty()).then_some(said)
+    let (kept, baked) = said.split_once('|').unwrap_or_default();
+    (
+        (!kept.is_empty()).then(|| kept.to_owned()),
+        (!baked.is_empty()).then(|| baked.to_owned()),
+    )
 }
 
-/// And the mark left behind for the next run to find.
+/// And both marks left behind for the next run of the process to find.
+///
+/// The cookie carries no `expires` and no `max-age`, which is what makes it a session
+/// cookie: it is the kind a login uses and the kind that is gone tomorrow unless the
+/// profile was told to keep it.
 fn write_mark(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&format!("web-{tab}")) {
         let _ = view.eval(format!(
-            "try {{ localStorage.setItem('{MARK}', '{MARK}') }} catch (error) {{}}"
+            "try {{ localStorage.setItem('{MARK}', '{MARK}') }} catch (error) {{}}; \
+             try {{ document.cookie = '{MARK}={MARK}; path=/; SameSite=Lax' }} catch (error) {{}}"
         ));
     }
+}
+
+/// One script run in the page, and the answer it returned.
+fn ask_page(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
+    let view = app.get_webview(&format!("web-{tab}"))?;
+    let (sending, waiting) = std::sync::mpsc::channel::<String>();
+    view.eval_with_callback(script.to_owned(), move |answer| {
+        let _ = sending.send(answer);
+    })
+    .ok()?;
+
+    let answer = waiting.recv_timeout(Duration::from_secs(10)).ok()?;
+    serde_json::from_str::<String>(&answer).ok()
 }
 
 /// One of the engine's own pages, in a webview beside the others.

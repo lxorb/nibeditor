@@ -182,9 +182,26 @@ jobs:
       # libraries want the static CRT and the Cargo config that asks for it is only
       # read from the directory a build runs in upwards; see
       # apps/desktop/src-tauri/cef/.cargo/config.toml.
+      #
+      # **And what happens the day that branch moves**, which is the one way this build
+      # can break through no change of nib's: `--locked` refuses to update the lock, the
+      # build stops before it compiles a line, and the run has nothing to say. So a
+      # failure here is caught once: the lock is regenerated, the file is put where the
+      # artefact will carry it, the run carries on and measures - and the job says out
+      # loud that the lock in the repository is out of date, because the fix is a
+      # one-line commit of the file this step leaves behind and not a workflow that
+      # quietly stops pinning anything.
       - name: The flagged build
         working-directory: apps/desktop/src-tauri/cef
-        run: cargo build --release --locked
+        run: |
+          if cargo build --release --locked; then
+            exit 0
+          fi
+
+          echo '::warning::the flagged lock file no longer resolves; it is in the artefact as Cargo.lock.new'
+          cargo generate-lockfile
+          cp Cargo.lock "$GITHUB_WORKSPACE/Cargo.lock.new"
+          cargo build --release
 
       # The run, and **the one step whose colour means something**: `gate.py` exits 0
       # whenever it wrote its table, with the verdict in the table, so this job being red
@@ -242,6 +259,10 @@ jobs:
         if: always()
         with:
           name: cef-gate-${{ matrix.os }}
-          path: gate-out/**
+          # The lock beside the table, on the one kind of run that regenerated it: see
+          # the flagged build above.
+          path: |
+            gate-out/**
+            Cargo.lock.new
           if-no-files-found: warn
           retention-days: 7

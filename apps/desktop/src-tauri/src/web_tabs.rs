@@ -32,7 +32,11 @@
 //! before the page's first script runs, along with the devices nobody asked to
 //! hand over. See `GUARD`.
 
-use std::collections::{HashMap, HashSet};
+// The map is the trail's, and the trail is only kept on an engine that cannot be asked;
+// see `Trail`.
+#[cfg(not(feature = "cef"))]
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
@@ -105,7 +109,6 @@ const GUARD: &str = r"(function () {
     // A page that has frozen its own globals keeps them. The capabilities are
     // what actually refuse the call; this is the second lock, not the first.
   }
-
 })()";
 
 /// The buses a page can reach hardware over, taken away where the engine has no chooser

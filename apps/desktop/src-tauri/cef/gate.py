@@ -1245,7 +1245,8 @@ def batch_two(report: dict) -> dict:
         'a login survives the tab being closed and opened again': answered(
             cef, 'closed and opened again'
         ),
-        'a login survives a relaunch': answered(again, 'localStorage from an earlier run'),
+        'localStorage survives a relaunch': answered(again, 'localStorage from an earlier run'),
+        'a session cookie survives a relaunch': answered(again, 'session cookie from an earlier'),
         'an overlay can keep its own ground over a page': answered(cef, 'a photograph'),
         'the page tells the window its name': answered(cef, 'what the page is called'),
         "the page tells the window the site's mark": answered(cef, "the site's own mark"),
