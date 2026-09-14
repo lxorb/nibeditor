@@ -1451,8 +1451,8 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    extension service starts, so a command-line extension is installed into *every*
    profile in the process, the primary one and nib's alike. Two profiles are therefore
    necessary and not sufficient: **the install has to be profile-scoped too**, which
-   makes batch 4's route the per-profile preference tree rather than a switch, and
-   makes this the one criterion of the six that is still no.
+   makes batch 4's route the per-profile preference tree rather than a switch, and makes
+   this one of the two criteria still answered no.
 2. **`chrome://settings` is refused in a webview inside nib's own window on macOS, and
    the refusal segfaults.** This is the one that touches what Emil asked for by name.
    CEF has two browser styles and only Chrome style has Chromium's own pages; the
@@ -1475,10 +1475,13 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    CEF's browser process failing to answer a renderer within two seconds, which is a
    blocked UI thread. The gate now gives a tab ninety seconds, says so, carries on to
    everything else, and round-trips the main thread at each step so that "the runtime is
-   waiting" and "the main thread has stopped" are told apart in the table. It is
-   upstream's either way: the same runtime opens five webviews in one window on a Mac.
+   waiting" and "the main thread has stopped" are told apart in the table - and the
+   answer is that the main thread stops, from that call onwards, which is why every
+   later step reports "the window never answered" rather than a refusal. It is
+   upstream's either way: the same runtime opens nib's interface and two web tabs in one
+   window on a Mac and keeps answering.
 
-**What batch 1.5 changed, in six files and no new ones.**
+**What batch 1.5 changed, in eight files and no new ones.**
 
 | | |
 | --- | --- |
@@ -1486,7 +1489,7 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
 | `apps/desktop/src-tauri/cef/gate.py` | the layout Chromium looks for (a real bundle on a Mac), the diagnosis of a build that never got a window, the six criteria as rows, and the exit code that is now 0 whenever a table was written |
 | `apps/desktop/src-tauri/cef/src/main.rs` | `NIB_CEF_ARGS`, so a run can ask Chromium for `--enable-logging=stderr` without a rebuild |
 | `apps/desktop/src-tauri/src/engine/gate.rs` | a website in a window of its own for criterion 4, ninety seconds of patience per web tab, a round trip to the main thread after each step, everything inside a 1024 by 768 screen, and the engine's own pages last because that step can take the process with it |
-| `apps/desktop/src-tauri/cef/bump.py` | the pin job's own fault: a report that ended without a newline, a null that could mean either "no answer" or "nobody could ask", and a one-line edit that rewrote every line ending on Windows |
+| `apps/desktop/src-tauri/cef/bump.py`, `upstream.py` | the pin job's own fault: a report that ended without a newline, a null that could mean either "no answer" or "nobody could ask", and a one-line edit that rewrote every line ending on Windows |
 | `.github/workflows/cef.yml`, `cef-bump.yml` | the sandbox said out loud, `pefile` and `gdb` for the diagnosis, a temporary spaces folder, and a `propose` job that only opens a pull request from the default branch |
 
 ### The gate table
