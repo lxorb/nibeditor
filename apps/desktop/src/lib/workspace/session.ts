@@ -130,7 +130,7 @@ export interface Session {
   rightPanel?: Panel | null
 }
 
-const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'links']
+const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'links', 'footnotes']
 
 function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)

@@ -261,8 +261,11 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Fullscreen `F11`
 - [x] Zoom in/out/reset
 - [x] Toggle sidebar `Ctrl+Shift+L`
-- [x] Outline and file tree panels, plus Search and Links, which is the four
-      the sidebar has; no Articles - see section 9
+- [x] Outline and file tree panels, plus Search, Links and Footnotes, which is the
+      five the sidebar has; no Articles - see section 9. The four that were there
+      first each have a key; Footnotes is reached from the tab strip and from the
+      palette, because a fifth combination nobody asked for is a key taken away from
+      whatever they might have wanted it for
 - [x] Word count (words, characters, lines, reading time), and with something
       selected the words and the characters read as `3/47w` - this many of that
       many. No word for it and nothing to turn on: the second number is what the
@@ -537,11 +540,12 @@ Features Typora does not have, which are the reason this exists.
       already a split, up to four with linked scrolling; a third arrangement of
       the same tabs would need a second answer to every question the first two
       have settled
-- [x] The outline and the links panel can be held on one note while another is
-      written in the pane beside it: an outline to read down on the left, the note
-      it is about on the right. One press in the panel's own row holds it and
-      lets it go, the note it is held on is named quietly over it, and pressing a
-      row takes you to that note wherever it is open. It lasts the sitting - a
+- [x] The three panels that are about one note - the outline, the links and the
+      footnotes - can be held on it while another is written in the pane beside it: an
+      outline to read down on the left, the note it is about on the right. One press
+      in the panel's own row holds it and lets it go, the note it is held on is named
+      quietly over it, and pressing a row takes you to that note wherever it is open.
+      It lasts the sitting - a
       panel held on a note nobody remembers holding it on is worse than one that
       simply follows - and it is not offered on a handheld, which has one document
       and so nothing to hold a panel against
@@ -712,6 +716,15 @@ Features Typora does not have, which are the reason this exists.
       to the definition at the bottom. In the order the words reach them, with the
       ones nothing points at after and drawn quiet - worth seeing precisely
       because nothing points at them
+- [x] A Footnotes panel: the same rows on a tab of their own, which is the fifth the
+      sidebar has. A footnote is two things in two places - the mark in the middle of a
+      sentence and what it says at the bottom - and this is the one screen that reaches
+      both: the row goes to the mark, the sign at the end of it goes to the definition,
+      and the count is in the heading. The section under the Outline's headings stays
+      where it is, because it costs nothing and it is where somebody reading the shape
+      of a note would look. The panel moves to either side and can be held on one note
+      while another is written beside it, exactly as the Outline and the Links panel
+      can; see section 17
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
 - [x] Selecting several notes with Ctrl and Shift, moved or deleted together
 - [x] Running a JavaScript fence from the note (`Ctrl+Enter`, or the play button

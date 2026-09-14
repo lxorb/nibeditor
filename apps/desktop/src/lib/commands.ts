@@ -1157,6 +1157,15 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.links'),
       run: () => revealPanel('links'),
     },
+    // The fifth panel. No key of its own: the four that have one are the four that
+    // had one, and a fifth combination nobody asked for is a key taken away from
+    // whatever the reader might have wanted it for. The palette is how it is reached
+    // without pointing, and the tab strip is how it is reached with.
+    {
+      id: 'footnotes-panel',
+      label: t('Footnotes'),
+      run: () => revealPanel('footnotes'),
+    },
     { id: 'graph', label: t('Graph'), run: () => workspace.openGraph() },
     // Round the regions of the window, and round the spaces. Here as well as on a
     // key, because the palette is where somebody looks for a thing they have not

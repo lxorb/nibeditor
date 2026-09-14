@@ -221,6 +221,11 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 
+Footnotes is the fifth panel and has no key of its own. The four above are the four
+that had one, and a fifth combination nobody asked for is a key taken away from
+whatever a reader might have wanted it for: the tab strip and the palette are how it
+is reached.
+
 Each of the four opens its panel **and puts the keyboard in it**, and pressing it
 again while the keyboard is already there gives the note the keyboard back. One
 key there and one key back: the alternative is a key that opens something and a
