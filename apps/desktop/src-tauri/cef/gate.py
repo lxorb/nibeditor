@@ -1007,6 +1007,21 @@ def said(result: dict, name: str) -> dict | None:
     return None
 
 
+def stalled(result: dict) -> str | None:
+    """Where the app's main thread stopped answering, if it did.
+
+    The gate asks the main thread to say hello after each step, and on Windows it stops
+    answering the moment a second web tab is asked for. Everything after that is
+    unanswerable rather than answered no - a webview cannot be created and a page cannot
+    be navigated while the thread that owns the window is not running - so every
+    criterion that depends on a later step says so instead of blaming the engine.
+    """
+    for one in result.get('events') or []:
+        if one.get('event') == 'pulse' and 'blocked' in str(one.get('main_thread', '')):
+            return str(one.get('after'))
+    return None
+
+
 def criteria(report: dict) -> list[dict]:
     """Batch 2's six criteria, each with the measurement that answers it.
 
@@ -1021,6 +1036,7 @@ def criteria(report: dict) -> list[dict]:
     ships = report.get('ships') or {}
     tabs = report.get('tabs') or 2
     band = BANDS.get(platform.system(), {})
+    stopped = stalled(cef)
 
     def answer(number: int, name: str, ok: bool | None, note: str) -> dict:
         return {'n': number, 'name': name, 'ok': ok, 'note': note}
@@ -1037,15 +1053,34 @@ def criteria(report: dict) -> list[dict]:
         )
     )
 
+    # Two things, not one: the tabs have to have opened *and* one browser process has
+    # to have served them. A count of one browser process taken while only one tab is up
+    # answers a different question, and on Windows that is exactly the run there is.
     count = browsers(cef, tabs)
-    out.append(
-        answer(
-            2,
-            f'one browser process serves {tabs} web tabs',
-            None if count is None else count == 1,
-            'not measured' if count is None else f'{count} browser processes',
+    opened = said(cef, 'every web tab opened')
+    all_opened = opened is not None and bool(opened.get('ok'))
+    if count is None or opened is None:
+        note = f'not measured{f"; the main thread was blocked after {stopped}" if stopped else ""}'
+        out.append(answer(2, f'one browser process serves {tabs} web tabs', None, note))
+    elif not all_opened:
+        out.append(
+            answer(
+                2,
+                f'one browser process serves {tabs} web tabs',
+                None,
+                f'not answered: {opened.get("note")} web tabs opened'
+                + (f'; the main thread was blocked after {stopped}' if stopped else ''),
+            )
         )
-    )
+    else:
+        out.append(
+            answer(
+                2,
+                f'one browser process serves {tabs} web tabs',
+                count == 1,
+                f'{count} browser processes for {opened.get("note")} tabs',
+            )
+        )
 
     # Criterion 3 is the one the app's own check cannot answer on its own: it knows a
     # webview was created and not whether Chromium then let it navigate. CEF says so on
@@ -1059,7 +1094,17 @@ def criteria(report: dict) -> list[dict]:
         if 'blocked in Alloy-style browser' in line
     ]
     pages = said(cef, "the engine's own pages")
-    if blocked:
+    if stopped and not blocked:
+        # Nothing was refused; nothing could be asked.
+        out.append(
+            answer(
+                3,
+                'chrome://settings and chrome://extensions load',
+                None,
+                f'not answered: the main thread was blocked after {stopped}',
+            )
+        )
+    elif blocked:
         out.append(
             answer(
                 3,
@@ -1085,6 +1130,14 @@ def criteria(report: dict) -> list[dict]:
     if inside is not None and in_tab is not None:
         both = bool(inside.get('ok')) and bool(in_tab.get('ok'))
         note = f'{in_tab.get("note")}; {inside.get("note")}'
+        if both is False and not bool(in_tab.get('ok')) and stopped:
+            # The page the extension was to be seen in never opened, so only the half
+            # about nib's own interface was actually measured.
+            both = None
+            note = (
+                f'half answered: {inside.get("note")}, and the page the gate '
+                f'opens itself never opened: the main thread was blocked after {stopped}'
+            )
     out.append(answer(4, 'an extension runs in a web tab and not in the interface', both, note))
 
     was = launch_ms(control)
