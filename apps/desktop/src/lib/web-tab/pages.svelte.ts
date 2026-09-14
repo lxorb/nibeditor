@@ -603,9 +603,33 @@ class Pages {
     if (!page) return
 
     clearTimeout(page.parking)
+
+    if (!isDesktop || !page.live) {
+      this.held.delete(tabId)
+      grants.dropped(tabId)
+      if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+      return
+    }
+
+    void this.closing(tabId)
+  }
+
+  /** Where the reading got to, written down before the webview goes.
+   *
+   *  A tab switched away from has already had its place written by `hide`, and a
+   *  parked one by `park` - but the tab a reader closes is usually the one in front of
+   *  them, and that road wrote nothing: the page was taken down with the place still
+   *  only inside it, so opening the note again landed at the top of the site with no
+   *  trail behind the arrows. The place is read first and the page closed after,
+   *  because `look` asks the page itself and a webview that has gone answers nothing.
+   *  The tab is out of the map before the close either way, so nothing draws a page
+   *  that is on its way out. */
+  private async closing(tabId: string): Promise<void> {
+    await this.look(tabId)
+
     this.held.delete(tabId)
     grants.dropped(tabId)
-    if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+    await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
   /** Every page whose tab has gone, closed.
