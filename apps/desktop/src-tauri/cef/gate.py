@@ -1047,15 +1047,36 @@ def criteria(report: dict) -> list[dict]:
         )
     )
 
+    # Criterion 3 is the one the app's own check cannot answer on its own: it knows a
+    # webview was created and not whether Chromium then let it navigate. CEF says so on
+    # stderr when it refuses - *"Navigation to chrome://settings/ is blocked in
+    # Alloy-style browser"* - and on macOS it always refuses, because a browser given a
+    # native parent view is forced to Alloy style there (upstream issue #3294) and a
+    # `chrome://` page is Chrome style's. So the log wins over the check.
+    blocked = [
+        line.strip()
+        for line in cef.get('log') or []
+        if 'blocked in Alloy-style browser' in line
+    ]
     pages = said(cef, "the engine's own pages")
-    out.append(
-        answer(
-            3,
-            'chrome://settings and chrome://extensions load',
-            None if pages is None else bool(pages.get('ok')),
-            'not measured' if pages is None else str(pages.get('note')),
+    if blocked:
+        out.append(
+            answer(
+                3,
+                'chrome://settings and chrome://extensions load',
+                False,
+                f'refused: {blocked[0].split("] ", 1)[-1]}',
+            )
         )
-    )
+    else:
+        out.append(
+            answer(
+                3,
+                'chrome://settings and chrome://extensions load',
+                None if pages is None else bool(pages.get('ok')),
+                'not measured' if pages is None else str(pages.get('note')),
+            )
+        )
 
     inside = said(cef, "never reaches the app's own interface")
     in_tab = said(cef, 'reaches a page in the browsing profile')

@@ -1265,7 +1265,11 @@ expressible, and `engine::web_store` is where the choice is made.
 way round.** An extension installed by Chromium's command line or by its policy
 mechanisms lands in the primary profile - so the browsing profile has to be the
 primary one and **nib's own interface has to be the named profile beside it**, which
-is the reverse of the `app` and `web` sketch. The layout is now
+is the reverse of the `app` and `web` sketch. (Batch 1.5 measured the first half of
+that sentence and it is *wrong about the command line*: `--load-extension` is read as
+each profile's extension service starts, so it lands in **every** profile, nib's
+interface included. The layout below is still the right one, for the policy half; the
+consequence is below in batch 1.5.) The layout is now
 `<config>/web/Default` for the web and `<config>/web/app` for the interface, and it
 has one consequence worth knowing before batch 2: the interface's window has to be
 built in Rust rather than by `tauri.conf.json`, because a window in the config cannot
@@ -1435,12 +1439,22 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    necessary and not sufficient: **the install has to be profile-scoped too**, which
    makes batch 4's route the per-profile preference tree rather than a switch, and
    makes this the one criterion of the six that is still no.
-2. **A webview's own title handler is never called under this runtime; a window's is.**
-   The interface's title arrived (its handler is on the window `engine::open_ui_window`
-   builds) and the handlers on the two `chrome://` webviews `add_child` made were never
-   called at all, for a title `chrome://settings` certainly sets. So the gate reads both
-   halves of criterion 4 through a window of its own now, and the runtime's
-   per-webview handler is a bug to report upstream.
+2. **`chrome://settings` is refused in a webview inside nib's own window on macOS, and
+   the refusal segfaults.** This is the one that touches what Emil asked for by name.
+   CEF has two browser styles and only Chrome style has Chromium's own pages; the
+   runtime's own comment says the rest: *"on macOS a browser given a native parent view
+   - which is how every webview here is hosted - is forced to Alloy style whatever the
+   application asked for, because Chrome style does not support a native parent there"*
+   (upstream issue #3294). So the log says
+   `Navigation to chrome://settings/ is blocked in Alloy-style browser`, a
+   `blink.mojom.Widget` message is rejected, and the process dies with `SIGSEGV` -
+   which is also why batch 1.5's first run measured criterion 3 as "2 of 2" and meant
+   only "two webviews were created". A window of its own is Chrome style even on macOS,
+   so the page is reachable there; putting `chrome://settings` in a pane of nib's own
+   window is not, on that platform, until #3294 moves. **Criterion 3 is therefore a
+   platform row rather than a yes**, the gate reads CEF's refusal off the log rather
+   than trusting the creation, and it opens the engine's own pages last so the crash
+   costs one row instead of the table.
 3. **A second web tab hangs on Windows.** The first opens; the second never comes back
    from the app's own command, with CEF logging *"Timeout of new browser info response
    for frame"* and a Mojo `blink.mojom.WidgetHost` rejection first - and that timeout is

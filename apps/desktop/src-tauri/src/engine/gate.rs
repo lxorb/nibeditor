@@ -173,8 +173,9 @@ pub(crate) fn start(app: &AppHandle) {
     });
 }
 
-/// The sequence, in the order the numbers are wanted: a launch with nothing open,
-/// then one web tab, then two, then the engine's own pages.
+/// The sequence, in the order the numbers are wanted: a launch with nothing open, then
+/// one web tab, then two, then a website of the gate's own - and the engine's own pages
+/// last, because that is the step that can take the process with it.
 fn walk(app: &AppHandle, tabs: usize) {
     say("\"event\":\"tabs\",\"count\":0");
     pulse(app, "the window");
@@ -217,23 +218,11 @@ fn walk(app: &AppHandle, tabs: usize) {
     say("\"event\":\"shot:app-and-tabs\"");
     std::thread::sleep(Duration::from_secs(2));
 
-    // Then the engine's own pages, each in a webview of its own, because a page
-    // that cannot be reached is the row that decides batch 3 - and a website of the
-    // gate's own beside them, which is the half of criterion 4 batch 1 could not see.
-    let mut pages: Vec<String> = Vec::new();
-    for (at, address) in PAGES.iter().enumerate() {
-        let label = format!("gate-page-{at}");
-        match page(app, &label, address, if at % 2 == 0 { 60.0 } else { 330.0 }) {
-            Ok(()) => {
-                say(&format!(
-                    "\"event\":\"page\",\"label\":\"{label}\",\"url\":\"{address}\""
-                ));
-                pages.push(label);
-            }
-            Err(error) => check(&format!("{address} opens in a webview"), false, &error),
-        }
-    }
-
+    // A website of the gate's own, in a window of its own: the half of criterion 4
+    // batch 1 could not see. **Before the engine's own pages, deliberately**, because
+    // those can take the process with them - `chrome://settings` is refused in an
+    // Alloy-style browser and the refusal segfaults - and a crash in the last step of
+    // the walk costs one row rather than every row.
     let probe = "gate-web-0";
     match probe_window(app, probe, PROBE) {
         Ok(()) => say(&format!(
@@ -248,19 +237,43 @@ fn walk(app: &AppHandle, tabs: usize) {
     }
 
     std::thread::sleep(SETTLE);
+    say("\"event\":\"shot:app-and-a-page\"");
+    pulse(app, "the gate's own page");
+
+    answers(app, tabs, &tab_labels, probe);
+
+    // And last of all the engine's own pages, each in a webview of its own, because a
+    // page that cannot be reached is the row that decides batch 3.
+    let mut pages: Vec<String> = Vec::new();
+    for (at, address) in PAGES.iter().enumerate() {
+        let label = format!("gate-page-{at}");
+        match page(app, &label, address, if at % 2 == 0 { 60.0 } else { 330.0 }) {
+            Ok(()) => {
+                say(&format!(
+                    "\"event\":\"page\",\"label\":\"{label}\",\"url\":\"{address}\""
+                ));
+                pages.push(label);
+            }
+            Err(error) => check(&format!("{address} opens in a webview"), false, &error),
+        }
+    }
+    std::thread::sleep(SETTLE);
     say("\"event\":\"shot:chrome-pages\"");
     pulse(app, "the pages");
-
-    answers(app, tabs, &tab_labels, &pages, probe);
+    check(
+        "every one of the engine's own pages opened",
+        pages.len() == PAGES.len(),
+        &format!("{} of {}", pages.len(), PAGES.len()),
+    );
 }
 
 /// The checks, once everything that was going to happen has happened.
-fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String], probe: &str) {
+fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], probe: &str) {
     let webviews = app.webviews().len();
-    // The interface, every web tab and every one of the engine's own pages, all in the
-    // one window - the gate's own website is a window of its own and is counted with
-    // them, because `webviews()` is the app's and not the window's.
-    let asked = 1 + tabs + PAGES.len() + 1;
+    // The interface and every web tab in the one window, plus the gate's own website,
+    // which is a window of its own and is counted with them because `webviews()` is the
+    // app's and not the window's. The engine's own pages come after this.
+    let asked = 1 + tabs + 1;
     check(
         "the interface and every tab are webviews of one window",
         webviews >= asked,
@@ -272,12 +285,6 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]
         tab_labels.len() == tabs,
         &format!("{} of {tabs}", tab_labels.len()),
     );
-    check(
-        "every one of the engine's own pages opened",
-        pages.len() == PAGES.len(),
-        &format!("{} of {}", pages.len(), PAGES.len()),
-    );
-
     // The whole reason there are two profiles. An extension is installed into a
     // profile, so an extension in the browsing profile has no way to reach the
     // app's own document - and with one profile the spike's screenshot showed it
@@ -460,14 +467,15 @@ fn page(app: &AppHandle, label: &str, url: &str, y: f64) -> Result<(), String> {
 
 /// A website in a window of its own, in the engine's primary profile.
 ///
-/// **Why a window rather than a webview beside the others.** The gate learns that an
-/// extension's content script ran by being told a document renamed itself, and on the
-/// first run of batch 1.5 only the *window's* own handler was ever called: the
-/// interface's title arrived with the extension's mark on it, and the handlers on the
-/// webviews `add_child` made - the two `chrome://` pages - were never called at all,
-/// for a title `chrome://settings` certainly sets. So the one channel this runtime
-/// demonstrably has is a window's, and criterion 4 needs both halves through one
-/// channel or it is comparing two different instruments.
+/// **Why a window rather than a webview beside the others.** Two reasons, and the
+/// second one only became visible once the first run of batch 1.5 got this far. A
+/// window's own title handler is the one channel this runtime is known to call - the
+/// interface's title arrived with the extension's mark on it - while the handlers on
+/// the webviews `add_child` made were never called, although those two webviews were
+/// also the two whose navigation CEF refused, so which of the two explains the silence
+/// is not yet settled. And on macOS a webview given a native parent is forced to Alloy
+/// style, where a `chrome://` page is refused; a window of its own is Chrome style, so
+/// this is also the shape a page Chromium reserves for itself can be put in there.
 ///
 /// It sets no storage of its own, which is what leaves it in the primary profile: the
 /// browsing one, where an extension a reader installs lands. Small and out of the way,
