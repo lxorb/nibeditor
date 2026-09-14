@@ -628,8 +628,8 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     let shot = tauri::async_runtime::block_on(crate::web_tabs::web_shot(app.clone(), tab.clone()));
     check(
         "a page answers a photograph with nothing, so an overlay keeps its own ground",
-        matches!(shot, Ok(None)),
-        match shot {
+        matches!(&shot, Ok(None)),
+        match &shot {
             Ok(None) => "nothing, which is what the window expects here",
             Ok(Some(_)) => "a picture, which is better than the window expects",
             Err(_) => "an error, which the window reads as nothing",
