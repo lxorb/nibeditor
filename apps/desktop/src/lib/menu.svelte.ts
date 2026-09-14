@@ -1,5 +1,6 @@
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { DIVIDER, type MenuEntry } from './menu-item'
+import { archive, canArchive, unarchive } from './archive'
 import { chosenIcon } from './chosen-icon'
 import { setFileIcon } from './file-icon'
 import { iconChoice } from './icon-choice.svelte'
@@ -110,6 +111,35 @@ export function excludeEntry(path: string | null | undefined): MenuEntry[] {
     {
       label: workspace.excluded.names(path) ? t('Search here again') : t('Leave out of search'),
       run: () => workspace.excluded.toggle(path),
+    },
+  ]
+}
+
+/** Putting a row away, or taking it back.
+ *
+ *  One row and not two, because it is one gesture in two directions and a menu with both
+ *  in it would be a menu with one row that does nothing. Here rather than in the file
+ *  list for the reason the icon is: it belongs to the thing, and every list that shows
+ *  one offers it - a row in the tree, a tab, a website's own menu, a row in the archive.
+ *
+ *  A folder stands for everything under it. A note inside an archived folder is offered
+ *  nothing: its own mark is not what is hiding it, so a row that said Unarchive and left
+ *  it hidden would be a row that lied. Taking back the folder is what brings it back, and
+ *  the folder's own row is where that is offered.
+ *
+ *  A `.webloc` is offered nothing either: that is macOS's shortcut format, this app has
+ *  never written one, and there is no key in it to write the mark into. See `canArchive`
+ *  in archive.ts. */
+export function archiveEntry(path: string | null | undefined): MenuEntry[] {
+  if (!path || !canArchive(path)) return []
+
+  const archived = workspace.leftOut.isArchived(path)
+  if (archived && !workspace.leftOut.namesArchived(path)) return []
+
+  return [
+    {
+      label: archived ? t('Unarchive') : t('Archive'),
+      run: () => void (archived ? unarchive(path) : archive(path)),
     },
   ]
 }

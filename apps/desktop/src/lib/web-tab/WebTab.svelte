@@ -19,7 +19,7 @@
   import { onMount, untrack } from 'svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { t } from '../i18n.svelte'
-  import { menu } from '../menu.svelte'
+  import { archiveEntry, menu } from '../menu.svelte'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
@@ -323,7 +323,9 @@
       }}
       onclip={clip}
       onmenu={(event: MouseEvent) =>
-        menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
+        menu.show(event, [...webRows(page, zoom, actions), ...archiveEntry(tab.path)], {
+          title: t('Website'),
+        })}
       onsite={() => (showingSite = !showingSite)}
       ontyping={(on: boolean) => {
         // By id, for the reason the teardown above says: a blur arrives while the pane is

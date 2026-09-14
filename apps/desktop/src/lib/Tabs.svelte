@@ -4,7 +4,14 @@
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { DIVIDER, menu, shareEntry, stackEntries, type MenuEntry } from './menu.svelte'
+  import {
+    archiveEntry,
+    DIVIDER,
+    menu,
+    shareEntry,
+    stackEntries,
+    type MenuEntry,
+  } from './menu.svelte'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -131,6 +138,10 @@
       // Who else may have the file this tab is showing, in the same word and the
       // same sheet the tree's row and the space's own menu use.
       ...shareEntry(tab.path),
+      // Putting away what the tab is showing, in the same word the row in the file list
+      // uses. The tab closes as the mark is written, which is what makes this the last
+      // row a reader presses on a note they are done with. See archive.ts.
+      ...archiveEntry(tab.path),
       ...stackEntries(paneId),
       ...splitEntries(tab),
       ...keepEntry(tab),
