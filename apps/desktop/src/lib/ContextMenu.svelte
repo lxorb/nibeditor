@@ -181,7 +181,7 @@
     // of the same module. A letter no row starts with leaves the keyboard where it was
     // rather than moving it somewhere arbitrary. See list-keys.ts.
     if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
-      const names = list.map((row) => row.textContent ?? '')
+      const names = list.map((row) => row.textContent)
       const { typed, typedAt, found } = spelled(spelling, event.key, event.timeStamp, names)
       spelling = { typed, typedAt }
 

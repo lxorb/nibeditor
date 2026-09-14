@@ -1730,8 +1730,9 @@ describe('a tab nobody has saved', () => {
 
     const wrote = written()
     expect(wrote.map((one) => one.path)).toEqual(['/space/Example.url'])
-    expect(wrote[0]?.content).toContain('URL=https://example.com/a')
-    expect(workspace.active?.path).toBe('/space/Example.url')
+    expect(wrote[0]!.content).toContain('URL=https://example.com/a')
+    // The same tab, in place: what changed is which file the document is of.
+    expect(tab.path).toBe('/space/Example.url')
   })
 
   /** A save must never write over a file, and the sheet is the only place that could:

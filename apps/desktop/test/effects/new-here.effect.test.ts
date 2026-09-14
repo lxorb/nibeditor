@@ -79,7 +79,7 @@ test('offers every kind a new tab can be, in the order the plus offers them', ()
   makers()
   here()
 
-  expect(buttons().map((one) => one.textContent?.trim())).toEqual([
+  expect(buttons().map((one) => one.textContent.trim())).toEqual([
     'New note',
     'New canvas',
     'New web note',

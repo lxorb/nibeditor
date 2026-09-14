@@ -248,6 +248,17 @@ def chooser(page) -> None:
     page.keyboard.press("ArrowUp")
     page.wait_for_timeout(200)
 
+    # Escape closes it and makes nothing, like every other layer the app puts up.
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+    if page.evaluate(MENU)["rows"]:
+        wrong("Escape did not close the chooser")
+    else:
+        say("Escape                 -> closed, and nothing made")
+
+    page.keyboard.press("Control+KeyT")
+    page.wait_for_timeout(450)
+
     before = len(page.evaluate(STATE)["tabs"])
     page.keyboard.press("Enter")
     page.wait_for_timeout(600)
