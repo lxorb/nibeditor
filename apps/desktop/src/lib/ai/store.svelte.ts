@@ -11,6 +11,7 @@
  *  and the address. So the list is a list and the ids are handed out here. */
 
 import { isRecord, isString, keep, stored } from '../stored'
+import { transcribersAre } from './hears'
 import { type Provider, type ProviderKind, transcribes, usable } from './providers'
 
 const STORAGE_KEY = 'nib:ai'
@@ -140,6 +141,11 @@ class Ai {
 }
 
 export const ai = new Ai()
+
+// What can hear a recording, said once to the leaf the two recorder rows ask. They are
+// built in front of the first paint and this store is not, so the question is asked
+// there and answered here; see ai/hears.ts.
+transcribersAre(() => ai.transcriber)
 
 // Read as this module arrives rather than at launch, because the launch does not have
 // it any more: everything about talking to a model is fetched by the press that asks

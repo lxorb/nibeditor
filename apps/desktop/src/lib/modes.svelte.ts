@@ -33,7 +33,7 @@ import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
-import { isPaper, type Paper } from '@nib/markdown/canvas'
+import { isPaper, type Paper } from '@nib/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from './sync/conflicts'
 import {

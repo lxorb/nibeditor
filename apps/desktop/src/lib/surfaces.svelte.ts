@@ -173,5 +173,16 @@ export const slidesStage = held(() => import('./Slides.svelte'))
  *  the frame its fetch happens in. */
 export async function warmDoors(): Promise<void> {
   await startup.turn('doors')
-  await Promise.all([findBar(), searchPanel(), appMenuRows(), readingSurface(), loadFind()])
+  await Promise.all([
+    findBar(),
+    searchPanel(),
+    appMenuRows(),
+    readingSurface(),
+    loadFind(),
+    // The AI providers, which are not a door but the same bargain: two rows ask whether
+    // anything of the reader's own can turn sound into words, and they are asked the
+    // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here
+    // and answers that question right from the first menu; see ai/hears.ts.
+    import('./ai/store.svelte'),
+  ])
 }
