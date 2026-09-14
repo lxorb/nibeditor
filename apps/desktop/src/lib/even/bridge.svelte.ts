@@ -104,6 +104,12 @@ type Health = 'alone' | 'reaching' | 'live' | 'stalled' | 'failed'
  *  `folds` says whether a folder can be shut at all: `null` is the sidebar, where
  *  everything is open and a folder is a label, and a function is the picker, where
  *  it follows the folds the reader has made and a tap changes them. */
+/** The rows the glasses show, off the tree the file list shows.
+ *
+ *  `shownTree` rather than `tree`, so the glasses leave out what the space leaves out: a
+ *  note archived on the laptop is not on the glasses' list either, and the two lists being
+ *  the same list is the whole reason there is one walker. See `shownTree` in
+ *  workspace.svelte.ts. */
 function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
   if (!entry) return []
 
@@ -287,7 +293,7 @@ class Bridge {
   private world(): World {
     return {
       space: () => workspace.activeSpace?.name ?? panelWord('Notes'),
-      contents: () => rowsOf(workspace.tree, null),
+      contents: () => rowsOf(workspace.shownTree, null),
       spaces: () =>
         workspace.spaces.map((one) => ({
           label: one.name,
@@ -297,7 +303,7 @@ class Bridge {
           pick: true,
           id: one.id,
         })),
-      tree: () => rowsOf(workspace.tree, (path) => workspace.isExpanded(path)),
+      tree: () => rowsOf(workspace.shownTree, (path) => workspace.isExpanded(path)),
       open: (id) => {
         // Notes only. A canvas is never in a list the glasses show, and this is the
         // second lock on the same door.
@@ -777,7 +783,10 @@ class Bridge {
       }
 
       case 'switchNote': {
-        const notes = workspace.notes
+        // What the space is showing, the way every other list of its notes is: asking
+        // the glasses for a note that has been archived opens the file list instead, and
+        // the reader sees that it is not there.
+        const notes = workspace.notes.filter((one) => !workspace.leftOut.has(one.path))
         const name = bestOf(
           command.name,
           notes.map((one) => shownName(one.name)),

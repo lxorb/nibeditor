@@ -69,7 +69,7 @@
     // in an archive is not part of what the space says about itself and a picture a
     // note holds either is part of it or is not, on both surfaces.
     return neighbourhood(
-      without(links.pictureOf(attachments), workspace.excluded.here),
+      without(links.pictureOf(attachments), workspace.leftOut.here),
       centre,
       depth,
     )

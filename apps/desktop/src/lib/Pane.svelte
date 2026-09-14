@@ -58,6 +58,7 @@
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
+  import ArchiveBanner from './ArchiveBanner.svelte'
   import Tabs from './Tabs.svelte'
   import { openExternal } from './tauri'
   import { usage } from './usage.svelte'
@@ -70,6 +71,16 @@
 
   const tab = $derived(workspace.showing(pane.id))
 
+  /** The path of the archived document this pane is showing, or null when it is showing
+   *  one that is not archived. Not fetched: a strip of two words is smaller than the
+   *  promise it would take to ask for it later, and the note it sits over is already
+   *  here. */
+  const archived = $derived(
+    tab?.path !== null && tab?.path !== undefined && workspace.leftOut.isArchived(tab.path)
+      ? tab.path
+      : null,
+  )
+
   /** Whether the card has asked for the files the notes embed. Read into a derived of
    *  its own, because the settings are one object behind one getter: reading a key off
    *  it inside the pass below would make that pass follow every setting there is, and
@@ -80,7 +91,7 @@
   /** The space as a picture, without the notes it leaves out, and with the files its
    *  notes embed where the card has asked for them. Lazy like the graph itself:
    *  nothing here is worked out until a graph tab is open. */
-  const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.excluded.here))
+  const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut.here))
   /** Every note this pane holds. The editor keeps a state for each one it has
    *  shown, and this is what tells it which of them are still open. */
   const strip = $derived(workspace.tabsIn(pane.id).map(noteKey))
@@ -438,6 +449,14 @@
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
     {/await}
+  {/if}
+
+  <!-- An archived document says so, whatever kind it is: a note, a plane, a set of pages
+       or a website all open the same way and all have the same reason to explain
+       themselves. Under the find bar, because this is about the document and that is about
+       the reading of it. -->
+  {#if archived !== null}
+    <ArchiveBanner path={archived} />
   {/if}
 
   <!-- Every surface below the editor is fetched the first time a tab of its kind is

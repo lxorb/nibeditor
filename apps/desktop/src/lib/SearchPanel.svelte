@@ -64,7 +64,17 @@
     return out.sort()
   })
 
-  const names = $derived([...new Set(workspace.notes.map((note) => shownName(note.name)))].sort())
+  const names = $derived(
+    [
+      ...new Set(
+        workspace.notes
+          // What `file:` finishes is a name the search can find, and the search leaves
+          // the archive out: offering one would be offering a query with no answer.
+          .filter((note) => !workspace.leftOut.has(note.path))
+          .map((note) => shownName(note.name)),
+      ),
+    ].sort(),
+  )
 
   /** The space's tags as the tree their slashes describe. */
   const tags = $derived(tagTree(workspace.tags))
@@ -116,6 +126,10 @@
 
   /** The search in the box, as something to keep. */
   const searchMark = $derived(search.asks ? workspace.bookmarks.forSearch(search.text) : null)
+
+  /** Whether this space has anything archived at all, which is whether the chip can
+   *  change the answer. */
+  const archived = $derived(workspace.leftOut.archived.length > 0)
 
   /** Consecutive hits from one note read as that note's hits, with its name
    *  said once above them. */
@@ -332,6 +346,23 @@
       <svg viewBox="0 0 13 13"><path d={SWAP} /></svg>
     </button>
   </div>
+
+  <!-- One chip, and only where it can change the answer: a space with nothing archived
+       in it has nothing to let back in, and a row that never does anything is a row
+       worth not drawing. It says what it lets in rather than what it leaves out,
+       because the leaving out is the resting state. -->
+  {#if archived}
+    <div class="row filters">
+      <button
+        class="chip"
+        class:active={search.archived}
+        aria-pressed={search.archived}
+        onclick={() => search.showArchived(!search.archived)}
+      >
+        {t('Archived')}
+      </button>
+    </div>
+  {/if}
 
   {#if search.replacing}
     <div class="row" transition:fly={{ y: -6, duration: dur(130), easing: cubicOut }}>
@@ -572,6 +603,52 @@
 
   .swap:focus-visible {
     outline-offset: -1px;
+  }
+
+  /* The filter row under the field, and the one chip on it. A chip rather than the
+     glyph the replace toggle is, because it is a word: "Archived" says what it does and
+     no picture of an archive would. Its on state is the toggle's own, so the two read as
+     one kind of control in one place. */
+  .filters {
+    padding-inline-start: 2px;
+  }
+
+  .chip {
+    flex: none;
+    min-height: var(--row-height-sm);
+    padding: 0 var(--space-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-row);
+    background: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    color: var(--muted);
+    cursor: default;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .chip:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+
+  .chip.active {
+    border-color: var(--accent-line);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .chip:focus-visible {
+    outline-offset: -1px;
+  }
+
+  :global([data-touch]) .chip {
+    min-height: var(--touch-target);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
   }
 
   .apply {

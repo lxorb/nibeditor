@@ -42,6 +42,10 @@ const DEFAULTS = {
   createNote: 'Ctrl+Click to create the note',
   createNoteMac: '⌘-click to create the note',
   noteNotFound: 'Note not found',
+  /** Beside a note in the `[[` list that has been put away. It is offered only to
+   *  somebody who typed its whole name, so the word is there to confirm what they asked
+   *  for rather than to warn them off it. See archived.ts in the app. */
+  archived: 'Archived',
   loadingNote: 'Loading…',
   alignLeft: 'Align left',
   alignCenter: 'Align center',

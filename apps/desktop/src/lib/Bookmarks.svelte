@@ -339,6 +339,13 @@
               <svg class="nib-row-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
             {/if}
             <span class="nib-row-label">{row.label}</span>
+            {#if row.path !== null && workspace.leftOut.isArchived(row.path)}
+              <!-- A bookmark still opens what it points at, even once that has been put away:
+               the archive hides things from the lists that speak for the space, and a
+               bookmark is the reader saying they want this one. So the row stays and wears
+               the word, which is why the row is not simply missing. -->
+              <span class="nib-row-meta">{t('Archived')}</span>
+            {/if}
             {#if row.note}<span class="nib-row-meta">{row.note}</span>{/if}
           </button>
         </div>

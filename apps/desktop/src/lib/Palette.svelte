@@ -31,9 +31,14 @@
    *  changes none of them. */
   const commands = $derived(open ? appCommands(view) : [])
 
+  /** The notes the switcher offers. Every file of the space except the ones it is not
+   *  showing: an archived note is reachable by its own name from a link, from a
+   *  bookmark and from the archive, and the switcher is the space listing itself. */
+  const openable = $derived(workspace.files.filter((one) => !workspace.leftOut.has(one.path)))
+
   const results = $derived.by((): (Command | Entry)[] => {
     if (asCommands) return rank(term, commands, (command) => command.label)
-    return rank(term, workspace.files, (one) => shownName(one.name)).slice(0, 40)
+    return rank(term, openable, (one) => shownName(one.name)).slice(0, 40)
   })
 
   const label = (item: Command | Entry) => ('label' in item ? item.label : shownName(item.name))

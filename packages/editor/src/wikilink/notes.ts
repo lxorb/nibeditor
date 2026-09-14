@@ -23,6 +23,15 @@ export interface NoteRef {
   /** The other names the note gave itself, in its own front matter. A link may
    *  use any of them; see `resolveNote`. */
   aliases: readonly string[]
+  /** Whether the note has been put away: archived, in the app's words.
+   *
+   *  Here and not filtered out of the index, because resolving is not offering. A link
+   *  into an archived note still resolves, still draws as a link and still opens - the
+   *  note is put away, not gone - and a reader writing `[[` has not asked for it. So the
+   *  index carries every note and the completion decides: an archived note is offered
+   *  only to somebody who types its whole name, which is somebody who knows it is there
+   *  and means that one. See `noteOptions` in complete.ts. */
+  archived?: boolean
 }
 
 /** One tag the space uses, and how many of its notes carry it.

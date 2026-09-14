@@ -71,6 +71,17 @@ class Search {
   /** Whether the replacement field is open. */
   replacing = $state(false)
   replacement = $state('')
+  /** Whether the archive answers too.
+   *
+   *  Off, because an archived note is one somebody has put away and a search that kept
+   *  handing them back would be the archive not working. On, it is the one place in the
+   *  app that looks inside the archive by words rather than by name - which is what a
+   *  reader who half-remembers an old note needs, and the reason this is a chip in the
+   *  field rather than a setting in a pane.
+   *
+   *  A reader's own exclusions are not affected: those are folders they said to leave
+   *  out of the search, and this chip is about the archive. */
+  archived = $state(false)
 
   /** The hits the reader has turned off. Everything found is on to begin with,
    *  so what is worth keeping is the exceptions. */
@@ -108,6 +119,14 @@ class Search {
 
   /** Chooses the order. The same key again flips the direction, as the file
    *  list's own sort does. */
+  /** The chip pressed: the same question asked again, of a different set of notes. */
+  showArchived(shown: boolean) {
+    if (this.archived === shown) return
+
+    this.archived = shown
+    if (this.asks) void this.run()
+  }
+
   setSort(sort: SearchSort) {
     const descending = this.ordering.sort === sort ? !this.ordering.descending : false
     this.ordering = { sort, descending }
@@ -240,7 +259,11 @@ class Search {
     // Rows arrive in handfuls and go on the end, so the list fills from the
     // top while the rest of the space is still being read. The guesses come in
     // the last handful, already ranked; see space.ts.
-    const excluded = workspace.excluded.of(root)
+    // What the space is not showing, which the walk skips as it goes rather than
+    // filtering afterwards: the crate and the worker both take this list, so a limit is
+    // never spent on a row nobody was going to see. The archive is part of it until the
+    // reader asks for it, and then only the reader's own exclusions are left.
+    const excluded = this.archived ? workspace.excluded.of(root) : workspace.leftOut.of(root)
     await searchSpace(
       root,
       this.query,

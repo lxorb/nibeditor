@@ -2,6 +2,7 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf } from '@nib/markdown/links'
+import { label } from '../labels'
 import {
   fuzzy,
   type LinkWrite,
@@ -145,11 +146,15 @@ function folderOf(path: string): string | undefined {
 function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] {
   const rows: Completion[] = []
   const folder = folderOf(note.path)
+  // A note that has been put away says so where the folder would be: the reader asked
+  // for this one by its whole name, so the word confirms what they are about to write
+  // rather than warning them off it. See `offers`.
+  const detail = note.archived === true ? label('archived') : folder
 
-  if (!needle || matches(note, needle)) {
+  if (offers(note, needle)) {
     rows.push({
       label: note.name,
-      ...(folder === undefined ? {} : { detail: folder }),
+      ...(detail === undefined ? {} : { detail }),
       apply: insert(about(index, note)),
       type: 'text',
     })
@@ -158,6 +163,9 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
   for (const alias of note.aliases) {
     if (!alias.trim()) continue
     if (needle && !alias.toLowerCase().includes(needle)) continue
+    // An archived note's other names are offered on the same terms its own is: the
+    // whole of one, typed.
+    if (note.archived === true && alias.trim().toLowerCase() !== needle) continue
 
     // The alias is the name, so a wikilink writes the alias and a markdown link
     // shows it over the note's own path - which is the same sentence either way.
@@ -185,6 +193,22 @@ function noteOptions(index: NoteIndex, typed: string): Completion[] {
   }
 
   return rows.slice(0, MOST_SHOWN)
+}
+
+/** Whether a note is worth offering for what has been typed.
+ *
+ *  Every note that matches, except an archived one: that is offered only to somebody
+ *  who has typed its whole name, which is somebody who knows the note is there and means
+ *  that one. An archived note sitting in the list under two letters would be the archive
+ *  not working - the `[[` list is the space offering its notes, and an archived note has
+ *  stopped being offered - while refusing it outright would break the one case that
+ *  matters: writing a link to a note you have deliberately put away.
+ *
+ *  Nothing typed at all offers every note and no archived one, for the same reason. */
+function offers(note: NoteRef, needle: string): boolean {
+  if (note.archived === true) return needle !== '' && note.name.toLowerCase() === needle
+
+  return !needle || matches(note, needle)
 }
 
 /** A note matches what has been typed when its name, its path or one of the

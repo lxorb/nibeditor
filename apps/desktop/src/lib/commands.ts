@@ -73,6 +73,7 @@ import { shortcuts } from './shortcuts.svelte'
 import { invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
+import { archive, canArchive, unarchive } from './archive'
 import { workspace } from './workspace.svelte'
 import { openFile } from './open-file'
 
@@ -761,6 +762,11 @@ function spaceCommands(): Command[] {
 
 export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
+  // The open document's path, where it has one and archiving it is possible at all: a
+  // note that has never been written has no file to write the mark into, and a `.webloc`
+  // has no key for it. Worked out once rather than three times in the row below.
+  const open = workspace.active?.path ?? null
+  const archivable = open !== null && canArchive(open) ? open : null
 
   return [
     {
@@ -852,6 +858,26 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeActive(),
     },
+    // Archiving what is open, and taking it back. One row that says which of the two it
+    // is, the way the undo row says what it would undo: two rows would mean one of them
+    // never did anything. No default key, for the reason the Footnotes row has none -
+    // this is a gesture somebody makes now and then, and the keyboard is full of ones
+    // they make constantly. Greyed rather than absent where there is no note to archive,
+    // so the row can still be read; see the note on `disabled` above.
+    ...(archivable === null
+      ? []
+      : [
+          {
+            id: 'archive',
+            label: workspace.leftOut.isArchived(archivable)
+              ? t('Unarchive note')
+              : t('Archive note'),
+            run: () =>
+              void (workspace.leftOut.isArchived(archivable)
+                ? unarchive(archivable)
+                : archive(archivable)),
+          },
+        ]),
     {
       id: 'back',
       label: t('Back'),
@@ -929,6 +955,9 @@ export function appCommands(view?: EditorView): Command[] {
 
     ...workspace.recent
       .filter((path) => !workspace.tabs.some((tab) => tab.path === path))
+      // A note the space is not showing is not offered as somewhere to go back to: the
+      // archive is where an archived note is listed, and nowhere else.
+      .filter((path) => !workspace.leftOut.has(path))
       .slice(0, 8)
       .map((path) => ({
         id: `recent:${path}`,
