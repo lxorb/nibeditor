@@ -58,7 +58,9 @@ import {
 } from './recorder/commands'
 import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
+import { shownName } from './note-name'
 import { prompt } from './prompt.svelte'
+import { nameOf } from './space-paths'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
@@ -930,13 +932,7 @@ export function appCommands(view?: EditorView): Command[] {
       .slice(0, 8)
       .map((path) => ({
         id: `recent:${path}`,
-        label: t('Recent: {name}', {
-          name:
-            path
-              .split(/[\\/]/)
-              .pop()
-              ?.replace(/\.[^.]+$/, '') ?? path,
-        }),
+        label: t('Recent: {name}', { name: shownName(nameOf(path)) }),
         run: () => void workspace.openEntry(path),
       })),
 

@@ -19,7 +19,7 @@
  *  sheet; see move-targets.test.ts. */
 
 import { folderFor, folderNote } from './folder-notes'
-import { folderOf, isMarkdownPath } from './space-paths'
+import { folderOf, isMarkdownPath, relativeTo } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
 export interface MoveTarget {
@@ -136,11 +136,9 @@ export function moveTargets(input: {
                 id: place.path,
                 mark: 'note' as const,
                 // The path inside the space: a note three deep is only itself if
-                // the way to it is shown.
-                label: place.path
-                  .slice(tree.path.length)
-                  .replace(/^[\\/]+/, '')
-                  .replace(/\\/g, '/'),
+                // the way to it is shown. A note's place is the folder it would
+                // become, so the ending is already off it; see `folderFor`.
+                label: relativeTo(tree.path, place.path),
               },
         )
 

@@ -12,6 +12,7 @@
   import { publish } from './publishing.svelte'
   import { segmented } from './slide'
   import { shownName } from './note-name'
+  import { nameOf } from './space-paths'
   import Select from './Select.svelte'
   import Sheet from './Sheet.svelte'
   import { chooseTarget, download, writeFile } from './export/save'
@@ -61,7 +62,7 @@
             {
               value: publish.note,
               label: t('Only {name}', {
-                name: shownName(publish.note.split('/').pop() ?? publish.note),
+                name: shownName(nameOf(publish.note)),
               }),
             },
           ]
@@ -541,7 +542,7 @@
         {#each publish.answers.slice(0, SHOWN_ANSWERS) as one (one.id)}
           <div class="answer">
             <span class="name">
-              {shownName(one.path.split('/').pop() ?? one.path)}
+              {shownName(nameOf(one.path))}
               <small>{when(one.at)}</small>
             </span>
             <span class="said">

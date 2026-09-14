@@ -205,7 +205,9 @@ function wanted(args: Said): string {
   return withExtension(safe)
 }
 
-/** A name with `.md` on it, unless it already ends in something the app opens. */
+/** A name with `.md` on it, unless it is already a markdown name. Markdown and no
+ *  other ending: this makes a note, and `nib new Board.canvas` asking for a plane
+ *  would be a verb doing something other than what it says. */
 function withExtension(name: string): string {
   return MARKDOWN.test(name) ? name : `${name}.md`
 }

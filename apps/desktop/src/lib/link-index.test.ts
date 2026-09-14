@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { shownName } from './note-name'
 import { scanNote } from './scan-note'
 import type { Hit } from './search/match'
 import type { Query } from './search/query'
@@ -128,7 +129,23 @@ describe('backlinks', () => {
       'Three.md': 'nothing to do with it',
     })
 
-    expect(links.backlinks(at('Plan.md')).map((one) => one.name)).toEqual(['One', 'Two'])
+    // The file's own name. What a row shows is `shownName` of it, read once by
+    // whatever draws the row; see note-name.ts and HitList.svelte.
+    expect(links.backlinks(at('Plan.md')).map((one) => one.name)).toEqual(['One.md', 'Two.md'])
+  })
+
+  /** The panel used to take an ending off a name an ending had already come off of,
+   *  so a note called `a.canvas.md` read `a` here and `a.canvas` in the file list,
+   *  the palette and the tab strip. */
+  test('name a note the one way every other list names it', async () => {
+    await space({
+      'Plan.md': '# Plan',
+      'a.canvas.md': 'see [[Plan]]',
+      'NOTE.MD': 'see [[Plan]]',
+    })
+
+    const shown = links.backlinks(at('Plan.md')).map((one) => shownName(one.name))
+    expect(shown).toEqual(['a.canvas', 'NOTE'])
   })
 
   test('carry the line and the words around it', async () => {
@@ -188,9 +205,9 @@ describe('links out', () => {
     })
 
     expect(links.outgoing(at('One.md'))).toEqual([
-      expect.objectContaining({ target: 'Plan', to: 'Plan.md', name: 'Plan' }),
+      expect.objectContaining({ target: 'Plan', to: 'Plan.md', name: 'Plan.md' }),
       expect.objectContaining({ target: 'Nowhere', to: null, name: 'Nowhere' }),
-      expect.objectContaining({ target: 'ideas/Spark', to: 'ideas/Spark.md', name: 'Spark' }),
+      expect.objectContaining({ target: 'ideas/Spark', to: 'ideas/Spark.md', name: 'Spark.md' }),
     ])
   })
 

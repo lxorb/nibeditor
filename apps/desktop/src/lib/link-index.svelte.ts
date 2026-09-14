@@ -40,6 +40,7 @@ import { buildGraph, type NoteGraph } from './graph'
 import { drawFile } from './reading/drawn'
 import { rewriteLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
+import { shownName } from './note-name'
 import { pressRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
@@ -62,7 +63,11 @@ import { invoke } from './tauri'
 export interface Reference {
   /** The note it is in, relative to the space. */
   path: string
-  /** That note's name, for the row. */
+  /** That note's file name, ending and all: what a row shows is `shownName` of it,
+   *  read once by whatever draws the row rather than half here and half there. A
+   *  name an ending had already come off of had a second one taken off, so a note
+   *  called `a.canvas.md` read `a` in this panel and `a.canvas` in every other
+   *  list. See note-name.ts. */
   name: string
   line: number
   /** The line, as the context the row is read in. */
@@ -810,7 +815,7 @@ class Links {
       for (const link of note.links) {
         if (!this.couldName(link, names)) continue
         if (this.resolveFrom(note.path, link) !== relative) continue
-        out.push({ path: note.path, name: note.name, line: link.line, text: link.text })
+        out.push({ path: note.path, name: nameOf(note.path), line: link.line, text: link.text })
       }
     }
 
@@ -829,7 +834,7 @@ class Links {
         const to = this.resolveFrom(relative, link)
         return {
           path: relative,
-          name: to === null ? nameOf(link.target) : noteName(to),
+          name: nameOf(to ?? link.target),
           line: link.line,
           text: link.text,
           target: link.target,
@@ -854,8 +859,12 @@ class Links {
 
     // Its own name, and every other name it answers to: somebody writing the
     // alias has mentioned this note as surely as somebody writing the filename.
+    //
+    // The name as the app shows it, which is the name a reader would have written in
+    // their prose: a canvas was looked for as `Board.canvas` and so a plane nobody
+    // spells that way had no mentions at all.
     const note = this.notes.find((one) => one.path === relative)
-    const written = [noteName(relative), ...(note?.aliases ?? [])]
+    const written = [shownName(nameOf(relative)), ...(note?.aliases ?? [])]
       .map((one) => one.trim())
       .filter((one) => one.length >= 2)
     if (!written.length) return []
@@ -889,7 +898,7 @@ class Links {
       found
         .map((hit) => ({
           path: this.relative(hit.path) ?? hit.path,
-          name: hit.name.replace(OWN, ''),
+          name: hit.name,
           line: hit.line,
           text: hit.text,
         }))

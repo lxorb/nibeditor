@@ -17,7 +17,7 @@ import { key, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { nameFromContent } from '../note-name'
 import { without } from '../records'
-import { nameOf } from '../space-paths'
+import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import type { Space } from '../workspace.svelte'
@@ -30,8 +30,6 @@ const SAVE_DELAY = 1200
 
 /** How long the dot stays as a tick once the note is down, in milliseconds. */
 const SAVED_SHOWN = 1400
-
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 /** What writing needs of the store the documents are open in. */
 export interface Writes {
@@ -73,7 +71,7 @@ async function pickSavePath(
   const target = spaces.find((space) => space.id === answer.space) ?? first
   const clean = answer.name.replace(/[\\/]/g, ' ').trim()
 
-  return joinPath(target.root, MARKDOWN.test(clean) ? clean : `${clean}.md`)
+  return joinPath(target.root, isMarkdownPath(clean) ? clean : `${clean}.md`)
 }
 
 export class Saving {

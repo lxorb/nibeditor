@@ -102,12 +102,37 @@ describe('the extension a commit puts back', () => {
     expect(extensionOf('Readme', false)).toBe('.md')
   })
 
-  /** A PDF is the one kind shown with its extension, so the field hands it back
-   *  and a second copy of it would make `paper.pdf.pdf`. */
+  /** A paper is shown with its extension, so the field hands it back and a second
+   *  copy of it would make `paper.pdf.pdf`. */
   test('is not added twice when the field already holds it', () => {
     expect(nameToWrite('paper.pdf', '.pdf')).toBe('paper.pdf')
-    expect(nameToWrite('paper.PDF', '.pdf')).toBe('paper.PDF')
     expect(nameToWrite('other', '.pdf')).toBe('other.pdf')
+  })
+
+  /** The file's spelling and not the reader's. `NOTE.MD` renamed by typing `Note.md`
+   *  asks the disk for a name it already has under another spelling, which both
+   *  Windows and a Mac refuse - and the row wore the name it could not have. */
+  test('is the one the file wrote, whatever case the field holds it in', () => {
+    expect(nameToWrite('paper.PDF', '.pdf')).toBe('paper.pdf')
+    expect(nameToWrite('NOTE.md', '.MD')).toBe('NOTE.MD')
+    expect(nameToWrite('Note.MD', '.md')).toBe('Note.md')
+  })
+
+  /** A run with a space in it is part of somebody's name, so renaming `v1.2 plan`
+   *  no longer asks for `v1.3 plan.2 plan`. */
+  test('is nothing a dot in the middle of a name made up', () => {
+    expect(extensionOf('v1.2 plan.md', false)).toBe('.md')
+    expect(nameToWrite('v1.3 plan', extensionOf('v1.2 plan.md', false))).toBe('v1.3 plan.md')
+  })
+
+  /** The ending the list took off, read back by the same rule; see note-name.ts. */
+  test('is the ending the list leaves off', () => {
+    expect(extensionOf('Board.canvas', false)).toBe('.canvas')
+    expect(extensionOf('Sketch.pages', false)).toBe('.pages')
+    expect(extensionOf('Svelte docs.url', false)).toBe('.url')
+    expect(extensionOf('report.pdf', false)).toBe('.pdf')
+    expect(extensionOf('NOTE.MD', false)).toBe('.MD')
+    expect(extensionOf('a.canvas.md', false)).toBe('.md')
   })
 })
 

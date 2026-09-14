@@ -14,7 +14,7 @@
   import { longPress } from './longpress'
   import { roving } from './roving'
   import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
-  import { shownName } from './note-name'
+  import { rowName } from './note-name'
   import { carryBookmark, draggedBookmark, isBookmarkDrag } from './drag-paths'
   import { insideSpace } from './space-paths'
   import { type Bookmark, sameBookmark } from './workspace/bookmarks.svelte'
@@ -74,8 +74,8 @@
     const named = mark.kind === 'heading' || mark.kind === 'block'
     return {
       ...shared,
-      label: named ? mark.text : shownName(entry.name),
-      note: named ? shownName(entry.name) : null,
+      label: named ? mark.text : rowName(entry.name, entry.is_dir),
+      note: named ? rowName(entry.name, entry.is_dir) : null,
       path: entry.path,
       // The mark the file list gives the same row: a folder that a reader
       // bookmarked is a folder with no note of its own - one nib nested would have

@@ -163,7 +163,7 @@
     long: {
       count: () => all.length,
       indexOf,
-      labels: () => all.map((one) => `${one.name} ${one.text}`),
+      labels: () => all.map((one) => `${shownName(one.name)} ${one.text}`),
       reach,
     },
   }}

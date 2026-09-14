@@ -29,7 +29,7 @@ import {
   shareEntry,
 } from './menu.svelte'
 import { moveTargets, type MoveTarget } from './move-targets'
-import { shownName } from './note-name'
+import { rowName } from './note-name'
 import { isMarkdownPath } from './space-paths'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
@@ -146,7 +146,7 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
 
   const { prompt } = await import('./prompt.svelte')
   const sure = await prompt.confirm({
-    title: t('Delete {name}?', { name: shownName(marked.name) }),
+    title: t('Delete {name}?', { name: rowName(marked.name, marked.is_dir) }),
     detail: t('The notes inside it go too.'),
     confirmLabel: key('Delete'),
     danger: true,

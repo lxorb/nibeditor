@@ -144,8 +144,9 @@ describe('a note that declares other names', () => {
     const [out] = links.outgoing(at('Other.md'))
     expect(out?.to).not.toBeNull()
     // The row reads as the note it found rather than as the words that were
-    // written, which is how a reader learns which note the alias meant.
-    expect(out?.name).toBe('Plan')
+    // written, which is how a reader learns which note the alias meant. The file's
+    // own name; the row shows `shownName` of it.
+    expect(out?.name).toBe('Plan.md')
   })
 
   test('keeps the alias when the note is renamed', async () => {

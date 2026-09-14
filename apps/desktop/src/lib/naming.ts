@@ -14,6 +14,8 @@
  *  Pure, so the whole rule reads as a list of names and the field is left with
  *  nothing to decide; see naming.test.ts. */
 
+import { endingOf } from './note-name'
+
 /** Why a name will not do. One per sentence a row can show, which is why a
  *  slash and a colon are two of them: what the row says is what to change, not
  *  that something is invalid.
@@ -102,25 +104,36 @@ export function nameFault({ typed, extension, taken }: Naming): NameFault | null
   return taken.some((one) => one.toLowerCase() === written) ? 'taken' : null
 }
 
-/** The name a commit writes: what was typed with the extension put back.
+/** The name a commit writes: what was typed with the file's own ending put back.
  *
- *  Unless it is already there. A note and a canvas are shown without the
- *  extension they were written with and keep it, so a vault of `.markdown` files
- *  stays one; a PDF is shown with its own, so the field hands that back, and a
- *  second copy of it would make `paper.pdf.pdf`. */
+ *  Unless it is already there, in which case the ending on the end of what was typed
+ *  is taken for the one it is: a note and a canvas are shown without the ending they
+ *  were written with and keep it, so a vault of `.markdown` files stays one, and a
+ *  PDF is shown with its own, so a second copy of it would make `paper.pdf.pdf`.
+ *
+ *  And the file's own spelling of it rather than the reader's. `NOTE.MD` renamed by
+ *  typing `Note.md` is the same file under the same name to Windows and to a Mac, so
+ *  writing back what was typed asked the disk for a rename it refuses - and the row
+ *  kept the name it could not have until the next listing. What is renamed here is
+ *  the name; the ending stays exactly as the file wrote it. */
 export function nameToWrite(typed: string, extension: string): string {
   const name = typed.trim()
   if (!extension) return name
+  if (!name.toLowerCase().endsWith(extension.toLowerCase())) return name + extension
 
-  return name.toLowerCase().endsWith(extension.toLowerCase()) ? name : name + extension
+  return name.slice(0, name.length - extension.length) + extension
 }
 
-/** The extension the commit puts back for a row holding this name. A folder has
- *  none; a file keeps its own, and a note that somehow has none becomes
- *  markdown, which is what everything the app writes itself is. */
+/** The ending the commit puts back for a row holding this name.
+ *
+ *  A folder has none, because a folder's name is not a file name. A file keeps its
+ *  own, which is `endingOf` - the same reading `shownName` takes the ending off by,
+ *  so what the field shows and what the commit writes cannot come apart. A name with
+ *  no ending at all becomes markdown, which is what everything the app writes itself
+ *  is. */
 export function extensionOf(name: string, isFolder: boolean): string {
   if (isFolder) return ''
-  return /\.[^.]+$/.exec(name)?.[0] ?? '.md'
+  return endingOf(name) ?? '.md'
 }
 
 /** The name leaving the field writes, or null for nothing to do.

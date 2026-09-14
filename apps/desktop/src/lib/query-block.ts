@@ -19,6 +19,7 @@
  *  the surface that asked draws the answer. */
 
 import { taskAt } from '@nib/markdown/tasks'
+import { shownName } from './note-name'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
@@ -43,11 +44,6 @@ const ESCAPES: Record<string, string> = {
 
 function escape(text: string): string {
   return text.replace(/[&<>"']/g, (one) => ESCAPES[one] ?? one)
-}
-
-/** A note's name as a row says it: without the extension every note has. */
-function shown(name: string): string {
-  return name.replace(/\.(md|markdown|mdown|mkd)$/i, '')
 }
 
 /** The query a fence holds. Every line of it, joined, because a fence is a box
@@ -144,7 +140,7 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
     .map((group) => {
       const rows = group.hits.map(row).join('')
 
-      return `<p class="nib-section">${escape(shown(group.name))}<span>${group.hits.length}</span></p>${rows}`
+      return `<p class="nib-section">${escape(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
     })
     .join('')
 

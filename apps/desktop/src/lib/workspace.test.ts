@@ -2085,9 +2085,12 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  test('is a paper without its extension too, the way every kind is now', () => {
+  /** A paper is a file from somewhere else with no title behind it, so its name is
+   *  the file's own - the way Obsidian shows one, and the way a picture is shown.
+   *  Which kind the tab holds is the mark on it. */
+  test('is a paper with its extension, which is the whole of its name', () => {
     workspace.openPdf('/space/paper.pdf')
-    expect(workspace.active?.shown).toBe('paper')
+    expect(workspace.active?.shown).toBe('paper.pdf')
   })
 
   test('is a draft first heading, so two drafts are two names', () => {

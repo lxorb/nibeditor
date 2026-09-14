@@ -97,6 +97,13 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'rename_note': {
         const from = text(args?.from)
         const to = text(args?.to)
+        // The crate refuses rather than replacing what is there, and case-insensitively
+        // on two of the three platforms; see `rename_note` in src-tauri/src/notes.rs.
+        const held = [...files.keys(), ...folders].some(
+          (one) =>
+            one.toLowerCase() === to.toLowerCase() && one.toLowerCase() !== from.toLowerCase(),
+        )
+        if (held) throw new Error('something already lives there')
         const was = files.get(from)
         if (was !== undefined) {
           files.delete(from)
@@ -128,6 +135,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
+const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 
 /** Every path the list shows, in the order it shows them. */
@@ -375,5 +383,126 @@ describe('the names beside a row', () => {
     expect(workspace.namesBeside('/space/Beta.md')).toEqual(['Work'])
     expect(workspace.namesBeside('/space/Work/Plan.md')).toEqual([])
     expect(workspace.namesBeside('/space/Work')).toEqual(['Beta.md'])
+  })
+})
+
+/** A website made from the file list: the one row that wrote its ending twice.
+ *
+ *  The field puts the row's own ending back before it commits, as it does for every
+ *  kind, so what arrives here is `Blog.url` - and the name was then read as a title
+ *  and given a second `.url`. The row said `Blog.url`, which is the ending Emil kept
+ *  seeing in the list. */
+describe('making a website', () => {
+  test('writes the name once, ending and all', async () => {
+    await workspace.createWebsite()
+    expect(workspace.naming?.path).toBe('/space/Untitled.url')
+
+    await workspace.makeNamed('Blog.url')
+
+    expect([...files.keys()]).toContain('/space/Blog.url')
+    expect([...files.keys()]).not.toContain('/space/Blog.url.url')
+  })
+
+  /** The shortcut keeps the title in a key of its own, and that is what the bar and
+   *  the tab read before a page has loaded. */
+  test('and the title inside it is the name, not the file name', async () => {
+    await workspace.createWebsite()
+    await workspace.makeNamed('Blog.url')
+
+    expect(files.get('/space/Blog.url')).toContain('Blog')
+    expect(files.get('/space/Blog.url')).not.toContain('Blog.url')
+  })
+})
+
+/** Duplicating: the word goes beside the name rather than after the ending, and the
+ *  name steps like every other name the app writes. A second copy used to be written
+ *  straight over the first. */
+describe('duplicating a file', () => {
+  test('puts the word beside the name and keeps the ending', async () => {
+    await workspace.duplicate('/space/Beta.md')
+
+    expect(files.get('/space/Beta copy.md')).toBe('# Beta')
+    expect([...files.keys()]).toContain('/space/Beta.md')
+  })
+
+  test('and a second copy is a second file rather than the first one over again', async () => {
+    await workspace.duplicate('/space/Beta.md')
+    await workspace.duplicate('/space/Beta.md')
+
+    expect([...files.keys()].filter((one) => one.startsWith('/space/Beta copy'))).toEqual([
+      '/space/Beta copy.md',
+      '/space/Beta copy 2.md',
+    ])
+  })
+
+  /** A name that is nothing but an ending has no stem to put the word beside, and the
+   *  old rule made ` copy.md` - a name starting with a space, which the trash then
+   *  refuses to restore. */
+  test('and a name that is only an ending copies to a name', async () => {
+    files.set('/space/.md', '# only an ending')
+    await workspace.loadTree()
+
+    await workspace.duplicate('/space/.md')
+    expect([...files.keys()]).toContain('/space/copy.md')
+    expect([...files.keys()]).not.toContain('/space/ copy.md')
+  })
+
+  test('and a canvas copies as a canvas', async () => {
+    files.set('/space/Board.canvas', '{}')
+    await workspace.loadTree()
+
+    await workspace.duplicate('/space/Board.canvas')
+    expect([...files.keys()]).toContain('/space/Board copy.canvas')
+  })
+})
+
+/** Two kinds under one name: `Note.md` beside `Note.canvas` is two rows saying
+ *  `Note`, told apart by the mark in front of them. Neither may be written over. */
+describe('a name two kinds share', () => {
+  beforeEach(async () => {
+    files.set('/space/Note.md', '# Note')
+    files.set('/space/Note.canvas', '{}')
+    await workspace.loadTree()
+  })
+
+  test('is two files, and renaming one leaves the other alone', async () => {
+    await workspace.rename('/space/Note.canvas', 'Board.canvas')
+
+    expect([...files.keys()]).toContain('/space/Board.canvas')
+    expect(files.get('/space/Note.md')).toBe('# Note')
+  })
+
+  /** Which is what the field asks about: the name that would be written, against the
+   *  names in the folder. `Note` beside `Note.canvas` is free; `Note.canvas` is not. */
+  test('and the field knows which of the two a name would take', () => {
+    const beside = workspace.namesBeside('/space/Note.canvas')
+    expect(nameFault({ typed: 'Note', extension: '.canvas', taken: beside })).toBeNull()
+    expect(nameFault({ typed: 'Note', extension: '.md', taken: beside })).toBe('taken')
+  })
+})
+
+/** A rename the disk refuses - something already there, a name that differs only in
+ *  case - used to leave the row wearing a name nothing answered to, because the row
+ *  moves before the rename is asked for and nothing put it back. */
+describe('a rename the disk refuses', () => {
+  test('leaves the row under the name it has', async () => {
+    files.set('/space/Taken.md', '# Taken')
+    await workspace.loadTree()
+
+    await expect(workspace.rename('/space/Beta.md', 'Taken.md')).rejects.toThrow()
+
+    expect(rows()).toContain('/space/Beta.md')
+    expect(rows()).not.toContain('/space/Taken 2.md')
+    expect(files.get('/space/Beta.md')).toBe('# Beta')
+  })
+
+  test('and so does a move', async () => {
+    files.set('/space/Work/Beta.md', '# another Beta')
+    await workspace.loadTree()
+
+    await expect(workspace.move('/space/Beta.md', '/space/Work')).rejects.toThrow()
+
+    expect(rows()).toContain('/space/Beta.md')
+    expect(files.get('/space/Work/Beta.md')).toBe('# another Beta')
   })
 })

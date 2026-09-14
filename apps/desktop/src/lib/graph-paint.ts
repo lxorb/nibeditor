@@ -19,6 +19,7 @@
 import type { Camera } from './camera'
 import { SMALLEST_DOT } from './camera'
 import type { NoteGraph } from './graph'
+import { shownName } from './note-name'
 
 /** How wide a note is drawn, in graph units, by how many links it has. The square
  *  root, so a note with a hundred links is noticeably bigger than one with four
@@ -371,7 +372,12 @@ export function paint(context: CanvasRenderingContext2D, view: GraphView) {
   for (const one of naming) {
     context.globalAlpha = (highlighting && lit[one] === 0 ? DIMMED : 1) * arriving
     const radius = Math.max(SMALLEST_DOT, (radii[one] ?? 0) * scale)
-    context.fillText(graph.nodes[one]?.name ?? '', screenX(one), screenY(one) + radius + 3)
+    // The name as every list of the app says it: a node is a note, and a plane the
+    // file list calls `Board` cannot be called `Board.canvas` here. What the picture
+    // is drawn from keeps the file's own name, because that is what a link resolves
+    // against; see note-name.ts.
+    const name = graph.nodes[one]?.name
+    context.fillText(name ? shownName(name) : '', screenX(one), screenY(one) + radius + 3)
   }
 
   context.globalAlpha = 1

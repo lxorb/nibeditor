@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { draftName, nameFromContent, shownName, titleFrom } from './note-name'
+import { nameToWrite } from './naming'
+import { draftName, endingOf, nameFromContent, rowName, shownName, titleFrom } from './note-name'
 
 const lines = (doc: string) => doc.split('\n')
 
@@ -141,19 +142,21 @@ describe('the name a document is listed under', () => {
     expect(shownName('Sketch.pages')).toBe('Sketch')
   })
 
-  /** Emil, 2026-09-13: no filename endings anywhere a name is shown. A website's two
-   *  endings and a PDF's go too, so nothing in the list, the strip or the title wears
-   *  one. */
-  test('drops a website and a PDF as well', () => {
+  /** Emil, 2026-09-13: no filename endings anywhere a name is shown. A website is
+   *  written as a shortcut file in one of two formats and is known by its title,
+   *  like every other kind nib opens in a tab. */
+  test('drops a website, written either way', () => {
     expect(shownName('Svelte docs.url')).toBe('Svelte docs')
     expect(shownName('Page.webloc')).toBe('Page')
-    expect(shownName('Paper.pdf')).toBe('Paper')
-    expect(shownName('Paper.PDF')).toBe('Paper')
   })
 
-  /** A picture is a file from somewhere else with no title behind it, so its name is
-   *  the file's own. The tree says which kind a row is with the mark beside it. */
-  test('keeps the extension of a picture', () => {
+  /** A paper, a picture and anything else nib did not write are files from
+   *  somewhere else with no title behind them, so the name is the file's own -
+   *  which is what Obsidian shows and what Emil asked for on 2026-09-14. The mark
+   *  beside the row says which kind it is either way. */
+  test('keeps the extension of a paper, a picture and a file it knows nothing about', () => {
+    expect(shownName('Paper.pdf')).toBe('Paper.pdf')
+    expect(shownName('Paper.PDF')).toBe('Paper.PDF')
     expect(shownName('shot.png')).toBe('shot.png')
     expect(shownName('notes.txt')).toBe('notes.txt')
   })
@@ -161,5 +164,103 @@ describe('the name a document is listed under', () => {
   test('leaves an extension in the middle alone', () => {
     expect(shownName('shot.png.canvas')).toBe('shot.png')
     expect(shownName('backup.md.bak')).toBe('backup.md.bak')
+    expect(shownName('a.canvas.md')).toBe('a.canvas')
+  })
+
+  test('keeps a dot that is part of somebody name', () => {
+    expect(shownName('v1.2 plan.md')).toBe('v1.2 plan')
+    expect(shownName('v1.2 plan')).toBe('v1.2 plan')
+  })
+
+  /** Taking the ending off would leave the row, the tab, the tooltip and the window
+   *  title with nothing to say at all. */
+  test('keeps a name that is nothing but an ending', () => {
+    expect(shownName('.md')).toBe('.md')
+    expect(shownName('.canvas')).toBe('.canvas')
+    expect(shownName('.url')).toBe('.url')
+  })
+})
+
+describe('the name a row of the file list is under', () => {
+  /** A folder called `Papers.pdf` is not holding a paper and one called `Notes.md`
+   *  is not a note, so a folder is called what it is called. */
+  test('is the folder own name, whatever it looks like', () => {
+    expect(rowName('Papers.pdf', true)).toBe('Papers.pdf')
+    expect(rowName('Notes.md', true)).toBe('Notes.md')
+    expect(rowName('Work', true)).toBe('Work')
+  })
+
+  test('and a file name as every other list shows it', () => {
+    expect(rowName('Plan.md', false)).toBe('Plan')
+    expect(rowName('report.pdf', false)).toBe('report.pdf')
+  })
+})
+
+describe('the ending a name wears', () => {
+  test('is one of the ones a document is known by', () => {
+    expect(endingOf('Plan.md')).toBe('.md')
+    expect(endingOf('Plan.markdown')).toBe('.markdown')
+    expect(endingOf('Board.canvas')).toBe('.canvas')
+    expect(endingOf('Sketch.pages')).toBe('.pages')
+    expect(endingOf('Svelte docs.url')).toBe('.url')
+  })
+
+  /** However it was written, so a rename puts back the name that is on the disk
+   *  rather than a tidied-up spelling of it. */
+  test('in the case the file wrote it in', () => {
+    expect(endingOf('NOTE.MD')).toBe('.MD')
+    expect(endingOf('Board.CANVAS')).toBe('.CANVAS')
+  })
+
+  test('or the file own extension, for a file nib did not write', () => {
+    expect(endingOf('report.pdf')).toBe('.pdf')
+    expect(endingOf('shot.png')).toBe('.png')
+    expect(endingOf('notes.txt')).toBe('.txt')
+    expect(endingOf('backup.md.bak')).toBe('.bak')
+  })
+
+  test('and the whole of a name that is nothing else', () => {
+    expect(endingOf('.md')).toBe('.md')
+    expect(endingOf('.url')).toBe('.url')
+  })
+
+  /** A run with a space in it is part of somebody name. Reading it as an extension
+   *  is what renamed `v1.2 plan` to `v1.3 plan.2 plan`. */
+  test('and nothing at all where the name wears none', () => {
+    expect(endingOf('Readme')).toBeNull()
+    expect(endingOf('v1.2 plan')).toBeNull()
+    expect(endingOf('.hidden folder')).toBeNull()
+  })
+})
+
+/** The one rule, read from both ends. Whatever a list leaves off a name, a rename
+ *  puts back, so every name nib lists survives being shown and typed back
+ *  unchanged - which is what keeps an ending from doubling up or going missing. The
+ *  pair is `shownName` and `endingOf` here, and `nameToWrite` in naming.ts. */
+describe('what a list leaves off and a rename puts back', () => {
+  const LISTED = [
+    'Plan.md',
+    'Plan.markdown',
+    'Plan.mdown',
+    'Plan.mkd',
+    'NOTE.MD',
+    'Board.canvas',
+    'Board.CANVAS',
+    'Sketch.pages',
+    'Svelte docs.url',
+    'Page.webloc',
+    'report.pdf',
+    'report.PDF',
+    'shot.png',
+    'notes.txt',
+    '.md',
+    '.url',
+    'a.canvas.md',
+    'v1.2 plan.md',
+    'shot.png.canvas',
+  ]
+
+  test.each(LISTED)('is the same name again: %s', (name) => {
+    expect(nameToWrite(shownName(name), endingOf(name) ?? '')).toBe(name)
   })
 })

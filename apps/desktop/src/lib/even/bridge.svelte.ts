@@ -24,6 +24,7 @@ import { bestOf, type Command, commandIn, commandWords, settled } from './comman
 import type { Field } from '../preferences'
 import { fileMark } from '../file-mark'
 import { modes } from '../modes.svelte'
+import { shownName } from '../note-name'
 import { panelWord } from './panel-words'
 import { Panel } from './screen'
 import { connectGlasses, type Glasses, type Input } from './sdk'
@@ -128,7 +129,7 @@ function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
     if (fileMark(child.name) !== 'note') continue
 
     out.push({
-      label: child.name.replace(/\.md$/i, ''),
+      label: shownName(child.name),
       depth,
       folder: false,
       open: false,
@@ -439,7 +440,7 @@ class Bridge {
           note.flush()
           // Without the extension: on a panel of seven lines `.md` is four
           // characters of nothing, and the reader knows what their notes are.
-          const name = note.name.replace(/\.md$/iu, '')
+          const name = shownName(note.name)
           this.follow({ key: note.key, name, text: note.text })
         }, wait)
       })
@@ -482,7 +483,7 @@ class Bridge {
   private again(): void {
     const reading = this.reading
     if (reading) {
-      const name = reading.note.name.replace(/\.md$/iu, '')
+      const name = shownName(reading.note.name)
       this.session.follow({ key: reading.note.key, name, text: reading.note.text }, this.paging())
     }
 
@@ -779,9 +780,9 @@ class Bridge {
         const notes = workspace.notes
         const name = bestOf(
           command.name,
-          notes.map((one) => one.name.replace(/\.md$/i, '')),
+          notes.map((one) => shownName(one.name)),
         )
-        const found = notes.find((one) => one.name.replace(/\.md$/i, '') === name)
+        const found = notes.find((one) => shownName(one.name) === name)
         if (!found) {
           this.act(shell.show('tree'))
           return

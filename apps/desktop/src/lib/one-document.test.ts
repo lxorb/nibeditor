@@ -120,7 +120,8 @@ describe('a phone and a tablet', () => {
     expect(open()).toEqual(['Plan'])
 
     workspace.openPdf('/space/Paper.pdf')
-    expect(open()).toEqual(['Paper'])
+    // A paper keeps its ending, which is the whole of the name it has; see note-name.ts.
+    expect(open()).toEqual(['Paper.pdf'])
     expect(workspace.active?.kind).toBe('pdf')
   })
 

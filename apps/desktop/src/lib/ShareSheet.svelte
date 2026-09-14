@@ -20,6 +20,7 @@
   import { t } from './i18n.svelte'
   import { initial } from './icons'
   import { shownName } from './note-name'
+  import { nameOf } from './space-paths'
   import { isShared, share } from './sharing.svelte'
   import { theme } from './theme.svelte'
   import { called } from './person'
@@ -48,9 +49,7 @@
   /** What the head says it is about: the file's name, else the space's. The same
    *  words and the same shape for both - a smaller thing to share is not a
    *  different sheet. */
-  const subject = $derived(
-    item ? shownName(item.path.slice(item.path.lastIndexOf('/') + 1)) : (share.space?.name ?? ''),
-  )
+  const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
 
   /** Whether the space this file sits in is already shared with somebody, which
    *  is what the hint under the head is about. */

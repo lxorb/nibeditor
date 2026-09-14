@@ -10,6 +10,7 @@ import type { EditorView } from '@nib/editor'
 import type { Command } from './commands'
 import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'
+import { shownName } from './note-name'
 import { workspace } from './workspace.svelte'
 
 /** The note to merge into, found by typing its name in the prompt sheet - which
@@ -19,7 +20,7 @@ async function askForNote(exclude: string): Promise<string | null> {
   const { prompt } = await import('./prompt.svelte')
   const options = workspace.notes
     .filter((note) => note.path !== exclude)
-    .map((note) => ({ id: note.path, label: note.name.replace(/\.[^.]+$/, '') }))
+    .map((note) => ({ id: note.path, label: shownName(note.name) }))
 
   if (!options.length) return null
 

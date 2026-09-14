@@ -15,9 +15,9 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
-import { folderOf, insideSpace, nameOf, noteName, relativeTo } from './space-paths'
+import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
-import { nameFromContent, nameFromTitle, shownName } from './note-name'
+import { copyName, nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -151,7 +151,6 @@ const SESSION_DELAY = 400
 /** How far back one tab remembers. Longer than anybody follows a link in one
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
-const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
 /** Which line of a note a followed link lands on: the heading it names, or the
  *  line the block name sits on. Null when the note holds neither, which leaves
@@ -1211,7 +1210,13 @@ class Workspace {
    *  the whole point of naming a thing before making it.
    *
    *  Where there is no list to type in, the same stepped `Untitled` every other kind
-   *  falls back to. */
+   *  falls back to.
+   *
+   *  What arrives from the list is a file name, ending and all - the field puts the
+   *  row's own ending back before it commits, as it does for every other kind - so
+   *  the ending comes off before the name is read as a title. Without that the row
+   *  wrote `Blog.url.url` and put `Blog.url` in the shortcut's own `Title`, which is
+   *  the `.url` Emil kept seeing in the file list. */
   async createWebsite(folder?: string, named?: string) {
     if (viewport.device === 'phone') return
 
@@ -1219,7 +1224,7 @@ class Workspace {
     if (!dir) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const title = named ?? UNTITLED
+    const title = named === undefined ? UNTITLED : shownName(named)
     const path = joinPath(dir, this.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
     const content = writeShortcut('', title, new Date())
 
@@ -1615,7 +1620,16 @@ class Workspace {
     // The row is in its new folder as soon as the drop lands.
     this.showMove(from, target)
 
-    await invoke('rename_note', { from, to: target })
+    // And back where it was if the move did not happen - something already there,
+    // a file that has gone. The listing is what the tree really is, and until it is
+    // read again the row is sitting in a folder that does not hold it; see `remove`,
+    // which puts a row back the same way.
+    try {
+      await invoke('rename_note', { from, to: target })
+    } catch (error) {
+      await this.loadTree()
+      throw error
+    }
     this.positions.move(from, target)
 
     // A note that moved is a note every link to it has to be pointed at again;
@@ -2467,7 +2481,7 @@ class Workspace {
     // under rather than an empty page.
     const name = this.freeName(dir, named ?? PLACEHOLDER.note)
     const path = joinPath(dir, name)
-    const content = `# ${name.replace(MARKDOWN, '')}\n\n`
+    const content = `# ${shownName(name)}\n\n`
 
     // The row, the tab and the caret are all there before the file is. Making
     // a note is the one thing that should never feel like waiting for a disk,
@@ -2709,7 +2723,17 @@ class Workspace {
     this.showMove(path, target)
     this.naming = null
 
-    await invoke('rename_note', { from: path, to: target })
+    // And back under the name it had if the rename did not happen. The field refuses
+    // a name the listing it was drawn from held, so what is left here is a race - a
+    // note that arrived from sync, a name that differs from this one only in case,
+    // which is the same file to Windows and to a Mac - and the row wore a name
+    // nothing answered to until the next listing. See `move` and `remove`.
+    try {
+      await invoke('rename_note', { from: path, to: target })
+    } catch (error) {
+      await this.loadTree()
+      throw error
+    }
     this.positions.move(path, target)
 
     // Every link to the note now points at a name nothing answers to, so they
@@ -2731,10 +2755,10 @@ class Workspace {
       // A new note is written with its own name as the heading, so renaming it
       // straight afterwards would otherwise leave `# Untitled` at the top. Only
       // while the heading still is the old name; an edited one is the author's.
-      const was = `# ${nameOf(path).replace(MARKDOWN, '')}`
+      const was = `# ${shownName(nameOf(path))}`
       if (note.text === was || note.text.startsWith(was + '\n')) {
         // Nobody typed this, so it goes in the way any other outside edit does.
-        note.replace(`# ${clean.replace(MARKDOWN, '')}${note.text.slice(was.length)}`, note.dirty)
+        note.replace(`# ${shownName(clean)}${note.text.slice(was.length)}`, note.dirty)
       }
 
       note.path = target
@@ -2933,7 +2957,7 @@ class Workspace {
     // it. So the same function the local endpoint and every `nib://` link are
     // judged by decides this too: one rule for the three roads a path somebody
     // else wrote takes into a space. See automation/inside.ts.
-    const safe = insideOnly(MARKDOWN.test(relative) ? relative : `${relative}.md`)
+    const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null
 
     const path = insideSpace(root, safe)
@@ -3012,11 +3036,19 @@ class Workspace {
     return this.undone.label
   }
 
+  /** A second copy of a file, beside the first.
+   *
+   *  `Plan.md` copies to `Plan copy.md`: the word goes beside the name rather than
+   *  after the ending, so the copy is still a note in a vault opened next door, and
+   *  `copyName` is where that is said. Through `freeName` like every other name the
+   *  app writes, because a second copy used to be written straight over the first -
+   *  `write_note` replaces what is there, and nothing asked. */
   async duplicate(path: string) {
+    const folder = folderOf(path)
     const content = await invoke<string>('read_note', { path })
-    const name = nameOf(path).replace(/(\.[^.]+)$/, ' copy$1')
+    const name = this.freeName(folder, copyName(nameOf(path)))
 
-    await invoke('write_note', { path: joinPath(folderOf(path), name), content })
+    await invoke('write_note', { path: joinPath(folder, name), content })
     await this.loadTree()
   }
 
