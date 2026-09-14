@@ -305,7 +305,7 @@ Reduced motion needs no second answer: the transitions take their duration from
 with every other duration. For a reader who has asked for as little movement as
 possible, everything here is simply already where it is going.
 
-What this reaches: the four panel tabs and the panel under them, on a desktop
+What this reaches: the panel tabs and the panel under them, on a desktop
 and in the drawer alike; the settings sheet's segmented controls, and its panes,
 which come up from below where they used to appear (and, on a phone, where they
 used to do nothing at all); the publishing sheet's address; the LLM pane's client
@@ -636,7 +636,7 @@ order and Notion's:
    place, at the same height, with the same radius and the same magnifier, drawn
    from the same `.nib-field` class. It is one control that becomes editable, not
    two controls that look alike.
-3. **The panel tabs**, full width, one quarter each - the segmented control the
+3. **The panel tabs**, full width, an equal share each - the segmented control the
    settings sheet already uses, so the tab you are on is raised out of its groove
    exactly the way every other "this one" in the app is, and the raised surface
    slides between them rather than blinking; see "Swapping".

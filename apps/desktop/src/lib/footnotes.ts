@@ -7,10 +7,11 @@
  *
  *  A footnote is two things in two places - a `[^1]` in the middle of a sentence
  *  and a `[^1]: …` at the bottom - and the panel is the one screen that puts them
- *  together. So a row carries both: what the note says at the bottom, and the
- *  line the mark is on in the words above, which is where a click goes. Reading
- *  the note is what you were doing; the definition is at the end and you can
- *  scroll there yourself. */
+ *  together. So a row carries both lines: the one the mark is on in the words above,
+ *  which is where pressing the row goes, and the one the definition is written on,
+ *  which the Footnotes panel offers beside it. Reading the note is what you were
+ *  doing, so the mark is what a press answers; the definition is a second press for
+ *  the times you came looking for what it says. */
 
 export interface Footnote {
   /** The label between the brackets, which is what the note shows as a raised
@@ -21,6 +22,10 @@ export interface Footnote {
   /** The line the first `[^id]` in the words is on, or the definition's own line
    *  for a footnote nothing refers to. */
   line: number
+  /** The line the definition is written on, or null for a mark nothing defines -
+   *  which is a real thing to find in a note and the reason this is not simply the
+   *  line above. */
+  defined: number | null
   /** Whether anything in the note actually points at it. */
   used: boolean
 }
@@ -95,6 +100,7 @@ export function scanFootnotes(text: string): Footnote[] {
     id,
     text: said.get(id) ?? '',
     line: usedAt.get(id) ?? definedAt.get(id) ?? 0,
+    defined: definedAt.get(id) ?? null,
     used: usedAt.has(id),
   }))
 }
