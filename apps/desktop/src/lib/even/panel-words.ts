@@ -1,6 +1,6 @@
 /** Which language the *panel* is written in.
  *
- *  The app has thirty-nine interface catalogues. The firmware has one font, and that
+ *  The app has forty interface catalogues. The firmware has one font, and that
  *  font draws Latin, Cyrillic, Greek, CJK and emoji: Devanagari, Bengali, Tamil,
  *  Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Arabic, Persian, Pashto, Urdu,
  *  Thai, Burmese and Amharic have no glyphs at all, so a reader in one of those
@@ -15,7 +15,7 @@
  *  **Decided by what the font can draw, not by a list of scripts.** `undrawable` in
  *  packages/glasses/src/firmware.ts answers what share of a text the font has no
  *  glyph for, and that is asked of the reader's own catalogue. Measured over the
- *  thirty-nine, the answer is two groups and nothing in between: every Latin,
+ *  forty, the answer is two groups and nothing in between: every Latin,
  *  Cyrillic, Greek and CJK catalogue is at 0.0%, and the fifteen scripts above are
  *  at 31% and more. A catalogue in a script the firmware gains is drawable the day
  *  the metrics say so, and a hand list would still say no. */

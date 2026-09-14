@@ -317,7 +317,7 @@ class Bridge {
   /** The words the glasses say for themselves, translated once. */
   /** What the panel says, in a language the firmware can draw.
    *
-   *  `panelWord` rather than `t`: the app has thirty-nine catalogues and the firmware
+   *  `panelWord` rather than `t`: the app has forty catalogues and the firmware
    *  has one font, so a reader in Thai or Hindi had a menu of boxes. The phone's own
    *  panes stay in their language; see panel-words.ts. */
   private words(): Words {

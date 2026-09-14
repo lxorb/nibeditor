@@ -7,6 +7,8 @@ import { de } from '../locales/de'
 import { fr } from '../locales/fr'
 import { gsw } from '../locales/gsw'
 import { ja } from '../locales/ja'
+import { yue } from '../locales/yue'
+import { zhHantHK } from '../locales/zh-Hant-HK'
 import {
   CATALOGUE_IDS,
   catalogueFor,
@@ -226,7 +228,10 @@ describe('the folder, the list and the loader', () => {
       expect(CATALOGUE_IDS, id).toContain(id)
     }
 
-    expect(CATALOGUE_IDS.length).toBeGreaterThanOrEqual(39)
+    // Forty, since Cantonese: eighty-five million speakers, written differently
+    // enough from standard written Chinese to be its own catalogue rather than a
+    // region of one. The floor moved with it deliberately - it was thirty-nine.
+    expect(CATALOGUE_IDS.length).toBeGreaterThanOrEqual(40)
   })
 })
 
@@ -252,7 +257,18 @@ describe('following the system', () => {
     expect(catalogueFor('zh-TW')).toBe('zh-Hant')
     expect(catalogueFor('zh-MO')).toBe('zh-Hant')
     expect(catalogueFor('zh-HK')).toBe('zh-Hant-HK')
-    expect(catalogueFor('yue')).toBe('zh-Hant-HK')
+  })
+
+  /** Cantonese is a language rather than a region of Chinese, and it has a
+   *  catalogue of its own. A system asking for `yue` used to be answered in Hong
+   *  Kong's written Chinese, which is not what it asked for; `zh-HK` above still
+   *  is, because that is the tag for written Chinese in Hong Kong. */
+  test('and Cantonese as a language of its own', () => {
+    expect(catalogueFor('yue')).toBe('yue')
+    expect(catalogueFor('yue-HK')).toBe('yue')
+    expect(catalogueFor('yue-Hant-HK')).toBe('yue')
+    // The legacy tag, which is what an older system sends for the same language.
+    expect(catalogueFor('zh-yue')).toBe('yue')
   })
 
   test('spells Portuguese the way the region does', () => {
@@ -466,6 +482,64 @@ describe('the catalogues between them', () => {
     for (const [english, value] of Object.entries(fr)) {
       for (const written of forms(value)) expect(written, english).not.toContain("'")
     }
+  })
+
+  /** Cantonese written as Cantonese, rather than as standard written Chinese in
+   *  Traditional characters with a word changed here and there. It is a separate
+   *  catalogue only because it is a separate language in writing: the words below
+   *  are the ones a Cantonese reader looks for first, and a catalogue without them
+   *  would be the Hong Kong one under another name.
+   *
+   *  Traditional characters, which is what Cantonese is written in, come from that
+   *  catalogue being where this one started; the Simplified test above holds every
+   *  catalogue to its own script. */
+  test('Cantonese is written Cantonese, not standard written Chinese', () => {
+    const said = Object.values(yue)
+      .flatMap((value) => forms(value))
+      .join('\n')
+
+    // The attributive, the copula, the negator and "there is none": between them
+    // they are in a third of the rows.
+    for (const word of ['嘅', '係', '唔', '冇']) {
+      expect(said.includes(word), word).toBe(true)
+    }
+    // And the words that are Cantonese and nothing else: this and that, the
+    // pronoun, the perfective, "look", "pick", "thing", "what".
+    for (const word of ['呢個', '嗰', '佢', '咗', '睇', '揀', '嘢', '咩']) {
+      expect(said.includes(word), word).toBe(true)
+    }
+
+    // The other way round: the words standard written Chinese uses where
+    // Cantonese has its own. 不 survives in 不透明度, which is opacity in both.
+    for (const [english, value] of Object.entries(yue)) {
+      for (const written of forms(value)) {
+        expect(written, english).not.toContain('沒有')
+        expect(written, english).not.toContain('這')
+        expect(written, english).not.toContain('那')
+        expect(written, english).not.toContain('它')
+        expect(written, english).not.toContain('的')
+        expect(written, english).not.toContain('什麼')
+        expect(written, english).not.toContain('無法')
+      }
+    }
+  })
+
+  /** It is its own catalogue, so it has to say something of its own: a row-for-row
+   *  copy of the Hong Kong one would be a language in the picker that changes
+   *  nothing on the screen. */
+  test('and says something different from Hong Kong’s written Chinese', () => {
+    const rows = Object.keys(yue).filter((english) => english in zhHantHK)
+    const differ = rows.filter((english) => {
+      const one = yue[english]
+      const two = zhHantHK[english]
+      return JSON.stringify(one) !== JSON.stringify(two)
+    })
+
+    // A quarter of the rows, and every sentence among them: most of what a
+    // catalogue holds is one or two words - 儲存, 畫布 - which Cantonese and
+    // standard written Chinese spell the same way, and changing those would be
+    // writing a different language rather than the same one.
+    expect(differ.length / rows.length).toBeGreaterThan(0.2)
   })
 
   /** Japanese punctuation is full width. A question asked with an ASCII mark

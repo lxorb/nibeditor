@@ -7,7 +7,7 @@ import { forgetPanelLanguage, panelDrawable, panelWord } from './panel-words'
 
 /** Which language the panel is written in.
  *
- *  The app has thirty-nine interface catalogues and the firmware has one font. That
+ *  The app has forty interface catalogues and the firmware has one font. That
  *  font draws Latin, Cyrillic, Greek, CJK and emoji: a catalogue in Devanagari,
  *  Bengali, Tamil, Telugu, Kannada, Malayalam, Gurmukhi, Gujarati, Arabic, Persian,
  *  Pashto, Urdu, Thai, Burmese or Amharic reaches the glass as a row of boxes.
