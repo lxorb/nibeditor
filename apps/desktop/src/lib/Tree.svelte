@@ -745,14 +745,13 @@
     if (!landed && folder && paths.length) void workspace.moveMany(paths, folder)
   }
 
-  /** Escape while a row is in the air: everything slides back. */
+  /** Escape while a row is in the air. Nothing to do but end the lift: ending one
+   *  slides the rows back, because that is what ending one without a drop means. */
   function onLiftKey(event: KeyboardEvent) {
     if (event.key !== 'Escape') return
 
     event.preventDefault()
-    const was = placesNow()
     dropLift()
-    void slideInto(was)
   }
 
   /** The lift is over, however it ended: the copy goes, the listeners go, and
