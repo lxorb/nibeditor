@@ -1772,17 +1772,27 @@ allowances in `web_tabs.rs` were found to be wrong: they said `not(windows)` whe
 only build that raises a permission request is `all(windows, not(feature = "cef"))`.
 
 **And one thing that broke on the way, which is worth more than the fix.** The flagged
-build stopped compiling between one round and the next with
-`cannot update the lock file ... because --locked was passed` - no change of nib's, and
-nothing wrong with the code. The `dpi` patch points at a **branch** of somebody else's
-fork (`winit-gtk4`'s `master`, which has to be the same checkout `winit` itself
-resolves to), the lock beside the manifest pins the commit that branch was at, and the
-day the branch moves the lock is out of date. `--locked` then refuses before a line is
-compiled. So `cef.yml` now catches that one failure: it regenerates the lock, carries on
-and measures, leaves the new lock in the run's artefact and says out loud that the one
-in the repository is stale - because the fix is a one-line commit of that file, and the
-alternative, dropping `--locked`, would make every round a different build. It is the
-same fact section 7 records about the pin, arriving through the lock instead.
+build stopped compiling with `cannot update the lock file ... because --locked was
+passed` - before a line of it was read, and with nothing wrong in it. The cause is a
+coupling nobody had had to think about: **the flagged workspace's lock file records the
+app crate's own dependency list**, because the app is a path dependency of `nib-cef`. So
+the day main gains an ordinary dependency - it was `window-vibrancy`, for the window
+frame that lets the desk show through - the lock beside `nib-cef` is out of date, and
+`--locked` refuses. `check.yml` never builds that workspace, so nothing on the way to
+main can notice, and the failure arrives forty-five minutes into a `cef.yml` round
+belonging to whoever pushed next.
+
+Two things came out of it, and the cheap one is the better one:
+
+- **A test that reads two files.** `apps/desktop/test/cef.test.ts` now asserts that
+  every dependency in the app's manifest is in the flagged lock. It runs in the ordinary
+  test job on every pull request, it takes no runner and no Chromium, and the day
+  somebody adds a crate it says so - with the fix, which is `cargo generate-lockfile` in
+  `apps/desktop/src-tauri/cef`.
+- **And `cef.yml` catches the failure once**: it regenerates the lock, carries on and
+  measures, leaves the new lock in the run's artefact and says out loud that the one in
+  the repository is stale. The fix is a one-line commit of that file; the alternative -
+  dropping `--locked` - would make every round a different build.
 
 MEASURED-ROWS-GO-HERE
 

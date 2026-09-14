@@ -1240,6 +1240,8 @@ def batch_two(report: dict) -> dict:
             f'the webview {"kept" if switch.get("kept") else "**gone**"}'
         ),
         'the page is still there after a switch': answered(cef, 'switch away from a web tab'),
+        'a script the app runs in a page runs': answered(cef, 'a script the app runs in a page'),
+        "a page's answer comes back out of it": answered(cef, "a page's answer comes back"),
         "back is the engine's own history": answered(cef, 'back is the engine'),
         'the place on the page, read back': answered(cef, 'the place on the page'),
         'a login survives the tab being closed and opened again': answered(
@@ -1252,6 +1254,18 @@ def batch_two(report: dict) -> dict:
         "the page tells the window the site's mark": answered(cef, "the site's own mark"),
         'web tabs open when the tree was counted': str(report.get('tabs') or 0),
     }
+
+    # Which of the two channels the session rows were read over, said by the run itself.
+    # A mark read out of the page's own address is still a mark the profile kept - the
+    # claim is about what survived a relaunch rather than about how it was read - but a
+    # reader of the table is owed the difference.
+    for name, result in (('the first run', cef), ('the relaunch', again)):
+        how = next(
+            (one.get('read') for one in result.get('events') or [] if one.get('event') == 'mark'),
+            None,
+        )
+        if how:
+            rows[f'what the marks were read with, {name}'] = how
 
     # Which folder nib's own interface asked the engine for, against the one this script
     # looks in. A third profile appeared on Windows in batch 1.5 and the runtime only
@@ -1478,7 +1492,6 @@ def main() -> int:
         again = dict(env)
         again['NIB_CEF_GATE'] = '1'
         report['relaunch'] = run(flagged, again, out_dir / 'relaunch', args.timeout, measured=True)
-        print(json.dumps({key: report['why'][key] for key in report['why']}, indent=2)[:8000])
 
     # The two profiles, on disk, after a run that used both of them.
     root = config_dir() / 'web'

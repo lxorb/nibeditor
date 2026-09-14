@@ -38,6 +38,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
@@ -1326,6 +1327,39 @@ pub fn web_step(
     stepped(&found(&app, &tab)?, &tabs, &tab, &step)
 }
 
+/// How long a page is given to answer a script before the command gives up on it.
+///
+/// A page that is going to answer answers in a millisecond or two, so this is not a
+/// budget: it is an end. **The wait used to have none**, and two commands did it - the
+/// place a tab was left at, and the text of a clip. Under nib's own Chromium the answer
+/// comes back over the engine's own DevTools channel, which that runtime pins off by
+/// default, and the engine drops a message addressed to a webview it can no longer find;
+/// so "the page never answers" is a state that exists rather than a worry. The gate's own
+/// walk sat inside `web_look` on a Mac until the harness killed the process seven minutes
+/// later. A command that cannot be answered has to say so instead.
+const ANSWER: Duration = Duration::from_secs(8);
+
+/// One script run in the page, and the answer it gave.
+///
+/// The answer comes back through the engine's own callback rather than through the app's
+/// IPC, which is what lets a page be read without the page being handed anything to call.
+/// The waiting is done on a blocking thread rather than in the command's own future
+/// because a timer is the one thing a channel does not have, and see [`ANSWER`] for the
+/// run that made the wait need an end.
+async fn asked(view: &Webview, script: String) -> Result<String, String> {
+    let (sending, waiting) = std::sync::mpsc::channel::<String>();
+    view.eval_with_callback(script, move |answer| {
+        // One page, one answer: a channel nobody holds is an answer nobody waited for.
+        let _ = sending.send(answer);
+    })
+    .map_err(|error| format!("that page could not be read: {error}"))?;
+
+    tauri::async_runtime::spawn_blocking(move || waiting.recv_timeout(ANSWER))
+        .await
+        .map_err(|error| format!("that page could not be read: {error}"))?
+        .map_err(|_| "that page said nothing".to_string())
+}
+
 /// Where the tab is: the page, how far down it the reading has got, and the trail
 /// behind it.
 ///
@@ -1340,18 +1374,7 @@ pub async fn web_look(
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
 ) -> Result<Look, String> {
-    let view = found(&app, &tab)?;
-    let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
-    view.eval_with_callback(LOOKED, move |answer| {
-        let _ = sending.try_send(answer);
-    })
-    .map_err(|error| format!("that page could not be read: {error}"))?;
-
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = asked(&found(&app, &tab)?, LOOKED.to_owned()).await?;
 
     let said = serde_json::from_str::<Looked>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))?;
@@ -1402,19 +1425,7 @@ pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
 /// page be read without the page being given anything to call.
 #[tauri::command]
 pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Clipped, String> {
-    let view = found(&app, &tab)?;
-    let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
-    view.eval_with_callback(reader(selection), move |answer| {
-        // One page, one answer: a full channel is an answer already sent.
-        let _ = sending.try_send(answer);
-    })
-    .map_err(|error| format!("that page could not be read: {error}"))?;
-
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = asked(&found(&app, &tab)?, reader(selection)).await?;
 
     serde_json::from_str::<Clipped>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))

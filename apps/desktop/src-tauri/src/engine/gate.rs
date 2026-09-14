@@ -71,6 +71,13 @@ const SETTLE: Duration = Duration::from_secs(6);
 /// this the gate gives up on that one tab, says so, and measures everything else.
 const PATIENCE: Duration = Duration::from_secs(90);
 
+/// How long batch 2's rows are given, all of them together.
+///
+/// They sleep about a third of it on purpose - a page has to load, a scroll has to
+/// happen, a tab has to be closed and opened again - and the rest is the room the calls
+/// themselves get. Past this the walk carries on without them; see [`walk`].
+const ROWS: Duration = Duration::from_secs(240);
+
 /// When the process started, as near as a line of our own code can be to it.
 static STARTED: LazyLock<Instant> = LazyLock::new(Instant::now);
 
@@ -273,7 +280,30 @@ fn walk(app: &AppHandle, tabs: usize) {
     // Batch 2's own rows, after the counting and before the engine's own pages: they
     // move a tab about, and a process tree counted in the middle of that would be a
     // measurement of the gate rather than of the app.
-    web_tab_rows(app, &tab_labels);
+    //
+    // **With an end of their own.** They are the part of the walk that asks a page
+    // questions, and an answer that never comes is a state this engine has: the first
+    // flagged run to reach these rows stopped inside the third of them on both platforms
+    // that started, and said nothing about the profiles or the engine's own pages
+    // afterwards. Every row prints as it is measured, so a run that gives up here keeps
+    // the rows it already got.
+    let rows = app.clone();
+    let labels = tab_labels.clone();
+    let (sending, waiting) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        web_tab_rows(&rows, &labels);
+        let _ = sending.send(());
+    });
+    if waiting.recv_timeout(ROWS).is_err() {
+        check(
+            "batch 2's rows all came back",
+            false,
+            &format!(
+                "one of them did not answer in {} seconds; the rows above are the measured ones",
+                ROWS.as_secs()
+            ),
+        );
+    }
     pulse(app, "batch 2's rows");
 
     // And last of all the engine's own pages, each in a webview of its own, because a
@@ -542,21 +572,48 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     say(&format!(
         "\"event\":\"switch\",\"away_us\":{away},\"to_web_us\":{to_web},\"kept\":{alive}"
     ));
+    pulse(app, "the switch");
+
+    // **The two ways a page can be talked to, told apart.** Running a script in a page
+    // needs nothing but the engine's own message queue; getting an *answer* back out of
+    // one travels the engine's DevTools protocol, and under this engine those are
+    // different channels with different failure modes - a page that never answers is why
+    // these rows have an end at all. So the gate asks the same page the same question
+    // twice: once through its own address, which only needs the script to run, and once
+    // through the answer channel the app's own commands use. A yes on the first and a no
+    // on the second is a finding about the engine rather than about the page.
+    let ran = page_says(app, &tab, "'ok'");
+    check(
+        "a script the app runs in a page runs",
+        ran.as_deref() == Some("ok"),
+        "the page put the answer in its own address, which needs no answer channel",
+    );
+    let answered = ask_page(app, &tab, "'ok'");
+    check(
+        "a page's answer comes back through the engine's own channel",
+        answered.as_deref() == Some("ok"),
+        "what web_look and the favicon are read with",
+    );
+    pulse(app, "the page's answer");
 
     // Back and forward, which on this engine are the engine's own. The tab is sent
     // somewhere new, which is what gives it somewhere to go back to, and then stepped.
+    // Where it landed is read off the engine rather than out of the page: the history is
+    // the engine's under this build, so the engine is the one to ask, and its answer
+    // needs nothing of the page.
     let sent = crate::web_tabs::web_navigate(app.clone(), tab.clone(), SITES[1].to_owned());
     std::thread::sleep(SETTLE);
     let stepped = step_back(app, &tab);
     std::thread::sleep(SETTLE);
 
-    let (where_now, _) = looked(app, &tab);
-    let went_back = where_now.starts_with(SITES[0].trim_end_matches('/'));
+    let landed = where_now(app, &tab);
+    let went_back = landed.starts_with(SITES[0].trim_end_matches('/'));
     check(
         "back is the engine's own history and lands where the tab was",
         sent.is_ok() && stepped.is_ok() && went_back,
-        &format!("after a step back the tab is at {where_now}"),
+        &format!("after a step back the tab is at {landed}"),
     );
+    pulse(app, "the step back");
 
     // The place: scrolled, then read out of the page the way `web_look` does when a tab
     // is left. A number rather than a yes, because "the place is kept" is a claim about
@@ -572,11 +629,14 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     std::thread::sleep(Duration::from_secs(1));
     let scrolled = crate::web_tabs::web_scroll(app.clone(), tab.clone(), 0.0, 900.0);
     std::thread::sleep(Duration::from_secs(2));
-    let (_, y) = looked(app, &tab);
+    let read = place(app, &tab);
     check(
         "the place on the page is read back out of it",
-        scrolled.is_ok() && y > 0.0,
-        &format!("the reading is {y} down the page, where 900 was asked for"),
+        scrolled.is_ok() && read.as_ref().is_ok_and(|y| *y > 0.0),
+        &match &read {
+            Ok(y) => format!("the reading is {y} down the page, where 900 was asked for"),
+            Err(error) => format!("the page could not be read: {error}"),
+        },
     );
 
     // What the bar over the tab is drawn from: the page's own name and the site's own
@@ -626,7 +686,10 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     let at = 0;
     crate::web_tabs::web_close(app.clone(), app.state(), tab.clone(), true);
     std::thread::sleep(Duration::from_secs(2));
-    let again = web_tab(app, at, SITES[0]);
+    // Through the same patience the first one was opened with: on Windows the *second*
+    // webview of a run has been the call that never comes back, and this is the second
+    // one of this tab.
+    let again = opened_within(app, at, SITES[0]);
     std::thread::sleep(SETTLE);
     let (over, cooked) = if again.is_ok() {
         read_mark(app, &tab)
@@ -678,26 +741,34 @@ fn step_back(app: &AppHandle, tab: &str) -> Result<(), String> {
     )
 }
 
-/// Where the tab is and how far down it the reading has got, through `web_look` - the
-/// command the window calls when a tab is left, so the answer is the one that is written
-/// against the note.
+/// Where the engine says the tab is.
+///
+/// The engine rather than the page: under this build the history is Chromium's, so
+/// Chromium is the one to ask whether a step landed, and the answer travels the same
+/// message queue every other call here uses instead of the page's answer channel.
+fn where_now(app: &AppHandle, tab: &str) -> String {
+    app.get_webview(&format!("web-{tab}"))
+        .and_then(|view| view.url().ok())
+        .map(|one| one.to_string())
+        .unwrap_or_default()
+}
+
+/// How far down the page the reading has got, through `web_look` - the command the window
+/// calls when a tab is left, so the answer is the one that is written against the note.
 ///
 /// Read out of the answer as JSON because `Look`'s fields are the web-tab module's own
 /// to keep private, and a gate is not a reason to open them.
-fn looked(app: &AppHandle, tab: &str) -> (String, f64) {
+fn place(app: &AppHandle, tab: &str) -> Result<f64, String> {
     let said = tauri::async_runtime::block_on(crate::web_tabs::web_look(
         app.clone(),
         app.state::<crate::web_tabs::WebTabs>(),
         tab.to_owned(),
-    ))
-    .ok()
-    .and_then(|one| serde_json::to_value(one).ok())
-    .unwrap_or_default();
+    ))?;
 
-    (
-        said["url"].as_str().unwrap_or_default().to_owned(),
-        said["y"].as_f64().unwrap_or_default(),
-    )
+    Ok(serde_json::to_value(said)
+        .ok()
+        .and_then(|one| one["y"].as_f64())
+        .unwrap_or_default())
 }
 
 /// What an earlier run of this binary left behind in the site's own storage: the value
@@ -709,7 +780,7 @@ fn looked(app: &AppHandle, tab: &str) -> (String, f64) {
 /// logins are session cookies - which is the half of Emil's *"cookies etc. ... even
 /// across application restarts"* that had to be asked for. See `cef/src/main.rs`.
 fn read_mark(app: &AppHandle, tab: &str) -> (Option<String>, Option<String>) {
-    let said = ask_page(
+    let (said, how) = answer(
         app,
         tab,
         &format!(
@@ -722,13 +793,18 @@ fn read_mark(app: &AppHandle, tab: &str) -> (Option<String>, Option<String>) {
                  }}); \
                  baked = found ? found.slice('{MARK}='.length) : '' \
                }} catch (error) {{}} \
-               return kept + '|' + baked \
+               return (kept + '.' + baked).replace(/[^A-Za-z0-9._-]/g, '') \
              }})()"
         ),
-    )
-    .unwrap_or_default();
+    );
+    say(&format!("\"event\":\"mark\",\"read\":\"{how}\""));
 
-    let (kept, baked) = said.split_once('|').unwrap_or_default();
+    // A full stop between them, and nothing but letters, digits and three punctuation
+    // marks in what comes back: the second of the two channels this can be read over
+    // carries the answer in the page's own address, and an address is no place for an
+    // arbitrary string. The gate's own mark is spelled to fit.
+    let said = said.unwrap_or_default();
+    let (kept, baked) = said.split_once('.').unwrap_or_default();
     (
         (!kept.is_empty()).then(|| kept.to_owned()),
         (!baked.is_empty()).then(|| baked.to_owned()),
@@ -748,6 +824,54 @@ fn write_mark(app: &AppHandle, tab: &str) {
         ));
     }
 }
+
+/// One question put to the page through whichever channel answers it, and which one did.
+///
+/// The app's own commands read a page through the engine's answer channel and there is
+/// nothing else for them to use, so [`ask_page`] is asked first: a row measured any other
+/// way would not be a row about nib. But a claim like *"the login is still there"* is
+/// about what the profile kept rather than about how it was read, and it would be a poor
+/// gate that could not answer it on a build whose answer channel is silent. So the second
+/// way is [`page_says`], and the run says which one it got the answer from.
+fn answer(app: &AppHandle, tab: &str, script: &str) -> (Option<String>, &'static str) {
+    if let Some(said) = ask_page(app, tab, script) {
+        return (Some(said), "the engine's own answer channel");
+    }
+
+    (
+        page_says(app, tab, script),
+        "the address the page put it in, because the answer channel said nothing",
+    )
+}
+
+/// One script run in the page, and the answer read back out of the page's own address.
+///
+/// The page is asked to put its answer in its own fragment with `history.replaceState`,
+/// which loads nothing and leaves no entry in the history, and the address is then read
+/// off the engine. **Two things that can only fail together**: it needs a script to run
+/// and it needs the engine to say where a webview is, and it needs no answer to travel
+/// back out of the page - which is the channel that has gone silent under this engine.
+///
+/// Only for answers that can live in an address: letters, digits, and the three marks
+/// `page_says` does not strip. The gate's own answers are spelled that way.
+fn page_says(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
+    let view = app.get_webview(&format!("web-{tab}"))?;
+    view.eval(format!(
+        "try {{ history.replaceState(null, '', '#{FRAGMENT}=' + \
+           String({script}).replace(/[^A-Za-z0-9._-]/g, '')) }} catch (error) {{}}"
+    ))
+    .ok()?;
+    std::thread::sleep(Duration::from_secs(2));
+
+    let url = view.url().ok()?.to_string();
+    url.split_once(&format!("#{FRAGMENT}="))
+        .map(|(_, said)| said.to_owned())
+        .filter(|said| !said.is_empty())
+}
+
+/// What the gate's own answers are labelled with in a page's address. Its own name,
+/// because a fragment belongs to the site and the site might be using one.
+const FRAGMENT: &str = "nib-gate";
 
 /// One script run in the page, and the answer it returned.
 fn ask_page(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
