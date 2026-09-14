@@ -51,6 +51,34 @@ export function mark(step: string): void {
   STEPS.push({ step, at: performance.now() })
 }
 
+/** One step of the launch, on the frame after now.
+ *
+ *  For the steps that are about pixels rather than about code: "the shell is on
+ *  screen" is not the moment the markup was handed over, it is the moment after the
+ *  browser has drawn it. Two frames, because the first callback runs before the
+ *  paint it was scheduled for and the second is the first moment the pixels are
+ *  really there - the same two frames every drive in test/e2e waits for. */
+export function markPainted(step: string): void {
+  requestAnimationFrame(() => requestAnimationFrame(() => mark(step)))
+}
+
+/** The first thing somebody did, once.
+ *
+ *  What "interactive" means for a launch: not a clock reaching a number, but a key
+ *  or a pointer being answered in the frame it happened in. A probe nobody touches
+ *  never records it, and that is honest - there is nothing to record. Listened for
+ *  in the capture phase so it is marked before whatever handles it, and taken off
+ *  after the first one: the question is about the launch, not about the session. */
+export function watchFirstInput(): void {
+  const kinds = ['keydown', 'pointerdown'] as const
+  const heard = () => {
+    mark('interactive: first input answered')
+    for (const kind of kinds) removeEventListener(kind, heard, true)
+  }
+
+  for (const kind of kinds) addEventListener(kind, heard, { capture: true, once: false })
+}
+
 /** Hands the launch over to the crate, which writes it beside its own steps if the
  *  switch is on and drops it if it is not.
  *

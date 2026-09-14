@@ -27,6 +27,7 @@ import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
+import { markPainted } from './trace'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
@@ -533,6 +534,7 @@ class Workspace {
 
       // The list is on screen before a body is read; see startup.svelte.ts.
       await startup.shown()
+      markPainted('tree painted')
 
       // A first visit opens what it was given rather than a blank page - unless
       // something is open already. The list goes out above this line and the window
@@ -573,6 +575,7 @@ class Workspace {
     // the notes are read into a window somebody can already see and scroll. See
     // startup.svelte.ts, which also starts the queue behind this.
     await startup.shown()
+    markPainted('tree painted')
 
     // Nobody asked for this one: it is the sitting that was, arriving.
     if (state.layout) await this.applyLayout(state.layout, false)
@@ -591,6 +594,12 @@ class Workspace {
     // A phone and a tablet show one document at a time, so a session written on
     // a desktop arrives as the one that had the focus; see `oneDocument`.
     this.oneDocument()
+
+    // And whatever the sitting left in the pane, on screen: the last of the three paints
+    // a launch is made of, after the shell and the file list. Which is a note, or the
+    // empty pane of somebody who closed everything before they quit - either way it is
+    // the frame the launch ends on.
+    markPainted('active tab painted')
   }
 
   /** Drafts as tabs. A file that was clean is re-read from disk, so an edit made

@@ -74,10 +74,22 @@ static BEFORE: LazyLock<Duration> = LazyLock::new(|| before_main().unwrap_or(Dur
 /// Every step so far, in the order it happened.
 static MARKS: Mutex<Vec<Mark>> = Mutex::new(Vec::new());
 
-/// One step: what it was, and how long after the app started it happened.
+/// One step: what it was, how long after the app started it happened, and how much
+/// processor this process had spent by then.
+///
+/// The processor time is the number worth comparing. Wall-clock says what somebody
+/// waited through, which is the question - but it also says what every other
+/// program on the machine was doing at the time, and a launch measured beside seven
+/// other builds is a launch measured against those builds. User plus kernel time is
+/// this process's own work and nothing else's, so it is the same number on a quiet
+/// machine as on a loaded one, and it is what says whether a change made the app do
+/// less. `None` for a step the window timed: the window's clock is its own, and the
+/// processor time of this process when its list arrived is not the processor time it
+/// had reached at that step.
 struct Mark {
     step: String,
     at: Duration,
+    cpu: Option<Duration>,
 }
 
 /// A step the window timed, as it hands it over. `at` is milliseconds on the
@@ -146,6 +158,7 @@ pub fn write(app: &AppHandle) {
         return;
     };
     let _ = out.write_all(page(&marks).as_bytes());
+    let _ = out.write_all(line(&marks).as_bytes());
 }
 
 /// Where the file is, in a folder that exists by the time this returns.
@@ -164,18 +177,64 @@ fn page(marks: &[Mark]) -> String {
     );
 
     let mut last = Duration::ZERO;
+    let mut spent_by = Duration::ZERO;
     for mark in marks {
         let step = mark.step.chars().take(COLUMN).collect::<String>();
         let since = mark.at.saturating_sub(last);
+        // And what the processor spent over the same step, which is the column that
+        // means the same thing on a loaded machine. Blank for the window's own
+        // steps; see `Mark`.
+        let spent = match mark.cpu {
+            Some(now) => {
+                let over = now.saturating_sub(spent_by);
+                spent_by = now;
+                format!("{:>8.1} cpu", millis(over))
+            }
+            None => " ".repeat(12),
+        };
         let _ = writeln!(
             out,
-            "{step:<COLUMN$} {:>9.1} ms  +{:>8.1} ms",
+            "{step:<COLUMN$} {:>9.1} ms  +{:>8.1} ms  {spent}",
             millis(mark.at),
             millis(since)
         );
         last = mark.at;
     }
 
+    out
+}
+
+/// The same trace as one line of JSON, so a check can read it.
+///
+/// A page is for a person and this is for a program: every number a speed run
+/// reports, every budget a gate holds the launch to, and every before-and-after
+/// table comes off this line rather than off somebody's reading of the page above.
+/// One line, appended, so a file of several launches is several lines and the last
+/// of them is the launch that just happened.
+fn line(marks: &[Mark]) -> String {
+    let mut out = format!(
+        "{{\"nib\":\"{}\",\"launched\":{},\"steps\":[",
+        env!("CARGO_PKG_VERSION"),
+        STARTED.1
+    );
+
+    for (index, mark) in marks.iter().enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+
+        // The step's name with the two characters JSON minds taken out rather than
+        // escaped. Every step name is written in this crate and none of them holds
+        // either; a hand-rolled escape is a bug waiting for the first one that does.
+        let step = mark.step.replace(['\\', '"'], " ");
+        let _ = write!(out, "{{\"step\":\"{step}\",\"at\":{:.1}", millis(mark.at));
+        if let Some(over) = mark.cpu {
+            let _ = write!(out, ",\"cpu\":{:.1}", millis(over));
+        }
+        out.push('}');
+    }
+
+    out.push_str("]}\n");
     out
 }
 
@@ -187,11 +246,21 @@ fn millis(span: Duration) -> f64 {
 /// Adds a step, and keeps the list in the order the steps happened: the window's
 /// arrive last and belong in the middle.
 fn push(step: &str, at: Duration) {
+    push_with(step, at, cpu());
+}
+
+/// The same, for a step whose processor time is not ours to report.
+fn push_said(step: &str, at: Duration) {
+    push_with(step, at, None);
+}
+
+fn push_with(step: &str, at: Duration, cpu: Option<Duration>) {
     let Ok(mut marks) = MARKS.lock() else { return };
 
     let mark = Mark {
         step: step.to_owned(),
         at,
+        cpu,
     };
     let place = marks.partition_point(|held| held.at <= mark.at);
     marks.insert(place, mark);
@@ -215,7 +284,7 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
         // On the same axis as this side's own steps, which starts before our first
         // line rather than at it; see `BEFORE`.
         let at = at.saturating_add(shift).saturating_add(*BEFORE);
-        push(&format!("window: {}", said.step), at);
+        push_said(&format!("window: {}", said.step), at);
     }
 
     write(&app);
@@ -247,6 +316,66 @@ fn millis_since_epoch() -> f64 {
 
 /// How long the machine spent on this process before our own first line ran.
 ///
+/// How much processor this process has spent, user and kernel together.
+///
+/// The load-independent half of the trace: wall-clock says what somebody waited
+/// through and processor time says what the app actually did, and only the second
+/// one means the same thing on a machine running seven other builds. Windows hands
+/// both back from the same call `before_main` already makes.
+#[cfg(windows)]
+fn cpu() -> Option<Duration> {
+    use windows::Win32::Foundation::FILETIME;
+    use windows::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+
+    /// Windows counts processor time in hundreds of nanoseconds.
+    const PER_TICK: u32 = 100;
+
+    let mut created = FILETIME::default();
+    let mut exited = FILETIME::default();
+    let mut kernel = FILETIME::default();
+    let mut user = FILETIME::default();
+
+    // SAFETY: the four are ours and outlive the call, and the handle is the
+    // pseudo-handle for this process, which needs no closing. The call writes the
+    // four and nothing else.
+    #[allow(
+        unsafe_code,
+        reason = "there is no safe way to ask Windows how much processor this process has had"
+    )]
+    unsafe {
+        GetProcessTimes(
+            GetCurrentProcess(),
+            std::ptr::from_mut(&mut created),
+            std::ptr::from_mut(&mut exited),
+            std::ptr::from_mut(&mut kernel),
+            std::ptr::from_mut(&mut user),
+        )
+    }
+    .ok()?;
+
+    let ticks =
+        |one: FILETIME| (u64::from(one.dwHighDateTime) << 32) | u64::from(one.dwLowDateTime);
+    let spent = ticks(kernel).checked_add(ticks(user))?;
+
+    Some(Duration::new(spent / 10_000_000, {
+        #[allow(
+            clippy::cast_possible_truncation,
+            reason = "a remainder under ten million times a hundred is under a second of nanoseconds"
+        )]
+        {
+            (spent % 10_000_000) as u32 * PER_TICK
+        }
+    }))
+}
+
+/// Nothing to say where the platform is not asked this way. The wall-clock half of
+/// the trace still stands; only the column that does not move with the load is
+/// missing.
+#[cfg(not(windows))]
+fn cpu() -> Option<Duration> {
+    None
+}
+
 /// Windows says when the process was created and the clock above says when we
 /// first looked, and the difference is the image being loaded, the webview runtime
 /// being mapped and - on a binary the machine has not seen before - whatever reads
@@ -310,15 +439,24 @@ fn before_main() -> Option<Duration> {
 
 #[cfg(test)]
 mod tests {
-    use super::{millis, page, push, Mark, COLUMN, MARKS};
+    use super::{line, millis, page, push, Mark, COLUMN, MARKS};
     use std::time::Duration;
 
     /// The marks are one list for the whole process, so a test that writes to them
     /// takes them back out again.
     fn only(marks: Vec<Mark>) -> String {
+        with(marks, page)
+    }
+
+    /// The same, read as the one line a program reads.
+    fn only_line(marks: Vec<Mark>) -> String {
+        with(marks, line)
+    }
+
+    fn with(marks: Vec<Mark>, read: fn(&[Mark]) -> String) -> String {
         let mut held = MARKS.lock().expect("the marks");
         let before = std::mem::replace(&mut *held, marks);
-        let written = page(&held);
+        let written = read(&held);
         *held = before;
         written
     }
@@ -335,10 +473,12 @@ mod tests {
             Mark {
                 step: "first".to_owned(),
                 at: Duration::from_millis(10),
+                cpu: None,
             },
             Mark {
                 step: "second".to_owned(),
                 at: Duration::from_millis(45),
+                cpu: None,
             },
         ]);
 
@@ -353,6 +493,7 @@ mod tests {
         let written = only(vec![Mark {
             step: "x".repeat(COLUMN * 2),
             at: Duration::ZERO,
+            cpu: None,
         }]);
 
         let line = written
@@ -376,5 +517,77 @@ mod tests {
         let order: Vec<&str> = held.iter().map(|one| one.step.as_str()).collect();
         assert_eq!(order, vec!["early", "between", "late"]);
         *held = before;
+    }
+
+    /// The line a check reads, which is the whole point of having one: every number
+    /// in a speed report and every budget a gate holds the launch to comes off this
+    /// rather than off somebody's reading of the page above it.
+    #[test]
+    fn the_line_is_json_a_program_can_read() {
+        let written = only_line(vec![
+            Mark {
+                step: "app starting".to_owned(),
+                at: Duration::ZERO,
+                cpu: Some(Duration::from_millis(2)),
+            },
+            Mark {
+                step: "window: first frame painted".to_owned(),
+                at: Duration::from_millis(400),
+                cpu: None,
+            },
+        ]);
+
+        assert!(written.ends_with("]}\n"), "{written}");
+        assert!(
+            written.contains(r#""step":"app starting","at":0.0,"cpu":2.0"#),
+            "{written}"
+        );
+        // A step the window timed has no processor time of ours to report, and says
+        // nothing rather than nought: nought would read as "this cost nothing".
+        assert!(
+            written.contains(r#""step":"window: first frame painted","at":400.0}"#),
+            "{written}"
+        );
+    }
+
+    /// A step name with a quote in it would otherwise close the string it is in and
+    /// leave a line no parser can read. None of them has one; this is the guard for
+    /// the first one that does.
+    #[test]
+    fn a_quote_in_a_step_name_cannot_break_the_line() {
+        let written = only_line(vec![Mark {
+            step: "a \"quoted\" step".to_owned(),
+            at: Duration::ZERO,
+            cpu: None,
+        }]);
+
+        assert_eq!(written.matches('"').count() % 2, 0, "{written}");
+        assert!(!written.contains('\\'), "{written}");
+    }
+
+    /// The processor column is the one that means the same thing on a loaded
+    /// machine, so it says what each step spent rather than the running total.
+    #[test]
+    fn the_processor_column_is_what_each_step_spent() {
+        let written = only(vec![
+            Mark {
+                step: "first".to_owned(),
+                at: Duration::from_millis(10),
+                cpu: Some(Duration::from_millis(8)),
+            },
+            Mark {
+                step: "second".to_owned(),
+                at: Duration::from_millis(45),
+                cpu: Some(Duration::from_millis(30)),
+            },
+        ]);
+
+        let second = written
+            .lines()
+            .find(|one| one.starts_with("second"))
+            .unwrap_or_default();
+
+        // Thirty less the eight already spent, not thirty.
+        assert!(second.contains("22.0 cpu"), "{written}");
     }
 }
