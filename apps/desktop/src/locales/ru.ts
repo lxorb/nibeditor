@@ -193,6 +193,16 @@ export const ru: Dictionary = {
   'Sort by name': 'По имени',
   'Sort by modified': 'По изменению',
   'Sort by created': 'По созданию',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Порядок файлов',
+  'Name, A to Z': 'Имя, от А до Я',
+  'Name, Z to A': 'Имя, от Я до А',
+  'Modified, newest first': 'Изменение, сначала новые',
+  'Modified, oldest first': 'Изменение, сначала старые',
+  'Created, newest first': 'Создание, сначала новые',
+  'Created, oldest first': 'Создание, сначала старые',
+  Manual: 'Вручную',
   'Show hidden files': 'Показать скрытые файлы',
   'Hide hidden files': 'Скрыть скрытые файлы',
   // Writing

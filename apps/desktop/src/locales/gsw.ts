@@ -193,6 +193,16 @@ export const gsw: Dictionary = {
   'Sort by name': 'Nach Name sortiere',
   'Sort by modified': 'Nach Änderig sortiere',
   'Sort by created': 'Nach Erstellig sortiere',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Reihefolg vo de Dateie',
+  'Name, A to Z': 'Name, A bis Z',
+  'Name, Z to A': 'Name, Z bis A',
+  'Modified, newest first': 'Änderig, nöischti zerscht',
+  'Modified, oldest first': 'Änderig, eltischti zerscht',
+  'Created, newest first': 'Erstellig, nöischti zerscht',
+  'Created, oldest first': 'Erstellig, eltischti zerscht',
+  Manual: 'Vo Hand',
   'Show hidden files': 'Versteckti Dateie zeige',
   'Hide hidden files': 'Versteckti Dateie uusblände',
   // Writing

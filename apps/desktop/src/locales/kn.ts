@@ -193,6 +193,16 @@ export const kn: Dictionary = {
   'Sort by name': 'ಹೆಸರು ಪ್ರಕಾರ ಕ್ರಮ',
   'Sort by modified': 'ಬದಲಾದ ದಿನಾಂಕ ಪ್ರಕಾರ ಕ್ರಮ',
   'Sort by created': 'ರಚಿಸಿದ ದಿನಾಂಕ ಪ್ರಕಾರ ಕ್ರಮ',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ಫೈಲ್‌ಗಳ ಕ್ರಮ',
+  'Name, A to Z': 'ಹೆಸರು, ಅ ಇಂದ ಹ',
+  'Name, Z to A': 'ಹೆಸರು, ಹ ಇಂದ ಅ',
+  'Modified, newest first': 'ಬದಲಾದ ದಿನಾಂಕ, ಹೊಸದು ಮೊದಲು',
+  'Modified, oldest first': 'ಬದಲಾದ ದಿನಾಂಕ, ಹಳೆಯದು ಮೊದಲು',
+  'Created, newest first': 'ರಚಿಸಿದ ದಿನಾಂಕ, ಹೊಸದು ಮೊದಲು',
+  'Created, oldest first': 'ರಚಿಸಿದ ದಿನಾಂಕ, ಹಳೆಯದು ಮೊದಲು',
+  Manual: 'ಕೈಯಿಂದ',
   'Show hidden files': 'ಅಡಗಿದ ಫೈಲ್‌ಗಳನ್ನು ತೋರಿಸಿ',
   'Hide hidden files': 'ಅಡಗಿದ ಫೈಲ್‌ಗಳನ್ನು ಮರೆಮಾಡಿ',
   // Writing

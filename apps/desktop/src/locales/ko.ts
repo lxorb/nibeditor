@@ -193,6 +193,16 @@ export const ko: Dictionary = {
   'Sort by name': '이름순 정렬',
   'Sort by modified': '수정일순 정렬',
   'Sort by created': '생성일순 정렬',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': '파일 정렬 순서',
+  'Name, A to Z': '이름, 오름차순',
+  'Name, Z to A': '이름, 내림차순',
+  'Modified, newest first': '수정일, 최신순',
+  'Modified, oldest first': '수정일, 오래된 순',
+  'Created, newest first': '생성일, 최신순',
+  'Created, oldest first': '생성일, 오래된 순',
+  Manual: '직접 정렬',
   'Show hidden files': '숨긴 파일 보이기',
   'Hide hidden files': '숨긴 파일 숨기기',
   // Writing

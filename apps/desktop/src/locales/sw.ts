@@ -193,6 +193,16 @@ export const sw: Dictionary = {
   'Sort by name': 'Panga kwa jina',
   'Sort by modified': 'Panga kwa mabadiliko',
   'Sort by created': 'Panga kwa kuundwa',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Mpangilio wa faili',
+  'Name, A to Z': 'Jina, A hadi Z',
+  'Name, Z to A': 'Jina, Z hadi A',
+  'Modified, newest first': 'Mabadiliko, mpya kwanza',
+  'Modified, oldest first': 'Mabadiliko, za kale kwanza',
+  'Created, newest first': 'Kuundwa, mpya kwanza',
+  'Created, oldest first': 'Kuundwa, za kale kwanza',
+  Manual: 'Kwa mkono',
   'Show hidden files': 'Onyesha faili zilizofichwa',
   'Hide hidden files': 'Ficha faili zilizofichwa',
   // Writing

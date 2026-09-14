@@ -18,6 +18,7 @@
     FOOTNOTES_MARK,
     GRAPH_MARK,
     LINKS_MARK,
+    ORDER_MARK,
     OUTLINE_MARK,
     SEARCH_MARK,
   } from './panel-marks'
@@ -37,7 +38,8 @@
   import { pagesNavigator, searchPanel } from './surfaces.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
-  import type { Panel, PanelSide, SortKey } from './workspace.svelte'
+  import type { Panel, PanelSide } from './workspace.svelte'
+  import { SORT_MODES, type SortMode } from './tree-order'
   import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
@@ -149,27 +151,57 @@
    *  first pass has named grafted into it. See `shownTree` in workspace.svelte.ts. */
   const listing = $derived(workspace.shownTree)
 
-  /** Right-clicking the Files tab is where a file list keeps its sorting. */
-  function sortMenu(): MenuEntry[] {
-    const options = workspace.treeOptions
-    const arrow = (key: SortKey) =>
-      options.sort === key ? (options.descending ? '↓' : '↑') : undefined
+  /** What each of the seven orders is called, in the order the menu offers them.
+   *
+   *  Spelled out rather than built from a key and a direction, because that is what a
+   *  reader reads: `Modified, newest first` says which way round it is, where a
+   *  direction arrow beside `Sort by modified` left them to work out whether the
+   *  arrow meant the newest or the oldest. Seven rows is also the whole answer in one
+   *  glance, which a control that flips when you press it twice never is. */
+  const ORDER_WORDS: Record<SortMode, () => string> = {
+    name: () => t('Name, A to Z'),
+    'name-desc': () => t('Name, Z to A'),
+    'modified-desc': () => t('Modified, newest first'),
+    'modified-asc': () => t('Modified, oldest first'),
+    'created-desc': () => t('Created, newest first'),
+    'created-asc': () => t('Created, oldest first'),
+    manual: () => t('Manual'),
+  }
+
+  /** The order the file list is read in, as a menu. One builder, because the glyph at
+   *  the end of the header and a right click on the Files tab ask the same question:
+   *  the button is where a reader finds it, and the tab menu is where the list's
+   *  sorting has always been. See tree-order.ts. */
+  function orderMenu(): MenuEntry[] {
+    const here = workspace.sortMode
+    const row = (mode: SortMode) => ({
+      label: ORDER_WORDS[mode](),
+      checked: here === mode,
+      run: () => workspace.setSort(mode),
+    })
+
+    // A rule between the rules and the one order that is nobody's rule: what the
+    // first six read off the notes, and what the reader arranged themselves.
+    const [byName, backwards, ...rest] = SORT_MODES
+    const arranged = rest.pop()
 
     return [
-      { label: t('Sort by name'), hint: arrow('name'), run: () => workspace.setSort('name') },
-      {
-        label: t('Sort by modified'),
-        hint: arrow('modified'),
-        run: () => workspace.setSort('modified'),
-      },
-      {
-        label: t('Sort by created'),
-        hint: arrow('created'),
-        run: () => workspace.setSort('created'),
-      },
+      ...(byName ? [row(byName)] : []),
+      ...(backwards ? [row(backwards)] : []),
+      DIVIDER,
+      ...rest.map(row),
+      DIVIDER,
+      ...(arranged ? [row(arranged)] : []),
+    ]
+  }
+
+  /** Right-clicking the Files tab: the order it is read in, and what the list makes. */
+  function sortMenu(): MenuEntry[] {
+    return [
+      ...orderMenu(),
       DIVIDER,
       {
-        label: options.showHidden ? t('Hide hidden files') : t('Show hidden files'),
+        label: workspace.treeOptions.showHidden ? t('Hide hidden files') : t('Show hidden files'),
         run: () => workspace.toggleHidden(),
       },
       DIVIDER,
@@ -590,6 +622,25 @@
           onclick={() => workspace.holdPanel(held ? null : (workspace.panelTab?.id ?? null))}
         >
           <svg viewBox="0 0 13 13"><path d={HOLD_MARK} /></svg>
+        </button>
+      </div>
+    {/if}
+    <!-- Which order the file list is read in. At the end of the header row, where
+         every other panel's own tools are, because it is a fact about the list under
+         it rather than about the space: one glyph, one press, seven rows, and the one
+         that is in force wears the tick. Remembered per space on this machine; the
+         order somebody arranged by hand travels with the space instead. See
+         tree-order.ts and docs/tree.md. -->
+    {#if showing === 'tree' && listing}
+      <div class="tools">
+        <button
+          class="nib-glyph tool"
+          title={t('Order of the files')}
+          aria-label={t('Order of the files')}
+          aria-haspopup="menu"
+          onclick={(event) => menu.show(event, orderMenu(), { title: t('Order of the files') })}
+        >
+          <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
         </button>
       </div>
     {/if}

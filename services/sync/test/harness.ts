@@ -235,6 +235,9 @@ interface SpaceView {
   tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
+  /** The order each folder of its tree was arranged into, by the folder's path; see
+   *  0037. */
+  arranged: Record<string, string[]>
   createdAt: number
   updatedAt: number
   blog: {
@@ -333,6 +336,7 @@ export interface Reply {
   tints: Record<string, string>
   graph: Record<string, unknown>
   excluded: string[]
+  arranged: Record<string, string[]>
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

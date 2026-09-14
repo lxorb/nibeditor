@@ -27,6 +27,7 @@ import {
   stringList,
 } from '../stored'
 import { without, withOrWithout } from '../records'
+import { FIRST_MODE, isSortMode, type SortMode } from '../tree-order'
 
 export const RECENT_KEY = 'nib:recent'
 export const ICONS_KEY = 'nib:icons'
@@ -38,6 +39,9 @@ export const EXPANDED_KEY = 'nib:expanded'
 /** How far down the file list each space was left. Not exported, unlike the keys
  *  around it: nothing outside this file names it. */
 const LIST_AT_KEY = 'nib:list-at'
+/** Which order each space's file list is read in. Not exported for the same reason
+ *  the one above is not. */
+const LIST_ORDER_KEY = 'nib:list-order'
 export const TAGS_KEY = 'nib:expanded-tags'
 /** Which groups of bookmarks are open. Not exported, unlike the two above it:
  *  nothing outside this file names it, and the one place that lists these keys
@@ -69,6 +73,19 @@ export class DeviceView {
    *  window is arithmetic off this number, so restoring it costs one assignment
    *  rather than a wait for three thousand rows to exist. */
   listScroll = $state<Record<string, number>>({})
+
+  /** Which order each space's file list is read in, by the space's own folder.
+   *
+   *  On the machine rather than on the account, and per space rather than for the
+   *  app: the same two decisions the scroll above already embodies. Whether a space
+   *  reads by name or by age is how somebody is looking at it this afternoon - a
+   *  space of meeting notes wants the newest first and a space of chapters wants
+   *  them in the order somebody arranged - and a phone and a desktop can honestly
+   *  disagree about it, the way they disagree about which folders are open.
+   *
+   *  What the arranged order itself is, on the other hand, is a fact about the
+   *  notes and follows the account; see workspace/arranged.svelte.ts. */
+  listOrder = $state<Record<string, SortMode>>({})
 
   /** Which tags are open, by tag path. Its own record rather than a share of the
    *  one above: a tag `work/nib` and a folder called `work/nib` are two
@@ -109,6 +126,7 @@ export class DeviceView {
     this.recent = stringList(stored(RECENT_KEY)) ?? []
     this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
     this.listScroll = recordOf(stored(LIST_AT_KEY), isNumber)
+    this.listOrder = recordOf(stored(LIST_ORDER_KEY), isSortMode)
     this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
     this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
     this.icons = recordOf(stored(ICONS_KEY), isString)
@@ -171,6 +189,35 @@ export class DeviceView {
       this.writing = null
       keep(LIST_AT_KEY, JSON.stringify(this.listScroll))
     }, SETTLING)
+  }
+
+  /** Which order this space's list is read in. By name until somebody says
+   *  otherwise, which is what the list has always done. */
+  orderOf(root: string): SortMode {
+    return this.listOrder[root] ?? FIRST_MODE
+  }
+
+  /** The order chosen for one space. Written on the spot: it is one press in a
+   *  menu, and the list is redrawn from what is already in memory rather than read
+   *  off the disk again. */
+  setOrder(root: string, mode: SortMode) {
+    if (this.orderOf(root) === mode) return
+
+    // The default is what no entry already means, so choosing it again takes the
+    // entry away rather than freezing today's default into this machine.
+    this.listOrder =
+      mode === FIRST_MODE ? without(this.listOrder, root) : { ...this.listOrder, [root]: mode }
+    keep(LIST_ORDER_KEY, JSON.stringify(this.listOrder))
+  }
+
+  /** Carries a chosen order over to a renamed space folder, the way the icon is
+   *  carried: the record is keyed by the folder, and the folder is what moved. */
+  moveOrder(from: string, to: string) {
+    const mode = this.listOrder[from]
+    if (!mode || from === to) return
+
+    this.listOrder = { ...without(this.listOrder, from), [to]: mode }
+    keep(LIST_ORDER_KEY, JSON.stringify(this.listOrder))
   }
 
   isTagOpen(path: string): boolean {

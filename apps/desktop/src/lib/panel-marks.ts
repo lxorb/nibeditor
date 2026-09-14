@@ -28,3 +28,9 @@ export const FOOTNOTES_MARK = 'M2 3h5.5M9.4 1.8h1.6l-1.8 2.6h1.9M2 7h9M2 10h4'
 /** Three notes and the edges between them: the same links, drawn as a picture. */
 export const GRAPH_MARK =
   'M1.4 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M8 3.4a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M4.7 9.9a1.8 1.8 0 1 0 3.6 0 1.8 1.8 0 1 0-3.6 0M5 3.4h3M5.7 8.3 4 5M7.3 8.3 9 5'
+
+/** Three lines getting shorter, and an arrow down the side of them: the order the
+ *  list is read in. The lines are the rows and the arrow is the direction, which is
+ *  the one glyph every file manager draws for this and so the one a reader already
+ *  knows. */
+export const ORDER_MARK = 'M2 3.5h5M2 6.5h4M2 9.5h3M10 2.6v7.8M8.5 8.9 10 10.4l1.5-1.5'

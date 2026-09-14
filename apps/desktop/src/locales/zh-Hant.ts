@@ -193,6 +193,16 @@ export const zhHant: Dictionary = {
   'Sort by name': '依名稱排序',
   'Sort by modified': '依修改時間排序',
   'Sort by created': '依建立時間排序',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': '檔案排序方式',
+  'Name, A to Z': '名稱，A 到 Z',
+  'Name, Z to A': '名稱，Z 到 A',
+  'Modified, newest first': '修改時間，最新在前',
+  'Modified, oldest first': '修改時間，最舊在前',
+  'Created, newest first': '建立時間，最新在前',
+  'Created, oldest first': '建立時間，最舊在前',
+  Manual: '手動',
   'Show hidden files': '顯示隱藏檔案',
   'Hide hidden files': '不顯示隱藏檔案',
   // Writing

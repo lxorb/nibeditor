@@ -14,7 +14,7 @@
  *  succeeded, which it usually does. */
 
 import { folderOf, nameOf } from './space-paths'
-import type { Entry, SortKey, TreeOptions } from './workspace.svelte'
+import type { Entry } from './workspace.svelte'
 
 /** Whether `path` names something inside the folder at `base`, at any depth. */
 function under(base: string, path: string): boolean {
@@ -24,21 +24,6 @@ function under(base: string, path: string): boolean {
   // A space that is the whole of its store has the separator in `base` already;
   // see `spaces_root` in the browser build.
   return base.endsWith('/') ? path.length > base.length : next === '/' || next === '\\'
-}
-
-/** The order the listing itself uses: folders first, then the chosen key. */
-function compareEntries(options: TreeOptions): (a: Entry, b: Entry) => number {
-  const key: SortKey = options.sort
-  const by = (a: Entry, b: Entry) => {
-    if (key === 'modified') return a.modified - b.modified
-    if (key === 'created') return a.created - b.created
-    return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
-  }
-
-  return (a, b) => {
-    if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
-    return options.descending ? -by(a, b) : by(a, b)
-  }
 }
 
 /** `tree` with `change` applied to the children of the folder at `path`. */
@@ -52,15 +37,19 @@ function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entr
   }
 }
 
-/** A new note or folder, in the place the listing would put it. */
-export function withEntry(tree: Entry, entry: Entry, options: TreeOptions): Entry {
-  const order = compareEntries(options)
-  return inFolder(tree, folderOf(entry.path), (children) => {
-    const kept = children.filter((child) => child.path !== entry.path)
-    const at = kept.findIndex((child) => order(entry, child) < 0)
-    if (at < 0) return [...kept, entry]
-    return [...kept.slice(0, at), entry, ...kept.slice(at)]
-  })
+/** A new note or folder, in the folder it belongs to.
+ *
+ *  Not in any particular place in that folder: where a row sits is decided when the
+ *  list is drawn, once, for all seven orders at once - see tree-order.ts - so a row
+ *  added here is on the tree and lands where the chosen order puts it in the same
+ *  frame. This used to sort as it inserted, which was the same rule written twice
+ *  and one of the two could not have known about an order somebody arranged by
+ *  hand. */
+export function withEntry(tree: Entry, entry: Entry): Entry {
+  return inFolder(tree, folderOf(entry.path), (children) => [
+    ...children.filter((child) => child.path !== entry.path),
+    entry,
+  ])
 }
 
 /** A row that is on its way out. */
@@ -104,31 +93,32 @@ function rebased(entry: Entry, from: string, to: string): Entry {
  *  the folders above it are made as well, since a note the account keeps two
  *  folders deep has neither of them on this disk yet.
  *
- *  Sorted before they go in, so the same listing lands the same way twice. No time
- *  on them: a file that is not here has no age, and the listing that follows
- *  brings the real one.
+ *  Read in name order before they go in, so the same pass lands the same way
+ *  twice. No time on them: a file that is not here has no age, and the listing that
+ *  follows brings the real one; which order the rows are then drawn in is
+ *  tree-order.ts's, like every other row's.
  *
  *  A path the listing already holds is left alone, which is what makes this safe
  *  to apply to every pass rather than only the first. */
-export function withComing(tree: Entry, paths: readonly string[], options: TreeOptions): Entry {
+export function withComing(tree: Entry, paths: readonly string[]): Entry {
   let out = tree
 
   for (const path of [...paths].sort()) {
     if (!under(tree.path, path)) continue
     if (entryAt(out, path)) continue
 
-    out = withFolders(out, folderOf(path), options)
-    out = withEntry(out, blank(path, false), options)
+    out = withFolders(out, folderOf(path))
+    out = withEntry(out, blank(path, false))
   }
 
   return out
 }
 
 /** The folder at `path`, and every folder above it the listing has none for. */
-function withFolders(tree: Entry, path: string, options: TreeOptions): Entry {
+function withFolders(tree: Entry, path: string): Entry {
   if (!path || path === tree.path || entryAt(tree, path)) return tree
 
-  return withEntry(withFolders(tree, folderOf(path), options), blank(path, true), options)
+  return withEntry(withFolders(tree, folderOf(path)), blank(path, true))
 }
 
 function blank(path: string, isFolder: boolean): Entry {
@@ -143,8 +133,8 @@ function blank(path: string, isFolder: boolean): Entry {
 }
 
 /** A note or folder under its new name, or in its new folder. */
-export function withMove(tree: Entry, from: string, to: string, options: TreeOptions): Entry {
+export function withMove(tree: Entry, from: string, to: string): Entry {
   const entry = entryAt(tree, from)
   if (!entry || from === to) return tree
-  return withEntry(withoutEntry(tree, from), rebased(entry, from, to), options)
+  return withEntry(withoutEntry(tree, from), rebased(entry, from, to))
 }

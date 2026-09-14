@@ -193,6 +193,16 @@ export const pa: Dictionary = {
   'Sort by name': 'ਨਾਂ ਮੁਤਾਬਕ ਲੜੀਬੱਧ ਕਰੋ',
   'Sort by modified': 'ਬਦਲਾਅ ਮੁਤਾਬਕ ਲੜੀਬੱਧ ਕਰੋ',
   'Sort by created': 'ਬਣਨ ਮੁਤਾਬਕ ਲੜੀਬੱਧ ਕਰੋ',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ਫ਼ਾਈਲਾਂ ਦੀ ਲੜੀ',
+  'Name, A to Z': 'ਨਾਂ, ੳ ਤੋਂ ੜ',
+  'Name, Z to A': 'ਨਾਂ, ੜ ਤੋਂ ੳ',
+  'Modified, newest first': 'ਬਦਲਾਅ, ਨਵੇਂ ਪਹਿਲਾਂ',
+  'Modified, oldest first': 'ਬਦਲਾਅ, ਪੁਰਾਣੇ ਪਹਿਲਾਂ',
+  'Created, newest first': 'ਬਣਨ ਦਾ ਵੇਲਾ, ਨਵੇਂ ਪਹਿਲਾਂ',
+  'Created, oldest first': 'ਬਣਨ ਦਾ ਵੇਲਾ, ਪੁਰਾਣੇ ਪਹਿਲਾਂ',
+  Manual: 'ਹੱਥੀਂ',
   'Show hidden files': 'ਲੁਕੀਆਂ ਫ਼ਾਈਲਾਂ ਦਿਖਾਓ',
   'Hide hidden files': 'ਲੁਕੀਆਂ ਫ਼ਾਈਲਾਂ ਲੁਕਾਓ',
   // Writing

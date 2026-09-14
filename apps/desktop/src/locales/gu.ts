@@ -193,6 +193,16 @@ export const gu: Dictionary = {
   'Sort by name': 'નામ પ્રમાણે ગોઠવો',
   'Sort by modified': 'ફેરફાર પ્રમાણે ગોઠવો',
   'Sort by created': 'બન્યાની તારીખ પ્રમાણે ગોઠવો',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ફાઇલોનો ક્રમ',
+  'Name, A to Z': 'નામ, અ થી હ',
+  'Name, Z to A': 'નામ, હ થી અ',
+  'Modified, newest first': 'ફેરફાર, નવા પહેલા',
+  'Modified, oldest first': 'ફેરફાર, જૂના પહેલા',
+  'Created, newest first': 'બન્યાની તારીખ, નવા પહેલા',
+  'Created, oldest first': 'બન્યાની તારીખ, જૂના પહેલા',
+  Manual: 'હાથે ગોઠવેલ',
   'Show hidden files': 'છુપી ફાઇલો બતાવો',
   'Hide hidden files': 'છુપી ફાઇલો છુપાવો',
   // Writing

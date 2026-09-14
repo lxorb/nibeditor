@@ -227,7 +227,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Tabs, `Ctrl+Tab` switching
 - [x] Reopen last files on start
 - [x] Drag to move
-- [x] Sort by name, modified, created
+- [x] Sort by name, modified, created, each way round, and a Manual order the
+      reader arranges by dragging the rows; see docs/tree.md
 - [x] Show hidden files toggle
 - [x] Recent files, and pinning notes and folders
 - [x] Undo move/rename/delete

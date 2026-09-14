@@ -193,6 +193,16 @@ export const am: Dictionary = {
   'Sort by name': 'በስም አስተካክል',
   'Sort by modified': 'በተለወጠበት አስተካክል',
   'Sort by created': 'በተፈጠረበት አስተካክል',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'የፋይሎች ቅደም ተከተል',
+  'Name, A to Z': 'ስም፣ ከሀ እስከ ፐ',
+  'Name, Z to A': 'ስም፣ ከፐ እስከ ሀ',
+  'Modified, newest first': 'የተለወጠበት፣ አዲሱ መጀመሪያ',
+  'Modified, oldest first': 'የተለወጠበት፣ አሮጌው መጀመሪያ',
+  'Created, newest first': 'የተፈጠረበት፣ አዲሱ መጀመሪያ',
+  'Created, oldest first': 'የተፈጠረበት፣ አሮጌው መጀመሪያ',
+  Manual: 'በእጅ',
   'Show hidden files': 'የተደበቁ ፋይሎች አሳይ',
   'Hide hidden files': 'የተደበቁ ፋይሎች ደብቅ',
   // Writing

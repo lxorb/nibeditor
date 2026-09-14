@@ -3,7 +3,7 @@ import { call, signIn, testEnv, type TestEnv } from './harness'
 import { fits, MOST_BYTES } from '../src/spaces/columns'
 import { staysInside } from '../src/spaces/paths'
 
-/** The six columns a client writes whole: what each may hold, and that writing one
+/** The seven columns a client writes whole: what each may hold, and that writing one
  *  says the space changed.
  *
  *  The ceilings were six constants in six files and the write was one statement in
@@ -73,6 +73,20 @@ const TOO_MUCH: {
     }),
     says: 'that is more folder icons than a space holds',
   },
+  {
+    name: 'arranged',
+    path: 'arranged',
+    method: 'PUT',
+    body: () => ({
+      arranged: Object.fromEntries(
+        Array.from({ length: 200 }, (_, at) => [
+          `${at}`,
+          Array.from({ length: 12 }, (_one, which) => `${'n'.repeat(200)}${which}.md`),
+        ]),
+      ),
+    }),
+    says: 'that is more arranged folders than a space holds',
+  },
 ]
 
 describe('a column filled past what it holds', () => {
@@ -135,6 +149,9 @@ describe('what each column may hold', () => {
     expect(MOST_BYTES.excluded).toBeLessThan(MOST_BYTES.site)
     expect(MOST_BYTES.site).toBeLessThan(MOST_BYTES.files)
     expect(MOST_BYTES.files).toBe(MOST_BYTES.icons)
+    // The three keyed by path share the ceiling: fewer folders may be arranged than
+    // may wear an icon, and each of them carries a list rather than one word.
+    expect(MOST_BYTES.arranged).toBe(MOST_BYTES.icons)
   })
 
   /** Bytes and not characters: one emoji is a single character and four bytes, and

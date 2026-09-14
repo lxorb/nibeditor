@@ -38,8 +38,6 @@ interface Entry {
 
 interface TreeOptions {
   showHidden?: boolean
-  sort?: string
-  descending?: boolean
 }
 
 const now = () => Date.now()
@@ -118,17 +116,15 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
     })
   }
 
-  const key = options.sort ?? 'name'
-  const order = (a: Entry, b: Entry) => {
-    if (key === 'modified') return a.modified - b.modified
-    if (key === 'created') return a.created - b.created
-    return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
-  }
-
+  // Folders first, then the names, and nothing about which order the reader chose:
+  // that is decided over the listing, once, in the app's own tree-order.ts, the same
+  // way it is decided over the one the Rust crate answers with. What this owes is an
+  // answer that is the same twice, since a map is walked in whatever order it was
+  // filled in.
   const sort = (entry: Entry) => {
     entry.children.sort((a, b) => {
       if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
-      return options.descending ? -order(a, b) : order(a, b)
+      return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1
     })
     entry.children.forEach(sort)
   }

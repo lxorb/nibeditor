@@ -193,6 +193,16 @@ export const ja: Dictionary = {
   'Sort by name': '名前順',
   'Sort by modified': '更新日順',
   'Sort by created': '作成日順',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ファイルの並び順',
+  'Name, A to Z': '名前、昇順',
+  'Name, Z to A': '名前、降順',
+  'Modified, newest first': '更新日、新しい順',
+  'Modified, oldest first': '更新日、古い順',
+  'Created, newest first': '作成日、新しい順',
+  'Created, oldest first': '作成日、古い順',
+  Manual: '手動',
   'Show hidden files': '隠しファイルを表示',
   'Hide hidden files': '隠しファイルを隠す',
   // Writing

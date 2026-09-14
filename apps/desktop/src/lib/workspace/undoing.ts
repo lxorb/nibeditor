@@ -14,6 +14,7 @@ import { links } from '../link-index.svelte'
 import { paperMoved } from '../pdf/papers'
 import { nameOf } from '../space-paths'
 import { invoke } from '../tauri'
+import type { Arranged } from './arranged.svelte'
 import type { Excluded } from './excluded.svelte'
 import type { FolderIcons } from './folder-icons.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
@@ -27,6 +28,7 @@ export interface PutsBack {
   readonly documents: NoteDoc[]
   readonly positions: Positions
   readonly folderIcons: FolderIcons
+  readonly arranged: Arranged
   readonly excluded: Excluded
   close(id: string): void
   reload(path: string, content: string): void
@@ -154,6 +156,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   links.notesMoved(action.to, action.from)
   paperMoved(action.to, action.from)
   ws.folderIcons.moved(action.to, action.from)
+  ws.arranged.moved(action.to, action.from)
   ws.excluded.moved(action.to, action.from)
 }
 

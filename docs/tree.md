@@ -26,7 +26,8 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | the twist at the far end | shows what the row holds, and only appears when it holds something |
 | right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
-| a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests |
+| a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
+| Alt and up, down | in Manual, moves the row one step within its own group: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
 | its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
@@ -156,6 +157,121 @@ about to become, and a folder out of a vault as the row it is. Every target wear
 a note's mark; a space wears the mark the switcher gives it, in the same box, so
 the names still read as one column. See `move-targets.ts`.
 
+## The order it is read in
+
+Emil: *"there should be settings to decide the order of notes displayed in the
+explorer, e.g. manual, name, etc. Manual will definitely need some work, make it
+feel really really nice."* And: *"by name should be the default."*
+
+Seven orders, behind the one glyph at the end of the panel's header - the same slot
+the Links panel keeps its own two controls in. The row that is in force wears a
+tick. The same seven are still on a right click on the Files tab, where the list's
+sorting has always been, because one builder draws both.
+
+| | |
+| --- | --- |
+| Name, A to Z | the default, and what the list has always done |
+| Name, Z to A | |
+| Modified, newest first | |
+| Modified, oldest first | |
+| Created, newest first | |
+| Created, oldest first | |
+| Manual | the order somebody arranged by dragging the rows |
+
+Folders come first in all seven. That is what Obsidian, Finder and Explorer do, it
+is what a reader looking for a folder expects, and it means a row only ever moves
+within its own group: a note cannot be dragged above the last folder, and the gap
+does not open where it could not land.
+
+The names are spelled out rather than built from a key and a direction. A row
+reading "Sort by modified" with an arrow beside it leaves the reader to work out
+whether the arrow means the newest or the oldest; "Modified, newest first" says it.
+Seven rows is also the whole answer in one glance, which a control that flips when
+you press it twice never is.
+
+**Which order is per space, and on this device.** Whether a space reads by name or
+by age is how somebody is looking at it this afternoon: a space of meeting notes
+wants the newest first and a space of chapters wants them in the order somebody
+arranged, and a phone and a desktop can honestly disagree about it the way they
+already disagree about which folders are open. So it sits beside how far down the
+list each space was left, in `workspace/device.svelte.ts` under `nib:list-order`.
+It used to be one choice for the whole app, in `nib:tree`; a value written there by
+an older build is ignored.
+
+**Nothing is read off the disk to change it.** The listing in memory is the
+listing, and which order it is drawn in is arithmetic over it - `orderedTree` in
+`tree-order.ts`, applied once in `shownTree`. So the rows are in their new places in
+the frame the menu closes in, where this used to cost a round trip and a fresh
+read of the whole space. It is also what makes Manual possible at all: the sort was
+in the Rust crate and in the browser build's own listing, and an order the reader
+arranged is one no listing can know about. Both of those now answer in name order
+and nothing else reads their order as meaningful.
+
+Names sort the way a reader reads them, through ICU with `numeric` on, so `Note 2`
+comes before `Note 10` and the case of the first letter is no reason for one name to
+come before another. Two names that compare equal fall back to an exact comparison
+and then to their code points, because a list that reorders itself between two reads
+of the same folder is worse than one with an opinion about capitals.
+
+### Manual
+
+The order lives on the space, not in it. One map per space, from a folder's path as
+the space speaks it to the names of its children in the order they are drawn, kept
+where a folder's icon is kept and synced the same way: the account for a space the
+account knows, this machine for one it does not. Migration 0037 gave it the
+`arranged` column, `workspace/arranged.svelte.ts` is this end of it, and
+`spaces/arranged.ts` is the other. A dotfile inside each arranged folder would have
+synced for free and survived a move without being told - and it would also put a
+file into somebody's vault that every other tool walking it can see, which the space
+does not do.
+
+The list only runs as far as somebody actually arranged. A name the list does not
+hold falls to the end of its group in name order, so pulling three notes to the top
+of a folder of four hundred writes three names, and a folder that reads in name
+order keeps no entry at all. Which is also why Manual starts out identical to Name,
+A to Z instead of freezing today's listing into the space; see `trimmed` in
+`tree-order.ts`.
+
+A rename rewrites the name in place, so the row keeps where it was arranged to. A
+move takes it out of the list it was in and leaves it at the end of the one it
+arrives in. A folder that moves takes its own list and every list under it along,
+re-keyed, which is the one thing the dotfile would have got for free. A delete takes
+the name out. All four are hooked where `folderIcons.moved` and `folderIcons.gone`
+already were, including the undo of a rename or a move.
+
+### The drag
+
+| | |
+| --- | --- |
+| lifting it | a press and a move with a mouse or a pen, which is the drag the platform starts; a press, a short hold of 250 ms and a move under a finger, which is the only gesture a touch screen has - it fires no drag events at all. The hold is shorter than the 500 ms the row's own menu waits, so a press that then moves is a drag and a press that stays put is a menu |
+| what follows the pointer | a copy of the row, a little larger and with a shadow under it. The platform draws that itself for a drag it started; a lift draws its own, in `body`, so no scroll and no rebuild of the window can take it away mid-gesture |
+| where it will land | the row's own place in the list, drawn hollow. The gap is the row, so there is no drop line to draw and nothing for the reader to translate: what they see is the answer |
+| the other rows | slide out of the way over 180 ms, ease-out, measured before and after the order changes and started from their own old places. Instant for a reader who has asked for as little movement as possible |
+| onto a folder | the middle half of any row is still the row: a drop there goes into it, exactly as it always has. Resting there for 400 ms opens it, so a drop can go further in than the row it started over |
+| near an edge | the list rolls under the pointer, the same band and the same speed a drag has always had |
+| Escape | everything slides back |
+| the keys | Alt and an arrow, one step at a time, with the same slide |
+
+The gap is written into the store rather than held in the component, which is what
+makes the gap under the pointer the same gap the whole list is drawn from: one
+source for the order, so the rows in the window, the rows the keyboard walks and the
+row being dragged cannot come to different answers. It is computed from what the
+folder keeps rather than from what is showing, so the answer depends on where the
+pointer is and not on how it got there - a drag computed from its own last frame
+drifts, and a row dragged down and back does not come back. And a pointer resting
+over the row it is carrying holds the gap where it is, which is what stops it
+flicking back and forth.
+
+Virtualisation is not in the way of any of it. The window mounts a slice of the
+rows and the lift reads the row under the pointer out of the page, so a drag works
+the same in a space of twenty notes and one of five thousand; the rows that scroll
+in while the order changes have a place to be rather than a distance to travel, and
+are left out of the slide. See "Only the rows in view" below.
+
+The search panel and the quick switcher are not affected by any of this. They rank
+what they show by how well it matched, which is a different question about a
+different list; see `search.svelte.ts`.
+
 ## What still says "folder", and why
 
 - **The filesystem layer.** `read_tree`, `create_folder`, `remove_empty_folder`,
@@ -164,6 +280,9 @@ the names still read as one column. See `move-targets.ts`.
 - **`folder-notes.ts` and `workspace/folder-icons.svelte.ts`.** Named after the
   convention they implement, which is what it is called everywhere outside this
   app.
+- **`workspace/arranged.svelte.ts`**, whose map is keyed by folder and whose
+  `folders` field says so. It is a map of paths on a disk, and a path is made of
+  folders.
 - **The settings that say where pictures go**: "Assets folder of the space", "A
   folder named after the note". Those name real folders on disk that another app
   will also look in.

@@ -62,8 +62,10 @@ function store(spaces: Space[]) {
     bookmarks: { migrate: (roots: string[]) => void told.push(`migrated ${roots.join()}`) },
     device: {
       moveIcon: (from: string, to: string) => void told.push(`icon ${from} -> ${to}`),
+      moveOrder: (from: string, to: string) => void told.push(`order ${from} -> ${to}`),
     },
     folderIcons: follows('folder icons'),
+    arranged: follows('arranged'),
     graphSettings: follows('graph'),
     excluded: follows('left out'),
     close: (id: string) => void told.push(`closed ${id}`),
@@ -166,14 +168,16 @@ describe('the order the switcher shows', () => {
 })
 
 describe('a space renamed', () => {
-  test('takes its folder icons, its graph and its exclusions with it', async () => {
+  test('takes everything kept under its root with it', async () => {
     const { ws, told } = store([WORK])
     await renameSpace(ws, 'w', 'Studio')
 
     expect(ws.spaces[0]).toEqual({ id: 'w', name: 'Studio', root: '/spaces/Studio' })
     expect(told).toEqual([
       'icon /spaces/Work -> /spaces/Studio',
+      'order /spaces/Work -> /spaces/Studio',
       'folder icons /spaces/Work -> /spaces/Studio',
+      'arranged /spaces/Work -> /spaces/Studio',
       'graph /spaces/Work -> /spaces/Studio',
       'left out /spaces/Work -> /spaces/Studio',
     ])
@@ -205,6 +209,7 @@ describe('a space deleted', () => {
     expect(ws.spaces.map((one) => one.id)).toEqual(['h'])
     expect(told).toEqual([
       'folder icons forgot /spaces/Work',
+      'arranged forgot /spaces/Work',
       'graph forgot /spaces/Work',
       'left out forgot /spaces/Work',
     ])

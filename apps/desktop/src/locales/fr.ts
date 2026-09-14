@@ -193,6 +193,16 @@ export const fr: Dictionary = {
   'Sort by name': 'Trier par nom',
   'Sort by modified': 'Trier par modification',
   'Sort by created': 'Trier par création',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Ordre des fichiers',
+  'Name, A to Z': 'Nom, de A à Z',
+  'Name, Z to A': 'Nom, de Z à A',
+  'Modified, newest first': 'Modification, la plus récente en premier',
+  'Modified, oldest first': 'Modification, la plus ancienne en premier',
+  'Created, newest first': 'Création, la plus récente en premier',
+  'Created, oldest first': 'Création, la plus ancienne en premier',
+  Manual: 'Manuel',
   'Show hidden files': 'Afficher les fichiers masqués',
   'Hide hidden files': 'Masquer les fichiers cachés',
   // Writing

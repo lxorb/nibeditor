@@ -193,6 +193,16 @@ export const bn: Dictionary = {
   'Sort by name': 'নাম অনুযায়ী',
   'Sort by modified': 'বদলের সময় অনুযায়ী',
   'Sort by created': 'তৈরির সময় অনুযায়ী',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ফাইলের ক্রম',
+  'Name, A to Z': 'নাম, অ থেকে হ',
+  'Name, Z to A': 'নাম, হ থেকে অ',
+  'Modified, newest first': 'বদলের সময়, নতুন আগে',
+  'Modified, oldest first': 'বদলের সময়, পুরনো আগে',
+  'Created, newest first': 'তৈরির সময়, নতুন আগে',
+  'Created, oldest first': 'তৈরির সময়, পুরনো আগে',
+  Manual: 'হাতে সাজানো',
   'Show hidden files': 'লুকানো ফাইল দেখান',
   'Hide hidden files': 'লুকানো ফাইল লুকান',
   // Writing

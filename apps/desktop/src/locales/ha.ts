@@ -193,6 +193,16 @@ export const ha: Dictionary = {
   'Sort by name': 'Tsara bisa suna',
   'Sort by modified': 'Tsara bisa sauyi',
   'Sort by created': 'Tsara bisa ƙirƙira',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Tsarin fayiloli',
+  'Name, A to Z': 'Suna, A zuwa Z',
+  'Name, Z to A': 'Suna, Z zuwa A',
+  'Modified, newest first': 'Sauyi, sababbi da farko',
+  'Modified, oldest first': 'Sauyi, tsofaffi da farko',
+  'Created, newest first': 'Ƙirƙira, sababbi da farko',
+  'Created, oldest first': 'Ƙirƙira, tsofaffi da farko',
+  Manual: 'Da hannu',
   'Show hidden files': 'Nuna fayilolin da aka ɓoye',
   'Hide hidden files': 'Ɓoye fayilolin da aka ɓoye',
   // Writing

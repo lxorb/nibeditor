@@ -193,6 +193,16 @@ export const zhHans: Dictionary = {
   'Sort by name': '按名称排序',
   'Sort by modified': '按修改时间排序',
   'Sort by created': '按创建时间排序',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': '文件排序方式',
+  'Name, A to Z': '名称，A 到 Z',
+  'Name, Z to A': '名称，Z 到 A',
+  'Modified, newest first': '修改时间，最新在前',
+  'Modified, oldest first': '修改时间，最早在前',
+  'Created, newest first': '创建时间，最新在前',
+  'Created, oldest first': '创建时间，最早在前',
+  Manual: '手动',
   'Show hidden files': '显示隐藏文件',
   'Hide hidden files': '不显示隐藏文件',
   // Writing

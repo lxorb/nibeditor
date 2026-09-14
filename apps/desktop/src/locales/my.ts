@@ -193,6 +193,16 @@ export const my: Dictionary = {
   'Sort by name': 'အမည်အလိုက်စီ',
   'Sort by modified': 'ပြင်ချိန်အလိုက်စီ',
   'Sort by created': 'ဖန်တီးချိန်အလိုက်စီ',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ဖိုင်များ၏ အစီအစဉ်',
+  'Name, A to Z': 'အမည်၊ က မှ အ',
+  'Name, Z to A': 'အမည်၊ အ မှ က',
+  'Modified, newest first': 'ပြင်ချိန်၊ အသစ်အရင်',
+  'Modified, oldest first': 'ပြင်ချိန်၊ အဟောင်းအရင်',
+  'Created, newest first': 'ဖန်တီးချိန်၊ အသစ်အရင်',
+  'Created, oldest first': 'ဖန်တီးချိန်၊ အဟောင်းအရင်',
+  Manual: 'ကိုယ်တိုင်စီ',
   'Show hidden files': 'ဖျောက်ထားသောဖိုင်ပြ',
   'Hide hidden files': 'ဖျောက်ထားသောဖိုင်ဖျောက်',
   // Writing

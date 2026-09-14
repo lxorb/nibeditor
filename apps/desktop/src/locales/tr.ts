@@ -193,6 +193,16 @@ export const tr: Dictionary = {
   'Sort by name': 'Ada göre sırala',
   'Sort by modified': 'Değiştirilmeye göre sırala',
   'Sort by created': 'Oluşturulmaya göre sırala',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Dosyaların sırası',
+  'Name, A to Z': 'Ad, A’dan Z’ye',
+  'Name, Z to A': 'Ad, Z’den A’ya',
+  'Modified, newest first': 'Değiştirilme, en yeni önce',
+  'Modified, oldest first': 'Değiştirilme, en eski önce',
+  'Created, newest first': 'Oluşturulma, en yeni önce',
+  'Created, oldest first': 'Oluşturulma, en eski önce',
+  Manual: 'Elle',
   'Show hidden files': 'Gizli dosyaları göster',
   'Hide hidden files': 'Gizli dosyaları gizle',
   // Writing

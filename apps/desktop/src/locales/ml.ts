@@ -193,6 +193,16 @@ export const ml: Dictionary = {
   'Sort by name': 'പേര് അനുസരിച്ച് ക്രമം',
   'Sort by modified': 'മാറ്റിയ തീയതി അനുസരിച്ച് ക്രമം',
   'Sort by created': 'ഉണ്ടാക്കിയ തീയതി അനുസരിച്ച് ക്രമം',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ഫയലുകളുടെ ക്രമം',
+  'Name, A to Z': 'പേര്, അ മുതൽ ഹ വരെ',
+  'Name, Z to A': 'പേര്, ഹ മുതൽ അ വരെ',
+  'Modified, newest first': 'മാറ്റിയ തീയതി, പുതിയത് ആദ്യം',
+  'Modified, oldest first': 'മാറ്റിയ തീയതി, പഴയത് ആദ്യം',
+  'Created, newest first': 'ഉണ്ടാക്കിയ തീയതി, പുതിയത് ആദ്യം',
+  'Created, oldest first': 'ഉണ്ടാക്കിയ തീയതി, പഴയത് ആദ്യം',
+  Manual: 'കൈകൊണ്ട്',
   'Show hidden files': 'മറഞ്ഞ ഫയലുകൾ കാണിക്കുക',
   'Hide hidden files': 'മറഞ്ഞ ഫയലുകൾ മറയ്ക്കുക',
   // Writing

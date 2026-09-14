@@ -193,6 +193,16 @@ export const ta: Dictionary = {
   'Sort by name': 'பெயர்ப்படி வரிசைப்படுத்து',
   'Sort by modified': 'மாற்றியபடி வரிசைப்படுத்து',
   'Sort by created': 'உருவாக்கியபடி வரிசைப்படுத்து',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'கோப்புகளின் வரிசை',
+  'Name, A to Z': 'பெயர், அ முதல் ன வரை',
+  'Name, Z to A': 'பெயர், ன முதல் அ வரை',
+  'Modified, newest first': 'மாற்றம், புதியது முதலில்',
+  'Modified, oldest first': 'மாற்றம், பழையது முதலில்',
+  'Created, newest first': 'உருவாக்கம், புதியது முதலில்',
+  'Created, oldest first': 'உருவாக்கம், பழையது முதலில்',
+  Manual: 'கையால்',
   'Show hidden files': 'மறைந்த கோப்புகளைக் காட்டு',
   'Hide hidden files': 'மறைந்த கோப்புகளை மறை',
   // Writing

@@ -801,6 +801,29 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'F2',
     contextual: true,
   },
+  // Moving a row within the order somebody arranged, which is the one of the
+  // list's seven orders a key can change: the other six are rules the notes
+  // themselves decide. Alt and an arrow, because the plain arrows walk the list and
+  // because it is the key every list that can be rearranged uses. Contextual, like
+  // the walk itself, so sharing it with the editor's own move-a-line-up is not
+  // reported as a clash: it only means anything while the focus is in the list, and
+  // only in Manual. See `moveInOrder` in workspace.svelte.ts.
+  {
+    id: 'tree.move-up',
+    label: () => t('Move up'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Alt-ArrowUp',
+    contextual: true,
+  },
+  {
+    id: 'tree.move-down',
+    label: () => t('Move down'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Alt-ArrowDown',
+    contextual: true,
+  },
   // The row's own menu, which every row in every list already has on a right
   // click and a held finger. Shift+F10 is the key a window manager has used for it
   // for thirty years, and the key beside the right Ctrl is the one with the picture

@@ -193,6 +193,16 @@ export const vi: Dictionary = {
   'Sort by name': 'Sắp theo tên',
   'Sort by modified': 'Sắp theo ngày sửa',
   'Sort by created': 'Sắp theo ngày tạo',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Thứ tự tệp',
+  'Name, A to Z': 'Tên, A đến Z',
+  'Name, Z to A': 'Tên, Z đến A',
+  'Modified, newest first': 'Ngày sửa, mới nhất trước',
+  'Modified, oldest first': 'Ngày sửa, cũ nhất trước',
+  'Created, newest first': 'Ngày tạo, mới nhất trước',
+  'Created, oldest first': 'Ngày tạo, cũ nhất trước',
+  Manual: 'Thủ công',
   'Show hidden files': 'Hiện tệp ẩn',
   'Hide hidden files': 'Ẩn tệp ẩn',
   // Writing

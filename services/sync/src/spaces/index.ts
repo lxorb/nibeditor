@@ -12,6 +12,7 @@ import { chunks } from '../bound'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
+import { spaceArranged } from './arranged'
 import { bookmarks } from './bookmarks'
 import { spaceExcluded } from './excluded'
 import { spaceFiles } from './files'
@@ -267,15 +268,18 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
   return context.json({ ok: true })
 })
 
-// A space's published side, its bookmarks, the icons its folders wear, how its
-// graph is drawn, what it leaves out, the files beside its notes and who else may
-// reach it answer under these same paths.
-// Mounted last, so `/order` above is still read as a word and not as an id.
+// A space's published side, its bookmarks, the icons its folders wear, the order its
+// folders were arranged into, how its graph is drawn, what it leaves out, the files
+// beside its notes and who else may reach it answer under these same paths.
+// Mounted last, so `/order` above is still read as a word and not as an id. Which is
+// also why the arranged order answers on `/arranged`: `/order` is a word this file has
+// already spent on the rail of spaces itself.
 spaces.route('/', publish)
 spaces.route('/', site)
 spaces.route('/', answers)
 spaces.route('/', bookmarks)
 spaces.route('/', folderIcons)
+spaces.route('/', spaceArranged)
 spaces.route('/', spaceGraph)
 spaces.route('/', spaceExcluded)
 spaces.route('/', spaceFiles)

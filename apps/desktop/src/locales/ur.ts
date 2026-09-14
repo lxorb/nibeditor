@@ -193,6 +193,16 @@ export const ur: Dictionary = {
   'Sort by name': 'نام کے مطابق ترتیب',
   'Sort by modified': 'تبدیلی کے مطابق ترتیب',
   'Sort by created': 'تخلیق کے مطابق ترتیب',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'فائلوں کی ترتیب',
+  'Name, A to Z': 'نام، الف سے ی',
+  'Name, Z to A': 'نام، ی سے الف',
+  'Modified, newest first': 'تبدیلی، نئی پہلے',
+  'Modified, oldest first': 'تبدیلی، پرانی پہلے',
+  'Created, newest first': 'تخلیق، نئی پہلے',
+  'Created, oldest first': 'تخلیق، پرانی پہلے',
+  Manual: 'ہاتھ سے',
   'Show hidden files': 'پوشیدہ فائلیں دکھائیں',
   'Hide hidden files': 'پوشیدہ فائلیں چھپائیں',
   // Writing

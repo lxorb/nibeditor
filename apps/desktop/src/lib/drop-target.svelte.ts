@@ -20,9 +20,12 @@ import { folderOf, isMarkdownPath } from './space-paths'
 /** The folder a row stands for: a folder is itself, a note is the folder it would
  *  become, and any other file is the folder it sits in.
  *
- *  The whole row, not a third of it: the tree has no order anybody arranged, so
- *  there is no "above this row" for a drop to mean and nothing for a band across
- *  the top or the bottom of a row to say. */
+ *  Most of the row, and in six of the seven orders all of it. The list used to have
+ *  no order anybody arranged, so there was no "above this row" for a drop to mean and
+ *  nothing for a band across the top or the bottom of a row to say. In Manual there
+ *  is: the outer quarter of a row is the space between two rows and a drop there is a
+ *  new order, which is `bandOf` in tree-lift.ts and never reaches here. Half the row
+ *  is still the row, so this answer is still the one most of it gives. */
 export function targetFor(path: string, isFolder: boolean): string {
   if (isFolder) return path
   return isMarkdownPath(path) ? folderFor(path) : folderOf(path)

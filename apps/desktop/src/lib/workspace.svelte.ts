@@ -71,6 +71,16 @@ import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
+import {
+  groupNames,
+  keptOrder,
+  orderedTree,
+  placedBeside,
+  shownNames,
+  stepped,
+  type SortMode,
+} from './tree-order'
+import { Arranged } from './workspace/arranged.svelte'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { asShortcut, convertWebsites } from './web-tab/convert'
@@ -86,12 +96,12 @@ export interface Entry {
   children: Entry[]
 }
 
-export type SortKey = 'name' | 'modified' | 'created'
-
+/** What the listing itself is asked for. One field, because the order the rows are
+ *  drawn in is no longer a question for whoever reads the disk: it is decided once,
+ *  in tree-order.ts, over the listing that came back. Which files exist at all still
+ *  is a question for the read. */
 export interface TreeOptions {
   showHidden: boolean
-  sort: SortKey
-  descending: boolean
 }
 
 /** A space is a folder today and a synced collection once accounts land. */
@@ -167,21 +177,15 @@ function lineOfTarget(doc: string, jump: NoteJump): number | null {
   return lineOfHeading(scanHeadings(doc), jump.heading)
 }
 
-const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'created']
-
 function readTreeOptions(): TreeOptions {
   const saved = stored(TREE_KEY)
-  if (!isRecord(saved)) return { showHidden: false, sort: 'name', descending: false }
+  // A build older than this one wrote a sort key and a direction here as well, for
+  // the whole app rather than per space. They are ignored: the order is now the
+  // space's own and is kept beside where each space was left scrolled to; see
+  // `listOrder` in workspace/device.svelte.ts.
+  if (!isRecord(saved)) return { showHidden: false }
 
-  // Each field on its own, because a stored view is worth reading as far as it
-  // makes sense: an unknown sort key should not cost the reader their choice
-  // about hidden files.
-  const sort = SORT_KEYS.find((key) => key === saved.sort)
-  return {
-    showHidden: saved.showHidden === true,
-    sort: sort ?? 'name',
-    descending: saved.descending === true,
-  }
+  return { showHidden: saved.showHidden === true }
 }
 
 /** A map read within one call and thrown away. Not one of Svelte's: nothing
@@ -288,6 +292,12 @@ class Workspace {
    *  the same reasons the bookmarks are, and here rather than in the file itself
    *  because a folder has no file; see workspace/folder-icons. */
   readonly folderIcons = new FolderIcons(() => this.activeSpace?.root ?? null)
+  /** The order somebody arranged each folder's rows into, where they arranged one.
+   *  Beside the folder icons because it is the same kind of thing and kept in the
+   *  same way, for the same reason: a folder has no file to keep it in, and the order
+   *  is a fact about the space's notes rather than about this machine. See
+   *  workspace/arranged. */
+  readonly arranged = new Arranged(() => this.activeSpace?.root ?? null)
   /** How the picture of this space is drawn. Beside the folder icons because it is
    *  the same kind of thing: one space's own settings, kept on the account so
    *  every machine draws it the same way. */
@@ -474,11 +484,28 @@ class Workspace {
    *  `tree` is the disk, and it is what a push reads, what a search walks, what a
    *  rename edits and what says whether a space is empty: a row for a file that is
    *  not there yet would be a lie to every one of them. This one is only ever
-   *  drawn. See `withComing` in tree-edits.ts and arriving.svelte.ts. */
+   *  drawn. See `withComing` in tree-edits.ts and arriving.svelte.ts.
+   *
+   *  And it is the one place the chosen order is applied. The listing arrives in
+   *  whatever order the disk was read in; this puts every folder of it into the order
+   *  the space is being read in, so the rows the panel draws, the rows the keyboard
+   *  walks and the rows a Shift-click ranges over cannot disagree about which row is
+   *  row forty. Derived, so a tree that has not changed is sorted once however many
+   *  times it is read; see tree-order.ts. */
   readonly shownTree = $derived.by((): Entry | null => {
-    if (!this.tree || !arriving.coming.size) return this.tree
-    return withComing(this.tree, [...arriving.coming], this.treeOptions)
+    const coming =
+      this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
+    if (!coming) return null
+
+    return orderedTree(coming, this.sortMode, (folder) => this.arranged.listOf(folder))
   })
+
+  /** Which order this space's file list is read in. By name until somebody chooses
+   *  otherwise, per space, on this machine; see `listOrder` in
+   *  workspace/device.svelte.ts. */
+  readonly sortMode = $derived<SortMode>(
+    this.activeSpace ? this.device.orderOf(this.activeSpace.root) : 'name',
+  )
 
   /** Whether an account's first pass is running and there is still nothing of
    *  theirs on screen: no space, no listing, no tree.
@@ -1593,11 +1620,17 @@ class Workspace {
     }
   }
 
-  setSort(sort: SortKey) {
-    // Choosing the same key again flips the direction, as a file list should.
-    const descending = this.treeOptions.sort === sort ? !this.treeOptions.descending : false
-    this.treeOptions = { ...this.treeOptions, sort, descending }
-    this.persistTreeOptions()
+  /** The order this space's list is read in.
+   *
+   *  Nothing is read off the disk again: the listing in memory is the listing, and
+   *  which order it is drawn in is arithmetic over it. So the rows are in their new
+   *  places in the frame the menu closes in - a round trip is what this used to cost,
+   *  and on a synced folder it was long enough to wonder whether the press landed. */
+  setSort(mode: SortMode) {
+    const root = this.activeSpace?.root
+    if (root === undefined) return
+
+    this.device.setOrder(root, mode)
   }
 
   toggleHidden() {
@@ -1640,6 +1673,9 @@ class Workspace {
     // A folder's icon is kept under its path, so a folder that moved takes its
     // icon and its subfolders' icons with it.
     this.folderIcons.moved(from, target)
+    // And the order it was arranged into: it leaves the list of the folder it was
+    // in, and a folder that moved takes its own list and every list under it along.
+    this.arranged.moved(from, target)
     this.excluded.moved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
@@ -2276,6 +2312,105 @@ class Workspace {
     return this.picked.dragging(path)
   }
 
+  /* -- The order somebody arranged ----------- */
+
+  /** The children the list draws for one folder, the space's own top included.
+   *  Off `shownTree`, so a note an account's pass has named counts as a row. */
+  private childrenIn(folder: string): readonly Entry[] {
+    const tree = this.shownTree
+    if (!tree) return []
+    if (tree.path === folder) return tree.children
+
+    return entryAt(tree, folder)?.children ?? []
+  }
+
+  /** Whether these rows could be arranged beside that one: the same folder, the
+   *  same group, and the order actually being the reader's to arrange. */
+  private canArrange(moving: readonly string[], target: string): boolean {
+    if (this.sortMode !== 'manual') return false
+    if (!moving.length || moving.includes(target)) return false
+
+    const folder = folderOf(target)
+    return moving.every((path) => folderOf(path) === folder)
+  }
+
+  /** The order a drag would leave behind, shown while it is held between two rows.
+   *
+   *  Written into the store rather than into the component, which is what makes the
+   *  gap under the pointer the same gap the whole list is drawn from; see
+   *  workspace/arranged.svelte.ts. Answers whether a gap is showing, so the row
+   *  underneath knows not to light up as a folder to drop into as well.
+   *
+   *  Computed from what the folder keeps rather than from what is showing, so the
+   *  answer depends on where the pointer is and not on how it got there. */
+  showArrange(moving: readonly string[], target: string, after: boolean): boolean {
+    if (!this.canArrange(moving, target)) return false
+
+    const folder = folderOf(target)
+    const children = this.childrenIn(folder)
+    const names = placedBeside(
+      children,
+      this.arranged.savedList(folder),
+      moving.map((path) => nameOf(path)),
+      nameOf(target),
+      after,
+    )
+
+    this.arranged.show(folder, names)
+    return true
+  }
+
+  /** The pointer is over the row it started on, or over one of the rows moving with
+   *  it: whatever is showing stays showing. Which is what stops a drag oscillating,
+   *  since the row under the pointer is the row the last gap put there. */
+  holdArrange(moving: readonly string[], target: string): boolean {
+    return this.sortMode === 'manual' && this.arranged.dragging && moving.includes(target)
+  }
+
+  /** Whether a drag is showing a gap between two rows rather than a folder to drop
+   *  into. What the row under the pointer reads to know it is not the target. */
+  get arranging(): boolean {
+    return this.arranged.dragging
+  }
+
+  /** The drop landed between two rows: what was showing is what the folder keeps. */
+  dropArrange() {
+    this.arranged.drop()
+  }
+
+  /** Escape, or a drag that ended nowhere: the rows slide back. */
+  cancelArrange() {
+    this.arranged.unshow()
+  }
+
+  /** One row a step up or down in the order somebody arranged, with a key rather
+   *  than a drag. True when there was a step to take; false at the top and the
+   *  bottom of a group, and in every order but Manual.
+   *
+   *  Within its own group, like the drag: a note cannot step above the last folder,
+   *  because folders come first in every order the list has. */
+  moveInOrder(path: string, by: number): boolean {
+    if (this.sortMode !== 'manual') return false
+
+    const entry = this.entryAt(path)
+    if (!entry) return false
+
+    const folder = folderOf(path)
+    const children = this.childrenIn(folder)
+    const listed = this.arranged.savedList(folder)
+    const displayed = shownNames(children, 'manual', listed)
+    const group = groupNames(children, displayed, entry.is_dir)
+
+    const moved = stepped(group, entry.name, by)
+    if (!moved) return false
+
+    const other = groupNames(children, displayed, !entry.is_dir)
+    const whole = entry.is_dir ? [...moved, ...other] : [...other, ...moved]
+    this.arranged.set(folder, keptOrder(children, whole))
+
+    return true
+  }
+
   async moveMany(paths: string[], intoFolder: string) {
     // A drop on a note lands in the folder that note is about to become, so the
     // note goes in first and what was dropped on it follows: `A.md` becomes
@@ -2315,7 +2450,7 @@ class Workspace {
    *  of the whole folder. An operation that fails undoes itself when the
    *  listing arrives. */
   showEntry(entry: Entry) {
-    if (this.tree) this.tree = withEntry(this.tree, entry, this.treeOptions)
+    if (this.tree) this.tree = withEntry(this.tree, entry)
   }
 
   private hideEntry(path: string) {
@@ -2323,7 +2458,7 @@ class Workspace {
   }
 
   private showMove(from: string, to: string) {
-    if (this.tree) this.tree = withMove(this.tree, from, to, this.treeOptions)
+    if (this.tree) this.tree = withMove(this.tree, from, to)
   }
 
   /** A row for something that is about to exist. The times are now, which is
@@ -2746,6 +2881,8 @@ class Workspace {
     links.notesMoved(path, target)
     paperMoved(path, target)
     this.folderIcons.moved(path, target)
+    // A row renamed keeps the place it was arranged into, under its new name.
+    this.arranged.moved(path, target)
     this.excluded.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
@@ -2814,6 +2951,7 @@ class Workspace {
 
     links.noteGone(path)
     this.folderIcons.gone(path)
+    this.arranged.gone(path)
     this.excluded.gone(path)
     // A paper that has gone has no words worth searching any more.
     paperGone(path)

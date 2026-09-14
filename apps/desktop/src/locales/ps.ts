@@ -193,6 +193,16 @@ export const ps: Dictionary = {
   'Sort by name': 'د نوم له مخې ترتيب',
   'Sort by modified': 'د بدلون له مخې ترتيب',
   'Sort by created': 'د جوړېدو له مخې ترتيب',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'د دوتنو ترتيب',
+  'Name, A to Z': 'نوم، له الف تر ی',
+  'Name, Z to A': 'نوم، له ی تر الف',
+  'Modified, newest first': 'بدلون، نوي لومړی',
+  'Modified, oldest first': 'بدلون، زاړه لومړی',
+  'Created, newest first': 'جوړېدل، نوي لومړی',
+  'Created, oldest first': 'جوړېدل، زاړه لومړی',
+  Manual: 'په لاس',
   'Show hidden files': 'پټې دوتنې ښودل',
   'Hide hidden files': 'پټې دوتنې پټول',
   // Writing

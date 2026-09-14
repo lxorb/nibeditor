@@ -193,6 +193,16 @@ export const jv: Dictionary = {
   'Sort by name': 'Urutake miturut jeneng',
   'Sort by modified': 'Urutake miturut owahan',
   'Sort by created': 'Urutake miturut digawe',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Urutan berkas',
+  'Name, A to Z': 'Jeneng, A tekan Z',
+  'Name, Z to A': 'Jeneng, Z tekan A',
+  'Modified, newest first': 'Owahan, sing anyar dhisik',
+  'Modified, oldest first': 'Owahan, sing lawas dhisik',
+  'Created, newest first': 'Digawe, sing anyar dhisik',
+  'Created, oldest first': 'Digawe, sing lawas dhisik',
+  Manual: 'Manual',
   'Show hidden files': 'Tuduhake berkas sing diumpetake',
   'Hide hidden files': 'Umpetake berkas sing diumpetake',
   // Writing

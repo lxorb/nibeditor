@@ -57,6 +57,7 @@
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
   import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
+  import { bandOf, slides, type Band } from './tree-lift'
   import { steppedKey } from './direction'
   import { treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
@@ -76,12 +77,43 @@
    *  wrapper's own `slide` had. */
   const FOLDING = 190
 
+  /** How long a row takes to get out of the way of one being dragged past it.
+   *
+   *  A little shorter than a fold, because a fold happens once and this happens every
+   *  time the gap moves: the rows have to have arrived before the pointer asks them to
+   *  move again, or a slow drag leaves them permanently behind the finger. */
+  const SLIDING = 180
+
+  /** How long a finger has to be still on a row before it lifts, in milliseconds.
+   *
+   *  Shorter than the 500 the row's own menu waits, and deliberately: a press that
+   *  then moves is a drag and a press that stays put is a menu, so the lift arms
+   *  first and the menu only happens if nothing moved. Long enough not to fire on a
+   *  tap, short enough that it does not feel like waiting; see longpress.ts. */
+  const HOLD_TO_LIFT = 250
+
+  /** How far a finger may stray in that time before it counts as a scroll rather
+   *  than a press. Tighter than the menu's ten, since this is the gesture that has
+   *  to give way to the list scrolling. */
+  const LIFT_SLOP = 8
+
+  /** How long the pointer has to rest on a closed folder before it opens under what
+   *  is being dragged. The dwell every file manager has: long enough that passing
+   *  over a folder on the way somewhere else does not open it, short enough that
+   *  waiting on purpose is not waiting. */
+  const DWELL = 400
+
   /** Whether the name being typed cannot be written, which the row wears as a
    *  hairline in red; the field is what knows why. One flag for the list, because
    *  one row at a time is being named. */
   let wrong = $state(false)
 
   const isOpen = (path: string) => workspace.isExpanded(path)
+
+  /** Whether the rows are in the order somebody arranged, which is the one order a
+   *  drag and the two keys can change. In the other six, a drag still moves a row
+   *  into a folder exactly as it always has. */
+  const manual = $derived(workspace.sortMode === 'manual')
 
   /** Every row the list shows, top to bottom. The same list `visibleTree` hands
    *  the keys and the selection, numbered the same way; see tree-flat.ts. */
@@ -316,6 +348,22 @@
     if (shortcuts.pressed('tree.rename', event)) {
       event.preventDefault()
       workspace.startRenaming(here)
+      return
+    }
+
+    // A row a step up or down the order somebody arranged, with the same slide a drag
+    // gets. Nothing at all in the other six orders, which are the notes' own rules
+    // rather than anybody's arrangement; see `moveInOrder` in workspace.svelte.ts.
+    const step = shortcuts.pressed('tree.move-up', event)
+      ? -1
+      : shortcuts.pressed('tree.move-down', event)
+        ? 1
+        : 0
+
+    if (step !== 0) {
+      event.preventDefault()
+      const was = placesNow()
+      if (workspace.moveInOrder(here, step)) void slideInto(was)
     }
   }
 
@@ -426,7 +474,9 @@
   }
 
   function startDrag(event: DragEvent, path: string) {
-    carry(event.dataTransfer, workspace.dragPayload(path))
+    const paths = workspace.dragPayload(path)
+    carry(event.dataTransfer, paths)
+    carrying = paths
     // The panes light their drop zones for a note out of the list as well as
     // for a tab out of a strip: both land in the same five places.
     workspace.panes.dragging = { tabId: null }
@@ -436,8 +486,275 @@
     workspace.panes.dragging = null
     workspace.panes.landing = null
     carriedNothing()
+    // A drag that ended without a drop - Escape, or a release over nothing - takes
+    // the gap back with it, and the rows slide to where they were.
+    letGo()
     stopRolling()
   }
+
+  /* -- A row lifted out of the order ---------- */
+
+  /** The rows being carried, whichever gesture is carrying them.
+   *
+   *  The same list `carried()` holds for a drag the platform started, and the only
+   *  list there is for a lift under a finger: a touch screen fires no drag events at
+   *  all, so the one gesture that can reorder a list on a phone is a press, a hold and
+   *  a move. One name for both, so everything below this line is the same code on a
+   *  desktop and on a phone - and so the design is one design, with two ways in
+   *  because the platforms offer two. */
+  let carrying = $state<string[]>([])
+
+  /** The row drawn under the pointer while a finger is carrying it. The platform
+   *  draws this itself for a drag it started; a lift has to. */
+  let ghost: HTMLElement | null = null
+  let ghostFrom = 0
+
+  /** The press that has not become a lift yet, and where it started. */
+  let holding: ReturnType<typeof setTimeout> | null = null
+  let heldAt = { x: 0, y: 0 }
+
+  /** The folder the pointer is resting on, and the timer that will open it. */
+  let dwelling: ReturnType<typeof setTimeout> | null = null
+  let dwellOn: string | null = null
+
+  const entryFor = (path: string): Entry | null => {
+    const index = at.get(path)
+    return index === undefined ? null : (flat[index]?.entry ?? null)
+  }
+
+  /** Where every row on screen is, by the path written on it. Measured before the
+   *  order changes and again after, which is what the slide is the difference of. */
+  function placesNow(): Map<string, number> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- measured and thrown away inside one frame
+    const out = new Map<string, number>()
+    for (const row of list?.querySelectorAll<HTMLElement>('.row[data-path]') ?? []) {
+      const path = row.dataset.path
+      if (path !== undefined) out.set(path, row.getBoundingClientRect().top)
+    }
+
+    return out
+  }
+
+  /** The rows slide from where they were to where the new order puts them.
+   *
+   *  Measured, changed, measured again, and each row started from its own old place
+   *  and animated back to none: the rows are laid out by the flow and by the window's
+   *  arithmetic, so there is nothing to animate except the distance between the two
+   *  answers. Nothing at all for a reader who has asked for as little movement as
+   *  possible - `dur` answers zero - and then the new order simply is the order. */
+  async function slideInto(was: Map<string, number>) {
+    const ms = dur(SLIDING)
+    if (ms === 0) return
+
+    await tick()
+    const moving = slides(was, placesNow(), carrying)
+
+    for (const row of list?.querySelectorAll<HTMLElement>('.row[data-path]') ?? []) {
+      const from = moving.get(row.dataset.path ?? '')
+      if (from === undefined) continue
+
+      row.animate([{ transform: `translateY(${from}px)` }, { transform: 'none' }], {
+        duration: ms,
+        // Ease out, which is cubicOut as a browser spells it: the row leaves at once
+        // and settles, rather than creeping away from the pointer.
+        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+      })
+    }
+  }
+
+  /** What the pointer is pointing at, and the order that would leave behind.
+   *
+   *  Answers whether a gap is showing, which is what tells the row underneath not to
+   *  light up as a folder to drop into as well: a row cannot be both the place
+   *  something goes into and the place it goes beside.
+   *
+   *  The row under the pointer while a gap is showing is usually the row the last gap
+   *  put there, which is the row being carried - and that is what holds the gap still
+   *  instead of letting it flick back and forth under a resting pointer. */
+  function aimAt(row: HTMLElement, y: number, entry: Entry): boolean {
+    if (!manual || !carrying.length) return false
+    if (workspace.holdArrange(carrying, entry.path)) return true
+
+    const box = row.getBoundingClientRect()
+    const band: Band = bandOf(y, box.top, box.height)
+    if (band === 'on') return false
+
+    const was = placesNow()
+    if (!workspace.showArrange(carrying, entry.path, band === 'after')) return false
+
+    void slideInto(was)
+    return true
+  }
+
+  /** A closed folder the pointer is resting on opens, so a drop can go further in
+   *  than the row it started over. Only while nothing is being dropped between two
+   *  rows, and only for a folder that is shut. */
+  function dwellOver(path: string | null, folder: boolean) {
+    if (path === dwellOn) return
+
+    dwellOn = path
+    if (dwelling !== null) clearTimeout(dwelling)
+    dwelling = null
+    if (path === null || !folder || workspace.isExpanded(path)) return
+
+    dwelling = setTimeout(() => {
+      dwelling = null
+      if (dwellOn === path) workspace.device.expand(path)
+    }, DWELL)
+  }
+
+  /** The gap goes, whatever was holding it: a drag that ended over nothing, Escape,
+   *  or a lift that was let go. */
+  function letGo() {
+    workspace.cancelArrange()
+    dwellOver(null, false)
+    carrying = []
+  }
+
+  /** A row under a finger, lifted after a short hold.
+   *
+   *  A copy of the row rather than the row itself, for the reason the platform draws a
+   *  copy for a drag of its own: the row in the list is a row of a window that is
+   *  still scrolling, still being rebuilt as the order changes and still keyed by its
+   *  path, and a row taken out of that to follow a finger is a row the list has lost
+   *  track of. The copy keeps the row's own classes, so it is drawn by the same
+   *  stylesheet, and it sits above everything at the place the finger took it from. */
+  function lift(row: HTMLElement, entry: Entry) {
+    holding = null
+    carrying = workspace.dragPayload(entry.path)
+
+    const box = row.getBoundingClientRect()
+    const copy = row.cloneNode(true)
+    if (!(copy instanceof HTMLElement)) return
+
+    copy.classList.add('carried')
+    copy.style.width = `${box.width}px`
+    copy.style.left = `${box.left}px`
+    copy.style.top = `${box.top}px`
+    copy.setAttribute('aria-hidden', 'true')
+    document.body.append(copy)
+
+    ghost = copy
+    ghostFrom = heldAt.y
+
+    window.addEventListener('touchmove', onLiftMove, { passive: false })
+    window.addEventListener('touchend', onLiftEnd)
+    window.addEventListener('touchcancel', dropLift)
+    window.addEventListener('keydown', onLiftKey)
+  }
+
+  function onRowTouchStart(event: TouchEvent, entry: Entry) {
+    if (!manual || ghost) return
+
+    // Two fingers down is a pinch or a scroll, not a press; the row's own menu reads
+    // it the same way.
+    const touch = event.touches.length === 1 ? event.touches[0] : undefined
+    if (!touch) {
+      cancelHold()
+      return
+    }
+
+    const row = event.currentTarget
+    if (!(row instanceof HTMLElement)) return
+
+    heldAt = { x: touch.clientX, y: touch.clientY }
+    holding = setTimeout(() => lift(row, entry), HOLD_TO_LIFT)
+  }
+
+  /** Moving before the hold is up is the list being scrolled, which outranks both the
+   *  lift and the menu - and the menu cancels itself on the same movement, for the
+   *  same reason; see longpress.ts. */
+  function onRowTouchMove(event: TouchEvent) {
+    const touch = event.touches[0]
+    if (!touch || holding === null) return
+
+    const strayed =
+      Math.abs(touch.clientX - heldAt.x) > LIFT_SLOP ||
+      Math.abs(touch.clientY - heldAt.y) > LIFT_SLOP
+    if (strayed) cancelHold()
+  }
+
+  function cancelHold() {
+    if (holding !== null) clearTimeout(holding)
+    holding = null
+  }
+
+  function onLiftMove(event: TouchEvent) {
+    const touch = event.touches[0]
+    if (!ghost || !touch) return
+
+    // The list must not scroll under the finger that is carrying a row; the page's
+    // own gesture is what this is instead of.
+    if (event.cancelable) event.preventDefault()
+
+    ghost.style.transform = `translateY(${touch.clientY - ghostFrom}px) scale(1.03)`
+
+    const under = document.elementFromPoint(touch.clientX, touch.clientY)
+    const row = under instanceof Element ? under.closest('.row[data-path]') : null
+    const path = row instanceof HTMLElement ? row.dataset.path : undefined
+    const entry = path === undefined ? null : entryFor(path)
+
+    if (row instanceof HTMLElement && entry) {
+      if (aimAt(row, touch.clientY, entry)) {
+        dropTarget.clear()
+        dwellOver(null, false)
+      } else if (takes(entry)) {
+        workspace.cancelArrange()
+        dropTarget.over(targetFor(entry.path, entry.is_dir))
+        dwellOver(entry.path, entry.is_dir)
+      }
+    }
+
+    const box = where.box
+    if (box) {
+      edgeAt = touch.clientY - box.getBoundingClientRect().top
+      rolling ??= requestAnimationFrame(rollOn)
+    }
+  }
+
+  function onLiftEnd(event: TouchEvent) {
+    // The finger lifting is the end of the gesture, not a tap: left alone the browser
+    // follows it with a click, and the click would open whatever row the drop landed
+    // on. See longpress.ts, which says the same about its own press.
+    if (event.cancelable) event.preventDefault()
+
+    const gap = workspace.arranging
+    const folder = dropTarget.folder
+    const paths = [...carrying]
+
+    dropLift()
+
+    if (gap) workspace.dropArrange()
+    else if (folder && paths.length) void workspace.moveMany(paths, folder)
+  }
+
+  /** Escape while a row is in the air: everything slides back. */
+  function onLiftKey(event: KeyboardEvent) {
+    if (event.key !== 'Escape') return
+
+    event.preventDefault()
+    const was = placesNow()
+    dropLift()
+    void slideInto(was)
+  }
+
+  /** The lift is over, however it ended: the copy goes, the listeners go, and
+   *  whatever the gap was showing is dropped unless somebody has just taken it. */
+  function dropLift() {
+    ghost?.remove()
+    ghost = null
+    cancelHold()
+    dropTarget.clear()
+    letGo()
+    stopRolling()
+
+    window.removeEventListener('touchmove', onLiftMove)
+    window.removeEventListener('touchend', onLiftEnd)
+    window.removeEventListener('touchcancel', dropLift)
+    window.removeEventListener('keydown', onLiftKey)
+  }
+
+  $effect(() => () => dropLift())
 
   /** A row lights only where a drop would do something, the way a pane's drop
    *  zones do: a row held over itself, over a row inside it, or over the row it
@@ -462,11 +779,28 @@
   }
 
   function overRow(event: DragEvent, entry: Entry) {
-    if (!isTreeDrag(event.dataTransfer) || !takes(entry)) return
+    if (!isTreeDrag(event.dataTransfer)) return
+
+    const row = event.currentTarget
+    // The thin bands at the top and the bottom of a row are the spaces between rows,
+    // and in Manual that is where a new order is; the middle of the row is the row
+    // itself, which is the move into a folder the list has always had. See
+    // tree-lift.ts.
+    if (row instanceof HTMLElement && aimAt(row, event.clientY, entry)) {
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+      dropTarget.clear()
+      dwellOver(null, false)
+      return
+    }
+
+    if (!takes(entry)) return
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    workspace.cancelArrange()
     dropTarget.over(targetFor(entry.path, entry.is_dir))
+    dwellOver(entry.path, entry.is_dir)
   }
 
   /** `dragleave` also fires when the pointer moves onto a child - the label
@@ -484,6 +818,15 @@
   function drop(event: DragEvent, entry: Entry) {
     event.preventDefault()
     dropTarget.clear()
+    dwellOver(null, false)
+
+    // A drop with a gap showing is a new order rather than a move: the row is already
+    // where it is going, and what is left is to write it down.
+    if (workspace.arranging) {
+      workspace.dropArrange()
+      carrying = []
+      return
+    }
 
     const paths = dragged(event.dataTransfer)
     if (paths.length) void workspace.moveMany(paths, targetFor(entry.path, entry.is_dir))
@@ -887,6 +1230,7 @@
       class:is-left-out={workspace.excluded.has(entry.path)}
       class:is-quiet={unwritten}
       class:is-taking={nesting(entry)}
+      class:is-lifted={carrying.includes(entry.path)}
       class:is-on={workspace.active?.path === opens}
       class:is-picked={workspace.isSelected(entry.path)}
       style:--level={depth}
@@ -896,6 +1240,10 @@
       ondblclick={() => workspace.openRow(entry.path)}
       oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
       use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
+      ontouchstart={(event) => onRowTouchStart(event, entry)}
+      ontouchmove={onRowTouchMove}
+      ontouchend={cancelHold}
+      ontouchcancel={cancelHold}
       ondragstart={(event) => startDrag(event, entry.path)}
       ondragend={endDrag}
       ondragover={(event) => overRow(event, entry)}
@@ -971,6 +1319,33 @@
     position: absolute;
     left: 0;
     right: 0;
+  }
+
+  /* The row being carried, where it sits in the list. Hollow rather than hidden,
+     because it is the gap: the space it leaves is exactly the space it will fill, so
+     there is no drop line to draw and nothing for the reader to translate - what they
+     see is the answer. The copy that follows the pointer is drawn from the same
+     classes; see `.carried` below. */
+  .row.is-lifted {
+    opacity: 0.35;
+  }
+
+  /* The copy under the finger. Out of the list and above everything, a little larger
+     than the row it came from and with a shadow under it, which is the whole of what
+     "picked up" looks like: the two together say the row has left the surface. The
+     platform draws this itself for a drag it started, and a touch screen starts none.
+
+     It is in `body` rather than in the list, so no scroll and no rebuild of the window
+     can take it away mid-gesture; the transform is written on it by hand every frame,
+     so nothing here may set one. */
+  :global(.row.carried) {
+    position: fixed;
+    z-index: 90;
+    pointer-events: none;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    box-shadow: var(--shadow-md, 0 6px 16px rgb(0 0 0 / 0.22));
+    opacity: 0.95;
   }
 
   /* A row the space leaves out of its own search, its picture and its mentions.

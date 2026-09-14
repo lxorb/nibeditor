@@ -144,6 +144,16 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/icons`, { method: 'PUT', token, body: { icons: {} } }),
   },
   {
+    what: 'arranging the folders',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/arranged`, {
+        method: 'PUT',
+        token,
+        body: { arranged: { '': ['b.md', 'a.md'] } },
+      }),
+  },
+  {
     what: 'drawing the graph',
     needs: 'write',
     go: (token) =>

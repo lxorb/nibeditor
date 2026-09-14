@@ -193,6 +193,16 @@ export const te: Dictionary = {
   'Sort by name': 'పేరు ప్రకారం క్రమం',
   'Sort by modified': 'మార్చిన తేదీ ప్రకారం క్రమం',
   'Sort by created': 'సృష్టించిన తేదీ ప్రకారం క్రమం',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ఫైల్‌ల క్రమం',
+  'Name, A to Z': 'పేరు, అ నుండి హ',
+  'Name, Z to A': 'పేరు, హ నుండి అ',
+  'Modified, newest first': 'మార్చిన తేదీ, కొత్తవి మొదట',
+  'Modified, oldest first': 'మార్చిన తేదీ, పాతవి మొదట',
+  'Created, newest first': 'సృష్టించిన తేదీ, కొత్తవి మొదట',
+  'Created, oldest first': 'సృష్టించిన తేదీ, పాతవి మొదట',
+  Manual: 'చేతితో',
   'Show hidden files': 'దాగిన ఫైల్‌లు చూపు',
   'Hide hidden files': 'దాగిన ఫైల్‌లు దాచు',
   // Writing

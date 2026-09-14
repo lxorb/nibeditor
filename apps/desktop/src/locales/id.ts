@@ -193,6 +193,16 @@ export const id: Dictionary = {
   'Sort by name': 'Urutkan menurut nama',
   'Sort by modified': 'Urutkan menurut perubahan',
   'Sort by created': 'Urutkan menurut pembuatan',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Urutan berkas',
+  'Name, A to Z': 'Nama, A ke Z',
+  'Name, Z to A': 'Nama, Z ke A',
+  'Modified, newest first': 'Perubahan, terbaru dahulu',
+  'Modified, oldest first': 'Perubahan, terlama dahulu',
+  'Created, newest first': 'Pembuatan, terbaru dahulu',
+  'Created, oldest first': 'Pembuatan, terlama dahulu',
+  Manual: 'Manual',
   'Show hidden files': 'Tampilkan berkas tersembunyi',
   'Hide hidden files': 'Sembunyikan berkas tersembunyi',
   // Writing

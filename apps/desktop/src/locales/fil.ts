@@ -193,6 +193,16 @@ export const fil: Dictionary = {
   'Sort by name': 'Isunod-sunod ayon sa pangalan',
   'Sort by modified': 'Isunod-sunod ayon sa huling baguhan',
   'Sort by created': 'Isunod-sunod ayon sa pagkagawa',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Pagkakasunod-sunod ng mga file',
+  'Name, A to Z': 'Pangalan, A hanggang Z',
+  'Name, Z to A': 'Pangalan, Z hanggang A',
+  'Modified, newest first': 'Huling baguhan, pinakabago muna',
+  'Modified, oldest first': 'Huling baguhan, pinakaluma muna',
+  'Created, newest first': 'Pagkagawa, pinakabago muna',
+  'Created, oldest first': 'Pagkagawa, pinakaluma muna',
+  Manual: 'Manu-mano',
   'Show hidden files': 'Ipakita ang nakatagong file',
   'Hide hidden files': 'Itago ang nakatagong file',
   // Writing

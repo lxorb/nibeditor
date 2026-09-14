@@ -193,6 +193,16 @@ export const ar: Dictionary = {
   'Sort by name': 'الترتيب حسب الاسم',
   'Sort by modified': 'الترتيب حسب التعديل',
   'Sort by created': 'الترتيب حسب الإنشاء',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ترتيب الملفات',
+  'Name, A to Z': 'الاسم، من أ إلى ي',
+  'Name, Z to A': 'الاسم، من ي إلى أ',
+  'Modified, newest first': 'التعديل، الأحدث أولاً',
+  'Modified, oldest first': 'التعديل، الأقدم أولاً',
+  'Created, newest first': 'الإنشاء، الأحدث أولاً',
+  'Created, oldest first': 'الإنشاء، الأقدم أولاً',
+  Manual: 'يدوي',
   'Show hidden files': 'إظهار الملفات المخفية',
   'Hide hidden files': 'إخفاء الملفات المخفية',
   // Writing

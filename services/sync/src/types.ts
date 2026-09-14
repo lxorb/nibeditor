@@ -131,6 +131,11 @@ export interface Space {
    *  unlinked mentions, as a JSON array of paths; see spaces/excluded.ts. `[]`
    *  until one is. */
   excluded: string
+  /** The order somebody arranged the rows of a folder into, as a JSON map keyed by
+   *  the folder's path, with the ordered names of its children under each; see
+   *  spaces/arranged.ts. `{}` until a row is dragged, and holding only the folders
+   *  where one was: everything a list leaves out falls to the end in name order. */
+  arranged: string
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string

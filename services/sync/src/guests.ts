@@ -160,7 +160,14 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'DELETE', path: /^\/v1\/shared\/[^/]+$/ },
   { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
   { method: 'POST', path: /^\/v1\/spaces\/[^/]+\/notes$/ },
-  { method: 'PUT', path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|files|graph|excluded)$/ },
+  // What a space says about its own tree, which a guest who may write may say too:
+  // somebody who can move a note into a folder can drag it above its neighbour, and
+  // a link that let them do the first and not the second would read as a fault.
+  // Every one of these is still behind its own `atLeast('write')`.
+  {
+    method: 'PUT',
+    path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|arranged|files|graph|excluded)$/,
+  },
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },

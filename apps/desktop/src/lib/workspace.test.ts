@@ -342,16 +342,20 @@ describe('selecting several rows', () => {
     workspace.clearSelection()
   })
 
+  /** The listing here is handed over in the order it was written down, and the rows
+   *  come back in the order the space is read in - folders first, then the names -
+   *  because that is decided over the listing rather than by whoever read it; see
+   *  tree-order.ts. */
   test('the rows shown, top to bottom, follow open folders', () => {
     expect(workspace.visibleRows()).toEqual([
-      '/space/a.md',
       '/space/f',
       '/space/f/b.md',
       '/space/f/c.md',
+      '/space/a.md',
       '/space/d.md',
     ])
     workspace.device.expanded = {}
-    expect(workspace.visibleRows()).toEqual(['/space/a.md', '/space/f', '/space/d.md'])
+    expect(workspace.visibleRows()).toEqual(['/space/f', '/space/a.md', '/space/d.md'])
   })
 
   test('a plain pick replaces, ctrl toggles', () => {
@@ -365,16 +369,16 @@ describe('selecting several rows', () => {
   })
 
   test('shift takes everything shown between the anchor and the row', () => {
-    workspace.select('/space/a.md')
-    workspace.selectRange('/space/f/c.md')
+    workspace.select('/space/f')
+    workspace.selectRange('/space/a.md')
     expect(workspace.selection).toEqual([
-      '/space/a.md',
       '/space/f',
       '/space/f/b.md',
       '/space/f/c.md',
+      '/space/a.md',
     ])
-    workspace.selectRange('/space/f')
-    expect(workspace.selection).toEqual(['/space/a.md', '/space/f'])
+    workspace.selectRange('/space/f/b.md')
+    expect(workspace.selection).toEqual(['/space/f', '/space/f/b.md'])
   })
 
   test('shift without an anchor picks the row alone', () => {
@@ -501,7 +505,9 @@ describe('nesting a note in a note', () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     await workspace.moveMany(['/space/a/d.md'], '/space')
 
-    expect(shown(workspace.tree)).toEqual(['/space/a.md', '/space/d.md'])
+    // Read the way the panel reads it: a row put back on the tree is appended to its
+    // folder, and where it then sits is the chosen order's to say.
+    expect(shown(workspace.shownTree)).toEqual(['/space/a.md', '/space/d.md'])
   })
 
   test('and asks for the folder to go only once nothing is left in it', async () => {

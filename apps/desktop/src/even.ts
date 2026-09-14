@@ -62,6 +62,7 @@ rememberSeedIn(seedFlag)
 void filling.then(() => {
   workspace.device.reread()
   workspace.folderIcons.reread()
+  workspace.arranged.reread()
   workspace.graphSettings.reread()
   workspace.excluded.reread()
   sync.reread()

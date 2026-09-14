@@ -193,6 +193,16 @@ export const ms: Dictionary = {
   'Sort by name': 'Susun mengikut nama',
   'Sort by modified': 'Susun mengikut ubahan',
   'Sort by created': 'Susun mengikut penciptaan',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Susunan fail',
+  'Name, A to Z': 'Nama, A ke Z',
+  'Name, Z to A': 'Nama, Z ke A',
+  'Modified, newest first': 'Ubahan, terbaharu dahulu',
+  'Modified, oldest first': 'Ubahan, terlama dahulu',
+  'Created, newest first': 'Penciptaan, terbaharu dahulu',
+  'Created, oldest first': 'Penciptaan, terlama dahulu',
+  Manual: 'Manual',
   'Show hidden files': 'Tunjukkan fail tersembunyi',
   'Hide hidden files': 'Sembunyikan fail tersembunyi',
   // Writing

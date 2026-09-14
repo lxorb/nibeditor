@@ -193,6 +193,16 @@ export const uk: Dictionary = {
   'Sort by name': 'За назвою',
   'Sort by modified': 'За зміною',
   'Sort by created': 'За створенням',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Порядок файлів',
+  'Name, A to Z': 'Назва, від А до Я',
+  'Name, Z to A': 'Назва, від Я до А',
+  'Modified, newest first': 'Зміна, спершу найновіші',
+  'Modified, oldest first': 'Зміна, спершу найстаріші',
+  'Created, newest first': 'Створення, спершу найновіші',
+  'Created, oldest first': 'Створення, спершу найстаріші',
+  Manual: 'Вручну',
   'Show hidden files': 'Показати сховані файли',
   'Hide hidden files': 'Сховати сховані файли',
   // Writing

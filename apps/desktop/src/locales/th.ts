@@ -193,6 +193,16 @@ export const th: Dictionary = {
   'Sort by name': 'เรียงตามชื่อ',
   'Sort by modified': 'เรียงตามวันแก้ไข',
   'Sort by created': 'เรียงตามวันสร้าง',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'ลำดับของไฟล์',
+  'Name, A to Z': 'ชื่อ ก ถึง ฮ',
+  'Name, Z to A': 'ชื่อ ฮ ถึง ก',
+  'Modified, newest first': 'วันแก้ไข ใหม่สุดก่อน',
+  'Modified, oldest first': 'วันแก้ไข เก่าสุดก่อน',
+  'Created, newest first': 'วันสร้าง ใหม่สุดก่อน',
+  'Created, oldest first': 'วันสร้าง เก่าสุดก่อน',
+  Manual: 'จัดเอง',
   'Show hidden files': 'แสดงไฟล์ที่ซ่อน',
   'Hide hidden files': 'ซ่อนไฟล์ที่ซ่อน',
   // Writing

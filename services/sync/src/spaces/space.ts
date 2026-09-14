@@ -13,6 +13,7 @@ import { askInChunks, AT_A_TIME, places } from '../bound'
 import { newId, now } from '../crypto'
 import { dnsRecords } from './addresses'
 import type { Env, Space, Variables, Whoever } from '../types'
+import { readArranged } from './arranged'
 import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
 import { readGraph } from './graph'
@@ -105,6 +106,7 @@ export async function addSpace(
     icons: '{}',
     tints: '{}',
     graph: '{}',
+    arranged: '{}',
     excluded: '[]',
     site: '{}',
   }
@@ -398,6 +400,11 @@ export function presentSpace(
     // And again: the search, the picture and the mentions all read this, and all
     // three are drawn from what the listing already brought down.
     excluded: readExcluded(space.excluded),
+    // And once more: the tree is drawn on every reconcile pass, so the order its
+    // folders were arranged into comes down with it rather than a request behind it -
+    // a tree that arrived in name order and rearranged itself a moment later would be
+    // the rows moving under somebody's hand.
+    arranged: readArranged(space.arranged),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

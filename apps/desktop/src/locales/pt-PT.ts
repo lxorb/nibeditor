@@ -193,6 +193,16 @@ export const ptPT: Dictionary = {
   'Sort by name': 'Ordenar por nome',
   'Sort by modified': 'Ordenar por alteração',
   'Sort by created': 'Ordenar por criação',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'Ordem dos ficheiros',
+  'Name, A to Z': 'Nome, de A a Z',
+  'Name, Z to A': 'Nome, de Z a A',
+  'Modified, newest first': 'Alteração, mais recentes primeiro',
+  'Modified, oldest first': 'Alteração, mais antigos primeiro',
+  'Created, newest first': 'Criação, mais recentes primeiro',
+  'Created, oldest first': 'Criação, mais antigos primeiro',
+  Manual: 'Manual',
   'Show hidden files': 'Mostrar ficheiros ocultos',
   'Hide hidden files': 'Ocultar ficheiros ocultos',
   // Writing

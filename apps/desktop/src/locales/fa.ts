@@ -193,6 +193,16 @@ export const fa: Dictionary = {
   'Sort by name': 'چیدن بر پایه نام',
   'Sort by modified': 'چیدن بر پایه تغییر',
   'Sort by created': 'چیدن بر پایه ساخت',
+  // The order the file list is read in, which the button at the end of its header
+  // opens. `Manual` is the order somebody arranged by dragging the rows.
+  'Order of the files': 'چیدمان پرونده‌ها',
+  'Name, A to Z': 'نام، از الف تا ی',
+  'Name, Z to A': 'نام، از ی تا الف',
+  'Modified, newest first': 'تغییر، تازه‌ترین نخست',
+  'Modified, oldest first': 'تغییر، کهنه‌ترین نخست',
+  'Created, newest first': 'ساخت، تازه‌ترین نخست',
+  'Created, oldest first': 'ساخت، کهنه‌ترین نخست',
+  Manual: 'دستی',
   'Show hidden files': 'نمایش پرونده‌های نهفته',
   'Hide hidden files': 'نهفتن پرونده‌های نهفته',
   // Writing

@@ -1,0 +1,25 @@
+-- The order somebody arranged the rows of a folder into: one JSON object on the
+-- space, keyed by the folder's path as the space speaks it, with the ordered names of
+-- that folder's children for the value.
+--
+-- On the space rather than on the account, the way its folder icons are, because
+-- every one of these is a fact about that space's own tree: a list naming `Ideas.md`
+-- means nothing in a space that holds no such note. So it travels with the space to
+-- every device signed in, goes with it when it is deleted and comes back with it when
+-- it is restored.
+--
+-- A name the list does not hold falls to the end, in name order, which is where every
+-- row of every folder starts out. That is what keeps this short: the list runs only as
+-- far as somebody actually arranged, so a folder nobody has dragged a row in is not in
+-- here at all, and one whose top three rows were dragged holds three names rather than
+-- all ninety.
+--
+-- Not a file beside the notes. A space holds files Obsidian can open, and a dotfile in
+-- every arranged folder is a file every other tool that walks the vault would see - in
+-- its own sidebar, in its own search, and in the diff of whoever keeps the vault in
+-- git. What the app arranges about its own tree is the app's to keep, and this is
+-- where the app keeps such things.
+--
+-- Called `arranged` and not `order`, because `order` is a word SQL has already spent
+-- and because `/order` is already the route that arranges the rail of spaces itself.
+alter table spaces add column arranged text not null default '{}';

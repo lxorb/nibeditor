@@ -19,6 +19,7 @@ import type { Entry, Naming, Panel, Space } from '../workspace.svelte'
 import type { Bookmarks } from './bookmarks.svelte'
 import type { DeviceView } from './device.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
+import type { Arranged } from './arranged.svelte'
 import type { Excluded } from './excluded.svelte'
 import type { FolderIcons } from './folder-icons.svelte'
 import type { SpaceGraphSettings } from './graph-settings.svelte'
@@ -36,6 +37,7 @@ export interface HoldsSpaces {
   readonly bookmarks: Bookmarks
   readonly device: DeviceView
   readonly folderIcons: FolderIcons
+  readonly arranged: Arranged
   readonly graphSettings: SpaceGraphSettings
   readonly excluded: Excluded
   close(id: string): void
@@ -153,7 +155,10 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   // The icon is keyed by folder, so it has to follow the folder - and the
   // folder icons inside it are kept under the root, so they follow it too.
   ws.device.moveIcon(space.root, renamed.path)
+  // And which order its list is read in, which is kept under the root too.
+  ws.device.moveOrder(space.root, renamed.path)
   ws.folderIcons.spaceMoved(space.root, renamed.path)
+  ws.arranged.spaceMoved(space.root, renamed.path)
   ws.graphSettings.spaceMoved(space.root, renamed.path)
   ws.excluded.spaceMoved(space.root, renamed.path)
 
@@ -291,6 +296,7 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   }
 
   ws.folderIcons.forget(space.root)
+  ws.arranged.forget(space.root)
   ws.graphSettings.forget(space.root)
   ws.excluded.forget(space.root)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)

@@ -183,6 +183,11 @@ export interface RemoteSpace {
    *  unlinked mentions, relative to the space. `[]` until one is; see
    *  workspace/excluded.svelte.ts. */
   excluded: unknown
+  /** The order somebody arranged each folder of the space into, by the folder's path
+   *  as the space speaks it, with the names of that folder's children under it. Read
+   *  rather than trusted, for the reason the graph settings are: a build of the service
+   *  older than this app answers with nothing at all. */
+  arranged: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -759,6 +764,16 @@ export const api = {
       method: 'PUT',
       token,
       body: { excluded },
+    }),
+
+  /** The whole map, for the reason the folder icons go whole: a folder renamed moves
+   *  every list under it from one key to another, and one PUT of the lot is the only
+   *  shape in which that is a single request. */
+  saveArranged: (token: string, id: string, arranged: Record<string, readonly string[]>) =>
+    request<{ arranged: Record<string, string[]> }>(`/v1/spaces/${id}/arranged`, {
+      method: 'PUT',
+      token,
+      body: { arranged },
     }),
 
   deleteSpace: (token: string, id: string) =>
