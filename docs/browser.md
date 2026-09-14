@@ -1311,6 +1311,145 @@ and GTK 4 aborts when it finds GTK 3 in the process - the plugin has an `xdg-por
 feature that would fix it, and turning it on is a change to the *shipping* Linux build
 and therefore Emil's to make. It is in batch 7's Linux row now rather than a surprise.
 
+### What batch 1.5 did: three causes, named, and two of them shut
+
+Batch 1's answer was *"it compiles, it links, its tests pass on all three desktops and
+it starts on none of them"*, with three reasons it could not name. Batch 1.5 is the
+naming and the repair. **Windows and macOS now start**, which is criterion 1 below;
+Linux does not, and its reason has an owner.
+
+**Windows: one missing entry point, and it was never CEF's.** The loader refused the
+binary with `STATUS_ENTRYPOINT_NOT_FOUND` before nib's first line, with all
+thirty-nine imported `cef_*` symbols present. The hole is one entry point:
+**`TaskDialogIndirect`, imported from `COMCTL32.dll`** - and it was reproduced in
+isolation rather than inferred, both ways, on a machine with no Chromium on it at all.
+A twelve-line Rust binary that imports that one symbol the way `windows-sys` does and
+carries no manifest dies with exactly `0xC0000139` and no output; the same binary with
+the manifest this batch embeds prints its line and exits 0. The chain of five facts
+behind it, each one checkable:
+
+1. `tauri-plugin-dialog` takes `rfd` with `features = ["common-controls-v6"]`, and nib
+   depends on that plugin on all three desktops.
+2. Under that feature `rfd`'s Windows message dialog calls `TaskDialogIndirect`, which
+   is a *static* import of `COMCTL32.dll` in whatever binary links it.
+3. `TaskDialogIndirect` exists only in version 6 of the common controls.
+   `C:\Windows\System32\comctl32.dll` is 5.82 and exports 119 names, not that one; the
+   version 6 assembly in `WinSxS` exports 150 names, including it. `rfd`'s own
+   documentation says so: *"It is only provided by ComCtl32.dll v6 but Windows use v5
+   by default... Add an application manifest"*.
+4. The only thing that makes a process load version 6 is an application manifest with
+   that dependency in it. **A plain rustc MSVC executable has none** - built one and
+   read its resources: no `RT_MANIFEST` at all.
+5. `tauri_build::build()` does embed one, and it does not reach this binary.
+   `tauri-winres` compiles its resource through `embed-resource`, which emits
+   `cargo:rustc-link-arg-bins` - and cargo applies that **only to the binary targets of
+   the package whose build script emitted it**. The app's crate is a path *dependency*
+   of the flagged workspace, so its manifest and its icon go into the app's own binary
+   next door and into nothing else.
+
+So the flagged binary was the app, linked without the manifest the app ships with, and
+the loader gave it `comctl32` 5.82. The repair is four lines in
+`apps/desktop/src-tauri/cef/build.rs`: the compatibility list and the common-controls
+dependency out of CEF's own `cefsimple` manifest, written into `OUT_DIR` and embedded
+with `/MANIFEST:EMBED /MANIFESTINPUT:`, which the linker merges with anything else it
+was given. **With it, the window is on screen in 1.4 seconds.** It is not a Chromium
+problem, it was never the sandbox, and `gate.py` now prints the manifest a binary has
+beside the entry point the loader could not bind, so the next one is a paragraph rather
+than a week.
+
+**macOS: the bundle, and the helpers in it.** CEF loaded and then died on
+`icudtl.dat not found in bundle`, which is Chromium asking `NSBundle` for the main
+bundle and being handed an executable in a folder. Three things are needed and all
+three are packaging rather than code: the framework in `Contents/Frameworks`, which
+batch 1 already staged; a real `Contents/Info.plist` with `CFBundleExecutable`, which
+is what makes the folder a bundle at all and therefore what makes Chromium able to
+find `icudtl.dat`, the `.pak` files and the locales inside the framework; and the
+helper apps at `Contents/Frameworks/<app> Helper.app`, because with
+`browser_subprocess_path` unset - and `tauri-runtime-cef` does not set it - that is
+where CEF looks for the executable it launches for every renderer, the GPU process and
+every utility process, and on that platform it will not re-launch the main executable
+the way it does on the other two. `gate.py` builds all of it now, from the same recipe
+the `cef` crate's own bundler writes (`src/build_util/mac.rs`), including
+`LSEnvironment`'s `MallocNanoZone=0` - the framework replaces the process's malloc zone
+and the nano zone has to be off before the first allocation - which the gate also sets
+in the environment, because `LSEnvironment` only reaches a launch made through the
+system. **With it, the window is on screen in 1.6 seconds and one browser process
+serves two web tabs.**
+
+**Linux: both toolkits are in the process, and that is Emil's decision rather than a
+repair.** The flagged binary dies with `SIGSEGV` about 290 ms in, having printed its own
+first line and nothing else - and *"nothing else"* was itself a measurement error:
+`tauri-runtime-cef` defaults CEF's log into the cache directory, so batch 1 read an
+empty stderr as an empty answer. There is no `cef.log` either, which places the crash
+before CEF initialised its logging at all. What `ldd` says about the binary is the
+finding:
+
+```text
+libgtk-3.so.0 => /lib/x86_64-linux-gnu/libgtk-3.so.0
+libgdk-3.so.0 => /lib/x86_64-linux-gnu/libgdk-3.so.0
+libgtk-4.so.1 => /lib/x86_64-linux-gnu/libgtk-4.so.1
+libcef.so     => .cef/libcef.so
+```
+
+**GTK 3 and GTK 4 in one process**, which GTK does not support and which the runtime's
+own comment says cannot be shared. The mechanism is the one that makes it a segmentation
+fault rather than a message: the two libraries export the same symbol names, so whichever
+the dynamic loader binds first answers for *both* callers, with one library's struct
+layouts and the other's expectations. `spike/shell`, which links no GTK 3 at all, brought
+the same engine up on the same runner in 264 ms.
+
+GTK 4 is the runtime's, through `winit-gtk4`. GTK 3 is `tauri-plugin-dialog`'s: that
+plugin's default feature is `gtk3`, which is `rfd/gtk3`. **It cannot be turned off from
+the flagged workspace**, and that is a fact about Cargo rather than something nobody
+tried: features are additive, so `cef = ["tauri-plugin-dialog/xdg-portal"]` would add the
+portal backend *beside* GTK 3 rather than instead of it, and only
+`default-features = false` on the plugin removes it - in the app's own manifest, which
+is the build that ships. So Linux is exactly where batch 1 left it and now with the
+evidence attached: it is **the GTK 3 → 4 change in batch 7's Linux row**, it is Emil's
+to make because it changes the shipping Linux build's file dialogs to the XDG portal,
+and criterion 1 needs Windows and a Mac rather than all three.
+
+**And the gate's own contract changed, which is why the colour of the job is worth
+reading now.** Batch 1's `gate.py` returned non-zero on every "not yet" and wrote no
+table when it stopped the binary early - so the workflow was red on all nine runs, a
+broken build looked exactly like a measured no, and the artefact worth having was the
+one thing the run threw away. It now **exits 0 whenever it wrote a table, with the
+verdict in the table**: the six criteria as rows, each with the measurement that
+answers it and "not measured" where nothing did. A red `cef` job means the gate could
+not run at all. And a run that never got a window now says why, because a diagnosis is
+the second half of a gate: the Windows loader's whole import chain against what each
+module in it exports plus the manifest the binary carries, a Mac's bundle and its crash
+report, Linux's `ldd` and a backtrace out of `gdb`, and on all three **the log CEF
+itself wrote** - which `tauri-runtime-cef` defaults into the cache directory rather
+than onto stderr, and is why batch 1 read three silences as nothing at all.
+
+**Three findings that change what a later batch has to do.**
+
+1. **`--load-extension` is not profile-scoped, and batch 1's finding 5 was wrong about
+   the consequence.** The two profiles are real - Chromium's own user-data layout is
+   there with `Default` and `app` beside each other - and the extension's content script
+   still renamed **nib's own interface**: the mark arrived in the interface's title, on
+   a Mac, with both profiles on disk. Chromium reads that switch as each profile's
+   extension service starts, so a command-line extension is installed into *every*
+   profile in the process, the primary one and nib's alike. Two profiles are therefore
+   necessary and not sufficient: **the install has to be profile-scoped too**, which
+   makes batch 4's route the per-profile preference tree rather than a switch, and
+   makes this the one criterion of the six that is still no.
+2. **A webview's own title handler is never called under this runtime; a window's is.**
+   The interface's title arrived (its handler is on the window `engine::open_ui_window`
+   builds) and the handlers on the two `chrome://` webviews `add_child` made were never
+   called at all, for a title `chrome://settings` certainly sets. So the gate reads both
+   halves of criterion 4 through a window of its own now, and the runtime's
+   per-webview handler is a bug to report upstream.
+3. **A second web tab hangs on Windows.** The first opens; the second never comes back
+   from the app's own command, with CEF logging *"Timeout of new browser info response
+   for frame"* and a Mojo `blink.mojom.WidgetHost` rejection first - and that timeout is
+   CEF's browser process failing to answer a renderer within two seconds, which is a
+   blocked UI thread. The gate now gives a tab ninety seconds, says so, carries on to
+   everything else, and round-trips the main thread at each step so that "the runtime is
+   waiting" and "the main thread has stopped" are told apart in the table. It is
+   upstream's either way: the same runtime opens five webviews in one window on a Mac.
+
 ### The gate table
 
 Every number below is `.github/workflows/cef.yml` on GitHub's own runners, from
@@ -1406,16 +1545,16 @@ whose shape depends on where the engine lives - so it is the one batch that must
 start on a guess. These are the criteria, and every one of them is a row the gate
 already prints, so the answer is a workflow run and not a conversation.
 
-**Go needs all six, and the first one is the one batch 1 did not get.**
+**Go needs all six. Batch 1 got none of them; batch 1.5 got the first one and three
+more.**
 
 1. **The flagged build starts on Windows and on macOS**, from a clean runner, with
-   `--locked`, and stays up long enough to show a window. It *builds* on all three
-   today and starts on none, and the three reasons are in the table above: a bundle on
-   macOS, GTK 4 on Linux, an unexplained loader refusal on Windows. Until at least two
-   of those are shut there is nothing for batch 2 to build on, and the honest thing is
-   to keep pressing the gate rather than to start. Linux may lag without holding batch
-   2 up - nothing about a web tab depends on the toolkit - but it has to be a known lag
-   with an owner, not a red square nobody read.
+   `--locked`, and stays up long enough to show a window. **Met.** A window on both,
+   from a clean runner, with `--locked` - the manifest on Windows and the bundle on a
+   Mac, both in batch 1.5 above. Linux still does not start and its reason is named and
+   owned: GTK 3 and GTK 4 in one process, which is the plugin feature Emil has to
+   change. That is the known lag this criterion allows, rather than a red square nobody
+   read.
 2. **One browser process serves two web tabs**, counted off `--type=` on the process
    tree rather than asserted. More than one and the premise of the whole design is
    wrong and B′ is the shape.
@@ -1619,10 +1758,21 @@ shape that will actually ship rather than in a standalone program.
   change it.
 - **No sandbox in an AppImage or a snap**, so the browser should not be offered in
   those builds. Section 7.
-- **The flagged build starts on no desktop yet.** It compiles and links on all three;
-  macOS wants the app bundle, Linux dies where GTK 3 and GTK 4 meet, and Windows is
-  refused by the loader for a reason not yet named. Section 8's gate table, and the
-  first criterion batch 2 waits on.
+- **The flagged build starts on Windows and on macOS, and not on Linux.** Batch 1.5:
+  the Windows loader wanted an application manifest the app's own build script cannot
+  give this binary, a Mac wanted a real bundle with the framework and the helpers in
+  it, and Linux has GTK 3 and GTK 4 in one process. The first two are fixed and
+  measured; the third is the row below and Emil's.
+- **An extension installed on the command line lands in *every* profile**, so two
+  profiles are necessary and not sufficient. It is the one batch 2 criterion still
+  answered no, and it makes batch 4's install the per-profile preference tree rather
+  than a switch. Section 8.
+- **A webview's own title handler is never called under `tauri-runtime-cef`**, where a
+  window's is. To report upstream; the gate reads titles off a window because of it.
+- **A second web tab hangs on Windows under the flag.** The first opens; the second
+  never returns from `add_child`, with CEF's *"Timeout of new browser info response for
+  frame"* before it. Upstream's, and the same runtime opens five webviews in one window
+  on a Mac.
 - **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
   one that supports iOS asks for a `wry` feature the branch removed. One empty
   feature repairs it and batch 1 carries the repair in
@@ -1640,9 +1790,11 @@ shape that will actually ship rather than in a standalone program.
   which is not the engine any more; `pdf_supported` says no and the window falls back
   to the system's print panel. Chromium's own `PrintToPDF` is batch 6.
 - **On Linux the flagged build has GTK 3 in it**, through `tauri-plugin-dialog` and
-  `rfd`, and GTK 4 aborts when it finds GTK 3 in the process. The plugin has an
-  `xdg-portal` feature that would fix it, and turning that on changes the *shipping*
-  Linux build. Section 8, batch 7.
+  `rfd`, beside the runtime's GTK 4 - `ldd` says both, and the process dies with
+  `SIGSEGV` 290 ms in and before CEF has a log to write to. The plugin has an
+  `xdg-portal` feature that would fix it and only `default-features = false` in the
+  app's own manifest can remove `gtk3`, which changes the *shipping* Linux build's file
+  dialogs. Emil's, section 8, batch 7.
 - **The shell spike segfaults on exit** after its work is done - a shutdown path in
   an unreleased runtime, to report upstream.
 - **Android and iOS get the system browser**, because CEF has no build for either.
