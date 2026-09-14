@@ -311,6 +311,25 @@ for "the one before" and "the one after" take it instead. The switcher is on the
 space bar because that is where the word is written, and it opens the sidebar
 header's own menu rather than a second copy of it.
 
+**Undo and redo**
+
+| | |
+| --- | --- |
+| Ctrl+Z | undo (already there) |
+| Ctrl+Y | redo (already there) |
+| Ctrl+Shift+Z | redo as well, on Windows and Linux |
+
+Two keys for redo because the rest of the world has two. Ctrl+Y is Windows's own
+and was always here; Ctrl+Shift+Z is what Obsidian, VS Code and Word answer, and
+it is the key a hand that has just pressed Ctrl+Z reaches for without thinking.
+CodeMirror bound it on Linux alone, which left a Windows reader pressing a key that
+did nothing. Nothing else holds the chord on either platform, so it is a second key
+rather than a trade. On a Mac it is Cmd+Shift+Z and that is redo's only key, which
+is the platform's own convention; the entry there is Redo itself rather than an
+alias. Both are in the registry as `edit.redo` and `edit.redo.alt`, so the list
+shows the second one as a second key and either can be rebound. The canvas and a
+page note keep their own history and answer both.
+
 **Folding**
 
 | | |

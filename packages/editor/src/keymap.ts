@@ -370,12 +370,18 @@ export const standardBindings: BindingSpec[] = [
   adopt('edit.undo', historyKeymap, 'Mod-z', { run: undoEdit }),
   // On Linux the library binds Ctrl+Shift+Z as well as Ctrl+Y, through a
   // second entry with no `key` at all. That entry cannot be reached by key,
-  // so it is listed as the second key it is - and stays Linux-only, exactly
-  // as it was.
+  // so it is listed as the second key it is.
   adopt('edit.redo', historyKeymap, 'Mod-y', { run: redoEdit }),
   {
     id: 'edit.redo.alt',
     key: null,
+    // Windows as well as Linux: Ctrl+Shift+Z is the redo Obsidian, VS Code and
+    // Word all answer, and somebody who undid too far presses the key their other
+    // editors taught them rather than looking for Ctrl+Y. Nothing else holds it on
+    // either platform, so this is a second key for Redo and takes nothing away.
+    // The Mac's own key is Cmd+Shift+Z, which `edit.redo` above already carries
+    // from the library, so there is nothing to add here for it.
+    win: 'Ctrl-Shift-z',
     linux: linuxRedo.linux ?? 'Ctrl-Shift-z',
     run: redoEdit,
     preventDefault: true,

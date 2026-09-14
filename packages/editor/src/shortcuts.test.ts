@@ -67,13 +67,20 @@ describe('building the keymap', () => {
   })
 
   test('drops a platform default the entry does not have', () => {
-    // Redo's second key is Linux's alone; it is unbound anywhere else.
+    // Redo's second key is Ctrl+Shift+Z on Windows and Linux, which is what every
+    // other editor answers; the Mac's own Cmd+Shift+Z is on `edit.redo` itself, so
+    // this entry names no key there at all.
     const alt = standardBindings.find((one) => one.id === 'edit.redo.alt')!
 
     expect(defaultKeyFor(alt, 'linux')).toBe('Ctrl-Shift-z')
-    expect(defaultKeyFor(alt, 'win')).toBeNull()
+    expect(defaultKeyFor(alt, 'win')).toBe('Ctrl-Shift-z')
+    expect(defaultKeyFor(alt, 'mac')).toBeNull()
     expect(bindings([alt], {}).length).toBe(1)
+    // Bound per platform rather than on a key of its own, so a Mac never sees it.
     expect(bindings([alt], {})[0]?.key).toBeUndefined()
+
+    const redo = standardBindings.find((one) => one.id === 'edit.redo')!
+    expect(defaultKeyFor(redo, 'mac')).toBe('Mod-Shift-z')
   })
 })
 

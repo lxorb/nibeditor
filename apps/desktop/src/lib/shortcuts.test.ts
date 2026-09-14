@@ -154,6 +154,26 @@ describe('every shortcut there is', () => {
     for (const binding of nibKeymap) expect(listed, binding.key).toContain(binding.key)
   })
 
+  /** The second key for Redo, which is the one every other editor answers:
+   *  Obsidian, VS Code and Word all take Ctrl+Shift+Z, and somebody who undid one
+   *  step too far presses what those taught them rather than Ctrl+Y. Listed here as
+   *  well as in the editor's own specs because this is the list the Shortcuts pane
+   *  draws, the palette hints from, and the canvas and a page note read - all three
+   *  ask about `edit.redo.alt` by id. */
+  test('answers Redo on Ctrl+Shift+Z on Windows and Linux, and on Cmd+Shift+Z on a Mac', () => {
+    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
+    const alt = found('edit.redo.alt')
+    expect(defaultKeyFor(alt, 'win')).toBe('Ctrl-Shift-z')
+    expect(defaultKeyFor(alt, 'linux')).toBe('Ctrl-Shift-z')
+    // Nothing on a Mac, where the same chord is Redo's own key rather than a second one.
+    expect(defaultKeyFor(alt, 'mac')).toBeNull()
+    expect(defaultKeyFor(found('edit.redo'), 'mac')).toBe('Mod-Shift-z')
+
+    // A second key, so the list marks it as one rather than showing Redo twice.
+    expect(alt.alias).toBe(true)
+    expect(alt.label()).toBe(found('edit.redo').label())
+  })
+
   /** Two entries on one key means one of them never fires. The contextual
    *  ones are the exception by design: they look for a table or a picture and
    *  give way when there is none, which is how six of them sit on the arrow
