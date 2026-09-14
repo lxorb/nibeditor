@@ -18,7 +18,7 @@ use std::fs;
 use tauri::AppHandle;
 
 use crate::front_matter;
-use crate::paths::{files_in, in_spaces, is_canvas, is_shortcut, relative_to};
+use crate::paths::{files_in, in_spaces, is_canvas, is_pages, is_shortcut, relative_to};
 use crate::tags::tags_in;
 
 /// How much of a line is worth keeping as the context a result is read in. The
@@ -114,6 +114,17 @@ pub struct Note {
     /// read, because no list asks it; the surface that draws the banner reads it
     /// out of the note itself. See cover.ts in @nib/markdown.
     cover: Option<String>,
+    /// When the note was archived, as it says so: `archived:` in a note's front
+    /// matter, `nib.archived` in a plane, `Nib-Archived` in a website. None for a
+    /// note nobody has archived, which is almost every note.
+    ///
+    /// Read on this pass for the reason the icon is, and read at all because an
+    /// archived note is left out of every list that speaks for the space - the file
+    /// list, the search, the graph, the tags - and a list that had to ask the disk
+    /// would ask once per row. The value is read in archived.ts in the app: anything
+    /// that is not `false` or `no` counts, so `archived: true` typed into Obsidian
+    /// reads as archived here. See docs/archive.md.
+    archived: Option<String>,
 }
 
 /// A whole space's links.
@@ -148,7 +159,16 @@ pub fn scan_links(app: AppHandle, root: String) -> Result<SpaceLinks, String> {
     // resolves; it is read here as well because every row of the tree wants the
     // icon, and a scan that skipped it would leave a canvas wearing the plain
     // mark until somebody opened it.
-    for path in others.iter().filter(|path| is_canvas(path)) {
+    //
+    // And the page notes, which are the same JSON under another name and keep the
+    // same two keys under `nib`. They were read only once somebody opened one -
+    // `putCanvas` in link-index.svelte.ts - which is late for an icon and wrong for
+    // `nib.archived`: a plane archived last week would be back in the file list
+    // after a relaunch, until the reader opened the very thing they had put away.
+    for path in others
+        .iter()
+        .filter(|path| is_canvas(path) || is_pages(path))
+    {
         let Ok(body) = fs::read_to_string(path) else {
             continue;
         };
@@ -220,6 +240,7 @@ fn note_at(relative: String, body: &str) -> Note {
         // website's, read in `shortcut_note`.
         favicon: None,
         cover: said("cover"),
+        archived: said("archived"),
     }
 }
 
@@ -247,6 +268,11 @@ struct CanvasNib {
     icon: Option<String>,
     #[serde(default, rename = "iconColor")]
     icon_color: Option<String>,
+    /// When the plane was archived, beside the icon and for the same reason it is
+    /// there: JSON has no front matter, and this key is the one place the spec
+    /// leaves for something no other app has to look at. See docs/archive.md.
+    #[serde(default)]
+    archived: Option<String>,
 }
 
 /// One card, as far as this cares: the four kinds the spec names share these
@@ -328,6 +354,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
         favicon: None,
         // And a plane has no cover: the whole of it is a picture already.
         cover: None,
+        archived: said(read.nib.archived),
     }
 }
 
@@ -358,18 +385,29 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         url: None,
         favicon: favicon_of(content),
         cover: None,
+        archived: keyed(content, "nib-archived"),
     }
 }
 
 /// The site's own mark out of a shortcut, as an address: the `Nib-Icon` line the app
 /// writes into a `.url`. None for a `.webloc`, which has no such key, and for a
-/// shortcut nobody has followed a link out of yet. A twenty-line reader for a
-/// twenty-line file, so the whole INI parser the app has is not asked for on a pass
-/// that wants one line; see web-tab/shortcut.ts, which writes it and reads it there.
+/// shortcut nobody has followed a link out of yet.
 fn favicon_of(content: &str) -> Option<String> {
+    keyed(content, "nib-icon")
+}
+
+/// One `Key=value` line out of a shortcut, trimmed, or None where the file has no
+/// such key or nothing after the equals. The key is matched without case, the way
+/// the format's own readers match it.
+///
+/// A twenty-line reader for a twenty-line file, so the whole INI parser the app has
+/// is not asked for on a pass that wants one line; see web-tab/shortcut.ts, which
+/// writes these and reads them there. Two keys read through it - `Nib-Icon` and
+/// `Nib-Archived` - because one reader for both is one reading of the format.
+fn keyed(content: &str, wanted: &str) -> Option<String> {
     content.lines().find_map(|line| {
         let (key, value) = line.split_once('=')?;
-        if !key.trim().eq_ignore_ascii_case("nib-icon") {
+        if !key.trim().eq_ignore_ascii_case(wanted) {
             return None;
         }
 
@@ -877,7 +915,7 @@ fn hex(byte: u8) -> Option<u8> {
 #[cfg(test)]
 mod tests {
     use super::{
-        block_id_of, canvas_note, decode, favicon_of, heading_of, note_at, note_tags, prose,
+        block_id_of, canvas_note, decode, favicon_of, heading_of, keyed, note_at, note_tags, prose,
         shortcut_note, without_code, Link,
     };
 
@@ -1213,6 +1251,79 @@ mod tests {
         assert_eq!(block_id_of("a^b"), None);
         assert_eq!(block_id_of("^abc in the middle"), None);
         assert_eq!(block_id_of("x^2^ is a superscript"), None);
+    }
+
+    /// When a note was archived, read on the same pass as the icon: an archived note
+    /// is left out of every list that speaks for the space, and a list that had to
+    /// ask the disk would ask once per row. Every case here has its twin in
+    /// `apps/desktop/src/lib/scan-note.test.ts`.
+    #[test]
+    fn a_note_says_when_it_was_archived() {
+        let read = note_at(
+            "Old/Last year.md".to_string(),
+            "---\narchived: 2026-09-14T10:00:00.000Z\n---\n\n# Last year\n",
+        );
+
+        assert_eq!(read.archived.as_deref(), Some("2026-09-14T10:00:00.000Z"));
+
+        // What Obsidian would write if somebody ticked a checkbox there. The word is
+        // carried across as it stands; archived.ts in the app is what reads it.
+        let ticked = note_at("A.md".to_string(), "---\narchived: true\n---\n");
+        assert_eq!(ticked.archived.as_deref(), Some("true"));
+    }
+
+    #[test]
+    fn and_a_note_nobody_archived_says_nothing() {
+        let plain = note_at("A.md".to_string(), "# A\n");
+        assert!(plain.archived.is_none());
+
+        // A key with nothing after it is not a date, and not an answer either.
+        let blank = note_at("A.md".to_string(), "---\narchived:   \n---\n");
+        assert!(blank.archived.is_none());
+    }
+
+    /// A plane keeps it beside its icon, under the key the spec leaves free.
+    #[test]
+    fn a_plane_says_when_it_was_archived() {
+        let read = canvas_note(
+            "boards/Board.canvas".to_string(),
+            r#"{"nodes":[],"nib":{"version":1,"archived":"2026-09-14T10:00:00.000Z"}}"#,
+        );
+
+        assert_eq!(read.archived.as_deref(), Some("2026-09-14T10:00:00.000Z"));
+
+        let plain = canvas_note("Board.canvas".to_string(), r#"{"nodes":[]}"#);
+        assert!(plain.archived.is_none());
+
+        let blank = canvas_note(
+            "Board.canvas".to_string(),
+            r#"{"nodes":[],"nib":{"archived":"  "}}"#,
+        );
+        assert!(blank.archived.is_none());
+    }
+
+    /// And a website in its own `Key=value` shape, beside `Nib-Icon`.
+    #[test]
+    fn a_website_says_when_it_was_archived() {
+        let read = shortcut_note(
+            "Svelte docs.url".to_string(),
+            "[InternetShortcut]\nURL=https://svelte.dev/\nNib-Archived=2026-09-14T10:00:00.000Z\n",
+        );
+
+        assert_eq!(read.archived.as_deref(), Some("2026-09-14T10:00:00.000Z"));
+
+        let plain = shortcut_note(
+            "Svelte docs.url".to_string(),
+            "[InternetShortcut]\nURL=https://svelte.dev/\n",
+        );
+        assert!(plain.archived.is_none());
+
+        // The key without case, the way the format's own readers match it.
+        assert_eq!(
+            keyed("nib-archived=2026-09-14", "nib-archived").as_deref(),
+            Some("2026-09-14")
+        );
+        assert!(keyed("Nib-Archived=   ", "nib-archived").is_none());
     }
 
     /// A canvas keeps its icon under `nib`, since a JSON file has no front matter.
