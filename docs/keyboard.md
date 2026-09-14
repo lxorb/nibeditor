@@ -104,7 +104,7 @@ Nine, in the order the window draws them, which is the order Tab already walks:
 
 | | |
 | --- | --- |
-| `space` | the panel's header, which is the space's name and its switcher |
+| `space` | the panel's header, which is the space's mark and name, and its switcher |
 | `panels` | the row of panel tabs |
 | `search` | the search pill under them |
 | `list` | whichever panel is open |
