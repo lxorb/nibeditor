@@ -145,6 +145,41 @@ describe('the button that holds a panel on a note', () => {
     }
   })
 
+  /** A handheld is the machine, not the size of the window: `deviceFor` asks the width
+   *  only once a finger and a mobile user agent have already said it is a handheld, so a
+   *  desktop window narrowed to the width of a phone stays a desktop and still has two
+   *  panes to hold a panel between. Which is what the docs say, and - since nothing
+   *  tested it - what an audit reading a narrow window as a phone would have called a
+   *  bug. See viewport.svelte.ts and docs/mobile.md. */
+  test('which is the machine and not the width, so a narrow window keeps it', () => {
+    open('# Head\n')
+
+    const html = drawn('outline', 'desktop')
+
+    expect(viewport.touch).toBe(false)
+    expect(html).toContain(HELD)
+  })
+
+  test('and the palette offers the same hold, by the same rule', async () => {
+    const { appCommands } = await import('./commands')
+    open('# Head\n')
+
+    viewport.device = 'desktop'
+    workspace.panel = 'footnotes'
+    const desktop = appCommands().find((one) => one.id === 'hold-panel')
+    expect(desktop?.label).toBe(HELD)
+    expect(desktop?.disabled).toBe(false)
+
+    // Nothing to hold: a panel that is about the space, and then a handheld.
+    workspace.panel = 'tree'
+    expect(appCommands().find((one) => one.id === 'hold-panel')?.disabled).toBe(true)
+
+    workspace.panel = 'outline'
+    viewport.device = 'phone'
+    expect(appCommands().find((one) => one.id === 'hold-panel')?.disabled).toBe(true)
+    viewport.device = 'desktop'
+  })
+
   test('nor on a tablet, which holds one document too', () => {
     open('# Head\n\nWords[^1].\n\n[^1]: said\n')
 

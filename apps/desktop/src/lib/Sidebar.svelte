@@ -270,18 +270,12 @@
     if (showing === 'search') void workspace.loadTags()
   })
 
-  /** Whether the panels are held on a tab rather than following the pane. */
-  const held = $derived(!!workspace.heldTabId && workspace.panelTab?.id === workspace.heldTabId)
-  /** Which panels can be held: the two that are about one note. The files are
-   *  the space's and a search is the space's, so neither has a note to be held
-   *  on.
-   *
-   *  Not on a handheld, which holds one document at a time: there is nothing to
-   *  hold a panel against, and opening another note closes the tab the panel
-   *  would have been held on. */
-  const holdable = $derived(
-    !viewport.touch && (showing === 'outline' || showing === 'links' || showing === 'footnotes'),
-  )
+  /** Whether the panels are held on a tab, and whether this side's panel is one that
+   *  can be held at all. Both the workspace's own answers, because the palette offers
+   *  the same hold and two copies of one rule is one of them going stale; see
+   *  `holdable` there for which panels and which machines. */
+  const held = $derived(workspace.held)
+  const holdable = $derived(workspace.holdable(showing))
 
   /** Takes the reader to a line of the note the panel is about.
    *

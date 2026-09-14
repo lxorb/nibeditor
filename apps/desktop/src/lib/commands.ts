@@ -1166,6 +1166,19 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Footnotes'),
       run: () => revealPanel('footnotes'),
     },
+    // Holding a panel on one note while another is written beside it. One row that
+    // says which way it goes, the way every other two-state row in the palette does,
+    // and greyed out where there is nothing to hold: no panel open that is about a
+    // note, or a handheld, which holds one document. The rule is the workspace's, so
+    // this and the button in the panel cannot come to different answers; see
+    // `holdable` there.
+    {
+      id: 'hold-panel',
+      label: workspace.held ? t('Follow the open note') : t('Stay on this note'),
+      checked: workspace.held,
+      disabled: workspace.holdablePanel === null,
+      run: () => workspace.holdPanel(workspace.held ? null : (workspace.panelTab?.id ?? null)),
+    },
     { id: 'graph', label: t('Graph'), run: () => workspace.openGraph() },
     // Round the regions of the window, and round the spaces. Here as well as on a
     // key, because the palette is where somebody looks for a thing they have not
