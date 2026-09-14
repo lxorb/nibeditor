@@ -414,6 +414,12 @@ export const es: Dictionary = {
   'Switch theme': 'Cambiar de tema',
   Style: 'Estilo',
   Mode: 'Modo',
+  // The window's own edges; see appearance.rs
+  Window: 'Ventana',
+  'Nib’s own': 'De Nib',
+  'The system’s': 'Del sistema',
+  Translucency: 'Translucidez',
+  'Window frame': 'Marco de la ventana',
   System: 'Sistema',
   'Mode: {name}': 'Modo: {name}',
   'Open themes folder': 'Abrir la carpeta de temas',

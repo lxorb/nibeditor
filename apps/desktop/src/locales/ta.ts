@@ -405,6 +405,12 @@ export const ta: Dictionary = {
   'Switch theme': 'தீம் மாற்று',
   Style: 'பாங்கு',
   Mode: 'நிலை',
+  // The window's own edges; see appearance.rs
+  Window: 'சாளரம்',
+  'Nib’s own': 'Nib-இன் சொந்தம்',
+  'The system’s': 'கணினியின்',
+  Translucency: 'அரைவெளிப்படைத்தன்மை',
+  'Window frame': 'சாளரச் சட்டம்',
   System: 'கணினி',
   'Mode: {name}': 'நிலை: {name}',
   'Open themes folder': 'தீம் கோப்புறையைத் திற',

@@ -406,6 +406,12 @@ export const ja: Dictionary = {
   'Switch theme': 'テーマを切り替え',
   Style: 'スタイル',
   Mode: 'モード',
+  // The window's own edges; see appearance.rs
+  Window: 'ウィンドウ',
+  'Nib’s own': 'Nib のもの',
+  'The system’s': 'システムのもの',
+  Translucency: '半透明',
+  'Window frame': 'ウィンドウの枠',
   System: 'システム',
   'Mode: {name}': 'モード: {name}',
   'Open themes folder': 'テーマフォルダを開く',

@@ -47,7 +47,7 @@ import { glassesKey } from './even/key.svelte'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
-import { currentWindow } from './tauri'
+import { currentWindow, invoke, isDesktop } from './tauri'
 
 const STORAGE_KEY = 'nib:modes'
 
@@ -112,6 +112,16 @@ export function glassesBreak(value: unknown): GlassesBreak | null {
 
 export const LINE_HEIGHTS = [1.5, 1.62, 1.72, 1.85, 2] as const
 
+/** Who draws the window's frame. Nib's own is the whole shape of the shell - one bar
+ *  holding the menu, the sidebar toggle, the tabs and the window's three buttons - and
+ *  the system's is for somebody who would rather every window on their desk agreed. */
+export const FRAMES = ['nib', 'system'] as const
+export type Frame = (typeof FRAMES)[number]
+
+export function frameChoice(value: unknown): Frame | null {
+  return FRAMES.find((one) => one === value) ?? null
+}
+
 interface Saved {
   source: boolean
   readOnly: boolean
@@ -131,6 +141,8 @@ interface Saved {
   spellLanguage: string
   spellWords: string[]
   alwaysOnTop: boolean
+  frame: Frame
+  translucent: boolean
   closeBrackets: boolean
   ligatures: LigatureScope
   glassesBreak: GlassesBreak
@@ -259,6 +271,21 @@ class Modes {
    *  rather than the account's: which window is in front is about the desk it is
    *  on. */
   alwaysOnTop = $state(false)
+
+  /** Who draws the frame round the window, and whether the desk shows through it.
+   *
+   *  This machine's own, both of them, and for the same reason `alwaysOnTop` is: they
+   *  are about the desk the window is on rather than about the notes in it. Somebody
+   *  with a Mac and a Linux laptop wants their system's titlebar on one and not the
+   *  other, and Mica exists on exactly one of them.
+   *
+   *  Nib's own frame is the default and stays the default: the bar it draws holds the
+   *  menu, the sidebar toggle, the tabs and the window's three buttons, and every
+   *  measurement in the shell is taken from it. The other choice is for somebody who
+   *  asked for it. See appearance.rs, and Titlebar.svelte for the three buttons that
+   *  stand down when the system draws its own. */
+  frame = $state<Frame>('nib')
+  translucent = $state(false)
   closeBrackets = $state(true)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
@@ -439,6 +466,8 @@ class Modes {
       this.glassesModel = text(saved.glassesModel, '')
       this.glassesEffort = isEffort(saved.glassesEffort) ? saved.glassesEffort : 'low'
       this.vim = saved.vim === true
+      this.frame = frameChoice(saved.frame) ?? 'nib'
+      this.translucent = saved.translucent === true
       if (isAttachmentFolder(saved.attachments)) this.attachments = saved.attachments
       if (isPaper(saved.pagesPaper)) this.pagesPaper = saved.pagesPaper
       if (isNumber(saved.highlightTone) || saved.highlightTone === null) {
@@ -456,6 +485,12 @@ class Modes {
     this.applyZoom()
     if (this.alwaysOnTop) this.applyAlwaysOnTop()
 
+    // Both of these are the window's own, so they are put on before the first paint
+    // rather than after it: a window that came up with nib's frame and grew the
+    // system's a moment later is a window that jumped.
+    this.applyFrame()
+    this.applyTranslucency()
+
     // Written back without whatever this version has not got; see `stale` above.
     if (stale) this.persist()
   }
@@ -469,6 +504,53 @@ class Modes {
   /** Tells the window. A refusal is the window manager's answer and there is
    *  nothing to say about it: the row goes back to what the window is doing at
    *  the next start, since nothing was written. */
+  setFrame(value: string) {
+    const wanted = frameChoice(value)
+    if (!wanted || wanted === this.frame) return
+
+    this.frame = wanted
+    this.applyFrame()
+    this.persist()
+  }
+
+  setTranslucent(on: boolean) {
+    if (on === this.translucent) return
+
+    this.translucent = on
+    this.applyTranslucency()
+    this.persist()
+  }
+
+  /** The frame, asked of the crate and said on the root.
+   *
+   *  Both, because both halves have to agree: the crate is what puts a titlebar on the
+   *  window, and the attribute is what tells the shell's own bar to stop drawing the
+   *  three buttons the system is now drawing. A browser has no window to ask and no
+   *  titlebar to draw either, so the attribute is all that happens there. */
+  private applyFrame() {
+    document.documentElement.dataset.frame = this.frame
+
+    if (!isDesktop) return
+    void invoke('set_frame', { system: this.frame === 'system' }).catch(() => undefined)
+  }
+
+  /** And the material behind the window, the same way round.
+   *
+   *  The attribute is what makes the app's own ground transparent, so there is something
+   *  for the material to be seen through; see `[data-translucent]` in the themes. A
+   *  platform that has nothing to turn on answers an error, and the switch goes back:
+   *  a translucency that is on and invisible is worse than one that says it cannot. */
+  private applyTranslucency() {
+    document.documentElement.toggleAttribute('data-translucent', this.translucent)
+
+    if (!isDesktop) return
+    void invoke('set_translucency', { on: this.translucent }).catch(() => {
+      this.translucent = false
+      document.documentElement.toggleAttribute('data-translucent', false)
+      this.persist()
+    })
+  }
+
   private applyAlwaysOnTop() {
     void currentWindow()
       .then((window) => window.setAlwaysOnTop(this.alwaysOnTop))
@@ -1180,6 +1262,8 @@ class Modes {
       vim: this.vim,
       attachments: this.attachments,
       pagesPaper: this.pagesPaper,
+      frame: this.frame,
+      translucent: this.translucent,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,

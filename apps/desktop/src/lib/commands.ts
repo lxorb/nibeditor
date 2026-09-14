@@ -1046,6 +1046,25 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => modes.resetZoom(),
     },
 
+    // The window's own two, which only a desktop has a window for. Each says what it
+    // would do rather than what is on, the way every other toggle in this list does:
+    // a row somebody reads before they press it. The pane in Settings shows both as a
+    // pair of choices; see preferences.ts and appearance.rs.
+    ...(isDesktop
+      ? [
+          {
+            id: 'window-frame',
+            label: t('Window frame'),
+            run: () => modes.setFrame(modes.frame === 'system' ? 'nib' : 'system'),
+          },
+          {
+            id: 'translucency',
+            label: t('Translucency'),
+            run: () => modes.setTranslucent(!modes.translucent),
+          },
+        ]
+      : []),
+
     // A theme, an accent and a code theme carry a name rather than a word, so
     // the row reads "Design: Sepia" in German and not "Theme: Sepia". The one in
     // force is ticked, which is the mark the menu rows already use: a word in the

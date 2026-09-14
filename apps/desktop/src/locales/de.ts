@@ -409,6 +409,12 @@ export const de: Dictionary = {
   'Switch theme': 'Design wechseln',
   Style: 'Stil',
   Mode: 'Modus',
+  // The window's own edges; see appearance.rs
+  Window: 'Fenster',
+  'Nib’s own': 'Von Nib',
+  'The system’s': 'Vom System',
+  Translucency: 'Transparenz',
+  'Window frame': 'Fensterrahmen',
   System: 'System',
   'Mode: {name}': 'Modus: {name}',
   'Open themes folder': 'Design-Ordner öffnen',

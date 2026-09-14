@@ -406,6 +406,12 @@ export const jv: Dictionary = {
   'Switch theme': 'Ganti tema',
   Style: 'Gaya',
   Mode: 'Mode',
+  // The window's own edges; see appearance.rs
+  Window: 'Jendhela',
+  'Nib’s own': 'Duwèké Nib',
+  'The system’s': 'Duwèké sistem',
+  Translucency: 'Semu tembus',
+  'Window frame': 'Kerangka jendhela',
   System: 'Sistem',
   'Mode: {name}': 'Mode: {name}',
   'Open themes folder': 'Bukak folder tema',

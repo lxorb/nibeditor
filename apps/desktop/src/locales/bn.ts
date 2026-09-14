@@ -406,6 +406,12 @@ export const bn: Dictionary = {
   'Switch theme': 'থিম বদল',
   Style: 'ধরন',
   Mode: 'মোড',
+  // The window's own edges; see appearance.rs
+  Window: 'উইন্ডো',
+  'Nib’s own': 'Nib-এর নিজের',
+  'The system’s': 'সিস্টেমের',
+  Translucency: 'আধা-স্বচ্ছতা',
+  'Window frame': 'উইন্ডোর ফ্রেম',
   System: 'সিস্টেম',
   'Mode: {name}': 'মোড: {name}',
   'Open themes folder': 'থিম ফোল্ডার খুলুন',

@@ -406,6 +406,12 @@ export const id: Dictionary = {
   'Switch theme': 'Ganti tema',
   Style: 'Gaya',
   Mode: 'Mode',
+  // The window's own edges; see appearance.rs
+  Window: 'Jendela',
+  'Nib’s own': 'Milik Nib',
+  'The system’s': 'Milik sistem',
+  Translucency: 'Ketembusan',
+  'Window frame': 'Bingkai jendela',
   System: 'Sistem',
   'Mode: {name}': 'Mode: {name}',
   'Open themes folder': 'Buka folder tema',

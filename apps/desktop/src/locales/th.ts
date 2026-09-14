@@ -404,6 +404,12 @@ export const th: Dictionary = {
   'Switch theme': 'สลับธีม',
   Style: 'สไตล์',
   Mode: 'โหมด',
+  // The window's own edges; see appearance.rs
+  Window: 'หน้าต่าง',
+  'Nib’s own': 'ของ Nib',
+  'The system’s': 'ของระบบ',
+  Translucency: 'ความโปร่งแสง',
+  'Window frame': 'กรอบหน้าต่าง',
   System: 'ระบบ',
   'Mode: {name}': 'โหมด: {name}',
   'Open themes folder': 'เปิดโฟลเดอร์ธีม',

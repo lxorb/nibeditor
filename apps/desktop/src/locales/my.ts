@@ -406,6 +406,12 @@ export const my: Dictionary = {
   'Switch theme': 'အပြင်အဆင်ပြောင်း',
   Style: 'စတိုင်',
   Mode: 'မုဒ်',
+  // The window's own edges; see appearance.rs
+  Window: 'ဝင်းဒိုး',
+  'Nib’s own': 'Nib ၏ကိုယ်ပိုင်',
+  'The system’s': 'စနစ်၏',
+  Translucency: 'တစ်ဝက်ပွင့်လင်းမှု',
+  'Window frame': 'ဝင်းဒိုးအဘောင်',
   System: 'စနစ်',
   'Mode: {name}': 'မုဒ်: {name}',
   'Open themes folder': 'အပြင်အဆင်ဖိုင်တွဲဖွင့်',

@@ -21,7 +21,23 @@ function memoryStorage(): Storage {
 }
 
 vi.stubGlobal('localStorage', memoryStorage())
-vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
+/** The root element, as far as this store reaches into it: a property it sets for the
+ *  text size, and two attributes the window's own settings say out loud for the
+ *  stylesheet to read. Both are readable here, because what the app draws from is what
+ *  a test about them should look at. */
+const root = {
+  style: { setProperty: () => undefined },
+  dataset: {} as Record<string, string>,
+  attributes: new Set<string>(),
+  toggleAttribute(name: string, on?: boolean) {
+    const wanted = on ?? !this.attributes.has(name)
+    if (wanted) this.attributes.add(name)
+    else this.attributes.delete(name)
+    return wanted
+  },
+}
+
+vi.stubGlobal('document', { documentElement: root })
 
 /** What the two modes under test were last told. The editor's own side of
  *  them is tested in packages/editor; what matters here is that the store
@@ -737,5 +753,64 @@ describe('the paper new page notes start on', () => {
   test('and a word nobody wrote is A4 again', async () => {
     localStorage.setItem('nib:modes', JSON.stringify({ pagesPaper: 'foolscap' }))
     expect((await restarted()).pagesPaper).toBe('a4')
+  })
+})
+
+/** The window's own two settings: who draws the frame, and whether the desk shows
+ *  through it.
+ *
+ *  Both are this machine's, both are said on the root element for the stylesheet to
+ *  read, and both are put on again when the app starts - a window that came up with
+ *  nib's frame and grew the system's a moment later is a window that jumped. The crate
+ *  is the other half and is not here: there is no window under node, and `isDesktop` is
+ *  false, so what this can ask about is the store and the root. */
+describe('the window’s own frame', () => {
+  test('is nib’s own until somebody says otherwise', () => {
+    expect(modes.frame).toBe('nib')
+    expect(root.dataset.frame).toBe('nib')
+  })
+
+  test('is remembered, and said on the root for the shell to read', async () => {
+    modes.setFrame('system')
+    expect(modes.frame).toBe('system')
+    expect(root.dataset.frame).toBe('system')
+
+    const again = await restarted()
+    expect(again.frame).toBe('system')
+    expect(root.dataset.frame).toBe('system')
+  })
+
+  test('and a word nobody wrote leaves it alone', async () => {
+    modes.setFrame('nonsense')
+    expect(modes.frame).toBe('nib')
+
+    localStorage.setItem('nib:modes', JSON.stringify({ frame: 'nonsense' }))
+    expect((await restarted()).frame).toBe('nib')
+  })
+})
+
+describe('translucency', () => {
+  test('is off, which is what every window starts as', () => {
+    expect(modes.translucent).toBe(false)
+    expect(root.attributes.has('data-translucent')).toBe(false)
+  })
+
+  test('is remembered, and is what makes the app’s own ground transparent', async () => {
+    modes.setTranslucent(true)
+    expect(modes.translucent).toBe(true)
+    // The attribute is what `--window-ground` hangs off; see packages/themes.
+    expect(root.attributes.has('data-translucent')).toBe(true)
+
+    const again = await restarted()
+    expect(again.translucent).toBe(true)
+    expect(root.attributes.has('data-translucent')).toBe(true)
+  })
+
+  test('and goes back off again, ground and all', () => {
+    modes.setTranslucent(true)
+    modes.setTranslucent(false)
+
+    expect(modes.translucent).toBe(false)
+    expect(root.attributes.has('data-translucent')).toBe(false)
   })
 })

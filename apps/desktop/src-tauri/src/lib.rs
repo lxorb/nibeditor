@@ -32,6 +32,8 @@
 //! a window.
 
 #[cfg(desktop)]
+mod appearance;
+#[cfg(desktop)]
 mod apple_notes;
 // Where the database holding the notes is, that is a Mac: SQLite, a group
 // container and a permission no other system has, all of which is `apple_notes`.
@@ -277,6 +279,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
         endpoint::automation_result,
+        appearance::set_frame,
+        appearance::set_translucency,
         apple_notes::read_apple_notes,
         apple_notes::open_full_disk_access,
         launch::take_startup_files,

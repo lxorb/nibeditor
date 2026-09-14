@@ -403,6 +403,12 @@ export const zhHant: Dictionary = {
   'Switch theme': '切換主題',
   Style: '樣式',
   Mode: '模式',
+  // The window's own edges; see appearance.rs
+  Window: '視窗',
+  'Nib’s own': 'Nib 自己的',
+  'The system’s': '系統的',
+  Translucency: '半透明',
+  'Window frame': '視窗邊框',
   System: '系統',
   'Mode: {name}': '模式：{name}',
   'Open themes folder': '開啟主題資料夾',

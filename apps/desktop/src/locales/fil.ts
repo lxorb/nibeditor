@@ -409,6 +409,12 @@ export const fil: Dictionary = {
   'Switch theme': 'Palitan ang tema',
   Style: 'Estilo',
   Mode: 'Mode',
+  // The window's own edges; see appearance.rs
+  Window: 'Bintana',
+  'Nib’s own': 'Sa Nib',
+  'The system’s': 'Sa sistema',
+  Translucency: 'Pagkahalumigmig',
+  'Window frame': 'Kuwadro ng bintana',
   System: 'Sistema',
   'Mode: {name}': 'Mode: {name}',
   'Open themes folder': 'Buksan ang folder ng tema',

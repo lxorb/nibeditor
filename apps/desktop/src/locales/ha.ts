@@ -408,6 +408,12 @@ export const ha: Dictionary = {
   'Switch theme': 'Sauya kamanni',
   Style: 'Salo',
   Mode: 'Yanayi',
+  // The window's own edges; see appearance.rs
+  Window: 'Taga',
+  'Nib’s own': 'Na Nib',
+  'The system’s': 'Na tsarin',
+  Translucency: 'Sheƙewa',
+  'Window frame': 'Firam ɗin taga',
   System: 'Tsarin',
   'Mode: {name}': 'Yanayi: {name}',
   'Open themes folder': 'Buɗe babban fayil na kamanni',

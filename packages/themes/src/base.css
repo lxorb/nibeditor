@@ -7,12 +7,29 @@
   box-sizing: border-box;
 }
 
+/* The window's own ground.
+   `--bg` in every window there has ever been, and the one thing a reader can take
+   away: with translucency on it is nothing at all, so what shows through the app is
+   whatever the platform composites behind the window - Mica on Windows 11, Acrylic on
+   Windows 10, a vibrancy view on macOS. See appearance.rs and modes.svelte.ts.
+
+   The ground and nothing else. Every surface above it keeps the token it had, so a
+   row, a card, a sheet and a menu are the colours they were measured at: a translucent
+   window must not become a window whose words are on somebody's wallpaper. */
+:root {
+  --window-ground: var(--bg);
+}
+
+:root[data-translucent] {
+  --window-ground: transparent;
+}
+
 html,
 body {
   height: 100%;
   margin: 0;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--window-ground);
   color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--text-base);

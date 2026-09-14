@@ -406,6 +406,12 @@ export const gsw: Dictionary = {
   'Switch theme': 'Design wächsle',
   Style: 'Stil',
   Mode: 'Modus',
+  // The window's own edges; see appearance.rs
+  Window: 'Fänschter',
+  'Nib’s own': 'Vo Nib',
+  'The system’s': 'Vom Syschtem',
+  Translucency: 'Transparänz',
+  'Window frame': 'Fänschterrahme',
   System: 'System',
   'Mode: {name}': 'Modus: {name}',
   'Open themes folder': 'Design-Mappe ufmache',

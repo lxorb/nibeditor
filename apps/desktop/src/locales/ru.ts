@@ -426,6 +426,12 @@ export const ru: Dictionary = {
   'Switch theme': 'Сменить тему',
   Style: 'Стиль',
   Mode: 'Режим',
+  // The window's own edges; see appearance.rs
+  Window: 'Окно',
+  'Nib’s own': 'Nib',
+  'The system’s': 'Системная',
+  Translucency: 'Полупрозрачность',
+  'Window frame': 'Рамка окна',
   System: 'Системная',
   'Mode: {name}': 'Режим: {name}',
   'Open themes folder': 'Открыть папку тем',

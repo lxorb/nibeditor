@@ -408,6 +408,12 @@ export const kn: Dictionary = {
   'Switch theme': 'ಥೀಮ್ ಬದಲಿಸಿ',
   Style: 'ಶೈಲಿ',
   Mode: 'ಮೋಡ್',
+  // The window's own edges; see appearance.rs
+  Window: 'ವಿಂಡೋ',
+  'Nib’s own': 'Nib ನದೇ',
+  'The system’s': 'ಸಿಸ್ಟಂನದು',
+  Translucency: 'ಅರೆಪಾರದರ್ಶಕತೆ',
+  'Window frame': 'ವಿಂಡೋದ ಚೌಕಟ್ಟು',
   System: 'ಸಿಸ್ಟಂ',
   'Mode: {name}': 'ಮೋಡ್: {name}',
   'Open themes folder': 'ಥೀಮ್ ಫೋಲ್ಡರ್ ತೆರೆಯಿರಿ',

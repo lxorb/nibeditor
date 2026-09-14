@@ -406,6 +406,12 @@ export const mr: Dictionary = {
   'Switch theme': 'थीम बदला',
   Style: 'शैली',
   Mode: 'मोड',
+  // The window's own edges; see appearance.rs
+  Window: 'विंडो',
+  'Nib’s own': 'Nib चे स्वतःचे',
+  'The system’s': 'सिस्टमचे',
+  Translucency: 'अर्धपारदर्शकता',
+  'Window frame': 'विंडोची चौकट',
   System: 'सिस्टम',
   'Mode: {name}': 'मोड: {name}',
   'Open themes folder': 'थीम फोल्डर उघडा',

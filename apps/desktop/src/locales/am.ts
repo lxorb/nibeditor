@@ -404,6 +404,12 @@ export const am: Dictionary = {
   'Switch theme': 'ገጽታ ቀይር',
   Style: 'ቅጥ',
   Mode: 'ዘዴ',
+  // The window's own edges; see appearance.rs
+  Window: 'መስኮት',
+  'Nib’s own': 'የNib ራሱ',
+  'The system’s': 'የሥርዓቱ',
+  Translucency: 'ግልጽነት',
+  'Window frame': 'የመስኮት ክፈፍ',
   System: 'ሥርዓት',
   'Mode: {name}': 'ዘዴ: {name}',
   'Open themes folder': 'የገጽታ ፎልደር ክፈት',

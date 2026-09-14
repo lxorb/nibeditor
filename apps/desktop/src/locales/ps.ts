@@ -406,6 +406,12 @@ export const ps: Dictionary = {
   'Switch theme': 'بڼه بدلول',
   Style: 'ډول',
   Mode: 'حالت',
+  // The window's own edges; see appearance.rs
+  Window: 'کړکۍ',
+  'Nib’s own': 'د Nib خپل',
+  'The system’s': 'د سيستم',
+  Translucency: 'نيم رڼاتوب',
+  'Window frame': 'د کړکۍ چوکاټ',
   System: 'غونډال',
   'Mode: {name}': 'حالت: {name}',
   'Open themes folder': 'د بڼو دوتنپوښ پرانيستل',

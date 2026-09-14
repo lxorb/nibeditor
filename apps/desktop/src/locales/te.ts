@@ -404,6 +404,12 @@ export const te: Dictionary = {
   'Switch theme': 'థీమ్ మార్చు',
   Style: 'శైలి',
   Mode: 'మోడ్',
+  // The window's own edges; see appearance.rs
+  Window: 'విండో',
+  'Nib’s own': 'Nib సొంతం',
+  'The system’s': 'సిస్టమ్‌ది',
+  Translucency: 'అర్ధపారదర్శకత',
+  'Window frame': 'విండో ఫ్రేమ్',
   System: 'సిస్టమ్',
   'Mode: {name}': 'మోడ్: {name}',
   'Open themes folder': 'థీమ్‌ల ఫోల్డర్ తెరువు',
