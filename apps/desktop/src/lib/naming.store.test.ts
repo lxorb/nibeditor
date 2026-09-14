@@ -481,6 +481,21 @@ describe('a name two kinds share', () => {
   })
 })
 
+/** What the row's own menu offers to take back, which sits under the row and has to
+ *  call the file what the row calls it. */
+describe('the undo a row offers', () => {
+  test('names the file the way the row names it', async () => {
+    files.set('/space/Sketch.pages', '{}')
+    await workspace.loadTree()
+
+    await workspace.rename('/space/Sketch.pages', 'Sketch drawing.pages')
+    expect(workspace.undoLabel).toBe('Undo renaming Sketch drawing')
+
+    await workspace.move('/space/Beta.md', '/space/Work')
+    expect(workspace.undoLabel).toBe('Undo moving Beta')
+  })
+})
+
 /** A rename the disk refuses - something already there, a name that differs only in
  *  case - used to leave the row wearing a name nothing answered to, because the row
  *  moves before the rename is asked for and nothing put it back. */

@@ -36,6 +36,7 @@ export type FileAction =
    *  snapshot kept of it. */
   | { kind: 'import'; paths: string[] }
 
+import { shownName } from '../note-name'
 import { nameOf } from '../space-paths'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
@@ -75,24 +76,29 @@ export class FileActions {
     )
   }
 
-  /** What undoing would do, phrased for a menu. Null when there is nothing. */
+  /** What undoing would do, phrased for a menu. Null when there is nothing.
+   *
+   *  The name as the row beside it says the name, which is without the ending a
+   *  document is known by: the menu this appears in is the row's own menu, and
+   *  "Undo renaming Plan.md" under a row that reads `Plan` is the list disagreeing
+   *  with itself. See note-name.ts. */
   get label(): string | null {
     const action = this.last
     if (!action) return null
 
     switch (action.kind) {
       case 'move':
-        return t('Undo moving {name}', { name: nameOf(action.to) })
+        return t('Undo moving {name}', { name: shownName(nameOf(action.to)) })
       case 'rename':
-        return t('Undo renaming {name}', { name: nameOf(action.to) })
+        return t('Undo renaming {name}', { name: shownName(nameOf(action.to)) })
       case 'delete':
-        return t('Undo deleting {name}', { name: nameOf(action.path) })
+        return t('Undo deleting {name}', { name: shownName(nameOf(action.path)) })
       case 'merge':
-        return t('Undo merging {name}', { name: nameOf(action.from) })
+        return t('Undo merging {name}', { name: shownName(nameOf(action.from)) })
       case 'split':
-        return t('Undo splitting {name}', { name: nameOf(action.from) })
+        return t('Undo splitting {name}', { name: shownName(nameOf(action.from)) })
       case 'extract':
-        return t('Undo extracting from {name}', { name: nameOf(action.from) })
+        return t('Undo extracting from {name}', { name: shownName(nameOf(action.from)) })
       case 'replace':
         return t('Undo the replacement')
       case 'import':

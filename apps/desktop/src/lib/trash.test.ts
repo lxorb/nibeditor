@@ -254,7 +254,8 @@ describe('signed out', () => {
     await workspace.undoFileAction()
 
     expect(workspace.undone.stack).toHaveLength(1)
-    expect(workspace.undoLabel).toBe('Undo deleting Idea.md')
+    // The name as the row says it, without the ending; see note-name.ts.
+    expect(workspace.undoLabel).toBe('Undo deleting Idea')
   })
 
   test('the sweep drops what is older than 14 days', async () => {
