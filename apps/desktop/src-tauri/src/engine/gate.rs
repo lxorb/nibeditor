@@ -133,6 +133,16 @@ pub(crate) fn title_seen(label: &str, title: &str) {
     }
 }
 
+/// Whether a webview with this label ever told the app about a title.
+///
+/// The positive control for [`extension_ran_in`]: without it, "no mark in the title"
+/// and "no title" are the same answer, and they are not the same answer.
+fn spoke(label: &str) -> bool {
+    TITLES
+        .lock()
+        .is_ok_and(|titles| titles.iter().any(|(seen, _)| seen == label))
+}
+
 /// Whether anything the extension's content script ran in was labelled like this.
 fn extension_ran_in(label: &str) -> bool {
     TITLES.lock().is_ok_and(|titles| {
@@ -298,13 +308,22 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], probe: &str) {
     let in_the_app = extension_ran_in("main");
     let in_the_probe = extension_ran_in(probe);
     let in_a_tab = tab_labels.iter().any(|label| extension_ran_in(label));
+    // **A title that never arrived is not a title without the mark in it.** One Windows
+    // run reported no title at all - the main thread had stopped before the interface
+    // renamed itself - and this check read the silence as "the interface was not
+    // renamed", which is a pass nobody earned. So it asks first whether the interface
+    // said anything, and says "not measured" in as many words when it did not; the
+    // harness reads that phrase and leaves criterion 4 unanswered.
+    let interface_spoke = spoke("main");
     check(
         "an extension's content script never reaches the app's own interface",
-        !in_the_app,
+        !in_the_app && interface_spoke,
         if in_the_app {
             "the mark is in the interface's own title"
+        } else if interface_spoke {
+            "the interface renamed itself and never carried the mark"
         } else {
-            "the interface was not renamed"
+            "not measured: no title arrived from the interface at all"
         },
     );
     check(

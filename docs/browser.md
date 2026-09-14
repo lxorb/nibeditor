@@ -1572,7 +1572,7 @@ on all three. What changed is the row under them:
 | the tree with two web tabs | - | 1 browser, 1 GPU, 2 utility, 6 renderers | - |
 | a second web tab | never came back, and the main thread stopped answering from that call on | opened, 166 ms | - |
 | `chrome://settings` in a pane of nib's own window | not reached | **refused: Alloy style** (run `34858474457`, which caught CEF saying so) | - |
-| an extension's content script in nib's own interface | **reached it** in one run of two | **reached it**, every run | - |
+| an extension's content script in nib's own interface | **reached it** in the run that got a title at all | **reached it**, every run | - |
 | how far it got | two web tabs asked for, one opened | every row above, then the main thread stopped after the `chrome://` pages | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
 
 The Windows column is run `34858474457` and the other two are run `34863736033`. Three

@@ -1130,6 +1130,13 @@ def criteria(report: dict) -> list[dict]:
     if inside is not None and in_tab is not None:
         both = bool(inside.get('ok')) and bool(in_tab.get('ok'))
         note = f'{in_tab.get("note")}; {inside.get("note")}'
+        # The app says "not measured" in as many words when a half had no positive
+        # control - no title arrived from the interface at all, say - and a half that
+        # was not measured cannot make the criterion a no.
+        if 'not measured' in str(inside.get('note')) or 'not measured' in str(
+            in_tab.get('note')
+        ):
+            both = None
         if both is False and not bool(in_tab.get('ok')) and stopped:
             # The page the extension was to be seen in never opened, so only the half
             # about nib's own interface was actually measured.
