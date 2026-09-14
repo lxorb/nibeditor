@@ -364,7 +364,19 @@ def drive(app: pathlib.Path) -> None:
         # same shape as every other pair of choices in the app.
         asked(held, "commands.run", {"id": "settings"})
         time.sleep(1.2)
-        ran(held, "window.location.hash")
+
+        # The sheet opens on General, so the Appearance section is pressed the way a
+        # reader presses it: the row in the sheet's own list, by the word on it.
+        went = ran(
+            held,
+            "(() => { const row = [...document.querySelectorAll('button')]"
+            ".find((one) => one.textContent.trim() === 'Appearance');"
+            " if (!row) return false; row.click(); return true })()",
+        )
+        if not went:
+            wrong("the settings sheet has no Appearance row to press")
+        time.sleep(1.0)
+
         pane = ran(
             held,
             "(() => { const rows = [...document.querySelectorAll('.nib-setting')]"
@@ -372,11 +384,13 @@ def drive(app: pathlib.Path) -> None:
             " return JSON.stringify(rows.filter((one) => /Frame|Translucency/.test(one))) })()",
         )
         say(f"the pane shows {pane}")
-        if not pane or "Frame" not in str(pane):
-            wrong("the Appearance pane does not show the two window rows")
+        if not pane or "Frame" not in str(pane) or "Translucency" not in str(pane):
+            wrong(f"the Appearance pane does not show the two window rows: {pane}")
 
         shot(process.pid, "03b-the-pane")
-        ran(held, "document.querySelector('.nib-screen.sheet button[aria-label]')?.click()")
+        # And shut again, so the rest of the drive is looking at the window rather
+        # than at a sheet over it.
+        ran(held, "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))")
         time.sleep(0.8)
 
         translucent_as(held, False)
