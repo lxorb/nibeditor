@@ -1481,6 +1481,16 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    upstream's either way: the same runtime opens nib's interface and two web tabs in one
    window on a Mac and keeps answering.
 
+**And one open question the gate now prints rather than hides.** On Windows a *third*
+profile appears beside `Default` and `app` - `Profile-ezIV5moIbrEKA5IkfSkz2g`, with
+Chromium's own fourteen files in it - and nothing in nib asks for it by name. The
+runtime derives a name like that only when a webview's `data_directory` does not
+resolve under the cache root, and the only `data_directory` under the flag is the
+interface's `<config>/web/app`; a webview with none uses the global request context,
+which is `Default`, so a web tab's storage is where the design says it is. It does not
+happen on a Mac. Attributing it is batch 2's first hour rather than a guess here, and
+`gate.py` puts the row in the table so the next run cannot lose it.
+
 **What batch 1.5 changed, in eight files and no new ones.**
 
 | | |
