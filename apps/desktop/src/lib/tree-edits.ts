@@ -63,6 +63,55 @@ export function withEntry(tree: Entry, entry: Entry, options: TreeOptions): Entr
   })
 }
 
+/** The tree without the rows the space is not showing, at any depth.
+ *
+ *  One filter for the whole file list, rather than one at each of the places that walk
+ *  it. The panel mounts a slice of the rows and the arrow keys walk all of them, and
+ *  they count from the same list: a row hidden from one and not the other is Down
+ *  landing on nothing. So the tree they are both drawn from is the filtered one, and
+ *  neither knows anything about it.
+ *
+ *  A folder that is left out goes with everything under it, which needs no saying here:
+ *  the branch is dropped, so nothing inside it is walked. `leaving` answers about the
+ *  path as the app holds one, since that is what an entry carries.
+ *
+ *  The tree itself is never dropped, whatever it says: the space's own folder is the
+ *  list, not a row in it. See workspace/left-out.svelte.ts for what does the leaving. */
+export function withoutLeftOut(
+  tree: Entry | null,
+  leaving: (path: string) => boolean,
+): Entry | null {
+  if (!tree) return null
+
+  const kept = pruned(tree.children, leaving)
+  return kept === tree.children ? tree : { ...tree, children: kept }
+}
+
+/** One folder's children, filtered, and the same array back where nothing changed - so
+ *  a space with nothing archived in it is not rebuilt on every keystroke. */
+function pruned(children: readonly Entry[], leaving: (path: string) => boolean): Entry[] {
+  let touched = false
+  const out: Entry[] = []
+
+  for (const child of children) {
+    if (leaving(child.path)) {
+      touched = true
+      continue
+    }
+
+    const inside = child.children.length ? pruned(child.children, leaving) : child.children
+    if (inside === child.children) {
+      out.push(child)
+      continue
+    }
+
+    touched = true
+    out.push({ ...child, children: inside })
+  }
+
+  return touched ? out : (children as Entry[])
+}
+
 /** A row that is on its way out. */
 export function withoutEntry(tree: Entry, path: string): Entry {
   return inFolder(tree, folderOf(path), (children) =>

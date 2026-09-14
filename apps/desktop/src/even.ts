@@ -64,6 +64,7 @@ void filling.then(() => {
   workspace.folderIcons.reread()
   workspace.graphSettings.reread()
   workspace.excluded.reread()
+  workspace.archivedFolders.reread()
   sync.reread()
   recovery.restore()
 })

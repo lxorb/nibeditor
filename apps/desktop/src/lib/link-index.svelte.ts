@@ -36,6 +36,7 @@ import {
   type LinkKind,
   withoutBlockIds,
 } from '@nib/markdown/links'
+import { isArchived } from './archived'
 import { buildGraph, type NoteGraph } from './graph'
 import { drawFile } from './reading/drawn'
 import { rewriteLinks } from './link-rewrite'
@@ -100,6 +101,13 @@ function comparable(path: string): string {
   return path.replace(/\\/g, '/').replace(OWN, '').toLowerCase()
 }
 
+/** Whether a path is one the space is not showing: the path itself, or a folder that
+ *  is. The twin of `has` in workspace/left-out.svelte.ts, here because this index
+ *  answers the question for its own notes without a workspace to ask. */
+function leftOut(path: string, left: readonly string[]): boolean {
+  return left.some((one) => path === one || path.startsWith(`${one}/`))
+}
+
 /** Every name a note answers to, folded: the last part of its path, and the
  *  aliases it gave itself in its own front matter. */
 function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySet<string> {
@@ -128,6 +136,21 @@ class Links {
    *  so rather than showing an empty list that is not the answer. */
   scanning = $state(false)
 
+  /** What the space is not showing, as the space speaks of its paths: a reader's own
+   *  exclusions and the archive, which is one question answered in one place; see
+   *  workspace/left-out.svelte.ts.
+   *
+   *  Handed in rather than imported, because the answer lives on the workspace and the
+   *  workspace reads this index: the two would import each other. Set once, when the
+   *  workspace is built, and read inside the deriveds below so they follow it.
+   *
+   *  What it is for is the three lists here that are about the space as a whole rather
+   *  than about one note - the tag counts, the mentions that are not links yet, and the
+   *  blocks `[[^^` searches - which is exactly the set `excluded.svelte.ts` has always
+   *  named as its readers. What it is deliberately not for is `refs`: resolving a link
+   *  is not offering one, and a link into an archived note has to keep working. */
+  leaving: () => readonly string[] = () => []
+
   /** Notes read for an embed or a preview, newest last. Cleared whenever the
    *  index changes, so a frame never shows a note as it was two saves ago. */
   private read = new Map<string, string>()
@@ -141,6 +164,10 @@ class Links {
       headings: note.headings,
       blocks: note.blocks,
       aliases: note.aliases,
+      // Carried rather than filtered out: a link into an archived note still resolves,
+      // still draws as a link and still opens. What changes is what `[[` offers, and
+      // that is the completion's decision to make; see complete.ts in @nib/editor.
+      ...(this.archives.has(note.path) ? { archived: true } : {}),
     })),
   )
 
@@ -171,7 +198,15 @@ class Links {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const counts = new Map<string, number>()
 
+    const left = this.leaving()
+
     for (const note of this.notes) {
+      // A note the space is not showing does not speak for it either. The count over a
+      // tag row and the count the `tag:` search behind that row answers with are the
+      // same number, which they were not while this walked every note: an excluded note
+      // put a row on screen whose search came back empty.
+      if (left.length && leftOut(note.path, left)) continue
+
       // One note is one count per name, whatever it wrote twice and whatever two
       // of its tags share a level. A list rather than a set: a note carries a
       // handful of tags, and the reading below is a walk either way.
@@ -377,6 +412,44 @@ class Links {
 
     return map
   })
+
+  /** The files that said they have been archived, by path, with what each said.
+   *
+   *  The same shape as the icons above and for the same reason: a space holds a
+   *  handful of these, so the map is the size of what was put away rather than of the
+   *  space, and it is asked by a lookup rather than by a walk. Derived, so archiving a
+   *  note takes it out of the file list, the switcher, the search and the graph the
+   *  moment the file says so, without any of them being told.
+   *
+   *  The words are kept as written rather than read here: `archived.ts` is what says
+   *  which of them count, because a note ticked `archived: true` in Obsidian is
+   *  archived and one left saying `archived: false` is not. */
+  private readonly archives = $derived.by(() => {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
+    const map = new Map<string, string>()
+
+    for (const note of this.notes) {
+      if (note.archived !== null && isArchived(note.archived)) map.set(note.path, note.archived)
+    }
+
+    return map
+  })
+
+  /** Every archived file of the space, as the space speaks of its paths.
+   *
+   *  What the predicate that leaves them out of every list is built from, and what the
+   *  archive itself is drawn from. Derived off the map above, so the two cannot
+   *  disagree. */
+  get archivedFiles(): string[] {
+    return [...this.archives.keys()]
+  }
+
+  /** What the file at this path said when it was archived, as written, or null for one
+   *  nobody has put away. Takes either spelling of a path, like the icon below it. */
+  archivedOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.archives.get(relative) ?? null
+  }
 
   /** What the note at this path says it wears, as written, or null where it says
    *  nothing. The value is read in icons.ts, which knows the conventions.
@@ -881,6 +954,7 @@ class Links {
           [],
           MOST_MENTIONS,
           (batch) => found.push(...batch.hits),
+          this.leaving(),
         ).catch(() => undefined),
       ),
     )
@@ -979,7 +1053,6 @@ class Links {
     const needle = text.trim()
     if (!root || needle.length < 2) return []
 
-    const { workspace } = await import('./workspace.svelte')
     const found: Hit[] = []
 
     await searchSpace(
@@ -988,7 +1061,7 @@ class Links {
       [],
       most,
       (batch) => found.push(...batch.hits),
-      workspace.excluded.of(root),
+      this.leaving(),
     ).catch(() => undefined)
 
     return (

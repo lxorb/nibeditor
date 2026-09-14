@@ -42,7 +42,9 @@ import {
 } from './workspace/session'
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
+import { ArchivedFolders } from './workspace/archived-folders.svelte'
 import { Excluded } from './workspace/excluded.svelte'
+import { LeftOut } from './workspace/left-out.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -70,7 +72,14 @@ import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { flatRows } from './tree-flat'
-import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
+import {
+  entryAt,
+  withComing,
+  withEntry,
+  withMove,
+  withoutEntry,
+  withoutLeftOut,
+} from './tree-edits'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { asShortcut, convertWebsites } from './web-tab/convert'
@@ -296,6 +305,21 @@ class Workspace {
    *  unlinked mentions. Beside the other two because it is the same kind of thing:
    *  one space's own settings, kept on the account so every machine agrees. */
   readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
+  /** The folders of this space that have been put away, where those folders have no
+   *  note of their own to say so. Beside the folder icons because it is the same map
+   *  over the same keys, for the same reason: a folder is not a file; see
+   *  workspace/archived-folders. */
+  readonly archivedFolders = new ArchivedFolders(() => this.activeSpace?.root ?? null)
+  /** The one question every list that speaks for the space asks: is this one of the
+   *  notes I am not meant to be showing? Two sources answer it - a reader's own
+   *  exclusions and the archive - and they answer it here rather than in each list, so
+   *  a list that honours one honours both. See workspace/left-out. */
+  readonly leftOut = new LeftOut({
+    root: () => this.activeSpace?.root ?? null,
+    chosen: (root) => this.excluded.of(root),
+    archivedFiles: () => links.archivedFiles,
+    archivedFolders: () => this.archivedFolders.here,
+  })
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Writing what is open down, and the dot beside a name that says so; see
@@ -476,8 +500,15 @@ class Workspace {
    *  not there yet would be a lie to every one of them. This one is only ever
    *  drawn. See `withComing` in tree-edits.ts and arriving.svelte.ts. */
   readonly shownTree = $derived.by((): Entry | null => {
-    if (!this.tree || !arriving.coming.size) return this.tree
-    return withComing(this.tree, [...arriving.coming], this.treeOptions)
+    const coming =
+      !this.tree || !arriving.coming.size
+        ? this.tree
+        : withComing(this.tree, [...arriving.coming], this.treeOptions)
+
+    // And what the space is not showing, which for the file list means the archive: a
+    // row that is not here is not walked by the keys either, because the keys read this
+    // same tree. One filter and not two; see workspace/left-out and tree-edits.ts.
+    return withoutLeftOut(coming, (path) => this.leftOut.isArchived(path))
   })
 
   /** Whether an account's first pass is running and there is still nothing of
@@ -1641,6 +1672,7 @@ class Workspace {
     // icon and its subfolders' icons with it.
     this.folderIcons.moved(from, target)
     this.excluded.moved(from, target)
+    this.archivedFolders.moved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
     for (const note of this.documents.filter((entry) => entry.path === from)) {
@@ -2298,9 +2330,19 @@ class Workspace {
   async removeMany(paths: string[]) {
     for (const path of outermost(paths)) {
       const entry = this.entryAt(path)
-      if (entry) await this.remove(path, entry.is_dir)
+      // A selection with something archived in it deletes the rest. Skipped rather than
+      // refused whole, because the reader picked several rows and meant the ones that
+      // can go; the archived one staying is the answer, and the menu already said so by
+      // offering a count that left it out.
+      if (entry && !this.refusesDeleting(path)) await this.remove(path, entry.is_dir)
     }
     this.clearSelection()
+  }
+
+  /** The rows of a selection that may actually be deleted. What the menu counts, so
+   *  "Delete 3 items" never names a row that is going to stay. */
+  deletable(paths: readonly string[]): string[] {
+    return outermost([...paths]).filter((path) => !this.refusesDeleting(path))
   }
 
   entryAt(path: string): Entry | null {
@@ -2747,6 +2789,7 @@ class Workspace {
     paperMoved(path, target)
     this.folderIcons.moved(path, target)
     this.excluded.moved(path, target)
+    this.archivedFolders.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
     const note = this.documents.find((entry) => entry.path === path)
@@ -2769,7 +2812,19 @@ class Workspace {
     this.persist()
   }
 
+  /** Whether this row may be deleted at all, and what stands in the way. The predicate's
+   *  own answer, read here because this is where the deleting happens; see
+   *  `refusesDeleting` in workspace/left-out.svelte.ts and docs/archive.md. */
+  refusesDeleting(path: string): { itself: boolean; inside: string[] } | null {
+    return this.leftOut.refusesDeleting(path)
+  }
+
   async remove(path: string, isFolder: boolean) {
+    // Nothing archived is deleted, and nothing holding something archived either. The
+    // menus do not offer it and the key does nothing, so reaching this is a caller that
+    // asked without looking - automation, or a surface written later.
+    if (this.refusesDeleting(path)) return
+
     // Gone from the tree before the snapshot has been taken and the file has
     // been moved: three round trips is a long time for a row to sit there
     // looking as though the delete had not registered.
@@ -2815,6 +2870,7 @@ class Workspace {
     links.noteGone(path)
     this.folderIcons.gone(path)
     this.excluded.gone(path)
+    this.archivedFolders.gone(path)
     // A paper that has gone has no words worth searching any more.
     paperGone(path)
     await this.loadTree()
@@ -3316,3 +3372,8 @@ class Workspace {
 }
 
 export const workspace = new Workspace()
+
+// The index asks the workspace what the space is not showing, and the workspace reads the
+// index: written statically either way round is a cycle, so it is handed over here, once,
+// where both already exist. See `leaving` in link-index.svelte.ts.
+links.leaving = () => workspace.leftOut.here

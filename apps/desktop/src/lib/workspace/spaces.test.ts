@@ -66,6 +66,7 @@ function store(spaces: Space[]) {
     folderIcons: follows('folder icons'),
     graphSettings: follows('graph'),
     excluded: follows('left out'),
+    archivedFolders: follows('archived folders'),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
     loadTree: () => Promise.resolve(),
@@ -166,7 +167,7 @@ describe('the order the switcher shows', () => {
 })
 
 describe('a space renamed', () => {
-  test('takes its folder icons, its graph and its exclusions with it', async () => {
+  test('takes its folder icons, its graph, its exclusions and its archive with it', async () => {
     const { ws, told } = store([WORK])
     await renameSpace(ws, 'w', 'Studio')
 
@@ -176,6 +177,7 @@ describe('a space renamed', () => {
       'folder icons /spaces/Work -> /spaces/Studio',
       'graph /spaces/Work -> /spaces/Studio',
       'left out /spaces/Work -> /spaces/Studio',
+      'archived folders /spaces/Work -> /spaces/Studio',
     ])
   })
 
@@ -207,6 +209,7 @@ describe('a space deleted', () => {
       'folder icons forgot /spaces/Work',
       'graph forgot /spaces/Work',
       'left out forgot /spaces/Work',
+      'archived folders forgot /spaces/Work',
     ])
     expect(ws.activeSpaceId).toBe('h')
   })

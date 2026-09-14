@@ -22,6 +22,7 @@
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'
+  import Toast from './lib/Toast.svelte'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
   import { arriving } from './lib/arriving.svelte'
@@ -217,6 +218,7 @@
       workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
       workspace.excluded.adopt(space.root, remote.excluded, who)
+      workspace.archivedFolders.adopt(space.root, remote.archivedFolders, who)
     }
   })
 
@@ -861,6 +863,11 @@
 <SizeBadge />
 
 <StorageWarning />
+
+<!-- What a quiet gesture just did, and the one thing left to do about it. Beside the
+     update notice because it is the same kind of card, in the other corner because a reader
+     who has both is reading two things; see Toast.svelte. -->
+<Toast />
 
 {#if updates.ready}
   <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />

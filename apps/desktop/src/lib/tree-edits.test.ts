@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import type { Entry, TreeOptions } from './workspace.svelte'
-import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
+import {
+  entryAt,
+  withComing,
+  withEntry,
+  withMove,
+  withoutEntry,
+  withoutLeftOut,
+} from './tree-edits'
 
 const BY_NAME: TreeOptions = { showHidden: false, sort: 'name', descending: false }
 
@@ -221,5 +228,58 @@ describe('rows for notes the account has named and not sent yet', () => {
     const other = withComing(root(), ['/N/b.md', '/N/Work/b.md', '/N/z.md'], BY_NAME)
 
     expect(shape(one)).toEqual(shape(other))
+  })
+})
+
+/** The rows the space is not showing, taken out of the tree once.
+ *
+ *  One filter for the whole file list. The panel mounts a slice of the rows and the arrow
+ *  keys walk all of them, counting from the same list: a row hidden from one and not the
+ *  other is Down landing on nothing. So the tree they are both drawn from is the filtered
+ *  one; see `shownTree` in workspace.svelte.ts and docs/archive.md. */
+describe('the rows the space is not showing', () => {
+  test('are gone from the tree', () => {
+    const kept = withoutLeftOut(root(), (path) => path === '/N/a.md')
+
+    expect(shape(kept ?? root())).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/c.md'])
+  })
+
+  test('and a folder that is left out goes with everything under it', () => {
+    const kept = withoutLeftOut(root(), (path) => path === '/N/Deep')
+
+    expect(shape(kept ?? root())).toEqual(['/N/a.md', '/N/c.md'])
+  })
+
+  test('a row nested deep is taken out on its own', () => {
+    const kept = withoutLeftOut(root(), (path) => path === '/N/Deep/inner.md')
+
+    expect(shape(kept ?? root())).toEqual(['/N/Deep', '/N/a.md', '/N/c.md'])
+  })
+
+  test('the space’s own folder is never one of them', () => {
+    // The space is the list, not a row in it: a predicate that says yes to everything still
+    // leaves a tree to draw, empty.
+    const kept = withoutLeftOut(root(), () => true)
+
+    expect(kept?.path).toBe('/N')
+    expect(shape(kept ?? root())).toEqual([])
+  })
+
+  test('and a tree with nothing left out is the same tree, not a copy of it', () => {
+    // A space with nothing archived in it must not be rebuilt on every keystroke.
+    const tree = root()
+
+    expect(withoutLeftOut(tree, () => false)).toBe(tree)
+  })
+
+  test('filtering never changes the tree it was given', () => {
+    const tree = root()
+    withoutLeftOut(tree, (path) => path === '/N/a.md')
+
+    expect(shape(tree)).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/a.md', '/N/c.md'])
+  })
+
+  test('and no tree at all is no tree', () => {
+    expect(withoutLeftOut(null, () => true)).toBeNull()
   })
 })

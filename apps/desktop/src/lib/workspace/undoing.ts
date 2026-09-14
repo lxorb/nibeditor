@@ -14,6 +14,7 @@ import { links } from '../link-index.svelte'
 import { paperMoved } from '../pdf/papers'
 import { nameOf } from '../space-paths'
 import { invoke } from '../tauri'
+import type { ArchivedFolders } from './archived-folders.svelte'
 import type { Excluded } from './excluded.svelte'
 import type { FolderIcons } from './folder-icons.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
@@ -28,6 +29,7 @@ export interface PutsBack {
   readonly positions: Positions
   readonly folderIcons: FolderIcons
   readonly excluded: Excluded
+  readonly archivedFolders: ArchivedFolders
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
@@ -155,6 +157,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   paperMoved(action.to, action.from)
   ws.folderIcons.moved(action.to, action.from)
   ws.excluded.moved(action.to, action.from)
+  ws.archivedFolders.moved(action.to, action.from)
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded
