@@ -6,6 +6,11 @@ complaining about it, so the app times itself: `NIB_TRACE_STARTUP=1` and every
 launch appends a page and one line of JSON to `startup-trace.log`. This reads the
 JSON, runs the app as many times as asked, and reports the median of each step.
 
+One step in the table is not the app's own: `window on screen, as Windows reports it`
+is the window manager's answer, polled from here, because that step is the one the app
+cannot time about itself - the whole point of it is that it happens before there is a
+webview to run a page that could say so.
+
 Two columns, and the second is the one to read:
 
     ms      what somebody waited through, which is the question - and also what
@@ -34,11 +39,40 @@ somebody who has just installed it.
 Cold is the first launch after a build - the machine has not read the binary before
 and neither has whatever scans it. Warm is every launch after that. They are
 different questions and the table says which it is.
+
+`--slow` pins the process to one core and puts it below normal, and it is here with a
+warning on it: measured, it does not slow the app down. Four warm launches of the five
+thousand note space came out at 735ms to a painted tree unpinned and 644ms pinned, on
+the same machine in the same minute - pinning took the process off the cores the rest of
+the machine was busy with, which helped. So it is not a slow device and nothing here
+should be read as one. A real answer for a slow device wants a slow device, or the
+webview throttled from the inside; neither is this.
+
+What it said on this machine, over five thousand notes of four kilobytes each, before
+this round and after it. Warm, median of four, and the machine had other work on it both
+times - so the rows to trust are the differences inside one launch rather than the
+totals, and the processor column beside them:
+
+    first pixel on screen              370ms ->   46ms
+    the tree read, asked to answered   142ms ->   38ms
+      of which the walk itself         117ms ->   11ms
+      processor spent by then          375ms ->  164ms
+    modules evaluated                   89ms ->   86ms
+    the shell painted, from the window
+      being on screen                  162ms ->  514ms
+
+The last row is the one to read twice. It grew because its zero moved: the window is on
+screen 324ms earlier than it was, and the shell lands where it always did. Nothing was
+made slower - the same launch, measured from a mark that now happens much sooner. Which
+is the whole of what this round did on Windows: the wait is the same length and most of
+it now happens behind a window somebody can see, in the colour they left it in.
 """
 
 from __future__ import annotations
 
 import argparse
+import ctypes
+import ctypes.wintypes
 import json
 import os
 import shutil
@@ -76,6 +110,63 @@ WRITTEN = 3
 #: How long to give a launch to prove it is one. A build that met the single-instance
 #: lock is gone well inside this; one that is opening a window is not.
 ALIVE = 2
+
+#: How often to ask Windows whether there is a window yet, in seconds. Fine enough that
+#: the answer is the window's moment rather than the poll's.
+PEEK = 0.004
+
+#: The step the poll below is written into the trace as. Named rather than numbered
+#: because its zero is a shade different from the trace's own: the trace counts from the
+#: app's first line and this counts from just before the process was started, so it
+#: carries whatever `CreateProcess` costs the parent. A millisecond or two, against a
+#: figure worth hundreds.
+ON_SCREEN = "window on screen, as Windows reports it"
+
+#: A window smaller than this is not the window. A process can own message-only and
+#: tooltip windows, and they are visible as far as the API is concerned.
+SMALLEST = 100
+
+
+def on_screen(pid: int) -> bool:
+    """Whether this process has a window on screen, asked of Windows.
+
+    The one thing the app cannot answer about itself. Every mark the app makes is a mark
+    it makes *after* something happened, and "the window is up" is the one step whose
+    whole point is that it happens before the app is in a position to say so - the
+    webview that would run the page does not exist yet. So this asks the window manager
+    instead.
+    """
+    user = ctypes.windll.user32
+    proc = ctypes.wintypes.DWORD()
+    found = False
+
+    class Rect(ctypes.Structure):
+        _fields_ = [
+            ("left", ctypes.c_long),
+            ("top", ctypes.c_long),
+            ("right", ctypes.c_long),
+            ("bottom", ctypes.c_long),
+        ]
+
+    def each(window: int, _unused: int) -> bool:
+        nonlocal found
+        user.GetWindowThreadProcessId(window, ctypes.byref(proc))
+        if proc.value != pid or not user.IsWindowVisible(window):
+            return True
+
+        box = Rect()
+        if not user.GetClientRect(window, ctypes.byref(box)):
+            return True
+        if box.right - box.left < SMALLEST or box.bottom - box.top < SMALLEST:
+            return True
+
+        found = True
+        return False
+
+    shape = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+    user.EnumWindows(shape(each), 0)
+
+    return found
 
 
 def say(words: str) -> None:
@@ -160,21 +251,34 @@ def launched(spaces: Path, slow: bool) -> dict | None:
         "NIB_SPACES_DIR": str(spaces),
     }
 
+    from_here = time.perf_counter()
     started = subprocess.Popen([str(EXE)], env=environment)
 
     # Whether this process is the one that opens the window, or whether it found a window
     # already up under the same identifier and handed itself over to it. The second is
     # not a slow launch and not a failed one: it is no launch, and reporting it as either
     # is a measurement of nothing.
-    time.sleep(ALIVE)
-    if started.poll() is not None:
-        say("handed over to a build already running under this identifier: no launch")
-        return None
+    #
+    # Waited out by polling for the window rather than by sleeping, so that the one step
+    # the app cannot time about itself is timed here; see `on_screen`.
+    appeared: float | None = None
+    while time.perf_counter() - from_here < ALIVE:
+        if started.poll() is not None:
+            say("handed over to a build already running under this identifier: no launch")
+            return None
+        if on_screen(started.pid):
+            appeared = (time.perf_counter() - from_here) * 1000
+            break
+        time.sleep(PEEK)
 
     if slow:
-        # A slower device, as far as one can be had without one: the process pinned
-        # to a single core and put below normal, which is the proxy this machine can
-        # offer for a phone. Said in the report as a proxy rather than as a throttle.
+        # The process pinned to a single core and put below normal.
+        #
+        # Meant as the nearest thing to a slow device this machine can offer, and kept
+        # because somebody will want to try it - but it is not one, and the docstring
+        # says so with the numbers. A launch pinned to one core measured *faster* than
+        # the same launch unpinned, because the core it was pinned to was not the one
+        # the rest of the machine was busy on.
         subprocess.run(
             [
                 "powershell",
@@ -187,7 +291,16 @@ def launched(spaces: Path, slow: bool) -> dict | None:
             check=False,
         )
 
-    time.sleep(WATCH - ALIVE)
+    # Whatever is left of the watch, and the poll kept going until there is a window:
+    # a launch slower than `ALIVE` has one later rather than never.
+    waited = time.perf_counter() - from_here
+    while appeared is None and time.perf_counter() - from_here < WATCH:
+        if on_screen(started.pid):
+            appeared = (time.perf_counter() - from_here) * 1000
+            break
+        time.sleep(PEEK)
+
+    time.sleep(max(0.0, WATCH - max(waited, time.perf_counter() - from_here)))
     started.kill()
     started.wait(timeout=30)
     time.sleep(WRITTEN)
@@ -203,7 +316,14 @@ def launched(spaces: Path, slow: bool) -> dict | None:
     if not lines:
         return None
 
-    return json.loads(lines[-1])
+    read = json.loads(lines[-1])
+
+    # The poll's answer goes in with the app's own marks, so one table holds the whole
+    # launch. `table` sorts by the median moment, so it lands where it happened.
+    if appeared is not None:
+        read["steps"].append({"step": ON_SCREEN, "at": appeared})
+
+    return read
 
 
 def table(runs: list[dict], what: str) -> None:
@@ -245,7 +365,9 @@ def main() -> int:
     ask = argparse.ArgumentParser(description=__doc__)
     ask.add_argument("--runs", type=int, default=5)
     ask.add_argument("--corpus", default="empty", choices=["empty", "big"])
-    ask.add_argument("--slow", action="store_true", help="one core, below normal")
+    ask.add_argument(
+        "--slow", action="store_true", help="one core, below normal - not a slow device"
+    )
     told = ask.parse_args()
 
     if not EXE.exists():
