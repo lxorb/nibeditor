@@ -567,12 +567,14 @@
         y: (one.screens[0].y + one.screens[1].y) / 2,
       }
 
-      const wanted = camera.y - (middle.y - was.y) / camera.scale
-      const bottom = store.bottom
+      // How much of this movement the column can really take, in screen pixels,
+      // before any of it happens: whatever is left over is the pull.
+      const room = Math.max(0, store.bottom - camera.y) * camera.scale
+
       store.camera = store.held({
         ...camera,
         x: camera.x - (middle.x - was.x) / camera.scale,
-        y: wanted,
+        y: camera.y - (middle.y - was.y) / camera.scale,
       })
       // Two fingers that stay the same distance apart are a pan, and a zoom of
       // exactly one is not worth a camera write.
@@ -582,15 +584,16 @@
 
       // And two fingers past the end of the column pull the next page, like one.
       // On a phone that has never seen a pen the finger draws, so two fingers are
-      // how a page note is scrolled at all - which would have been the one device
-      // where the gesture could not be made.
+      // how a page note is scrolled at all - which would otherwise have been the
+      // one device where this gesture could not be made.
       //
-      // Added up rather than measured from where the gesture began, because a pinch
-      // moves the paper and changes its scale at once: there is no fixed origin on
-      // the plane to measure against. A drag back up takes it off again, since the
-      // steps are signed and nothing below nought is a pull.
+      // Measured from the fingers and added up, rather than from the camera the way
+      // a one-finger pan measures it. A pinch moves the camera itself as it zooms,
+      // about a point that is not the middle of the view, so the camera is no
+      // origin to measure against: what is left of the fingers' own travel after
+      // the column has had its share is the pull, and a drag back up gives it back.
       const answer = dragged(pull, {
-        raw: pull.raw + Math.max(0, wanted - bottom) * camera.scale,
+        raw: pull.raw + Math.max(0, was.y - middle.y - room),
         reach,
         now: Date.now(),
         still: stillness(),
