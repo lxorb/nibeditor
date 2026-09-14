@@ -200,7 +200,13 @@ an older build is ignored.
 
 **Nothing is read off the disk to change it.** The listing in memory is the
 listing, and which order it is drawn in is arithmetic over it - `orderedTree` in
-`tree-order.ts`, applied once in `shownTree`. So the rows are in their new places in
+`tree-order.ts`, applied once in `shownTree`. That comparator is the only part of
+this the first paint pays for, because the first paint *is* the file list; the lift,
+the arithmetic of a drop, the seven words of the menu and the account's half of what
+somebody arranged are fetched by the first drag, the first press and the first
+syncing pass - `tree-lift.ts`, `tree-arranging.ts`, `order-menu.ts` and
+`workspace/arranging.ts`, thirty-one kilobytes that a reader who never rearranges a
+folder never loads. See `test/weight.test.ts` for the ceiling that keeps it so. So the rows are in their new places in
 the frame the menu closes in, where this used to cost a round trip and a fresh
 read of the whole space. It is also what makes Manual possible at all: the sort was
 in the Rust crate and in the browser build's own listing, and an order the reader

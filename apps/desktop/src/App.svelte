@@ -215,7 +215,7 @@
       if (!remote) continue
 
       workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
-      workspace.arranged.adopt(space.root, remote.arranged, who)
+      void workspace.arranged.adopt(space.root, remote.arranged, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
       workspace.excluded.adopt(space.root, remote.excluded, who)
     }

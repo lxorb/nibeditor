@@ -252,37 +252,37 @@ describe('what survives a relaunch', () => {
 })
 
 describe('the account s copy', () => {
-  test('is folded into this machine s the first time the account sees the space', () => {
+  test('is folded into this machine s the first time the account sees the space', async () => {
     arranged.set('/space/Work', ['b.md'])
-    arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-1')
+    await arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-1')
 
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'], Other: ['z.md'] })
   })
 
-  test('and this machine s wins for a folder both of them arranged', () => {
+  test('and this machine s wins for a folder both of them arranged', async () => {
     arranged.set('/space/Work', ['b.md'])
-    arranged.adopt(ROOT, { Work: ['z.md'] }, 'account-1')
+    await arranged.adopt(ROOT, { Work: ['z.md'] }, 'account-1')
 
     expect(arranged.listOf('/space/Work')).toEqual(['b.md'])
   })
 
-  test('is taken outright on every pass after the first', () => {
-    arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
-    arranged.adopt(ROOT, {}, 'account-1')
+  test('is taken outright on every pass after the first', async () => {
+    await arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
+    await arranged.adopt(ROOT, {}, 'account-1')
 
     expect(arranged.of(ROOT)).toEqual({})
   })
 
-  test('a different account signing in folds again', () => {
-    arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
-    arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-2')
+  test('a different account signing in folds again', async () => {
+    await arranged.adopt(ROOT, { Work: ['b.md'] }, 'account-1')
+    await arranged.adopt(ROOT, { Other: ['z.md'] }, 'account-2')
 
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'], Other: ['z.md'] })
   })
 
-  test('nothing at all from a service that has never heard of the column', () => {
+  test('nothing at all from a service that has never heard of the column', async () => {
     arranged.set('/space/Work', ['b.md'])
-    arranged.adopt(ROOT, undefined, 'account-1')
+    await arranged.adopt(ROOT, undefined, 'account-1')
 
     expect(arranged.of(ROOT)).toEqual({ Work: ['b.md'] })
   })

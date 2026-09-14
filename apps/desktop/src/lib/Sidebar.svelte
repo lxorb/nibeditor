@@ -39,7 +39,6 @@
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
-  import { SORT_MODES, type SortMode } from './tree-order'
   import { pullable } from './pull.svelte'
   import { scrollbar } from './scrollbar'
   import { workspace } from './workspace.svelte'
@@ -151,55 +150,41 @@
    *  first pass has named grafted into it. See `shownTree` in workspace.svelte.ts. */
   const listing = $derived(workspace.shownTree)
 
-  /** What each of the seven orders is called, in the order the menu offers them.
+  /** The order the file list is read in, offered by the press that asks for it.
    *
-   *  Spelled out rather than built from a key and a direction, because that is what a
-   *  reader reads: `Modified, newest first` says which way round it is, where a
-   *  direction arrow beside `Sort by modified` left them to work out whether the
-   *  arrow meant the newest or the oldest. Seven rows is also the whole answer in one
-   *  glance, which a control that flips when you press it twice never is. */
-  const ORDER_WORDS: Record<SortMode, () => string> = {
-    name: () => t('Name, A to Z'),
-    'name-desc': () => t('Name, Z to A'),
-    'modified-desc': () => t('Modified, newest first'),
-    'modified-asc': () => t('Modified, oldest first'),
-    'created-desc': () => t('Created, newest first'),
-    'created-asc': () => t('Created, oldest first'),
-    manual: () => t('Manual'),
+   *  The rows and their seven words are next door in order-menu.ts and arrive with the
+   *  press: a window draws its file list before it does anything else, and the order in
+   *  force is already on screen without the menu being built - it is what the rows are
+   *  in. The same seam lib/ai/ask.ts holds in front of answering.ts.
+   *
+   *  The press is spent here rather than left to `menu.show`, because after the await
+   *  it is too late to stop a browser showing its own menu. */
+  function showOrder(event: MouseEvent) {
+    event.preventDefault()
+    void import('./order-menu').then(({ orderMenu, orderTitle }) =>
+      menu.show(event, orderMenu(), { title: orderTitle() }),
+    )
   }
 
-  /** The order the file list is read in, as a menu. One builder, because the glyph at
-   *  the end of the header and a right click on the Files tab ask the same question:
-   *  the button is where a reader finds it, and the tab menu is where the list's
-   *  sorting has always been. See tree-order.ts. */
-  function orderMenu(): MenuEntry[] {
-    const here = workspace.sortMode
-    const row = (mode: SortMode) => ({
-      label: ORDER_WORDS[mode](),
-      checked: here === mode,
-      run: () => workspace.setSort(mode),
-    })
+  /** A press on a panel's own tab. The file list's tab leads with the order rows,
+   *  which is where the list's sorting has always been, so that one press fetches them
+   *  and every other tab answers at once. */
+  function showTabMenu(event: MouseEvent, id: Panel, label: string) {
+    event.preventDefault()
+    if (id !== 'tree') {
+      menu.show(event, tabMenu(id), { title: label })
+      return
+    }
 
-    // A rule between the rules and the one order that is nobody's rule: what the
-    // first six read off the notes, and what the reader arranged themselves.
-    const [byName, backwards, ...rest] = SORT_MODES
-    const arranged = rest.pop()
-
-    return [
-      ...(byName ? [row(byName)] : []),
-      ...(backwards ? [row(backwards)] : []),
-      DIVIDER,
-      ...rest.map(row),
-      DIVIDER,
-      ...(arranged ? [row(arranged)] : []),
-    ]
+    void import('./order-menu').then(({ orderMenu }) =>
+      menu.show(event, [...orderMenu(), DIVIDER, ...tabMenu(id)], { title: label }),
+    )
   }
 
-  /** Right-clicking the Files tab: the order it is read in, and what the list makes. */
+  /** What the Files tab offers besides the order: which files are shown at all, and
+   *  what the list makes. */
   function sortMenu(): MenuEntry[] {
     return [
-      ...orderMenu(),
-      DIVIDER,
       {
         label: workspace.treeOptions.showHidden ? t('Hide hidden files') : t('Show hidden files'),
         run: () => workspace.toggleHidden(),
@@ -595,8 +580,8 @@
           aria-label={item.label}
           aria-selected={showing === item.id}
           onclick={() => workspace.showPanel(item.id)}
-          oncontextmenu={(event) => menu.show(event, tabMenu(item.id), { title: item.label })}
-          use:longPress={(event) => menu.show(event, tabMenu(item.id), { title: item.label })}
+          oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
+          use:longPress={(event) => showTabMenu(event, item.id, item.label)}
         >
           <svg viewBox="0 0 13 13"><path d={item.path} /></svg>
         </button>
@@ -638,7 +623,7 @@
           title={t('Order of the files')}
           aria-label={t('Order of the files')}
           aria-haspopup="menu"
-          onclick={(event) => menu.show(event, orderMenu(), { title: t('Order of the files') })}
+          onclick={showOrder}
         >
           <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
         </button>

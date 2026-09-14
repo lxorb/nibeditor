@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { Entry } from './workspace.svelte'
-import { orderedTree, placedBeside, shownNames, type SortMode } from './tree-order'
+import { orderedTree, shownNames, type SortMode } from './tree-order'
+import { placedBeside } from './tree-arranging'
 
 /** What putting a whole space into order costs, as the space gets larger.
  *

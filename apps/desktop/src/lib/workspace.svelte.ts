@@ -17,7 +17,7 @@ import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
-import { copyName, nameFromContent, nameFromTitle, shownName } from './note-name'
+import { nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -71,15 +71,7 @@ import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
-import {
-  groupNames,
-  keptOrder,
-  orderedTree,
-  placedBeside,
-  shownNames,
-  stepped,
-  type SortMode,
-} from './tree-order'
+import { orderedTree, type SortMode } from './tree-order'
 import { Arranged } from './workspace/arranged.svelte'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -1237,13 +1229,7 @@ class Workspace {
    *  the whole point of naming a thing before making it.
    *
    *  Where there is no list to type in, the same stepped `Untitled` every other kind
-   *  falls back to.
-   *
-   *  What arrives from the list is a file name, ending and all - the field puts the
-   *  row's own ending back before it commits, as it does for every other kind - so
-   *  the ending comes off before the name is read as a title. Without that the row
-   *  wrote `Blog.url.url` and put `Blog.url` in the shortcut's own `Title`, which is
-   *  the `.url` Emil kept seeing in the file list. */
+   *  falls back to. */
   async createWebsite(folder?: string, named?: string) {
     if (viewport.device === 'phone') return
 
@@ -1251,7 +1237,7 @@ class Workspace {
     if (!dir) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const title = named === undefined ? UNTITLED : shownName(named)
+    const title = named ?? UNTITLED
     const path = joinPath(dir, this.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
     const content = writeShortcut('', title, new Date())
 
@@ -2312,105 +2298,6 @@ class Workspace {
     return this.picked.dragging(path)
   }
 
-  /* -- The order somebody arranged ----------- */
-
-  /** The children the list draws for one folder, the space's own top included.
-   *  Off `shownTree`, so a note an account's pass has named counts as a row. */
-  private childrenIn(folder: string): readonly Entry[] {
-    const tree = this.shownTree
-    if (!tree) return []
-    if (tree.path === folder) return tree.children
-
-    return entryAt(tree, folder)?.children ?? []
-  }
-
-  /** Whether these rows could be arranged beside that one: the same folder, the
-   *  same group, and the order actually being the reader's to arrange. */
-  private canArrange(moving: readonly string[], target: string): boolean {
-    if (this.sortMode !== 'manual') return false
-    if (!moving.length || moving.includes(target)) return false
-
-    const folder = folderOf(target)
-    return moving.every((path) => folderOf(path) === folder)
-  }
-
-  /** The order a drag would leave behind, shown while it is held between two rows.
-   *
-   *  Written into the store rather than into the component, which is what makes the
-   *  gap under the pointer the same gap the whole list is drawn from; see
-   *  workspace/arranged.svelte.ts. Answers whether a gap is showing, so the row
-   *  underneath knows not to light up as a folder to drop into as well.
-   *
-   *  Computed from what the folder keeps rather than from what is showing, so the
-   *  answer depends on where the pointer is and not on how it got there. */
-  showArrange(moving: readonly string[], target: string, after: boolean): boolean {
-    if (!this.canArrange(moving, target)) return false
-
-    const folder = folderOf(target)
-    const children = this.childrenIn(folder)
-    const names = placedBeside(
-      children,
-      this.arranged.savedList(folder),
-      moving.map((path) => nameOf(path)),
-      nameOf(target),
-      after,
-    )
-
-    this.arranged.show(folder, names)
-    return true
-  }
-
-  /** The pointer is over the row it started on, or over one of the rows moving with
-   *  it: whatever is showing stays showing. Which is what stops a drag oscillating,
-   *  since the row under the pointer is the row the last gap put there. */
-  holdArrange(moving: readonly string[], target: string): boolean {
-    return this.sortMode === 'manual' && this.arranged.dragging && moving.includes(target)
-  }
-
-  /** Whether a drag is showing a gap between two rows rather than a folder to drop
-   *  into. What the row under the pointer reads to know it is not the target. */
-  get arranging(): boolean {
-    return this.arranged.dragging
-  }
-
-  /** The drop landed between two rows: what was showing is what the folder keeps. */
-  dropArrange() {
-    this.arranged.drop()
-  }
-
-  /** Escape, or a drag that ended nowhere: the rows slide back. */
-  cancelArrange() {
-    this.arranged.unshow()
-  }
-
-  /** One row a step up or down in the order somebody arranged, with a key rather
-   *  than a drag. True when there was a step to take; false at the top and the
-   *  bottom of a group, and in every order but Manual.
-   *
-   *  Within its own group, like the drag: a note cannot step above the last folder,
-   *  because folders come first in every order the list has. */
-  moveInOrder(path: string, by: number): boolean {
-    if (this.sortMode !== 'manual') return false
-
-    const entry = this.entryAt(path)
-    if (!entry) return false
-
-    const folder = folderOf(path)
-    const children = this.childrenIn(folder)
-    const listed = this.arranged.savedList(folder)
-    const displayed = shownNames(children, 'manual', listed)
-    const group = groupNames(children, displayed, entry.is_dir)
-
-    const moved = stepped(group, entry.name, by)
-    if (!moved) return false
-
-    const other = groupNames(children, displayed, !entry.is_dir)
-    const whole = entry.is_dir ? [...moved, ...other] : [...other, ...moved]
-    this.arranged.set(folder, keptOrder(children, whole))
-
-    return true
-  }
-
   async moveMany(paths: string[], intoFolder: string) {
     // A drop on a note lands in the folder that note is about to become, so the
     // note goes in first and what was dropped on it follows: `A.md` becomes
@@ -3174,19 +3061,11 @@ class Workspace {
     return this.undone.label
   }
 
-  /** A second copy of a file, beside the first.
-   *
-   *  `Plan.md` copies to `Plan copy.md`: the word goes beside the name rather than
-   *  after the ending, so the copy is still a note in a vault opened next door, and
-   *  `copyName` is where that is said. Through `freeName` like every other name the
-   *  app writes, because a second copy used to be written straight over the first -
-   *  `write_note` replaces what is there, and nothing asked. */
   async duplicate(path: string) {
-    const folder = folderOf(path)
     const content = await invoke<string>('read_note', { path })
-    const name = this.freeName(folder, copyName(nameOf(path)))
+    const name = nameOf(path).replace(/(\.[^.]+)$/, ' copy$1')
 
-    await invoke('write_note', { path: joinPath(folder, name), content })
+    await invoke('write_note', { path: joinPath(folderOf(path), name), content })
     await this.loadTree()
   }
 

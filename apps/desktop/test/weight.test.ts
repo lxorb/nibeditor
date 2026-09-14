@@ -194,18 +194,26 @@ function holds(tail: string): boolean {
 /** How much of our own source the app reads before it draws anything, in bytes, and
  *  how many files that is.
  *
- *  3,107,276 bytes over 373 files, measured on 2026-09-14, against 1,206,912 bytes of
+ *  3,084,326 bytes over 372 files, measured on 2026-09-15, against 1,206,912 bytes of
  *  built JavaScript in the chunks `index.html` preloads - source counts the comments,
- *  and this repository has a great many of them. Both ceilings are ten per cent over
- *  what was measured: close enough that a whole subsystem arriving eagerly fails here,
- *  wide enough that a fortnight of ordinary work on the shell does not.
+ *  and this repository has a great many of them.
+ *
+ *  This ceiling is one per cent over what was measured, where it used to be ten. The
+ *  app opens in under a second and that is a rule rather than an aspiration, so the
+ *  number is held close: a margin wide enough to absorb a subsystem is a margin that
+ *  lets one in. One per cent is about thirty kilobytes, which is a module or two of
+ *  ordinary work; anything larger is a decision, and a decision belongs in this
+ *  comment beside the figure it moved.
  *
  *  It was 2,783,997 over 351 files on 2026-09-13. What moved it is the order the file
- *  list is read in: sixty-six kilobytes over three new modules and the components that
- *  read them - tree-order.ts, tree-lift.ts and workspace/arranged.svelte.ts - almost
- *  all of it prose, which this count includes. Eager by definition rather than by
- *  accident: the first paint *is* the file list, and which row is row forty is decided
- *  over the listing before a row is drawn. See docs/tree.md.
+ *  list is read in, which is eager by definition rather than by accident: the first
+ *  paint *is* the file list, and which row is row forty is decided over the listing
+ *  before a row is drawn. What is *not* eager is everything about that order a reader
+ *  has not asked for yet - the lift and the gap and the arithmetic of a drop
+ *  (tree-lift.ts, tree-arranging.ts), the seven words of its menu (order-menu.ts) and
+ *  the account's half of what somebody arranged (workspace/arranging.ts), thirty-one
+ *  kilobytes fetched by the first drag, the first press on the menu and the first
+ *  syncing pass. See docs/tree.md and lib/ai/ask.ts, which is the same seam.
  *
  *  The two figures move independently, which is the point of having both: batch 118
  *  took a hundred and sixty-seven kilobytes out of the built one and put five hundred
@@ -225,7 +233,7 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_420_000
+const BUDGET = 3_115_000
 const MOST_FILES = 386
 
 describe('what the app evaluates before it draws anything', () => {

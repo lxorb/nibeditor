@@ -148,14 +148,6 @@ function sameNames(one: readonly string[], other: readonly string[]): boolean {
   return one.length === other.length && one.every((name, at) => name === other[at])
 }
 
-/** Two maps of lists as one. */
-function same(one: Record<string, string[]>, other: Record<string, string[]>): boolean {
-  const keys = Object.keys(one)
-  if (keys.length !== Object.keys(other).length) return false
-
-  return keys.every((key) => sameNames(one[key] ?? [], other[key] ?? []))
-}
-
 /** How long after the last drop the account is told, in milliseconds. The number
  *  the folder icons wait, for the reason they wait: a row dragged three times in a
  *  row is three writes here and one request there. The list on screen and this
@@ -182,6 +174,8 @@ export class Arranged {
   /** A push waiting for the dragging to stop, per space. Bookkeeping rather than
    *  state: nothing on screen is drawn from it. */
   private pushing: Record<string, ReturnType<typeof setTimeout>> = {}
+  /** The account's half, once it has been asked for. */
+  private talking: Promise<typeof import('./arranging')> | null = null
 
   /** Which space the rows on screen belong to. A function rather than a value
    *  because the workspace decides that, and it changes as spaces are picked. */
@@ -395,31 +389,47 @@ export class Arranged {
     this.writeAll()
   }
 
-  /** Takes over what the account holds for one space: this machine's own orders
-   *  folded in the first time an account sees the space, and the account's map
-   *  outright on every pass after that.
+  /** Takes over what the account holds for one space.
    *
-   *  Folded by folder rather than by name: two machines that arranged two
-   *  different folders both keep their work, and a folder both of them arranged is
-   *  this machine's, because this machine is the one somebody is sitting at.
-   *  Exactly what `folderIcons.adopt` does, and for the same reason. */
-  adopt(root: string, theirs: unknown, accountId: string) {
-    // Read rather than trusted: the service is deployed on its own, so a build of
-    // it older than this app answers with no arranged orders at all.
-    const account = arrangedMap(theirs)
+   *  The fold itself, and the push that answers it, are next door in arranging.ts and
+   *  are fetched when there is an account to talk to: a window that is not signed in,
+   *  or one nobody has arranged anything in, never asks for them, and the file list is
+   *  the first paint. See lib/ai/ask.ts, which is the same seam.
+   *
+   *  Answers a promise so a caller who wants to know when the fold has happened can
+   *  wait for it; App.svelte does not, and the tests do. */
+  adopt(root: string, theirs: unknown, accountId: string): Promise<void> {
+    return this.reaching().then(({ fold }) => fold(this, root, theirs, accountId))
+  }
+
+  /** What one space's map is, and what the account has been told of it: the orders,
+   *  which account they were folded into, and whether that account has heard them.
+   *
+   *  These three are public for arranging.ts and for nothing else. The alternative was
+   *  a second interface saying the same three things, which is a shape that drifts. */
+  kept(root: string): { folders: Record<string, string[]>; account: string | null; sent: boolean } {
     const held = this.spaces[root]
-    const first = held?.account !== accountId
-    // First contact, or a push that never landed. Either way what is here has not
-    // been said yet, so it is folded in and sent rather than replaced.
-    const ours = first || !held.sent
-    const folders = ours ? { ...account, ...(held?.folders ?? {}) } : account
+    return {
+      folders: held?.folders ?? {},
+      account: held?.account ?? null,
+      sent: held?.sent !== false,
+    }
+  }
 
-    if (held && !ours && same(held.folders, folders)) return
-
-    this.spaces = { ...this.spaces, [root]: { folders, account: accountId, sent: true } }
+  /** The account's copy taken on, whole, and marked as heard. */
+  took(root: string, folders: Record<string, string[]>, account: string) {
+    this.spaces = { ...this.spaces, [root]: { folders, account, sent: true } }
     this.writeAll()
+  }
 
-    if (ours && !same(folders, account)) void this.push(root)
+  /** Whether the account has heard the space's map as it now stands. What the next
+   *  pass reads before it hands this machine the account's copy; see `fold`. */
+  said(root: string, landed: boolean) {
+    const held = this.spaces[root]
+    if (!held || held.sent === landed) return
+
+    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
+    this.writeAll()
   }
 
   private put(root: string, folders: Record<string, string[]>) {
@@ -438,52 +448,15 @@ export class Arranged {
 
     const waiting = setTimeout(() => {
       this.pushing = without(this.pushing, root)
-      void this.push(root)
+      void this.reaching().then(({ send }) => send(this, root))
     }, SETTLING)
 
     this.pushing = { ...this.pushing, [root]: waiting }
   }
 
-  /** The space's map as it now stands, sent up so every other machine draws the
-   *  rows in the same order.
-   *
-   *  Signed out, in a space the account has never heard of, or in one shared to
-   *  read, it stays on this machine. Imported where it is used, for the reason the
-   *  folder icons are: the loop reads the workspace this store belongs to, and the
-   *  two would import each other. */
-  private async push(root: string) {
-    const [{ account }, { api }, { sync }] = await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-      import('../sync.svelte'),
-    ])
-
-    const token = account.token
-    const spaceId = sync.remoteIdFor(root)
-    const role = spaceId ? account.spaces.find((one) => one.id === spaceId)?.role : undefined
-
-    if (!token || !spaceId || role === 'read') {
-      this.said(root, true)
-      return
-    }
-
-    const landed = await api
-      .saveArranged(token, spaceId, this.of(root))
-      .then(() => true)
-      .catch(() => false)
-
-    this.said(root, landed)
-    if (landed) await account.loadSpaces().catch(() => undefined)
-  }
-
-  /** Whether the account has heard the space's map as it now stands. What the next
-   *  pass reads before it hands this machine the account's copy; see `adopt`. */
-  private said(root: string, landed: boolean) {
-    const held = this.spaces[root]
-    if (!held || held.sent === landed) return
-
-    this.spaces = { ...this.spaces, [root]: { ...held, sent: landed } }
-    this.writeAll()
+  /** The account's half, once. */
+  private reaching(): Promise<typeof import('./arranging')> {
+    return (this.talking ??= import('./arranging'))
   }
 
   private writeAll() {
