@@ -95,10 +95,15 @@ export const yue: Dictionary = {
   Filter: '篩選',
   Orphans: '孤立筆記',
   'Colour a group': '為分組上色',
+  Forces: '力',
+  'Link distance': '連線距離',
+  Push: '斥力',
   Spread: '間距',
   Gather: '聚攏',
   Arrows: '箭頭',
   'Size by links': '按連結數定大小',
+  Lines: '連線',
+  'Text fade': '文字淡入',
   'Over time': '隨時間變化',
   Play: '播放',
   Pause: '暫停',
@@ -1070,6 +1075,8 @@ export const yue: Dictionary = {
   '{count} notes went back.': '{count}篇筆記已回溯。',
   'The account keeps a month of versions of every note that syncs.':
     '帳戶會為每篇同步嘅筆記保留一個月嘅版本。',
+  'The account keeps a year of versions of every note that syncs.':
+    '帳戶會為每篇同步嘅筆記保留一年嘅版本。',
   'That did not work.': '冇成功。',
   'Signing in': '登入',
   'Ask for a code from an app': '要求應用程式提供驗證碼',
@@ -1348,4 +1355,8 @@ export const yue: Dictionary = {
   Allowed: '已允許',
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
+  'Turn into': '轉換為',
+  'Bookmark these blocks': '為呢啲區塊加書籤',
+  Foldable: '可摺疊',
+  'Starts folded': '預設摺疊',
 }
