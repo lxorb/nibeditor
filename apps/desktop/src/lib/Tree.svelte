@@ -603,10 +603,23 @@
     }, DWELL)
   }
 
+  /** The gap goes, and the rows slide to where the order was before it opened.
+   *
+   *  Measured first, like every other change to the order: a gap that simply stopped
+   *  being there would put three rows back in one frame, and the one thing a drag has
+   *  to be is continuous. */
+  function slideBack() {
+    if (!workspace.arranging) return
+
+    const was = placesNow()
+    workspace.cancelArrange()
+    void slideInto(was)
+  }
+
   /** The gap goes, whatever was holding it: a drag that ended over nothing, Escape,
    *  or a lift that was let go. */
   function letGo() {
-    workspace.cancelArrange()
+    slideBack()
     dwellOver(null, false)
     carrying = []
   }
@@ -699,7 +712,7 @@
         dropTarget.clear()
         dwellOver(null, false)
       } else if (takes(entry)) {
-        workspace.cancelArrange()
+        slideBack()
         dropTarget.over(targetFor(entry.path, entry.is_dir))
         dwellOver(entry.path, entry.is_dir)
       }
@@ -718,14 +731,16 @@
     // on. See longpress.ts, which says the same about its own press.
     if (event.cancelable) event.preventDefault()
 
-    const gap = workspace.arranging
+    // Written down before anything is cleaned up: the clean-up is what takes the gap
+    // away, and a drop that ran after it would have nothing left to write.
+    const landed = workspace.arranging
     const folder = dropTarget.folder
     const paths = [...carrying]
 
+    if (landed) workspace.dropArrange()
     dropLift()
 
-    if (gap) workspace.dropArrange()
-    else if (folder && paths.length) void workspace.moveMany(paths, folder)
+    if (!landed && folder && paths.length) void workspace.moveMany(paths, folder)
   }
 
   /** Escape while a row is in the air: everything slides back. */
@@ -798,7 +813,7 @@
 
     event.preventDefault()
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-    workspace.cancelArrange()
+    slideBack()
     dropTarget.over(targetFor(entry.path, entry.is_dir))
     dwellOver(entry.path, entry.is_dir)
   }

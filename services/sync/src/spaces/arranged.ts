@@ -135,8 +135,11 @@ function namesOf(value: unknown): string[] {
  *
  *  A folder whose list comes to nothing is left out rather than kept empty. An empty
  *  list says exactly what no entry says - every child in name order - and of two ways
- *  to say one thing the column holds the shorter. */
-export function arrangedMap(value: unknown): Record<string, string[]> {
+ *  to say one thing the column holds the shorter.
+ *
+ *  Not exported: both directions reach it through `readArranged` and the route's own
+ *  write, and a reader of the column is a reader of one of those. */
+function arrangedMap(value: unknown): Record<string, string[]> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
 
   const kept: [string, string[]][] = []
