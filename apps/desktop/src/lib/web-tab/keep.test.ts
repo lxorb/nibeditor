@@ -13,6 +13,9 @@ interface Call {
 }
 
 const written: Call[] = []
+/** What the link index was told, so a row that draws the site's own mark can be
+ *  shown to hear about it. */
+const told: Call[] = []
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -21,6 +24,12 @@ vi.mock('../tauri', async (importOriginal) => ({
       written.push({ path: String(args.path), content: String(args.content) })
     }
     return Promise.resolve(undefined)
+  },
+}))
+
+vi.mock('../link-index.svelte', () => ({
+  links: {
+    noteSaved: (path: string, content: string) => told.push({ path, content }),
   },
 }))
 
@@ -38,6 +47,7 @@ function said(): string {
 
 beforeEach(() => {
   written.length = 0
+  told.length = 0
   keepNow(PATH)
   vi.useFakeTimers()
 })
@@ -128,4 +138,39 @@ test('an address that is not the web is never written', async () => {
   await vi.advanceTimersByTimeAsync(2500)
 
   expect(written).toHaveLength(0)
+})
+
+/** The row in the file list draws the site's own mark out of this file, and nothing
+ *  rescans a space while it is open - so the index has to be told, the same way every
+ *  other write in the app tells it. Without this the row wore the plain globe until
+ *  the next launch. See link-index.svelte.ts and docs/web-tabs.md. */
+test('tells the index what the file now says, so the row can wear the favicon', async () => {
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/docs/svelte/runes',
+    icon: 'https://svelte.dev/favicon.png',
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(2500)
+
+  expect(told).toHaveLength(1)
+  expect(told[0]?.path).toBe(PATH)
+  // The same text that went to the disk, so the index and the file cannot disagree.
+  expect(told[0]?.content).toBe(said())
+  expect(told[0]?.content).toContain('Nib-Icon=https://svelte.dev/favicon.png')
+})
+
+test('says nothing to the index when there was nothing to write', async () => {
+  keepPage({
+    path: PATH,
+    text: FILE,
+    url: 'https://svelte.dev/docs',
+    icon: null,
+    wrote: () => undefined,
+  })
+  await vi.advanceTimersByTimeAsync(2500)
+
+  expect(written).toHaveLength(0)
+  expect(told).toHaveLength(0)
 })

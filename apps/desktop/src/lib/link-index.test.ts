@@ -277,6 +277,42 @@ describe('a note saved keeps the index up to date', () => {
     links.noteSaved(at('Plan.md'), '# Changed')
     expect(await links.index(null).read('Plan.md')).toBe('# Changed')
   })
+
+  /** A website is a file the app writes as the reading moves: the keeper brings the
+   *  `.url` up to date and the site's own mark arrives in it, which is what the row
+   *  in the file list draws instead of the plain globe. Written while the app is
+   *  running, so nothing rescans the space - and a row that waits for the next launch
+   *  to wear the favicon is a row that says the wrong thing all afternoon. See
+   *  web-tab/keep.ts. */
+  test('a website written while the app runs hands the row the site’s own mark', async () => {
+    await space({ 'Plan.md': '# Plan' })
+    const site = at('A site.url')
+    expect(links.faviconOf(site)).toBeNull()
+
+    links.noteSaved(
+      site,
+      '[InternetShortcut]\nURL=https://a.example/read\nTitle=A site\n' +
+        'Nib-Icon=https://a.example/icon.png\n',
+    )
+
+    expect(links.faviconOf(site)).toBe('https://a.example/icon.png')
+  })
+
+  test('and the same file written again with a new mark answers with the new one', async () => {
+    await space({ 'Plan.md': '# Plan' })
+    const site = at('A site.url')
+
+    links.noteSaved(
+      site,
+      '[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a/one.png\n',
+    )
+    links.noteSaved(
+      site,
+      '[InternetShortcut]\nURL=https://a.example/\nNib-Icon=https://a/two.png\n',
+    )
+
+    expect(links.faviconOf(site)).toBe('https://a/two.png')
+  })
 })
 
 describe('a space of two thousand notes', () => {

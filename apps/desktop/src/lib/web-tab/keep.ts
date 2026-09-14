@@ -20,6 +20,7 @@
  *  Quiet about a write that fails. A shortcut that could not be written is a note that
  *  opens where it opened yesterday, which is what it did before any of this. */
 
+import { links } from '../link-index.svelte'
 import { invoke } from '../tauri'
 import { isWebAddress } from './address'
 import { readWebFile, writeShortcut } from './shortcut'
@@ -102,5 +103,10 @@ async function write(kept: Kept, home: string | null, icon: string | null): Prom
   if (content === kept.text) return
 
   kept.wrote(content)
+  // The index is told what the file now says, exactly as the workspace's own saves
+  // tell it: the row in the file list draws the site's own mark out of this file, and
+  // nothing rescans a space while it is open - so without this the row wore the plain
+  // globe until the next launch, however long ago the page said what its icon was.
+  links.noteSaved(kept.path, content)
   await invoke('write_note', { path: kept.path, content }).catch(() => undefined)
 }

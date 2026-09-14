@@ -32,6 +32,7 @@ import {
   isCanvasTarget,
   isPagesTarget,
   isTabFile,
+  isWebTarget,
   type LinkKind,
   withoutBlockIds,
 } from '@nib/markdown/links'
@@ -43,7 +44,7 @@ import { pressRow, queryRowsHtml } from './query-block'
 import type { Hit } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
-import { type ScannedNote, scanNote, type SpaceLinks } from './scan-note'
+import { type ScannedNote, scanNote, scanShortcut, type SpaceLinks } from './scan-note'
 import { startup } from './startup.svelte'
 import { mark } from './trace'
 import {
@@ -447,6 +448,17 @@ class Links {
     // is a link out of it exactly as a canvas's cards are.
     if (isCanvasTarget(relative) || isPagesTarget(relative)) {
       this.putCanvas(relative, content)
+      return
+    }
+
+    // A website is a file the app writes as well: the keeper brings the `.url` up to
+    // date as the reading moves, and the site's own mark arrives in it a moment after
+    // the page loads. The row in the file list draws that mark rather than the plain
+    // globe, so it has to be read in here - nothing rescans a space while it is open,
+    // and the row would otherwise wear the globe until the next launch. See
+    // web-tab/keep.ts and scanShortcut.
+    if (isWebTarget(relative)) {
+      this.put(scanShortcut(relative, content))
       return
     }
 
