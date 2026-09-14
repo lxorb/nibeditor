@@ -129,7 +129,7 @@ describe('the rule is about scripts rather than languages', () => {
   })
 
   test('while every script the font has keeps its own words', async () => {
-    for (const one of ['de', 'fr', 'gsw', 'ru', 'uk', 'ja', 'ko', 'zh-Hans', 'zh-Hant']) {
+    for (const one of ['de', 'fr', 'gsw', 'ru', 'uk', 'ja', 'ko', 'zh-Hans', 'zh-Hant', 'yue']) {
       await reading(one)
       expect(panelDrawable(), one).toBe(true)
       expect(panelWord('Settings'), one).toBe(t('Settings'))
@@ -156,5 +156,21 @@ describe('every catalogue is in a script the list names', () => {
     expect(listed).toContain('en')
     expect(catalogues.filter((one) => !listed.includes(one))).toEqual([])
     expect(new Set(listed).size).toBe(listed.length)
+  })
+})
+
+/** Cantonese, the fortieth catalogue. Han, so the firmware draws it: a reader in
+ *  `yue` gets their own words on the glass rather than English, and that is worth a
+ *  test of its own because it is the first catalogue added since the rule existed. */
+describe('a catalogue added after the rule', () => {
+  test('is drawn in its own words where the font has the script', async () => {
+    await reading('yue')
+
+    expect(panelDrawable()).toBe(true)
+    expect(t('Switch space')).not.toBe('Switch space')
+    expect(panelWord('Switch space')).toBe(t('Switch space'))
+    // And every letter of what the panel will say has a glyph.
+    const said = ['Settings', 'Switch space', 'Change note', 'Voice off', 'Done']
+    expect(undrawable(said.map((one) => panelWord(one)).join(' '))).toBe(0)
   })
 })

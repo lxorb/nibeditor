@@ -76,6 +76,13 @@ const CALLS = [
   new RegExp(String.raw`(?<![.\w$])key\(\s*${LITERAL}`, 'g'),
   new RegExp(String.raw`(?<![.\w$])message\(\s*[^,()]*,\s*${LITERAL}`, 'g'),
   new RegExp(String.raw`(?<![.\w$])other:\s*${LITERAL}`, 'g'),
+  // What the glasses say. `panelWord` is `t` with one extra rule - English wherever
+  // the firmware's font cannot draw the reader's script - and `say` is whichever of
+  // the two the caller handed the settings schema. Both were invisible here, so a
+  // string the panel asks for could be renamed in the source and go on reaching the
+  // glass in English with nothing to say so. See even/panel-words.ts.
+  new RegExp(String.raw`(?<![.\w$])panelWord\(\s*${LITERAL}`, 'g'),
+  new RegExp(String.raw`(?<![.\w$])say\(\s*${LITERAL}`, 'g'),
 ]
 
 function sourceFiles(directory: string, found: string[] = []): string[] {
