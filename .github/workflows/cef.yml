@@ -56,8 +56,22 @@ jobs:
       run:
         shell: bash
     env:
-      NIB_CEF_SANDBOX: ${{ inputs.sandbox || 'auto' }}
+      # **Every number here is an unsandboxed number, and that is said rather than
+      # buried.** A runner cannot give Linux's `chrome-sandbox` the setuid bit it needs,
+      # so `auto` there keeps a sandbox Chromium then cannot find and dies looking for -
+      # and on Windows there is no sandbox on this path at all, because CEF wants a
+      # broker pointer only a `bootstrap.exe`-hosted DLL can pass and a Tauri
+      # application is an executable (ship gate 1 of docs/browser.md). The spike's
+      # figures were taken the same way. A release must have the sandbox on, on all
+      # three; `workflow_dispatch` can ask for `auto` or `required` to see what happens.
+      NIB_CEF_SANDBOX: ${{ inputs.sandbox || 'disabled' }}
+      # Chromium's own fatal messages, on stderr where the gate reads them. Without
+      # this they go to `cef.log` inside the cache directory and a run that dies looks
+      # like a run that said nothing, which is how batch 1 read all three platforms.
+      NIB_CEF_ARGS: enable-logging=stderr
       CEF_DIR: ${{ github.workspace }}/.cef
+      # No run of a built app ever touches a real space, on any runner.
+      NIB_SPACES_DIR: ${{ runner.temp }}/nib-spaces
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -88,7 +102,14 @@ jobs:
             libgtk-4-dev libclang-dev libglib2.0-dev \
             libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 libdrm2 libxkbcommon0 \
             libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 libcups2t64 \
-            xvfb imagemagick dbus-x11
+            xvfb imagemagick dbus-x11 gdb
+
+      # What `gate.py` walks the Windows loader's import chain with when a build dies
+      # before its first line. One pure-Python file, and the walk says so rather than
+      # guessing when it is not there.
+      - name: What the loader is read with
+        if: runner.os == 'Windows'
+        run: python -m pip install --quiet pefile
 
       # Tauri's build script embeds the built frontend, so it has to exist before
       # either crate will compile - and the flagged build asks for
@@ -161,9 +182,17 @@ jobs:
         working-directory: apps/desktop/src-tauri/cef
         run: cargo build --release --locked
 
-      # The run. A window has to be able to appear: Windows and macOS runners log in a
-      # desktop session of their own, Linux is handed one. The engine's own files are
-      # staged beside the binary by the gate itself, off the same list it weighs.
+      # The run, and **the one step whose colour means something**: `gate.py` exits 0
+      # whenever it wrote its table, with the verdict in the table, so this job being red
+      # means the gate could not run - a broken build, a missing binary, a bug in the
+      # script - and never that the answer was "not yet". Batch 1 had it the other way
+      # round and was red on every run, table or no table, which made the colour
+      # unreadable and threw away the artefact worth having.
+      #
+      # A window has to be able to appear: Windows and macOS runners log in a desktop
+      # session of their own, Linux is handed one. The engine is laid out around the
+      # binary by the gate itself - beside it here, as a real application bundle on a
+      # Mac - off the same list it weighs.
       - name: Run the gate
         env:
           NIB_CEF_TABS: ${{ inputs.tabs || '2' }}
@@ -182,31 +211,6 @@ jobs:
           else
             "${run[@]}"
           fi
-
-      # Windows stopped the gate in the loader rather than in nib, with
-      # `STATUS_ENTRYPOINT_NOT_FOUND` and no output of its own - so this says which
-      # export is missing rather than leaving the next reader to guess. It never fails
-      # the job: it is a note, and the gate's own table is the finding.
-      - name: What the loader could not find
-        if: always() && runner.os == 'Windows'
-        shell: pwsh
-        continue-on-error: true
-        run: |
-          $exe = "apps/desktop/src-tauri/cef/target/release/nib-cef.exe"
-          # `VCINSTALLDIR` is only set inside a developer shell, which this is not.
-          $dumpbin = Get-ChildItem -Path 'C:\Program Files\Microsoft Visual Studio', 'C:\Program Files (x86)\Microsoft Visual Studio' `
-            -Filter dumpbin.exe -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.FullName -like '*Hostx64*' } | Select-Object -First 1
-          if (-not $dumpbin) { Write-Output 'no dumpbin on this image'; exit 0 }
-          $imports = & $dumpbin.FullName /imports $exe
-          $wanted = $imports | Select-String -Pattern '^\s+[0-9A-F]+\s+(cef_\w+)' -AllMatches |
-            ForEach-Object { $_.Matches.Groups[1].Value } | Sort-Object -Unique
-          $exports = & $dumpbin.FullName /exports "apps/desktop/src-tauri/cef/target/release/libcef.dll" |
-            Select-String -Pattern '\s(cef_\w+)$' | ForEach-Object { $_.Matches.Groups[1].Value }
-          Write-Output "the binary imports $($wanted.Count) cef symbols; libcef.dll exports $($exports.Count)"
-          $missing = $wanted | Where-Object { $exports -notcontains $_ }
-          if ($missing) { Write-Output 'missing from libcef.dll:'; $missing | ForEach-Object { Write-Output "  $_" } }
-          else { Write-Output 'every cef symbol the binary imports is exported' }
 
       # After the gate, deliberately: the numbers are what this workflow is for, and a
       # red test should not be the reason a table is missing. The flagged package's
