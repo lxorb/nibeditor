@@ -122,8 +122,13 @@ pub(crate) fn say(fields: &str) {
     let _ = std::io::stdout().flush();
 }
 
-/// A check, with its answer. The harness fails the job on any `ok: false`.
+/// A check, with its answer. The harness reads these off the run's own output.
+///
+/// The note is quoted out: it is a sentence somebody else's error may have written - a
+/// Windows path, a URL, a message from the engine - and this line is JSON, where a quote
+/// or a backslash in the middle of a string is a line the harness cannot read at all.
 fn check(name: &str, ok: bool, note: &str) {
+    let note = note.replace('\\', "/").replace('"', "'");
     say(&format!(
         "\"event\":\"check\",\"name\":\"{name}\",\"ok\":{ok},\"note\":\"{note}\""
     ));
@@ -253,6 +258,38 @@ fn walk(app: &AppHandle, tabs: usize) {
     say("\"event\":\"shot:app-and-tabs\"");
     std::thread::sleep(Duration::from_secs(2));
 
+    // **Batch 2's own rows, before anything else is opened.** They were after the
+    // counting until a round proved they cannot be: every browser this process opens
+    // after the first two is a browser the runtime does not bring up - on Windows the
+    // call that makes it never comes back and the main thread stops answering from that
+    // moment, which is the batch 1.5 finding - so a row measured *after* the gate's own
+    // window is a row measured on a dead main thread. Everything below this line is
+    // allowed to cost the process; nothing above it is.
+    //
+    // **With an end of their own**, because an answer that never comes is a state this
+    // engine has: the first flagged run to reach these rows stopped inside the third of
+    // them and said nothing about the profiles or the engine's own pages afterwards.
+    // Every row prints as it is measured, so a run that gives up here keeps the rows it
+    // already got.
+    let rows = app.clone();
+    let labels = tab_labels.clone();
+    let (sending, waiting) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        web_tab_rows(&rows, &labels);
+        let _ = sending.send(());
+    });
+    if waiting.recv_timeout(ROWS).is_err() {
+        check(
+            "batch 2's rows all came back",
+            false,
+            &format!(
+                "one of them did not answer in {} seconds; the rows above are the measured ones",
+                ROWS.as_secs()
+            ),
+        );
+    }
+    pulse(app, "batch 2's rows");
+
     // A website of the gate's own, in a window of its own: the half of criterion 4
     // batch 1 could not see. **Before the engine's own pages, deliberately**, because
     // those can take the process with them - `chrome://settings` is refused in an
@@ -276,35 +313,6 @@ fn walk(app: &AppHandle, tabs: usize) {
     pulse(app, "the gate's own page");
 
     answers(app, tabs, &tab_labels, probe);
-
-    // Batch 2's own rows, after the counting and before the engine's own pages: they
-    // move a tab about, and a process tree counted in the middle of that would be a
-    // measurement of the gate rather than of the app.
-    //
-    // **With an end of their own.** They are the part of the walk that asks a page
-    // questions, and an answer that never comes is a state this engine has: the first
-    // flagged run to reach these rows stopped inside the third of them on both platforms
-    // that started, and said nothing about the profiles or the engine's own pages
-    // afterwards. Every row prints as it is measured, so a run that gives up here keeps
-    // the rows it already got.
-    let rows = app.clone();
-    let labels = tab_labels.clone();
-    let (sending, waiting) = std::sync::mpsc::channel();
-    std::thread::spawn(move || {
-        web_tab_rows(&rows, &labels);
-        let _ = sending.send(());
-    });
-    if waiting.recv_timeout(ROWS).is_err() {
-        check(
-            "batch 2's rows all came back",
-            false,
-            &format!(
-                "one of them did not answer in {} seconds; the rows above are the measured ones",
-                ROWS.as_secs()
-            ),
-        );
-    }
-    pulse(app, "batch 2's rows");
 
     // And last of all the engine's own pages, each in a webview of its own, because a
     // page that cannot be reached is the row that decides batch 3.
@@ -751,11 +759,20 @@ fn step_back(app: &AppHandle, tab: &str) -> Result<(), String> {
 /// The engine rather than the page: under this build the history is Chromium's, so
 /// Chromium is the one to ask whether a step landed, and the answer travels the same
 /// message queue every other call here uses instead of the page's answer channel.
+/// Said as the engine said it, because the three ways this can be nothing are three
+/// different findings: no webview at all, a message the engine dropped (which comes back
+/// as an error), and **a browser whose main frame has no address**, which is what a
+/// browser that has never navigated looks like from outside. One round of the gate spent
+/// a table's worth of noes on the third one without being able to name it.
 fn where_now(app: &AppHandle, tab: &str) -> String {
-    app.get_webview(&format!("web-{tab}"))
-        .and_then(|view| view.url().ok())
-        .map(|one| one.to_string())
-        .unwrap_or_default()
+    let Some(view) = app.get_webview(&format!("web-{tab}")) else {
+        return "no webview under that label".to_string();
+    };
+
+    match view.url() {
+        Ok(url) => url.to_string(),
+        Err(error) => format!("the engine would not say: {error}"),
+    }
 }
 
 /// How far down the page the reading has got, through `web_look` - the command the window
