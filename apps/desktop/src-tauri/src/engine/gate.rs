@@ -600,6 +600,41 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
             None => "nothing yet, which is what a first run says".to_string(),
         },
     );
+
+    // And the closer half of the same question, which is the one Emil reported: a note
+    // closed and opened again is a new webview on the same profile, and what it can read
+    // is what a login is. The tab is taken away with `keep`, which is what the window
+    // does when a pane goes, and then opened again at the same address.
+    let at = 0;
+    crate::web_tabs::web_close(app.clone(), app.state(), tab.clone(), true);
+    std::thread::sleep(Duration::from_secs(2));
+    let again = web_tab(app, at, SITES[0]);
+    std::thread::sleep(SETTLE);
+    let kept = again.is_ok().then(|| read_mark(app, &tab)).flatten();
+    check(
+        "localStorage survives the tab being closed and opened again",
+        kept.as_deref() == Some(MARK),
+        &match (&again, &kept) {
+            (Err(error), _) => format!("the tab did not open again: {error}"),
+            (Ok(_), Some(one)) if one == MARK => "the mark is still there".to_string(),
+            _ => "the mark was gone".to_string(),
+        },
+    );
+
+    // What the window is handed when it wants to draw something over a page. `None`
+    // here is the answer this engine gives - Chromium photographs a page over the
+    // DevTools protocol, which is batch 8 - and the window reads it as "keep your own
+    // ground", which is how an overlay stays above a page at all.
+    let shot = tauri::async_runtime::block_on(crate::web_tabs::web_shot(app.clone(), tab.clone()));
+    check(
+        "a page answers a photograph with nothing, so an overlay keeps its own ground",
+        matches!(shot, Ok(None)),
+        match shot {
+            Ok(None) => "nothing, which is what the window expects here",
+            Ok(Some(_)) => "a picture, which is better than the window expects",
+            Err(_) => "an error, which the window reads as nothing",
+        },
+    );
 }
 
 /// What the gate writes into `localStorage` to find again on the next run.

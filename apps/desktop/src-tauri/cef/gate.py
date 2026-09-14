@@ -1242,7 +1242,11 @@ def batch_two(report: dict) -> dict:
         'the page is still there after a switch': answered(cef, 'switch away from a web tab'),
         "back is the engine's own history": answered(cef, 'back is the engine'),
         'the place on the page, read back': answered(cef, 'the place on the page'),
+        'a login survives the tab being closed and opened again': answered(
+            cef, 'closed and opened again'
+        ),
         'a login survives a relaunch': answered(again, 'localStorage from an earlier run'),
+        'an overlay can keep its own ground over a page': answered(cef, 'a photograph'),
         'the page tells the window its name': answered(cef, 'what the page is called'),
         "the page tells the window the site's mark": answered(cef, "the site's own mark"),
         'web tabs open when the tree was counted': str(report.get('tabs') or 0),
