@@ -29,6 +29,13 @@ and it is the only one that repeats. See `pick`. The counted work behind each fi
 asserted in the unit tests beside the code it is about; a clock says what the machine
 was doing and a count says what the code did.
 
+The two search walks that keep a clock on themselves are timed here and nowhere
+else. Both count what the code did, and those counts are their test; each also has
+one wall-clock bound on its worst case, which a loaded machine misses for reasons
+that are nothing to do with the code. So they ask for `NIB_PERF=1` before they
+believe their own clock, this drive is the only thing that sets it, and it is asked
+before a browser exists. `--no-clock` leaves it out. See `clocked`.
+
 Every run ends by reading each lane against the other and against what the row is
 worth to nobody - the two halves of the run asked the same question. Put the same
 build in both folders and every row must read `same`; a row that says `differs` then
@@ -79,7 +86,10 @@ import argparse
 import functools
 import http.server
 import json
+import os
+import shutil
 import statistics
+import subprocess
 import threading
 from pathlib import Path
 
@@ -1592,6 +1602,57 @@ def prove(
         say("every row agrees within what it is worth to nobody")
 
 
+#: The two files whose one wall-clock bound is nobody's to assert but this drive's.
+CLOCKED = [
+    "src/lib/search/fuzzy.perf.test.ts",
+    "src/lib/search/match.perf.test.ts",
+]
+
+
+def clocked() -> str:
+    """The two search walks, timed rather than only counted.
+
+    Both files count what the code did - lines folded, regions asked about, needles
+    looked for - and those counts are the test: each is the same number on a machine
+    running thirty files at once as on an idle one. Each also keeps one clock on its
+    worst case, and that one is not: a walk descheduled halfway through says nothing
+    about the walk, and one of them failed a gate at 3.9 seconds with every count
+    right.
+
+    So they ask for `NIB_PERF=1` before they believe their own clock, and this is the
+    only thing in the repository that sets it. `pnpm test` never does, which is why
+    a loaded machine cannot fail on it; a speed run does, because a speed run is
+    somebody measuring rather than checking - and it is run first, before a browser
+    is started, which is the quietest this machine gets.
+    """
+    npx = shutil.which("npx")
+    if not npx:
+        return "no npx, so the clocked bounds were not asked"
+
+    asked = subprocess.run(
+        [npx, "vitest", "run", *CLOCKED],
+        cwd=APP,
+        env={**os.environ, "NIB_PERF": "1"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+
+    if asked.returncode == 0:
+        return "the clocked bounds hold"
+
+    # The lines that say which bound, so a failure here reads as a number rather
+    # than as "something in a file".
+    said = [
+        line.strip()
+        for line in (asked.stdout + asked.stderr).splitlines()
+        if "AssertionError" in line or line.strip().startswith("FAIL")
+    ]
+    return "; ".join(["the clocked bounds do not hold", *said[:6]])
+
+
 def main() -> int:
     ask = argparse.ArgumentParser(description=__doc__)
     ask.add_argument("parts", nargs="*", default=[], help=f"any of {', '.join(PARTS)}")
@@ -1602,6 +1663,11 @@ def main() -> int:
     # they are, and by lane rather than by turn. So a number that is about the launch
     # itself is taken one build at a time, and the two runs compared.
     ask.add_argument("--build", default="", help="before or after, for one of them alone")
+    ask.add_argument(
+        "--no-clock",
+        action="store_true",
+        help="skip the timed search bounds, for a run that is only about the browser",
+    )
     ask.add_argument(
         "--as-was",
         action="store_true",
@@ -1637,6 +1703,13 @@ def main() -> int:
     rounds = told.rounds + (-told.rounds % len(lanes))
     if rounds != told.rounds:
         say(f"{told.rounds} rounds over {len(lanes)} lanes is not a whole turn; {rounds} rounds")
+
+    # The two timed search bounds first, before a browser exists: this is the
+    # quietest the machine gets in a speed run, and they are the only thing that
+    # asks for `NIB_PERF=1`. See `clocked`.
+    clock = "" if told.no_clock else clocked()
+    if clock:
+        say(clock)
 
     for lane in lanes:
         lane.start()
@@ -1743,6 +1816,10 @@ def main() -> int:
             print(f"  {what}")
             for line in dict.fromkeys(lines):
                 print(f"    {line}")
+
+    if clock:
+        print()
+        say(clock)
 
     print()
     print(json.dumps({name: {key: round(value, 1) for key, value in one.items()} for name, one in found.items()}))
