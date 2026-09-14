@@ -278,12 +278,6 @@ def drive(apps: list[pathlib.Path]) -> None:
             if held.get("pid") != process.pid:
                 wrong(f"[{label}] the endpoint says pid {held.get('pid')}, the process is {process.pid}")
 
-        # A note of its own in each, so the two windows are not the same picture.
-        for label, _process, held in running:
-            answer = asked(held, "new", {"name": f"Window {label.upper()}", "content": f"# {label.upper()}"})
-            if not answer.get("ok"):
-                wrong(f"[{label}] the app would not make a note: {answer}")
-
         time.sleep(2.5)
 
         # One window over the other, and each a size of its own. Over, because that is

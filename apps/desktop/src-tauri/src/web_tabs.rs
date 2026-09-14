@@ -966,8 +966,9 @@ pub fn hearing(app: &AppHandle) {
         return;
     };
 
-    // The dev server, where there is one: a development build is served from it rather
-    // than from the runtime's own address, and the config is what names it.
+    // Where the app's own page is served from, which is the one question the handler
+    // asks of a request: the two the runtime uses are constants below, and this is the
+    // third - the dev server a development build is served by, which the config names.
     let ours: Vec<String> = app
         .config()
         .build
@@ -976,9 +977,8 @@ pub fn hearing(app: &AppHandle) {
         .map(|url| vec![origin_of(url.as_str())])
         .unwrap_or_default();
 
-    // Where the app's own page is served from, which is the one question the handler
-    // asks of a request. Gathered here rather than in the handler, because the handler
-    // runs on the engine's own thread and this is a fact about the build.
+    // On the window's own thread, which is the only thread the engine's objects may be
+    // touched from; the same move `listening` makes for the same reason.
     let _ = view.with_webview(move |platform| {
         ask::own(&platform, ours);
     });
