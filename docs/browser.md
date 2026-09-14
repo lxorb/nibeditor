@@ -1478,6 +1478,17 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    waiting" and "the main thread has stopped" are told apart in the table. It is
    upstream's either way: the same runtime opens five webviews in one window on a Mac.
 
+**What batch 1.5 changed, in six files and no new ones.**
+
+| | |
+| --- | --- |
+| `apps/desktop/src-tauri/cef/build.rs` | the Windows application manifest, written into `OUT_DIR` and embedded with `/MANIFEST:EMBED`. The reason it cannot come from the app's own build script is in the file |
+| `apps/desktop/src-tauri/cef/gate.py` | the layout Chromium looks for (a real bundle on a Mac), the diagnosis of a build that never got a window, the six criteria as rows, and the exit code that is now 0 whenever a table was written |
+| `apps/desktop/src-tauri/cef/src/main.rs` | `NIB_CEF_ARGS`, so a run can ask Chromium for `--enable-logging=stderr` without a rebuild |
+| `apps/desktop/src-tauri/src/engine/gate.rs` | a website in a window of its own for criterion 4, ninety seconds of patience per web tab, a round trip to the main thread after each step, everything inside a 1024 by 768 screen, and the engine's own pages last because that step can take the process with it |
+| `apps/desktop/src-tauri/cef/bump.py` | the pin job's own fault: a report that ended without a newline, a null that could mean either "no answer" or "nobody could ask", and a one-line edit that rewrote every line ending on Windows |
+| `.github/workflows/cef.yml`, `cef-bump.yml` | the sandbox said out loud, `pefile` and `gdb` for the diagnosis, a temporary spaces folder, and a `propose` job that only opens a pull request from the default branch |
+
 ### The gate table
 
 Every number below is `.github/workflows/cef.yml` on GitHub's own runners, from
