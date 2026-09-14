@@ -1570,7 +1570,7 @@ on all three. What changed is the row under them:
 | the tree with two web tabs | - | 1 browser, 1 GPU, 2 utility, 6 renderers | - |
 | a second web tab | never came back, and the main thread stopped answering from that call on | opened, 166 ms | - |
 | `chrome://settings` in a pane of nib's own window | not reached | **refused: Alloy style** (run `34858474457`, which caught CEF saying so) | - |
-| an extension's content script in nib's own interface | **reached it** | **reached it** | - |
+| an extension's content script in nib's own interface | **reached it** in one run of two | **reached it**, every run | - |
 | how far it got | two web tabs asked for, one opened | every row above, then the main thread stopped after the `chrome://` pages | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
 
 The Windows column is run `34858474457` and the other two are run `34863736033`. Three
@@ -1580,7 +1580,10 @@ with each tab and the browser count never moved off one. **The launch rows are t
 instrument on the same runner minutes apart**, and the flagged build coming up *faster*
 than the app on the system's own engine on both is a statement about a cold runner
 loading `WebView2` and `WKWebView` for the first time rather than a promise about
-anybody's machine; Emil's own is where that number will mean something. And **no remote
+anybody's machine. How little a runner's launch figure is worth, in one comparison: the
+next Windows run of the same commit measured **627.9 ms** for the flagged build against
+**10234.0 ms** for the control, where this one measured 1676.6 against 5230.0. Emil's
+own machine is where that number will mean something. And **no remote
 page has been seen to paint on a runner yet**: every title the gate was told about came
 from nib's own document, the tabs' titles arrive through an event that carried none on
 either engine, and the screenshots show blank panels behind a system permission dialog.
