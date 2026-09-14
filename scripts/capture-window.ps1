@@ -20,6 +20,13 @@
 #   - WHOSE keyboard. Nothing is raised, focused or moved. The old version called
 #     SetForegroundWindow and waited 700ms for it, which took the keyboard away from
 #     whatever somebody was typing in - a screenshot is a question, not an interruption.
+#   - HOW BIG. The process says it understands this display's scaling before it asks
+#     anything about a window. Without that, Windows answers GetWindowRect in the
+#     scaled-down coordinates it pretends the screen is in, while the webview
+#     composites at the real one - so the bitmap was the window's logical size and
+#     PrintWindow filled the whole of it with the top left corner of the window at
+#     device resolution. On a 200% display every picture was the top left quarter,
+#     at twice the size, and nothing in the file said so.
 param(
   [Alias('Pid')]
   [int]$ProcessId = 0,
@@ -41,6 +48,27 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
+
+public class NibDpi {
+  // Per-monitor v2, which is what a webview window is: the numbers below come back
+  // in real pixels from here on. The older call is the fallback for a Windows that
+  // has never heard of the newer one; both are allowed to fail, because a process
+  // whose awareness is already set is a process that already answers in pixels.
+  [DllImport("user32.dll")] static extern bool SetProcessDpiAwarenessContext(IntPtr context);
+  [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+
+  public static void Ask() {
+    try {
+      if (SetProcessDpiAwarenessContext(new IntPtr(-4))) return;
+    } catch (EntryPointNotFoundException) {
+    }
+
+    try {
+      SetProcessDPIAware();
+    } catch (EntryPointNotFoundException) {
+    }
+  }
+}
 
 public class NibCapture {
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left, Top, Right, Bottom; }
@@ -79,6 +107,9 @@ public class NibCapture {
   }
 }
 "@
+
+# In real pixels from here on, before a single question about a window is asked.
+[NibDpi]::Ask()
 
 # The process the caller named. A pid nothing answers to is a window that has closed,
 # which is an error rather than a reason to look for another one.

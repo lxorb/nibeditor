@@ -10,6 +10,7 @@
    *  Watches the size rather than being told: the keys, the slider, the wheel and
    *  the menu rows all set the same value, so all four are answered by one
    *  effect. */
+  import { onDestroy } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
@@ -35,9 +36,12 @@
     timer = setTimeout(() => {
       shown = false
     }, HELD)
-
-    return () => clearTimeout(timer)
   })
+
+  /** The waiting hide dropped when the window goes, and never before: a cleanup
+   *  runs before every re-run of the effect as well, and a re-run that found the
+   *  size unchanged returned early - which left the badge on the note for good. */
+  onDestroy(() => clearTimeout(timer))
 
   const percent = $derived(Math.round(modes.zoom * 100))
 </script>

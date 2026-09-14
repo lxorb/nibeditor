@@ -12,6 +12,7 @@
    *  Watches the scale rather than being told, so the wheel, the keys, the pinch,
    *  the bar's buttons and the menu rows are all answered by one effect. */
 
+  import { onDestroy } from 'svelte'
   import { fade, scale as growing } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { dur } from './motion'
@@ -45,9 +46,15 @@
     timer = setTimeout(() => {
       shown = false
     }, HELD)
-
-    return () => clearTimeout(timer)
   })
+
+  /** The waiting hide dropped when the surface goes, and never before.
+   *
+   *  Deliberately not the effect's own cleanup. A cleanup runs before every re-run
+   *  of the effect, not only on the way out, so a re-run for any other reason
+   *  cleared the timer that hides the badge - and the effect then returned early
+   *  because the zoom had not changed, leaving the number on the paper for good. */
+  onDestroy(() => clearTimeout(timer))
 
   const percent = $derived(Math.round(zoom * 100))
 </script>

@@ -59,6 +59,22 @@ describe('the window capture', () => {
     expect(SCRIPT).toMatch(/Get-Process -Id \$ProcessId -ErrorAction Stop/)
   })
 
+  /** And it says it understands the display's scaling before it measures anything.
+   *
+   *  Without that, Windows answers GetWindowRect in the scaled-down coordinates it
+   *  pretends the screen is in while the webview composites at the real one: the
+   *  bitmap came out the window's logical size and PrintWindow filled all of it with
+   *  the top left corner of the window at device resolution. On a 200% display every
+   *  picture was the top left quarter of the app, at twice the size, and nothing in
+   *  the file said so. The order is the whole of it - awareness first, then the
+   *  first question about a window. */
+  test('says it understands the display’s scaling before it measures a window', () => {
+    expect(SCRIPT).toContain('SetProcessDpiAwarenessContext')
+    expect(SCRIPT).toContain('[NibDpi]::Ask()')
+    expect(SCRIPT.indexOf('[NibDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('Get-Process -Id'))
+    expect(SCRIPT.indexOf('[NibDpi]::Ask()')).toBeLessThan(SCRIPT.indexOf('GetWindowRect($handle'))
+  })
+
   test.each(CALLERS)('%s passes a pid', (relative) => {
     const caller = read(relative)
     expect(caller).toContain('capture-window.ps1')

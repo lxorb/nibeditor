@@ -53,11 +53,14 @@
   const part = $derived(reach > 0 ? Math.min(1, rise / reach) : 0)
   const ready = $derived(rise >= reach && reach > 0)
 
-  /** What it says. An offer at rest, and while the reader is pulling the one thing
-   *  they need to know: how much further, and then that it is far enough. */
-  const words = $derived(
-    !pulling ? t('Add a page') : ready ? t('Release to add a page') : t('Pull to add a page'),
-  )
+  /** What it says while the reader is pulling: the one thing they need to know -
+   *  how much further, and then that it is far enough.
+   *
+   *  Nothing at rest. A dashed sheet with a plus in it is not a sentence anybody has
+   *  to read, and the words would be under the bar down there anyway: the bar sits
+   *  at the bottom of the pane, which is exactly where the band that peeks out is.
+   *  The room is kept either way, so the plus does not move when they arrive. */
+  const words = $derived(ready ? t('Release to add a page') : t('Pull to add a page'))
 </script>
 
 <div
@@ -124,6 +127,17 @@
 
   .slot.ready .mark {
     color: var(--accent);
+  }
+
+  /* The words, which are only there while somebody is pulling: at rest the plus is
+     the whole of what this says. */
+  .mark span {
+    opacity: 0;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .slot.pulling .mark span {
+    opacity: 1;
   }
 
   /* Small at rest and full size by the threshold, which is the one thing on here
