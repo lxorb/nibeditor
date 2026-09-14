@@ -14,12 +14,12 @@ export const ta: Dictionary = {
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
   'Page {number}': 'பக்கம் {number}',
   'The paper could not be read': 'தாளைப் படிக்க முடியவில்லை',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'லெட்டர்',
   'Long page': 'நீண்ட பக்கம்',
   Blank: 'வெற்று',
-  Lines: 'கோடுகள்',
   Grid: 'கட்டம்',
   Dots: 'புள்ளிகள்',
   '{at} / {count}': '{at} / {count}',

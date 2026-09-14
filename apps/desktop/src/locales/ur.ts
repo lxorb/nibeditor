@@ -14,12 +14,12 @@ export const ur: Dictionary = {
   'Delete this page': 'یہ صفحہ حذف کریں',
   'Page {number}': 'صفحہ {number}',
   'The paper could not be read': 'کاغذ نہیں پڑھا جا سکا',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'لیٹر',
   'Long page': 'لمبا صفحہ',
   Blank: 'خالی',
-  Lines: 'لکیریں',
   Grid: 'خانے',
   Dots: 'نقطے',
   '{at} / {count}': '{at} / {count}',

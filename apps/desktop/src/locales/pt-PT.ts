@@ -14,12 +14,12 @@ export const ptPT: Dictionary = {
   'Delete this page': 'Eliminar esta página',
   'Page {number}': 'Página {number}',
   'The paper could not be read': 'O papel não pôde ser lido',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Carta',
   'Long page': 'Página longa',
   Blank: 'Em branco',
-  Lines: 'Linhas',
   Grid: 'Quadriculado',
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',

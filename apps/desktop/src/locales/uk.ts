@@ -14,12 +14,12 @@ export const uk: Dictionary = {
   'Delete this page': 'Видалити цю сторінку',
   'Page {number}': 'Сторінка {number}',
   'The paper could not be read': 'Не вдалося прочитати папір',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Довга сторінка',
   Blank: 'Без розмітки',
-  Lines: 'Лінії',
   Grid: 'Клітинка',
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',

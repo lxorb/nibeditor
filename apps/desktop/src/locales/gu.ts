@@ -14,12 +14,12 @@ export const gu: Dictionary = {
   'Delete this page': 'આ પાનું કાઢો',
   'Page {number}': 'પાનું {number}',
   'The paper could not be read': 'કાગળ વાંચી શકાયો નહીં',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'લેટર',
   'Long page': 'લાંબું પાનું',
   Blank: 'ખાલી',
-  Lines: 'લીટીઓ',
   Grid: 'ચોકડી',
   Dots: 'બિંદુઓ',
   '{at} / {count}': '{at} / {count}',

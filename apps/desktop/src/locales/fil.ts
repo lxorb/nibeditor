@@ -14,12 +14,12 @@ export const fil: Dictionary = {
   'Delete this page': 'Tanggalin ang pahinang ito',
   'Page {number}': 'Pahina {number}',
   'The paper could not be read': 'Hindi mabasa ang papel',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Mahabang pahina',
   Blank: 'Blangko',
-  Lines: 'Mga linya',
   Grid: 'Grid',
   Dots: 'Mga tuldok',
   '{at} / {count}': '{at} / {count}',

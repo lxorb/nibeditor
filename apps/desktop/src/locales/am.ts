@@ -14,12 +14,12 @@ export const am: Dictionary = {
   'Delete this page': 'ይህን ገጽ አጥፋ',
   'Page {number}': 'ገጽ {number}',
   'The paper could not be read': 'ወረቀቱን ማንበብ አልተቻለም',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ሌተር',
   'Long page': 'ረጅም ገጽ',
   Blank: 'ባዶ',
-  Lines: 'መስመሮች',
   Grid: 'መጋጠሚያ',
   Dots: 'ነጥቦች',
   '{at} / {count}': '{at} / {count}',

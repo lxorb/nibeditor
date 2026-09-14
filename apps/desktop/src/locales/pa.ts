@@ -14,12 +14,12 @@ export const pa: Dictionary = {
   'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',
   'Page {number}': 'ਸਫ਼ਾ {number}',
   'The paper could not be read': 'ਕਾਗਜ਼ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ਲੈਟਰ',
   'Long page': 'ਲੰਮਾ ਸਫ਼ਾ',
   Blank: 'ਖਾਲੀ',
-  Lines: 'ਲਾਈਨਾਂ',
   Grid: 'ਜਾਲੀ',
   Dots: 'ਬਿੰਦੂ',
   '{at} / {count}': '{at} / {count}',

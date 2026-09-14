@@ -14,12 +14,12 @@ export const gsw: Dictionary = {
   'Delete this page': 'Die Siite lösche',
   'Page {number}': 'Siite {number}',
   'The paper could not be read': 'S Papier het mer nöd chöne läse',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Langi Siite',
   Blank: 'Läär',
-  Lines: 'Linie',
   Grid: 'Raschter',
   Dots: 'Pünkt',
   '{at} / {count}': '{at} / {count}',

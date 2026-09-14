@@ -14,12 +14,12 @@ export const tr: Dictionary = {
   'Delete this page': 'Bu sayfayı sil',
   'Page {number}': 'Sayfa {number}',
   'The paper could not be read': 'Kâğıt okunamadı',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Uzun sayfa',
   Blank: 'Boş',
-  Lines: 'Çizgili',
   Grid: 'Kareli',
   Dots: 'Noktalı',
   '{at} / {count}': '{at} / {count}',

@@ -14,12 +14,12 @@ export const id: Dictionary = {
   'Delete this page': 'Hapus halaman ini',
   'Page {number}': 'Halaman {number}',
   'The paper could not be read': 'Kertas tidak dapat dibaca',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Halaman panjang',
   Blank: 'Kosong',
-  Lines: 'Garis',
   Grid: 'Kotak',
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
