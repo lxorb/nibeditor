@@ -43,6 +43,10 @@ function walk(dir: string): string[] {
 
 let files: { name: string; text: string }[] = []
 
+// Five minutes, said here rather than left to the project's thirty seconds: this
+// hook builds the whole plugin package, which takes about forty-five, and a
+// project's own timeout wins over `--hookTimeout` on the command line. The number
+// is a wall rather than an expectation - nothing below asserts on time.
 beforeAll(() => {
   // The plugin's own build, not the editor's: what it ships is decided by leaving
   // code out, and only this build leaves it out. See vite.even.config.ts.
@@ -266,7 +270,14 @@ describe('the bundle a package is made of', () => {
    *
    *  Measured, the answer is two groups and nothing between them: every Latin,
    *  Cyrillic, Greek and CJK catalogue is at 0.0% undrawable, and the fifteen scripts
-   *  are at 31% and more. */
+   *  are at 31% and more.
+   *
+   *  Its own budget, for the reason the hook above has one: forty catalogues is
+   *  1.8 MB of words weighed a glyph at a time against the firmware's metrics, and
+   *  on a machine that is also running the rest of the suite that does not fit in
+   *  the project's thirty seconds - which it has failed to twice. Nothing here
+   *  asserts on time; the four minutes is the wall a slow honest run must not
+   *  hit. */
   test('ships the catalogues the firmware can draw, and only those', () => {
     const where = resolve(app, 'src/locales')
     const catalogues = readdirSync(where).filter((one) => one.endsWith('.ts'))
@@ -288,5 +299,5 @@ describe('the bundle a package is made of', () => {
     }
 
     expect(wrong.join('\n')).toBe('')
-  })
+  }, 240_000)
 })

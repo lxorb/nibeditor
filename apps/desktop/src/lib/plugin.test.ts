@@ -34,11 +34,19 @@ vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
 
 /** The module graph, compiled once and outside anybody's budget: the settings
- *  pull in most of the app. See docs/conventions.md. */
+ *  pull in most of the app. See docs/conventions.md.
+ *
+ *  The budget is said here rather than left to the project's, which is the whole
+ *  of what "outside anybody's budget" has to mean: `vitest.config.ts` gives every
+ *  hook thirty seconds, a project's own setting wins over `--hookTimeout` on the
+ *  command line, and compiling most of an app on a machine that is also running
+ *  the rest of the suite does not fit in thirty seconds. Four minutes is not a
+ *  claim about how long this takes - it is a wall a slow honest run must not hit,
+ *  and nothing here asserts on time. */
 beforeAll(async () => {
   await import('./preferences')
   await import('./settings/sections')
-})
+}, 240_000)
 
 /** A page, with or without a pair of glasses behind it. */
 async function page(asPlugin: boolean) {

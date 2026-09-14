@@ -21,11 +21,18 @@ import { parseQuery } from './query'
  *  difference between one look and one per line is the difference between a
  *  search and a hang.
  *
- *  One clock is left, on the heaviest of them, with a wide margin around it: a
- *  count cannot tell a walk that has got slower from one that has not, and a walk
- *  that looks per line misses that margin by a factor of hundreds. The absolute
- *  figures, on the machine this was written on: 3.4 MB in 20 notes, and the
- *  heaviest walk 28 ms. */
+ *  One clock is left, on the heaviest of them, with a wide margin around it, and
+ *  it is asked only of a run that set `NIB_PERF=1`: a count cannot tell a walk
+ *  that has got slower from one that has not, and a walk that looks per line
+ *  misses that margin by a factor of hundreds - but a loaded machine misses it
+ *  too, which is a failure about the machine. The absolute figures, on the machine
+ *  this was written on: 3.4 MB in 20 notes, and the heaviest walk 28 ms. */
+
+/** Whether the one clock may be asserted on at all: `NIB_PERF=1` says somebody is
+ *  measuring rather than checking. The counts below are always checked, because a
+ *  count is the same number on a loaded machine and an idle one; see `CLOCKED` in
+ *  fuzzy.perf.test.ts, which is where the whole of the reasoning is. */
+const CLOCKED = process.env.NIB_PERF === '1'
 
 /** The folded copy of a note, made when it is first wanted and counted.
  *
@@ -168,7 +175,8 @@ describe('a scoped search over long notes', () => {
     // The one clock, on the walk that costs the most, and thirty times the figure
     // in the note above rather than one and a half: the counts say what the walk
     // did, and this only has to catch a walk that has become a different shape.
-    expect(ms).toBeLessThan(1_000)
+    // Asked of a speed run and not of a gate; see `CLOCKED` above.
+    if (CLOCKED) expect(ms).toBeLessThan(1_000)
   })
 
   test('and for a paragraph, which is the same walk over fewer regions', () => {
