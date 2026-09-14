@@ -222,19 +222,28 @@ async function endpoint() {
     )
   }
 
-  const { port, secret } = JSON.parse(held)
+  const { port, secret, pid } = JSON.parse(held)
   if (!port || !secret) throw new Error(`${path} says no port or no secret`)
 
-  return { port, secret }
+  // The process that wrote this file is the process listening on that port, which is
+  // what `screenshot` needs: two nibs can be running and only one of them answered.
+  return { port, secret, pid }
 }
 
 /** A picture of the window.
  *
  *  The app says where its window is; the picture is taken by the platform, because
- *  a webview cannot photograph the window it is drawn in. Windows has the script
- *  this repository already uses to eyeball the app, which finds the window itself.
- *  macOS is handed the rectangle. Linux is told the truth: X11 and Wayland have no
- *  one tool between them, so there is nothing honest to shell out to. */
+ *  a webview cannot photograph the window it is drawn in.
+ *
+ *  Windows is handed the pid the app wrote beside its port, so the window in the picture
+ *  is the window of the app that answered - two nibs can be running, and going by name
+ *  photographed whichever Windows listed first. The script asks that window to draw
+ *  itself rather than copying the screen, so nothing in front of it lands in the file,
+ *  and it raises nothing: a screenshot must not take the keyboard off whatever somebody
+ *  is typing in.
+ *
+ *  macOS is handed the rectangle. Linux is told the truth: X11 and Wayland have no one
+ *  tool between them, so there is nothing honest to shell out to. */
 async function screenshot(asked) {
   const out = asked.out ?? join(tmpdir(), 'nib-window.png')
   const rect = await ask('window', {}, [])
@@ -245,9 +254,19 @@ async function screenshot(asked) {
       dirname(fileURLToPath(import.meta.url)),
       '../../scripts/capture-window.ps1',
     )
+    const { pid } = await endpoint()
     const ran = spawnSync(
       'powershell',
-      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Out', out],
+      [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        script,
+        '-Out',
+        out,
+        ...(pid ? ['-ProcessId', String(pid)] : []),
+      ],
       { encoding: 'utf8' },
     )
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')

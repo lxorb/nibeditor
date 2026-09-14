@@ -84,6 +84,20 @@ struct Kept {
     /// turning it on should cost opening the file the secret is in.
     #[serde(default)]
     eval: bool,
+    /// Which process is listening on that port.
+    ///
+    /// For `nib screenshot`, which has to photograph the window of the app that
+    /// answered it. Two nibs can be running - a build somebody is working on beside
+    /// the one they use - and a capture that went looking for a process by name
+    /// photographed whichever of them Windows happened to list first.
+    ///
+    /// Right by construction rather than by being asked for: whoever wrote this file
+    /// is whoever opened that socket, so the port and the process below it are one
+    /// fact written at one moment. Never read back - the file is rewritten every
+    /// launch, and a pid from a launch that has ended names nothing or names somebody
+    /// else's process.
+    #[serde(default)]
+    pid: u32,
 }
 
 /// The requests the window has not answered yet, by the id each was given.
@@ -171,6 +185,7 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
             _ => fresh_secret()?,
         },
         eval: held.is_some_and(|one| one.eval),
+        pid: std::process::id(),
     };
 
     let written = serde_json::to_string_pretty(&kept)
@@ -539,8 +554,38 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 mod tests {
     use super::{
         as_hex, find, is_json, is_local, parse_head, read_request, reason, refused, same_secret,
-        Request, MOST_BYTES, SECRET_BYTES,
+        Kept, Request, MOST_BYTES, SECRET_BYTES,
     };
+
+    /// What the file says about who is answering on that port.
+    ///
+    /// `nib screenshot` photographs the window of the app that answered it, and the only
+    /// thing that can say which process that is, is the process that opened the socket.
+    /// So the pid is written beside the port, as this process's own.
+    #[test]
+    fn says_which_process_is_listening() {
+        let text = serde_json::to_string(&Kept {
+            port: 1234,
+            secret: "a".repeat(SECRET_BYTES * 2),
+            eval: false,
+            pid: std::process::id(),
+        })
+        .expect("a kept endpoint is serialisable");
+
+        let read: Kept = serde_json::from_str(&text).expect("and readable again");
+        assert_eq!(read.pid, std::process::id());
+        assert_eq!(read.port, 1234);
+    }
+
+    /// A file written before this version knew about the pid still reads, and says
+    /// nothing about a process rather than refusing to be read at all.
+    #[test]
+    fn reads_a_file_written_without_one() {
+        let read: Kept = serde_json::from_str(r#"{"port":9,"secret":"ab"}"#).expect("a Kept");
+
+        assert_eq!(read.pid, 0);
+        assert!(!read.eval);
+    }
 
     #[test]
     fn reads_a_request_line_and_folds_the_header_names() {

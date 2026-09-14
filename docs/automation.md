@@ -161,6 +161,27 @@ picture: `scripts/capture-window.ps1` on Windows, `screencapture -R` on macOS. O
 Linux there is nothing honest to shell out to, since X11 and Wayland share no
 capture tool, and it says so.
 
+Three things the Windows capture is careful about, and each of them was wrong:
+
+- **Which window.** The script is handed `-ProcessId`, and the pid comes out of
+  `automation.json` - written by the process that opened the socket, so it is the app
+  that answered the request by construction. Going by name photographed whichever
+  process Windows listed first, which is a coin toss the moment somebody runs a build
+  they are working on beside the one they use.
+- **What is in it.** `PrintWindow` with `PW_RENDERFULLCONTENT` asks the window to draw
+  itself. Copying the screen region put whatever was in front of the window into the
+  picture - a menu, a notification, another app over the corner - and a screenshot of
+  the app has to be a screenshot of the app. The flag is what makes a webview's own
+  content come out at all: a composited surface is not part of what a window paints on
+  request without it.
+- **Whose keyboard.** Nothing is raised, focused or moved. The old version called
+  `SetForegroundWindow` and waited 700ms for it, which took the keyboard off whatever
+  was being typed in. A screenshot is a question, not an interruption.
+
+`scripts/capture-e2e.py` drives it against two nibs running at once: each is asked for
+a picture, each picture is the size of its own window, the two are not the same picture,
+and the window in front is the same one before and after.
+
 ## Security
 
 **A path from outside is not a path until it has been read.** One function judges
@@ -208,6 +229,11 @@ to `automation.json` in the app's own config folder:
 | Windows | `%APPDATA%\ch.emilvinu.nib\automation.json` |
 | macOS | `~/Library/Application Support/ch.emilvinu.nib/automation.json` |
 | Linux | `~/.config/ch.emilvinu.nib/automation.json` |
+
+It holds the port, the secret, `eval`, and `pid` - which process is listening. The pid
+is written rather than read: the file is rewritten every launch, so the one in it is
+always the process that wrote it, and a pid from a launch that has ended names nothing or
+names somebody else's process. `nib screenshot` is the one caller that wants it.
 
 The secret is 32 bytes of system randomness as hex, kept across launches, and the
 file is `0600` where the platform has modes. Every request carries it as
