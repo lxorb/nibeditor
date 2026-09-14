@@ -2590,6 +2590,17 @@
   max-height: 17em;
 }
 
+/* The writing surface inside a card is the same surface, at a card's size: the
+   measure a page reads at is wider than the card, and the space a page leaves above
+   its first line and below its last is most of a card. So the column is the card and
+   the room at the ends is a line of it - which is what makes the note in the card
+   start where the card starts. */
+#write.nib-note-preview-body[data-written='yes'] .cm-editor #write {
+  max-width: none;
+  margin: 0 var(--space-3);
+  padding: var(--space-2) 0 var(--space-4);
+}
+
 /* Before it has arrived, or when there is nothing to show: one line of words,
    which wants the padding the note's own paragraphs bring with them. */
 #write.nib-note-preview-body:not(:has(*)) {
