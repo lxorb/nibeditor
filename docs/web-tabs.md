@@ -659,6 +659,13 @@ the microphone and then says it could not be opened. A promise that can hang for
 a clock that never moves, and that is the worst way for an app to be wrong. See
 `PATIENCE` in `recorder/microphone.ts`.
 
+`scripts/recorder-e2e.py` drives it against a built app, which is the only place any of
+this happens: there is no `WebView2` under node, so every unit test passed while the app
+sat at 0:00. It times the microphone request, presses Record through the row's own id, and
+reads the `.weba` off the disk afterwards. A machine that refuses a microphone - Windows'
+own privacy settings, a desk with none on it - is not a failure there; a request that
+never settles is.
+
 **What is still refused outright** is the buses a page can reach hardware over -
 Bluetooth, USB, serial, HID - and the credential store. Those are taken off
 `Navigator.prototype` before the page's first script, because a note-taking app has no

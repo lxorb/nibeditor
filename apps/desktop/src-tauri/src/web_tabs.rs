@@ -966,42 +966,70 @@ pub fn hearing(app: &AppHandle) {
         return;
     };
 
-    // What the page is, for the one question the handler asks of a request. Read here
-    // rather than in the handler because the handler runs on the engine's thread and
-    // this is a fact about the window, settled before it is shown.
-    let page = view.url().map(|url| url.to_string()).unwrap_or_default();
+    // The dev server, where there is one: a development build is served from it rather
+    // than from the runtime's own address, and the config is what names it.
+    let ours: Vec<String> = app
+        .config()
+        .build
+        .dev_url
+        .as_ref()
+        .map(|url| vec![origin_of(url.as_str())])
+        .unwrap_or_default();
 
+    // Where the app's own page is served from, which is the one question the handler
+    // asks of a request. Gathered here rather than in the handler, because the handler
+    // runs on the engine's own thread and this is a fact about the build.
     let _ = view.with_webview(move |platform| {
-        ask::own(&platform, page);
+        ask::own(&platform, ours);
     });
 }
 
-/// Whether two addresses are the same origin: the same scheme, host and port.
+/// The origins the app's own page is ever served from.
 ///
-/// Written out rather than parsed, because what is compared is a prefix and both sides
-/// arrive as strings the engine wrote. Everything from the third slash on is the path,
-/// which an origin is not.
+/// Windows serves the bundle from `http://tauri.localhost` and the other two desktops
+/// from `tauri://localhost`. Written out because they are the runtime's own two
+/// addresses and there is nothing to ask for them; a development build is served by a
+/// dev server instead, and the config knows that one by name.
 ///
-/// Only `WebView2`'s own handler asks it, and the tests. Under nib's own Chromium the
-/// engine puts its own prompt up and nothing here is called; the same `cfg_attr` this
-/// file already wears over `Asked`, for the same reason.
+/// Not the webview's own `url()`, and that is the whole reason this list exists: at
+/// setup - which is the only moment the listener can be attached, because a page that
+/// asked before anything was listening waits for ever - the engine may still answer
+/// `about:blank`, and a window whose own page it could not name would have its
+/// microphone refused. Measured: it does.
+const OURS: [&str; 2] = ["http://tauri.localhost", "tauri://localhost"];
+
+/// Where a URL's origin ends: the scheme, the host and the port, and nothing after
+/// them. Written out rather than parsed, because both sides arrive as strings the
+/// engine wrote and everything from the third slash on is the path.
+fn origin_of(url: &str) -> String {
+    match url.find("://") {
+        Some(at) => match url[at + 3..].find('/') {
+            Some(end) => url[..at + 3 + end].to_lowercase(),
+            None => url.to_lowercase(),
+        },
+        None => String::new(),
+    }
+}
+
+/// Whether a request came from the app's own page rather than from something inside it.
+///
+/// `known` is what the build adds to the two constants above - the dev server, in a
+/// development build. Nothing at all is nobody: a request with no origin to speak of is
+/// not the app's.
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
-    allow(dead_code, reason = "only the WebView2 handler asks this; see above")
+    allow(
+        dead_code,
+        reason = "only the WebView2 handler asks this; see `own` in `ask`"
+    )
 )]
-fn same_origin(page: &str, asked: &str) -> bool {
-    let origin = |url: &str| -> String {
-        match url.find("://") {
-            Some(at) => match url[at + 3..].find('/') {
-                Some(end) => url[..at + 3 + end].to_lowercase(),
-                None => url.to_lowercase(),
-            },
-            None => String::new(),
-        }
-    };
+fn is_ours(known: &[String], asked: &str) -> bool {
+    let origin = origin_of(asked);
+    if origin.is_empty() {
+        return false;
+    }
 
-    let ours = origin(page);
-    !ours.is_empty() && ours == origin(asked)
+    OURS.contains(&origin.as_str()) || known.contains(&origin)
 }
 
 /// Says where a page is, to the window that holds it and to nothing else.
@@ -1478,7 +1506,7 @@ mod ask {
         unsafe_code,
         reason = "a permission request is one of WebView2's own events, and its objects are reached through COM"
     )]
-    pub fn own(webview: &PlatformWebview, page: String) {
+    pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
         // Safe: the controller is this window's, the handler is used only on this
         // thread, and WebView2 holds it for as long as the webview lives.
         unsafe {
@@ -1503,14 +1531,14 @@ mod ask {
                     }
                     let origin = webview2_com::take_pwstr(uri);
 
-                    let ours = super::same_origin(&page, &origin);
+                    let mine = super::is_ours(&ours, &origin);
                     let asked_for = matches!(
                         kind,
                         COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
                             | COREWEBVIEW2_PERMISSION_KIND_CAMERA
                     );
 
-                    let _ = args.SetState(if ours && asked_for {
+                    let _ = args.SetState(if mine && asked_for {
                         COREWEBVIEW2_PERMISSION_STATE_ALLOW
                     } else {
                         COREWEBVIEW2_PERMISSION_STATE_DENY
@@ -1567,7 +1595,7 @@ mod ask {
     /// which on both of these is a prompt the engine puts up itself. Nothing to attach,
     /// and nothing that hangs for want of it: it is `WebView2` that waits for ever when
     /// nothing is listening.
-    pub fn own(_webview: &PlatformWebview, _page: String) {}
+    pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
 
     /// Nothing was ever asked here, so nothing is ever answered.
     pub fn answer(_id: u64, _allow: bool) {}
@@ -1694,7 +1722,9 @@ mod shot {
 
 #[cfg(test)]
 mod tests {
-    use super::{allowed, guard, handed_over, opening, reader, same_origin, Place, Trail, WebTabs};
+    use super::{
+        allowed, guard, handed_over, is_ours, opening, origin_of, reader, Place, Trail, WebTabs,
+    };
     use tauri::Url;
 
     fn at(url: &str) -> Url {
@@ -1708,40 +1738,38 @@ mod tests {
     /// somebody's note. A frame in a note is not the thing to hand a camera to, and a
     /// site that wants one opens in a web tab, where it is asked about properly.
     #[test]
-    fn the_window_own_page_is_its_own_origin() {
-        // What Windows serves the app from, and what a Mac and Linux do.
-        assert!(same_origin(
-            "http://tauri.localhost/index.html",
-            "http://tauri.localhost/"
-        ));
-        assert!(same_origin(
-            "tauri://localhost/",
-            "tauri://localhost/index.html"
-        ));
-        // A development build, which is a dev server on this machine.
-        assert!(same_origin(
-            "http://localhost:1420/",
-            "http://localhost:1420/x"
-        ));
+    fn the_window_own_page_is_the_app() {
+        // What Windows serves the bundle from, and what the other two desktops do.
+        assert!(is_ours(&[], "http://tauri.localhost/"));
+        assert!(is_ours(&[], "http://tauri.localhost"));
+        assert!(is_ours(&[], "tauri://localhost/index.html"));
+        // And a development build, which is served by a dev server the config names.
+        let dev = vec!["http://localhost:1420".to_string()];
+        assert!(is_ours(&dev, "http://localhost:1420/"));
     }
 
     #[test]
     fn and_nothing_else_is() {
-        let page = "http://tauri.localhost/index.html";
-
-        assert!(!same_origin(page, "https://tauri.localhost/"));
-        assert!(!same_origin(page, "http://tauri.localhost.example.com/"));
-        assert!(!same_origin(page, "http://evil.example/"));
+        assert!(!is_ours(&[], "https://tauri.localhost/"));
+        assert!(!is_ours(&[], "http://tauri.localhost.example.com/"));
+        assert!(!is_ours(&[], "http://evil.example/"));
         // A port is part of an origin: a dev server and something else on this machine
         // are two different places.
-        assert!(!same_origin(
-            "http://localhost:1420/",
-            "http://localhost:8080/"
-        ));
-        // Nothing at all is nobody, whichever side of the question it is on.
-        assert!(!same_origin("", "http://tauri.localhost/"));
-        assert!(!same_origin(page, ""));
-        assert!(!same_origin(page, "about:blank"));
+        let dev = vec!["http://localhost:1420".to_string()];
+        assert!(!is_ours(&dev, "http://localhost:8080/"));
+        // Nothing to speak of is not the app.
+        assert!(!is_ours(&[], ""));
+        assert!(!is_ours(&[], "about:blank"));
+    }
+
+    #[test]
+    fn an_origin_is_the_scheme_the_host_and_the_port() {
+        assert_eq!(
+            origin_of("http://a.example:8080/x/y?z"),
+            "http://a.example:8080"
+        );
+        assert_eq!(origin_of("HTTP://A.Example/"), "http://a.example");
+        assert_eq!(origin_of("about:blank"), "");
     }
 
     #[test]

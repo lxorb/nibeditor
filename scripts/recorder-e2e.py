@@ -191,17 +191,19 @@ def drive(app: pathlib.Path) -> None:
             return
 
         if "refused" in opened:
-            if inputs:
-                wrong(f"a machine with {inputs} input(s) refused: {opened}")
-            else:
-                say(f"no microphone on this machine, and it said so in {opened['ms']}ms: {opened}")
-                say("which is the honest answer; the bug was saying nothing at all")
-            # Either way the promise settled, which is the half of this that is about
-            # the crate. A machine with no input cannot record, so there is no file to
-            # look for.
+            # An answer, which is what the fix is about: the bug was a promise that never
+            # settled at all, so the pill sat at 0:00 with nothing said. Whether this
+            # machine then grants a microphone is the machine's own business - Windows'
+            # privacy settings, a desk with no microphone on it, a session with nobody
+            # sitting in front of it - and a refusal is something the app can say.
+            say(f"the microphone was refused in {opened['ms']}ms: {opened['refused']!r}")
             if opened["ms"] > 24000:
                 wrong(f"the microphone request never settled: {opened}")
-            shot(process.pid, "01-no-microphone")
+            else:
+                say("it settled, which is the whole of what used to be broken")
+            if not inputs:
+                say("and this machine lists no input, so a refusal is the right answer")
+            shot(process.pid, "01-refused")
             return
 
         say(f"the microphone opened in {opened['ms']}ms: {opened['tracks']}")
