@@ -1638,9 +1638,9 @@ more.**
 5. **The launch stays inside what Emil was told.** The flagged build's time to a
    window, on the same runner as the control: no more than **+250 ms on Windows** and
    no more than **+1.2 s on macOS**. **Met, and by a distance that should be read with
-   suspicion rather than pleasure**: −3283 ms on Windows and −298 ms on macOS, which is
+   suspicion rather than pleasure**: −3553 ms on Windows and −954 ms on macOS, which is
    to say the flagged build came up *faster* than the app on the system's own engine on
-   both. On a cold runner the system engine is the slow one; the number that matters is
+   both, in the two runs of record. On a cold runner the system engine is the slow one; the number that matters is
    a real machine's, and it is still unmeasured.
 6. **The download grows by no more than 170 MB on Windows and 140 MB on macOS**,
    measured as the compressed size of what a release would have to carry rather than
