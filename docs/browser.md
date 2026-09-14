@@ -1469,7 +1469,7 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    platform row rather than a yes**, the gate reads CEF's refusal off the log rather
    than trusting the creation, and it opens the engine's own pages last so the crash
    costs one row instead of the table.
-3. **A second web tab hangs on Windows.** The first opens; the second never comes back
+3. **A second web tab hangs on Windows, and the main thread goes with it.** The first opens; the second never comes back
    from the app's own command, with CEF logging *"Timeout of new browser info response
    for frame"* and a Mojo `blink.mojom.WidgetHost` rejection first - and that timeout is
    CEF's browser process failing to answer a renderer within two seconds, which is a
@@ -1477,7 +1477,9 @@ than onto stderr, and is why batch 1 read three silences as nothing at all.
    everything else, and round-trips the main thread at each step so that "the runtime is
    waiting" and "the main thread has stopped" are told apart in the table - and the
    answer is that the main thread stops, from that call onwards, which is why every
-   later step reports "the window never answered" rather than a refusal. It is
+   later step reports "the window never answered" rather than a refusal. It is the same
+   in both Windows runs of batch 1.5, so criteria 2, 3 and 4 there are *unanswered*
+   rather than answered no, and the gate says so in those words. It is
    upstream's either way: the same runtime opens nib's interface and two web tabs in one
    window on a Mac and keeps answering.
 
