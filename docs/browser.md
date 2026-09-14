@@ -1541,9 +1541,11 @@ crate's own bundler builds and what batch 7 owns. The engine row above is the en
 the helper question is a binary layout, and the answer is known.
 
 **What the app itself costs on the engine it ships with**, for the control every
-flagged number is read against. The launch is the app's own trace, which counts from
-before nib's first line - so the Windows figure is mostly a runner loading a binary it
-has never seen, and none of the three is a number to compare between platforms.
+flagged number is read against - batch 1's run, kept because it is the first
+measurement and because the spread against batch 1.5's control row below is what a
+runner's noise looks like. The launch is the app's own trace, which counts from before
+nib's first line - so the Windows figure is mostly a runner loading a binary it has
+never seen, and none of the three is a number to compare between platforms.
 
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
 | --- | --- | --- | --- |
@@ -1565,7 +1567,7 @@ on all three. What changed is the row under them:
 | resident, one web tab | 691.3 MB | 1205.4 MB | - |
 | resident, two web tabs | - | 1478.2 MB | - |
 | **browser processes for two web tabs** | - | **1** | - |
-| a second web tab | never came back from `add_child` | opened, 150 ms | - |
+| a second web tab | never came back, and the main thread stopped answering from that call on | opened, 150 ms | - |
 | `chrome://settings` in a pane of nib's own window | - | **refused: Alloy style** | - |
 | an extension's content script in nib's own interface | - | **reached it** | - |
 | how far it got | two web tabs asked for, one opened | every row above, then `SIGSEGV` on the refused `chrome://` page | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
