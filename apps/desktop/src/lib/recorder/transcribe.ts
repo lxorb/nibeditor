@@ -31,9 +31,8 @@
 import { api } from '../api'
 import { account } from '../account.svelte'
 import { roomDelay } from '../backoff'
-import { readKey } from '../ai/keys'
-import { headersWithoutType, heardUrl, type Provider, reachable, troubleIn } from '../ai/providers'
-import { ai } from '../ai/store.svelte'
+import { transcriberNow } from '../ai/hears'
+import type { Provider } from '../ai/providers'
 import { key, message, t } from '../i18n.svelte'
 import { waited } from '../timing'
 import { mono, pieces, RATE, resampled, wavOf } from './wav'
@@ -121,7 +120,7 @@ function modelsFor(provider: Provider): string[] {
  *  account. Recording needs neither; transcribing needs one of them. Asked before a row
  *  is offered rather than after it is pressed. */
 export function canTranscribe(): boolean {
-  return !!ai.transcriber || !!account.accountToken
+  return !!transcriberNow() || !!account.accountToken
 }
 
 /** The name to write under a transcript, before a word of it has arrived.
@@ -131,7 +130,7 @@ export function canTranscribe(): boolean {
  *  answer for both the meeting's heading and a file's callout, so a note cannot say one
  *  thing and mean another. */
 export function transcribedBy(): string {
-  const provider = ai.transcriber
+  const provider = transcriberNow()
   if (!provider) return WHISPER
 
   return modelsFor(provider)[0] ?? WHISPER
@@ -149,6 +148,12 @@ export function transcribedBy(): string {
  *  the list above is a guess about somebody else's server. Anything else - a key
  *  refused, a server that is not running - is said out loud. */
 async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>): Promise<Words> {
+  // Fetched here rather than imported: what a provider is, where its key lives and the
+  // request itself are some fifteen kilobytes, and this module is in front of the first
+  // paint because two menu rows ask it a question. See test/weight.test.ts.
+  const { readKey } = await import('../ai/keys')
+  const { headersWithoutType, heardUrl, reachable, troubleIn } = await import('../ai/providers')
+
   const apiKey = await readKey(provider)
   if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
 
@@ -171,7 +176,7 @@ async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>)
     const said = await response.text().catch(() => '')
 
     if (!response.ok) {
-      refused = new Error(refusal(response.status, said))
+      refused = new Error(refusal(response.status, said, troubleIn))
       // Only a model this server does not have is worth trying the next name for.
       if (!aboutTheModel(said)) throw refused
 
@@ -216,7 +221,11 @@ function aboutTheModel(body: string): boolean {
   return /model/i.test(body)
 }
 
-function refusal(status: number, body: string): string {
+function refusal(
+  status: number,
+  body: string,
+  troubleIn: (body: unknown) => string | null,
+): string {
   const said = troubleIn(parsed(body))
   if (said) return said
 
@@ -242,7 +251,7 @@ export async function heardPiece(
    *  rather than a transcript quietly falling behind. */
   failed?: (round: number) => void,
 ): Promise<Words> {
-  const provider = ai.transcriber
+  const provider = transcriberNow()
   const token = account.accountToken
   if (!provider && !token) {
     throw new Error(key('Add an AI provider or sign in to turn speech into words.'))
