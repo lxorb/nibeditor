@@ -1396,11 +1396,25 @@ libcef.so     => .cef/libcef.so
 ```
 
 **GTK 3 and GTK 4 in one process**, which GTK does not support and which the runtime's
-own comment says cannot be shared. The mechanism is the one that makes it a segmentation
-fault rather than a message: the two libraries export the same symbol names, so whichever
-the dynamic loader binds first answers for *both* callers, with one library's struct
-layouts and the other's expectations. `spike/shell`, which links no GTK 3 at all, brought
-the same engine up on the same runner in 264 ms.
+own comment says cannot be shared. And the backtrace out of `gdb` is the mechanism
+itself, frame by frame:
+
+```text
+Thread 1 "nib-cef" received signal SIGSEGV, Segmentation fault.
+#0  g_option_context_parse ()  from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#1  gtk_parse_args ()          from /lib/x86_64-linux-gnu/libgtk-3.so.0
+#2  gtk_init_check ()          from /lib/x86_64-linux-gnu/libgtk-3.so.0
+#3  nib-cef
+...
+#11 __libc_start_main ()
+```
+
+The runtime calls `gtk_init_check`, and **GTK 3's** answers it, because GTK 3 was bound
+first and the two libraries export the same names. GTK 4's `gtk_init_check` takes no
+arguments where GTK 3's takes `argc` and `argv`, so GTK 3 reads two arguments nobody
+passed and dies parsing them. That is symbol interposition, demonstrated rather than
+asserted. `spike/shell`, which links no GTK 3 at all, brought the same engine up on the
+same runner in 264 ms.
 
 GTK 4 is the runtime's, through `winit-gtk4`. GTK 3 is `tauri-plugin-dialog`'s: that
 plugin's default feature is `gtk3`, which is `rfd/gtk3`. **It cannot be turned off from
