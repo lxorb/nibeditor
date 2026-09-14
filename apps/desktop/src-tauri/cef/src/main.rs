@@ -52,6 +52,28 @@ fn sandbox() -> SandboxPolicy {
     }
 }
 
+/// The variable the extra Chromium switches are written in.
+const ARGS: &str = "NIB_CEF_ARGS";
+
+/// Extra Chromium switches, as a list a person wrote in one string.
+///
+/// `NIB_CEF_ARGS=enable-logging=stderr,no-sandbox`: comma separated, each one a
+/// `key=value` pair or a bare key, appended to the browser process's command line in
+/// the order they are written. It exists for the gate, which needs Chromium's own
+/// fatal messages on stderr rather than in the log file inside the cache directory -
+/// and it is how the next thing a run needs to be asked gets asked without a rebuild.
+fn switches(written: &str) -> Vec<(String, Option<String>)> {
+    written
+        .split(',')
+        .map(str::trim)
+        .filter(|one| !one.is_empty())
+        .map(|one| match one.split_once('=') {
+            Some((key, value)) => (key.to_owned(), Some(value.to_owned())),
+            None => (one.to_owned(), None),
+        })
+        .collect()
+}
+
 /// Where the engine's profiles go: `<the app's settings folder>/web`.
 ///
 /// The same two steps Tauri takes for `app_config_dir`, with the same crate, so the
@@ -82,7 +104,8 @@ fn main() {
         .sandbox(sandbox())
         // `nib://` links reach the app the same way they do on the system's engine;
         // the plugin handles the arriving half either way.
-        .deep_link_schemes(["nib"]);
+        .deep_link_schemes(["nib"])
+        .command_line_args(switches(&std::env::var(ARGS).unwrap_or_default()));
 
     if let Some(path) = root_cache_path() {
         engine = engine.root_cache_path(path);
@@ -101,7 +124,24 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{root_cache_path, CONFIG};
+    use super::{root_cache_path, switches, CONFIG};
+
+    /// The switches a run can add, read the way a person would write them.
+    #[test]
+    fn the_command_line_reads_pairs_and_bare_keys() {
+        assert_eq!(
+            switches("enable-logging=stderr, no-sandbox ,,v=1"),
+            vec![
+                ("enable-logging".to_owned(), Some("stderr".to_owned())),
+                ("no-sandbox".to_owned(), None),
+                ("v".to_owned(), Some("1".to_owned())),
+            ]
+        );
+        assert!(
+            switches("").is_empty(),
+            "an unset variable adds no switches"
+        );
+    }
 
     /// One revision, in one place. The pin is what the bump workflow rewrites and
     /// what `upstream.py` reads, and a second revision anywhere in this manifest
