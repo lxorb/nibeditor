@@ -572,6 +572,13 @@ def loader_chain(binary: Path) -> dict:
     Delayed imports are checked and marked as delayed, because they cannot be what
     stopped a process before its first line: a delay-loaded module is not touched until
     something calls into it, which is why CEF's own link flags delay-load `libcef.dll`.
+
+    **Read `missing` together with `manifest`.** This resolves a name the way the file
+    system offers it, and an application manifest can redirect one of those to a
+    side-by-side assembly that does export the entry point - which is exactly what the
+    common controls do. So a row here is "the copy on disk does not have it", and
+    whether that mattered depends on the manifest beside it. With no manifest at all,
+    it mattered.
     """
     try:
         import pefile
@@ -650,14 +657,16 @@ def loader_chain(binary: Path) -> dict:
         for table, delayed in tables:
             for entry in table:
                 name = entry.dll.decode('ascii', 'replace') if entry.dll else '?'
+                # An api set is resolved by the loader through its own schema and not by
+                # finding a file, so it is skipped before the search rather than after
+                # it: a file of that name does exist here and there - a Windows Kit puts
+                # several on `PATH` - and reading one of those as the answer produced
+                # five missing entry points that were not missing at all.
+                if name.lower().startswith(('api-ms-', 'ext-ms-')):
+                    api_sets.add(name)
+                    continue
                 at = find(name)
                 if at is None:
-                    # An api set has no file of its own on most systems - the loader
-                    # resolves the name through a schema - so it is counted rather than
-                    # listed, and this walk's blind spot is said out loud below.
-                    if name.lower().startswith(('api-ms-', 'ext-ms-')):
-                        api_sets.add(name)
-                        continue
                     unresolved.append({'module': one.name, 'needs': name, 'delayed': delayed})
                     continue
                 have = exported(at)
@@ -667,11 +676,6 @@ def loader_chain(binary: Path) -> dict:
                         if wanted.name
                         else f'#{wanted.ordinal}'
                     )
-                    # An api set is resolved by the loader through a schema rather than
-                    # by a file, so an empty export table there is this walk's blind
-                    # spot and not a finding.
-                    if not have and name.lower().startswith(('api-ms-', 'ext-ms-')):
-                        continue
                     if asked not in have:
                         missing.append(
                             {

@@ -177,6 +177,7 @@ pub(crate) fn start(app: &AppHandle) {
 /// then one web tab, then two, then the engine's own pages.
 fn walk(app: &AppHandle, tabs: usize) {
     say("\"event\":\"tabs\",\"count\":0");
+    pulse(app, "the window");
     std::thread::sleep(SETTLE);
 
     let mut tab_labels: Vec<String> = Vec::new();
@@ -202,6 +203,7 @@ fn walk(app: &AppHandle, tabs: usize) {
             ),
         }
         say(&format!("\"event\":\"tabs\",\"count\":{}", at + 1));
+        pulse(app, &format!("tab {at}"));
         std::thread::sleep(SETTLE);
     }
 
@@ -247,6 +249,7 @@ fn walk(app: &AppHandle, tabs: usize) {
 
     std::thread::sleep(SETTLE);
     say("\"event\":\"shot:chrome-pages\"");
+    pulse(app, "the pages");
 
     answers(app, tabs, &tab_labels, &pages, probe);
 }
@@ -317,6 +320,42 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]
                 "\"event\":\"title\",\"label\":\"{label}\",\"title\":\"{title}\""
             ));
         }
+    }
+}
+
+/// How long the main thread is given to answer a round trip before the gate calls it
+/// blocked.
+const PULSE: Duration = Duration::from_secs(10);
+
+/// Round-trips the main thread and says how long it took, or that it never came back.
+///
+/// **The one question a hang leaves open.** When the second web tab did not come back
+/// on Windows, there was no way to tell whether the runtime was waiting for something
+/// or whether the whole main thread had stopped - and those have different owners: a
+/// blocked main thread cannot pump CEF's own work queue, which is exactly what CEF
+/// logged when it said *"Timeout of new browser info response for frame"*. So the gate
+/// asks the main thread to say hello at each step, and a step where it does not is the
+/// finding.
+fn pulse(app: &AppHandle, after: &str) {
+    let (sending, waiting) = std::sync::mpsc::channel::<()>();
+    let asked = Instant::now();
+    if let Err(error) = app.run_on_main_thread(move || {
+        let _ = sending.send(());
+    }) {
+        say(&format!(
+            "\"event\":\"pulse\",\"after\":\"{after}\",\"main_thread\":\"not asked: {error}\""
+        ));
+        return;
+    }
+    match waiting.recv_timeout(PULSE) {
+        Ok(()) => say(&format!(
+            "\"event\":\"pulse\",\"after\":\"{after}\",\"main_thread_ms\":{}",
+            asked.elapsed().as_millis()
+        )),
+        Err(_) => say(&format!(
+            "\"event\":\"pulse\",\"after\":\"{after}\",\"main_thread\":\"blocked for more than {} seconds\"",
+            PULSE.as_secs()
+        )),
     }
 }
 
