@@ -1271,9 +1271,9 @@ export const ps: Dictionary = {
   'Written by {model}': '{model} ليکلی',
   'Saving the recording': 'ثبت خوندول',
   'Turning the recording into words': 'ثبت کلمو ته اړول',
+  'Add an AI provider or sign in to turn speech into words.':
+    'د وينا د ليکنې لپاره يو AI چوونکی ورزيات کړه يا ننوځه.',
   'Open a space to record into.': 'د ثبت لپاره ځای پرانيځئ.',
-  'Sign in to take meeting notes.': 'د غونډې يادښت لپاره ننوځئ.',
-  'Sign in to turn a recording into words.': 'ثبت کلمو ته اړولو لپاره ننوځئ.',
   'That microphone could not be opened.': 'هغه مايکروفون ونه پرانيستل شو.',
   'That recording could not be saved.': 'هغه ثبت ونه خوندل شو.',
   'That recording could not be turned into words.': 'هغه ثبت کلمو ته ونه اړول شو.',

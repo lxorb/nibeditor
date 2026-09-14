@@ -1287,9 +1287,9 @@ export const ta: Dictionary = {
   'Written by {model}': '{model} எழுதியது',
   'Saving the recording': 'பதிவைச் சேமிக்கிறது',
   'Turning the recording into words': 'பதிவைச் சொற்களாக மாற்றுகிறது',
+  'Add an AI provider or sign in to turn speech into words.':
+    'பேச்சை எழுத்தாக மாற்ற ஒரு AI வழங்குநரைச் சேர்க்கவும் அல்லது உள்நுழையவும்.',
   'Open a space to record into.': 'பதிவு செய்ய ஒரு வெளியைத் திற.',
-  'Sign in to take meeting notes.': 'கூட்டக் குறிப்புகள் எடுக்க உள்நுழை.',
-  'Sign in to turn a recording into words.': 'பதிவைச் சொற்களாக மாற்ற உள்நுழை.',
   'That microphone could not be opened.': 'அந்த ஒலிவாங்கியைத் திறக்க முடியவில்லை.',
   'That recording could not be saved.': 'அந்தப் பதிவைச் சேமிக்க முடியவில்லை.',
   'That recording could not be turned into words.': 'அந்தப் பதிவைச் சொற்களாக மாற்ற முடியவில்லை.',

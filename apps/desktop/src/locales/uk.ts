@@ -1331,9 +1331,9 @@ export const uk: Dictionary = {
   'Written by {model}': 'Написано {model}',
   'Saving the recording': 'Збереження запису',
   'Turning the recording into words': 'Перетворення запису на слова',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Додайте ШІ-провайдера або увійдіть, щоб перетворювати мовлення на текст.',
   'Open a space to record into.': 'Відкрийте простір, куди записувати.',
-  'Sign in to take meeting notes.': 'Увійдіть, щоб вести нотатки зустрічі.',
-  'Sign in to turn a recording into words.': 'Увійдіть, щоб перетворити запис на слова.',
   'That microphone could not be opened.': 'Цей мікрофон не вдалося відкрити.',
   'That recording could not be saved.': 'Цей запис не вдалося зберегти.',
   'That recording could not be turned into words.': 'Цей запис не вдалося перетворити на слова.',

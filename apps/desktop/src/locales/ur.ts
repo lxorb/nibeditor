@@ -1268,9 +1268,9 @@ export const ur: Dictionary = {
   'Written by {model}': '{model} نے لکھا',
   'Saving the recording': 'ریکارڈنگ محفوظ کی جا رہی ہے',
   'Turning the recording into words': 'ریکارڈنگ کو الفاظ میں بدلا جا رہا ہے',
+  'Add an AI provider or sign in to turn speech into words.':
+    'بولی کو لکھائی میں بدلنے کے لیے AI فراہم کنندہ شامل کریں یا سائن ان کریں۔',
   'Open a space to record into.': 'ریکارڈ کرنے کے لیے ایک اسپیس کھولیں۔',
-  'Sign in to take meeting notes.': 'اجلاس کے نوٹس لینے کے لیے سائن ان کریں۔',
-  'Sign in to turn a recording into words.': 'ریکارڈنگ کو الفاظ میں بدلنے کے لیے سائن ان کریں۔',
   'That microphone could not be opened.': 'وہ مائیکروفون کھولا نہ جا سکا۔',
   'That recording could not be saved.': 'وہ ریکارڈنگ محفوظ نہ ہو سکی۔',
   'That recording could not be turned into words.': 'وہ ریکارڈنگ الفاظ میں نہ بدلی جا سکی۔',

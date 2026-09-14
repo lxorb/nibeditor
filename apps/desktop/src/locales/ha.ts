@@ -1289,9 +1289,9 @@ export const ha: Dictionary = {
   'Written by {model}': '{model} ya rubuta',
   'Saving the recording': 'Ana ajiye rikodin',
   'Turning the recording into words': 'Ana mayar da rikodin zuwa kalmomi',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Ƙara mai bayar da AI ko shiga don mayar da magana zuwa rubutu.',
   'Open a space to record into.': 'Buɗe wuri don yin rikodi a ciki.',
-  'Sign in to take meeting notes.': 'Shiga don ɗaukar bayanan taro.',
-  'Sign in to turn a recording into words.': 'Shiga don mayar da rikodi zuwa kalmomi.',
   'That microphone could not be opened.': 'Ba a iya buɗe wannan makirufo ba.',
   'That recording could not be saved.': 'Ba a iya ajiye wannan rikodin ba.',
   'That recording could not be turned into words.':

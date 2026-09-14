@@ -1275,9 +1275,9 @@ export const gsw: Dictionary = {
   'Written by {model}': 'Gschribe vo {model}',
   'Saving the recording': 'Ufnahm wird gspicheret',
   'Turning the recording into words': 'Ufnahm wird i Text umgwandlet',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Füeg en KI-Aabieter dazue oder mäld di aa, zum Sproch i Text umwandle.',
   'Open a space to record into.': 'Mach en Ablag uf zum Ufnäh.',
-  'Sign in to take meeting notes.': 'Zum Protokolliere amälde.',
-  'Sign in to turn a recording into words.': 'Zum en Ufnahm i Text umwandle amälde.',
   'That microphone could not be opened.': 'Das Mikrofon hät sich nöd uufmache laa.',
   'That recording could not be saved.': 'Die Ufnahm hät sich nöd spichere laa.',
   'That recording could not be turned into words.': 'Die Ufnahm hät sich nöd i Text umwandle laa.',

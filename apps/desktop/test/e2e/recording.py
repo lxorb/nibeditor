@@ -53,7 +53,7 @@ DIST = APP / "dist"
 SHOTS = HERE / "shots" / "recording"
 
 # In this agent's own range, and nowhere near the dev server's 1420.
-PORT = 19842
+PORT = 23304
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
 # What the fake Whisper route answers with, and what a summary comes back as. German,
@@ -224,6 +224,44 @@ def shot(page: Page, name: str) -> None:
     SHOTS.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(SHOTS / f"{name}.png"))
     say(f"shot {name}.png")
+
+
+class Byok:
+    """A transcriber of the reader's own, answered here.
+
+    The same route OpenAI serves and every OpenAI-compatible one serves under the same
+    name, which is the whole point of the shape: `POST /v1/audio/transcriptions`, a
+    multipart body with the sound in it, and words back. What this watches for is that
+    the app asked *it* and not the account - a reader who set up a whisper server on
+    their own machine did that so nothing would leave it.
+    """
+
+    def __init__(self) -> None:
+        self.asked = 0
+        self.models: list[str] = []
+        self.formats: list[str] = []
+        self.bytes: list[int] = []
+
+    def listen(self, route: Route) -> None:
+        self.asked += 1
+        body = route.request.post_data_buffer or b""
+        self.bytes.append(len(body))
+
+        # The multipart body, read for the two fields that say what was asked for. Read
+        # off the raw bytes rather than through a parser: the fields are short and the
+        # boundary is whatever the browser chose.
+        said = body.decode("latin-1")
+        for name, into in (("model", self.models), ("response_format", self.formats)):
+            mark = f'name="{name}"'
+            if mark in said:
+                after = said.split(mark, 1)[1]
+                into.append(after.split("\r\n\r\n", 1)[1].split("\r\n", 1)[0].strip())
+
+        route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({"text": HEARD, "language": LANGUAGE}),
+        )
 
 
 class Whisper:
@@ -478,6 +516,108 @@ def drive(browser: Browser) -> None:
     page.context.close()
 
 
+# A transcriber of the reader's own, set up the way the AI pane sets one up: a
+# compatible provider with an address on this machine. No account anywhere near it.
+OWN_TRANSCRIBER = """
+async (base) => {
+  const ai = window.nibApp.ai
+  for (const one of [...ai.providers]) ai.remove(one.id)
+  const made = ai.add('compatible')
+  ai.update(made.id, { name: 'On this machine', baseUrl: base, model: 'llama' })
+  ai.setDefault(made.id)
+  return { id: made.id, transcriber: ai.transcriber?.id ?? null }
+}
+"""
+
+
+def byok(browser: Browser) -> None:
+    """A recording turned into words by the reader's own transcriber, with no account.
+
+    The gap this is here for: transcribing asked for a nib account and nothing else, so
+    somebody with their own OpenAI key - or a whisper server on their own machine - was
+    told to sign in to turn their own recording into words. The Transcribe row was not
+    even in the menu.
+    """
+    say("=== a transcriber of the reader's own ===")
+    page, whisper = fresh(browser)
+    own = Byok()
+    page.route("**/v1/audio/transcriptions", own.listen)
+
+    made = page.evaluate(OWN_TRANSCRIBER, "http://127.0.0.1:23305/v1")
+    say(f"the provider is set up: {json.dumps(made)}")
+    if not made["transcriber"]:
+        wrong("a compatible provider is not read as a transcriber")
+
+    if page.evaluate("() => !!window.nibApp.account.accountToken"):
+        wrong("this check is about having no account, and there is one")
+
+    page.click(".cm-content")
+    page.keyboard.press("Control+End")
+
+    run_command(page, "Record")
+    wait_for(page, "document.querySelector('.recording')", "the pill")
+    page.wait_for_timeout(3200)
+    page.click(".recording button")
+    wait_for(page, "!document.querySelector('.recording')", "the pill to go")
+    wait_for(page, "window.nibApp.workspace.active.doc.includes('![[recording-')", "the embed")
+
+    page.keyboard.press("Control+Home")
+    page.wait_for_timeout(1400)
+
+    box = page.locator("audio").first.bounding_box()
+    if not box:
+        wrong("the player has no box to press")
+        page.context.close()
+        return
+
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, button="right")
+    page.wait_for_timeout(400)
+
+    rows = page.evaluate(
+        "() => [...document.querySelectorAll('[role=menu] button, [role=menuitem]')]"
+        ".map((one) => one.textContent.trim())"
+    )
+    if "Transcribe" not in rows:
+        wrong(f"no Transcribe row with a provider of one's own and no account: {rows}")
+        page.keyboard.press("Escape")
+        page.context.close()
+        return
+
+    shot(page, "byok-menu")
+    page.get_by_role("menuitem", name="Transcribe").click()
+    wait_for(page, "window.nibApp.workspace.active.doc.includes('[!quote]')", "the transcript")
+
+    said = note_says(page)
+    if HEARD not in said:
+        wrong(f"the words the provider heard are not in the note:\n{said}")
+    # The note says which model wrote it, and it is the reader's own rather than Whisper.
+    if "> *Written by whisper-1*" not in said:
+        wrong(f"the transcript does not name the model that wrote it:\n{said}")
+    if "> [!quote] Transcript (German)" not in said:
+        wrong(f"the language the provider said is not in the heading:\n{said}")
+    say(f"the callout reads:\n{said[said.index('> [!quote]') :]}")
+    shot(page, "byok-transcript")
+
+    if own.asked < 1:
+        wrong("nothing was sent to the reader's own transcriber")
+    else:
+        say(f"{own.asked} piece(s) to the provider: models {own.models}, shapes {own.formats}")
+    if own.models and own.models[0] != "whisper-1":
+        wrong(f"a server on this machine was asked for {own.models[0]!r}")
+    if own.formats and own.formats[0] != "verbose_json":
+        wrong(f"the language was not asked for: {own.formats[0]!r}")
+    for size in own.bytes:
+        if size < 44:
+            wrong(f"a piece of {size} bytes is not a WAV at all")
+
+    # And the account's route was never touched, which is the point of having one's own.
+    if whisper.heard:
+        wrong(f"{whisper.heard} piece(s) went to the account as well")
+
+    page.context.close()
+
+
 def meeting(browser: Browser) -> None:
     say("--- meeting notes ---")
     page, whisper = fresh(browser)
@@ -641,6 +781,7 @@ def main() -> int:
                 )
                 try:
                     drive(browser)
+                    byok(browser)
                     meeting(browser)
                     phone(browser)
                 finally:

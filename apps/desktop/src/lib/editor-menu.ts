@@ -490,8 +490,9 @@ function spellingEntries(view: EditorView | undefined, event: MouseEvent): MenuE
  *  the recordings in a note was meant. The words go under the player through the same
  *  Whisper path a meeting's live transcript goes through; see recorder/commands.ts.
  *
- *  Only with an account, because that path is on the Worker. Left out rather than
- *  greyed out: somebody with no account has nothing to press it for. */
+ *  Only where there is something to ask - a provider of the reader's own, or an
+ *  account. Left out rather than greyed out: somebody with neither has nothing to press
+ *  it for. See recorder/transcribe.ts, which is what knows. */
 function recordingEntries(view: EditorView | undefined, at: number | null): MenuEntry[] {
   if (!view || at === null || view.state.readOnly || !canTranscribe()) return []
   if (!recordingAt(view, at)) return []

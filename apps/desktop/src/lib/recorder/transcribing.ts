@@ -15,8 +15,7 @@ import { links } from '../link-index.svelte'
 import { settings } from '../settings.svelte'
 import { assetUrl, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
-import { WHISPER } from './recording.svelte'
-import { wordsInFile } from './transcribe'
+import { transcribedBy, wordsInFile } from './transcribe'
 import { languageName, transcriptCallout } from './transcript'
 
 /** The recording named by an embed, as bytes, or null where the space has no such
@@ -67,7 +66,7 @@ export async function transcribeInto(view: EditorView, at: number, target: strin
     const said = transcriptCallout(
       words.text,
       words.language ? languageName(words.language, i18n.language) : '',
-      WHISPER,
+      transcribedBy(),
     )
 
     view.dispatch({

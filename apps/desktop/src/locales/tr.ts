@@ -1269,9 +1269,9 @@ export const tr: Dictionary = {
   'Written by {model}': '{model} yazdı',
   'Saving the recording': 'Kayıt saklanıyor',
   'Turning the recording into words': 'Kayıt sözcüklere çevriliyor',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Konuşmayı yazıya çevirmek için bir yapay zekâ sağlayıcısı ekle ya da giriş yap.',
   'Open a space to record into.': 'Kayıt yapılacak bir alan açın.',
-  'Sign in to take meeting notes.': 'Toplantı notu almak için oturum açın.',
-  'Sign in to turn a recording into words.': 'Bir kaydı sözcüklere çevirmek için oturum açın.',
   'That microphone could not be opened.': 'Bu mikrofon açılamadı.',
   'That recording could not be saved.': 'Bu kayıt saklanamadı.',
   'That recording could not be turned into words.': 'Bu kayıt sözcüklere çevrilemedi.',

@@ -1267,9 +1267,9 @@ export const bn: Dictionary = {
   'Written by {model}': '{model} লিখেছে',
   'Saving the recording': 'রেকর্ডিং রাখা হচ্ছে',
   'Turning the recording into words': 'রেকর্ডিং কথায় বদলানো হচ্ছে',
+  'Add an AI provider or sign in to turn speech into words.':
+    'কথা লেখায় বদলাতে একটি AI প্রদানকারী যোগ করুন বা সাইন ইন করুন।',
   'Open a space to record into.': 'রেকর্ড করার জন্য একটি স্পেস খুলুন।',
-  'Sign in to take meeting notes.': 'সভার নোট নিতে সাইন ইন করুন।',
-  'Sign in to turn a recording into words.': 'রেকর্ডিং কথায় বদলাতে সাইন ইন করুন।',
   'That microphone could not be opened.': 'ওই মাইক্রোফোন খোলা গেল না।',
   'That recording could not be saved.': 'ওই রেকর্ডিং রাখা গেল না।',
   'That recording could not be turned into words.': 'ওই রেকর্ডিং কথায় বদলানো গেল না।',

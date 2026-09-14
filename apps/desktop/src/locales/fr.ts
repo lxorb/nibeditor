@@ -1313,9 +1313,9 @@ export const fr: Dictionary = {
   'Written by {model}': 'Écrit par {model}',
   'Saving the recording': 'Enregistrement en cours de sauvegarde',
   'Turning the recording into words': 'Transcription de l’enregistrement',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Ajoute un fournisseur d’IA ou connecte-toi pour transcrire la parole.',
   'Open a space to record into.': 'Ouvrez un espace pour y enregistrer.',
-  'Sign in to take meeting notes.': 'Connectez-vous pour prendre des notes de réunion.',
-  'Sign in to turn a recording into words.': 'Connectez-vous pour transcrire un enregistrement.',
   'That microphone could not be opened.': 'Ce microphone n’a pas pu être ouvert.',
   'That recording could not be saved.': 'Cet enregistrement n’a pas pu être sauvegardé.',
   'That recording could not be turned into words.': 'Cet enregistrement n’a pas pu être transcrit.',

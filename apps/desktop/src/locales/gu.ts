@@ -1262,9 +1262,9 @@ export const gu: Dictionary = {
   'Written by {model}': '{model} એ લખ્યું',
   'Saving the recording': 'રેકૉર્ડિંગ સાચવે છે',
   'Turning the recording into words': 'રેકૉર્ડિંગને શબ્દોમાં ફેરવે છે',
+  'Add an AI provider or sign in to turn speech into words.':
+    'વાણીને લખાણમાં ફેરવવા માટે AI પ્રદાતા ઉમેરો અથવા સાઇન ઇન કરો.',
   'Open a space to record into.': 'રેકૉર્ડ કરવા માટે એક જગ્યા ખોલો.',
-  'Sign in to take meeting notes.': 'બેઠકની નોંધ લેવા સાઇન ઇન કરો.',
-  'Sign in to turn a recording into words.': 'રેકૉર્ડિંગ શબ્દોમાં ફેરવવા સાઇન ઇન કરો.',
   'That microphone could not be opened.': 'એ માઇક્રોફોન ખોલી શકાયો નહીં.',
   'That recording could not be saved.': 'એ રેકૉર્ડિંગ સાચવી શકાયું નહીં.',
   'That recording could not be turned into words.': 'એ રેકૉર્ડિંગ શબ્દોમાં ફેરવી શકાયું નહીં.',

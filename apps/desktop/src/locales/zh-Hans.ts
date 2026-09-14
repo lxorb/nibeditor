@@ -1236,9 +1236,9 @@ export const zhHans: Dictionary = {
   'Written by {model}': '由 {model} 撰写',
   'Saving the recording': '正在保存录音',
   'Turning the recording into words': '正在把录音转成文字',
+  'Add an AI provider or sign in to turn speech into words.':
+    '添加 AI 提供方或登录，即可把语音转成文字。',
   'Open a space to record into.': '打开一个空间以录入。',
-  'Sign in to take meeting notes.': '登录后可记会议笔记。',
-  'Sign in to turn a recording into words.': '登录后可把录音转成文字。',
   'That microphone could not be opened.': '无法打开该麦克风。',
   'That recording could not be saved.': '无法保存该录音。',
   'That recording could not be turned into words.': '无法把该录音转成文字。',

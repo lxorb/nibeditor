@@ -1252,9 +1252,9 @@ export const am: Dictionary = {
   'Written by {model}': '{model} ጽፎታል',
   'Saving the recording': 'ቀረጻውን በማስቀመጥ ላይ',
   'Turning the recording into words': 'ቀረጻውን ወደ ቃላት በመለወጥ ላይ',
+  'Add an AI provider or sign in to turn speech into words.':
+    'ንግግርን ወደ ጽሑፍ ለመቀየር የAI አቅራቢ አክል ወይም ግባ።',
   'Open a space to record into.': 'የሚቀረጽበት ቦታ ክፈት።',
-  'Sign in to take meeting notes.': 'የስብሰባ ማስታወሻ ለመያዝ ግባ።',
-  'Sign in to turn a recording into words.': 'ቀረጻን ወደ ቃላት ለመለወጥ ግባ።',
   'That microphone could not be opened.': 'ያ ማይክሮፎን መከፈት አልቻለም።',
   'That recording could not be saved.': 'ያ ቀረጻ መቀመጥ አልቻለም።',
   'That recording could not be turned into words.': 'ያ ቀረጻ ወደ ቃላት መለወጥ አልቻለም።',

@@ -1289,9 +1289,9 @@ export const fil: Dictionary = {
   'Written by {model}': 'Isinulat ni {model}',
   'Saving the recording': 'Sinasave ang recording',
   'Turning the recording into words': 'Ginagawang salita ang recording',
+  'Add an AI provider or sign in to turn speech into words.':
+    'Magdagdag ng AI provider o mag-sign in para maging teksto ang pananalita.',
   'Open a space to record into.': 'Magbukas ng espasyong mare-record-an.',
-  'Sign in to take meeting notes.': 'Mag-sign in para magtala ng pulong.',
-  'Sign in to turn a recording into words.': 'Mag-sign in para gawing salita ang recording.',
   'That microphone could not be opened.': 'Hindi mabuksan ang mikropono na iyon.',
   'That recording could not be saved.': 'Hindi na-save ang recording na iyon.',
   'That recording could not be turned into words.': 'Hindi nagawang salita ang recording na iyon.',

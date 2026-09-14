@@ -1270,9 +1270,9 @@ export const fa: Dictionary = {
   'Written by {model}': 'نوشته {model}',
   'Saving the recording': 'ذخیره ضبط',
   'Turning the recording into words': 'تبدیل ضبط به واژه',
+  'Add an AI provider or sign in to turn speech into words.':
+    'برای تبدیل گفتار به نوشته، یک ارائه‌دهنده هوش مصنوعی اضافه کن یا وارد شو.',
   'Open a space to record into.': 'فضایی برای ضبط در آن بگشایید.',
-  'Sign in to take meeting notes.': 'برای یادداشت نشست وارد شوید.',
-  'Sign in to turn a recording into words.': 'برای تبدیل ضبط به واژه وارد شوید.',
   'That microphone could not be opened.': 'آن میکروفون گشوده نشد.',
   'That recording could not be saved.': 'آن ضبط ذخیره نشد.',
   'That recording could not be turned into words.': 'آن ضبط به واژه تبدیل نشد.',

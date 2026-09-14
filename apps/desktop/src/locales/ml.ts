@@ -1283,9 +1283,9 @@ export const ml: Dictionary = {
   'Written by {model}': '{model} എഴുതിയത്',
   'Saving the recording': 'റെക്കോർഡിംഗ് സൂക്ഷിക്കുന്നു',
   'Turning the recording into words': 'റെക്കോർഡിംഗ് വാക്കുകളാക്കുന്നു',
+  'Add an AI provider or sign in to turn speech into words.':
+    'സംസാരം എഴുത്താക്കാൻ ഒരു AI ദാതാവിനെ ചേർക്കുക അല്ലെങ്കിൽ സൈൻ ഇൻ ചെയ്യുക.',
   'Open a space to record into.': 'റെക്കോർഡ് ചെയ്യാൻ ഒരു സ്പേസ് തുറക്കുക.',
-  'Sign in to take meeting notes.': 'യോഗക്കുറിപ്പ് എടുക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
-  'Sign in to turn a recording into words.': 'റെക്കോർഡിംഗ് വാക്കുകളാക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'That microphone could not be opened.': 'ആ മൈക്രോഫോൺ തുറക്കാനായില്ല.',
   'That recording could not be saved.': 'ആ റെക്കോർഡിംഗ് സൂക്ഷിക്കാനായില്ല.',
   'That recording could not be turned into words.': 'ആ റെക്കോർഡിംഗ് വാക്കുകളാക്കാനായില്ല.',
