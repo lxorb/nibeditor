@@ -26,6 +26,7 @@ import {
   type Transaction,
   turnBlocksInto,
 } from '@nib/editor'
+import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
 import { countText } from './counts'
 import { linkTo } from './composer'
@@ -34,7 +35,6 @@ import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
 import { recordingAt, transcribeEmbed } from './recorder/commands'
-import { canTranscribe } from './recorder/transcribe'
 import { shortcuts } from './shortcuts.svelte'
 import { noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'

@@ -91,7 +91,8 @@ vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
 
 const { account } = await import('../account.svelte')
 const { ai } = await import('../ai/store.svelte')
-const { canTranscribe, heardPiece, transcribedBy, WHISPER } = await import('./transcribe')
+const { canTranscribe } = await import('../ai/hears')
+const { heardPiece, transcribedBy, WHISPER } = await import('./transcribe')
 
 /** A piece of sound, of a size a test can recognise again. */
 const wav = new Uint8Array(new ArrayBuffer(2048))

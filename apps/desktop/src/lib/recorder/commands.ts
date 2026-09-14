@@ -20,10 +20,10 @@
 
 import type { EditorView } from '@nib/editor'
 import { embedKind, parseWikilink } from '@nib/markdown/links'
+import { canTranscribe } from '../ai/hears'
 import { t } from '../i18n.svelte'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere } from './container'
-import { canTranscribe } from './transcribe'
 
 /** The recorder, once one of the rows below has woken it.
  *

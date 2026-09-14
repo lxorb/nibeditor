@@ -44,7 +44,8 @@ import {
 import { spaceRelative } from './paths'
 import { recordingPill } from '../surfaces.svelte'
 import { canSummarise, summaryOf } from './summarise'
-import { canTranscribe, heardPiece, LIVE_SECONDS, transcribedBy } from './transcribe'
+import { canTranscribe } from '../ai/hears'
+import { heardPiece, LIVE_SECONDS, transcribedBy } from './transcribe'
 import {
   embedFor,
   languageName,

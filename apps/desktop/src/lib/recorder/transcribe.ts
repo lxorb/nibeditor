@@ -116,13 +116,6 @@ function modelsFor(provider: Provider): string[] {
   return remembered ? [remembered, ...every.filter((one) => one !== remembered)] : every
 }
 
-/** Whether there is anything at all to ask: a provider of the reader's own, or an
- *  account. Recording needs neither; transcribing needs one of them. Asked before a row
- *  is offered rather than after it is pressed. */
-export function canTranscribe(): boolean {
-  return !!transcriberNow() || !!account.accountToken
-}
-
 /** The name to write under a transcript, before a word of it has arrived.
  *
  *  A meeting's note is headed the moment it is made, so this says who is about to write
