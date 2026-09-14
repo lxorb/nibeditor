@@ -27,7 +27,7 @@ import { warm } from './search/warm.svelte'
 import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
-import { markPainted } from './trace'
+import { mark, markPainted } from './trace'
 import { afterQuiet } from './timing'
 import { isRecord, keep, stored } from './stored'
 import { WELCOME_PATH } from './welcome'
@@ -1585,6 +1585,7 @@ class Workspace {
    *  workspace/spaces. */
   async loadSpaces() {
     await spaces.loadSpaces(this)
+    mark('spaces listed')
   }
 
   /** A space the account has that this machine does not. */
@@ -1640,11 +1641,18 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
+    mark('tree asked')
     try {
       this.tree = await invoke<Entry>('read_tree', { root, options: this.treeOptions })
     } catch {
       this.tree = null
     }
+
+    // The three marks around this read are the launch's largest single step on a space
+    // of a few thousand notes, and they are three rather than one so that the answer
+    // says where: `tree asked` to `tree walked` is the disk, `tree walked` to here is
+    // the bridge and the parse, and here to `tree painted` is the rows. See tree.rs.
+    mark('tree read')
 
     // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))

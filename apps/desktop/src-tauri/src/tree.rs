@@ -81,14 +81,23 @@ pub fn read_tree(
     let space = fs::canonicalize(&space).map_err(|error| cannot("resolve", &space, &error))?;
     let mut left = MAX_ENTRIES;
 
-    walk(
+    let tree = walk(
         &space,
         &path,
         &options.unwrap_or_default(),
         0,
         &mut Seen::default(),
         &mut left,
-    )
+    );
+
+    // Which half of a slow launch this is. The window times the round trip; this times
+    // the walk inside it, so the two numbers say whether a space takes its time on the
+    // disk or on the way back through the bridge. The count goes in the name because a
+    // space being opened later marks again and a row that cannot be told from the
+    // launch's own is a row nobody can read. See lib/trace.ts, and `loadTree`.
+    crate::trace::mark(&format!("tree walked: {} entries", MAX_ENTRIES - left));
+
+    tree
 }
 
 /// One folder and its children.

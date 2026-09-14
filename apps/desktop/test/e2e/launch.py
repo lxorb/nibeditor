@@ -24,7 +24,7 @@ build loads the dev server rather than the page inside it and a window with no p
 has no launch to trace:
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.launch"}'
 
 Every run gets `NIB_SPACES_DIR` pointed at a folder of its own, so nothing here
 reads or writes the notes anybody has. `--corpus big` copies the five thousand note
@@ -50,9 +50,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
 
-#: The identifier the probe build carries, and so the folder it keeps its own log
-#: and settings in. Never the one somebody's real notes are under.
-PROBE = "ch.emilvinu.nib.probe"
+#: The identifier this build carries, and so the folder it keeps its own log and
+#: settings in. Never the one somebody's real notes are under.
+#:
+#: Its own rather than the `.probe` other measurements here use, because the app holds a
+#: single-instance lock keyed by exactly this string: a launch made while another build
+#: with the same identifier is running never opens a window at all. It hands its
+#: arguments to the one already up and exits, and leaves nothing behind - no window, no
+#: trace, and a drive reporting "no line" for a reason that has nothing to do with the
+#: app being slow. Four runs were lost that way before this was written, to another
+#: agent's probe in another worktree; see `handed over` in `launched`.
+PROBE = "ch.emilvinu.nib.launch"
 
 #: Where that build puts the binary.
 EXE = APP / "src-tauri" / "target" / "release" / "nib.exe"
@@ -64,6 +72,10 @@ WATCH = 26
 
 #: And how long to wait for the file to be written after that.
 WRITTEN = 3
+
+#: How long to give a launch to prove it is one. A build that met the single-instance
+#: lock is gone well inside this; one that is opening a window is not.
+ALIVE = 2
 
 
 def say(words: str) -> None:
@@ -149,6 +161,16 @@ def launched(spaces: Path, slow: bool) -> dict | None:
     }
 
     started = subprocess.Popen([str(EXE)], env=environment)
+
+    # Whether this process is the one that opens the window, or whether it found a window
+    # already up under the same identifier and handed itself over to it. The second is
+    # not a slow launch and not a failed one: it is no launch, and reporting it as either
+    # is a measurement of nothing.
+    time.sleep(ALIVE)
+    if started.poll() is not None:
+        say("handed over to a build already running under this identifier: no launch")
+        return None
+
     if slow:
         # A slower device, as far as one can be had without one: the process pinned
         # to a single core and put below normal, which is the proxy this machine can
@@ -165,7 +187,7 @@ def launched(spaces: Path, slow: bool) -> dict | None:
             check=False,
         )
 
-    time.sleep(WATCH)
+    time.sleep(WATCH - ALIVE)
     started.kill()
     started.wait(timeout=30)
     time.sleep(WRITTEN)
