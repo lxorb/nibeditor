@@ -73,6 +73,10 @@ function space(many: number): Entry {
 function compares(run: () => void): number {
   const proto = Intl.Collator.prototype
   const was = Object.getOwnPropertyDescriptor(proto, 'compare')
+  // Taken off the descriptor and called with the collator the app is asking, which is
+  // the whole point of standing in front of a getter: `this` is deliberately somebody
+  // else's here, and the getter is put back before this function returns.
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- see above
   const reader = was?.get
   if (!reader) throw new Error('no compare getter to count through')
 
