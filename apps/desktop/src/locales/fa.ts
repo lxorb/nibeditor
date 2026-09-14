@@ -14,12 +14,12 @@ export const fa: Dictionary = {
   'Delete this page': 'حذف این صفحه',
   'Page {number}': 'صفحه {number}',
   'The paper could not be read': 'کاغذ خوانده نشد',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'لتر',
   'Long page': 'صفحه بلند',
   Blank: 'خالی',
-  Lines: 'خط‌دار',
   Grid: 'شطرنجی',
   Dots: 'نقطه‌چین',
   '{at} / {count}': '{at} / {count}',

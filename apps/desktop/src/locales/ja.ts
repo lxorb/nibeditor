@@ -14,12 +14,12 @@ export const ja: Dictionary = {
   'Delete this page': 'このページを削除',
   'Page {number}': '{number} ページ',
   'The paper could not be read': '用紙を読み込めませんでした',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'レター',
   'Long page': '長いページ',
   Blank: '無地',
-  Lines: '横罫',
   Grid: '方眼',
   Dots: 'ドット',
   '{at} / {count}': '{at} / {count}',

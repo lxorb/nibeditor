@@ -14,12 +14,12 @@ export const my: Dictionary = {
   'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',
   'Page {number}': 'စာမျက်နှာ {number}',
   'The paper could not be read': 'စာရွက်ကို ဖတ်လို့မရပါ',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'ရှည်သောစာမျက်နှာ',
   Blank: 'အလွတ်',
-  Lines: 'မျဉ်းများ',
   Grid: 'ဆန်းခါ',
   Dots: 'အစက်များ',
   '{at} / {count}': '{at} / {count}',

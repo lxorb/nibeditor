@@ -14,12 +14,12 @@ export const vi: Dictionary = {
   'Delete this page': 'Xoá trang này',
   'Page {number}': 'Trang {number}',
   'The paper could not be read': 'Không đọc được giấy',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Trang dài',
   Blank: 'Trắng',
-  Lines: 'Dòng kẻ',
   Grid: 'Ô vuông',
   Dots: 'Dấu chấm',
   '{at} / {count}': '{at} / {count}',

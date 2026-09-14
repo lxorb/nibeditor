@@ -14,12 +14,12 @@ export const ha: Dictionary = {
   'Delete this page': 'Share wannan shafi',
   'Page {number}': 'Shafi {number}',
   'The paper could not be read': 'Ba a iya karanta takardar ba',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Shafi mai tsawo',
   Blank: 'Fanko',
-  Lines: 'Layuka',
   Grid: 'Tsari',
   Dots: 'Ɗigogi',
   '{at} / {count}': '{at} / {count}',

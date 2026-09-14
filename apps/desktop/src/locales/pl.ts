@@ -14,12 +14,12 @@ export const pl: Dictionary = {
   'Delete this page': 'Usuń tę stronę',
   'Page {number}': 'Strona {number}',
   'The paper could not be read': 'Nie udało się odczytać papieru',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Długa strona',
   Blank: 'Gładka',
-  Lines: 'Linie',
   Grid: 'Kratka',
   Dots: 'Kropki',
   '{at} / {count}': '{at} / {count}',

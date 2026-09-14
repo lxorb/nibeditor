@@ -14,12 +14,12 @@ export const jv: Dictionary = {
   'Delete this page': 'Busak kaca iki',
   'Page {number}': 'Kaca {number}',
   'The paper could not be read': 'Kertas ora bisa diwaca',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Kaca dawa',
   Blank: 'Kosong',
-  Lines: 'Garis',
   Grid: 'Kotak',
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',

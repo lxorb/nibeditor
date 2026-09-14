@@ -14,12 +14,12 @@ export const hi: Dictionary = {
   'Delete this page': 'यह पृष्ठ हटाएँ',
   'Page {number}': 'पृष्ठ {number}',
   'The paper could not be read': 'कागज़ पढ़ा नहीं जा सका',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'लेटर',
   'Long page': 'लंबा पृष्ठ',
   Blank: 'खाली',
-  Lines: 'रेखाएँ',
   Grid: 'ग्रिड',
   Dots: 'बिंदु',
   '{at} / {count}': '{at} / {count}',

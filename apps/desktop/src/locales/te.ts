@@ -14,12 +14,12 @@ export const te: Dictionary = {
   'Delete this page': 'ఈ పేజీ తొలగించు',
   'Page {number}': 'పేజీ {number}',
   'The paper could not be read': 'కాగితాన్ని చదవలేకపోయాం',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'లెటర్',
   'Long page': 'పొడవైన పేజీ',
   Blank: 'ఖాళీ',
-  Lines: 'గీతలు',
   Grid: 'గ్రిడ్',
   Dots: 'చుక్కలు',
   '{at} / {count}': '{at} / {count}',

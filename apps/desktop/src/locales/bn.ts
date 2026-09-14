@@ -14,12 +14,12 @@ export const bn: Dictionary = {
   'Delete this page': 'এই পাতা মুছুন',
   'Page {number}': 'পাতা {number}',
   'The paper could not be read': 'কাগজটি পড়া যায়নি',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'লেটার',
   'Long page': 'লম্বা পাতা',
   Blank: 'খালি',
-  Lines: 'রেখা',
   Grid: 'ছক',
   Dots: 'বিন্দু',
   '{at} / {count}': '{at} / {count}',

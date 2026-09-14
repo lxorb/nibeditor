@@ -14,12 +14,12 @@ export const th: Dictionary = {
   'Delete this page': 'ลบหน้านี้',
   'Page {number}': 'หน้า {number}',
   'The paper could not be read': 'อ่านกระดาษไม่ได้',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'หน้ายาว',
   Blank: 'ว่าง',
-  Lines: 'เส้นบรรทัด',
   Grid: 'ตาราง',
   Dots: 'จุด',
   '{at} / {count}': '{at} / {count}',

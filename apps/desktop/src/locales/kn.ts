@@ -14,12 +14,12 @@ export const kn: Dictionary = {
   'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',
   'Page {number}': 'ಪುಟ {number}',
   'The paper could not be read': 'ಕಾಗದವನ್ನು ಓದಲು ಆಗಲಿಲ್ಲ',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'ಲೆಟರ್',
   'Long page': 'ಉದ್ದದ ಪುಟ',
   Blank: 'ಖಾಲಿ',
-  Lines: 'ಗೆರೆಗಳು',
   Grid: 'ಚೌಕಟ್ಟು',
   Dots: 'ಚುಕ್ಕೆಗಳು',
   '{at} / {count}': '{at} / {count}',

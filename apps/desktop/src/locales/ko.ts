@@ -14,12 +14,12 @@ export const ko: Dictionary = {
   'Delete this page': '이 페이지 삭제',
   'Page {number}': '{number}쪽',
   'The paper could not be read': '용지를 읽을 수 없습니다',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '레터',
   'Long page': '긴 페이지',
   Blank: '빈 종이',
-  Lines: '줄',
   Grid: '격자',
   Dots: '점',
   '{at} / {count}': '{at} / {count}',

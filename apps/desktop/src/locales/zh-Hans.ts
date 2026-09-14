@@ -14,12 +14,12 @@ export const zhHans: Dictionary = {
   'Delete this page': '删除此页',
   'Page {number}': '第 {number} 页',
   'The paper could not be read': '无法读取纸张',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: '信纸',
   'Long page': '长页',
   Blank: '空白',
-  Lines: '横线',
   Grid: '方格',
   Dots: '点阵',
   '{at} / {count}': '{at} / {count}',

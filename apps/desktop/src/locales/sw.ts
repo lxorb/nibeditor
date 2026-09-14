@@ -14,12 +14,12 @@ export const sw: Dictionary = {
   'Delete this page': 'Futa ukurasa huu',
   'Page {number}': 'Ukurasa {number}',
   'The paper could not be read': 'Karatasi haikuweza kusomwa',
-  // The three papers and the four rulings, which are the rows the page menu offers
+  // The three papers and the rulings, which are the rows the page menu offers.
+  // `Lines` is one word for two things and is filed with the graph's own rows.
   A4: 'A4',
   Letter: 'Letter',
   'Long page': 'Ukurasa mrefu',
   Blank: 'Wazi',
-  Lines: 'Mistari',
   Grid: 'Gridi',
   Dots: 'Vitone',
   '{at} / {count}': '{at} / {count}',
