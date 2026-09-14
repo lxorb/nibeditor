@@ -946,7 +946,7 @@
     if (tools.which !== 'select' && tools.which !== 'hand') return
 
     store.halt()
-    const fitted = store.widest ? (width - 2 * 28) / store.widest : 0
+    const fitted = store.fitted
     if (fitted && Math.abs(camera.scale - fitted) < fitted * 0.005) store.fitPage()
     else store.fitAgain()
   }

@@ -241,10 +241,9 @@ export class PagesStore extends CanvasStore {
   /** The widest page across the pane, which is what fitting means for pages: a
    *  column has no width to frame beyond the paper's own. */
   fitWidth(keepTop = true) {
-    const widest = this.widest
-    if (!widest || !this.pane.width || !this.pane.height) return
+    const scale = this.fitted
+    if (!scale || !this.pane.height) return
 
-    const scale = clampScale((this.pane.width - 2 * MARGIN) / widest)
     const down = this.pane.height / scale
     // Kept where it was by the top of the view rather than by the middle: a zoom that
     // moved the page somebody is reading is a zoom that lost their place.
@@ -265,6 +264,18 @@ export class PagesStore extends CanvasStore {
     const { width, height } = this.pane
     this.theirs()
     this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by))
+  }
+
+  /** The scale the widest page is fitted across the pane at, or nought where there
+   *  is nothing to fit yet.
+   *
+   *  Read as well as set, because a double tap asks whether the paper is already
+   *  fitted before deciding which of the two fits it means; see Pages.svelte. */
+  get fitted(): number {
+    const widest = this.widest
+    if (!widest || !this.pane.width) return 0
+
+    return clampScale((this.pane.width - 2 * MARGIN) / widest)
   }
 
   /** The whole of the page being read in the pane, which is the other thing a
