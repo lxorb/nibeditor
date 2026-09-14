@@ -215,6 +215,15 @@ function holds(tail: string): boolean {
  *  kilobytes fetched by the first drag, the first press on the menu and the first
  *  syncing pass. See docs/tree.md and lib/ai/ask.ts, which is the same seam.
  *
+ *  3,117,488 over 373 files on 2026-09-15, which is where the ceiling below is set from.
+ *  Two and a half kilobytes of that is a batch of Emil's: one list of the kinds a new tab
+ *  can be (new-kinds.ts), the chord that opens it, and the sheet that names an unsaved
+ *  tab. Eager because a menu is: the strip's plus holds the list and the File menu reads
+ *  the same one. What is not eager is the two heaviest halves of it - the buttons a pane
+ *  with nothing open shows (NewHere.svelte, through `emptySurface`) and the places a save
+ *  can write to (move-targets.ts, fetched by the first save) - so what arrived here is
+ *  the list itself and the words for it.
+ *
  *  The two figures move independently, which is the point of having both: batch 118
  *  took a hundred and sixty-seven kilobytes out of the built one and put five hundred
  *  bytes of comment into this one, because what it moved was a library's own import.
@@ -233,7 +242,7 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_115_000
+const BUDGET = 3_148_000
 const MOST_FILES = 386
 
 describe('what the app evaluates before it draws anything', () => {
