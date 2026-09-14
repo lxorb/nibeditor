@@ -5,6 +5,7 @@ Seven of them, each one a thing the app claimed and did not do:
 - the Links setting reaches the `[[` popup, so a picked link is spelled the way
   every other link the app writes is - in a nested space, where the three markdown
   spellings are three different links
+- the card over a `[[link]]` is the linked note, written in where it stands
 - an indented block folds, chevron and all
 - a block of the note's own HTML that runs draws its click-to-load card in the
   editor, where it used to draw nothing
@@ -373,6 +374,128 @@ def drive_links(page: Page, paths: dict[str, str]) -> None:
 
     shot(page, "02-links-heading-and-block")
     format_to(page, "wikilink")
+
+
+# ── The card over a link is the note, editable ────────────────────────
+
+CARD = """
+() => {
+  const card = document.querySelector('.nib-note-preview')
+  if (!card) return null
+
+  const body = card.querySelector('.nib-note-preview-body')
+  const inner = card.querySelector('.cm-content')
+  const box = card.getBoundingClientRect()
+
+  return {
+    name: card.querySelector('.nib-note-preview-name')?.textContent ?? '',
+    written: body?.dataset.written ?? 'no',
+    editor: !!inner,
+    said: inner ? inner.textContent.slice(0, 40) : (body?.textContent ?? '').slice(0, 40),
+    top: Math.round(box.top),
+    height: Math.round(box.height),
+  }
+}
+"""
+
+
+def drive_hover(page: Page, paths: dict[str, str]) -> None:
+    """The note behind a link, and a word of it fixed without opening it.
+
+    The pointer has to rest on the link with the modifier down, which is what says
+    "I mean this link"; the card is opened by the editor's own hover, so the drive
+    holds the key and puts the pointer where CodeMirror says the link is."""
+    away(page)
+    open_note(page, paths["monday"])
+
+    page.evaluate(
+        """() => {
+          const doc = window.nib.state.doc
+          const line = '\\n\\nSee [[Deep note]] here.\\n'
+          window.nib.dispatch({
+            changes: { from: doc.length, insert: line },
+            selection: { anchor: 0 },
+          })
+          window.nib.focus()
+        }"""
+    )
+    page.wait_for_timeout(700)
+
+    where = page.evaluate(
+        """() => {
+          const at = window.nib.state.doc.toString().indexOf('Deep note')
+          const box = window.nib.coordsAtPos(at + 4)
+          return box ? { x: Math.round((box.left + box.right) / 2), y: Math.round((box.top + box.bottom) / 2) } : null
+        }"""
+    )
+    if not where:
+        wrong("the link is not on screen")
+        return
+
+    page.keyboard.down("Control")
+    page.mouse.move(where["x"] - 40, where["y"] + 60)
+    page.wait_for_timeout(120)
+    page.mouse.move(where["x"], where["y"])
+    page.wait_for_timeout(1400)
+
+    card = page.evaluate(CARD)
+    say(f"[the card] {json.dumps(card)}")
+    shot(page, "16-hover-card")
+
+    if card is None:
+        wrong("holding the modifier over a link opened no card")
+        page.keyboard.up("Control")
+        return
+    if card["name"] != "Deep note":
+        wrong(f"the card does not name the note it stands for: {card['name']}")
+    if not card["editor"] or card["written"] != "yes":
+        wrong(f"the card is a reading of the note rather than the note: {card}")
+    if "Something to point at" not in card["said"]:
+        wrong(f"the card does not hold what the note says: {card['said']}")
+
+    # The caret into the card, which is what keeps it up.
+    page.mouse.click(where["x"], where["y"] + 90)
+    page.wait_for_timeout(500)
+    page.keyboard.up("Control")
+
+    settled = page.evaluate(CARD)
+    say(f"[after the press] {json.dumps(settled)}")
+    if settled is None:
+        wrong("pressing into the card closed it")
+        return
+    if settled["top"] != card["top"] or settled["height"] != card["height"]:
+        wrong(f"the card moved when the caret arrived in it: {card} then {settled}")
+
+    page.keyboard.type(" and a word more", delay=25)
+    page.wait_for_timeout(400)
+
+    # The pointer somewhere else entirely: a card with a caret in it stays up.
+    page.mouse.move(40, 600)
+    page.wait_for_timeout(900)
+    stayed = page.evaluate(CARD)
+    say(f"[pointer away] {json.dumps(stayed)}")
+    shot(page, "17-hover-card-written-in")
+
+    if stayed is None:
+        wrong("the card closed while the caret was still in it")
+    elif "and a word more" not in stayed["said"]:
+        wrong(f"what was typed is not in the card: {stayed['said']}")
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(1500)
+    gone = page.evaluate(CARD)
+    say(f"[after Escape] {json.dumps(gone)}")
+    shot(page, "18-hover-card-closed")
+    if gone is not None:
+        wrong("Escape did not put the card away")
+
+    said = page.evaluate(
+        "(path) => window.nibApp.workspace.noteText(path)",
+        paths["deep"],
+    )
+    say(f"[the linked note] {json.dumps((said or '')[:80])}")
+    if "and a word more" not in (said or ""):
+        wrong(f"what was typed in the card never reached the note: {json.dumps(said)}")
 
 
 # ── An indented block folds ───────────────────────────────────────────
@@ -804,6 +927,8 @@ def drive(browser: Browser) -> None:
 
     say("--- the Links setting reaches the popup ---")
     drive_links(page, paths)
+    say("--- the card over a link is the note ---")
+    drive_hover(page, paths)
     say("--- an indented block folds ---")
     drive_fold(page, paths)
     say("--- a block of the note's own HTML ---")
