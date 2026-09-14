@@ -371,3 +371,12 @@ drag, same twist.
   note inside a note.
 - `apps/desktop/test/e2e/big-list.py` - a space of three thousand notes: how many
   rows are in the page, and every gesture that has to reach one that is not.
+- `apps/desktop/test/e2e/tree-order.py` - sixty files in five folders, photographed
+  in each of the seven orders, then rearranged with a mouse and, at phone width, with
+  a finger; and the browser relaunched against the same profile to prove the
+  arrangement came back rather than never left.
+- `scripts/order-probe.py` - the same seven orders in a built probe app, a row moved
+  within the arranged one, and a relaunch of the process: the half only a built app
+  can answer.
+- `apps/desktop/src/lib/tree-order.perf.test.ts` - what an order costs at five
+  thousand notes, counted in comparisons rather than timed.

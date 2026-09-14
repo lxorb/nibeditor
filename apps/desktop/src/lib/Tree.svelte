@@ -543,8 +543,7 @@
    *  answers. Nothing at all for a reader who has asked for as little movement as
    *  possible - `dur` answers zero - and then the new order simply is the order. */
   async function slideInto(was: Map<string, number>) {
-    const ms = dur(SLIDING)
-    if (ms === 0) return
+    if (dur(SLIDING) === 0) return
 
     await tick()
     const moving = slides(was, placesNow(), carrying)
@@ -554,7 +553,10 @@
       if (from === undefined) continue
 
       row.animate([{ transform: `translateY(${from}px)` }, { transform: 'none' }], {
-        duration: ms,
+        // Spelled out rather than held in a variable above, because the rule that
+        // every duration JavaScript hands out goes through `dur` is read off the call
+        // site; see test/motion.test.ts and motion.ts.
+        duration: dur(SLIDING),
         // Ease out, which is cubicOut as a browser spells it: the row leaves at once
         // and settles, rather than creeping away from the pointer.
         easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
