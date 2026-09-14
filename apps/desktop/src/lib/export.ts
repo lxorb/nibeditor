@@ -217,6 +217,10 @@ export async function renderNote(
  *  has closed; taking it away sooner cancels the print in some engines. */
 export function printInFrame(html: string): Promise<void> {
   return new Promise((resolve) => {
+    /** What had the keyboard before the frame took it. Read now, because by the
+     *  time the dialog closes the answer is the frame. */
+    const from = document.activeElement
+
     const frame = document.createElement('iframe')
     frame.setAttribute('aria-hidden', 'true')
     frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;'
@@ -225,7 +229,17 @@ export function printInFrame(html: string): Promise<void> {
     const finish = () => {
       if (done) return
       done = true
+
+      // The frame is focused below, because an engine prints the window that has
+      // the keyboard; nothing gives it back when the frame goes, and a reader who
+      // printed a note and carried on typing was typing into a frame that had
+      // already been taken away. Only where the frame is still holding it - what
+      // somebody clicked while the dialog was up is theirs - and only to something
+      // still in the page, the way trap.ts hands it back.
+      const ours = document.activeElement === frame
       frame.remove()
+      if (ours && from instanceof HTMLElement && from.isConnected) from.focus()
+
       resolve()
     }
 
