@@ -758,6 +758,8 @@ export const ms: Dictionary = {
   'Go to the definition': 'Ke definisinya',
   'Nothing points at this one': 'Tiada apa-apa merujuk kepadanya',
   'No footnotes in this note': 'Tiada nota kaki dalam nota ini',
+  'Stack tabs': 'Susun tab',
+  'Unstack tabs': 'Buang susunan tab',
   'High contrast': 'Kontras tinggi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',

@@ -769,6 +769,8 @@ export const ta: Dictionary = {
   'Go to the definition': 'விளக்கத்திற்குச் செல்',
   'Nothing points at this one': 'இதைச் சுட்டும் எதுவும் இல்லை',
   'No footnotes in this note': 'இந்தக் குறிப்பில் அடிக்குறிப்பு இல்லை',
+  'Stack tabs': 'தாவல்களை அடுக்கு',
+  'Unstack tabs': 'தாவல் அடுக்கை நீக்கு',
   'High contrast': 'உயர் மாறுபாடு',
   'Front matter': 'முன்தகவல்',
   'Front matter: {name}': 'முன்தகவல்: {name}',

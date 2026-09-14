@@ -772,6 +772,8 @@ export const ptPT: Dictionary = {
   'Go to the definition': 'Ir para a nota',
   'Nothing points at this one': 'Nada aponta para esta',
   'No footnotes in this note': 'Nenhuma nota de rodapé nesta nota',
+  'Stack tabs': 'Empilhar separadores',
+  'Unstack tabs': 'Desempilhar separadores',
   'High contrast': 'Contraste elevado',
   'Front matter': 'Cabeçalho YAML',
   'Front matter: {name}': 'Metadados: {name}',

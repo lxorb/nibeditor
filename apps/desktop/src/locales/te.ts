@@ -761,6 +761,8 @@ export const te: Dictionary = {
   'Go to the definition': 'వివరణకు వెళ్లు',
   'Nothing points at this one': 'దీన్ని ఏదీ సూచించడం లేదు',
   'No footnotes in this note': 'ఈ నోట్‌లో ఫుట్‌నోట్‌లు లేవు',
+  'Stack tabs': 'ట్యాబ్‌లను నిలువుగా పెట్టు',
+  'Unstack tabs': 'ట్యాబ్ నిలువు తీసివేయి',
   'High contrast': 'అధిక కాంట్రాస్ట్',
   'Front matter': 'ఫ్రంట్ మేటర్',
   'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',

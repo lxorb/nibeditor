@@ -753,6 +753,8 @@ export const my: Dictionary = {
   'Go to the definition': 'အောက်ခြေမှတ်စုသို့ သွားရန်',
   'Nothing points at this one': 'ဤအရာကို ဘာမှ မရည်ညွှန်းပါ',
   'No footnotes in this note': 'ဤမှတ်စုတွင် အောက်ခြေမှတ်စု မရှိပါ',
+  'Stack tabs': 'တက်ဗ်များ အတန်းစီရန်',
+  'Unstack tabs': 'တက်ဗ် အတန်းစီမှု ဖျက်ရန်',
   'High contrast': 'အရောင်ကွာဟမှု မြင့်',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ခေါင်းစီးအချက်အလက်: {name}',

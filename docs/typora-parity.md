@@ -533,13 +533,28 @@ Features Typora does not have, which are the reason this exists.
       a word at a time and has been for forty years, and Cmd and a bracket is
       indenting here. Where a trail lands is where that note was left, through the
       places the app already keeps per note, and a trail lasts the sitting
-- [x] Stacking tabs as columns to scroll sideways through is deliberately not
-      built. What it is for is the trail, which is the entry above and which works
-      in one pane, in a split, and on a phone - where columns of tabs cannot exist
-      at all, since a handheld holds one document. Two notes side by side is
-      already a split, up to four with linked scrolling; a third arrangement of
-      the same tabs would need a second answer to every question the first two
-      have settled
+- [x] Stacked tabs: a pane's notes laid out as columns side by side, scrolling
+      sideways, each column its own editor with its own caret, its own scroll and its
+      own folds. Every column keeps a spine of the note's name down its edge, which
+      stays where it is as the column scrolls past, so a row of them reads as a row of
+      names; the active one is twice the width of the rest, which is what says which
+      one is being written in. Pressing a spine makes that column the active one,
+      which is the same press a tab in the strip is.
+
+      Off by default, and a pane's own answer rather than the window's: a long note
+      read down the left and three short ones stacked on the right is the point of it.
+      `Stack tabs` is a row in the pane's own menu - the menu over its tabs - and a row
+      in the palette that acts on the pane with the focus; both read one rule, so
+      neither can offer it where there is nothing to stack.
+
+      What it arranges is documents, so it arranges the notes: a plane, a website, a
+      PDF, a set of pages and the graph are each one surface that fills a pane, and a
+      note being read rather than written is a page with its own scroller. Any of those
+      showing and the pane draws the way it always did.
+
+      And not on a phone, said plainly: a handheld holds one document, so there is
+      nothing to put beside anything. The row is not offered there at all, and a
+      session stacked on a desktop opens as one document on a phone
 - [x] The three panels that are about one note - the outline, the links and the
       footnotes - can be held on it while another is written in the pane beside it: an
       outline to read down on the left, the note it is about on the right. One press
@@ -771,7 +786,11 @@ Features Typora does not have, which are the reason this exists.
       fade dial; Arrows; Size by links; the space played through in
       the order it was written, with a scrub bar; and Reset. All of it kept per
       space on the account, so the picture is the way you left it on every machine
-      you sign in on, which is why there is nothing to bookmark
+      you sign in on. Which is not the same as there being nothing to bookmark, and this
+      entry used to say it was: what is kept per space is the one picture the space is
+      looked at through, and a bookmark is a *second* way of looking at the same space,
+      under a name, put back in one press. There is a row for that in the list above the
+      files; see the graph bookmark entry in section 17
 - [x] Arrowheads that say which note reached for which, and two heads on a pair
       that link each way. The graph still answers "these two are connected",
       because that is what a picture of a space is looked at for, but it remembers

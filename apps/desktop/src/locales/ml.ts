@@ -770,6 +770,8 @@ export const ml: Dictionary = {
   'Go to the definition': 'വിശദീകരണത്തിലേക്ക് പോകുക',
   'Nothing points at this one': 'ഇതിലേക്ക് ഒന്നും ചൂണ്ടുന്നില്ല',
   'No footnotes in this note': 'ഈ കുറിപ്പിൽ അടിക്കുറിപ്പുകളില്ല',
+  'Stack tabs': 'ടാബുകൾ അടുക്കുക',
+  'Unstack tabs': 'ടാബ് അടുക്കൽ മാറ്റുക',
   'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
   'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',

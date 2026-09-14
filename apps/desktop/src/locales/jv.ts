@@ -757,6 +757,8 @@ export const jv: Dictionary = {
   'Go to the definition': 'Menyang panjlentrehane',
   'Nothing points at this one': 'Ora ana sing nuduhake iki',
   'No footnotes in this note': 'Ora ana cathetan sikil ing cathetan iki',
+  'Stack tabs': 'Tumpuk tab',
+  'Unstack tabs': 'Batalake tumpukan tab',
   'High contrast': 'Kontras dhuwur',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',

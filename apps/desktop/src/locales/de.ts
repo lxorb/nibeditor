@@ -770,6 +770,8 @@ export const de: Dictionary = {
   'Go to the definition': 'Zur Fussnote springen',
   'Nothing points at this one': 'Nichts verweist darauf',
   'No footnotes in this note': 'Keine Fussnoten in dieser Notiz',
+  'Stack tabs': 'Tabs stapeln',
+  'Unstack tabs': 'Tabs nicht stapeln',
   'High contrast': 'Hoher Kontrast',
   'Front matter': 'Kopfdaten',
   'Front matter: {name}': 'Kopfdaten: {name}',

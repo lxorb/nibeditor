@@ -770,6 +770,8 @@ export const fil: Dictionary = {
   'Go to the definition': 'Pumunta sa depinisyon',
   'Nothing points at this one': 'Walang tumutukoy dito',
   'No footnotes in this note': 'Walang talababa sa notang ito',
+  'Stack tabs': 'Isalansan ang mga tab',
+  'Unstack tabs': 'Alisin ang salansan ng tab',
   'High contrast': 'Mataas na kontrast',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',

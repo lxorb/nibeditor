@@ -760,6 +760,8 @@ export const mr: Dictionary = {
   'Go to the definition': 'तळटीपेकडे जा',
   'Nothing points at this one': 'याकडे काहीही निर्देश करत नाही',
   'No footnotes in this note': 'या टिपणात तळटीप नाही',
+  'Stack tabs': 'टॅब स्तंभांत ठेवा',
+  'Unstack tabs': 'टॅब स्तंभ काढा',
   'High contrast': 'उच्च कॉन्ट्रास्ट',
   'Front matter': 'फ्रंट मॅटर',
   'Front matter: {name}': 'शीर्षमाहिती: {name}',

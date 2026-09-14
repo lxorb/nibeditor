@@ -757,6 +757,8 @@ export const ja: Dictionary = {
   'Go to the definition': '脚注の本文へ移動',
   'Nothing points at this one': 'これを指すものがありません',
   'No footnotes in this note': 'このノートに脚注はありません',
+  'Stack tabs': 'タブを並べる',
+  'Unstack tabs': 'タブを並べない',
   'High contrast': 'ハイコントラスト',
   'Front matter': 'フロントマター',
   'Front matter: {name}': 'フロントマター: {name}',

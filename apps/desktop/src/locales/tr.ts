@@ -761,6 +761,8 @@ export const tr: Dictionary = {
   'Go to the definition': 'Dipnot metnine git',
   'Nothing points at this one': 'Buna işaret eden bir şey yok',
   'No footnotes in this note': 'Bu notta dipnot yok',
+  'Stack tabs': 'Sekmeleri yan yana diz',
+  'Unstack tabs': 'Sekme dizilişini kaldır',
   'High contrast': 'Yüksek karşıtlık',
   'Front matter': 'Ön bilgi',
   'Front matter: {name}': 'Ön bilgi: {name}',

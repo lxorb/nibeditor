@@ -168,6 +168,29 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
   ]
 }
 
+/** Whether the pane this tab is in lays its notes out as columns side by side.
+ *
+ *  A pane's own answer and so a row in the pane's own menu, which is the menu over its
+ *  tabs. Left out rather than greyed where there is nothing to stack: one note in the
+ *  pane, or a handheld, which holds one document and so has nothing to put beside
+ *  anything. The rule is the workspace's; see `canStack` there, which the palette reads
+ *  too.
+ *
+ *  A factory here rather than markup in the strip, for the reason every other row in
+ *  this file is: the strip splices one line in and knows nothing about stacking. */
+export function stackEntries(paneId: string): MenuEntry[] {
+  if (!workspace.canStack(paneId)) return []
+
+  return [
+    {
+      label: workspace.stacked(paneId) ? t('Unstack tabs') : t('Stack tabs'),
+      checked: workspace.stacked(paneId),
+      run: () => workspace.toggleStacked(paneId),
+    },
+    DIVIDER,
+  ]
+}
+
 /** Who else may have this one file. The same word and the same sheet a space is
  *  shared with, about a note or a canvas instead; see ShareSheet.svelte.
  *

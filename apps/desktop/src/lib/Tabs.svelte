@@ -4,7 +4,7 @@
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { DIVIDER, menu, shareEntry, type MenuEntry } from './menu.svelte'
+  import { DIVIDER, menu, shareEntry, stackEntries, type MenuEntry } from './menu.svelte'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -131,6 +131,7 @@
       // Who else may have the file this tab is showing, in the same word and the
       // same sheet the tree's row and the space's own menu use.
       ...shareEntry(tab.path),
+      ...stackEntries(paneId),
       ...splitEntries(tab),
       ...keepEntry(tab),
     ]

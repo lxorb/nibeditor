@@ -350,6 +350,18 @@ function paneCommands(): Command[] {
       disabled: workspace.panes.count < 2,
       run: () => workspace.panes.focusNext(),
     },
+    // Stacking the focused pane's notes as columns side by side. A pane's own answer,
+    // so the row acts on the focused one - the same pane every other row here acts on -
+    // and says which way it goes. Greyed where there is nothing to stack: one note in
+    // the pane, or a machine that holds one document. See `canStack` in
+    // workspace.svelte.ts, which the pane's own menu reads too.
+    {
+      id: 'stack-tabs',
+      label: workspace.stacked() ? t('Unstack tabs') : t('Stack tabs'),
+      checked: workspace.stacked(),
+      disabled: !workspace.canStack(),
+      run: () => workspace.toggleStacked(),
+    },
     {
       id: 'close-pane',
       label: t('Close this pane'),

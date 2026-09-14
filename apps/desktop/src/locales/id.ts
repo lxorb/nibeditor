@@ -758,6 +758,8 @@ export const id: Dictionary = {
   'Go to the definition': 'Ke definisinya',
   'Nothing points at this one': 'Tidak ada yang menunjuk ke ini',
   'No footnotes in this note': 'Tidak ada catatan kaki di catatan ini',
+  'Stack tabs': 'Tumpuk tab',
+  'Unstack tabs': 'Lepas tumpukan tab',
   'High contrast': 'Kontras tinggi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Front matter: {name}',
