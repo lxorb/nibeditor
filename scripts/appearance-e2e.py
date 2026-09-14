@@ -359,6 +359,26 @@ def drive(app: pathlib.Path) -> None:
 
         shot(process.pid, "03-translucent")
 
+        # And the pane the two rows are read in, which is where a reader meets them.
+        # Photographed rather than only asserted: two segmented rows in one group, in the
+        # same shape as every other pair of choices in the app.
+        asked(held, "commands.run", {"id": "settings"})
+        time.sleep(1.2)
+        ran(held, "window.location.hash")
+        pane = ran(
+            held,
+            "(() => { const rows = [...document.querySelectorAll('.nib-setting')]"
+            ".map((one) => one.textContent.replace(/\\s+/g, ' ').trim());"
+            " return JSON.stringify(rows.filter((one) => /Frame|Translucency/.test(one))) })()",
+        )
+        say(f"the pane shows {pane}")
+        if not pane or "Frame" not in str(pane):
+            wrong("the Appearance pane does not show the two window rows")
+
+        shot(process.pid, "03b-the-pane")
+        ran(held, "document.querySelector('.nib-screen.sheet button[aria-label]')?.click()")
+        time.sleep(0.8)
+
         translucent_as(held, False)
         if backdrop_of(hwnd) == DWMSBT_MAINWINDOW:
             wrong("turning translucency off left the material behind the window")
