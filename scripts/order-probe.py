@@ -309,6 +309,14 @@ KEPT = """JSON.stringify({
 })"""
 
 
+def showing(app: App) -> None:
+    """The file list on screen. Asked for only when something else is there: pressing
+    the tab of the panel already showing is what closes the sidebar, and a relaunch
+    comes back with the panel it was left on."""
+    app.ask("nib.workspace.panel === 'tree' ? true : nib.workspace.showPanel('tree')")
+    time.sleep(0.8)
+
+
 def ready(app: App) -> None:
     until = time.perf_counter() + 90
     while time.perf_counter() < until:
@@ -352,8 +360,7 @@ def main() -> int:
     arranged_order: list[str] = []
     try:
         ready(talk)
-        talk.ask("nib.workspace.showPanel('tree')")
-        time.sleep(0.6)
+        showing(talk)
 
         orders: dict[str, list[str]] = {}
         for mode, label in ORDERS:
@@ -416,8 +423,7 @@ def main() -> int:
     app, talk, hwnd = launch(args.exe, args.identifier, was_on)
     try:
         ready(talk)
-        talk.ask("nib.workspace.showPanel('tree')")
-        time.sleep(0.8)
+        showing(talk)
 
         kept = talk.ask(KEPT)
         names = talk.ask(TOP_NAMES)
