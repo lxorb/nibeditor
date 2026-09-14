@@ -758,6 +758,7 @@ export const fa: Dictionary = {
   Footnote: 'پانویس',
   Footnotes: 'پانویس‌ها',
   'Table of contents': 'فهرست مطالب',
+  'High contrast': 'کنتراست بالا',
   'Front matter': 'پیش‌داده',
   'Front matter: {name}': 'فرامتن: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

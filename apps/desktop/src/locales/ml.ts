@@ -766,6 +766,7 @@ export const ml: Dictionary = {
   Footnote: 'അടിക്കുറിപ്പ്',
   Footnotes: 'അടിക്കുറിപ്പുകൾ',
   'Table of contents': 'ഉള്ളടക്കം',
+  'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
   'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

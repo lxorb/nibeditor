@@ -795,6 +795,7 @@ export const ar: Dictionary = {
   Footnote: 'حاشية',
   Footnotes: 'الحواشي',
   'Table of contents': 'جدول المحتويات',
+  'High contrast': 'تباين عالٍ',
   'Front matter': 'بيانات أولية',
   'Front matter: {name}': 'البيانات الأولية: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

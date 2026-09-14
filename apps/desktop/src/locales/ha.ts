@@ -765,6 +765,7 @@ export const ha: Dictionary = {
   Footnote: 'Bayanin ƙasa',
   Footnotes: 'Bayanan ƙasa',
   'Table of contents': 'Jerin abubuwan ciki',
+  'High contrast': 'Bambanci mai ƙarfi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Bayanan gaba: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

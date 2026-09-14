@@ -1,3 +1,4 @@
+import { contrastCss } from '@nib/themes/raw'
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
@@ -26,10 +27,14 @@ export const SCHEME_NAMES: Record<SchemeChoice, string> = {
 interface ThemeInfo {
   id: string
   name: string
-  /** Which schemes the theme states. The built-in states both; a theme file
+  /** Which schemes the theme states. The two built-in ones state both; a theme file
    *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
+  /** The stylesheet itself, for a theme the app ships with rather than reads: the
+   *  high contrast one. Applied by the same road a theme file is - see `apply` - so a
+   *  built-in palette and an installed one cannot be dressed two different ways. */
+  css?: string
   /** Whether the theme states an accent of its own. One that does keeps it: the
    *  card in the store showed that colour, and what the app looks like has to be
    *  what the card showed. */
@@ -64,9 +69,13 @@ const OFFERED_KEY = 'nib:contrast-offered'
 /** Where the contrast switch wrote whether it was on, before contrast was a
  *  theme. Read once, by the offer, and never written. */
 const CONTRAST_KEY = 'nib:contrast'
-/** The id the registry knows the contrast theme under, which is what the offer
- *  opens the store on. */
-export const CONTRAST_THEME = 'contrast'
+/** The high contrast theme's own id. The same word the registry knows it under, and
+ *  deliberately: the theme in the store is this palette, published so a reader can
+ *  update it without waiting for a release of the app, and a card there that installed
+ *  a theme under a different name would be a second Contrast in the dropdown. An
+ *  installed copy is a file and carries `file:` in front of its id, so the two can sit
+ *  beside each other without either becoming the other. */
+const CONTRAST_THEME = 'contrast'
 
 /** The one built-in theme: the app's own tokens, which state both schemes.
  *
@@ -80,6 +89,24 @@ const DEFAULT_THEME: ThemeInfo = {
   id: DEFAULT_ID,
   name: 'Default',
   variants: ['dark', 'light'],
+}
+
+/** And the second: high contrast, which the app ships with rather than fetches.
+ *
+ *  A mode in every sense that matters - one row in Appearance, one row in the palette,
+ *  and what a system asking for more contrast is answered with - and a theme in the
+ *  way it is built, which is what keeps it out of every other theme's way. It states
+ *  an accent of its own, so the reader's accent is not painted over the palette the
+ *  row showed; see `paintAccent`.
+ *
+ *  Offline, because the launch that needs it most is a first launch. See
+ *  contrast.css in @nib/themes. */
+const CONTRAST: ThemeInfo = {
+  id: CONTRAST_THEME,
+  name: 'High contrast',
+  variants: ['dark', 'light'],
+  ownAccent: true,
+  css: contrastCss,
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
@@ -133,7 +160,7 @@ class Themes {
   /** The built-in first, then what is installed, in the order the folder gave
    *  them - both platforms list a folder by name, so the order is the same on
    *  every machine and does not move as themes are used. */
-  readonly all = $derived<ThemeInfo[]>([DEFAULT_THEME, ...this.files])
+  readonly all = $derived<ThemeInfo[]>([DEFAULT_THEME, CONTRAST, ...this.files])
 
   readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
 
@@ -200,25 +227,27 @@ class Themes {
     keep(SCHEME_KEY, this.scheme)
   }
 
-  /** Whether to offer the contrast theme, which happens once or not at all.
+  /** Whether to answer a system asking for more contrast, which happens once or not
+   *  at all.
    *
-   *  Contrast is a theme, and a theme is a file in the folder. So the answer to a
-   *  system asking for more contrast cannot be to turn it on: it has to be
-   *  fetched and written, and a first launch can promise neither - it happens
-   *  offline, and the browser build has a folder only in name. What it can do is
-   *  open the store on the theme that answers the ask and let the reader install
-   *  it in one press, which is also the only version of this that tells them
-   *  afterwards where the thing they now have came from.
+   *  High contrast is a theme the app ships with, so the answer is the theme itself:
+   *  it is chosen, on the frame the launch happens on, with nothing to fetch and no
+   *  network to depend on. That is the whole reason it is built in - the launch that
+   *  needs more contrast most is a first launch, and a reader who cannot read the
+   *  screen cannot be asked to go and find a file.
    *
-   *  One rule covers both the reader who has never launched this and the reader
-   *  who had the switch: offer it to anybody the switch would have been on for at
-   *  this launch. It said so itself, or their system says so and they never
-   *  contradicted it. A reader who turned the switch off said no to contrast, and
-   *  that answer stands.
+   *  Chosen *and* shown: Appearance opens on the Style row it was chosen from, so
+   *  nothing has silently changed and putting it back is one press. A theme applied
+   *  without saying so would be the app deciding what somebody's screen looks like.
    *
-   *  The marker is written the moment the offer is made, so it is made once
-   *  however it is answered - and nothing here selects a theme, so a reader who
-   *  walks past the store keeps exactly the look they had. */
+   *  One rule covers both the reader who has never launched this and the reader who
+   *  had the switch: answer anybody the switch would have been on for at this launch.
+   *  It said so itself, or their system says so and they never contradicted it. A
+   *  reader who turned the switch off said no to contrast, and that answer stands.
+   *
+   *  The marker is written the moment it happens, so it happens once however it is
+   *  answered: a reader who chooses something else keeps that from then on, whatever
+   *  their system goes on asking for. */
   private offerTheContrastTheme() {
     if (storedText(OFFERED_KEY)) return
 
@@ -236,8 +265,20 @@ class Themes {
     // next month gets the offer then, which is still only ever once.
     if (had !== 'on' && !window.matchMedia(MORE).matches) return
 
+    // A reader who has already chosen a theme has answered the question about how
+    // their screen looks, and repainting it because their system asks for contrast
+    // would be the app overruling them. The question is marked answered: High contrast
+    // is a row in Appearance and in the palette, there whenever they want it.
+    if (this.id !== DEFAULT_ID) {
+      keep(OFFERED_KEY, 'yes')
+      return
+    }
+
     keep(OFFERED_KEY, 'yes')
     this.offerContrast = true
+    // The theme, now, rather than a card to fetch one from. `select` persists it, so
+    // the choice is the reader's from here on and the launch has nothing more to say.
+    this.select(CONTRAST_THEME)
   }
 
   /** Rescans the themes folder, so dropping in a file needs no restart, and so
@@ -414,6 +455,14 @@ class Themes {
     document.documentElement.dataset.theme = this.current
     this.paintAccent()
     this.paintSystemBars()
+
+    // A theme the app ships with carries its own stylesheet and needs no round trip:
+    // the high contrast one is applied on the frame it is chosen on, and on a first
+    // launch with no network at all.
+    if (theme.css !== undefined) {
+      this.inject(theme.css)
+      return
+    }
 
     if (!theme.path) {
       this.inject('')

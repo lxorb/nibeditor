@@ -742,6 +742,7 @@ export const zhHant: Dictionary = {
   Footnote: '註腳',
   Footnotes: '註腳',
   'Table of contents': '目錄',
+  'High contrast': '高對比',
   'Front matter': '前置資料',
   'Front matter: {name}': '前置資料：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

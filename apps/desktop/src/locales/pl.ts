@@ -786,6 +786,7 @@ export const pl: Dictionary = {
   Footnote: 'Przypis',
   Footnotes: 'Przypisy',
   'Table of contents': 'Spis treści',
+  'High contrast': 'Wysoki kontrast',
   'Front matter': 'Nagłówek YAML',
   'Front matter: {name}': 'Metadane: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

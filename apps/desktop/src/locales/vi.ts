@@ -749,6 +749,7 @@ export const vi: Dictionary = {
   Footnote: 'Chú thích',
   Footnotes: 'Chú thích',
   'Table of contents': 'Mục lục',
+  'High contrast': 'Tương phản cao',
   'Front matter': 'Phần đầu tệp',
   'Front matter: {name}': 'Siêu dữ liệu: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

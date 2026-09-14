@@ -757,6 +757,7 @@ export const te: Dictionary = {
   Footnote: 'ఫుట్‌నోట్',
   Footnotes: 'ఫుట్‌నోట్‌లు',
   'Table of contents': 'విషయసూచిక',
+  'High contrast': 'అధిక కాంట్రాస్ట్',
   'Front matter': 'ఫ్రంట్ మేటర్',
   'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

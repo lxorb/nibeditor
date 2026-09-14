@@ -761,6 +761,7 @@ export const kn: Dictionary = {
   Footnote: 'ಅಡಿಟಿಪ್ಪಣಿ',
   Footnotes: 'ಅಡಿಟಿಪ್ಪಣಿಗಳು',
   'Table of contents': 'ಪರಿವಿಡಿ',
+  'High contrast': 'ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್',
   'Front matter': 'ಫ್ರಂಟ್ ಮ್ಯಾಟರ್',
   'Front matter: {name}': 'ಮುನ್ನುಡಿ ಮಾಹಿತಿ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

@@ -756,6 +756,7 @@ export const ur: Dictionary = {
   Footnote: 'حاشیہ',
   Footnotes: 'حواشی',
   'Table of contents': 'فہرستِ مضامین',
+  'High contrast': 'زیادہ تضاد',
   'Front matter': 'ابتدائی ڈیٹا',
   'Front matter: {name}': 'ابتدائی معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

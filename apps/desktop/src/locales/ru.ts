@@ -788,6 +788,7 @@ export const ru: Dictionary = {
   Footnote: 'Сноска',
   Footnotes: 'Сноски',
   'Table of contents': 'Содержание',
+  'High contrast': 'Высокая контрастность',
   'Front matter': 'Метаданные',
   'Front matter: {name}': 'Метаданные: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

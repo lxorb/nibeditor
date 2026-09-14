@@ -756,6 +756,7 @@ export const mr: Dictionary = {
   Footnote: 'तळटीप',
   Footnotes: 'तळटिपा',
   'Table of contents': 'अनुक्रमणिका',
+  'High contrast': 'उच्च कॉन्ट्रास्ट',
   'Front matter': 'फ्रंट मॅटर',
   'Front matter: {name}': 'शीर्षमाहिती: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

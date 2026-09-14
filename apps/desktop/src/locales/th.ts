@@ -745,6 +745,7 @@ export const th: Dictionary = {
   Footnote: 'เชิงอรรถ',
   Footnotes: 'เชิงอรรถ',
   'Table of contents': 'สารบัญ',
+  'High contrast': 'คอนทราสต์สูง',
   'Front matter': 'ส่วนหัวเอกสาร',
   'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':

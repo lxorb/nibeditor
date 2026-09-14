@@ -1,5 +1,6 @@
 import katex from 'katex/dist/katex.min.css?raw'
 import base from './base.css?raw'
+import contrast from './contrast.css?raw'
 import note from './document.css?raw'
 import exported from './export.css?raw'
 import stage from './slides.css?raw'
@@ -9,6 +10,12 @@ import tokens from './tokens.css?raw'
  *  Relative `?raw` imports resolve reliably; the same imports made through the
  *  package's exports map from another package come back empty. */
 export const themeCss = [tokens, base].join('\n')
+
+/** The high contrast theme, which is the second theme the app ships with: a whole
+ *  palette of its own on both sides, stated in the tokens any other theme states. The
+ *  app injects it the way it injects a theme read from a file, so a built-in theme and
+ *  an installed one are applied by one road. See contrast.css, and theme.svelte.ts. */
+export const contrastCss = contrast
 
 /** The tokens alone. The theme gallery re-scopes the scheme-independent blocks
  *  of these onto its miniatures: the Typora aliases are written in terms of
