@@ -17,7 +17,7 @@ import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
 import { key, t } from './i18n.svelte'
-import { nameFromContent, nameFromTitle, shownName } from './note-name'
+import { copyName, nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -1229,7 +1229,13 @@ class Workspace {
    *  the whole point of naming a thing before making it.
    *
    *  Where there is no list to type in, the same stepped `Untitled` every other kind
-   *  falls back to. */
+   *  falls back to.
+   *
+   *  What arrives from the list is a file name, ending and all - the field puts the
+   *  row's own ending back before it commits, as it does for every other kind - so
+   *  the ending comes off before the name is read as a title. Without that the row
+   *  wrote `Blog.url.url` and put `Blog.url` in the shortcut's own `Title`, which is
+   *  the `.url` Emil kept seeing in the file list. */
   async createWebsite(folder?: string, named?: string) {
     if (viewport.device === 'phone') return
 
@@ -1237,7 +1243,7 @@ class Workspace {
     if (!dir) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const title = named ?? UNTITLED
+    const title = named === undefined ? UNTITLED : shownName(named)
     const path = joinPath(dir, this.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
     const content = writeShortcut('', title, new Date())
 
@@ -3061,11 +3067,19 @@ class Workspace {
     return this.undone.label
   }
 
+  /** A second copy of a file, beside the first.
+   *
+   *  `Plan.md` copies to `Plan copy.md`: the word goes beside the name rather than
+   *  after the ending, so the copy is still a note in a vault opened next door, and
+   *  `copyName` is where that is said. Through `freeName` like every other name the
+   *  app writes, because a second copy used to be written straight over the first -
+   *  `write_note` replaces what is there, and nothing asked. */
   async duplicate(path: string) {
+    const folder = folderOf(path)
     const content = await invoke<string>('read_note', { path })
-    const name = nameOf(path).replace(/(\.[^.]+)$/, ' copy$1')
+    const name = this.freeName(folder, copyName(nameOf(path)))
 
-    await invoke('write_note', { path: joinPath(folderOf(path), name), content })
+    await invoke('write_note', { path: joinPath(folder, name), content })
     await this.loadTree()
   }
 

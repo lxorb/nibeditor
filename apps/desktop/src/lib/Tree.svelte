@@ -45,7 +45,7 @@
   import { movesInto } from './move-targets'
   import NameField from './NameField.svelte'
   import { extensionOf } from './naming'
-  import { shownName } from './note-name'
+  import { rowName } from './note-name'
   import { rowMenu } from './row-menu'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
@@ -404,7 +404,7 @@
   function nameToEdit(entry: Entry): string {
     if (workspace.naming?.making) return ''
 
-    const name = entry.is_dir ? entry.name : shownName(entry.name)
+    const name = labelOf(entry)
     return workspace.naming?.appending ? `${name} ` : name
   }
 
@@ -425,7 +425,7 @@
    *  whose note is somebody else's `index.md` is still called after its place. Also
    *  what a spelled name is looked for in; see roving.ts. */
   function labelOf(entry: Entry): string {
-    return entry.is_dir ? entry.name : shownName(entry.name)
+    return rowName(entry.name, entry.is_dir)
   }
 
   /** Whose icon it is: the note's where the row has one, and the folder's while it
