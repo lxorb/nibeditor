@@ -771,6 +771,24 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
   })
 
+  /** Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there
+   *  should be a menu (as if you would click the +) where you can decide what type."*
+   *  So Ctrl+T is a command of its own rather than a second key for New note, and it
+   *  presses the plus of the pane that has the keyboard; see chooseNewKind in focus.ts
+   *  and the one list of kinds in new-kinds.ts. */
+  test('ask what kind a new tab is, and keep Ctrl+N for a note', () => {
+    const { shortcuts } = registry
+    expect(shortcuts.keyFor('app.new-kind')).toBe('Mod-t')
+    expect(shortcuts.keyFor('app.new')).toBe('Mod-n')
+
+    const chooser = registry.SHORTCUTS.find((one) => one.id === 'app.new-kind')
+    // Its own row in the settings and in the key list, not a second key for another
+    // row: the two do different things now.
+    expect(chooser?.alias).toBeUndefined()
+    expect(chooser?.label()).not.toBe(shortcuts.hint('app.new'))
+    expect(registry.SHORTCUTS.some((one) => one.id === 'app.new.alt')).toBe(false)
+  })
+
   /** The rule that cost a day, in both directions.
    *
    *  A digit held with a modifier is read twice. CodeMirror reads a character key as

@@ -33,7 +33,7 @@ export interface Preset {
 /** Obsidian's own keys.
  *
  *  Most of Nib's already are Obsidian's - Ctrl+E for reading, Ctrl+P for the
- *  palette, Ctrl+N, Ctrl+T, Ctrl+W, Ctrl+Shift+T for the last closed tab,
+ *  palette, Ctrl+N, Ctrl+W, Ctrl+Shift+T for the last closed tab,
  *  Ctrl+Tab, Ctrl+K, Ctrl+comma, Ctrl+Shift+F and Ctrl+Shift+V - so what is
  *  written here is only where the two differ.
  *

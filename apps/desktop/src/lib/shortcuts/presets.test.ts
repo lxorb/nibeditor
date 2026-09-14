@@ -26,10 +26,15 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 let registry: typeof import('./registry')
 let presets: typeof import('./presets')
 
+/** A budget of its own, because what this hook does is compile the registry's graph -
+ *  half the app, cold, on whatever cores are left. Thirty seconds is enough on a quiet
+ *  machine and not enough on one that is also building something else, and a timeout
+ *  here skips every test in the file rather than failing one. Nothing here asserts on
+ *  time; see docs/conventions.md. */
 beforeAll(async () => {
   registry = await import('./registry')
   presets = await import('./presets')
-})
+}, 240_000)
 
 const PLATFORMS: Platform[] = ['mac', 'win', 'linux']
 
@@ -174,6 +179,16 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
     for (const platform of PLATFORMS) {
       expect(keyUnder(keys, 'app.commands', platform), platform).toBe('Mod-Shift-p')
       expect(keyUnder(keys, 'paragraph.body', platform), platform).toBeNull()
+    }
+  })
+
+  /** Ctrl+T asks which kind under every keyboard: none of the three binds the chord to
+   *  anything of its own, and a new tab is a new tab wherever a hand learned it. */
+  test('asks what kind a new tab is on Ctrl+T', () => {
+    const keys = presets.presetById(id)?.keys ?? {}
+
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, 'app.new-kind', platform), platform).toBe('Mod-t')
     }
   })
 })

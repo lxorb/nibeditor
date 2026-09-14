@@ -31,6 +31,7 @@ import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
+import { newKinds } from './new-kinds'
 import { canSaveAs, saveAs } from './save-as'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -156,10 +157,17 @@ export function appMenu(context: Context): MenuGroup[] {
       id: 'file',
       label: t('File'),
       rows: [
-        { label: t('New note'), hint: shortcuts.hint('app.new'), run: () => workspace.openBlank() },
-        { label: t('New canvas'), run: () => void workspace.createCanvas() },
-        { label: t('New page note'), run: () => void workspace.createPages() },
-        { label: t('New web note'), run: () => void workspace.createWebsite() },
+        // The kinds a new document can be, out of the one list the plus, Ctrl+T and a
+        // pane with nothing open all read; see new-kinds.ts. This menu used to write
+        // its own four and offered a website on a phone, where a website opens in the
+        // phone's own browser and there is no tab to make.
+        ...newKinds().map((one) => ({
+          label: one.label(),
+          // One of the four carries a key of its own; the chord that asks which kind
+          // is on the menu bar's own row for it rather than on any one of these.
+          ...(one.kind === 'note' ? { hint: shortcuts.hint('app.new') } : {}),
+          run: () => one.make(),
+        })),
         { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
         ...(imported ? [{ label: imported.label, run: imported.run }] : []),
         { label: t('New space'), run: () => void newSpace() },

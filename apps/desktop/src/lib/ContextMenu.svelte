@@ -2,6 +2,7 @@
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
+  import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
   import { trap } from './trap'
@@ -134,6 +135,14 @@
     item.run()
   }
 
+  /** What has been spelled, and when. A menu that opens is a fresh word: the letters
+   *  belong to the list in front of somebody, not to the one before it. */
+  let spelling: Spelling = { typed: '', typedAt: 0 }
+
+  $effect(() => {
+    if (menu.open) spelling = { typed: '', typedAt: 0 }
+  })
+
   /** The rows a key can land on: the dividers are not rows and a greyed one is
    *  not a choice. Read off the page rather than counted in state, because what a
    *  press has to move is a real element - the row it lands on has to take the
@@ -164,6 +173,22 @@
     if (event.key === ' ' && at >= 0) {
       event.preventDefault()
       list[at]?.click()
+      return
+    }
+
+    // A letter is the row whose name begins with it, and letters in a row spell more of
+    // the name: the same rule the file list and every dropdown in the app follow, out
+    // of the same module. A letter no row starts with leaves the keyboard where it was
+    // rather than moving it somewhere arbitrary. See list-keys.ts.
+    if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+      const names = list.map((row) => row.textContent ?? '')
+      const { typed, typedAt, found } = spelled(spelling, event.key, event.timeStamp, names)
+      spelling = { typed, typedAt }
+
+      if (found >= 0) {
+        event.preventDefault()
+        list[found]?.focus()
+      }
     }
   }
 </script>

@@ -19,7 +19,7 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
-import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
+import { chooseNewKind, openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
@@ -267,14 +267,19 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-n',
     run: () => workspace.openBlank(),
   },
+  // Ctrl+T asks what kind, the way the plus does. It was a second key for New note,
+  // and Emil asked for the choice by name: "When you press Ctrl + T it shouldn't just
+  // be a new note, there should be a menu (as if you would click the +) where you can
+  // decide what type." The chooser opens under the plus of the pane that has the
+  // keyboard and lands on the first row, so Ctrl+T then Enter is still a new note; see
+  // chooseNewKind in focus.ts and the list in new-kinds.ts.
   {
-    id: 'app.new.alt',
-    label: () => t('New note'),
+    id: 'app.new-kind',
+    label: () => t('New'),
     category: 'file',
     scope: 'app',
     key: 'Mod-t',
-    alias: true,
-    run: () => workspace.openBlank(),
+    run: () => chooseNewKind(),
   },
   {
     id: 'app.new-window',

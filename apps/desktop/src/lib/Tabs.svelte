@@ -5,6 +5,7 @@
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { DIVIDER, menu, shareEntry, stackEntries, type MenuEntry } from './menu.svelte'
+  import { showNewKinds } from './new-kinds'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -140,48 +141,11 @@
   const showMenu = (event: MouseEvent, tab: Tab) =>
     menu.show(event, tabMenu(tab), { title: tab.shown })
 
-  /** The things a tab can be opened as. Pressing the plus asks which - Emil,
-   *  2026-09-13: *"When you press on the plus for creating a new tab, then you should
-   *  be able to choose between the different things (note, canvas, web note etc.)."* -
-   *  so a note, a canvas, a website or a page note is one gesture away rather than a
-   *  row of buttons. A note is first, which is what a strip is mostly filled with, and
-   *  the same key and held finger open the same list. */
-  function newMenu(): MenuEntry[] {
-    return [
-      { label: t('New note'), run: () => makeNote() },
-      { label: t('New canvas'), run: () => void makeCanvas() },
-      ...(viewport.device === 'phone'
-        ? []
-        : [{ label: t('New web note'), run: () => void makeWebsite() }]),
-      { label: t('New page note'), run: () => void makePages() },
-    ]
-  }
-
-  /** In this pane, whichever way it was asked for: both open in whichever pane
-   *  has the keyboard, so the pane whose plus was pressed takes it first. */
-  function makeNote() {
-    workspace.focusPane(paneId)
-    workspace.openBlank()
-  }
-
-  function makeCanvas() {
-    workspace.focusPane(paneId)
-    return workspace.createCanvas()
-  }
-
-  function makeWebsite() {
-    workspace.focusPane(paneId)
-    return workspace.createWebsite()
-  }
-
-  function makePages() {
-    workspace.focusPane(paneId)
-    return workspace.createPages()
-  }
-
-  /** A held finger is the right click a touch screen has, and the menu key is
-   *  the one a keyboard has: all three ask for the same list. */
-  const showNewMenu = (event: MouseEvent) => menu.show(event, newMenu(), { title: t('New') })
+  /** A held finger is the right click a touch screen has, and the menu key is the one
+   *  a keyboard has: all three ask for the same list, and so does Ctrl+T, which presses
+   *  this very button. What the list holds is new-kinds.ts - one list for the plus, the
+   *  chord and the buttons an empty pane shows. */
+  const showNewMenu = (event: MouseEvent) => showNewKinds(event, paneId)
 
   /** Whether the drag over the panes is one this strip takes: a tab out of any
    *  strip, or notes out of the file list. */
@@ -448,8 +412,11 @@
          what makes one there. Left out rather than hidden, so no key reaches it
          and nothing reads it out. -->
     {#if !viewport.touch}
+      <!-- Named for the pane it belongs to, so Ctrl+T can press the plus of the pane
+           that has the keyboard rather than the first one on screen; see focus.ts. -->
       <button
         class="new"
+        data-new={paneId}
         title={t('New')}
         aria-label={t('New')}
         aria-haspopup="menu"

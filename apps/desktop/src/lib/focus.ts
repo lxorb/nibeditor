@@ -169,6 +169,14 @@ function pressRegion(name: Region, what?: string): boolean {
   const entry = found instanceof HTMLElement ? found : entryOf(name)
   if (!entry) return false
 
+  press(entry)
+  return true
+}
+
+/** Presses one control at its own corner. The click carries a place because a menu
+ *  opens at the pointer, and a key has none: a press from the keyboard used to arrive
+ *  at 0,0 and hang its menu in the corner of the window. */
+function press(entry: HTMLElement): void {
   entry.focus()
   const box = entry.getBoundingClientRect()
   entry.dispatchEvent(
@@ -179,8 +187,6 @@ function pressRegion(name: Region, what?: string): boolean {
       clientY: Math.round(box.bottom),
     }),
   )
-
-  return true
 }
 
 /** The space switcher, from anywhere: the sidebar's own header opens it, so the
@@ -199,4 +205,55 @@ export function openSpaces(): void {
   requestAnimationFrame(() => {
     pressRegion('space', SWITCHER)
   })
+}
+
+/** What a new tab could be, from the keyboard: Ctrl+T.
+ *
+ *  Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there
+ *  should be a menu (as if you would click the +) where you can decide what type."*
+ *  So the key presses the plus of the pane that has the keyboard, at the plus's own
+ *  corner, and the chooser arrives exactly where a pointer would have put it. One
+ *  list, written once, in the component that owns the button; see new-kinds.ts.
+ *
+ *  Three answers, in order. A pane with nothing open is already showing the kinds as
+ *  buttons, so the key puts the keyboard on them rather than hanging a second copy of
+ *  the same list over them. A strip with a plus has its plus pressed. And where there
+ *  is neither - a phone, a tablet, the app in full screen - the chooser opens in the
+ *  middle of the window, which on a touch screen is the sheet every menu there is. */
+export function chooseNewKind(): void {
+  const here = paneBox()
+
+  const buttons = here?.querySelector('[data-new-here] button')
+  if (buttons instanceof HTMLElement && reachable(buttons)) {
+    buttons.focus()
+    return
+  }
+
+  const plus = document.querySelector(`[data-new="${CSS.escape(workspace.panes.focusedId)}"]`)
+  if (plus instanceof HTMLElement && reachable(plus)) {
+    press(plus)
+    return
+  }
+
+  // Fetched when it is wanted rather than imported: the chooser reaches the menu store
+  // and everything a row of one can do, and this module is read by the shortcut
+  // registry, which is loaded before anything is on screen. The two roads above need
+  // none of it - they press a button that already holds the list. Same reason the
+  // registry fetches an export when its key is pressed; see registry.ts.
+  void import('./new-kinds').then(({ showNewKinds }) => {
+    showNewKinds(
+      new MouseEvent('click', {
+        clientX: Math.round(window.innerWidth / 2),
+        clientY: Math.round(window.innerHeight / 3),
+      }),
+    )
+  })
+}
+
+/** The pane that has the keyboard, as an element. Named by the pane rather than found
+ *  by region, because a window can hold four of them and `tabs` or `editor` answers
+ *  with the first on screen. */
+function paneBox(): HTMLElement | null {
+  const found = document.querySelector(`[data-pane="${CSS.escape(workspace.panes.focusedId)}"]`)
+  return found instanceof HTMLElement ? found : null
 }
