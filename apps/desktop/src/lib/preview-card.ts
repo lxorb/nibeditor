@@ -78,6 +78,10 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     shortcuts: shortcuts.forEditor,
     trustedMarkup: trustsHtmlAt(path),
     openLink: (href: string) => void openExternal(href),
+    // And deliberately no `editPreview` of its own: a link inside the card still
+    // shows the note behind it, as the reading it always was. One card deep is a
+    // glance at what a link points at; a card inside a card inside a card is a
+    // reader lost in their own note.
   })
 
   // The reader's own modes, which is what makes this the same surface as the pane
