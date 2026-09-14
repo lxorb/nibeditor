@@ -104,8 +104,26 @@ describe('a wheel that has stopped', () => {
     expect(fallen(200, FALL * 2)).toBe(0)
   })
 
-  test('at once for a reader who asked for no movement', () => {
-    expect(fallen(200, 1, true)).toBe(0)
+  /** Reduced motion means the app does not ease it away, not that the gesture has
+   *  no memory: a trackpad's deltas are five pixels each, and without the memory
+   *  they could never reach the threshold at all. */
+  test('and for a reader who asked for no movement it goes whole rather than easing', () => {
+    expect(fallen(200, 1, true)).toBe(200)
+    expect(fallen(200, FALL / 2, true)).toBe(200)
+    expect(fallen(200, FALL, true)).toBe(0)
+  })
+
+  test('so a trackpad’s small deltas still add up under reduced motion', () => {
+    let pull = began(noPull(), true, 1000)
+    let pages = 0
+
+    for (let step = 0; step < 60; step++) {
+      const answer = wheeled(pull, { delta: 5, reach: 160, now: 1000 + step * 8, still: true })
+      pull = answer.pull
+      if (answer.makes) pages++
+    }
+
+    expect(pages).toBe(1)
   })
 })
 

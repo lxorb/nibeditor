@@ -659,10 +659,25 @@
     contacts.went(event.pointerId)
 
     const one = gesture
-    // A finger coming off a pinch ends the pinch rather than handing the paper to
-    // the one that is left: two fingers were the gesture.
+    // A finger coming off a pinch leaves the other one holding the paper, from
+    // wherever it is: two fingers were the paper and one of them still is, so the
+    // pinch becomes a pan rather than the gesture ending under a hand that has not
+    // let go. The plane does the same with its spare fingers.
     if (one?.kind === 'pinch') {
-      if (one.ids.includes(event.pointerId)) finish()
+      const which = one.ids.indexOf(event.pointerId)
+      if (which < 0) return
+
+      const left = which === 0 ? 1 : 0
+      const id = one.ids[left]
+      const screen = one.screens[left]
+      if (!contacts.has(id)) {
+        finish()
+        return
+      }
+
+      gesture = { kind: 'pan', id, screen, from: camera, moved: true, onSlot: false }
+      driver = { id, touch: true, screen, since: event.timeStamp }
+      pull = began(pull, startedNearEnd(store.viewBottom, store.last), Date.now())
       return
     }
 

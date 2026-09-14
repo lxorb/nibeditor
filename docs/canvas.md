@@ -279,6 +279,14 @@ Minus, the percentage, plus. The number is the button that fits the whole plane
 in the pane, which is the only other thing anybody asks of a zoom. Pinch, the
 wheel and the keys do the rest and always did.
 
+One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the buttons and the
+wheel really do agree on it now: the comment here said they did while the buttons
+stepped by a fifth and the wheel by two fifths, which is two zooms for one hand.
+`wheelZoom` is the one function both the plane and a page note ask.
+
+On paper the number opens rows instead - a sheet has a width to read at and a page
+to see whole, so there is more than one answer to "fit"; see [pages.md](pages.md).
+
 ## Keys
 
 Every tool has one, every one of them is in the shortcut registry, and the

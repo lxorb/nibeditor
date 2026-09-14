@@ -81,10 +81,19 @@ export function armed(rise: number, reach: number): boolean {
 
 /** What is left of a pull `elapsed` milliseconds after the last notch of the
  *  wheel: all of it at once, then less and less, and nothing at all once the fall
- *  is over. Instant for a reader who asked for no movement. */
+ *  is over.
+ *
+ *  This is also what adds a scroll up: a wheel notch asks how much of the last one
+ *  is still standing before adding its own, which is what turns a trackpad's
+ *  hundred small deltas into one pull and a scroll a second later into none.
+ *
+ *  A reader who asked for no movement keeps the whole of it and then has none:
+ *  reduced motion means the app does not ease it away, not that a gesture has no
+ *  memory - without the memory a trackpad, whose deltas are five pixels each,
+ *  could never reach the threshold at all. */
 export function fallen(raw: number, elapsed: number, still = false): number {
-  if (still || elapsed >= FALL || raw <= 0) return 0
-  if (elapsed <= 0) return raw
+  if (elapsed >= FALL || raw <= 0) return 0
+  if (still || elapsed <= 0) return raw
 
   const left = 1 - elapsed / FALL
   return raw * left * left
