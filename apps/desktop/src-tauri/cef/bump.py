@@ -61,19 +61,30 @@ def pin() -> dict[str, str]:
 
 
 def head(repository: str, branch: str) -> str:
-    """What the branch points at right now."""
-    out = subprocess.run(
+    """What the branch points at right now, or a sentence and a stop.
+
+    **The one lookup that is not allowed to half-fail.** Everything below is a
+    description of a revision and can be reported as unreachable; this *is* the
+    revision, so a network that cannot be reached here has to end the run rather than
+    leave the rest of the report to describe a pin nobody resolved. Said as a sentence
+    and not as a traceback, because the reader is somebody looking at a red Monday.
+    """
+    done = subprocess.run(
         ['git', 'ls-remote', repository, f'refs/heads/{branch}'],
         capture_output=True,
         text=True,
-        check=True,
-    ).stdout.split()
+        check=False,
+    )
+    if done.returncode != 0:
+        said = (done.stderr or done.stdout).strip() or f'git exited {done.returncode}'
+        raise SystemExit(f'could not reach {repository} to resolve {branch}: {said}')
+    out = done.stdout.split()
     if not out:
         raise SystemExit(f'{repository} has no branch {branch}')
     return out[0]
 
 
-def engine_version(revision: str) -> str | None:
+def engine_version(revision: str, missed: list[str]) -> str | None:
     """Which `cef` crate the revision pins, which is which Chromium it is."""
     url = (
         'https://raw.githubusercontent.com/tauri-apps/tauri/'
@@ -82,15 +93,19 @@ def engine_version(revision: str) -> str | None:
     try:
         text = urllib.request.urlopen(url, timeout=60).read().decode()
     except OSError as error:
-        print(f'could not read the engine version: {error}')
+        missed.append(f'the engine version of {revision[:12]}: {error}')
         return None
     match = re.search(r'^cef = \{ version = "=?([^"]+)"', text, re.M)
-    return match.group(1) if match else None
+    if not match:
+        missed.append(f'the engine version of {revision[:12]}: no cef version in the manifest')
+        return None
+    return match.group(1)
 
 
-def newest_stable_cef() -> str | None:
+def newest_stable_cef(missed: list[str]) -> str | None:
     """The newest true stable CEF, out of the script that already knows the traps."""
     if not FETCH_CEF.is_file():
+        missed.append(f"CEF's own newest stable: no {FETCH_CEF}")
         return None
     out = subprocess.run(
         [sys.executable, str(FETCH_CEF), '--newest-stable', '--print-version'],
@@ -103,10 +118,12 @@ def newest_stable_cef() -> str | None:
     for line in out.stdout.splitlines():
         if line.startswith('cef '):
             return line[len('cef ') :].strip()
+    said = (out.stderr or out.stdout).strip().splitlines()
+    missed.append(f"CEF's own newest stable: {said[-1] if said else 'nothing was said'}")
     return None
 
 
-def published() -> str | None:
+def published(missed: list[str]) -> str | None:
     """Whether `tauri-runtime-cef` is a release yet, and which one."""
     try:
         raw = urllib.request.urlopen(
@@ -116,11 +133,13 @@ def published() -> str | None:
             ),
             timeout=60,
         ).read()
-    except OSError:
+    except OSError as error:
+        missed.append(f'whether the engine is published: {error}')
         return None
     try:
         return json.loads(raw)['crate']['newest_version']
-    except (KeyError, ValueError):
+    except (KeyError, ValueError) as error:
+        missed.append(f'whether the engine is published: {error}')
         return None
 
 
@@ -142,16 +161,21 @@ def main() -> int:
     held = pin()
     wanted = args.set or head(held['repository'], held['branch'])
 
+    missed: list[str] = []
     report = {
         'repository': held['repository'],
         'branch': held['branch'],
         'from': held['revision'],
         'to': wanted,
         'moved': wanted != held['revision'],
-        'engine_before': engine_version(held['revision']),
-        'engine_after': engine_version(wanted),
-        'newest_stable_cef': newest_stable_cef(),
-        'published': published(),
+        'engine_before': engine_version(held['revision'], missed),
+        'engine_after': engine_version(wanted, missed),
+        'newest_stable_cef': newest_stable_cef(missed),
+        'published': published(missed),
+        # What could not be read, by name. A null in this report used to mean either
+        # "there is no answer" or "nobody could ask", and a Monday morning cannot tell
+        # those apart.
+        'unreachable': missed,
     }
 
     if report['moved'] and (args.write or args.set):
@@ -164,7 +188,22 @@ def main() -> int:
 
     print(json.dumps(report, indent=2))
     if args.out:
-        Path(args.out).write_text(json.dumps(report, indent=2), encoding='utf-8')
+        # With the newline, because the workflow reads this file into a multiline job
+        # output and that syntax needs its delimiter on a line of its own: a file that
+        # ends without a newline put `}REPORT` on one line and failed the whole job
+        # with "Matching delimiter not found", which is what the first scheduled run
+        # did. The workflow guards it too; a file that ends properly is the fix.
+        Path(args.out).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+
+    for one in missed:
+        print(f'could not read {one}')
+
+    # **And then stop, if what could not be read is what a pull request would claim.**
+    # A bump whose new revision cannot be described is a bump nobody can review, so it
+    # is a red job with a sentence rather than a draft pull request with a null in it.
+    if report['moved'] and report['engine_after'] is None:
+        print(f'the pin would move to {wanted} and nothing could be read about it; stopping')
+        return 1
     return 0
 
 

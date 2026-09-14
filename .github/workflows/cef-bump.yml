@@ -58,9 +58,15 @@ jobs:
           python apps/desktop/src-tauri/cef/bump.py "${args[@]}" --out bump.json
           echo "moved=$(python -c "import json;print(str(json.load(open('bump.json'))['moved']).lower())")" >>"$GITHUB_OUTPUT"
           echo "revision=$(python -c "import json;print(json.load(open('bump.json'))['to'])")" >>"$GITHUB_OUTPUT"
+          # The delimiter has to be on a line of its own, and `cat` of a file that does
+          # not end in a newline does not put it there: the first scheduled run of this
+          # workflow wrote `}REPORT` and failed the job with "Matching delimiter not
+          # found" *after* resolving everything correctly. `bump.py` ends the file with
+          # a newline now and this no longer depends on it.
           {
             echo 'report<<REPORT'
             cat bump.json
+            echo
             echo REPORT
           } >>"$GITHUB_OUTPUT"
 
@@ -218,6 +224,13 @@ jobs:
   # And the button: a draft pull request with the pin moved, the lock file the new
   # revision resolved to, and the three tables in the body. Draft, because a person
   # decides whether a Chromium nib has not shipped yet is a Chromium nib wants.
+  #
+  # **It only ever opens one from the default branch.** A `workflow_dispatch` can be
+  # asked for on any ref - which is how the plumbing gets proved without waiting for a
+  # Monday - and a branch nobody releases from must not be able to push a `cef-pin-*`
+  # branch or open a pull request against main by accident. So this job runs
+  # everywhere, builds the body everywhere, puts it in the job summary everywhere, and
+  # pushes nothing anywhere but the default branch.
   propose:
     needs: [pin, gate]
     if: always() && needs.pin.outputs.moved == 'true'
@@ -279,8 +292,30 @@ jobs:
             echo 'allowed to say no. Read the table before merging.'
           } >body.md
           cat body.md
+          {
+            echo '## The pull request this would open'
+            echo
+            cat body.md
+          } >>"$GITHUB_STEP_SUMMARY"
+
+      # The guard, and it is a step rather than a job condition so that a dispatch on
+      # any other ref still proves everything above it works.
+      - name: Whether this may open a pull request
+        id: allowed
+        shell: bash
+        run: |
+          default='${{ github.event.repository.default_branch }}'
+          default=${default:-main}
+          if [ "${{ github.ref_name }}" = "$default" ]; then
+            echo 'may=true' >>"$GITHUB_OUTPUT"
+          else
+            echo 'may=false' >>"$GITHUB_OUTPUT"
+            echo "This ran on \`${{ github.ref_name }}\` rather than \`$default\`, so nothing was pushed and no pull request was opened." >>"$GITHUB_STEP_SUMMARY"
+            echo "not the default branch ($default): nothing pushed, no pull request"
+          fi
 
       - name: Open it
+        if: steps.allowed.outputs.may == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
