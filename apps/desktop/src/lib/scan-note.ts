@@ -7,11 +7,12 @@
  *  from the same note read by the first scan. */
 
 import { COVER_KEY } from '@nib/markdown/cover'
+import { archivedIn } from './archived'
 import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { tagsIn } from './search/tags'
-import { iconOf } from './web-tab/shortcut'
+import { archivedOf, iconOf } from './web-tab/shortcut'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -76,6 +77,14 @@ export interface ScannedNote {
    *  surface that draws the banner reads it out of the note. See cover.ts in
    *  @nib/markdown. */
   cover: string | null
+  /** When the file was archived, as it says so, or null for one nobody has put away -
+   *  which is almost every file.
+   *
+   *  Read on this pass for the reason the icon is, and read at all because an archived
+   *  note is left out of every list that speaks for the space: a list that had to ask
+   *  the disk would ask once per row. The twin of the same field in links.rs. See
+   *  archived.ts for what the words count as, and docs/archive.md. */
+  archived: string | null
 }
 
 export interface SpaceLinks {
@@ -105,6 +114,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     // website's, read in `scanShortcut`.
     favicon: null,
     cover: frontMatterValue(content, COVER_KEY),
+    archived: archivedIn(content),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
       target: link.target,
@@ -158,6 +168,8 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     // reads it out of the `.url`; a `.webloc` has none and falls back to the globe.
     favicon: iconOf(path, content),
     cover: null,
+    // The `Nib-Archived` line beside the mark, which is where this format keeps it.
+    archived: archivedOf(path, content),
     links: [],
   }
 }

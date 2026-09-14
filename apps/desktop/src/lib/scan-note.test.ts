@@ -148,3 +148,63 @@ describe('reading a website for the index', () => {
     expect(scanShortcut('A.webloc', '<plist><dict></dict></plist>').favicon).toBeNull()
   })
 })
+
+/** When each kind of file was archived, read on the pass that reads the space.
+ *
+ *  Every case here has its twin at the bottom of `apps/desktop/src-tauri/src/links.rs`: two
+ *  languages cannot share one reader, so what keeps the desktop's pass and the browser's
+ *  from drifting is that both are asked the same questions. See archived.ts for what the
+ *  words count as, and docs/archive.md. */
+describe('when a file was archived', () => {
+  const WHEN = '2026-09-14T10:00:00.000Z'
+
+  test('a note says it in its front matter', () => {
+    const note = scanNote('Old/Last year.md', `---\narchived: ${WHEN}\n---\n\n# Last year\n`)
+
+    expect(note.archived).toBe(WHEN)
+  })
+
+  test('and a word typed by hand is carried across as it stands', () => {
+    // What Obsidian writes if somebody ticks a checkbox called `archived`. Whether it counts
+    // is archived.ts's question, not this pass's.
+    expect(scanNote('A.md', '---\narchived: true\n---\n').archived).toBe('true')
+    expect(scanNote('A.md', '---\narchived: false\n---\n').archived).toBe('false')
+  })
+
+  test('a note nobody archived says nothing', () => {
+    expect(scanNote('A.md', '# A\n').archived).toBeNull()
+    expect(scanNote('A.md', '---\nicon: rocket\n---\n').archived).toBeNull()
+  })
+
+  test('a plane says it under its nib key, beside the icon', () => {
+    const plane = scanCanvas(
+      'boards/Board.canvas',
+      JSON.stringify({ nodes: [], edges: [], nib: { version: 1, icon: 'rocket', archived: WHEN } }),
+    )
+
+    expect(plane.archived).toBe(WHEN)
+    expect(plane.icon).toBe('rocket')
+  })
+
+  test('and a plane nobody archived says nothing', () => {
+    expect(scanCanvas('Board.canvas', '{"nodes":[],"edges":[]}').archived).toBeNull()
+    expect(scanCanvas('Board.canvas', 'not json').archived).toBeNull()
+  })
+
+  test('a website says it on a line beside its mark', () => {
+    const site = scanShortcut(
+      'Svelte docs.url',
+      '[InternetShortcut]\nURL=https://svelte.dev/\nNib-Icon=https://svelte.dev/f.png\n' +
+        `Nib-Archived=${WHEN}\n`,
+    )
+
+    expect(site.archived).toBe(WHEN)
+    expect(site.favicon).toBe('https://svelte.dev/f.png')
+  })
+
+  test('and a website nobody archived says nothing', () => {
+    const bare = scanShortcut('A.url', '[InternetShortcut]\nURL=https://a.example/\n')
+
+    expect(bare.archived).toBeNull()
+  })
+})

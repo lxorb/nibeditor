@@ -289,10 +289,31 @@ export interface Canvas {
    *  app can read. Meaningless for an emoji or a coloured drawing, which have their
    *  own colours; see icons.ts in the app. */
   iconColor?: string | null
+  /** When the plane was archived, as the file says it, or null for a plane nobody
+   *  has put away - which is almost every plane.
+   *
+   *  Beside the icon, and absent rather than empty for the same reason: it is about
+   *  the file and not about the plane, so a room and a copied plane say nothing
+   *  about it, which is different from saying there is none.
+   *
+   *  A date rather than a flag so the archive can be read newest first, but the
+   *  words are not held to that: anything that is not `false` or `no` counts as
+   *  archived, so a `true` typed in by hand reads as archived too. See
+   *  archived.ts in the app and docs/archive.md. */
+  archived?: string | null
 }
 
 export function emptyCanvas(): Canvas {
-  return { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
+  return {
+    nodes: [],
+    edges: [],
+    ink: [],
+    at: {},
+    gone: {},
+    icon: null,
+    iconColor: null,
+    archived: null,
+  }
 }
 
 /** A colour the spec would accept, or undefined. Anything else is dropped rather
@@ -778,6 +799,7 @@ export function readCanvas(text: string): Canvas {
     gone: readTimes(nib.gone),
     icon: iconWritten(nib.icon),
     iconColor: iconWritten(nib.iconColor),
+    archived: iconWritten(nib.archived),
   }
 }
 
@@ -904,6 +926,9 @@ export function writeCanvas(canvas: Canvas): string {
     // to read: what the row in the file list wears.
     ...(canvas.icon ? { icon: canvas.icon } : {}),
     ...(canvas.icon && canvas.iconColor ? { iconColor: canvas.iconColor } : {}),
+    // Then whether the plane has been put away, which is the other thing about the
+    // file rather than about the plane. See docs/archive.md.
+    ...(canvas.archived ? { archived: canvas.archived } : {}),
     // Before the ink, because the pages are what the ink is written on, and the
     // list's own order is the order they turn in.
     ...(pages.length ? { pages: pages.map(writtenPage) } : {}),
@@ -965,6 +990,23 @@ export function canvasIconEdit(
   if (canvas.icon === name && (canvas.iconColor ?? null) === wanted) return null
 
   return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
+}
+
+/** One edit that says when a plane was archived, or takes the key away when `when`
+ *  is null. Null when the file already says that, so a caller writes no file.
+ *
+ *  The icon edit's twin in every respect - the same read, the same write back, the
+ *  same refusal on a file that is not JSON at all - because it is the same key in the
+ *  same place, written for the same reason: the mark belongs to the file, so it
+ *  travels with it and another app reading the plane is not confused by it. See
+ *  `canvasIconEdit` above and docs/archive.md. */
+export function canvasArchivedEdit(text: string, when: string | null): TextEdit | null {
+  if (text.trim() && !isCanvasJson(text)) return null
+
+  const canvas = readCanvas(text)
+  if ((canvas.archived ?? null) === when) return null
+
+  return oneEdit(text, writeCanvas({ ...canvas, archived: when }))
 }
 
 function isCanvasJson(text: string): boolean {

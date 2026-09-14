@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 import {
   blankCanvas,
   type Canvas,
+  canvasArchivedEdit,
   canvasIconEdit,
   clampOpacity,
   DEFAULT_INK,
@@ -99,7 +100,16 @@ describe('reading a canvas', () => {
   })
 
   test('is an empty canvas for a file that is not one', () => {
-    const empty = { nodes: [], edges: [], ink: [], at: {}, gone: {}, icon: null, iconColor: null }
+    const empty = {
+      nodes: [],
+      edges: [],
+      ink: [],
+      at: {},
+      gone: {},
+      icon: null,
+      iconColor: null,
+      archived: null,
+    }
     expect(readCanvas('')).toEqual(empty)
     expect(readCanvas('nonsense')).toEqual(empty)
     expect(readCanvas('[]')).toEqual(empty)
@@ -273,6 +283,7 @@ describe('writing a canvas', () => {
       gone: {},
       icon: null,
       iconColor: null,
+      archived: null,
     })
     // Nothing of Nib's in a canvas that has none of Nib's in it.
     expect(blankCanvas()).not.toContain('nib')
@@ -343,6 +354,7 @@ describe('what Nib keeps beyond the spec', () => {
     gone: { old: 900 },
     icon: null,
     iconColor: null,
+    archived: null,
   }
 
   const written = writeCanvas(drawn)
@@ -394,6 +406,7 @@ describe('what Nib keeps beyond the spec', () => {
       gone: {},
       icon: null,
       iconColor: null,
+      archived: null,
     }
 
     const back = readCanvas(writeCanvas(diagram))
@@ -557,6 +570,7 @@ describe('how translucent a stroke was drawn', () => {
       gone: {},
       icon: null,
       iconColor: null,
+      archived: null,
     }
 
     const written = writeCanvas(drawn)
@@ -766,5 +780,72 @@ describe('the icon a canvas wears', () => {
 
     expect(after.at).toEqual(drawn.at)
     expect(after.nodes).toEqual(drawn.nodes)
+  })
+})
+
+/** When a plane was put away. Beside the icon in the file and beside the icon here,
+ *  because it is the same kind of fact about the same key: something about the file
+ *  rather than about the plane. Every case has its twin in `links.rs`, which reads it on
+ *  the pass over the space; see docs/archive.md. */
+describe('when a plane was archived', () => {
+  const applied = (text: string, when: string | null) => {
+    const edit = canvasArchivedEdit(text, when)
+    return edit === null ? null : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
+  }
+
+  const WHEN = '2026-09-14T10:00:00.000Z'
+
+  test('is read off the nib key', () => {
+    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, archived: WHEN } })
+    expect(readCanvas(file).archived).toBe(WHEN)
+  })
+
+  test('and a plane nobody put away says nothing', () => {
+    expect(readCanvas('{"nodes":[],"edges":[]}').archived).toBeNull()
+    expect(readCanvas('{"nib":{"archived":"   "}}').archived).toBeNull()
+    expect(readCanvas('{"nib":{"archived":true}}').archived).toBeNull()
+    expect(readCanvas('not json').archived).toBeNull()
+  })
+
+  test('is written into the file, and taken back out of it', () => {
+    const away = applied(blankCanvas(), WHEN) ?? ''
+    expect(readCanvas(away).archived).toBe(WHEN)
+
+    const back = applied(away, null) ?? ''
+    expect(readCanvas(back).archived).toBeNull()
+    // Byte for byte what it was, which is what "exactly where it was before" means for
+    // the file as much as for the row.
+    expect(back).toBe(blankCanvas())
+  })
+
+  test('says nothing where the file already says it', () => {
+    const away = applied(blankCanvas(), WHEN) ?? ''
+    expect(canvasArchivedEdit(away, WHEN)).toBeNull()
+    expect(canvasArchivedEdit(blankCanvas(), null)).toBeNull()
+  })
+
+  test('never writes over a file that is not a canvas', () => {
+    expect(canvasArchivedEdit('# Not JSON at all', WHEN)).toBeNull()
+  })
+
+  test('leaves the icon, the cards, the ink and the times where they were', () => {
+    const drawn = readCanvas(
+      writeCanvas({ ...readCanvas(blankCanvas()), icon: 'rocket', at: { card: 7 } }),
+    )
+    const after = readCanvas(applied(writeCanvas(drawn), WHEN) ?? '')
+
+    expect(after.icon).toBe('rocket')
+    expect(after.at).toEqual(drawn.at)
+    expect(after.nodes).toEqual(drawn.nodes)
+  })
+
+  test('and sits after the icon under nib, which is the order a person reads', () => {
+    const away = applied(writeCanvas({ ...readCanvas(blankCanvas()), icon: 'rocket' }), WHEN) ?? ''
+
+    expect(Object.keys((JSON.parse(away) as { nib: object }).nib)).toEqual([
+      'version',
+      'icon',
+      'archived',
+    ])
   })
 })

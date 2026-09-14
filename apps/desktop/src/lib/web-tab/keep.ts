@@ -99,6 +99,10 @@ async function write(kept: Kept, home: string | null, icon: string | null): Prom
     Number.isNaN(when.getTime()) ? new Date() : when,
     home,
     icon,
+    // Handed straight back, because this writes the whole file: a website archived
+    // last week that the reader then opened from the archive would come back
+    // unarchived the moment the page moved. See writeShortcut.
+    said?.archived ?? null,
   )
   if (content === kept.text) return
 

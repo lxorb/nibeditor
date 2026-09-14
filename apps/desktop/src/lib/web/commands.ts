@@ -389,8 +389,11 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
       // A canvas is read too, for the icon its `nib` key may carry: every row of
       // the tree wants that, and the desktop's `scan_links` reads it on the same
-      // pass for the same reason.
-      if (isCanvas(row.path)) {
+      // pass for the same reason. A page note with it, because it is the same JSON
+      // under another name and keeps the same two keys - and because a plane that
+      // said it was archived would otherwise be back in the file list after a
+      // reload, until the reader opened the very thing they had put away.
+      if (isCanvas(row.path) || isPages(row.path)) {
         notes.push(scanCanvas(relative(row.path), row.content))
         continue
       }

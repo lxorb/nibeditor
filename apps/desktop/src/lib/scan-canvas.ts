@@ -40,6 +40,9 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     favicon: null,
     // Nor a cover: the whole of a plane is a picture already.
     cover: null,
+    // Under the same `nib` key as the icon, because it is the same kind of fact about
+    // the file rather than about the plane. See canvas.ts and docs/archive.md.
+    archived: canvas.archived ?? null,
     links: canvas.nodes
       .filter((node): node is Extract<typeof node, { type: 'file' }> => node.type === 'file')
       .map((node) => ({

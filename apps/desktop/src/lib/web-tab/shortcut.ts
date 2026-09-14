@@ -54,6 +54,7 @@ const TITLE_KEY = 'title'
 const ADDED_KEY = 'nib-added'
 const HOME_KEY = 'nib-home'
 const ICON_KEY = 'nib-icon'
+const ARCHIVED_KEY = 'nib-archived'
 
 /** What a shortcut file says. */
 export interface Shortcut {
@@ -89,19 +90,33 @@ export interface Shortcut {
    *  list have the site's mark before the page has loaded and on a machine that has
    *  never opened it. */
   icon: string | null
+  /** When the website was archived, as the file says it, or null for one nobody has
+   *  put away.
+   *
+   *  Here for the reason the icon is here: it is the file's own, so it travels with
+   *  the file and says the same thing on every machine the space syncs to. A note
+   *  says it in its front matter and a plane under its `nib` key; this format has
+   *  neither, and a `Key=value` line beside the others is what it has instead. See
+   *  archived.ts and docs/archive.md. */
+  archived: string | null
 }
 
 /** A shortcut file, from its parts.
  *
- *  `home` and `icon` are left out when there is nothing to say, so the ordinary file
- *  is the three lines it always was: a note nobody has browsed out of writes exactly
- *  what it wrote before this existed. */
+ *  `home`, `icon` and `archived` are left out when there is nothing to say, so the
+ *  ordinary file is the three lines it always was: a note nobody has browsed out of
+ *  writes exactly what it wrote before this existed.
+ *
+ *  Every caller that rewrites a file that is already there has to hand back what it
+ *  read, because this writes the whole file: a keeper that dropped `archived` as the
+ *  reading moved would unarchive a website nobody touched. See keep.ts. */
 export function writeShortcut(
   url: string,
   title: string,
   when: Date,
   home?: string | null,
   icon?: string | null,
+  archived?: string | null,
 ): string {
   const rows = [
     `URL=${oneLine(url)}`,
@@ -111,6 +126,7 @@ export function writeShortcut(
 
   if (home && home !== url) rows.push(`Nib-Home=${oneLine(home)}`)
   if (icon) rows.push(`Nib-Icon=${oneLine(icon)}`)
+  if (archived) rows.push(`Nib-Archived=${oneLine(archived)}`)
 
   return `[InternetShortcut]\r\n${rows.join('\r\n')}\r\n`
 }
@@ -167,6 +183,7 @@ export function readShortcut(text: string | null | undefined): Shortcut | null {
     added: nothing(said.get(ADDED_KEY)),
     home: nothing(said.get(HOME_KEY)),
     icon: nothing(said.get(ICON_KEY)),
+    archived: nothing(said.get(ARCHIVED_KEY)),
   }
 }
 
@@ -186,7 +203,9 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
   if (!/\.webloc$/i.test(path.trim())) return readShortcut(text)
 
   const url = readWebloc(text)
-  return url === null ? null : { url, title: null, added: null, home: null, icon: null }
+  return url === null
+    ? null
+    : { url, title: null, added: null, home: null, icon: null, archived: null }
 }
 
 /** The address in a macOS `.webloc`, or null.
@@ -227,4 +246,16 @@ function entities(value: string): string {
 export function iconOf(path: string | null, text: string): string | null {
   if (path === null) return null
   return readWebFile(path, text)?.icon ?? null
+}
+
+/** When a website was archived, as its file says it, or null for one nobody put away.
+ *
+ *  Beside `iconOf` and for the same reason: it is the file format's business, and the
+ *  scan pass asks it once per website so every list has the answer without reading the
+ *  file again. A `.webloc` has no such key and always answers null, which is a website
+ *  that can be archived only by the map a folder uses - so it is not offered. See
+ *  archived.ts and docs/archive.md. */
+export function archivedOf(path: string | null, text: string): string | null {
+  if (path === null) return null
+  return readWebFile(path, text)?.archived ?? null
 }

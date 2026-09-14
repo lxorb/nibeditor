@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { readShortcut, readWebloc, writeShortcut } from './shortcut'
+import { readShortcut, readWebFile, readWebloc, writeShortcut } from './shortcut'
 
 const WHEN = new Date('2026-09-12T08:30:00.000Z')
 
@@ -36,6 +36,7 @@ describe('the file a website is written as', () => {
       added: '2026-09-12T08:30:00.000Z',
       home: null,
       icon: null,
+      archived: null,
     })
   })
 
@@ -138,5 +139,81 @@ describe('a shortcut a Mac wrote', () => {
     expect(readWebloc('bplist00')).toBe(null)
     expect(readWebloc('')).toBe(null)
     expect(readWebloc(null)).toBe(null)
+  })
+})
+
+/** When a website was archived: a line beside `Nib-Icon`, because this format has neither
+ *  front matter nor a `nib` key to keep it in. See archived.ts and docs/archive.md. */
+describe('when a website was archived', () => {
+  const ARCHIVED = '2026-09-14T10:00:00.000Z'
+
+  test('is left out of a file nobody archived, so the ordinary file is what it was', () => {
+    expect(writeShortcut('https://a.example/', 'A', WHEN)).not.toContain('Nib-Archived')
+    expect(writeShortcut('https://a.example/', 'A', WHEN, null, null, null)).not.toContain(
+      'Nib-Archived',
+    )
+  })
+
+  test('and is a line of its own after the mark when there is something to say', () => {
+    expect(
+      writeShortcut('https://a.example/', 'A', WHEN, null, 'https://a.example/i.png', ARCHIVED),
+    ).toBe(
+      '[InternetShortcut]\r\n' +
+        'URL=https://a.example/\r\n' +
+        'Title=A\r\n' +
+        'Nib-Added=2026-09-12T08:30:00.000Z\r\n' +
+        'Nib-Icon=https://a.example/i.png\r\n' +
+        `Nib-Archived=${ARCHIVED}\r\n`,
+    )
+  })
+
+  test('reads back off the file, in any case the key is written in', () => {
+    const said = readShortcut(
+      `[InternetShortcut]\nURL=https://a.example/\nNib-Archived=${ARCHIVED}\n`,
+    )
+    const folded = readShortcut(
+      `[internetshortcut]\nurl=https://a.example/\nnib-archived=${ARCHIVED}\n`,
+    )
+
+    expect(said?.archived).toBe(ARCHIVED)
+    expect(folded?.archived).toBe(ARCHIVED)
+  })
+
+  test('a key with nothing after it reads as no key at all', () => {
+    const said = readShortcut('[InternetShortcut]\nURL=https://a.example/\nNib-Archived=\n')
+
+    expect(said?.archived).toBeNull()
+  })
+
+  test('and a file nobody archived says nothing', () => {
+    expect(readShortcut('[InternetShortcut]\nURL=https://a.example/\n')?.archived).toBeNull()
+  })
+
+  test('survives being written and read again, with everything else beside it', () => {
+    const written = writeShortcut(
+      'https://a.example/page',
+      'A',
+      WHEN,
+      'https://a.example/',
+      'https://a.example/i.png',
+      ARCHIVED,
+    )
+    const said = readShortcut(written)
+
+    expect(said?.archived).toBe(ARCHIVED)
+    expect(said?.home).toBe('https://a.example/')
+    expect(said?.icon).toBe('https://a.example/i.png')
+    expect(said?.url).toBe('https://a.example/page')
+  })
+
+  test('a webloc has no key for it, so it never says one', () => {
+    // macOS's own format, which this app reads and has never written. A website kept in one
+    // is not offered Archive at all; see `canArchive` in archive.ts.
+    const said = readWebFile(
+      'A.webloc',
+      '<plist><dict><key>URL</key><string>https://a.example/</string></dict></plist>',
+    )
+
+    expect(said?.archived).toBeNull()
   })
 })
