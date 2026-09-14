@@ -29,12 +29,19 @@
  *  reset by an edit, and the two of them walk each other back exactly. They are
  *  two rows and no chord, so the keyboard is no more crowded than it was.
  *
- *  Nothing here decides *what* can fold. `foldable` does, and it answers out of
- *  the language: `@codemirror/lang-markdown` registers a fold service for a
- *  heading's section and a fold prop for every other block - a list item with
- *  children, a blockquote or callout, a fence, an indented block, a table. One
- *  source of truth for the ranges, so a chevron, a chord and a restored fold
- *  can never disagree about where a fold ends.
+ *  Where a fold *ends* is never decided here. `foldable` answers that, out of the
+ *  language: `@codemirror/lang-markdown` registers a fold service for a heading's
+ *  section and a fold prop for every other block - a list item with children, a
+ *  blockquote or callout, a fence, an indented block, a table. One source of truth
+ *  for the ranges, so a chevron, a chord and a restored fold can never disagree
+ *  about where a fold ends.
+ *
+ *  Which lines are *asked* is decided here, and it is `COULD_FOLD`: a heading, a
+ *  quote, a list item, a fence, or anything set in from the margin. Two things the
+ *  language would fold are deliberately never asked about. An unindented paragraph,
+ *  because a note is read down its left edge and a chevron beside every paragraph is
+ *  a map of nothing. And a table, which folds to a row of pipes that says less than
+ *  the table did.
  *
  *  A fold is view state and never touches the file: see foldLines below, which
  *  is what the app writes down per note per device. */
