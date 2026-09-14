@@ -167,6 +167,109 @@ across the pane, and you cannot lose your pages off the side of a note of pages,
 which is the one thing an endless plane lets you do. Zooming in frees the
 horizontal pan, because then there is something to the side to see.
 
+### Zooming
+
+**Every way a hand zooms paper, and one rate for all of them.**
+
+| | |
+| --- | --- |
+| two fingers | a pinch on the paper, about the middle of the two of them, with the pan the middle moves as well. Two fingers mean the paper in every tool: whatever the first was doing, the second takes it over - except ink that has been going for longer than a quarter of a second, which is a hand settling on the glass rather than a pinch |
+| Ctrl and the wheel | in and out about the pointer, which stays over what it was over. A trackpad pinch arrives as exactly this on every platform |
+| a double tap | the two fits in turn: the width of the paper, and then the whole of the page |
+| Ctrl+Alt+= and Ctrl+Alt+- | a notch in and out, about the middle of the view |
+| Ctrl+Alt+0 | back to the width, and the paper stays fitted from then on |
+| the bar | the two buttons step by a notch; the percentage opens Fit width, Fit page and 100% |
+
+One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts` and nothing has its own:
+the bar's own comment said the buttons and the wheel agreed, and they did not -
+the buttons stepped by a fifth, the plane's wheel by two fifths and a page note's
+by a quarter, which is three surfaces for a reader who uses two of them.
+`wheelZoom` is what both the plane and the paper ask now.
+
+**The keys are one modifier over** from the three every browser zooms with,
+because those three are the app's own text size and are read off the window after
+the surface has had the press: one key would resize the words and the paper at
+once. The same trade the plane's Fit made; see [keyboard.md](keyboard.md), which
+states the digit rule once.
+
+**How far it is zoomed is said on the paper**, as a badge at the top of the pane,
+while the zoom is happening and for six tenths of a second after. The bar carries
+the percentage too, but the bar is at the bottom of the pane and a hand pinching
+the middle of a page is not looking there. It is the same pill the text size uses
+after a pinch - `.nib-pill` in the themes package - because it is the same thing
+said about something else.
+
+**The zoom is the reader's, and it is kept.** Until somebody has zoomed, the paper
+stays fitted across the pane: the sidebar opening, a pane splitting, a phone
+turning. Once they have, nothing takes it off them - including the app being
+started again, which used to. The camera came back from `nib:canvas-views` and the
+fact that the zoom was chosen did not, so the first measurement fitted the paper
+again and threw it away. A `chose` key beside the camera is the whole fix; see
+`KeptView` in `apps/desktop/src/lib/canvas/place.ts`.
+
+**What is on the paper is drawn at the zoom; what is not, is not.** The ruling is
+the paper's own and scales with it, the way a printed page does. The edge round
+each sheet, its shadow, the number in its corner and the sentence a sheet says
+when its PDF cannot be read are the app talking, and they are sized in screen
+pixels off `unit`, the same unit the canvas draws a handle in. The number used to
+be forty-four pixels high on a page zoomed in and four tenths of one on a note
+seen whole.
+
+## A page by scrolling
+
+**Carry on scrolling past the last sheet and the next one comes up out from under
+it.** That is how a page is added, because it is the one movement somebody makes
+at the end of a page note that means nothing else - and it is the same gesture
+with a thumb, a trackpad and a wheel.
+
+What happens, in order:
+
+1. **At rest**, the end of the column is the silhouette of the sheet that is not
+   there yet: a dashed outline the width of the paper with a plus in it, quiet.
+   The view reaches 88 screen pixels past the last page so that band is in reach,
+   which is also what makes the gesture discoverable - and it can simply be
+   pressed.
+2. **Pulling** brings it up on a rubber band: the first pixels are one for one and
+   each one after buys less, approaching three times the threshold and never
+   passing it. The plus grows, the outline fills in, and it says *Pull to add a
+   page*.
+3. **Past the threshold** - a third of the page as it is on screen, never less
+   than 96 pixels and never more than 160, so it is reachable at any zoom - the
+   outline goes solid, the silhouette fills with the colour of paper, and it says
+   *Release to add a page*. Letting go there makes the page.
+4. **The page lands in exactly the box the silhouette was drawn in**, so nothing on
+   screen moves: the overscroll the view was held at is now somewhere it may really
+   be, because the column is a page longer, and it is handed over as that in the
+   same breath. Then the view slides down onto the new page over four tenths of a
+   second.
+5. **Short of the threshold**, everything springs back.
+
+**A wheel has no lift**, so its notches are added up and the threshold itself
+makes the page; the notches that arrive in the next three tenths of a second make
+nothing, which is what turns one long scroll into one page rather than four. When
+the wheel stops short, the pull falls back to nothing over a quarter of a second.
+
+**A scroll that did not begin at the end cannot reach it.** A hard flick from the
+top of a sixty page note passes the end of the column with hundreds of pixels of
+wheel left over, and without this it would make a page out of momentum. So the
+gesture may only make one when it *began* with the bottom of the view already in
+the lower half of the last page - which is where somebody who means to add a page
+is.
+
+**Reduced motion**: no rubber band - the silhouette follows the hand exactly,
+which is the reader's own movement rather than the app's - the page is made at the
+threshold rather than at the lift, and the view is put on it rather than sliding
+to it.
+
+Undo takes the page back, like every other gesture on this surface: one edit, one
+step. The arithmetic is `apps/desktop/src/lib/pages/pull.ts`, pure and tested in
+`pull.test.ts`; the silhouette is `PagesSlot.svelte`; `addPage` in the store is
+the one place a page is put in, which the navigator's own row asks for too.
+
+There is also a named command, **Add a page**, on no key out of the box: the
+gesture is the way in and the silhouette is the button, and this is here so a
+reader who wants a key can give it one.
+
 ## Navigating
 
 Thumbnails in the outline panel's slot - `PagesNavigator.svelte`. In the outline's
@@ -182,6 +285,11 @@ rasterise, and the panel is not what the hand is looking at.
 Reordering is a drag, the way moving a section in the outline is. The menu on a
 thumbnail adds a page after it, deletes it, or changes its ruling. **Page up** and
 **Page down** turn a page; the status bar says which page of how many, unasked.
+
+The row at the bottom of the panel and the silhouette at the end of the column are
+the same command: `addPage` on the store, which puts the page in and says which
+page it now is. Two copies of "put a page in and go to it" would be two things to
+keep in step.
 
 ## A PDF in
 
@@ -318,8 +426,13 @@ a phone reader sees; the navigator is in the drawer where the outline is.
 | The page model | `packages/markdown/src/pages.ts` - the column, add, delete, reorder, grow |
 | The surface | `apps/desktop/src/lib/Pages.svelte` |
 | One sheet | `apps/desktop/src/lib/PagesPage.svelte` |
+| The sheet that is not there yet | `apps/desktop/src/lib/PagesSlot.svelte` |
+| How far it is zoomed, said | `apps/desktop/src/lib/PagesZoom.svelte` |
 | The navigator | `apps/desktop/src/lib/PagesNavigator.svelte` |
 | The store | `apps/desktop/src/lib/pages/store.svelte.ts` |
+| The pull, as arithmetic | `apps/desktop/src/lib/pages/pull.ts` |
+| One notch of a zoom | `apps/desktop/src/lib/camera.ts` |
+| Where a view was left, and whether its zoom was chosen | `apps/desktop/src/lib/canvas/place.ts` |
 | The paper behind a page | `apps/desktop/src/lib/pages/paper.ts` |
 | Out | `apps/desktop/src/lib/pages/out.ts` |
 | What is in front | `apps/desktop/src/lib/pages/showing.svelte.ts` |

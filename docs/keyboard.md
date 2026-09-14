@@ -423,6 +423,20 @@ resize the words at once. A surface with a zoom of its own - the canvas, the gra
 page note - answers the same gesture on its own element, and the note's rule stands
 down on anything one of them has already prevented, keys as well as the wheel.
 
+**A page note's zoom is the same three keys, one modifier over.**
+
+| | |
+| --- | --- |
+| Ctrl+Alt+= , Ctrl+Alt+- | a notch in and out of the paper |
+| Ctrl+Alt+0 | fit the width, and keep the paper fitted from then on |
+| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the menu the percentage on the bar opens |
+| Add a page | a page at the end. No key either: the gesture is carrying on scrolling past the last sheet, and the silhouette there is the button |
+
+They share Ctrl+Alt+0 with the plane's own Fit and are not a clash, because both
+are contextual and read off their own surface: only one of the two is ever in front
+of a reader. `shortcuts.test.ts` pins all three keys, that none of them is one of
+the text size's, and that the two commands with no key have none.
+
 ### Not covered
 
 The canvas and the Even glasses. The plane has its own keyboard already, one
@@ -442,6 +456,8 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
 | `apps/desktop/src/lib/text-size.ts` | Ctrl and the wheel over the note, and what it does not touch |
+| `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |
+| `apps/desktop/src/lib/Pages.svelte` | the paper's own keys and the four other ways it is zoomed |
 | `packages/editor/src/fold.ts` | the five folding commands, and what a level is |
 | `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |

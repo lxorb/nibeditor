@@ -832,9 +832,9 @@ describe('a page note’s zoom', () => {
         press({ key: '0', code: 'Digit0', ctrlKey: true, altKey: true }),
       ),
     ).toBe(true)
-    expect(
-      shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true })),
-    ).toBe(false)
+    expect(shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true }))).toBe(
+      false,
+    )
     expect(
       shortcuts.pressed(
         'pages.zoom.in',

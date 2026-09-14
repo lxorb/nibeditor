@@ -187,7 +187,6 @@ export class CanvasStore implements PlaneSurface {
     return this.camera
   }
 
-
   /** Whether the view has been settled on anything yet, so a canvas frames itself
    *  once and never again.
    *

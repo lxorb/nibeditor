@@ -111,7 +111,6 @@ export class PagesStore extends CanvasStore {
     return this.chose ? { ...this.camera, chose: true } : this.camera
   }
 
-
   /** The pages, in the order they turn. Derived rather than held: the canvas is
    *  the state, and a second list of the same pages is a second thing to keep in
    *  step. */
