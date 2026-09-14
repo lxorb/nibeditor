@@ -178,6 +178,7 @@ export const es: Dictionary = {
   'Remove from every note': 'Quitar de todas las notas',
   'That tag could not be renamed.': 'No se pudo renombrar esa etiqueta.',
   'That icon could not be written.': 'No se pudo guardar ese icono.',
+  'That could not be archived.': 'No se ha podido archivar.',
   'That tag could not be deleted.': 'No se pudo eliminar esa etiqueta.',
   'Show sidebar': 'Mostrar la barra lateral',
   'Hide sidebar': 'Ocultar la barra lateral',
@@ -245,6 +246,20 @@ export const es: Dictionary = {
   Notes: 'Notas',
   'Delete now': 'Eliminar ahora',
   'deleted {when}': 'eliminado {when}',
+  // Archive
+  Archive: 'Archivar',
+  Unarchive: 'Desarchivar',
+  Archived: 'Archivado',
+  Unarchived: 'Desarchivado',
+  'Archive note': 'Archivar la nota',
+  'Unarchive note': 'Desarchivar la nota',
+  'Show them': 'Mostrarlas',
+  'archived {when}': 'archivado {when}',
+  '{count} archived notes inside': {
+    one: '{count} nota archivada dentro',
+    many: '{count} notas archivadas dentro',
+    other: '{count} notas archivadas dentro',
+  },
   'gone in {count} days': {
     one: 'desaparece en {count} día',
     many: 'desaparece en {count} días',

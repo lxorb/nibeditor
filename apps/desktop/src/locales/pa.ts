@@ -178,6 +178,7 @@ export const pa: Dictionary = {
   'Remove from every note': 'ਹਰ ਨੋਟ ਤੋਂ ਹਟਾਓ',
   'That tag could not be renamed.': 'ਉਸ ਟੈਗ ਦਾ ਨਾਂ ਨਹੀਂ ਬਦਲਿਆ ਜਾ ਸਕਿਆ।',
   'That icon could not be written.': 'ਉਹ ਆਈਕਨ ਲਿਖਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
+  'That could not be archived.': 'ਆਰਕਾਈਵ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਿਆ।',
   'That tag could not be deleted.': 'ਉਹ ਟੈਗ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   'Show sidebar': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਦਿਖਾਓ',
   'Hide sidebar': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਲੁਕਾਓ',
@@ -241,6 +242,19 @@ export const pa: Dictionary = {
   Notes: 'ਨੋਟਾਂ',
   'Delete now': 'ਹੁਣੇ ਮਿਟਾਓ',
   'deleted {when}': '{when} ਮਿਟਾਇਆ',
+  // Archive
+  Archive: 'ਆਰਕਾਈਵ ਕਰੋ',
+  Unarchive: 'ਆਰਕਾਈਵ ਤੋਂ ਹਟਾਓ',
+  Archived: 'ਆਰਕਾਈਵ ਕੀਤੇ',
+  Unarchived: 'ਆਰਕਾਈਵ ਤੋਂ ਹਟਾਇਆ',
+  'Archive note': 'ਨੋਟ ਆਰਕਾਈਵ ਕਰੋ',
+  'Unarchive note': 'ਨੋਟ ਆਰਕਾਈਵ ਤੋਂ ਹਟਾਓ',
+  'Show them': 'ਦਿਖਾਓ',
+  'archived {when}': '{when} ਆਰਕਾਈਵ ਕੀਤਾ',
+  '{count} archived notes inside': {
+    one: 'ਅੰਦਰ {count} ਆਰਕਾਈਵ ਨੋਟ',
+    other: 'ਅੰਦਰ {count} ਆਰਕਾਈਵ ਨੋਟਾਂ',
+  },
   'gone in {count} days': {
     one: '{count} ਦਿਨ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ',
     other: '{count} ਦਿਨਾਂ ਵਿੱਚ ਚਲਾ ਜਾਵੇਗਾ',

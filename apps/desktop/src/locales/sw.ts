@@ -178,6 +178,7 @@ export const sw: Dictionary = {
   'Remove from every note': 'Ondoa kwenye kila dokezo',
   'That tag could not be renamed.': 'Lebo hiyo haikuweza kubadilishwa jina.',
   'That icon could not be written.': 'Aikoni hiyo haikuweza kuandikwa.',
+  'That could not be archived.': 'Haikuwezekana kuweka kwenye kumbukumbu.',
   'That tag could not be deleted.': 'Lebo hiyo haikuweza kufutwa.',
   'Show sidebar': 'Onyesha utepe',
   'Hide sidebar': 'Ficha utepe',
@@ -241,6 +242,19 @@ export const sw: Dictionary = {
   Notes: 'Madokezo',
   'Delete now': 'Futa sasa',
   'deleted {when}': 'imefutwa {when}',
+  // Archive
+  Archive: 'Weka kwenye kumbukumbu',
+  Unarchive: 'Ondoa kwenye kumbukumbu',
+  Archived: 'Imewekwa kumbukumbu',
+  Unarchived: 'Imeondolewa kwenye kumbukumbu',
+  'Archive note': 'Weka dokezo kwenye kumbukumbu',
+  'Unarchive note': 'Ondoa dokezo kwenye kumbukumbu',
+  'Show them': 'Yaonyeshe',
+  'archived {when}': 'imewekwa kumbukumbu {when}',
+  '{count} archived notes inside': {
+    one: 'dokezo {count} la kumbukumbu ndani',
+    other: 'madokezo {count} ya kumbukumbu ndani',
+  },
   'gone in {count} days': {
     one: 'inaondoka baada ya siku {count}',
     other: 'inaondoka baada ya siku {count}',

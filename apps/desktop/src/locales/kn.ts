@@ -178,6 +178,7 @@ export const kn: Dictionary = {
   'Remove from every note': 'ಪ್ರತಿ ಟಿಪ್ಪಣಿಯಿಂದ ತೆಗೆಯಿರಿ',
   'That tag could not be renamed.': 'ಆ ಟ್ಯಾಗ್ ಮರುಹೆಸರಿಸಲಾಗಲಿಲ್ಲ.',
   'That icon could not be written.': 'ಆ ಐಕಾನ್ ಬರೆಯಲಾಗಲಿಲ್ಲ.',
+  'That could not be archived.': 'ಆರ್ಕೈವ್ ಮಾಡಲು ಆಗಲಿಲ್ಲ.',
   'That tag could not be deleted.': 'ಆ ಟ್ಯಾಗ್ ಅಳಿಸಲಾಗಲಿಲ್ಲ.',
   'Show sidebar': 'ಸೈಡ್‌ಬಾರ್ ತೋರಿಸಿ',
   'Hide sidebar': 'ಸೈಡ್‌ಬಾರ್ ಮರೆಮಾಡಿ',
@@ -241,6 +242,19 @@ export const kn: Dictionary = {
   Notes: 'ಟಿಪ್ಪಣಿಗಳು',
   'Delete now': 'ಈಗಲೇ ಅಳಿಸಿ',
   'deleted {when}': '{when} ಅಳಿಸಲಾಗಿದೆ',
+  // Archive
+  Archive: 'ಆರ್ಕೈವ್ ಮಾಡಿ',
+  Unarchive: 'ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಿರಿ',
+  Archived: 'ಆರ್ಕೈವ್ ಮಾಡಿದವು',
+  Unarchived: 'ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಲಾಗಿದೆ',
+  'Archive note': 'ಟಿಪ್ಪಣಿಯನ್ನು ಆರ್ಕೈವ್ ಮಾಡಿ',
+  'Unarchive note': 'ಟಿಪ್ಪಣಿಯನ್ನು ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಿರಿ',
+  'Show them': 'ತೋರಿಸಿ',
+  'archived {when}': '{when} ಆರ್ಕೈವ್ ಮಾಡಲಾಗಿದೆ',
+  '{count} archived notes inside': {
+    one: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿ',
+    other: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು',
+  },
   'gone in {count} days': {
     one: '{count} ದಿನದಲ್ಲಿ ಹೋಗುತ್ತದೆ',
     other: '{count} ದಿನಗಳಲ್ಲಿ ಹೋಗುತ್ತದೆ',

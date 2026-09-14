@@ -178,6 +178,7 @@ export const ha: Dictionary = {
   'Remove from every note': 'Cire daga kowane bayanin kula',
   'That tag could not be renamed.': 'Ba a iya sauya sunan wannan tambari ba.',
   'That icon could not be written.': 'Ba a iya rubuta wannan alama ba.',
+  'That could not be archived.': 'Ba a iya adanawa ba.',
   'That tag could not be deleted.': 'Ba a iya share wannan tambari ba.',
   'Show sidebar': 'Nuna gefen mashaya',
   'Hide sidebar': 'Ɓoye gefen mashaya',
@@ -241,6 +242,19 @@ export const ha: Dictionary = {
   Notes: 'Bayanan kula',
   'Delete now': 'Share yanzu',
   'deleted {when}': 'an share {when}',
+  // Archive
+  Archive: 'Adana',
+  Unarchive: 'Cire daga ajiya',
+  Archived: 'An adana',
+  Unarchived: 'An cire daga ajiya',
+  'Archive note': 'Adana bayanin kula',
+  'Unarchive note': 'Cire bayanin kula daga ajiya',
+  'Show them': 'Nuna su',
+  'archived {when}': 'an adana {when}',
+  '{count} archived notes inside': {
+    one: 'bayanin kula {count} da aka adana a ciki',
+    other: 'bayanan kula {count} da aka adana a ciki',
+  },
   'gone in {count} days': {
     one: 'zai tafi cikin kwana {count}',
     other: 'zai tafi cikin kwanaki {count}',

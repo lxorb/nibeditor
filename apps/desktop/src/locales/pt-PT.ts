@@ -178,6 +178,7 @@ export const ptPT: Dictionary = {
   'Remove from every note': 'Remover de todas as notas',
   'That tag could not be renamed.': 'Não foi possível renomear essa etiqueta.',
   'That icon could not be written.': 'Não foi possível guardar esse ícone.',
+  'That could not be archived.': 'Não foi possível arquivar.',
   'That tag could not be deleted.': 'Não foi possível eliminar essa etiqueta.',
   'Show sidebar': 'Mostrar a barra lateral',
   'Hide sidebar': 'Ocultar a barra lateral',
@@ -245,6 +246,20 @@ export const ptPT: Dictionary = {
   Notes: 'Notas',
   'Delete now': 'Eliminar agora',
   'deleted {when}': 'eliminada {when}',
+  // Archive
+  Archive: 'Arquivar',
+  Unarchive: 'Desarquivar',
+  Archived: 'Arquivada',
+  Unarchived: 'Desarquivada',
+  'Archive note': 'Arquivar a nota',
+  'Unarchive note': 'Desarquivar a nota',
+  'Show them': 'Mostrá-las',
+  'archived {when}': 'arquivada {when}',
+  '{count} archived notes inside': {
+    one: '{count} nota arquivada dentro',
+    many: '{count} notas arquivadas dentro',
+    other: '{count} notas arquivadas dentro',
+  },
   'gone in {count} days': {
     one: 'desaparece em {count} dia',
     many: 'desaparece em {count} dias',
