@@ -1,6 +1,6 @@
 """The editor gaps an audit found, driven in the built app.
 
-Six of them, each one a thing the app claimed and did not do:
+Seven of them, each one a thing the app claimed and did not do:
 
 - the Links setting reaches the `[[` popup, so a picked link is spelled the way
   every other link the app writes is - in a nested space, where the three markdown

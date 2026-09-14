@@ -56,8 +56,13 @@ function viewOf(doc: string, from: number, to = from) {
     get state() {
       return state
     },
+    // Parsed to the end after every change, not only at the start. Creating or
+    // updating a state parses for a fixed number of milliseconds and no longer, and
+    // every one of these reads the syntax tree to find its blocks: a machine busy
+    // enough to spend that budget would hand the next command a tree with no blocks
+    // in it yet, and the command would correctly do nothing. See test/parsed.ts.
     dispatch: (spec: TransactionSpec) => {
-      state = state.update(spec).state
+      state = parsed(state.update(spec).state)
     },
     focus: () => undefined,
   } as unknown as EditorView

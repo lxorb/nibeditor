@@ -13,13 +13,15 @@ import { describe, expect, test } from 'vitest'
  *  Two of them had neither the rules nor the press. A card on a canvas came out as a
  *  borderless line thirty-seven pixels tall, because every rule was written
  *  `#write .embed-web` and a canvas card is not a document; pressing it loaded
- *  nothing, because nothing on the plane was listening. A card on a slide turned the
- *  slide or sent the reader out to the page, because the deck read the card's own
- *  link before anything asked whether it was a card.
+ *  nothing, because nothing on the plane was listening - and once something was, the
+ *  press still had to be taken from the plane, which asks to be sent the rest of
+ *  every contact that lands on it. A card on a slide turned the slide or sent the
+ *  reader out to the page, because the deck read the card's own link before anything
+ *  asked whether it was a card.
  *
  *  Read off the source rather than remembered: a surface added later is a surface
  *  that has to answer these too. What each one actually does when pressed is the
- *  drive's - see apps/desktop/test/e2e/embed-cards.py. */
+ *  drive's - see apps/desktop/test/e2e/editor-gaps.py. */
 
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
