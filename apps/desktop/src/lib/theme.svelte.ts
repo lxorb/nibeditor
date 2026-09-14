@@ -2,6 +2,7 @@ import { contrastCss } from '@nib/themes/contrast'
 import { ACCENTS, accentTokens, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
+import { rememberGround } from './ground'
 import { forget, keep, storedText } from './stored'
 import { invoke } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
@@ -455,6 +456,10 @@ class Themes {
     document.documentElement.dataset.theme = this.current
     this.paintAccent()
     this.paintSystemBars()
+    // And what the next launch should paint before it has read any of this; see
+    // ground.ts. Off the window rather than off the theme, so a theme file's own
+    // colour and a translucent window are both what they really are.
+    rememberGround()
 
     // A theme the app ships with carries its own stylesheet and needs no round trip:
     // the high contrast one is applied on the frame it is chosen on, and on a first

@@ -46,6 +46,7 @@ import {
   type Marks,
 } from '@nib/glasses/choices'
 import { glassesKey } from './even/key.svelte'
+import { rememberGround } from './ground'
 import { type Effort, isEffort } from './even/models'
 import { key } from './i18n.svelte'
 import { isNumber, isRecord, isString, keep, stored, stringList } from './stored'
@@ -557,6 +558,9 @@ class Modes {
    *  a translucency that is on and invisible is worse than one that says it cannot. */
   private applyTranslucency() {
     document.documentElement.toggleAttribute('data-translucent', this.translucent)
+    // The ground the next launch opens on: nothing at all while this is on, and the
+    // theme's colour once it is off again. See ground.ts.
+    rememberGround()
 
     if (!isDesktop) return
     void invoke('set_translucency', { on: this.translucent }).catch(() => {

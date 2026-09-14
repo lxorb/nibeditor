@@ -29,6 +29,69 @@
     <link rel="apple-touch-icon" href="/icon-256.png" />
 
     <title>Nib</title>
+
+    <!-- What the window looks like before any of the app has been read.
+         A webview paints its default white the moment it has a page, and the app's own
+         stylesheet is a fetch and a parse away: a fifth of a second of white, every
+         launch, on a window whose whole look is dark. So the ground is stated here,
+         where it costs nothing and needs nothing - the shell above it has no colour of
+         its own, `main` is `--window-ground` and every panel is transparent over it, so
+         this *is* the shell as far as the eye is concerned until the rows arrive.
+
+         The two colours are `--bg` on either side, copied because a custom property
+         cannot be read before the sheet that declares it; test/ground.test.ts holds them
+         to packages/themes/src/tokens.css so the copies cannot drift.
+
+         On `html` alone, deliberately: a translucent window's ground is nothing at all,
+         and the script below says so by making this one element transparent again. A
+         colour on `body` as well would show through that and flash a solid window over
+         somebody's wallpaper. -->
+    <style>
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      html {
+        background: #0e1013;
+      }
+
+      html[data-theme='light'] {
+        background: #fbfcfd;
+      }
+    </style>
+
+    <!-- And which of the two, plus the exact ground a reader actually has.
+         Inline and first, because anything fetched is already too late: this runs before
+         the stylesheet below it and decides what the first paint shows. Three lines of
+         it, all three cosmetic - a machine with nothing remembered opens on the colours
+         above, which is what it does today.
+
+         `nib:theme-scheme` is the reader's choice of side and `nib:ground` the colour the
+         window last stood on, which is the only honest answer for a theme read from a
+         file and for a translucent window, where the ground is nothing at all. Written
+         by src/lib/ground.ts; the keys are held to it by test/ground.test.ts. -->
+    <script>
+      try {
+        var chosen = localStorage.getItem('nib:theme-scheme') || 'system'
+        var side =
+          chosen === 'dark' || chosen === 'light'
+            ? chosen
+            : matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark'
+        document.documentElement.dataset.theme = side
+
+        var ground = localStorage.getItem('nib:ground')
+        if (ground) document.documentElement.style.background = ground
+      } catch (whatever) {
+        // A window told to keep no site data refuses the getter. Nothing to put right:
+        // the colours above are the app's own, and the reader sees the default palette
+        // for a fifth of a second rather than white.
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>
