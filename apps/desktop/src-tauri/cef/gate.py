@@ -775,15 +775,29 @@ def diagnose(binary: Path, payload: Path, env: dict[str, str]) -> dict:
     whole = dict(os.environ)
     whole.update(env)
     if shutil.which('gdb'):
+        # **Without `libcef.so`'s symbols, deliberately.** CEF ships that library
+        # unstripped at 1.4 GB and gdb spent its whole timeout reading the DWARF in it
+        # and printing "Could not find DWO CU" several thousand times, which is what the
+        # first run of this diagnosis captured instead of a backtrace. So symbols are
+        # off to begin with and then loaded for `libg*` only - GTK, GDK, GLib, GObject -
+        # which is where a toolkit crash is and is a few megabytes rather than one and a
+        # half gigabytes. `info sharedlibrary` is what attributes the frames that are
+        # still bare addresses.
         script = [
             'gdb',
             '--batch',
-            '-ex',
+            '-iex',
             'set confirm off',
+            '-iex',
+            'set auto-solib-add off',
             '-ex',
             'run',
             '-ex',
-            'thread apply all backtrace 24',
+            'sharedlibrary libg',
+            '-ex',
+            'backtrace 30',
+            '-ex',
+            'info sharedlibrary',
             '--args',
             str(binary),
         ]
@@ -797,7 +811,10 @@ def diagnose(binary: Path, payload: Path, env: dict[str, str]) -> dict:
                 env=whole,
                 cwd=str(binary.parent),
             )
-            found['gdb'] = ((done.stdout or '') + (done.stderr or '')).splitlines()[-160:]
+            said = ((done.stdout or '') + (done.stderr or '')).splitlines()
+            found['gdb'] = [
+                line for line in said if 'During symbol reading' not in line and line.strip()
+            ][-160:]
         except (OSError, subprocess.SubprocessError) as error:
             found['gdb'] = [f'gdb: {error}']
     else:
@@ -1133,10 +1150,17 @@ def cause(report: dict) -> str:
             return f'CEF wrote `{line.strip()}`'
 
     for line in why.get('gdb') or []:
-        if line.startswith('Thread ') and 'signal' in line:
+        if 'Program received signal' in line:
             return f'gdb: `{line.strip()}`'
-        if 'SIGSEGV' in line or 'SIGTRAP' in line or 'SIGILL' in line:
-            return f'gdb: `{line.strip()}`'
+
+    # Two toolkits in one process, which is a fact rather than a diagnosis - but it is
+    # the fact the backtrace is read against, so it belongs in the one-line answer.
+    linked = ' '.join(why.get('ldd') or [])
+    if 'libgtk-3' in linked and 'libgtk-4' in linked:
+        return (
+            'the process links both `libgtk-3.so.0` and `libgtk-4.so.1`, which GTK '
+            'does not support sharing a process'
+        )
 
     if why.get('icudtl') and str(why['icudtl'][0]).startswith('no icudtl'):
         return 'the bundle carries no icudtl.dat'
