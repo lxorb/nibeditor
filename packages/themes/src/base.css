@@ -120,6 +120,29 @@ body {
   white-space: nowrap;
 }
 
+/* ── Said for a moment ───────────────────────────────── */
+
+/* A number the app says once and then stops saying: the size of the text after a
+   pinch, how far a page note is zoomed while it is being zoomed.
+
+   One shape, because they are one thing. Two surfaces had written the same nine
+   declarations - the same radius, the same fill, the same shadow, the same
+   tabular figures - and a reader who pinches the words and then pinches the paper
+   sees the two of them within a second of each other. Where it sits is each
+   one's own; what it looks like is this. */
+.nib-pill {
+  padding: 6px var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: var(--surface-3);
+  box-shadow: var(--shadow-md);
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
 /* ── Dropdowns ───────────────────────────────────────────────────── */
 
 /* One rule for every dropdown in the app. The native control brings the

@@ -12,6 +12,11 @@ export const tr: Dictionary = {
   'Add a page': 'Sayfa ekle',
   'Add a page after this': 'Bundan sonra sayfa ekle',
   'Delete this page': 'Bu sayfayı sil',
+  Zoom: 'Yakınlaştırma',
+  'Fit width': 'Genişliğe sığdır',
+  'Fit page': 'Sayfaya sığdır',
+  'Pull to add a page': 'Sayfa eklemek için çekin',
+  'Release to add a page': 'Sayfa eklemek için bırakın',
   'Page {number}': 'Sayfa {number}',
   'The paper could not be read': 'Kâğıt okunamadı',
   // The three papers and the rulings, which are the rows the page menu offers.

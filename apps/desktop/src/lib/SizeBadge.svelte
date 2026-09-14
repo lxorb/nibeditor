@@ -48,7 +48,7 @@
      draws. -->
 {#if shown}
   <div
-    class="size"
+    class="size nib-pill"
     role="status"
     in:scale={{ duration: dur(140), start: 0.94, easing: cubicOut }}
     out:fade={{ duration: dur(180) }}
@@ -58,21 +58,13 @@
 {/if}
 
 <style>
+  /* Where it sits. What it looks like is `.nib-pill` in the themes package, which
+     is the same shape the page note's zoom wears; see base.css. */
   .size {
     position: fixed;
     top: calc(var(--titlebar-height) + var(--space-4));
     left: 50%;
     translate: -50% 0;
     z-index: 30;
-    padding: 6px var(--space-3);
-    border: 1px solid var(--line);
-    border-radius: 99px;
-    background: var(--surface-3);
-    box-shadow: var(--shadow-md);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-variant-numeric: tabular-nums;
-    color: var(--text-strong);
-    pointer-events: none;
   }
 </style>

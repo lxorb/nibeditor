@@ -42,6 +42,7 @@ export type Category =
   | 'view'
   | 'panel'
   | 'canvas'
+  | 'pages'
   | 'table'
   | 'picture'
   | 'fixed'
@@ -54,6 +55,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
   { id: 'view', label: () => t('View') },
   { id: 'panel', label: () => t('File list') },
   { id: 'canvas', label: () => t('Canvas') },
+  { id: 'pages', label: () => t('Pages') },
   { id: 'table', label: () => t('Tables') },
   { id: 'picture', label: () => t('Pictures') },
   { id: 'fixed', label: () => t('Fixed keys') },
@@ -878,6 +880,39 @@ const CANVAS_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
+/** A page note's own keys: the zoom, and adding a page.
+ *
+ *  Read where the paper is - see Pages.svelte - and only while it is the surface
+ *  in front, like the plane's above. Contextual for the same reason: they share
+ *  Ctrl+Alt+0 with the plane's Fit, and only one of the two surfaces is ever in
+ *  front of a reader.
+ *
+ *  One modifier over from the keys every browser zooms with, because the app's own
+ *  text size holds those: Ctrl+=, Ctrl+- and Ctrl+0 make the words bigger
+ *  everywhere, including over a page note, and a zoom on one of these keys would
+ *  resize the words and the paper from one press. See docs/keyboard.md, which
+ *  states the digit rule once, and `canvas.fit`, which made the same trade.
+ *
+ *  Adding a page has no key at all. The gesture is the way in - carry on scrolling
+ *  past the last page - and the silhouette at the end of the column is the button;
+ *  this row is here so a reader who wants a key can give it one. */
+const PAGES_ENTRIES: Shortcut[] = (
+  [
+    ['pages.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
+    ['pages.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
+    ['pages.fit', () => t('Fit width'), 'Mod-Alt-0'],
+    ['pages.fit.page', () => t('Fit page'), null],
+    ['pages.add', () => t('Add a page'), null],
+  ] as const
+).map(([id, label, key]) => ({
+  id,
+  label,
+  category: 'pages' as const,
+  scope: 'panel' as const,
+  key,
+  contextual: true,
+}))
+
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
   label: () => t('Delete what is picked'),
@@ -997,6 +1032,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
   ...CANVAS_ENTRIES,
+  ...PAGES_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 

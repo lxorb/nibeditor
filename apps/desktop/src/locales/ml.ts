@@ -12,6 +12,11 @@ export const ml: Dictionary = {
   'Add a page': 'താൾ ചേർക്കുക',
   'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
   'Delete this page': 'ഈ താൾ മായ്ക്കുക',
+  Zoom: 'സൂം',
+  'Fit width': 'വീതിയിൽ ഒതുക്കുക',
+  'Fit page': 'പേജിൽ ഒതുക്കുക',
+  'Pull to add a page': 'പേജ് ചേർക്കാൻ വലിക്കുക',
+  'Release to add a page': 'പേജ് ചേർക്കാൻ വിടുക',
   'Page {number}': 'താൾ {number}',
   'The paper could not be read': 'കടലാസ് വായിക്കാൻ കഴിഞ്ഞില്ല',
   // The three papers and the rulings, which are the rows the page menu offers.

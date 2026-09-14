@@ -12,6 +12,11 @@ export const ar: Dictionary = {
   'Add a page': 'إضافة صفحة',
   'Add a page after this': 'إضافة صفحة بعد هذه',
   'Delete this page': 'حذف هذه الصفحة',
+  Zoom: 'تكبير',
+  'Fit width': 'ملاءمة العرض',
+  'Fit page': 'ملاءمة الصفحة',
+  'Pull to add a page': 'اسحب لإضافة صفحة',
+  'Release to add a page': 'أفلت لإضافة صفحة',
   'Page {number}': 'الصفحة {number}',
   'The paper could not be read': 'تعذّر قراءة الورق',
   // The three papers and the rulings, which are the rows the page menu offers.

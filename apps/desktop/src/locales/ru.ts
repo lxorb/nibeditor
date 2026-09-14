@@ -12,6 +12,11 @@ export const ru: Dictionary = {
   'Add a page': 'Добавить страницу',
   'Add a page after this': 'Добавить страницу после этой',
   'Delete this page': 'Удалить эту страницу',
+  Zoom: 'Масштаб',
+  'Fit width': 'По ширине',
+  'Fit page': 'По размеру страницы',
+  'Pull to add a page': 'Потяните, чтобы добавить страницу',
+  'Release to add a page': 'Отпустите, чтобы добавить страницу',
   'Page {number}': 'Страница {number}',
   'The paper could not be read': 'Не удалось прочитать бумагу',
   // The three papers and the rulings, which are the rows the page menu offers.

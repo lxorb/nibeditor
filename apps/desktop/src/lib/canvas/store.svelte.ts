@@ -37,7 +37,7 @@ import {
   writeCanvas,
 } from './format'
 import { pickedBox } from './edits'
-import { viewKept, viewOf } from './place'
+import { type KeptView, viewKept, viewOf } from './place'
 import { bounds } from './geometry'
 import { strokeBox } from './ink'
 import { afterQuiet } from '../timing'
@@ -110,11 +110,19 @@ export class CanvasStore implements PlaneSurface {
   private readonly writing = afterQuiet(() => this.commit(), WRITE_DELAY)
   /** The gesture the last edit belonged to, while one is under way; see `edit`. */
   private during: string | null = null
+  /** The view this device had written down for this plane, where it had one and
+   *  the camera was taken from it.
+   *
+   *  A plane wants nothing more from it than the camera, which the constructor has
+   *  already set. A page note reads one more fact off it - whether that zoom is the
+   *  reader's own - and this is how it reaches it; see pages/store.svelte.ts. */
+  protected readonly restored: KeptView | null
 
   constructor(tab: Tab) {
     this.tab = tab
     this.note = tab.note
     this.read()
+    this.restored = tab.camera === undefined ? viewOf(tab.path) : null
 
     // Where this device left the plane, so opening the canvas again - tomorrow, or
     // after the app is started again - lands where the reading was rather than fitting
@@ -122,10 +130,8 @@ export class CanvasStore implements PlaneSurface {
     // kept its camera across the switch away and back (the camera lives on the tab, not
     // here), and that one is newer than anything written down. The `!store.framed` guard
     // in Canvas.svelte keeps the opening fit off a view restored this way. See place.ts.
-    if (this.tab.camera === undefined) {
-      const kept = viewOf(this.tab.path)
-      if (kept) this.tab.camera = kept
-    }
+    const kept = this.restored
+    if (kept) this.tab.camera = { x: kept.x, y: kept.y, scale: kept.scale }
 
     drawn.add(new WeakRef(this))
   }
@@ -169,6 +175,18 @@ export class CanvasStore implements PlaneSurface {
   set camera(next: Camera) {
     this.tab.camera = { ...next, scale: clampScale(next.scale) }
   }
+
+  /** What is written down beside the camera when this plane is left, and what a
+   *  surface reads back off it on the way in.
+   *
+   *  The camera and nothing else, for a plane. A page note has one more fact to
+   *  keep - whether the zoom is the reader's own rather than the fitted one - and
+   *  these two are where it goes; see pages/store.svelte.ts. Two lines, like
+   *  `parse` and `serialise` above, rather than a second store. */
+  protected get keptView(): KeptView {
+    return this.camera
+  }
+
 
   /** Whether the view has been settled on anything yet, so a canvas frames itself
    *  once and never again.
@@ -308,7 +326,7 @@ export class CanvasStore implements PlaneSurface {
     // Where the reading was left, for this device: coming back to the plane, or opening
     // it again, lands here. Only once it has been framed, so an empty plane nobody moved
     // is not written down as the origin over a view it might have had. See place.ts.
-    if (this.framed) viewKept(this.tab.path, this.camera)
+    if (this.framed) viewKept(this.tab.path, this.keptView)
   }
 
   /** Brings the surface up to words that changed under it: a version restored, a

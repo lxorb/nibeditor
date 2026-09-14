@@ -12,6 +12,11 @@ export const te: Dictionary = {
   'Add a page': 'పేజీ చేర్చు',
   'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
   'Delete this page': 'ఈ పేజీ తొలగించు',
+  Zoom: 'జూమ్',
+  'Fit width': 'వెడల్పుకు సరిపోల్చు',
+  'Fit page': 'పేజీకి సరిపోల్చు',
+  'Pull to add a page': 'పేజీ జోడించడానికి లాగండి',
+  'Release to add a page': 'పేజీ జోడించడానికి వదలండి',
   'Page {number}': 'పేజీ {number}',
   'The paper could not be read': 'కాగితాన్ని చదవలేకపోయాం',
   // The three papers and the rulings, which are the rows the page menu offers.

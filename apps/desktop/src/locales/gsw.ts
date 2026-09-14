@@ -12,6 +12,11 @@ export const gsw: Dictionary = {
   'Add a page': 'Siite hinzuefüege',
   'Add a page after this': 'Siite dernaa hinzuefüege',
   'Delete this page': 'Die Siite lösche',
+  Zoom: 'Zoom',
+  'Fit width': 'Breiti iipasse',
+  'Fit page': 'Siite iipasse',
+  'Pull to add a page': 'Zieh, zum e Siite hinzuefüege',
+  'Release to add a page': 'Loslah, zum e Siite hinzuefüege',
   'Page {number}': 'Siite {number}',
   'The paper could not be read': 'S Papier het mer nöd chöne läse',
   // The three papers and the rulings, which are the rows the page menu offers.

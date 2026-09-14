@@ -12,6 +12,11 @@ export const kn: Dictionary = {
   'Add a page': 'ಪುಟ ಸೇರಿಸು',
   'Add a page after this': 'ಇದರ ನಂತರ ಪುಟ ಸೇರಿಸು',
   'Delete this page': 'ಈ ಪುಟ ಅಳಿಸು',
+  Zoom: 'ಜೂಮ್',
+  'Fit width': 'ಅಗಲಕ್ಕೆ ಹೊಂದಿಸಿ',
+  'Fit page': 'ಪುಟಕ್ಕೆ ಹೊಂದಿಸಿ',
+  'Pull to add a page': 'ಪುಟ ಸೇರಿಸಲು ಎಳೆಯಿರಿ',
+  'Release to add a page': 'ಪುಟ ಸೇರಿಸಲು ಬಿಡಿ',
   'Page {number}': 'ಪುಟ {number}',
   'The paper could not be read': 'ಕಾಗದವನ್ನು ಓದಲು ಆಗಲಿಲ್ಲ',
   // The three papers and the rulings, which are the rows the page menu offers.

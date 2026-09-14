@@ -12,6 +12,11 @@ export const ur: Dictionary = {
   'Add a page': 'صفحہ شامل کریں',
   'Add a page after this': 'اس کے بعد صفحہ شامل کریں',
   'Delete this page': 'یہ صفحہ حذف کریں',
+  Zoom: 'زوم',
+  'Fit width': 'چوڑائی کے مطابق',
+  'Fit page': 'صفحے کے مطابق',
+  'Pull to add a page': 'صفحہ شامل کرنے کے لیے کھینچیں',
+  'Release to add a page': 'صفحہ شامل کرنے کے لیے چھوڑیں',
   'Page {number}': 'صفحہ {number}',
   'The paper could not be read': 'کاغذ نہیں پڑھا جا سکا',
   // The three papers and the rulings, which are the rows the page menu offers.

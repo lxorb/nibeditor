@@ -12,6 +12,11 @@ export const mr: Dictionary = {
   'Add a page': 'पान जोडा',
   'Add a page after this': 'याच्या नंतर पान जोडा',
   'Delete this page': 'हे पान काढा',
+  Zoom: 'झूम',
+  'Fit width': 'रुंदीत बसवा',
+  'Fit page': 'पान बसवा',
+  'Pull to add a page': 'पान जोडण्यासाठी ओढा',
+  'Release to add a page': 'पान जोडण्यासाठी सोडा',
   'Page {number}': 'पान {number}',
   'The paper could not be read': 'कागद वाचता आला नाही',
   // The three papers and the rulings, which are the rows the page menu offers.

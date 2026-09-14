@@ -12,6 +12,11 @@ export const pa: Dictionary = {
   'Add a page': 'ਸਫ਼ਾ ਜੋੜੋ',
   'Add a page after this': 'ਇਸ ਤੋਂ ਬਾਅਦ ਸਫ਼ਾ ਜੋੜੋ',
   'Delete this page': 'ਇਹ ਸਫ਼ਾ ਮਿਟਾਓ',
+  Zoom: 'ਜ਼ੂਮ',
+  'Fit width': 'ਚੌੜਾਈ ਵਿੱਚ ਫਿੱਟ ਕਰੋ',
+  'Fit page': 'ਸਫ਼ਾ ਫਿੱਟ ਕਰੋ',
+  'Pull to add a page': 'ਸਫ਼ਾ ਜੋੜਨ ਲਈ ਖਿੱਚੋ',
+  'Release to add a page': 'ਸਫ਼ਾ ਜੋੜਨ ਲਈ ਛੱਡੋ',
   'Page {number}': 'ਸਫ਼ਾ {number}',
   'The paper could not be read': 'ਕਾਗਜ਼ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ',
   // The three papers and the rulings, which are the rows the page menu offers.

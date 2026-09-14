@@ -12,6 +12,11 @@ export const ptPT: Dictionary = {
   'Add a page': 'Adicionar uma página',
   'Add a page after this': 'Adicionar uma página depois desta',
   'Delete this page': 'Eliminar esta página',
+  Zoom: 'Zoom',
+  'Fit width': 'Ajustar à largura',
+  'Fit page': 'Ajustar à página',
+  'Pull to add a page': 'Arraste para adicionar uma página',
+  'Release to add a page': 'Largue para adicionar uma página',
   'Page {number}': 'Página {number}',
   'The paper could not be read': 'O papel não pôde ser lido',
   // The three papers and the rulings, which are the rows the page menu offers.

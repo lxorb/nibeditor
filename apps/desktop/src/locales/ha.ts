@@ -12,6 +12,11 @@ export const ha: Dictionary = {
   'Add a page': 'Ƙara shafi',
   'Add a page after this': 'Ƙara shafi bayan wannan',
   'Delete this page': 'Share wannan shafi',
+  Zoom: 'Girma',
+  'Fit width': 'Daidaita fadi',
+  'Fit page': 'Daidaita shafi',
+  'Pull to add a page': 'Ja don ƙara shafi',
+  'Release to add a page': 'Saki don ƙara shafi',
   'Page {number}': 'Shafi {number}',
   'The paper could not be read': 'Ba a iya karanta takardar ba',
   // The three papers and the rulings, which are the rows the page menu offers.

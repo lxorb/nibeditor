@@ -12,6 +12,11 @@ export const vi: Dictionary = {
   'Add a page': 'Thêm một trang',
   'Add a page after this': 'Thêm một trang sau trang này',
   'Delete this page': 'Xoá trang này',
+  Zoom: 'Thu phóng',
+  'Fit width': 'Vừa chiều rộng',
+  'Fit page': 'Vừa trang',
+  'Pull to add a page': 'Kéo để thêm trang',
+  'Release to add a page': 'Thả để thêm trang',
   'Page {number}': 'Trang {number}',
   'The paper could not be read': 'Không đọc được giấy',
   // The three papers and the rulings, which are the rows the page menu offers.

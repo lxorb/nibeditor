@@ -12,6 +12,11 @@ export const ms: Dictionary = {
   'Add a page': 'Tambah halaman',
   'Add a page after this': 'Tambah halaman selepas ini',
   'Delete this page': 'Hapuskan halaman ini',
+  Zoom: 'Zum',
+  'Fit width': 'Muat lebar',
+  'Fit page': 'Muat halaman',
+  'Pull to add a page': 'Tarik untuk menambah halaman',
+  'Release to add a page': 'Lepaskan untuk menambah halaman',
   'Page {number}': 'Halaman {number}',
   'The paper could not be read': 'Kertas tidak dapat dibaca',
   // The three papers and the rulings, which are the rows the page menu offers.

@@ -12,6 +12,11 @@ export const zhHans: Dictionary = {
   'Add a page': '添加一页',
   'Add a page after this': '在此页后添加一页',
   'Delete this page': '删除此页',
+  Zoom: '缩放',
+  'Fit width': '适合宽度',
+  'Fit page': '适合页面',
+  'Pull to add a page': '下拉添加页面',
+  'Release to add a page': '松开添加页面',
   'Page {number}': '第 {number} 页',
   'The paper could not be read': '无法读取纸张',
   // The three papers and the rulings, which are the rows the page menu offers.

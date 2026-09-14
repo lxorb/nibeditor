@@ -18,7 +18,13 @@
    *
    *  The pitch is the paper's and not the screen's: 8mm ruled lines and a 5mm grid,
    *  which is what school paper and graph paper are, so a page printed out has the
-   *  ruling it had on screen. */
+   *  ruling it had on screen.
+   *
+   *  What is *not* the paper's is sized in screen pixels instead: the edge round the
+   *  sheet, its shadow, the number in its corner and the one sentence a sheet says
+   *  when its paper is missing. Those are the app talking rather than something
+   *  printed, and a column of sheets reads as a stack of paper at every zoom only if
+   *  they hold their size while the paper changes its. See `unit`. */
 
   import { onDestroy } from 'svelte'
   import type { PageNode } from './canvas/format'
@@ -28,12 +34,24 @@
   const {
     page,
     number,
+    unit,
     notePath,
     root,
   }: {
     page: PageNode
     /** Counting from one, which is what a page's label says. */
     number: number
+    /** One screen pixel in plane units.
+     *
+     *  The whole column is inside one transform, so everything in here is drawn at
+     *  the zoom - which is right for the paper and for the ruling printed on it, and
+     *  wrong for the two things that are not on the paper at all. The page's number
+     *  and the edge that separates one sheet from the next are the app talking, not
+     *  the page, and they are sized in these so they are the same size on screen at
+     *  every zoom: the number used to be 44 pixels high on a page zoomed in and four
+     *  tenths of one on a note seen whole, which is a label that is either shouting
+     *  or gone. The same unit the canvas sizes a handle and a name in. */
+    unit: number
     /** The note this page belongs to, and the space it is in. A page's `file` is a
      *  relative path - the two things it can be relative to are these - so a sheet
      *  cannot find its own paper without them; see pages/paper.ts. */
@@ -125,6 +143,7 @@
   style:height="{page.height}px"
   style:background-image={ruling}
   style:background-size={ruled}
+  style:--unit={unit}
   aria-hidden="true"
 >
   {#if backed}
@@ -152,9 +171,9 @@
     position: absolute;
     background-color: var(--surface);
     background-repeat: repeat;
-    border: 1px solid var(--line);
-    border-radius: 2px;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    border: calc(1px * var(--unit)) solid var(--line);
+    border-radius: calc(2px * var(--unit));
+    box-shadow: 0 calc(1px * var(--unit)) calc(3px * var(--unit)) rgb(0 0 0 / 0.08);
     pointer-events: none;
     overflow: hidden;
   }
@@ -179,9 +198,9 @@
   .missing {
     position: absolute;
     inset-inline: 0;
-    top: 12px;
+    top: calc(12px * var(--unit));
     color: var(--muted);
-    font: 12px/1.4 var(--font-ui, inherit);
+    font: calc(12px * var(--unit)) / 1.4 var(--font-ui, inherit);
     text-align: center;
     user-select: none;
   }
@@ -190,10 +209,10 @@
      there so somebody scrolling knows where they are without the bar. */
   .number {
     position: absolute;
-    inset-inline-end: 10px;
-    bottom: 6px;
+    inset-inline-end: calc(10px * var(--unit));
+    bottom: calc(6px * var(--unit));
     color: var(--muted);
-    font: 11px/1 var(--font-ui, inherit);
+    font: calc(11px * var(--unit)) / 1 var(--font-ui, inherit);
     opacity: 0.55;
     user-select: none;
   }

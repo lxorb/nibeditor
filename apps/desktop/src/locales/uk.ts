@@ -12,6 +12,11 @@ export const uk: Dictionary = {
   'Add a page': 'Додати сторінку',
   'Add a page after this': 'Додати сторінку після цієї',
   'Delete this page': 'Видалити цю сторінку',
+  Zoom: 'Масштаб',
+  'Fit width': 'За шириною',
+  'Fit page': 'За розміром сторінки',
+  'Pull to add a page': 'Потягніть, щоб додати сторінку',
+  'Release to add a page': 'Відпустіть, щоб додати сторінку',
   'Page {number}': 'Сторінка {number}',
   'The paper could not be read': 'Не вдалося прочитати папір',
   // The three papers and the rulings, which are the rows the page menu offers.

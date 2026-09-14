@@ -12,6 +12,11 @@ export const ps: Dictionary = {
   'Add a page': 'مخ ورزياتول',
   'Add a page after this': 'له دې وروسته مخ ورزياتول',
   'Delete this page': 'دا مخ ړنګول',
+  Zoom: 'زوم',
+  'Fit width': 'د پراخۍ سره برابر',
+  'Fit page': 'د پاڼې سره برابر',
+  'Pull to add a page': 'پاڼه زیاتولو لپاره کش کړئ',
+  'Release to add a page': 'پاڼه زیاتولو لپاره پرېږدئ',
   'Page {number}': 'مخ {number}',
   'The paper could not be read': 'کاغذ ونه لوستل شو',
   // The three papers and the rulings, which are the rows the page menu offers.

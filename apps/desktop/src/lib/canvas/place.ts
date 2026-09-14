@@ -24,22 +24,35 @@ const STORAGE_KEY = 'nib:canvas-views'
  *  small enough to be one string in storage. */
 const KEEPS = 300
 
+/** Where a plane was left: the camera, and for a page note one more fact about
+ *  it.
+ *
+ *  A page note's zoom is either the reader's own or the fitted one, and which of
+ *  the two it is has to come back with it: a scale restored without it reads as
+ *  the fitted one, and the first resize fits the paper across the pane again and
+ *  takes the reader's zoom off them. A canvas has no equivalent, and rightly - an
+ *  endless plane has no width to fit - so the key is absent for one. See
+ *  `chose` in pages/store.svelte.ts. */
+export interface KeptView extends Camera {
+  chose?: boolean
+}
+
 /** The pan and zoom out of one stored value, or null for anything that is not one. */
-function readView(value: unknown): Camera | null {
+function readView(value: unknown): KeptView | null {
   if (!isRecord(value)) return null
 
-  const { x, y, scale } = value
+  const { x, y, scale, chose } = value
   if (typeof x !== 'number' || typeof y !== 'number' || typeof scale !== 'number') return null
 
-  return { x, y, scale }
+  return chose === true ? { x, y, scale, chose: true } : { x, y, scale }
 }
 
 /** Every view this device remembers, read once. */
-function all(): Record<string, Camera> {
+function all(): Record<string, KeptView> {
   const read = stored(STORAGE_KEY)
   if (!isRecord(read)) return {}
 
-  const out: Record<string, Camera> = {}
+  const out: Record<string, KeptView> = {}
   for (const [path, value] of Object.entries(read)) {
     const view = readView(value)
     if (view) out[path] = view
@@ -48,14 +61,14 @@ function all(): Record<string, Camera> {
 }
 
 /** Where this canvas was left, or null for one this device has not held open. */
-export function viewOf(path: string | null): Camera | null {
+export function viewOf(path: string | null): KeptView | null {
   if (!path) return null
   return all()[path] ?? null
 }
 
 /** Writes down where a canvas is now. The newest is last, which is what makes the
  *  oldest the one that goes when the list is full. */
-export function viewKept(path: string | null, view: Camera) {
+export function viewKept(path: string | null, view: KeptView) {
   if (!path) return
 
   // Built rather than edited, so the newest is last however many times this plane has

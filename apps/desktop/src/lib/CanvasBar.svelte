@@ -21,6 +21,7 @@
    *  gesture, and a bar that let one through would clear the selection its own
    *  buttons are for. */
 
+  import { NOTCH } from './camera'
   import CanvasCatch from './CanvasCatch.svelte'
   import CanvasColours from './CanvasColours.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
@@ -45,6 +46,7 @@
   import { tools } from './canvas/tools.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
+  import { type MenuEntry, menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
@@ -57,6 +59,7 @@
     onerase,
     onzoom,
     onfit,
+    zoomRows,
   }: {
     canundo: boolean
     canredo: boolean
@@ -70,6 +73,11 @@
     /** In or out about the middle of the view, by this much. */
     onzoom: (by: number) => void
     onfit: () => void
+    /** What the percentage offers instead of simply fitting, for a surface with
+     *  more than one answer to "fit". A page note has two - the width of the paper
+     *  and the whole of the page - and one to one, which is the size it prints at;
+     *  a plane has neither, so this is absent there and the number fits. */
+    zoomRows?: (() => MenuEntry[]) | undefined
   } = $props()
 
   /** Which panel is open over the bar, if any. One at a time: two panels over a
@@ -85,10 +93,6 @@
   /** How far a press may drift and still be a press on the grip rather than a drag
    *  of the bar, in pixels. */
   const A_TWITCH = 12
-
-  /** One notch of the zoom buttons. The same step a wheel notch comes to, so the
-   *  button and the wheel agree. */
-  const NOTCH = 1.2
 
   const nib = $derived(pens.current)
   const drawing = $derived(tools.which === 'draw')
@@ -471,15 +475,18 @@
         </button>
 
         <!-- The number is the button that puts the whole plane in the pane, which
-             is the only other thing anybody asks of a zoom. -->
+             is the only other thing anybody asks of a zoom on a plane. On paper it
+             opens the rows instead: there is more than one way to fit a sheet. -->
         <button
           type="button"
           class="how-far"
-          title={t('Show the whole canvas')}
-          aria-label={t('Show the whole canvas')}
-          onclick={() => {
+          title={zoomRows ? t('Zoom') : t('Show the whole canvas')}
+          aria-label={zoomRows ? t('Zoom') : t('Show the whole canvas')}
+          onclick={(event) => {
             tick()
-            onfit()
+            const rows = zoomRows
+            if (rows) menu.show(event, rows(), { title: t('Zoom') })
+            else onfit()
           }}
         >
           {Math.round(zoom * 100)}%

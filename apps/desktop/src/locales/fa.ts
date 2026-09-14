@@ -12,6 +12,11 @@ export const fa: Dictionary = {
   'Add a page': 'افزودن صفحه',
   'Add a page after this': 'افزودن صفحه پس از این',
   'Delete this page': 'حذف این صفحه',
+  Zoom: 'بزرگ‌نمایی',
+  'Fit width': 'اندازه عرض',
+  'Fit page': 'اندازه صفحه',
+  'Pull to add a page': 'برای افزودن صفحه بکشید',
+  'Release to add a page': 'برای افزودن صفحه رها کنید',
   'Page {number}': 'صفحه {number}',
   'The paper could not be read': 'کاغذ خوانده نشد',
   // The three papers and the rulings, which are the rows the page menu offers.

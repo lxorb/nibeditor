@@ -12,6 +12,11 @@ export const fil: Dictionary = {
   'Add a page': 'Magdagdag ng pahina',
   'Add a page after this': 'Magdagdag ng pahina pagkatapos nito',
   'Delete this page': 'Tanggalin ang pahinang ito',
+  Zoom: 'Zoom',
+  'Fit width': 'Iayon sa lapad',
+  'Fit page': 'Iayon sa pahina',
+  'Pull to add a page': 'Hilahin para magdagdag ng pahina',
+  'Release to add a page': 'Bitawan para magdagdag ng pahina',
   'Page {number}': 'Pahina {number}',
   'The paper could not be read': 'Hindi mabasa ang papel',
   // The three papers and the rulings, which are the rows the page menu offers.

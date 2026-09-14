@@ -12,6 +12,11 @@ export const th: Dictionary = {
   'Add a page': 'เพิ่มหน้า',
   'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
   'Delete this page': 'ลบหน้านี้',
+  Zoom: 'ย่อขยาย',
+  'Fit width': 'พอดีความกว้าง',
+  'Fit page': 'พอดีหน้า',
+  'Pull to add a page': 'ลากเพื่อเพิ่มหน้า',
+  'Release to add a page': 'ปล่อยเพื่อเพิ่มหน้า',
   'Page {number}': 'หน้า {number}',
   'The paper could not be read': 'อ่านกระดาษไม่ได้',
   // The three papers and the rulings, which are the rows the page menu offers.

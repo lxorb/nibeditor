@@ -12,6 +12,11 @@ export const yue: Dictionary = {
   'Add a page': '加一頁',
   'Add a page after this': '喺呢頁之後加一頁',
   'Delete this page': '刪除呢頁',
+  Zoom: '縮放',
+  'Fit width': '啱闊度',
+  'Fit page': '啱成頁',
+  'Pull to add a page': '拉落去加一頁',
+  'Release to add a page': '放手就加一頁',
   'Page {number}': '第 {number} 頁',
   'The paper could not be read': '讀唔到張紙',
   // The three papers and the rulings, which are the rows the page menu offers.

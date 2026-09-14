@@ -12,6 +12,11 @@ export const ko: Dictionary = {
   'Add a page': '페이지 추가',
   'Add a page after this': '이 뒤에 페이지 추가',
   'Delete this page': '이 페이지 삭제',
+  Zoom: '확대/축소',
+  'Fit width': '너비에 맞추기',
+  'Fit page': '페이지에 맞추기',
+  'Pull to add a page': '당겨서 페이지 추가',
+  'Release to add a page': '놓아서 페이지 추가',
   'Page {number}': '{number}쪽',
   'The paper could not be read': '용지를 읽을 수 없습니다',
   // The three papers and the rulings, which are the rows the page menu offers.

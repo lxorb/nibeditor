@@ -12,6 +12,11 @@ export const ta: Dictionary = {
   'Add a page': 'பக்கம் சேர்',
   'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
+  Zoom: 'பெரிதாக்கு',
+  'Fit width': 'அகலத்திற்குப் பொருத்து',
+  'Fit page': 'பக்கத்திற்குப் பொருத்து',
+  'Pull to add a page': 'பக்கம் சேர்க்க இழுக்கவும்',
+  'Release to add a page': 'பக்கம் சேர்க்க விடுங்கள்',
   'Page {number}': 'பக்கம் {number}',
   'The paper could not be read': 'தாளைப் படிக்க முடியவில்லை',
   // The three papers and the rulings, which are the rows the page menu offers.

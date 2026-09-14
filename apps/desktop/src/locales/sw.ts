@@ -12,6 +12,11 @@ export const sw: Dictionary = {
   'Add a page': 'Ongeza ukurasa',
   'Add a page after this': 'Ongeza ukurasa baada ya huu',
   'Delete this page': 'Futa ukurasa huu',
+  Zoom: 'Kuza',
+  'Fit width': 'Linganisha upana',
+  'Fit page': 'Linganisha ukurasa',
+  'Pull to add a page': 'Vuta ili kuongeza ukurasa',
+  'Release to add a page': 'Achia ili kuongeza ukurasa',
   'Page {number}': 'Ukurasa {number}',
   'The paper could not be read': 'Karatasi haikuweza kusomwa',
   // The three papers and the rulings, which are the rows the page menu offers.

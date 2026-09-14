@@ -12,6 +12,11 @@ export const zhHantHK: Dictionary = {
   'Add a page': '加一頁',
   'Add a page after this': '在此頁之後加一頁',
   'Delete this page': '刪除此頁',
+  Zoom: '縮放',
+  'Fit width': '符合寬度',
+  'Fit page': '符合頁面',
+  'Pull to add a page': '拉下加一頁',
+  'Release to add a page': '放手加一頁',
   'Page {number}': '第 {number} 頁',
   'The paper could not be read': '無法讀取紙張',
   // The three papers and the rulings, which are the rows the page menu offers.

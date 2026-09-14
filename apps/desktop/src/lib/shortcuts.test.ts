@@ -783,6 +783,83 @@ describe('the keys that move the keyboard about', () => {
   })
 })
 
+/** The paper's own zoom.
+ *
+ *  A page note is a surface with a zoom of its own, like the plane and the graph,
+ *  and it cannot have the three keys every browser zooms with: those are the app's
+ *  text size, they fire on the window after the surface has had the press, and one
+ *  key doing both would resize the words and the paper at once. So they are one
+ *  modifier over, which is the trade `canvas.fit` already made. */
+describe('a page note’s zoom', () => {
+  test('is on the keys the plane’s Fit is on, one modifier over', () => {
+    expect(registry.shortcuts.keyFor('pages.zoom.in')).toBe('Mod-Alt-=')
+    expect(registry.shortcuts.keyFor('pages.zoom.out')).toBe('Mod-Alt--')
+    expect(registry.shortcuts.keyFor('pages.fit')).toBe('Mod-Alt-0')
+  })
+
+  test('and never on the three that change the size of the words', () => {
+    const size = ['app.zoom-in', 'app.zoom-out', 'app.zoom-reset'].map((id) =>
+      registry.shortcuts.keyFor(id),
+    )
+
+    for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit']) {
+      expect(size, id).not.toContain(registry.shortcuts.keyFor(id))
+    }
+  })
+
+  /** Read off the paper, like the plane's own keys, so the two surfaces share
+   *  Ctrl+Alt+0 rather than being reported as a clash: only one of them is ever in
+   *  front of a reader. */
+  test('is read where the paper is, and shares its keys with the plane', () => {
+    for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit', 'pages.add']) {
+      const entry = registry.SHORTCUTS.find((one) => one.id === id)
+      expect(entry?.scope, id).toBe('panel')
+      expect(entry?.contextual, id).toBe(true)
+      expect(entry?.category, id).toBe('pages')
+    }
+
+    expect(registry.shortcuts.keyFor('canvas.fit')).toBe('Mod-Alt-0')
+    expect(registry.shortcuts.conflicts('pages.fit', 'Mod-Alt-0')).toEqual([])
+  })
+
+  test('answers the press the surface reads, and no other', () => {
+    const { shortcuts } = registry
+    const press = (spelling: Partial<KeyboardEvent>) => spelling as KeyboardEvent
+
+    expect(
+      shortcuts.pressed(
+        'pages.fit',
+        press({ key: '0', code: 'Digit0', ctrlKey: true, altKey: true }),
+      ),
+    ).toBe(true)
+    expect(
+      shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true })),
+    ).toBe(false)
+    expect(
+      shortcuts.pressed(
+        'pages.zoom.in',
+        press({ key: '=', code: 'Equal', ctrlKey: true, altKey: true }),
+      ),
+    ).toBe(true)
+    expect(
+      shortcuts.pressed(
+        'pages.zoom.out',
+        press({ key: '-', code: 'Minus', ctrlKey: true, altKey: true }),
+      ),
+    ).toBe(true)
+  })
+
+  /** The gesture is the way in - carry on scrolling past the last page - and the
+   *  silhouette at the end of the column is the button. The row is here so a reader
+   *  who wants a key can give it one, and a default would be a key taken away from
+   *  whatever else they might have wanted it for. */
+  test('while adding a page and fitting one start on no key at all', () => {
+    expect(registry.shortcuts.keyFor('pages.add')).toBeNull()
+    expect(registry.shortcuts.keyFor('pages.fit.page')).toBeNull()
+    expect(registry.shortcuts.defaultFor('pages.add')).toBeNull()
+  })
+})
+
 describe('on a Mac', () => {
   test('the keys are written as a Mac writes them', async () => {
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })

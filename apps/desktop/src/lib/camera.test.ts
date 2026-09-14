@@ -7,7 +7,9 @@ import {
   FURTHEST,
   graphPoint,
   nodeAt,
+  NOTCH,
   SMALLEST_DOT,
+  wheelZoom,
   zoomed,
 } from './camera'
 
@@ -105,6 +107,38 @@ describe('scrolling to zoom', () => {
     const camera: Camera = { x: 0, y: 0, scale: CLOSEST }
 
     expect(zoomed(camera, WIDTH, HEIGHT, 0, 0, 10).scale).toBe(CLOSEST)
+  })
+})
+
+/** One notch, everywhere.
+ *
+ *  The bar's own comment said the buttons and the wheel agree, and they did not:
+ *  the buttons stepped by a fifth, the plane's wheel by two fifths and a page
+ *  note's by a quarter, so a reader who zoomed with one and then the other felt
+ *  three different surfaces. `wheelZoom` is what both of them ask now. */
+describe('one notch of a zoom', () => {
+  test('is the same for a wheel notch as for a button', () => {
+    expect(wheelZoom(-100)).toBeCloseTo(NOTCH, 10)
+    expect(wheelZoom(100)).toBeCloseTo(1 / NOTCH, 10)
+  })
+
+  test('and nothing at all for a wheel that did not move', () => {
+    expect(wheelZoom(0)).toBe(1)
+  })
+
+  /** A trackpad sends dozens of small deltas where a wheel sends one notch, which
+   *  is the whole reason this is an exponential: the same distance travelled comes
+   *  to the same zoom however it arrived. */
+  test('so a trackpad’s many small ones multiply up to the same thing', () => {
+    let scale = 1
+    for (let step = 0; step < 20; step++) scale *= wheelZoom(-5)
+
+    expect(scale).toBeCloseTo(NOTCH, 10)
+  })
+
+  test('up is bigger, the way round every platform reads it', () => {
+    expect(wheelZoom(-100)).toBeGreaterThan(1)
+    expect(wheelZoom(100)).toBeLessThan(1)
   })
 })
 

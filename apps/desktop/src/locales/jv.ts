@@ -12,6 +12,11 @@ export const jv: Dictionary = {
   'Add a page': 'Tambah kaca',
   'Add a page after this': 'Tambah kaca sawise iki',
   'Delete this page': 'Busak kaca iki',
+  Zoom: 'Zoom',
+  'Fit width': 'Cocogake ambane',
+  'Fit page': 'Cocogake kaca',
+  'Pull to add a page': 'Sèrèt kanggo nambah kaca',
+  'Release to add a page': 'Culna kanggo nambah kaca',
   'Page {number}': 'Kaca {number}',
   'The paper could not be read': 'Kertas ora bisa diwaca',
   // The three papers and the rulings, which are the rows the page menu offers.

@@ -12,6 +12,11 @@ export const am: Dictionary = {
   'Add a page': 'ገጽ ጨምር',
   'Add a page after this': 'ከዚህ በኋላ ገጽ ጨምር',
   'Delete this page': 'ይህን ገጽ አጥፋ',
+  Zoom: 'ማጉላት',
+  'Fit width': 'ወርድን አስማማ',
+  'Fit page': 'ገጹን አስማማ',
+  'Pull to add a page': 'ገጽ ለመጨመር ይጎትቱ',
+  'Release to add a page': 'ገጽ ለመጨመር ይልቀቁ',
   'Page {number}': 'ገጽ {number}',
   'The paper could not be read': 'ወረቀቱን ማንበብ አልተቻለም',
   // The three papers and the rulings, which are the rows the page menu offers.

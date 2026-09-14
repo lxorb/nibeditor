@@ -14,7 +14,9 @@
  *  laidOut in @nib/markdown/pages. */
 
 import {
+  added,
   columnHeight,
+  GUTTER,
   grown,
   onPage,
   pageCount,
@@ -23,15 +25,44 @@ import {
   settled,
 } from '@nib/markdown/pages'
 import { type Camera, clampScale, zoomed } from '../camera'
-import { type Canvas, readCanvas, takeParsed, writeCanvas } from '../canvas/format'
+import { type Canvas, type PageNode, readCanvas, takeParsed, writeCanvas } from '../canvas/format'
 import { strokeBox } from '../canvas/ink'
+import type { KeptView } from '../canvas/place'
 import { CanvasStore } from '../canvas/store.svelte'
+import { stillness } from '../motion'
+import type { Tab } from '../workspace/documents.svelte'
 
 /** Room left round the column when the view is fitted, in pixels. Enough that the
  *  edge of the paper is visibly an edge. */
 const MARGIN = 28
 
+/** How much of the next sheet is in reach at the end of the column, in screen
+ *  pixels.
+ *
+ *  A page note ends in the silhouette of the sheet that is not there yet, and the
+ *  scroll reaches far enough past the last page to show this much of it. That is
+ *  the whole of how the gesture is discoverable: somebody who scrolls to the end
+ *  of a note sees where the next page would go, can press it, and can carry on
+ *  scrolling to pull it into being. In screen pixels rather than plane units, so
+ *  the band is the same size on paper seen from any distance.
+ *
+ *  Nought for a note nobody may write in: there is nothing to add, and a dashed
+ *  slot offering it would be a button that refuses. */
+export const PEEK = 88
+
+/** How long the view takes to settle on a page a pull has just made, in
+ *  milliseconds. Long enough to follow by eye, short enough not to be a wait. */
+const SETTLE = 420
+
 export class PagesStore extends CanvasStore {
+  constructor(tab: Tab) {
+    super(tab)
+    // A zoom the reader chose comes back with the camera it belongs to, so the
+    // paper is not fitted across the pane again the first time this one is
+    // measured. See `keptView` and place.ts.
+    if (this.restored?.chose === true) this.chose = true
+  }
+
   /** How big the pane is, in pixels. Told by the surface, because only a component
    *  can measure one, and held here because every sum about where the view may go
    *  needs it: turning to a page, fitting the width, holding a scroll to the column.
@@ -70,6 +101,17 @@ export class PagesStore extends CanvasStore {
     this.chose = true
   }
 
+  /** And that fact written down beside the camera, so it comes back with it.
+   *
+   *  Without this a zoom survived the app being started again for exactly as long
+   *  as it took the pane to be measured: the camera came back, `chose` did not, and
+   *  the first measurement fitted the paper across the pane again and threw the
+   *  reader's zoom away. See place.ts. */
+  protected override get keptView(): KeptView {
+    return this.chose ? { ...this.camera, chose: true } : this.camera
+  }
+
+
   /** The pages, in the order they turn. Derived rather than held: the canvas is
    *  the state, and a second list of the same pages is a second thing to keep in
    *  step. */
@@ -88,6 +130,30 @@ export class PagesStore extends CanvasStore {
 
   get widest(): number {
     return this.pages.reduce((most, page) => Math.max(most, page.width), 0)
+  }
+
+  /** The last sheet, which is the one the end of the column is about. */
+  get last(): PageNode | null {
+    return this.pages[this.pages.length - 1] ?? null
+  }
+
+  /** Whether a page may be added at all: a note to write in, with something to add
+   *  after. A space somebody shared to read has neither. */
+  get canAdd(): boolean {
+    return !this.readOnly && this.pages.length > 0
+  }
+
+  /** Where the next sheet would go: the silhouette's box, in plane units, which is
+   *  exactly the box `added` will give the real page. Null where none may be added.
+   *
+   *  The same answer for the drawing, for the press that lands on it and for the
+   *  camera that settles on it afterwards - which is what lets the silhouette
+   *  become the page with nothing moving. */
+  get slot(): { x: number; y: number; width: number; height: number } | null {
+    const last = this.last
+    if (!last || !this.canAdd) return null
+
+    return { x: last.x, y: this.tall + GUTTER, width: last.width, height: last.height }
   }
 
   /** Where the top of the view is, in plane units. The camera names the middle of
@@ -114,7 +180,6 @@ export class PagesStore extends CanvasStore {
   held(next: Camera): Camera {
     const scale = clampScale(next.scale)
     const across = this.pane.width / scale
-    const down = this.pane.height / scale
     const slack = MARGIN / scale
     const widest = this.widest
 
@@ -123,14 +188,42 @@ export class PagesStore extends CanvasStore {
     const sideways = Math.max(0, (widest - across) / 2 + slack)
     const x = Math.min(Math.max(next.x, -sideways), sideways)
 
-    // And down, between the top of the first page and the bottom of the last, both
-    // with the margin's worth of paper-coloured air beyond them.
-    // A column shorter than the view has nowhere to scroll: it sits in the middle.
-    const first = -slack + down / 2
-    const last = this.tall + slack - down / 2
+    const { first, last } = this.limits(scale)
     const y = last < first ? this.tall / 2 : Math.min(Math.max(next.y, first), last)
 
     return { x, y, scale }
+  }
+
+  /** How far up and down the view may go at a scale, as camera positions.
+   *
+   *  Between the top of the first page and the bottom of the last, both with the
+   *  margin's worth of paper-coloured air beyond them - and past the last one, the
+   *  band the next sheet's silhouette sits in, so scrolling to the end of a note
+   *  arrives at where the next page would go rather than at a dead stop.
+   *
+   *  A column shorter than the view has nowhere to scroll: it sits in the middle.
+   *
+   *  Its own method because the surface reads the same numbers: how far a scroll
+   *  asked to go past the bottom is the pull, and the pull is what makes a page. */
+  private limits(scale: number): { first: number; last: number } {
+    const down = this.pane.height / scale
+    const slack = MARGIN / scale
+    const below = this.canAdd ? GUTTER + PEEK / scale : slack
+
+    return { first: -slack + down / 2, last: this.tall + below - down / 2 }
+  }
+
+  /** The furthest down the view goes, in plane units. What a scroll asks to pass,
+   *  and what the pull is measured from. */
+  get bottom(): number {
+    const { first, last } = this.limits(this.camera.scale)
+    return last < first ? this.tall / 2 : last
+  }
+
+  /** Where the bottom of the view is, in plane units. The other half of the rule
+   *  about where a pull may begin; see `startedNearEnd` in pull.ts. */
+  get viewBottom(): number {
+    return this.camera.y + this.pane.height / this.camera.scale / 2
   }
 
   /** The view moved so a page's top edge is at the top of the pane, counting from
@@ -175,12 +268,104 @@ export class PagesStore extends CanvasStore {
     this.camera = this.held(zoomed(this.camera, width, height, at.x, at.y, by))
   }
 
+  /** The whole of the page being read in the pane, which is the other thing a
+   *  reader of paper asks for: the width to read it, the page to see it. Theirs
+   *  from here on, like every other zoom somebody chose. */
+  fitPage() {
+    const page = this.pages[this.showing - 1] ?? this.last
+    if (!page || !this.pane.width || !this.pane.height) return
+
+    this.theirs()
+    const scale = clampScale(
+      Math.min(
+        (this.pane.width - 2 * MARGIN) / page.width,
+        (this.pane.height - 2 * MARGIN) / page.height,
+      ),
+    )
+    this.camera = this.held({ x: 0, y: page.y + page.height / 2, scale })
+  }
+
+  /** A scale outright, which is what the 100% row asks for. Kept where it was by
+   *  the top of the view, the way fitting the width is. */
+  zoomTo(scale: number) {
+    if (!this.pane.height) return
+
+    this.theirs()
+    const wanted = clampScale(scale)
+    this.camera = this.held({
+      ...this.camera,
+      y: this.top + this.pane.height / wanted / 2,
+      scale: wanted,
+    })
+  }
+
   /** Back to the paper across the pane, which is what the bar's fit button asks for -
    *  and it hands the scale back, so the pane resizing keeps it fitted again. */
   fitAgain() {
     this.chose = false
     this.fitWidth()
   }
+
+  /** A page put in, after the one named or at the end, and which page it now is,
+   *  counting from one. Nought where there was nothing to add to.
+   *
+   *  Here rather than in the surfaces that ask for it, because all three ask the
+   *  same questions of the same canvas: the row in the navigator, the press on the
+   *  silhouette at the end of the column, and the pull that brings it into being. */
+  addPage(after: string | null = null): number {
+    if (!this.canAdd) return 0
+
+    const { canvas, id } = added(this.canvas, after)
+    this.edit(canvas)
+
+    const at = pagesOf(this.canvas).findIndex((one) => one.id === id)
+    return at < 0 ? 0 : at + 1
+  }
+
+  /** The view slid down to a page rather than put there, for the one move that has
+   *  to be followed by eye: the page a pull has just made, which was a silhouette a
+   *  moment ago and must not jump.
+   *
+   *  Instant for a reader who has asked their system for as little movement as
+   *  possible, and instant where there are no frames to ask for. */
+  glideTo(number: number) {
+    const page = this.pages[Math.min(Math.max(1, Math.round(number)), this.pages.length) - 1]
+    if (!page) return
+
+    const down = this.pane.height / this.camera.scale
+    const wanted = this.held({
+      ...this.camera,
+      y: page.y + down / 2 - MARGIN / this.camera.scale,
+    })
+
+    this.halt()
+    const from = this.camera.y
+    if (stillness() || typeof requestAnimationFrame !== 'function' || from === wanted.y) {
+      this.camera = wanted
+      return
+    }
+
+    const began = Date.now()
+    const step = () => {
+      const part = Math.min(1, (Date.now() - began) / SETTLE)
+      const eased = 1 - (1 - part) ** 3
+      this.camera = this.held({ ...this.camera, y: from + (wanted.y - from) * eased })
+      this.gliding = part < 1 ? requestAnimationFrame(step) : 0
+    }
+    this.gliding = requestAnimationFrame(step)
+  }
+
+  /** A glide dropped, because the reader has taken the view somewhere themselves.
+   *  Every gesture says so: a view being pulled about while it slides is a fight. */
+  halt() {
+    if (!this.gliding) return
+
+    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(this.gliding)
+    this.gliding = 0
+  }
+
+  /** The frame a glide is waiting on, while one is. */
+  private gliding = 0
 
   /** An edit, with the long pages grown to hold what is now on them.
    *

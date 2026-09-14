@@ -12,6 +12,11 @@ export const my: Dictionary = {
   'Add a page': 'စာမျက်နှာထည့်ပါ',
   'Add a page after this': 'ဤအပြီး စာမျက်နှာထည့်ပါ',
   'Delete this page': 'ဤစာမျက်နှာဖျက်ပါ',
+  Zoom: 'ဇူးမ်',
+  'Fit width': 'အကျယ်နှင့် အံကိုက်',
+  'Fit page': 'စာမျက်နှာ အံကိုက်',
+  'Pull to add a page': 'စာမျက်နှာ ထည့်ရန် ဆွဲပါ',
+  'Release to add a page': 'စာမျက်နှာ ထည့်ရန် လွှတ်ပါ',
   'Page {number}': 'စာမျက်နှာ {number}',
   'The paper could not be read': 'စာရွက်ကို ဖတ်လို့မရပါ',
   // The three papers and the rulings, which are the rows the page menu offers.

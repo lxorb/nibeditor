@@ -12,6 +12,11 @@ export const es: Dictionary = {
   'Add a page': 'Añadir una página',
   'Add a page after this': 'Añadir una página después de esta',
   'Delete this page': 'Eliminar esta página',
+  Zoom: 'Zoom',
+  'Fit width': 'Ajustar al ancho',
+  'Fit page': 'Ajustar a la página',
+  'Pull to add a page': 'Tira para añadir una página',
+  'Release to add a page': 'Suelta para añadir una página',
   'Page {number}': 'Página {number}',
   'The paper could not be read': 'No se pudo leer el papel',
   // The three papers and the rulings, which are the rows the page menu offers.

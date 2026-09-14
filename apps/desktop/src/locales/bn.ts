@@ -12,6 +12,11 @@ export const bn: Dictionary = {
   'Add a page': 'পাতা যোগ করুন',
   'Add a page after this': 'এর পরে পাতা যোগ করুন',
   'Delete this page': 'এই পাতা মুছুন',
+  Zoom: 'জুম',
+  'Fit width': 'প্রস্থে ফিট করুন',
+  'Fit page': 'পৃষ্ঠায় ফিট করুন',
+  'Pull to add a page': 'পৃষ্ঠা যোগ করতে টানুন',
+  'Release to add a page': 'পৃষ্ঠা যোগ করতে ছেড়ে দিন',
   'Page {number}': 'পাতা {number}',
   'The paper could not be read': 'কাগজটি পড়া যায়নি',
   // The three papers and the rulings, which are the rows the page menu offers.

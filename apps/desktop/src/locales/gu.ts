@@ -12,6 +12,11 @@ export const gu: Dictionary = {
   'Add a page': 'પાનું ઉમેરો',
   'Add a page after this': 'આ પછી પાનું ઉમેરો',
   'Delete this page': 'આ પાનું કાઢો',
+  Zoom: 'ઝૂમ',
+  'Fit width': 'પહોળાઈમાં ફિટ કરો',
+  'Fit page': 'પાનું ફિટ કરો',
+  'Pull to add a page': 'પાનું ઉમેરવા ખેંચો',
+  'Release to add a page': 'પાનું ઉમેરવા છોડો',
   'Page {number}': 'પાનું {number}',
   'The paper could not be read': 'કાગળ વાંચી શકાયો નહીં',
   // The three papers and the rulings, which are the rows the page menu offers.

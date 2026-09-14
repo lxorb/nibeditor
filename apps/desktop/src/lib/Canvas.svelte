@@ -33,7 +33,7 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
-  import { graphPoint, zoomed } from './camera'
+  import { graphPoint, wheelZoom, zoomed } from './camera'
   import { canvasMenu, place, pull, run } from './canvas/actions'
   import {
     coloured,
@@ -1297,7 +1297,7 @@
         height,
         event.clientX - rect.left,
         event.clientY - rect.top,
-        Math.exp(-event.deltaY * 0.0035),
+        wheelZoom(event.deltaY),
       )
       return
     }

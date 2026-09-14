@@ -20,7 +20,7 @@
    *  Reordering is a drag, the way moving a section in the outline is. Dropping a
    *  page between two others moves the page and everything written on it. */
 
-  import { added, moved, removed, reshaped } from '@nib/markdown/pages'
+  import { moved, removed, reshaped } from '@nib/markdown/pages'
   import type { Canvas } from './canvas/format'
   import { PAPER_NAMES, PATTERNS, type PageNode, type Paper, type Pattern } from './canvas/format'
   import { paintInk } from './canvas/paint'
@@ -155,15 +155,13 @@
   }
 
   function add(after: string | null) {
-    const held = store
-    if (!held) return
-
-    const { canvas: next, id } = added(held.canvas, after)
-    held.edit(next)
+    // The store's own, because the surface adds a page too - by being scrolled past
+    // the end of the column - and two copies of "put a page in and go to it" are two
+    // things to keep in step. See `addPage` in pages/store.svelte.ts.
+    const at = store?.addPage(after) ?? 0
     // To the page that was just made, which is where somebody who added one is
     // about to write.
-    const at = next.nodes.filter((node) => node.type === 'page').findIndex((one) => one.id === id)
-    if (at >= 0) held.turnTo(at + 1)
+    if (at) store?.turnTo(at)
   }
 
   /** What each ruling is called. Words rather than an app's name, so they are asked

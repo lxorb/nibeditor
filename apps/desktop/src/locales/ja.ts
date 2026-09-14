@@ -12,6 +12,11 @@ export const ja: Dictionary = {
   'Add a page': 'ページを追加',
   'Add a page after this': 'この後にページを追加',
   'Delete this page': 'このページを削除',
+  Zoom: 'ズーム',
+  'Fit width': '幅に合わせる',
+  'Fit page': 'ページ全体に合わせる',
+  'Pull to add a page': '引いてページを追加',
+  'Release to add a page': '離してページを追加',
   'Page {number}': '{number} ページ',
   'The paper could not be read': '用紙を読み込めませんでした',
   // The three papers and the rulings, which are the rows the page menu offers.

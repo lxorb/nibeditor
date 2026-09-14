@@ -31,6 +31,26 @@ export function clampScale(scale: number): number {
   return Math.min(CLOSEST, Math.max(FURTHEST, scale))
 }
 
+/** One notch of a zoom: what a button on the bar steps by, and what one notch of a
+ *  wheel held with Ctrl comes to.
+ *
+ *  One number, here, because a reader who zooms with the buttons and then with the
+ *  wheel is zooming the same paper: the bar's own comment already said the two
+ *  agree, and they did not - the buttons stepped by a fifth, the plane's wheel by
+ *  two fifths and a page note's by a quarter. */
+export const NOTCH = 1.2
+
+/** What a wheel does to the scale.
+ *
+ *  Ctrl and the wheel is a zoom on every platform, and so is a trackpad pinch,
+ *  which arrives as exactly that. A notch of a real wheel is a hundred pixels of
+ *  delta, so that is what `NOTCH` is spelled against; a trackpad sends dozens of
+ *  small ones and they multiply up to the same thing over the same distance, which
+ *  is the whole reason this is an exponential rather than a step. */
+export function wheelZoom(deltaY: number): number {
+  return Math.exp((-deltaY / 100) * Math.log(NOTCH))
+}
+
 /** The point of the plane a screen point is over. */
 export function graphPoint(
   camera: Camera,
