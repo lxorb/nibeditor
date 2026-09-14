@@ -1210,6 +1210,60 @@ def verdict(answers: list[dict]) -> str:
 # --- the table --------------------------------------------------------------
 
 
+def batch_two(report: dict) -> dict:
+    """What batch 2 of docs/browser.md claims about a web tab, as the run measured it.
+
+    The app says all of these about itself - the switch is timed inside the process
+    around the two calls a switch makes, the step and the place come back through the
+    same commands the window uses - and the session row is the *second* run of the
+    binary, because "a login survives a relaunch" is a claim about a different process
+    reading the same profile. A row with nothing behind it says so.
+    """
+    cef = report.get('cef') or {}
+    again = report.get('relaunch') or {}
+
+    def answered(result: dict, name: str) -> str:
+        one = said(result, name)
+        if one is None:
+            return 'not measured'
+        return f'{"yes" if one.get("ok") else "**no**"} - {one.get("note")}'
+
+    switch = next(
+        (one for one in cef.get('events') or [] if one.get('event') == 'switch'),
+        {},
+    )
+    rows = {
+        'the crate\'s own part of a switch, hidden and shown again': (
+            'not measured'
+            if not switch
+            else f'{switch.get("away_us")} us away, {switch.get("to_web_us")} us back, '
+            f'the webview {"kept" if switch.get("kept") else "**gone**"}'
+        ),
+        'the page is still there after a switch': answered(cef, 'switch away from a web tab'),
+        "back is the engine's own history": answered(cef, 'back is the engine'),
+        'the place on the page, read back': answered(cef, 'the place on the page'),
+        'a login survives a relaunch': answered(again, 'localStorage from an earlier run'),
+        'the page tells the window its name': answered(cef, 'what the page is called'),
+        "the page tells the window the site's mark": answered(cef, "the site's own mark"),
+        'web tabs open when the tree was counted': str(report.get('tabs') or 0),
+    }
+
+    # Which folder nib's own interface asked the engine for, against the one this script
+    # looks in. A third profile appeared on Windows in batch 1.5 and the runtime only
+    # derives one of those from a path it decided was not under the cache root, so the
+    # two paths belong side by side.
+    asked = next(
+        (one.get('interface') for one in cef.get('events') or [] if one.get('event') == 'profile'),
+        None,
+    )
+    if asked:
+        want = str(config_dir() / 'web' / 'app').replace('\\', '/')
+        rows["the interface's own profile, as the app asked for it"] = (
+            f'`{asked}`' if asked == want else f'`{asked}`, where this script looks in `{want}`'
+        )
+    return rows
+
+
 def cause(report: dict) -> str:
     """One sentence naming why the flagged build never said anything, from the diagnosis."""
     why = report.get('why')
@@ -1302,6 +1356,12 @@ def table(report: dict) -> str:
         out.append(f'| {one["n"]} | {one["name"]} | {mark}, {one["note"]} |')
 
     out.append('')
+    out.append("| what batch 2 claims about a web tab | |")
+    out.append('| --- | --- |')
+    for name, said in batch_two(report).items():
+        out.append(f'| {name} | {said} |')
+
+    out.append('')
     out.append('| what the flagged build was asked to prove | |')
     out.append('| --- | --- |')
     for check in cef.get('checks') or []:
@@ -1333,6 +1393,9 @@ def main() -> int:
     ap.add_argument('--tabs', type=int, default=2)
     ap.add_argument('--timeout', type=int, default=420)
     ap.add_argument('--no-compress', action='store_true', help='skip the installer delta')
+    ap.add_argument(
+        '--no-relaunch', action='store_true', help="skip the second run, which is batch 2's session row"
+    )
     ap.add_argument('--out', default='gate-out')
     args = ap.parse_args()
 
@@ -1396,6 +1459,20 @@ def main() -> int:
     if launch_ms(cef) is None:
         print('== no window, so: why ==')
         report['why'] = diagnose(flagged, payload, env)
+
+    # **And once more, which is batch 2's session row.** A login that survives a relaunch
+    # is a value in a profile on disk being read by a *different process*, so the only
+    # honest measurement is a second run of the same binary against the same profile: the
+    # first wrote a mark into the site's `localStorage` and this one looks for it before
+    # writing it again. One web tab is enough and the engine is already staged, so it
+    # costs a launch rather than a round.
+    if launch_ms(cef) is not None and not args.no_relaunch:
+        print('== and again, for what the profile kept ==')
+        if trace_file().is_file():
+            trace_file().unlink()
+        again = dict(env)
+        again['NIB_CEF_GATE'] = '1'
+        report['relaunch'] = run(flagged, again, out_dir / 'relaunch', args.timeout, measured=True)
         print(json.dumps({key: report['why'][key] for key in report['why']}, indent=2)[:8000])
 
     # The two profiles, on disk, after a run that used both of them.

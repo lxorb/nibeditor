@@ -143,6 +143,14 @@ fn spoke(label: &str) -> bool {
         .is_ok_and(|titles| titles.iter().any(|(seen, _)| seen == label))
 }
 
+/// How many titles a webview with this label has told the app about.
+fn titles_for(label: &str) -> usize {
+    TITLES
+        .lock()
+        .map(|titles| titles.iter().filter(|(seen, _)| seen == label).count())
+        .unwrap_or_default()
+}
+
 /// Whether anything the extension's content script ran in was labelled like this.
 fn extension_ran_in(label: &str) -> bool {
     TITLES.lock().is_ok_and(|titles| {
@@ -167,10 +175,20 @@ pub(crate) fn start(app: &AppHandle) {
         let Ok(moved) = serde_json::from_str::<serde_json::Value>(event.payload()) else {
             return;
         };
-        let (Some(tab), Some(title)) = (moved["tab"].as_str(), moved["title"].as_str()) else {
+        let Some(tab) = moved["tab"].as_str() else {
             return;
         };
-        title_seen(&format!("web-{tab}"), title);
+
+        if let Some(title) = moved["title"].as_str() {
+            title_seen(&format!("web-{tab}"), title);
+        }
+
+        // The site's own mark, on the same event and under a label of its own, so that
+        // "the tab has a favicon" is a question the gate can ask later. Batch 2, and the
+        // one thing about a tab's bar that a runner can see without a picture.
+        if let Some(icon) = moved["icon"].as_str().filter(|one| !one.is_empty()) {
+            title_seen(&format!("icon-{tab}"), icon);
+        }
     });
 
     let app = app.clone();
@@ -251,6 +269,12 @@ fn walk(app: &AppHandle, tabs: usize) {
     pulse(app, "the gate's own page");
 
     answers(app, tabs, &tab_labels, probe);
+
+    // Batch 2's own rows, after the counting and before the engine's own pages: they
+    // move a tab about, and a process tree counted in the middle of that would be a
+    // measurement of the gate rather than of the app.
+    web_tab_rows(app, &tab_labels);
+    pulse(app, "batch 2's rows");
 
     // And last of all the engine's own pages, each in a webview of its own, because a
     // page that cannot be reached is the row that decides batch 3.
@@ -418,15 +442,7 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
     let webview = app
         .get_webview("main")
         .ok_or_else(|| "the app's own webview is not there".to_string())?;
-    // Inside a 1024 by 768 screen, which is what the runners have: batch 1.5's first
-    // pictures put the engine's own pages at x = 1180 and photographed the desktop
-    // beside them, so a screenshot corroborated nothing. Everything the gate opens is
-    // in the top-left 1024 by 768 now, tabs on one column and pages on the next.
-    let y = if at % 2 == 0 { 60.0 } else { 330.0 };
-    let pane: crate::web_tabs::Pane = serde_json::from_value(serde_json::json!({
-        "x": 400.0, "y": y, "width": 300.0, "height": 260.0
-    }))
-    .map_err(|error| error.to_string())?;
+    let pane = pane(at)?;
 
     // A fresh page, not a revived one: no place to restore and an empty trail. Built
     // from JSON because the fields are the web-tab module's own to keep private.
@@ -446,6 +462,205 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
     ))?;
 
     Ok(format!("web-{tab}"))
+}
+
+/// The pane a gate tab sits in, which is where `web_place` is told to put it.
+///
+/// Inside a 1024 by 768 screen, which is what the runners have: batch 1.5's first
+/// pictures put the engine's own pages at x = 1180 and photographed the desktop beside
+/// them, so a screenshot corroborated nothing. Everything the gate opens is in the
+/// top-left 1024 by 768, tabs on one column and pages on the next.
+fn pane(at: usize) -> Result<crate::web_tabs::Pane, String> {
+    let y = if at % 2 == 0 { 60.0 } else { 330.0 };
+    serde_json::from_value(serde_json::json!({
+        "x": 400.0, "y": y, "width": 300.0, "height": 260.0
+    }))
+    .map_err(|error| error.to_string())
+}
+
+/// **Batch 2's own rows.** What a web tab on nib's own Chromium has to do, measured by
+/// the app on itself rather than claimed in a table.
+///
+/// Five things, in the order a reader would do them, and every one of them through the
+/// command that ships rather than beside it:
+///
+/// * **the switch**, which is the row the round-six drive turned on WebView2: hiding a
+///   page and showing another is two calls into the engine and no rebuild, so it has to
+///   be milliseconds and the webview has to still be there afterwards. Both are asked.
+/// * **back and forward**, which under this engine are the engine's own: a tab sent
+///   somewhere new can go back, and after the step it is where it was.
+/// * **the place**, scrolled and read back, which is what keeps a revived tab where the
+///   reading was.
+/// * **`localStorage`**, written here and read on the *next run of the process*, which
+///   is the session criterion: the mark is looked for before it is written, so the
+///   second run of the same binary is the one that answers yes.
+/// * **one browser process**, which `gate.py` counts off the process tree; this only
+///   says how many tabs were open when it counted.
+fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
+    let Some(first) = tabs.first() else {
+        check("batch 2's rows", false, "no web tab to measure");
+        return;
+    };
+    // The tab's own id, which is what every command below takes: the label is
+    // `web-<tab>` and the gate named it `gate-<n>`.
+    let tab = first.trim_start_matches("web-").to_owned();
+
+    // Which folder nib's own interface asked the engine for, said out loud. Batch 1.5
+    // found a *third* profile on Windows that nothing in nib asks for by name, and the
+    // runtime only derives one of those when a webview's `data_directory` does not
+    // resolve under the cache root - so the path this build handed it is the one thing
+    // that was missing from the picture. Slashes the other way round, because a
+    // backslash in a JSON string is an escape.
+    if let Ok(profile) = super::app_profile(app) {
+        say(&format!(
+            "\"event\":\"profile\",\"interface\":\"{}\"",
+            profile.display().to_string().replace('\\', "/")
+        ));
+    }
+
+    // The switch. Hidden and shown again, timed, and then asked whether the page is
+    // still there - which is the whole of what round six fixed on the other engine.
+    let switch = Instant::now();
+    let hidden =
+        pane(0).and_then(|one| crate::web_tabs::web_place(app.clone(), tab.clone(), one, false));
+    let away = switch.elapsed().as_micros();
+
+    let back_on = Instant::now();
+    let shown =
+        pane(0).and_then(|one| crate::web_tabs::web_place(app.clone(), tab.clone(), one, true));
+    let to_web = back_on.elapsed().as_micros();
+
+    let alive = app.get_webview(first).is_some();
+    check(
+        "a switch away from a web tab and back keeps the page",
+        hidden.is_ok() && shown.is_ok() && alive,
+        &format!(
+            "hidden in {away} us, shown in {to_web} us, the webview {}",
+            if alive { "is still there" } else { "is gone" }
+        ),
+    );
+    say(&format!(
+        "\"event\":\"switch\",\"away_us\":{away},\"to_web_us\":{to_web},\"kept\":{alive}"
+    ));
+
+    // Back and forward, which on this engine are the engine's own. The tab is sent
+    // somewhere new, which is what gives it somewhere to go back to, and then stepped.
+    let sent = crate::web_tabs::web_navigate(app.clone(), tab.clone(), SITES[1].to_owned());
+    std::thread::sleep(SETTLE);
+    let stepped = step_back(app, &tab);
+    std::thread::sleep(SETTLE);
+
+    let (where_now, _) = looked(app, &tab);
+    let went_back = where_now.starts_with(SITES[0].trim_end_matches('/'));
+    check(
+        "back is the engine's own history and lands where the tab was",
+        sent.is_ok() && stepped.is_ok() && went_back,
+        &format!("after a step back the tab is at {where_now}"),
+    );
+
+    // The place: scrolled, then read out of the page the way `web_look` does when a tab
+    // is left. A number rather than a yes, because "the place is kept" is a claim about
+    // a number being the same twice.
+    let scrolled = crate::web_tabs::web_scroll(app.clone(), tab.clone(), 0.0, 900.0);
+    std::thread::sleep(Duration::from_secs(2));
+    let (_, y) = looked(app, &tab);
+    check(
+        "the place on the page is read back out of it",
+        scrolled.is_ok() && y > 0.0,
+        &format!("the reading is {y} down the page"),
+    );
+
+    // What the bar over the tab is drawn from: the page's own name and the site's own
+    // mark, both of which arrive on the event `web_tabs.rs` emits. A runner cannot see a
+    // favicon in a picture of a 300-pixel pane, but it can see whether the window was
+    // ever told about one.
+    check(
+        "a web tab tells the window what the page is called",
+        spoke(first),
+        &format!("{} titles for {first}", titles_for(first)),
+    );
+    check(
+        "a web tab tells the window the site's own mark",
+        spoke(&format!("icon-{tab}")),
+        "the favicon the tab and the sidebar are drawn with",
+    );
+
+    // The session, across runs of the process. Looked for first: on the first run of
+    // this binary there is nothing to find, and on the second there is - which is what
+    // "a login survives a relaunch" means when the login is a value in a profile on
+    // disk.
+    let found = read_mark(app, &tab);
+    write_mark(app, &tab);
+    check(
+        "localStorage from an earlier run of the app is still there",
+        found.as_deref() == Some(MARK),
+        &match found {
+            Some(one) if one == MARK => "the mark this binary wrote last time".to_string(),
+            Some(one) => format!("something else was there: {one}"),
+            None => "nothing yet, which is what a first run says".to_string(),
+        },
+    );
+}
+
+/// What the gate writes into `localStorage` to find again on the next run.
+const MARK: &str = "nib-gate-2";
+
+/// A step back, through the app's own command.
+fn step_back(app: &AppHandle, tab: &str) -> Result<(), String> {
+    crate::web_tabs::web_step(
+        app.clone(),
+        app.state::<crate::web_tabs::WebTabs>(),
+        tab.to_owned(),
+        serde_json::from_value(serde_json::json!("back")).map_err(|error| error.to_string())?,
+    )
+}
+
+/// Where the tab is and how far down it the reading has got, through `web_look` - the
+/// command the window calls when a tab is left, so the answer is the one that is written
+/// against the note.
+///
+/// Read out of the answer as JSON because `Look`'s fields are the web-tab module's own
+/// to keep private, and a gate is not a reason to open them.
+fn looked(app: &AppHandle, tab: &str) -> (String, f64) {
+    let said = tauri::async_runtime::block_on(crate::web_tabs::web_look(
+        app.clone(),
+        app.state::<crate::web_tabs::WebTabs>(),
+        tab.to_owned(),
+    ))
+    .ok()
+    .and_then(|one| serde_json::to_value(one).ok())
+    .unwrap_or_default();
+
+    (
+        said["url"].as_str().unwrap_or_default().to_owned(),
+        said["y"].as_f64().unwrap_or_default(),
+    )
+}
+
+/// The mark an earlier run of this binary left in the site's own storage, if any.
+fn read_mark(app: &AppHandle, tab: &str) -> Option<String> {
+    let view = app.get_webview(&format!("web-{tab}"))?;
+    let (sending, waiting) = std::sync::mpsc::channel::<String>();
+    view.eval_with_callback(
+        format!("(function () {{ try {{ return localStorage.getItem('{MARK}') || '' }} catch (error) {{ return '' }} }})()"),
+        move |answer| {
+            let _ = sending.send(answer);
+        },
+    )
+    .ok()?;
+
+    let answer = waiting.recv_timeout(Duration::from_secs(10)).ok()?;
+    let said = serde_json::from_str::<String>(&answer).unwrap_or_default();
+    (!said.is_empty()).then_some(said)
+}
+
+/// And the mark left behind for the next run to find.
+fn write_mark(app: &AppHandle, tab: &str) {
+    if let Some(view) = app.get_webview(&format!("web-{tab}")) {
+        let _ = view.eval(format!(
+            "try {{ localStorage.setItem('{MARK}', '{MARK}') }} catch (error) {{}}"
+        ));
+    }
 }
 
 /// One of the engine's own pages, in a webview beside the others.
