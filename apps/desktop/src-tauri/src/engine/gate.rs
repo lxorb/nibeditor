@@ -223,7 +223,7 @@ fn walk(app: &AppHandle, tabs: usize) {
     let mut pages: Vec<String> = Vec::new();
     for (at, address) in PAGES.iter().enumerate() {
         let label = format!("gate-page-{at}");
-        match page(app, &label, address) {
+        match page(app, &label, address, if at % 2 == 0 { 60.0 } else { 330.0 }) {
             Ok(()) => {
                 say(&format!(
                     "\"event\":\"page\",\"label\":\"{label}\",\"url\":\"{address}\""
@@ -392,9 +392,13 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
     let webview = app
         .get_webview("main")
         .ok_or_else(|| "the app's own webview is not there".to_string())?;
-    let x = if at % 2 == 0 { 520.0 } else { 860.0 };
+    // Inside a 1024 by 768 screen, which is what the runners have: batch 1.5's first
+    // pictures put the engine's own pages at x = 1180 and photographed the desktop
+    // beside them, so a screenshot corroborated nothing. Everything the gate opens is
+    // in the top-left 1024 by 768 now, tabs on one column and pages on the next.
+    let y = if at % 2 == 0 { 60.0 } else { 330.0 };
     let pane: crate::web_tabs::Pane = serde_json::from_value(serde_json::json!({
-        "x": x, "y": 96.0, "width": 320.0, "height": 620.0
+        "x": 400.0, "y": y, "width": 300.0, "height": 260.0
     }))
     .map_err(|error| error.to_string())?;
 
@@ -424,7 +428,7 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
 /// the web is an address a reader may type - `chrome://settings` is a page nib
 /// opens, never a page a page can reach. Batch 3 is where it becomes a tab with a
 /// gear on it; here it only has to load.
-fn page(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
+fn page(app: &AppHandle, label: &str, url: &str, y: f64) -> Result<(), String> {
     let at: tauri::Url = url.parse().map_err(|_| format!("{url} is not a URL"))?;
     let window = app
         .get_window("main")
@@ -440,8 +444,8 @@ fn page(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
         let made = window
             .add_child(
                 builder,
-                LogicalPosition::new(1180.0, 96.0),
-                LogicalSize::new(360.0, 620.0),
+                LogicalPosition::new(710.0, y),
+                LogicalSize::new(300.0, 260.0),
             )
             .map(|_| ())
             .map_err(|error| error.to_string());
@@ -479,8 +483,10 @@ fn probe_window(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
     app.run_on_main_thread(move || {
         let made = tauri::WebviewWindowBuilder::new(&handle, &label, WebviewUrl::External(at))
             .title("the gate's own page")
-            .inner_size(360.0, 320.0)
-            .position(40.0, 760.0)
+            // Small, and inside a 1024 by 768 screen like everything else the gate
+            // opens, so a picture of the screen has it in it.
+            .inner_size(320.0, 200.0)
+            .position(30.0, 500.0)
             .on_document_title_changed(move |_window, title| title_seen(&watching, &title))
             .build()
             .map(|_| ())
