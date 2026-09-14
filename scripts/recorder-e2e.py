@@ -79,9 +79,26 @@ def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
     SPACES.mkdir(parents=True, exist_ok=True)
     return subprocess.Popen(
         [str(app)],
-        env={**os.environ, "NIB_SPACES_DIR": str(SPACES)},
+        # The launch trace as well, which is where the crate says what it did with a
+        # permission request: which origin asked for what, and what it was told. A
+        # refusal is invisible from the window - all a reader sees is a clock that does
+        # not move - so a drive about a microphone reads it. See trace.rs.
+        env={**os.environ, "NIB_SPACES_DIR": str(SPACES), "NIB_TRACE_STARTUP": "1"},
         cwd=str(app.parent),
     )
+
+
+def trace_of(identifier: str) -> list[str]:
+    """What the launch trace says about the microphone, if anything."""
+    path = pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier / "logs" / "startup-trace.log"
+    if not path.exists():
+        return []
+
+    return [
+        line.strip()
+        for line in path.read_text(encoding="utf-8", errors="replace").split("\n")
+        if "microphone" in line
+    ]
 
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:
@@ -146,7 +163,14 @@ def shot(pid: int, name: str) -> None:
 # whole bug was a promise that never settled while `enumerateDevices` listed a
 # microphone, so the two questions are asked separately here as well.
 HAS_INPUT = """
-navigator.mediaDevices.enumerateDevices().then((all) => all.filter((one) => one.kind === 'audioinput').length)
+navigator.mediaDevices.enumerateDevices().then((all) => JSON.stringify({
+  inputs: all.filter((one) => one.kind === 'audioinput').length,
+  // A microphone is only reachable from a secure context, and the app is served from a
+  // host the engine has to count as one. If this ever says false, nothing else here can
+  // work and the reason is the address rather than the permission.
+  secure: isSecureContext,
+  origin: location.origin,
+}))
 """
 
 # The microphone opened directly, with a clock on it. This is the call that used to hang:
@@ -181,8 +205,12 @@ def drive(app: pathlib.Path) -> None:
         say(f"{identifier} is up on port {held['port']}, pid {held.get('pid')}")
         time.sleep(4.0)
 
-        inputs = ran(held, HAS_INPUT)
-        say(f"the machine lists {inputs} audio input(s)")
+        listed = ran(held, HAS_INPUT)
+        say(f"the page says {listed}")
+        inputs = json.loads(str(listed)).get("inputs", 0) if listed else 0
+
+        for line in trace_of(identifier):
+            say(f"trace: {line}")
 
         # ── the call that used to hang ─────────────────────────────────────
         opened = ran(held, OPENS)
@@ -197,6 +225,8 @@ def drive(app: pathlib.Path) -> None:
             # privacy settings, a desk with no microphone on it, a session with nobody
             # sitting in front of it - and a refusal is something the app can say.
             say(f"the microphone was refused in {opened['ms']}ms: {opened['refused']!r}")
+            for line in trace_of(identifier):
+                say(f"trace: {line}")
             if opened["ms"] > 24000:
                 wrong(f"the microphone request never settled: {opened}")
             else:

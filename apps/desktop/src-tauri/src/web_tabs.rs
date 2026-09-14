@@ -963,6 +963,10 @@ pub fn hearing(app: &AppHandle) {
     // and this one keeps answering after a web tab has put a second webview in the
     // window. See the note at the top of this file.
     let Some(view) = app.get_webview(MAIN) else {
+        // Nothing to listen on, which would mean the microphone answers nothing again.
+        // Said in the launch trace, because it is exactly the kind of thing that is
+        // invisible until somebody presses Record; see trace.rs.
+        crate::trace::mark("microphone: no webview to listen on");
         return;
     };
 
@@ -981,6 +985,7 @@ pub fn hearing(app: &AppHandle) {
     // touched from; the same move `listening` makes for the same reason.
     let _ = view.with_webview(move |platform| {
         ask::own(&platform, ours);
+        crate::trace::mark("microphone: listening on the window's own page");
     });
 }
 
@@ -1537,8 +1542,18 @@ mod ask {
                         COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
                             | COREWEBVIEW2_PERMISSION_KIND_CAMERA
                     );
+                    let allow = mine && asked_for;
 
-                    let _ = args.SetState(if mine && asked_for {
+                    // What was asked for and what it was told, in the launch trace: a
+                    // permission refused is exactly the kind of thing that is invisible
+                    // from the window, where all a reader sees is a clock that does not
+                    // move. Free unless the trace is switched on; see trace.rs.
+                    crate::trace::mark(&format!(
+                        "microphone: {origin} asked for {kind:?} and was {}",
+                        if allow { "allowed" } else { "refused" }
+                    ));
+
+                    let _ = args.SetState(if allow {
                         COREWEBVIEW2_PERMISSION_STATE_ALLOW
                     } else {
                         COREWEBVIEW2_PERMISSION_STATE_DENY

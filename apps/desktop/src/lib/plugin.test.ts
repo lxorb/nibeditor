@@ -29,9 +29,16 @@ function memoryStorage(): Storage {
 }
 
 vi.stubGlobal('localStorage', memoryStorage())
-// The store sets the zoom on the document element when it is restored. There is no
-// document here and none of this is about the zoom.
-vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
+// The store writes three things onto the document element when it is restored: the
+// zoom, which frame the window wears and whether the desk shows through it. There is no
+// document here and none of this is about any of the three.
+vi.stubGlobal('document', {
+  documentElement: {
+    style: { setProperty: () => undefined },
+    dataset: {},
+    toggleAttribute: () => false,
+  },
+})
 
 /** The module graph, compiled once and outside anybody's budget: the settings
  *  pull in most of the app. See docs/conventions.md.
