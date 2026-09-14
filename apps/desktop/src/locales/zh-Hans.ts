@@ -536,6 +536,7 @@ export const zhHans: Dictionary = {
   Superscript: '上标',
   Subscript: '下标',
   'Command palette': '命令面板',
+  Commands: '命令',
   Storage: '存储',
   Dismiss: '忽略',
   'Manage storage': '管理存储',

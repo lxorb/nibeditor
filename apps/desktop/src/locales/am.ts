@@ -540,6 +540,7 @@ export const am: Dictionary = {
   Superscript: 'የላይ ጽሕፈት',
   Subscript: 'የታች ጽሕፈት',
   'Command palette': 'የትዕዛዝ ሰሌዳ',
+  Commands: 'ትዕዛዞች',
   Storage: 'ማከማቻ',
   Dismiss: 'አስወግድ',
   'Manage storage': 'ማከማቻ አስተዳድር',

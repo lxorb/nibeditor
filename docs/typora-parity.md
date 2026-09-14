@@ -1292,9 +1292,10 @@ Features Typora does not have, which are the reason this exists.
       that would scale the panel and the tab strip with the words, would not be
       remembered, and would not reach the phone or the browser build. The keys are
       the three every browser and every editor use - Ctrl+=, Ctrl+- and Ctrl+0, and
-      Ctrl+0 by the key underneath so it reads the same on AZERTY. Heading up,
-      heading down and Paragraph, which held them, are one modifier over at
-      Ctrl+Shift+=, Ctrl+Shift+- and Ctrl+Shift+P
+      Ctrl+0 by the key underneath so it reads the same on AZERTY. Heading up and
+      heading down, which held two of them, are one modifier over at Ctrl+Shift+= and
+      Ctrl+Shift+-; Paragraph, which held the third, has no key at all, because a
+      heading key pressed on the level it already set turns the line back into prose
 - [x] The bar over the keyboard on a phone holds any command from the app's own
       registry, chosen in Settings > Mobile and kept on the account beside the
       shortcuts. The nine it has always held are the default, so nothing changes

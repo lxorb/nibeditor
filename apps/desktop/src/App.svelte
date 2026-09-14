@@ -68,7 +68,7 @@
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
   import PullMark from './lib/PullMark.svelte'
-  import { runEntry } from './lib/shortcuts/registry'
+  import { type AppContext, runEntry } from './lib/shortcuts/registry'
 
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
@@ -82,6 +82,9 @@
    *  own read-only switch does; see sharing.svelte.ts. */
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   let palette = $state(false)
+  /** The palette itself, for the one thing a flag cannot say: Ctrl+Shift+P opens it
+   *  on the commands, which is a `>` in its field and a caret after it. */
+  let paletteScreen = $state<{ showCommands(): void }>()
   /** The formatting bar, once it is on the page. */
   let formatBar = $state<{ follow(view: EditorView): void }>()
   /** The element holding both layers, which is what the drawer gesture
@@ -616,11 +619,12 @@
    *  presses one: the buttons on the format bar are registry commands too, and a
    *  bar that built its own context would be a second answer to what the app is
    *  showing. */
-  function appContext() {
+  function appContext(): AppContext {
     return {
       view,
-      palette: () => {
-        palette = true
+      palette: (mode) => {
+        if (mode === 'commands') paletteScreen?.showCommands()
+        else palette = true
       },
       // The document alone, with the app out of the way and the window's own
       // frame with it; see fullscreen.svelte.ts.
@@ -867,7 +871,7 @@
   <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
 {/if}
 
-<Palette bind:open={palette} {view} />
+<Palette bind:this={paletteScreen} bind:open={palette} {view} />
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />

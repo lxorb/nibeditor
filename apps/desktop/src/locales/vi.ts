@@ -539,6 +539,7 @@ export const vi: Dictionary = {
   Superscript: 'Chỉ số trên',
   Subscript: 'Chỉ số dưới',
   'Command palette': 'Bảng lệnh',
+  Commands: 'Lệnh',
   Storage: 'Dung lượng',
   Dismiss: 'Bỏ qua',
   'Manage storage': 'Quản lý dung lượng',

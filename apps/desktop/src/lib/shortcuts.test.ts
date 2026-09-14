@@ -617,6 +617,48 @@ describe('the keyboard', () => {
     expect(opened).toBe(1)
   })
 
+  /** The palette has two ways in and they are one command each: Ctrl+P on the notes,
+   *  Ctrl+Shift+P on the commands. Emil asked for the second by name - "Ctrl + P is
+   *  very very handy, I really like it. There should be another shortcut that is for
+   *  commands (so you don't have to type > all the time, maybe Ctrl + Shift + P?)".
+   *  What the reader then sees in the field is the palette's own; see
+   *  test/effects/palette-commands.effect.test.ts. */
+  test('opens the palette on the commands from a chord of its own', () => {
+    const { shortcuts } = registry
+    const asked: (string | undefined)[] = []
+    const context = {
+      palette: (mode?: 'commands') => asked.push(mode),
+      fullscreen: () => undefined,
+    }
+
+    expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(true)
+    // Shift and the letter arrive as the capital, which is the same key.
+    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
+      true,
+    )
+
+    expect(asked).toEqual([undefined, 'commands'])
+  })
+
+  test('and follows a rebind of that one too', () => {
+    const { shortcuts } = registry
+    const asked: (string | undefined)[] = []
+    const context = {
+      palette: (mode?: 'commands') => asked.push(mode),
+      fullscreen: () => undefined,
+    }
+
+    shortcuts.set('app.commands', 'Mod-Alt-9')
+
+    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
+      false,
+    )
+    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
+      true,
+    )
+    expect(asked).toEqual(['commands'])
+  })
+
   test('leaves a key nothing is bound to alone', () => {
     const { shortcuts } = registry
     shortcuts.set('app.palette', null)
@@ -775,11 +817,24 @@ describe('the keys that move the keyboard about', () => {
     expect(registry.shortcuts.keyFor('app.zoom-reset')).toBe('Mod-0')
   })
 
-  test('and the three that were on them are one modifier over', () => {
+  test('and the two that were on them are one modifier over', () => {
     expect(registry.shortcuts.keyFor('paragraph.heading-up')).toBe('Mod-Shift-=')
     expect(registry.shortcuts.keyFor('paragraph.heading-down')).toBe('Mod-Shift--')
-    // A letter rather than Ctrl+Shift+0, which on AZERTY is Ctrl+0 all over again.
-    expect(registry.shortcuts.keyFor('paragraph.body')).toBe('Mod-Shift-p')
+  })
+
+  /** The third of them is Paragraph, which needs no key at all: setting a heading to
+   *  the level it already is turns it back into prose, so Ctrl+2 on a second-level
+   *  heading is the way out of one. It keeps its row in the menu, the palette and the
+   *  list, and a key can be put on it there. Ctrl+Shift+P, which it held, is the
+   *  palette on commands now. */
+  test('and Paragraph needs none, because a heading key undoes itself', () => {
+    expect(registry.shortcuts.keyFor('paragraph.body')).toBeNull()
+    expect(registry.shortcuts.keyFor('app.commands')).toBe('Mod-Shift-p')
+
+    // Still a row that can be found and given one, like Comment.
+    const entry = registry.SHORTCUTS.find((one) => one.id === 'paragraph.body')
+    expect(entry?.category).toBe('paragraph')
+    expect(entry?.label()).toBeTruthy()
   })
 })
 

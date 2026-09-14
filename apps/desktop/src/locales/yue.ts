@@ -536,6 +536,7 @@ export const yue: Dictionary = {
   Superscript: '上標',
   Subscript: '下標',
   'Command palette': '命令面板',
+  Commands: '命令',
   Storage: '儲存空間',
   Dismiss: '關閉',
   'Manage storage': '管理儲存空間',

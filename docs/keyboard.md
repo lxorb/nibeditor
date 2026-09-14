@@ -208,6 +208,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
 | Ctrl+P | the palette. Type for a note, `>` for a command (already there) |
+| Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings |
 
@@ -243,9 +244,17 @@ purpose: a chord that wants a digit and no Shift is matched by the key underneat
 Ctrl+0 reaches the text size on AZERTY as it does everywhere else (see
 `matchesCombination` in `keys.ts`). Which means Ctrl+Shift+0 and Ctrl+0 are one press
 on those keyboards whichever of the two something is bound to, so nothing may hold one
-while anything holds the other. That is why Paragraph is Ctrl+Shift+P and not
-Ctrl+Shift+0, where Notion puts it, and it is the one key of Notion's the Notion preset
-cannot take. `shortcuts.test.ts` fails if a pair appears, in either direction.
+while anything holds the other. That is why Paragraph never took Ctrl+Shift+0, where
+Notion puts it, and it is the one key of Notion's the Notion preset cannot take.
+`shortcuts.test.ts` fails if a pair appears, in either direction.
+
+**Paragraph has no key at all**, and wants none: a heading key undoes itself. Ctrl+2 on
+a line that is already a second-level heading turns it back into prose, which is what
+every other format key on the keyboard already does, so there was nothing left for a
+chord of its own to do. It keeps its row in the Paragraph menu, the palette and the
+shortcut list and can be given a key there, the way Comment can. The chord it held,
+Ctrl+Shift+P, is the palette on commands - where every editor that has a command
+palette puts it. See `setHeading` in `packages/editor/src/commands.ts`.
 
 **A press a surface has already answered is spent.** The window's handler is the last
 one to run, and the plane, the page column and the file list read their own keys off
@@ -411,11 +420,12 @@ those before they open a shortcut list, so those are what they are. Ctrl+0 is ma
 by the key rather than by the character it printed, which is what makes it Ctrl+0 on
 AZERTY too, where the nought is the shifted character; see the digit rule above.
 
-They were Heading up, Heading down and Paragraph in the editor, which have moved one
-modifier over: **Ctrl+Shift+=**, **Ctrl+Shift+-** and **Ctrl+Shift+P**. Obsidian binds
-none of those three at all, so nothing carries over from it, and the heading levels keep
-Ctrl+1 to Ctrl+6, which are nobody else's. Paragraph takes a letter because
-Ctrl+Shift+0 cannot be pressed on AZERTY without also being Ctrl+0.
+They were Heading up, Heading down and Paragraph in the editor. The first two moved one
+modifier over, to **Ctrl+Shift+=** and **Ctrl+Shift+-**; Obsidian binds neither at all,
+so nothing carries over from it, and the heading levels keep Ctrl+1 to Ctrl+6, which are
+nobody else's. Paragraph has no key now - Ctrl+2 on a second-level heading is what turns
+it back into prose - and **Ctrl+Shift+P**, which it held for a while, is the palette on
+commands; see the digit rule above.
 
 The plane's Fit is Ctrl+Alt+0 for the same reason: it is read off the plane and the
 press goes on to the window afterwards, so the two on one key would fit the plane and

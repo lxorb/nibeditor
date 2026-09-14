@@ -65,7 +65,11 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
  *  on screen, and the two things that live in App.svelte's own state. */
 export interface AppContext {
   view?: EditorView | undefined
-  palette(): void
+  /** Opens the palette. `'commands'` opens it on the commands rather than on the
+   *  notes, which is the `>` in the field and nothing else: one palette with two
+   *  ways in, so the field is what says which of the two it is showing and
+   *  deleting the `>` is the way back. */
+  palette(mode?: 'commands'): void
   fullscreen(): void
 }
 
@@ -468,6 +472,25 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-p',
     run: (context) => context.palette(),
+  },
+  // The same palette, opened on the commands: the field arrives holding `>` with the
+  // caret after it, so nothing new has to be learned and deleting the `>` is the way
+  // back to the notes. Ctrl+Shift+P because that is where VS Code, Obsidian and every
+  // editor that has a command palette put it, and because it is Ctrl+P with the one
+  // modifier a reader already reaches for to mean "the other one of these".
+  //
+  // Emil asked for it by name: "Ctrl + P is very very handy, I really like it. There
+  // should be another shortcut that is for commands (so you don't have to type > all
+  // the time, maybe Ctrl + Shift + P?)". Paragraph held the chord until this took it
+  // and needs none now, because setting a heading to the level it already is turns it
+  // back into prose; see setHeading in @nib/editor.
+  {
+    id: 'app.commands',
+    label: () => t('Commands'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-p',
+    run: (context) => context.palette('commands'),
   },
   {
     id: 'app.sidebar',

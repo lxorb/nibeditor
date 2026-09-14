@@ -539,6 +539,7 @@ export const ko: Dictionary = {
   Superscript: '위 첨자',
   Subscript: '아래 첨자',
   'Command palette': '명령 팔레트',
+  Commands: '명령',
   Storage: '저장 공간',
   Dismiss: '닫기',
   'Manage storage': '저장 공간 관리',

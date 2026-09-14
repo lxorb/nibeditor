@@ -150,6 +150,27 @@ describe('headings', () => {
     expect(run(setHeading(0), '### |Title')).toBe('Title')
   })
 
+  /** The key that made a heading unmakes it, which is what every other format key
+   *  on the keyboard already does - and why Paragraph needs no chord of its own; see
+   *  keymap.ts. */
+  test('the level a line already is turns it back into a paragraph', () => {
+    expect(run(setHeading(2), '## |Title')).toBe('Title')
+    expect(run(setHeading(1), '# |Title')).toBe('Title')
+    expect(run(setHeading(6), '###### |Title')).toBe('Title')
+  })
+
+  test('while another level replaces it, as before', () => {
+    expect(run(setHeading(2), '### |Title')).toBe('## Title')
+  })
+
+  /** All of them or none, over a selection - the rule the line prefixes already
+   *  follow: a run where one line is short of the level becomes headings, and a run
+   *  that is already all of that level becomes prose. */
+  test('over several lines, all of them or none', () => {
+    expect(run(setHeading(2), '[## One\nTwo]')).toBe('## One\n## Two')
+    expect(run(setHeading(2), '[## One\n## Two]')).toBe('One\nTwo')
+  })
+
   test('raises and lowers the level', () => {
     expect(run(shiftHeading(1), '## |Title')).toBe('### Title')
     expect(run(shiftHeading(-1), '## |Title')).toBe('# Title')

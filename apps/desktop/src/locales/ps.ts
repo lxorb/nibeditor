@@ -543,6 +543,7 @@ export const ps: Dictionary = {
   Superscript: 'پورتنی ليک',
   Subscript: 'ښکتنی ليک',
   'Command palette': 'د کړنو تخته',
+  Commands: 'کړنې',
   Storage: 'زېرمه',
   Dismiss: 'پرېښودل',
   'Manage storage': 'زېرمه سمبالول',

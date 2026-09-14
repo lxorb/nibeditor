@@ -543,6 +543,7 @@ export const gsw: Dictionary = {
   Superscript: 'Hochgstellt',
   Subscript: 'Tüüfgstellt',
   'Command palette': 'Befehlspalette',
+  Commands: 'Befehl',
   Storage: 'Spycher',
   Dismiss: 'Uusblände',
   'Manage storage': 'Spycher verwalte',

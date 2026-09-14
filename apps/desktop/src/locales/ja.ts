@@ -540,6 +540,7 @@ export const ja: Dictionary = {
   Superscript: '上付き',
   Subscript: '下付き',
   'Command palette': 'コマンドパレット',
+  Commands: 'コマンド',
   Storage: 'ストレージ',
   Dismiss: '閉じる',
   'Manage storage': 'ストレージを管理',

@@ -545,6 +545,7 @@ export const ha: Dictionary = {
   Superscript: 'Rubutu sama',
   Subscript: 'Rubutu ƙasa',
   'Command palette': 'Fanon umarni',
+  Commands: 'Umarni',
   Storage: "Ma'aji",
   Dismiss: 'Kau da',
   'Manage storage': "Sarrafa ma'aji",

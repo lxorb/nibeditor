@@ -552,6 +552,7 @@ export const ptPT: Dictionary = {
   Superscript: 'Expoente',
   Subscript: 'Índice inferior',
   'Command palette': 'Paleta de comandos',
+  Commands: 'Comandos',
   Storage: 'Armazenamento',
   Dismiss: 'Descartar',
   'Manage storage': 'Gerir o armazenamento',

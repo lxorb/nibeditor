@@ -8,9 +8,11 @@ gesture.
 
 And the keys, which are the three every browser uses: **Ctrl+=**, **Ctrl+-** and
 **Ctrl+0** are the size and nothing else, Ctrl+0 answers to the key underneath so it
-reads the same on a keyboard where the nought needs Shift, and Heading up, heading
-down and Paragraph are one modifier over on Ctrl+Shift+=, Ctrl+Shift+- and
-Ctrl+Shift+P, where they change the line and not the size.
+reads the same on a keyboard where the nought needs Shift, and Heading up and heading
+down are one modifier over on Ctrl+Shift+= and Ctrl+Shift+-, where they change the line
+and not the size. Paragraph has no key of its own: Ctrl+1 on a line that is already a
+first-level heading turns it back into prose, and Ctrl+Shift+P - which Paragraph used to
+hold - opens the palette on the commands.
 
 It fails loudly: anything wrong is printed at the end and the exit code says so.
 
@@ -267,13 +269,40 @@ def drive(browser) -> None:
     else:
         say(f"Control+Shift+-        -> {line()!r}")
 
-    pressed("Control+Shift+KeyP")
+    # Paragraph has no chord, because a heading key undoes itself: the level a line
+    # already is turns it back into prose, which is what every other format key does.
+    pressed("Control+Digit1")
     if line().startswith("#"):
-        wrong(f"Ctrl+Shift+P did not make it a paragraph: {line()!r}")
+        wrong(f"Ctrl+1 on a first-level heading did not make it prose: {line()!r}")
     else:
-        say(f"Control+Shift+P        -> {line()!r}")
+        say(f"Control+1 again        -> {line()!r}")
+    if size() != was:
+        wrong(f"Ctrl+1 changed the size as well: {size()}")
+
+    pressed("Control+Digit1")
+    if line() != heading:
+        wrong(f"Ctrl+1 did not make it a heading again: {line()!r}")
+    else:
+        say(f"Control+1              -> {line()!r}")
+
+    # And the chord Paragraph held is the palette, opened on the commands: a `>` in the
+    # field with the caret after it. See Palette.svelte.
+    pressed("Control+Shift+KeyP")
+    field = page.evaluate("() => document.querySelector('.palette input')?.value ?? null")
+    if field != ">":
+        wrong(f"Ctrl+Shift+P did not open the palette on the commands: {field!r}")
+    else:
+        say("Control+Shift+P        -> the palette, on the commands")
+    if line() != heading:
+        wrong(f"Ctrl+Shift+P changed the line as well: {line()!r}")
     if size() != was:
         wrong(f"Ctrl+Shift+P changed the size as well: {size()}")
+
+    page.screenshot(path=str(SHOTS / "commands.png"))
+    say("shot commands.png")
+    pressed("Escape")
+    if page.evaluate("() => !!document.querySelector('.palette input')"):
+        wrong("Escape did not close the palette")
 
     page.screenshot(path=str(SHOTS / "after.png"))
     say("shot after.png")

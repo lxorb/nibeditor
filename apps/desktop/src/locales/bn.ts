@@ -543,6 +543,7 @@ export const bn: Dictionary = {
   Superscript: 'ঊর্ধ্বলিপি',
   Subscript: 'নিম্নলিপি',
   'Command palette': 'কমান্ড প্যালেট',
+  Commands: 'কমান্ডসমূহ',
   Storage: 'স্টোরেজ',
   Dismiss: 'লুকান',
   'Manage storage': 'স্টোরেজ ব্যবস্থাপনা',

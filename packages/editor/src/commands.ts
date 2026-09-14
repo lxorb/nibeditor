@@ -81,13 +81,24 @@ function headingOf(text: string): { level: number; length: number } {
   return { level: hashes.length, length: match[0].length }
 }
 
-/** Level 0 turns the line back into a paragraph. */
+/** Level 0 turns the line back into a paragraph, and so does the level a line
+ *  already is: the key that made a heading unmakes it, the way every other format
+ *  key on the keyboard already reads. That is why Paragraph has no chord of its own
+ *  - there is nothing left for one to do; see keymap.ts.
+ *
+ *  All of them or none, over a selection of several lines, which is the rule
+ *  `toggleLinePrefix` already follows: a run where one line is short of the level
+ *  becomes headings, and a run that is already all of that level becomes prose. */
 export function setHeading(level: number): StateCommand {
   return ({ state, dispatch }) => {
-    const changes: ChangeSpec[] = selectedLines(state).map((line) => ({
+    const lines = selectedLines(state)
+    const already = level > 0 && lines.every((line) => headingOf(line.text).level === level)
+    const insert = level && !already ? `${'#'.repeat(level)} ` : ''
+
+    const changes: ChangeSpec[] = lines.map((line) => ({
       from: line.from,
       to: line.from + headingOf(line.text).length,
-      insert: level ? `${'#'.repeat(level)} ` : '',
+      insert,
     }))
 
     dispatch(state.update({ changes, userEvent: 'input' }))

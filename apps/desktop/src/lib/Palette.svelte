@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
@@ -70,6 +71,27 @@
 
     open = false
     query = ''
+  }
+
+  /** Opens it on the commands, and says so the way a reader would: the `>` goes in
+   *  front of whatever is in the field - once, so a second press is only ever the
+   *  mode - with the caret after everything, which is the field somebody who typed
+   *  the `>` themselves would be looking at. Deleting it is still the way back to the
+   *  notes, so there is nothing new to learn.
+   *
+   *  The text in the box is what the mode is made of, so this writes the box rather
+   *  than raising a flag beside it: two answers to what the palette is showing is how
+   *  one ends up listing commands with nothing typed. The app calls it for the key;
+   *  see `app.commands` in the shortcut registry. */
+  export async function showCommands() {
+    if (!query.startsWith('>')) query = `>${query}`
+    open = true
+
+    // The field is not in the page until the opening pass has run, and a caret cannot
+    // be put at the end of a value the input has not been handed yet.
+    await tick()
+    input?.focus()
+    input?.setSelectionRange(query.length, query.length)
   }
 
   /** Closed, and forgotten: the next opening starts on an empty field rather

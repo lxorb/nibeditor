@@ -543,6 +543,7 @@ export const tr: Dictionary = {
   Superscript: 'Üst simge',
   Subscript: 'Alt simge',
   'Command palette': 'Komut paleti',
+  Commands: 'Komutlar',
   Storage: 'Depolama',
   Dismiss: 'Kapat',
   'Manage storage': 'Depolamayı yönet',

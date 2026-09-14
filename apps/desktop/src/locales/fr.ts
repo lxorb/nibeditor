@@ -553,6 +553,7 @@ export const fr: Dictionary = {
   Superscript: 'Exposant',
   Subscript: 'Indice',
   'Command palette': 'Palette de commandes',
+  Commands: 'Commandes',
   Storage: 'Stockage',
   Dismiss: 'Masquer',
   'Manage storage': 'Gérer le stockage',

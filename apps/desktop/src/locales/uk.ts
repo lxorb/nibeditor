@@ -569,6 +569,7 @@ export const uk: Dictionary = {
   Superscript: 'Верхній індекс',
   Subscript: 'Нижній індекс',
   'Command palette': 'Палітра команд',
+  Commands: 'Команди',
   Storage: 'Сховище',
   Dismiss: 'Сховати',
   'Manage storage': 'Керування сховищем',

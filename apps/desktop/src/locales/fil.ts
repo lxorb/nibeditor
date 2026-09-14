@@ -546,6 +546,7 @@ export const fil: Dictionary = {
   Superscript: 'Superscript',
   Subscript: 'Subscript',
   'Command palette': 'Palette ng utos',
+  Commands: 'Mga utos',
   Storage: 'Imbakan',
   Dismiss: 'Isantabi',
   'Manage storage': 'Pamahalaan ang imbakan',

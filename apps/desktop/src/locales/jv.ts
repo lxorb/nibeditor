@@ -540,6 +540,7 @@ export const jv: Dictionary = {
   Superscript: 'Superskrip',
   Subscript: 'Subskrip',
   'Command palette': 'Palet printah',
+  Commands: 'Printah',
   Storage: 'Panyimpenan',
   Dismiss: 'Tutup',
   'Manage storage': 'Atur panyimpenan',

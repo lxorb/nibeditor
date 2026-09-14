@@ -546,6 +546,7 @@ export const pa: Dictionary = {
   Superscript: 'ਉੱਪਰਲਿਖਤ',
   Subscript: 'ਹੇਠਲਿਖਤ',
   'Command palette': 'ਹੁਕਮ ਪੱਟੀ',
+  Commands: 'ਹੁਕਮ',
   Storage: 'ਸੰਭਾਲ',
   Dismiss: 'ਹਟਾਓ',
   'Manage storage': 'ਸੰਭਾਲ ਸੰਭਾਲੋ',

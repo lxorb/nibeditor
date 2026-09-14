@@ -537,6 +537,7 @@ export const th: Dictionary = {
   Superscript: 'ตัวยก',
   Subscript: 'ตัวห้อย',
   'Command palette': 'พาเลตคำสั่ง',
+  Commands: 'คำสั่ง',
   Storage: 'ที่เก็บข้อมูล',
   Dismiss: 'ปิดไป',
   'Manage storage': 'จัดการที่เก็บข้อมูล',

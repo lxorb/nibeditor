@@ -581,6 +581,7 @@ export const ar: Dictionary = {
   Superscript: 'نص مرتفع',
   Subscript: 'نص منخفض',
   'Command palette': 'لوحة الأوامر',
+  Commands: 'الأوامر',
   Storage: 'التخزين',
   Dismiss: 'تجاهل',
   'Manage storage': 'إدارة التخزين',

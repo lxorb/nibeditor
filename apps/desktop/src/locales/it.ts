@@ -557,6 +557,7 @@ export const it: Dictionary = {
   Superscript: 'Apice',
   Subscript: 'Pedice',
   'Command palette': 'Tavolozza comandi',
+  Commands: 'Comandi',
   Storage: 'Archiviazione',
   Dismiss: 'Ignora',
   'Manage storage': 'Gestisci l’archiviazione',

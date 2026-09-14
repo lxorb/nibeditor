@@ -543,6 +543,7 @@ export const ur: Dictionary = {
   Superscript: 'بالائی متن',
   Subscript: 'زیریں متن',
   'Command palette': 'کمانڈ پیلیٹ',
+  Commands: 'کمانڈز',
   Storage: 'ذخیرہ',
   Dismiss: 'نظرانداز کریں',
   'Manage storage': 'ذخیرہ منظم کریں',

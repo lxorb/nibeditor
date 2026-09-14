@@ -543,6 +543,7 @@ export const fa: Dictionary = {
   Superscript: 'بالانویس',
   Subscript: 'زیرنویس',
   'Command palette': 'تخته فرمان',
+  Commands: 'فرمان‌ها',
   Storage: 'انبار',
   Dismiss: 'کنار گذاشتن',
   'Manage storage': 'مدیریت انبار',

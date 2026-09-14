@@ -546,6 +546,7 @@ export const sw: Dictionary = {
   Superscript: 'Kiandikoni juu',
   Subscript: 'Kiandikoni chini',
   'Command palette': 'Paleti ya amri',
+  Commands: 'Amri',
   Storage: 'Hifadhi',
   Dismiss: 'Ondoa',
   'Manage storage': 'Dhibiti hifadhi',

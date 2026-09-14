@@ -552,6 +552,7 @@ export const ptBR: Dictionary = {
   Superscript: 'Sobrescrito',
   Subscript: 'Subscrito',
   'Command palette': 'Paleta de comandos',
+  Commands: 'Comandos',
   Storage: 'Armazenamento',
   Dismiss: 'Descartar',
   'Manage storage': 'Gerenciar o armazenamento',

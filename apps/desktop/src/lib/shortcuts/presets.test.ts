@@ -162,6 +162,22 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
   })
 })
 
+/** One keyboard is not the place to decide where the command palette lives: every
+ *  editor that has one puts it on Ctrl+Shift+P, and none of the three keyboards here
+ *  binds that chord to anything of its own. So the default reaches all of them, which
+ *  is what a preset holding only its differences means - and Paragraph, which held the
+ *  chord, is without a key under every one of them. */
+describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) => {
+  test('opens the commands on Ctrl+Shift+P, and leaves Paragraph no key', () => {
+    const keys = presets.presetById(id)?.keys ?? {}
+
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, 'app.commands', platform), platform).toBe('Mod-Shift-p')
+      expect(keyUnder(keys, 'paragraph.body', platform), platform).toBeNull()
+    }
+  })
+})
+
 describe('the Obsidian keyboard', () => {
   test('puts the digits on the notes, the way Obsidian does', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
@@ -200,7 +216,8 @@ describe('the Notion keyboard', () => {
 
     // Every one of them but Paragraph, which Notion puts on Ctrl+Shift+0: the nought
     // is the shifted character on AZERTY, so that chord is Ctrl+0 there as well, and
-    // Ctrl+0 is the text size. Paragraph keeps Nib's own key.
+    // Ctrl+0 is the text size. Paragraph has no key under any keyboard now - a heading
+    // key pressed on the level it already set is what turns the line back into prose.
     expect(keys['paragraph.body']).toBeUndefined()
     expect(keys['paragraph.heading-1']).toBe('Mod-Shift-1')
     expect(keys['paragraph.bullet-list']).toBe('Mod-Shift-5')

@@ -540,6 +540,7 @@ export const ms: Dictionary = {
   Superscript: 'Superskrip',
   Subscript: 'Subskrip',
   'Command palette': 'Palet perintah',
+  Commands: 'Perintah',
   Storage: 'Simpanan',
   Dismiss: 'Tolak',
   'Manage storage': 'Urus simpanan',

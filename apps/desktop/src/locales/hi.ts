@@ -543,6 +543,7 @@ export const hi: Dictionary = {
   Superscript: 'सुपरस्क्रिप्ट',
   Subscript: 'सबस्क्रिप्ट',
   'Command palette': 'कमांड पैलेट',
+  Commands: 'कमांड',
   Storage: 'स्टोरेज',
   Dismiss: 'खारिज करें',
   'Manage storage': 'स्टोरेज प्रबंधित करें',

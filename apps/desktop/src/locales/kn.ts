@@ -545,6 +545,7 @@ export const kn: Dictionary = {
   Superscript: 'ಮೇಲ್ಬರಹ',
   Subscript: 'ಕೆಳಬರಹ',
   'Command palette': 'ಕಮಾಂಡ್ ಪ್ಯಾಲೆಟ್',
+  Commands: 'ಕಮಾಂಡ್‌ಗಳು',
   Storage: 'ಸಂಗ್ರಹಣೆ',
   Dismiss: 'ನಿರ್ಲಕ್ಷಿಸಿ',
   'Manage storage': 'ಸಂಗ್ರಹಣೆ ನಿರ್ವಹಿಸಿ',

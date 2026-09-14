@@ -546,6 +546,7 @@ export const ml: Dictionary = {
   Superscript: 'മേലെഴുത്ത്',
   Subscript: 'കീഴെഴുത്ത്',
   'Command palette': 'കമാൻഡ് പാലറ്റ്',
+  Commands: 'കമാൻഡുകൾ',
   Storage: 'സ്റ്റോറേജ്',
   Dismiss: 'ഒഴിവാക്കുക',
   'Manage storage': 'സ്റ്റോറേജ് കൈകാര്യം ചെയ്യുക',

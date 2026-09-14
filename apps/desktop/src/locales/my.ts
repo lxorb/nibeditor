@@ -540,6 +540,7 @@ export const my: Dictionary = {
   Superscript: 'အထက်တွဲစာ',
   Subscript: 'အောက်တွဲစာ',
   'Command palette': 'အမိန့်စာရင်း',
+  Commands: 'အမိန့်များ',
   Storage: 'သိုလှောင်မှု',
   Dismiss: 'ပယ်',
   'Manage storage': 'သိုလှောင်မှုစီမံ',

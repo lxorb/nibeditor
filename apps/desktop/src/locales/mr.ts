@@ -543,6 +543,7 @@ export const mr: Dictionary = {
   Superscript: 'सुपरस्क्रिप्ट',
   Subscript: 'सबस्क्रिप्ट',
   'Command palette': 'कमांड पॅलेट',
+  Commands: 'कमांड',
   Storage: 'स्टोरेज',
   Dismiss: 'बाजूला करा',
   'Manage storage': 'स्टोरेज व्यवस्थापित करा',

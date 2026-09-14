@@ -542,6 +542,7 @@ export const ta: Dictionary = {
   Superscript: 'மேலெழுத்து',
   Subscript: 'கீழெழுத்து',
   'Command palette': 'கட்டளைத் தட்டு',
+  Commands: 'கட்டளைகள்',
   Storage: 'சேமிப்பிடம்',
   Dismiss: 'விலக்கு',
   'Manage storage': 'சேமிப்பிடத்தை நிர்வகி',

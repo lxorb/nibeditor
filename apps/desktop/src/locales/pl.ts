@@ -570,6 +570,7 @@ export const pl: Dictionary = {
   Superscript: 'Indeks górny',
   Subscript: 'Indeks dolny',
   'Command palette': 'Paleta poleceń',
+  Commands: 'Polecenia',
   Storage: 'Pamięć',
   Dismiss: 'Pomiń',
   'Manage storage': 'Zarządzaj pamięcią',

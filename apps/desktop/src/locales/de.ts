@@ -547,6 +547,7 @@ export const de: Dictionary = {
   Superscript: 'Hochgestellt',
   Subscript: 'Tiefgestellt',
   'Command palette': 'Befehlspalette',
+  Commands: 'Befehle',
   Storage: 'Speicher',
   Dismiss: 'Ausblenden',
   'Manage storage': 'Speicher verwalten',

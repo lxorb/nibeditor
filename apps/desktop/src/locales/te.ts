@@ -541,6 +541,7 @@ export const te: Dictionary = {
   Superscript: 'పైఅక్షరం',
   Subscript: 'కిందఅక్షరం',
   'Command palette': 'కమాండ్ పాలెట్',
+  Commands: 'కమాండ్‌లు',
   Storage: 'స్టోరేజ్',
   Dismiss: 'విస్మరించు',
   'Manage storage': 'స్టోరేజ్ నిర్వహించు',

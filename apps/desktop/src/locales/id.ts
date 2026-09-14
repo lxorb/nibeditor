@@ -540,6 +540,7 @@ export const id: Dictionary = {
   Superscript: 'Pangkat atas',
   Subscript: 'Pangkat bawah',
   'Command palette': 'Palet perintah',
+  Commands: 'Perintah',
   Storage: 'Penyimpanan',
   Dismiss: 'Tutup',
   'Manage storage': 'Kelola penyimpanan',

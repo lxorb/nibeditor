@@ -543,6 +543,7 @@ export const gu: Dictionary = {
   Superscript: 'ઉપલિપિ',
   Subscript: 'નીચલિપિ',
   'Command palette': 'આદેશ પટ',
+  Commands: 'આદેશો',
   Storage: 'સંગ્રહ',
   Dismiss: 'હટાવો',
   'Manage storage': 'સંગ્રહ સંભાળો',

@@ -570,6 +570,7 @@ export const ru: Dictionary = {
   Superscript: 'Надстрочный',
   Subscript: 'Подстрочный',
   'Command palette': 'Палитра команд',
+  Commands: 'Команды',
   Storage: 'Хранилище',
   Dismiss: 'Скрыть',
   'Manage storage': 'Управление хранилищем',
