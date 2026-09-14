@@ -288,6 +288,24 @@ question asked the slow way: every Latin, Cyrillic, Greek and CJK catalogue come
 at **0.0%** and the twelve undrawable scripts at **31% and more**, so the tenth the
 measurement is cut at is nowhere near either.
 
+A reader whose script the font *has* keeps their own words, head band and all:
+
+![The glasses settings in German: Einstellungen, Neue Seite bei, Zeilennummern](even/settings-de.png)
+
+![The same panel in Cantonese, every glyph drawn](even/settings-yue.png)
+
+Cantonese is the fortieth catalogue and the first added since this rule existed. It
+is Han, so it draws, and it ships in the package: `Intl` maximises `yue` to `Hant`,
+which is the row the two Chinese catalogues already use.
+
+The German picture is also what caught a stale string on the glass. The labels used to
+be an object built once, when the bridge connected - and a plugin reaches the glasses
+in milliseconds while its catalogue is a dynamic import that lands a moment later, so
+every label was whatever the catalogue said before it had loaded. A German reader read
+"Settings" over a list of German rows. The shell is handed `() => Words` now, the way
+it is handed every other question about the world, and reads them per render: twelve
+lookups, and the head says Einstellungen.
+
 And it is said once where the choice is made: for a reader whose script the glass
 cannot draw, the Language row says **"The glasses show English."** - only where a pair
 has been seen, because it is noise to anybody else, and in all forty catalogues
@@ -1491,7 +1509,7 @@ but nothing here sets either yet.
 
 In **Chromium through Playwright**, against `even.html` itself with a stand-in
 bridge installed before a line of the app ran, exactly as the phone app installs
-the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
+the real one. `scripts/even-e2e.py` is the whole of it, and it makes 91 checks:
 
 - the plugin booted, found the bridge and made its page: **six text containers
   and no image container**, exactly one of them capturing, every `zOrderIndex`
@@ -1546,6 +1564,9 @@ the real one. `scripts/even-e2e.py` is the whole of it, and it makes 89 checks:
 - **one string per writing system, on the panel**: seven scripts drawn as their own
   words and twelve as boxes, which is the list in `packages/glasses/src/scripts.ts`
   seen rather than claimed;
+- **the settings panel in German and in Cantonese**, both in the reader's own words
+  with no box on either, which is what says the labels follow the catalogue rather
+  than whatever was loaded when the glasses answered;
 - **a note holding everything the app has learned to write since** reached the panel
   whole: a fence with a caption (the caption above the code, the language alone on the
   fence line), callouts by name - known, unknown, titled and folded - tasks as boxes,

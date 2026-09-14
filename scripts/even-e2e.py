@@ -1538,6 +1538,47 @@ def main() -> int:
             )
             page.evaluate("window.__gesture('double')")
             page.wait_for_timeout(400)
+
+            # ── And two the firmware draws ────────────────────────────────────
+            # A reader whose script the font has keeps their own words on the glass.
+            # German, the app's own second language, and Cantonese, the fortieth
+            # catalogue and the first added since the rule existed: Han, so it draws.
+            # A picture of the settings panel in each, because a panel of somebody
+            # else's words is the one thing a screenshot settles.
+            def panel_in(language: str) -> dict:
+                page.evaluate("([one]) => localStorage.setItem('nib:language', one)", [language])
+                page.wait_for_timeout(700)
+                page.reload()
+                page.wait_for_timeout(1800)
+                page.evaluate("window.__gesture('hold')")
+                page.wait_for_timeout(300)
+                for _one in range(3):
+                    page.evaluate("window.__gesture('down')")
+                page.evaluate("window.__gesture('tap')")
+                page.wait_for_timeout(500)
+                bands = page.evaluate("window.__bands()")
+                screens.append(
+                    {"name": f"settings-{language}", "lineNumbers": True, **naming(bands)}
+                )
+                page.evaluate("window.__gesture('double')")
+                page.evaluate("window.__gesture('double')")
+                page.wait_for_timeout(500)
+                return bands
+
+            rows_de = panel_in("de").get("nibBody", "")
+            report.ok(
+                "a reader in German reads the panel in German",
+                "Zeilennummern" in rows_de and "□" not in rows_de,
+                rows_de.replace(chr(10), " | ")[:90],
+            )
+
+            rows_yue = panel_in("yue").get("nibBody", "")
+            report.ok(
+                "and a reader in Cantonese reads it in Cantonese, box free",
+                "空行" in rows_yue and "□" not in rows_yue,
+                rows_yue.replace(chr(10), " | ")[:90],
+            )
+
             page.evaluate("localStorage.removeItem('nib:language')")
 
             # The note names a picture on purpose, to exercise the one block that

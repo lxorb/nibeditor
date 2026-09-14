@@ -257,6 +257,10 @@ describe('the bundle a package is made of', () => {
     // draw. Strings in the languages the app ships in are the app, which is what the
     // headroom was for.
     //
+    // Measured again on 2026-09-14, after four more rounds of features and a fortieth
+    // catalogue - Cantonese, which is Han and so ships: **8,112,017 bytes**, 24
+    // catalogues of the 40, and 276,591 bytes under this ceiling.
+    //
     // The ceiling is still close on purpose: this number went from 11.8 MB to 6.0 by
     // leaving libraries out, and a megabyte back is a library that crept in again.
     // Speed is the selling point, and on a phone the download is part of it.
