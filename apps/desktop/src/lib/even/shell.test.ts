@@ -119,7 +119,7 @@ beforeEach(() => {
   session = new Session()
   settings = new FakeSettings()
   session.follow({ key: 'a', name: 'A note', text: NOTE }, paging)
-  shell = new Shell(world, WORDS, session, settings)
+  shell = new Shell(world, () => WORDS, session, settings)
 })
 
 /** The table in the file's own header, as tests. */
@@ -570,5 +570,36 @@ describe('what a command asks for', () => {
 
     shell.clearFlash()
     expect(shell.view().head).toContain('THE TITLE')
+  })
+})
+
+/** The words on the glass, in the reader's language as it stands *now*.
+ *
+ *  They used to be an object built once, when the bridge connected - and a plugin
+ *  reaches the glasses in milliseconds while its interface catalogue is a dynamic
+ *  import that lands a moment later. So a German reader read "Settings" over a list
+ *  of German rows: the rows are built per render, and the labels were built once,
+ *  before the catalogue existed. */
+describe('a catalogue that lands after the glasses did', () => {
+  test('reaches the panel, with nothing rebuilt and no screen reopened', () => {
+    const said = { ...WORDS }
+    const session = new Session()
+    session.follow({ key: 'a', name: 'A note', text: NOTE }, paging)
+    const late = new Shell(new Fake(), () => said, session, new FakeSettings())
+
+    late.handle('hold')
+    expect(late.view().body).toContain(WORDS.switchSpace)
+
+    // The catalogue arrives, and the next render is in the reader's language.
+    said.switchSpace = 'Raum wechseln'
+    said.settings = 'Einstellungen'
+    expect(late.view().body).toContain('Raum wechseln')
+
+    // Including the head of a screen opened before it landed.
+    late.handle('down')
+    late.handle('down')
+    late.handle('down')
+    late.handle('tap')
+    expect(late.view().head).toContain('Einstellungen')
   })
 })

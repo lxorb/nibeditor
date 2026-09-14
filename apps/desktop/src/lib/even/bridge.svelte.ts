@@ -248,7 +248,7 @@ class Bridge {
     }
 
     this.panel = panel
-    this.shell = new Shell(this.world(), this.words(), this.session, this.settings())
+    this.shell = new Shell(this.world(), () => this.words(), this.session, this.settings())
     this.voice = new Voice({
       microphone: (open) => glasses.microphone(open),
       // A session, and nothing else. Which model turns the sound into words is the

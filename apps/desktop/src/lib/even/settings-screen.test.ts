@@ -82,7 +82,7 @@ beforeEach(() => {
   settings = new FakeSettings()
   const session = new Session()
   session.follow({ key: 'a', name: 'A note', text: '# A note\n\nWords.\n' }, paging)
-  shell = new Shell(WORLD, WORDS, session, settings)
+  shell = new Shell(WORLD, () => WORDS, session, settings)
 })
 
 /** A hold, then the fourth choice. */

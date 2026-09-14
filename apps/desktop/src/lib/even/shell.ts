@@ -261,10 +261,23 @@ export class Shell {
 
   constructor(
     private readonly world: World,
-    private readonly words: Words,
+    /** Asked for rather than handed over, the way everything in `World` is.
+     *
+     *  It was an object built once, when the bridge connected - and a plugin connects
+     *  to the glasses in milliseconds while its interface catalogue is a dynamic
+     *  import that lands a moment later. So every label on the glass was whatever the
+     *  catalogue said before it had loaded, which is English: a German reader read
+     *  "Settings" over a list of German rows, because the rows are built per render
+     *  and these were built once. Read per render now, which is twelve lookups. */
+    private readonly saying: () => Words,
     private readonly session: Session,
     private readonly settings: Settings,
   ) {}
+
+  /** What the panel says, in the reader's language as it stands now. */
+  private get words(): Words {
+    return this.saying()
+  }
 
   get screen(): Screen {
     return this.stack.at(-1) ?? { kind: 'note' }
