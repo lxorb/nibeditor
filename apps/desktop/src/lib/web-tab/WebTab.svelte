@@ -219,14 +219,12 @@
     if (page.url !== null && page.url !== tab.address) workspace.webWalked(tab, page.url)
   })
 
-  // A website in the space keeps itself, the way a note in a space does: as soon as
-  // the page has said what it is called, there is a file. Nothing to press.
+  // What the strip calls a tab with no file: what the page calls itself. Nothing is
+  // written - a new web tab is a browser tab until somebody saves it, which is Ctrl+S
+  // and writes the shortcut; see `keepWeb` in workspace.svelte.ts.
   $effect(() => {
-    const url = page.url
     const title = page.title
-    if (url === null) return
-
-    void untrack(() => workspace.keepWeb(tab, url, title))
+    untrack(() => workspace.webNamed(tab, title))
   })
 
   // Which file this tab is showing, so the store can write down where the reading got

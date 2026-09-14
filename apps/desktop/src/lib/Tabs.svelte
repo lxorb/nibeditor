@@ -106,8 +106,25 @@
     ]
   }
 
+  /** Only for a tab with no file: every other kind of tab is written as the typing
+   *  pauses and has nothing to save. The row is here because a tab is where somebody
+   *  looking at an unsaved one is pointing; the key and the menu bar say the same thing.
+   *  See `save` in workspace/saving.svelte.ts. */
+  function saveEntry(tab: Tab): MenuEntry[] {
+    if (tab.path !== null) return []
+
+    return [
+      {
+        label: t('Save'),
+        hint: shortcuts.hint('app.save'),
+        run: () => void workspace.save(tab),
+      },
+    ]
+  }
+
   function tabMenu(tab: Tab): MenuEntry[] {
     return [
+      ...saveEntry(tab),
       ...readingEntry(tab),
       {
         label: tab.pinned ? t('Unpin') : t('Pin'),

@@ -780,7 +780,12 @@ class Workspace {
       // re-read from there on the way back in (see `tabsFrom`), so its copy here
       // would never be looked at, and copying a large one every time the typing
       // pauses is not free.
-      doc: tab.dirty ? tab.doc : '',
+      //
+      // A document with no file is the exception whether or not it has been typed in:
+      // this is the only place its words exist, so an untouched new plane that is
+      // clean still has a blank plane's worth of JSON to come back as. A browser
+      // restores the tabs it had, and so does this.
+      doc: tab.dirty || tab.path === null ? tab.doc : '',
       dirty: tab.dirty,
       cursor: tab.cursor ?? 0,
       scroll: tab.scroll ?? 0,
@@ -891,6 +896,46 @@ class Workspace {
   openBlank(name = UNTITLED, doc = '') {
     const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc })
     this.add(new Tab(note, this.panes.focusedId))
+  }
+
+  /** A new plane, and a new stack of paper: a tab, and nothing else.
+   *
+   *  No file in the space and no row in the list until somebody saves it, which is what
+   *  a new note has always been and what Emil asked for the other three to be: *"if you
+   *  create a new webnote by clicking the plus for a new tab, then it should open it as
+   *  a tab and not create it in the sidebar. Same for canvas and page notes. And like
+   *  normal notes, then can then of course be saved as well, but they should be able to
+   *  exist in an "unsaved" state. Just as a tab, like a browser tab normally would."*
+   *
+   *  Clean rather than dirty, like the blank page a window used to start with: an
+   *  untouched plane has nothing in it to lose, so it wears no dot and closes without a
+   *  question, and the first stroke drawn on it is what makes both true. The words are
+   *  what a blank one says, so the surface has something to read and the session has
+   *  something to keep; see `draftOf` and NewHere.svelte.
+   *
+   *  The two makers beside these - `createCanvas` and `createPages` - are the file
+   *  list's own gesture and still write a named file where they are asked to. */
+  async newCanvas() {
+    // What an empty plane says, fetched with the first one asked for; see createCanvas.
+    const { blankCanvas } = await import('./canvas/format')
+    this.openUnsaved('canvas', blankCanvas())
+  }
+
+  async newPages() {
+    const { blankPages } = await import('@nib/markdown/pages')
+    // The paper the reader chose, which the workspace has no opinion about.
+    const { modes } = await import('./modes.svelte')
+    this.openUnsaved('pages', blankPages(modes.pagesPaper))
+  }
+
+  /** One document with no file, in a tab of its own. The blank note goes if there is
+   *  one, which is what opening anything real does; see `dropScaffolding`. */
+  private openUnsaved(kind: 'canvas' | 'pages', text: string) {
+    const file = this.document({ kind, path: null, name: UNTITLED, text, dirty: false })
+    const tab = this.add(new Tab(file, this.panes.focusedId))
+    this.showNote()
+    this.dropScaffolding(tab)
+    this.persist()
   }
 
   /** A file somebody shared on its own, in a tab of its own.
@@ -1310,32 +1355,40 @@ class Workspace {
    *  page do not write two files. */
   private readonly keeping = new Set<string>()
 
-  /** A website keeps itself, the way a note in a space does.
+  /** What the strip calls a website nobody has saved: whatever the page calls itself.
    *
-   *  As soon as the page has said what it is called there is a file, named after the
-   *  title. Nothing to press and nothing to save: what the file holds - the address,
-   *  the title, the day - is all the document is, and the reader never edits it.
-   *
-   *  A tab that already has a file is left alone. Its title is the page's while it is
-   *  open, because a page renaming its own file as somebody reads it would be a file
-   *  that moves under every link to it. */
-  async keepWeb(tab: Tab, url: string, title: string) {
-    if (tab.kind !== 'web') return
+   *  A tab with no file is a browser tab, so it wears the page's own title and the
+   *  page's own mark and there is nothing on disk saying either. A tab that has a file
+   *  is left alone: a page renaming its own file as somebody reads it would be a file
+   *  moving under every link to it. */
+  webNamed(tab: Tab, title: string) {
+    if (tab.kind !== 'web' || tab.path !== null) return
 
-    if (tab.path !== null) return
-
-    // Before there is a file the strip says what the page says, so a tab nobody has
-    // named is still a tab somebody recognises.
     const named = title.trim()
     if (named && tab.name !== named) tab.name = named
+  }
 
-    const dir = this.activeSpace?.root
-    if (!named || this.keeping.has(tab.id) || dir === undefined) return
+  /** Writes the shortcut for a website that has none, which is what saving one means.
+   *
+   *  Emil, 2026-09-14: a new web tab *"should open it as a tab and not create it in the
+   *  sidebar ... they should be able to exist in an "unsaved" state. Just as a tab, like
+   *  a browser tab normally would."* So nothing is written while somebody is only
+   *  reading, and this is the moment they say to keep it: the address the tab is on, the
+   *  title the page reported, and the site's own mark, in the folder the sheet asked
+   *  about. From here on it is an ordinary file and the reading follows it; see keep.ts.
+   *
+   *  The tab becomes the saved one in place - the same tab, the same page, still live -
+   *  because all that changes is which file the document is of. */
+  async keepWeb(tab: Tab, path: string) {
+    if (tab.kind !== 'web' || tab.path !== null || this.keeping.has(tab.id)) return
+
+    const page = pages.of(tab.id)
+    const url = page.url ?? tab.address ?? ''
+    const title = (page.title || tab.name || UNTITLED).trim()
 
     this.keeping.add(tab.id)
     try {
-      const text = writeShortcut(url, named, new Date())
-      const path = joinPath(dir, this.freeName(dir, `${nameFromTitle(named) ?? UNTITLED}.url`))
+      const text = writeShortcut(url, title, new Date(), undefined, page.icon ?? undefined)
 
       this.showEntry(this.freshEntry(path, false))
       await invoke('write_note', { path, content: text })

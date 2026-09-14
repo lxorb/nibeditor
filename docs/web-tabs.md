@@ -129,18 +129,29 @@ carries the address. So one file can become two, which is exactly what was in it
 
 Two gestures, because there are two ways somebody arrives at a website.
 
-**New web note** - in the file list's menu, the tab strip's plus, the File menu and
-the palette - is the file list's own gesture and works the way a new note's does: a
-row goes into the tree waiting to be named, the name it is given is the title, and
-the shortcut is written the moment there is one. The address is what the bar asks
-for next. The row is in the list from that first moment, which is the whole point of
-naming a thing before making it.
+**New web note** - in the file list's menu - is the file list's own gesture and works
+the way a new note's does there: a row goes into the tree waiting to be named, the name
+it is given is the title, and the shortcut is written the moment there is one. The
+address is what the bar asks for next. The row is in the list from that first moment,
+which is the whole point of naming a thing before making it.
 
-**Open a website** is the other way round, for somebody who has an address and no
-name in mind: a tab with an address field and no file yet. The file is written the
-moment the page says what it is called, named after the title, the way every note in
-a space keeps itself. No file first, because a folder of `Untitled` shortcuts is
-what asking for the name first would leave behind here.
+**A new tab** - the strip's plus, Ctrl+T, the File menu, the buttons a pane with
+nothing open shows - is the other way round, and is a browser tab: a live page with an
+address field and **no file at all**. Nothing is written while somebody is only reading.
+Saving it is the moment they say to keep it - Ctrl+S, File ▸ Save, or Save on the tab's
+own menu - and it asks the two questions Chrome asks when a page is bookmarked: what to
+call it, and which folder. Then the shortcut goes down with the address the tab is on
+and the mark the page reported, and the tab becomes that file in place, still live.
+
+Emil, 2026-09-14: *"if you create a new webnote by clicking the plus for a new tab, then
+it should open it as a tab and not create it in the sidebar. Same for canvas and page
+notes. And like normal notes, then can then of course be saved as well, but they should
+be able to exist in an "unsaved" state. Just as a tab, like a browser tab normally
+would."* Which is one model for all four kinds: see `newCanvas` and `newPages` beside
+`openWebsite` in `workspace.svelte.ts`, and `pickSavePath` in `workspace/saving.svelte.ts`
+for the one sheet that names any of them. A restart brings unsaved tabs back the way a
+browser does - the session is the only place their words exist, so it keeps them whether
+or not anybody has typed in one.
 
 Neither is offered on a phone, and neither is in the editor's `/` menu. A phone has
 no bar to type an address into and no tab to put a page in - the row would make a
@@ -722,7 +733,8 @@ versions and goes to the trash like every other document.
 | `packages/editor/src/wikilink/notes.ts` | `[[Svelte docs]]` with the extension left out |
 | `apps/desktop/src/lib/rooms/kind.ts` | no room for a website, said at the file's end |
 | `services/sync/src/notes.ts` | the extensions the account carries |
-| `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `createWebsite`, `openWebsite`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry` |
+| `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry` |
+| `apps/desktop/src/lib/workspace/saving.svelte.ts` | `pickSavePath`: the one sheet that names an unsaved tab of any kind, and where a save writes it |
 | `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
 | `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
 | `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |

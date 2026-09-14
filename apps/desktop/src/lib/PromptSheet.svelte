@@ -99,6 +99,23 @@
           use:selectAll
         />
 
+        <!-- Where the file goes, for a save: a space, or a note in it - a note that holds
+             notes is what nib has instead of folders, so the word is never used; see
+             docs/tree.md. Only worth asking when there is more than one answer. -->
+        {#if prompt.folders.length > 1}
+          <div class="field">
+            <span class="label">{t('Where')}</span>
+            <Select
+              value={prompt.folder ?? ''}
+              options={prompt.folders.map((one) => ({ value: one.id, label: one.label }))}
+              onchange={(id: string) => {
+                prompt.folder = id
+              }}
+              label={t('Where')}
+            />
+          </div>
+        {/if}
+
         <!-- Only worth asking when there is more than one answer. -->
         {#if prompt.spaces.length > 1}
           <div class="field">

@@ -79,6 +79,8 @@ const sheet = {
   answer: null as string | null,
   /** The name a save is given, or null for a question nobody answers. */
   name: null as string | null,
+  /** The folder the save sheet is answered with, or null for "wherever it offered". */
+  folder: null as string | null,
 }
 
 vi.mock('./prompt.svelte', () => ({
@@ -89,7 +91,9 @@ vi.mock('./prompt.svelte', () => ({
     },
     askName: (options: { title: string }) => {
       sheet.named.push(options.title)
-      return Promise.resolve(sheet.name === null ? null : { name: sheet.name, space: 's' })
+      return Promise.resolve(
+        sheet.name === null ? null : { name: sheet.name, space: 's', folder: sheet.folder },
+      )
     },
   },
 }))
@@ -1473,7 +1477,9 @@ describe('closing something that holds unsaved work', () => {
     await workspace.closeAsking(tab.id)
 
     expect(sheet.asked).toEqual(['Save a draft?'])
-    expect(sheet.named).toEqual(['Name the note'])
+    // One sheet for every kind now - a name and a folder, which is what Chrome asks
+    // when a page is bookmarked - so the title is the word on the button.
+    expect(sheet.named).toEqual(['Save'])
     expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
       '/space/Draft.md',
     ])
@@ -1592,6 +1598,176 @@ describe('closing something that holds unsaved work', () => {
  *  of asking about the space rather than about the mirror: the welcome note a
  *  browser opens on a first visit is somebody's writing before they have an
  *  account, and it must not be waiting on a key nobody has been told about. */
+/** A tab with no file, of every kind there is.
+ *
+ *  Emil, 2026-09-14: *"if you create a new webnote by clicking the plus for a new tab,
+ *  then it should open it as a tab and not create it in the sidebar. Same for canvas and
+ *  page notes. And like normal notes, then can then of course be saved as well, but they
+ *  should be able to exist in an "unsaved" state. Just as a tab, like a browser tab
+ *  normally would."*
+ *
+ *  A blank note has always been this; three of the four kinds wrote a file and a row in
+ *  the list before the first frame. What is pinned here is the one model: a tab, no
+ *  file, no row, the words in memory, and a save that writes the kind's own file where
+ *  the sheet was told to put it. */
+describe('a tab nobody has saved', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.closed.stack = []
+    sheet.asked = []
+    sheet.named = []
+    sheet.answer = 'cancel'
+    sheet.name = null
+    sheet.folder = null
+    sent.length = 0
+  })
+
+  const written = () => sent.filter((one) => one.command === 'write_note')
+
+  test('a new plane is a tab, with nothing on disk and no row in the list', async () => {
+    await workspace.newCanvas()
+
+    expect(workspace.active?.kind).toBe('canvas')
+    expect(workspace.active?.path).toBeNull()
+    expect(written()).toEqual([])
+    // The words are there for the surface to read, in memory and nowhere else.
+    expect(workspace.active?.doc).toContain('"nodes"')
+    expect(workspace.active?.shown).toBe('Untitled')
+  })
+
+  test('and a new deck of pages is the same', async () => {
+    await workspace.newPages()
+
+    expect(workspace.active?.kind).toBe('pages')
+    expect(workspace.active?.path).toBeNull()
+    expect(written()).toEqual([])
+    expect(workspace.active?.shown).toBe('Untitled')
+  })
+
+  /** A browser tab, which is what a web tab is: the page is live, the bar is the
+   *  window's own, and no shortcut is written until somebody says to keep it. */
+  test('and a new website is a tab with no shortcut behind it', () => {
+    workspace.openWebsite()
+
+    expect(workspace.active?.kind).toBe('web')
+    expect(workspace.active?.path).toBeNull()
+    expect(written()).toEqual([])
+  })
+
+  test('closes without a word while nothing has been drawn on it', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
+  })
+
+  test('and asks once there is something on it', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    tab.note.replace('{ "nodes": [1] }')
+    expect(tab.unsaved).toBe(true)
+
+    await workspace.closeAsking(tab.id)
+
+    // Cancelled, which is the answer this sheet is scripted with, so it stays.
+    expect(sheet.asked).toHaveLength(1)
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  /** A web tab closes like a browser tab: no question, whatever the page is. */
+  test('while a website closes without a question either way', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
+  })
+
+  test('saves as the file its own kind is written as', async () => {
+    await workspace.newCanvas()
+    sheet.name = 'Plan'
+
+    await workspace.save()
+
+    expect(written().map((one) => one.path)).toEqual(['/space/Plan.canvas'])
+    expect(workspace.active?.path).toBe('/space/Plan.canvas')
+    // The same tab, in place: what changed is which file the document is of.
+    expect(workspace.tabs).toHaveLength(1)
+    expect(workspace.active?.unsaved).toBe(false)
+  })
+
+  test('and a deck of pages as a deck of pages', async () => {
+    await workspace.newPages()
+    sheet.name = 'Papers'
+
+    await workspace.save()
+
+    expect(written().map((one) => one.path)).toEqual(['/space/Papers.pages'])
+  })
+
+  /** The shortcut holds the address the tab is on, which is the whole of what a website
+   *  note is; see web-tab/shortcut.ts. */
+  test('and a website as a shortcut holding the address it is on', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    tab.address = 'https://example.com/a'
+    sheet.name = 'Example'
+
+    await workspace.save(tab)
+
+    const wrote = written()
+    expect(wrote.map((one) => one.path)).toEqual(['/space/Example.url'])
+    expect(wrote[0]?.content).toContain('URL=https://example.com/a')
+    expect(workspace.active?.path).toBe('/space/Example.url')
+  })
+
+  test('is left where it was when the sheet is dismissed', async () => {
+    await workspace.newCanvas()
+    sheet.name = null
+
+    await workspace.save()
+
+    expect(written()).toEqual([])
+    expect(workspace.active?.path).toBeNull()
+  })
+
+  /** A browser brings back the tabs it had, and so does this: the words of a document
+   *  with no file exist in the session and nowhere else, so they are kept whether or not
+   *  anybody has typed in it. See `draftOf`. */
+  test('comes back after a restart, words and all', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.note.replace('{ "nodes": [2] }')
+
+    const draft = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)[0]
+
+    expect(draft?.kind).toBe('canvas')
+    expect(draft?.path).toBeNull()
+    expect(draft?.doc).toBe('{ "nodes": [2] }')
+  })
+
+  test('including one nobody has touched', async () => {
+    await workspace.newPages()
+
+    const drafts = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)
+    expect(drafts[0]?.doc.length).toBeGreaterThan(0)
+  })
+})
+
 describe('a note that keeps itself, and one that does not', () => {
   const WELCOME = '/Notes/Read me.md'
 

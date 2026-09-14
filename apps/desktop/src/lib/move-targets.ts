@@ -105,8 +105,11 @@ function placesIn(entry: Entry): Place[] {
 }
 
 export function moveTargets(input: {
-  /** The note or folder being moved. */
-  moving: string
+  /** The note or folder being moved, or null where nothing is: a save asks where a file
+   *  it is about to make could go, and a file that does not exist yet is in nobody's
+   *  way. Null offers every place there is; a path leaves out its own and anything
+   *  inside it. */
+  moving: string | null
   /** The space on screen, as the file list holds it. */
   tree: Entry | null
   /** Every space there is, in the order the switcher shows them. */
@@ -121,8 +124,11 @@ export function moveTargets(input: {
     ? []
     : placesIn(tree)
         // Where it already is, itself, and anything inside it - and, for a note,
-        // the folder it would itself become, since a note cannot hold itself.
-        .filter((place) => place.note !== moving && movesInto([moving], place.path))
+        // the folder it would itself become, since a note cannot hold itself. Nothing
+        // is left out where nothing is moving.
+        .filter(
+          (place) => moving === null || (place.note !== moving && movesInto([moving], place.path)),
+        )
         .map((place) =>
           place.path === tree.path
             ? // The space itself, which is where the row sits when it sits in no

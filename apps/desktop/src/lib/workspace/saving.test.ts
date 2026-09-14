@@ -51,6 +51,7 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
     previewTabId: null,
     spaces: [{ id: 's', name: 'Space', root: SPACE }],
     activeSpaceId: 's',
+    tree: null,
     kept: [],
     keep(id) {
       this.kept.push(id)
@@ -58,6 +59,7 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
     scheduleSession: () => undefined,
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
+    keepWeb: () => Promise.resolve(),
   }
 
   const saving = new Saving(ws)

@@ -58,9 +58,9 @@ function makers(): string[] {
   const made: string[] = []
 
   vi.spyOn(workspace, 'openBlank').mockImplementation(() => void made.push('note'))
-  vi.spyOn(workspace, 'createCanvas').mockImplementation(async () => void made.push('canvas'))
-  vi.spyOn(workspace, 'createWebsite').mockImplementation(async () => void made.push('web'))
-  vi.spyOn(workspace, 'createPages').mockImplementation(async () => void made.push('pages'))
+  vi.spyOn(workspace, 'newCanvas').mockImplementation(async () => void made.push('canvas'))
+  vi.spyOn(workspace, 'openWebsite').mockImplementation(() => void made.push('web'))
+  vi.spyOn(workspace, 'newPages').mockImplementation(async () => void made.push('pages'))
   vi.spyOn(workspace, 'focusPane').mockImplementation(() => undefined)
 
   return made

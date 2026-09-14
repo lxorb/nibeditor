@@ -12,6 +12,11 @@
  *  makes one, in the order a reader is offered them: a note first, which is what a
  *  strip is mostly filled with.
  *
+ *  Every one of them opens a tab and writes nothing: no file in the space and no row in
+ *  the list until somebody saves it. The file list's own New rows are the other gesture
+ *  and still make a named file where they are asked to; see `newCanvas` and
+ *  `createCanvas` in workspace.svelte.ts.
+ *
  *  Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you
  *  should be able to choose between the different things (note, canvas, web note
  *  etc.)"*, and 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new
@@ -57,7 +62,7 @@ export function newKinds(): NewKindRow[] {
       kind: 'canvas',
       label: () => t('New canvas'),
       mark: 'canvas',
-      make: (paneId) => inPane(paneId, () => workspace.createCanvas()),
+      make: (paneId) => inPane(paneId, () => workspace.newCanvas()),
     },
     // A website is a bookmark on a phone - it opens in the phone's own browser and
     // there is no tab to make - so the row is left out there rather than offered and
@@ -69,14 +74,14 @@ export function newKinds(): NewKindRow[] {
             kind: 'web' as const,
             label: () => t('New web note'),
             mark: 'web' as const,
-            make: (paneId: string | undefined) => inPane(paneId, () => workspace.createWebsite()),
+            make: (paneId: string | undefined) => inPane(paneId, () => workspace.openWebsite()),
           },
         ]),
     {
       kind: 'pages',
       label: () => t('New page note'),
       mark: 'pages',
-      make: (paneId) => inPane(paneId, () => workspace.createPages()),
+      make: (paneId) => inPane(paneId, () => workspace.newPages()),
     },
   ]
 }

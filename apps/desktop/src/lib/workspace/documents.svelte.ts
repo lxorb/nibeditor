@@ -167,6 +167,13 @@ export class NoteDoc {
    *  a note with no name of its own pays for it at all. */
   private firstWords = $state<string | null>(null)
 
+  /** The words a name can be read off, for a document that has none: a note's first
+   *  heading or line. A plane and a deck of pages hold JSON rather than prose, so there
+   *  is nothing to read there and such a tab says Untitled until it is saved. */
+  private get titleWords(): string | null {
+    return this.kind === 'note' ? this.firstWords : null
+  }
+
   /** What this document is called wherever it is listed: its tab, a row in the
    *  file list, a menu's heading, the window title.
    *
@@ -174,9 +181,7 @@ export class NoteDoc {
    *  or, for a note nobody has named, the words at the top of it, so three drafts
    *  open at once read as three notes rather than three Untitleds. */
   readonly shown = $derived(
-    this.unnamed
-      ? ((this.kind === 'note' ? this.firstWords : null) ?? t('Untitled'))
-      : shownName(this.name),
+    this.unnamed ? (this.titleWords ?? t('Untitled')) : shownName(this.name),
   )
 
   /** Whether this note keeps itself, which is to say something other than

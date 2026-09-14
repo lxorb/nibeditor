@@ -237,6 +237,28 @@ describe('a space of its own', () => {
 
 /** The same rule the other way round: a drag names the folder and asks whether
  *  it takes what is coming, which is what decides whether the row lights. */
+/** A save asks the same question a move does, with nothing moving: a file that does not
+ *  exist yet is in nobody's way, so every place is offered. Null rather than an empty
+ *  path, because an empty path is a prefix of every path and used to rule them all out;
+ *  see `pickSavePath` in workspace/saving.svelte.ts. */
+describe('nothing moving, which is where a new file could go', () => {
+  const every = () => moveTargets({ moving: null, tree, spaces, here: '/Notes' }).map((o) => o.id)
+
+  test('offers every place there is', () => {
+    expect(every().length).toBeGreaterThan(where('/Notes/loose.md').length)
+    expect(every()[0]).toBe('/Notes')
+    // Nothing is left out, which is the whole difference: the row a move would have
+    // dropped - the folder the note being moved would itself become - is a place a new
+    // file can perfectly well go.
+    expect(every()).toContain('/Notes/loose')
+  })
+
+  test('and the other spaces with them', () => {
+    expect(every()).toContain('/Uni')
+    expect(every()).toContain('/Archive')
+  })
+})
+
 describe('whether a drop would move anything', () => {
   test('yes, into another folder of the space', () => {
     expect(movesInto(['/Notes/loose.md'], '/Notes/Work')).toBe(true)

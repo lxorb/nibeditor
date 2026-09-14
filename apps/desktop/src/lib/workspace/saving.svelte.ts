@@ -15,12 +15,13 @@
 import { flushTableEdits } from '@nib/editor'
 import { key, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
-import { nameFromContent } from '../note-name'
+import { endingOf, nameFromContent, shownName } from '../note-name'
 import { without } from '../records'
 import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
-import type { Space } from '../workspace.svelte'
+import { keep, storedText } from '../stored'
+import type { Entry, Space } from '../workspace.svelte'
 import { holdsWords, NoteDoc, type Tab, UNTITLED } from './documents.svelte'
 
 /** How long after the last keystroke a note that keeps itself is written, in
@@ -31,6 +32,15 @@ const SAVE_DELAY = 1200
 /** How long the dot stays as a tick once the note is down, in milliseconds. */
 const SAVED_SHOWN = 1400
 
+/** The kinds of document a save can write. Every kind a tab holds but the two that
+ *  are somebody else's file already: a PDF is read and never written, and the graph is
+ *  a picture of the space rather than a document. */
+type Savable = 'note' | 'canvas' | 'pages' | 'web'
+
+const SAVABLE = new Set<string>(['note', 'canvas', 'pages', 'web'])
+
+const savable = (kind: string): kind is Savable => SAVABLE.has(kind)
+
 /** What writing needs of the store the documents are open in. */
 export interface Writes {
   readonly tabs: Tab[]
@@ -39,39 +49,105 @@ export interface Writes {
   readonly previewTabId: string | null
   readonly spaces: Space[]
   readonly activeSpaceId: string | null
+  /** The space on screen as the file list holds it, for the folders a save offers. */
+  readonly tree: Entry | null
   keep(id: string): void
   scheduleSession(): void
   loadTree(): Promise<void>
   persist(): void
+  /** Writes the shortcut for a website nobody has saved yet. The one document whose
+   *  file is not its own words, so the workspace writes it rather than this; see
+   *  `keepWeb` in workspace.svelte.ts. */
+  keepWeb(tab: Tab, path: string): Promise<void>
 }
 
-/** Where a note that has never been saved should go. The desktop asks the
- *  reader; a name and a space, in one prompt. */
-async function pickSavePath(
-  spaces: Space[],
-  activeId: string | null,
-  doc = '',
-  name = UNTITLED,
-): Promise<string | null> {
-  const [first] = spaces
-  if (!first) return null
+/** The ending each kind of document is written under, and how a name that already
+ *  wears one is recognised. Read through the app's own two answers rather than a regex
+ *  of this file's own: `isMarkdownPath` for a note and `endingOf` for the rest, so
+ *  saving `Plan.canvas` does not make `Plan.canvas.canvas`. See note-name.ts, which
+ *  says why nothing here takes an ending off by hand. */
+const EXTENSION: Record<Savable, string> = {
+  note: '.md',
+  canvas: '.canvas',
+  pages: '.pages',
+  web: '.url',
+}
+
+/** The file a typed name comes to, under its kind's own ending. */
+function fileNamed(name: string, kind: Savable): string {
+  const already =
+    kind === 'note' ? isMarkdownPath(name) : endingOf(name)?.toLowerCase() === EXTENSION[kind]
+
+  return already ? name : `${name}${EXTENSION[kind]}`
+}
+
+/** The folder a save was last pointed at. This machine's, not the space's and not the
+ *  account's: it is where a hand was a moment ago. */
+const FOLDER_KEY = 'nib:save-folder'
+
+/** A name for a file that has none, and the folder to put it in.
+ *
+ *  One sheet for every kind, and it is the sheet Chrome shows when a page is
+ *  bookmarked, for the same reason: the two things nobody else can decide are what to
+ *  call it and where to keep it. The folder starts at the one used last, so a run of
+ *  drafts is one press each after the first.
+ *
+ *  Null where the question was dismissed, which always means "do nothing". */
+async function pickSavePath(ask: {
+  kind: Savable
+  doc: string
+  name: string
+  spaces: Space[]
+  activeId: string | null
+  tree: Entry | null
+}): Promise<{ path: string; name: string } | null> {
+  const here = ask.spaces.find((one) => one.id === ask.activeId) ?? ask.spaces[0]
+  if (!here) return null
+
+  // Every folder a file could go in, which is the list a move already works out: the
+  // space's own room, every note in it - a note that holds notes is a folder - and any
+  // other space there is. Fetched rather than imported, because nothing here is wanted
+  // until somebody saves something that has never been saved.
+  const { moveTargets } = await import('../move-targets')
+  const folders = moveTargets({
+    moving: null,
+    tree: ask.tree,
+    spaces: ask.spaces,
+    here: here.root,
+  })
+
+  const last = storedText(FOLDER_KEY)
+  const start = folders.some((one) => one.id === last) ? last : here.root
 
   const { prompt } = await import('../prompt.svelte')
   const answer = await prompt.askName({
-    title: t('Name the note'),
-    value: (name !== UNTITLED ? name : null) ?? nameFromContent(doc) ?? UNTITLED,
+    title: t('Save'),
+    // The name it has, else the words at the top of it - which only a note has; a plane
+    // and a deck of pages hold JSON, and the first line of that is not a name. A website
+    // arrives here already called what the page calls itself.
+    value:
+      (ask.name !== UNTITLED ? ask.name : null) ??
+      (ask.kind === 'note' ? nameFromContent(ask.doc) : null) ??
+      UNTITLED,
     placeholder: t('Untitled'),
     confirmLabel: key('Save'),
-    spaces: spaces.map((space) => ({ id: space.id, name: space.name })),
-    space: activeId,
+    // A folder says which space it is in, so the spaces are not asked about twice.
+    spaces: [],
+    space: null,
+    folders: folders.map((one) => ({ id: one.id, label: one.label })),
+    folder: start,
   })
 
   if (!answer?.name) return null
 
-  const target = spaces.find((space) => space.id === answer.space) ?? first
-  const clean = answer.name.replace(/[\\/]/g, ' ').trim()
+  const folder = answer.folder ?? here.root
+  keep(FOLDER_KEY, folder)
 
-  return joinPath(target.root, isMarkdownPath(clean) ? clean : `${clean}.md`)
+  const clean = answer.name.replace(/[\\/]/g, ' ').trim()
+  if (!clean) return null
+
+  const named = fileNamed(clean, ask.kind)
+  return { path: joinPath(folder, named), name: shownName(named) }
 }
 
 export class Saving {
@@ -220,12 +296,35 @@ export class Saving {
     flushTableEdits()
 
     const tab = target ?? this.ws.active
-    if (!tab || !holdsWords(tab.kind)) return
+    if (!tab) return
 
     // Saving is as deliberate as it gets: a note that was only being looked
     // at is one to stay from here on, whether or not there was anything to
     // write.
     this.ws.keep(tab.id)
+
+    // A website nobody has saved is the one document whose file is not its words: what
+    // goes down is a shortcut holding the address the tab is on, so the same sheet asks
+    // the same two questions and the workspace writes the file. A saved one needs
+    // nothing here - the file follows the reading on its own; see keep.ts.
+    if (tab.kind === 'web') {
+      if (tab.path !== null) return
+
+      const picked = await pickSavePath({
+        kind: 'web',
+        doc: '',
+        name: tab.name,
+        spaces: this.ws.spaces,
+        activeId: this.ws.activeSpaceId,
+        tree: this.ws.tree,
+      })
+      if (!picked) return
+
+      await this.ws.keepWeb(tab, picked.path)
+      return
+    }
+
+    if (!holdsWords(tab.kind)) return
     await this.write(tab.note)
   }
 
@@ -252,14 +351,22 @@ export class Saving {
 
     let path = note.path
     if (!path) {
-      // A canvas is only ever made with a name and a place of its own, so there
-      // is no "save this canvas somewhere" to ask about; the name prompt would
-      // offer to write it as markdown.
-      if (note.kind === 'canvas') return
+      // Every kind that has words asks the same two questions - what to call it, and
+      // which folder - and is written under its own extension. A plane used to refuse
+      // here, because a plane was only ever made with a file already; now one can be
+      // made as a tab and saved afterwards, which is what Emil asked for.
+      if (!savable(note.kind)) return
 
-      const picked = await pickSavePath(this.ws.spaces, this.ws.activeSpaceId, note.text, note.name)
+      const picked = await pickSavePath({
+        kind: note.kind,
+        doc: note.text,
+        name: note.name,
+        spaces: this.ws.spaces,
+        activeId: this.ws.activeSpaceId,
+        tree: this.ws.tree,
+      })
       if (!picked) return
-      path = picked
+      path = picked.path
     }
 
     // The words going down, and which revision of the note they are, both read
