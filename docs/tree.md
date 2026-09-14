@@ -27,7 +27,7 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests |
-| its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
+| its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Archive, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts`. An archived row says Unarchive where Delete would be, and is never deleted; see `docs/archive.md` |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
 ask: New note, New canvas and New web note - and a recording or a meeting on a
