@@ -1518,53 +1518,45 @@ has never seen, and none of the three is a number to compare between platforms.
 | launch to the window on the system's engine | 7135.9 ms | 2195.1 ms | 680.8 ms |
 | resident with no web tab, the whole tree | 302.8 MB | 87.6 MB | 524.5 MB |
 
-**And the row this batch turns on: the flagged app builds on all three desktops and
-starts on none of them yet.** Nine runs of the workflow, each one a different answer,
-and every failure upstream of nib's own code rather than in it:
+**And the row batch 1.5 turned: the flagged app starts on Windows and on macOS.** The
+build rows were batch 1's and still hold - Cargo resolves the graph with the `wry`
+repair, `tauri-runtime-cef` compiles with the winit repair, nib's own crate compiles
+against it, the binary links with the static CRT and the flagged package's tests pass,
+on all three. What changed is the row under them:
 
 | | `windows-latest` | `macos-latest` (arm64) | `ubuntu-latest` |
 | --- | --- | --- | --- |
-| Cargo resolves the graph | yes, with the `wry` repair | yes | yes |
-| `tauri-runtime-cef` compiles | yes | yes, with the winit repair | yes |
-| nib's own crate compiles against it | yes | yes | yes |
-| the flagged binary links | yes, with the static CRT | yes | yes |
-| the flagged package's tests pass | yes | yes | yes |
-| **it starts** | **no** | **no** | **no** |
-| how far it got | died in the loader, `STATUS_ENTRYPOINT_NOT_FOUND` (`0xC0000139`), before nib's first line | CEF loaded, then `icudtl.dat not found in bundle` and `SIGTRAP`, 246 ms in | `SIGSEGV`, 264 ms in, with nothing on stderr |
-| what the loader was missing | **not a CEF symbol**: the binary imports 39 and `libcef.dll` exports all 39 of them, so it is further down the chain | - | - |
+| **it starts** | **yes**, with the manifest | **yes**, with the bundle | **no** |
+| launch to the window, the flagged build | 1402.0 ms | 804.7 ms | - |
+| the same build on the system's engine, same runner | 4685.4 ms | 1102.9 ms | 2429.3 ms |
+| resident, no web tab, the whole tree | 478.1 MB | 897.2 MB | - |
+| resident, one web tab | 691.3 MB | 1205.4 MB | - |
+| resident, two web tabs | - | 1478.2 MB | - |
+| **browser processes for two web tabs** | - | **1** | - |
+| a second web tab | never came back from `add_child` | opened, 150 ms | - |
+| `chrome://settings` in a pane of nib's own window | - | **refused: Alloy style** | - |
+| an extension's content script in nib's own interface | - | **reached it** | - |
+| how far it got | two web tabs asked for, one opened | every row above, then `SIGSEGV` on the refused `chrome://` page | `SIGSEGV` in GTK 3's `gtk_init_check`, 290 ms in |
 
-What each of those means, in the order they will be fixed:
+The Windows column is run `34812662525` and the other two are run `34858474457`; the
+second-tab hang is why Windows has no two-tab row yet, and the gate now gives a tab
+ninety seconds rather than the whole run. The two launch rows are the same instrument
+on the same runner, minutes apart - and the flagged build being *faster* than the
+control on both is a statement about a cold runner loading `WebView2` and `WKWebView`
+for the first time, not a promise about anybody's machine. Emil's own is where that
+number means something.
 
-- **macOS is the closest and the clearest.** CEF's own loader looks for the framework
-  at `../Frameworks` relative to the executable and the gate now puts it there, so the
-  engine loads; the next thing Chromium wants is the *bundle* - `icudtl.dat` out of
-  `Contents/Frameworks/.../Resources` - because a CEF application on a Mac is an app
-  bundle with five helper bundles in it and not an executable. That is exactly the
-  packaging work batch 7 already owns, and it is now a measured requirement rather than
-  a paragraph.
-- **Linux dies without a word, at 264 ms, and the most likely reason is the toolkit.**
-  nib links GTK 3 - through `tauri-plugin-dialog`'s `rfd`, and through the tray, `xdo`
-  and `rsvg` libraries beside it - and `tauri-runtime-cef` is GTK 4, which is a pair
-  the runtime's own comment says cannot share a process. `spike/shell`, which links no
-  GTK 3 at all, brought the same engine up on the same runner in 264 ms. So this is the
-  GTK 4 migration in batch 7's Linux row, arriving early.
-- **Windows is the one that is not yet explained**, and it is the platform Emil is on.
-  The binary links - with `-C target-feature=+crt-static`, because CEF's own libraries
-  are built against the static CRT - and then the loader refuses it before any of our
-  code runs, with the sandbox library both in the link and out of it. The gate now
-  prints the imports of the binary against the exports of `libcef.dll` when that
-  happens, and the first answer is already in: **the CEF C API is not the problem.**
-  The binary imports thirty-nine `cef_*` symbols and `libcef.dll` exports every one of
-  them, so the missing entry point is somewhere else in the loader's chain - most
-  likely something `libcef.dll` itself wants, which is where CEF 151's
-  `bootstrap.exe` DLL-host requirement lives, and that is ship gate 1. The next step is
-  the same check one level down: what `libcef.dll` imports against what `chrome_elf.dll`
-  and the runtime beside it export.
+What each of the three meant, and what became of it: the three paragraphs above - the
+manifest, the bundle, the two toolkits. Batch 1 named none of them and guessed wrong
+about one (Windows was never the sandbox), which is what a gate is for: the guesses are
+cheap and the measurements are not.
 
-**So the launch, the memory and the one-browser-process rows are empty, and they are
-the rows batch 2 needs.** That is the gate working as intended: it is allowed to say
-"not yet", the reasons are precise, three of the four are somebody else's to fix, and
-none of them is evidence against the design.
+**So three of the six rows batch 2 needs are now filled, one is refused and two were
+never in doubt.** That is the gate working as intended. It is allowed to say "not yet",
+the reasons are precise, every one of them is upstream's or Emil's rather than nib's
+own code, and none of them is evidence against the design - but criterion 3 and
+criterion 4 are the two that section 8 calls the premise, and one of each is now a
+measured no rather than an empty cell.
 
 ### Go or no-go for batch 2
 
@@ -1584,24 +1576,37 @@ more.**
    change. That is the known lag this criterion allows, rather than a red square nobody
    read.
 2. **One browser process serves two web tabs**, counted off `--type=` on the process
-   tree rather than asserted. More than one and the premise of the whole design is
-   wrong and B′ is the shape.
+   tree rather than asserted. **Met on macOS: one.** Two tabs and one browser process,
+   which is the question Emil asked first, answered with a process list. Not yet
+   answered on Windows, where the second tab does not come back from the runtime.
 3. **`chrome://settings` and `chrome://extensions` both load** in a webview inside
-   nib's own window, with no Chrome toolbar and no Chrome tab strip. This is the ask
-   Emil made by name.
+   nib's own window, with no Chrome toolbar and no Chrome tab strip. **Refused on
+   macOS**, and by CEF rather than by nib: a webview given a native parent view is
+   forced to Alloy style there and Chromium's own pages are Chrome style's (upstream
+   #3294). A window of its own is Chrome style even on a Mac, so the page is reachable -
+   in a window rather than in a pane. Windows and Linux use Chrome style for a child
+   browser and are expected to load it; neither has got that far in one run yet.
 4. **An extension's content script runs in a web tab and not in nib's interface.**
-   Both halves. One profile let the spike's extension read the app's own document in a
-   screenshot; two profiles have to be shown to stop it, on each platform, or nothing
-   after batch 2 is safe to ship.
+   Both halves. **Not met**, and this is the one to read twice: the two profiles are
+   real - `web/Default` and `web/app`, fourteen of Chromium's own files in each - and
+   the extension still renamed nib's own interface, because `--load-extension` is read
+   by *every* profile's extension service. So the profile boundary is not what failed;
+   the only install mechanism available today ignores it. Batch 4's install has to be
+   the per-profile preference tree, and until something can put an extension in one
+   profile only, this criterion cannot be answered yes by any run.
 5. **The launch stays inside what Emil was told.** The flagged build's time to a
    window, on the same runner as the control: no more than **+250 ms on Windows** and
-   no more than **+1.2 s on macOS**. The spike's figures were +170 ms and +1006 ms and
-   he has not objected to them; a number outside this band is a number he has not
-   agreed to, and the macOS one is the one to watch - if a *real* Mac still costs most
-   of a second, that is the moment to take B′ seriously rather than after batch 2.
+   no more than **+1.2 s on macOS**. **Met, and by a distance that should be read with
+   suspicion rather than pleasure**: −3283 ms on Windows and −298 ms on macOS, which is
+   to say the flagged build came up *faster* than the app on the system's own engine on
+   both. On a cold runner the system engine is the slow one; the number that matters is
+   a real machine's, and it is still unmeasured.
 6. **The download grows by no more than 170 MB on Windows and 140 MB on macOS**,
    measured as the compressed size of what a release would have to carry rather than
-   estimated from a ratio. Those are the numbers in section 9 that Emil was told.
+   estimated from a ratio. **Met: 133.9 MB and 102.2 MB**, the same figures batch 1
+   measured, with the caveat below about what a Mac's five helper bundles would add if
+   a release copied the whole binary into each of them instead of carrying one small
+   one.
 
 **No-go, and what each one means.** Any of 2, 3 or 4 failing is a reason to stop and
 reconsider the shape, not to work round it: they are the premise. 5 or 6 outside the
@@ -1609,6 +1614,25 @@ band is Emil's call rather than a technical block - the engine works, it simply 
 more than he was told it would, and he should be told again before batch 2 spends a
 week on it. 1 failing on both desktops means the branch is not ready and the pin
 waits: `cef-bump.yml` will ask again every Monday, and that is exactly what it is for.
+
+**So where batch 1.5 leaves it: 1, 2, 5 and 6 are met and 3 and 4 are the two that are
+not - and both of them are refusals with a named owner rather than mysteries.** Neither
+is a reason to doubt B: one browser process serves two tabs, which was the premise, and
+both profiles are real on disk. What the two noes change is the *route* to two rows of
+the design:
+
+- **`chrome://settings` in a pane of nib's own window does not work on a Mac**, and
+  cannot until CEF's #3294 lets a Chrome-style browser take a native parent. Emil asked
+  for `chrome://settings` by name; a window of its own is the shape that is available
+  today, and whether that is acceptable is his call rather than the gate's. Batch 3 is
+  where it lands either way, and the same question does not arise on Windows or Linux.
+- **An extension has to be installed into one profile rather than onto a command
+  line**, because a switch reaches every profile in the process. That is batch 4's
+  design changing shape, before batch 4 starts, which is the cheapest moment for it.
+
+Everything else batch 2 was waiting on is measured. Batch 2's own shape - web tabs as
+webviews in one window, two profiles, one browser process - is what these runs show
+working.
 
 **And one criterion that is not the gate's.** The plugin repair in `upstream.py` is a
 patch nib carries against somebody else's branch, and a batch 2 built on it inherits
