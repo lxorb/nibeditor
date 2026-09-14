@@ -41,6 +41,17 @@ const SITES: [&str; 2] = ["https://example.com/", "https://example.net/"];
 /// every later batch rests on.
 const PAGES: [&str; 2] = ["chrome://settings/", "chrome://extensions/"];
 
+/// The page the gate opens in a window of its own, in the engine's primary profile,
+/// to see whether the extension is in that profile.
+///
+/// **Why the gate opens a website of its own.** Criterion 4 of docs/browser.md section
+/// 8 has two halves - the extension reaches a web page, and the extension does *not*
+/// reach nib's own interface - and batch 1 could only see the second one. A web tab's
+/// title arrives through the event `web_tabs.rs` emits, which is a file this batch does
+/// not touch and which carried no title on either engine. See [`probe_window`] for why
+/// it is a window rather than a webview beside the tabs.
+const PROBE: &str = "https://example.org/";
+
 /// What the content script of the gate's test extension writes into a title. The
 /// extension is `spike/browser/extension`, which already does exactly this.
 const EXTENSION_MARK: &str = "NIB-EXTENSION-OK";
@@ -48,6 +59,17 @@ const EXTENSION_MARK: &str = "NIB-EXTENSION-OK";
 /// How long to hold still after each step, so the harness can read the process tree
 /// and take a picture of a window that has finished painting.
 const SETTLE: Duration = Duration::from_secs(6);
+
+/// How long a web tab is given to open before the gate calls it a failure and carries
+/// on.
+///
+/// **A hang has to be a row rather than the end of the run.** On Windows the second web
+/// tab did not come back at all - the runtime's own `add_child` never returned, with
+/// CEF logging *"Timeout of new browser info response for frame"* first - and batch
+/// 1.5's first run spent its whole four hundred seconds inside that call and then had
+/// nothing to say about the engine's own pages, the extension or the profiles. Beyond
+/// this the gate gives up on that one tab, says so, and measures everything else.
+const PATIENCE: Duration = Duration::from_secs(90);
 
 /// When the process started, as near as a line of our own code can be to it.
 static STARTED: LazyLock<Instant> = LazyLock::new(Instant::now);
@@ -161,7 +183,12 @@ fn walk(app: &AppHandle, tabs: usize) {
 
     for at in 0..tabs {
         let site = SITES[at % SITES.len()];
-        match web_tab(app, at, site) {
+        // Said before the call and not only after it, so a run that stops inside the
+        // app's own command is told apart from one that stopped before reaching it.
+        say(&format!(
+            "\"event\":\"opening\",\"tab\":{at},\"url\":\"{site}\""
+        ));
+        match opened_within(app, at, site) {
             Ok(label) => {
                 say(&format!(
                     "\"event\":\"tab\",\"label\":\"{label}\",\"url\":\"{site}\""
@@ -169,7 +196,7 @@ fn walk(app: &AppHandle, tabs: usize) {
                 tab_labels.push(label);
             }
             Err(error) => check(
-                "a web tab opens through the app's own command",
+                &format!("web tab {at} opens through the app's own command"),
                 false,
                 &error,
             ),
@@ -189,7 +216,8 @@ fn walk(app: &AppHandle, tabs: usize) {
     std::thread::sleep(Duration::from_secs(2));
 
     // Then the engine's own pages, each in a webview of its own, because a page
-    // that cannot be reached is the row that decides batch 3.
+    // that cannot be reached is the row that decides batch 3 - and a website of the
+    // gate's own beside them, which is the half of criterion 4 batch 1 could not see.
     let mut pages: Vec<String> = Vec::new();
     for (at, address) in PAGES.iter().enumerate() {
         let label = format!("gate-page-{at}");
@@ -203,16 +231,33 @@ fn walk(app: &AppHandle, tabs: usize) {
             Err(error) => check(&format!("{address} opens in a webview"), false, &error),
         }
     }
+
+    let probe = "gate-web-0";
+    match probe_window(app, probe, PROBE) {
+        Ok(()) => say(&format!(
+            "\"event\":\"page\",\"label\":\"{probe}\",\"url\":\"{}\"",
+            PROBE
+        )),
+        Err(error) => check(
+            "a website opens in a window of the gate's own",
+            false,
+            &error,
+        ),
+    }
+
     std::thread::sleep(SETTLE);
     say("\"event\":\"shot:chrome-pages\"");
 
-    answers(app, tabs, &tab_labels, &pages);
+    answers(app, tabs, &tab_labels, &pages, probe);
 }
 
 /// The checks, once everything that was going to happen has happened.
-fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]) {
+fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String], probe: &str) {
     let webviews = app.webviews().len();
-    let asked = 1 + tabs + PAGES.len();
+    // The interface, every web tab and every one of the engine's own pages, all in the
+    // one window - the gate's own website is a window of its own and is counted with
+    // them, because `webviews()` is the app's and not the window's.
+    let asked = 1 + tabs + PAGES.len() + 1;
     check(
         "the interface and every tab are webviews of one window",
         webviews >= asked,
@@ -235,7 +280,13 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]
     // app's own document - and with one profile the spike's screenshot showed it
     // reaching it. If the mark is in the interface's title, the profiles are not
     // doing their job and batch 2 does not start.
+    //
+    // Both halves are read off a webview's own title handler: the interface's, which
+    // `engine::open_ui_window` installs, and the gate's own website, which `page`
+    // installs. A web tab's title is reported as well where it arrived, and on neither
+    // engine has it - which is why it is a note rather than the measurement.
     let in_the_app = extension_ran_in("main");
+    let in_the_probe = extension_ran_in(probe);
     let in_a_tab = tab_labels.iter().any(|label| extension_ran_in(label));
     check(
         "an extension's content script never reaches the app's own interface",
@@ -247,14 +298,17 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]
         },
     );
     check(
-        "an extension's content script reaches a web tab",
-        in_a_tab,
-        if in_a_tab {
-            "a tab carries the mark"
+        "an extension's content script reaches a page in the browsing profile",
+        in_the_probe,
+        if in_the_probe {
+            "the gate's own page carries the mark"
         } else {
-            "no tab was renamed; the extension may be in another profile or not loaded"
+            "the gate's own page was not renamed; the extension may not be loaded at all"
         },
     );
+    say(&format!(
+        "\"event\":\"note\",\"extension_in_a_web_tab\":{in_a_tab}"
+    ));
 
     if let Ok(titles) = TITLES.lock() {
         for (label, title) in &*titles {
@@ -264,6 +318,28 @@ fn answers(app: &AppHandle, tabs: usize, tab_labels: &[String], pages: &[String]
             ));
         }
     }
+}
+
+/// `web_tab`, given up on after [`PATIENCE`].
+///
+/// The call happens on a thread of its own so that a call which never comes back
+/// costs one thread rather than the whole run: the thread is left where it is - the
+/// process is about to be asked to quit either way - and the gate carries on to the
+/// engine's own pages, the extension and the profiles. See [`PATIENCE`] for the run
+/// that made this necessary.
+fn opened_within(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
+    let (sending, waiting) = std::sync::mpsc::channel();
+    let app = app.clone();
+    let site = site.to_owned();
+    std::thread::spawn(move || {
+        let _ = sending.send(web_tab(&app, at, &site));
+    });
+    waiting.recv_timeout(PATIENCE).unwrap_or_else(|_| {
+        Err(format!(
+            "the app's own command did not come back in {} seconds",
+            PATIENCE.as_secs()
+        ))
+    })
 }
 
 /// A web tab, through the app's own command rather than beside it.
@@ -328,6 +404,46 @@ fn page(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
                 LogicalPosition::new(1180.0, 96.0),
                 LogicalSize::new(360.0, 620.0),
             )
+            .map(|_| ())
+            .map_err(|error| error.to_string());
+        let _ = sending.send(made);
+    })
+    .map_err(|error| error.to_string())?;
+
+    waiting
+        .recv_timeout(Duration::from_secs(30))
+        .map_err(|_| "the window never answered".to_string())?
+}
+
+/// A website in a window of its own, in the engine's primary profile.
+///
+/// **Why a window rather than a webview beside the others.** The gate learns that an
+/// extension's content script ran by being told a document renamed itself, and on the
+/// first run of batch 1.5 only the *window's* own handler was ever called: the
+/// interface's title arrived with the extension's mark on it, and the handlers on the
+/// webviews `add_child` made - the two `chrome://` pages - were never called at all,
+/// for a title `chrome://settings` certainly sets. So the one channel this runtime
+/// demonstrably has is a window's, and criterion 4 needs both halves through one
+/// channel or it is comparing two different instruments.
+///
+/// It sets no storage of its own, which is what leaves it in the primary profile: the
+/// browsing one, where an extension a reader installs lands. Small and out of the way,
+/// because a picture of the screen is part of what the gate produces.
+fn probe_window(app: &AppHandle, label: &str, url: &str) -> Result<(), String> {
+    let at: tauri::Url = url.parse().map_err(|_| format!("{url} is not a URL"))?;
+    let label = label.to_owned();
+    let watching = label.clone();
+    let app = app.clone();
+    let (sending, waiting) = std::sync::mpsc::channel::<Result<(), String>>();
+
+    let handle = app.clone();
+    app.run_on_main_thread(move || {
+        let made = tauri::WebviewWindowBuilder::new(&handle, &label, WebviewUrl::External(at))
+            .title("the gate's own page")
+            .inner_size(360.0, 320.0)
+            .position(40.0, 760.0)
+            .on_document_title_changed(move |_window, title| title_seen(&watching, &title))
+            .build()
             .map(|_| ())
             .map_err(|error| error.to_string());
         let _ = sending.send(made);

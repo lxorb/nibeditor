@@ -1037,7 +1037,7 @@ def criteria(report: dict) -> list[dict]:
     )
 
     inside = said(cef, "never reaches the app's own interface")
-    in_tab = said(cef, 'reaches a web tab')
+    in_tab = said(cef, 'reaches a page in the browsing profile')
     both = None
     note = 'not measured'
     if inside is not None and in_tab is not None:
@@ -1199,7 +1199,18 @@ def table(report: dict) -> str:
         mark = 'yes' if check.get('ok') else '**no**'
         out.append(f'| {check.get("name")} | {mark} - {check.get("note")} |')
     for name, ok in (report.get('profiles') or {}).items():
-        out.append(f'| the `{name}` profile is on disk | {"yes" if ok else "**no**"} |')
+        held = len((report.get('profile_contents') or {}).get(name) or [])
+        out.append(
+            f'| the `{name}` profile is on disk | {"yes" if ok else "**no**"}'
+            f' - {held} of Chromium\'s own files in it |'
+        )
+    for name, held in (report.get('profile_contents') or {}).items():
+        if name.startswith('Profile-'):
+            out.append(
+                f'| a profile the runtime derived, `{name}` | '
+                f'{len(held)} files: the interface asked for a path the runtime '
+                'decided was not under the cache root |'
+            )
 
     return '\n'.join(out)
 
@@ -1286,6 +1297,18 @@ def main() -> int:
     }
     report['profile_root'] = str(root)
     report['profile_children'] = sorted(one.name for one in root.iterdir()) if root.is_dir() else []
+
+    # And what is *in* each of them, which is the difference between a profile and a
+    # folder. `engine::app_profile` makes `web/app` itself before it hands the path to
+    # the engine, so the folder existing proves nothing at all; Chromium's own files in
+    # it - `Preferences`, `Local Storage`, `Network` - prove the engine took it as a
+    # profile. A `Profile-<hash>` beside them is the runtime deriving one from a path it
+    # decided was not under the cache root, which is a finding rather than a layout.
+    report['profile_contents'] = {
+        one.name: sorted(inside.name for inside in one.iterdir())[:14]
+        for one in (root.iterdir() if root.is_dir() else [])
+        if one.is_dir() and (one.name in ('app', 'Default') or one.name.startswith('Profile-'))
+    }
 
     # What a release would have to carry, and what that costs a reader: the engine's
     # own files where the run put them, weighed and then compressed with the algorithm
