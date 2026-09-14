@@ -762,6 +762,8 @@ export const gsw: Dictionary = {
   'Go to the definition': 'Zur Fuessnote goh',
   'Nothing points at this one': 'Da zeigt öppis druf',
   'No footnotes in this note': 'Kei Fuessnote i dere Notiz',
+  'Stack tabs': 'Tabs stapla',
+  'Unstack tabs': 'Tabs nöd stapla',
   'High contrast': 'Hohe Kontrascht',
   'Front matter': 'Chopfdate',
   'Front matter: {name}': 'Chopfdate: {name}',

@@ -781,6 +781,8 @@ export const it: Dictionary = {
   'Go to the definition': 'Vai alla nota',
   'Nothing points at this one': 'Niente rimanda a questa',
   'No footnotes in this note': 'Nessuna nota a piè di pagina in questa nota',
+  'Stack tabs': 'Impila le schede',
+  'Unstack tabs': 'Separa le schede',
   'High contrast': 'Contrasto elevato',
   'Front matter': 'Intestazione YAML',
   'Front matter: {name}': 'Front matter: {name}',

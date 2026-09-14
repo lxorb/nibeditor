@@ -759,6 +759,8 @@ export const ps: Dictionary = {
   'Go to the definition': 'تعریف ته ولاړ شه',
   'Nothing points at this one': 'هیڅ شی دې ته اشاره نه کوي',
   'No footnotes in this note': 'په دې یادښت کې لمنلیک نشته',
+  'Stack tabs': 'ټوپونه په ستنو کې کېښکېنه',
+  'Unstack tabs': 'د ټوپونو ستنې لرې کړه',
   'High contrast': 'لوړ تضاد',
   'Front matter': 'سرمنځپانګه',
   'Front matter: {name}': 'سرلیک معلومات: {name}',

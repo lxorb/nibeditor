@@ -21,6 +21,10 @@ export interface Pane {
   activeTabId: string | null
   /** Whether this pane scrolls with the other one showing the same note. */
   linked: boolean
+  /** Whether this pane lays its notes out as columns side by side rather than one
+   *  document with a strip of names over it. Off, which is where every pane starts and
+   *  what a window is; see Pane.svelte. */
+  stacked: boolean
 }
 
 export interface Split {
@@ -43,7 +47,7 @@ export const EQUAL = 0.5
 const LEAST = 220
 
 export function pane(id: string, activeTabId: string | null = null): Pane {
-  return { kind: 'pane', id, activeTabId, linked: false }
+  return { kind: 'pane', id, activeTabId, linked: false, stacked: false }
 }
 
 /** Every pane, in the order they are laid out: left to right, top to bottom. */

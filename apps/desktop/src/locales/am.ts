@@ -753,6 +753,8 @@ export const am: Dictionary = {
   'Go to the definition': 'ወደ ትርጓሜው ሂድ',
   'Nothing points at this one': 'ምንም ወደዚህ አያመለክትም',
   'No footnotes in this note': 'በዚህ ማስታወሻ ውስጥ የግርጌ ማስታወሻ የለም',
+  'Stack tabs': 'ትሮችን አደራድር',
+  'Unstack tabs': 'ትሮችን አታደራድር',
   'High contrast': 'ከፍተኛ ንፅፅር',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ራስጌ መረጃ: {name}',

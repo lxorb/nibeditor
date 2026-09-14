@@ -762,6 +762,8 @@ export const hi: Dictionary = {
   'Go to the definition': 'परिभाषा पर जाएँ',
   'Nothing points at this one': 'कुछ भी इसकी ओर नहीं दिखाता',
   'No footnotes in this note': 'इस नोट में कोई पादटिप्पणी नहीं',
+  'Stack tabs': 'टैब को स्तंभों में रखें',
+  'Unstack tabs': 'टैब के स्तंभ हटाएँ',
   'High contrast': 'उच्च कंट्रास्ट',
   'Front matter': 'फ़्रंट मैटर',
   'Front matter: {name}': 'फ़्रंट मैटर: {name}',

@@ -473,3 +473,44 @@ describe('writing the session down', () => {
     }
   })
 })
+
+/** Whether a pane lays its notes out as columns is the pane's own answer, so it travels
+ *  with the pane: a window put back after a restart is the arrangement it was left in.
+ *  Absent in a session written by a build that had never heard of it, which reads back as
+ *  off - and off is where every pane starts. */
+describe('a pane that stacks its notes', () => {
+  test('says so when it is read back', () => {
+    const layout = readLayout({
+      focused: 'p1',
+      frame: {
+        kind: 'pane',
+        pane: {
+          id: 'p1',
+          tabs: [draft('/Notes/a.md', '')],
+          active: 0,
+          linked: false,
+          stacked: true,
+        },
+      },
+    })
+
+    expect(panesOf(layout?.frame ?? onePane([]))[0]?.stacked).toBe(true)
+  })
+
+  test('and a session that never said reads back as one that does not', () => {
+    const layout = readLayout({ focused: 'p1', frame: onePane([draft('/Notes/a.md', '')]) })
+
+    expect(panesOf(layout?.frame ?? onePane([]))[0]?.stacked).toBe(false)
+  })
+
+  test('and it survives the round trip out and back', () => {
+    const one = pane('p1', 't1')
+    one.stacked = true
+
+    const written = frameDraft(one, () => ({ tabs: [draft('/Notes/a.md', '')], active: 0 }))
+    expect(written.kind === 'pane' && written.pane.stacked).toBe(true)
+
+    const back = frameOf(written, () => 't1')
+    expect(back.kind === 'pane' && back.stacked).toBe(true)
+  })
+})

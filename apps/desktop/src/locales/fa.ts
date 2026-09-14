@@ -762,6 +762,8 @@ export const fa: Dictionary = {
   'Go to the definition': 'رفتن به تعریف',
   'Nothing points at this one': 'چیزی به آن اشاره نمی‌کند',
   'No footnotes in this note': 'در این یادداشت پانویسی نیست',
+  'Stack tabs': 'چیدن زبانه‌ها در ستون',
+  'Unstack tabs': 'برچیدن ستون زبانه‌ها',
   'High contrast': 'کنتراست بالا',
   'Front matter': 'پیش‌داده',
   'Front matter: {name}': 'فرامتن: {name}',

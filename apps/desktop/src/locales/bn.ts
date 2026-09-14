@@ -760,6 +760,8 @@ export const bn: Dictionary = {
   'Go to the definition': 'সংজ্ঞায় যান',
   'Nothing points at this one': 'কিছুই এটিকে নির্দেশ করে না',
   'No footnotes in this note': 'এই নোটে কোনো পাদটীকা নেই',
+  'Stack tabs': 'ট্যাব স্তূপ করুন',
+  'Unstack tabs': 'ট্যাব স্তূপ সরান',
   'High contrast': 'উচ্চ বৈসাদৃশ্য',
   'Front matter': 'ফ্রন্ট ম্যাটার',
   'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',

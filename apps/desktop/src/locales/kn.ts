@@ -765,6 +765,8 @@ export const kn: Dictionary = {
   'Go to the definition': 'ವಿವರಣೆಗೆ ಹೋಗಿ',
   'Nothing points at this one': 'ಇದನ್ನು ಯಾವುದೂ ಸೂಚಿಸುವುದಿಲ್ಲ',
   'No footnotes in this note': 'ಈ ಟಿಪ್ಪಣಿಯಲ್ಲಿ ಅಡಿಟಿಪ್ಪಣಿ ಇಲ್ಲ',
+  'Stack tabs': 'ಟ್ಯಾಬ್‌ಗಳನ್ನು ಜೋಡಿಸಿ',
+  'Unstack tabs': 'ಟ್ಯಾಬ್ ಜೋಡಣೆ ತೆಗೆ',
   'High contrast': 'ಹೆಚ್ಚಿನ ಕಾಂಟ್ರಾಸ್ಟ್',
   'Front matter': 'ಫ್ರಂಟ್ ಮ್ಯಾಟರ್',
   'Front matter: {name}': 'ಮುನ್ನುಡಿ ಮಾಹಿತಿ: {name}',

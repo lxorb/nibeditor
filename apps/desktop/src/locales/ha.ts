@@ -769,6 +769,8 @@ export const ha: Dictionary = {
   'Go to the definition': 'Je zuwa bayanin',
   'Nothing points at this one': 'Babu abin da ke nuni gare ta',
   'No footnotes in this note': 'Babu bayanin ƙasa a wannan rubutu',
+  'Stack tabs': 'Tara shafuka a ginshiƙi',
+  'Unstack tabs': 'Warware tarin shafuka',
   'High contrast': 'Bambanci mai ƙarfi',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Bayanan gaba: {name}',

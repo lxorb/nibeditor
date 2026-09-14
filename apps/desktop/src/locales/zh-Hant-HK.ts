@@ -746,6 +746,8 @@ export const zhHantHK: Dictionary = {
   'Go to the definition': '跳到註腳內容',
   'Nothing points at this one': '沒有任何地方指向它',
   'No footnotes in this note': '這則筆記沒有註腳',
+  'Stack tabs': '並排標籤頁',
+  'Unstack tabs': '取消並排標籤頁',
   'High contrast': '高對比',
   'Front matter': '前置數據',
   'Front matter: {name}': '前置資料：{name}',

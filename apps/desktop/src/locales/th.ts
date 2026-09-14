@@ -749,6 +749,8 @@ export const th: Dictionary = {
   'Go to the definition': 'ไปที่เชิงอรรถ',
   'Nothing points at this one': 'ไม่มีอะไรชี้มาที่นี่',
   'No footnotes in this note': 'บันทึกนี้ไม่มีเชิงอรรถ',
+  'Stack tabs': 'เรียงแท็บเป็นคอลัมน์',
+  'Unstack tabs': 'เลิกเรียงแท็บ',
   'High contrast': 'คอนทราสต์สูง',
   'Front matter': 'ส่วนหัวเอกสาร',
   'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',

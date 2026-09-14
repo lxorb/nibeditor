@@ -765,6 +765,8 @@ export const pa: Dictionary = {
   'Go to the definition': 'ਵਿਆਖਿਆ ਉੱਤੇ ਜਾਓ',
   'Nothing points at this one': 'ਕੁਝ ਵੀ ਇਸ ਵੱਲ ਨਹੀਂ ਇਸ਼ਾਰਾ ਕਰਦਾ',
   'No footnotes in this note': 'ਇਸ ਨੋਟ ਵਿੱਚ ਕੋਈ ਫੁਟਨੋਟ ਨਹੀਂ',
+  'Stack tabs': 'ਟੈਬ ਕਾਲਮਾਂ ਵਿੱਚ ਰੱਖੋ',
+  'Unstack tabs': 'ਟੈਬ ਕਾਲਮ ਹਟਾਓ',
   'High contrast': 'ਉੱਚ ਕੰਟਰਾਸਟ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ਮੁੱਖ ਜਾਣਕਾਰੀ: {name}',

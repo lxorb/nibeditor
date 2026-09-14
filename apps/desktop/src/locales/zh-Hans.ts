@@ -746,6 +746,8 @@ export const zhHans: Dictionary = {
   'Go to the definition': '跳到脚注内容',
   'Nothing points at this one': '没有任何地方指向它',
   'No footnotes in this note': '这则笔记没有脚注',
+  'Stack tabs': '并排标签页',
+  'Unstack tabs': '取消并排标签页',
   'High contrast': '高对比度',
   'Front matter': '前置元数据',
   'Front matter: {name}': '前置数据：{name}',

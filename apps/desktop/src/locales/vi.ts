@@ -753,6 +753,8 @@ export const vi: Dictionary = {
   'Go to the definition': 'Đến nội dung chú thích',
   'Nothing points at this one': 'Không có gì trỏ tới nó',
   'No footnotes in this note': 'Ghi chú này không có chú thích cuối trang',
+  'Stack tabs': 'Xếp thẻ thành cột',
+  'Unstack tabs': 'Bỏ xếp cột thẻ',
   'High contrast': 'Tương phản cao',
   'Front matter': 'Phần đầu tệp',
   'Front matter: {name}': 'Siêu dữ liệu: {name}',

@@ -158,6 +158,17 @@ export class Panes {
     this.changed()
   }
 
+  /** Whether a pane lays its notes out as columns side by side. Per pane, because two
+   *  panes are two arrangements: a long note read down the left and three short ones
+   *  stacked on the right is the whole point of it being a pane's own answer. */
+  setStacked(id: string, on: boolean) {
+    const one = paneIn(this.frame, id)
+    if (!one || one.stacked === on) return
+
+    one.stacked = on
+    this.changed()
+  }
+
   activate(id: string, tabId: string | null) {
     const one = paneIn(this.frame, id)
     if (!one || one.activeTabId === tabId) return

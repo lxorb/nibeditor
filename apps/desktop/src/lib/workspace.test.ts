@@ -114,6 +114,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
+const { viewport } = await import('./viewport.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -2395,5 +2396,58 @@ describe('whether this machine holds anything worth asking about', () => {
     workspace.tree = holding([file(SEED), file(MINE)])
 
     expect(await workspace.hasLocalContent()).toBe(true)
+  })
+})
+
+/** Stacking is a pane's own answer: how the notes in *this* pane are laid out, which is
+ *  why a long note read down the left and three short ones stacked on the right is the
+ *  point of it rather than a thing the window does. */
+describe('a pane that lays its notes out as columns', () => {
+  test('starts as every pane starts, which is one document with a strip over it', async () => {
+    await workspace.open('/space/a.md')
+
+    expect(workspace.stacked()).toBe(false)
+    expect(workspace.panes.all[0]?.stacked).toBe(false)
+  })
+
+  test('has nothing to stack while it holds one note', async () => {
+    await workspace.open('/space/a.md')
+
+    expect(workspace.canStack()).toBe(false)
+  })
+
+  test('and offers it once it holds two', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+
+    expect(workspace.canStack()).toBe(true)
+    workspace.toggleStacked()
+    expect(workspace.stacked()).toBe(true)
+    workspace.toggleStacked()
+    expect(workspace.stacked()).toBe(false)
+  })
+
+  test('per pane, so the other one is left as it was', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+    workspace.split('row')
+
+    const [first, second] = workspace.panes.all
+    if (!first || !second) throw new Error('the split did not happen')
+
+    workspace.toggleStacked(first.id)
+
+    expect(workspace.stacked(first.id)).toBe(true)
+    expect(workspace.stacked(second.id)).toBe(false)
+  })
+
+  test('and never on a machine that holds one document', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+    expect(workspace.canStack()).toBe(true)
+
+    viewport.device = 'phone'
+    expect(workspace.canStack()).toBe(false)
+    viewport.device = 'desktop'
   })
 })

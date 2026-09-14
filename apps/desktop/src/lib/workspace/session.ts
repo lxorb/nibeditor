@@ -66,6 +66,10 @@ export interface PaneDraft {
   /** Index into `tabs`, not an id: ids are handed out fresh on every run. */
   active: number
   linked: boolean
+  /** Whether the pane lays its notes out as columns side by side. Absent in a session
+   *  written by a build that had never heard of it, which reads back as off - and off is
+   *  where every pane starts. */
+  stacked?: boolean
 }
 
 export type FrameDraft =
@@ -245,6 +249,7 @@ function readPane(value: unknown): PaneDraft | null {
     tabs: readDrafts(value.tabs),
     active: isNumber(value.active) ? value.active : 0,
     linked: value.linked === true,
+    stacked: value.stacked === true,
   }
 }
 
@@ -370,6 +375,7 @@ export function frameOf(draft: FrameDraft, showing: (pane: PaneDraft) => string 
   if (draft.kind === 'pane') {
     const one = pane(draft.pane.id, showing(draft.pane))
     one.linked = draft.pane.linked
+    one.stacked = draft.pane.stacked === true
     return one
   }
 
@@ -390,7 +396,10 @@ export function frameDraft(
 ): FrameDraft {
   if (frame.kind === 'pane') {
     const { tabs, active } = strip(frame)
-    return { kind: 'pane', pane: { id: frame.id, tabs, active, linked: frame.linked } }
+    return {
+      kind: 'pane',
+      pane: { id: frame.id, tabs, active, linked: frame.linked, stacked: frame.stacked },
+    }
   }
 
   return {

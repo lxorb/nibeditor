@@ -3233,6 +3233,27 @@ class Workspace {
     for (const id of [paneId, ...this.twins(paneId)]) this.panes.setLinked(id, on)
   }
 
+  /** Whether a pane may lay its notes out as columns at all: it has to hold more than
+   *  one note, and the machine has to be one that holds more than one document. A
+   *  handheld holds one, so there is nothing to put beside anything. */
+  canStack(paneId: string = this.panes.focusedId): boolean {
+    if (viewport.touch) return false
+
+    return this.tabsIn(paneId).filter((tab) => tab.kind === 'note' && !tab.reading).length > 1
+  }
+
+  /** Whether a pane is stacked. */
+  stacked(paneId: string = this.panes.focusedId): boolean {
+    return this.panes.at(paneId)?.stacked ?? false
+  }
+
+  /** Lays a pane's notes out as columns, or puts them back to one document with a strip
+   *  of names over it. A pane's own answer, and remembered with the pane. */
+  toggleStacked(paneId: string = this.panes.focusedId) {
+    this.panes.setStacked(paneId, !this.stacked(paneId))
+    this.persist()
+  }
+
   /** One pane again, with everything in it: what a phone gets, since there is no
    *  room there to put two notes beside each other. */
   collapsePanes() {

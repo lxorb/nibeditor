@@ -792,6 +792,8 @@ export const ru: Dictionary = {
   'Go to the definition': 'Перейти к тексту сноски',
   'Nothing points at this one': 'Ничто на неё не ссылается',
   'No footnotes in this note': 'В этой заметке нет сносок',
+  'Stack tabs': 'Расставить вкладки в столбцы',
+  'Unstack tabs': 'Убрать столбцы вкладок',
   'High contrast': 'Высокая контрастность',
   'Front matter': 'Метаданные',
   'Front matter: {name}': 'Метаданные: {name}',

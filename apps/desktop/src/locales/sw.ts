@@ -767,6 +767,8 @@ export const sw: Dictionary = {
   'Go to the definition': 'Nenda kwa maelezo',
   'Nothing points at this one': 'Hakuna kinachoielekea',
   'No footnotes in this note': 'Hakuna tanbihi katika dokezo hili',
+  'Stack tabs': 'Panga vichupo safu',
+  'Unstack tabs': 'Ondoa safu za vichupo',
   'High contrast': 'Utofautishaji wa juu',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Data ya kichwa: {name}',

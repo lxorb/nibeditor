@@ -61,6 +61,7 @@
   import Tabs from './Tabs.svelte'
   import { openExternal } from './tauri'
   import { usage } from './usage.svelte'
+  import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
   import { EDGE, inside, type Zone, zoneAt } from './workspace/zones'
@@ -102,7 +103,39 @@
       !tab.reading,
   )
 
+  /** The notes this pane lays out as columns, or none where it lays out none.
+   *
+   *  Stacking is an arrangement of documents, so what it arranges is the notes: a plane,
+   *  a website, a PDF, a set of pages and the graph are each one surface that fills a
+   *  pane, and a note being read rather than written is a page with its own scroller. Any
+   *  of those showing and the pane draws the way it always did, columns or no columns.
+   *
+   *  Off on a handheld whatever the pane says, because a handheld holds one document; see
+   *  `canStack` in workspace.svelte.ts, which the rows that offer this read too. */
+  const columns = $derived(
+    pane.stacked && !viewport.touch
+      ? workspace.tabsIn(pane.id).filter((one) => one.kind === 'note' && !one.reading)
+      : [],
+  )
+
+  /** Whether this pane is drawing columns right now: it is stacked, it holds more than
+   *  one note, and what is showing is one of them. */
+  const stacking = $derived(columns.length > 1 && columns.some((one) => one.id === tab?.id))
+
   let view = $state<EditorView>()
+
+  /** One editor per column, by the tab it is showing. The pane's bars - the find bar, the
+   *  formatting bar, the menu over the words - talk to one editor, and in a stacked pane
+   *  that one is the active column's; the effect below is what keeps `view` pointing at
+   *  it as the column changes. */
+  const columnViews = $state<Record<string, EditorView | undefined>>({})
+
+  $effect(() => {
+    if (!stacking) return
+
+    const current = columnViews[pane.activeTabId ?? '']
+    if (current && current !== view) view = current
+  })
 
   /** The find bar over this pane's editor.
    *
@@ -478,6 +511,57 @@
         <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
       {/await}
     {/key}
+  {:else if stacking}
+    <!-- Stacked: the pane's notes as columns side by side, each its own editor, scrolling
+         sideways. The active one is widest, because it is the one being written in; the
+         rest are a spine of the note's name and as much of the words as there is room
+         for. Pressing a spine makes that column the active one, which is the same press
+         a tab in the strip is.
+
+         An editor per column and not one editor showing several notes: two notes side by
+         side have two carets, two scroll positions and two sets of folds, and a state
+         swapped between them would have one of each. The editors were already several -
+         a split has one per pane - so what is new here is the layout and not the
+         machinery; see Editor.svelte. -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div class="stack" data-region="editor">
+      {#each columns as one (one.id)}
+        <section class="column" class:is-active={one.id === pane.activeTabId}>
+          <button
+            class="spine"
+            title={one.shown}
+            aria-label={one.shown}
+            aria-pressed={one.id === pane.activeTabId}
+            onclick={() => workspace.activate(one.id)}
+          >
+            <span class="nib-row-label">{one.shown}</span>
+          </button>
+          <div
+            class="sheet"
+            oncontextmenu={(event: MouseEvent) =>
+              showEditorMenu(event, columnViews[one.id], one.path)}
+          >
+            <Editor
+              bind:view={columnViews[one.id]}
+              tab={one}
+              kept={strip}
+              onimage={saveImage}
+              resolveimage={resolveImage}
+              openlink={(href: string) => void openExternal(href)}
+              notes={(which: Tab) => links.index(which.path)}
+              opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+              nameblock={(path: string, line: number) => nameBlock(path, line)}
+              onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
+              onselection={(current: EditorView) => {
+                views.moved(current)
+                placement.remember(current)
+                rooms.moved(current)
+              }}
+            />
+          </div>
+        </section>
+      {/each}
+    </div>
   {:else if tab}
     <!-- One editor for the pane, whichever note is in it: switching swaps the
          note's state into it rather than building another editor, which is what
@@ -554,6 +638,98 @@
   .editor {
     position: relative;
     flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+
+  /* Stacked tabs: the pane's notes as columns, scrolling sideways.
+
+     `overscroll-behavior-x: contain` so reaching the end of the row does not hand the
+     gesture to whatever is behind the app, which on a trackpad is a page going back. */
+  .stack {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .stack::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* A column: the spine with the note's name, and the words beside it. The active one
+     takes three times the room, which is what says which one is being written in without
+     anything else having to say it - and it moves there rather than jumping, on the same
+     duration every other surface of the app moves on. */
+  .column {
+    position: relative;
+    flex: 1 0 var(--stack-column);
+    min-width: 0;
+    display: flex;
+    border-inline-start: 1px solid var(--line);
+    transition: flex-basis var(--dur-base) var(--ease-out);
+  }
+
+  .column:first-child {
+    border-inline-start: 0;
+  }
+
+  .column.is-active {
+    flex-basis: var(--stack-column-wide);
+  }
+
+  /* The name, written down the side and staying where it is as the column scrolls: the
+     one thing a column always shows, so a row of them reads as a row of names. */
+  .spine {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    flex: none;
+    width: var(--titlebar-height);
+    border: 0;
+    padding: var(--space-3) 0;
+    background: var(--surface);
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    text-align: start;
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  /* The name itself is what turns, not the button around it: `inset-inline-start` on the
+     sticky spine is resolved against the element's own writing mode, so a spine written
+     vertically would have been sticking to its top rather than to the edge of the row. */
+  .spine .nib-row-label {
+    display: block;
+    max-height: 100%;
+    overflow: hidden;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  @media (hover: hover) {
+    .spine:hover {
+      color: var(--text);
+    }
+  }
+
+  .column.is-active .spine {
+    background: var(--bg);
+    color: var(--text-strong);
+  }
+
+  .sheet {
+    position: relative;
+    flex: 1;
+    min-width: 0;
     min-height: 0;
     display: flex;
   }

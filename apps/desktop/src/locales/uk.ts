@@ -791,6 +791,8 @@ export const uk: Dictionary = {
   'Go to the definition': 'Перейти до тексту виноски',
   'Nothing points at this one': 'Ніщо на неї не посилається',
   'No footnotes in this note': 'У цій нотатці немає виносок',
+  'Stack tabs': 'Розставити вкладки в стовпці',
+  'Unstack tabs': 'Прибрати стовпці вкладок',
   'High contrast': 'Висока контрастність',
   'Front matter': 'Метадані',
   'Front matter: {name}': 'Метадані: {name}',

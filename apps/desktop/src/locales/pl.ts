@@ -790,6 +790,8 @@ export const pl: Dictionary = {
   'Go to the definition': 'Przejdź do treści przypisu',
   'Nothing points at this one': 'Nic na to nie wskazuje',
   'No footnotes in this note': 'Brak przypisów w tej notatce',
+  'Stack tabs': 'Ułóż karty w kolumny',
+  'Unstack tabs': 'Rozłóż karty',
   'High contrast': 'Wysoki kontrast',
   'Front matter': 'Nagłówek YAML',
   'Front matter: {name}': 'Metadane: {name}',

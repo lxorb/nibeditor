@@ -752,6 +752,8 @@ export const ko: Dictionary = {
   'Go to the definition': '각주 본문으로 이동',
   'Nothing points at this one': '이것을 가리키는 것이 없습니다',
   'No footnotes in this note': '이 노트에 각주가 없습니다',
+  'Stack tabs': '탭을 나란히',
+  'Unstack tabs': '탭 나란히 해제',
   'High contrast': '고대비',
   'Front matter': '프런트 매터',
   'Front matter: {name}': '프런트 매터: {name}',

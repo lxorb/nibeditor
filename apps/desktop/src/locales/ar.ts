@@ -799,6 +799,8 @@ export const ar: Dictionary = {
   'Go to the definition': 'الانتقال إلى التعريف',
   'Nothing points at this one': 'لا شيء يشير إلى هذه',
   'No footnotes in this note': 'لا حواشي في هذه الملاحظة',
+  'Stack tabs': 'ترتيب الألسنة في أعمدة',
+  'Unstack tabs': 'إلغاء ترتيب الألسنة',
   'High contrast': 'تباين عالٍ',
   'Front matter': 'بيانات أولية',
   'Front matter: {name}': 'البيانات الأولية: {name}',

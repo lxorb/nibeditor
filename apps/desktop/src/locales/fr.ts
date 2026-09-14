@@ -778,6 +778,8 @@ export const fr: Dictionary = {
   'Go to the definition': 'Aller à la note',
   'Nothing points at this one': 'Rien n’y renvoie',
   'No footnotes in this note': 'Aucune note de bas de page dans cette note',
+  'Stack tabs': 'Empiler les onglets',
+  'Unstack tabs': 'Désempiler les onglets',
   'High contrast': 'Contraste élevé',
   'Front matter': 'En-tête YAML',
   'Front matter: {name}': 'Métadonnées : {name}',

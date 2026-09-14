@@ -760,6 +760,8 @@ export const ur: Dictionary = {
   'Go to the definition': 'حاشیے پر جائیں',
   'Nothing points at this one': 'کوئی چیز اس کی طرف اشارہ نہیں کرتی',
   'No footnotes in this note': 'اس نوٹ میں کوئی حاشیہ نہیں',
+  'Stack tabs': 'ٹیبز کو کالموں میں رکھیں',
+  'Unstack tabs': 'ٹیب کالم ہٹائیں',
   'High contrast': 'زیادہ تضاد',
   'Front matter': 'ابتدائی ڈیٹا',
   'Front matter: {name}': 'ابتدائی معلومات: {name}',

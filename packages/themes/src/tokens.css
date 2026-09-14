@@ -65,6 +65,14 @@
      row: a 56px row a thumb lands on wants more of a corner than a 28px one. */
   --radius-row: 6px;
 
+  /* How wide one column of a stacked pane is, and how wide the active one is. Two
+     numbers rather than a share of the pane: a column is a column of words, and what
+     makes it readable is its own width and not how many of them there happen to be. The
+     active one is twice the rest, which says which one is being written in without
+     anything else having to say it. See Pane.svelte. */
+  --stack-column: 22rem;
+  --stack-column-wide: 44rem;
+
   /* How tall a note's cover is. One number, so the editor, the reading view, an
      exported document and a published page all give a note the same top; a theme
      may say otherwise like any other token. Shorter on a hand's width of screen,

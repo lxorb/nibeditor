@@ -760,6 +760,8 @@ export const gu: Dictionary = {
   'Go to the definition': 'વ્યાખ્યા પર જાઓ',
   'Nothing points at this one': 'આ તરફ કંઈ સૂચવતું નથી',
   'No footnotes in this note': 'આ નોંધમાં કોઈ ફૂટનોટ નથી',
+  'Stack tabs': 'ટેબ થપ્પી કરો',
+  'Unstack tabs': 'ટેબ થપ્પી હટાવો',
   'High contrast': 'ઉચ્ચ કોન્ટ્રાસ્ટ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ફ્રન્ટ મેટર: {name}',
