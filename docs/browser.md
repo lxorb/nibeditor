@@ -1716,6 +1716,15 @@ Everything else batch 2 was waiting on is measured. Batch 2's own shape - web ta
 webviews in one window, two profiles, one browser process - is what these runs show
 working.
 
+**One correction batch 2 had to make to that sentence.** Those runs showed the *shape*
+working: the webviews are made, the window holds them, one browser process serves them,
+the profiles are on disk. They did not show a **page** in one, and batch 2's own rows
+found that none of them ever had: on Windows the first web tab leaves the main thread
+blocked ten seconds later, and on macOS a web tab's browser never navigates at all. Both
+are upstream and both are in section 10; what they change here is that criterion 2 is a
+claim about processes rather than about pages, and that nothing built on top of a web tab
+can be measured until a child browser comes all the way up.
+
 **And one criterion that is not the gate's.** The plugin repair in `upstream.py` is a
 patch nib carries against somebody else's branch, and a batch 2 built on it inherits
 that. Before batch 2 ships anything, the repair should be an upstream pull request

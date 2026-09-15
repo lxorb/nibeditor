@@ -785,7 +785,11 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
 fn bare_page(app: &AppHandle) {
     let label = "gate-bare";
     if let Err(error) = page(app, label, SITES[0], 60.0) {
-        check("a website opens in a webview with nothing of nib's on it", false, &error);
+        check(
+            "a website opens in a webview with nothing of nib's on it",
+            false,
+            &error,
+        );
         return;
     }
     std::thread::sleep(SETTLE);
