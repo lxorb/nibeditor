@@ -32,6 +32,10 @@ on:
         description: 'How many web tabs the gate opens'
         type: string
         default: '2'
+      bare:
+        description: 'Also open a website in a webview with nothing of nib’s on it, which is the control for every row about a page'
+        type: boolean
+        default: false
 
 concurrency:
   group: cef-${{ github.ref }}
@@ -217,6 +221,7 @@ jobs:
       - name: Run the gate
         env:
           NIB_CEF_TABS: ${{ inputs.tabs || '2' }}
+          NIB_CEF_BARE_ASKED: ${{ inputs.bare }}
         run: |
           suffix=''
           [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
@@ -227,6 +232,12 @@ jobs:
             --extension spike/browser/extension
             --tabs "$NIB_CEF_TABS"
             --out gate-out)
+          # The control page is off unless a dispatch asked for it: it costs the browser
+          # a web tab would have been, and on Windows the third browser of a run is the
+          # one that never comes back.
+          if [ "$NIB_CEF_BARE_ASKED" = "true" ]; then
+            run+=(--bare)
+          fi
           if [ "${{ runner.os }}" = "Linux" ]; then
             xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
           else

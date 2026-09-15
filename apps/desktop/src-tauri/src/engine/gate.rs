@@ -28,6 +28,10 @@ use tauri::{AppHandle, Listener, LogicalPosition, LogicalSize, Manager, WebviewU
 /// somebody who never opens one pays; `1` and `2` are the memory rows.
 const SWITCH: &str = "NIB_CEF_GATE";
 
+/// The variable that asks for the control page: a website in a child webview with
+/// nothing of nib's on it. See [`bare_page`].
+const BARE: &str = "NIB_CEF_BARE";
+
 /// The sites the web tabs are sent to. Real pages over TLS, because a browser that
 /// only works on `about:blank` has not been measured; two different sites, because
 /// Chromium gives one renderer per site and two tabs on one site would understate
@@ -220,6 +224,20 @@ fn walk(app: &AppHandle, tabs: usize) {
     say("\"event\":\"tabs\",\"count\":0");
     pulse(app, "the window");
     std::thread::sleep(SETTLE);
+
+    // **The control for every row about a page**, on a run that asks for it.
+    //
+    // Batch 2's rows all go through `web_tabs.rs`, which dresses a webview up: a script
+    // that runs before the page's own, a navigation handler, the drop handler taken away,
+    // a page-load handler, a title handler. When the page in a web tab then does not load
+    // - and under this engine it does not, on either desktop that starts - the first
+    // question is whether *any* child webview can show a website here or only nib's. So
+    // this opens one with nothing on it but an address and a title handler, and puts the
+    // same three questions to it. It costs the browser that a web tab would have been, so
+    // it is off unless a run asks: see the `bare` input of `cef.yml`.
+    if std::env::var_os(BARE).is_some() {
+        bare_page(app);
+    }
 
     let mut tab_labels: Vec<String> = Vec::new();
 
@@ -595,13 +613,13 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     // twice: once through its own address, which only needs the script to run, and once
     // through the answer channel the app's own commands use. A yes on the first and a no
     // on the second is a finding about the engine rather than about the page.
-    let ran = page_says(app, &tab, "'ok'");
+    let ran = page_says(app, first, "'ok'");
     check(
         "a script the app runs in a page runs",
         ran.as_deref() == Some("ok"),
         "the page put the answer in its own address, which needs no answer channel",
     );
-    let answered = ask_page(app, &tab, "'ok'");
+    let answered = ask_page(app, first, "'ok'");
     check(
         "a page's answer comes back through the engine's own channel",
         answered.as_deref() == Some("ok"),
@@ -619,7 +637,7 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     let stepped = step_back(app, &tab);
     std::thread::sleep(SETTLE);
 
-    let landed = where_now(app, &tab);
+    let landed = where_now(app, first);
     let went_back = landed.starts_with(SITES[0].trim_end_matches('/'));
     check(
         "back is the engine's own history and lands where the tab was",
@@ -671,8 +689,8 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     // this binary there is nothing to find, and on the second there is - which is what
     // "a login survives a relaunch" means when the login is a value in a profile on
     // disk.
-    let (kept, baked) = read_mark(app, &tab);
-    write_mark(app, &tab);
+    let (kept, baked) = read_mark(app, first);
+    write_mark(app, first);
     check(
         "localStorage from an earlier run of the app is still there",
         kept.as_deref() == Some(MARK),
@@ -713,7 +731,7 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     let again = opened_within(app, at, SITES[0]);
     std::thread::sleep(SETTLE);
     let (over, cooked) = if again.is_ok() {
-        read_mark(app, &tab)
+        read_mark(app, first)
     } else {
         (None, None)
     };
@@ -749,6 +767,50 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
     );
 }
 
+/// A website in a child webview with nothing of nib's on it, asked the same questions a
+/// web tab is asked.
+///
+/// The three that matter, and why each is the same question twice over:
+///
+/// * **where the engine says it is.** A browser that has navigated has an address on its
+///   main frame; one that has not has none, and `web_look`'s own answer comes out of the
+///   page rather than out of the engine, so this is the reading that cannot be confused
+///   with a script not running.
+/// * **whether a title arrived.** A page that loaded renamed itself; `example.com` calls
+///   itself *Example Domain*. This one is read through the webview's own title handler,
+///   which is the handler section 10 says is never called under this runtime - so a title
+///   here would correct that finding as well.
+/// * **whether a script the app runs in it takes effect**, read back out of the address
+///   the script puts it in, which needs no answer channel.
+fn bare_page(app: &AppHandle) {
+    let label = "gate-bare";
+    if let Err(error) = page(app, label, SITES[0], 60.0) {
+        check("a website opens in a webview with nothing of nib's on it", false, &error);
+        return;
+    }
+    std::thread::sleep(SETTLE);
+    pulse(app, "the bare page");
+
+    let landed = where_now(app, label);
+    check(
+        "the engine says where a page with nothing of nib's on it is",
+        landed.starts_with(SITES[0].trim_end_matches('/')),
+        &format!("the engine says {landed}"),
+    );
+    check(
+        "a page with nothing of nib's on it tells the window its name",
+        spoke(label),
+        &format!("{} titles for {label}", titles_for(label)),
+    );
+    let ran = page_says(app, label, "'ok'");
+    check(
+        "a script the app runs in a page with nothing of nib's on it runs",
+        ran.as_deref() == Some("ok"),
+        "read back out of the address the script put it in",
+    );
+    pulse(app, "the bare page's answers");
+}
+
 /// What the gate writes into `localStorage` to find again on the next run.
 const MARK: &str = "nib-gate-2";
 
@@ -772,8 +834,8 @@ fn step_back(app: &AppHandle, tab: &str) -> Result<(), String> {
 /// as an error), and **a browser whose main frame has no address**, which is what a
 /// browser that has never navigated looks like from outside. One round of the gate spent
 /// a table's worth of noes on the third one without being able to name it.
-fn where_now(app: &AppHandle, tab: &str) -> String {
-    let Some(view) = app.get_webview(&format!("web-{tab}")) else {
+fn where_now(app: &AppHandle, label: &str) -> String {
+    let Some(view) = app.get_webview(label) else {
         return "no webview under that label".to_string();
     };
 
@@ -809,10 +871,10 @@ fn place(app: &AppHandle, tab: &str) -> Result<f64, String> {
 /// dropped when the process exits unless `persist_session_cookies` is on, and most
 /// logins are session cookies - which is the half of Emil's *"cookies etc. ... even
 /// across application restarts"* that had to be asked for. See `cef/src/main.rs`.
-fn read_mark(app: &AppHandle, tab: &str) -> (Option<String>, Option<String>) {
+fn read_mark(app: &AppHandle, label: &str) -> (Option<String>, Option<String>) {
     let (said, how) = answer(
         app,
-        tab,
+        label,
         &format!(
             "(function () {{ \
                var kept = ''; var baked = ''; \
@@ -846,8 +908,8 @@ fn read_mark(app: &AppHandle, tab: &str) -> (Option<String>, Option<String>) {
 /// The cookie carries no `expires` and no `max-age`, which is what makes it a session
 /// cookie: it is the kind a login uses and the kind that is gone tomorrow unless the
 /// profile was told to keep it.
-fn write_mark(app: &AppHandle, tab: &str) {
-    if let Some(view) = app.get_webview(&format!("web-{tab}")) {
+fn write_mark(app: &AppHandle, label: &str) {
+    if let Some(view) = app.get_webview(label) {
         let _ = view.eval(format!(
             "try {{ localStorage.setItem('{MARK}', '{MARK}') }} catch (error) {{}}; \
              try {{ document.cookie = '{MARK}={MARK}; path=/; SameSite=Lax' }} catch (error) {{}}"
@@ -863,13 +925,13 @@ fn write_mark(app: &AppHandle, tab: &str) {
 /// about what the profile kept rather than about how it was read, and it would be a poor
 /// gate that could not answer it on a build whose answer channel is silent. So the second
 /// way is [`page_says`], and the run says which one it got the answer from.
-fn answer(app: &AppHandle, tab: &str, script: &str) -> (Option<String>, &'static str) {
-    if let Some(said) = ask_page(app, tab, script) {
+fn answer(app: &AppHandle, label: &str, script: &str) -> (Option<String>, &'static str) {
+    if let Some(said) = ask_page(app, label, script) {
         return (Some(said), "the engine's own answer channel");
     }
 
     (
-        page_says(app, tab, script),
+        page_says(app, label, script),
         "the address the page put it in, because the answer channel said nothing",
     )
 }
@@ -884,8 +946,8 @@ fn answer(app: &AppHandle, tab: &str, script: &str) -> (Option<String>, &'static
 ///
 /// Only for answers that can live in an address: letters, digits, and the three marks
 /// `page_says` does not strip. The gate's own answers are spelled that way.
-fn page_says(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
-    let view = app.get_webview(&format!("web-{tab}"))?;
+fn page_says(app: &AppHandle, label: &str, script: &str) -> Option<String> {
+    let view = app.get_webview(label)?;
     view.eval(format!(
         "try {{ history.replaceState(null, '', '#{FRAGMENT}=' + \
            String({script}).replace(/[^A-Za-z0-9._-]/g, '')) }} catch (error) {{}}"
@@ -904,8 +966,8 @@ fn page_says(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
 const FRAGMENT: &str = "nib-gate";
 
 /// One script run in the page, and the answer it returned.
-fn ask_page(app: &AppHandle, tab: &str, script: &str) -> Option<String> {
-    let view = app.get_webview(&format!("web-{tab}"))?;
+fn ask_page(app: &AppHandle, label: &str, script: &str) -> Option<String> {
+    let view = app.get_webview(label)?;
     let (sending, waiting) = std::sync::mpsc::channel::<String>();
     view.eval_with_callback(script.to_owned(), move |answer| {
         let _ = sending.send(answer);

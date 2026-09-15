@@ -1427,6 +1427,12 @@ def main() -> int:
     ap.add_argument(
         '--no-relaunch', action='store_true', help="skip the second run, which is batch 2's session row"
     )
+    ap.add_argument(
+        '--bare',
+        action='store_true',
+        help='also open a website in a webview with nothing of the app on it, which is '
+        'the control for every row about a page',
+    )
     ap.add_argument('--out', default='gate-out')
     args = ap.parse_args()
 
@@ -1469,6 +1475,8 @@ def main() -> int:
 
     print('== nib on its own Chromium ==')
     env = {'NIB_TRACE_STARTUP': '1', 'NIB_CEF_GATE': str(args.tabs)}
+    if args.bare:
+        env['NIB_CEF_BARE'] = '1'
     if args.extension:
         env['NIB_CEF_EXTENSION'] = str(Path(args.extension).resolve())
     if MACOS:
