@@ -1821,7 +1821,32 @@ input opens, the find bar a page's own `Ctrl+F` reaches and the zoom a `Ctrl+scr
 applies. That is the batch's principle paying for itself: **where Chromium already does
 something, nib stops doing it.**
 
-MEASURED-ROWS-GO-HERE
+#### The rows, and which platform each one could be measured on
+
+**Read this first, because it decides how much of the table below means anything.** A row
+about a *page* needs a page: batch 2's rows are measured by the app on itself, through
+the commands the window calls, and every one of them from "back" onwards asks the page
+in the tab something. Two of the three desktops cannot answer:
+
+- **On macOS a web tab never loads its page under the flag.** The browser is made, the
+  call returns, the webview is placed - and the engine says its main frame has no
+  address at all. No title arrives, a script the app runs in it does nothing, storage is
+  empty on a site whose storage was written a moment before. Batch 1.5's own screenshots
+  have it too, two white rectangles where the panes are, so nothing in batch 2 caused
+  it. Section 10.
+- **On Windows the third browser in the process hangs the main thread.** The interface is
+  the first, one web tab is the second, and whatever is third - a second tab, or a window
+  the gate opens - never comes back from the call that makes it; from that moment the
+  main thread answers nothing, which the gate's own pulse says in as many words. So the
+  rows are measured with **one** web tab, and the gate now measures them *before* it
+  opens anything else. That reordering is what turned the table from eleven "not
+  measured" into the one below.
+- **On Linux the flagged build does not start at all**, which is Emil's GTK 3 row.
+
+So the rows below are Windows, one tab, `cef.yml` run `MEASURED-RUN-ID`, and the second
+half of each session row is the *relaunch* of the same binary in the same run.
+
+MEASURED-TABLE-GOES-HERE
 
 ---
 
