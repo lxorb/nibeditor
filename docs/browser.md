@@ -990,6 +990,14 @@ would put nib inside a tab with the site's script beside it.
 signing out of the nib account still empties the vault, and the two are separate on
 purpose - somebody may well want one without the other.
 
+**How far this is proven.** The switch is in the code with Emil's sentence above it, the
+gate has the row that would prove it - a session cookie and a `localStorage` key written
+in one run of the binary and looked for in the next, before anything is written again -
+and the profile is on disk with Chromium's own `Network` and `Local Storage` in it. What
+the row cannot say yet is *yes*, because a web tab under the flag has no page to store
+anything: section 8's table, and section 10's two upstream rows. Nothing about it is
+waiting on nib.
+
 **And everything a browser keeps, nib keeps - on this device, and only on this
 device.** Emil, on batch 2: *"when I close and reopen nib then for web notes the state
 (e.g. cookies etc. also including general application data that would normally be saved
@@ -1843,10 +1851,68 @@ in the tab something. Two of the three desktops cannot answer:
   measured" into the one below.
 - **On Linux the flagged build does not start at all**, which is Emil's GTK 3 row.
 
-So the rows below are Windows, one tab, `cef.yml` run `MEASURED-RUN-ID`, and the second
-half of each session row is the *relaunch* of the same binary in the same run.
+So the rows below are `cef.yml` run `34903195206` - one web tab, both desktops that start,
+and the figure in brackets is the **relaunch** of the same binary later in the same run,
+which is the only honest way to ask what a profile kept. The two-tab figures are run
+`34898301806`.
 
-MEASURED-TABLE-GOES-HERE
+| what batch 2 claims about a web tab | `windows-latest` | `macos-latest` |
+| --- | --- | --- |
+| the crate's own part of a switch, away | **109 µs** (133 µs) | **24 µs** (34 µs) |
+| and back | **6 µs** (8 µs) | **2 µs** (2 µs) |
+| the webview after a switch | **still there** | **still there** |
+| the main thread after the switch | **blocked** | alive, 38 ms |
+| one browser process for two web tabs | never both opened | **1** |
+| the `app` profile on disk | **yes**, 14 of Chromium's own files | **yes**, 14 |
+| the `Default` profile on disk | **yes**, 14 | **yes**, 14 |
+| the profile the interface asked for | `…/Roaming/ch.emilvinu.nib/web/app` | `…/Application Support/ch.emilvinu.nib/web/app` |
+| a third profile nobody asked for | `Profile-ezIV5moIbrEKA5IkfSkz2g`, 14 files | none |
+| a script the app runs in the page runs | not measured | **no** |
+| a page's answer comes back out of it | not measured | **no** |
+| back is the engine's own history | not measured | **no**: *the engine would not say: invalid url* |
+| the place on the page, read back | not measured | **no**: the page said nothing |
+| the page tells the window its name | not measured | **no**, 0 titles |
+| the site's own mark | not measured | **no** |
+| `localStorage` across a relaunch | not measured | **no**, nothing was there to find |
+| a session cookie across a relaunch | not measured | **no**, nothing was there to find |
+| a login across a close and an open again | not measured | not measured: the process died first |
+
+**What the first four rows are worth, and it is not nothing.** *"Note to web and back in
+single-digit milliseconds, with the webview never destroyed on a switch"* was the round-six
+promise, and on this engine the crate's own half of a switch is **six microseconds** on
+Windows and **two** on a Mac - three orders of magnitude inside the budget, with the
+webview still there afterwards on both. A switch under nib's own Chromium is two messages
+and no rebuild, exactly as it is under `WebView2`, and the pane is placed and shown by the
+same two calls. The two profiles are real: fourteen of Chromium's own files in each,
+`Preferences` and `Local Storage` and `Network` among them, which is what makes
+`web/Default` a browser profile rather than a folder.
+
+**And what the rest of the table says, which is the honest headline of this batch: a web
+tab on nib's own Chromium cannot show a website yet, and the reason is upstream.** Three
+platforms, three shapes of the same fault - a child browser that never finishes coming up:
+
+- **Windows.** CEF logs *"Timeout of new browser info response for frame"* twice, about
+  ten seconds after the first web tab is created, and from that moment the main thread
+  answers nothing at all: the gate's pulse says *blocked for more than 10 seconds* at
+  every step afterwards, `add_child` for any later browser never returns, and even
+  `chrome://settings` in a webview of its own is refused because there is no thread left
+  to open it on. One web tab is enough to do it; batch 1.5 read it as "the second tab"
+  because the second tab is the first thing that needs the thread back.
+- **macOS.** No hang and no error - the main thread answers in tens of milliseconds all
+  the way through - and the page simply never loads: the engine says the browser's main
+  frame has **no address**, no title ever arrives, a script the app runs in it does
+  nothing, and the site's storage is empty on the run after the one that wrote it. Then
+  closing that tab takes the process with it (`SIGSEGV`).
+- **Linux.** Does not start, which is Emil's GTK 3 row.
+
+**None of it is nib's code, and the table is what says so.** Every call the window makes
+returns and returns fast; the profiles are where they should be; the same file, with the
+flag off, is what ships today and is what round six drove on `WebView2`. What is missing
+is a browser the runtime brings all the way up. So batch 2's *code* is done - the seam is
+cut, the trail is gone, the guard is split, the two profiles are described - and batch 2's
+*claims* wait on `tauri-runtime-cef`. Section 10 has both faults as rows of their own, and
+the next flagged round asks the one question that would move them: whether a child webview
+with **nothing of nib's on it** loads a page here, which is `cef.yml`'s `bare` input.
 
 ---
 
