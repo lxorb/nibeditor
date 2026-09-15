@@ -337,7 +337,13 @@ fn walk(app: &AppHandle, tabs: usize) {
     let mut pages: Vec<String> = Vec::new();
     for (at, address) in PAGES.iter().enumerate() {
         let label = format!("gate-page-{at}");
-        match page(app, &label, address, if at % 2 == 0 { 60.0 } else { 330.0 }) {
+        match page(
+            app,
+            &label,
+            address,
+            if at % 2 == 0 { 60.0 } else { 330.0 },
+            None,
+        ) {
             Ok(()) => {
                 say(&format!(
                     "\"event\":\"page\",\"label\":\"{label}\",\"url\":\"{address}\""
@@ -783,36 +789,66 @@ fn web_tab_rows(app: &AppHandle, tabs: &[String]) {
 /// * **whether a script the app runs in it takes effect**, read back out of the address
 ///   the script puts it in, which needs no answer channel.
 fn bare_page(app: &AppHandle) {
-    let label = "gate-bare";
-    if let Err(error) = page(app, label, SITES[0], 60.0) {
+    asked_of(app, "gate-bare", None, "nothing of nib's on it");
+
+    // **And the same page again with one thing on it: a script to run before the page's
+    // own.** The first control came up on Windows - the engine knew where it was, three
+    // titles arrived, a script took effect - while a web tab beside it left the main
+    // thread blocked, so the difference is something `web_tabs.rs` asks for and this is
+    // the first suspect by the runtime's own account: it installs document-start scripts
+    // over the engine's `DevTools` protocol and *holds the webview's first navigation
+    // until that round trip answers*. nib's guard is such a script. If this page fails
+    // where the one above it passed, that is the cause named rather than suspected.
+    asked_of(
+        app,
+        "gate-dressed",
+        Some("window.__nib_gate = 1"),
+        "one script to run before the page's own",
+    );
+}
+
+/// One control page, opened with what `dressed` says and asked the three questions a page
+/// can be asked without its answer channel.
+///
+/// The three, and why each one is the same question twice over:
+///
+/// * **where the engine says it is.** A browser that has navigated has an address on its
+///   main frame; one that has not has none. Read off the engine, so it cannot be confused
+///   with a script that did not run.
+/// * **whether a title arrived.** A page that loaded renamed itself - `example.com` calls
+///   itself *Example Domain* - and this is read through the webview's own title handler.
+/// * **whether a script the app runs in it takes effect**, read back out of the address
+///   the script puts it in, which needs no answer channel.
+fn asked_of(app: &AppHandle, label: &str, dressed: Option<&str>, what: &str) {
+    if let Err(error) = page(app, label, SITES[0], 60.0, dressed) {
         check(
-            "a website opens in a webview with nothing of nib's on it",
+            &format!("a website opens in a webview with {what}"),
             false,
             &error,
         );
         return;
     }
     std::thread::sleep(SETTLE);
-    pulse(app, "the bare page");
+    pulse(app, label);
 
     let landed = where_now(app, label);
     check(
-        "the engine says where a page with nothing of nib's on it is",
+        &format!("the engine says where a page with {what} is"),
         landed.starts_with(SITES[0].trim_end_matches('/')),
         &format!("the engine says {landed}"),
     );
     check(
-        "a page with nothing of nib's on it tells the window its name",
+        &format!("a page with {what} tells the window its name"),
         spoke(label),
         &format!("{} titles for {label}", titles_for(label)),
     );
     let ran = page_says(app, label, "'ok'");
     check(
-        "a script the app runs in a page with nothing of nib's on it runs",
+        &format!("a script the app runs in a page with {what} runs"),
         ran.as_deref() == Some("ok"),
         "read back out of the address the script put it in",
     );
-    pulse(app, "the bare page's answers");
+    pulse(app, &format!("the answers from {label}"));
 }
 
 /// What the gate writes into `localStorage` to find again on the next run.
@@ -988,7 +1024,13 @@ fn ask_page(app: &AppHandle, label: &str, script: &str) -> Option<String> {
 /// the web is an address a reader may type - `chrome://settings` is a page nib
 /// opens, never a page a page can reach. Batch 3 is where it becomes a tab with a
 /// gear on it; here it only has to load.
-fn page(app: &AppHandle, label: &str, url: &str, y: f64) -> Result<(), String> {
+fn page(
+    app: &AppHandle,
+    label: &str,
+    url: &str,
+    y: f64,
+    dressed: Option<&str>,
+) -> Result<(), String> {
     let at: tauri::Url = url.parse().map_err(|_| format!("{url} is not a URL"))?;
     let window = app
         .get_window("main")
@@ -996,11 +1038,19 @@ fn page(app: &AppHandle, label: &str, url: &str, y: f64) -> Result<(), String> {
 
     let label = label.to_owned();
     let watching = label.clone();
+    let dressed = dressed.map(str::to_owned);
     let (sending, waiting) = std::sync::mpsc::channel::<Result<(), String>>();
 
     app.run_on_main_thread(move || {
         let builder = tauri::webview::WebviewBuilder::new(&label, WebviewUrl::External(at))
             .on_document_title_changed(move |_view, title| title_seen(&watching, &title));
+        // A script to run before the page's own, when the caller asked for one: the one
+        // thing a control page can be dressed in, and the one the runtime holds a
+        // navigation for. See `bare_page`.
+        let builder = match &dressed {
+            Some(script) => builder.initialization_script(script.clone()),
+            None => builder,
+        };
         let made = window
             .add_child(
                 builder,
