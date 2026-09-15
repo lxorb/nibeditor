@@ -387,8 +387,10 @@ fn ready(
     trace::mark("deep links");
 
     // And the socket the `nib` command drives the app through, which only a
-    // desktop has. It comes up after the links above and before the window is
-    // seen, so a request that arrives in the first moment finds a window to ask.
+    // desktop has. It comes up after the links above and a millisecond or two before
+    // the window below, which is as close to "there is a window to ask" as the order
+    // can be: the socket has to be listening early enough that a second launch and a
+    // waiting script find it, and the window is the last thing this function does.
     #[cfg(desktop)]
     endpoint::start(handle);
     #[cfg(desktop)]
