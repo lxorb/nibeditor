@@ -27,6 +27,7 @@ const FLAGGED = ['cef.yml', 'cef-bump.yml']
 
 const cargo = read('../src-tauri/Cargo.toml')
 const flagged = read('../src-tauri/cef/Cargo.toml')
+const locked = read('../src-tauri/cef/Cargo.lock')
 
 const workflows = readdirSync(WORKFLOWS)
   .filter((name) => name.endsWith('.yml'))
@@ -68,6 +69,53 @@ describe('the app that ships', () => {
     const revisions = [...flagged.matchAll(/^revision = "([0-9a-f]+)"/gm)].map((one) => one[1])
     expect(revisions).toHaveLength(1)
     expect(revisions[0]).toHaveLength(40)
+  })
+
+  /** Every dependency the app takes is in the flagged workspace's lock file.
+   *
+   *  **This one is here because it cost a round of `cef.yml`.** That lock records the
+   *  app crate's own dependency list, because the app is a path dependency of
+   *  `nib-cef` - so adding a crate to the app's manifest makes the flagged build fail
+   *  with `cannot update the lock file ... because --locked was passed`, in a workflow
+   *  nothing on the way to main runs and forty-five minutes after the push. `check.yml`
+   *  never builds that workspace and cannot notice. Reading two files can: the day
+   *  somebody adds a dependency, this says so in the ordinary test run, and the fix is
+   *  `cargo generate-lockfile` in `apps/desktop/src-tauri/cef`.
+   *
+   *  `window-vibrancy` was the one that found it. */
+  test('every dependency the app takes is in the flagged lock file', () => {
+    const inside = locked.split('\nname = "nib"\n')[1]?.split('\n[[package]]')[0] ?? ''
+    expect(inside).toContain('dependencies')
+
+    // The dependency names out of the app's own manifest, table by table: only the
+    // ones under a `[...dependencies]` header, so `version` under `[package]` and the
+    // feature names under `[features]` are not mistaken for crates. A renamed
+    // dependency is written down as its package, which is the name the lock uses.
+    const asked = new Set<string>()
+    let table = ''
+    for (const line of cargo.split('\n')) {
+      const header = /^\[([^\]]+)\]/.exec(line)
+      if (header) {
+        table = header[1] ?? ''
+        continue
+      }
+      if (!table.endsWith('dependencies')) continue
+
+      const named = /^([a-z0-9_-]+) = [{"]/.exec(line)
+      if (!named) continue
+      const renamed = /package = "([a-z0-9_-]+)"/.exec(line)
+      const name = renamed?.[1] ?? named[1]
+      if (name) asked.add(name)
+    }
+
+    expect(asked.size).toBeGreaterThan(10)
+    for (const name of asked) {
+      // `windows` and friends appear in the lock with a version beside them, so the
+      // quoted name is the test either way.
+      expect(inside, `${name} is in the app's manifest and not in the flagged lock`).toContain(
+        `"${name}`,
+      )
+    }
   })
 })
 

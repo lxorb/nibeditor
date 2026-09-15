@@ -32,8 +32,13 @@
 //! before the page's first script runs, along with the devices nobody asked to
 //! hand over. See `GUARD`.
 
-use std::collections::{HashMap, HashSet};
+// The map is the trail's, and the trail is only kept on an engine that cannot be asked;
+// see `Trail`.
+#[cfg(not(feature = "cef"))]
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Mutex;
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
@@ -58,9 +63,10 @@ const MOVED: &str = "nib://web-tab";
 /// The event the window hears when a site asks for something it has to be given: the
 /// camera, the microphone, where you are, notifications, the clipboard to read.
 ///
-/// Only `WebView2` raises the request this carries, so off Windows nothing emits it;
-/// the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Only `WebView2` raises the request this carries, so nothing emits it off Windows -
+/// nor under nib's own Chromium on Windows, where Chromium asks for itself and the ask
+/// module is the same stub it is on a Mac. The `cfg_attr` names that one build.
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
@@ -77,6 +83,13 @@ const LONGEST_PAGE: usize = 4_000_000;
 /// the buses a page can reach hardware over - Bluetooth, USB, serial, HID - and the
 /// credential store, none of which a note-taking app has any business handing to a
 /// page and none of which a browser asks about in a bubble anybody could answer.
+///
+/// **Only the first kind under nib's own Chromium.** The buses are `BUSES`, which is
+/// added to this on the system's engines and not under the flag: there a page that asks
+/// for a USB device gets Chromium's own chooser, which is a real answer to a real
+/// question, and hiding the API to avoid a bubble nobody could answer is a workaround
+/// for a bubble that now exists. The globals half is not a workaround and stays on
+/// every engine - it is the lock that does not depend on a list of labels being right.
 ///
 /// **What is no longer here is the camera, the microphone, where you are,
 /// notifications and the clipboard.** Those were taken off `Navigator.prototype` too,
@@ -98,7 +111,19 @@ const GUARD: &str = r"(function () {
     // A page that has frozen its own globals keeps them. The capabilities are
     // what actually refuse the call; this is the second lock, not the first.
   }
+})()";
 
+/// The buses a page can reach hardware over, taken away where the engine has no chooser
+/// of its own to offer instead.
+///
+/// Bluetooth, USB, serial, HID and the credential store. On the system's engines a
+/// request for one of these is either refused in silence or answered by a prompt that
+/// cannot say which device, so the API is not there at all. Under nib's own Chromium it
+/// is Chromium that asks, with the device picker a reader knows from their browser - and
+/// a browser that hid `navigator.usb` would be a browser missing a feature rather than
+/// one being careful. See `guard`.
+#[cfg(not(feature = "cef"))]
+const BUSES: &str = r"(function () {
   function hide(on, name) {
     try {
       Object.defineProperty(on, name, { configurable: true, get: () => undefined })
@@ -267,10 +292,17 @@ const READER: &str = r"(function () {
 /// `WKWebView` tells Tauri whether a page can go back, and a back arrow that is
 /// always lit is an arrow that lies half the time.
 ///
+/// **None of this exists under nib's own Chromium**, which is the whole of what batch 2
+/// of docs/browser.md changes about this file: that engine keeps the history and
+/// answers for it - `can_go_back`, `go_back`, four calls the released Tauri does not
+/// have at all - so the trail is not kept, not written down and not walked. See
+/// `arrows` and `stepped`.
+///
 /// It outlives the webview. A parked tab keeps its trail, so the arrows over a page
 /// that has just been revived are right from the first frame rather than dead until
 /// somebody follows a link - and stepping one of them walks the trail rather than the
 /// engine's own history, which a revived webview has none of. See `engine`.
+#[cfg(not(feature = "cef"))]
 #[derive(Default)]
 struct Trail {
     urls: Vec<String>,
@@ -286,6 +318,7 @@ struct Trail {
     engine: bool,
 }
 
+#[cfg(not(feature = "cef"))]
 impl Trail {
     /// The trail a parked tab was parked with, restored under a webview that has just
     /// been built. Its own history is empty, so every step from here is a navigation.
@@ -346,6 +379,9 @@ impl Trail {
 /// is in the middle of being given a page.
 #[derive(Default)]
 pub struct WebTabs {
+    /// Where each tab has been, on an engine that does not know. Not there at all under
+    /// nib's own Chromium, which does; see `Trail`.
+    #[cfg(not(feature = "cef"))]
     trails: Mutex<HashMap<String, Trail>>,
     /// The tabs whose webview is being built at this moment.
     ///
@@ -373,6 +409,7 @@ impl WebTabs {
     }
 
     /// A page a tab has arrived on, on the trail kept for that tab.
+    #[cfg(not(feature = "cef"))]
     fn walked(&self, tab: &str, url: &str) {
         if let Ok(mut trails) = self.trails.lock() {
             trails.entry(tab.to_string()).or_default().visited(url);
@@ -382,6 +419,7 @@ impl WebTabs {
     /// The trail a tab was parked with, put back under the webview that has just been
     /// built for it. An empty one is no trail at all, which is a tab being opened for
     /// the first time.
+    #[cfg(not(feature = "cef"))]
     fn restore(&self, tab: &str, urls: Vec<String>, at: usize) {
         if urls.is_empty() {
             return;
@@ -394,6 +432,7 @@ impl WebTabs {
 
     /// Where this tab has been and where along it it is, for the window to write down
     /// against the note.
+    #[cfg(not(feature = "cef"))]
     fn walk(&self, tab: &str) -> (Vec<String>, usize) {
         self.trails
             .lock()
@@ -405,6 +444,7 @@ impl WebTabs {
     /// Where a step goes: the address to send the tab to, or `None` for a tab whose
     /// own engine can take the step. Stepping by address is what a revived page does,
     /// and from the first one this tab does it for good; see `Trail::engine`.
+    #[cfg(not(feature = "cef"))]
     fn stepping(&self, tab: &str, forward: bool) -> Option<String> {
         let mut trails = self.trails.lock().ok()?;
         let trail = trails.get_mut(tab)?;
@@ -414,6 +454,152 @@ impl WebTabs {
 
         trail.step_to(forward).cloned()
     }
+}
+
+/// Whether the arrows over a page are lit, for the window to draw them by.
+///
+/// **The one thing about a web tab that is a different question on each engine**, and
+/// batch 2 of docs/browser.md is where the second answer arrives. The system's engines
+/// tell Tauri nothing about a page's own history, so nib keeps the addresses itself and
+/// reads the arrows off them - see `Trail`. nib's own Chromium has the history, knows
+/// whether there is anywhere to go, and is asked: two calls that the released Tauri
+/// does not have at all, which is why this is a `cfg` and not a runtime branch.
+///
+/// Asking the engine is safe from here even though `say` is called from inside the
+/// engine's own page-load handler: the runtime runs a getter inline when it is already
+/// on the main thread, so the answer does not wait for a loop this thread is holding.
+/// That was the freeze `web_open` is written around, and this is the same trap avoided
+/// by somebody else's care rather than by ours.
+#[cfg(not(feature = "cef"))]
+fn arrows(app: &AppHandle, _view: &Webview, tab: &str, url: &str, loading: bool) -> (bool, bool) {
+    app.try_state::<WebTabs>()
+        .and_then(|tabs| {
+            tabs.trails.lock().ok().map(|mut open| {
+                let trail = open.entry(tab.to_string()).or_default();
+                if !loading && !url.is_empty() {
+                    trail.visited(url);
+                }
+                (trail.back(), trail.forward())
+            })
+        })
+        .unwrap_or((false, false))
+}
+
+/// The arrows, asked of nib's own Chromium, which keeps the history itself. See above.
+#[cfg(feature = "cef")]
+fn arrows(
+    _app: &AppHandle,
+    view: &Webview,
+    _tab: &str,
+    _url: &str,
+    _loading: bool,
+) -> (bool, bool) {
+    (
+        view.can_go_back().unwrap_or(false),
+        view.can_go_forward().unwrap_or(false),
+    )
+}
+
+/// A step taken: back, forward, or the same page again.
+///
+/// The system engines' half is the older and the longer one, and its reasoning is on
+/// `web_step`: a page that has been running all along steps in the page, and a page
+/// that has just been revived steps by address along the trail this crate kept.
+#[cfg(not(feature = "cef"))]
+fn stepped(view: &Webview, tabs: &WebTabs, tab: &str, step: &Step) -> Result<(), String> {
+    let walked = match step {
+        Step::Reload => None,
+        Step::Back => tabs.stepping(tab, false),
+        Step::Forward => tabs.stepping(tab, true),
+    };
+
+    if let Some(url) = walked {
+        let at = address(&url)?;
+        return view
+            .navigate(at)
+            .map_err(|error| format!("that page could not be stepped: {error}"));
+    }
+
+    match step {
+        Step::Reload => view.reload(),
+        Step::Back => view.eval("history.back()"),
+        Step::Forward => view.eval("history.forward()"),
+    }
+    .map_err(|error| format!("that page could not be stepped: {error}"))
+}
+
+/// A step taken by nib's own Chromium, which is what "real back and forward" means in
+/// batch 2's row: the engine's own history, the place on the page and the half-filled
+/// form all come back with it, and nothing here keeps a list of addresses to walk.
+#[cfg(feature = "cef")]
+fn stepped(view: &Webview, _tabs: &WebTabs, _tab: &str, step: &Step) -> Result<(), String> {
+    match step {
+        Step::Reload => view.reload(),
+        Step::Back => view.go_back(),
+        Step::Forward => view.go_forward(),
+    }
+    .map_err(|error| format!("that page could not be stepped: {error}"))
+}
+
+/// What a tab was parked with, put back - on an engine that needs it told.
+#[cfg(not(feature = "cef"))]
+fn revive(tabs: &WebTabs, tab: &str, trail: Vec<String>, at: usize) {
+    tabs.restore(tab, trail, at);
+}
+
+/// And under nib's own Chromium, where there is nothing to put back: a webview that has
+/// just been built has the history it has, which is none, and the `.url` file is written
+/// and read exactly as it was either way. See `Trail`.
+#[cfg(feature = "cef")]
+fn revive(_tabs: &WebTabs, _tab: &str, trail: Vec<String>, at: usize) {
+    let _ = (trail, at);
+}
+
+/// A page a tab has arrived on, written down where the engine does not do it for us.
+#[cfg(not(feature = "cef"))]
+fn arrived(tabs: &WebTabs, tab: &str, url: &str) {
+    tabs.walked(tab, url);
+}
+
+/// And under nib's own Chromium, where the engine wrote it down itself.
+#[cfg(feature = "cef")]
+fn arrived(_tabs: &WebTabs, _tab: &str, _url: &str) {}
+
+/// Where this tab has been, for the window to write against the note.
+#[cfg(not(feature = "cef"))]
+fn walked(tabs: &WebTabs, tab: &str) -> (Vec<String>, usize) {
+    tabs.walk(tab)
+}
+
+/// Nothing, under nib's own Chromium: the trail is the engine's and cannot be handed to
+/// a webview built tomorrow, so nib stops pretending to keep one. The field stays in
+/// `Look` and in the file, empty, because the file is not this batch's to change.
+#[cfg(feature = "cef")]
+fn walked(_tabs: &WebTabs, _tab: &str) -> (Vec<String>, usize) {
+    (Vec::new(), 0)
+}
+
+/// The page taken away, and what is kept of where it had been.
+#[cfg(not(feature = "cef"))]
+fn forget(tabs: &WebTabs, tab: &str, keep: bool) {
+    if let Ok(mut open) = tabs.trails.lock() {
+        if keep {
+            // The engine's history goes with the webview, so the trail that is left is
+            // one every step has to walk by address.
+            if let Some(trail) = open.get_mut(tab) {
+                trail.engine = false;
+            }
+        } else {
+            open.remove(tab);
+        }
+    }
+}
+
+/// And under nib's own Chromium there is nothing to keep: the history went with the
+/// webview, which is what a browser's own discarded tab does too.
+#[cfg(feature = "cef")]
+fn forget(_tabs: &WebTabs, _tab: &str, keep: bool) {
+    let _ = keep;
 }
 
 /// Where the pane is, in the window's own coordinates, as the window measured it.
@@ -478,9 +664,10 @@ struct Looked {
 /// while the reader decides, and the only thing either side needs to agree on is which
 /// request is being answered.
 ///
-/// Built only where a permission request is raised, which is Windows; off it the ask
-/// module is a stub and nothing constructs this, so it is allowed to be dead there.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Built only where a permission request is raised, which is `WebView2` on Windows;
+/// everywhere else - the other two desktops, and nib's own Chromium, which asks for
+/// itself - the ask module is a stub and nothing constructs this.
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,
@@ -570,9 +757,18 @@ fn address(url: &str) -> Result<Url, String> {
 /// and a change to the list meant building the webview again - which threw away the
 /// page somebody was reading to answer a question about the camera. What a site may do
 /// is now answered where a browser answers it, while the page goes on running; see
-/// `ask`. Kept as a function because the script is a constant and this is the one
-/// place that says so.
+/// `ask`.
+///
+/// Two halves on the system's engines and one under nib's own Chromium: the app's own
+/// globals always, and the hardware buses only where nothing else will ask about them.
+/// See `GUARD` and `BUSES`.
 fn guard() -> String {
+    // The semicolon between the two is the one `opening` needs as well, and for the
+    // same reason: JavaScript has no statement boundary between `})()` and `(function`.
+    #[cfg(not(feature = "cef"))]
+    return format!("{GUARD};\n{BUSES};\n");
+
+    #[cfg(feature = "cef")]
     GUARD.to_string()
 }
 
@@ -790,8 +986,9 @@ pub async fn web_open(
 
     // Where this tab had been, back under the webview being built for it: a tab being
     // revived keeps its arrows, and stepping one of them walks this rather than an
-    // engine history that is empty.
-    tabs.restore(&tab, revived.trail, revived.at);
+    // engine history that is empty. Nothing at all under nib's own Chromium, where the
+    // engine owns the history; see `revive`.
+    revive(&tabs, &tab, revived.trail, revived.at);
 
     let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .initialization_script(opening(revived.place, &url))
@@ -911,7 +1108,7 @@ pub async fn web_open(
     made?;
 
     listening(&app, &tab);
-    tabs.walked(&tab, &url);
+    arrived(&tabs, &tab, &url);
     Ok(())
 }
 
@@ -1047,16 +1244,7 @@ fn say(
     icon: Option<String>,
     loading: bool,
 ) {
-    let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
-        tabs.trails.lock().ok().map(|mut open| {
-            let trail = open.entry(tab.to_string()).or_default();
-            if !loading && !url.is_empty() {
-                trail.visited(url);
-            }
-            (trail.back(), trail.forward())
-        })
-    });
-    let (back, forward) = stepping.unwrap_or((false, false));
+    let (back, forward) = arrows(app, view, tab, url, loading);
 
     let payload = Moved {
         tab: tab.to_string(),
@@ -1125,6 +1313,10 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
 /// first of those this tab steps that way for good; see `Trail::engine`.
 ///
 /// Reload goes through the engine either way, which is the one of the three it offers.
+///
+/// **Under nib's own Chromium all three go through the engine**, because that engine
+/// has the history and Tauri's own `go_back` reaches it. Which of the two this build
+/// does is `stepped`, and it is the only `cfg` a step needs.
 #[tauri::command]
 pub fn web_step(
     app: AppHandle,
@@ -1132,27 +1324,40 @@ pub fn web_step(
     tab: String,
     step: Step,
 ) -> Result<(), String> {
-    let view = found(&app, &tab)?;
+    stepped(&found(&app, &tab)?, &tabs, &tab, &step)
+}
 
-    let walked = match step {
-        Step::Reload => None,
-        Step::Back => tabs.stepping(&tab, false),
-        Step::Forward => tabs.stepping(&tab, true),
-    };
+/// How long a page is given to answer a script before the command gives up on it.
+///
+/// A page that is going to answer answers in a millisecond or two, so this is not a
+/// budget: it is an end. **The wait used to have none**, and two commands did it - the
+/// place a tab was left at, and the text of a clip. Under nib's own Chromium the answer
+/// comes back over the engine's own `DevTools` channel, and the engine drops a message
+/// addressed to a webview it can no longer find - so "the page never answers" is a state
+/// that exists rather than a worry. The gate's own walk sat inside `web_look` on a Mac
+/// until the harness killed the process seven minutes later. A command that cannot be
+/// answered has to say so instead.
+const ANSWER: Duration = Duration::from_secs(8);
 
-    if let Some(url) = walked {
-        let at = address(&url)?;
-        return view
-            .navigate(at)
-            .map_err(|error| format!("that page could not be stepped: {error}"));
-    }
+/// One script run in the page, and the answer it gave.
+///
+/// The answer comes back through the engine's own callback rather than through the app's
+/// IPC, which is what lets a page be read without the page being handed anything to call.
+/// The waiting is done on a blocking thread rather than in the command's own future
+/// because a timer is the one thing a channel does not have, and see [`ANSWER`] for the
+/// run that made the wait need an end.
+async fn asked(view: &Webview, script: String) -> Result<String, String> {
+    let (sending, waiting) = std::sync::mpsc::channel::<String>();
+    view.eval_with_callback(script, move |answer| {
+        // One page, one answer: a channel nobody holds is an answer nobody waited for.
+        let _ = sending.send(answer);
+    })
+    .map_err(|error| format!("that page could not be read: {error}"))?;
 
-    match step {
-        Step::Reload => view.reload(),
-        Step::Back => view.eval("history.back()"),
-        Step::Forward => view.eval("history.forward()"),
-    }
-    .map_err(|error| format!("that page could not be stepped: {error}"))
+    tauri::async_runtime::spawn_blocking(move || waiting.recv_timeout(ANSWER))
+        .await
+        .map_err(|error| format!("that page could not be read: {error}"))?
+        .map_err(|_| "that page said nothing".to_string())
 }
 
 /// Where the tab is: the page, how far down it the reading has got, and the trail
@@ -1169,22 +1374,11 @@ pub async fn web_look(
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
 ) -> Result<Look, String> {
-    let view = found(&app, &tab)?;
-    let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
-    view.eval_with_callback(LOOKED, move |answer| {
-        let _ = sending.try_send(answer);
-    })
-    .map_err(|error| format!("that page could not be read: {error}"))?;
-
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = asked(&found(&app, &tab)?, LOOKED.to_owned()).await?;
 
     let said = serde_json::from_str::<Looked>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))?;
-    let (trail, at) = tabs.walk(&tab);
+    let (trail, at) = walked(&tabs, &tab);
 
     Ok(Look {
         url: said.url,
@@ -1231,19 +1425,7 @@ pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
 /// page be read without the page being given anything to call.
 #[tauri::command]
 pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Clipped, String> {
-    let view = found(&app, &tab)?;
-    let (sending, mut waiting) = tauri::async_runtime::channel::<String>(1);
-
-    view.eval_with_callback(reader(selection), move |answer| {
-        // One page, one answer: a full channel is an answer already sent.
-        let _ = sending.try_send(answer);
-    })
-    .map_err(|error| format!("that page could not be read: {error}"))?;
-
-    let answer = waiting
-        .recv()
-        .await
-        .ok_or_else(|| "that page said nothing".to_string())?;
+    let answer = asked(&found(&app, &tab)?, reader(selection)).await?;
 
     serde_json::from_str::<Clipped>(&answer)
         .map_err(|error| format!("that page could not be read: {error}"))
@@ -1261,17 +1443,7 @@ pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String, k
         let _ = view.close();
     }
 
-    if let Ok(mut open) = tabs.trails.lock() {
-        if keep {
-            // The engine's history goes with the webview, so the trail that is left is
-            // one every step has to walk by address.
-            if let Some(trail) = open.get_mut(&tab) {
-                trail.engine = false;
-            }
-        } else {
-            open.remove(&tab);
-        }
-    }
+    forget(&tabs, &tab, keep);
 }
 
 /// A still picture of the page as it is now, as a `data:` address the window can put
@@ -1737,9 +1909,9 @@ mod shot {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        allowed, guard, handed_over, is_ours, opening, origin_of, reader, Place, Trail, WebTabs,
-    };
+    #[cfg(not(feature = "cef"))]
+    use super::Trail;
+    use super::{allowed, guard, handed_over, is_ours, opening, origin_of, reader, Place, WebTabs};
     use tauri::Url;
 
     fn at(url: &str) -> Url {
@@ -1822,6 +1994,7 @@ mod tests {
         assert!(handed_over(&at("http://tauri.localhost/index.html")).is_none());
     }
 
+    #[cfg(not(feature = "cef"))]
     #[test]
     fn a_trail_remembers_where_it_has_been() {
         let mut trail = Trail::default();
@@ -1834,6 +2007,7 @@ mod tests {
         assert!(!trail.forward());
     }
 
+    #[cfg(not(feature = "cef"))]
     #[test]
     fn the_same_page_again_is_not_a_step() {
         let mut trail = Trail::default();
@@ -1843,6 +2017,7 @@ mod tests {
         assert_eq!(trail.urls.len(), 1);
     }
 
+    #[cfg(not(feature = "cef"))]
     #[test]
     fn a_step_back_moves_along_the_trail_rather_than_adding_to_it() {
         let mut trail = Trail::default();
@@ -1856,6 +2031,7 @@ mod tests {
         assert!(trail.forward());
     }
 
+    #[cfg(not(feature = "cef"))]
     #[test]
     fn somewhere_new_forgets_what_was_ahead() {
         let mut trail = Trail::default();
@@ -1877,13 +2053,28 @@ mod tests {
     fn the_app_and_the_hardware_buses_are_taken_away() {
         let script = guard();
         assert!(script.contains("delete window.__TAURI_INTERNALS__"));
-        assert!(script.contains("'usb'"));
-        assert!(script.contains("'bluetooth'"));
-        assert!(script.contains("'credentials'"));
 
         assert!(!script.contains("'mediaDevices'"));
         assert!(!script.contains("'geolocation'"));
         assert!(!script.contains("Notification"));
+
+        // The buses go on the system's engines, which have no chooser to offer
+        // instead, and stay under nib's own Chromium, which has Chromium's. Batch 2
+        // of docs/browser.md, and the one half of the guard that is not the same on
+        // both; see `BUSES`.
+        #[cfg(not(feature = "cef"))]
+        {
+            assert!(script.contains("'usb'"));
+            assert!(script.contains("'bluetooth'"));
+            assert!(script.contains("'credentials'"));
+        }
+
+        #[cfg(feature = "cef")]
+        {
+            assert!(!script.contains("'usb'"));
+            assert!(!script.contains("'bluetooth'"));
+            assert!(!script.contains("'credentials'"));
+        }
     }
 
     /// A revived tab is put back where the reading was, and one that is being opened
@@ -1931,6 +2122,7 @@ mod tests {
         assert!(tabs.claim("a"));
     }
 
+    #[cfg(not(feature = "cef"))]
     #[test]
     fn the_trail_is_kept_for_the_tab_that_walked_it() {
         let tabs = WebTabs::default();

@@ -990,6 +990,37 @@ would put nib inside a tab with the site's script beside it.
 signing out of the nib account still empties the vault, and the two are separate on
 purpose - somebody may well want one without the other.
 
+**How far this is proven.** The switch is in the code with Emil's sentence above it, the
+gate has the row that would prove it - a session cookie and a `localStorage` key written
+in one run of the binary and looked for in the next, before anything is written again -
+and the profile is on disk with Chromium's own `Network` and `Local Storage` in it. What
+the row cannot say yet is *yes*, because a web tab under the flag has no page to store
+anything: section 8's table, and section 10's two upstream rows. Nothing about it is
+waiting on nib.
+
+**And everything a browser keeps, nib keeps - on this device, and only on this
+device.** Emil, on batch 2: *"when I close and reopen nib then for web notes the state
+(e.g. cookies etc. also including general application data that would normally be saved
+by browsers) should be saved by nib as well even across application restarts... all the
+cookies and data etc. should be on a per device basis (for each website)."* So the
+browsing profile is a real Chromium profile on disk at
+`<config>/<identifier>/web/Default`, and what lives in it is what lives in a browser
+profile: persistent cookies, `localStorage` and `sessionStorage`, IndexedDB, service
+workers and their caches, the HTTP cache, a permission somebody granted, a per-site
+zoom. **Session cookies too**, which is the one that had to be asked for: CEF drops
+those when the process exits the way a browser drops them when the browser quits, most
+logins are session cookies, and `persist_session_cookies` is the switch that writes them
+to the profile instead - so closing nib is Chrome's *continue where you left off* rather
+than a sign-out. (CEF 151 has no switch for the rest: `persist_user_preferences` is not
+a field of its settings any more, because preferences are persisted for every profile
+with a cache path.)
+
+**None of it syncs, and that is the whole of the per-device rule.** The profile is a
+folder on the machine it was made on; nib's account carries notes, the extension list of
+section 5 and nothing else. A cookie is not a note. Signing in on another machine opens
+the same web note at the same address and asks that site to log you in there, exactly as
+a second computer with the same browser would.
+
 ---
 
 ## 7. Keeping up with Chromium
@@ -1639,7 +1670,12 @@ more.**
    by *every* profile's extension service. So the profile boundary is not what failed;
    the only install mechanism available today ignores it. Batch 4's install has to be
    the per-profile preference tree, and until something can put an extension in one
-   profile only, this criterion cannot be answered yes by any run.
+   profile only, this criterion cannot be answered yes by any run. (Batch 2 found the
+   *other* half of this row was read too kindly: the gate's own website "was not
+   renamed" on a Mac because that page had never loaded at all, not because the
+   extension was missing from its profile. The no above stands on the first half, which
+   is a mark that *is* in the interface's title; the second half is unanswered there.
+   See section 10.)
 5. **The launch stays inside what Emil was told.** The flagged build's time to a
    window, on the same runner as the control: no more than **+250 ms on Windows** and
    no more than **+1.2 s on macOS**. **Met, and by a distance that should be read with
@@ -1680,6 +1716,15 @@ Everything else batch 2 was waiting on is measured. Batch 2's own shape - web ta
 webviews in one window, two profiles, one browser process - is what these runs show
 working.
 
+**One correction batch 2 had to make to that sentence.** Those runs showed the *shape*
+working: the webviews are made, the window holds them, one browser process serves them,
+the profiles are on disk. They did not show a **page** in one, and batch 2's own rows
+found that none of them ever had: on Windows the first web tab leaves the main thread
+blocked ten seconds later, and on macOS a web tab's browser never navigates at all. Both
+are upstream and both are in section 10; what they change here is that criterion 2 is a
+claim about processes rather than about pages, and that nothing built on top of a web tab
+can be measured until a child browser comes all the way up.
+
 **And one criterion that is not the gate's.** The plugin repair in `upstream.py` is a
 patch nib carries against somebody else's branch, and a batch 2 built on it inherits
 that. Before batch 2 ships anything, the repair should be an upstream pull request
@@ -1697,6 +1742,186 @@ hosts on Windows, with its views parented into nib's window - and the plan is on
 batch longer and one engine less consistent. That is a worse product, which is why B
 is the recommendation; it is not a dead end, which is why waiting on the gate is
 safe.
+
+### What batch 2 delivered
+
+Emil gave batch 2 its go with one sentence about the shape of it: *"chrome://settings
+should be for the chrome settings. This makes stuff easier for us. We keep the chrome
+settings in chrome. Then we don't have to be scared of updates / changes from their
+side."* That is the whole principle of this batch applied to more than one page -
+**where Chromium already does something, nib stops doing it** - and it decided every
+line below.
+
+**One file of the app's own changed, and two things in it.**
+
+| | |
+| --- | --- |
+| `web_tabs.rs`, the stepping seam | Back and forward are the engine's own history under the flag - `go_back`, `can_go_back`, four calls the released Tauri does not have at all - so the trail of addresses this crate kept is *not kept, not written down and not walked* there. `arrows` and `stepped` are the two `cfg` pairs that say it, and every command around them is the same on both engines |
+| `web_tabs.rs`, the guard | Split in two. The app's own globals are taken away from a page on every engine, because that is the lock that does not depend on a list of labels being right. The hardware buses - Bluetooth, USB, serial, HID, the credential store - are taken away only on the system's engines: there a request for one is refused in silence or answered by a prompt that cannot name the device, and under Chromium it is Chromium that asks, with the picker a reader knows |
+
+**And what did not change, which is most of it.** The `.url` file: the address was
+always the document and the place and the trail always lived in this device's own
+storage, so a file two dozen other programs read is untouched by an engine. The bar,
+the plus chooser, the pane, the overlay logic, the sidebar: no frontend file was opened
+for this batch. `place`, `show`, `hide`, `navigate`, `reload`, `zoom`, `print`, the
+clip, the close - one call each, the same call on both engines, because Tauri's own
+webview API is what `tauri-runtime-cef` implements. And the default build: the feature
+is off, the trail is compiled, `BUSES` is in the guard, and every `WebView2`-only path
+is still behind `cfg(all(windows, not(feature = "cef")))`.
+
+**And a way to compile the flagged build's own code without Chromium, which batch 2
+found by needing it.** A round of `cef.yml` is forty-five minutes, and until batch 2
+every compile error in the flagged half of the crate cost one. It does not have to: the
+three hundred megabytes are `cef-dll-sys`'s, and **nib's own crate does not depend on
+it** - only `nib-cef` does. So a throwaway package that depends on the app crate with
+the feature on, carrying the same two patches, checks the whole flagged half of the app
+in about a minute and needs no CEF, no CMake and no runner:
+
+```toml
+[dependencies]
+nib = { path = "<the app crate>", features = ["cef"] }
+tauri = { version = "2", features = ["unstable"] }
+
+[patch.crates-io]
+tauri = { path = "<the app crate>/cef/target/upstream/tauri/crates/tauri" }
+tauri-build = { path = "<the app crate>/cef/target/upstream/tauri/crates/tauri-build" }
+dpi = { git = "https://github.com/tauri-apps/winit-gtk4", branch = "master" }
+```
+
+`cargo check` there is the check that `cargo clippy --features cef` cannot be - the
+app's own manifest carries no patch, on purpose - and it is how two dead-code
+allowances in `web_tabs.rs` were found to be wrong: they said `not(windows)` where the
+only build that raises a permission request is `all(windows, not(feature = "cef"))`.
+
+**And one thing that broke on the way, which is worth more than the fix.** The flagged
+build stopped compiling with `cannot update the lock file ... because --locked was
+passed` - before a line of it was read, and with nothing wrong in it. The cause is a
+coupling nobody had had to think about: **the flagged workspace's lock file records the
+app crate's own dependency list**, because the app is a path dependency of `nib-cef`. So
+the day main gains an ordinary dependency - it was `window-vibrancy`, for the window
+frame that lets the desk show through - the lock beside `nib-cef` is out of date, and
+`--locked` refuses. `check.yml` never builds that workspace, so nothing on the way to
+main can notice, and the failure arrives forty-five minutes into a `cef.yml` round
+belonging to whoever pushed next.
+
+Two things came out of it, and the cheap one is the better one:
+
+- **A test that reads two files.** `apps/desktop/test/cef.test.ts` now asserts that
+  every dependency in the app's manifest is in the flagged lock. It runs in the ordinary
+  test job on every pull request, it takes no runner and no Chromium, and the day
+  somebody adds a crate it says so - with the fix, which is `cargo generate-lockfile` in
+  `apps/desktop/src-tauri/cef`.
+- **And `cef.yml` catches the failure once**: it regenerates the lock, carries on and
+  measures, leaves the new lock in the run's artefact and says out loud that the one in
+  the repository is stale. The fix is a one-line commit of that file; the alternative -
+  dropping `--locked` - would make every round a different build.
+
+**And one bug that was nib's own, found by the gate and fixed in the app rather than in
+the gate.** Two commands ask a page a question and wait for the answer: `web_look`, which
+reads how far down the page the reading has got when a tab is left, and `web_clip`. The
+wait had **no end** - a channel `recv` with nothing beside it - which is fine on an engine
+whose answers always come back and is a hang on one where they might not. Under nib's own
+Chromium an answer travels the engine's own `DevTools` channel, and the engine drops a
+message addressed to a webview it can no longer find, so a page that never answers is a
+state that exists. The first flagged run to reach batch 2's rows proved it: the walk went
+into `web_look` and stayed there until the harness killed the process seven minutes later,
+and every row after it - the profiles, the engine's own pages - went unmeasured with it.
+So the two commands share one `asked` helper with a deadline on it, a page that says
+nothing is an error rather than a wait, and the gate's own rows each have an end too.
+
+**What a reader gets from Chromium without nib doing anything, and what that is worth.**
+Nothing in `web_tabs.rs` asks for a context menu, so the menu over a page is the engine's
+own on both builds - which under the flag means Chromium's, with *Back*, *Reload*,
+*Open link in new tab*, *Inspect* where DevTools are allowed, and the spelling suggestions
+a text box gets. The same is true of the permission bubble (section 6), the picker a file
+input opens, the find bar a page's own `Ctrl+F` reaches and the zoom a `Ctrl+scroll`
+applies. That is the batch's principle paying for itself: **where Chromium already does
+something, nib stops doing it.**
+
+#### The rows, and which platform each one could be measured on
+
+**Read this first, because it decides how much of the table below means anything.** A row
+about a *page* needs a page: batch 2's rows are measured by the app on itself, through
+the commands the window calls, and every one of them from "back" onwards asks the page
+in the tab something. Two of the three desktops cannot answer:
+
+- **On macOS a web tab never loads its page under the flag.** The browser is made, the
+  call returns, the webview is placed - and the engine says its main frame has no
+  address at all. No title arrives, a script the app runs in it does nothing, storage is
+  empty on a site whose storage was written a moment before. Batch 1.5's own screenshots
+  have it too, two white rectangles where the panes are, so nothing in batch 2 caused
+  it. Section 10.
+- **On Windows the third browser in the process hangs the main thread.** The interface is
+  the first, one web tab is the second, and whatever is third - a second tab, or a window
+  the gate opens - never comes back from the call that makes it; from that moment the
+  main thread answers nothing, which the gate's own pulse says in as many words. So the
+  rows are measured with **one** web tab, and the gate now measures them *before* it
+  opens anything else. That reordering is what turned the table from eleven "not
+  measured" into the one below.
+- **On Linux the flagged build does not start at all**, which is Emil's GTK 3 row.
+
+So the rows below are `cef.yml` run `34903195206` - one web tab, both desktops that start,
+and the figure in brackets is the **relaunch** of the same binary later in the same run,
+which is the only honest way to ask what a profile kept. The two-tab figures are run
+`34898301806`.
+
+| what batch 2 claims about a web tab | `windows-latest` | `macos-latest` |
+| --- | --- | --- |
+| the crate's own part of a switch, away | **109 µs** (133 µs) | **24 µs** (34 µs) |
+| and back | **6 µs** (8 µs) | **2 µs** (2 µs) |
+| the webview after a switch | **still there** | **still there** |
+| the main thread after the switch | **blocked** | alive, 38 ms |
+| one browser process for two web tabs | never both opened | **1** |
+| the `app` profile on disk | **yes**, 14 of Chromium's own files | **yes**, 14 |
+| the `Default` profile on disk | **yes**, 14 | **yes**, 14 |
+| the profile the interface asked for | `…/Roaming/ch.emilvinu.nib/web/app` | `…/Application Support/ch.emilvinu.nib/web/app` |
+| a third profile nobody asked for | `Profile-ezIV5moIbrEKA5IkfSkz2g`, 14 files | none |
+| a script the app runs in the page runs | not measured | **no** |
+| a page's answer comes back out of it | not measured | **no** |
+| back is the engine's own history | not measured | **no**: *the engine would not say: invalid url* |
+| the place on the page, read back | not measured | **no**: the page said nothing |
+| the page tells the window its name | not measured | **no**, 0 titles |
+| the site's own mark | not measured | **no** |
+| `localStorage` across a relaunch | not measured | **no**, nothing was there to find |
+| a session cookie across a relaunch | not measured | **no**, nothing was there to find |
+| a login across a close and an open again | not measured | not measured: the process died first |
+
+**What the first four rows are worth, and it is not nothing.** *"Note to web and back in
+single-digit milliseconds, with the webview never destroyed on a switch"* was the round-six
+promise, and on this engine the crate's own half of a switch is **six microseconds** on
+Windows and **two** on a Mac - three orders of magnitude inside the budget, with the
+webview still there afterwards on both. A switch under nib's own Chromium is two messages
+and no rebuild, exactly as it is under `WebView2`, and the pane is placed and shown by the
+same two calls. The two profiles are real: fourteen of Chromium's own files in each,
+`Preferences` and `Local Storage` and `Network` among them, which is what makes
+`web/Default` a browser profile rather than a folder.
+
+**And what the rest of the table says, which is the honest headline of this batch: a web
+tab on nib's own Chromium cannot show a website yet, and the reason is upstream.** Three
+platforms, three shapes of the same fault - a child browser that never finishes coming up:
+
+- **Windows.** CEF logs *"Timeout of new browser info response for frame"* twice, about
+  ten seconds after the first web tab is created, and from that moment the main thread
+  answers nothing at all: the gate's pulse says *blocked for more than 10 seconds* at
+  every step afterwards, `add_child` for any later browser never returns, and even
+  `chrome://settings` in a webview of its own is refused because there is no thread left
+  to open it on. One web tab is enough to do it; batch 1.5 read it as "the second tab"
+  because the second tab is the first thing that needs the thread back.
+- **macOS.** No hang and no error - the main thread answers in tens of milliseconds all
+  the way through - and the page simply never loads: the engine says the browser's main
+  frame has **no address**, no title ever arrives, a script the app runs in it does
+  nothing, and the site's storage is empty on the run after the one that wrote it. Then
+  closing that tab takes the process with it (`SIGSEGV`).
+- **Linux.** Does not start, which is Emil's GTK 3 row.
+
+**None of it is nib's code, and the table is what says so.** Every call the window makes
+returns and returns fast; the profiles are where they should be; the same file, with the
+flag off, is what ships today and is what round six drove on `WebView2`. What is missing
+is a browser the runtime brings all the way up. So batch 2's *code* is done - the seam is
+cut, the trail is gone, the guard is split, the two profiles are described - and batch 2's
+*claims* wait on `tauri-runtime-cef`. Section 10 has both faults as rows of their own, and
+the next flagged round asks the one question that would move them: whether a child webview
+with **nothing of nib's on it** loads a page here, which is `cef.yml`'s `bare` input.
 
 ---
 
@@ -1861,16 +2086,40 @@ shape that will actually ship rather than in a standalone program.
   give this binary, a Mac wanted a real bundle with the framework and the helpers in
   it, and Linux has GTK 3 and GTK 4 in one process. The first two are fixed and
   measured; the third is the row below and Emil's.
+- **On macOS a site in a web tab is handed the camera and the microphone without being
+  asked**, and that is the runtime's policy rather than nib's: a webview with a native
+  parent is forced to Alloy style there (#3294), Alloy has no permission UI, and
+  `tauri-runtime-cef` grants media capture itself rather than let CEF's default refuse
+  it - recording a content setting as it goes, so `enumerateDevices` is not redacted. On
+  Windows and Linux the same request is Chromium's own prompt, remembered per origin,
+  which is what section 6 describes. Batch 2 measured the difference and changed
+  nothing: nib *can* pass a permission handler of its own, and whether a Mac should get
+  a silent grant, a silent refusal or nib's own bubble is Emil's call.
 - **An extension installed on the command line lands in *every* profile**, so two
   profiles are necessary and not sufficient. It is the one batch 2 criterion still
   answered no, and it makes batch 4's install the per-profile preference tree rather
   than a switch. Section 8.
 - **A webview's own title handler is never called under `tauri-runtime-cef`**, where a
   window's is. To report upstream; the gate reads titles off a window because of it.
-- **A second web tab hangs on Windows under the flag.** The first opens; the second
-  never returns from `add_child`, with CEF's *"Timeout of new browser info response for
-  frame"* before it. Upstream's, and the same runtime opens five webviews in one window
-  on a Mac.
+- **The third browser in the process hangs the main thread on Windows under the flag.**
+  Batch 1.5 read this as "a second web tab": the first tab opens, the second never
+  returns from `add_child`, with CEF's *"Timeout of new browser info response for frame"*
+  before it. Batch 2 saw it once more with **one** tab open, where the browser that
+  never came back was a *window* the gate opened - so what it counts is browsers in the
+  process rather than tabs, and the interface is the first of them. The main thread
+  answers nothing from that call on, which is why the gate now measures a web tab before
+  it opens anything else. Upstream's.
+- **A web tab never loads its page on macOS under the flag.** The browser is made, the
+  call comes back, `add_child` succeeds, the webview is where it should be - and the
+  page is never navigated to: the engine says its main frame has **no address at all**, no
+  title ever arrives, a script the app runs in it does nothing, and `localStorage` is
+  empty on a site whose own `localStorage` a moment earlier was written. Batch 2's rows
+  are what found it, and batch 1.5's macOS screenshots have it too - two white rectangles
+  where the panes are - so it is not new and nothing in nib caused it. It is why
+  everything batch 2 claims about a *page* is measured on Windows: on a Mac there is no
+  page to measure. Upstream's, and the first thing to ask about is the deferred initial
+  navigation the runtime holds until a `DevTools` round trip answers, which is also the
+  one mechanism that would fail silently.
 - **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
   one that supports iOS asks for a `wry` feature the branch removed. One empty
   feature repairs it and batch 1 carries the repair in

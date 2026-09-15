@@ -105,6 +105,26 @@ fn main() {
         // `nib://` links reach the app the same way they do on the system's engine;
         // the plugin handles the arriving half either way.
         .deep_link_schemes(["nib"])
+        // **A login survives quitting nib.** Emil, on batch 2: *"when I close and reopen
+        // nib then for web notes the state (e.g. cookies etc. also including general
+        // application data that would normally be saved by browsers) should be saved by
+        // nib as well even across application restarts."*
+        //
+        // A *session* cookie is the one that does not, by default: CEF drops it when the
+        // process exits, the way a browser drops it when the browser quits - and most
+        // logins are session cookies. This is the switch that writes them to the profile
+        // instead, so quitting nib is Chrome's "continue where you left off" rather than
+        // a sign-out. Everything else a browser keeps - persistent cookies,
+        // `localStorage`, IndexedDB, service workers, the HTTP cache, a granted
+        // permission, a per-site zoom - is already kept by the profile being on disk at
+        // all, and CEF 151 has no switch for any of it: `persist_user_preferences` is
+        // not a field of `cef_settings_t` any more, because preferences are persisted
+        // for every profile with a cache path.
+        //
+        // It is all per device and none of it syncs: the profile is
+        // `<config>/<identifier>/web` on the machine it was made on, and nib's account
+        // carries notes. See docs/browser.md, section 6.
+        .persist_session_cookies(true)
         .command_line_args(switches(&std::env::var(ARGS).unwrap_or_default()));
 
     if let Some(path) = root_cache_path() {
