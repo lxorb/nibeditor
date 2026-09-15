@@ -273,14 +273,23 @@ function holds(tail: string): boolean {
  *  kilobytes fetched by the first drag, the first press on the menu and the first
  *  syncing pass. See docs/tree.md and lib/ai/ask.ts, which is the same seam.
  *
- *  3,117,488 over 373 files on 2026-09-15, which is where the ceiling below is set from.
- *  Two and a half kilobytes of that is a batch of Emil's: one list of the kinds a new tab
- *  can be (new-kinds.ts), the chord that opens it, and the sheet that names an unsaved
- *  tab. Eager because a menu is: the strip's plus holds the list and the File menu reads
- *  the same one. What is not eager is the two heaviest halves of it - the buttons a pane
- *  with nothing open shows (NewHere.svelte, through `emptySurface`) and the places a save
- *  can write to (move-targets.ts, fetched by the first save) - so what arrived here is
- *  the list itself and the words for it.
+ *  3,117,488 over 373 files on 2026-09-15. Two and a half kilobytes of that is a batch of
+ *  Emil's: one list of the kinds a new tab can be (new-kinds.ts), the chord that opens it,
+ *  and the sheet that names an unsaved tab. Eager because a menu is: the strip's plus
+ *  holds the list and the File menu reads the same one. What is not eager is the two
+ *  heaviest halves of it - the buttons a pane with nothing open shows (NewHere.svelte,
+ *  through `emptySurface`) and the places a save can write to (move-targets.ts, fetched by
+ *  the first save) - so what arrived here is the list itself and the words for it.
+ *
+ *  3,123,073 over 374 files on 2026-09-15, which is where the ceiling below is set from,
+ *  and it went *up* by five and a half kilobytes in a round whose whole subject was the
+ *  launch. Worth saying why, because the number on its own reads backwards. The file is
+ *  ground.ts, which is how the window opens in the colour it was last seen in rather than
+ *  waiting for the webview to have something to show; and the round's saving is in the
+ *  other two figures rather than this one - 1,412,342 built bytes to 1,264,446, and
+ *  147,467 bytes of stylesheet quoted into a chunk to 3,092. A module that quotes a
+ *  hundred and fifty kilobytes of CSS is a dozen lines long, so this figure could never
+ *  have seen it. That is what `MOST_TEXT` below is for.
  *
  *  The two figures move independently, which is the point of having both: batch 118
  *  took a hundred and sixty-seven kilobytes out of the built one and put five hundred
@@ -300,7 +309,7 @@ function holds(tail: string): boolean {
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_148_000
+const BUDGET = 3_154_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
