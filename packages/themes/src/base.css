@@ -70,8 +70,8 @@ body {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* And two places that answer a focus another way instead, both of them here, so
-   the app has exactly three rules about the ring rather than thirty.
+/* And three places that answer a focus another way instead, all of them here, so
+   the app has exactly four rules about the ring rather than thirty.
 
    The first is a box that holds the keyboard for the things inside it rather than
    being one of them: the menu whose rows are the stops, the pane a note is read
@@ -91,6 +91,20 @@ body {
    the border, the halo and the ring, and the input in it says nothing of its own
    or the answer is drawn twice. See `.nib-field` below. */
 .nib-field :is(input, textarea):focus-visible {
+  outline: none;
+}
+
+/* The third is the writing surface. A note is a `contenteditable`, so the rule
+   above found it and drew the ring round the whole of it: a frame in the accent
+   round every word on screen, there the entire time anybody is writing. Emil,
+   with a note open: *"while editing a note, there is currently a frame around
+   it."*
+
+   It is the same question the pane answers - a region that holds the keyboard
+   rather than being a stop on the way to one - and the caret has already
+   answered it, in the accent, blinking, at the exact character the next key will
+   land on. Nothing a frame adds to that is worth a border round the reading. */
+.cm-content:focus-visible {
   outline: none;
 }
 
