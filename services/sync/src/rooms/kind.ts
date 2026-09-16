@@ -21,7 +21,8 @@
 import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
-import { planeIsEmpty, readPlane, seedPlane } from '@nib/rooms/plane'
+import { fold } from '@nib/rooms/fold'
+import { planeIsEmpty, pushPlane, readPlane, seedPlane } from '@nib/rooms/plane'
 import type * as Y from 'yjs'
 
 /** The two shapes a room's document comes in. */
@@ -74,6 +75,35 @@ export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
   }
 
   if (stored) doc.getText(TEXT).insert(0, stored)
+}
+
+/** The file as the store now holds it, taken into a room's document as the edit it
+ *  is.
+ *
+ *  For a room that wakes to find the note has moved while it was away and holds
+ *  nothing of its own to weigh against it; see `caughtUp` in room.ts. An edit rather
+ *  than a second seed, for two reasons: seeding a document that already holds a plane
+ *  would put every card on it twice, and an edit is a thing every device in the room
+ *  hears - so a note nobody has typed in since simply becomes what the file says, on
+ *  every screen showing it.
+ *
+ *  `held` is what the document says now, which the caller has read already. */
+export function takeInto(kind: RoomKind, doc: Y.Doc, held: string, file: string) {
+  if (kind === 'plane') {
+    pushPlane(doc, readCanvas(held), readCanvas(file))
+    return
+  }
+
+  // One replacement, the shared front and back left alone, so a caret in either
+  // stays where its words are; see fold.ts.
+  const change = fold(held, file)
+  if (!change) return
+
+  const text = doc.getText(TEXT)
+  doc.transact(() => {
+    text.delete(change.from, change.to - change.from)
+    text.insert(change.from, change.insert)
+  })
 }
 
 /** Whether reading this document as `kind` would leave a drawing behind.

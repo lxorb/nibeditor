@@ -219,6 +219,16 @@ write too. So before it writes, the room keeps what the note says beside it, und
 the same name and by the same rule - `services/sync/src/rooms/room.ts`. The same
 words offered again on every pass are copied once, not once a pass.
 
+Only where the settle would drop something, though. One machine already has two ways
+up to the account for one note - the room, keystroke by keystroke, and its own pass
+carrying the file - and a push that lands a moment before the room settles is that
+same document, a letter short. Writing the room's words over it takes nothing away,
+so nothing is kept beside it: a copy of your own paragraph is not an answer to
+anything. A room that wakes to find the note has moved while it slept, holding
+nothing of its own, takes those words rather than writing over them; and a pass asks
+whether a room is carrying a note as it reaches each one, so a room that settles
+halfway through a pass is a room the rest of that pass knows about.
+
 Which is the whole of the promise, stated as one sentence: **no write anywhere -
 not a pass, not a room, not a push - ever replaces a copy that is not the copy both
 sides started from.** Where it cannot merge, it keeps.

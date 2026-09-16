@@ -263,6 +263,150 @@ describe('a room', () => {
     })
   })
 
+  /** The live notes of the space, by path: what a second copy of anything shows up
+   *  in. */
+  async function held(): Promise<string[]> {
+    const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
+    return (page.json.notes as { path: string; deleted?: boolean }[])
+      .filter((one) => !one.deleted)
+      .map((one) => one.path)
+      .sort()
+  }
+
+  /** One device with the note open, which is two ways up to the account for one hand
+   *  typing: the room, keystroke by keystroke, and that machine's own pass, which
+   *  carries the file. They meet whenever a push lands in the seconds before the room
+   *  settles - and what the room sees then is a version it did not write, which is
+   *  exactly what it sees when a device it cannot reach pushes from the other side of
+   *  the world.
+   *
+   *  A room cannot know which of the two it is and must not guess. What it can read
+   *  off the two texts is the only thing the copy is for: whether writing its own
+   *  words over that version would drop any of it. Where the push is this same
+   *  document a keystroke ago, none of it goes - and a copy of one's own paragraph is
+   *  not an answer to anything. Three of them turned up on Emil's disk on three
+   *  consecutive mornings, on a machine that has never had a second device. */
+  describe('a note pushed as a file while its room held it', () => {
+    test('is not copied when the settle would drop none of it', async () => {
+      const { room: made, state } = room(env)
+      const inside = await arrive(made, state, { id: noteId, spaceId })
+
+      // Typed here, and a moment later the file on disk says the same.
+      await say(made, state, inside.socket, inside.type(11, 'one\n'))
+
+      // The pass carries that file up, naming the version it read. Nothing about it
+      // is wrong: the room has not settled, so the account's copy is still the one
+      // this device was handed.
+      const pushed = await call(env, `/v1/notes/${noteId}`, {
+        token,
+        method: 'PUT',
+        body: { path: 'together.md', content: '# Together\none\n', baseVersion: 1 },
+      })
+      expect(pushed.json.note.version).toBe(2)
+
+      // And the hand carries on typing, which is the settle that used to make the
+      // copy: a version it never saw, holding words it has every one of.
+      await say(made, state, inside.socket, inside.type(inside.words.length, 'two\n'))
+      await made.alarm()
+
+      expect(await held()).toEqual(['together.md'])
+
+      const read = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(read.json.content).toBe('# Together\none\ntwo\n')
+    })
+
+    test('stands as it is when the room has nothing of its own to say', async () => {
+      const { room: made, state } = room(env)
+      const inside = await arrive(made, state, { id: noteId, spaceId })
+
+      // Nothing was typed in the room: the note was opened, the room answered with
+      // what the account held, and every keystroke since went to the file, because
+      // the room had not said it was carrying the note yet.
+      await call(env, `/v1/notes/${noteId}`, {
+        token,
+        method: 'PUT',
+        body: {
+          path: 'together.md',
+          content: '# Together\ntyped while the room was joining\n',
+          baseVersion: 1,
+        },
+      })
+
+      // The tab closes, and the last device out settles what is left - which is
+      // nothing at all.
+      await made.webSocketClose(inside.socket as unknown as WebSocket)
+
+      expect(await held()).toEqual(['together.md'])
+
+      const read = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(read.json.content).toBe('# Together\ntyped while the room was joining\n')
+    })
+  })
+
+  /** A room keeps its document for as long as the file does, and the note goes on
+   *  being written while nobody is in it. So what a room wakes holding can be a day
+   *  behind - and it used to hand that to the next device to open the note as the
+   *  truth, which took the newer words off that device's screen and then, through the
+   *  settle, off the account.
+   *
+   *  Behind it was the same record and the same mistake: which version the room is
+   *  level with is written down, and a join wrote over it. The header a device arrives
+   *  on says which note and which shape and nothing about where the note had got to,
+   *  so the first join after a sleep left the room saying nothing about itself at all.
+   *
+   *  Nothing here is weighed against anything: the room holds exactly what it last
+   *  wrote down, so every word the note has gained since is one nobody in this room
+   *  has touched, and taking them costs nothing and keeps nothing beside. */
+  describe('a room that wakes up behind the note', () => {
+    /** A room that settled its words, was left, and was written to while it slept. */
+    async function pushedWhileAsleep() {
+      const { room: made, state } = room(env)
+      const one = await arrive(made, state, { id: noteId, spaceId })
+      await say(made, state, one.socket, one.type(11, 'from the room\n'))
+      await made.alarm()
+
+      // Everybody leaves, and the runtime takes the object out of memory.
+      await made.webSocketClose(one.socket as unknown as WebSocket)
+      state.drop(one.socket)
+
+      // The file is written while the room is away: this same device's next pass,
+      // the connector, a version put back.
+      await call(env, `/v1/notes/${noteId}`, {
+        token,
+        method: 'PUT',
+        body: {
+          path: 'together.md',
+          content: '# Together\nfrom the room\nand while it slept\n',
+          baseVersion: 2,
+        },
+      })
+
+      // The note is opened again: a new object over the storage the old one left.
+      const woken = new NoteRoom(state as unknown as DurableObjectState, env)
+      return { woken, state }
+    }
+
+    test('opens on the note as the store now holds it', async () => {
+      const { woken, state } = await pushedWhileAsleep()
+      const back = await arrive(woken, state, { id: noteId, spaceId })
+
+      expect(back.words).toBe('# Together\nfrom the room\nand while it slept\n')
+    })
+
+    test('and what is typed next is written on top of it, with no copy beside', async () => {
+      const { woken, state } = await pushedWhileAsleep()
+      const back = await arrive(woken, state, { id: noteId, spaceId })
+
+      await say(woken, state, back.socket, back.type(back.words.length, 'and more\n'))
+      await woken.alarm()
+
+      expect(await held()).toEqual(['together.md'])
+
+      const read = await call(env, `/v1/notes/${noteId}`, { token })
+      expect(read.json.content).toBe('# Together\nfrom the room\nand while it slept\nand more\n')
+    })
+  })
+
   test('writes the words into the note store when the typing stops', async () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })

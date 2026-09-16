@@ -38,7 +38,8 @@ import {
   syncStep1,
   syncUpdate,
 } from '@nib/rooms'
-import { byteLength } from '../crypto'
+import { fold } from '@nib/rooms/fold'
+import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
 import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
@@ -51,6 +52,7 @@ import {
   leavesAPlane,
   neverHeld,
   roomKind,
+  takeInto,
   writesOf,
   type RoomKind,
 } from './kind'
@@ -84,6 +86,17 @@ export interface Held {
    *  Absent for a room written down before there was a reason to keep it, which is
    *  read as "level with whatever is there": one settle later it says so. */
   version?: number
+  /** And the words that version said, as this room's own document settles into. What
+   *  it answers is whether the room is carrying anything at all: a document that
+   *  still says exactly this has heard no keystroke since, so a note that has moved
+   *  under it moved for somebody else's reasons and there is nothing here to write on
+   *  top of it. See `caughtUp` and the settle.
+   *
+   *  Written at the moment it becomes true - the seed, and every settle that lands -
+   *  because that is the only moment anything can honestly say it. Absent for a room
+   *  written down before this was kept, which is a room that says nothing about
+   *  itself until its next settle. */
+  hash?: string
 }
 
 /** What a socket has announced, kept on the socket so that a room which was
@@ -128,6 +141,7 @@ function heldIn(value: unknown): Held | null {
     spaceId: held.spaceId,
     kind: kindOf(held.kind),
     ...(typeof held.version === 'number' ? { version: held.version } : {}),
+    ...(typeof held.hash === 'string' && held.hash ? { hash: held.hash } : {}),
   }
 }
 
@@ -510,6 +524,19 @@ export class NoteRoom implements DurableObject {
     // Nothing else may run against this object until the document is whole: a
     // second join that saw an empty room would seed it a second time.
     const opening = this.ctx.blockConcurrencyWhile(async () => {
+      // What this room already knew about itself, which a join does not carry. The
+      // headers a device arrives on say which note and which shape and nothing about
+      // where the note had got to, so writing them straight over the stored record
+      // was a room that woke having forgotten which words it is level with - and a
+      // settle that could no longer tell a note nothing had touched from one a device
+      // pushed while the room slept. It wrote over the second without keeping a word
+      // of it. See `Held`.
+      const before = heldIn(await this.ctx.storage.get('note'))
+      if (before?.noteId === held.noteId) {
+        if (before.version !== undefined) held.version ??= before.version
+        if (before.hash !== undefined) held.hash ??= before.hash
+      }
+
       await this.ctx.storage.put('note', held)
 
       // A room with nothing stored of its own is filled from the file as the store
@@ -531,8 +558,14 @@ export class NoteRoom implements DurableObject {
 
         if (row) {
           held.version = row.version
+          // The words themselves, as this room would settle them: a plane read back
+          // out of a file is the same drawing and not always the same bytes, and what
+          // this answers is whether the room is carrying anything of its own.
+          held.hash = await sha256(fileOf(held.kind, this.state.doc))
           await this.ctx.storage.put('note', held)
         }
+      } else {
+        await this.caughtUp(held)
       }
 
       // Sockets that were already here mean this object was asleep rather than
@@ -555,6 +588,54 @@ export class NoteRoom implements DurableObject {
     })
 
     return opening
+  }
+
+  /** What the note says now, for a room that has just woken to find it has moved.
+   *
+   *  A room keeps its document for as long as the file does, and while nobody is in
+   *  it the note goes on being written: a pass pushing the file, the connector, a
+   *  rollback, a version put back. So the words a room wakes holding can be a day
+   *  behind - and what it did with them was hand them to the next device to open the
+   *  note as the truth, which took the newer words off that device's screen, then off
+   *  its disk, and then off the account through a settle that read its own stale copy
+   *  as what everybody was looking at.
+   *
+   *  Taken rather than weighed, because there is nothing here to weigh: this runs only
+   *  where the document says exactly what the room last wrote down, so every word the
+   *  note has gained since is one nobody in this room has touched. A room that does
+   *  hold writing of its own is left exactly as it is, and its settle keeps both
+   *  copies the way it always has; see `keptBeside`.
+   *
+   *  One row per wake, which is once per object: the same read the settle makes every
+   *  time it runs. */
+  private async caughtUp(held: Held): Promise<void> {
+    if (held.version === undefined || held.hash === undefined) return
+
+    const row = await this.env.DB.prepare(
+      'select version, path from notes where id = ? and deleted = 0',
+    )
+      .bind(held.noteId)
+      .first<{ version: number; path: string }>()
+
+    if (!row || row.version === held.version) return
+    // A file renamed across the two kinds while the room slept is not a note to take
+    // the bytes of; that is `crossed`, and it runs before this.
+    if (roomKind(row.path) !== held.kind) return
+
+    const mine = fileOf(held.kind, this.state.doc)
+    if ((await sha256(mine)) !== held.hash) return
+
+    const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
+    const file = object ? await object.text() : ''
+    // Nothing to take from a read that came back empty: a note whose bytes are not
+    // there is not a note that says nothing. See `neverHeld` for the same line.
+    if (!file) return
+
+    if (file !== mine) takeInto(held.kind, this.state.doc, mine, file)
+
+    held.version = row.version
+    held.hash = await sha256(fileOf(held.kind, this.state.doc))
+    await this.ctx.storage.put('note', held)
   }
 
   /** An update somebody made: passed on to everyone else, and written down.
@@ -701,6 +782,25 @@ export class NoteRoom implements DurableObject {
       return false
     }
 
+    // Nothing of the room's own to say. The document holds exactly the words this
+    // room last wrote down, so whatever the note says now was written by something
+    // that is not this room, and it is simply the truth: there is nothing here to put
+    // on top of it, and nothing of anybody's to keep beside it either.
+    //
+    // It used to write anyway, because a settle wrote whatever it held. A note open
+    // in a tab and joined to its room, with the pass on that same machine pushing the
+    // file a moment before the room had said it was carrying it, came back to the
+    // words the room was seeded with - and the push was kept beside the note as
+    // somebody else's copy, on a machine that has only ever had one device.
+    //
+    // Which words the room is level with is written down at the moment it becomes
+    // true, never worked out afterwards from two versions failing to match. The
+    // crossing settle is the one write that must land whatever it holds; see
+    // `crossed`.
+    if (!crossing && held.hash !== undefined && (await sha256(settled)) === held.hash) {
+      return file.hash === held.hash
+    }
+
     // Only a note that grew can take an account past what it may keep, and
     // working out what an account is using reads every note it holds. A limit
     // nobody enforces is a number on a settings page; one worked out on every
@@ -726,7 +826,7 @@ export class NoteRoom implements DurableObject {
     // drop. What happens instead is what the app does with the same question, which
     // is to keep the other copy beside the note; see `keptBeside`.
     if (held.version !== undefined && file.version !== held.version) {
-      await this.keptBeside(file, settled)
+      await this.keptBeside(file, settled, held.kind)
     }
 
     const saved = await saveNote(this.env, file, settled, file.path, this.settling)
@@ -735,9 +835,10 @@ export class NoteRoom implements DurableObject {
       return false
     }
 
-    // Which version the room is level with now, so the next settle asks the same
-    // question against this one rather than against the one before it.
+    // Which version the room is level with now, and what it said, so the next settle
+    // asks both questions against this one rather than against the one before it.
     held.version = saved.version
+    held.hash = saved.hash
     await this.ctx.storage.put('note', held)
 
     // Said once. Whoever types next is whose the next version is, and a settle that
@@ -763,11 +864,31 @@ export class NoteRoom implements DurableObject {
    *  room is about to write. Best effort past that - a copy that could not be made is
    *  said out loud and the settle carries on, because a note that cannot be saved at
    *  all is worse than one whose second copy is only in the version history. */
-  private async keptBeside(file: Note, settling: string) {
+  private async keptBeside(file: Note, settling: string, kind: RoomKind) {
     try {
       const object = await this.env.NOTES.get(noteKey(file.space_id, file.id))
       const wrote = object ? await object.text() : ''
       if (!wrote || wrote === settling) return
+
+      // And nothing is kept where this settle would drop none of it. What the copy is
+      // for is the words in a version the room never saw; where the change that turns
+      // that version into what the room holds only inserts, there are none of them -
+      // every word of it is inside what is about to be written.
+      //
+      // Which is what one device looks like from in here. Its pass pushed the file a
+      // keystroke before the room settled the same document, so the version the room
+      // never saw is the version the room is about to write, a letter shorter. A copy
+      // of your own paragraph is not an answer to anything, and three of them turned
+      // up on Emil's disk on three consecutive mornings. Read off the two texts rather
+      // than off the version numbers, because a version that moved says that something
+      // wrote, never what it wrote.
+      //
+      // Words only. A plane's file is a serialisation rather than prose, and two of
+      // them sharing a front and a back says nothing about the objects on it.
+      if (kind === 'words') {
+        const change = fold(wrote, settling)
+        if (!change || change.from === change.to) return
+      }
 
       if (!(await noteBeside(this.env, file, wrote))) {
         throw new Error('there was nowhere free to keep it')
