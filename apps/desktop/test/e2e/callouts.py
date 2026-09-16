@@ -38,17 +38,20 @@ SHOTS = HERE / "shots" / "callouts"
 PORT = 18952
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
+#: The thirteen looks, which are Obsidian's thirteen. `important` and `caution` are
+#: not among them: nib had those two as GitHub alert kinds before it had any of the
+#: others, and they were folded in as aliases so that a file reads the same in the
+#: editor it was written for and in the one it travels to. They are checked below
+#: with the other aliases; see the head of packages/markdown/src/callouts.ts.
 KINDS = [
     "note",
     "abstract",
     "info",
     "todo",
     "tip",
-    "important",
     "success",
     "question",
     "warning",
-    "caution",
     "failure",
     "danger",
     "bug",
@@ -56,7 +59,20 @@ KINDS = [
     "quote",
 ]
 
-ALIASES = ["summary", "tldr", "hint", "check", "done", "help", "faq", "attention", "fail", "error"]
+ALIASES = [
+    "summary",
+    "tldr",
+    "hint",
+    "check",
+    "done",
+    "help",
+    "faq",
+    "attention",
+    "fail",
+    "error",
+    "important",
+    "caution",
+]
 
 NOTE = "# Callouts\n\n" + "".join(f"> [!{kind}]\n> The {kind} one.\n\n" for kind in KINDS)
 
@@ -340,6 +356,9 @@ def drive(browser: Browser, scheme: str) -> None:
         "attention": "nib-callout-warning",
         "fail": "nib-callout-failure",
         "error": "nib-callout-danger",
+        # The two GitHub alert kinds, folded in with the rest; see KINDS above.
+        "important": "nib-callout-tip",
+        "caution": "nib-callout-warning",
     }
     for name, look in expected.items():
         if others.get(name, {}).get("look") != look:
