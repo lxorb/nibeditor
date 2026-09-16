@@ -8,9 +8,10 @@
  *  `Fine <img src=x onerror=…>` wrote a tag into every clip of it, above the
  *  words, under a heading the reader never typed.
  *
- *  The converter has always escaped this in a page's prose; see `escape` in
- *  from-html.ts, which is where the rule was and which now reads it from here. The
- *  strings that never went through the converter are the ones this is for. */
+ *  The converter has always escaped this in a page's prose; see escapes.ts, which
+ *  is what a conversion's own text goes through and which reads the rule from
+ *  here. The strings that never went through a converter are the ones this is
+ *  for. */
 
 /** A `<` the note would read as the start of a tag, a closing tag, a comment or a
  *  processing instruction: the four things CommonMark lets raw HTML begin with.

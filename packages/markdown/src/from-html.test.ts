@@ -540,6 +540,101 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>1 &lt; 2 and 3 &gt; 2</p>')).toBe('1 < 2 and 3 > 2')
   })
 
+  /** The note this was reported from. A course page's prose showed the characters
+   *  `**kurz**`, they were pasted into a note, and what landed was
+   *  `\*\*kurz\*\*` - which renders as asterisks and can never be bold, which is
+   *  what was asked for. The rule is escapes.ts and the reasoning is there; these
+   *  are the words that arrived, along the road they arrived by. */
+  describe('a page whose own words are markdown', () => {
+    test('a doubled marker around plain words is kept, and reads as markdown', () => {
+      expect(htmlToMarkdown('<p>dann überfliegen Sie **kurz** das Dokument</p>')).toBe(
+        'dann überfliegen Sie **kurz** das Dokument',
+      )
+      expect(htmlToMarkdown('<p>ganz __fett__ gesagt</p>')).toBe('ganz __fett__ gesagt')
+    })
+
+    test('and so is a code span', () => {
+      expect(htmlToMarkdown('<p>run `npm run dev` first</p>')).toBe('run `npm run dev` first')
+    })
+
+    /** An escape that changes nothing is a backslash the note carries for no
+     *  reason. `cx_out` is the one out of somebody's own note: an underscore
+     *  inside a word opens no emphasis in any reader of markdown. */
+    test('and an escape no reader would have needed is not written at all', () => {
+      expect(htmlToMarkdown('<p>plt.savefig("./cx_out/pic.png")</p>')).toBe(
+        'plt.savefig("./cx_out/pic.png")',
+      )
+      expect(htmlToMarkdown('<p>2 * 3 = 6</p>')).toBe('2 * 3 = 6')
+      expect(htmlToMarkdown('<p>C:\\Users\\me\\notes</p>')).toBe('C:\\Users\\me\\notes')
+    })
+
+    /** The other half of the same paste, and it stays escaped: the page's
+     *  paragraph began with a plus, and a plus at the start of a line is a
+     *  bullet. What the escape buys there is the paragraph the page showed. */
+    test('a marker that would open a block of its own is still escaped', () => {
+      expect(htmlToMarkdown('<p>+ Lesen und üben Sie die Aufgaben</p>')).toBe(
+        '\\+ Lesen und üben Sie die Aufgaben',
+      )
+      expect(htmlToMarkdown('<p># 1 der Liste</p>')).toBe('\\# 1 der Liste')
+      expect(htmlToMarkdown('<p>&gt; sagte sie</p>')).toBe('\\> sagte sie')
+    })
+
+    /** A single marker is punctuation as often as it is emphasis, and the two
+     *  mistakes are not the same size: a backslash too many is visible and can be
+     *  deleted, a phrase eaten by a pair of stars is not. So prose keeps its. */
+    test('a single marker is prose, and keeps its escape', () => {
+      expect(htmlToMarkdown('<p>rename *.md to *.txt</p>')).toBe('rename \\*.md to \\*.txt')
+      expect(htmlToMarkdown('<p>the _config_ file</p>')).toBe('the \\_config\\_ file')
+    })
+
+    /** What is kept is a phrase in bold, never a way for a page to put markup of
+     *  its own into somebody's note: the words inside the markers may hold
+     *  nothing the escaping was protecting the note from. */
+    test('and never a run with markup inside it', () => {
+      expect(htmlToMarkdown('<p>**&lt;img src=q onerror=alert(1)&gt;**</p>')).toBe(
+        '\\*\\*\\<img src=q onerror=alert(1)>\\*\\*',
+      )
+      expect(htmlToMarkdown('<p>**[a](javascript:alert(1))**</p>')).toBe(
+        '\\*\\*\\[a\\](javascript:alert(1))\\*\\*',
+      )
+    })
+
+    /** A page that means emphasis says so in its own tags, and that road is
+     *  untouched: the markers below are written by the rules, not left by the
+     *  escaping. */
+    test('and a page that means emphasis still gets it from its tags', () => {
+      expect(htmlToMarkdown('<p><strong>kurz</strong> und <em>gut</em></p>')).toBe(
+        '**kurz** und *gut*',
+      )
+    })
+
+    /** The whole section, as the course page writes it and as the note should
+     *  have held it. The rest of the page is untouched by any of this - the
+     *  heading keeps its link, the list is numbered by the list rule - and the
+     *  three lines that were wrong are the three lines below. */
+    test('and the section it was reported from arrives as the note it should be', () => {
+      const page = [
+        '<h3><a href="https://moodle.test/section.php?id=1">Vor der Ersten Vorlesung</a></h3>',
+        '<p>+ Schauen Sie sich das Cheatsheet an und überfliegen Sie **kurz** das Dokument.</p>',
+        '<ol><li>in CodeExpert zu arbeiten;</li><li>oder nur mit IPython.</li></ol>',
+        '<p>in CodeExpert braucht man plt.savefig("./cx_out/pic.png") statt plt.show()</p>',
+      ].join('')
+
+      expect(htmlToMarkdown(page)).toBe(
+        [
+          '### [Vor der Ersten Vorlesung](https://moodle.test/section.php?id=1)',
+          '',
+          '\\+ Schauen Sie sich das Cheatsheet an und überfliegen Sie **kurz** das Dokument.',
+          '',
+          '1. in CodeExpert zu arbeiten;',
+          '2. oder nur mit IPython.',
+          '',
+          'in CodeExpert braucht man plt.savefig("./cx_out/pic.png") statt plt.show()',
+        ].join('\n'),
+      )
+    })
+  })
+
   /** Code says what it says. Turndown hands a fence its own text rather than the
    *  escaped kind, and the fence keeps it that way. */
   test('a tag inside code keeps its brackets', () => {

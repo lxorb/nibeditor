@@ -18,9 +18,9 @@
 
 import TurndownService from 'turndown'
 import { gfm } from 'turndown-plugin-gfm'
+import { escapeText } from './escapes'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
 import { appHref, safeHref, safeSrc } from './html'
-import { asWords } from './words'
 
 /** What a note never contains.
  *
@@ -416,14 +416,12 @@ function converter(options: FromHtmlOptions): TurndownService {
 
   service.use(gfm)
 
-  // Turndown escapes the markdown a page's text would otherwise read as; a `<`
-  // is the one it leaves, and the one that matters most here - see `asWords`,
-  // which is the same rule the strings that never reach a converter go through.
-  // Wrapped rather than replaced, and hung on the instance because that is where
-  // turndown looks it up - and it looks it up only for text that is not inside
-  // code, which is what keeps a fence's own brackets intact.
-  const escapeMarkdown = service.escape.bind(service)
-  service.escape = (text: string) => asWords(escapeMarkdown(text))
+  // What a page's own text is written as, which is escapes.ts and not turndown's
+  // own: the same markers, escaped where the escape changes what is rendered and
+  // left alone where a run of the page's words already is markdown. Hung on the
+  // instance because that is where turndown looks it up - and it looks it up only
+  // for text that is not inside code, which is what keeps a fence's brackets.
+  service.escape = escapeText
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
   // the list is one. For the clipper this is a second line of defence behind its
