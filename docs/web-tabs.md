@@ -318,6 +318,42 @@ no list in the web tab to keep in step with the app. The document is still asked
 well, at nine points rather than one, for the few things over the page that Escape
 does not close.
 
+**What is over the hole decides how the page is placed, and never whether there is
+one.** That distinction is worth a paragraph of its own, because losing it cost the
+whole feature. Asking for the page used to hang off the same measurement: a pane that
+measured itself while something was over the hole asked for no page at all, and nothing
+asked again - the rectangle had not changed and the overlay stack was already empty.
+
+Emil, 2026-09-17: *"Browser tabs take AN ETERNITY to load."* The eternity was not a
+load. Every way of opening a website except clicking its row in the file list goes
+through a layer, and a layer that has closed is still in the document for the 120 to 190
+milliseconds it takes to play its way out: the palette's scrim, the app menu's, the
+chooser Ctrl+T opens, a row's own menu. The pane mounted under one of those, and the tab
+then sat on an empty pane until the reader happened to press something - which is what
+finally made the page arrive, because a press is one of the few things that asks again.
+
+So the page is opened whatever is over the pane, and opened **out of sight** where
+something is, which is the other half of the same rule: a webview built over a menu
+would be a page in front of it. And while the hit test says covered with nothing on the
+overlay stack - which is exactly a layer on its way out - the pane looks again on the
+next frame until it has gone. Measured with `scripts/web-open-probe.py`, on a local page
+so the number is about the app:
+
+| | before | after |
+| --- | --- | --- |
+| a tab opened from the file list, to the site on screen | 143 ms | 99 ms |
+| the first web tab of the run, which starts the engine as well | 474 ms | 388 ms |
+| a tab opened under a layer that is still leaving | **never** | 112 ms |
+| what the window does before the crate is asked at all | 54 ms | 1 ms |
+
+That last row was three things in front of `web_open` that had nothing to do with this
+tab: two painted frames spent waiting for a launch stage that had already passed, a
+third for the frame the measurement is coalesced onto, and the window's two page
+listeners - a fetch and two round trips, now started with the first page in the window
+rather than with the first placement. For scale, the same pages in plain Chrome, new tab
+to `DOMContentLoaded`: 589 ms for the local one, 607 ms for `example.com`, 1,420 ms for
+the Svelte docs. Nothing here was ever a throughput problem.
+
 **And the page does not blink out any more.** The engine is asked to photograph itself -
 `CapturePreview`, which is the only way to those pixels - and the still picture is what
 the pane holds while the webview is out of sight: under a menu, and while a parked page
@@ -330,7 +366,12 @@ a page finishes loading, and the overlay then finds one already there. The one c
 waits is the first thing ever drawn over a page nothing has photographed yet, and that
 wait is capped; a picture from a moment ago is used at once and refreshed behind the
 menu. Nothing photographs a page that is already hidden, because a hidden webview has no
-frame to hand over and a blank picture is worse than none. On macOS and Linux there is no
+frame to hand over and a blank picture is worse than none. And one picture at a time,
+taken on the moment a page *stops* loading rather than on every report that it is not
+loading: the crate says where a page is again whenever its title or its mark arrives, so
+a page landing is three reports in a few milliseconds, and each of them used to throw the
+picture away and ask for another - three engine captures at once, in the breath the
+reader is watching the page appear. On macOS and Linux there is no
 snapshot to be had through what wry hands out, and the hole keeps its own ground there.
 
 **Back and forward are the page's own history, until they cannot be.** Neither
@@ -738,6 +779,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
 | `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
 | `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
+| `scripts/web-open-probe.py` | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1` |
 | `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page |
 | `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
