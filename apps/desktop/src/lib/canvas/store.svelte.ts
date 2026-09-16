@@ -43,6 +43,7 @@ import { strokeBox } from './ink'
 import { afterQuiet } from '../timing'
 import { CanvasHistory } from './history'
 import type { Hand, PlaneSurface, Reachable, SharedPlane } from './shared'
+import { flushCardEdits } from './writing'
 import type { NoteDoc, Tab } from '../workspace/documents.svelte'
 
 /** Room left around the canvas when it is framed, in pixels. */
@@ -320,6 +321,10 @@ export class CanvasStore implements PlaneSurface {
   /** Anything owing, written now: the room is being left, or the last tab on this
    *  plane is closing. */
   part() {
+    // The card somebody is writing in holds words the plane has not been given yet,
+    // and this is the last moment they can be asked for: a window shut mid-word wrote
+    // the plane without the word in it. See canvas/writing.ts.
+    flushCardEdits()
     this.writing.flush()
 
     // Where the reading was left, for this device: coming back to the plane, or opening

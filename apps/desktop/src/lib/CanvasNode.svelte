@@ -16,6 +16,7 @@
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
+  import { cardWriting } from './canvas/writing'
   import { pickedLink } from './composer'
   import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
@@ -154,6 +155,20 @@
   let editor: EditorView | undefined
   let typed = ''
 
+  /** The words the plane has already been given, so handing them over twice - a
+   *  flush and then the teardown that follows it - is one edit rather than two. */
+  let handed: string | null = null
+
+  /** The words in the card given to the plane. What the caret leaving does, and what
+   *  anything about to read the plane asks for first: until this has run, the plane
+   *  says the card is empty. See canvas/writing.ts. */
+  function hand() {
+    if (typed === handed) return
+
+    handed = typed
+    ontext?.(typed)
+  }
+
   /** The small editor, mounted only while this card is being written in and taken
    *  down the moment it is not: five hundred cards must not be five hundred
    *  editors, and the one that exists is sized to its own card. */
@@ -161,6 +176,7 @@
     if (node.type !== 'text' && node.type !== 'shape') return
 
     typed = words ?? ''
+    handed = null
     editor = createEditor({
       parent: host,
       doc: typed,
@@ -179,10 +195,12 @@
       shortcuts: shortcuts.forEditor,
     })
     editor.focus()
+    cardWriting(hand)
 
     return {
       destroy: () => {
-        ontext?.(typed)
+        cardWriting(null)
+        hand()
         editor?.destroy()
         editor = undefined
       },
@@ -231,14 +249,22 @@
     }
   }
 
-  /** Escape leaves the card. Everything else belongs to the editor inside it,
-   *  including the keys that would otherwise reach the canvas: a card being
-   *  written in is a text field, and Delete in one deletes a character. */
+  /** Escape leaves the card. Every other press is left exactly as it arrived.
+   *
+   *  This runs in the capture phase, on the box the editor is mounted inside, which
+   *  means it runs before the editor has seen the press at all - so stopping a press
+   *  here stopped it for the editor as well as for everything above. A card could not
+   *  be given a second line, because Enter never reached the editor's own keymap; nor
+   *  could it be given a bold word or an undo; and no app shortcut worked while the
+   *  caret was in one, because the press never got out of the card either.
+   *
+   *  Nothing above needs protecting from the press. The plane stands down while
+   *  something is being typed in - see `onKeyDown` in Canvas.svelte, which asks both
+   *  whether the press came out of a field and whether a card is open - and the app's
+   *  own handler is the last one to run and leaves a press the editor has already
+   *  answered alone; see `handle` in shortcuts.svelte.ts. */
   function onKey(event: KeyboardEvent) {
-    if (event.key !== 'Escape') {
-      event.stopPropagation()
-      return
-    }
+    if (event.key !== 'Escape') return
 
     event.preventDefault()
     event.stopPropagation()
