@@ -471,7 +471,18 @@ export const blockDecorations = StateField.define<Blocks>({
     // Moving the caret is choosing where it goes, and so is writing at it. A
     // transaction that does neither - a setting, or the parse arriving - leaves
     // the caret as unchosen as it found it.
-    const chosen = value.chosen || transaction.docChanged || transaction.selection !== undefined
+    //
+    // Carrying the selection is not moving it. A transaction may state the caret it
+    // already had, and one does on every open: the folds a note asks for go in with
+    // `selection: state.selection` beside them, so that the library keeps a fold the
+    // caret would otherwise have covered - see `withFolds` in fold.ts. Counted as a
+    // choice, that left a note whose first block is its front matter, a table, a
+    // display equation or a `[toc]` opening on the markdown of it, but only when the
+    // note also held a callout written shut.
+    const moved =
+      transaction.selection !== undefined &&
+      !transaction.startState.selection.eq(transaction.state.selection)
+    const chosen = value.chosen || transaction.docChanged || moved
 
     // Reading mode holds every reveal shut, and equation numbering changes what
     // every display equation says. Either way the transaction changes neither

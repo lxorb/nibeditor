@@ -149,6 +149,22 @@ describe('block decorations', () => {
     expect(state(long, inside).field(blockDecorations).decorations.size).toBe(1)
   })
 
+  test('nor by a transaction that states the caret it already had', () => {
+    // A note opens with the folds it asks for, and those go in with
+    // `selection: state.selection` beside them so the library keeps a fold the caret
+    // would otherwise have covered; see `withFolds` in fold.ts. Carrying the caret is
+    // not moving it. Counted as a choice, it left a note whose first block is its
+    // front matter, a table, an equation or a `[toc]` opening on the markdown of it -
+    // but only when the note also held a callout written shut, which is what puts any
+    // folds in at all. It showed in the card over a `[[link]]`, whose editor is built
+    // this way every time it opens.
+    const doc = `${TABLE}\n\ntail\n`
+    const held = state(doc)
+    const again = held.update({ selection: held.selection }).state
+
+    expect(again.field(blockDecorations).decorations.size).toBe(1)
+  })
+
   test('but the caret does reveal once it has been put somewhere', () => {
     const doc = `${TABLE}\n\ntail\n`
     const moved = state(doc).update({ selection: EditorSelection.cursor(3) }).state
