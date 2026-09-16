@@ -25,7 +25,17 @@ Run it from the repository root:
 
     python apps/desktop/test/e2e/smoke.py
 
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
+Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run, or NIB_ORIGIN
+to drive a server somebody else is already running - the dev server on 1420, which
+is what a desktop build in development loads from.
+
+One thing this does NOT cover, said here because the gap is easy to miss. The build
+it makes is a development build, because `window.nibApp` and `window.nib` - the
+handles every drive in this folder steers the app by - are behind
+`import.meta.env.DEV`, which a production build folds to false and removes. So the
+bundle that actually ships is driven by nothing at all, here or anywhere else in the
+repository. Closing that means a define the release build can turn on, and a harness
+these ninety drives can share; it is worth doing and it is more than a smoke test.
 """
 
 from __future__ import annotations

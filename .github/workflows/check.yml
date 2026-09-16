@@ -93,14 +93,18 @@ jobs:
           python3 -m pip install --quiet --break-system-packages playwright
           python3 -m playwright install --with-deps chromium
 
-      # The drive builds the app itself when there is nothing to reuse, but doing
-      # it here means a build failure is reported as a build failure rather than
-      # as the drive giving up.
-      - name: Frontend
-        run: pnpm --filter @nib/desktop build
-
+      # The drive builds its own, in development mode, and that is not a detail to
+      # tidy away: `window.nibApp` and `window.nib` - the two handles every drive
+      # in the folder steers the app by - are behind `import.meta.env.DEV`, which a
+      # production build folds to false and eliminates. The first version of this
+      # job built the app the way a release does and handed the drive that, and the
+      # drive sat waiting thirty seconds for an app it had no way to reach.
+      #
+      # So this gate covers the development build, like every other drive, and the
+      # build that actually ships is still driven by nothing. That is a real hole
+      # and it is not this job's to close; see the note in smoke.py.
       - name: Smoke
-        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/smoke.py
+        run: python3 apps/desktop/test/e2e/smoke.py
 
       # What it saw, when it did not like it. A screenshot of the surface that
       # failed is the difference between "bold is not bold" and knowing why.
