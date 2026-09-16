@@ -40,10 +40,36 @@ type Doc = import('./documents.svelte').NoteDoc
 
 const SPACE = '/space'
 
+/** One row of a listing, as the disk hands it over. */
+function row(path: string, children: Entry[] = []): Entry {
+  return {
+    name: path.slice(path.lastIndexOf('/') + 1),
+    path,
+    is_dir: children.length > 0,
+    modified: 0,
+    created: 0,
+    children,
+  }
+}
+
+/** The space's listing, holding whatever paths are named. What the store's own
+ *  `tree` is, and what says whether a note still has a file: a delete takes the
+ *  row out of it before it touches the disk. */
+function listing(paths: readonly string[]): Entry {
+  return row(
+    SPACE,
+    paths.map((one) => row(one)),
+  )
+}
+
+type Entry = import('../workspace.svelte').Entry
+
 /** A store with one document open in it. `kept` is the workspace's own answer to
  *  "is saving this anybody's job", which is the whole of what the two rules turn
  *  on. */
 function open(path: string | null, { kept = true, text = '# a' } = {}) {
+  let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
+
   const ws: Writes & { kept: string[] } = {
     tabs: [],
     documents: [],
@@ -51,7 +77,9 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
     previewTabId: null,
     spaces: [{ id: 's', name: 'Space', root: SPACE }],
     activeSpaceId: 's',
-    tree: null,
+    get tree() {
+      return tree
+    },
     kept: [],
     keep(id) {
       this.kept.push(id)
@@ -76,7 +104,23 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
   ws.documents.push(note)
   Object.defineProperty(ws, 'active', { get: () => tab })
 
-  return { saving, note, tab, ws }
+  /** The note deleted, as the store deletes one: the row leaves the listing and
+   *  the tab it was open in is closed, both before the file itself goes. See
+   *  `remove` in workspace.svelte.ts. */
+  const deleted = () => {
+    tree = listing([])
+    ws.tabs.length = 0
+    ws.documents.length = 0
+  }
+
+  /** The tab closed on a note that is still there, which is the ordinary way a
+   *  document stops being shown. */
+  const closed = () => {
+    ws.tabs.length = 0
+    ws.documents.length = 0
+  }
+
+  return { saving, note, tab, ws, deleted, closed }
 }
 
 beforeEach(() => {
@@ -169,6 +213,40 @@ describe('what the pause after the typing writes', () => {
     await vi.advanceTimersByTimeAsync(5000)
 
     expect(sent).toEqual([])
+  })
+})
+
+describe('a note deleted while the typing was still warm', () => {
+  /** A note is written a second or so after the last keystroke, so deleting one
+   *  straight after typing in it leaves a write in the air with nowhere to go. It
+   *  used to land: the row came back into the file list about a second after it was
+   *  deleted, with the words in it, and where the delete took the folder around it
+   *  the folder came back too. See `gone` in saving.svelte.ts. */
+  test('is not written back to the disk by the write that was waiting', async () => {
+    vi.useFakeTimers()
+    const { note, deleted } = open(`${SPACE}/a.md`)
+
+    note.replace('# a\n\nthe last thing typed')
+    deleted()
+
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+
+  /** The other half of the same moment, and the reason the listing is asked about
+   *  rather than the tab alone: closing a tab on a note that is still there has to
+   *  write what was typed just before it was shut. */
+  test('while a tab closed on a note that is still there is written as it always was', async () => {
+    vi.useFakeTimers()
+    const { note, closed } = open(`${SPACE}/a.md`)
+
+    note.replace('# a\n\nthe last thing typed')
+    closed()
+
+    await vi.advanceTimersByTimeAsync(5000)
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([
+      { command: 'write_note', path: `${SPACE}/a.md`, content: '# a\n\nthe last thing typed' },
+    ])
   })
 })
 

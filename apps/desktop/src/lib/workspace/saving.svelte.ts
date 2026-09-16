@@ -21,6 +21,7 @@ import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import { keep, storedText } from '../stored'
+import { entryAt } from '../tree-edits'
 import type { Entry, Space } from '../workspace.svelte'
 import { holdsWords, NoteDoc, type Tab, UNTITLED } from './documents.svelte'
 
@@ -257,6 +258,31 @@ export class Saving {
     for (const note of notes) await this.write(note)
   }
 
+  /** Whether a note's file went out from under a write that was still waiting for
+   *  the typing to stop.
+   *
+   *  Deleting a note closes its tab and takes the file, and the keystrokes from the
+   *  second before are still here waiting to go down. Writing them then put the note
+   *  straight back on the disk a moment after it was deleted - and, where the folder
+   *  around it went too, put the folder back as well.
+   *
+   *  Two things have to be true, and both are read rather than asked of the disk. No
+   *  tab is holding the note, so nobody can still be typing in it: a tab closed on a
+   *  note that is still there is the ordinary case, and the last thing typed before
+   *  it was shut has to go down. And the listing no longer holds the path, which is
+   *  what a delete does to the tree before it touches the file; see `hideEntry` in
+   *  workspace.svelte.ts. A note belonging to some other space is nothing this
+   *  listing can answer for, so it is left alone. */
+  private gone(note: NoteDoc): boolean {
+    const path = note.path
+    const tree = this.ws.tree
+    if (path === null || !tree) return false
+    if (this.ws.tabs.some((tab) => tab.note === note)) return false
+    if (!path.startsWith(`${tree.path}/`)) return false
+
+    return !entryAt(tree, path)
+  }
+
   /** The dot's three states. `saved` stands for a moment and then goes: it is
    *  a confirmation, not a status, and a note with nothing to write should not
    *  wear a mark forever.
@@ -369,6 +395,13 @@ export class Saving {
     // The keystrokes since the last pause, which are still only a rope.
     note.flush()
     if (!holdsWords(note.kind)) return
+
+    // The file this write is for may have been deleted while the write was waiting;
+    // see `gone`. Nothing is written, because writing would be undeleting.
+    if (this.gone(note)) {
+      this.clearSaveState(note.key)
+      return
+    }
 
     // Which note this document is on as the write begins. A document outlives the
     // file in it - the one tab that previews a note takes another note on rather
