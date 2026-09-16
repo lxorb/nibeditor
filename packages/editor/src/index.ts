@@ -1,7 +1,7 @@
 export { createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
 export { HeldState, type StateView } from './held'
 export { type Peer, peersOf, remoteCarets, setPeers } from './carets'
-export { redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
+export { type DocView, documentOf, letGo, redoEdit, SharedDoc, sharedOf, undoEdit } from './shared'
 export { type AiAsk, type AiRunner, setAiRunner } from './ai/run'
 export {
   calloutSign,

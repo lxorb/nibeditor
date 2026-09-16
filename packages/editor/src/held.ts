@@ -95,15 +95,17 @@ export class HeldState implements DocView {
    *  painted, so the note appears already where it was left rather than at its
    *  top for a frame or two. */
   give(view: StateView, effects: readonly StateEffect<unknown>[] = []) {
-    // The view takes this state's place at the document: two of them holding
-    // the same words would each be sent the other's changes.
-    this.note.leave(this)
-    view.setState(this.held)
-    // A note nobody has read opens at its top. The scroller is the same element
-    // whichever note is in it, so without this the note would arrive at however
-    // far down the last one was.
-    if (!this.place) view.scrollDOM.scrollTop = 0
-    this.note.join(view)
+    // The view takes this state's place at the document, in one move the document
+    // makes for itself: two of them holding the same words would each be sent the
+    // other's changes, and a view left on the note it came from would be sent that
+    // note's. See `handOver` in shared.ts.
+    this.note.handOver(this, view, () => {
+      view.setState(this.held)
+      // A note nobody has read opens at its top. The scroller is the same element
+      // whichever note is in it, so without this the note would arrive at however
+      // far down the last one was.
+      if (!this.place) view.scrollDOM.scrollTop = 0
+    })
     this.settle(view, effects)
   }
 
@@ -116,22 +118,18 @@ export class HeldState implements DocView {
   }
 
   /** Takes the note back when the view moves on to another one, with wherever
-   *  the reader had got to in it. */
+   *  the reader had got to in it. The other half of `give`, and the same one
+   *  move: the document goes from the view to this state, with this state's
+   *  words being what the view was holding. */
   take(view: StateView) {
-    this.note.leave(view)
-    this.held = view.state
-    this.place = view.scrollSnapshot()
-    this.note.join(this)
+    this.note.handOver(view, this, () => {
+      this.held = view.state
+      this.place = view.scrollSnapshot()
+    })
   }
 
   /** Lets the document go, for a tab that has closed. */
   release() {
     this.note.leave(this)
-  }
-
-  /** The view showing this note is going. The document lets the view go; nothing
-   *  is kept, since the tab it belonged to is going with it. */
-  close(view: StateView) {
-    this.note.leave(view)
   }
 }

@@ -43,6 +43,38 @@ export interface DocView {
   dispatch(spec: TransactionSpec): void
 }
 
+/** Which document each view is on. One entry per view, whatever else is holding
+ *  a reference to it, because a view can only be looking at one note at a time.
+ *
+ *  Here, and owned by the document, because this is the fact that used to be
+ *  spread across four files - a pane's swap, a held state being given and taken
+ *  back, and the join itself - and could be forgotten in any of them. Forgetting
+ *  it left a view on the note it came from as well as the note it had moved to,
+ *  so that note's changes went on arriving in it: one note's words appearing in
+ *  another, under the other's name, on their way to the disk. A document that
+ *  takes a view off whatever it was on cannot be forgotten by anybody.
+ *
+ *  Weak because it is not a reason to keep a view alive: a pane that has gone is
+ *  gone whether or not anything here still names its view. */
+const onDocument = new WeakMap<DocView, SharedDoc>()
+
+/** The document a view is on, which is the document whose changes reach it.
+ *
+ *  Not the same question as `sharedOf` below, and the one to ask. That reads a
+ *  claim the view's own state is carrying, which is a copy of a fact and can
+ *  outlive it - a state put away and handed to a view again still says what it
+ *  said. This is the fact. */
+export function documentOf(view: DocView): SharedDoc | null {
+  return onDocument.get(view) ?? null
+}
+
+/** Takes a view off whatever document it is on, for a view that is going: a
+ *  document carrying its changes into a view that no longer exists is carrying
+ *  them nowhere. */
+export function letGo(view: DocView) {
+  onDocument.get(view)?.leave(view)
+}
+
 /** Which document a view is looking at. Set through the effect below rather
  *  than given at creation, because a view outlives the note in it: the one tab
  *  that previews a note moves on to another without being rebuilt. */
@@ -59,8 +91,13 @@ const sharedField = StateField.define<SharedDoc | null>({
   },
 })
 
-/** The document a view is joined to, or null for a view that owns its text
- *  alone. Absent rather than null in a state built without `sharing()`. */
+/** The document a state was last told it belongs to, or null for one that owns
+ *  its text alone. Absent rather than null in a state built without `sharing()`.
+ *
+ *  A claim rather than a fact: what this state was told, which stays true only
+ *  while the view holding it is still on that document. Read it to ask what a
+ *  state is *about* - whose history answers Ctrl+Z, which note a place belongs to
+ *  - and never to decide whether changes may flow. `documentOf` is that one. */
 export function sharedOf(state: EditorState): SharedDoc | null {
   return state.field(sharedField, false) ?? null
 }
@@ -178,18 +215,29 @@ export class SharedDoc {
     return this.views.size
   }
 
-  /** Takes a view on. Its text is brought to the document's, which is what a
-   *  view built for another note and pointed at this one needs; a view built
-   *  from `text` above holds the same rope already and only takes the effect. */
+  /** Takes a view on, off whatever it was on before.
+   *
+   *  Both halves, always, because a view looking at two notes is the one thing
+   *  that must not happen: the note it came from would go on carrying its changes
+   *  into it, and those words would be written down under the name of the note it
+   *  moved to. Joining is the only way in, so there is no way in that skips it.
+   *
+   *  Its text is brought to the document's, which is what a view built for another
+   *  note and pointed at this one needs; a view built from `text` above holds the
+   *  very rope this document holds, so the comparison is an identity check and
+   *  there is nothing to put in. */
   join(view: DocView) {
-    this.views.add(view)
+    // Already ours. It has had every change since it joined - membership is what
+    // decides that, and this document is what keeps it - so there is nothing to
+    // tell it and nothing to compare.
+    if (onDocument.get(view) === this) {
+      this.views.add(view)
+      return
+    }
 
-    // A state that says it is already this document's has had every change since
-    // it joined, so there is nothing to tell it and nothing to compare: two ropes
-    // built by applying the same changes are equal without being the same object,
-    // and comparing them costs a pass over the note on every switch between two
-    // open ones. See held.ts, which is what leaves and comes back.
-    if (sharedOf(view.state) === this) return
+    onDocument.get(view)?.leave(view)
+    this.views.add(view)
+    onDocument.set(view, this)
 
     const same = view.state.doc.eq(this.state.doc)
     view.dispatch({
@@ -199,10 +247,45 @@ export class SharedDoc {
     })
   }
 
+  /** This document changes hands: `leaving` stops following it, `taking` starts,
+   *  and `move` in between is what puts this document's words into `taking`.
+   *
+   *  One call rather than a leave and a join around a swap, because which of the
+   *  two is following is one fact, and a fact told in two halves is a fact that
+   *  can be half told. It is also what makes the swap free: `leaving` was
+   *  following, so the words `move` has just put into `taking` are this document's
+   *  own, and there is nothing to compare. Where `leaving` turns out not to have
+   *  been following, `taking` comes in the ordinary way above and is brought up to
+   *  the words like any other newcomer.
+   *
+   *  See held.ts: a pane's one view and the state waiting its turn hand this
+   *  document back and forth on every switch. */
+  handOver(leaving: DocView, taking: DocView, move: () => void) {
+    const followed = onDocument.get(leaving) === this
+    this.leave(leaving)
+    move()
+
+    if (!followed) {
+      this.join(taking)
+      return
+    }
+
+    onDocument.get(taking)?.leave(taking)
+    this.views.add(taking)
+    onDocument.set(taking, this)
+
+    // Only where it is not already carrying the claim, which it is whenever it has
+    // just been handed a state of this document's.
+    if (sharedOf(taking.state) !== this) {
+      taking.dispatch({ effects: setShared.of(this), annotations: external.of(true) })
+    }
+  }
+
   /** Lets a view go. The view keeps the text it has: whether it is about to be
    *  destroyed or pointed at another note is the caller's business. */
   leave(view: DocView) {
     this.views.delete(view)
+    if (onDocument.get(view) === this) onDocument.delete(view)
   }
 
   /** A change a view made. Applied to the document and to the other views.
@@ -393,14 +476,17 @@ export function sharing(): Extension {
   ]
 }
 
-/** Undo and redo, asked of the document when there is one and of the view
- *  otherwise. What the keymap binds, so a rebound key reaches both. */
+/** Undo and redo, asked of the document the view is on when there is one and of
+ *  the view otherwise. What the keymap binds, so a rebound key reaches both.
+ *
+ *  Asked of the document the view is *on*, not of the one its state names: a
+ *  Ctrl+Z is about the note in front of whoever pressed it. */
 export const undoEdit: Command = (view) => {
-  const shared = sharedOf(view.state)
+  const shared = documentOf(view)
   return shared ? shared.undo(view) : undo(view)
 }
 
 export const redoEdit: Command = (view) => {
-  const shared = sharedOf(view.state)
+  const shared = documentOf(view)
   return shared ? shared.redo(view) : redo(view)
 }

@@ -6,7 +6,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { type DocView, SharedDoc, sharedOf, sharing } from './shared'
+import { type DocView, documentOf, letGo, SharedDoc, sharedOf, sharing } from './shared'
 
 /** A view without a DOM: the state a pane holds, and the dispatch a document
  *  reaches it through. The extensions are the two the document needs from a
@@ -14,10 +14,7 @@ import { type DocView, SharedDoc, sharedOf, sharing } from './shared'
 class Pane implements DocView {
   private held: EditorState
 
-  constructor(
-    private readonly note: SharedDoc,
-    cursor = 0,
-  ) {
+  constructor(note: SharedDoc, cursor = 0) {
     this.held = EditorState.create({
       doc: note.text,
       selection: EditorSelection.cursor(cursor),
@@ -42,8 +39,9 @@ class Pane implements DocView {
     return this.held.selection.main.head
   }
 
-  /** What the editor does with an edit: applies it, then hands the change over.
-   *  See the update listener in editor.ts, which does exactly this. */
+  /** What the editor does with an edit: applies it, then hands the change over to
+   *  the document this view is on. See the update listener in editor.ts, which
+   *  does exactly this - and asks which document the same way. */
   edit(changes: ChangeSpec, cursor: number) {
     const made = this.held.update({
       changes,
@@ -52,7 +50,7 @@ class Pane implements DocView {
     })
 
     this.held = made.state
-    this.note.local(made.changes, made.state.selection, this)
+    documentOf(this)?.local(made.changes, made.state.selection, this)
   }
 
   type(at: number, insert: string) {
@@ -265,5 +263,142 @@ describe('a document with one pane', () => {
 
     expect(note.text.toString()).toBe('alone!')
     expect(note.panes).toBe(1)
+  })
+})
+
+/** A view looks at one note at a time, and the documents are what make that true.
+ *
+ *  Emil, on the desktop app: *"I switch to a different note and then for some
+ *  reason it gets some random useless content ... switched from a web note tab to
+ *  a normal note tab and then it had some strange web note tab content in it."*
+ *  That is a view left on the note it came from: the note it came from goes on
+ *  carrying its changes into it, and those words are then the note that is up,
+ *  under that note's name, on their way to the disk and to every other device.
+ *
+ *  It used to take one forgotten `leave` anywhere in the pane's swap. Now a join
+ *  is the only way in and it takes the view off whatever it was on, so there is
+ *  nothing anybody can forget. */
+describe('a view looks at one note at a time', () => {
+  test('joining a second document takes it off the first', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('the website')
+    const view = new Pane(here)
+
+    there.join(view)
+
+    expect(documentOf(view)).toBe(there)
+    expect(here.panes).toBe(0)
+    expect(there.panes).toBe(1)
+  })
+
+  test('the note it came from no longer reaches it', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('[InternetShortcut]\nURL=https://a.example\n')
+    const view = new Pane(here)
+
+    there.join(view)
+    // The reading moved on, so the shortcut is rewritten under the website's name.
+    there.replace('[InternetShortcut]\nURL=https://b.example\n')
+    // And the note it came from is edited too, from another pane or a sync.
+    here.replace('the note, changed')
+
+    expect(view.text).toBe('[InternetShortcut]\nURL=https://b.example\n')
+  })
+
+  test('a keystroke goes to the document the view is on', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('the website')
+    const view = new Pane(here)
+
+    there.join(view)
+    view.type(view.text.length, '!')
+
+    expect(there.text.toString()).toBe('the website!')
+    expect(here.text.toString()).toBe('the note')
+  })
+
+  test('a state that still names a document it has left is not believed', () => {
+    const note = new SharedDoc('the note')
+    const view = new Pane(note)
+    // What a swap leaves behind: the view is off the document, and the state it
+    // is holding still says the document's name.
+    note.leave(view)
+    expect(sharedOf(view.state)).toBe(note)
+    expect(documentOf(view)).toBeNull()
+
+    // Meanwhile the note is written to by the other pane it is open in.
+    note.replace('the note, changed')
+    expect(view.text).toBe('the note')
+
+    // Coming back to it brings it up to the words rather than trusting the claim.
+    note.join(view)
+    expect(view.text).toBe('the note, changed')
+  })
+
+  test('letting a view go takes it off whatever it was on', () => {
+    const note = new SharedDoc('the note')
+    const view = new Pane(note)
+
+    letGo(view)
+
+    expect(documentOf(view)).toBeNull()
+    expect(note.panes).toBe(0)
+  })
+
+  test('joining the document it is already on costs nothing and says nothing', () => {
+    const note = new SharedDoc('the note')
+    const view = new Pane(note)
+    const before = view.state
+
+    note.join(view)
+
+    // The very same state: a view that has been following has had every change
+    // there was, so there is nothing to tell it.
+    expect(view.state).toBe(before)
+    expect(note.panes).toBe(1)
+  })
+})
+
+/** The swap a pane makes on every switch, asked of the document rather than of
+ *  the two halves separately; see held.ts, which is what calls it. */
+describe('a document changing hands', () => {
+  test('moves from the one that was following to the one taking over', () => {
+    const note = new SharedDoc('the note')
+    const was = new Pane(note)
+    const now = new Pane(note)
+    note.leave(now)
+
+    note.handOver(was, now, () => undefined)
+
+    expect(documentOf(was)).toBeNull()
+    expect(documentOf(now)).toBe(note)
+    expect(note.panes).toBe(1)
+  })
+
+  test('takes the one taking over off whatever it was on', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('the website')
+    const was = new Pane(here)
+    const now = new Pane(there)
+
+    here.handOver(was, now, () => undefined)
+
+    expect(documentOf(now)).toBe(here)
+    expect(there.panes).toBe(0)
+  })
+
+  test('brings the words over where the one leaving was not following', () => {
+    const note = new SharedDoc('the note')
+    const was = new Pane(note)
+    note.leave(was)
+    // Nobody was following, so whoever takes over is a newcomer and is brought up
+    // to the words like any other.
+    const now = new Pane(note)
+    note.leave(now)
+    note.replace('the note, changed')
+
+    note.handOver(was, now, () => undefined)
+
+    expect(now.text).toBe('the note, changed')
   })
 })

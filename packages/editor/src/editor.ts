@@ -40,7 +40,7 @@ import { richPaste } from './paste'
 import { nibSelection } from './selection/layer'
 import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
-import { type SharedDoc, sharedOf, sharing } from './shared'
+import { documentOf, type SharedDoc, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
@@ -248,7 +248,13 @@ export function editorState(options: StateOptions): EditorState {
         if (update.docChanged && !pushed) {
           // A shared note is one document in several views: the change goes to
           // it, and it is the document that says the note changed.
-          const document = sharedOf(update.state)
+          //
+          // The document this view is *on*, never the one its state names. A
+          // state carries the claim it was last given and a view outlives the
+          // note in it, so the two can differ for as long as a swap takes -
+          // and a keystroke reported to the wrong document is this note's
+          // words written down under another note's name. See shared.ts.
+          const document = documentOf(update.view)
           if (document) document.local(update.changes, update.state.selection, update.view)
           else onChange?.(update.state.doc)
         }

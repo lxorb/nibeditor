@@ -2,7 +2,7 @@ import { history } from '@codemirror/commands'
 import { EditorSelection, EditorState, StateEffect, type TransactionSpec } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { HeldState, type StateView } from './held'
-import { SharedDoc, sharedOf, sharing } from './shared'
+import { documentOf, SharedDoc, sharedOf, sharing } from './shared'
 
 /** Stands in for a scroll snapshot: what a real view answers is CodeMirror's own
  *  effect, and what matters here is that whatever it is travels with the note and
@@ -193,5 +193,86 @@ describe('showing a note in a view', () => {
 
     expect(view.scrollDOM.scrollTop).toBe(1200)
     expect(view.at).toBe(8)
+  })
+})
+
+/** The swap, asked of the two notes rather than of the pane doing it.
+ *
+ *  A pane's view shows one note at a time, and what used to make that true was the
+ *  pane remembering to take the last note back before handing the view to the next
+ *  one. Emil, on the desktop app: *"switched from a web note tab to a normal note
+ *  tab and then it had some strange web note tab content in it."* That is the
+ *  taking-back not having happened - the old note still holding the view, and every
+ *  change made to it since arriving in the note that is now up. The two notes settle
+ *  it between them now, so there is nothing for a pane to forget. */
+describe('a view moving from one note to another', () => {
+  test('is on the note it moved to and on nothing else', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('[InternetShortcut]\nURL=https://a.example\n')
+    const view = new Surface('')
+
+    HeldState.waiting(here, stateFor('the note')).give(view)
+    // No `take`: the pane hands the view straight to the other note.
+    HeldState.waiting(there, stateFor('[InternetShortcut]\nURL=https://a.example\n')).give(view)
+
+    expect(documentOf(view)).toBe(there)
+    expect(here.panes).toBe(0)
+  })
+
+  test('never hears from the note it came from again', () => {
+    const here = new SharedDoc('the note')
+    const there = new SharedDoc('[InternetShortcut]\nURL=https://a.example\n')
+    const view = new Surface('')
+
+    HeldState.waiting(here, stateFor('the note')).give(view)
+    HeldState.waiting(there, stateFor('[InternetShortcut]\nURL=https://a.example\n')).give(view)
+
+    // The website's file is rewritten as the reading moves on, and the note is
+    // written to by whatever else has it open.
+    there.replace('[InternetShortcut]\nURL=https://b.example\n')
+    here.replace('the note, changed')
+
+    expect(view.state.doc.toString()).toBe('[InternetShortcut]\nURL=https://b.example\n')
+  })
+
+  test('costs the swap and one transaction, however many notes it has been on', () => {
+    const here = new SharedDoc('one\ntwo\nthree')
+    const there = new SharedDoc('four\nfive')
+    const view = new Surface('')
+
+    const first = HeldState.waiting(here, stateFor('one\ntwo\nthree'), scrolledTo.of(4))
+    const second = HeldState.waiting(there, stateFor('four\nfive'), scrolledTo.of(5))
+
+    first.give(view)
+    first.take(view)
+    view.done.length = 0
+    second.give(view)
+
+    // The state, and the one transaction that carries the place: a note that is
+    // already this document's is never written out again on a switch.
+    expect(view.done).toEqual(['state', 'dispatch'])
+    expect(view.state.doc.toString()).toBe('four\nfive')
+  })
+
+  test('hands the note back to the state waiting, and the view to the next note', () => {
+    const here = new SharedDoc('one\ntwo\nthree')
+    const there = new SharedDoc('four')
+    const view = new Surface('')
+
+    const first = HeldState.waiting(here, stateFor('one\ntwo\nthree'))
+    first.give(view)
+    view.at = 8
+    first.take(view)
+
+    expect(documentOf(first)).toBe(here)
+    expect(documentOf(view)).toBeNull()
+
+    HeldState.waiting(there, stateFor('four')).give(view)
+    // The note it left goes on being written to, and reaches the state waiting
+    // rather than the view that has moved on.
+    here.replace('one\ntwo\nthree\nfour')
+
+    expect(view.state.doc.toString()).toBe('four')
+    expect(first.state.doc.toString()).toBe('one\ntwo\nthree\nfour')
   })
 })
