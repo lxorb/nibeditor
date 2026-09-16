@@ -238,6 +238,10 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [FIRST, SECOND])} notes")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface")
+    # Which code this actually is. Printed rather than checked: the drive's job is
+    # to say what it drove, so a passing run against the wrong build cannot be
+    # mistaken for a passing run against the right one. See main.ts.
+    say(f"driving build {page.evaluate('() => window.nibBuild ?? 'unstamped'')}")
 
     show(page, "Smoke")
     shot(page, "01-smoke")

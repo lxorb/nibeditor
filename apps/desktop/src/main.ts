@@ -13,6 +13,18 @@ mark('modules evaluated')
 // by the time a note is open. Nothing at all in the app builds; see public/sw.js.
 serveAssets()
 
+// Which code this actually is, said out loud, on every build rather than only on a
+// development one.
+//
+// The stamp has been baked into every bundle since the glasses package needed it
+// (see `stamp()` in vite.config.ts) and nothing has ever read it. Meanwhile the two
+// handles a drive steers the app by - `window.nibApp` and `window.nib` - are both
+// behind `import.meta.env.DEV`, so the build that ships is the one build nothing can
+// identify or drive. That cost a day: Emil reported three bugs that could not be
+// reproduced anywhere in main, and there was no way to ask his window what it was
+// running. One line answers it, from a console, from a drive, from any build.
+Object.assign(window, { nibBuild: __EVEN_BUILD__ })
+
 // index.html carries it, so a missing one means the page itself is wrong -
 // worth saying outright rather than mounting into nothing.
 const target = document.getElementById('app')
