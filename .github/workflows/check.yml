@@ -55,6 +55,62 @@ jobs:
       - name: Tests
         run: pnpm test
 
+  # Whether a person could write in it at all.
+  #
+  # Every gate above this one is blind to layout and paint by construction: the
+  # desktop app's vitest.config.ts says so itself, because jsdom has no layout. So
+  # a note that will not scroll and a `**bold**` that comes out plain pass types,
+  # lint, prettier, knip and the whole unit suite, and are found by the person
+  # using the app. Both of those shipped, in the same week, on top of forty
+  # end-to-end drives that nothing ran.
+  #
+  # This job runs the shallowest of those drives - the four facts whose failure
+  # means the app is not usable - in a real browser on every change. Depth stays in
+  # the drive written beside each feature and in run-all.py, which is far too long
+  # for a pull request; the floor is what a pull request can afford. See
+  # apps/desktop/test/e2e/smoke.py.
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The runner's own Python, the way cef.yml takes it: one package, and the
+      # browser it drives. `--with-deps` because a bare Chromium on a runner is
+      # missing half the shared libraries it needs to start.
+      - name: The browser the drive holds
+        run: |
+          python -m pip install --quiet playwright
+          python -m playwright install --with-deps chromium
+
+      # The drive builds the app itself when there is nothing to reuse, but doing
+      # it here means a build failure is reported as a build failure rather than
+      # as the drive giving up.
+      - name: Frontend
+        run: pnpm --filter @nib/desktop build
+
+      - name: Smoke
+        run: NIB_SKIP_BUILD=1 python apps/desktop/test/e2e/smoke.py
+
+      # What it saw, when it did not like it. A screenshot of the surface that
+      # failed is the difference between "bold is not bold" and knowing why.
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: smoke-shots
+          path: apps/desktop/test/e2e/shots/smoke
+          if-no-files-found: ignore
+
   # All three platforms, because the crate is not one body of code. The taskbar's
   # recent documents list, Explorer's New menu and the PDF printer are behind a
   # Windows cfg gate, the Apple Notes reader is behind a macOS one - SQLite,
