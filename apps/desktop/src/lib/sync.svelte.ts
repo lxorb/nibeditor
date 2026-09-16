@@ -591,6 +591,11 @@ class Sync {
 
         const sending = { held: record.held, sent: () => (this.pushed += 1) }
         if (await push(mirror, token, joined, sending)) moved = true
+
+        // A whole pass has been through this space, so every note in the folder has
+        // an entry again and the table is a record rather than a hole. Said here
+        // because reaching this line is what makes it true; see `dropped`.
+        mirror.dropped = false
         this.noted(mirror, began, null)
       }
 
@@ -618,6 +623,18 @@ class Sync {
       this.lastSyncedAt = Date.now()
       this.status = Object.keys(this.mirrors).length ? 'idle' : 'off'
     } catch (error) {
+      // What the pass got through before it fell over is written down all the same.
+      //
+      // It used to be thrown away, and a run of failing passes therefore left
+      // storage holding a picture of this machine from before any of them: cursors
+      // that had moved, notes that had been sent, and - worst - the record of a
+      // write that was in the air when the failure came. The next launch read that
+      // stale picture, found the account ahead of it and the file ahead of both,
+      // and put a conflict copy beside a note nobody else had ever opened. A pass
+      // that failed halfway still learned the first half. See `save` and `offered`
+      // in sync/mirror.ts.
+      this.save()
+
       // What went wrong is worth a line even though the pass is over: the words
       // the server used are the whole of what a reader can act on.
       const said = error instanceof Error ? error.message : String(error)
@@ -718,6 +735,17 @@ class Sync {
         mine.files[path] = file
         grew = true
       }
+
+      // A write that was in the air when this storage was last written. Filled in
+      // like the rest, and for a sharper reason: it is what says a note the account
+      // holds is this machine's own writing, and a machine that forgets it puts a
+      // conflict copy beside its own note. See `offered` in sync/mirror.ts.
+      for (const [path, hash] of Object.entries(stored.offered)) {
+        if (mine.offered[path]) continue
+
+        mine.offered[path] = hash
+        grew = true
+      }
     }
 
     // Nothing to say when storage held nothing this did not, which is every
@@ -782,11 +810,21 @@ class Sync {
 
 /** The mirrors with their caches left out: everything that says where this machine
  *  is with a space, and nothing that says what it holds. What is offered to a
- *  storage that would not take the whole table; see `save`. */
+ *  storage that would not take the whole table; see `save`.
+ *
+ *  It says that it did so. A mirror with no entry for a note the account holds can
+ *  mean two opposite things - a folder newly paired with a space somebody else has
+ *  been writing in, or this, a table thrown overboard to save the cursors - and a
+ *  pass that cannot tell them apart reads its own gap as a stranger and puts a
+ *  second copy of a note beside itself. See `dropped` in sync/mirror.ts.
+ *
+ *  What a write in the air said is kept whatever happens. It is a hash per note
+ *  still waiting for its answer, which is normally nothing at all, and it is the
+ *  one record that says a note up there is this machine's own writing. */
 function withoutCaches(mirrors: Record<string, Mirror>): Record<string, Mirror> {
   const out: Record<string, Mirror> = {}
   for (const [root, mirror] of Object.entries(mirrors)) {
-    out[root] = { ...mirror, notes: {}, files: {} }
+    out[root] = { ...mirror, notes: {}, files: {}, dropped: true }
   }
 
   return out

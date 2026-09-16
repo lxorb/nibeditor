@@ -999,7 +999,9 @@ describe('a storage with no room left for the note caches', () => {
   }
 
   /** What is under nib:mirrors, read back the way the next launch reads it. */
-  function written(): { mirrors: Record<string, { cursor?: number; notes?: object }> } {
+  function written(): {
+    mirrors: Record<string, { cursor?: number; notes?: object; dropped?: boolean }>
+  } {
     const held = localStorage.getItem('nib:mirrors')
     expect(held).not.toBeNull()
     return JSON.parse(held ?? '{}') as ReturnType<typeof written>
@@ -1016,7 +1018,15 @@ describe('a storage with no room left for the note caches', () => {
       account: 'x',
       seen: true,
       mirrors: {
-        '/Account': { spaceId: 's-Account', root: '/Account', cursor: 1, notes: {}, files: {} },
+        '/Account': {
+          spaceId: 's-Account',
+          root: '/Account',
+          cursor: 1,
+          notes: {},
+          offered: {},
+          files: {},
+          dropped: true,
+        },
       },
     }).length
     vi.stubGlobal('localStorage', cramped(full + 40))
@@ -1026,8 +1036,11 @@ describe('a storage with no room left for the note caches', () => {
 
     const mirror = Object.values(written().mirrors)[0]
     expect(mirror?.cursor).toBeGreaterThan(0)
-    // And the thing that would not fit is the thing that was dropped.
+    // And the thing that would not fit is the thing that was dropped - which the
+    // blob says out loud, because a mirror that threw its table away and one that
+    // never had it mean opposite things to the next pass; see `dropped`.
     expect(mirror?.notes).toEqual({})
+    expect(mirror?.dropped).toBe(true)
     // In memory it is all still there, so nothing this session does reads a note
     // again either.
     expect(sync.tracked('/Account/Hello.md')).not.toBeNull()

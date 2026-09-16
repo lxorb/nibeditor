@@ -51,8 +51,33 @@ export interface Mirror {
   root: string
   cursor: number
   notes: Record<string, Tracked>
+  /** The bodies this device has handed the account and not heard the answer to,
+   *  by path. Normally empty: an entry goes in the moment before the request and
+   *  comes out with the reply, so it holds a hash only for as long as a write is
+   *  in the air.
+   *
+   *  It is there for the reply that never comes. A write that lands and whose
+   *  answer is lost - a connection dropped, a window closed inside a pass, a
+   *  worker that took too long - leaves the account a version ahead of what this
+   *  machine wrote down, and the next keystroke leaves the file differing from
+   *  both. Without this the pass had no way to tell that the copy up there is its
+   *  own writing come back, read the difference as a second writer, and put a
+   *  conflict copy beside a note one person had been typing in the whole time.
+   *  See `mine` in `pull`: whose writing this is, is something a device records,
+   *  never something it works out from two hashes failing to match. */
+  offered: Record<string, string>
   /** The PDFs beside the notes; see `pushFiles`. */
   files: Record<string, TrackedFile>
+  /** Whether the note table above was thrown away to fit in storage rather than
+   *  never written; see `withoutCaches` in sync.svelte.ts.
+   *
+   *  The two look the same - no entry for a note the account holds - and they mean
+   *  opposite things. A folder freshly paired with a space that already held notes
+   *  really may have two writers in it, and both copies are kept. A mirror that had
+   *  the entries and dropped them has exactly one writer as far as anybody knows,
+   *  and reading its own gap as a stranger is what made a second file appear beside
+   *  a note nobody else had ever opened. */
+  dropped: boolean
   /** Whether the space belongs to somebody else. Remembered here rather than
    *  read off the account's listing, because the moment it matters is the
    *  moment the space has gone from that listing: a folder somebody stopped
@@ -64,7 +89,7 @@ export interface Mirror {
 /** A folder just paired with a space, which knows nothing about it yet. One
  *  place, so a new field cannot be forgotten at one of the five call sites. */
 export function newMirror(spaceId: string, root: string, shared = false): Mirror {
-  return { spaceId, root, cursor: 0, notes: {}, files: {}, shared }
+  return { spaceId, root, cursor: 0, notes: {}, offered: {}, files: {}, dropped: false, shared }
 }
 
 function hex(digest: ArrayBuffer): string {
@@ -321,23 +346,55 @@ export async function pull(
 
       const { content } = await api.readNote(token, remote.id)
 
-      // Whether the file here carries writing the account has never seen. With an
-      // entry to compare against, the answer is exact: a file whose words have
-      // moved since the last pass was written here.
+      // Whether the copy up there says anything this machine has not said itself.
       //
-      // Without one there is nothing to compare, and the only safe answer is that
-      // it was. A mirror can lose entries - storage truncated on a phone, a folder
-      // paired with a space that already held notes, an account swapped on this
-      // machine - and reading "nothing recorded" as "nothing written here" is what
-      // turns that into somebody's writing overwritten without trace. A note in a
-      // room is the exception either way: the room settled the two character by
-      // character before either of them ever became a file. And the app's own
-      // welcome note is nobody's writing, so it is simply replaced.
+      // Two ways it can be this device's own writing come back, and both of them are
+      // things the device wrote down rather than worked out: the body the last pass
+      // left the two agreeing on, and the body handed over whose answer never
+      // arrived. Either way there is no second writer in it however far the file has
+      // moved on since - the keystrokes after the push are simply what the push below
+      // will offer next.
+      //
+      // And a mirror that threw its note table away to fit in storage cannot say
+      // anything is news: the gap is its own doing. A folder freshly paired with a
+      // space that already held notes is the case that looks exactly like it and is
+      // not, and there both copies are kept; see `dropped`.
+      //
+      // The old rule was the other way round - anything that did not match the one
+      // hash the last pass recorded counted as somebody else's writing - and on a
+      // machine that is the only one there is, that is every note being typed in
+      // whenever a reply went missing. Whose writing this is, is recorded, never
+      // inferred from two hashes failing to match.
+      const news =
+        remote.hash !== tracked?.hash &&
+        !(remote.hash && remote.hash === mirror.offered[remote.path]) &&
+        !(tracked === undefined && mirror.dropped)
+
+      // Whether the file here also carries writing the account has never seen, which
+      // is the other half of a disagreement. With an entry to compare against the
+      // answer is exact: a file whose words have moved since the last pass was
+      // written here. Without one there is nothing to compare and the safe answer is
+      // that it was.
+      //
+      // A note in a room is the exception either way: the room settled the two
+      // character by character before either of them ever became a file. And the
+      // app's own welcome note is nobody's writing, so it is simply replaced.
       const diverged =
         local !== null &&
+        news &&
         !joined.has(remote.id) &&
         !isUntouchedWelcome(remote.path, local) &&
         (tracked === undefined || !(await holdsSameWords(local, tracked.hash)))
+
+      // Nothing up there this machine has not said, and a file that has moved on
+      // since it said it. The version is written down so the pass stops asking, and
+      // the file is left exactly as it is for the push below to offer. Writing the
+      // account's copy over it is what the line at the bottom does, and it would
+      // throw away every keystroke typed since the push.
+      if (!news && local !== null && local !== content) {
+        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
+        continue
+      }
 
       if (diverged && local !== content) {
         // A canvas is put back together rather than copied: both drawings are
@@ -359,7 +416,17 @@ export async function pull(
 
         if (together !== null) {
           await writeDown(target, together, local)
-          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+          // The account's copy, which the merged file is now ahead of: the push
+          // below sees the two differ and sends, and a room joined afterwards is
+          // told the truth about what the account last handed this device. An
+          // empty hash used to stand here to force that push, and a room reading
+          // it matched neither side and asked for a conflict copy of its own; see
+          // `startedFrom` in rooms/room.ts.
+          mirror.notes[remote.path] = {
+            id: remote.id,
+            version: remote.version,
+            hash: remote.hash,
+          }
           waiting?.wrote?.(target)
           continue
         }
@@ -378,6 +445,10 @@ export async function pull(
             at: Date.now(),
           })
 
+          // The one place an empty hash is the truth: nothing was settled, so there
+          // is no body the two sides agree on. A room joining this note reads it as
+          // "I cannot tell" and asks the same question again rather than writing
+          // either copy over the other, which is what `ask` means.
           mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
           continue
         }
@@ -394,9 +465,11 @@ export async function pull(
 
         if (rule === 'both') await writeDown(conflictPath(target), content)
 
-        // An empty hash guarantees the push below sends our copy, now based
-        // on the version we just saw, so it lands as the newest one.
-        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: '' }
+        // The account's copy, which ours is now beside rather than in step with:
+        // the push below sees the two differ and sends ours on top of the version
+        // we just saw, so it lands as the newest one. Truthful rather than empty,
+        // for the reason the merge above gives.
+        mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
         waiting?.wrote?.(target)
         continue
       }
@@ -483,9 +556,16 @@ export async function push(
 
     moved = true
 
+    // Said before the request goes out, because the case it answers is the answer
+    // that never comes back: the write lands, the reply is lost, and this is the
+    // only record that the copy the account now holds is this machine's own. See
+    // `offered` and `mine` in `pull`.
+    mirror.offered = { ...mirror.offered, [path]: hash }
+
     try {
       const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
       mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+      mirror.offered = without(mirror.offered, path)
       sending.sent?.(path)
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 409) throw error
@@ -621,9 +701,15 @@ async function create(
   path: string,
   content: string,
 ): Promise<boolean> {
+  // For the reason the push gives: a create whose answer is lost leaves the account
+  // holding a note this machine has no entry for and made itself.
+  const offered = await sha256(content)
+  mirror.offered = { ...mirror.offered, [path]: offered }
+
   try {
     const { note } = await api.createNote(token, mirror.spaceId, path, content)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+    mirror.offered = without(mirror.offered, path)
     return true
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 409) throw error
@@ -639,7 +725,16 @@ async function create(
     // the account's own hash rather than by hashing again, which is what the rest
     // of this file compares against too.
     const hash = await sha256(content)
-    if (hash === tracked.hash) return false
+    if (hash === tracked.hash) {
+      mirror.offered = without(mirror.offered, path)
+      return false
+    }
+
+    // The note up there is one this machine wrote itself, on a pass whose answer
+    // never arrived - the create landed, the reply did not, and there is no entry
+    // because of it. Paired and left to the next push, which offers what the file
+    // says now. A second copy of somebody's own note is not an answer to anything.
+    if (mirror.offered[path] && tracked.hash === mirror.offered[path]) return false
 
     // Two notes at one path with different words is the conflict this file has
     // always had an answer for: neither is dropped.
@@ -695,7 +790,11 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     root,
     cursor: typeof value.cursor === 'number' ? value.cursor : 0,
     notes: readTracked(value.notes),
+    offered: readOffered(value.offered),
     files: readTrackedFiles(value.files),
+    // Absent in what an older version wrote, and absent in every full write: only
+    // the blob that had to leave its note table behind says so. See `withoutCaches`.
+    dropped: value.dropped === true,
     // Written by every version since sharing; an older entry is the account's
     // own space, which is what every space was before there were shared ones.
     shared: value.shared === true,
@@ -713,6 +812,19 @@ function readTrackedFiles(value: unknown): Record<string, TrackedFile> {
     if (!isRecord(one) || !isString(one.hash) || !isNumber(one.modified)) continue
 
     out[path] = { hash: one.hash, modified: one.modified }
+  }
+
+  return out
+}
+
+/** The writes that were in the air when this machine last wrote itself down. A
+ *  handful at the very most, and normally none at all. */
+function readOffered(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, string> = {}
+  for (const [path, hash] of Object.entries(value)) {
+    if (isString(hash) && hash) out[path] = hash
   }
 
   return out
