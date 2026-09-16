@@ -90,8 +90,8 @@ jobs:
       # missing half the shared libraries it needs to start.
       - name: The browser the drive holds
         run: |
-          python -m pip install --quiet playwright
-          python -m playwright install --with-deps chromium
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps chromium
 
       # The drive builds the app itself when there is nothing to reuse, but doing
       # it here means a build failure is reported as a build failure rather than
@@ -100,7 +100,7 @@ jobs:
         run: pnpm --filter @nib/desktop build
 
       - name: Smoke
-        run: NIB_SKIP_BUILD=1 python apps/desktop/test/e2e/smoke.py
+        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/smoke.py
 
       # What it saw, when it did not like it. A screenshot of the surface that
       # failed is the difference between "bold is not bold" and knowing why.
