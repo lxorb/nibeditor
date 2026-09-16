@@ -251,7 +251,8 @@ def drive(browser: Browser) -> None:
     # Which code this actually is. Printed rather than checked: the drive's job is
     # to say what it drove, so a passing run against the wrong build cannot be
     # mistaken for a passing run against the right one. See main.ts.
-    say(f"driving build {page.evaluate('() => window.nibBuild ?? 'unstamped'')}")
+    stamp = page.evaluate("() => window.nibBuild || 'unstamped'")
+    say(f"driving build {stamp}")
 
     show(page, "Smoke")
     shot(page, "01-smoke")

@@ -103,6 +103,14 @@ jobs:
       # So this gate covers the development build, like every other drive, and the
       # build that actually ships is still driven by nothing. That is a real hole
       # and it is not this job's to close; see the note in smoke.py.
+      # Every drive in the folder, parsed. Nothing else in the repository reads
+      # these ninety files - eslint does not, prettier cannot - so a syntax error
+      # in one of them is invisible until somebody runs it, which for most of them
+      # is months. It costs about a second and it caught this job's own first
+      # version.
+      - name: The drives parse
+        run: python3 -m compileall -q apps/desktop/test/e2e
+
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
