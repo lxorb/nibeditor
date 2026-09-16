@@ -310,6 +310,9 @@ export async function pull(
           await invoke('delete_note', { path: target }).catch(() => undefined)
           mirror.notes = without(mirror.notes, remote.path)
         }
+        // A write that was in the air about a note that has since gone says nothing
+        // about whatever is made at that name next.
+        mirror.offered = without(mirror.offered, remote.path)
         continue
       }
 
@@ -579,6 +582,7 @@ export async function push(
 
     await api.deleteNote(token, tracked.id).catch(() => undefined)
     mirror.notes = without(mirror.notes, path)
+    mirror.offered = without(mirror.offered, path)
     moved = true
   }
 
