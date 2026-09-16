@@ -11,8 +11,21 @@ const host = process.env.TAURI_DEV_HOST
  *
  *  A build installed on a phone has no other way of saying which build it is,
  *  and "did the new one actually reach the device" is the first question when
- *  nothing appears to have changed. */
-function stamp(): string {
+ *  nothing appears to have changed. The app puts it on `window.nibBuild`; see
+ *  src/main.ts.
+ *
+ *  `serving` is the difference between a bundle and a dev server, and it is the
+ *  whole point of this function rather than a detail of it. A bundle is the
+ *  commit it was built from, for as long as it exists. A dev server reads its
+ *  config once and then serves whatever is on disk for days, so the commit read
+ *  here names the moment the server started and says nothing about the code it is
+ *  handing out now. A server two days old was found serving code from an hour
+ *  ago, and a stamp that answered with the older sha would have sent whoever
+ *  asked looking for a bug in the wrong commit. So it does not answer: it says
+ *  what it actually knows, which is when the server started. */
+function stamp(serving: boolean): string {
+  if (serving) return `${manifest.version} dev server started ${when()}`
+
   let sha = 'unknown'
   try {
     sha = execSync('git rev-parse --short HEAD', { encoding: 'utf8' }).trim()
@@ -20,16 +33,20 @@ function stamp(): string {
     // A tree with no git in it still builds; it just cannot say which commit.
   }
 
-  return `${manifest.version} ${sha} ${new Date().toISOString().slice(0, 16)}Z`
+  return `${manifest.version} ${sha} ${when()}`
 }
 
-export default defineConfig({
+function when(): string {
+  return `${new Date().toISOString().slice(0, 16)}Z`
+}
+
+export default defineConfig(({ command }) => ({
   plugins: [svelte()],
   // This build is the editor: on the desktop, on the web, in the presenter's
   // window, and on the `/even/` page the web serves. The package that goes on a
   // phone is built by `vite.even.config.ts`, which sets the second of these true
   // and leaves out what a pair of glasses cannot use.
-  define: { __EVEN_BUILD__: JSON.stringify(stamp()), __EVEN_PLUGIN__: 'false' },
+  define: { __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')), __EVEN_PLUGIN__: 'false' },
   clearScreen: false,
   // The same policy the installed app is served with. `tauri dev` loads the dev
   // server rather than the bundle, so without this the app being worked on is a
@@ -72,4 +89,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
