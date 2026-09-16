@@ -51,7 +51,12 @@ SHOTS = HERE / "shots" / "smoke"
 
 # Not the dev server's 1420, and not another drive's either.
 PORT = 18847
-ORIGIN = f"http://127.0.0.1:{PORT}"
+#: Where to drive. Its own build by default, served here. `NIB_ORIGIN` points it
+#: at a server that is already running instead - the dev server on 1420, or the
+#: address a desktop build is loading from - which is how this answers "is what
+#: is on that screen the same as what is in main" without a build of its own.
+ORIGIN = os.environ.get("NIB_ORIGIN") or f"http://127.0.0.1:{PORT}"
+BORROWED = bool(os.environ.get("NIB_ORIGIN"))
 
 #: A note with one of everything this drive asks about, and long enough that it
 #: cannot fit in the window: the filler is what makes the scroll question real.
@@ -264,6 +269,41 @@ def drive(browser: Browser) -> None:
     else:
         say(f"the heading is {heading}px against {body}px")
 
+    # ── And bold as it is typed, which is what was reported ──────────────
+    # The measurement above is of bold that was already in the file. What Emil
+    # said is "when I put stuff in ** it doesn't get displayed bold", which is
+    # the live preview answering a keystroke - a different code path, and the one
+    # a person actually uses. So this types it.
+    typed = page.evaluate(
+        """
+        () => {
+          const view = window.nib
+          if (!view) return false
+          view.dispatch({ selection: { anchor: view.state.doc.length } })
+          view.focus()
+          return true
+        }
+        """
+    )
+    if not typed:
+        say("no view handle in this build; the typed-bold question is skipped")
+    else:
+        page.keyboard.press("Enter")
+        page.keyboard.press("Enter")
+        page.keyboard.type("Typed **marzipan** here.")
+        page.wait_for_timeout(250)
+        # The caret is still in the line it was typed on, where a live preview
+        # shows the markers. Moving it away is what asks the question.
+        page.keyboard.press("Home")
+        page.keyboard.press("ArrowUp")
+        page.wait_for_timeout(300)
+        weight = weight_of(page, "marzipan")
+        if weight < 600:
+            wrong(f"**marzipan** typed into the note is drawn at weight {weight}")
+        else:
+            say(f"bold typed into the note came out at {weight}")
+        shot(page, "01b-typed")
+
     # ── A note longer than the window scrolls ────────────────────────────
     room = page.evaluate(
         """
@@ -292,6 +332,30 @@ def drive(browser: Browser) -> None:
             wrong(f"the scroller was asked for 400px and went to {moved}px")
         else:
             say(f"the note has {room['over']}px to scroll and went to {moved}px")
+
+        # And with a wheel, which is how a person scrolls. Setting scrollTop only
+        # says the scroller CAN move; a wheel says nothing between the pointer and
+        # the scroller swallows the gesture, which is a different question and the
+        # one Emil asked. The pointer is put over the writing first, because a
+        # wheel lands wherever it is.
+        page.evaluate("() => { document.querySelector('.cm-scroller').scrollTop = 0 }")
+        page.wait_for_timeout(60)
+        box = page.evaluate(
+            """
+            () => {
+              const r = document.querySelector('.cm-scroller').getBoundingClientRect()
+              return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+            }
+            """
+        )
+        page.mouse.move(box["x"], box["y"])
+        page.mouse.wheel(0, 600)
+        page.wait_for_timeout(300)
+        wheeled = page.evaluate("() => document.querySelector('.cm-scroller').scrollTop")
+        if wheeled < 100:
+            wrong(f"a 600px wheel over the note moved it {wheeled}px, so it does not scroll")
+        else:
+            say(f"a 600px wheel moved the note {wheeled}px")
         shot(page, "02-scrolled")
 
     # ── A tab switch shows the note the tab names, and nothing before it ──
@@ -338,9 +402,13 @@ def drive(browser: Browser) -> None:
 
 
 def main() -> int:
-    build()
     shutil.rmtree(SHOTS, ignore_errors=True)
-    server = serve()
+    if BORROWED:
+        say(f"driving {ORIGIN}, which somebody else is serving")
+        server = None
+    else:
+        build()
+        server = serve()
 
     try:
         with sync_playwright() as playwright:
@@ -350,8 +418,9 @@ def main() -> int:
             finally:
                 browser.close()
     finally:
-        server.shutdown()
-        server.server_close()
+        if server:
+            server.shutdown()
+            server.server_close()
 
     if failures:
         say(f"{len(failures)} of the floor's questions came back wrong")
