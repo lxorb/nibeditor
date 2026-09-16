@@ -34,6 +34,7 @@ vi.mock('../link-index.svelte', () => ({
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 const { Saving } = await import('./saving.svelte')
+const { settleUp } = await import('../parting')
 const { NoteDoc, Tab } = await import('./documents.svelte')
 type Writes = import('./saving.svelte').Writes
 type Doc = import('./documents.svelte').NoteDoc
@@ -70,7 +71,7 @@ type Entry = import('../workspace.svelte').Entry
 function open(path: string | null, { kept = true, text = '# a' } = {}) {
   let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
 
-  const ws: Writes & { kept: string[] } = {
+  const ws: Writes & { kept: string[]; persisted: number } = {
     tabs: [],
     documents: [],
     active: null,
@@ -81,12 +82,15 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
       return tree
     },
     kept: [],
+    persisted: 0,
     keep(id) {
       this.kept.push(id)
     },
     scheduleSession: () => undefined,
     loadTree: () => Promise.resolve(),
-    persist: () => undefined,
+    persist() {
+      this.persisted += 1
+    },
     keepWeb: () => Promise.resolve(),
     // Nothing is in the way in these tests, so the wanted name is the free one.
     freeName: (_folder: string, name: string) => name,
@@ -213,6 +217,53 @@ describe('what the pause after the typing writes', () => {
     await vi.advanceTimersByTimeAsync(5000)
 
     expect(sent).toEqual([])
+  })
+})
+
+describe('the window going while the typing is still warm', () => {
+  /** A note is written a second or so after the last keystroke, and a window closing
+   *  runs no teardown: the pause never came, so the sentence somebody typed and then
+   *  closed the window on was on no disk and in no session either. See `part` in
+   *  saving.svelte.ts and parting.ts. */
+  const PATH = `${SPACE}/parting.md`
+  const written = () => sent.filter((one) => one.command === 'write_note' && one.path === PATH)
+
+  test('writes the note that was waiting for the typing to stop', async () => {
+    vi.useFakeTimers()
+    const { note } = open(PATH)
+
+    note.replace('# a\n\nthe last sentence')
+    expect(written()).toEqual([])
+
+    settleUp()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(written()).toEqual([
+      { command: 'write_note', path: PATH, content: '# a\n\nthe last sentence' },
+    ])
+  })
+
+  /** And the session with it, synchronously, because the write above is a round trip
+   *  a page being torn down may never come back from: whichever of the two landed,
+   *  the words are there to come back to. */
+  test('and puts the same words in the session, which storage takes at once', () => {
+    const { note, ws } = open(PATH)
+
+    note.replace('# a\n\nthe last sentence')
+    const was = ws.persisted
+    settleUp()
+
+    expect(ws.persisted).toBe(was + 1)
+  })
+
+  test('and does nothing at all where nothing was typed', () => {
+    const { ws } = open(PATH)
+
+    const was = ws.persisted
+    settleUp()
+
+    expect(ws.persisted).toBe(was)
+    expect(written()).toEqual([])
   })
 })
 

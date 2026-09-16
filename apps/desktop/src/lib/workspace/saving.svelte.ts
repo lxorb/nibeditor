@@ -13,9 +13,11 @@
  *  `workspace.save()` still means what it always did. */
 
 import { flushTableEdits } from '@nib/editor'
+import { flushCardEdits } from '../canvas/writing'
 import { key, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { endingOf, nameFromContent, shownName } from '../note-name'
+import { owesLast } from '../parting'
 import { without } from '../records'
 import { isMarkdownPath, nameOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -194,7 +196,28 @@ export class Saving {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly waiting = new Set<NoteDoc>()
 
-  constructor(private readonly ws: Writes) {}
+  constructor(private readonly ws: Writes) {
+    // A window closing runs no teardown, so the pause a note is written after never
+    // comes: a sentence typed and then closed on was gone, with nothing on the disk
+    // and nothing in the session either. Last of all, because a plane turns itself
+    // into its document first and this is what writes the document out. See
+    // parting.ts.
+    owesLast(() => this.part())
+  }
+
+  /** What is owed when the window goes: the write that was waiting for the typing to
+   *  stop, and the session that holds the same words.
+   *
+   *  Both, because they answer different halves of the same second. The write is a
+   *  round trip, and a page being torn down may not come back from it; the session is
+   *  one synchronous line of storage, so the words are there to come back to whether
+   *  or not the file was reached. Whichever landed, nothing was typed and lost. */
+  private part() {
+    if (!this.waiting.size) return
+
+    this.ws.persist()
+    void this.saveWaiting()
+  }
 
   /** What a document reports whenever it changes, wherever the change came from:
    *  a keystroke in either pane, an undo, a picture dropped in. Nothing here
@@ -347,8 +370,11 @@ export class Saving {
   }
 
   async save(target?: Tab) {
-    // A table cell holds its text until it loses focus; make sure it landed.
+    // A table cell holds its text until it loses focus; make sure it landed. A card
+    // on a canvas holds its words the same way, and saving on purpose used to write
+    // the empty card over the file; see canvas/writing.ts.
     flushTableEdits()
+    flushCardEdits()
 
     const tab = target ?? this.ws.active
     if (!tab) return

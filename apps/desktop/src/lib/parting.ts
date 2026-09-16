@@ -18,13 +18,28 @@
 
 const owing = new Set<() => void>()
 
+/** The writes that have to happen after all of the others.
+ *
+ *  Turning what is on screen into words and putting those words on the disk are two
+ *  writes, and the second cannot run before the first: a plane serialises itself into
+ *  its document, and the document is what the save writes out. One list would leave
+ *  that to the order the modules happened to load in, which is the order the reader
+ *  happened to open things in. */
+const lastly = new Set<() => void>()
+
 /** Said once by whoever owes a write, when its module is first loaded. */
 export function owes(write: () => void): void {
   owing.add(write)
+}
+
+/** The same, for a write that has to come after those: see `lastly`. */
+export function owesLast(write: () => void): void {
+  lastly.add(write)
 }
 
 /** Everything owing, written now. Called where the window is going; see `onClose`
  *  in start.ts. */
 export function settleUp(): void {
   for (const write of owing) write()
+  for (const write of lastly) write()
 }
