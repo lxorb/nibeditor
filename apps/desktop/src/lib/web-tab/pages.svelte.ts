@@ -99,6 +99,11 @@ export type Step = 'back' | 'forward' | 'reload'
 interface Wanted {
   pane: Rect
   visible: boolean
+  /** Why it is out of sight, for the one case where the two answers differ: something
+   *  of the app's is over the page, which leaves the tab in front and nothing counting
+   *  down for it. A tab that was switched away from is the other, and that one starts
+   *  the countdown to being parked. */
+  covering: boolean
 }
 
 /** What a browser build is showing in the pane: the card that stands for the page,
@@ -194,6 +199,15 @@ export class Page {
   shot = $state<string | null>(null)
   /** When that picture was taken, so two overlays in a row share one. */
   shotAt = 0
+  /** The picture being taken at this moment, if one is.
+   *
+   *  Photographing a page is the most expensive thing the crate does for one - a fifth
+   *  of a second, measured - and the engine says where a page is several times in the
+   *  breath after it loads: once for the load, once for the title and once for the
+   *  mark. Each of those used to throw the picture away and ask for another, so a page
+   *  arriving cost three photographs at once. One at a time, and the ones behind it
+   *  wait for the one in front rather than asking again. */
+  shooting: Promise<void> | null = null
 
   /** Whether the webview is on screen at this moment.
    *
@@ -239,6 +253,15 @@ class Pages {
     const found = this.held.get(tabId)
     if (found) return found
 
+    // The window's two listeners, started with the first page in the window rather
+    // than with the first placement. They are a fetch and two round trips, and they
+    // used to sit in front of `web_open` on the one path that decides how long a site
+    // takes to appear: nine milliseconds of a hundred and forty, spent doing something
+    // that had nothing to do with this tab. Asked for here they are answered by the
+    // time a pane has measured itself. Nothing is awaited - a listener that is not
+    // ready yet is one the placement still waits for; see `show`.
+    void this.listen()
+
     const made = new Page()
     this.held.set(tabId, made)
     return made
@@ -249,13 +272,21 @@ class Pages {
     return this.held.get(tabId)?.url ?? null
   }
 
-  /** Puts the page on screen where the pane says, opening it if it is not there.
+  /** Puts the page where the pane says, opening it if it is not there, and lets it be
+   *  seen unless something of the app's is over it.
    *
    *  One call for the whole of "this tab is showing, and this is its rectangle",
    *  because that is one fact: the pane says it on every resize and on every scroll,
    *  and a page that had to be opened, then placed, then shown would flash where the
-   *  last one was. */
-  async show(tabId: string, url: string, pane: Rect): Promise<void> {
+   *  last one was.
+   *
+   *  **What is over the hole decides how the page is placed and never whether there is
+   *  one.** It used to decide both - a covered pane asked for no page at all - and that
+   *  is what "browser tabs take an eternity to load" was: every way of opening a
+   *  website except clicking its row goes through a layer, the pane is measured while
+   *  that layer is still playing its way out, and the one moment the page was ever
+   *  asked for was spent on a hit test. See `look` in WebTab.svelte. */
+  async show(tabId: string, url: string, pane: Rect, visible = true): Promise<void> {
     const page = this.of(tabId)
     this.wake(page)
     page.url ??= url
@@ -268,18 +299,18 @@ class Pages {
     await this.listen()
 
     if (page.live) {
-      await this.place(tabId, pane, true)
+      await this.place(tabId, pane, visible, !visible)
       return
     }
 
     // A page already on its way. Where the pane is now is where it will be put when
     // it arrives; see `place`.
     if (page.opening) {
-      page.wanted = { pane, visible: true }
+      page.wanted = { pane, visible, covering: !visible }
       return
     }
 
-    await this.build(tabId, page, pane)
+    await this.build(tabId, page, pane, visible)
   }
 
   /** The webview for a tab, and then whatever happened while it was being built.
@@ -289,8 +320,15 @@ class Pages {
    *  to have been switched away from, or for the tab to have been closed. None of
    *  those used to be possible - the command was answered inline, which is what froze
    *  the window - so all three are answered here now. */
-  private async build(tabId: string, page: Page, pane: Rect): Promise<void> {
+  private async build(tabId: string, page: Page, pane: Rect, visible: boolean): Promise<void> {
     page.opening = true
+
+    // Out of sight from the frame it arrives in, where something of the app's is over
+    // the hole: a native webview draws above every pixel of HTML in the window, so a
+    // page built under a menu would be a page in front of it. Said here rather than
+    // after the build because the build is what takes the time, and the pane is free to
+    // say something else while it happens; the tail below applies whichever came last.
+    if (!visible) page.wanted = { pane, visible, covering: true }
 
     // Where this tab was left, if it is the page being opened: a parked tab comes back
     // at the place it was parked at, and a note opened again tomorrow comes back at the
@@ -339,6 +377,10 @@ class Pages {
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true)
+    // Something of the app's is over the hole. Out of sight and still the tab in front,
+    // so nothing counts down for it - and nothing is photographed either: a page that
+    // has this moment been built has nothing on it worth standing in for it.
+    else if (wanted.covering) await this.place(tabId, wanted.pane, false)
     // Out of sight, and counting down to being taken down: the countdown that should
     // have started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
@@ -359,7 +401,7 @@ class Pages {
     // tab switched away from while its page was on its way must not have the page
     // arrive over the tab that took its place.
     if (page.opening) {
-      page.wanted = { pane, visible }
+      page.wanted = { pane, visible, covering }
       return
     }
 
@@ -466,7 +508,23 @@ class Pages {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
+    // One at a time. The picture already being taken is this page as it is now, and a
+    // second engine capture alongside it is a fifth of a second of the window's own
+    // thread spent twice for one answer; see `shooting`.
+    if (page.shooting) return page.shooting
 
+    const taking = this.photograph(page, tabId)
+    page.shooting = taking
+    try {
+      await taking
+    } finally {
+      page.shooting = null
+    }
+  }
+
+  /** The picture itself, raced against a clock. Split from `shoot` so that the one
+   *  going on at the moment is something a second caller can wait for. */
+  private async photograph(page: Page, tabId: string): Promise<void> {
     try {
       // Raced against a clock, because the overlay is behind the page until this
       // answers: the engine photographs itself in a handful of milliseconds or it is
@@ -648,7 +706,12 @@ class Pages {
   /** Two listeners for the window, started by the first web tab that needs them: where
    *  every page in the window has got to, and what every site in it has asked for. */
   private async listen(): Promise<void> {
-    if (this.listening || !isDesktop) return
+    // A window to listen on, because that is what the runtime's own `listen` needs and
+    // this is now started with the first page in the window rather than with the first
+    // placement: a test that says it is a desktop without putting a document under it
+    // reaches here, where it never used to. The same guard tauri.ts puts on the line
+    // that decides which platform this is, and for the same reason.
+    if (this.listening || !isDesktop || typeof window === 'undefined') return
     this.listening = true
 
     const { listen } = await import('@tauri-apps/api/event')
@@ -668,6 +731,7 @@ class Pages {
       const page = this.held.get(said.tab)
       if (!page) return
 
+      const was = page.loading
       page.loading = said.loading
       page.back = said.back
       page.forward = said.forward
@@ -678,7 +742,14 @@ class Pages {
       // The page has arrived, so the picture of the last one is no longer a picture of
       // this page - and the new one is taken now rather than when something is waiting
       // for it. Nothing is drawn from either while the webview is on top.
-      if (!said.loading) {
+      //
+      // On the moment it stops loading rather than on every report that it is not
+      // loading. The engine says where a page is again whenever its title or its mark
+      // arrives, which is three reports in the eight milliseconds after a page lands,
+      // and each of them threw the picture away and asked for another: three engine
+      // captures at once, a fifth of a second each, on the window's own thread in the
+      // breath the reader is watching the page appear.
+      if (was && !said.loading) {
         page.shot = null
         void this.shoot(said.tab)
       }

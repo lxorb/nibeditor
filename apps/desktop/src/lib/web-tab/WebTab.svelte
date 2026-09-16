@@ -40,6 +40,14 @@
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
 
+  /** How long a layer that has closed may still be in the document.
+   *
+   *  A little over the longest thing the app plays on the way out - a layer's own rise
+   *  is 190 ms and a menu's is 120 - because that is exactly the window in which the
+   *  overlay stack is already empty and the element is still there to be hit. See
+   *  `look` and LAYER in motion.ts. */
+  const LEAVING = 300
+
   const page = $derived(pages.of(tab.id))
 
   let hole = $state<HTMLElement>()
@@ -117,33 +125,64 @@
    *  one in front should not pay for it before it has finished coming up: the bar is
    *  on screen with the address and the title the file says, which is everything the
    *  file says, and the page fills in after the stages that read the space have had
-   *  their turn. For a tab opened by hand every turn has passed and the wait is one
-   *  painted frame - which is what puts the bar up before the page is asked for. See
+   *  their turn. For a tab opened by hand every turn has passed and there is nothing
+   *  to be after, so the page is asked for in the same breath as the mount. See
    *  startup.svelte.ts. */
   let ready = false
 
+  /** When the layer that is over the hole has to have finished leaving by, or nought
+   *  while nothing is over it; see `look`. */
+  let leaving = 0
+
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
-   *  dragged reports every pixel, and silent when nothing has changed. */
+   *  dragged reports every pixel. */
   function follow() {
     if (!isDesktop || !ready) return
 
     cancelAnimationFrame(scheduled)
-    scheduled = requestAnimationFrame(() => {
-      const box = rect()
-      if (!box) return
+    scheduled = requestAnimationFrame(look)
+  }
 
-      last = box
-      const visible = !covered()
-      const said = `${box.x},${box.y},${box.width},${box.height},${String(visible)}`
-      if (said === told) return
+  /** Where the hole is now, said to the crate: the page is opened if it is not there,
+   *  put at that rectangle, and seen unless something of the app's is over it.
+   *
+   *  **Whether anything is over the hole decides how the page is placed and never
+   *  whether there is one**, which is the whole of the fix for "browser tabs take an
+   *  eternity to load". Every way of opening a website except clicking its row in the
+   *  file list goes through a layer - the palette, the app menu, the chooser Ctrl+T
+   *  opens, a row's own menu - and a layer that has closed is still in the document
+   *  while it plays its way out. The pane mounts under it, the hit test says covered,
+   *  and the page was simply not asked for; nothing asked again, because the rectangle
+   *  never changed and the stack was already empty. The tab sat on an empty pane until
+   *  the reader clicked something, which is what made the page arrive. */
+  function look() {
+    if (!isDesktop || !ready) return
 
-      told = said
-      if (visible) void pages.show(tab.id, address, box)
-      // The tab is the one showing and something of the app's is over it, which is the
-      // one case where the page is photographed before it goes: what the pane holds
-      // under a menu is then the page rather than nothing. See `covered`.
-      else void pages.place(tab.id, box, false, true)
-    })
+    const box = rect()
+    if (!box) return
+
+    last = box
+    const visible = !covered()
+
+    // A layer on its way out is on no list: it took itself off the overlay stack the
+    // moment it closed, and nothing says when its own motion has finished. So while
+    // the stack is empty and something is still over the hole, look again on the next
+    // frame - which is the fifth of a second a layer takes to leave and no frame at all
+    // once it has gone. See LAYER in motion.ts for where the number comes from.
+    if (visible) leaving = 0
+    else if (overlays.depth === 0) {
+      if (leaving === 0) leaving = Date.now() + LEAVING
+      if (Date.now() < leaving) follow()
+    }
+
+    const said = `${box.x},${box.y},${box.width},${box.height},${String(visible)}`
+    // Nothing has moved *and there is a page*. The second half is what keeps a tab from
+    // being left on an empty pane for good: a pane measured under a layer on its way out
+    // has said its rectangle already, and the page is the thing that is missing.
+    if (said === told && page.live) return
+
+    told = said
+    void pages.show(tab.id, address, box, visible)
   }
 
   /** Where this tab points: the address the page is on, else the one the session
@@ -152,13 +191,20 @@
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
   onMount(() => {
-    // The page is the last thing the launch does, and one painted frame after that.
-    // Everything below is watching for the hole to move, and none of it says anything
-    // to the crate until this has come round; see `ready` and `follow`.
-    void startup.turn('rooms').then(() => {
+    // The page is the last thing the launch does. Everything below is watching for the
+    // hole to move, and none of it says anything to the crate until this has come
+    // round; see `ready` and `look`.
+    //
+    // A tab opened by hand is not the launch: every turn has passed, so the page is
+    // asked for in the same breath as the mount rather than two painted frames later.
+    // Those two frames were forty of the hundred and forty milliseconds a web tab cost
+    // and they drew nothing - the bar and the hole are put up by this same mount.
+    const asking = () => {
       ready = true
-      follow()
-    })
+      look()
+    }
+    if (startup.reached('rooms')) asking()
+    else void startup.turn('rooms').then(asking)
 
     const watching = new ResizeObserver(follow)
     if (hole) watching.observe(hole)
