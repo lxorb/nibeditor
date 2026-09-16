@@ -34,6 +34,13 @@ class Device {
     this.text.insert(at, words)
     return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
   }
+
+  /** And after taking something out again. */
+  erase(at: number, length: number): Uint8Array {
+    const before = Y.encodeStateVector(this.doc)
+    this.text.delete(at, length)
+    return syncUpdate(Y.encodeStateAsUpdate(this.doc, before))
+  }
 }
 
 /** A device joining, through the whole handshake: the room says what it holds and
@@ -313,6 +320,36 @@ describe('a room', () => {
 
       const read = await call(env, `/v1/notes/${noteId}`, { token })
       expect(read.json.content).toBe('# Together\none\ntwo\n')
+    })
+
+    /** The one way in that is left, and it is narrow: the words that went up are ones
+     *  the hand then took out again, inside the second and a bit before the settle. The
+     *  change that turns the pushed version into what the room holds is then a
+     *  deletion, and a deletion is exactly what the copy is for - so the copy is made,
+     *  and it holds a line somebody had already decided against.
+     *
+     *  Closing it needs the one thing this side is never told: that the push came from
+     *  a device that is in this room. Nothing on the wire says so - the write arrives
+     *  over the API as any device's would, and the name it carries is a platform
+     *  ("Windows"), not a machine. Held as a failing test rather than argued about in a
+     *  comment, so that the day anything does carry it, this line is what says so. */
+    test.fails('is copied when the settle takes back words the push had in it', async () => {
+      const { room: made, state } = room(env)
+      const inside = await arrive(made, state, { id: noteId, spaceId })
+
+      await say(made, state, inside.socket, inside.type(11, 'one\ntwo\n'))
+
+      await call(env, `/v1/notes/${noteId}`, {
+        token,
+        method: 'PUT',
+        body: { path: 'together.md', content: '# Together\none\ntwo\n', baseVersion: 1 },
+      })
+
+      // The second line goes again before the room has settled anything.
+      await say(made, state, inside.socket, inside.erase(15, 4))
+      await made.alarm()
+
+      expect(await held()).toEqual(['together.md'])
     })
 
     test('stands as it is when the room has nothing of its own to say', async () => {
