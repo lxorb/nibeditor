@@ -215,9 +215,12 @@ def properties(page: Page) -> None:
     if page.evaluate("() => document.querySelectorAll('.nib-property-add').length") != 1:
         wrong("there is no way to add a property")
 
-    # A click on a row puts the caret on the line it was drawn from, which is
-    # what shows the source.
-    page.click('.property[data-key="title"]')
+    # A click on a row's key puts the caret on the line it was drawn from, which is
+    # what shows the source. On the key and not the middle of the row: the value cell
+    # takes three quarters of the width, and a press inside a control belongs to the
+    # control - that is where a value is changed without going near the YAML. See the
+    # widget's own `mousedown` in live-preview/properties.ts.
+    page.click('.property[data-key="title"] .property-key')
     page.wait_for_timeout(500)
     caret = page.evaluate("() => window.nib.state.selection.main.head")
     source = page.evaluate("() => document.querySelectorAll('.property').length === 0")
