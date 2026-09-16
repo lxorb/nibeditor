@@ -86,9 +86,17 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   }
 }
 
-// jsdom has no hit testing either. Nothing of the app's is over the page here, so
-// the topmost element at the middle of the hole is the hole.
-document.elementFromPoint = () => document.querySelector('.hole')
+/** What the hit test finds over the hole, or null for a pane with nothing over it.
+ *
+ *  A layer of the app's that has closed is still in the document while it plays its
+ *  way out - 120 to 190 ms - and it is on no list by then: it took itself off the
+ *  overlay stack the moment it closed. This is that element. */
+let over: Element | null = null
+
+// jsdom has no hit testing either. Nothing of the app's is over the page here unless
+// a test has put something there, so the topmost element at the middle of the hole is
+// the hole.
+document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
 const { overlays } = await import('../../src/lib/overlays')
 const { workspace } = await import('../../src/lib/workspace.svelte')
@@ -100,6 +108,7 @@ let target: HTMLElement
 
 beforeEach(() => {
   asked.length = 0
+  over = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -194,6 +203,60 @@ test('the page is hidden while anything of the app is over it, and comes back wh
 
   const shown = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(shown?.args.visible).toBe(true)
+
+  void unmount(app)
+})
+
+/** A web tab opened from anywhere but a row in the file list.
+ *
+ *  This is what Emil meant by *"browser tabs take an eternity to load"*, and the
+ *  eternity was not a slow load: the page was never asked for. Every way of opening a
+ *  website except clicking its row goes through a layer - the palette, the app menu,
+ *  the chooser Ctrl+T opens, a row's own menu - and a layer that has closed is still in
+ *  the document for the 120 to 190 ms it takes to play its way out, with nothing on the
+ *  overlay stack to say so. The pane mounted under it, the hit test said covered, and
+ *  the one moment the page was ever asked for was spent. Nothing asked again: the
+ *  rectangle had not changed and the stack was already empty, so the tab sat on an
+ *  empty pane until the reader happened to click something.
+ *
+ *  Counted rather than timed. The page is asked for exactly once, whatever was over the
+ *  pane when it mounted, and it is placed out of sight until the layer has gone. */
+test('a web tab that mounts under a layer on its way out still asks for its page', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/under'
+
+  // The layer that opened this tab, still in the document and already off the stack.
+  const leaving = document.createElement('div')
+  document.body.append(leaving)
+  over = leaving
+
+  asked.length = 0
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+
+  // Asked for, once, and out of sight: a native webview draws above every pixel of
+  // HTML in the window, so a page built over the layer would be the other half of the
+  // same bug.
+  expect(asked.filter((one) => one.command === 'web_open')).toHaveLength(1)
+  expect(pages.of(tab.id).live).toBe(true)
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+
+  // The layer finishes leaving. Nothing tells the pane so - that is the whole of the
+  // problem - and the page is on screen anyway.
+  asked.length = 0
+  over = null
+  leaving.remove()
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_open')).toHaveLength(0)
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(true)
 
   void unmount(app)
 })
