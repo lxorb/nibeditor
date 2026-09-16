@@ -38,7 +38,7 @@
   } from '@nib/editor'
   import { pickedLink } from './composer'
   import { mountPreview } from './preview-card'
-  import { EditorStates, noteKey } from './editor-states'
+  import { EditorStates } from './editor-states'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { PROPERTY_CHOICES } from './property-choices'
@@ -66,9 +66,9 @@
      *  is asked of the tab rather than captured once, because the pane's editor
      *  outlives the note in it. */
     tab: Tab
-    /** Which tabs the pane still holds. A note it no longer holds lets its
-     *  document go; see `keepOnly`. */
-    kept: string[]
+    /** Which tabs the pane still holds, as the tabs themselves. A note it no
+     *  longer holds lets its document go; see `keepOnly`. */
+    kept: Tab[]
     onimage?: (file: File, tab: Tab) => Promise<string | null>
     resolveimage?: (src: string, tab: Tab) => string
     openlink?: (href: string) => void
@@ -157,13 +157,13 @@
    *  or last shown for: each of those is a reconfiguration, and reconfiguring
    *  throws away the parse and every decoration on screen. */
   function fitting(
-    key: string,
+    one: Tab,
     index: NoteIndex | undefined,
     trusted: boolean,
   ): StateEffect<unknown>[] {
     const stamp = dressing()
-    const dressed = states.fitted(key) === stamp
-    states.fit(key, stamp)
+    const dressed = states.fitted(one) === stamp
+    states.fit(one, stamp)
 
     return [
       ...(index ? [noteIndexEffect(index)] : []),
@@ -176,29 +176,19 @@
     ]
   }
 
-  // Built once, on the note the pane opens with. Reading anything reactively
-  // here would tear the editor down and rebuild it, losing the caret each time.
+  // Built once, on the note the pane opens with, and never again while the pane
+  // is up. Nothing here may be read reactively: this effect running a second time
+  // is the whole editor torn down and built afresh, every other tab's state in
+  // this pane thrown away with it, and the reader dropped back at the place the
+  // session remembered. Reading how many notes the tab's document had held - which
+  // the key the pane kept its states under used to be spelled out of - did exactly
+  // that on every click in the file list.
   $effect(() => {
     const first = untrack(() => tab)
     const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
 
-    // The writing surface is a text box as far as anything reading the page is
-    // concerned - CodeMirror says so itself, with `role="textbox"` - and a text box
-    // has to be called something. It was the one thing on every single surface of
-    // the app that axe-core called serious: an unnamed field the size of the
-    // window. The name is the app's to give rather than the library's, because what
-    // is in it is a note.
-    //
-    // Set on the element and not through `contentAttributes`, which is where the
-    // `#write` id comes from: the pane's view outlives every note in it and each
-    // note is a whole state swapped in, so a facet appended to the state that built
-    // the view goes with the first swap. An attribute the library never set is one
-    // it never takes off again; see updateAttrs in @codemirror/view.
-    created.contentDOM.setAttribute('aria-label', t('The note'))
-
     states.started(
-      noteKey(first),
-      first.note.live,
+      first,
       created,
       untrack(() => placeOf(first)),
     )
@@ -220,6 +210,26 @@
     }
   })
 
+  // The writing surface is a text box as far as anything reading the page is
+  // concerned - CodeMirror says so itself, with `role="textbox"` - and a text box
+  // has to be called something. It was the one thing on every single surface of
+  // the app that axe-core called serious: an unnamed field the size of the window.
+  // The name is the app's to give rather than the library's, because what is in it
+  // is a note.
+  //
+  // Set on the element and not through `contentAttributes`, which is where the
+  // `#write` id comes from: the pane's view outlives every note in it and each
+  // note is a whole state swapped in, so a facet appended to the state that built
+  // the view goes with the first swap. An attribute the library never set is one it
+  // never takes off again; see updateAttrs in @codemirror/view.
+  //
+  // In an effect of its own because the name is the one thing about this editor
+  // that is in the reader's language: read where the view is built, a window
+  // switched to another language would rebuild every editor in it.
+  $effect(() => {
+    view?.contentDOM.setAttribute('aria-label', t('The note'))
+  })
+
   // The note, and the space around it. Swapped in whole, in the same frame as
   // the click that asked for it: see editor-states.ts.
   //
@@ -234,7 +244,11 @@
     const showing = tab
     if (!current) return
 
-    const key = noteKey(showing)
+    // Whether the pane is already on this note, read outside the untrack below and
+    // for its own sake. It is the one thing about the note this effect follows: the
+    // one tab that previews a note moves on to another without becoming another
+    // tab, and the note it moves to is a switch like any other.
+    const switching = !states.shows(showing)
     const index = notes?.(showing)
     // Read for its own sake, like the index: whether this note's HTML is markup
     // changes while it is open - a paste, a peer - and the cards in it have to be
@@ -242,8 +256,7 @@
     const trusted = trustsHtmlIn(showing.note)
 
     untrack(() => {
-      const switching = states.current !== key
-      states.show(current, key, () => build(showing), fitting(key, index, trusted))
+      states.show(current, showing, () => build(showing), fitting(showing, index, trusted))
 
       // Another note is another length and another place in it, so the bar
       // shapes itself into its new size rather than appearing in it.

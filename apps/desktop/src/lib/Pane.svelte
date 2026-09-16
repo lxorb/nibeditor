@@ -32,7 +32,6 @@
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
   import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
-  import { noteKey } from './editor-states'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
@@ -83,8 +82,10 @@
    *  nothing here is worked out until a graph tab is open. */
   const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.excluded.here))
   /** Every note this pane holds. The editor keeps a state for each one it has
-   *  shown, and this is what tells it which of them are still open. */
-  const strip = $derived(workspace.tabsIn(pane.id).map(noteKey))
+   *  shown, and this is what tells it which of them are still open. The tabs
+   *  themselves, because a tab is what a state is kept under; see
+   *  editor-states.ts. */
+  const strip = $derived(workspace.tabsIn(pane.id))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along. */
