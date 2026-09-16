@@ -15,7 +15,16 @@ import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke } from './tauri'
-import { type Mirror, newMirror, pull, push, readMirror, type Waiting, within } from './sync/mirror'
+import {
+  type Joined,
+  type Mirror,
+  newMirror,
+  pull,
+  push,
+  readMirror,
+  type Waiting,
+  within,
+} from './sync/mirror'
 import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -471,7 +480,7 @@ class Sync {
    *  The reading is the workspace's and the counting is `arriving`'s; this is the
    *  wiring between them and the pass, which knows about neither. See
    *  sync/mirror.ts. */
-  private waiting(mirror: Mirror, joined: ReadonlySet<string>): Waiting {
+  private waiting(mirror: Mirror, joined: Joined): Waiting {
     const open = new Set(
       workspace.openNotes
         .map((one) => within(mirror.root, one.path))
@@ -515,7 +524,7 @@ class Sync {
    *  document is already joined to it keystroke by keystroke, so putting a file into
    *  it would offer a whole text to the room as one edit - which is the write this
    *  batch is about. See rooms/join.ts. */
-  private async refresh(path: string, joined: ReadonlySet<string>) {
+  private async refresh(path: string, joined: Joined) {
     const id = this.tracked(path)?.id
     if (id !== undefined && joined.has(id)) return
 
@@ -553,10 +562,13 @@ class Sync {
 
     const token = account.token
     const mine = this.generation
-    // Which notes a room is already carrying, read once for the whole pass: they
-    // are the ones a pass leaves alone, and one that changed halfway would leave a
-    // note either pushed twice or not at all.
-    const joined = rooms.joined
+    // Which notes a room is carrying: the ones a pass leaves alone, since the room
+    // is already writing them into the account itself. Asked of the store as the
+    // pass reaches each note rather than read once here, because a room settles
+    // whenever somebody stops typing and a pass is seconds long - and the note whose
+    // room settled halfway through one was the second copy Emil kept finding. See
+    // `Joined` in sync/mirror.ts.
+    const joined: Joined = { has: (id) => rooms.carries(id) }
     this.running = true
     this.status = 'syncing'
     this.lastError = null

@@ -40,6 +40,16 @@ const fake = vi.hoisted(() => {
   /** Set to make the next write to the account land and then answer with a broken
    *  connection: the account moved on and this machine never heard how. */
   let loseTheAnswer = false
+  /** What happens between a write leaving this machine and the account answering it.
+   *  Where a room's settle lands when it lands inside a push; see `settles`. Fires
+   *  once, because the moment it stands for happens once. */
+  let between: (() => void) | null = null
+
+  function meanwhile() {
+    const now = between
+    between = null
+    now?.()
+  }
 
   const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
@@ -138,6 +148,7 @@ const fake = vi.hoisted(() => {
     ) => {
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
+      meanwhile()
 
       if (note.version !== baseVersion) {
         throw new ApiError(409, 'a note already lives there', {
@@ -193,11 +204,22 @@ const fake = vi.hoisted(() => {
     return note.id
   }
 
+  /** The account's copy written by something that is not this pass: the room this
+   *  note is open in, settling what was typed into it. The version and the cursor
+   *  move on exactly as they do for a push, which is what the room's settle is. */
+  function settles(path: string, content: string) {
+    const note = [...remote.values()].find((one) => one.path === path && !one.deleted)
+    if (!note) throw new Error(`no note at ${path}`)
+
+    Object.assign(note, { content, version: note.version + 1, seq: ++seq })
+  }
+
   function reset() {
     disk.clear()
     remote.clear()
     seq = 0
     loseTheAnswer = false
+    between = null
   }
 
   return {
@@ -207,8 +229,10 @@ const fake = vi.hoisted(() => {
     hashOf,
     invoke,
     lose: () => (loseTheAnswer = true),
+    meanwhile: (then: () => void) => (between = then),
     remote,
     reset,
+    settles,
   }
 })
 
@@ -224,6 +248,7 @@ vi.mock('../api', async (importOriginal) => ({
 
 const { newMirror, pull, push, readMirror } = await import('./mirror')
 type Mirror = import('./mirror').Mirror
+type Joined = import('./mirror').Joined
 
 const ROOT = '/Notes'
 const NOBODY: ReadonlySet<string> = new Set()
@@ -249,10 +274,11 @@ function types(path: string, content: string) {
   fake.disk.set(`${ROOT}/${path}`, content)
 }
 
-/** One pass of the loop, in the order sync.svelte.ts runs it. */
-async function pass(mirror: Mirror) {
-  await pull(mirror, 'token', NOBODY)
-  await push(mirror, 'token', NOBODY)
+/** One pass of the loop, in the order sync.svelte.ts runs it. `rooms` is the rooms
+ *  store as the pass asks it: note by note, as it reaches each one. */
+async function pass(mirror: Mirror, rooms: Joined = NOBODY) {
+  await pull(mirror, 'token', rooms)
+  await push(mirror, 'token', rooms)
 }
 
 /** What the machine holds, so a second copy under any name shows up. */
@@ -409,6 +435,60 @@ describe('one device typing in one note', () => {
 
     expect(files()).toEqual([`${ROOT}/Notes on the plan.md`])
     expect(account()).toEqual(['Notes on the plan.md'])
+  })
+
+  /** The note is open in a tab, so it is in a room, and the room carries what is
+   *  typed into it up to the account itself - keystroke by keystroke, without
+   *  waiting for a pass. A pass leaves such a note alone for exactly that reason;
+   *  see `Joined` in mirror.ts.
+   *
+   *  Both channels are this one machine. The room is this device's writing going up
+   *  a letter at a time and the push is the same words going up as a file, so the
+   *  account moving on under a push is this device meeting itself - never a second
+   *  writer, however far the two versions have drifted apart in the seconds a pass
+   *  takes. */
+  test('makes no second copy when its room settles while the push is in the air', async () => {
+    const { mirror, id } = await alone('Plan.md', '# Plan\n')
+    const room = new Set<string>()
+
+    types('Plan.md', '# Plan\none\n')
+
+    // The pass asked the rooms store a moment ago and the room had not settled yet,
+    // so the file goes up naming the version this machine last read. The settle
+    // lands while that write is in the air: the account is a version on before the
+    // answer comes back, and what it holds is what this same hand typed.
+    fake.meanwhile(() => {
+      room.add(id)
+      fake.settles('Plan.md', '# Plan\none\n')
+    })
+    await pass(mirror, room)
+
+    expect(files()).toEqual([`${ROOT}/Plan.md`])
+    expect(account()).toEqual(['Plan.md'])
+  })
+
+  /** And the pass has learned where the account got to, so the note goes on being
+   *  carried the moment its tab closes and there is no room to carry it. */
+  test('offers the note again once its room has gone', async () => {
+    const { mirror, id } = await alone('Plan.md', '# Plan\n')
+    const room = new Set<string>()
+
+    types('Plan.md', '# Plan\none\n')
+    fake.meanwhile(() => {
+      room.add(id)
+      fake.settles('Plan.md', '# Plan\none\n')
+    })
+    await pass(mirror, room)
+
+    // The tab closes, the room goes with it, and the file is the only way what is
+    // typed next travels.
+    room.clear()
+    types('Plan.md', '# Plan\none\ntwo\n')
+    await pass(mirror, room)
+
+    expect(files()).toEqual([`${ROOT}/Plan.md`])
+    expect(account()).toEqual(['Plan.md'])
+    expect([...fake.remote.values()][0]?.content).toBe('# Plan\none\ntwo\n')
   })
 
   /** A note made here while the account was out of reach, offered once the account is

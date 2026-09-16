@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 
+/** The account's own refusal, so a write that names a version the account has moved
+ *  past comes back the way the service answers it; see services/sync/src/notes.ts. */
+const { ApiError } = await import('./api')
+
 /** Syncing is driven here the way the app drives it, one pass at a time,
  *  against a disk and an account that both live in memory. Under node there is
  *  neither a platform shim nor a network, so both are stood in for before the
@@ -195,11 +199,17 @@ const fake = vi.hoisted(() => {
     },
     changes: async (_token: string, spaceId: string, since: number) => {
       const notes = remote.notes.filter((note) => note.spaceId === spaceId && note.seq > since)
-      return {
+      const page = {
         notes: await Promise.all(notes.map(wire)),
         cursor: Math.max(since, ...notes.map((note) => note.seq)),
         more: false,
       }
+
+      // Whatever the test says happens while the pass is running: a room settling
+      // the note somebody is typing in, which lands after this page was taken and
+      // before the push below reaches that note. See `meanwhile`.
+      between()
+      return page
     },
     readNote: async (_token: string, id: string) => {
       const note = found(id)
@@ -219,9 +229,26 @@ const fake = vi.hoisted(() => {
       remote.notes.push(note)
       return { note: await wire(note) }
     },
-    writeNote: async (_token: string, id: string, path: string, content: string) => {
+    writeNote: async (
+      _token: string,
+      id: string,
+      path: string,
+      content: string,
+      baseVersion: number,
+    ) => {
       remote.calls.push(`writeNote ${path}`)
       const note = found(id)
+
+      // The account takes one write per version: a write naming a version it has
+      // moved past is answered with what it holds instead, so the two copies can be
+      // kept. See notes.ts in the service.
+      if (note.version !== baseVersion) {
+        throw new ApiError(409, 'this note changed elsewhere', {
+          note: await wire(note),
+          content: note.content,
+        })
+      }
+
       Object.assign(note, { path, content, version: note.version + 1, seq: ++remote.seq })
       return { note: await wire(note) }
     },
@@ -273,6 +300,19 @@ const fake = vi.hoisted(() => {
     found.seq = ++remote.seq
   }
 
+  /** The notes a room is carrying, as the rooms store answers for them; see the mock
+   *  below. A test adds one the moment its room settles. */
+  const rooms = new Set<string>()
+
+  /** What happens in the middle of a pass, said once and taken as it fires. */
+  let inTheMiddle: (() => void) | null = null
+
+  function between() {
+    const now = inTheMiddle
+    inTheMiddle = null
+    now?.()
+  }
+
   function reset() {
     disk.clear()
     remote.spaces = []
@@ -280,9 +320,21 @@ const fake = vi.hoisted(() => {
     remote.calls = []
     remote.local = []
     remote.seq = 0
+    rooms.clear()
+    inTheMiddle = null
   }
 
-  return { disk, remote, invoke, api, addRemoteNote, writeRemoteNote, reset }
+  return {
+    disk,
+    remote,
+    invoke,
+    api,
+    addRemoteNote,
+    writeRemoteNote,
+    meanwhile: (then: () => void) => (inTheMiddle = then),
+    reset,
+    rooms,
+  }
 })
 
 vi.mock('./tauri', async (importOriginal) => ({
@@ -293,6 +345,14 @@ vi.mock('./tauri', async (importOriginal) => ({
 vi.mock('./api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api')>()),
   api: fake.api,
+}))
+
+/** The rooms, which under node there are none of: no socket, no document, nothing to
+ *  join. What the pass asks of them is one question - whether a room is carrying this
+ *  note - and a test answers it for itself, so a room can settle in the middle of a
+ *  pass the way one does when somebody stops typing. */
+vi.mock('./rooms.svelte', () => ({
+  rooms: { carries: (noteId: string) => fake.rooms.has(noteId), present: {} },
 }))
 
 function memoryStorage(): Storage {
@@ -577,6 +637,62 @@ describe('what arrives from the account', () => {
     await sync.pass()
 
     expect(workspace.active?.doc).toBe('# Hello, and something I am still typing')
+  })
+})
+
+describe('a note that is open in its room while a pass runs', () => {
+  /** One device, one note, and the two ways its words travel: the room, which carries
+   *  every keystroke into the account as it is typed, and the pass, which carries the
+   *  file. A pass leaves a note its room is carrying alone for exactly that reason.
+   *
+   *  What it must not do is decide that once, at the top, and hold the answer for the
+   *  minutes a pass can run. A room settles whenever somebody stops typing, so the note
+   *  whose room settled halfway through went up as a file naming a version that had
+   *  just moved - the account answered 409, the pass read that as a second writer, and
+   *  the machine that had been typing in one note the whole time was left with a second
+   *  copy of it beside the first. */
+  async function typingInTheOpenNote() {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    // The note is open, so it is in a room, and what is typed into it reaches the
+    // file at the next pause; see workspace/saving.svelte.ts.
+    fake.disk.set('/Account/Hello.md', '# Hello, and a line typed here')
+
+    // The room settles those same keystrokes a moment after the pass took the
+    // account's page of changes, which is the whole of the race: what the pass knows
+    // about the rooms is from before that moment.
+    fake.meanwhile(() => {
+      fake.rooms.add('n-Hello.md')
+      fake.writeRemoteNote('s-Account', 'Hello.md', '# Hello, and a line typed here')
+    })
+
+    await sync.pass()
+  }
+
+  /** What the folder holds, so a second copy under any name shows up. */
+  function files(): string[] {
+    return [...fake.disk.keys()]
+      .filter((path) => path.startsWith('/Account/') && !path.includes('/.'))
+      .sort()
+  }
+
+  test('is left where it is rather than pushed against a version that moved', async () => {
+    await typingInTheOpenNote()
+
+    expect(files()).toEqual(['/Account/Hello.md'])
+    expect(fake.remote.notes.filter((one) => !one.deleted).map((one) => one.path)).toEqual([
+      'Hello.md',
+    ])
+  })
+
+  test('and the pass says nothing about it in the log', async () => {
+    await typingInTheOpenNote()
+
+    // Nothing was sent and nothing clashed: the room had it the whole time.
+    expect(fake.remote.calls).toEqual([])
   })
 })
 

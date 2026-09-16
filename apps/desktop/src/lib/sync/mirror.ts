@@ -224,7 +224,7 @@ function flatten(entry: Entry): Entry[] {
   return out
 }
 
-/** The notes that are open in a room, by their id on the account.
+/** Whether a note is in a room, by its id on the account.
  *
  *  A note in a room has one truth and it is the room's: every device in it holds
  *  the same characters, and the room writes them into the account itself. So a
@@ -234,9 +234,20 @@ function flatten(entry: Entry): Entry[] {
  *  it, because two devices typing in one paragraph is exactly what the room has
  *  already settled.
  *
+ *  A question rather than a list, and asked again at every note and after every
+ *  refusal. A pass is seconds of round trips and a room settles the moment somebody
+ *  stops typing, so a list taken at the top of a pass is a list from before both:
+ *  the note whose room settled halfway through went up as a file naming a version
+ *  the account had just moved past, the 409 that came back was read as a second
+ *  writer, and the machine that had been typing in that one note the whole time was
+ *  left with a second copy of it. A set answers this shape too, which is what a test
+ *  hands in when there are no rooms at all.
+ *
  *  Handed in rather than imported so this file stays about moving files: the store
- *  next door knows about rooms, and a test can say there are none. */
-export type Joined = ReadonlySet<string>
+ *  next door is what knows about rooms. */
+export interface Joined {
+  has(id: string): boolean
+}
 
 /** Whoever is waiting on a pass, and what they need out of it while it runs.
  *
@@ -572,6 +583,17 @@ export async function push(
       sending.sent?.(path)
     } catch (error) {
       if (!(error instanceof ApiError) || error.status !== 409) throw error
+
+      // The note's room settled while this write was in the air, which is this
+      // device losing to itself: the version the account moved on to is its own
+      // keystrokes, carried up one at a time by the room this same tab is in. The
+      // file and the room are two ways out of one document, so nothing in what was
+      // sent is missing from what landed. Where the account got to is written down
+      // and the note is left to the room - which is where the question above would
+      // have left it had it been asked a moment later. Asked now rather than trusted
+      // from before the request, for the reason `Joined` gives.
+      if (joined.has(tracked.id) && caughtUpWith(mirror, path, error.body)) continue
+
       await keepBoth(mirror, path, tracked, error.body, token)
     }
   }
@@ -745,6 +767,24 @@ async function create(
     await keepBoth(mirror, path, tracked, body, token)
     return true
   }
+}
+
+/** Where the account says it has got to, written down out of the refusal that says
+ *  it. What the pass does with a note it has just learned it is behind on is ask
+ *  about it from there rather than from the version it was refused on.
+ *
+ *  Answers whether the refusal named a copy at all: a body that does not read as one
+ *  says nothing to write down, and the caller settles it the way it always has. */
+function caughtUpWith(mirror: Mirror, path: string, refusal: unknown): boolean {
+  const body = isRecord(refusal) ? refusal : {}
+  const theirs = isRecord(body.note) ? body.note : null
+  if (!isString(theirs?.id) || !isNumber(theirs.version) || !isString(theirs.hash)) return false
+
+  mirror.notes[path] = { id: theirs.id, version: theirs.version, hash: theirs.hash }
+  // Nothing of this device's is in the air any more: the write it was about was
+  // refused rather than lost. See `offered`.
+  mirror.offered = without(mirror.offered, path)
+  return true
 }
 
 async function keepBoth(

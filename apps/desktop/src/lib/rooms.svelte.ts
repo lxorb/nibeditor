@@ -100,16 +100,26 @@ class Rooms {
    *  without the app being asked what is open all over again. */
   private open: readonly Open[] = []
 
-  /** The files a room now holds the truth of, by their id on the account. What the
-   *  file sync asks, so it can leave those files to the room; see sync/mirror.ts.
+  /** Whether a room now holds the truth of this file, by its id on the account. What
+   *  the file sync asks before it writes anything about a note, so it can leave the
+   *  ones a room is carrying to the room; see sync/mirror.ts.
    *
-   *  A room that has been opened but has not yet said what it holds is not in this
-   *  list. Until that moment nothing has been settled and the file is still the
-   *  best answer anybody has, so a pass carries on exactly as it did before. */
-  get joined(): Set<string> {
-    return new Set(
-      [...this.held.values()].filter((one) => one.room.settled).map((one) => one.noteId),
-    )
+   *  One note at a time rather than the whole list at once, because the answer keeps
+   *  changing while a pass runs: a room settles the moment somebody stops typing, and
+   *  a pass over a space is seconds of round trips. A list taken at the top of one
+   *  said nothing about the note whose room settled halfway through, and that note was
+   *  pushed as a file against a version the room had just moved past - which the
+   *  account refuses, and which the pass read as a second writer.
+   *
+   *  A room that has been opened but has not yet said what it holds answers no. Until
+   *  that moment nothing has been settled and the file is still the best answer
+   *  anybody has, so a pass carries on exactly as it did before. */
+  carries(noteId: string): boolean {
+    for (const one of this.held.values()) {
+      if (one.noteId === noteId && one.room.settled) return true
+    }
+
+    return false
   }
 
   /** The open files, as the app now has them. Rooms are joined and left to match:

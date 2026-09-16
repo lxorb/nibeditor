@@ -213,7 +213,7 @@ async function following(note: Doc, server: Server, held = words(note)) {
   const socket = latest()
   socket.arrive()
   carry(socket, server)
-  await until(() => rooms.joined.has('note-1'), 'the room to catch up')
+  await until(() => rooms.carries('note-1'), 'the room to catch up')
   carry(socket, server)
 
   return socket
@@ -287,7 +287,7 @@ describe('a space renamed while one of its notes is open in a room', () => {
     expect(socket.open).toBe(true)
     // And the room still says it holds this file, which is what tells the file
     // sync to leave it alone; see sync/mirror.ts.
-    expect(rooms.joined.has('note-1')).toBe(true)
+    expect(rooms.carries('note-1')).toBe(true)
   })
 })
 
@@ -366,7 +366,7 @@ describe('a room the service threw away and will build again', () => {
     const back = latest()
     back.arrive()
     carry(back, rebuilt)
-    await until(() => rooms.joined.has('note-1'), 'the new room to catch up')
+    await until(() => rooms.carries('note-1'), 'the new room to catch up')
     carry(back, rebuilt)
 
     expect(rebuilt.file).toBe('# A\ntyped while it was away\n')
@@ -401,7 +401,7 @@ describe('a room the service threw away and will build again', () => {
       // keeps a pass from pushing one over the other.
       expect(words(note)).toBe('# A\ntyped while it was away\n')
       expect(rebuilt.file).toBe('# A\nand something from the phone\n')
-      expect(rooms.joined.has('note-1')).toBe(false)
+      expect(rooms.carries('note-1')).toBe(false)
       expect(record.clashes.map((one) => one.theirs)).toEqual([
         '# A\nand something from the phone\n',
       ])
@@ -431,13 +431,13 @@ describe('a room the service threw away and will build again', () => {
     const note = documentOn('/Notes/a.md', '# A\n')
     const server = new Server('# A\n')
     const socket = await following(note, server)
-    expect(rooms.joined.has('note-1')).toBe(true)
+    expect(rooms.carries('note-1')).toBe(true)
 
     socket.went(1012)
 
     // Which is what hands the file back to the file sync for the moment in
     // between; see `caughtUp` in rooms/door.ts.
-    expect(rooms.joined.has('note-1')).toBe(false)
+    expect(rooms.carries('note-1')).toBe(false)
   })
 })
 
@@ -458,14 +458,14 @@ describe('a room that will take no more keystrokes', () => {
     const note = documentOn('/Notes/a.md', '# A\n')
     const server = new Server('# A\n')
     const socket = await following(note, server)
-    expect(rooms.joined.has('note-1')).toBe(true)
+    expect(rooms.carries('note-1')).toBe(true)
 
     socket.went(TOO_LARGE, SAID)
 
     // One socket, stopped: a second would be closed again on the next keystroke.
     expect(socket.stopped).toBe(true)
     expect(sockets.opened).toHaveLength(1)
-    expect(rooms.joined.has('note-1')).toBe(false)
+    expect(rooms.carries('note-1')).toBe(false)
   })
 
   test('and says so once, in the app’s own words', async () => {
