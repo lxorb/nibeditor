@@ -141,6 +141,14 @@ class Record {
       }
 
       await invoke('write_note', { path, content: clash.theirs })
+      // And the document, if the note is open. The file is theirs now and the
+      // document is still holding what this machine said - so the note on screen
+      // reads as words the file no longer has, and the first keystroke after that
+      // writes them back over the copy the reader had just chosen. Nothing writes
+      // a file a document is open on without telling the document; see
+      // workspace/open.ts.
+      const { workspace } = await import('../workspace.svelte')
+      workspace.reload(path, clash.theirs)
     }
 
     if (answer === 'both') {

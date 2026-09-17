@@ -12,7 +12,15 @@ const KEY = 'nib:sync-log'
  *  of storage is a note at all. */
 const spaces = [{ root: '/Work' }]
 
-vi.mock('../workspace.svelte', () => ({ workspace: { spaces } }))
+/** What a document open on the settled note was told, if anything. */
+const reloaded: { path: string; content: string }[] = []
+
+vi.mock('../workspace.svelte', () => ({
+  workspace: {
+    spaces,
+    reload: (path: string, content: string) => void reloaded.push({ path, content }),
+  },
+}))
 
 /** Every command settling an answer sent to the crate, and the path it named. */
 const invoked: { command: string; path: string }[] = []
@@ -56,6 +64,7 @@ function stored(): string {
 beforeEach(() => {
   localStorage.clear()
   invoked.length = 0
+  reloaded.length = 0
   record.restore()
 })
 
@@ -104,6 +113,19 @@ describe('a path read back out of storage', () => {
       { command: 'write_note', path: '/Work/Plan.md' },
     ])
     expect(record.clashes).toHaveLength(0)
+  })
+
+  /** And the document, if the note is open. Taking the other copy writes the file,
+   *  and a document over that file is still holding what this machine said: clean
+   *  it shows words the file no longer has, and the first keystroke after that
+   *  writes them back over the copy the reader just chose. Nothing writes a file a
+   *  document is open on without telling the document; see workspace/open.ts. */
+  test('and the note on screen becomes the copy that was chosen', async () => {
+    held([aClash('/Work/Plan.md')])
+
+    await record.settle(record.clashes[0]!, 'theirs')
+
+    expect(reloaded).toEqual([{ path: '/Work/Plan.md', content: 'what the other device wrote' }])
   })
 
   test('and touches nothing when no space does', async () => {

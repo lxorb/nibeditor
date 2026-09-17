@@ -18,6 +18,7 @@ import { invoke } from './tauri'
 import {
   type Joined,
   type Mirror,
+  movedHere,
   newMirror,
   pull,
   push,
@@ -154,6 +155,21 @@ class Sync {
 
     const token = account.token
     if (token) await api.renameSpace(token, mirror.spaceId, name).catch(() => undefined)
+  }
+
+  /** A note or a folder that moved here, said to the account so that the note keeps
+   *  the id it has always had. Beside `renamed` above, which is the same sentence
+   *  about a space; `movedHere` in sync/mirror.ts is the whole of the reasoning.
+   *
+   *  Signed out there is nobody to tell, and the next pass reads the move off the
+   *  folder the way it always has. */
+  async moved(from: string, to: string) {
+    const token = account.token
+    if (!token) return
+
+    for (const mirror of Object.values(this.mirrors)) {
+      if (await movedHere(mirror, token, from, to)) this.save()
+    }
   }
 
   /** Deleting a space here deletes it from the account too. Anything less and

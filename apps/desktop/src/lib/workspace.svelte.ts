@@ -1826,6 +1826,7 @@ class Workspace {
       note.name = name
     }
 
+    await this.movedOnAccount(from, target)
     await this.loadTree()
     await this.unnest(folderOf(from))
     this.persist()
@@ -1955,6 +1956,13 @@ class Workspace {
     // A preview reuses the one preview tab rather than opening another, and only
     // when that tab is in the pane being worked in: taking over a tab in another
     // pane would change a note nobody was looking at.
+    //
+    // And only while the preview is the one view of its document. Taking a note on
+    // is the document being pointed at another file rather than the tab being handed
+    // another document, so a preview that was split into a second pane would move
+    // that pane to a note nobody asked it for - the same hole `walk` had, reached by
+    // the other door. Such a tab simply stops being the preview: the note opening
+    // gets a tab of its own, and that one is the preview from here.
     const reusable =
       options.preview &&
       this.tabs.find(
@@ -1963,7 +1971,8 @@ class Workspace {
           tab.kind === 'note' &&
           !tab.dirty &&
           !tab.pinned &&
-          tab.paneId === this.panes.focusedId,
+          tab.paneId === this.panes.focusedId &&
+          !this.tabs.some((one) => one.id !== tab.id && one.note === tab.note),
       )
 
     if (reusable) {
@@ -2052,12 +2061,21 @@ class Workspace {
    *  from. `to` is where along the trail to land, which the two steps and the
    *  list behind the back arrow all say for themselves.
    *
-   *  The note is taken on by the document the tab already holds, the way the
-   *  preview tab takes one on: every pane showing this tab keeps its place, the
-   *  editor keeps its own state per note, and the caret lands where it was left
-   *  in the note being returned to. A note that has gone from the disk is
-   *  dropped from the trail rather than reported: it is a road that is no longer
-   *  there. */
+   *  A step is an opening like any other, and goes through the one place that says
+   *  what a file is open as: the tab is pointed at that file's document - the one
+   *  that is already open on it, or one made from the file here - and the editor
+   *  keeps its own state per note, so the caret lands where it was left in the note
+   *  being returned to.
+   *
+   *  It used to read the file and have the tab's own document take the note on,
+   *  which went around all of that. Two things came of it and both are one note's
+   *  words under another note's name: a step back to a note another pane was
+   *  showing made a second set of words over one file, and a step back in a tab
+   *  whose document a second pane shared moved that pane to the note as well. See
+   *  workspace/open.ts.
+   *
+   *  A note that has gone from the disk is dropped from the trail rather than
+   *  reported: it is a road that is no longer there. */
   async walk(to: number, id: string | null = this.activeTabId) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || to < 0 || to >= tab.trail.length || to === tab.at) return
@@ -2066,14 +2084,16 @@ class Workspace {
     if (path === undefined) return
 
     this.flush()
-    const doc = await invoke<string>('read_note', { path }).catch(() => null)
-    if (doc === null) {
+    const note = await this.opened.opening(path, () => this.stepped(tab, path))
+    if (!note) {
       tab.trail = tab.trail.filter((one) => one !== path)
       tab.at = Math.min(tab.at, Math.max(tab.trail.length - 1, 0))
       return
     }
 
-    tab.note.adopt({ path, name: nameOf(path), text: doc })
+    // The file was already open, so this step joins what is showing it. `stepped`
+    // has done this for a file it read itself, before the open was let go of.
+    tab.note = note
     tab.at = to
     this.placeAt(tab, path)
     tab.reading = false
@@ -2086,6 +2106,22 @@ class Workspace {
     this.showNote()
     this.remember(path)
     this.persist()
+  }
+
+  /** The document one step along a trail comes to, put in the tab that stepped.
+   *  Only `walk` calls it, and only through the one open.
+   *
+   *  The tab is pointed at the document inside the open rather than after it, for
+   *  the reason the open exists: what is open is the tabs, so a document that is in
+   *  no tab yet is a file nothing says is open - and the next opener of it would
+   *  read the file a second time. */
+  private async stepped(tab: Tab, path: string): Promise<NoteDoc | null> {
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    if (text === null) return null
+
+    const note = this.document({ kind: 'note', path, name: nameOf(path), text, dirty: false })
+    tab.note = note
+    return note
   }
 
   /** One step back, and one step on. */
@@ -2957,8 +2993,29 @@ class Workspace {
       note.name = nameOf(target)
     }
 
+    await this.movedOnAccount(path, target)
     await this.loadTree()
     this.persist()
+  }
+
+  /** And the account, which keeps a note under an id rather than under its name.
+   *
+   *  Said from the two operations that move a file rather than by whoever asked for
+   *  one, because the askers are what keep being added: the field in the file list,
+   *  a drag, a drop onto a note, the palette, an automation, an undo, a folder that
+   *  stopped holding anything. Every one of them is a `rename` or a `move`, and this
+   *  is the sentence both of them owe. See `moved` in sync.svelte.ts, and
+   *  `movedHere` in sync/mirror.ts for what the account is told and why the mirror
+   *  is re-keyed only afterwards.
+   *
+   *  Fetched rather than imported, like every other word this store has for the
+   *  account: nothing about syncing is in a window that never signs in.
+   *
+   *  Not private because putting a rename back is a rename, and that lives next
+   *  door; see workspace/undoing.ts. */
+  async movedOnAccount(from: string, to: string) {
+    const { sync } = await import('./sync.svelte')
+    await sync.moved(from, to)
   }
 
   async remove(path: string, isFolder: boolean) {

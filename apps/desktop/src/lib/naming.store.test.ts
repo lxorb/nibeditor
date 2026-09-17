@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 /** Naming a row, through the store that owns the tree.
  *
@@ -137,6 +137,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
+const { sync } = await import('./sync.svelte')
 
 /** Every path the list shows, in the order it shows them. */
 function rows(): string[] {
@@ -493,6 +494,49 @@ describe('the undo a row offers', () => {
 
     await workspace.move('/space/Beta.md', '/space/Work')
     expect(workspace.undoLabel).toBe('Undo moving Beta')
+  })
+})
+
+/** A file that moved reaches the account as itself.
+ *
+ *  The account keeps a note under an id rather than under its name, and everything
+ *  that outlives one sitting hangs off that id: the version history, the room every
+ *  device in the note joins, what a published link points at. Nothing used to tell
+ *  the account anything, so the next pass read the move off the folder as one note
+ *  being created and another deleted - a new id, and the note's history ending where
+ *  its name changed.
+ *
+ *  Said by the two operations that move a file rather than by whoever asked for one,
+ *  because the askers are what keep being added: the field in this list, a drag, the
+ *  palette, an automation, an undo, a folder that stopped holding anything. See
+ *  `movedOnAccount` in workspace.svelte.ts and `movedHere` in sync/mirror.ts. */
+describe('what the account is told about a file that moved', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  test('a rename is that note, under another name', async () => {
+    const moved = vi.spyOn(sync, 'moved').mockResolvedValue(undefined)
+
+    await workspace.rename('/space/Beta.md', 'Gamma.md')
+
+    expect(moved).toHaveBeenCalledWith('/space/Beta.md', '/space/Gamma.md')
+  })
+
+  test('and a drag into a folder is the same note, in the folder', async () => {
+    const moved = vi.spyOn(sync, 'moved').mockResolvedValue(undefined)
+
+    await workspace.move('/space/Beta.md', '/space/Work')
+
+    expect(moved).toHaveBeenCalledWith('/space/Beta.md', '/space/Work/Beta.md')
+  })
+
+  test('while a rename the disk refused says nothing at all', async () => {
+    files.set('/space/Taken.md', '# Taken')
+    await workspace.loadTree()
+    const moved = vi.spyOn(sync, 'moved').mockResolvedValue(undefined)
+
+    await expect(workspace.rename('/space/Beta.md', 'Taken.md')).rejects.toThrow()
+
+    expect(moved).not.toHaveBeenCalled()
   })
 })
 

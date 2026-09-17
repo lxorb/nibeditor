@@ -34,6 +34,10 @@ export interface PutsBack {
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
+  /** The account told which note moved, so it keeps the id it has always had; see
+   *  `movedOnAccount` in workspace.svelte.ts. An undo is a rename like any other
+   *  and owes the same sentence. */
+  movedOnAccount(from: string, to: string): Promise<void>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -160,6 +164,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   ws.folderIcons.moved(action.to, action.from)
   ws.arranged.moved(action.to, action.from)
   ws.excluded.moved(action.to, action.from)
+  await ws.movedOnAccount(action.to, action.from)
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded

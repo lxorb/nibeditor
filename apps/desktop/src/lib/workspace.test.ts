@@ -182,6 +182,29 @@ describe('keeping a preview tab', () => {
     expect(workspace.previewTabId).toBe(second.id)
   })
 
+  /** A preview takes its next note on rather than being handed another, which is
+   *  only honest while the preview is the one view of that document. Split into a
+   *  second pane it is not: there are two tabs on one document, and a note taken on
+   *  here moves the pane beside it to a note nobody asked it for. The same hole
+   *  `walk` had, reached by the other door. */
+  test('is not taken over while a second pane is showing its note', async () => {
+    const looking = await preview('/space/a.md')
+    workspace.split('row')
+
+    const beside = workspace.tabs.find((one) => one.id !== looking.id)
+    if (!beside) throw new Error('the split did not happen')
+    expect(beside.note).toBe(looking.note)
+
+    // Back in the pane the preview is in, and another row clicked.
+    workspace.focusPane(looking.paneId)
+    const next = await preview('/space/b.md')
+
+    expect(next.id).not.toBe(looking.id)
+    expect(beside.path).toBe('/space/a.md')
+    expect(looking.path).toBe('/space/a.md')
+    workspace.collapsePanes()
+  })
+
   test('leaves the preview alone when asked about some other tab', async () => {
     await workspace.open('/space/a.md')
     const [permanent] = workspace.tabs
@@ -717,6 +740,71 @@ function onePane() {
   workspace.tabs = []
   workspace.previewTabId = null
 }
+
+/** Back and forward along one tab's trail.
+ *
+ *  A trail is where this tab has been this afternoon, and stepping along it is a
+ *  note being opened like any other - which is exactly what it was not. It read the
+ *  file and had the tab's own document take the note on, going around the one place
+ *  that answers what a file is open as. So two things could happen, and both are one
+ *  note's words under another note's name: stepping back to a note another pane is
+ *  showing made a second set of words over that file, and stepping back in a tab
+ *  whose document a second pane shares moved that pane to the note as well.
+ *
+ *  One file is one document, whichever door the file is reached by. See
+ *  workspace/open.ts, and `walk`. */
+describe('walking back along a trail', () => {
+  beforeEach(() => {
+    onePane()
+  })
+
+  test('joins the document the note is already open as', async () => {
+    // A click in the list, a click on the next row, and the first note opened for
+    // real: one tab that has looked at two notes, and one holding the first.
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    await workspace.open('/space/a.md')
+
+    const kept = workspace.tabs.find((one) => one.id !== looking.id)
+    if (!kept) throw new Error('the note did not open in a tab of its own')
+
+    await workspace.walk(0, looking.id)
+
+    expect(looking.path).toBe('/space/a.md')
+    expect(looking.note).toBe(kept.note)
+    expect(workspace.documentAt('/space/a.md')).toBe(kept.note)
+    expect(workspace.documents.filter((one) => one.path === '/space/a.md')).toHaveLength(1)
+  })
+
+  test('and leaves the pane that shares this tab’s document where it was', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    // The same note in a second pane: one document, two tabs.
+    workspace.split('row')
+
+    const other = workspace.tabs.find((one) => one.id !== looking.id)
+    if (!other) throw new Error('the split did not happen')
+    expect(other.note).toBe(looking.note)
+
+    await workspace.walk(0, looking.id)
+
+    expect(looking.path).toBe('/space/a.md')
+    // The other pane is still reading what it was reading.
+    expect(other.path).toBe('/space/b.md')
+    expect(other.note).not.toBe(looking.note)
+  })
+
+  test('and drops a note that has gone from the disk out of the trail', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    looking.trail = ['/space/gone.md', '/space/b.md']
+
+    await workspace.walk(0, looking.id)
+
+    expect(looking.trail).toEqual(['/space/b.md'])
+    expect(looking.path).toBe('/space/b.md')
+  })
+})
 
 describe('a note in two panes', () => {
   beforeEach(() => {
@@ -1839,10 +1927,7 @@ describe('a tab nobody has saved', () => {
     expect(first.path).toBe('/space/Example.url')
     expect(second.path).toBe('/space/Example 2.url')
     expect(workspace.documentAt('/space/Example.url')).toBe(first.note)
-    expect(written().map((one) => one.path)).toEqual([
-      '/space/Example.url',
-      '/space/Example 2.url',
-    ])
+    expect(written().map((one) => one.path)).toEqual(['/space/Example.url', '/space/Example 2.url'])
   })
 
   /** A browser brings back the tabs it had, and so does this: the words of a document

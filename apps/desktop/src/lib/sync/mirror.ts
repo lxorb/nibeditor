@@ -19,7 +19,7 @@
 
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
-import { api, ApiError, type SpaceFile } from '../api'
+import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
@@ -502,6 +502,112 @@ export async function pull(
   }
 
   return moved
+}
+
+/** A note or a folder that moved here - renamed, or dragged into another folder -
+ *  told to the account, so that the note keeps the id it has always had.
+ *
+ *  A note is a row up there with an id, and everything that outlives one sitting
+ *  hangs off it: the version history, the room every device in the note joins, what
+ *  a published link points at. A rename changes the name of a file. It is not a note
+ *  ending and another beginning, and it must not reach the account as one.
+ *
+ *  Nothing used to tell the account anything, so the next pass read the move off the
+ *  folder: the new name a path the mirror had never seen, which went up as a brand
+ *  new note with a fresh uuid, and the old name a path with no file, which was
+ *  deleted. The history ended there, the open room was left named after an id nothing
+ *  answered to, and where the filesystem does not care about case a rename that only
+ *  changed case was a second row over one file.
+ *
+ *  A folder is this said once per note under it.
+ *
+ *  The table here is re-keyed only once the account has taken the new name, and that
+ *  order is the whole safety of it: a table saying a note lives at a name the account
+ *  has never heard of is worse than one that is merely behind, because the next pull
+ *  reads the account's copy as a note this machine has never seen, does not find the
+ *  file, and writes the old name back onto the disk. So a request that does not land
+ *  leaves this machine exactly as it was and the pass does what it has always done -
+ *  losing the identity, which is the thing this is for, and nothing else.
+ *
+ *  Answers whether anything was re-keyed, so the caller knows to write the mirrors
+ *  down. */
+export async function movedHere(
+  mirror: Mirror,
+  token: string,
+  from: string,
+  to: string,
+): Promise<boolean> {
+  const was = within(mirror.root, from)
+  const now = within(mirror.root, to)
+  if (was === null || now === null) return false
+
+  // The file itself, and - for a folder - every note under it. `Kept/` rather than
+  // `Kept`, or a folder would carry `Keptish.md` along with it.
+  const under = `${was}/`
+  const moving = Object.keys(mirror.notes).filter((path) => path === was || path.startsWith(under))
+
+  let done = false
+  for (const path of moving) {
+    if (await movedOne(mirror, token, path, now + path.slice(was.length))) done = true
+  }
+
+  return done
+}
+
+async function movedOne(mirror: Mirror, token: string, was: string, now: string): Promise<boolean> {
+  const tracked = mirror.notes[was]
+  // A note the account has never been handed has no identity to keep. It goes up
+  // under its new name the first time a push meets it, which is right.
+  if (!tracked) return false
+
+  const content = await invoke<string>('read_note', {
+    path: joinPath(mirror.root, now),
+  }).catch(() => null)
+  if (content === null) return false
+
+  const note = await renamedUpThere(token, tracked, now, content)
+  if (!note) return false
+
+  mirror.notes = {
+    ...without(mirror.notes, was),
+    [now]: { id: note.id, version: note.version, hash: note.hash },
+  }
+  // A write that was in the air about the old name says nothing about the new one.
+  mirror.offered = without(mirror.offered, was)
+
+  return true
+}
+
+/** The note at its new name on the account, or null when it could not be said.
+ *
+ *  A version the account has moved past is almost always this note's own room. The
+ *  note somebody renames is the note they are reading, the note they are reading is
+ *  the note a room is carrying, and a room writes its keystrokes up one at a time
+ *  while the version the last pass wrote down stays where it was. The room names the
+ *  note by its id and never says where it lives, so this is the only thing that can
+ *  move it - and what it moves is what the room wrote, read back and put down again
+ *  under the new name, rather than the file this machine happens to hold. */
+async function renamedUpThere(
+  token: string,
+  tracked: Tracked,
+  path: string,
+  content: string,
+): Promise<RemoteNote | null> {
+  try {
+    const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
+    return note
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 409) return null
+  }
+
+  try {
+    const held = await api.readNote(token, tracked.id)
+    const { note } = await api.writeNote(token, tracked.id, path, held.content, held.note.version)
+    return note
+  } catch {
+    // Left for the pass, which reads a move off the folder the way it always has.
+    return null
+  }
 }
 
 /** Offers what this machine has. Answers whether anything moved. */

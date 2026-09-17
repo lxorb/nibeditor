@@ -61,7 +61,6 @@ export class OpenDocuments {
    *  being written this instant is neither. See `freeName` in workspace.svelte.ts,
    *  which is the one numbering every new name in the app goes through. */
   get paths(): Set<string> {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- thrown away by the caller; nothing renders from it
     const out = new Set<string>(this.coming.keys())
     for (const tab of this.showing()) {
       if (tab.note.path !== null) out.add(tab.note.path)

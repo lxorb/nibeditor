@@ -63,12 +63,20 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     documentAt: () => null,
     positions: { move: (from: string, to: string) => void moved.push(`${from} -> ${to}`) },
     folderIcons: { moved: (from: string, to: string) => void moved.push(`icon ${from} -> ${to}`) },
+    // The order a folder was arranged into. Missing here until now, so a name put
+    // back threw halfway down `putName` and the undo was swallowed by the catch
+    // around it - which every assertion below happened to be taken before.
+    arranged: { moved: (from: string, to: string) => void moved.push(`order ${from} -> ${to}`) },
     excluded: { moved: (from: string, to: string) => void moved.push(`left out ${from} -> ${to}`) },
     close: () => undefined,
     reload: (path: string) => void told.push(`reloaded ${path}`),
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
+    },
+    movedOnAccount: (from: string, to: string) => {
+      told.push(`account ${from} -> ${to}`)
+      return Promise.resolve()
     },
     loadTree: () => {
       kept.loaded += 1
@@ -159,6 +167,11 @@ describe('an import taken back', () => {
   })
 })
 
+/** Putting a name back is a rename, and owes everything a rename owes - the links
+ *  that followed the note, the index, the papers, and the account, which keeps a
+ *  note under an id rather than under a name. Without that last one the note that
+ *  came back from a mistaken rename is a third note up there, with the history of
+ *  neither; see `movedHere` in sync/mirror.ts. */
 describe('a name put back', () => {
   test('rewrites the links that followed it, and only when they were rewritten', async () => {
     const ws = store({ kind: 'rename', from: '/s/a.md', to: '/s/b.md', rewrote: true })
@@ -169,6 +182,7 @@ describe('a name put back', () => {
       'retargeted /s/b.md -> /s/a.md',
       'moved /s/b.md -> /s/a.md',
       'paper /s/b.md -> /s/a.md',
+      'account /s/b.md -> /s/a.md',
     ])
   })
 
@@ -176,7 +190,11 @@ describe('a name put back', () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
 
-    expect(told).toEqual(['moved /s/f/a.md -> /s/a.md', 'paper /s/f/a.md -> /s/a.md'])
+    expect(told).toEqual([
+      'moved /s/f/a.md -> /s/a.md',
+      'paper /s/f/a.md -> /s/a.md',
+      'account /s/f/a.md -> /s/a.md',
+    ])
   })
 })
 

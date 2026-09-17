@@ -144,7 +144,13 @@ const fake = vi.hoisted(() => {
       fetched.push(note.path)
       return { note: await present(note), content: note.content }
     },
-    writeNote: async (_token: string, id: string, path: string, content: string) => {
+    writeNote: async (
+      _token: string,
+      id: string,
+      path: string,
+      content: string,
+      _baseVersion = 0,
+    ) => {
       calls.push(`writeNote ${path}`)
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
@@ -220,7 +226,7 @@ vi.mock('../api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { newMirror, pull, push, within } = await import('./mirror')
+const { movedHere, newMirror, pull, push, within } = await import('./mirror')
 
 const ROOT = '/Notes'
 const NOBODY: ReadonlySet<string> = new Set()
@@ -247,18 +253,136 @@ function conflicts(): string[] {
   return [...fake.disk.keys()].filter((path) => path.includes('from another device'))
 }
 
-/** A rename is one file leaving and another arriving, and nothing tells the mirror:
- *  see `rename` in workspace.svelte.ts. So the pass has to read it off the folder -
- *  the new name is a note the account has never seen, and the old one is a path the
- *  mirror holds whose file is gone. Both halves, or the account keeps two live notes
- *  and every other machine downloads the one nobody has any more. */
+/** A rename keeps the note's identity on the account.
+ *
+ *  A note is a row up there with an id, and everything that outlives one sitting
+ *  hangs off that id: the version history, the room every device in the note joins,
+ *  what a published link points at. A rename changes the name of a file; it is not a
+ *  note ending and another beginning.
+ *
+ *  Nothing used to tell the account, and the next pass read the move off the folder
+ *  instead - the new name a note it had never seen, the old one a path with no file.
+ *  That is a create and a delete: a fresh uuid, the history severed, the open room
+ *  named after an id nothing answers to, and - where the filesystem does not care
+ *  about case - a rename that only changed case going up as a brand new note. The
+ *  pass reading it off the folder is still what happens when nobody could be told,
+ *  which is the last test here. */
 describe('a note renamed on this machine', () => {
-  test('arrives under its new name and goes from under the old one', async () => {
-    const HERE = '# One' + String.fromCharCode(10)
-    const { mirror } = await paired('One.md', HERE)
+  const HERE = '# One' + String.fromCharCode(10)
 
-    fake.disk.delete(`${ROOT}/One.md`)
-    fake.disk.set(`${ROOT}/Two.md`, HERE)
+  /** The rename, as the workspace does it: the file leaves one name and arrives
+   *  under another, and the account is told which note that was. */
+  function renameOnDisk(from: string, to: string) {
+    const held = fake.disk.get(`${ROOT}/${from}`) ?? ''
+    fake.disk.delete(`${ROOT}/${from}`)
+    fake.disk.set(`${ROOT}/${to}`, held)
+  }
+
+  test('keeps its id, and the account holds one note at the new name', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+
+    expect(await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)).toBe(true)
+
+    // One request, and it is the note being renamed rather than a new one.
+    expect(fake.calls).toEqual(['writeNote Two.md'])
+    expect(fake.remote.get(id)?.path).toBe('Two.md')
+    expect(fake.remote.get(id)?.deleted).toBe(false)
+    expect(mirror.notes['Two.md']?.id).toBe(id)
+    expect(mirror.notes['One.md']).toBeUndefined()
+  })
+
+  test('and the pass that follows has nothing left to do about it', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual([])
+    expect([...fake.disk.keys()].sort()).toEqual([`${ROOT}/Two.md`])
+    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([
+      id,
+    ])
+  })
+
+  /** Where the filesystem does not care about case - Windows, and a Mac unless
+   *  somebody asked otherwise - `One.md` and `one.md` are one file. The account
+   *  does care, so a create and a delete over that pair is two rows over one file,
+   *  and which of them wins the next pass is a coin toss. */
+  test('and a rename that only changes case is the same note, not another one', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'one.md')
+
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/one.md`)
+
+    expect(fake.calls).toEqual(['writeNote one.md'])
+    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([
+      id,
+    ])
+    expect(mirror.notes['one.md']?.id).toBe(id)
+  })
+
+  /** A note somebody is reading is the note they rename, and a note somebody is
+   *  reading is the note a room is carrying: the room writes it up keystroke by
+   *  keystroke, so the version the last pass wrote down is behind by the time the
+   *  name changes. The room names the note by its id and never says where it lives,
+   *  so this is the only thing that can move it - and what it moves is what the room
+   *  wrote. */
+  test('and follows a room that moved past this machine while the name changed', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+
+    // The room settled twice since the last pass, so the version the mirror holds is
+    // not the one the account is on.
+    const THEIRS = '# One, and a sentence somebody typed' + String.fromCharCode(10)
+    fake.editRemote(id, THEIRS)
+    const stale = fake.api.writeNote
+    fake.api.writeNote = async (token, noteId, path, content, base) => {
+      if (base !== fake.remote.get(noteId)?.version) throw new ApiError(409, 'a version behind', {})
+      return stale(token, noteId, path, content, base)
+    }
+
+    try {
+      expect(await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)).toBe(true)
+    } finally {
+      fake.api.writeNote = stale
+    }
+
+    expect(fake.remote.get(id)?.path).toBe('Two.md')
+    // The room's words, at the new name: nothing it wrote was rolled back to the
+    // file this machine happened to hold.
+    expect(fake.remote.get(id)?.content).toBe(THEIRS)
+    expect(mirror.notes['Two.md']?.id).toBe(id)
+  })
+
+  /** A folder is the same move said once per note under it. */
+  test('and a folder carries every note under it', async () => {
+    const { mirror } = await paired('Kept/One.md', HERE)
+    fake.addRemote('Keptish.md', '# elsewhere' + String.fromCharCode(10))
+    fake.disk.set(`${ROOT}/Keptish.md`, '# elsewhere' + String.fromCharCode(10))
+    await pull(mirror, 'token', NOBODY)
+    fake.calls.length = 0
+
+    renameOnDisk('Kept/One.md', 'Shelved/One.md')
+    await movedHere(mirror, 'token', `${ROOT}/Kept`, `${ROOT}/Shelved`)
+
+    expect(fake.calls).toEqual(['writeNote Shelved/One.md'])
+    expect(mirror.notes['Shelved/One.md']?.id).toBe('n-Kept/One.md')
+    // A name that merely starts with the folder's is not under it.
+    expect(mirror.notes['Keptish.md']?.id).toBe('n-Keptish.md')
+  })
+
+  /** And the account that could not be told: signed out, or a request that never
+   *  landed. The mirror is left exactly as it was and the pass reads the move off
+   *  the folder the way it always has - the new name a note it has never seen, the
+   *  old one a path with no file. The identity is lost, which is what makes telling
+   *  the account worth doing, but nothing else is. */
+  test('while a rename nobody could be told about is still read off the folder', async () => {
+    const { mirror } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
 
     await push(mirror, 'token', NOBODY)
 
@@ -273,12 +397,9 @@ describe('a note renamed on this machine', () => {
    *  carries the old note - the cursor is behind it until a pass moves it on - so the
    *  pull sees a note whose file is not here, which is exactly what a rename looks
    *  like from that side. */
-  test('is not brought back by the pull that runs before the push', async () => {
-    const HERE = '# One' + String.fromCharCode(10)
+  test('and is not brought back by the pull that runs before that push', async () => {
     const { mirror, id } = await paired('One.md', HERE)
-
-    fake.disk.delete(`${ROOT}/One.md`)
-    fake.disk.set(`${ROOT}/Two.md`, HERE)
+    renameOnDisk('One.md', 'Two.md')
 
     // The account a version ahead of the entry, which is what a note that was open
     // in a room looks like - the room wrote it up there, keystroke by keystroke - and

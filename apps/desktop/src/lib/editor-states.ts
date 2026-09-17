@@ -22,21 +22,30 @@ import { HeldState, letGo, type SharedDoc, type StateEffect, type StateView } fr
 /** As much of a tab as a pane's states need: the document it is a view of, and
  *  how many notes that document has held.
  *
- *  Almost always the tab alone would say which note this is. The exception is the
- *  one tab that previews a note: it moves on to another note without becoming
- *  another tab, and the note it moves to has its own caret and its own place. A
- *  rename does not count, which is why this is how many notes the document has
- *  held rather than which path it is on. */
+ *  Almost always the tab alone would say which note this is. There are two
+ *  exceptions and a tab has both. The one tab that previews a note moves on to
+ *  another note without becoming another tab, which is what the count is for; a
+ *  rename does not move it on, which is why it counts notes rather than naming a
+ *  path. And any tab can be pointed at another document - walking back along a
+ *  trail to a note another pane already has open makes the tab a second view of
+ *  that document, because one file is one document and there is nothing else for
+ *  it to be. That one the count cannot see: the new document has held as many
+ *  notes as the old. */
 export interface NoteTab {
   readonly note: { readonly live: SharedDoc; readonly arrivals: number }
 }
 
 /** What a pane is keeping for one tab: the state, and which of that tab's notes
- *  it is a state of. */
+ *  it is a state of.
+ *
+ *  Which note that is, is the document and the count together. Either of them
+ *  having moved means this caret, these folds and this place are the note the tab
+ *  came from's, and none of it belongs to the note that is there now. */
 interface Kept {
-  /** How many notes the tab's document had held when this was built. A tab that
-   *  has moved on since is showing another note, and this caret, these folds and
-   *  this place are the note it came from's. */
+  /** The document this is a state of, held as the thing rather than as a name
+   *  for it - the same argument as `shown` below. */
+  readonly note: NoteTab['note']
+  /** And how many notes that document had held when this was built. */
   readonly arrivals: number
   readonly state: HeldState
   /** What the state is already configured for: the modes, and the keyboard. See
@@ -44,19 +53,22 @@ interface Kept {
   stamp: string | undefined
 }
 
-/** How many notes a tab's document has held, read without the reader following it.
+/** Which note a tab is on - the document, and how many notes it has held - read
+ *  without the reader following it.
  *
- *  Every method here is called from an effect, and a tab is a rune: read plainly,
- *  this makes whoever called it follow the one tab that previews a note. The effect
- *  that builds the pane's editor did exactly that, through the key it named states
- *  by - so every click in the file list tore the pane's editor down and built
- *  another, with every other tab's state in that pane thrown away.
+ *  Every method here is called from an effect, and both of those are runes: read
+ *  plainly, this makes whoever called it follow a tab moving on to another note.
+ *  The effect that builds the pane's editor did exactly that, through the key it
+ *  named states by - so every click in the file list tore the pane's editor down
+ *  and built another, with every other tab's state in that pane thrown away.
  *
  *  A pane does have to hear about it, and `shows` below is where it does: the one
  *  method that follows the note, called from the one effect that wants to. Nothing
- *  else here adds a dependency behind its caller's back. */
-function arrivalsOf(tab: NoteTab): number {
-  return untrack(() => tab.note.arrivals)
+ *  else here adds a dependency behind its caller's back.
+ *
+ *  Both in one read, so the two cannot be taken a moment apart and disagree. */
+function noteOf(tab: NoteTab): { note: NoteTab['note']; arrivals: number } {
+  return untrack(() => ({ note: tab.note, arrivals: tab.note.arrivals }))
 }
 
 export class EditorStates {
@@ -83,22 +95,27 @@ export class EditorStates {
    *  the effect that shows a note has to run again when the one tab that previews
    *  a note moves on, and the effect that builds the editor must not. */
   shows(tab: NoteTab): boolean {
-    // Read first and always. An `&&` that can stop before it is an effect that
-    // registers the dependency on some runs and not others - and the run it would
-    // skip is the pane sitting on another tab, which is exactly when the preview
-    // tab is free to move on to another note.
-    const arrivals = tab.note.arrivals
+    // Read first and always, both of them. An `&&` that can stop before one is an
+    // effect that registers the dependency on some runs and not others - and the
+    // run it would skip is the pane sitting on another tab, which is exactly when
+    // a tab is free to move on to another note.
+    const note = tab.note
+    const arrivals = note.arrivals
     const kept = this.held.get(tab)
 
-    return kept !== undefined && kept === this.shown && kept.arrivals === arrivals
+    return (
+      kept !== undefined && kept === this.shown && kept.note === note && kept.arrivals === arrivals
+    )
   }
 
   /** The note the pane's view was built on; see `HeldState.shownIn`. `place` is
    *  where that note was last being read, which the first `show` settles. */
   started(tab: NoteTab, view: StateView, place: StateEffect<unknown> | null) {
+    const on = noteOf(tab)
     const kept: Kept = {
-      arrivals: arrivalsOf(tab),
-      state: HeldState.shownIn(tab.note.live, view, place),
+      note: on.note,
+      arrivals: on.arrivals,
+      state: HeldState.shownIn(on.note.live, view, place),
       stamp: undefined,
     }
 
@@ -136,15 +153,19 @@ export class EditorStates {
     build: () => HeldState,
     effects: readonly StateEffect<unknown>[] = [],
   ): boolean {
-    // A tab that has moved on to another note: whatever is kept for it is the
+    // A tab that has moved on to another note - taken one on, or been pointed at
+    // the document another pane already had open: whatever is kept for it is the
     // note it came from's, and none of it - the caret, the folds, the place -
     // belongs to the note that is there now.
+    const on = noteOf(tab)
     const had = this.held.get(tab)
-    const stale = had && had.arrivals !== arrivalsOf(tab) ? had : undefined
+    const moved = had && (had.note !== on.note || had.arrivals !== on.arrivals)
+    const stale = moved ? had : undefined
     const known = stale ? undefined : had
 
     const next =
-      known ?? ({ arrivals: arrivalsOf(tab), state: build(), stamp: undefined } satisfies Kept)
+      known ??
+      ({ note: on.note, arrivals: on.arrivals, state: build(), stamp: undefined } satisfies Kept)
     if (!known) this.held.set(tab, next)
 
     if (this.shown === next) {

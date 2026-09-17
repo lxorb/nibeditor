@@ -325,8 +325,32 @@ export class NoteDoc {
 export class Tab {
   readonly id = identifier()
 
-  /** The document this tab is a view of. */
-  readonly note: NoteDoc
+  /** The document this tab is a view of, which the tab can be pointed at another
+   *  of.
+   *
+   *  Held in a field of its own because a rune has to be given its first value
+   *  where it is declared rather than in the constructor; it is never null after
+   *  that, which is what the accessors below say.
+   *
+   *  It changes for one reason: the tab reaches a file that is already open, and
+   *  one file is one document. Walking back along a trail is where that happens -
+   *  the note two steps ago may be the note another pane is showing - and the tab
+   *  becomes a second view of that document, exactly as opening a note in a second
+   *  pane has always done. The alternative is a second document over one file,
+   *  which is two notes wearing one name; see workspace/open.ts. */
+  private on = $state<NoteDoc | null>(null)
+
+  get note(): NoteDoc {
+    // Never null: the constructor takes a document and the setter below only ever
+    // swaps in another. The field is spelled as though it could be because a rune
+    // takes its first value where it is declared, which is before the constructor
+    // has its argument.
+    return this.on!
+  }
+
+  set note(to: NoteDoc) {
+    this.on = to
+  }
 
   /** Which pane the tab sits in. The pane holds no list of its own: the strip
    *  is the tabs that say they are in it, in the order they were opened. */
@@ -415,7 +439,7 @@ export class Tab {
   zoom = $state<number | undefined>(undefined)
 
   constructor(note: NoteDoc, paneId: string) {
-    this.note = note
+    this.on = note
     this.paneId = paneId
   }
 

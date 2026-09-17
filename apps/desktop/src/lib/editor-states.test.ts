@@ -303,6 +303,30 @@ describe('which note a state is a state of', () => {
     expect(preview.note.live.panes).toBe(1)
   })
 
+  /** The other way a tab changes note, and the one a count of arrivals cannot see.
+   *
+   *  Walking back along a tab's trail to a note another pane already has open makes
+   *  the tab a second view of that open document - one file is one document, so
+   *  there is nothing else for it to be. The tab is the same tab and the new
+   *  document has held exactly as many notes as the old one, so a state kept under
+   *  the pair of them looked current, and the view stayed on the note it came from
+   *  while the tab named another. See `walk` in workspace.svelte.ts. */
+  test('a tab pointed at another document is another note', () => {
+    const states = new EditorStates()
+    const view = new Surface()
+    const tab = new Tab('First')
+    const already = new SharedDoc('Second')
+
+    states.show(view, tab, () => tab.state())
+    tab.note = { live: already, arrivals: 0 }
+
+    expect(states.shows(tab)).toBe(false)
+    expect(states.show(view, tab, () => tab.state())).toBe(true)
+
+    shows(view, tab)
+    expect(states.count).toBe(1)
+  })
+
   test('two tabs on one note are two states of it', () => {
     const states = new EditorStates()
     const view = new Surface()
