@@ -1,9 +1,10 @@
-"""Callouts, seen: the thirteen types and their other names, the icons they
-wear, a title of the writer's own, a type nothing knows dressed by a theme's own
-rule, and the same note as it reads.
+"""Callouts, seen: the thirteen looks and every other word for them, the icons
+they wear, a title of the writer's own, a type nothing knows dressed by a theme's
+own rule, and the same note as it reads.
 
 Serves the built web app and drives it in the machine's own Chrome. The build has
-to be a development one or `window.nib` and `window.nibApp` are not there.
+to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
+are not there.
 
 Run it from the repository root:
 
@@ -38,25 +39,49 @@ SHOTS = HERE / "shots" / "callouts"
 PORT = 18952
 ORIGIN = f"http://127.0.0.1:{PORT}"
 
-KINDS = [
-    "note",
-    "abstract",
-    "info",
-    "todo",
-    "tip",
-    "important",
-    "success",
-    "question",
-    "warning",
-    "caution",
-    "failure",
-    "danger",
-    "bug",
-    "example",
-    "quote",
-]
+# Every word the first note writes, and the look it comes out wearing. Thirteen
+# looks, and `important` and `caution` are not two more of them: nib drew those as
+# GitHub alert kinds of its own until 5d93b5a4, where they folded into `tip` and
+# `warning` the way Obsidian has them - a note that reads one way here and another
+# way over there is a note this app got wrong. The word itself survives in
+# `data-callout`, which is what still lets a theme colour one of them apart; see
+# packages/markdown/src/callouts.ts.
+LOOKS = {
+    "note": "note",
+    "abstract": "abstract",
+    "info": "info",
+    "todo": "todo",
+    "tip": "tip",
+    "important": "tip",
+    "success": "success",
+    "question": "question",
+    "warning": "warning",
+    "caution": "warning",
+    "failure": "failure",
+    "danger": "danger",
+    "bug": "bug",
+    "example": "example",
+    "quote": "quote",
+}
 
-ALIASES = ["summary", "tldr", "hint", "check", "done", "help", "faq", "attention", "fail", "error"]
+KINDS = list(LOOKS)
+
+# The other words for the same looks, which is Obsidian's list of aliases minus the
+# two above: a callout written in either app is the same callout in both.
+ALIASES = {
+    "summary": "abstract",
+    "tldr": "abstract",
+    "hint": "tip",
+    "check": "success",
+    "done": "success",
+    "help": "question",
+    "faq": "question",
+    "attention": "warning",
+    "fail": "failure",
+    "missing": "failure",
+    "error": "danger",
+    "cite": "quote",
+}
 
 NOTE = "# Callouts\n\n" + "".join(f"> [!{kind}]\n> The {kind} one.\n\n" for kind in KINDS)
 
@@ -107,7 +132,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,
@@ -277,8 +302,8 @@ def drive(browser: Browser, scheme: str) -> None:
         if not one:
             wrong(f"{kind} is not marked as a callout in the editor")
             continue
-        if one["look"] != f"nib-callout-{kind}":
-            wrong(f"{kind} wears {one['look']}")
+        if one["look"] != f"nib-callout-{LOOKS[kind]}":
+            wrong(f"{kind} wears {one['look']} rather than nib-callout-{LOOKS[kind]}")
         if not one["icon"]:
             wrong(f"{kind} has no icon")
 
@@ -329,21 +354,9 @@ def drive(browser: Browser, scheme: str) -> None:
     others = swept(page)
     say(f"[{scheme}] other names: {json.dumps({k: v['look'] for k, v in others.items()})}")
     shot(page, f"04-aliases-{scheme}")
-    expected = {
-        "summary": "nib-callout-abstract",
-        "tldr": "nib-callout-abstract",
-        "hint": "nib-callout-tip",
-        "check": "nib-callout-success",
-        "done": "nib-callout-success",
-        "help": "nib-callout-question",
-        "faq": "nib-callout-question",
-        "attention": "nib-callout-warning",
-        "fail": "nib-callout-failure",
-        "error": "nib-callout-danger",
-    }
-    for name, look in expected.items():
-        if others.get(name, {}).get("look") != look:
-            wrong(f"{name} does not wear {look}: {others.get(name)}")
+    for name, look in ALIASES.items():
+        if others.get(name, {}).get("look") != f"nib-callout-{look}":
+            wrong(f"{name} does not wear nib-callout-{look}: {others.get(name)}")
 
     # And the same notes as they read.
     open_note(page, "Callouts")
@@ -355,8 +368,8 @@ def drive(browser: Browser, scheme: str) -> None:
     if len(read) != len(KINDS):
         wrong(f"the reading view drew {len(read)} callouts, not {len(KINDS)}")
     for one in read:
-        if one["look"] != f"callout-{one['type']}":
-            wrong(f"{one['type']} reads as {one['look']}")
+        if one["look"] != f"callout-{LOOKS[one['type']]}":
+            wrong(f"{one['type']} reads as {one['look']} rather than callout-{LOOKS[one['type']]}")
         if not one["icon"]:
             wrong(f"{one['type']} has no icon in the reading view")
         if one["title"] != one["type"].capitalize():

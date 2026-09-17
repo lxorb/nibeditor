@@ -3,7 +3,8 @@ strip wearing its mark and refusing to close, and the trail a tab leaves as it
 moves from note to note, walked with the two arrows.
 
 Serves the built web app and drives it in the machine's own Chrome. The build has
-to be a development one or `window.nib` and `window.nibApp` are not there.
+to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
+are not there.
 
 Run it from the repository root:
 
@@ -61,7 +62,10 @@ STRIP = """
   tabs: [...document.querySelectorAll('.tab')].map((tab) => ({
     name: tab.querySelector('.label')?.textContent ?? null,
     pinned: tab.classList.contains('pinned'),
-    mark: !!tab.querySelector('.pin'),
+    // Every tab wears one of these since a4be39f4 - the mark of the kind of thing
+    // it holds - and a pinned tab is that mark with the name taken away. Which mark
+    // it is, and that there is exactly one, is tab-icons.py's question.
+    mark: !!tab.querySelector('.mark'),
     shut: !!tab.querySelector('.shut'),
     width: Math.round(tab.getBoundingClientRect().width),
   })),
@@ -93,7 +97,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,

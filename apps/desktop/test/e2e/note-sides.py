@@ -102,7 +102,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,
@@ -215,9 +215,11 @@ def properties(page: Page) -> None:
     if page.evaluate("() => document.querySelectorAll('.nib-property-add').length") != 1:
         wrong("there is no way to add a property")
 
-    # A click on a row puts the caret on the line it was drawn from, which is
-    # what shows the source.
-    page.click('.property[data-key="title"]')
+    # A click on a row's key puts the caret on the line it was drawn from, which is
+    # what shows the source. The key and never the middle of the row: 51846d87 put a
+    # control in every value cell, and a press inside one belongs to the control, so
+    # the way back to the source is the half of the row that is not editable.
+    page.click('.property[data-key="title"] .property-key')
     page.wait_for_timeout(500)
     caret = page.evaluate("() => window.nib.state.selection.main.head")
     source = page.evaluate("() => document.querySelectorAll('.property').length === 0")
