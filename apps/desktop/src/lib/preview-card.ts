@@ -18,9 +18,12 @@
  *  that exists is the size of the card it is in. */
 
 import { createEditor, EditorView, modeEffects, type PreviewNote } from '@nib/editor'
+import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { pickedLink } from './composer'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
+import { notePicture } from './note-images'
+import { PROPERTY_CHOICES } from './property-choices'
 import { trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { insideSpace } from './space-paths'
@@ -63,8 +66,9 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     parent: host,
     doc: note.text,
     // Where the link pointed, so a card over `[[Note#Heading]]` opens on that
-    // heading rather than at the top of the note.
-    selection: { anchor: Math.min(Math.max(0, note.at), note.text.length) },
+    // heading rather than at the top of the note - and never inside the front
+    // matter; see `caretFor`.
+    selection: { anchor: caretFor(note) },
     onChange: (doc) => {
       said = doc.toString()
       clearTimeout(settling)
@@ -78,6 +82,18 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     shortcuts: shortcuts.forEditor,
     trustedMarkup: trustsHtmlAt(path),
     openLink: (href: string) => void openExternal(href),
+    // Where the pictures in the card's note actually are. Resolved from that note
+    // and from its own words - `![[shot.png]]` is looked for anywhere in the space
+    // and a path is read beside the note that wrote it, and a note may say where its
+    // own root is in its front matter. Without it the editor falls back to the
+    // resolver it has standing on its own, which hands the name back unchanged: the
+    // card asked the page for `/shot.png` and got a 404, and every picture in every
+    // glance was a broken one. The pane a card is opened from resolves its pictures
+    // the same way and against its own note; see Pane.svelte and note-images.ts.
+    resolveImage: (src: string) => notePicture(src, path, said),
+    // The keys the app has fixed answers for, so the note's own metadata reads in
+    // the card as it reads in the pane rather than as a row of free text.
+    propertyChoices: PROPERTY_CHOICES,
     // And deliberately no `editPreview` of its own: a link inside the card still
     // shows the note behind it, as the reading it always was. One card deep is a
     // glance at what a link points at; a card inside a card inside a card is a
@@ -94,6 +110,29 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     void write()
     view.destroy()
   }
+}
+
+/** Where the caret stands when the card opens: where the link pointed, but never
+ *  inside the note's own front matter.
+ *
+ *  The card is an editor, and an editor shows the block the caret is in as the
+ *  markdown it is - that is what live preview means, and in a pane it is exactly
+ *  right, because the caret is there because somebody put it there. In a card
+ *  nobody put it anywhere: a link that names the whole note opens at character
+ *  nought, which is inside the front matter, so a glance at any note with metadata
+ *  opened on three lines of raw YAML and the rows it draws for everybody else were
+ *  nowhere to be seen. Everything below the front matter drew perfectly, which is
+ *  what made it look like a renderer that had lost half its extensions rather than a
+ *  caret standing in the wrong place.
+ *
+ *  Only the caret moves. Where the card is scrolled to is still where the link
+ *  pointed, so a card over `[[Note]]` opens at the top of the note with its
+ *  metadata as rows, which is what the note itself shows. */
+export function caretFor(note: PreviewNote): number {
+  const at = Math.min(Math.max(0, note.at), note.text.length)
+  const matter = frontMatterBlock(note.text)
+
+  return matter && at < matter.to ? Math.min(matter.to, note.text.length) : at
 }
 
 /** The part the link named, at the top of the card. A card is a dozen lines, so

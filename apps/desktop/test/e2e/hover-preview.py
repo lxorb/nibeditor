@@ -1,16 +1,28 @@
 """The note behind a link, glanced at: modifier and hover over a `[[wikilink]]`
-and the card that opens is the reading view of that note - coloured fences with
-their captions, callouts with their icons, tables, maths, task boxes, the note's
-own metadata as rows, footnotes, the heading a link names.
+and the card that opens is that note - coloured fences with their captions,
+callouts with their icons and their fold, tables, maths, task boxes, the note's own
+metadata as rows, footnotes, the picture it embeds, the heading a link names.
 
 Emil: "Some things don't render properly in the hover preview, e.g. code blocks."
-Two things were wrong and both are checked here. The editor rendered a shown note
-itself, with a renderer that has no fence highlighter and no resolvers - so the
-card is compared block for block against the reading view of the same note. And
-CodeMirror hangs a tooltip off the editor rather than inside its content, so the
-card sat outside `#write`, the one scope every prose rule is written against - so
-the colours and the frames in the card are compared against the reading view's
-own, computed.
+The card was a second, thinner rendering of the note then. It is not any more: the
+card is a small editor on the linked note's own words, drawn by the same live
+preview the pane behind it is drawn by and editable for the same reason Obsidian's
+is - see hover.ts and preview-card.ts. So the card is compared block for block
+against a **pane** showing the same note, not against the reading view: one surface
+said twice is the thing worth holding to, and which of the app's two faces it is
+comes from what the card is for.
+
+Two faults this file is here to keep from coming back, both of them a card being
+almost the pane and not quite. The editor was built with no image resolver, so a
+picture the note embedded asked the page for `/shot.png` - the space serves it at
+`/asset/<space>/...` - and every picture in every glance was a broken one. And the
+card put the caret at character nought, which in a note with metadata is inside the
+front matter: an editor shows the block the caret is in as the markdown it is, so a
+glance opened on three lines of raw YAML while every block below it drew perfectly.
+It read as a renderer that had lost its extensions and was a caret in the wrong
+place. CodeMirror also hangs a tooltip off the editor rather than inside its
+content, so the card carries `#write` itself - the one scope every prose rule is
+written against - and that is checked here too.
 
 Serves the built web app and drives it in the machine's own Chrome. The build has
 to be a development one or `window.nib` and `window.nibApp` are not there.
@@ -58,6 +70,8 @@ tags:
 
 # Everything
 
+![[shot.png]]
+
 ```ts pipeline.ts
 const ink = 'on glass'
 export function write(words: string) {
@@ -78,8 +92,6 @@ $$
 
 - [ ] one
 - [x] two
-
-![[shot.png]]
 
 Text[^1].
 
@@ -105,56 +117,98 @@ async ([target, source]) => {
 }
 """
 
-# What the card holds, and what the browser computed for the things in it. Read
-# off the card rather than off the note, because the whole question is whether the
-# rules reached this element tree at all.
+# Everything a surface drawing a note draws, by the names the live preview gives
+# them, and what the browser computed for each. Written once and asked of two
+# element trees - the card, and a pane showing the same note - because the whole
+# question is whether the card is that surface or a thinner copy of it.
+BLOCKS = """
+(root) => {
+  if (!root) return null
+
+  const fence = root.querySelector('.nib-code')
+  const header = root.querySelector('.nib-fence-header')
+  const callout = root.querySelector('.nib-callout')
+  const table = root.querySelector('table')
+  const said = (node) => (node ? getComputedStyle(node) : null)
+  const fenceStyle = said(fence)
+  const calloutStyle = said(callout)
+
+  // A word in the code that the highlighter gave a colour of its own. Found by
+  // colour rather than by class, because which class a token wears is the
+  // highlighter's business and changes with the theme.
+  const ink = said(root).color
+  const token = [...root.querySelectorAll('.nib-code span')].find(
+    (one) => one.textContent.trim() && getComputedStyle(one).color !== ink,
+  )
+
+  return {
+    fence: !!fence,
+    caption: root.querySelector('.nib-fence-caption')?.textContent?.trim() ?? null,
+    language: root.querySelector('.nib-fence-language')?.textContent?.trim() ?? null,
+    header: !!header,
+    keyword: token?.textContent?.trim() ?? null,
+    keywordColour: token ? getComputedStyle(token).color : null,
+    fenceBackground: fenceStyle?.backgroundColor ?? null,
+    fenceRadius: fenceStyle?.borderTopLeftRadius ?? null,
+    callout: callout ? [...callout.classList].find((one) => one.startsWith('nib-callout-')) : null,
+    calloutFolds: !!root.querySelector('.nib-folded, .nib-callout .nib-fold'),
+    calloutIcon: !!root.querySelector('.callout-icon'),
+    calloutBar: calloutStyle?.borderLeftWidth ?? null,
+    table: !!table,
+    tableBorders: said(table)?.borderCollapse ?? null,
+    maths: !!root.querySelector('.katex'),
+    tasks: root.querySelectorAll('.nib-checkbox, input[type=checkbox]').length,
+    ticked: root.querySelectorAll('.nib-task-done').length,
+    // The first picture that names a file. A surface draws more than one `img` -
+    // a widget puts an empty one up while it works out where the file is - so the
+    // first element is not the answer; the first address is.
+    picture:
+      [...root.querySelectorAll('img')].map((one) => one.getAttribute('src')).find(Boolean) ??
+      null,
+    properties: !!root.querySelector('.nib-properties'),
+    propertyKeys: [...root.querySelectorAll('.property-key')].map((one) => one.textContent),
+    footnotes: root.querySelectorAll('.nib-footnote').length,
+    // Front matter must not reach the words of the note: it is rows, not YAML.
+    raw: root.textContent.includes('tags:'),
+  }
+}
+"""
+
+# What the card holds, and the card itself: where it is and how it arrives. The
+# reading above is written once and spliced into both of the two below, so the card
+# and a pane are asked exactly the same question; see `asking`.
 INSIDE = """
 () => {
   const card = document.querySelector('.nib-note-preview')
   if (!card) return null
 
   const body = card.querySelector('.nib-note-preview-body')
-  const fence = body.querySelector('figure.code')
-  const keyword = body.querySelector('.hl-keyword')
-  const pre = body.querySelector('pre')
-  const callout = body.querySelector('[data-callout]')
-  const table = body.querySelector('table')
+  const inner = body.querySelector('.cm-content')
   const box = card.getBoundingClientRect()
 
-  const said = (node) => (node ? getComputedStyle(node) : null)
-  const preStyle = said(pre)
-  const calloutStyle = said(callout)
-
   return {
-    // The scope: the body is a writing surface, like the reading view's page.
+    // The scope: the body is a writing surface, like every other place a note is
+    // read or written in this app.
     scope: body.id,
-    words: body.textContent.slice(0, 40),
+    words: (inner ?? body).textContent.slice(0, 40),
+    // The lines inside the card's own box, which is what a reader sees of it. The
+    // card holds the whole note - what is typed in it goes back to the file - so
+    // where it is scrolled to is what says which part of the note the link named.
+    showing: [...body.querySelectorAll('.cm-line')]
+      .filter((one) => {
+        const line = one.getBoundingClientRect()
+        const frame = body.getBoundingClientRect()
+        return line.bottom > frame.top + 2 && line.top < frame.bottom - 2
+      })
+      .map((one) => one.textContent)
+      .join(' ')
+      .slice(0, 160),
     name: card.querySelector('.nib-note-preview-name')?.textContent ?? null,
-    fence: !!fence,
-    caption: fence?.querySelector('figcaption')?.textContent ?? null,
-    language: fence?.querySelector('code')?.className ?? null,
-    keyword: keyword?.textContent ?? null,
-    keywordColour: keyword ? getComputedStyle(keyword).color : null,
-    preBackground: preStyle?.backgroundColor ?? null,
-    preRadius: preStyle?.borderTopLeftRadius ?? null,
-    callout: callout?.dataset.callout ?? null,
-    calloutFolds: callout?.tagName ?? null,
-    calloutIcon: !!body.querySelector('.callout-icon'),
-    calloutBar: calloutStyle?.borderLeftWidth ?? null,
-    table: !!table,
-    tableBorders: said(table)?.borderCollapse ?? null,
-    maths: !!body.querySelector('.katex'),
-    tasks: body.querySelectorAll('input[type=checkbox]').length,
-    ticked: body.querySelectorAll('.task-list-item.is-done').length,
-    inert: [...body.querySelectorAll('input[type=checkbox]')].every((one) => one.disabled),
-    picture: body.querySelector('img')?.getAttribute('src') ?? null,
-    properties: !!body.querySelector('.properties'),
-    propertyKeys: [...body.querySelectorAll('.property-key')].map((one) => one.textContent),
-    footnotes: !!body.querySelector('.footnotes'),
-    anchored: [...body.querySelectorAll('h1, h2')].map((one) => one.id),
-    // Front matter must not reach the words of the note.
-    raw: body.textContent.includes('tags:'),
-    // And the card itself: where it is, and how it arrives.
+    // The card is the note, so there is an editor in it and it can be typed in.
+    written: body.dataset.written ?? 'no',
+    editor: !!inner,
+    editable: inner?.getAttribute('contenteditable') ?? null,
+    ...BLOCKS(body),
     animation: getComputedStyle(card).animationName,
     duration: getComputedStyle(card).animationDuration,
     rect: {
@@ -168,26 +222,24 @@ INSIDE = """
 }
 """
 
-# The same things, in the reading view of the same note. One scope or two.
-READ = """
+# The same note in a pane of its own, which is the surface the card claims to be.
+PANE_BLOCKS = """
 () => {
-  const page = document.querySelector('#write')
-  const keyword = page.querySelector('.hl-keyword')
-  const pre = page.querySelector('pre')
-  const callout = page.querySelector('[data-callout]')
-  const preStyle = pre ? getComputedStyle(pre) : null
-
-  return {
-    keywordColour: keyword ? getComputedStyle(keyword).color : null,
-    preBackground: preStyle?.backgroundColor ?? null,
-    preRadius: preStyle?.borderTopLeftRadius ?? null,
-    calloutBar: callout ? getComputedStyle(callout).borderLeftWidth : null,
-    tableBorders: page.querySelector('table')
-      ? getComputedStyle(page.querySelector('table')).borderCollapse
-      : null,
-  }
+  const pane = document.querySelector('.cm-content')
+  return pane ? BLOCKS(pane) : null
 }
 """
+
+
+def asking(reading: str) -> str:
+    """The reading above, spliced into a page function that calls it.
+
+    One definition of what a surface draws, asked of two element trees. Spliced
+    rather than passed in, because a function cannot cross into the page: what
+    crosses is the text of one, and building it back up in there is `new Function`,
+    which is a thing a test should not teach a page to do."""
+    return reading.replace("BLOCKS(", f"({BLOCKS.strip()})(")
+
 
 # What the pane is doing, for when the links in a note are not drawn.
 PANE = """
@@ -408,7 +460,10 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
         page.wait_for_timeout(120)
         link.hover()
         page.wait_for_timeout(120)
-        link.hover(position={"x": 3, "y": 3})
+        # The second touch is what makes it a rest rather than a crossing, which is
+        # what a reader's hand does anyway. Forced, because by now the card may
+        # already be up and a card stands over the link it was opened from.
+        link.hover(position={"x": 3, "y": 3}, force=True)
 
         try:
             # The frame goes up at once and the note arrives into it; the render
@@ -423,7 +478,7 @@ def glance(page: Page, label: str, which: int = 0) -> dict | None:
                 return None
 
     page.wait_for_timeout(400)
-    inside = page.evaluate(INSIDE)
+    inside = page.evaluate(asking(INSIDE))
     page.keyboard.up("Control")
     return inside
 
@@ -444,19 +499,26 @@ def drive_desktop(browser: Browser) -> None:
     if card["name"] != "Everything":
         wrong(f"the card does not name the note: {card['name']!r}")
 
+    # The card is the note, not a picture of it: a word of it can be fixed from
+    # here. See hover.ts and preview-card.ts.
+    if not card["editor"] or card["written"] != "yes":
+        wrong(f"the card is a reading of the note rather than the note: {card}")
+    if card["editable"] != "true":
+        wrong(f"the note in the card cannot be written in: {card['editable']!r}")
+
     # The blocks Emil could not see.
     if not card["fence"]:
         wrong("a fenced code block came out unframed")
     if card["caption"] != "pipeline.ts":
         wrong(f"the block does not say what it is: {card['caption']!r}")
-    if card["language"] != "language-ts":
+    if card["language"] != "ts":
         wrong(f"the block is not marked as its language: {card['language']!r}")
     if card["keyword"] is None:
         wrong("nothing in the code block is coloured: the fence was never highlighted")
-    if card["callout"] != "tip":
+    if card["callout"] != "nib-callout-tip":
         wrong(f"the callout is a plain quote: {card['callout']!r}")
-    if card["calloutFolds"] != "DETAILS":
-        wrong(f"a callout that folds is not foldable here: {card['calloutFolds']!r}")
+    if not card["calloutFolds"]:
+        wrong("a callout that folds is not foldable here")
     if not card["calloutIcon"]:
         wrong("the callout has no icon")
     if not card["table"]:
@@ -467,18 +529,18 @@ def drive_desktop(browser: Browser) -> None:
         wrong(f"the task boxes are {card['tasks']}, not two")
     if card["ticked"] != 1:
         wrong(f"the ticked task is not marked done: {card['ticked']} of them")
-    if not card["inert"]:
-        wrong("a task box in a glance can be pressed")
+    # The one thing a glance must not do to a picture: ask the page for it. The
+    # space serves what a note embeds at an address of its own.
     if card["picture"] is None:
         wrong("the embedded picture drew no element at all")
+    elif "/asset/" not in card["picture"]:
+        wrong(f"the picture is not at the space's own address: {card['picture']!r}")
     if not card["properties"]:
         wrong("the note's own metadata is not shown as rows")
     if card["raw"]:
         wrong("the front matter is in the words of the note")
     if not card["footnotes"]:
-        wrong("the footnotes were not gathered")
-    if not all(card["anchored"]):
-        wrong(f"a heading in the card has no anchor: {card['anchored']}")
+        wrong("the footnotes were not drawn")
 
     # It arrives rather than appearing, and it stays on the screen.
     if card["animation"] != "settle-in":
@@ -491,7 +553,9 @@ def drive_desktop(browser: Browser) -> None:
     if rect["top"] < 0 or rect["bottom"] > window["height"] + 1:
         wrong(f"the card runs off the bottom: {rect} in {window}")
 
-    # And the same note read as a page, for the styles to be compared against.
+    # And the same note in a pane of its own, which is the surface the card says it
+    # is. Everything the two draw is drawn by one live preview, so a difference here
+    # is a card that was built with something the pane has and it has not.
     page.evaluate(
         """async () => {
           const ws = window.nibApp.workspace
@@ -499,17 +563,39 @@ def drive_desktop(browser: Browser) -> None:
           await ws.openEntry(note.path, { activate: true })
         }"""
     )
-    page.wait_for_timeout(600)
-    page.evaluate("() => window.nibApp.workspace.toggleReading()")
-    wait_for(page, "document.querySelector('#write .hl-keyword')", "the reading view")
-    page.wait_for_timeout(500)
-    read = page.evaluate(READ)
-    say(f"[desktop] the reading view: {json.dumps(read, ensure_ascii=False)}")
-    shot(page, "02-reading")
+    wait_for(page, "window.nib.state.doc.toString().includes('pipeline.ts')", "the note in a pane")
+    page.wait_for_timeout(900)
+    pane = page.evaluate(asking(PANE_BLOCKS))
+    say(f"[desktop] the same note in a pane: {json.dumps(pane, ensure_ascii=False)}")
+    shot(page, "02-pane")
 
-    for what in ("keywordColour", "preBackground", "preRadius", "calloutBar", "tableBorders"):
-        if card[what] != read[what]:
-            wrong(f"{what} differs: the card says {card[what]!r}, the page {read[what]!r}")
+    for what in (
+        "fence",
+        "caption",
+        "language",
+        "keywordColour",
+        "fenceBackground",
+        "fenceRadius",
+        "callout",
+        "calloutIcon",
+        "calloutBar",
+        "table",
+        "tableBorders",
+        "maths",
+        "tasks",
+        "ticked",
+        "properties",
+        "footnotes",
+        "raw",
+    ):
+        if card[what] != pane[what]:
+            wrong(f"{what} differs: the card says {card[what]!r}, a pane {pane[what]!r}")
+
+    # The picture is the one thing the two cannot say the same way - a pane resolves
+    # it against the note it has open, and that is the same note here - so it is
+    # compared rather than skipped.
+    if card["picture"] != pane["picture"]:
+        wrong(f"the picture differs: the card {card['picture']!r}, a pane {pane['picture']!r}")
 
     page.context.close()
 
@@ -523,16 +609,16 @@ def drive_section(browser: Browser) -> None:
         page.context.close()
         return
 
-    say(f"[section] the card says {card['words']!r}")
+    say(f"[section] the card is showing {card['showing']!r}")
     shot(page, "10-section")
 
-    if "Only this much" not in card["words"]:
-        wrong(f"the card did not open on the heading the link names: {card['words']!r}")
-    if "const ink" in card["words"]:
-        wrong("the card showed the whole note rather than the section")
-    # The section starts below the front matter, so there are no rows to draw.
-    if card["properties"]:
-        wrong("a section of a note carries the whole note's metadata")
+    # The whole note is in the card - what is typed there goes back to the file, and
+    # a section spliced in at an offset nobody can check is a note rewritten wrong -
+    # opened at the part the link named. See `PreviewNote` in hover.ts.
+    if "Only this much" not in card["showing"]:
+        wrong(f"the card did not open on the heading the link names: {card['showing']!r}")
+    if card["raw"]:
+        wrong("the front matter is in the words of the note")
 
     page.context.close()
 
@@ -553,6 +639,8 @@ def drive_still(browser: Browser) -> None:
         wrong(f"the card still moves where no motion was asked for: {card['duration']}")
     if not card["fence"]:
         wrong("the card lost its blocks along with its motion")
+    if card["raw"]:
+        wrong("the front matter is in the words of the note")
 
     page.context.close()
 
