@@ -35,7 +35,11 @@ export default defineConfig({
   plugins: [svelte()],
   // The build stamps the first in and sets the second; a test is the app rather
   // than the plugin, and the one test that wants the plugin says so for itself.
-  define: { __EVEN_BUILD__: JSON.stringify('under test'), __EVEN_PLUGIN__: 'false' },
+  define: {
+    __EVEN_BUILD__: JSON.stringify('under test'),
+    __EVEN_PLUGIN__: 'false',
+    __DRIVEABLE__: 'true',
+  },
   test: {
     projects: [
       {

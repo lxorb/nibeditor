@@ -11,9 +11,19 @@ import { describe, expect, test } from 'vitest'
  *  somewhere else entirely - `window.nibApp.present is undefined`, in a run that was
  *  about slides.
  *
- *  A development build only, which is what the drives are served. See App.svelte. */
+ *  Not a release, because this object is the whole workspace and the page it sits on
+ *  renders other people's HTML. It used to be `import.meta.env.DEV`, which meant the
+ *  only build anything could drive was the one nobody ships - and three reported bugs
+ *  turned out to be unreproducible in every build a drive could reach. So the guard is
+ *  `__DRIVEABLE__`: on while a dev server serves and in `--mode drive`, off in a
+ *  release, where the bundler removes the branch and the handle is not there at all.
+ *  See App.svelte, env.d.ts and vite.config.ts. */
 
 const APP = readFileSync(fileURLToPath(new URL('../src/App.svelte', import.meta.url)), 'utf8')
+
+/** Where the constant is decided. Read here so the two halves of the rule - what the
+ *  guard is, and when it is true - are held by one test rather than by a comment. */
+const CONFIG = readFileSync(fileURLToPath(new URL('../vite.config.ts', import.meta.url)), 'utf8')
 
 /** The object literal assigned as `nibApp`, brace matched. */
 function handle(): string {
@@ -36,9 +46,19 @@ function handle(): string {
 describe('the handle a drive reads the app through', () => {
   const listed = handle()
 
-  test('it is only in a development build', () => {
-    expect(APP).toContain('if (import.meta.env.DEV)')
-    expect(APP.indexOf('if (import.meta.env.DEV)')).toBeLessThan(APP.indexOf('nibApp: {'))
+  test('it is behind the constant that says a build may be driven', () => {
+    expect(APP).toContain('if (__DRIVEABLE__)')
+    expect(APP.indexOf('if (__DRIVEABLE__)')).toBeLessThan(APP.indexOf('nibApp: {'))
+    // And never guarded on DEV again: that is what shut every drive out of the
+    // build that ships. The guard form, not the bare name, because the comment
+    // above the guard in App.svelte says what it used to be.
+    expect(APP).not.toContain('if (import.meta.env.DEV)')
+  })
+
+  test('and that constant is false in a release', () => {
+    expect(CONFIG).toContain(
+      "__DRIVEABLE__: JSON.stringify(command === 'serve' || mode === 'drive')",
+    )
   })
 
   /** Named one by one rather than counted, so adding a store is a line here and

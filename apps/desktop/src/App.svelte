@@ -388,7 +388,12 @@
   })
 
   // `window.nib` is the editor view; this is the surrounding app state.
-  if (import.meta.env.DEV) {
+  //
+  // Not `import.meta.env.DEV`, which is what this used to be. Every drive in
+  // test/e2e steers the app through this object, and DEV is false in a bundle, so
+  // the only build anything could drive was the one nobody ships. See
+  // `__DRIVEABLE__` in env.d.ts.
+  if (__DRIVEABLE__) {
     Object.assign(window, {
       nibApp: {
         account,

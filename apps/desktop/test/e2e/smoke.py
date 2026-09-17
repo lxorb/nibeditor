@@ -25,17 +25,18 @@ Run it from the repository root:
 
     python apps/desktop/test/e2e/smoke.py
 
-Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run, or NIB_ORIGIN
-to drive a server somebody else is already running - the dev server on 1420, which
-is what a desktop build in development loads from.
+Set NIB_MODE=development to build the way the other drives do, NIB_SKIP_BUILD=1 to
+reuse apps/desktop/dist from a previous run, or NIB_ORIGIN to drive a server
+somebody else is already running - the dev server on 1420, which is what a desktop
+build in development loads from.
 
-One thing this does NOT cover, said here because the gap is easy to miss. The build
-it makes is a development build, because `window.nibApp` and `window.nib` - the
-handles every drive in this folder steers the app by - are behind
-`import.meta.env.DEV`, which a production build folds to false and removes. So the
-bundle that actually ships is driven by nothing at all, here or anywhere else in the
-repository. Closing that means a define the release build can turn on, and a harness
-these ninety drives can share; it is worth doing and it is more than a smoke test.
+By default it builds `--mode drive`, which is a release build with one constant
+flipped: `__DRIVEABLE__` keeps `window.nibApp` and `window.nib`, the handles every
+drive steers the app by. Those used to be behind `import.meta.env.DEV`, so the only
+build anything could drive was the one nobody ships - which is how three reported
+bugs came to be unreproducible in every build a drive could reach. This gate covers
+the shape that ships. The other eighty-nine drives still build in development mode
+and still cannot; a harness they could share is the rest of that job.
 """
 
 from __future__ import annotations
@@ -120,12 +121,20 @@ def build() -> None:
         say("reusing the build that is there")
         return
 
-    say("building the web app")
+    # `drive` is a release build in every respect but one: minified, tree-shaken,
+    # the real chunks, and `__DRIVEABLE__` on so the handles a drive steers by are
+    # still there. `development` is what the other drives in this folder use.
+    #
+    # The default is the release-shaped one, and that is why this function exists
+    # in this form. A floor that only covers the development build is a floor under
+    # the wrong room.
+    mode = os.environ.get("NIB_MODE") or "drive"
+    say(f"building the web app in {mode}")
     shutil.rmtree(DIST, ignore_errors=True)
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", mode],
         cwd=APP,
-        env={**os.environ, "NODE_ENV": "development"},
+        env={**os.environ, **({"NODE_ENV": "development"} if mode == "development" else {})},
         capture_output=True,
         text=True,
         encoding="utf-8",

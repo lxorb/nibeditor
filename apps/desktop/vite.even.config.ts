@@ -218,6 +218,8 @@ export default defineConfig({
     // it, and the flag every branch below reads.
     __EVEN_BUILD__: JSON.stringify(`${manifest.version} even`),
     __EVEN_PLUGIN__: 'true',
+    // A packed plugin is a release; nothing drives it.
+    __DRIVEABLE__: 'false',
   },
   clearScreen: false,
   envPrefix: ['VITE_', 'TAURI_ENV_*'],

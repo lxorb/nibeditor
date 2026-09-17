@@ -93,16 +93,14 @@ jobs:
           python3 -m pip install --quiet --break-system-packages playwright
           python3 -m playwright install --with-deps chromium
 
-      # The drive builds its own, in development mode, and that is not a detail to
-      # tidy away: `window.nibApp` and `window.nib` - the two handles every drive
-      # in the folder steers the app by - are behind `import.meta.env.DEV`, which a
-      # production build folds to false and eliminates. The first version of this
-      # job built the app the way a release does and handed the drive that, and the
-      # drive sat waiting thirty seconds for an app it had no way to reach.
-      #
-      # So this gate covers the development build, like every other drive, and the
-      # build that actually ships is still driven by nothing. That is a real hole
-      # and it is not this job's to close; see the note in smoke.py.
+      # The drive builds its own, `--mode drive`: a release build in every respect
+      # but one, with `__DRIVEABLE__` keeping the two handles it steers by. That
+      # matters more than it sounds. Those handles used to be behind
+      # `import.meta.env.DEV`, so the only build anything could drive was the one
+      # nobody ships, and three reported bugs turned out to be unreproducible in
+      # every build a drive could reach. This is the first gate in the repository
+      # that exercises the shape that ships. The other eighty-nine drives still
+      # build in development mode; a harness they could share is the rest of it.
       # Every drive in the folder, parsed. Nothing else in the repository reads
       # these ninety files - eslint does not, prettier cannot - so a syntax error
       # in one of them is invisible until somebody runs it, which for most of them

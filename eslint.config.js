@@ -47,7 +47,18 @@ export default tseslint.config(
   ...svelte.configs.recommended,
   {
     languageOptions: {
-      globals: { ...globals.browser, ...globals.node },
+      // The three constants the bundler substitutes, declared in
+      // apps/desktop/src/env.d.ts. TypeScript files take them from there because
+      // typescript-eslint leaves `no-undef` to the compiler; a `.svelte` file is
+      // parsed by the Svelte parser, which still asks this list. So a constant used
+      // in a component has to be here or it reads as a typo.
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        __EVEN_BUILD__: 'readonly',
+        __EVEN_PLUGIN__: 'readonly',
+        __DRIVEABLE__: 'readonly',
+      },
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,

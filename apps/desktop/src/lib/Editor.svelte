@@ -196,7 +196,9 @@
     // Our own scrollbar over the editor's scroller: the platform's cannot be
     // animated and takes a gutter of the writing column. See scrollbar.ts.
     bar = overlayScrollbar(created.scrollDOM, created.dom)
-    if (import.meta.env.DEV) Object.assign(window, { nib: created })
+    // The view a drive reaches for; see `__DRIVEABLE__` in env.d.ts for why this
+    // is not `import.meta.env.DEV`.
+    if (__DRIVEABLE__) Object.assign(window, { nib: created })
 
     return () => {
       // Every document the pane was holding lets go first: one that carried its

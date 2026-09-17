@@ -40,13 +40,19 @@ function when(): string {
   return `${new Date().toISOString().slice(0, 16)}Z`
 }
 
-export default defineConfig(({ command }) => ({
+export default defineConfig(({ command, mode }) => ({
   plugins: [svelte()],
   // This build is the editor: on the desktop, on the web, in the presenter's
   // window, and on the `/even/` page the web serves. The package that goes on a
   // phone is built by `vite.even.config.ts`, which sets the second of these true
   // and leaves out what a pair of glasses cannot use.
-  define: { __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')), __EVEN_PLUGIN__: 'false' },
+  // `__DRIVEABLE__` is on while a dev server serves and in `--mode drive`, and off
+  // in a release. See env.d.ts for what it guards and why a release must not.
+  define: {
+    __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
+    __EVEN_PLUGIN__: 'false',
+    __DRIVEABLE__: JSON.stringify(command === 'serve' || mode === 'drive'),
+  },
   clearScreen: false,
   // The same policy the installed app is served with. `tauri dev` loads the dev
   // server rather than the bundle, so without this the app being worked on is a
