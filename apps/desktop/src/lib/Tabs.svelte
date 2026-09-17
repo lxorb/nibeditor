@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition'
+  import { fade, fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { carryTab, dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
@@ -132,11 +132,10 @@
         run: () => workspace.togglePin(tab.id),
       },
       {
+        // A pinned tab has no cross, so this row and the key beside it are the
+        // two ways it closes - which is why the row says the key as well.
         label: t('Close'),
         hint: shortcuts.hint('app.close'),
-        // A pinned tab stays until it is let go of, so the row says so rather
-        // than doing nothing when it is pressed.
-        disabled: tab.pinned,
         run: () => void workspace.closeAsking(tab.id),
       },
       {
@@ -339,9 +338,10 @@
         >
           <!-- What this tab is looking at, on every tab: a strip of a note, a
                canvas and two websites says which is which before any of the names
-               are read, and every name in it starts at the same place. Never the
-               icon the file chose for its row - a tab says what kind of thing it
-               holds, and a website says which site. See TabMark.svelte. -->
+               are read, and every name in it starts at the same place. The icon the
+               file chose for its row where it chose one, because it is the same file
+               and one file wears one mark - which is the whole of what a pinned tab
+               is reduced to. See TabMark.svelte. -->
           <TabMark {tab} />
           {#if tab.reading}
             <!-- An open book, quietly: the tab says which face of the note is up
@@ -366,9 +366,16 @@
           <!-- A pinned tab is its mark and nothing else: the name is what takes the
                room, and a tab kept open all day is one somebody knows by sight. The
                name is still what it says to a reader who cannot see it, and what the
-               title shows. -->
+               title shows.
+               It slides away along the line rather than vanishing, and takes the
+               space in front of it with it, so pinning a tab is the chip closing
+               around the mark rather than the whole strip jumping a tab's width. -->
           {#if !tab.pinned}
-            <span class="label">{tab.shown}</span>
+            <span
+              class="label"
+              transition:slide={{ axis: 'x', duration: dur(130), easing: cubicOut }}
+              >{tab.shown}</span
+            >
           {/if}
           <!-- Not yours: this document is one somebody else shared on its own, and
                the tab says so in the mark the whole app says it with. On the tab
@@ -407,12 +414,18 @@
             ></span>
           {/if}
         </button>
+        <!-- A pinned tab has no cross: what is kept is not closed by the hand that
+             happened to be passing over it. Ctrl+W and the row in the tab's own menu
+             still close it, which is what Emil asked for and what a browser does.
+             It leaves along the line the name does, so the chip closes as one
+             movement rather than in two steps. -->
         {#if !tab.pinned}
           <button
             class="shut"
             title={t('Close')}
             aria-label={t('Close')}
             onclick={() => void workspace.closeAsking(tab.id)}
+            transition:slide={{ axis: 'x', duration: dur(130), easing: cubicOut }}
           >
             <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
           </button>
@@ -708,12 +721,27 @@
   .pick {
     display: flex;
     align-items: center;
-    gap: 6px;
     flex: 1 1 auto;
     min-width: 0;
     padding: 7px 4px 7px 10px;
     overflow: hidden;
     white-space: nowrap;
+    /* The padding closes with the name when a tab is pinned, so the chip is one
+       movement and not a slide with a hop at the end of it. */
+    transition: padding var(--dur-fast) var(--ease-out);
+  }
+
+  /* The parts of a tab are spaced one by one rather than by a gap on the row.
+     The name slides away along the line when the tab is pinned, and whatever
+     slides away has to take the space in front of it with it: a gap belongs to
+     the row, so it would stay behind and the chip would close and then hop six
+     pixels. The mark is first and wants none; the shared glyph brings its own,
+     the same lead it has in every other list. */
+  .reading,
+  .label,
+  .here,
+  .dot {
+    margin-inline-start: 6px;
   }
 
   /* The name, and the whole of what a tab is as wide as. The dots and the book
