@@ -101,6 +101,36 @@ describe('block decorations', () => {
     }
   })
 
+  /** The shape a formula is actually typed in, and the one that shipped broken.
+   *
+   *  `$$…$$` on one line was parsed, decorated and drawn - and drawn empty, because
+   *  the formula was read as the text BETWEEN the opening line and the closing line,
+   *  which for one line is a range that runs backwards and comes back as nothing. The
+   *  block took its room on the page and held no formula. Emil, of a page of lecture
+   *  notes written entirely this way: *"I see no formulas with $$ ... the space is
+   *  just empty where it should be."*
+   *
+   *  Asserted as the words the widget was given rather than as a count, because the
+   *  count was right the whole time. */
+  test('a formula written on one line is handed to the renderer, not an empty string', () => {
+    for (const [doc, tex] of [
+      ['$$x + y = z$$\n\ntail\n', 'x + y = z'],
+      // The shape that always worked, so the fix is not a swap of one for the other.
+      ['$$\nx + y = z\n$$\n\ntail\n', 'x + y = z'],
+      // A single character, which is where an off-by-two would show.
+      ['$$x$$\n\ntail\n', 'x'],
+    ] as const) {
+      const found = state(doc, doc.length - 1).field(blockDecorations).decorations
+      const widgets: string[] = []
+      found.between(0, doc.length, (_from, _to, value) => {
+        const widget = value.spec.widget as { tex?: string } | undefined
+        if (widget && typeof widget.tex === 'string') widgets.push(widget.tex)
+      })
+
+      expect(widgets, doc).toEqual([tex])
+    }
+  })
+
   test('nothing is revealed by the caret a document opens with', () => {
     // A state is created with a caret at 0 unless someone says otherwise, and 0
     // is the start of the first block - so a note beginning with one of these

@@ -6,6 +6,7 @@ import {
   type Range,
   type SelectionRange,
   StateField,
+  type Text,
   type Transaction,
 } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
@@ -66,6 +67,31 @@ const TOC_MAX = 16
  *  anything else. */
 const MEDIA: ReadonlySet<EmbedKind | null> = new Set<EmbedKind>(['image', 'audio', 'video'])
 
+/** The formula inside a `$$` block, whichever of the two shapes it was written in.
+ *
+ *  Two shapes, and only one of them used to work. `$$` on a line of its own with the
+ *  formula under it and a closing `$$` beneath that is read by taking everything
+ *  between the two lines. The other shape is a whole line of `$$…$$`, which is how a
+ *  formula is usually typed and how every other editor reads it - and there the two
+ *  ends are the SAME line, so "between the lines" asks for the text from the end of a
+ *  line to its own start. That is a backwards range, which is the empty string, so
+ *  KaTeX was handed nothing and drew an empty box: the block took its room on the page
+ *  and showed nothing in it. Emil, of a page of lecture notes written entirely in the
+ *  one-line shape: *"I see no formulas with $$ ... the space is just empty where it
+ *  should be."*
+ *
+ *  So the one-line shape is read between its own marks instead. The marks are two
+ *  characters at each end; the parser puts a `MathMark` on each and this agrees with
+ *  it by arithmetic rather than by asking the tree for children it would then have to
+ *  trust. See `BlockMath` in markdown/constructs.ts. */
+function mathIn(doc: Text, node: { from: number; to: number }): string {
+  const first = doc.lineAt(node.from)
+  const last = doc.lineAt(node.to)
+  if (first.number === last.number) return doc.sliceString(node.from + 2, node.to - 2)
+
+  return doc.sliceString(first.to, last.from)
+}
+
 /** Labels have to be known before any `\eqref` renders, so equations are
  *  counted in a first pass over the document. */
 function collectEquationLabels(state: EditorState): Map<number, number> {
@@ -78,9 +104,7 @@ function collectEquationLabels(state: EditorState): Map<number, number> {
       counter += 1
       numbers.set(node.from, counter)
 
-      const doc = state.doc
-      const tex = doc.sliceString(doc.lineAt(node.from).to, doc.lineAt(node.to).from)
-      recordEquationLabel(tex, counter)
+      recordEquationLabel(mathIn(state.doc, node), counter)
       return false
     },
   })
@@ -155,7 +179,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
           const span = found(node.from, node.to)
           if (revealed(node.from, node.to)) return false
-          const tex = doc.sliceString(doc.lineAt(node.from).to, doc.lineAt(node.to).from).trim()
+          const tex = mathIn(doc, node).trim()
           ranges.push(
             Decoration.replace({
               widget: new MathWidget(tex, true, equationNumbers.get(node.from)),
