@@ -104,14 +104,43 @@ describe('the marks a row wears', () => {
   /** By value rather than by identity, because the marks are imported one file each
    *  rather than off the library's index - a static import from the index puts all six
    *  thousand icons in front of the app's first paint. The two are the same drawing and
-   *  need not be the same array; see file-mark.ts. */
+   *  need not be the same array; see file-mark.ts.
+   *
+   *  All but the canvas, which is the library's `workflow` on the family's grid: the
+   *  drawing is Lucide's and the size is the set's. What that is and why is below. */
   test('all of them come from the icon library rather than being drawn here', () => {
     const library = Object.values(lucide)
       .filter(Array.isArray)
       .map((one) => JSON.stringify(one))
 
-    for (const name of MARK_NAMES) {
+    for (const name of MARK_NAMES.filter((one) => one !== 'canvas')) {
       expect(library, name).toContain(JSON.stringify(MARKS[name]))
+    }
+  })
+
+  /** The canvas, which is the one mark the set had to be told about.
+   *
+   *  Lucide builds `workflow` out of its own eight unit cards, so its artwork fills
+   *  eighteen of the twenty-four where every other mark here fills twenty. In a row
+   *  that is a tenth of a pixel; at the size the buttons in an empty pane draw a mark,
+   *  and on a pinned tab, which is its mark and nothing else, it reads as the canvas
+   *  being smaller than what it sits beside.
+   *
+   *  So it is the same drawing at the family's size: the same three shapes in the same
+   *  order, the cards a quarter rounded as Lucide rounds them, two units of air between
+   *  them as Lucide leaves, and the ink from 2 to 22 like the rest of the set. */
+  test('the canvas is that drawing on the grid the rest of the set fills', () => {
+    const [first, line, second] = MARKS.canvas
+    expect(MARKS.canvas.map(([tag]) => tag)).toEqual(lucide.Workflow.map(([tag]) => tag))
+    expect(line?.[1].d).toBe('M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13')
+
+    for (const [card, at] of [
+      [first, 2],
+      [second, 13],
+    ] as const) {
+      expect(card?.[1]).toMatchObject({ x: String(at), y: String(at), width: '9', height: '9' })
+      // A quarter of the card, which is the corner Lucide drew on a card of eight.
+      expect(card?.[1].rx).toBe('2.25')
     }
   })
 

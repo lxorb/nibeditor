@@ -147,6 +147,18 @@ handed one, which is why a folder and a canvas got icons for nothing the day the
 stores learned to keep them: the tree, the tab strip, a search hit, a bookmark and
 the Move sheet all draw this component.
 
+The marks a kind wears are one set and are held to it: Lucide's own drawings, off
+the same 24 unit grid, at the same weight, filling the same 20 of it. The last of
+those had one exception - Lucide builds `workflow`, which is the canvas, out of its
+own eight unit cards, so it filled 18 where the rest fill 20. In a row that is a
+tenth of a pixel; at the size the buttons in an empty pane draw a mark, and on a
+pinned tab, which is its mark and nothing else, it read as the canvas being smaller
+than what it sits beside. So the canvas is that drawing on the family's grid, in
+`file-mark.ts`: the same three shapes, the same corners, the same two units of air
+between the cards. Lucide's `image` is drawn to 18 as well and is left alone - one
+full card that fills a box as far as a circle does reads bigger than the circle, and
+two small cards on a diagonal have no such weight to hold back.
+
 A tab hands it the path as well. What a window wears and what a row wears are the
 same question about the same file, so there is one answer to it - Emil, 2026-09-17:
 *"for all note types, the tab icon and the explorer icon should always be the

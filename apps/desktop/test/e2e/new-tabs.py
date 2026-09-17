@@ -105,9 +105,23 @@ MENU = """
 HERE = """
 () => {
   const buttons = [...document.querySelectorAll('[data-new-here] button')]
+  const round = (n) => Math.round(n * 100) / 100
+
   return {
     buttons: buttons.map((one) => one.textContent.trim()),
     on: document.activeElement ? document.activeElement.textContent.trim() : null,
+    // Each mark's artwork in its own 24 unit grid: where it starts down the box and
+    // how much of it it fills. Read off the drawing with `getBBox` rather than off
+    // the screen, so it is the ink and not the stroke around it. This is twice the
+    // size a row draws a mark at, which is where a mark that fills less of its grid
+    // than the rest stops being invisible; see file-mark.ts.
+    marks: buttons.map((one) => {
+      const svg = one.querySelector('.mark svg')
+      if (!svg) return null
+
+      const box = svg.getBBox()
+      return { top: round(box.y), tall: round(box.height), wide: round(box.width) }
+    }),
   }
 }
 """
@@ -389,6 +403,23 @@ def nothing_open(page) -> None:
         wrong(f"the keyboard did not land on the first button: {here['on']!r}")
     else:
         say("the keyboard           -> on New note")
+
+    # One set, at one size. Emil, 2026-09-17: *"the icons in these buttons are not
+    # properly aligned"* - and every one of them was centred: what differed was how
+    # much of its grid each drawing filled, which at this size reads as the canvas
+    # sitting oddly. A width may differ, because a page is a portrait shape; the
+    # height and where it starts may not. See file-mark.ts.
+    marks = here["marks"]
+    say(f"the marks              -> {marks}")
+    if any(one is None for one in marks):
+        wrong(f"a button wears no mark at all: {marks}")
+    else:
+        sizes = {(one["top"], one["tall"]) for one in marks}
+        if len(sizes) != 1:
+            wrong(f"the marks do not fill the same height of their grid: {sorted(sizes)}")
+        else:
+            say(f"one height             -> {sizes.pop()} of 24")
+
     page.screenshot(path=str(SHOTS / "nothing-open.png"))
 
     page.keyboard.press("ArrowRight")

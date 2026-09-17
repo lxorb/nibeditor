@@ -30,9 +30,35 @@ import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Globe from 'lucide/dist/esm/icons/globe.mjs'
 import Image from 'lucide/dist/esm/icons/image.mjs'
 import NotebookPen from 'lucide/dist/esm/icons/notebook-pen.mjs'
-import Workflow from 'lucide/dist/esm/icons/workflow.mjs'
 import { isMarkdownPath } from './space-paths'
 import type { TabKind } from './workspace/documents.svelte'
+
+/** The canvas: Lucide's `workflow`, on the grid the rest of the set is drawn on.
+ *
+ *  Every other mark here fills twenty of the twenty-four units - a page is 2 to 22
+ *  down, so is the globe, so is the pad - and `workflow` fills eighteen, because
+ *  Lucide builds it out of its own eight unit cards. At the size a row draws a mark
+ *  that is a tenth of a pixel and nobody can see it. At the size the buttons in an
+ *  empty pane draw one, which is twice that, it reads as the canvas being smaller
+ *  than the three beside it and sitting oddly in its card - which is what Emil saw,
+ *  2026-09-17: *"the icons in these buttons are not properly aligned"*. It shows
+ *  worst of all on a pinned tab, which is its mark and nothing else.
+ *
+ *  So: the same drawing, scaled to the same extent. Two cards of nine with the two
+ *  units of air between them the original leaves, the corner and the elbow a quarter
+ *  of a card as Lucide drew them, the line still leaving the first card at its
+ *  middle and arriving at the middle of the second. Nothing here is a shape this app
+ *  invented - it is Lucide's, on the family's grid, so a strip of marks is one size
+ *  wherever it is drawn.
+ *
+ *  Lucide's `image` is the other mark drawn to eighteen, and it is left alone: it is
+ *  one full card, and a square that fills a box as far as a circle does reads bigger
+ *  than the circle. Two small cards on a diagonal have no such weight to hold back. */
+const Workflow: IconNode = [
+  ['rect', { width: '9', height: '9', x: '2', y: '2', rx: '2.25' }],
+  ['path', { d: 'M6.5 11v4.25a2.25 2.25 0 0 0 2.25 2.25H13' }],
+  ['rect', { width: '9', height: '9', x: '13', y: '13', rx: '2.25' }],
+]
 
 /** The marks there are, and there is no folder among them, because no row is a
  *  folder: a note that holds notes is drawn as the note, and a folder out of
@@ -87,9 +113,10 @@ export function markOf(kind: TabKind): FileMark | null {
  *
  *  Lucide, so the tree wears an icon set somebody drew rather than five shapes
  *  this app drew for itself, and one set: every mark comes off the same 24 unit
- *  grid at the same weight, which is what makes a list of files read as a list
- *  rather than as a row of unrelated pictures. The same library the space icons
- *  come from; see icons.ts.
+ *  grid at the same weight, and fills the same twenty of it, which is what makes a
+ *  list of files read as a list rather than as a row of unrelated pictures. The one
+ *  mark that did not fill it is the canvas, and what it is instead is above. The
+ *  same library the space icons come from; see icons.ts.
  *
  *  Three of them are the obvious thing: a page with writing on it, a plain page,
  *  a picture in its frame. The other two are choices. A canvas is two cards with
