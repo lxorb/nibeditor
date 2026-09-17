@@ -7,6 +7,26 @@ import { markTags } from './markdown/tags'
  *  so swapping a theme restyles the editor without touching this file. */
 export const nibTheme = EditorView.theme({
   '&': {
+    // A height from the flex line first, and the percentage only as the fallback
+    // for a parent that is not a flex column - the card over a `[[link]]`, and a
+    // test that mounts the editor in a bare div.
+    //
+    // `height: 100%` alone was the whole of it, and on a stretched flex item that
+    // is the one case engines have never agreed on. Chromium resolved it and gave
+    // the scroller a height; the WebView2 the Windows app embeds did not, so the
+    // scroller grew to the whole note, `.surface` clipped it with `overflow:
+    // hidden`, and the editor believed its content fitted. What that looks like is
+    // a note that cannot be scrolled: no bar, because the app draws one only when
+    // there is something to scroll, and a wheel that does nothing, because the
+    // element under the pointer has nowhere to go - while the caret still moves the
+    // note, because that is the app setting `scrollTop` on the clipping parent,
+    // which works whether or not it hides its overflow.
+    //
+    // The reading view never had this: it sizes its own scroller `flex: 1;
+    // min-height: 0` and asks no percentage of anybody. See Reading.svelte, which
+    // is now the one way a scrolling surface is sized in this app.
+    flex: '1',
+    minHeight: 0,
     height: '100%',
     backgroundColor: 'transparent',
     color: 'var(--text)',

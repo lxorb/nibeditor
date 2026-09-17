@@ -499,7 +499,12 @@ def main() -> int:
 
     try:
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch()
+            # `NIB_CHANNEL=msedge` drives the engine the Windows app actually
+            # embeds. WebView2 is Edge, not Chrome, and the two do not always lay
+            # out the same: a note that scrolls here and not there is a question
+            # only this can answer.
+            channel = os.environ.get("NIB_CHANNEL")
+            browser = playwright.chromium.launch(**({"channel": channel} if channel else {}))
             try:
                 drive(browser)
             finally:

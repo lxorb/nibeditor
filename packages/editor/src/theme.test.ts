@@ -69,7 +69,16 @@ describe('the writing surface', () => {
     // what overflows it - `.surface` in Editor.svelte - so an editor that grew would
     // put the foot of a long note under the bottom of the window with nothing to
     // scroll it back into view.
-    expect(rules).toMatch(/\.\S+ \{[^}]*height: 100%/)
+    //
+    // Off the flex line FIRST and the percentage only as the fallback. The
+    // percentage alone shipped, and a percentage against a stretched flex item is
+    // the one case engines disagree on: Chromium resolved it and WebView2, which is
+    // what the Windows app embeds, did not - so on Windows the editor grew to the
+    // note and no wheel could move it, while every test and every drive here passed.
+    const surface = /\.\S+ \{([^}]*)\}/.exec(rules)?.[1] ?? ''
+    expect(surface).toMatch(/height: 100%/)
+    expect(surface).toMatch(/flex: 1/)
+    expect(surface).toMatch(/min-height: 0/)
 
     // And the scroller is what scrolls. The library's own theme states `overflow-x`
     // and leaves the block axis alone, so this one declaration is what makes a note
