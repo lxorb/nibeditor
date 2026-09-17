@@ -27,7 +27,7 @@ import { startup } from '../startup.svelte'
 import { mark } from '../trace'
 import type { Entry } from '../workspace.svelte'
 import { openDocument, textOf } from './document'
-import { paperOpened, paperRead, papersFor, writePapers } from './papers'
+import { paperOpened, paperRead, papersFor, papersListed, writePapers } from './papers'
 import { paperText } from './text-cache'
 
 /** How many pages of one paper are worth taking down. A book is a book; past this
@@ -55,13 +55,19 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
 
+  // Said before the turn is waited for, not after it. This is the one thing in the
+  // app that knows when each of these files was last written, and a search asked
+  // before this pass gets its turn - a query fence in the note the app opens is
+  // exactly that - has to be held to it too. See `papersListed`.
+  papersListed(root, stamps)
+
   await startup.turn('search')
   if (reading !== root) return
 
   // What earlier sittings took down, first: it is a read of a row rather than of a
   // PDF, and it is what makes the first search of a space answer about papers.
   mark(`papers: ${papers.length} in the space`)
-  await papersFor(root, stamps)
+  await papersFor(root)
   if (reading !== root || sparing()) return
 
   for (const paper of papers) {

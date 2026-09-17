@@ -47,10 +47,16 @@ export async function searchSpace(
 ): Promise<void> {
   // The papers answer first, and from memory: their words are not on disk as text,
   // so neither walk below has anything to read. What was taken down in an earlier
-  // sitting is read back once per space rather than per search - the second call
-  // awaits the first one's promise - so this is a wait only for the first question
-  // about a space, and one row per paper rather than a PDF taken apart. See
-  // pdf/papers.ts.
+  // sitting is read back once per space and per listing of it rather than per
+  // search - every call after the first awaits that one's promise - so this is a
+  // wait only for the first question about a space, and one row per paper rather
+  // than a PDF taken apart.
+  //
+  // Nothing about the files is passed in here on purpose. A search has the root and
+  // nothing else, and a read-back that trusted whatever the store held because its
+  // caller could not say otherwise is how a PDF replaced on disk used to answer with
+  // its old text. What the file list says is written down where it is known; see
+  // `papersListed` in pdf/papers.ts.
   const { papersFor, searchPapers } = await import('../pdf/papers')
   await papersFor(root)
   const papers = searchPapers(root, query, PAPERS, excluded)

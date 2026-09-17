@@ -10,7 +10,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *  a paper read in one sitting answers in the next, and that a file which has
  *  changed under its words does not. */
 
-const store = vi.hoisted(() => ({ records: new Map<string, string>() }))
+const store = vi.hoisted(() => ({
+  records: new Map<string, string>(),
+  /** How many records have been read out of it, so "once per space" is a number
+   *  rather than a hope. */
+  reads: 0,
+  /** Run as each record is read back, after the store has answered and before the
+   *  answer lands. Which is what lets a test move a paper under a walk that is
+   *  already in the air - the shape of this bug and the only way to drive it. */
+  reading: null as ((path: string) => void) | null,
+}))
 
 vi.mock('../tauri', () => ({
   isNative: false,
@@ -18,8 +27,14 @@ vi.mock('../tauri', () => ({
     const at = args.path as string
 
     switch (command) {
-      case 'read_paper_text':
-        return Promise.resolve(store.records.get(at) ?? '')
+      case 'read_paper_text': {
+        // The store answers as it stood when it was asked, which is the whole of
+        // the race: whatever happens next happens while this is on its way back.
+        store.reads += 1
+        const content = store.records.get(at) ?? ''
+        store.reading?.(at)
+        return Promise.resolve(content)
+      }
       case 'write_paper_text': {
         const content = args.content as string
         if (content) store.records.set(at, content)
@@ -39,10 +54,12 @@ vi.mock('../tauri', () => ({
 const {
   forgetPapers,
   paperGone,
+  paperMoved,
   paperOpened,
   paperRead,
   papersFor,
   papersHeld,
+  papersListed,
   papersRead,
   searchPapers,
   writePapers,
@@ -61,6 +78,8 @@ const found = (source: string, excluded: readonly string[] = []) =>
 beforeEach(() => {
   forgetPapers()
   store.records.clear()
+  store.reads = 0
+  store.reading = null
 })
 
 // The viewer writes a paper down a moment after the last page was read, so the
@@ -156,6 +175,13 @@ describe('a paper read in an earlier sitting', () => {
   /** What the file list says about the paper: one path, one moment. */
   const listed = (modified: number) => new Map([[PAPER, modified]])
 
+  /** The launch's own pass: the file list says what it says, and then the store is
+   *  read back against it. */
+  const readBack = async (modified: number) => {
+    papersListed(ROOT, listed(modified))
+    await papersFor(ROOT)
+  }
+
   test('is written down and answers again after everything is forgotten', async () => {
     paperOpened(PAPER, 'abc', 10)
     paperRead(PAPER, 3, page('a study of ink on paper and its wear'))
@@ -165,7 +191,7 @@ describe('a paper read in an earlier sitting', () => {
     forgetPapers()
     expect(found('ink')).toEqual([])
 
-    await papersFor(ROOT, listed(10))
+    await readBack(10)
     const hits = found('ink')
     expect(hits).toHaveLength(1)
     expect(hits[0]?.page).toBe(3)
@@ -178,9 +204,13 @@ describe('a paper read in an earlier sitting', () => {
     await writePapers()
     forgetPapers()
 
-    await papersFor(ROOT, listed(10))
+    await readBack(10)
+    store.reads = 0
+
     // The same space again is the promise that was kept, not a second read.
-    await papersFor(ROOT, listed(10))
+    await papersFor(ROOT)
+    await papersFor(ROOT)
+    expect(store.reads).toBe(0)
     expect(papersHeld().papers).toBe(1)
   })
 
@@ -190,7 +220,7 @@ describe('a paper read in an earlier sitting', () => {
     await writePapers()
     forgetPapers()
 
-    await papersFor(ROOT, listed(11))
+    await readBack(11)
     expect(found('ink')).toEqual([])
   })
 
@@ -223,5 +253,154 @@ describe('a paper read in an earlier sitting', () => {
     paperGone(PAPER)
     await Promise.resolve()
     expect(store.records.size).toBe(0)
+  })
+})
+
+/** A space still being read back.
+ *
+ *  The read-back is a walk of the store with a round trip per paper, and the space
+ *  does not hold still for it: a PDF can be deleted, renamed, or moved with the
+ *  folder it sits in while the walk is in the air. What it read is the store as it
+ *  stood when it asked, so landing it as it comes puts a paper back under a path
+ *  that has nothing at it - and a search then answers with its pages, on a row that
+ *  opens nothing, for the rest of the sitting. */
+describe('a paper that changes while the store is being read back', () => {
+  const PAPER = `${ROOT}/papers/Ink.pdf`
+  const listed = (modified: number) => new Map([[PAPER, modified]])
+
+  const readBack = async (modified: number) => {
+    papersListed(ROOT, listed(modified))
+    await papersFor(ROOT)
+  }
+
+  /** One paper taken down in an earlier sitting and nothing in memory, which is
+   *  the state a read-back starts from. */
+  const takenDown = async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('a study of ink on paper and its wear'))
+    await writePapers()
+    forgetPapers()
+  }
+
+  test('is not put back when it was deleted while the walk was in the air', async () => {
+    await takenDown()
+
+    store.reading = (path) => {
+      if (path === PAPER) paperGone(PAPER)
+    }
+    await readBack(10)
+
+    expect(found('ink')).toEqual([])
+    expect(papersRead()).toBe(0)
+  })
+
+  test('and is not put back under the name a rename took away', async () => {
+    await takenDown()
+
+    store.reading = (path) => {
+      if (path === PAPER) paperMoved(PAPER, `${ROOT}/papers/Wear.pdf`)
+    }
+    await readBack(10)
+
+    expect(found('ink').map((one) => one.path)).toEqual([])
+  })
+
+  test('and not under it when the folder it sat in is what moved', async () => {
+    await takenDown()
+
+    store.reading = (path) => {
+      if (path === PAPER) paperMoved(`${ROOT}/papers`, `${ROOT}/shelf`)
+    }
+    await readBack(10)
+
+    expect(found('ink').map((one) => one.path)).toEqual([])
+  })
+
+  test('and a paper nothing touched still lands', async () => {
+    await takenDown()
+
+    store.reading = (path) => {
+      if (path === PAPER) paperGone(`${ROOT}/papers/Other.pdf`)
+    }
+    await readBack(10)
+
+    expect(found('ink')).toHaveLength(1)
+  })
+
+  test('and the next read-back of the space is not held to what the last one missed', async () => {
+    await takenDown()
+
+    store.reading = (path) => {
+      if (path === PAPER) paperGone(PAPER)
+    }
+    await readBack(10)
+    expect(found('ink')).toEqual([])
+
+    // The paper is back at that path, with its words taken down again. Nothing
+    // that was written down while the last walk was in the air is still in the way.
+    store.reading = null
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('ink once more'))
+    expect(found('ink')).toHaveLength(1)
+  })
+})
+
+/** Which of the two reads of the store actually runs.
+ *
+ *  It is read back once per space, and two callers ask for it: the launch's own
+ *  pass, which has the file list in hand, and a search, which has only the root. A
+ *  query fence in the note the app opens is a search before the launch's pass has
+ *  had its turn, so whichever of them got there first used to decide whether a
+ *  record was held against the file at all. */
+describe('a space read back before the file list has said anything', () => {
+  const PAPER = `${ROOT}/papers/Ink.pdf`
+  const listed = (modified: number) => new Map([[PAPER, modified]])
+
+  beforeEach(async () => {
+    paperOpened(PAPER, 'abc', 10)
+    paperRead(PAPER, 1, page('a study of ink on paper and its wear'))
+    await writePapers()
+    forgetPapers()
+  })
+
+  test('answers from the store, because nothing has said what the file looks like now', async () => {
+    await papersFor(ROOT)
+    expect(found('ink')).toHaveLength(1)
+  })
+
+  test('and lets go of the words once the listing says the file has been written since', async () => {
+    await papersFor(ROOT)
+    expect(found('ink')).toHaveLength(1)
+
+    papersListed(ROOT, listed(11))
+    expect(found('ink')).toEqual([])
+
+    // And the store is not read back into memory behind it either.
+    await papersFor(ROOT)
+    expect(found('ink')).toEqual([])
+  })
+
+  test('and keeps them where the listing says the file is the one they came from', async () => {
+    await papersFor(ROOT)
+    papersListed(ROOT, listed(10))
+    await papersFor(ROOT)
+
+    expect(found('ink')).toHaveLength(1)
+  })
+
+  test('and the listing landing first is what the search is held to', async () => {
+    papersListed(ROOT, listed(11))
+    await papersFor(ROOT)
+
+    expect(found('ink')).toEqual([])
+  })
+
+  test('and one that lands while the walk is in the air is held against it too', async () => {
+    store.reading = (path) => {
+      if (path === PAPER) papersListed(ROOT, listed(11))
+    }
+    await papersFor(ROOT)
+
+    expect(found('ink')).toEqual([])
   })
 })

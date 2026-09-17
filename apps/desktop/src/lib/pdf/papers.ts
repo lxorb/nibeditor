@@ -69,9 +69,75 @@ const BEFORE = 60
  *  `pageRead` and `writePapers`. */
 const writing = afterQuiet(() => void writePapers(), SETTLE)
 
-/** Which space has had what was taken down in an earlier sitting read back, so
- *  that a search asks for it once rather than per keystroke. */
-let hydrated: { root: string; done: Promise<void> } | null = null
+/** Which space has had what was taken down in an earlier sitting read back, and
+ *  which listing it was read against, so that a search asks for it once rather than
+ *  per keystroke.
+ *
+ *  Keyed by the listing as well as by the root, because the root on its own cannot
+ *  say which of two different reads was done. A read-back without the file list
+ *  trusts every record it finds - nothing has said what the files look like now - and
+ *  one with it drops the record of a paper that has been written since. Under one
+ *  key the weaker of the two stood in for the stronger, so whichever caller got
+ *  there first decided whether the freshness check ran at all: a query fence in the
+ *  note the app opens beats the launch's own pass, and a PDF replaced on disk then
+ *  answered searches with its old words and its old page numbers for the rest of the
+ *  sitting. */
+let hydrated: { root: string; at: number; done: Promise<void> } | null = null
+
+/** What the file list last said about a space's papers, and which listing that was.
+ *
+ *  A number rather than the root, for the same reason as everywhere else in this
+ *  round: a space opened, closed and opened again is two listings under one name,
+ *  and the files may have changed in between. */
+let listing: { root: string; at: number; modified: Map<string, number> } | null = null
+let listings = 0
+
+/** When the file list last said one of a space's papers was written, or nothing
+ *  where it has not said. Asked per paper rather than once per walk, so a listing
+ *  that lands while a walk is in the air is held against the rest of it. */
+function listedAt(root: string, path: string): number | undefined {
+  return listing?.root === root ? listing.modified.get(path) : undefined
+}
+
+/** Paths whose paper has been let go of while a read-back was walking the store.
+ *
+ *  A walk reads the store as it stood when it asked, a round trip per paper, and the
+ *  space does not hold still for it: a PDF can be deleted, renamed, or moved with the
+ *  folder it sits in while the walk is in the air. Landing what comes back as it
+ *  comes puts such a paper straight back under a path that has nothing at it, and the
+ *  search answers with its pages from then on, on a row that opens nothing.
+ *
+ *  So every path a paper leaves goes through `letGo`, which writes it down here, and
+ *  a walk lands nothing it finds named. Held only while a walk is in the air, so
+ *  this is empty in the ordinary minute. */
+const letGone = new Set<string>()
+
+/** How many read-backs are walking the store. Counted rather than a flag, because
+ *  two spaces can be read back at once and the ledger above belongs to whichever is
+ *  still going. */
+let walking = 0
+
+/** The one place a paper stops being held at a path, and the place that fact is
+ *  written down while a walk is in the air.
+ *
+ *  Not the memory bound, which also takes papers out of the map: a paper let go of
+ *  to stay under `IN_MEMORY` has not left its path, and the store still has its
+ *  words for whoever asks next. See `hold`. */
+function letGo(path: string): void {
+  held.delete(path)
+  if (walking) letGone.add(path)
+}
+
+/** Whether a path has been let go of since the walk asking began. A folder as well
+ *  as a file, because a folder of papers moves as a folder and the papers in it are
+ *  not named one by one. */
+function letGoOf(path: string): boolean {
+  for (const one of letGone) {
+    if (path === one || path.startsWith(`${one}/`)) return true
+  }
+
+  return false
+}
 
 /** Which file a paper's words came out of.
  *
@@ -141,49 +207,108 @@ export async function writePapers(): Promise<void> {
   }
 }
 
-/** Reads back what was taken down in an earlier sitting, once per space.
+/** What the file list says about a space's papers: which are there, and when each
+ *  was last written.
+ *
+ *  Written down here rather than carried in by whoever asks for the read-back. The
+ *  store is read back once per space and is asked for from two places - the launch's
+ *  own pass, which has the listing in hand, and a search, which has only the root -
+ *  so leaving the listing to the caller left the freshness check to whichever of them
+ *  got there first.
+ *
+ *  What is held and this listing contradicts goes now rather than at the next
+ *  read-back, which is the other half of the same door: a read-back skips a paper it
+ *  already holds, and the walk that put those words in memory may have had nothing to
+ *  hold them against. */
+export function papersListed(root: string, modified: Map<string, number>): void {
+  listing = { root, at: ++listings, modified }
+
+  let dropped = false
+  for (const [path, paper] of [...held]) {
+    // Only a paper whose words came out of a named file. One nobody has named is
+    // held for the sitting and written nowhere, and there is nothing to hold it
+    // against; see `paperOpened`.
+    if (!paper.hash) continue
+
+    // And only one the listing actually says something else about. A listing that
+    // does not mention a path is not a deletion - that is `paperGone` - so a paper
+    // of another space, or one this pass did not walk, is left alone.
+    const stamp = modified.get(path)
+    if (stamp === undefined || stamp === paper.modified) continue
+
+    // Taken out of the map rather than let go of through `letGo`: the paper has not
+    // left its path, only these words have stopped being its, and the read-back this
+    // listing sets off must be free to take them down again.
+    held.delete(path)
+    dropped = true
+  }
+
+  if (dropped) told()
+}
+
+/** Reads back what was taken down in an earlier sitting, once per space and per
+ *  listing of it.
  *
  *  Awaited by the space search before it asks the papers anything, and asked for
  *  in idle time at the search stage of the launch, so the first question about a
  *  space has the answer already. Smallest first: a shelf of papers answers rather
  *  than one book filling everything there is.
  *
- *  A record is read with what the listing says about the file, so a paper written
- *  since it was taken down is dropped rather than answered with; see
- *  text-cache.ts. */
-export async function papersFor(root: string, modified?: Map<string, number>): Promise<void> {
-  if (hydrated?.root === root) return hydrated.done
+ *  A record is read against what the file list says about the file, so a paper
+ *  written since it was taken down is dropped rather than answered with; see
+ *  `papersListed` above and text-cache.ts. A space nothing has listed yet is read
+ *  back on what the store says alone, and read again when the listing lands. */
+export async function papersFor(root: string): Promise<void> {
+  const at = listing?.root === root ? listing.at : 0
+  if (hydrated?.root === root && hydrated.at === at) return hydrated.done
 
   const done = (async () => {
-    const inside = root.endsWith('/') ? root : `${root}/`
+    walking += 1
+    try {
+      const inside = root.endsWith('/') ? root : `${root}/`
 
-    for (const file of await paperFiles()) {
-      if (!file.path.startsWith(inside)) continue
-      if (characters() + file.size > IN_MEMORY) break
-      if (held.get(file.path)?.pages.size) continue
+      for (const file of await paperFiles()) {
+        if (!file.path.startsWith(inside)) continue
+        if (characters() + file.size > IN_MEMORY) break
+        if (held.get(file.path)?.pages.size) continue
 
-      const record = await paperText(file.path, modified?.get(file.path))
-      if (!record) continue
+        const record = await paperText(file.path)
+        if (!record) continue
 
-      const paper = paperAt(file.path)
-      paper.hash = record.hash
-      paper.modified = record.modified
-      for (const [page, text] of record.pages) paper.pages.set(page, text)
-      paper.characters = record.characters
-      paper.unwritten = false
+        // Held against the file list now that the record is in hand, rather than
+        // when this paper's turn came: the listing can land while a record is on
+        // its way back, and it is what says whether these are still the file's
+        // words. A space nothing has listed yet has nothing to ask.
+        const stamp = listedAt(root, file.path)
+        if (stamp !== undefined && record.modified !== stamp) continue
+
+        // And the paper may have left this path altogether while its record was on
+        // its way back. What the store answered is the space as it was when asked.
+        if (letGoOf(file.path)) continue
+
+        const paper = paperAt(file.path)
+        paper.hash = record.hash
+        paper.modified = record.modified
+        for (const [page, text] of record.pages) paper.pages.set(page, text)
+        paper.characters = record.characters
+        paper.unwritten = false
+      }
+
+      told()
+    } finally {
+      walking -= 1
+      if (!walking) letGone.clear()
     }
-
-    told()
   })()
 
-  hydrated = { root, done }
+  hydrated = { root, at, done }
   return done
 }
 
 /** Forgets a paper, for one that has been renamed, moved or deleted. Its words go
  *  from the store as well: they were that path's words, and the path has gone. */
 export function paperGone(path: string): void {
-  held.delete(path)
+  letGo(path)
   told()
   void forgetPaperText(path)
 }
@@ -204,6 +329,12 @@ export function paperMoved(from: string, to: string): void {
     held.set(to + path.slice(from.length), { ...paper, unwritten: true })
     void forgetPaperText(path)
   }
+
+  // Written down whether or not anything moved, and after the move rather than
+  // before it so the words follow the file: a paper a read-back is still carrying is
+  // held nowhere yet, and it is exactly the one that would land under the name this
+  // rename took away.
+  letGo(from)
 
   if (!moving.length) return
 
@@ -326,10 +457,13 @@ export function searchPapers(
   return out
 }
 
-/** For the tests: nothing read, as at launch. What is in the store stays there,
- *  which is what the store is for. */
+/** For the tests: nothing read and nothing listed, as at launch. What is in the
+ *  store stays there, which is what the store is for. */
 export function forgetPapers(): void {
   held.clear()
   hydrated = null
+  listing = null
+  letGone.clear()
+  walking = 0
   writing.cancel()
 }
