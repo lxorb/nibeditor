@@ -21,6 +21,15 @@ let reads = 0
 /** Every note a snapshot was taken of, so "one snapshot per touched note" is a
  *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
+/** Scans held open, by the space each is of: the rows it will answer with, and the
+ *  hand that lets it answer. Empty unless a test is standing in the gap between a
+ *  space being asked for and its rows arriving - which is where the app lives for
+ *  the first second of every space, and where everything in `a space still being
+ *  read` goes wrong.
+ *
+ *  A queue per space, because a space closed and opened again is two scans of one
+ *  root and the whole point of one of these tests. See `opening`. */
+const holding = new Map<string, { rows: unknown; gate: Promise<void>; taken: () => void }[]>()
 
 const stringOf = (args: Record<string, unknown> | undefined, name: string) => {
   const value = args?.[name]
@@ -33,11 +42,23 @@ vi.mock('./tauri', async (importOriginal) => ({
     const path = stringOf(args, 'path')
 
     switch (command) {
-      case 'scan_links':
-        return {
-          notes: Object.entries(notes).map(([one, content]) => scanNote(one, content)),
-          files,
+      case 'scan_links': {
+        // A scan reads the space as it was when it was asked. A held one says so
+        // out loud: its rows were taken before the test touched anything and are
+        // handed over whenever the test lets go, so everything the index is told
+        // meanwhile is news the scan cannot have.
+        const scan = holding.get(stringOf(args, 'root'))?.shift()
+        if (!scan) {
+          return {
+            notes: Object.entries(notes).map(([one, content]) => scanNote(one, content)),
+            files,
+          }
         }
+
+        scan.taken()
+        await scan.gate
+        return scan.rows
+      }
       case 'read_note': {
         const relative = path.slice(ROOT.length + 1)
         const doc = notes[relative]
@@ -114,10 +135,59 @@ async function space(contents: Record<string, string>, others: string[] = []) {
   await links.build(ROOT)
 }
 
+/** A space whose scan is still in the air, and the hand that lands it.
+ *
+ *  What the first second of any space looks like from the inside: the walk has
+ *  been done and its rows have not arrived, and the app is saving, deleting and
+ *  moving notes meanwhile. Awaited until the scan has actually been asked for, so
+ *  everything a test does next is news the rows cannot hold; `land` hands them
+ *  over and waits for them to be taken.
+ *
+ *  Held by space, so a test can have two of them open at once - which is how a
+ *  space opened and left while its rows were still coming is written down. */
+async function opening(
+  contents: Record<string, string>,
+  root = ROOT,
+): Promise<{ land: () => Promise<void> }> {
+  if (root === ROOT) {
+    notes = { ...contents }
+    files = []
+    written = []
+    snapshots = []
+    reads = 0
+  }
+
+  let go: () => void = () => undefined
+  let taken: () => void = () => undefined
+  const gate = new Promise<void>((done) => (go = done))
+  const asked = new Promise<void>((done) => (taken = done))
+  const queue = holding.get(root) ?? []
+  queue.push({
+    rows: {
+      notes: Object.entries(contents).map(([one, content]) => scanNote(one, content)),
+      files: [],
+    },
+    gate,
+    taken,
+  })
+  holding.set(root, queue)
+
+  const scanned = links.build(root)
+  await asked
+
+  return {
+    land: async () => {
+      go()
+      await scanned
+    },
+  }
+}
+
 const at = (relative: string) => `${ROOT}/${relative}`
 
 beforeEach(() => {
   links.clear()
+  holding.clear()
 })
 
 describe('backlinks', () => {
@@ -329,6 +399,139 @@ describe('a note saved keeps the index up to date', () => {
     )
 
     expect(links.faviconOf(site)).toBe('https://a/two.png')
+  })
+})
+
+/** The first second of a space, which is the one the app spends every launch in:
+ *  the rows have been read off the disk and have not arrived yet, and notes are
+ *  being written, deleted and moved the whole time.
+ *
+ *  What the rows say about the space is older than what the index has been told
+ *  since, and taking them as the answer threw the news away - silently, and for
+ *  good, because nothing reads a space twice while it is open. That is a `[[` list
+ *  that holds a different subset of the space on every launch. */
+describe('a space still being read', () => {
+  test('keeps a note written while the rows were in the air', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan' })
+
+    // Written after the walk went past, which is where a new note lands for the
+    // whole of a launch: a note made out of a canvas card, one the account has
+    // just brought down, one somebody typed.
+    links.noteSaved(at('One.md'), 'see [[Plan]]')
+    await scan.land()
+
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['One.md'])
+  })
+
+  test('takes the words of the save over the words the walk read', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan', 'One.md': 'nothing yet' })
+
+    links.noteSaved(at('One.md'), 'now [[Plan]] is linked')
+    await scan.land()
+
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['One.md'])
+  })
+
+  test('does not bring back a note deleted while the rows were in the air', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]' })
+
+    links.noteGone(at('One.md'))
+    await scan.land()
+
+    expect(links.backlinks(at('Plan.md'))).toEqual([])
+  })
+
+  test('leaves a note moved while the rows were in the air where it moved to', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan', 'One.md': 'see [[Plan]]' })
+
+    links.notesMoved(at('One.md'), at('deep/One.md'))
+    await scan.land()
+
+    expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['deep/One.md'])
+  })
+
+  test('keeps a file put beside the notes while the rows were in the air', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan' })
+
+    links.fileAdded('talk.webm')
+    await scan.land()
+
+    expect(links.index(null).files).toContain('talk.webm')
+  })
+
+  /** A `[[` list that offers a note from the space somebody has just left is worse
+   *  than one that is late: the index says which space it is of the moment it is
+   *  asked to read one, so until the rows land it holds nothing rather than the
+   *  last space's notes under this space's name. */
+  test('holds nothing of the space before it', async () => {
+    await space({ 'Theirs.md': '# Theirs', 'One.md': 'see [[Theirs]]' })
+    expect(links.index(null).notes).toHaveLength(2)
+
+    const scan = await opening({ 'Mine.md': '# Mine' }, '/other')
+    expect(links.index(null).notes).toEqual([])
+    expect(links.scanning).toBe(true)
+
+    await scan.land()
+    expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
+  })
+
+  /** Two spaces opened one after the other, the first's rows landing last. */
+  test('drops the rows of a space that is no longer open', async () => {
+    const first = await opening({ 'Theirs.md': '# Theirs' }, '/one')
+    const second = await opening({ 'Mine.md': '# Mine' }, '/two')
+
+    await first.land()
+    await second.land()
+
+    expect(links.rootOf()).toBe('/two')
+    expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
+  })
+
+  /** And the same space closed and opened again, which a root cannot tell apart
+   *  from one space read once: both scans are of `/one`, and the older one's rows
+   *  are still older. A scan carries its own number for exactly this; see
+   *  `build`. */
+  test('drops the rows of a scan the space has already been read again since', async () => {
+    const first = await opening({ 'Old.md': '# Old' }, '/one')
+    links.clear()
+    const second = await opening({ 'New.md': '# New' }, '/one')
+    links.noteSaved('/one/Fresh.md', '# Fresh')
+
+    await first.land()
+    await second.land()
+
+    expect(links.index(null).notes.map((one) => one.path)).toEqual(['New.md', 'Fresh.md'])
+  })
+
+  test('says it is reading until the rows land, and no longer', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan' })
+    expect(links.scanning).toBe(true)
+
+    const waited = links.scanned()
+    await scan.land()
+
+    await expect(waited).resolves.toBeUndefined()
+    expect(links.scanning).toBe(false)
+  })
+
+  /** Whoever waits for the scan waits for *their* scan. The one field that says
+   *  how a waiter is told belongs to whichever space asked last, so a scan that
+   *  finds itself out of date used to let go of the new space's waiters on its way
+   *  out - and the tag tree read an index that held nothing yet. */
+  test('does not let go of the next space’s waiters on its own way out', async () => {
+    const first = await opening({ 'Theirs.md': '# Theirs' }, '/one')
+    const second = await opening({ 'Mine.md': '# Mine' }, '/two')
+
+    let told = false
+    void links.scanned().then(() => (told = true))
+
+    await first.land()
+    await Promise.resolve()
+    expect(told).toBe(false)
+
+    await second.land()
+    await Promise.resolve()
+    expect(told).toBe(true)
   })
 })
 

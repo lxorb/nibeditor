@@ -11,6 +11,12 @@
  *  A space of a few thousand notes is scanned in one call and off the main
  *  thread; nothing here walks a space again.
  *
+ *  Which is why the two overlap rather than take turns. That one pass reads the
+ *  space as it was when it was asked for, and the app goes on writing, deleting
+ *  and moving notes for as long as it takes to answer - a launch is nothing but
+ *  that. So the rows it brings back are where the index starts and not what it
+ *  becomes: see `build` and `edit`.
+ *
  *  Paths are relative to the space and `/`-separated throughout, because that is
  *  what a link says. `space-paths.ts` is the only place that converts. */
 
@@ -231,20 +237,44 @@ class Links {
    *  breath as the listing, it was a second of the launch spent on the panel
    *  nobody had asked for yet, competing with the one read that was in anybody's
    *  way - the open note's. The space it is of is written down at once, though, so
-   *  a second space opening while this is still queued still cancels it, and the
-   *  panel can say it is scanning rather than showing an empty list as an answer.
+   *  a second space opening while this is still queued still cancels it - see
+   *  `scans` - and the panel can say it is scanning rather than showing an empty
+   *  list as an answer.
+   *
+   *  The index empties in the same breath, because from here until the rows land
+   *  it is an index of this space and holds nothing of it. It used to keep the
+   *  last space's notes under the new space's name for the whole of that second,
+   *  so `[[` offered notes from the space somebody had just left and a link drawn
+   *  in this one resolved against another's. A space being read says so - see
+   *  `scanning` - and saying nothing is the honest answer until it has one.
    *
    *  Rows go up without their chosen icons and take them when this lands; see
    *  `icons` below and chosen-icon.ts. See startup.svelte.ts for the order. */
   async build(root: string) {
+    // Which scan this is. A root cannot say: a space closed and opened again is
+    // the same string, and the first scan landing into the second one's index
+    // would take the second one's news with it. Counted, the way the syncing loop
+    // counts its own runs and for the same reason; see `generation` in
+    // sync.svelte.ts.
+    const mine = ++this.scans
     this.root = root
     this.scanning = true
-    const landing = new Promise<void>((go) => (this.landed = go))
-    this.landing = landing
+    this.notes = []
+    this.files = []
+    this.since = []
+    this.changed()
+
+    // A scan's own hand, held in its own frame rather than on a field of the
+    // class. A second space opening replaces the field, so a scan that finds
+    // itself out of date used to let go of the *new* space's waiters on its way
+    // out - and whoever was drawn from the whole index read one that held
+    // nothing yet.
+    let landed: () => void = () => undefined
+    this.landing = new Promise<void>((go) => (landed = go))
 
     await startup.turn('index')
-    if (this.root !== root) {
-      this.landed()
+    if (this.scans !== mine) {
+      landed()
       return
     }
 
@@ -253,21 +283,57 @@ class Links {
     mark('scan_links answered')
 
     // Another space may have opened while this one was being read.
-    if (this.root !== root) {
-      this.landed()
+    if (this.scans !== mine) {
+      landed()
       return
     }
 
     this.scanning = false
-    this.notes = found?.notes ?? []
-    this.files = found?.files ?? []
+    // The rows are the space as it was when the scan was asked for, and the app
+    // has gone on writing, deleting and moving notes for as long as it took to
+    // read. So they are not what the index becomes: they are what it starts from,
+    // and everything it was told meanwhile is done again on top, in the order it
+    // happened. Taking the rows as the answer dropped every note saved during the
+    // scan - which on a launch is whatever a space opens onto and whatever the
+    // account has just brought down - and nothing reads a space twice, so they
+    // stayed dropped until the next one. See `edit`.
+    this.notes = this.since.reduce((notes, again) => again(notes), found?.notes ?? [])
+    this.since = []
+    // A file has no words to be stale, so the two lists are simply both true: what
+    // the walk found, and what was put there while it walked.
+    this.files = [...new Set([...(found?.files ?? []), ...this.files])].sort()
     this.changed()
-    this.landed()
+    landed()
   }
 
-  /** Whoever is waiting for the scan in flight, and how they are told. */
+  /** Whoever is waiting for the scan in flight. */
   private landing: Promise<void> = Promise.resolve()
-  private landed: () => void = () => undefined
+
+  /** How many scans have been started, ever. A scan's own number is the whole of
+   *  how it tells whether it is still the one being waited for; see `build`. */
+  private scans = 0
+
+  /** Everything the index was told while a scan was in the air, as the changes
+   *  themselves, ready to be made again over the rows the scan brings back.
+   *
+   *  Empty except for the length of one scan, which is the first second of a
+   *  space; the one piece of state here that lives for the length of a round trip,
+   *  the way `coming` does in workspace/open.ts. */
+  private since: ((notes: readonly ScannedNote[]) => ScannedNote[])[] = []
+
+  /** One change to what the index holds, which is also what a change *is*: a new
+   *  list of notes made out of the one there was.
+   *
+   *  Made now, and written down to be made again if a scan is still in the air,
+   *  so that the news never depends on which of the two lands first. Every way the
+   *  index learns about one note goes through here, so there is nothing to
+   *  remember at a call site and nothing to forget at a new one. */
+  private edit(change: (notes: readonly ScannedNote[]) => ScannedNote[]) {
+    if (this.scanning) this.since.push(change)
+
+    this.notes = change(this.notes)
+    this.changed()
+  }
 
   /** Resolves when the scan in flight has landed, or at once when none is.
    *
@@ -426,11 +492,17 @@ class Links {
     return this.addresses.size > 0
   }
 
-  /** Forgets everything, for a window with no space open. */
+  /** Forgets everything, for a window with no space open.
+   *
+   *  A scan still in the air is forgotten with the rest: it finds no space of its
+   *  own to land in and says nothing, so the state that says one is being read has
+   *  to come down here rather than wait for a landing that never comes. */
   clear() {
     this.root = null
+    this.scanning = false
     this.notes = []
     this.files = []
+    this.since = []
     this.changed()
   }
 
@@ -502,14 +574,13 @@ class Links {
   /** One scanned file into the index, replacing whatever was there under its
    *  path. */
   private put(scanned: ScannedNote) {
-    const at = this.notes.findIndex((note) => note.path === scanned.path)
+    this.edit((notes) => {
+      const at = notes.findIndex((note) => note.path === scanned.path)
 
-    this.notes =
-      at === -1
-        ? [...this.notes, scanned]
-        : [...this.notes.slice(0, at), scanned, ...this.notes.slice(at + 1)]
-
-    this.changed()
+      return at === -1
+        ? [...notes, scanned]
+        : [...notes.slice(0, at), scanned, ...notes.slice(at + 1)]
+    })
   }
 
   /** A note that has gone. */
@@ -517,13 +588,16 @@ class Links {
     const relative = this.relative(path)
     if (!relative) return
 
-    const kept = this.notes.filter(
-      (note) => note.path !== relative && !note.path.startsWith(`${relative}/`),
-    )
-    if (kept.length === this.notes.length) return
+    // A scan in the air is told whatever it did not see, and this is the shape of
+    // that: nothing here to take away, and a row for it on its way back. Without
+    // the second half a note deleted in a space's first second came back with the
+    // rows and stayed in `[[` until the next launch.
+    const gone = (notes: readonly ScannedNote[]) =>
+      notes.filter((note) => note.path !== relative && !note.path.startsWith(`${relative}/`))
 
-    this.notes = kept
-    this.changed()
+    if (!this.scanning && gone(this.notes).length === this.notes.length) return
+
+    this.edit(gone)
   }
 
   /** A note or a folder that has moved. The links inside the notes that moved
@@ -533,12 +607,13 @@ class Links {
     const now = this.relative(to)
     if (!was || !now) return
 
-    this.notes = this.notes.map((note) => {
-      if (note.path !== was && !note.path.startsWith(`${was}/`)) return note
-      const path = now + note.path.slice(was.length)
-      return { ...note, path, name: noteName(path) }
-    })
-    this.changed()
+    this.edit((notes) =>
+      notes.map((note) => {
+        if (note.path !== was && !note.path.startsWith(`${was}/`)) return note
+        const path = now + note.path.slice(was.length)
+        return { ...note, path, name: noteName(path) }
+      }),
+    )
   }
 
   /** A path the app holds as one the index speaks in, or null for a note that
