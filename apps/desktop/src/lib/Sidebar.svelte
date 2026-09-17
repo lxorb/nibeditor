@@ -1028,15 +1028,21 @@
 
   /* And the tabs in it give way, which is the only thing in this row that can.
      A flex child will not shrink below what is in it unless it is told to, and a
-     tab is an icon with the shared control's own padding either side of it: five
-     of those do not fit beside a panel's tools, so the control shrank and its tabs
-     stayed where they were - out of its box, over the tools, and with a z-index
-     that made them win the press. Pressing the Links panel's depth stepper opened
-     the Footnotes panel instead. The tabs here carry an icon and no words, so the
-     padding is theirs to give. */
+     tab here is an icon with the shared control's own padding either side of it:
+     five of those do not fit beside a panel's tools, so the control shrank and its
+     tabs stayed the size they were - out of its box, over the tools, and with a
+     z-index that made them win the press. Pressing the Links panel's depth stepper
+     opened the Footnotes panel instead.
+     How wide a shared shape is in the row it sits in is this file's to say; how it
+     is drawn is not. See test/one-of-each.test.ts. */
   .switch .nib-segmented button {
     min-width: 0;
-    padding-inline: var(--space-1);
+  }
+
+  /* The mark in a tab is the one thing in the row that does not give: a squeezed
+     row is one with narrower tabs in it, not one with smaller icons. */
+  .switch .nib-segmented button svg {
+    flex: none;
   }
 
   /* The tools keep their size: they are square glyph buttons, and a row that has
