@@ -70,8 +70,11 @@ body {
   outline-offset: var(--focus-ring-offset);
 }
 
-/* And three places that answer a focus another way instead, all of them here, so
-   the app has exactly four rules about the ring rather than thirty.
+/* And three places that answer a focus another way instead, so the app has
+   exactly four rules about the ring rather than thirty. Two of them are here; the
+   third is the box a caret sits in, which is the whole of the Fields section
+   below rather than a line of it, and so is written there beside the answer it is
+   half of.
 
    The first is a box that holds the keyboard for the things inside it rather than
    being one of them: the menu whose rows are the stops, the pane a note is read
@@ -87,14 +90,7 @@ body {
   outline: none;
 }
 
-/* The second is the words inside a field whose box is the wrapper: the box has
-   the border, the halo and the ring, and the input in it says nothing of its own
-   or the answer is drawn twice. See `.nib-field` below. */
-.nib-field :is(input, textarea):focus-visible {
-  outline: none;
-}
-
-/* The third is the writing surface. A note is a `contenteditable`, so the rule
+/* The second is the writing surface. A note is a `contenteditable`, so the rule
    above found it and drew the ring round the whole of it: a frame in the accent
    round every word on screen, there the entire time anybody is writing. Emil,
    with a note open: *"while editing a note, there is currently a frame around
@@ -1117,7 +1113,13 @@ select option {
 
 /* One box for anything typed into or standing in for something typed into: the
    search pill at the top of the list panel, and the search field itself, which
-   is the same control in the same place once the panel it belongs to is open. */
+   is the same control in the same place once the panel it belongs to is open.
+
+   Worn either by the control or by a wrapper round it, and that is the whole of
+   what decides which element the box is - see the focus below, which is the only
+   thing the difference is about. A wrapper where something stands in the box
+   beside the words: a magnifier in front of the three settings searches, the role
+   and the press at the end of the Share sheet's. */
 .nib-field {
   width: 100%;
   min-height: var(--row-height);
@@ -1144,7 +1146,28 @@ textarea.nib-field {
   display: block;
 }
 
-.nib-field::placeholder {
+/* The words inside a box that is a wrapper: not a box themselves, and so nothing
+   a box has. No border, no ground and no ink of their own, no room taken by a
+   padding the wrapper already has, the rest of the row to grow into, and the
+   wrapper's own font - which is what carries the row scale into them, so a finger
+   gets the touch size here without a second rule saying so.
+
+   Said once here rather than in each field. The Share sheet and the three
+   settings searches had four copies of it between them, at three font sizes and
+   two inks, which is what the one box shape is for. */
+.nib-field :is(input, textarea) {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--row-height);
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.nib-field::placeholder,
+.nib-field :is(input, textarea)::placeholder {
   color: var(--muted);
 }
 
@@ -1160,17 +1183,32 @@ textarea.nib-field {
    The native dropdown says it the same way, so `select` is in the same rule
    rather than in a second copy of these three lines further up the file.
 
+   The answer is the box's, and the box is whichever element carries the border,
+   because the border is what turns. Two shapes, and this is the one rule that
+   decides between them:
+
+   - The control is the box, where it draws its own border - a sheet's field, the
+     palette's line, the value at the end of a setting's row. Most of them, and
+     they need no class for it: the answer is the box's, not a class's, which is
+     what let five boxes with a shape of their own stop carrying a copy of these
+     three lines.
+   - A wrapper is the box, where something stands in it beside the words. There
+     the wrapper carries the border and wears `.nib-field`, and wearing it is the
+     whole of what makes it the box.
+
+   So a wrapper that draws a field's border and does not wear the class is the one
+   thing that cannot work, and the three settings searches were exactly that: each
+   drew its own border, answered its own `:focus-within`, and then the input
+   inside it - a box to this rule, because nothing said otherwise - lit a square
+   halo of its own inside the border that had just turned. Emil, with the keyboard
+   in one: *"there's an inner frame for all input fields ... it is redundant."*
+
    A box you type into, and only that. The caret is the other half of this answer,
    and it is what says which of the two kinds a control is rather than which class
-   it happens to wear:
-
-   - The search pill wore the field for its shape - a button with a magnifier in
-     it, the door to the panel whose own field stands in the same place - and this
-     rule was reaching it and taking the ring away. It was the weakest thing in the
-     app to find with a key. A button gets the ring.
-   - Five boxes in sheets and panels had their own copy of the two lines below,
-     because they have a shape of their own and so could not wear the field. The
-     answer is the box's, not the class's, so they do not have to.
+   it happens to wear: the search pill wore the field for its shape - a button
+   with a magnifier in it, the door to the panel whose own field stands in the
+   same place - and this rule was reaching it and taking the ring away. It was the
+   weakest thing in the app to find with a key. A button gets the ring.
 
    A slider, a checkbox and a colour are inputs too and none of them holds a
    caret: they are named out here rather than left to be caught by accident, and
@@ -1186,12 +1224,28 @@ select:focus-visible,
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-/* The magnifier in front of the words, quiet, at the size a row's mark is. */
+/* And the other half of it: the words inside a wrapper say nothing at all when
+   the keyboard lands, or the shared ring is drawn inside the border that just
+   turned - which is the same frame twice, one of them square. This is the third
+   of the four rules the ring section at the top of the file counts, kept here
+   beside the answer it belongs to rather than a thousand lines away from it. */
+.nib-field :is(input, textarea):focus-visible {
+  outline: none;
+}
+
+/* The magnifier in front of the words, quiet, at the size a row's mark is. Drawn
+   the way every mark from a path in this app is - stroked, never filled - which
+   each caller used to say again for itself at three different thicknesses. */
 .nib-field-mark {
   width: var(--icon-md);
   height: var(--icon-md);
   flex: none;
   color: var(--muted);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 /* ── The bubble a sentence appears in ──────── */

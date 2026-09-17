@@ -283,7 +283,11 @@
     color: var(--accent);
   }
 
-  /* Something typed in: an address, a name, a domain. */
+  /* Something typed in: an address, a name, a domain. A box of its own, so what
+     it says when the keyboard lands in it is the themes package's answer for one
+     - the border turns, the halo lights, the ring goes. The turn is restated
+     below and only the turn: the border here is a shorthand, and a shorthand
+     naming a colour outweighs the one word the shared rule changes. */
   .sheet :global(input.field) {
     flex: 1;
     width: 100%;
@@ -295,7 +299,6 @@
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    outline: none;
     transition: border-color var(--dur-fast) var(--ease-out);
   }
 

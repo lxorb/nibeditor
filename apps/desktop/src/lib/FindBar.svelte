@@ -374,18 +374,14 @@
     padding-inline-end: calc((var(--row-height) - 6px) * 3 + var(--space-3));
   }
 
+  /* Over the field rather than beside it, because here the field is the input
+     itself and there is no box to stand in. The drawing is `.nib-field-mark` in
+     the themes package, which every search in the app wears. */
   .mag {
     position: absolute;
     inset-inline-start: var(--row-pad);
     top: 50%;
     transform: translateY(-50%);
-    /* Stroked rather than filled, like every other mark drawn from a path in
-       this app. Said here because `.nib-field-mark` in the themes package sets
-       the size and the colour and leaves the drawing to the caller. */
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.5;
-    stroke-linecap: round;
     pointer-events: none;
   }
 

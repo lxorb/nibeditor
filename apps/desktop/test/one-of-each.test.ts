@@ -236,6 +236,55 @@ describe('the ring a keyboard leaves', () => {
     )
   })
 
+  /** And the half of that hole the two tests above still left, which is how the
+   *  settings search kept its own answer for three years: `.search input` said
+   *  `outline: none` in a rule with no `:focus` in it at all, so neither of them
+   *  ever read it. A control the shared ring lands on is silenced in the themes
+   *  package or nowhere - and the only place it is silenced is inside a box, where
+   *  the box has already answered. */
+  test('and a component never silences a control, in any rule at all', () => {
+    const own = components
+      .filter((one) =>
+        rules(one.style).some(
+          (rule) =>
+            /(^|[\s,>+~(])(input|textarea|select)(?![\w-])/.test(rule.selector) &&
+            outlines(rule.declarations).includes('none'),
+        ),
+      )
+      .map((one) => one.name)
+      .sort()
+
+    expect(own, `these silence a control of their own: ${own.join(', ')}`).toEqual([])
+  })
+
+  /** And the fault that left: not a ring drawn twice but an *answer* drawn twice.
+   *  The settings search was a wrapper with a border of its own and a
+   *  `:focus-within` of its own, so the box turned - and the input inside it, which
+   *  nothing had said was not a box, lit a square halo within the border that had
+   *  just turned. Emil: *"there's an inner frame for all input fields ... it is
+   *  redundant."*
+   *
+   *  A wrapper that answers for what is inside it is a field, and a field is
+   *  `.nib-field` - which is drawn once, in the themes package, halo and all. */
+  test('and a component never answers a focus on behalf of something inside it', () => {
+    const own = components
+      .flatMap((one) =>
+        rules(one.style)
+          .filter(
+            (rule) =>
+              (rule.selector.includes(':focus-within') ||
+                /:has\([^)]*:focus/.test(rule.selector)) &&
+              ['border', 'border-color', 'box-shadow', 'outline'].some(
+                (property) => valuesOf(rule.declarations, property).length > 0,
+              ),
+          )
+          .map((rule) => `${one.name} (${rule.selector})`),
+      )
+      .sort()
+
+    expect(own, `these answer a focus for what is inside them: ${own.join(', ')}`).toEqual([])
+  })
+
   /** Where it is turned off, and the only two places it is. */
   test('and the two surfaces that answer another way are drawn in the themes package', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
@@ -281,6 +330,30 @@ describe('the ring a keyboard leaves', () => {
       .sort()
 
     expect(early, `these ring a click as well as a key: ${early.join(', ')}`).toEqual([])
+  })
+})
+
+/** The box a caret sits in, which is either the control or a wrapper round it -
+ *  and where it is the wrapper, what is inside the wrapper. Both halves are one
+ *  shape in the themes package, because the settings search drew its own and came
+ *  out a different height, a different corner, a different ink and a different
+ *  answer from every other field in the app. See the Fields section of base.css. */
+describe('the box a caret sits in', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(shared).toContain('.nib-field {')
+    // The class itself, not what a component says about where its own field
+    // sits in the column above what it searches.
+    expect(draw(/\.nib-field(?![\w-])/)).toEqual([])
+  })
+
+  test('and so are the words inside one, and the mark in front of them', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+
+    expect(shared).toContain('.nib-field :is(input, textarea) {')
+    expect(shared).toContain('.nib-field-mark {')
+    expect(draw(/\.nib-field-mark(?![\w-])/)).toEqual([])
   })
 })
 

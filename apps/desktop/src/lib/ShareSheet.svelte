@@ -390,25 +390,6 @@
     gap: var(--space-1);
   }
 
-  /* The box takes the border and the ring; this is only the words in it. The
-     height comes from the row scale rather than from padding, so what a thumb
-     lands on is a row and not the 34px this was on every screen. */
-  .compose input {
-    flex: 1;
-    min-width: 0;
-    min-height: var(--row-height);
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-  }
-
-  .compose input::placeholder {
-    color: var(--muted);
-  }
-
   /* What was typed is not an address, said by the field as well as under it. */
   .compose.bad {
     border-color: var(--danger);
@@ -606,10 +587,6 @@
      puts the role and the press on a line of their own under what is typed. */
   :global([data-touch]) .compose {
     padding: var(--space-1) var(--space-1) var(--space-1) var(--touch-gap);
-  }
-
-  :global([data-touch]) .compose input {
-    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .compose .pick {

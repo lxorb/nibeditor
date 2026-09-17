@@ -11,6 +11,7 @@
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
   import McpSetup from './McpSetup.svelte'
+  import { SEARCH_MARK } from './panel-marks'
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
   import RecentlyDeleted from './RecentlyDeleted.svelte'
@@ -385,10 +386,8 @@
           <h1>{t('Settings')}</h1>
         {/if}
 
-        <label class="search">
-          <svg viewBox="0 0 16 16"
-            ><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg
-          >
+        <label class="nib-field search">
+          <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
           <input bind:value={query} placeholder={t('Search settings')} spellcheck="false" />
         </label>
 
@@ -846,8 +845,8 @@
     })}
   </div>
 
-  <label class="search">
-    <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+  <label class="nib-field search">
+    <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input bind:value={keyFilter} placeholder={t('Search shortcuts')} spellcheck="false" />
   </label>
 
@@ -1006,8 +1005,8 @@
   </div>
 
   <h3>{t('Everything else')}</h3>
-  <label class="search">
-    <svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" /><path d="M10.4 10.4L14 14" /></svg>
+  <label class="nib-field search">
+    <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
     <input bind:value={barFilter} placeholder={t('Search commands')} spellcheck="false" />
   </label>
 
@@ -1217,42 +1216,13 @@
     color: var(--text-strong);
   }
 
+  /* The box, the magnifier in it, the words and what all three do when the
+     keyboard lands are `.nib-field` in the themes package, the same one the Share
+     sheet's field and the panel's search pill are. What is left here is where it
+     sits in the column above what it searches. */
   .search {
-    display: flex;
-    align-items: center;
-    gap: 6px;
     flex: none;
     margin-bottom: var(--space-3);
-    padding: 0 10px;
-    height: 32px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    transition: border-color var(--dur-fast) var(--ease-out);
-  }
-
-  .search:focus-within {
-    border-color: var(--accent);
-  }
-
-  .search svg {
-    width: 13px;
-    height: 13px;
-    flex: none;
-    fill: none;
-    stroke: var(--muted);
-    stroke-width: 1.4;
-  }
-
-  .search input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    background: none;
-    outline: none;
-    color: var(--text);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
   }
 
   .group {
@@ -2026,24 +1996,14 @@
     background: none;
   }
 
+  /* The row scale carries the height, the room, the corner and the type size
+     across by itself - past sixteen pixels, which is where iOS stops zooming into
+     a field on focus. What it cannot carry is the ground: the column here has none
+     of its own, so the box takes the surface the cards under it are on rather than
+     the window's. */
   .sheet.phone .search {
-    height: var(--touch-target);
     margin-bottom: var(--space-4);
-    padding: 0 var(--touch-pad);
-    border-color: var(--line);
-    border-radius: var(--radius-md);
     background: var(--surface);
-  }
-
-  .sheet.phone .search svg {
-    width: 16px;
-    height: 16px;
-  }
-
-  .sheet.phone .search input {
-    /* Past sixteen pixels, which is where iOS stops zooming into a field on
-       focus, and the same size as the rows the search leads to. */
-    font-size: var(--touch-text);
   }
 
   .sheet.phone .group {
