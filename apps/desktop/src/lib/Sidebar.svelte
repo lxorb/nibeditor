@@ -1026,6 +1026,25 @@
     min-width: 0;
   }
 
+  /* And the tabs in it give way, which is the only thing in this row that can.
+     A flex child will not shrink below what is in it unless it is told to, and a
+     tab is an icon with the shared control's own padding either side of it: five
+     of those do not fit beside a panel's tools, so the control shrank and its tabs
+     stayed where they were - out of its box, over the tools, and with a z-index
+     that made them win the press. Pressing the Links panel's depth stepper opened
+     the Footnotes panel instead. The tabs here carry an icon and no words, so the
+     padding is theirs to give. */
+  .switch .nib-segmented button {
+    min-width: 0;
+    padding-inline: var(--space-1);
+  }
+
+  /* The tools keep their size: they are square glyph buttons, and a row that has
+     to give somewhere gives from the tabs above. */
+  .tools {
+    flex: none;
+  }
+
   /* At the far end of the row, so the tabs keep their place whether or not the
      panel showing has anything to offer. */
   /* The note a held panel is about, over the panel that is about it. Quiet: the
