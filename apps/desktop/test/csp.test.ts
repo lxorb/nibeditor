@@ -19,7 +19,13 @@ import { CSP, META_CSP } from '../src/csp'
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
 
 const TAURI = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
-  app: { security: { csp: string | null } }
+  app: {
+    security: {
+      csp: string | null
+      /** The directives the bundler is told not to rewrite; see the last test. */
+      dangerousDisableAssetCspModification?: string[]
+    }
+  }
 }
 
 const INDEX = read('../index.html')
@@ -159,5 +165,40 @@ describe('the content policy', () => {
     for (const host of hosts) {
       expect(host, host).toMatch(/^http:\/\/(localhost|127\.0\.0\.1|[a-z]+\.localhost)(:\*)?$/)
     }
+  })
+
+  /** The one directive the bundler must not touch, and the most expensive line in
+   *  this file to have got wrong.
+   *
+   *  Tauri rewrites the policy in `tauri.conf.json` as it builds, and stamps every
+   *  inline `<style>` and `<script>` it finds in `index.html` with a nonce it puts
+   *  into the matching directive. That is the right thing for scripts. For styles it
+   *  is a trap, because CSP says a directive carrying a nonce IGNORES `'unsafe-inline'`
+   *  beside it - so the moment index.html gained its first inline style, every
+   *  stylesheet the app mounts at RUNTIME was silently blocked.
+   *
+   *  CodeMirror mounts its theme that way, and two of its rules exist nowhere else:
+   *  the editor is `height: 100%` and its scroller is `overflow-y: auto`. Without
+   *  them the editor grows to the whole note, the scroller has nothing left to
+   *  scroll, and a note cannot be scrolled at all - no bar, and a wheel that does
+   *  nothing, while the caret still moves the note because that is the app setting
+   *  `scrollTop` on the parent that clips. Reading mode was unaffected throughout,
+   *  because it is styled from a real stylesheet.
+   *
+   *  Measured in the shipped WebView2 app: the theme's `<style>` sat in the head with
+   *  its 14 kB of text and no `CSSStyleSheet` attached, five launches out of five.
+   *  With this line, 186 rules. Nothing caught it because the dev server sends its
+   *  own policy from src/csp.ts, which Tauri never sees, and every drive in the
+   *  repository runs against a server rather than against the packaged app.
+   *
+   *  The inline style that set it off arrived in 3a39445e, so the window could paint
+   *  its remembered colour before the webview existed. That is worth keeping; this is
+   *  what makes it safe to keep. */
+  test('leaves style-src alone, or the editor loses the stylesheet it mounts', () => {
+    const untouched = TAURI.app.security.dangerousDisableAssetCspModification
+    expect(untouched, 'the bundler must not add a nonce to style-src').toContain('style-src')
+
+    // And the directive it is protecting still has to allow what it allows.
+    expect(TAURI.app.security.csp ?? '').toContain("style-src 'self' 'unsafe-inline'")
   })
 })
