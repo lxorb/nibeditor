@@ -191,6 +191,18 @@ interface Someone {
   guest: string | null
 }
 
+/** What one call from the sheet is about, read once where the press happens.
+ *
+ *  Every route the sheet reaches takes these three and nothing else: whose account
+ *  is asking, which space, and which file of it - empty for the space itself. Handed
+ *  to the call rather than reached for from inside it, so that no control anywhere
+ *  below can read a field that has moved on since the press. */
+interface Asking {
+  token: string
+  id: string
+  item: string
+}
+
 /** The addresses in what was typed into the field.
  *
  *  Commas, semicolons and spaces all separate, because a list copied out of a
@@ -225,11 +237,6 @@ class Share {
    *  it - the same reason the address field is drawn before the list is. */
   item = $state<{ id: string; path: string } | null>(null)
 
-  /** Which share every call below is about: the file, or - empty - the space. */
-  get itemId(): string {
-    return this.item?.id ?? ''
-  }
-
   /** Who may reach it, as the account last said. Null while it is being read,
    *  which is when the sheet draws the shape of the rows instead. */
   who = $state<Sharing | null>(null)
@@ -242,6 +249,26 @@ class Share {
    *  second press cannot ask for the same change twice while the first is still
    *  in the air. */
   working = $state<string | null>(null)
+
+  /** Which sheet the answers coming back are about.
+   *
+   *  Bumped every time the sheet is pointed at something - a space, a file, or the
+   *  same file a second time - and every request carries the number it went out
+   *  under. Nothing an older number brings back is ever drawn.
+   *
+   *  A number and not the file's id, because the id cannot tell one question from
+   *  the next: a sheet closed on a note and opened on it again is a second question,
+   *  and the first answer is a list from before whatever was changed in between. And
+   *  a number and not a flag, because what is being guarded against is the sheet
+   *  having moved on, which happens as often as somebody presses Share.
+   *
+   *  This is the one thing standing between a reader and another file's people. The
+   *  sheet is opened from a row, a tab, the palette and a web tab, each of them one
+   *  press, so opening it on one note and on another inside a single round trip is
+   *  an ordinary minute - and what was drawn was the first note's list under the
+   *  second note's name, with Remove sending somebody who was never in the second
+   *  file against the second file's id. */
+  private sheet = 0
 
   error = $state<string | null>(null)
 
@@ -287,6 +314,10 @@ class Share {
     const id = sync.remoteIdFor(space.root)
     if (!id) return
 
+    // The sheet moves before the read begins, so whatever is already in the air is
+    // stale from this line on rather than from the line its answer lands at.
+    this.sheet += 1
+
     this.space = space
     this.spaceId = id
     this.item = item
@@ -295,9 +326,13 @@ class Share {
     this.email = ''
     this.wrongAddress = false
     this.role = 'write'
+    // Nothing in the air is about this sheet, so no control on it is waiting on
+    // anything: the one-at-a-time gate below is about two presses on one sheet, and
+    // a sheet the reader has just opened is not a second press on the one before it.
+    this.working = null
     this.open = true
 
-    await this.run((token) => api.sharing(token, id, this.itemId), 'sheet')
+    await this.run((asking) => api.sharing(asking.token, asking.id, asking.item), 'sheet')
   }
 
   close() {
@@ -320,9 +355,10 @@ class Share {
     const left = [...addresses]
     while (left.length) {
       const address = left[0] ?? ''
+      const role = this.role
       if (
         !(await this.change(
-          (token, id) => api.invite(token, id, address, this.role, this.itemId),
+          (asking) => api.invite(asking.token, asking.id, address, role, asking.item),
           'invite',
         ))
       ) {
@@ -338,7 +374,7 @@ class Share {
    *  first one took, which mints a fresh link and writes a fresh mail. */
   resend(person: Someone & { role: GivenRole }) {
     return this.change(
-      (token, id) => api.invite(token, id, person.email ?? '', person.role, this.itemId),
+      (asking) => api.invite(asking.token, asking.id, person.email ?? '', person.role, asking.item),
       whoIs(person),
     )
   }
@@ -349,20 +385,20 @@ class Share {
    *  have to know which it got. */
   setRole(person: Someone, role: GivenRole) {
     return this.change(
-      (token, id) =>
+      ({ token, id, item }) =>
         person.guest
-          ? api.setGuestRole(token, id, person.guest, role, this.itemId)
-          : api.setMemberRole(token, id, person.email ?? '', role, this.itemId),
+          ? api.setGuestRole(token, id, person.guest, role, item)
+          : api.setMemberRole(token, id, person.email ?? '', role, item),
       whoIs(person),
     )
   }
 
   remove(person: Someone) {
     return this.change(
-      (token, id) =>
+      ({ token, id, item }) =>
         person.guest
-          ? api.removeGuest(token, id, person.guest, this.itemId)
-          : api.removeMember(token, id, person.email ?? '', this.itemId),
+          ? api.removeGuest(token, id, person.guest, item)
+          : api.removeMember(token, id, person.email ?? '', item),
       whoIs(person),
     )
   }
@@ -371,11 +407,14 @@ class Share {
    *  The link itself stays the same, so a copy already in somebody's message
    *  keeps working and starts meaning this instead. */
   setLink(role: GivenRole, mode: 'open' | 'approval') {
-    return this.change((token, id) => api.setShareLink(token, id, role, mode, this.itemId), 'link')
+    return this.change(
+      ({ token, id, item }) => api.setShareLink(token, id, role, mode, item),
+      'link',
+    )
   }
 
   revoke() {
-    return this.change((token, id) => api.revokeShareLink(token, id, this.itemId), 'link')
+    return this.change(({ token, id, item }) => api.revokeShareLink(token, id, item), 'link')
   }
 
   /** A new link in place of the one there is: the old address stops opening
@@ -383,28 +422,28 @@ class Share {
    *  press, so the sheet never shows the moment in between where the space has no
    *  link at all. */
   reset(role: GivenRole, mode: 'open' | 'approval') {
-    return this.change(async (token, id) => {
-      await api.revokeShareLink(token, id, this.itemId)
-      return api.setShareLink(token, id, role, mode, this.itemId)
+    return this.change(async ({ token, id, item }) => {
+      await api.revokeShareLink(token, id, item)
+      return api.setShareLink(token, id, role, mode, item)
     }, 'link')
   }
 
   accept(person: Someone) {
     return this.change(
-      (token, id) =>
+      ({ token, id, item }) =>
         person.guest
-          ? api.acceptGuest(token, id, person.guest, this.itemId)
-          : api.acceptRequest(token, id, person.email ?? '', this.itemId),
+          ? api.acceptGuest(token, id, person.guest, item)
+          : api.acceptRequest(token, id, person.email ?? '', item),
       whoIs(person),
     )
   }
 
   decline(person: Someone) {
     return this.change(
-      (token, id) =>
+      ({ token, id, item }) =>
         person.guest
-          ? api.removeGuest(token, id, person.guest)
-          : api.declineRequest(token, id, person.email ?? '', this.itemId),
+          ? api.removeGuest(token, id, person.guest, item)
+          : api.declineRequest(token, id, person.email ?? '', item),
       whoIs(person),
     )
   }
@@ -413,55 +452,70 @@ class Share {
    *  space listing is asked for again as well: a role that changed here changes
    *  what the switcher and the editor offer. */
   private async change(
-    work: (token: string, id: string) => Promise<Sharing>,
+    work: (asking: Asking) => Promise<Sharing>,
     about: string,
   ): Promise<boolean> {
-    const id = this.spaceId
-    if (!id) return false
-
-    const done = await this.run((token) => work(token, id), about)
+    const done = await this.run(work, about)
     if (done) await account.loadSpaces().catch(() => undefined)
     return done
   }
 
-  private async run(work: (token: string) => Promise<Sharing>, about: string): Promise<boolean> {
+  /** The one door every call on the sheet goes through.
+   *
+   *  It reads what the call is about once, before anything is sent, and answers
+   *  only into the sheet that sent it. Which is why no control above reaches for
+   *  `spaceId` or for the file: a field read after an await is a field that may
+   *  have moved, and there is no way to see from a call site that it has. */
+  private async run(work: (asking: Asking) => Promise<Sharing>, about: string): Promise<boolean> {
     // The owner's, always: everything on this sheet is theirs to change, and a
     // guest has no account for any of it to be about.
     const token = account.accountToken
-    if (!token) return false
+    const id = this.spaceId
+    if (!token || !id) return false
 
     // One at a time. Every control goes quiet while one is in flight, so this is
     // the machine agreeing with the screen rather than a second guard.
     if (this.working !== null) return false
 
+    const asking: Asking = { token, id, item: this.item?.id ?? '' }
+    const sheet = this.sheet
+
     this.working = about
     this.error = null
 
     try {
-      this.who = await work(token)
-      return true
+      return this.landed(sheet, await work(asking))
     } catch (error) {
       // Somebody who is no longer in the space has already gone, which is what
       // the press was asking for. It is not a failure to report: the list is
       // simply older than the space, so it is read again.
-      if (gone(error)) return await this.reread()
+      if (gone(error)) return await this.reread(asking, sheet)
 
-      this.error = message(error, 'could not reach the server')
+      if (sheet === this.sheet) this.error = message(error, 'could not reach the server')
       return false
     } finally {
-      this.working = null
+      // A sheet that has moved on is already not waiting on anything: it has its
+      // own read in the air, under its own name.
+      if (sheet === this.sheet) this.working = null
     }
   }
 
-  /** The list again, after a change that turned out to have happened already. */
-  private async reread(): Promise<boolean> {
-    const token = account.accountToken
-    const id = this.spaceId
-    if (!token || !id) return false
+  /** Draws what came back, if the sheet that asked is still the sheet.
+   *
+   *  An answer to an older one is not merely out of date, which would be a reason
+   *  to draw it and read again. It is another file's list of people and another
+   *  file's invite link, and there is nowhere on this sheet either belongs. */
+  private landed(sheet: number, who: Sharing): boolean {
+    if (sheet !== this.sheet) return false
 
+    this.who = who
+    return true
+  }
+
+  /** The list again, after a change that turned out to have happened already. */
+  private async reread(asking: Asking, sheet: number): Promise<boolean> {
     try {
-      this.who = await api.sharing(token, id, this.itemId)
-      return true
+      return this.landed(sheet, await api.sharing(asking.token, asking.id, asking.item))
     } catch {
       // The change itself is not in doubt; only this list is out of date, and it
       // is read again the next time the sheet is opened.
@@ -559,6 +613,16 @@ class SharedWithYou {
    *  them has always had. */
   private asking: ReturnType<typeof setInterval> | undefined
 
+  /** Which list the rows are.
+   *
+   *  Bumped by everything here that changes them a row at a time - handing one back,
+   *  and the session going - and a listing carries the number it was asked under.
+   *  The listing is the whole list at once and it is read as it stood when it was
+   *  asked, so one that was already in the air when a row went puts the row back:
+   *  the file is handed back, the tab closes, and it is in the switcher again until
+   *  the next pass a quarter of a minute later. */
+  private listed = 0
+
   /** Whether one of these may be written in. Read-only for a file that is not in
    *  the list at all: it was taken back, and the tab on it is on its way out. */
   mayWrite(id: string): boolean {
@@ -585,13 +649,19 @@ class SharedWithYou {
   async load() {
     const token = account.token
     if (!token) {
-      this.stop()
-      this.items = []
+      this.forget()
       return
     }
 
+    const listed = this.listed
+
     try {
       const { shared } = await api.shared(token)
+      // A row went while this was on its way back, so what came back is the list
+      // from before it went. Dropped rather than drawn: the next pass asks again,
+      // and this one would put back what the reader has already let go of.
+      if (listed !== this.listed) return
+
       const before = new Set(this.items.map((one) => one.id))
       this.items = shared
 
@@ -613,6 +683,15 @@ class SharedWithYou {
   stop() {
     clearInterval(this.asking)
     this.asking = undefined
+  }
+
+  /** And lets go of the rows, for a session that has ended. Somebody else's files
+   *  go with the account that reached them, and so does a listing still in the air
+   *  for it. */
+  forget() {
+    this.stop()
+    this.listed += 1
+    this.items = []
   }
 
   private keepAsking() {
@@ -654,6 +733,9 @@ class SharedWithYou {
     const token = account.token
     if (!token) return
 
+    // The row goes here and now, so the listing that is already in the air is a
+    // list from before it went; see `listed`.
+    this.listed += 1
     this.items = this.items.filter((one) => one.id !== item.id)
     workspace.closeShared(item.id)
 
@@ -672,7 +754,4 @@ export const sharedWithYou = new SharedWithYou()
 // Somebody else's files go with the session that reached them, and so does the
 // asking behind them. Registered rather than reached for, the way everything that
 // holds something of an account's does; see `forgetWithSession`.
-account.forgetWithSession(() => {
-  sharedWithYou.stop()
-  sharedWithYou.items = []
-})
+account.forgetWithSession(() => sharedWithYou.forget())

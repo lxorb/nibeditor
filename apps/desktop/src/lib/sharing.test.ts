@@ -24,16 +24,28 @@ const member = (email: string, role = 'write') => ({
 })
 const guest = (id: string, name: string, role = 'write') => ({ email: null, guest: id, name, role })
 
+/** Who may reach one share, as the account answers it. */
+interface Who {
+  owner: { email: string; name: string | null }
+  members: (Held & { pending: boolean })[]
+  requests: (Held & { at: number })[]
+  link: { url: string; role: string; mode: string } | null
+}
+
 interface World {
   /** Which remote space each folder mirrors, if any. */
   mirrors: Record<string, string>
   /** What every share call answers with. */
-  sharing: {
-    owner: { email: string; name: string | null }
-    members: (Held & { pending: boolean })[]
-    requests: (Held & { at: number })[]
-    link: { url: string; role: string; mode: string } | null
-  }
+  sharing: Who
+  /** What a call about one file answers with instead, by the file's id. Which is
+   *  what lets a test tell two shares apart: the whole point of the sheet is that
+   *  the list in front of the reader is the list of the thing it is headed with. */
+  sharingOf: Record<string, Who>
+  /** Whether answers are held in the air rather than landing at once, so a test
+   *  can move the world under a request that has already gone. */
+  holding: boolean
+  /** The answers being held, in the order they were asked for; see `land`. */
+  held: (() => void)[]
   /** Set to make the next call fail. */
   refuse: string | null
   /** What the refusal comes back as. 404 is the space saying the change had
@@ -66,6 +78,9 @@ const world = vi.hoisted((): World => ({
     requests: [],
     link: null,
   },
+  sharingOf: {},
+  holding: false,
+  held: [],
   refuse: null,
   refuseStatus: 403,
   asked: [],
@@ -81,13 +96,22 @@ const world = vi.hoisted((): World => ({
 vi.mock('./api', async (importOriginal) => {
   const original = await importOriginal<typeof import('./api')>()
 
-  const answer = (what: string) => {
+  const answer = (what: string, who = world.sharing) => {
     world.asked.push(what)
-    if (world.refuse) {
-      return Promise.reject(new original.ApiError(world.refuseStatus, world.refuse))
-    }
 
-    return Promise.resolve(world.sharing)
+    // What the call answers is decided now, as a server decides it: a test that
+    // clears the refusal after the press is asking about the press, not about
+    // what the server thought a moment later.
+    const refuse = world.refuse
+    const status = world.refuseStatus
+    const settle = () =>
+      refuse ? Promise.reject(new original.ApiError(status, refuse)) : Promise.resolve(who)
+
+    if (!world.holding) return settle()
+
+    return new Promise<Who>((go, stop) => {
+      world.held.push(() => void settle().then(go, stop))
+    })
   }
 
   /** Which share a call was about, as the calls themselves say it: the space, or
@@ -98,7 +122,8 @@ vi.mock('./api', async (importOriginal) => {
   return {
     ...original,
     api: {
-      sharing: (_token: string, id: string, item = '') => answer(`read ${id}${about(item)}`),
+      sharing: (_token: string, id: string, item = '') =>
+        answer(`read ${id}${about(item)}`, world.sharingOf[item] ?? world.sharing),
       invite: (_token: string, id: string, email: string, role: string, item = '') =>
         answer(`invite ${email} as ${role} to ${id}${about(item)}`),
       setMemberRole: (_token: string, id: string, email: string, role: string, item = '') =>
@@ -130,7 +155,13 @@ vi.mock('./api', async (importOriginal) => {
           return Promise.reject(new original.ApiError(world.refuseStatus, world.refuse))
         }
 
-        return Promise.resolve({ shared: world.shared })
+        // Read as it stands now, and held in the air if the test is holding: a
+        // listing is the whole list at once, and what it answers with is the list
+        // as it was when it was asked.
+        const listing = { shared: world.shared }
+        if (!world.holding) return Promise.resolve(listing)
+
+        return new Promise<typeof listing>((go) => world.held.push(() => go(listing)))
       },
       readNote: (_token: string, id: string) => {
         world.asked.push(`words of ${id}`)
@@ -227,6 +258,23 @@ function sharedFile(id: string, path: string, owner: string, role = 'write'): Sh
 
 const local = (name: string) => ({ id: name, name, root: name })
 
+/** Lets answers that are being held in the air land, in the order named - `land(1,
+ *  0)` is the second request coming back before the first, and `land()` is all of
+ *  them in the order they were asked for. Whatever is not named stays in the air,
+ *  and anything asked for in the meantime joins the queue behind it. */
+async function land(...order: number[]) {
+  const held = world.held
+  const when = order.length ? order : held.map((_one, at) => at)
+  world.held = held.filter((_one, at) => !when.includes(at))
+
+  for (const at of when) {
+    held[at]?.()
+    // Several turns per answer: what it sets off can be another round trip, and
+    // the queue it joins has to be there before the next one lands.
+    for (let turn = 0; turn < 6; turn++) await Promise.resolve()
+  }
+}
+
 beforeEach(() => {
   world.mirrors = {}
   world.sharing = {
@@ -235,6 +283,9 @@ beforeEach(() => {
     requests: [],
     link: null,
   }
+  world.sharingOf = {}
+  world.holding = false
+  world.held = []
   world.refuse = null
   world.refuseStatus = 403
   world.asked = []
@@ -758,6 +809,7 @@ describe('the sheet about one file', () => {
     await share.setRole(guest('g1', 'Ada'), 'read')
     await share.remove(guest('g1', 'Ada'))
     await share.accept(guest('g1', 'Ada'))
+    await share.decline(guest('g1', 'Ada'))
     await share.accept(member('bob@example.com'))
     await share.decline(member('bob@example.com'))
     await share.setLink('read', 'approval')
@@ -771,6 +823,7 @@ describe('the sheet about one file', () => {
       'guest g1 is now read in space-1 about note-1',
       'remove guest g1 about note-1',
       'accept guest g1 about note-1',
+      'remove guest g1 about note-1',
       'accept bob@example.com about note-1',
       'decline bob@example.com about note-1',
       'link read approval about note-1',
@@ -786,6 +839,131 @@ describe('the sheet about one file', () => {
 
     expect(share.open).toBe(false)
     expect(world.asked).toEqual([])
+  })
+})
+
+/** Two sheets inside one round trip.
+ *
+ *  The sheet is opened from a row's menu, from a tab, from the palette and from a
+ *  web tab, and each of those is one press. So opening it on one note, closing it
+ *  and opening it on another before the first list has come back is an ordinary
+ *  minute rather than a quick one - and the reading of that minute has to be that
+ *  the list under a name is that name's list.
+ *
+ *  What it used to be: the second sheet never asked at all, because every control
+ *  goes quiet while one request is in flight and the first sheet's read was one.
+ *  So the first file's people and the first file's invite link were drawn under the
+ *  second file's name, for as long as the sheet stayed open, and Remove sent
+ *  somebody who was never in the second file against the second file's id. */
+describe('a sheet opened on another file while the first is still being read', () => {
+  const PLAN = 'Notes/plan.md'
+  const DIARY = 'Notes/diary.md'
+
+  /** One share, as the account answers it: who is in it, and the link it hands
+   *  out. Two of these tell the two files apart. */
+  const shareOf = (email: string, url: string): Who => ({
+    owner: { email: 'owner@example.com', name: 'Emil' },
+    members: [member(email)],
+    requests: [],
+    link: { url, role: 'read', mode: 'open' },
+  })
+
+  /** The sheet opened on the plan, closed, and opened on the diary before a word
+   *  has come back about either. */
+  const twoSheets = () => {
+    const first = share.showItem(local('Notes'), PLAN)
+    share.close()
+    const second = share.showItem(local('Notes'), DIARY)
+
+    return Promise.all([first, second])
+  }
+
+  beforeEach(() => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { [PLAN]: 'note-1', [DIARY]: 'note-2' }
+    account.spaces = [remote('space-1', 'owner')]
+    world.sharingOf = {
+      'note-1': shareOf('ada@example.com', 'https://nib.test/plan'),
+      'note-2': shareOf('bob@example.com', 'https://nib.test/diary'),
+    }
+    world.holding = true
+  })
+
+  test('asks about the file it is headed with rather than going quiet behind the first', async () => {
+    const both = twoSheets()
+    expect(world.asked).toEqual(['read space-1 about note-1', 'read space-1 about note-2'])
+
+    await land()
+    await both
+  })
+
+  test('shows the people of that file even when the first answer lands last', async () => {
+    const both = twoSheets()
+    await land(1, 0)
+    await both
+
+    expect(share.item?.id).toBe('note-2')
+    expect(share.who?.members.map((one) => one.email)).toEqual(['bob@example.com'])
+  })
+
+  test('and hands out that file’s invite link rather than the other file’s', async () => {
+    const both = twoSheets()
+    await land(1, 0)
+    await both
+
+    expect(share.who?.link?.url).toBe('https://nib.test/diary')
+  })
+
+  test('and the first answer landing leaves the sheet waiting on its own', async () => {
+    const both = twoSheets()
+
+    // Only the first comes back. The sheet in front of the reader is still being
+    // read, so it says so rather than drawing somebody else's list.
+    await land(0)
+    expect(share.who).toBeNull()
+    expect(share.waiting('sheet')).toBe(true)
+
+    await land()
+    await both
+    expect(share.who?.members.map((one) => one.email)).toEqual(['bob@example.com'])
+  })
+
+  test('and Remove takes the person it is showing out of the file it is showing', async () => {
+    const both = twoSheets()
+    await land(1, 0)
+    await both
+
+    world.holding = false
+    world.asked = []
+    const shown = share.who?.members[0]?.email ?? ''
+    await share.remove({ email: shown, guest: null })
+
+    expect(world.asked).toEqual(['remove bob@example.com about note-2'])
+  })
+
+  /** The same hole one step further in. A change that turns out to have happened
+   *  already reads the list again, and that read is a round trip like any other. */
+  test('and a list read again after a change had already happened is dropped as well', async () => {
+    world.holding = false
+    await share.showItem(local('Notes'), PLAN)
+
+    world.holding = true
+    world.refuse = 'nobody by that address'
+    world.refuseStatus = 404
+    const removing = share.remove(member('ada@example.com'))
+
+    // The removal comes back saying she had already gone, which sends the sheet
+    // to read the plan's list again.
+    world.refuse = null
+    await land()
+
+    // And while that read is in the air, the sheet is pointed at the diary.
+    const second = share.showItem(local('Notes'), DIARY)
+    await land()
+    await Promise.all([removing, second])
+
+    expect(share.item?.id).toBe('note-2')
+    expect(share.who?.members.map((one) => one.email)).toEqual(['bob@example.com'])
   })
 })
 
@@ -919,5 +1097,28 @@ describe('the files other people shared with you', () => {
 
     expect(sharedWithYou.items).toHaveLength(1)
     expect(world.closed).toEqual([])
+  })
+
+  /** The listing is the whole list at once and the rows change one at a time, which
+   *  is the same shape as everything else in this file: a pass that was already in
+   *  the air when a file was handed back used to put the row back, tab and all,
+   *  until the next pass a quarter of a minute later. */
+  test('and one handed back while a listing was in the air stays gone', async () => {
+    world.shared = [
+      sharedFile('n1', 'Plans/meeting.md', 'Ada'),
+      sharedFile('n2', 'Plans/next.md', 'Ada'),
+    ]
+    await sharedWithYou.load()
+
+    world.holding = true
+    const listing = sharedWithYou.load()
+
+    world.holding = false
+    await sharedWithYou.leave(world.shared[0]!)
+
+    await land()
+    await listing
+
+    expect(sharedWithYou.items.map((one) => one.id)).toEqual(['n2'])
   })
 })
