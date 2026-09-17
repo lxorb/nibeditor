@@ -1,5 +1,6 @@
 import { EditorSelection, type Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
+import { ourOwn } from './copy'
 
 /** The converter, fetched the first time a web page is pasted.
  *
@@ -58,6 +59,24 @@ export function delimitedToTable(text: string): string | null {
   ].join('\n')
 }
 
+/** The note's own markdown, where a copy out of this app is what filled the
+ *  clipboard, and null for a page from anywhere else.
+ *
+ *  A clipboard carries the same words twice and a paste picks one of them. For a
+ *  web page the HTML is the richer of the two by far - the headings, the lists and
+ *  the links are in it and not in the text - which is what a rich paste is for. For
+ *  a note it is the poorer: the markdown beside it is the source, and the HTML is
+ *  one rendering of it with everything markdown says and HTML does not already
+ *  spent. Reading that back guessed at the source and landed beside it, most
+ *  visibly at a formula: `$$\left\{ y \in \mathbb{R}^n \right\}$$` copied out of a
+ *  note came back as `{y∈Rn}`, the symbols it had been drawn as.
+ *
+ *  So the words a copy took are the words a paste puts back, character for
+ *  character. See `OURS` in copy.ts, which is the mark being read. */
+function copiedHere(html: string, text: string): string | null {
+  return text && ourOwn(html) ? text : null
+}
+
 function insert(view: EditorView, text: string) {
   const range = view.state.selection.main
   view.dispatch({
@@ -75,6 +94,11 @@ function insert(view: EditorView, text: string) {
  *  the converter. Only the HTML flavour does: a spreadsheet and a clipboard of plain
  *  text are both settled before anything is asked for. */
 export async function pastedMarkdown(html: string, text: string): Promise<string | null> {
+  // A note this app copied, which is the one clipboard whose plain text is already
+  // the answer.
+  const ours = copiedHere(html, text)
+  if (ours) return ours
+
   // A spreadsheet puts both on the clipboard; the plain text is the table.
   const table = delimitedToTable(text)
   if (table) return table
@@ -99,6 +123,11 @@ export function richPaste(): Extension {
 
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
+
+      // A note this app copied: handed back to CodeMirror, which puts the plain
+      // text in as it stands - and the plain text is the note's own markdown. See
+      // `copiedHere`.
+      if (copiedHere(html, text)) return false
 
       // A spreadsheet puts both flavours on the clipboard and the plain text is the
       // table, so that paste is worked out here and lands in the frame it happened in.
