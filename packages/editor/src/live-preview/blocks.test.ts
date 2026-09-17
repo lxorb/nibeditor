@@ -3,6 +3,7 @@ import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import type { PropertiesMode } from '@nib/markdown/properties'
 import { describe, expect, test } from 'vitest'
 import { blockDecorations, propertiesMode } from './blocks'
+import { ChartWidget, DiagramWidget, MathWidget } from './render'
 import { dragFreeze, setDragging } from './dragging'
 import { external } from '../external'
 import { nibMarkdownExtensions } from '../markdown/extensions'
@@ -219,6 +220,130 @@ describe('block decorations', () => {
     const { was, is } = afterMove(doc, doc.length - 2, 0)
     expect(is).not.toBe(was)
     expect(is.decorations.size).toBe(1)
+  })
+})
+
+/** Getting into a block that is drawn rather than written.
+ *
+ *  A rendered block replaces its own source, so the only way to edit one is to
+ *  put the caret in it - and every position the replacement covers has to bring
+ *  that source back, or the caret is standing somewhere nobody can see it. Worse
+ *  than invisible: a replacement is atomic, so from such a position the next
+ *  arrow key is thrown clear to the far edge of the block, and the whole thing
+ *  has gone by in two presses without ever showing a character of itself.
+ *
+ *  Which is what a single trailing space after `$$x = 1$$` did. The reveal was
+ *  asked of the syntax node, which ends at the closing `$$`; the replacement
+ *  covers whole lines, which includes the space after it. Measured in a browser
+ *  before the fix, from the line below: one ArrowLeft put the caret on the
+ *  formula's line with the formula still drawn over it, and the second threw it
+ *  to the line's start, past the lot. Emil: *"if I'm for example at the right of
+ *  it and press arrow to the left then it just skips the entire thing."*
+ *
+ *  So these ask it of every position rather than of a count: a count was right
+ *  the whole time. The arrow keys themselves belong to CodeMirror and need a
+ *  laid-out browser to run, so what is asserted here is the thing the motion
+ *  lands on - which position reveals what. */
+describe('a caret put where a block is drawn', () => {
+  /** A caret PUT at `at`, rather than a document opened with one there: a caret
+   *  nobody chose reveals nothing, which is what `state` alone gives. */
+  function caretAt(doc: string, at: number) {
+    const parked = state(doc, at === 0 ? doc.length : 0)
+    return parsed(parked.update({ selection: EditorSelection.cursor(at) }).state)
+  }
+
+  /** What is still drawn over the caret, as the text it stands for. The cover is
+   *  passed over: it is inserted above the front matter rather than replacing any
+   *  of it, so it stands over nothing. */
+  function overCaret(doc: string, at: number): string[] {
+    const found: string[] = []
+    caretAt(doc, at)
+      .field(blockDecorations)
+      .decorations.between(0, doc.length, (from, to) => {
+        if (from < to && at >= from && at <= to) found.push(doc.slice(from, to))
+      })
+    return found
+  }
+
+  test('the space after a closing $$ is part of the formula, not a hole in it', () => {
+    const doc = 'intro\n\n$$x = 1$$ \ntail\n'
+    const end = doc.indexOf(' \ntail') + 1
+    const now = caretAt(doc, end)
+
+    expect(now.selection.main.head).toBe(end)
+    expect(overCaret(doc, end)).toEqual([])
+    expect(drawn(now.field(blockDecorations), doc)).toEqual([])
+  })
+
+  test('and the formula is drawn again on the way out', () => {
+    const doc = 'intro\n\n$$x = 1$$ \ntail\n'
+    const end = doc.indexOf(' \ntail') + 1
+    const out = parsed(
+      caretAt(doc, end).update({ selection: EditorSelection.cursor(doc.indexOf('tail')) }).state,
+    )
+
+    expect(out.selection.main.head).toBe(doc.indexOf('tail'))
+    expect(drawn(out.field(blockDecorations), doc)).toEqual(['$$x = 1$$ '])
+  })
+
+  /** Every block here is drawn by replacing whole lines, so every one of them had
+   *  the same hole in it. Walked position by position, because the hole was one
+   *  character wide. */
+  const blocks: [string, string][] = [
+    ['a formula on one line', '$$x = 1$$'],
+    ['a formula with a space after it', '$$x = 1$$ '],
+    ['a formula with two spaces after it', '$$x = 1$$  '],
+    ['a formula on three lines', '$$\nx = 1\n$$'],
+    ['a formula with a space after its closing mark', '$$\nx = 1\n$$ '],
+    ['a diagram', '```mermaid\ngraph TD\n```'],
+    ['a diagram with a space after its fence', '```mermaid\ngraph TD\n``` '],
+    ['a table', TABLE],
+    ['a table with a space after its last row', `${TABLE} `],
+    ['a toc', '[toc]'],
+    ['a toc with a space after it', '[toc] '],
+  ]
+
+  for (const [what, block] of blocks) {
+    test(`${what} shows its source wherever the caret is put in it`, () => {
+      const doc = `intro\n\n${block}\n\n# One\n\ntail\n`
+      const from = doc.indexOf(block)
+
+      for (let at = from; at <= from + block.length; at++) {
+        expect(overCaret(doc, at), `${what} at ${at - from}`).toEqual([])
+      }
+    })
+
+    test(`${what} is drawn again once the caret is off its lines`, () => {
+      const doc = `intro\n\n${block}\n\n# One\n\ntail\n`
+      const from = doc.indexOf(block)
+
+      // A caret either side of it, which is where the reveal has to stop: the
+      // block is its own lines and nothing further.
+      for (const at of [from - 2, doc.indexOf('tail')]) {
+        const still = drawn(caretAt(doc, at).field(blockDecorations), doc)
+        expect(still, `${what} from ${at}`).toContain(block)
+      }
+    })
+  }
+})
+
+/** The other way in, which is the one a person reaches for first. */
+describe('a press on a block that is drawn', () => {
+  test('a rendered formula hands the press to the editor', () => {
+    // CodeMirror treats a widget as opaque unless it says otherwise, and a block
+    // widget is the whole row: with nowhere on it to aim at, clicking a formula
+    // did nothing at all. Measured in a browser - the press did not even take the
+    // focus off the page body.
+    expect(new MathWidget('x = 1', true).ignoreEvent()).toBe(false)
+  })
+
+  test('so do a diagram and a chart, which hold nothing to press either', () => {
+    expect(new DiagramWidget('graph TD', 'mermaid').ignoreEvent()).toBe(false)
+    expect(new ChartWidget('a, 1').ignoreEvent()).toBe(false)
+  })
+
+  test('inline maths keeps its press: a row of words has somewhere to land', () => {
+    expect(new MathWidget('E', false).ignoreEvent()).toBe(true)
   })
 })
 

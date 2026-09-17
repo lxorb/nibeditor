@@ -35,7 +35,25 @@ export function prepare(tex: string): string {
     })
 }
 
-export class MathWidget extends NibWidget {
+/** A picture the note draws and nobody presses: a formula, a diagram, a chart.
+ *
+ *  CodeMirror treats a widget as opaque, so a press inside one never reaches the
+ *  editor and the caret stays wherever it was. For a block that replaces its whole
+ *  source that leaves nothing to aim at: the picture is the entire row, there is
+ *  no text on it to click, and pressing a rendered formula did nothing whatever.
+ *  These three hold nothing of their own to press, so the press is the editor's -
+ *  it lands on the line the picture stands on, and the source comes back with it.
+ *
+ *  A widget that DOES hold something to press stays opaque, because there a press
+ *  already means something: a table's cells, a `[toc]`'s entries, a query's rows,
+ *  the card an embed offers, a picture's own handles. */
+abstract class PictureWidget extends NibWidget {
+  override ignoreEvent() {
+    return false
+  }
+}
+
+export class MathWidget extends PictureWidget {
   constructor(
     private readonly tex: string,
     private readonly block: boolean,
@@ -47,6 +65,12 @@ export class MathWidget extends NibWidget {
 
   override eq(other: MathWidget) {
     return other.tex === this.tex && other.block === this.block && other.number === this.number
+  }
+
+  /** Only the display shape. Inline maths sits in a row with words either side,
+   *  where a press already lands beside it and reveals the `$…$` around it. */
+  override ignoreEvent() {
+    return !this.block
   }
 
   toDOM() {
@@ -111,7 +135,7 @@ export const RENDERED_LANGUAGES: ReadonlySet<string> = new Set([
 
 let diagramSeq = 0
 
-export class DiagramWidget extends NibWidget {
+export class DiagramWidget extends PictureWidget {
   constructor(
     private readonly code: string,
     private readonly language: string,
@@ -151,7 +175,7 @@ export class DiagramWidget extends NibWidget {
  *
  *  A fence whose body is not a chart gets no widget at all - blocks.ts asks first
  *  - and stays code, which is what says nib could not read it. */
-export class ChartWidget extends NibWidget {
+export class ChartWidget extends PictureWidget {
   constructor(private readonly code: string) {
     super()
   }

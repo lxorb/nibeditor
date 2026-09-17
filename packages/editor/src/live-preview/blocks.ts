@@ -25,7 +25,7 @@ import { noteIndex, type NoteIndex } from '../wikilink/notes'
 import { standsAlone } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
-import { lineRevealed, noReveal, overlaps } from './reveal'
+import { noReveal, overlaps } from './reveal'
 import {
   ChartWidget,
   DiagramWidget,
@@ -147,8 +147,6 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
   const doc = state.doc
   const numbered = state.facet(numberEquations)
   const shown = state.facet(propertiesMode)
-  const revealed = (from: number, to: number) => reveals && overlaps(state, from, to)
-  const lineRevealedAt = (pos: number) => reveals && lineRevealed(state, pos)
   // The labels belong to this document, so they are dropped whether or not
   // numbering is on. With it off there is nothing for `\eqref` to resolve to,
   // and it must not answer with a number left over from another note.
@@ -160,12 +158,28 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
     to: doc.lineAt(to).to,
   })
 
-  /** Records where a construct is before deciding what to draw for it, so a
-   *  later caret move knows this is a place worth looking at again. */
+  /** Where a construct is, and whether the caret is in it. Recorded so a later
+   *  caret move knows this is a place worth looking at again; see `crosses`.
+   *
+   *  The two answers come out of one range because they have to be the same
+   *  range. Every construct here is drawn by replacing whole LINES, and what used
+   *  to decide whether it showed its source instead was the syntax node - which
+   *  ends at the closing mark. Those two part company the moment anything follows
+   *  that mark on its line, and a single trailing space after `$$x = 1$$` is
+   *  enough: the widget stood over a position the reveal knew nothing about, so
+   *  the caret arriving there brought nothing back, and since a replacement is
+   *  atomic the press after that was thrown clear to the far edge of the block.
+   *  Two presses, and the formula had gone by without ever showing its source.
+   *  Emil: *"if I'm for example at the right of it and press arrow to the left
+   *  then it just skips the entire thing."*
+   *
+   *  So the question is asked of the lines the reader sees the block standing on,
+   *  which is what `[toc]` below and the table's own navigation already ask; see
+   *  `renderedTables` in table/navigation.ts. */
   const found = (from: number, to: number) => {
     const span = wholeLines(from, to)
     spans.push(span)
-    return span
+    return { ...span, revealed: reveals && overlaps(state, span.from, span.to) }
   }
 
   syntaxTree(state).iterate({
@@ -178,7 +192,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           if (!standsAlone(state, node.from)) return true
 
           const span = found(node.from, node.to)
-          if (revealed(node.from, node.to)) return false
+          if (span.revealed) return false
           const tex = mathIn(doc, node).trim()
           ranges.push(
             Decoration.replace({
@@ -225,7 +239,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // Dataview query in their metadata asked for.
           if (shown === 'source') return false
 
-          if (revealed(node.from, node.to)) return false
+          if (span.revealed) return false
           if (readProperties(source) === null) return false
 
           ranges.push(
@@ -248,7 +262,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
 
           const language = fenceLanguage(state, node.node)
           if (!RENDERED_LANGUAGES.has(language)) return false
-          if (revealed(node.from, node.to)) return false
+          if (span.revealed) return false
 
           const code = fenceCode(state, node.node)
 
@@ -282,7 +296,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           const embed = embedOfBlock(state, node.from, node.to)
           if (embed && !MEDIA.has(embedKind(embed.target))) {
             const span = found(node.from, node.to)
-            if (revealed(node.from, node.to)) return false
+            if (span.revealed) return false
 
             ranges.push(
               Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
@@ -304,16 +318,16 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // of `[toc] draft` becomes one by deleting the word after it, and a
           // deletion of letters is prose to `onlyProse` below - so without a span
           // here that edit mapped past and the contents were never drawn.
-          spans.push({ from: line.from, to: line.to })
+          const span = found(line.from, line.to)
           if (!/^\s*\[toc\]\s*$/i.test(line.text)) return false
 
           toc = true
-          if (lineRevealedAt(node.from)) return false
+          if (span.revealed) return false
 
           ranges.push(
             Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
-              line.from,
-              line.to,
+              span.from,
+              span.to,
             ),
           )
           return false
@@ -341,7 +355,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           if (card === null) return false
 
           const span = found(node.from, node.to)
-          if (revealed(node.from, node.to)) return false
+          if (span.revealed) return false
 
           ranges.push(
             Decoration.replace({ widget: new WebEmbedWidget(card), block: true }).range(
@@ -361,7 +375,7 @@ function buildBlocks(state: EditorState, reveals = true): Blocks {
           // rendered table stays up while its cells are edited. Source only
           // shows while the caret is genuinely in the table's text.
           const span = found(node.from, node.to)
-          if (revealed(node.from, node.to)) return true
+          if (span.revealed) return true
 
           ranges.push(
             Decoration.replace({
