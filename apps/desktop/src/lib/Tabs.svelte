@@ -204,7 +204,7 @@
     const paths = dragged(event.dataTransfer)
 
     workspace.panes.landing = null
-    workspace.panes.dragging = null
+    workspace.panes.dropped()
 
     if (id) workspace.dropTab(id, landing)
     else if (paths.length) void workspace.dropNotes(paths, landing)
@@ -331,11 +331,10 @@
           use:longPress={(event) => showMenu(event, tab)}
           ondragstart={(event) => {
             carryTab(event.dataTransfer, tab.id)
-            workspace.panes.dragging = { tabId: tab.id }
+            workspace.panes.dragged({ tabId: tab.id })
           }}
           ondragend={() => {
-            workspace.panes.dragging = null
-            workspace.panes.landing = null
+            workspace.panes.dropped()
           }}
         >
           <!-- What this tab is looking at, on every tab: a strip of a note, a

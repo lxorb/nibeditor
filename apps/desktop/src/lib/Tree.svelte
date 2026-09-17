@@ -460,12 +460,11 @@
     carrying = paths
     // The panes light their drop zones for a note out of the list as well as
     // for a tab out of a strip: both land in the same five places.
-    workspace.panes.dragging = { tabId: null }
+    workspace.panes.dragged({ tabId: null })
   }
 
   function endDrag() {
-    workspace.panes.dragging = null
-    workspace.panes.landing = null
+    workspace.panes.dropped()
     carriedNothing()
     // A drag that ended without a drop - Escape, or a release over nothing - takes
     // the gap back with it, and the rows slide to where they were.

@@ -47,11 +47,71 @@ export class Panes {
   sliding = $state<string | null>(null)
 
   /** What is being dragged over the panes, while it is. What lights the drop
-   *  zones: they are there to be aimed at, and nothing else should show them. */
+   *  zones: they are there to be aimed at, and nothing else should show them.
+   *
+   *  Set and cleared through `dragged` and `dropped` below, never by hand. It used to be assigned
+   *  at the two ends of a drag by whichever element started it, and that element
+   *  is exactly what a cross-pane drop destroys: the tab moves to the other
+   *  strip, Svelte tears the original row down, and the `dragend` that would have
+   *  cleared this never fires on a node that is gone. The flag then stayed true
+   *  for the rest of the sitting.
+   *
+   *  What that looks like to a reader is not a stuck drag - the zones are
+   *  invisible - but a note that will not scroll. `.zone.whole` is `inset: 0` and
+   *  `pointer-events: auto` over the whole pane, so it swallows every wheel; the
+   *  caret still scrolls the note, because that is the app moving the scroller
+   *  rather than the reader. Emil: *"note scrollbar, mouse scrolling does
+   *  nothing, but when I move the cursor to the bottom it scrolls"*, in every
+   *  note, until the app was restarted. See Pane.svelte. */
   dragging = $state<Dragging | null>(null)
 
   /** The drop zone the dragged tab is over, lit while it is. */
   landing = $state<Landing | null>(null)
+
+  /** A drag over the panes has begun.
+   *
+   *  The end is listened for on the window rather than left to the element that
+   *  began it, because that element may not survive the drop. `dragend` bubbles to
+   *  the window when it fires at all, and `drop` covers the case where it does not
+   *  fire because the node carrying it has gone. Both are once-only, so a drag
+   *  cannot leave a listener behind, and starting a second drag drops the first
+   *  one's listeners before adding its own.
+   *
+   *  One owner rather than a rule each caller follows: the zones this lights are
+   *  invisible and take every wheel over the pane, so forgetting to clear it does
+   *  not look like a bug in dragging. It looks like a note that will not scroll. */
+  dragged(what: Dragging) {
+    this.settled()
+    this.dragging = what
+
+    const done = () => {
+      this.settled()
+      this.dragging = null
+      this.landing = null
+    }
+
+    window.addEventListener('dragend', done, { once: true })
+    window.addEventListener('drop', done, { once: true })
+    this.settling = () => {
+      window.removeEventListener('dragend', done)
+      window.removeEventListener('drop', done)
+    }
+  }
+
+  /** The drag is over, however it ended. Safe to call when none is under way. */
+  dropped() {
+    this.settled()
+    this.dragging = null
+    this.landing = null
+  }
+
+  /** Takes off whatever the last drag was listening for. */
+  private settled() {
+    this.settling?.()
+    this.settling = null
+  }
+
+  private settling: (() => void) | null = null
 
   /** Called whenever the arrangement changes, so the session is written down. */
   private readonly changed: () => void

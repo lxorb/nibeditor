@@ -375,7 +375,7 @@
     const paths = dragged(event.dataTransfer)
 
     workspace.panes.landing = null
-    workspace.panes.dragging = null
+    workspace.panes.dropped()
 
     if (id) workspace.dropTab(id, landing)
     else if (paths.length) void workspace.dropNotes(paths, landing)
