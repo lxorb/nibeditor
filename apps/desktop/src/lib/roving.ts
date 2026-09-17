@@ -21,6 +21,7 @@
 
 import { steppedKey } from './direction'
 import { focusEditor } from './focus'
+import { chorded } from './keys'
 import { spelled, type Spelling } from './list-keys'
 import { walked } from './walk'
 
@@ -197,6 +198,15 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       return
     }
 
+    // A key under Ctrl, Alt or Cmd is a chord on its way to the window and not this
+    // list's key at all. Every key below is read off the event by name, and the
+    // window's handler gives way to a press something else has already spent - so
+    // for as long as this was not asked, Ctrl+Shift+Space opened the space switcher
+    // from everywhere in the app except a list, and a list is where Tab lands. The
+    // rule was already here, on the letters at the bottom of this function; it was
+    // only ever half applied. See `chorded` in keys.ts.
+    const bare = !chorded(event)
+
     const long = settings.long
     const rows = rowsOf()
     const row = rowOf(event)
@@ -208,11 +218,13 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
     // In reading terms: in a list that runs across, and in a tree that opens to
     // one side, the two sideways keys trade places under an interface that reads
     // right to left. See `steppedKey` in direction.ts.
-    const pressed = ENDS.has(event.key)
-      ? event.key
-      : settings.keyOf
-        ? settings.keyOf(event)
-        : event.key
+    //
+    // `keyOf` is the one path a chord may come down: it answers the registry, which
+    // matches the modifiers exactly, so a reader who binds the tree's own walk to
+    // Mod-ArrowDown is obeyed. A list that reads the event itself only ever means
+    // the bare key.
+    const own = bare ? event.key : null
+    const pressed = ENDS.has(event.key) ? own : settings.keyOf ? settings.keyOf(event) : own
     const key = pressed === null ? null : steppedKey(pressed)
 
     const moves = settings.across ? ACROSS : DOWN
@@ -229,18 +241,15 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       return
     }
 
-    // A press with Ctrl, Cmd or Alt on it is the app's and not this list's. The four
-    // keys below are read off the event rather than through the registry - they are
-    // the ones `fixed.lists` says nobody may rebind - so a chord that happens to end
-    // in one of them used to be answered here and go no further: Ctrl+Shift+Space is
-    // the space switcher, and pressing it with the keyboard in the file list opened
-    // the row it was on instead. Shift alone is not a chord: Shift+F10 is the
-    // context-menu key every list answers below.
-    const chorded = event.ctrlKey || event.metaKey || event.altKey
+    // Everything below here is read off the event by name, so none of it is a chord
+    // and a chord that got this far is on its way to the window. Shift is not a
+    // modifier as far as this goes - the menu key is Shift+F10 - so the case that
+    // wants it asks for it itself. See `bare` above.
+    if (!bare) return
 
     switch (event.key) {
       case 'Enter':
-        if (!row || chorded) return
+        if (!row) return
         event.preventDefault()
         if (settings.open) settings.open(row)
         else row.click()
@@ -249,7 +258,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       case ' ':
         // Taken either way, so a space meant for the list never scrolls the page
         // underneath it.
-        if (!row || chorded) return
+        if (!row) return
         event.preventDefault()
         if (settings.peek) settings.peek(row)
         else if (settings.open) settings.open(row)
@@ -258,7 +267,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
       case 'Delete':
       case 'Backspace':
-        if (!row || chorded || !settings.remove) return
+        if (!row || !settings.remove) return
         event.preventDefault()
         settings.remove(row)
         return
@@ -289,7 +298,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
     // A letter spells a name, which is how a list of four hundred is reached
     // without four hundred presses of an arrow.
-    if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
+    if (event.key.length !== 1) return
 
     const labels = long ? long.labels() : rows.map(labelOf)
     const next = spelled(spelling, event.key, event.timeStamp, labels)

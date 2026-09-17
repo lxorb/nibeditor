@@ -173,6 +173,29 @@ export function readCombination(event: Keystroke, platform: Platform): string | 
   return writeCombination({ ...down, key }, platform)
 }
 
+/** Whether a keystroke is part of a chord rather than a key on its own.
+ *
+ *  What a widget that claims a bare key has to ask before it claims it. A list
+ *  answers Space by opening the row the keyboard is on, and Ctrl+Shift+Space is
+ *  not that Space: it is the space switcher, on its way to the window, and a list
+ *  that took it and called `preventDefault` made that chord dead everywhere the
+ *  keyboard could be in a list. The window's handler is the last one to run and
+ *  gives way to anything already spent - see `handle` in shortcuts.svelte.ts - so
+ *  every one of these is a chord nobody can press rather than a key that does two
+ *  things.
+ *
+ *  Shift is not one of them, because Shift is how a keyboard writes half of what
+ *  it writes and a widget's own keys include Shift+F10 and Shift+Tab. Ctrl, Alt
+ *  and Cmd are: nothing in this app binds a bare key under one of them to anything
+ *  but a command.
+ *
+ *  Here rather than in each of them, because "what is a chord" is the same
+ *  question `matchesCombination` answers from the other side. */
+export function chorded(event: Keystroke): boolean {
+  const down = held(event)
+  return down.ctrl || down.meta || down.alt
+}
+
 /** Whether a chord's key is a digit, which is the one class of key a layout puts
  *  behind Shift. See `matchesCombination`. */
 function isDigit(key: string): boolean {

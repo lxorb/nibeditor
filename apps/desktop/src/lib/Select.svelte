@@ -8,6 +8,7 @@
   import { fade, fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
+  import { chorded } from './keys'
   import { opensAt, type Walk, walk } from './list-keys'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
@@ -100,6 +101,12 @@
   }
 
   function onKey(event: KeyboardEvent) {
+    // Ctrl, Alt or Cmd and this key is a chord passing through on its way to the
+    // window, not a dropdown's Space; a picker that took it would make that chord
+    // dead for as long as the keyboard was on this control. Same rule as every
+    // other list in the app: see `chorded` in keys.ts and `onKey` in roving.ts.
+    if (chorded(event)) return
+
     if (!open) {
       if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
         event.preventDefault()

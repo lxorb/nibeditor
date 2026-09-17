@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import {
+  chorded,
   matchesCombination,
   parseCombination,
   readCombination,
@@ -200,5 +201,69 @@ describe('showing a combination', () => {
 
   test('hands back what it cannot read rather than nothing', () => {
     expect(showCombination('Hyper-k', 'win')).toBe('Hyper-k')
+  })
+})
+
+/** The space bar, which had no test at all here until the one chord on it stopped
+ *  working.
+ *
+ *  `Mod-Shift-Space` is the space switcher, and every layer of the app agreed it was
+ *  a chord: the parser reads it, the matcher answers a real Ctrl+Shift+Space, the
+ *  registry binds it - and it still opened nothing, because the key never reached the
+ *  window. A list had taken it on the way past. So what was missing is both halves:
+ *  that Space is a key like any other here, and that a widget can tell a chord from
+ *  its own bare key before it claims one. See `chorded`, roving.ts and Select.svelte. */
+describe('the space bar', () => {
+  /** The browser's name for it is a single space; the written form spells it,
+   *  because a combination with a space in the middle of it cannot be read back. */
+  test('is written Space and read as one', () => {
+    expect(parseCombination('Mod-Shift-Space', 'win')).toEqual({
+      ctrl: true,
+      meta: false,
+      alt: false,
+      shift: true,
+      key: ' ',
+    })
+    expect(
+      readCombination(press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' }), 'win'),
+    ).toBe('Mod-Shift-Space')
+    expect(showCombination('Mod-Shift-Space', 'win')).toBe('Ctrl+Shift+Space')
+    expect(showCombination('Mod-Shift-Space', 'mac')).toBe('⇧⌘Space')
+  })
+
+  test('answers the chord the space switcher is bound to', () => {
+    const chord = press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' })
+    expect(matchesCombination('Mod-Shift-Space', chord, 'win')).toBe(true)
+    expect(matchesCombination('Mod-Shift-Space', chord, 'mac')).toBe(false)
+    // And the bare key is not it, which is what a list opens a row with.
+    expect(matchesCombination('Mod-Shift-Space', press(' ', { code: 'Space' }), 'win')).toBe(false)
+  })
+})
+
+/** Whether a press belongs to the widget the keyboard is in or to the window.
+ *
+ *  The question every list, menu and picker has to ask before it calls
+ *  `preventDefault`, because the window's own handler is the last one to run and
+ *  gives way to a press something else has already spent. One list answering Space
+ *  without asking was one chord nobody could press anywhere the keyboard could be in
+ *  a list, which is most of the app. */
+describe('telling a chord from a key a widget owns', () => {
+  test('a bare key, and one under Shift, belong to the widget', () => {
+    expect(chorded(press(' ', { code: 'Space' }))).toBe(false)
+    expect(chorded(press('Enter'))).toBe(false)
+    // Shift+F10 is the menu key: a list owns it, so Shift is not a modifier here.
+    expect(chorded(press('F10', { shiftKey: true }))).toBe(false)
+  })
+
+  test('a key under Ctrl, Alt or Cmd is on its way to the window', () => {
+    expect(chorded(press(' ', { ctrlKey: true, shiftKey: true, code: 'Space' }))).toBe(true)
+    expect(chorded(press('ArrowLeft', { altKey: true }))).toBe(true)
+    expect(chorded(press('Enter', { metaKey: true }))).toBe(true)
+  })
+
+  /** A keystroke may arrive with the modifiers left out - a synthetic one, or an
+   *  older recording - and "not there" is not held down. */
+  test('a keystroke with nothing said about the modifiers is a bare one', () => {
+    expect(chorded({ key: ' ' })).toBe(false)
   })
 })
