@@ -46,12 +46,22 @@ export default defineConfig(({ command, mode }) => ({
   // window, and on the `/even/` page the web serves. The package that goes on a
   // phone is built by `vite.even.config.ts`, which sets the second of these true
   // and leaves out what a pair of glasses cannot use.
-  // `__DRIVEABLE__` is on while a dev server serves and in `--mode drive`, and off
-  // in a release. See env.d.ts for what it guards and why a release must not.
+  // `__DRIVEABLE__` is on while a dev server serves, in `--mode drive` and in a
+  // development build, and off in a release. See env.d.ts for what it guards and why
+  // a release must not.
+  //
+  // Development is in the list because that is what the eighty-nine drives beside
+  // smoke.py build for themselves, and `command` is `build` for every one of them:
+  // with only `serve` and `drive` on the list the handles were stripped out of the
+  // very build those drives then waited for, and each of them sat there until it
+  // gave up waiting for the app. `drive` is still the one that matters - it is the
+  // shipping shape - and this only says that a build nobody ships may be steered.
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',
-    __DRIVEABLE__: JSON.stringify(command === 'serve' || mode === 'drive'),
+    __DRIVEABLE__: JSON.stringify(
+      command === 'serve' || mode === 'drive' || mode === 'development',
+    ),
   },
   clearScreen: false,
   // The same policy the installed app is served with. `tauri dev` loads the dev

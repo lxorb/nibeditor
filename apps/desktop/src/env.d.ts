@@ -29,9 +29,12 @@ declare const __EVEN_PLUGIN__: boolean
  *
  *  True while a dev server is serving, and in a build made with `--mode drive`,
  *  which is a release build in every other respect - minified, tree-shaken, the
- *  real chunks - so a drive against it is a drive against what ships. False in an
- *  actual release, because these handles are the whole workspace and the page they
- *  sit on renders other people's HTML.
+ *  real chunks - so a drive against it is a drive against what ships. True in a
+ *  development build too, which is what every drive but smoke.py builds for itself:
+ *  those all run `vite build`, so the alternative was a handle stripped out of the
+ *  one build they were about to wait for. False in an actual release, because these
+ *  handles are the whole workspace and the page they sit on renders other people's
+ *  HTML.
  *
  *  A constant rather than a runtime flag, so a real release does not merely refuse
  *  to answer: the bundler removes the branch and the handles are not there at all.
