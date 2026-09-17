@@ -145,12 +145,16 @@ class Worker:
 
     def build(self) -> None:
         say("building the web app against the local Worker")
-        # `vite build` is a production build whatever mode it is given unless the
-        # environment says otherwise, and a production build is the one with the
-        # app's stores hidden. Both are set, so the built page keeps them.
-        environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
+        # `--mode drive`, which is a release build with `__DRIVEABLE__` left on:
+        # `window.nibApp` and `window.nib`, the handles this file steers the app by.
+        # They used to be behind `import.meta.env.DEV`, which a development build
+        # set - so this said `--mode development` and got them by accident. It does
+        # not any more: a development build has no handles in it at all, and this
+        # drive stopped half a second in, waiting for an app it could never see.
+        # See `__DRIVEABLE__` in src/env.d.ts and smoke.py.
+        environment = {**os.environ, "VITE_NIB_API": ORIGIN}
         built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
             cwd=APP,
             env=environment,
             capture_output=True,
@@ -446,12 +450,46 @@ WATCH = """
       window.nibApp.account.signedIn ? 1 : 0,
       window.nibApp.account.settling ? 1 : 0,
       window.nibApp.sync.status,
+      // What the foot actually said, which is the thing under test: the store
+      // being right and the row being wrong are two different failures.
+      (document.querySelector('aside .foot .coming')?.innerText ?? '').trim(),
     ])
-    if (window.__nib.length < 200) setTimeout(tick, 200)
+    if (window.__nib.length < 600) setTimeout(tick, 200)
   }
   tick()
 }
 """
+
+
+#: A count in the foot: "3 of 21".
+COUNT = re.compile(r"\d+\s*of\s*\d+")
+
+
+def counted_in(page: Page, patience: float = 30) -> str:
+    """What the foot counted - now, or at any moment since the sampler started.
+
+    The row and the trace, because the row on its own cannot answer the question.
+    What is under test is that somebody signing in sees the count while their notes
+    come down, and against a Worker on this machine that whole pass is over in a
+    second or two: a line that looks afterwards finds the row gone and has learned
+    nothing about whether it was ever there. The sampler has been reading that same
+    row every 200ms since before the code was typed, so it can say."""
+    until = time.monotonic() + patience
+    while True:
+        live = page.evaluate(
+            "() => (document.querySelector('aside .foot .coming')?.innerText ?? '').trim()"
+        )
+        if COUNT.search(live):
+            return live
+
+        seen = [row[6] for row in page.evaluate("() => window.__nib ?? []") if COUNT.search(row[6])]
+        if seen:
+            return f"{seen[0]} up to {seen[-1]}"
+
+        if time.monotonic() >= until:
+            return ""
+
+        page.wait_for_timeout(200)
 
 
 def watched(page: Page) -> str:
@@ -462,7 +500,10 @@ def watched(page: Page) -> str:
     for row in rows:
         shape = tuple(row[1:])
         if shape != last:
-            out.append(f"{row[0]:>6}ms showing={row[1]} drawn={row[2]} in={row[3]} settling={row[4]} sync={row[5]}")
+            out.append(
+                f"{row[0]:>6}ms showing={row[1]} drawn={row[2]} in={row[3]}"
+                f" settling={row[4]} sync={row[5]} foot={row[6]!r}"
+            )
             last = shape
 
     return "\n    ".join(out) or "nothing recorded"
@@ -539,6 +580,14 @@ def main() -> int:
                 page = fresh(browser, "reader")
                 on_a_bad_line(page)
 
+                # The foot of the list panel, which is where the pass reports, open
+                # before any of this begins: the sampler below reads the row out of
+                # the page, and a row on a panel nobody has opened yet is a row it
+                # cannot see. This used to be opened after the sign-in, which is
+                # after the pass it is there to watch had started.
+                page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
+                page.wait_for_selector("aside .foot", timeout=10_000)
+
                 page.evaluate(WATCH)
                 page.evaluate("() => (window.nibApp.account.open = true)")
                 page.locator("input[type=email]").wait_for(timeout=10_000)
@@ -569,26 +618,22 @@ def main() -> int:
                 if page.evaluate("() => document.querySelector('main')?.inert === true"):
                     wrong("the app was shut off while there was already a list to use")
 
-                # The question about the notes already here.
+                # The question about the notes already here. A browser holding only
+                # the welcome note is not asked - an untouched seed is not writing,
+                # see `hasLocalContent` - so this is usually a wait for nothing.
                 keep_local_notes(page, "reader")
 
-                # The foot of the list panel, which is where the pass reports.
-                page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
-                page.wait_for_selector("aside .foot", timeout=10_000)
                 page.wait_for_timeout(300)
                 page.screenshot(path=str(SHOTS / "signing-in-light.png"))
                 say("photographed the state, light")
 
                 # The count, once the pass has asked the account how much there is.
-                counted = wait_for(
-                    page,
-                    "() => {"
-                    "  const said = document.querySelector('aside .foot .coming')?.innerText ?? '';"
-                    "  return /\\d+\\s*of\\s*\\d+/.test(said) ? said : null"
-                    "}",
-                    "the count",
-                    patience=30,
-                )
+                counted = counted_in(page)
+                if not counted:
+                    raise SystemExit(
+                        f"the count never appeared. the app says: {state(page)}\n"
+                        f"    {watched(page)}"
+                    )
                 say(f"the state counts: {counted!r}")
                 page.screenshot(path=str(SHOTS / "signing-in-counting.png"))
 
