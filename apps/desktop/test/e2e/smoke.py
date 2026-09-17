@@ -215,6 +215,11 @@ def show(page: Page, start: str) -> None:
     page.wait_for_timeout(60)
 
 
+def rows_now(page: Page) -> int:
+    """How many rows the file list is drawing."""
+    return page.evaluate("() => document.querySelectorAll('.nib-row').length")
+
+
 def weight_of(page: Page, words: str) -> float:
     """The heaviest font-weight any element covering `words` is drawn at.
 
@@ -422,6 +427,64 @@ def drive(browser: Browser) -> None:
     say(f"the tabs kept their own words; the space holds {json.dumps(held)}")
     shot(page, "03-switched")
 
+    # The file list, opened so the reload below has something to lose. Cheap, and
+    # it is the surface a full drive run found empty after a reload of a large
+    # space - so a floor that reloads without it open is a floor that would not
+    # have noticed.
+    page.evaluate("() => { window.nibApp.workspace.showPanel('tree') }")
+    page.wait_for_timeout(350)
+    before_rows = rows_now(page)
+
+    # ── And all of it again after a reload ───────────────────────────────
+    # A person's app is not a fresh page. It is reopened, reloaded, restored from
+    # a session that was written the last time they closed it, and that is the
+    # path where a full drive run found the file list not drawing, the pictures
+    # of a note gone and the folds lost. Everything above this line passed on a
+    # page that had just been opened for the first time, which is the easy case
+    # and the one nobody's day is spent in.
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp", "the app after a reload")
+    wait_for(page, "window.nibApp.workspace.activeSpace", "the space after a reload")
+    wait_for(page, "document.querySelector('.cm-content')", "the writing surface after a reload")
+    page.wait_for_timeout(400)
+
+    # The file list, which is the one thing on screen that says the app came back
+    # with the space in it rather than merely came back. Counted before the reload
+    # as well, so a selector that never matched is told apart from a list that did
+    # not draw - the difference between finding a bug and inventing one.
+    # Which panel the app came back with, asked before the rows are counted: a
+    # panel that simply closed is not a file list that failed to draw, and telling
+    # those two apart is the difference between finding a bug and inventing one.
+    panel = page.evaluate("() => window.nibApp.workspace.panel")
+    if before_rows and panel != "tree":
+        say(f"the app came back with panel {json.dumps(panel)}; not asking about rows")
+    elif before_rows and not rows_now(page):
+        wrong(f"the file list had {before_rows} rows and has none after a reload")
+    elif before_rows:
+        say(f"after a reload the file list still has {rows_now(page)} rows")
+    else:
+        say("no file list rows before the reload either; not asking about them")
+
+    # The long note, brought forward by name: a reload restores whichever tab was
+    # in front, and asking the short one whether it scrolls proves nothing.
+    show(page, "Smoke")
+    again = page.evaluate(
+        """
+        () => {
+          const scroller = document.querySelector('.cm-scroller')
+          if (!scroller) return null
+          return scroller.scrollHeight - scroller.clientHeight
+        }
+        """
+    )
+    if again is None:
+        wrong("after a reload there is no scroller in the editor")
+    elif again <= 1:
+        wrong(f"after a reload the long note has {again}px to scroll, so it does not scroll")
+    else:
+        say(f"after a reload the long note still has {again}px to scroll")
+
+    shot(page, "04-reloaded")
     context.close()
 
 
