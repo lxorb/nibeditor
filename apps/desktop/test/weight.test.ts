@@ -308,8 +308,16 @@ function holds(tail: string): boolean {
  *
  *  then sum the `assets/*.js` that `dist/index.html` names - the entry script and
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
- *  bundler chunked it. Anything not in that list is behind a dynamic import. */
-const BUDGET = 3_154_000
+ *  bundler chunked it. Anything not in that list is behind a dynamic import.
+ *
+ *  Raised 2026-09-17 from 3,154,000 for workspace/open.ts, which is 6,756 bytes and
+ *  a fifth of one percent. It is in the launch graph on purpose and cannot be made
+ *  lazy: restoring a session opens documents, and it is the thing that makes two
+ *  opens of one file one document. Without it a note could be open twice over, each
+ *  copy reporting its own words as that file's, and whichever saved last won - one
+ *  person's writing under another note's name, on disk and on the account. Measured
+ *  3,160,756; this is that plus one percent. */
+const BUDGET = 3_192_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
