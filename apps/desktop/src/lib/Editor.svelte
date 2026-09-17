@@ -301,15 +301,9 @@
 ></div>
 
 <style>
-  /* A flex column, so the editor inside it takes its height from the line rather
-     than as a percentage of a box whose own height is a stretch. See the `&` rule
-     in packages/editor/src/theme.ts for what depended on that percentage and what
-     it cost. The same shape the reading view has always had. */
   .surface {
     flex: 1;
     min-height: 0;
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
   }
 
