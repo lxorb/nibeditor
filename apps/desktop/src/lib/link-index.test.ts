@@ -503,6 +503,20 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['New.md', 'Fresh.md'])
   })
 
+  /** A plane is read through a module that is fetched, so a space can open between
+   *  the asking and the reading. Fetched here first, so that what the app's own
+   *  `import` waits for is a microtask rather than a disk this test cannot time. */
+  test('does not take a plane read in the space before it', async () => {
+    await import('./scan-canvas')
+    await space({ 'Plan.md': '# Plan' })
+    links.canvasRead(at('Board.canvas'), JSON.stringify({ nodes: [], edges: [] }))
+
+    const scan = await opening({ 'Mine.md': '# Mine' }, '/other')
+    await scan.land()
+
+    expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
+  })
+
   test('says it is reading until the rows land, and no longer', async () => {
     const scan = await opening({ 'Plan.md': '# Plan' })
     expect(links.scanning).toBe(true)

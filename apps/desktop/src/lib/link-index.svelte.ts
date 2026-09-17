@@ -568,7 +568,16 @@ class Links {
    *  on it - the panel that shows them is drawn from the index as it changes - and
    *  there is nothing to wait for on the second plane. See scan-canvas.ts. */
   private putCanvas(relative: string, content: string) {
-    void import('./scan-canvas').then(({ scanCanvas }) => this.put(scanCanvas(relative, content)))
+    // The reader is fetched, so a space can open between the asking and the
+    // reading. The path was read against the space that was open then, and a plane
+    // of the space before this one has no place in this one's index - less than
+    // ever now that a save lands on top of a scan rather than under it, since a
+    // stale row put here would be replayed over the rows the new space brings
+    // back. See `edit`.
+    const mine = this.scans
+    void import('./scan-canvas').then(({ scanCanvas }) => {
+      if (this.scans === mine) this.put(scanCanvas(relative, content))
+    })
   }
 
   /** One scanned file into the index, replacing whatever was there under its
