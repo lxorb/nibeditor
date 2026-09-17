@@ -498,6 +498,10 @@ class Links {
    *  own to land in and says nothing, so the state that says one is being read has
    *  to come down here rather than wait for a landing that never comes. */
   clear() {
+    // Counted here as well as in `build`, because this is the other way a scan
+    // stops being the one anybody is waiting for: without it a scan already in the
+    // air would land its rows in a window that no longer has a space open.
+    this.scans++
     this.root = null
     this.scanning = false
     this.notes = []

@@ -517,6 +517,18 @@ describe('a space still being read', () => {
     expect(links.index(null).notes.map((one) => one.path)).toEqual(['Mine.md'])
   })
 
+  /** The other way a scan stops being the one anybody is waiting for: the window
+   *  has no space open at all any more. */
+  test('leaves a window with no space open empty when the rows land', async () => {
+    const scan = await opening({ 'Plan.md': '# Plan' })
+    links.clear()
+    await scan.land()
+
+    expect(links.rootOf()).toBeNull()
+    expect(links.index(null).notes).toEqual([])
+    expect(links.scanning).toBe(false)
+  })
+
   test('says it is reading until the rows land, and no longer', async () => {
     const scan = await opening({ 'Plan.md': '# Plan' })
     expect(links.scanning).toBe(true)
