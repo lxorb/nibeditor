@@ -1848,8 +1848,10 @@
     }
   }
 
+  /* The ground the box appears on, and only that: the turn is the themes
+     package's answer for a box with a caret in it, which outweighs both the
+     hairline above and the hover above that. */
   .inline:focus {
-    border-color: var(--accent);
     background: var(--bg);
   }
 

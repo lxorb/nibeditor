@@ -1212,12 +1212,24 @@ textarea.nib-field {
 
    A slider, a checkbox and a colour are inputs too and none of them holds a
    caret: they are named out here rather than left to be caught by accident, and
-   what they answer with is the one ring. */
+   what they answer with is the one ring.
+
+   `:is` and not `:where`, which is the opposite of the ring at the top of the
+   file and for the opposite reason. The ring weighs nothing so that a control with
+   a shape of its own can answer instead of it. This *is* the shape: a field states
+   the border it rests at, and a rule weighing nothing loses to the one word it
+   needs to change in it. Which it did - the palette's hairline never turned, and
+   nor did the Theme Store's, so a caret in either was said by a square wash of
+   accent and nothing else, and on a phone the settings search turned nothing at
+   all. Three fields had noticed and written the turn out again for themselves;
+   two of them have stopped. The third states its border as a shorthand naming a
+   colour, which outweighs the one word this changes however heavy it is, and says
+   so where it does it. One rule, heavy enough to be the answer everywhere else. */
 select:focus-visible,
-:where(
+:is(
     textarea,
     input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
-  ):not(:where(.nib-field *)):focus,
+  ):not(.nib-field *):focus,
 .nib-field:has(:is(input, textarea):focus) {
   outline: none;
   border-color: var(--accent);
