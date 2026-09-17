@@ -33,7 +33,12 @@
   import Icon from './Icon.svelte'
   import { readIcon } from './icons'
 
-  const { mark, path }: { mark: FileMark; path?: string } = $props()
+  /** `path` is left out by a caller that knows a name and no path, and handed in as
+   *  `undefined` by one whose path is sometimes null - a tab holding a note nobody has
+   *  saved. Both mean the same thing here, which is what the spelling says: under
+   *  `exactOptionalPropertyTypes` an optional property and one that may be undefined
+   *  are two different types, and this is both. */
+  const { mark, path }: { mark: FileMark; path?: string | undefined } = $props()
 
   /** What the file or folder at this path chose, or null for a row that chose
    *  nothing - and for a caller that knows a name but no path, which gets its kind's
