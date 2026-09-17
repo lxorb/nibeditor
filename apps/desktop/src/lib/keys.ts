@@ -104,6 +104,39 @@ export function sameCombination(left: string, right: string, platform: Platform)
   )
 }
 
+/** The modifier a chord is held under: the key whose release ends it.
+ *
+ *  For the one gesture in the app that is not over when its key comes up. The new-tab
+ *  chooser stays up while the modifier is down and chooses when it goes, which is
+ *  Alt+Tab's shape; see new-kind-chord.ts. Named the way `KeyboardEvent.key` names it,
+ *  so a release can be recognised by name rather than by guessing at a `code`.
+ *
+ *  Mod first, because that is what every chord in this app is written with, and Alt
+ *  last. Null for a combination with no modifier at all, which `refuse` in
+ *  shortcuts.svelte.ts forbids and a map written by another version is not this one's
+ *  to trust. */
+export function holdKey(combination: Combination): 'Control' | 'Meta' | 'Alt' | null {
+  if (combination.ctrl) return 'Control'
+  if (combination.meta) return 'Meta'
+  if (combination.alt) return 'Alt'
+
+  return null
+}
+
+/** The same combination with Shift in it, which is how a switcher steps back.
+ *
+ *  Written rather than parsed and rebuilt, so a combination this cannot read comes
+ *  back unchanged and fails to match rather than turning into some other chord. Split
+ *  the way `parseCombination` splits, so `Mod--` is still Mod and the minus key. */
+export function withShift(text: string): string {
+  const parts = text.split(/-(?!$)/)
+  const key = parts.pop()
+  if (key === undefined) return text
+  if (parts.some((one) => one.toLowerCase() === 'shift' || one.toLowerCase() === 's')) return text
+
+  return [...parts, 'Shift', key].join('-')
+}
+
 /** The physical key behind a code, for the shifted characters.
  *
  *  Ctrl+Shift+= arrives as `+`, Ctrl+Shift+3 as `#`, and on a Mac Alt+5

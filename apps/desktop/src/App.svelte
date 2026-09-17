@@ -43,6 +43,7 @@
     historySheet,
     iconPicker,
     importSheet,
+    newKindChord,
     publishSheet,
     rewriteSheet,
     settingsSheet,
@@ -615,6 +616,13 @@
     // window nobody can see holding the keyboard nobody can get back. While a
     // note is being presented the only app key is the one that stops.
     if (present.on && !shortcuts.pressed('app.present', event)) return
+
+    // The new-tab chooser stays up while the modifier of its own chord is held and
+    // chooses when that is let go, so it is the one command that has to read the
+    // keystroke rather than be dispatched from it: a repeat is not a second press. It
+    // is fetched rather than carried, and a press in front of that falls through to
+    // the plain command below. See new-kind-chord.ts and surfaces.svelte.ts.
+    if (newKindChord(event)) return
 
     shortcuts.handle(event, appContext())
   }

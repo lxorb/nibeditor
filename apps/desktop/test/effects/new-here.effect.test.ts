@@ -41,6 +41,9 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
+  // The chooser remembers what was made last, and one test in this file makes all
+  // four; a fresh pane is one nothing has chosen in yet. See last-kind.ts.
+  localStorage.clear()
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -94,6 +97,17 @@ test('lands the keyboard on the first of them', () => {
   here()
 
   expect(document.activeElement).toBe(buttons()[0])
+})
+
+/** Emil, 2026-09-17: *"The last chosen one should be selected already."* The same
+ *  memory the menu under the plus opens on, so a hand that has been making canvases
+ *  finds the canvas under its finger here too; see last-kind.ts. */
+test('and on the kind that was chosen last, once one has been', () => {
+  makers()
+  localStorage.setItem('nib:new-kind', 'web')
+  here()
+
+  expect(document.activeElement).toBe(buttons()[2])
 })
 
 test('and the arrows walk the rest', () => {

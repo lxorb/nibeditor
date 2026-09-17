@@ -8,14 +8,17 @@ What it proves, in order:
 * **Paragraph needs no chord**: Ctrl+1 on a line that is already a first-level heading
   turns it back into prose, and again makes it a heading. That is what freed
   Ctrl+Shift+P for the palette.
-* **Ctrl+T asks what kind**, with the keyboard on the first row - so Ctrl+T then Enter is
-  still a new note - and the arrows walk the rest.
+* **Ctrl+T held is Alt+Tab's shape**: Ctrl down and T pressed brings the chooser up on
+  the kind that was chosen last, each further T steps it round, and letting Ctrl go
+  makes the one that stands. Escape cancels, and the release after it makes nothing.
+* **Ctrl+T tapped makes that kind outright**, with no chooser drawn at all, which is the
+  new tab a browser makes and what a fast hand is after.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
   website open with no file in the space and no row in the list.
 * **Saving one** asks for a name and where, and writes the file the kind belongs in -
   `Plan.canvas`, not `Plan.md`.
 * **A pane with nothing open** shows those same kinds as buttons, with the keyboard on
-  the first, and pressing one makes that kind.
+  the one that was chosen last, and pressing one makes that kind.
 
 Build first, with the app's own handle on the page:
 
@@ -237,50 +240,100 @@ def heading_key(page) -> None:
 
 
 def chooser(page) -> None:
-    """Ctrl+T, and what it offers."""
-    say("--- Ctrl+T ---")
+    """Ctrl+T held, which is Alt+Tab's shape, and Ctrl+T tapped, which is a browser's."""
+    say("--- Ctrl+T held ---")
 
-    page.keyboard.press("Control+KeyT")
-    page.wait_for_timeout(450)
+    # Ctrl down, T pressed and let go, Ctrl still down: the chooser comes up once the
+    # hold has outlasted the beat. See BEAT in src/lib/new-kind-chord.ts.
+    page.keyboard.down("Control")
+    page.keyboard.press("KeyT")
+    page.wait_for_timeout(500)
     menu = page.evaluate(MENU)
     if menu["rows"] != ["New note", "New canvas", "New web note", "New page note"]:
-        wrong(f"Ctrl+T did not offer the kinds: {menu['rows']}")
+        wrong(f"the held chord did not offer the kinds: {menu['rows']}")
     else:
         say(f"the chooser            -> {menu['rows']}")
     if menu["on"] != "New note":
-        wrong(f"the keyboard did not land on the first row: {menu['on']!r}")
+        wrong(f"the keyboard did not land on the kind chosen last: {menu['on']!r}")
     else:
-        say("the keyboard           -> on New note, so Enter is a new note")
+        say("the keyboard           -> on New note, which is what was chosen last")
     page.screenshot(path=str(SHOTS / "chooser.png"))
 
-    page.keyboard.press("ArrowDown")
+    # Each further T steps one along while the modifier stays down.
+    page.keyboard.press("KeyT")
     page.wait_for_timeout(200)
     if page.evaluate(MENU)["on"] != "New canvas":
-        wrong("the arrows do not walk the chooser")
+        wrong("a second T did not step the chooser")
     else:
-        say("ArrowDown              -> New canvas")
-    page.keyboard.press("ArrowUp")
+        say("T again                -> New canvas")
+    page.keyboard.press("KeyT")
     page.wait_for_timeout(200)
+    if page.evaluate(MENU)["on"] != "New web note":
+        wrong("a third T did not step the chooser")
+    else:
+        say("T again                -> New web note")
 
-    # Escape closes it and makes nothing, like every other layer the app puts up.
+    # And Shift steps back, which is what every switcher under a held modifier does.
+    page.keyboard.press("Shift+KeyT")
+    page.wait_for_timeout(200)
+    if page.evaluate(MENU)["on"] != "New canvas":
+        wrong("Shift did not step the chooser back")
+    else:
+        say("Shift+T                -> New canvas")
+
+    # The pointer moves the ring while the chord is held, so the row lit under it is the
+    # row the release will choose rather than a second lit row that loses.
+    page.locator('.menu [role="menuitem"]:has-text("New page note")').first.hover()
+    page.wait_for_timeout(250)
+    if page.evaluate(MENU)["on"] != "New page note":
+        wrong("hovering a row did not move the keyboard onto it")
+    else:
+        say("hover New page note    -> the ring follows the pointer")
+    page.locator('.menu [role="menuitem"]:has-text("New canvas")').first.hover()
+    page.wait_for_timeout(250)
+
+    before = len(page.evaluate(STATE)["tabs"])
+    page.keyboard.up("Control")
+    page.wait_for_timeout(800)
+    state = page.evaluate(STATE)
+    if len(state["tabs"]) != before + 1 or state["active"] != {"kind": "canvas", "path": None}:
+        wrong(f"letting Ctrl go did not make the kind that stood: {state['active']}")
+    else:
+        say("Ctrl let go            -> a plane, with no file")
+    if page.evaluate(MENU)["rows"]:
+        wrong("the chooser stayed up after the release")
+
+    # Escape closes it and makes nothing, like every other layer the app puts up - and
+    # the release that follows must not make one either.
+    say("--- Escape ---")
+    before = len(page.evaluate(STATE)["tabs"])
+    page.keyboard.down("Control")
+    page.keyboard.press("KeyT")
+    page.wait_for_timeout(500)
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
     if page.evaluate(MENU)["rows"]:
         wrong("Escape did not close the chooser")
+    page.keyboard.up("Control")
+    page.wait_for_timeout(600)
+    if len(page.evaluate(STATE)["tabs"]) != before:
+        wrong("the release after an Escape made a tab anyway")
     else:
-        say("Escape                 -> closed, and nothing made")
+        say("Escape then Ctrl up    -> closed, and nothing made")
 
-    page.keyboard.press("Control+KeyT")
-    page.wait_for_timeout(450)
-
+    # Tapped rather than held: nothing is drawn and the kind that stands is made, which
+    # is the tab a browser makes. The plane above is what was chosen last.
+    say("--- Ctrl+T tapped ---")
     before = len(page.evaluate(STATE)["tabs"])
-    page.keyboard.press("Enter")
+    page.keyboard.press("Control+KeyT")
     page.wait_for_timeout(600)
     state = page.evaluate(STATE)
-    if len(state["tabs"]) != before + 1 or state["active"] != {"kind": "note", "path": None}:
-        wrong(f"Ctrl+T then Enter did not make a new note: {state['active']}")
+    if page.evaluate(MENU)["rows"]:
+        wrong("a tap of the chord drew the chooser")
+    if len(state["tabs"]) != before + 1 or state["active"] != {"kind": "canvas", "path": None}:
+        wrong(f"a tap did not make the kind chosen last: {state['active']}")
     else:
-        say("Enter                  -> a note, with no file")
+        say("Control+T              -> a plane at once, no chooser drawn")
 
 
 def unsaved(page) -> None:
@@ -293,9 +346,14 @@ def unsaved(page) -> None:
         ("pages", "New page note"),
         ("web", "New web note"),
     ):
-        page.keyboard.press("Control+KeyT")
-        page.wait_for_timeout(450)
+        # Held rather than tapped, because a tap makes the kind that stands and never
+        # draws a row to press. The click chooses and lets go of the chord with it, so
+        # the release afterwards makes nothing.
+        page.keyboard.down("Control")
+        page.keyboard.press("KeyT")
+        page.wait_for_timeout(500)
         page.locator(f'.menu [role="menuitem"]:has-text("{row}")').first.click()
+        page.keyboard.up("Control")
         page.wait_for_timeout(800)
 
         state = page.evaluate(STATE)
@@ -399,10 +457,12 @@ def nothing_open(page) -> None:
         wrong(f"the empty pane does not offer the kinds: {here['buttons']}")
     else:
         say(f"the buttons            -> {here['buttons']}")
-    if here["on"] != "New note":
-        wrong(f"the keyboard did not land on the first button: {here['on']!r}")
+    # The same memory the chooser opens on, at the other surface: the last kind chosen
+    # through it was the website, a few sections up.
+    if here["on"] != "New web note":
+        wrong(f"the keyboard did not land on the kind chosen last: {here['on']!r}")
     else:
-        say("the keyboard           -> on New note")
+        say("the keyboard           -> on New web note, which is what was chosen last")
 
     # One set, at one size. Emil, 2026-09-17: *"the icons in these buttons are not
     # properly aligned"* - and every one of them was centred: what differed was how
@@ -424,18 +484,62 @@ def nothing_open(page) -> None:
 
     page.keyboard.press("ArrowRight")
     page.wait_for_timeout(250)
-    if page.evaluate(HERE)["on"] != "New canvas":
+    if page.evaluate(HERE)["on"] != "New page note":
         wrong("the arrows do not walk the buttons")
     else:
-        say("ArrowRight             -> New canvas")
+        say("ArrowRight             -> New page note")
 
     page.keyboard.press("Enter")
     page.wait_for_timeout(900)
     state = page.evaluate(STATE)
-    if state["active"] != {"kind": "canvas", "path": None}:
-        wrong(f"pressing the button did not make a plane: {state['active']}")
+    if state["active"] != {"kind": "pages", "path": None}:
+        wrong(f"pressing the button did not make a page note: {state['active']}")
     else:
-        say("Enter                  -> an unsaved plane")
+        say("Enter                  -> an unsaved page note")
+
+    held_over_the_buttons(page)
+
+
+def held_over_the_buttons(page) -> None:
+    """The same chord over a pane with nothing open, where the kinds are already drawn.
+
+    No second copy of the list is hung over them: the chord walks the buttons that are
+    there and the release presses one, which is what the pointer would have done."""
+    say("--- the chord over an empty pane ---")
+
+    page.evaluate(
+        """() => {
+          const ws = window.nibApp.workspace
+          for (const tab of [...ws.tabs]) ws.close(tab.id)
+        }"""
+    )
+    page.wait_for_timeout(800)
+
+    page.keyboard.down("Control")
+    page.keyboard.press("KeyT")
+    page.wait_for_timeout(500)
+    if page.evaluate(MENU)["rows"]:
+        wrong("the chord hung a menu over the buttons that were already there")
+    here = page.evaluate(HERE)
+    if here["on"] != "New page note":
+        wrong(f"the chord did not stand on the kind chosen last: {here['on']!r}")
+    else:
+        say("Ctrl held, T           -> on New page note, and no menu over the buttons")
+
+    page.keyboard.press("KeyT")
+    page.wait_for_timeout(250)
+    if page.evaluate(HERE)["on"] != "New note":
+        wrong("T did not step the buttons, or did not wrap")
+    else:
+        say("T again                -> New note, wrapping round the end")
+
+    page.keyboard.up("Control")
+    page.wait_for_timeout(900)
+    state = page.evaluate(STATE)
+    if state["active"] != {"kind": "note", "path": None}:
+        wrong(f"letting Ctrl go did not press the button that stood: {state['active']}")
+    else:
+        say("Ctrl let go            -> a note, with no file")
 
 
 def drive(browser) -> None:

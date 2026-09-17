@@ -219,11 +219,21 @@ export function openSpaces(): void {
  *  buttons, so the key puts the keyboard on them rather than hanging a second copy of
  *  the same list over them. A strip with a plus has its plus pressed. And where there
  *  is neither - a phone, a tablet, the app in full screen - the chooser opens in the
- *  middle of the window, which on a touch screen is the sheet every menu there is. */
+ *  middle of the window, which on a touch screen is the sheet every menu there is.
+ *
+ *  Whichever of the three, the keyboard lands on the kind that was chosen last rather
+ *  than on the top of the list. Every surface marks that row with `data-lands`, which
+ *  is the attribute the trap already looks for, so neither this nor the chord has to
+ *  count its way to it. See trap.ts and last-kind.ts. */
 export function chooseNewKind(): void {
   const here = paneBox()
 
-  const buttons = here?.querySelector('[data-new-here] button')
+  // Two queries rather than one with a comma in it: a selector list answers with the
+  // first match in the page, which would be the first button whether or not it is the
+  // one that stands.
+  const buttons =
+    here?.querySelector('[data-new-here] [data-lands]') ??
+    here?.querySelector('[data-new-here] button')
   if (buttons instanceof HTMLElement && reachable(buttons)) {
     buttons.focus()
     return

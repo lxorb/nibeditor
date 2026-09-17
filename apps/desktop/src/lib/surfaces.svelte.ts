@@ -151,6 +151,24 @@ export const recordingPill = latched(() => import('./RecordingPill.svelte'))
  *  presses the bars; see AppMenu.svelte. */
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
+/** The held form of the new-tab chord: the state a hand is in between pressing Ctrl+T
+ *  and letting go of Ctrl, which is Alt+Tab's shape applied to the chooser that was
+ *  already there. See new-kind-chord.ts.
+ *
+ *  A door of a sort, but not one anything can wait at: a keystroke is answered in the
+ *  frame it arrives in, so what is here is the function once it has landed and a way
+ *  for the window's handler to ask whether this press is the chord's. Warmed below with
+ *  the rest, because the press it has to answer is the first one; until it lands, the
+ *  key is the plain command in the registry, which opens the same chooser on the same
+ *  row and has no modifier to wait for. Fetched rather than carried because it is a
+ *  state machine for a gesture, and a window that opens on a note should not read one
+ *  before it draws; see App.svelte and test/weight.test.ts. */
+let heldChooser: ((event: KeyboardEvent) => boolean) | null = null
+
+export function newKindChord(event: KeyboardEvent): boolean {
+  return heldChooser?.(event) ?? false
+}
+
 /** A note as a deck, over the whole window. The one overlay that is not latched:
  *  it takes the tab it is presenting as a prop, so there is nothing for it to be
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */
@@ -186,6 +204,9 @@ export async function warmDoors(): Promise<void> {
     appMenuRows(),
     readingSurface(),
     loadFind(),
+    // The held chooser, which is here rather than behind its own first press because
+    // the first press is the one it exists to answer; see above.
+    import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here

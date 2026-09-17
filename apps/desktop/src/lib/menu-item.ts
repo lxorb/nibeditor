@@ -28,6 +28,15 @@ export interface MenuItem {
    *  lists that have rows which do. */
   danger?: boolean
   disabled?: boolean
+  /** Whether the keyboard lands here when the menu opens, rather than on the first
+   *  row.
+   *
+   *  For a list whose rows are one choice made over and over: the new-tab chooser
+   *  opens on the kind that was chosen last, so a hand that makes canvases all
+   *  afternoon presses the chord and Enter rather than the chord and an arrow. One
+   *  row at most - the second is ignored - and none at all is the first row, which is
+   *  what every other menu in the app is. See `lands` in trap.ts and last-kind.ts. */
+  stands?: boolean
   /** Whether the menu stays open after this row is pressed.
    *
    *  For the handful of rows somebody presses twice in a row and would otherwise have

@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import {
   chorded,
+  holdKey,
   matchesCombination,
   parseCombination,
+  type Platform,
   readCombination,
   sameCombination,
   showCombination,
+  withShift,
 } from './keys'
 
 /** A keystroke, with only the fields the reader of one looks at. */
@@ -265,5 +268,55 @@ describe('telling a chord from a key a widget owns', () => {
    *  older recording - and "not there" is not held down. */
   test('a keystroke with nothing said about the modifiers is a bare one', () => {
     expect(chorded({ key: ' ' })).toBe(false)
+  })
+})
+
+/** The two halves a chord that is held rather than pressed needs: which key's release
+ *  ends it, and what the same chord reads as with Shift added. See new-kind-chord.ts. */
+describe('a chord that is held', () => {
+  /** Never null for any of these: the combinations are written out here, and a
+   *  parser that could not read one is the failure the test wants to see. */
+  function combination(text: string, platform: Platform) {
+    const read = parseCombination(text, platform)
+    if (!read) throw new Error(`not a combination: ${text}`)
+
+    return read
+  }
+
+  test('is ended by the modifier it is written with', () => {
+    expect(holdKey(combination('Mod-t', 'win'))).toBe('Control')
+    expect(holdKey(combination('Mod-t', 'mac'))).toBe('Meta')
+    expect(holdKey(combination('Alt-n', 'win'))).toBe('Alt')
+  })
+
+  /** Mod first, because that is what every chord in this app is written with. */
+  test('and Mod is the one that counts where there are two', () => {
+    expect(holdKey(combination('Ctrl-Alt-n', 'win'))).toBe('Control')
+  })
+
+  /** Which `refuse` in shortcuts.svelte.ts forbids; a map from another version is not
+   *  this one's to trust. */
+  test('a combination with no modifier has nothing to hold', () => {
+    expect(holdKey(combination('Shift-t', 'win'))).toBeNull()
+  })
+
+  test('steps back under Shift, which is the same chord with Shift in it', () => {
+    expect(withShift('Mod-t')).toBe('Mod-Shift-t')
+    expect(withShift('Alt-ArrowDown')).toBe('Alt-Shift-ArrowDown')
+  })
+
+  /** `Mod--` is Mod and the minus key, not Mod and nothing. */
+  test('and the minus key survives being written again', () => {
+    expect(parseCombination(withShift('Mod--'), 'win')).toEqual({
+      ctrl: true,
+      meta: false,
+      alt: false,
+      shift: true,
+      key: '-',
+    })
+  })
+
+  test('a chord that already holds Shift is left alone', () => {
+    expect(withShift('Mod-Shift-t')).toBe('Mod-Shift-t')
   })
 })

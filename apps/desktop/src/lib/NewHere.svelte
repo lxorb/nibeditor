@@ -12,13 +12,15 @@
    *  look at. Anything that appeared only here would be a second list to keep in step;
    *  see new-kinds.ts.
    *
-   *  The keyboard lands on the first of them, so Enter is the new note this used to
-   *  make on its own, and the arrows walk the rest - one tab stop for the group, which
-   *  is what every other list in the app is; see roving.ts. */
+   *  The keyboard lands on the kind that was chosen last, so Enter is whatever this
+   *  hand keeps making - a note, until somebody makes something else - and the arrows
+   *  walk the rest: one tab stop for the group, which is what every other list in the
+   *  app is; see roving.ts and last-kind.ts. */
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { MARKS } from './file-mark'
   import Icon from './Icon.svelte'
+  import { standingAt } from './last-kind'
   import { dur } from './motion'
   import { newKinds } from './new-kinds'
   import { roving } from './roving'
@@ -28,6 +30,10 @@
   const { paneId }: { paneId: string } = $props()
 
   const kinds = $derived(newKinds())
+  /** Which of them the keyboard lands on: the kind that was chosen last. Marked in
+   *  the page with the same attribute every other layer marks it with, so the key
+   *  that opens this can find it without counting; see trap.ts and focus.ts. */
+  const stands = $derived(standingAt(kinds.map((one) => one.kind)))
 
   let element = $state<HTMLElement>()
 
@@ -41,7 +47,7 @@
     const at = document.activeElement
     if (at && at !== document.body && !element?.contains(at)) return
 
-    element?.querySelector('button')?.focus()
+    element?.querySelector<HTMLElement>('[data-lands]')?.focus()
   })
 </script>
 
@@ -60,6 +66,7 @@
          motion.ts. -->
     <button
       class="kind"
+      data-lands={index === stands ? '' : undefined}
       onclick={() => one.make(paneId)}
       in:fly={{ y: 10, duration: dur(150), delay: dur(index * 40), easing: cubicOut }}
     >

@@ -28,6 +28,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { newKindMenu, newKinds } = await import('./new-kinds')
+const { standingAt } = await import('./last-kind')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 const { isSubmenu } = await import('./menu-item')
@@ -37,6 +38,7 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
+  localStorage.clear()
 })
 
 afterEach(() => {
@@ -125,5 +127,41 @@ describe('the kinds a new tab can be', () => {
     }
 
     expect(made).toEqual(['note', 'canvas', 'web', 'pages'])
+  })
+})
+
+/** Emil, 2026-09-17: *"The last chosen one should be selected already."* Which kind
+ *  that is is written down by the maker rather than by the door, so the plus, Ctrl+T,
+ *  the File menu and the buttons in an empty pane all agree about it; see
+ *  last-kind.ts. */
+describe('the kind that was chosen last', () => {
+  test('is written down by whichever way in made one', () => {
+    makers()
+    newKinds()[1]?.make()
+
+    expect(standingAt(newKinds().map((one) => one.kind))).toBe(1)
+  })
+
+  test('is the row the chooser opens on', () => {
+    makers()
+    newKinds()[2]?.make()
+
+    const rows = newKindMenu()
+    expect(rows.map((one) => (one !== null && !isSubmenu(one) ? !!one.stands : null))).toEqual([
+      false,
+      false,
+      true,
+      false,
+    ])
+  })
+
+  test('and the first row stands until something has been', () => {
+    const rows = newKindMenu()
+    expect(rows.map((one) => (one !== null && !isSubmenu(one) ? !!one.stands : null))).toEqual([
+      true,
+      false,
+      false,
+      false,
+    ])
   })
 })

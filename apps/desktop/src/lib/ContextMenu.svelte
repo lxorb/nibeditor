@@ -242,11 +242,15 @@
         {#if item === null}
           <hr />
         {:else}
+          <!-- The row the keyboard lands on, where the menu names one: `data-lands` is
+               what the trap looks for, the same attribute the Share sheet marks its
+               address field with. See trap.ts and menu-item.ts. -->
           <button
             class="nib-row"
             role="menuitem"
             class:danger={item.danger}
             disabled={item.disabled}
+            data-lands={item.stands ? '' : undefined}
             onclick={() => choose(item)}
           >
             <span class="nib-row-label">{item.label}</span>
