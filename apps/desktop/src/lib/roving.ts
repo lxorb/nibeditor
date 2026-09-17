@@ -229,9 +229,18 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       return
     }
 
+    // A press with Ctrl, Cmd or Alt on it is the app's and not this list's. The four
+    // keys below are read off the event rather than through the registry - they are
+    // the ones `fixed.lists` says nobody may rebind - so a chord that happens to end
+    // in one of them used to be answered here and go no further: Ctrl+Shift+Space is
+    // the space switcher, and pressing it with the keyboard in the file list opened
+    // the row it was on instead. Shift alone is not a chord: Shift+F10 is the
+    // context-menu key every list answers below.
+    const chorded = event.ctrlKey || event.metaKey || event.altKey
+
     switch (event.key) {
       case 'Enter':
-        if (!row) return
+        if (!row || chorded) return
         event.preventDefault()
         if (settings.open) settings.open(row)
         else row.click()
@@ -240,7 +249,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
       case ' ':
         // Taken either way, so a space meant for the list never scrolls the page
         // underneath it.
-        if (!row) return
+        if (!row || chorded) return
         event.preventDefault()
         if (settings.peek) settings.peek(row)
         else if (settings.open) settings.open(row)
@@ -249,7 +258,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
       case 'Delete':
       case 'Backspace':
-        if (!row || !settings.remove) return
+        if (!row || chorded || !settings.remove) return
         event.preventDefault()
         settings.remove(row)
         return
