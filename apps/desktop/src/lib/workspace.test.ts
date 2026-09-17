@@ -2451,10 +2451,9 @@ describe('the note a window comes back on', () => {
   test('is the first in the strip only where the pane was left showing nothing', async () => {
     workspace.openBlank('Untitled', '# unsaved words')
 
-    await workspace.applyLayout({
-      ...drafted(1),
-      frame: { ...drafted(1).frame, pane: { ...drafted(1).frame.pane, tabs: [] } },
-    })
+    const empty = drafted(0)
+    empty.frame.pane.tabs = []
+    await workspace.applyLayout(empty)
 
     expect(workspace.active?.doc).toBe('# unsaved words')
   })
