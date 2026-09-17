@@ -1,4 +1,4 @@
-import { caretLine, type EditorView, foldLines, sharedOf, topLine } from '@nib/editor'
+import { caretLine, documentOf, type EditorView, foldLines, topLine } from '@nib/editor'
 import { untrack } from 'svelte'
 import { onceAFrame } from './timing'
 import { type Tab, workspace } from './workspace.svelte'
@@ -58,7 +58,11 @@ class Placement {
       // may have swapped the note out, the tab may have taken another note on,
       // and the note may have been renamed out from under both.
       if (tab?.path !== path || tab.note.arrivals !== arrivals) return
-      if (sharedOf(view.state) !== live) return
+      // The note this view is on, not the one its state was last told it is about:
+      // a state put away and handed back still carries the claim, and a place
+      // written under the wrong note is a note reopening somewhere it never was.
+      // See shared.ts in the editor package.
+      if (documentOf(view) !== live) return
 
       workspace.noteView(
         id,

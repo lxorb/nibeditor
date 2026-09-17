@@ -14,7 +14,7 @@
  *
  *  What joining one room means is next door, in rooms/room.ts and rooms/plane.ts. */
 
-import { type EditorView, sharedOf } from '@nib/editor'
+import { documentOf, type EditorView } from '@nib/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
 import { busy } from './busy.svelte'
@@ -208,10 +208,12 @@ class Rooms {
   }
 
   /** A pane reporting that its caret moved, on its way to the other devices. Which
-   *  document the view is showing says which room to tell; see shared.ts in the
-   *  editor package. */
+   *  document the view is on says which room to tell - the fact, not the claim its
+   *  own state is carrying, which a state put away and handed back still carries.
+   *  A caret announced into the wrong room is this person shown to the others in a
+   *  note they are not in; see shared.ts in the editor package. */
   moved(view: EditorView) {
-    const shared = sharedOf(view.state)
+    const shared = documentOf(view)
     if (!shared) return
 
     for (const joined of this.held.values()) {
