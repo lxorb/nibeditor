@@ -70,7 +70,7 @@ def build() -> None:
     say("building the web app")
     # A production build hides the app's stores, and the run drives them.
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,
@@ -225,7 +225,7 @@ CHROME = [
     ["titlebar title", "header .title"],
     ["titlebar more", "header .more"],
     ["status bar", "footer"],
-    ["hamburger", ".hamburger"],
+    ["app menu button", "header .trigger"],
 ]
 
 PANELS = {
@@ -309,6 +309,17 @@ def shot(page: Page, name: str) -> None:
 def open_drawer(page: Page) -> None:
     page.evaluate("() => { const ws = window.nibApp.workspace; if (!ws.panel) ws.showPanel('tree') }")
     page.wait_for_timeout(350)
+
+
+def shut_drawer(page: Page) -> None:
+    """Both drawers away, and the one scrim they share with them.
+
+    On a phone that scrim is over the whole window, the titlebar included, so
+    anything in the bar has to be reached with the drawers shut."""
+    page.evaluate(
+        "() => { const ws = window.nibApp.workspace; ws.closePanel(); ws.closePanel('right') }"
+    )
+    page.wait_for_timeout(400)
 
 
 def run(label: str) -> int:
@@ -433,13 +444,16 @@ def one(
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    if page.locator(".hamburger").count():
-        page.click(".hamburger")
-        page.wait_for_timeout(600)
-        rows.update(measure(page, MENU))
-        shot(page, f"{label}-{name}-menu-{scheme}")
-        page.keyboard.press("Escape")
-        page.wait_for_timeout(300)
+    # The bars in the titlebar, which is what opens the app menu; see AppMenu.svelte.
+    # With the drawer shut first, because on a phone the drawer's scrim lies over the
+    # whole row and a press on a scrim is a press that shuts the drawer.
+    shut_drawer(page)
+    page.click("header .trigger")
+    page.wait_for_timeout(600)
+    rows.update(measure(page, MENU))
+    shot(page, f"{label}-{name}-menu-{scheme}")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
 
     open_drawer(page)
     page.wait_for_timeout(200)
