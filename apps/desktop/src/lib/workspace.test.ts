@@ -2345,6 +2345,93 @@ describe('a note opened while the session is still arriving', () => {
   })
 })
 
+/** Which of a pane's notes is in front when the window comes back.
+ *
+ *  A pane writes down the one it was showing as an index into its own strip, since
+ *  ids are handed out fresh on every run, and that index is the only record there
+ *  is of it. The arrangement honoured it and then a line below reached for the
+ *  first tab in the pane and put that one in front instead - so a window always
+ *  came back on the first note in the strip, however long somebody had been
+ *  reading the third, and a saved arrangement opened on its first note rather than
+ *  the one it names.
+ *
+ *  Emil met it as pictures that had gone: pictures.py pasted three into a note,
+ *  reloaded, and photographed the welcome note, which has none. Both callers of
+ *  `applyLayout` are here because one line served both. */
+describe('the note a window comes back on', () => {
+  /** Two notes in one pane, with the second of them the one that was showing. */
+  function drafted(active: number) {
+    return {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active,
+          linked: false,
+          tabs: ['/space/a.md', '/space/b.md'].map((path) => ({
+            kind: 'note' as const,
+            path,
+            name: path.slice(path.lastIndexOf('/') + 1),
+            doc: '',
+            dirty: false,
+            cursor: 0,
+            scroll: 0,
+          })),
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    }
+  }
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  test('is the one the session says was showing, not the first in the strip', async () => {
+    await workspace.applyLayout(drafted(1), false)
+
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md'])
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('and the one a saved arrangement names, when that is what was chosen', async () => {
+    await workspace.open('/space/c.md')
+
+    await workspace.applyLayout(drafted(1))
+
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('survives being written down and read back, which is what a restart is', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/b.md')
+    const written = workspace.layout()
+
+    // A window with nothing in it, which is what the arrangement arrives into.
+    onePane()
+
+    await workspace.applyLayout(written, false)
+
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  /** And the pane that ends up showing nothing still takes the first note it has:
+   *  an arrangement with no notes in it, and a note nobody saved carried into it. */
+  test('is the first in the strip only where the pane was left showing nothing', async () => {
+    workspace.openBlank('Untitled', '# unsaved words')
+
+    await workspace.applyLayout({
+      ...drafted(1),
+      frame: { ...drafted(1).frame, pane: { ...drafted(1).frame.pane, tabs: [] } },
+    })
+
+    expect(workspace.active?.doc).toBe('# unsaved words')
+  })
+})
+
 describe('what a document is called on screen', () => {
   beforeEach(() => {
     workspace.tabs = []

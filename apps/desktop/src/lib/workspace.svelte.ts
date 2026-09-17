@@ -778,8 +778,19 @@ class Workspace {
       inFront &&
       (this.tabs.includes(inFront) ? inFront : this.tabs.find((one) => one.note === inFront.note))
 
+    // Only where the arrangement left the focused pane showing nothing: a pane
+    // writes down the tab it was showing as an index into its own strip, that index
+    // is the only record of it - ids are handed out fresh every run - and it has
+    // already been honoured a few lines above. Reaching for the first tab here
+    // whatever the pane said is how every launch came back on the first note in the
+    // strip however long somebody had been reading the third, and how choosing a
+    // saved arrangement landed on its first note rather than the one it names. Emil
+    // met it as pictures that had gone: the note was there and another note was in
+    // front of it.
     if (still) this.activeTabId = still.id
-    else if (this.tabs.length) this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
+    else if (!this.activeTabId && this.tabs.length) {
+      this.activeTabId = this.tabsIn(this.panes.focusedId)[0]?.id ?? null
+    }
 
     // A phone and a tablet show one document at a time.
     this.oneDocument()
