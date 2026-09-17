@@ -100,6 +100,54 @@ describe('block math', () => {
   test('does not read an empty pair as a formula', () => {
     expect(names('$$$$')).not.toContain('BlockMath')
   })
+
+  /** A formula ends the paragraph above it, the way a fence and a heading do.
+   *
+   *  It used not to, and so a formula written straight under a line of prose was
+   *  not a formula at all: the `$$` line joined the paragraph and the maths came
+   *  out as two literal dollars around an inline formula. A blank line above it
+   *  was the difference, and nothing said so. Emil: *"is it possible that `$$`
+   *  only renders properly if we do two line breaks?"*
+   *
+   *  It is not a convention. CommonMark lets fenced code and an ATX heading
+   *  interrupt a paragraph, @lezer/markdown gives both of them an `endLeaf` for
+   *  it, and the renderer this package has to agree with already had the same
+   *  rule - see `blockMath` in @nib/markdown's blocks.ts, whose `start` hook is
+   *  marked's way of saying the same thing. So the note read one way while it was
+   *  written and another way once it was published, which is worse than either. */
+  test('ends the paragraph above it, in both shapes', () => {
+    expect(names('Text above\n$$x + y$$\nText below\n')).toContain('BlockMath')
+    expect(names('Text above\n$$\nx + y\n$$\nText below\n')).toContain('BlockMath')
+  })
+
+  test('which is what the two constructs either side of it already did', () => {
+    // The company it now keeps, asserted here so the rule is read as one rule
+    // rather than as a special case for maths.
+    expect(names('Text above\n```js\nlet x = 1\n```\nText below\n')).toContain('FencedCode')
+    expect(names('Text above\n# A heading\nText below\n')).toContain('ATXHeading1')
+  })
+
+  test('and the paragraph above it is still a paragraph', () => {
+    expect(tree('Text above\n$$x + y$$\n')).toMatchInlineSnapshot(`
+      "Document "Text above\\n$$x + y$$\\n"
+        Paragraph "Text above"
+        BlockMath "$$x + y$$"
+          MathMark "$$"
+          MathMark "$$""
+    `)
+  })
+
+  test('but prose about money is left where it is', () => {
+    // The rule that keeps it so is that `$$` has to be the whole line: a line
+    // with words before the marks is somebody's sentence, wherever it sits.
+    for (const doc of [
+      'I paid\nCosts $$5 and $$6 in total.\n',
+      'I paid\nThe sum $$E = mc^2$$ sits here.\n',
+      'I paid\n$$$$\n',
+    ]) {
+      expect(names(doc), doc).not.toContain('BlockMath')
+    }
+  })
 })
 
 describe('footnotes', () => {

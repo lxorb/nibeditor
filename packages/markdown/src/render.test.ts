@@ -335,6 +335,21 @@ describe('Typora extensions', () => {
     expect(html).toContain('<p>After.</p>')
   })
 
+  /** With no blank line above it, which is what the editor's parser used to need
+   *  and this one never did. The two have to say the same thing about the same
+   *  note, or a formula written under a line of prose is a formula while it is
+   *  being written and two dollars around an inline one once it is published. */
+  test('block math straight under a line of prose, in both shapes', () => {
+    for (const doc of ['Before.\n$$E = mc^2$$\nAfter.\n', 'Before.\n$$\nE = mc^2\n$$\nAfter.\n']) {
+      const html = renderMarkdown(doc)
+
+      expect(html, doc).toContain('math-block')
+      expect(html, doc).not.toContain('math-inline')
+      expect(html, doc).toContain('Before.')
+      expect(html, doc).toContain('After.')
+    }
+  })
+
   test('a one line block that is not the whole line is left alone', () => {
     // Display maths is a block; `$$` part way along a line is somebody's prose.
     const html = renderMarkdown('The sum $$E = mc^2$$ sits here.\n')

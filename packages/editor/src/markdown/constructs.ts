@@ -174,6 +174,23 @@ const InlineMath: MarkdownConfig = {
  *  else on a line it is left alone, because "Costs $$5 and $$6" is prose. */
 const ONE_LINE = /^\$\$(?![\s$])[^\n]*?(?<![\s$])\$\$$/
 
+/** The line as the block parser sees it: past whatever indent or quote marker it
+ *  sits behind, and without the spaces somebody left at the end of it. */
+const restOf = (line: Line) => line.text.slice(line.pos).trimEnd()
+
+/** Whether a line opens a display formula, in either of the two shapes.
+ *
+ *  One question, asked twice - by `parse`, which takes the line, and by `endLeaf`
+ *  below, which says a paragraph in progress stops above it. They have to be the
+ *  same question: a line that ended a paragraph and was then turned down by
+ *  `parse` would have cut the paragraph in two and left a stray one in its place.
+ *
+ *  A whole line either way, which is the rule that keeps prose about money out of
+ *  it: "Costs $$5 and $$6 in total" has words before the marks, wherever it sits. */
+function opensBlockMath(rest: string): boolean {
+  return ONE_LINE.test(rest) || rest.trim() === '$$'
+}
+
 /** A `$$` fence on its own line closed by another, or a whole line of `$$…$$`. */
 const BlockMath: MarkdownConfig = {
   defineNodes: [{ name: 'BlockMath', block: true, style: markTags.math }],
@@ -181,8 +198,31 @@ const BlockMath: MarkdownConfig = {
     {
       name: 'BlockMath',
       before: 'HorizontalRule',
+
+      /** A formula ends the paragraph above it, the way a fence and a heading do.
+       *
+       *  Without this a formula written straight under a line of prose was not a
+       *  formula at all - the `$$` line joined the paragraph, and what should have
+       *  been display maths came out as two literal dollars around an inline
+       *  formula. A blank line above it was the whole difference, and nothing on
+       *  the page said so. Emil: *"is it possible that `$$` only renders properly
+       *  if we do two line breaks?"*
+       *
+       *  It is not a convention anybody chose. CommonMark lets fenced code and an
+       *  ATX heading interrupt a paragraph, @lezer/markdown gives each of them one
+       *  of these, and the renderer this parser has to agree with already had the
+       *  same rule - `blockMath` in @nib/markdown's blocks.ts carries a `start`
+       *  hook, which is marked's way of saying it. So a note said one thing while
+       *  it was being written and another once it was read back, exported or
+       *  published, which is worse than either answer on its own. */
+      // Asked of every line of every paragraph in the note, so the dollar is
+      // checked first: a line that does not start with one is dismissed without
+      // being copied out of the document, which is all but a handful of them.
+      endLeaf: (_cx: BlockContext, line: Line) =>
+        line.next === DOLLAR && opensBlockMath(restOf(line)),
+
       parse(cx: BlockContext, line: Line) {
-        const rest = line.text.slice(line.pos).trimEnd()
+        const rest = restOf(line)
 
         // The one-line shape is the whole element: two marks and no scanning.
         if (ONE_LINE.test(rest)) {
