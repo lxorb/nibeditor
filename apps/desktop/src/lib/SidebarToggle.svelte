@@ -40,7 +40,7 @@
     }
 
     const first = workspace.nextRight
-    if (first) workspace.showPanel(first)
+    if (first) workspace.togglePanel(first)
   }
 </script>
 

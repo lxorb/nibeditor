@@ -290,12 +290,40 @@ describe('the two sides of the window', () => {
     expect(workspace.openOn('right')).toBe('outline')
 
     // Pressing the one already showing shuts that side and leaves the other.
-    workspace.showPanel('outline')
+    workspace.togglePanel('outline')
     expect(workspace.openOn('right')).toBeNull()
     expect(workspace.openOn('left')).toBe('tree')
 
     workspace.closePanel()
     expect(workspace.openOn('left')).toBeNull()
+  })
+
+  /** The switch and the showing are two gestures, and the names say which is
+   *  which. They were one method called `showPanel`, which shut the panel it was
+   *  asked for whenever that panel was the one already open: the File list row of
+   *  the menu, a website's bookmarks row and the drag that pulls the drawer out all
+   *  took the file list away instead of opening it, and every drive that asks for
+   *  the file list on the way in lost the list it had just asked for. */
+  test('asking for the panel that is already showing leaves it showing', () => {
+    workspace.showPanel('tree')
+    workspace.showPanel('tree')
+
+    expect(workspace.openOn('left')).toBe('tree')
+  })
+
+  test('and the press on a panel tab is the switch', () => {
+    workspace.togglePanel('tree')
+    expect(workspace.openOn('left')).toBe('tree')
+
+    workspace.togglePanel('tree')
+    expect(workspace.openOn('left')).toBeNull()
+  })
+
+  test('showing one panel over another still swaps them', () => {
+    workspace.showPanel('tree')
+    workspace.showPanel('outline')
+
+    expect(workspace.openOn('left')).toBe('outline')
   })
 
   test('and moving the last one back leaves no right side behind', () => {

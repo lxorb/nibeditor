@@ -83,9 +83,12 @@ async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []
     get nextRight(): string | null {
       return this.rightPanel ?? this.right[0] ?? null
     },
+    /** Shows it, as the real one does: a drawer being pulled out asks for the panel
+     *  it is pulling out, and asking for the one already showing is not a request to
+     *  shut it. The switch is `togglePanel`, which nothing here presses. */
     showPanel(next: string) {
-      if (this.right.includes(next)) this.rightPanel = this.rightPanel === next ? null : next
-      else this.panel = this.panel === next ? null : next
+      if (this.right.includes(next)) this.rightPanel = next
+      else this.panel = next
     },
     closePanel(side: 'left' | 'right' = 'left') {
       if (side === 'right') this.rightPanel = null

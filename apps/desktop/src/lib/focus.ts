@@ -136,7 +136,7 @@ export function revealPanel(panel: Panel): void {
     return
   }
 
-  if (workspace.panel !== panel) workspace.showPanel(panel)
+  workspace.showPanel(panel)
   settle('list')
 }
 

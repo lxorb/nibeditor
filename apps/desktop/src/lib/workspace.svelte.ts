@@ -3262,8 +3262,32 @@ class Workspace {
     return this.rightPanel ?? this.right[0] ?? null
   }
 
-  /** Shows a panel, or shuts it where it is already the one showing. */
+  /** Shows a panel. Asking for the one already showing leaves it showing, which is
+   *  what a method called `show` has to mean.
+   *
+   *  It used to be the switch below, and every caller that meant "show" had to
+   *  remember: two of them did, with `if (workspace.panel !== panel)` in front of
+   *  the call, and the rest took the file list away instead of opening it - the
+   *  menu's own File list row, the bookmarks row of a website, the drag that pulls
+   *  the drawer out. The drives met it hardest, because a drive asks for the file
+   *  list on every launch and the sitting before it left the file list open: they
+   *  spent a minute each waiting for rows they had just closed.
+   *
+   *  So the fact is held here rather than by everybody who asks for it, and the
+   *  gesture that switches says switch; see `togglePanel`. */
   showPanel(next: Panel) {
+    if (this.openOn(this.sideOf(next)) === next) return
+
+    this.sides = panels.showing(this.sides, next)
+  }
+
+  /** Shows a panel, or shuts it where it is already the one showing: the press on
+   *  a panel's own tab, and the button for a side.
+   *
+   *  A switch belongs to a control somebody is looking at, which knows what it is
+   *  showing. The rule itself is `showing` in workspace/panels.ts, which answers
+   *  what the two sides are after the press. */
+  togglePanel(next: Panel) {
     this.sides = panels.showing(this.sides, next)
   }
 

@@ -275,11 +275,9 @@
     return name === undefined ? {} : { title: name }
   }
 
-  /** A bookmarked search puts its words back in the box and runs them. The
-   *  panel is named rather than shown, because `showPanel` is a switch and
-   *  would shut a search panel that was already open. */
+  /** A bookmarked search puts its words back in the box and runs them. */
   function runBookmarked(text: string) {
-    if (showing !== 'search') workspace.showPanel('search')
+    workspace.showPanel('search')
     search.ask(text)
   }
 
@@ -579,7 +577,7 @@
           title={item.label}
           aria-label={item.label}
           aria-selected={showing === item.id}
-          onclick={() => workspace.showPanel(item.id)}
+          onclick={() => workspace.togglePanel(item.id)}
           oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
           use:longPress={(event) => showTabMenu(event, item.id, item.label)}
         >

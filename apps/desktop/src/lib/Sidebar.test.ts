@@ -42,8 +42,8 @@ function drawn(
   device: typeof viewport.device = 'desktop',
 ) {
   viewport.device = device
-  // Written rather than asked for: `showPanel` is a toggle, and a test that pressed the
-  // tab twice would be a test of a shut panel.
+  // Written rather than asked for: what these tests are about is the strip as it is
+  // drawn for a panel, not the gesture that got there.
   workspace.panel = panel
   return render(Sidebar, { props: { side: 'left' as const } }).body
 }
