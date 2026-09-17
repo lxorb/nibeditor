@@ -1443,10 +1443,29 @@ class Workspace {
    *  about. From here on it is an ordinary file and the reading follows it; see keep.ts.
    *
    *  The tab becomes the saved one in place - the same tab, the same page, still live -
-   *  because all that changes is which file the document is of. */
+   *  because all that changes is which file the document is of.
+   *
+   *  Which makes this the one gesture that gives a file to a document that already
+   *  exists, and so the one that can put a second document on a file. The name came
+   *  from the save sheet, which stepped it aside by number off the file list - and a
+   *  listing is a round trip behind what is open, so two tabs kept in the same
+   *  instant were handed the same name. It is asked for again here, against what is
+   *  open as well as what is listed, and claimed before the write begins: the same
+   *  rule and the same owner as opening a file. See workspace/open.ts. */
   async keepWeb(tab: Tab, path: string) {
     if (tab.kind !== 'web' || tab.path !== null || this.keeping.has(tab.id)) return
 
+    // Picked and claimed with nothing between them, which is the whole of it: a
+    // second keep of the same name finds this one written down however closely it
+    // follows, and steps aside by number rather than landing on the same file.
+    const dir = folderOf(path)
+    const target = joinPath(dir, this.freeName(dir, nameOf(path)))
+    await this.opened.opening(target, () => this.keptWeb(tab, target))
+  }
+
+  /** The shortcut one keep writes, and the document it leaves at that file. Only
+   *  `keepWeb` calls it, and only through the one claim. */
+  private async keptWeb(tab: Tab, path: string): Promise<NoteDoc | null> {
     const page = pages.of(tab.id)
     const url = page.url ?? tab.address ?? ''
     const title = (page.title || tab.name || UNTITLED).trim()
@@ -1464,6 +1483,7 @@ class Workspace {
       tab.note.replace(text, false)
       this.remember(path)
       this.persist()
+      return tab.note
     } finally {
       this.keeping.delete(tab.id)
     }
@@ -2770,10 +2790,16 @@ class Workspace {
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
-   *  folders between them too. */
+   *  folders between them too.
+   *
+   *  And the files that are open or on their way to being open. The tree is a
+   *  listing, and a listing is a round trip behind what the app has done: a file
+   *  written a moment ago is a document with a path and not yet a row, and a file
+   *  being written this instant is neither. Said here rather than at each of the
+   *  eight gestures that ask for a name, because the gestures are what keep being
+   *  added; see `paths` in workspace/open.ts. */
   private everyPath(): Set<string> {
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- thrown away by the caller; nothing renders from it
-    const out = new Set<string>()
+    const out = this.opened.paths
     const walk = (entry: Entry) => {
       for (const child of entry.children) {
         out.add(child.path)

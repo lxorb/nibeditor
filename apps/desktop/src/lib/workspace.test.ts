@@ -1808,6 +1808,43 @@ describe('a tab nobody has saved', () => {
     expect(workspace.active?.path).toBeNull()
   })
 
+  /** One file is one document, and keeping a website is a document being given a
+   *  file - the one place in the app where that happens to a document that already
+   *  exists. The name comes from the sheet, which stepped it aside by number off
+   *  the file list; the file list is a listing, and a listing is a round trip
+   *  behind what is open. Two tabs kept in the same instant read the same listing
+   *  and were handed the same name, and what that leaves is two documents over one
+   *  file: each honest about its own address, both reporting theirs as that file's,
+   *  and whichever settles last is the site the file opens at.
+   *
+   *  So the name is asked for again at the moment of writing, against what is open
+   *  as well as what is listed, and the path is claimed before the write begins -
+   *  which is the same rule, and the same owner, as opening a file. See
+   *  workspace/open.ts. */
+  test('never lands two websites on one file', async () => {
+    workspace.openWebsite()
+    const first = workspace.active
+    workspace.openWebsite()
+    const second = workspace.active
+    if (!first || !second || first.id === second.id) throw new Error('two tabs did not open')
+
+    first.address = 'https://example.com/a'
+    second.address = 'https://example.com/b'
+
+    await Promise.all([
+      workspace.keepWeb(first, '/space/Example.url'),
+      workspace.keepWeb(second, '/space/Example.url'),
+    ])
+
+    expect(first.path).toBe('/space/Example.url')
+    expect(second.path).toBe('/space/Example 2.url')
+    expect(workspace.documentAt('/space/Example.url')).toBe(first.note)
+    expect(written().map((one) => one.path)).toEqual([
+      '/space/Example.url',
+      '/space/Example 2.url',
+    ])
+  })
+
   /** A browser brings back the tabs it had, and so does this: the words of a document
    *  with no file exist in the session and nowhere else, so they are kept whether or not
    *  anybody has typed in it. See `draftOf`. */

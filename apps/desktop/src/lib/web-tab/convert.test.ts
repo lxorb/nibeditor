@@ -13,6 +13,8 @@ const sent: { command: string; path: string; content: string }[] = []
 const disk = new Map<string, string>()
 const told: string[] = []
 let signedIn = true
+/** The files a document is open on, which is what `documentAt` answers about. */
+const open = new Set<string>()
 
 vi.mock('../tauri', () => ({
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -51,6 +53,7 @@ vi.mock('../link-index.svelte', () => ({
 const { asShortcut, convertWebsites } = await import('./convert')
 type Converts = import('./convert').Converts
 type Entry = import('../workspace.svelte').Entry
+type NoteDoc = import('../workspace/documents.svelte').NoteDoc
 
 const SPACE = '/space'
 
@@ -72,6 +75,7 @@ function store(notes: Record<string, string>) {
     notes: Object.keys(notes).map((path) => ({ path, name: path.split('/').pop() ?? path })),
     activeSpace: { id: 's', name: 'Space', root: SPACE },
     entryAt: (path: string) => (disk.has(path) ? ({ path } as Entry) : null),
+    documentAt: (path: string) => (open.has(path) ? ({ path } as unknown as NoteDoc) : null),
     freeName: (dir: string, wanted: string) => {
       // The store's own numbering, in one line: `Name 2.url`, `Name 3.url`.
       let at = 1
@@ -93,6 +97,7 @@ function store(notes: Record<string, string>) {
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  open.clear()
   signedIn = true
 })
 
@@ -196,5 +201,46 @@ describe('converting a whole space', () => {
 
     expect(await convertWebsites(ws)).toBe(0)
     expect(sent).toEqual([])
+  })
+})
+
+/** The one file a conversion must not touch.
+ *
+ *  Converting writes `X.url` and then rewrites or deletes `X.md`. A document open
+ *  on `X.md` holds that file's words and writes them back as the typing pauses, so
+ *  a conversion underneath it leaves the shortcut and the note it was made from
+ *  both alive, each claiming to be the website - and the note comes back from the
+ *  document the moment anybody pauses. `openWeb` asks what is open before it
+ *  converts anything; the palette's pass over a whole space asked nothing, which
+ *  made it the one gesture in the app that wrote a file out from under a document.
+ *  See workspace/open.ts. */
+describe('a website a document is open on', () => {
+  const NOTE = `${SPACE}/Open.md`
+
+  test('is left exactly as it is, file and all', async () => {
+    const { ws, shown } = store({ [NOTE]: urlNote('https://svelte.dev', 'Open') })
+    open.add(NOTE)
+
+    expect(await asShortcut(ws, NOTE)).toBeNull()
+    expect(disk.has(NOTE)).toBe(true)
+    expect(disk.has(`${SPACE}/Open.url`)).toBe(false)
+    expect(shown).toEqual([])
+    // Not even read: nothing about this file is the conversion's business while
+    // somebody has it open.
+    expect(sent).toEqual([])
+    expect(told).toEqual([])
+  })
+
+  test('and a pass over the space converts the rest and steps around it', async () => {
+    const { ws } = store({
+      [NOTE]: urlNote('https://svelte.dev', 'Open'),
+      [`${SPACE}/A.md`]: urlNote('https://a.dev', 'A'),
+    })
+    open.add(NOTE)
+
+    expect(await convertWebsites(ws)).toBe(1)
+    expect(disk.has(`${SPACE}/A.url`)).toBe(true)
+    expect(disk.has(`${SPACE}/Open.url`)).toBe(false)
+    expect(disk.get(NOTE)).toContain('url: https://svelte.dev')
   })
 })

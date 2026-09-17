@@ -53,6 +53,26 @@ export class OpenDocuments {
     return [...seen]
   }
 
+  /** Every file that is spoken for: open, or on its way to being open.
+   *
+   *  What a name the app is about to hand out has to step aside from, beside the
+   *  file list. The list is a listing and a listing is a round trip behind: a file
+   *  written a moment ago is a document with a path and not yet a row, and a file
+   *  being written this instant is neither. See `freeName` in workspace.svelte.ts,
+   *  which is the one numbering every new name in the app goes through. */
+  get paths(): Set<string> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- thrown away by the caller; nothing renders from it
+    const out = new Set<string>(this.coming.keys())
+    for (const tab of this.showing()) {
+      if (tab.note.path !== null) out.add(tab.note.path)
+    }
+    for (const note of this.building) {
+      if (note.path !== null) out.add(note.path)
+    }
+
+    return out
+  }
+
   /** The document a file is open as, whichever pane is showing it.
    *
    *  Total rather than the first of several: with one document per file there is

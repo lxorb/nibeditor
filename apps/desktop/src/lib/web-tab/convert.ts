@@ -18,6 +18,7 @@ import { links } from '../link-index.svelte'
 import { shownName } from '../note-name'
 import { folderOf, isMarkdownPath, nameOf, withoutExtension } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
+import type { NoteDoc } from '../workspace/documents.svelte'
 import type { Entry, Space } from '../workspace.svelte'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { writeShortcut } from './shortcut'
@@ -29,6 +30,10 @@ export interface Converts {
   readonly notes: readonly Entry[]
   readonly activeSpace: Space | null
   entryAt(path: string): Entry | null
+  /** The document a file is open as, or null when nothing is showing it. What
+   *  makes a conversion something done to a file rather than to a file somebody
+   *  is looking at; see `asShortcut`. */
+  documentAt(path: string): NoteDoc | null
   freeName(dir: string, wanted: string): string
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
@@ -42,8 +47,21 @@ export interface Converts {
  *  the address as a link, and nothing of that is worth keeping; a note somebody had
  *  written into as well is a note, and it stays where it is with the `url:` line
  *  taken out of it. So a shortcut and a note of the same name can both come out of
- *  this, which is exactly what was in the file. */
+ *  this, which is exactly what was in the file.
+ *
+ *  Never a file a document is open on. This writes `X.url` and then rewrites or
+ *  deletes `X.md`, and a document over `X.md` is holding that file's words and
+ *  writes them back as the typing pauses - so the note would come back beside its
+ *  own shortcut, both of them live and both of them the website. `openWeb` asks
+ *  the same question before it gets here, because a website somebody is already
+ *  reading is a tab to bring forward rather than a file to convert; the palette's
+ *  pass over a whole space asked nothing at all, and that was the one gesture in
+ *  the app that wrote a file out from under a document. It is asked here rather
+ *  than at each door, because the doors are what keep being added. See
+ *  workspace/open.ts. */
 export async function asShortcut(ws: Converts, path: string): Promise<string | null> {
+  if (ws.documentAt(path)) return null
+
   const text = await invoke<string>('read_note', { path }).catch(() => null)
   const url = webUrlOf(text)
   if (text === null || url === null) return null
