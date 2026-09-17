@@ -463,8 +463,9 @@ is the one thing about an address worth warning somebody about.
 What somebody types is read once, in `web-tab/address.ts`: a host gets `https:`
 (`localhost:1425` is a host and not a scheme, which is the special case every
 browser makes), a scheme is taken as written so `javascript:` never opens, and
-words are a search - DuckDuckGo, because the search has to go somewhere and that
-is the one that asks for the least.
+words are a search - Google, because that is the answer most hands expect from an
+address bar, and a browser that quietly searches somewhere else reads as one that
+found nothing. It was DuckDuckGo, for asking the least.
 
 | key | |
 | --- | --- |

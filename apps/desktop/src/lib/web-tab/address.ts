@@ -9,10 +9,15 @@
 /** Where a few words go when they are not an address.
  *
  *  A browser's address bar searches, and a field that did nothing for `svelte docs`
- *  would read as broken. DuckDuckGo because the search has to go somewhere and this
- *  is the one that asks for the least: no account, no profile, and nothing kept.
+ *  would read as broken. Google, which is Emil's call and the answer most hands
+ *  expect from an address bar: the results are the ones somebody typing a few words
+ *  is picturing, and a browser that quietly searches somewhere else reads as a
+ *  browser that found nothing. It was DuckDuckGo, for asking the least - no account,
+ *  no profile, nothing kept - and that reasoning still stands; it simply is not the
+ *  reasoning of the person typing.
+ *
  *  Said here once so the app has one search and not a setting nobody would open. */
-const SEARCH = 'https://duckduckgo.com/?q='
+const SEARCH = 'https://www.google.com/search?q='
 
 /** Something that could be a host: dotted labels, or `localhost`, either with a
  *  port and a path after it. Deliberately not a guess at every address on the web -

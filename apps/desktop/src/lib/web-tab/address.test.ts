@@ -71,9 +71,9 @@ describe('what somebody typed', () => {
   })
 
   test('words are a search', () => {
-    expect(webAddress('svelte docs')).toBe('https://duckduckgo.com/?q=svelte%20docs')
+    expect(webAddress('svelte docs')).toBe('https://www.google.com/search?q=svelte%20docs')
     // One word with no dot is a word: a browser searches for `svelte` too.
-    expect(webAddress('svelte')).toBe('https://duckduckgo.com/?q=svelte')
+    expect(webAddress('svelte')).toBe('https://www.google.com/search?q=svelte')
   })
 })
 
