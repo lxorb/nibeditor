@@ -1426,10 +1426,19 @@
   padding: 0 0.12em;
 }
 
+/* The room around a formula is KaTeX's own `.katex-display` margin and nothing
+   else, which is one line of it above and below - the spacing every book sets a
+   display equation with, and the spacing the reading view has always used, since
+   document.css never overrode it.
+
+   This used to add `1.4em + var(--space-3)` of its own on top of that, and the two
+   stacked: a 58px formula sat in a 162px block with 218px between the paragraphs
+   either side of it, so five sixths of the room was air and the same note read
+   differently here and in the reading view. Emil: *"way too much padding for the
+   $$."* */
 .nib-math-block {
   position: relative;
   display: block;
-  padding: calc(1.4em + var(--space-3)) 0;
   text-align: center;
   overflow-x: auto;
   animation: settle-in var(--dur-base) var(--ease-out);

@@ -152,11 +152,16 @@
 </header>
 
 <style>
+  /* A step in from the edge, because the first thing in this row is a button and
+     a button against the window's own border reads as cramped rather than as
+     flush. Only the leading edge: the other end is the window's own buttons,
+     which go right to the corner the way every window's do. */
   header {
     height: var(--header-height);
     display: flex;
     align-items: stretch;
     flex: none;
+    padding-inline-start: var(--space-1);
     user-select: none;
     border-bottom: 1px solid var(--line);
   }
@@ -284,6 +289,9 @@
        held sideways puts it. */
     padding-top: var(--inset-top);
     padding-inline-end: var(--inset-end);
+    /* A phone's own inset already steps this row in, and it is the larger of the
+       two; the desktop's hairline would only fight it. */
+    padding-inline-start: var(--inset-start);
   }
 
   /* The note's name is titled the way the space's name is over the list beside
