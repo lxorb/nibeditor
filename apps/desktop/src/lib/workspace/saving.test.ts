@@ -256,13 +256,18 @@ describe('the window going while the typing is still warm', () => {
     expect(ws.persisted).toBe(was + 1)
   })
 
-  test('and does nothing at all where nothing was typed', () => {
+  /** The session goes down whether or not anything was typed: a tab opened or
+   *  brought forward in the last half second is what it holds, and that is written
+   *  after a pause too. A file is only written where there was something to write. */
+  test('and writes the session even where nothing was typed', async () => {
+    vi.useFakeTimers()
     const { ws } = open(PATH)
 
     const was = ws.persisted
     settleUp()
+    await vi.advanceTimersByTimeAsync(0)
 
-    expect(ws.persisted).toBe(was)
+    expect(ws.persisted).toBe(was + 1)
     expect(written()).toEqual([])
   })
 })

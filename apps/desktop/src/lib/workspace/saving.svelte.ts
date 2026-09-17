@@ -205,18 +205,22 @@ export class Saving {
     owesLast(() => this.part())
   }
 
-  /** What is owed when the window goes: the write that was waiting for the typing to
-   *  stop, and the session that holds the same words.
+  /** What is owed when the window goes: the session, and the write that was waiting
+   *  for the typing to stop.
    *
-   *  Both, because they answer different halves of the same second. The write is a
-   *  round trip, and a page being torn down may not come back from it; the session is
-   *  one synchronous line of storage, so the words are there to come back to whether
-   *  or not the file was reached. Whichever landed, nothing was typed and lost. */
+   *  The session always. It holds which notes are open, which one is in front and
+   *  what is unsaved in each of them, and it too is written after a pause - a tab
+   *  opened or brought forward in the last half second was simply not there on the
+   *  way back in. It is one synchronous line of storage, so it costs a closing window
+   *  nothing to be sure of it.
+   *
+   *  And the write, where there is one. That is a round trip, and a page being torn
+   *  down may not come back from it - which is the other reason the session goes
+   *  first: the words are in it either way, so whichever of the two landed, nothing
+   *  was typed and lost. */
   private part() {
-    if (!this.waiting.size) return
-
     this.ws.persist()
-    void this.saveWaiting()
+    if (this.waiting.size) void this.saveWaiting()
   }
 
   /** What a document reports whenever it changes, wherever the change came from:
