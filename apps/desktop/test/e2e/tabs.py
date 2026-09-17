@@ -61,7 +61,7 @@ STRIP = """
   tabs: [...document.querySelectorAll('.tab')].map((tab) => ({
     name: tab.querySelector('.label')?.textContent ?? null,
     pinned: tab.classList.contains('pinned'),
-    mark: !!tab.querySelector('.pin'),
+    mark: !!tab.querySelector('.mark'),
     shut: !!tab.querySelector('.shut'),
     width: Math.round(tab.getBoundingClientRect().width),
   })),
@@ -234,8 +234,13 @@ def drive_pinned(browser: Browser) -> None:
     first = pinned["tabs"][0]
     if not first["pinned"]:
         wrong("the pinned tab is not at the head of the strip")
+    # A pinned tab is its mark and nothing else: the name is what takes the room, and
+    # a tab kept open all day is one somebody knows by sight. So the mark has to be
+    # there - a pinned tab with neither a name nor a mark is a blank chip.
     if not first["mark"]:
         wrong("a pinned tab does not wear its mark")
+    if first["name"] is not None:
+        wrong(f"a pinned tab still spells its name: {first['name']!r}")
     if first["name"] is not None:
         wrong(f"a pinned tab still spends the room on its name: {first['name']!r}")
     if first["shut"]:
