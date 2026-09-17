@@ -291,8 +291,12 @@ def drive(browser: Browser) -> None:
     counts = page.evaluate(COUNTS)
     say(f"[editor] {json.dumps(counts)}")
     shot(page, "01-editor")
-    if counts["cards"] != 2:
-        wrong(f"the editor drew {counts['cards']} cards, not 2 (a page and a video)")
+    # Three, the same three the reading view draws below: the page the note framed by
+    # hand, the block of its own HTML, and the video a provider's address becomes.
+    # Every card wears `embed-web` and one class of its own beside it; see
+    # web-embed.ts and html-block.ts in @nib/markdown.
+    if counts["cards"] != 3:
+        wrong(f"the editor drew {counts['cards']} cards, not 3 (a page, a block and a video)")
     if counts["pages"] != 1:
         wrong(f"the editor drew {counts['pages']} cards for the tag, not 1")
     if counts["frames"] != 0:
