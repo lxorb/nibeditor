@@ -112,6 +112,20 @@ jobs:
       - name: Smoke
         run: python3 apps/desktop/test/e2e/smoke.py
 
+      # And the half of that rule a test over source text cannot prove: that a real
+      # release does not carry the handle. `window.nibApp` is the whole workspace,
+      # and the page it sits on renders other people's HTML, so "the bundler removed
+      # the branch" has to be checked on the bundle rather than asserted about the
+      # config that asks for it. A plain build, no mode, exactly what ships.
+      - name: A release carries no handle
+        run: |
+          pnpm --filter @nib/desktop build
+          if grep -rq nibApp apps/desktop/dist/assets; then
+            echo "a release bundle carries window.nibApp" >&2
+            exit 1
+          fi
+          echo "no handle in the release bundle"
+
       # What it saw, when it did not like it. A screenshot of the surface that
       # failed is the difference between "bold is not bold" and knowing why.
       - if: failure()
