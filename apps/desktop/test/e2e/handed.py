@@ -114,10 +114,18 @@ def png(width: int, height: int, tint: tuple[int, int, int]) -> bytes:
 SHARED_PICTURE = png(240, 160, (250, 120, 60))
 TAKEN_PHOTO = png(200, 200, (90, 180, 250))
 
-# The activity, as the page finds it: the same nine methods MainActivity.Bridge
-# publishes, answering out of `window.__android` and writing down what it is told.
+# The activity, as the page finds it: the ten methods of MainActivity.Bridge this
+# drive is about, answering out of `window.__android` and writing down what it is
+# told. The three about an AI key are the same shape and nothing here asks for them.
 # The slices are honest - `sharedBytes` decodes, cuts and re-encodes - because the
 # loop that asks for them is one of the things under test.
+#
+# The word is honest too. `addJavascriptInterface` puts the bridge in every frame of
+# the webview and tells the activity nothing about which of them called, so since
+# 837d689d the calls that matter want a word the activity says only into the main
+# frame, and the real one refuses anybody who says the wrong thing. This one refuses
+# too: a page that stopped asking for the word would be a framed page's microphone,
+# and a stand-in that let it through would never say so. See mobile/bridge.ts.
 ACTIVITY = """
 () => {
   const held = {
@@ -125,6 +133,7 @@ ACTIVITY = """
     handed: '{"command":"","open":""}',
     bytes: {},
     dictates: false,
+    word: 'this launch, and no frame in it',
     said: { widgets: [], done: 0, listen: [] },
   }
   window.__android = held
@@ -137,6 +146,9 @@ ACTIVITY = """
 
   window.__NIB_SYSTEM__ = {
     insets: () => '{"top":24,"right":0,"bottom":48,"left":0}',
+    // Into the page itself, whoever asked, which is what makes it a word only the
+    // page has: the activity runs this line in the main frame.
+    askForTheFrame: () => window.__nibFrame?.(held.word),
     bars: () => undefined,
     handed: () => {
       const answer = held.handed
@@ -151,7 +163,8 @@ ACTIVITY = """
     },
     widgets: (json) => held.said.widgets.push(json),
     dictates: () => held.dictates,
-    listen: (on) => {
+    listen: (said, on) => {
+      if (said !== held.word) return false
       held.said.listen.push(on)
       return on
     },
@@ -265,7 +278,7 @@ def build() -> None:
     say("building the web app")
     shutil.rmtree(DIST, ignore_errors=True)
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,
