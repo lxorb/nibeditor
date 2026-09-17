@@ -310,6 +310,19 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
+ *  Raised a third time 2026-09-17, to 3,277,000, for the Ctrl+T chord. The chord
+ *  itself is not in here - new-kind-chord.ts is fetched at the launch's last turn
+ *  with the other doors, which is why 279 lines cost nothing at the first paint.
+ *  What is in here is the small eager half it needs: the key helpers, the note of
+ *  which kind was chosen last, and a field on a menu row. Measured 3,244,532, which
+ *  is 7,532 bytes and a fifth of one percent.
+ *
+ *  Three raises in one day is drift worth naming. Together they are 2.7 per cent of
+ *  source bytes, and this figure is a proxy for the thing Emil actually asked for -
+ *  a launch under a second - which was last measured at about 735 ms warm. Nothing
+ *  here is near that. But the next raise should be asked to justify itself against a
+ *  measured launch rather than against this number.
+ *
  *  Raised again 2026-09-17, to 3,237,000, and this one is a debt rather than a
  *  cost. Fixing the glance card - so it draws a note's pictures at the space's own
  *  address and shows its metadata as rows instead of opening on raw YAML - made
@@ -330,7 +343,7 @@ function holds(tail: string): boolean {
  *  copy reporting its own words as that file's, and whichever saved last won - one
  *  person's writing under another note's name, on disk and on the account. Measured
  *  3,160,756; this is that plus one percent. */
-const BUDGET = 3_237_000
+const BUDGET = 3_277_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
