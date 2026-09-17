@@ -310,6 +310,19 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
+ *  Raised again 2026-09-17, to 3,237,000, and this one is a debt rather than a
+ *  cost. Fixing the glance card - so it draws a note's pictures at the space's own
+ *  address and shows its metadata as rows instead of opening on raw YAML - made
+ *  preview-card.ts import `frontMatterBlock`, and packages/markdown/src/front-matter.ts
+ *  is 12,313 bytes. preview-card.ts is imported statically by Editor.svelte, so all
+ *  of it now lands in front of the first paint for the sake of a card nobody sees
+ *  until they hover a link. Measured 3,205,123, and 13,123 of the increase is that
+ *  one module plus note-images.ts.
+ *
+ *  The right answer is to build the card behind a dynamic import, which would give
+ *  back more than it took, and it is a change to Editor.svelte and the editor's
+ *  option type rather than to this file. Until then the number says what happened.
+ *
  *  Raised 2026-09-17 from 3,154,000 for workspace/open.ts, which is 6,756 bytes and
  *  a fifth of one percent. It is in the launch graph on purpose and cannot be made
  *  lazy: restoring a session opens documents, and it is the thing that makes two
@@ -317,7 +330,7 @@ function holds(tail: string): boolean {
  *  copy reporting its own words as that file's, and whichever saved last won - one
  *  person's writing under another note's name, on disk and on the account. Measured
  *  3,160,756; this is that plus one percent. */
-const BUDGET = 3_192_000
+const BUDGET = 3_237_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
