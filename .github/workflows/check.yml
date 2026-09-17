@@ -99,8 +99,11 @@ jobs:
       # `import.meta.env.DEV`, so the only build anything could drive was the one
       # nobody ships, and three reported bugs turned out to be unreproducible in
       # every build a drive could reach. This is the first gate in the repository
-      # that exercises the shape that ships. The other eighty-nine drives still
-      # build in development mode; a harness they could share is the rest of it.
+      # that exercises the shape that ships. The other eighty-nine build the same
+      # mode now: while they built a development one they were building the app with
+      # these handles compiled out, and every one of them gave up waiting for the
+      # app. What holds them to it from here is apps/desktop/test/drives.test.ts, in
+      # the job above, which costs no browser; a harness they could share is the rest.
       # Every drive in the folder, parsed. Nothing else in the repository reads
       # these ninety files - eslint does not, prettier cannot - so a syntax error
       # in one of them is invisible until somebody runs it, which for most of them
