@@ -287,7 +287,13 @@ export class NoteDoc {
    *
    *  The document takes the new note on rather than being swapped for another,
    *  because a preview is never open in a second pane: nothing else is looking
-   *  at these words, and the view stays where it is with the new text in it. */
+   *  at these words, and the view stays where it is with the new text in it.
+   *
+   *  "Never" is a promise somebody has to keep, and `open` in workspace.svelte.ts
+   *  is where it is kept: a preview whose document a second tab is also showing is
+   *  not reused, because taking a note on here would move that pane to a note
+   *  nobody asked it for. A tab reaching a note another pane already has open is
+   *  pointed at that document instead; see `walk`. */
   adopt(note: { path: string; name: string; text: string }) {
     this.path = note.path
     this.name = note.name
