@@ -55,20 +55,24 @@ describe('the handle a drive reads the app through', () => {
     expect(APP).not.toContain('if (import.meta.env.DEV)')
   })
 
-  /** The half of the rule that matters for safety: a release must not carry the
-   *  handle. Read as the shape of the expression rather than as its exact text -
-   *  pinning the text meant that widening the rule to let a development build be
-   *  driven, which was a real repair, failed here for no reason.
-   *
-   *  What a release actually contains is checked where it can be checked properly:
-   *  the smoke job builds one and greps it. A string in a config file cannot prove
-   *  a bundler removed a branch. */
-  test('and that constant is decided, never simply on', () => {
-    const decided = /__DRIVEABLE__: JSON\.stringify\(([\s\S]*?)\),/.exec(CONFIG)?.[1]
-    expect(decided, 'no __DRIVEABLE__ in vite.config.ts').toBeTruthy()
-    expect(decided).toContain("mode === 'drive'")
-    // No `true` anywhere in it, which is the one way it could be on in a release.
-    expect(decided).not.toContain('true')
+  /** The rule itself rather than the line it is written on: what decides the
+   *  constant is a list of ways of being a build nobody ships, and a release is
+   *  none of them. Read with the whitespace taken out, because the last time this
+   *  was a literal string the list grew a third way - a development build, which is
+   *  what the drives make - and the test failed over where prettier wrapped it. */
+  test('and that constant is false in a release', () => {
+    const said = /__DRIVEABLE__:\s*JSON\.stringify\(([\s\S]*?)\),?\s*\}/u.exec(CONFIG)?.[1] ?? ''
+    const ways = said
+      .replace(/,\s*$/u, '')
+      .split('||')
+      .map((one) => one.replace(/\s+/gu, ' ').trim())
+
+    expect(ways.length).toBeGreaterThan(0)
+    // Every way in is a dev server or a mode a release is never built with, so
+    // nothing here can be true of the bundle that ships.
+    for (const way of ways) {
+      expect(["command === 'serve'", "mode === 'drive'", "mode === 'development'"]).toContain(way)
+    }
   })
 
   /** Named one by one rather than counted, so adding a store is a line here and
