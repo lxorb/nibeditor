@@ -31,6 +31,8 @@ export interface HoldsNotes {
   readonly documents: NoteDoc[]
   readonly undone: FileActions
   tags: SpaceTag[]
+  /** The document a file is open as; see workspace/open.ts. */
+  documentAt(path: string): NoteDoc | null
   flush(): void
   loadTree(): Promise<void>
   persist(): void
@@ -90,7 +92,7 @@ export async function retagNotes(ws: HoldsNotes, from: string, to: string | null
 export async function noteText(ws: HoldsNotes, path: string): Promise<string | null> {
   ws.flush()
 
-  const open = ws.documents.find((one) => one.path === path)
+  const open = ws.documentAt(path)
   if (open) return open.text
 
   return invoke<string>('read_note', { path }).catch(() => null)
@@ -193,7 +195,7 @@ export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[])
 
     done.push({ path: change.path, content: change.before, edits: change.back })
     links.noteSaved(change.path, change.after)
-    ws.documents.find((one) => one.path === change.path)?.edited(change.edits, change.after)
+    ws.documentAt(change.path)?.edited(change.edits, change.after)
   }
 
   ws.undone.record({ kind: 'replace', notes: done })

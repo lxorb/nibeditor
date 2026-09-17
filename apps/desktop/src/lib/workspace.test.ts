@@ -2732,3 +2732,261 @@ describe('a pane that lays its notes out as columns', () => {
     viewport.device = 'desktop'
   })
 })
+
+/** One file, one document.
+ *
+ *  Opening a note reads it, and a read is a round trip: the tab that would say the
+ *  file is already open is not there until it comes back. Two opens of one path that
+ *  overlap therefore each built one of everything, and then one file had two
+ *  documents over it - each honest about its own words, both reporting theirs as
+ *  that file's, and whichever was written last was what the file ended up saying.
+ *  That is one person's writing replacing another's, which is the worst thing this
+ *  app can do, and it is what every test here is about. */
+describe('two opens of one path', () => {
+  /** The file's read, held open, so the second open begins inside the first. */
+  function held(path: string): () => void {
+    let release: () => void = () => undefined
+    holding.readPath = path
+    holding.read = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    return release
+  }
+
+  /** The documents open over one file. Two of them is the bug. */
+  const over = (path: string) => workspace.documents.filter((one) => one.path === path)
+
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    holding.read = null
+    holding.readPath = ''
+    workspace.tabs = []
+  })
+
+  test('are one open, and come to one document', async () => {
+    const release = held('/space/a.md')
+    const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
+    release()
+    await both
+
+    expect(over('/space/a.md')).toHaveLength(1)
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  test('the same for a website, which is the tab Emil was switching away from', async () => {
+    notes['/space/site.url'] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
+    try {
+      const release = held('/space/site.url')
+      const both = Promise.all([
+        workspace.openWeb('/space/site.url'),
+        workspace.openWeb('/space/site.url'),
+      ])
+      release()
+      await both
+
+      expect(over('/space/site.url')).toHaveLength(1)
+    } finally {
+      delete notes['/space/site.url']
+    }
+  })
+
+  test('and for a plane', async () => {
+    const release = held('/space/plan.canvas')
+    const both = Promise.all([
+      workspace.openCanvas('/space/plan.canvas'),
+      workspace.openCanvas('/space/plan.canvas'),
+    ])
+    release()
+    await both
+
+    expect(over('/space/plan.canvas')).toHaveLength(1)
+  })
+
+  /** The launch race. A session is read a note at a time and goes into the window
+   *  when the last one lands, so a note clicked in that second is opened against a
+   *  window that says nothing is open yet. */
+  test('one of them from a session still being read', async () => {
+    const drafted = {
+      frame: {
+        kind: 'pane' as const,
+        pane: {
+          id: 'p1',
+          active: 0,
+          linked: false,
+          tabs: [
+            {
+              kind: 'note' as const,
+              path: '/space/a.md',
+              name: 'a.md',
+              doc: '',
+              dirty: false,
+              cursor: 0,
+              scroll: 0,
+            },
+          ],
+        },
+      },
+      focused: 'p1',
+      panel: null,
+    }
+
+    const release = held('/space/a.md')
+    const arriving = workspace.applyLayout(drafted, false)
+    await Promise.resolve()
+    // The click, while the session's own read of the same note is still in the air.
+    const clicked = workspace.open('/space/a.md')
+    release()
+    await Promise.all([arriving, clicked])
+
+    expect(over('/space/a.md')).toHaveLength(1)
+  })
+
+  /** The sharpest edge of it: a lookup by path answers the first document it finds,
+   *  so words that arrive for a file reach one of the two and the other keeps its
+   *  own - dirty, and on its way back over the file at the next save. */
+  test('so words arriving for the file reach every pane showing it', async () => {
+    const release = held('/space/a.md')
+    const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
+    release()
+    await both
+
+    // Another program wrote the file, or a sync brought it over.
+    workspace.reload('/space/a.md', '# a, from elsewhere')
+    workspace.flush()
+
+    for (const note of over('/space/a.md')) {
+      expect(note.text).toBe('# a, from elsewhere')
+      expect(note.dirty).toBe(false)
+    }
+  })
+
+  /** And the fourth of them: a room is named after the document, so two documents
+   *  over one file were two of this device's own clients in one room, seeded from
+   *  texts that had already parted company. */
+  test('and one file is one room, because it is one document', async () => {
+    const release = held('/space/a.md')
+    const both = Promise.all([workspace.open('/space/a.md'), workspace.open('/space/a.md')])
+    release()
+    await both
+
+    const keys = workspace.openNotes.filter((one) => one.path === '/space/a.md')
+    expect(keys).toHaveLength(1)
+  })
+})
+
+/** A path that changes moves the document rather than leaving a second one at the
+ *  name it had. Every one of these is the same gesture underneath - the document's
+ *  own `path` is the only place a file's name is written down - which is why there
+ *  is nothing here to keep in step. */
+describe('a file that changes its name', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/renamed.md']
+  })
+
+  test('takes its document with it', async () => {
+    await workspace.open('/space/a.md')
+    const note = workspace.documentAt('/space/a.md')
+    expect(note).not.toBeNull()
+
+    notes['/space/renamed.md'] = notes['/space/a.md'] ?? ''
+    await workspace.rename('/space/a.md', 'renamed.md')
+
+    expect(workspace.documentAt('/space/a.md')).toBeNull()
+    expect(workspace.documentAt('/space/renamed.md')).toBe(note)
+  })
+
+  /** And opening it under the new name is opening what is open, not a second
+   *  document over the same file. */
+  test('so opening it again under that name opens what is open', async () => {
+    await workspace.open('/space/a.md')
+    notes['/space/renamed.md'] = notes['/space/a.md'] ?? ''
+    await workspace.rename('/space/a.md', 'renamed.md')
+
+    await workspace.open('/space/renamed.md')
+
+    expect(workspace.documents.filter((one) => one.path === '/space/renamed.md')).toHaveLength(1)
+  })
+})
+
+/** A website written when a website was a note is a `.md` file with `url:` at the
+ *  top of it, and which opener its row runs depends on whether the link index has
+ *  read it yet: as a note until the pass catches up, as a website afterwards. So one
+ *  file can be asked for as a note and then as a website within a sitting.
+ *
+ *  That used to make two documents over it - the note's words in one, the shortcut's
+ *  three lines in the other - and the conversion rewrote the file under the note
+ *  that was still open on it. Emil: *"switched from a web note tab to a normal note
+ *  tab and then it had some strange web note tab content in it."* */
+describe('a file asked for as a note and then as a website', () => {
+  const WEB_NOTE = '/space/site.md'
+
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    notes[WEB_NOTE] = '---\nurl: https://example.com/\n---\n\n# The site\n'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/site.md']
+  })
+
+  test('is one document, and the open one is what comes forward', async () => {
+    await workspace.open(WEB_NOTE)
+    const note = workspace.documentAt(WEB_NOTE)
+    sent.length = 0
+
+    await workspace.openWeb(WEB_NOTE)
+
+    expect(workspace.documents.filter((one) => one.path === WEB_NOTE)).toHaveLength(1)
+    expect(workspace.documentAt(WEB_NOTE)).toBe(note)
+    // And nothing was written under the document that was open on it.
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+})
+
+/** The one tab that previews a note moves its document on to whatever is clicked
+ *  next, which is a document arriving at a path rather than being opened at it. A
+ *  note that is already open is never the one it moves on to: the pane showing it
+ *  comes forward instead. */
+describe('a preview landing on a note that is already open', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.previewTabId = null
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+  })
+
+  test('brings that note forward rather than taking it on', async () => {
+    await workspace.open('/space/a.md')
+    const first = workspace.documentAt('/space/a.md')
+
+    const previewed = await preview('/space/b.md')
+    await workspace.open('/space/a.md', { preview: true })
+
+    expect(workspace.documents.filter((one) => one.path === '/space/a.md')).toHaveLength(1)
+    expect(workspace.documentAt('/space/a.md')).toBe(first)
+    // The preview tab is still on the note it was previewing.
+    expect(previewed.path).toBe('/space/b.md')
+  })
+})

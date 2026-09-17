@@ -60,7 +60,7 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
   const kept = {
     undone,
     tabs: [],
-    documents: [],
+    documentAt: () => null,
     positions: { move: (from: string, to: string) => void moved.push(`${from} -> ${to}`) },
     folderIcons: { moved: (from: string, to: string) => void moved.push(`icon ${from} -> ${to}`) },
     excluded: { moved: (from: string, to: string) => void moved.push(`left out ${from} -> ${to}`) },

@@ -25,11 +25,12 @@ import type { FileAction, FileActions } from './undo.svelte'
 export interface PutsBack {
   readonly undone: FileActions
   readonly tabs: Tab[]
-  readonly documents: NoteDoc[]
   readonly positions: Positions
   readonly folderIcons: FolderIcons
   readonly arranged: Arranged
   readonly excluded: Excluded
+  /** The document a file is open as; see workspace/open.ts. */
+  documentAt(path: string): NoteDoc | null
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
@@ -134,7 +135,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
   for (const note of action.notes) {
     await invoke('write_note', { path: note.path, content: note.content })
     links.noteSaved(note.path, note.content)
-    ws.documents.find((one) => one.path === note.path)?.edited(note.edits, note.content)
+    ws.documentAt(note.path)?.edited(note.edits, note.content)
   }
 }
 
@@ -144,7 +145,8 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   await invoke('rename_note', { from: action.to, to: action.from })
   ws.positions.move(action.to, action.from)
 
-  for (const note of ws.documents.filter((entry) => entry.path === action.to)) {
+  const note = ws.documentAt(action.to)
+  if (note) {
     note.path = action.from
     note.name = nameOf(action.from)
   }

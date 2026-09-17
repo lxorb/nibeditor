@@ -69,6 +69,7 @@ function space(notes: Record<string, string>, openAt?: string) {
     activeSpace: { id: 's', name: 'Space', root: SPACE },
     notes: Object.keys(notes).map((path) => ({ path })),
     documents: open,
+    documentAt: (path: string) => open.find((one) => one.path === path) ?? null,
     undone: new FileActions(),
     tags: [],
     flushed: 0,

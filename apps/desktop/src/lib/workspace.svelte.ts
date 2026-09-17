@@ -55,6 +55,7 @@ import {
   UNTITLED,
 } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
+import { OpenDocuments } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
@@ -187,23 +188,6 @@ function emptyMap<T>(): Map<string, T> {
   return new Map<string, T>()
 }
 
-function pathsTo(notes: NoteDoc[]): Map<string, NoteDoc> {
-  const out = emptyMap<NoteDoc>()
-  for (const note of notes) if (note.path) out.set(note.path, note)
-
-  return out
-}
-
-/** The open documents by the key a draft names them with, so a tab reopened
- *  while another pane still shows the same note becomes a second view of that
- *  note rather than a second copy of it. */
-function keysTo(notes: NoteDoc[]): Map<string, NoteDoc> {
-  const out = emptyMap<NoteDoc>()
-  for (const note of notes) out.set(note.key, note)
-
-  return out
-}
-
 /** Whether a tab is worth remembering once it has been closed. A blank untitled
  *  note is not: it is the empty page a window starts with, and reopening it
  *  would put back something nobody ever wrote. */
@@ -307,6 +291,19 @@ class Workspace {
   /** The strip of tabs, written after a pause in the typing; see timing.ts. */
   private readonly session = afterQuiet(() => this.persist(), SESSION_DELAY)
 
+  /** One document per file, and the one place a document is made; see
+   *  workspace/open.ts. Everything that opens a file goes through it, because two
+   *  documents over one file are two notes wearing one name. */
+  private readonly opened = new OpenDocuments(
+    () => this.tabs,
+    (start) =>
+      new NoteDoc(
+        start,
+        (note) => this.saving.edited(note),
+        (path) => this.keepsItself(path),
+      ),
+  )
+
   /** Where each note was last being read; see workspace/positions.ts. */
   positions = new Positions()
 
@@ -343,9 +340,16 @@ class Workspace {
    *  nothing outside lib/workspace reads them, and the modules beside this one -
    *  workspace/undoing.ts and its neighbours - are what they are not private for. */
   get documents(): NoteDoc[] {
-    const seen: NoteDoc[] = []
-    for (const tab of this.tabs) if (!seen.includes(tab.note)) seen.push(tab.note)
-    return seen
+    return this.opened.all
+  }
+
+  /** The document a file is open as, or null when nothing is showing it.
+   *
+   *  The lookup every path-addressed thing goes through: words arriving for a file,
+   *  a rename, a replacement run across the space, an undone one. There is one
+   *  answer because there is one document per file; see workspace/open.ts. */
+  documentAt(path: string): NoteDoc | null {
+    return this.opened.at(path)
   }
 
   /** Every open file that has words of its own and a path behind it, once each
@@ -612,52 +616,73 @@ class Workspace {
    *  left out of the re-read comes back with nothing in it: a plane with every
    *  stroke still in the file and none of them on screen.
    *
-   *  `shared` is what makes two panes that were showing one note show one note
-   *  again rather than two copies of it, and `open` is what keeps a note that is
-   *  already open being the same note when an arrangement is applied over it. */
-  private async tabsFrom(
-    drafts: Draft[],
-    paneId: string,
-    shared: Map<string, NoteDoc>,
-    open: Map<string, NoteDoc>,
-  ): Promise<Tab[]> {
-    const made: Tab[] = []
+   *  Which document each draft comes back as is `already` below and the open
+   *  documents themselves; nothing is carried between the panes here, because one
+   *  document per file is the workspace's own answer now rather than a map this
+   *  method passes along. See workspace/open.ts. */
+  private async tabsFrom(drafts: Draft[], paneId: string): Promise<Tab[]> {
+    return this.opened.arranging(async () => {
+      const made: Tab[] = []
 
-    for (const draft of drafts) {
-      const already =
-        (draft.share ? shared.get(draft.share) : undefined) ??
-        (draft.path ? open.get(draft.path) : undefined)
-
-      if (already) {
-        made.push(this.viewOf(already, paneId, draft))
-        continue
-      }
-
-      let text = draft.doc
-
-      if (holdsWords(draft.kind) && draft.path && !draft.dirty) {
-        try {
-          text = await invoke<string>('read_note', { path: draft.path })
-        } catch {
-          // Deleted or moved while Nib was away, and nothing unsaved to keep.
+      for (const draft of drafts) {
+        const already = this.already(draft)
+        if (already) {
+          made.push(this.viewOf(already, paneId, draft))
           continue
         }
+
+        // A file that was clean is read again, so an edit made elsewhere shows up,
+        // and the read is the round trip a second open of the same file waits out.
+        const note =
+          holdsWords(draft.kind) && draft.path && !draft.dirty
+            ? await this.opened.opening(draft.path, () => this.drafted(draft))
+            : this.opened.make({
+                kind: draft.kind,
+                path: draft.path,
+                name: draft.name,
+                text: draft.doc,
+                dirty: draft.dirty,
+              })
+
+        // Deleted or moved while Nib was away, and nothing unsaved to keep.
+        if (!note) continue
+        made.push(this.viewOf(note, paneId, draft))
       }
 
-      const note = this.document({
-        kind: draft.kind,
-        path: draft.path,
-        name: draft.name,
-        text,
-        dirty: draft.dirty,
-      })
+      return made
+    })
+  }
 
-      if (draft.share) shared.set(draft.share, note)
-      if (draft.path) open.set(draft.path, note)
-      made.push(this.viewOf(note, paneId, draft))
-    }
+  /** The document a draft is a view of, if it is open already: the one it shares a
+   *  document with, or the one at its path.
+   *
+   *  The key has to agree with the path as well. It names a document rather than a
+   *  note, and the one tab that previews a note moves its document on to another
+   *  all day - so a key that once meant this note can now mean whatever that tab is
+   *  showing, and a tab built on it would wear this draft's name over that note's
+   *  words. */
+  private already(draft: Draft): NoteDoc | null {
+    const shared = draft.share ? this.opened.withKey(draft.share) : null
+    if (shared?.path === draft.path) return shared
 
-    return made
+    return draft.path ? this.opened.at(draft.path) : null
+  }
+
+  /** One draft's document, read from its file. Null for a file that has gone. */
+  private async drafted(draft: Draft): Promise<NoteDoc | null> {
+    const path = draft.path
+    if (path === null) return null
+
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    if (text === null) return null
+
+    return this.opened.make({
+      kind: draft.kind,
+      path,
+      name: draft.name,
+      text,
+      dirty: false,
+    })
   }
 
   private viewOf(note: NoteDoc, paneId: string, draft: Draft): Tab {
@@ -678,7 +703,7 @@ class Workspace {
    *  panes reads. All of it goes into the one pane there is. */
   private async restoreStrip(drafts: Draft[], active: number) {
     const paneId = this.panes.focusedId
-    const restored = await this.tabsFrom(drafts, paneId, emptyMap(), emptyMap())
+    const restored = await this.tabsFrom(drafts, paneId)
 
     this.tabs = restored
     this.panes.activate(paneId, (restored[active] ?? restored[0])?.id ?? null)
@@ -698,13 +723,19 @@ class Workspace {
    *  own sidebar, and the session, which arrives by itself, opens the sidebar it
    *  remembers only while nobody has chosen one. See `panelChosen`. */
   async applyLayout(layout: Layout, asked = true) {
-    const open = pathsTo(this.documents)
-    const shared = emptyMap<NoteDoc>()
+    // Every document this makes is held open until the arrangement is in the
+    // window, and not only for the pane that made it: a second pane showing the
+    // same note wants the same document, and a note clicked while this is still
+    // reading has to find the one it already read rather than open a second.
+    await this.opened.arranging(() => this.arrange(layout, asked))
+  }
+
+  private async arrange(layout: Layout, asked: boolean) {
     const showing = emptyMap<string | null>()
     const made: Tab[] = []
 
     for (const draft of panesOf(layout.frame)) {
-      const tabs = await this.tabsFrom(draft.tabs, draft.id, shared, open)
+      const tabs = await this.tabsFrom(draft.tabs, draft.id)
       made.push(...tabs)
       showing.set(draft.id, (tabs[draft.active] ?? tabs[0])?.id ?? null)
     }
@@ -999,15 +1030,12 @@ class Workspace {
     for (const tab of this.tabs.filter((one) => one.note.shared === id)) this.close(tab.id)
   }
 
-  /** A document, wired so that every change to it - a keystroke in any pane, an
-   *  undo, a picture dropped in - reaches the app exactly once, and so that it
-   *  can say whether saving it is anybody's job. */
+  /** A document, made once per file however many things ask for it at once and
+   *  wired so that every change to it - a keystroke in any pane, an undo, a picture
+   *  dropped in - reaches the app exactly once. See workspace/open.ts, which is
+   *  where the wiring above this lives and which this hands straight through to. */
   private document(start: DocumentStart): NoteDoc {
-    return new NoteDoc(
-      start,
-      (note) => this.saving.edited(note),
-      (path) => this.keepsItself(path),
-    )
+    return this.opened.make(start)
   }
 
   /** Whether the note at a path keeps itself, which is to say whether saving it
@@ -1132,17 +1160,28 @@ class Workspace {
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
   async openCanvas(path: string) {
-    const existing = this.tabs.find((tab) => tab.kind === 'canvas' && tab.path === path)
-    if (existing) {
-      this.activeTabId = existing.id
-      this.showNote()
-      return
-    }
+    this.showTab(await this.opened.opening(path, () => this.openPlane(path)))
+  }
 
+  /** Brings the pane showing a document forward, and answers the tab it is in.
+   *  What every opener ends with, whether this call did the opening or found the
+   *  file already open. Null for a file that could not be opened at all. */
+  private showTab(note: NoteDoc | null): Tab | null {
+    const tab = note && this.tabs.find((one) => one.note === note)
+    if (!tab) return null
+
+    this.activeTabId = tab.id
+    this.showNote()
+    return tab
+  }
+
+  /** The document one open of a canvas comes to. Only `openCanvas` calls it, and
+   *  only through the one open. */
+  private async openPlane(path: string): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
     // draw on: saving one over it would take the file with it.
-    if (text === null) return
+    if (text === null) return null
 
     // The plane read here and the thread handed over before the tab is built, so
     // the parse and the surface's mount are two tasks rather than one. A canvas of
@@ -1170,9 +1209,9 @@ class Workspace {
     // panel shows while the canvas is the tab being looked at.
     links.canvasRead(path, text)
 
-    this.showNote()
     this.remember(path)
     this.persist()
+    return file
   }
 
   /** A website in the space, in a tab of its own: a shortcut file, drawn as the page
@@ -1191,10 +1230,10 @@ class Workspace {
     // at all. See vite.even.config.ts.
     if (isPlugin()) return
 
-    const existing = this.tabs.find((tab) => tab.kind === 'web' && tab.path === path)
-    if (existing) {
-      this.activeTabId = existing.id
-      this.showNote()
+    // Already open, before anything is written: the conversion below makes a file.
+    const held = this.opened.at(path)
+    if (held) {
+      this.showTab(held)
       return
     }
 
@@ -1207,6 +1246,12 @@ class Workspace {
       return
     }
 
+    this.showTab(await this.opened.opening(opening, () => this.openSite(opening)))
+  }
+
+  /** The document one open of a website comes to. Only `openWeb` calls it, and only
+   *  through the one open. */
+  private async openSite(opening: string): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
 
@@ -1215,7 +1260,7 @@ class Workspace {
       // phone has no bar to type one into.
       if (said) await openExternal(said.url)
       this.remember(opening)
-      return
+      return null
     }
 
     const file = this.document({
@@ -1238,9 +1283,9 @@ class Workspace {
     this.add(tab)
     this.dropScaffolding(tab)
 
-    this.showNote()
     this.remember(opening)
     this.persist()
+    return file
   }
 
   /** Every website still written as a note, converted where it stands; see
@@ -1420,18 +1465,19 @@ class Workspace {
    *
    *  `page` counts from one, and null means wherever the tab was left. */
   async openPages(path: string, page: number | null = null) {
-    const existing = this.tabs.find((tab) => tab.kind === 'pages' && tab.path === path)
-    if (existing) {
-      this.activeTabId = existing.id
-      if (page !== null) this.gotoPage = { path, page }
-      this.showNote()
-      return
-    }
+    const tab = this.showTab(await this.opened.opening(path, () => this.openDeck(path, page)))
+    // A deck already open turns to the page the link named. One opening at it is
+    // already there, which is what the page it was given says.
+    if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
+  }
 
+  /** The document one open of a page note comes to. Only `openPages` calls it, and
+   *  only through the one open. */
+  private async openDeck(path: string, page: number | null): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
-    if (text === null) return
+    if (text === null) return null
 
     const file = this.document({
       kind: 'pages',
@@ -1450,9 +1496,9 @@ class Workspace {
     // nodes.
     links.canvasRead(path, text)
 
-    this.showNote()
     this.remember(path)
     this.persist()
+    return file
   }
 
   /** Makes a page note in a folder and opens it. The row asks for the name first
@@ -1741,7 +1787,10 @@ class Workspace {
     this.excluded.moved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
-    for (const note of this.documents.filter((entry) => entry.path === from)) {
+    // One document per file, so a path that changes moves rather than being written
+    // over one of several; see workspace/open.ts.
+    const note = this.opened.at(from)
+    if (note) {
       note.path = target
       note.name = name
     }
@@ -1812,17 +1861,31 @@ class Workspace {
     path: string,
     options: { activate?: boolean; preview?: boolean; blank?: boolean } = {},
   ) {
-    const existing = this.tabs.find((tab) => tab.path === path)
-    if (existing) {
-      // Opening for real what was only being looked at makes it stay.
-      if (!options.preview) this.keep(existing.id)
-      if (options.activate !== false) {
-        this.activeTabId = existing.id
-        this.showNote()
-      }
-      return
-    }
+    // One open of a file at a time, whoever asked: a second click on the row, a link
+    // followed twice, a note clicked while the session is still reading that very
+    // note. A file already open answers with its document and reads nothing; one
+    // still being read is waited out. Either way what comes back is the file's one
+    // document, and the tab showing it is the tab this open is about. See
+    // workspace/open.ts.
+    const note = await this.opened.opening(path, () => this.openNote(path, options))
+    const tab = note && this.tabs.find((one) => one.note === note)
+    if (!tab) return
 
+    // Opening for real what was only being looked at makes it stay.
+    if (!options.preview) this.keep(tab.id)
+    if (options.activate !== false) {
+      this.activeTabId = tab.id
+      this.showNote()
+    }
+  }
+
+  /** The document one open of a note comes to: the file read, and put in a tab or
+   *  taken on by the tab that previews notes. Null for a file that cannot be
+   *  opened at all. Only `open` above calls it, and only through the one open. */
+  private async openNote(
+    path: string,
+    options: { activate?: boolean; preview?: boolean; blank?: boolean },
+  ): Promise<NoteDoc | null> {
     const found = await invoke<string>('read_note', { path }).catch(() => null)
 
     // A row the first pass has named whose body has not come down yet. It opens,
@@ -1845,10 +1908,9 @@ class Workspace {
       tab.coming = true
       this.add(tab, options.activate !== false)
 
-      if (options.activate !== false) this.showNote()
       this.dropScaffolding(tab)
       this.persist()
-      return
+      return waiting
     }
 
     // Gone, or unreadable: nothing to open, and no tab that pretends otherwise.
@@ -1857,7 +1919,7 @@ class Workspace {
     // it is, and it is written when there are words in it - which is the ordinary
     // save, since a note in a space keeps itself.
     const doc = found ?? (options.blank ? '' : null)
-    if (doc === null) return
+    if (doc === null) return null
 
     // A preview reuses the one preview tab rather than opening another, and only
     // when that tab is in the pane being worked in: taking over a tab in another
@@ -1881,13 +1943,9 @@ class Workspace {
       // for writing however the tab was left.
       reusable.reading = false
 
-      if (options.activate !== false) {
-        this.activeTabId = reusable.id
-        this.showNote()
-      }
       this.remember(path)
       this.persist()
-      return
+      return reusable.note
     }
 
     const note = this.document({
@@ -1902,12 +1960,12 @@ class Workspace {
     this.placeAt(tab, path)
     this.add(tab, options.activate !== false)
 
-    if (options.activate !== false) this.showNote()
     this.previewTabId = options.preview ? tab.id : this.previewTabId
     this.remember(path)
 
     this.dropScaffolding(tab)
     this.persist()
+    return note
   }
 
   /** Where the note was last being read on this device. */
@@ -2199,12 +2257,7 @@ class Workspace {
   async reopenClosed() {
     for (let closed = this.closed.take(); closed; closed = this.closed.take()) {
       const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
-      const [tab] = await this.tabsFrom(
-        [closed.draft],
-        paneId,
-        keysTo(this.documents),
-        pathsTo(this.documents),
-      )
+      const [tab] = await this.tabsFrom([closed.draft], paneId)
       if (!tab) continue
 
       this.tabs = this.placed(tab, paneId, closed.at)
@@ -2851,7 +2904,7 @@ class Workspace {
     this.excluded.moved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
-    const note = this.documents.find((entry) => entry.path === path)
+    const note = this.opened.at(path)
     if (note) {
       note.flush()
       // A new note is written with its own name as the heading, so renaming it
@@ -2951,7 +3004,7 @@ class Workspace {
   /** Text written to a note from outside the editor, put into the document if it
    *  is open, which puts it into every pane showing it. */
   reload(path: string, content: string) {
-    this.documents.find((one) => one.path === path)?.replace(content, false)
+    this.opened.at(path)?.replace(content, false)
   }
 
   /** Rewrites every link in the space that points at `from` so it points at `to`.
