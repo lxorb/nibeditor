@@ -234,14 +234,8 @@ def look(page, name: str, tag: str) -> None:
 def panel(page) -> None:
     """The file list, open. A phone opens on the note with the drawer shut, and a
     desktop remembers whichever it was left on, so this is asked for rather than
-    assumed - through the one button that opens it, because `showPanel` toggles and
-    a drive that toggles a panel already open shuts it."""
-    page.evaluate(
-        """async () => {
-          const ws = window.nibApp.workspace
-          if (ws.panel !== 'tree') ws.showPanel('tree')
-        }"""
-    )
+    assumed."""
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .name", timeout=30000)
 
 

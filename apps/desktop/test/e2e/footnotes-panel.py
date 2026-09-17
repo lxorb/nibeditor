@@ -227,14 +227,9 @@ def opened(browser: Browser, finger: bool = False) -> tuple[BrowserContext, Page
 
 
 def show(page: Page, panel: str) -> None:
-    """The app's own road, which is what a tab press takes. Shut first, because
-    `showPanel` is a toggle and a drive that asked for the panel already open would be
-    reading a shut side."""
+    """The app's own road, which is what a tab press takes."""
     wait_for(page, "window.nibApp", "the app")
-    page.evaluate(
-        "(one) => { const ws = window.nibApp.workspace; ws.closePanel('left'); ws.showPanel(one) }",
-        panel,
-    )
+    page.evaluate("(one) => window.nibApp.workspace.showPanel(one)", panel)
     quiet(page)
 
 

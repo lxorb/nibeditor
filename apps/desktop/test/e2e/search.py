@@ -222,17 +222,8 @@ def say(words: str) -> None:
 
 
 def searching(page) -> None:
-    """The search panel showing, whether it already was or not.
-
-    `showPanel` is a toggle, and a page that has just been reloaded comes back with
-    the panel the session was left on: asking for it again would shut it.
-    """
-    page.evaluate(
-        """() => {
-          const ws = window.nibApp.workspace
-          if (ws.panel !== 'search') ws.showPanel('search')
-        }"""
-    )
+    """The search panel showing, whether it already was or not."""
+    page.evaluate("() => window.nibApp.workspace.showPanel('search')")
 
 
 def held_text(page) -> str:

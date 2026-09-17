@@ -992,10 +992,7 @@ PANEL = r"""
 async () => {
   const ws = window.nibApp.workspace
   const started = window.__since()
-  // Asked for rather than pressed. `showPanel` is what a key does and a key toggles:
-  // said about the panel that is already open it shuts the sidebar, and what this
-  // measures is the panel opening. See `showPanel` in workspace.svelte.ts.
-  if (ws.panel !== 'search') ws.showPanel('search')
+  ws.showPanel('search')
 
   // Two moments, because they are two questions. The panel is on screen when the
   // field is there to type in; the tag tree above it says what the space is tagged
@@ -1285,13 +1282,7 @@ def ready(page: Page, lane: Lane) -> None:
     # window is undone by `applyLayout`, which is why this drive used to lose a whole
     # lane's search rounds to a panel that never opened.
     page.wait_for_timeout(600)
-    # Asked for rather than pressed: `showPanel` is what a key does and a key
-    # toggles, so saying it on a window that already has the file list open is what
-    # shuts it. See `showPanel` in workspace.svelte.ts.
-    page.evaluate(
-        "() => { const ws = window.nibApp.workspace;"
-        " if (ws.panel !== 'tree') ws.showPanel('tree') }"
-    )
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     page.wait_for_selector("aside .row", timeout=60000)
 
 
@@ -1372,15 +1363,8 @@ class Lane:
             page.goto(self.origin, wait_until="domcontentloaded")
             page.wait_for_function(LAUNCHED, timeout=180000)
             # Said every time: a first visit has no session behind it and opens on
-            # whichever panel the app starts with. Asked for rather than pressed,
-            # because `showPanel` is what a key does and a key toggles: the first of
-            # these visits writes a sitting with the tree open, and saying it again on
-            # the visit after that shut the sidebar instead - which is a file list
-            # that never appears. See `showPanel` in workspace.svelte.ts.
-            page.evaluate(
-                "() => { const ws = window.nibApp.workspace;"
-                " if (ws.panel !== 'tree') ws.showPanel('tree') }"
-            )
+            # whichever panel the app starts with.
+            page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
             page.wait_for_selector("aside .row", timeout=60000)
 
         page.evaluate(OPEN_NOTE, f"{self.root}/{FIRST}")

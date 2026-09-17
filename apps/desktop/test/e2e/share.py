@@ -452,11 +452,7 @@ def space_row(page: Page, name: str = SPACE):
     button at the end of its row. See SpaceSwitcher.svelte and docs/design.md.
     The list is opened only if it is not already, because the name toggles it and
     a sheet closing above it leaves it standing."""
-    # `showPanel` is a toggle, so it is asked for only where the list is not
-    # already what the sidebar is showing.
-    page.evaluate(
-        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
-    )
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
     # The panel slides open and the header comes with it; a press landing
     # mid-slide lands on the note behind it.
@@ -534,11 +530,7 @@ def rename(page: Page, name: str) -> None:
 
     There is no Save. The field is what the app holds, so leaving it is what
     writes it, which is what every other field in the settings does."""
-    # `showPanel` is a toggle, so it is asked for only where the list is not
-    # already what the sidebar is showing.
-    page.evaluate(
-        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
-    )
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
     who = page.locator("aside .foot button.who")
     who.wait_for(state="visible", timeout=10_000)
@@ -596,9 +588,7 @@ def show_space(page: Page, name: str) -> None:
 
 def tree_row(page: Page, path: str):
     """A row in the file list, by the path it stands for."""
-    page.evaluate(
-        "() => { const ws = window.nibApp.workspace; if (ws.panel !== 'tree') ws.showPanel('tree') }"
-    )
+    page.evaluate("() => window.nibApp.workspace.showPanel('tree')")
 
     row = page.locator(f'.row[data-path="{path}"]')
     row.wait_for(state="visible", timeout=10_000)
