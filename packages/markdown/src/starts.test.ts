@@ -151,7 +151,7 @@ describe('a construct on a line of its own still ends the paragraph above it', (
     const html = renderMarkdown('Text\n$$\na^2\n$$\n')
 
     expect(html).toContain('<p>Text</p>')
-    expect(html).toContain('<div class="math-block">')
+    expect(html).toContain('<div class="math-block"')
   })
 
   test('a footnote definition', () => {

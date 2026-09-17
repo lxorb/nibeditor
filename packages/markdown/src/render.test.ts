@@ -378,7 +378,12 @@ describe('Typora extensions', () => {
    *  published to strangers. Left uncapped, one line of TeX was a box tens of
    *  thousands of ems tall, which is a page nobody can read or scroll. */
   test('a formula cannot ask for a box bigger than the page', () => {
-    const html = renderMarkdown('$$\\rule{99999em}{99999em}$$')
+    // Read off the drawing rather than off the whole of the HTML: the element
+    // around it carries the formula's own source, and `99999em` in there is the
+    // characters somebody typed rather than a size anything is laid out at. See
+    // `drawing` in extensions.ts.
+    const html = renderMarkdown('$$\\rule{99999em}{99999em}$$').replace(/ data-tex="[^"]*"/g, '')
+
     expect(html).toContain('katex')
     expect(html).not.toContain('99999em')
     for (const size of html.matchAll(/(\d+(?:\.\d+)?)em/g)) {

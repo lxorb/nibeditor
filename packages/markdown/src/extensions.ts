@@ -144,14 +144,30 @@ export const scripts: MarkedExtension = {
   ],
 }
 
+/** A formula, drawn, with the source it was drawn from on the element around it.
+ *
+ *  A drawing says nothing about the TeX behind it: KaTeX writes glyph by glyph,
+ *  and `\left\{ y \in \mathbb{R}^n \right\}` comes out as boxes holding `{`, `y`,
+ *  `∈` and `Rn`. So a formula copied out of a note and pasted back into one used
+ *  to arrive as the symbols it had been drawn as, which is nobody's idea of a
+ *  paste. The source travels with the drawing instead, and the converter reads it
+ *  back off the element; see `texOf` in from-html.ts. MathML carries its own the
+ *  same way, which is how a formula from anybody else's page survives the trip. */
+function drawing(token: Tokens.Generic, display: boolean): string {
+  const tex = String(token.text ?? '')
+  const tag = display ? 'div' : 'span'
+  const named = display ? 'math-block' : 'math-inline'
+
+  return `<${tag} class="${named}" data-tex="${escape(tex)}">${math(tex, display)}</${tag}>`
+}
+
 /** `$inline$`, and a `$$` block written either way. Where the block begins and
  *  ends is blocks.ts, which slides.ts reads without any of this. */
 export const maths: MarkedExtension = {
   extensions: [
     {
       ...blockMath,
-      renderer: (token: Tokens.Generic) =>
-        `<div class="math-block">${math(String(token.text ?? ''), true)}</div>`,
+      renderer: (token: Tokens.Generic) => drawing(token, true),
     },
     {
       name: 'inlineMath',
@@ -162,8 +178,7 @@ export const maths: MarkedExtension = {
         if (!match) return undefined
         return { type: 'inlineMath', raw: match[0], text: match[1] }
       },
-      renderer: (token: Tokens.Generic) =>
-        `<span class="math-inline">${math(String(token.text ?? ''), false)}</span>`,
+      renderer: (token: Tokens.Generic) => drawing(token, false),
     },
   ],
 }

@@ -87,12 +87,76 @@ export interface FromHtmlOptions {
  *  MathML says what a formula means and markdown has no way of writing that down,
  *  but every renderer that emits MathML keeps the source it was built from - as an
  *  annotation inside it, which is where the MathML standard puts it, or as
- *  `alttext` on the element. KaTeX, MathJax and MediaWiki all write both. */
+ *  `alttext` on the element. KaTeX, MathJax and MediaWiki all write both.
+ *
+ *  `data-tex` is this app's own, and is asked first because it is the outer
+ *  element's own statement about itself: a note draws its formulas with no MathML
+ *  at all - glyph by glyph, which is all a reader needs - and keeps the source on
+ *  the element it drew them into. See `drawing` in extensions.ts. */
 function texOf(maths: Element): string {
-  const annotated = maths.querySelector('annotation[encoding="application/x-tex"]')
-  const said = annotated?.textContent ?? maths.getAttribute('alttext') ?? ''
+  const said =
+    maths.getAttribute('data-tex') ??
+    maths.querySelector('annotation[encoding="application/x-tex"]')?.textContent ??
+    maths.getAttribute('alttext') ??
+    ''
 
   return angled(said.replace(/\s+/g, ' ').trim())
+}
+
+/** Whether an element says which formula it holds: MathML, or one of this app's
+ *  own with the source on it. */
+function saysAFormula(node: Element): boolean {
+  return node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
+}
+
+/** Whether this is a formula's drawing rather than a formula.
+ *
+ *  A renderer emits both: the glyphs it drew, and beside them the MathML that says
+ *  what they mean with the TeX inside it. The drawing is marked `aria-hidden`,
+ *  because what a reader is meant to be given is the maths and not the letters it
+ *  was drawn with - and a note holds it for the same reason. Without this a formula
+ *  copied off a page arrived twice, as `$e^{i\pi}+1=0$` and then as `eiπ+1=0`.
+ *
+ *  Only where the formula itself is beside it, which is what keeps this narrow.
+ *  Hidden is not on its own a reason to drop anything: a page takes what is behind
+ *  a dialog out of the reading order, a carousel hides the slides that are not
+ *  showing, and the words in either are still the page's words. */
+function drawnBeside(node: Element): boolean {
+  if (node.getAttribute('aria-hidden') !== 'true') return false
+  return !!node.parentElement?.querySelector('math, [data-tex]')
+}
+
+/** Whether a subtree puts any words into the note.
+ *
+ *  A formula's own drawing puts none: the glyphs are the letters the maths was
+ *  drawn with, and the note keeps the maths instead; see `drawnBeside`. That is
+ *  the whole reason this is asked by hand rather than off `textContent`, which
+ *  counts the drawing - and counting it left a page's display equation looking
+ *  like part of a line rather than a block of its own.
+ *
+ *  Answered at the first word rather than gathered up, because what wants to know
+ *  is whether anything shares a block with a formula. Walked from sibling to
+ *  sibling: a browser's `NodeList` can be iterated and the small DOM turndown
+ *  carries for node cannot. */
+function saysWords(node: Node): boolean {
+  // Read from `nodeType` rather than from the tag, because a text node has none.
+  if (node.nodeType === 3) return !!node.nodeValue?.trim()
+  if (node.nodeType !== 1 || drawnBeside(node as Element)) return false
+
+  for (let kid = node.firstChild; kid; kid = kid.nextSibling) {
+    if (saysWords(kid)) return true
+  }
+
+  return false
+}
+
+/** Whether the only thing this element holds that says anything is the one child. */
+function holdsOnly(parent: Element, one: Node): boolean {
+  for (let kid = parent.firstChild; kid; kid = kid.nextSibling) {
+    if (kid !== one && saysWords(kid)) return false
+  }
+
+  return true
 }
 
 /** A formula's own `<` and `>`, as TeX also writes them.
@@ -173,18 +237,31 @@ const HEADING = /^H[1-6]$/
  *  leaving it inside the sentence it belongs to, and `$$` in the middle of a
  *  sentence is not a formula to any reader of markdown. So the question is whether
  *  anything else shares the block - the words before and after it, in the page's
- *  own tree. */
+ *  own tree.
+ *
+ *  Asked of what sits beside the formula on the way up rather than of the block's
+ *  own text, which is the same answer read off a great deal less of the page: a
+ *  block is as long as somebody's article, and reading the whole of it for every
+ *  formula in it is the article read once per equation. */
 function standsAlone(maths: Element): boolean {
-  const said = maths.textContent.trim()
-  let at: Element | null = maths.parentElement
+  // A formula drawn into a block of its own is that block: this app writes a
+  // `$$` into a `<div>` and a `$…$` into a `<span>`, and MathML is neither.
+  if (OWNS_A_LINE.has(maths.nodeName)) return true
 
-  while (at && !OWNS_A_LINE.has(at.nodeName)) {
-    if (HEADING.test(at.nodeName)) return false
-    if (at.textContent.trim() !== said) return false
-    at = at.parentElement
+  let one: Element = maths
+  let over: Element | null = maths.parentElement
+
+  while (over) {
+    // A heading is deliberately not a block a formula can own; see `OWNS_A_LINE`.
+    if (HEADING.test(over.nodeName)) return false
+    if (!holdsOnly(over, one)) return false
+    if (OWNS_A_LINE.has(over.nodeName)) return true
+
+    one = over
+    over = over.parentElement
   }
 
-  return !!at && at.textContent.trim() === said
+  return false
 }
 
 /** A fence long enough to hold the code, whatever backticks the code contains. */
@@ -429,6 +506,11 @@ function converter(options: FromHtmlOptions): TurndownService {
   // arrives as a whole document with a head on it.
   service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
 
+  // A formula's drawing, which the formula beside it already says; see
+  // `drawnBeside`. The note keeps the maths rather than the letters it was drawn
+  // with, whichever of the two the page put first.
+  service.remove((node) => drawnBeside(node))
+
   // Kept for the one conversion, because the tree it counts lives for one
   // conversion.
   const indexIn = indexer()
@@ -560,14 +642,15 @@ function converter(options: FromHtmlOptions): TurndownService {
   // A formula, as the `$…$` this editor and Obsidian both draw. MathML is what a
   // page renders one as, and the TeX it was built from travels inside it, so the
   // note keeps the formula rather than the letters it was made of: a clipped
-  // Euler's identity is `e^{i\pi}+1=0` and not `eiπ+1=0`.
+  // Euler's identity is `e^{i\pi}+1=0` and not `eiπ+1=0`. A formula this app drew
+  // says the same thing on the element around the drawing; see `saysAFormula`.
   //
   // Written by the rule rather than as text, because text is escaped: every `\`
   // in the formula would come back doubled and the note would draw nothing.
   // Named through a function rather than as a tag, because `math` is MathML and
   // turndown's own list of tags is HTML's.
   service.addRule('maths', {
-    filter: (node) => node.nodeName.toLowerCase() === 'math',
+    filter: (node) => saysAFormula(node),
     replacement: (content, node) => {
       const tex = texOf(node)
       if (!tex) return content

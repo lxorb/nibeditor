@@ -488,9 +488,9 @@ describe('the parts', () => {
   })
 
   test('carry the maths as KaTeX drew it', () => {
-    expect(book.sections[0]).toContain('<span class="math-inline">')
+    expect(book.sections[0]).toContain('<span class="math-inline"')
     expect(book.sections[0]).toContain('class="katex"')
-    expect(book.sections[0]).toContain('<div class="math-block">')
+    expect(book.sections[0]).toContain('<div class="math-block"')
     expect(book.sections[0]).not.toContain('<math')
   })
 

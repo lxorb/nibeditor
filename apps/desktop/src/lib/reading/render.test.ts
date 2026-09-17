@@ -146,8 +146,8 @@ describe('the page a note is read on', () => {
   test('sets its maths', async () => {
     const html = await readingHtml(note('Inline $a^2$ and\n\n$$\nb^2\n$$\n'), 'light', true)
 
-    expect(html).toContain('<span class="math-inline">')
-    expect(html).toContain('<div class="math-block">')
+    expect(html).toContain('<span class="math-inline"')
+    expect(html).toContain('<div class="math-block"')
     expect(html).toContain('katex')
   })
 

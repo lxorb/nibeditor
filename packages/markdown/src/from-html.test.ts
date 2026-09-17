@@ -1,5 +1,8 @@
+import katex from 'katex'
 import { describe, expect, test } from 'vitest'
+import { loadFor } from './engines'
 import { htmlToMarkdown, NEVER, workDone } from './from-html'
+import { renderMarkdown } from './index'
 
 describe('a page as markdown', () => {
   test('headings and emphasis become markdown', () => {
@@ -431,6 +434,70 @@ describe('a page as markdown', () => {
 
   test('a formula that says no TeX keeps the letters it was made of', () => {
     expect(htmlToMarkdown('<p>a <math><mi>x</mi></math> b</p>')).toBe('a x b')
+  })
+
+  /** A page does not put MathML on the clipboard on its own: it puts what a
+   *  renderer drew, which is the glyphs and the MathML side by side, the glyphs
+   *  marked `aria-hidden` because they are letters rather than maths. Both used to
+   *  land, the formula and then again `Br(x)=B(x,r):={y∈Rn∣∥x−y∥<r}` after it.
+   *
+   *  Drawn by KaTeX here rather than written out, because the shape being read is
+   *  a real renderer's and not one anybody remembered. */
+  describe('a formula that has been drawn', () => {
+    const TEX = String.raw`B_r(x) = B(x, r) := \left\{ y \in \mathbb{R}^n \;\middle|\; \|x - y\| < r \right\}`
+    /** The same TeX, with the one character a tag can begin with written as TeX
+     *  writes it anyway; see `angled`. */
+    const KEPT = TEX.replace('<', String.raw`\lt `)
+
+    test('arrives as the TeX it was drawn from, and never as the glyphs it drew', () => {
+      const drawn = katex.renderToString(TEX, { displayMode: true, throwOnError: false })
+      const markdown = htmlToMarkdown(drawn)
+
+      expect(markdown).toBe(`$$\n${KEPT}\n$$`)
+      expect(markdown).not.toContain('∈')
+    })
+
+    test('and one a sentence runs through is part of the sentence', () => {
+      const drawn = katex.renderToString('x^2', { throwOnError: false })
+
+      expect(htmlToMarkdown(`<p>the square ${drawn} of it</p>`)).toBe('the square $x^2$ of it')
+    })
+
+    test('and one a lecture page sets between two paragraphs is a block of its own', () => {
+      const drawn = katex.renderToString('x^2', { displayMode: true, throwOnError: false })
+
+      expect(htmlToMarkdown(`<p>Sei</p><div>${drawn}</div><p>Dann</p>`)).toBe(
+        'Sei\n\n$$\nx^2\n$$\n\nDann',
+      )
+    })
+
+    /** The same bug from the other end: a formula copied out of a note and pasted
+     *  back into one. Nib draws the glyphs and keeps the source on the element it
+     *  draws them into, so the note gets its own equation back rather than the
+     *  symbols it was drawn as. */
+    test('and a formula this app drew pastes back into a note as itself', async () => {
+      const note = `$$${TEX}$$`
+      await loadFor(note)
+
+      expect(htmlToMarkdown(renderMarkdown(note))).toBe(`$$\n${KEPT}\n$$`)
+    })
+
+    test('an inline one too, still inside its sentence', async () => {
+      const note = 'the square $x^2$ of it'
+      await loadFor(note)
+
+      expect(htmlToMarkdown(renderMarkdown(note))).toBe(note)
+    })
+  })
+
+  /** Hidden is not on its own a reason to drop anything: a page takes what is
+   *  behind a dialog out of the reading order, and the words in it are still the
+   *  page's words. Only a formula's own drawing goes, and only where the formula
+   *  itself is beside it. */
+  test('a page that hides something from a reader still says what it says', () => {
+    expect(htmlToMarkdown('<p><span aria-hidden="true">Kapitel</span> eins</p>')).toBe(
+      'Kapitel eins',
+    )
   })
 
   test('a block holding nothing is nothing to fence', () => {
