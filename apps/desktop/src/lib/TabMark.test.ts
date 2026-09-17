@@ -6,15 +6,15 @@ import type { TabKind } from './workspace/documents.svelte'
 
 /** The mark an open tab wears, drawn.
  *
- *  One sentence holds the whole file together: a tab says what kind of thing it is a
- *  tab of, and a row in the file list says what the file is. Those are different
- *  sentences, and the difference only shows where a file has chosen an icon - a note
- *  called a rocket is still a note when it is open in front of you, and a strip whose
- *  six tabs wore six of somebody's emoji would be a strip nothing could be found in.
- *  So every kind is drawn here with a chosen icon set on the path, and every kind has
- *  to ignore it.
+ *  One sentence holds the whole file together: a file wears one mark, and which
+ *  surface is drawing it does not come into it. So every kind is drawn here with an
+ *  icon chosen on its path and every kind has to wear it - the same icon the row in
+ *  the file list wears, out of the same reader - and every kind has to fall back to
+ *  its own drawing where nothing was chosen. It was the other way around until Emil
+ *  asked: "for all note types, the tab icon and the explorer icon should always be
+ *  the same".
  *
- *  A website is the one tab whose mark is not about the kind at all, because which
+ *  A website is the one tab whose mark is not about the file at all, because which
  *  site it is on is the interesting fact and every browser has drawn it for thirty
  *  years. Three states, and all three are here: the site's own picture, the globe for
  *  a site that has none, and the turn while the page is on its way.
@@ -24,10 +24,12 @@ import type { TabKind } from './workspace/documents.svelte'
  *  in. */
 
 const chosen: Record<string, string | null> = {}
+const marks: Record<string, string | null> = {}
 
 vi.mock('./chosen-icon', () => ({
   chosenIcon: (path: string) => chosen[path] ?? null,
   chosenTint: () => null,
+  faviconFor: (path: string) => marks[path] ?? null,
 }))
 
 const { iconLibrary } = await import('./icon-library.svelte')
@@ -69,6 +71,9 @@ function drawn(tab: InstanceType<typeof Tab>): string {
 
 const SITE = 'https://svelte.dev/docs'
 const FAVICON = 'https://svelte.dev/favicon.png'
+/** The same mark as the row draws it: out of the index rather than out of the copy of
+ *  the file this window is holding. */
+const FOUND = 'https://svelte.dev/found.png'
 
 /** A website as its file: the shortcut the app writes, so the key the favicon is kept
  *  under is the writer's own rather than a string spelled twice. */
@@ -77,17 +82,17 @@ function shortcut(icon: string | null): string {
 }
 
 describe('a tab wearing the mark of what it holds', () => {
-  test('a note is the page with writing on it, whatever icon the note chose', () => {
+  test('a note that chose an icon wears it, the way its row does', () => {
     chosen['Plan.md'] = 'rocket'
     const body = drawn(tabFor('note', 'Plan.md', '# Plan'))
 
-    for (const stroke of strokes(MARKS.note)) expect(body).toContain(stroke)
-    for (const stroke of rocket) expect(body).not.toContain(stroke)
+    for (const stroke of rocket) expect(body).toContain(stroke)
+    expect(body).not.toContain(strokes(MARKS.note)[0])
   })
 
   /** The same rule for the three other kinds that keep an icon of their own: a canvas
    *  and a page note say it under `nib.icon`, a folder note in its front matter. */
-  test('and so are the canvas, the page note and the PDF', () => {
+  test('and so do the canvas, the page note and the PDF', () => {
     for (const [kind, path] of [
       ['canvas', 'Board.canvas'],
       ['pages', 'Lecture.pages'],
@@ -96,9 +101,35 @@ describe('a tab wearing the mark of what it holds', () => {
       chosen[path] = 'rocket'
       const body = drawn(tabFor(kind, path))
 
+      for (const stroke of rocket) expect(body, kind).toContain(stroke)
+      expect(body, kind).not.toContain(strokes(MARKS[kind])[0])
+    }
+  })
+
+  /** Which is what the kinds are for: nobody dresses every note, and a strip of
+   *  undressed ones still says which window is the plane and which is the paper. */
+  test('and a file that chose nothing wears its kind s own drawing', () => {
+    for (const [kind, path] of [
+      ['note', 'Bare.md'],
+      ['canvas', 'Bare.canvas'],
+      ['pages', 'Bare.pages'],
+      ['pdf', 'Bare.pdf'],
+    ] as const) {
+      const body = drawn(tabFor(kind, path))
+
       for (const stroke of strokes(MARKS[kind])) expect(body, kind).toContain(stroke)
       for (const stroke of rocket) expect(body, kind).not.toContain(stroke)
     }
+  })
+
+  /** A note nobody has saved has no file to have chosen anything in, and asking
+   *  after an icon by a path it has not got would be asking about the empty string. */
+  test('and a note with no file yet wears the page with writing on it', () => {
+    chosen[''] = 'rocket'
+    const body = drawn(tabFor('note', null, '# draft'))
+
+    for (const stroke of strokes(MARKS.note)) expect(body).toContain(stroke)
+    for (const stroke of rocket) expect(body).not.toContain(stroke)
   })
 
   /** The one tab that is not a file, so there is no kind's mark for it to wear: the
@@ -126,6 +157,18 @@ describe('a tab holding a website', () => {
     expect(body).not.toContain('<img')
   })
 
+  /** And where the file this window holds says nothing, what the row says: the tab
+   *  falls through to the same component the file list draws, so a mark that reached
+   *  the index without reaching this tab's copy of the file still lands in the strip.
+   *  One chain, ending at the globe. */
+  test('and what the row draws for it where this window s own file says nothing', () => {
+    marks['Elsewhere.url'] = FOUND
+    const body = drawn(tabFor('web', 'Elsewhere.url', shortcut(null)))
+
+    expect(body).toContain(`src="${FOUND}"`)
+    for (const stroke of strokes(MARKS.web)) expect(body).not.toContain(stroke)
+  })
+
   /** What a browser does with this box while a page is coming, and the reason the box
    *  is worth having: the reader can see which of six tabs is still loading. */
   test('and turns instead of either while the page is on its way', () => {
@@ -140,7 +183,7 @@ describe('a tab holding a website', () => {
   /** The turn is the page's, not the tab's. A note has no page to be loading, and the
    *  mark it wears must not depend on what some other tab's page is doing. */
   test('while a note is its page whatever any page is doing', () => {
-    const tab = tabFor('note', 'Plan.md', '# Plan')
+    const tab = tabFor('note', 'Bare.md', '# Plan')
     pages.of(tab.id).loading = true
 
     const body = drawn(tab)

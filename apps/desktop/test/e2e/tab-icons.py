@@ -1,15 +1,19 @@
 """One mark per open tab, measured.
 
-Emil asked for an icon on every window: a note icon for a note whatever icon the
-note chose for its row in the file list, the same for a canvas, a page note and a
-PDF, the space's own picture for the graph, and for a website the site's own
-favicon. What a unit test cannot say is whether the seven of them come out as one
-strip - the same box, in the same place inside the tab, at the same weight - so
-that is what this measures, in a real browser, and photographs.
+Emil asked for an icon on every window: the file's own, for a note, a canvas, a
+page note and a PDF, the space's own picture for the graph, and for a website the
+site's own favicon. What a unit test cannot say is whether the seven of them come
+out as one strip - the same box, in the same place inside the tab, at the same
+weight - so that is what this measures, in a real browser, and photographs.
 
-The proof that a tab is not a row: `Plan.md` says `icon: rocket` in its front
-matter. The row in the file list wears the rocket and the tab wears the page with
-writing on it, and the drive reads both out of the same window.
+The proof that a tab and a row are one answer: `Plan.md` says `icon: rocket` in
+its front matter, and the drive reads the row in the file list and the tab in the
+strip out of the same window and holds them against each other. Emil, 2026-09-17:
+*"for all note types, the tab icon and the explorer icon should always be the
+same."* Then it chooses one in the picker, on a canvas that had none, and holds the
+two against each other again - nothing tells the tab. And because the icon is the
+whole of a pinned tab, one tab is pinned at the end of the run and measured again as
+a chip.
 
 Serves the built web app and drives it in the machine's own Chrome, and serves one
 picture of its own for a website's favicon to point at. The build has to be a
@@ -53,8 +57,8 @@ ORIGIN = f"http://127.0.0.1:{PORT}"
 # the drive needs nothing off the network.
 MARK = "/mark.png"
 
-# A note that chose an icon of its own. The row in the list wears the rocket; the tab
-# has to wear the page with writing on it, which is the whole of what Emil asked for.
+# A note that chose an icon of its own. The row in the list wears the rocket and so
+# does the tab, because they are the same file and a file wears one mark.
 DRESSED = "---\nicon: rocket\n---\n\n# Plan\n\nA note that chose an icon.\n"
 
 
@@ -144,6 +148,10 @@ STRIP = """
 
     return {
       name: tab.querySelector('.label')?.textContent ?? null,
+      // A pinned tab is its mark alone, which is the one place the mark is the whole
+      // of what the reader has to go on.
+      pinned: tab.classList.contains('pinned'),
+      shut: !!tab.querySelector('.shut'),
       marks: marks.length,
       kind: img ? 'picture' : svg ? 'stroke' : 'nothing',
       width: box ? Math.round(box.width * 100) / 100 : null,
@@ -160,6 +168,28 @@ STRIP = """
       arrived: img ? img.naturalWidth > 0 : null,
     }
   })
+}
+"""
+
+# The note that chose an icon, pinned. Emil asked for both of these in one breath, and
+# they are one thing: a pinned tab is reduced to its icon, so the icon it is reduced to
+# had better be the one the file chose.
+PIN = """
+() => {
+  const ws = window.nibApp.workspace
+  const tab = ws.tabs.find((one) => (one.name ?? '').startsWith('Plan'))
+  ws.togglePin(tab.id)
+}
+"""
+
+# The picker, on the canvas, which is the one open file that chose nothing. A row's
+# menu is what opens it in the app and a drive cannot reach that; see App.svelte.
+CHOOSE = """
+() => {
+  const ws = window.nibApp.workspace
+  const canvas = ws.files.find((one) => one.name === 'Roadmap.canvas')
+  window.nibApp.iconChoice.file(canvas.path)
+  return canvas.path
 }
 """
 
@@ -324,6 +354,76 @@ def website(path: str) -> str:
     return f"{ORIGIN}{path}"
 
 
+def pinned(page: Page, scheme: str) -> None:
+    """The dressed note, pinned: a chip with the icon it chose in it and nothing else.
+
+    A pinned tab is its mark alone, so this is the one tab where the mark is the whole
+    of what the reader has to go on - and the two things Emil asked for meet here."""
+
+    page.evaluate(PIN)
+    page.wait_for_timeout(700)
+
+    strip = page.evaluate(STRIP)
+    chip = strip[0] if strip else None
+    beside = strip[1] if len(strip) > 1 else None
+    say(f"[{scheme}] the pinned chip: {json.dumps(chip, ensure_ascii=False)}")
+    shot(page, f"03-the-pinned-chip-{scheme}", ".strip")
+
+    if not chip or not beside:
+        wrong(f"[{scheme}] the strip lost its tabs when one of them was pinned")
+        return
+
+    if not chip["pinned"]:
+        wrong(f"[{scheme}] the pinned tab is not at the head of the strip")
+    if chip["name"] is not None:
+        wrong(f"[{scheme}] a pinned tab still spells its name: {chip['name']!r}")
+    if chip["shut"]:
+        wrong(f"[{scheme}] a pinned tab offers a cross")
+    if chip["tab"] > 48:
+        wrong(f"[{scheme}] a pinned tab is as wide as a named one: {chip['tab']}px")
+
+    # The mark it is reduced to: the one the row wears, in the box every other tab
+    # keeps. A chip whose icon is not the file's own would be a chip nothing can be
+    # told apart by.
+    row = page.evaluate(ROWS).get("Plan", "")
+    if chip["drawing"] != row:
+        wrong(f"[{scheme}] the pinned chip wears {chip['drawing']!r} where the row wears {row!r}")
+    if (chip["width"], chip["height"]) != (beside["width"], beside["height"]):
+        wrong(f"[{scheme}] the chip's mark is not the box the other tabs keep: {chip}")
+
+
+def chooses(page: Page, scheme: str) -> None:
+    """An icon chosen the way somebody chooses one, and both surfaces taking it.
+
+    Emil: *"if we set an explorer icon for a note, then it should also be the tab
+    icon."* Nothing tells the tab - the row and the tab ask one reader the same
+    question about one file, so the strip changes when the list does."""
+
+    say(f"[{scheme}] choosing an icon for {page.evaluate(CHOOSE)}")
+    page.locator(".sheet").wait_for(state="visible", timeout=30_000)
+    page.locator('.nib-segmented button:has-text("Line")').click()
+    page.locator(".sheet input.nib-field").fill("anchor")
+    cell = page.locator('.sheet button[aria-label="anchor"]').first
+    cell.wait_for(state="visible", timeout=30_000)
+    cell.click()
+    page.wait_for_timeout(900)
+    page.evaluate("() => window.nibApp.iconChoice.close()")
+    page.wait_for_timeout(400)
+
+    strip = page.evaluate(STRIP)
+    rows = page.evaluate(ROWS)
+    tab = next((one for one in strip if one["name"] == "Roadmap"), None)
+    row = rows.get("Roadmap", "")
+    drawn = tab["drawing"] if tab else None
+    say(f"[{scheme}] Roadmap now wears {row!r} in the list and {drawn!r} in the strip")
+    shot(page, f"04-an-icon-chosen-{scheme}", ".strip")
+
+    if not row:
+        wrong(f"[{scheme}] the chosen icon never reached the row it was chosen on")
+    elif drawn != row:
+        wrong(f"[{scheme}] an icon chosen in the list did not reach the tab: {drawn!r}")
+
+
 def drive(page: Page, scheme: str) -> list[dict]:
     where = page.evaluate(
         SEED,
@@ -393,16 +493,18 @@ def drive(page: Page, scheme: str) -> list[dict]:
     if not plain or plain["kind"] != "stroke":
         wrong(f"[{scheme}] the site with no mark does not fall back to the globe: {plain}")
 
-    # And the one that says a tab is not a row: the same file, two marks.
+    # And the one that says a tab and a row are one answer: the same file, one mark.
     rows = page.evaluate(ROWS)
     tab = next((one for one in strip if one["name"] == "Plan"), None)
     row = rows.get("Plan", "")
     say(f"[{scheme}] Plan wears {row!r} in the list and {tab and tab['drawing']!r} in the strip")
     if not row:
         wrong(f"[{scheme}] there is no row for the note that chose an icon")
-    elif tab and row == tab["drawing"]:
-        wrong(f"[{scheme}] the tab wears the icon the note chose rather than the note's mark")
+    elif tab and row != tab["drawing"]:
+        wrong(f"[{scheme}] the tab wears {tab['drawing']!r} where the row wears {row!r}")
 
+    pinned(page, scheme)
+    chooses(page, scheme)
     return strip
 
 
@@ -446,7 +548,11 @@ def main() -> int:
             print(f"  - {one}", flush=True)
         return 1
 
-    print("\nseven kinds of tab, one mark each, one box, one weight, one place", flush=True)
+    print(
+        "\nseven kinds of tab, one mark each, one box, one weight, one place - and the"
+        " file's own mark in the strip as in the list, down to the pinned chip",
+        flush=True,
+    )
     return 0
 
 

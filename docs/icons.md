@@ -146,3 +146,14 @@ moment before a set has arrived. It reads the icon off the path rather than bein
 handed one, which is why a folder and a canvas got icons for nothing the day the
 stores learned to keep them: the tree, the tab strip, a search hit, a bookmark and
 the Move sheet all draw this component.
+
+A tab hands it the path as well. What a window wears and what a row wears are the
+same question about the same file, so there is one answer to it - Emil, 2026-09-17:
+*"for all note types, the tab icon and the explorer icon should always be the
+same."* `TabMark.svelte` adds only the three marks a tab has and a row has not: the
+space's own picture for the graph, the picture a website's page found while it was
+loading, and the turn while it is still loading. It used to answer the whole question
+itself, on the grounds that a strip should say which kind each window is, and the
+cost was that the one thing somebody chose about a note was the one thing the tab
+would not show - and a pinned tab, which is its mark and no name at all, was a row of
+identical pages.

@@ -1,20 +1,25 @@
 <script lang="ts">
   /** The one mark an open tab wears: what this window is looking at.
    *
-   *  A tab is not a row in the file list, and that is the whole of why this exists
-   *  beside `FileMark.svelte`. A row is the file, so it wears whatever icon the file
-   *  chose for itself; a tab is a window onto one kind of thing, and what it owes the
-   *  reader is which kind - at a glance, along a full strip. So a note is the page
-   *  with writing on it however the note dressed its row, a canvas is the two cards,
-   *  a PDF is the book: the marks the lists already draw, asked of the kind and never
-   *  of the path. See file-mark.ts.
+   *  A file wears one mark, and the surface drawing it does not get a say. So a note
+   *  that chose a rocket in the file list is the rocket in the strip as well, and one
+   *  that chose nothing is its kind's own drawing in both places - which is
+   *  `FileMark.svelte` in both places, asked for the same path, rather than two
+   *  components that agree by being kept in step. A tab used to be the kind and
+   *  nothing else, on the grounds that a strip says which kind each window is; what
+   *  that cost was that the one thing somebody chose about a note was the one thing
+   *  the tab would not show, and a pinned tab - which is its mark and no name at all -
+   *  was a row of identical pages. See chosen-icon.ts, which is where the one answer
+   *  is, and file-mark.ts for what a kind draws when nothing was chosen.
    *
-   *  Two are drawn here rather than there. The graph is the space's own picture, which
-   *  the panel that opens it already wears; see panel-marks.ts. And a website wears
-   *  the site's own favicon, because every browser for thirty years has put the site
-   *  in this box and not the word "web" - the globe stands in only where there is no
-   *  picture to be had. While a page is loading the mark turns, which is the one
-   *  moment this box says what the tab is doing rather than what it holds.
+   *  What is left here is the three marks a tab has and a row has not. The graph is
+   *  the space's own picture, which the panel that opens it already wears; see
+   *  panel-marks.ts. A website wears the picture its own page found, which is newer
+   *  than anything the file says and is the reason a browser puts the site in this box
+   *  rather than the word "web" - and where the page has not found one, the row's own
+   *  reading of the file takes over below. While a page is loading the mark turns,
+   *  which is the one moment this box says what the tab is doing rather than what it
+   *  holds.
    *
    *  Everything here is the box and the hairline `FileMark.svelte` draws, because most
    *  of the time that component is what is in this slot. One size and one weight, so a
@@ -41,7 +46,8 @@
   /** The picture to draw for a website: the one the page found while it was loading,
    *  else the one its file wrote down - which is the only one a tab has before the page
    *  is there and on a machine that has never opened the site. Nothing where neither
-   *  says, and then the globe is what a website wears. */
+   *  says, and then the row's own reading of the file is what answers: the mark out of
+   *  the index, else whatever the file chose, else the globe. */
   const found = $derived(page ? (page.icon ?? iconOf(tab.path, tab.doc)) : null)
 
   /** Whether the picture refused to arrive. A site whose mark has moved, or one the
@@ -72,10 +78,12 @@
     <img src={found} alt="" onerror={() => (broken = true)} />
   </span>
 {:else if mark}
-  <!-- The kind's own drawing, with no path behind it: a note that chose a rocket
-       wears the rocket in the file list and the page here, because a tab has to say
-       what it is a tab of. -->
-  <FileMark {mark} />
+  <!-- The file's own mark, drawn by the component the file list draws it with and
+       handed the same path: a note that chose a rocket wears the rocket here too, and
+       one that chose nothing wears its kind's drawing. A tab with no file yet - an
+       unsaved note, a new plane - has no path to have chosen anything with, and gets
+       its kind's drawing for the same reason. -->
+  <FileMark {mark} path={tab.path ?? undefined} />
 {:else}
   <!-- Three notes and the edges between them: the space's own picture, which is what
        the panel that opens the graph and the bookmark that keeps a view of it already
