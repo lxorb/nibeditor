@@ -7,8 +7,12 @@ What each row writes is checked in the note afterwards, including the name the a
 writes into another note for a block that had none, and the places the `#` popup
 must stay out of: a fence, and a heading being typed.
 
-Serves the built web app and drives it in the machine's own Chrome. The build has
-to be a development one or `window.nib` and `window.nibApp` are not there.
+And then the space next door, which is the other half of "every heading in the
+space": a second space, opened, offers its own and none of the first one's, from
+the moment it is opened rather than from the moment it has been read.
+
+Serves the built web app and drives it in the machine's own Chrome. The build is
+`--mode drive`, which is what keeps `window.nib` and `window.nibApp` in it.
 
 Run it from the repository root:
 
@@ -93,6 +97,31 @@ ROWS = """
 )
 """
 
+# A second space, opened, and what the index holds the moment it is. Reading a
+# space starts when its file list does and takes as long as the space is big, so
+# this is the state `[[` is offered out of for the whole of that second.
+ANOTHER_SPACE = """
+async () => {
+  const ws = window.nibApp.workspace
+  const links = window.nibApp.links
+  await ws.addSpace('Elsewhere')
+
+  const at_once = {
+    root: links.rootOf(),
+    reading: links.scanning,
+    notes: links.index(null).notes.map((one) => one.path),
+  }
+
+  // Written while the new space is still being read, which is where a note lands
+  // for the whole of a launch: the reading must come back around it rather than
+  // over it.
+  const path = await ws.noteFrom('# Over here\\n\\nthe other space\\n')
+  await links.scanned()
+
+  return { at_once, path, after: links.index(null).notes.map((one) => one.path) }
+}
+"""
+
 TAGS = """
 () => (window.nibApp.links.index(null).tags ?? []).map((one) => `${one.tag} ${one.notes}`)
 """
@@ -129,11 +158,17 @@ def build() -> None:
 
     say("building the web app")
     shutil.rmtree(DIST, ignore_errors=True)
-    environment = {**os.environ, "NODE_ENV": "development"}
+    # `--mode drive`, which is a release build with `__DRIVEABLE__` left on:
+    # `window.nibApp` and `window.nib`, the handles this file steers the app by. They
+    # used to be behind `import.meta.env.DEV`, which a development build set - so this
+    # said `--mode development` and got them by accident. It does not any more: a
+    # development build has no handles in it at all, and this drive stopped half a
+    # second in, waiting for an app it could never see. See `__DRIVEABLE__` in
+    # src/env.d.ts and smoke.py.
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
-        env=environment,
+        env=os.environ.copy(),
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -290,6 +325,16 @@ def name_of(path: str) -> str:
     return path.replace("\\", "/").split("/")[-1].removesuffix(".md")
 
 
+def headings_of(names: list[str]) -> list[tuple[str, str]]:
+    """Every heading the space was seeded with, as the note it is in and itself."""
+    return [
+        (names[0], "Today"),
+        (names[0], "The plan for Monday"),
+        (names[1], "Sparks"),
+        (names[1], "Later"),
+    ]
+
+
 def drive_headings(page: Page, names: list[str]) -> None:
     line(page)
     page.keyboard.type("[[##", delay=40)
@@ -298,13 +343,17 @@ def drive_headings(page: Page, names: list[str]) -> None:
     every = rows_holding(page, "The plan for Monday")
     say(f"[[[##] {len(every)} rows: {json.dumps(every[:6])}")
     shot(page, "01-every-heading")
-    if len(every) < 4:
-        wrong(f"the space's headings are not all offered: {every}")
-    if not any("The plan for Monday" in one for one in every):
-        wrong("a heading of another note is missing")
-    # The note each heading is in reads beside it, muted.
-    if not any(names[1] in one for one in every):
-        wrong(f"the rows do not say which note each heading is in: {every}")
+
+    # Every heading the space was seeded with, each with the note it is in beside
+    # it: a row reads as the heading and then, muted, the note's name. Named rather
+    # than counted, because a count cannot tell a missing note from an extra one -
+    # the list used to lose a whole note's headings on about one launch in twenty
+    # and still have four rows in it, which is how long that went unseen. A fifth
+    # row for "Welcome to Nib" belongs here: the browser seeds every new space with
+    # a note of that name, and it is in this space like any other.
+    for note, heading in headings_of(names):
+        if not any(one.startswith(heading) and one.endswith(note) for one in every):
+            wrong(f"the space's headings are not all offered: no {heading!r} in {note!r}: {every}")
 
     # A few letters of the heading, wherever they fall in it.
     page.keyboard.type("pln", delay=60)
@@ -504,6 +553,49 @@ def drive_finger(browser: Browser) -> None:
     page.context.close()
 
 
+def drive_another_space(page: Page, names: list[str]) -> None:
+    """The space next door offers its own headings and none of this one's.
+
+    A space is read when it opens and the reading takes as long as the space is
+    big, so for the whole of that second the index is what `[[` is offered out of.
+    It used to be the *last* space's notes under this space's name, which is a list
+    that offers a note somebody cannot link to and a link that draws as resolved
+    when the space holds nothing of the sort. Empty is the honest answer until
+    there is one, and the panel already says the space is being read."""
+    seen = page.evaluate(ANOTHER_SPACE)
+    say(f"[another space] {json.dumps(seen)}")
+
+    at_once = seen["at_once"]
+    if not at_once["reading"]:
+        say("[another space] the space was read before this could look; nothing to say")
+        return
+
+    stale = [one for one in at_once["notes"] if name_of(one) in names]
+    if stale:
+        wrong(f"a space still being read offered the last space's notes: {stale}")
+
+    # And what was written while it was being read is in it once it has been.
+    if "Over here.md" not in seen["after"]:
+        wrong(f"a note written while the space was read is not in it: {seen['after']}")
+
+    open_note(page, seen["path"])
+    line(page)
+    page.keyboard.type("[[##", delay=40)
+    page.wait_for_timeout(700)
+    every = rows_holding(page, "Over here")
+    say(f"[[[## next door] {json.dumps(every)}")
+    shot(page, "15-another-space")
+
+    if not any(one.startswith("Over here") for one in every):
+        wrong(f"the new space's own heading is not offered: {every}")
+    for note, heading in headings_of(names):
+        if any(one.startswith(heading) and one.endswith(note) for one in every):
+            wrong(f"a heading of another space is offered here: {heading!r} in {note!r}")
+
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+
+
 def drive(browser: Browser) -> None:
     page, paths = fresh(browser)
     names = [name_of(one) for one in paths]
@@ -514,6 +606,7 @@ def drive(browser: Browser) -> None:
     drive_tags(page)
     drive_quiet(page)
     drive_front_matter(page, paths)
+    drive_another_space(page, names)
 
     page.context.close()
 
