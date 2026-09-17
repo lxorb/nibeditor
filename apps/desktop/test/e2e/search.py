@@ -11,7 +11,7 @@ timed, to say what a query costs against the hundred milliseconds a keystroke ha
 
 Build first, with the app's own handle on the page:
 
-    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode development
+    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode drive
 
 Then, from the repository root:
 

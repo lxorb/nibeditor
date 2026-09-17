@@ -17,7 +17,7 @@ It builds the app, applies the migrations, starts the Worker, runs the browsers
 and stops everything again. Nothing it makes outlives it but the screenshots,
 which go beside it under `shots/`.
 
-The app is built in development mode on purpose. That leaves the app's own stores
+The app is built `--mode drive` on purpose. That leaves the app's own stores
 reachable from the page, so the test opens a canvas by asking the workspace for it
 rather than by hunting for a row in a file list - which is a test of the sidebar,
 not of drawing together. Everything after that is real: real pen events into the
@@ -144,7 +144,7 @@ class Worker:
         # app's stores hidden. Both are set, so the built page keeps them.
         environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
         built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
             cwd=APP,
             env=environment,
             capture_output=True,

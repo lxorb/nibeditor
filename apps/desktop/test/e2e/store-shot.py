@@ -114,7 +114,7 @@ def build() -> None:
     say("building the web app")
     shutil.rmtree(APP / "dist", ignore_errors=True)
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,

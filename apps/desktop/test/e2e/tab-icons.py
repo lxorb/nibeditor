@@ -12,8 +12,8 @@ matter. The row in the file list wears the rocket and the tab wears the page wit
 writing on it, and the drive reads both out of the same window.
 
 Serves the built web app and drives it in the machine's own Chrome, and serves one
-picture of its own for a website's favicon to point at. The build has to be a
-development one or `window.nibApp` is not there.
+picture of its own for a website's favicon to point at. The build has to be one a
+drive may steer - `--mode drive` - or `window.nibApp` is not there.
 
 Run it from the repository root:
 
@@ -195,7 +195,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,

@@ -11,11 +11,11 @@ So this drive is the proof that nothing about the colouring changed. It photogra
 the three places HTML can appear in a note, twice over, and the two sets of PNGs are
 compared byte for byte:
 
-    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode development
+    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode drive
 
 and, from a tree without the change in it, the same again into a folder of its own:
 
-    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode development \
+    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode drive \
         --outDir dist-before
 
 Then, from the repository root, once for each build:

@@ -21,7 +21,7 @@ It builds the app, serves it, drives the browser and stops everything again.
 Nothing it makes outlives it but the screenshots, which go beside it under
 `shots/`.
 
-The app is built in development mode on purpose, which is what leaves the app's
+The app is built `--mode drive` on purpose, which is what leaves the app's
 own stores reachable from the page: the device class is settled from the window
 and there is no window on a desktop machine that is a tablet, so the test says
 so directly rather than pretending to be Android well enough to fool the whole
@@ -90,7 +90,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,

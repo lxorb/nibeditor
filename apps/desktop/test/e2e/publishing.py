@@ -149,11 +149,11 @@ class Worker:
 
     def build(self) -> None:
         say("building the web app against the local Worker")
-        # A development build keeps `window.nibApp`, which is how a drive opens a
-        # note without pointing at anything.
+        # A build made `--mode drive` keeps `window.nibApp`, which is how a drive
+        # opens a note without pointing at anything.
         environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
         built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
             cwd=APP,
             env=environment,
             capture_output=True,

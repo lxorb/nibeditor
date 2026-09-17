@@ -154,12 +154,12 @@ def free(drive: Path, patience: int) -> list[int]:
 
 
 def build() -> int:
-    """One build for the whole set, in development mode: a production build hides
-    the stores on `window.nibApp` that nearly every drive seeds its space through."""
+    """One build for the whole set, `--mode drive`: any other build hides the stores
+    on `window.nibApp` that nearly every drive seeds its space through."""
     print("building the web app once for the whole set", flush=True)
     started = time.monotonic()
     done = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,
