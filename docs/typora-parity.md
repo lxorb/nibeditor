@@ -323,6 +323,15 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       write the same spelling
 - [x] Text snippets
 - [x] Convert and reformat markdown
+- [x] The arrows get into a block that draws itself. A formula, a diagram, a
+      `[toc]` and the note's metadata stand on lines that are not drawn, so a
+      press aimed at one used to land past the whole block and a reader walking
+      the note could not reach their own formula. Now the press stops at the near
+      edge, which opens the block, and the press after it is an ordinary press in
+      ordinary text - one press, one block, whichever of the four arrows it was. A
+      table and a selected picture answer the arrow themselves, with a walk into
+      the cells and a step off the picture. See `stepping.ts` and
+      `test/e2e/caret-blocks.py`
 
 ## 13. Themes and appearance
 

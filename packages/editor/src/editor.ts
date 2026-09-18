@@ -38,6 +38,7 @@ import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
 import { richPaste } from './paste'
 import { nibSelection } from './selection/layer'
+import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
 import { documentOf, type SharedDoc, sharing } from './shared'
@@ -241,6 +242,12 @@ export function editorState(options: StateOptions): EditorState {
       // first, and over the library's own, whose Down at the last line goes
       // nowhere. Not in the settings, like the other arrow keys.
       keymap.of([{ key: 'ArrowDown', run: openTailDown }]),
+      // And up or down onto a block that draws itself stops at its edge, which
+      // opens it, rather than stepping over the whole thing: the lines it is
+      // written on are not drawn, so there is nowhere on them for the caret to
+      // land and the press would clear the block entirely. See stepping.ts. Below
+      // the tail, which is about the end of the note rather than about a block.
+      keymap.of(steppingKeymap),
       // What the library binds that nothing here has a name for, underneath
       // everything that does.
       keymap.of(unclaimedKeymap),
