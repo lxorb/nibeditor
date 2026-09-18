@@ -23,7 +23,7 @@ import { tick } from 'svelte'
 import { dropTarget, targetFor } from './drop-target.svelte'
 import { dur } from './motion'
 import { folderOf, nameOf } from './space-paths'
-import { placedBeside, groupNames, keptOrder, stepped } from './tree-arranging'
+import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { shownNames } from './tree-order'
 import { entryAt } from './tree-edits'
 import type { Entry } from './workspace.svelte'
@@ -191,8 +191,8 @@ function childrenIn(folder: string): readonly Entry[] {
   return entryAt(tree, folder)?.children ?? []
 }
 
-/** Whether these rows could be arranged beside that one: the same folder, the same
- *  group, and the order actually being the reader's to arrange. */
+/** Whether these rows could be arranged beside that one: the same folder, and the
+ *  order actually being the reader's to arrange. */
 function canArrange(moving: readonly string[], target: string): boolean {
   if (workspace.sortMode !== 'manual') return false
   if (!moving.length || moving.includes(target)) return false
@@ -235,11 +235,11 @@ export function holdArrange(moving: readonly string[], target: string): boolean 
 }
 
 /** One row a step up or down the order somebody arranged, with a key rather than a
- *  drag. True when there was a step to take; false at the top and the bottom of a
- *  group, and in every order but Manual.
+ *  drag. True when there was a step to take; false at the top and the bottom of the
+ *  folder, and in every order but Manual.
  *
- *  Within its own group, like the drag: a note cannot step above the last folder,
- *  because folders come first in every order the list has. */
+ *  The whole folder is one list, like the drag: a note steps over the folder above
+ *  it rather than stopping under it, because a hand-arranged folder has no groups. */
 export function moveInOrder(path: string, by: number): boolean {
   if (workspace.sortMode !== 'manual') return false
 
@@ -248,16 +248,12 @@ export function moveInOrder(path: string, by: number): boolean {
 
   const folder = folderOf(path)
   const children = childrenIn(folder)
-  const listed = workspace.arranged.savedList(folder)
-  const displayed = shownNames(children, 'manual', listed)
-  const group = groupNames(children, displayed, entry.is_dir)
+  const displayed = shownNames(children, 'manual', workspace.arranged.savedList(folder))
 
-  const moved = stepped(group, entry.name, by)
+  const moved = stepped(displayed, entry.name, by)
   if (!moved) return false
 
-  const other = groupNames(children, displayed, !entry.is_dir)
-  const whole = entry.is_dir ? [...moved, ...other] : [...other, ...moved]
-  workspace.arranged.set(folder, keptOrder(children, whole))
+  workspace.arranged.set(folder, trimmed(children, moved))
 
   return true
 }

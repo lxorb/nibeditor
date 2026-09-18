@@ -62,6 +62,8 @@ describe('the order a folder is drawn in', () => {
 
   test('puts the folders first, whatever the key', () => {
     for (const mode of SORT_MODES) {
+      // Manual as well, while nobody has moved a row: it falls back to where the
+      // other six leave the list, so choosing it changes nothing on the screen.
       const shown = names(ordered(tree, mode, []))
       expect(shown.slice(0, 2).sort(byName), mode).toEqual(['Alpha', 'Zed'])
     }
@@ -147,9 +149,14 @@ describe('the order somebody arranged', () => {
     expect(names(ordered(tree, 'manual', ['gone.md', 'c.md']))).toEqual(['c.md', 'a.md', 'b.md'])
   })
 
-  test('arranges the folders among the folders and the files among the files', () => {
+  test('lets a note sit above a folder, which no other order does', () => {
     const mixed = [folder('Two'), file('b.md'), folder('One'), file('a.md')]
-    expect(names(ordered(mixed, 'manual', ['b.md', 'Two']))).toEqual(['Two', 'One', 'b.md', 'a.md'])
+    expect(names(ordered(mixed, 'manual', ['b.md', 'Two']))).toEqual(['b.md', 'Two', 'One', 'a.md'])
+  })
+
+  test('but a name nobody arranged still falls where it was, which is folders first', () => {
+    const mixed = [folder('Two'), file('b.md'), folder('One'), file('a.md')]
+    expect(names(ordered(mixed, 'manual', ['a.md']))).toEqual(['a.md', 'One', 'Two', 'b.md'])
   })
 })
 

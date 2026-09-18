@@ -360,7 +360,27 @@ def desktop(playwright, profile: Path) -> list[str]:
         for folder, names in kept["arranged"].items():
             say(f"arranged {folder!r}: {names}")
 
-        return after
+        # And a folder dragged down among the notes, which is the one thing Manual
+        # allows and the other six do not. Emil: "for the manual ordering mode in
+        # explorer, it should not be enforced that directories display above files".
+        # The bottom edge of a row is the space under it; the middle would be a move
+        # into the note, which is a different gesture.
+        held, under = FOLDERS[-1], "Note 1.md"
+        tall = int(rowbox(page, under)["height"])
+        say(f"dragging the folder {held} below {under}")
+        row(page, held).drag_to(row(page, under), target_position={"x": 40, "y": tall - 2})
+        page.wait_for_timeout(500)
+
+        mixed = page.evaluate(TOP_NAMES)
+        say(f"after the folder moved: {' | '.join(mixed)}")
+        if mixed.index(held) != mixed.index(under) + 1:
+            wrong(f"the folder {held} did not land below {under}: {mixed}")
+        if mixed[: len(FOLDERS)] == after[: len(FOLDERS)]:
+            wrong(f"the folders were put back on top of the notes: {mixed}")
+
+        page.locator("aside").screenshot(path=str(SHOTS / "order-folder-moved.png"))
+
+        return mixed
     finally:
         context.close()
 

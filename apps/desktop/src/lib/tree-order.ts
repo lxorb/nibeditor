@@ -4,9 +4,10 @@
  *  Seven orders, one of them arranged by hand. Six are a key and a direction - a
  *  name, the last time a note was written in, the moment it was made, each either
  *  way round - and the seventh is a list of names somebody dragged into the order
- *  they wanted. Folders come first in all seven, because that is what every file
+ *  they wanted. Folders come first in the six, because that is what every file
  *  manager and Obsidian itself do and a reader looking for a folder looks at the
- *  top.
+ *  top; in the seventh the list is the answer and nothing comes first but what
+ *  somebody put there. See `ordered`.
  *
  *  It is decided here rather than where the tree is read, which used to be the
  *  case: the listing off the disk is sorted in the Rust crate and the browser
@@ -95,6 +96,26 @@ export function byName(one: string, other: string): number {
   return one < other ? -1 : one > other ? 1 : 0
 }
 
+/** What an order asks of a row when it is not asking for a time: the name, and
+ *  whether the row holds notes. */
+export interface Row {
+  readonly name: string
+  readonly is_dir: boolean
+}
+
+/** Where a row sits when nobody has said: folders first, then by name.
+ *
+ *  Which is the order every other mode reads, and so the one a hand-arranged folder
+ *  falls back to for the rows its list says nothing about. Choosing Manual therefore
+ *  changes nothing on the screen until somebody moves a row, and a note made this
+ *  afternoon in a folder arranged last week lands where the reader would look for
+ *  it rather than above the folders. */
+export function byDefault(one: Row, other: Row): number {
+  if (one.is_dir !== other.is_dir) return one.is_dir ? -1 : 1
+
+  return byName(one.name, other.name)
+}
+
 /** The time an order reads, and which way round, for the four that read one.
  *  Null for the two name orders and for `manual`, which is a list rather than a
  *  key. */
@@ -115,19 +136,20 @@ function placesIn(listed: readonly string[]): Map<string, number> {
 
 /** One group of a folder's children, in the order they are drawn.
  *
- *  The folders and the files are two groups and are ordered apart, which is what
- *  makes "folders first" true of every order rather than a rule the name order
- *  happens to obey. */
+ *  A group is what `ordered` hands it: the folders and the files apart for the six
+ *  read off a key, which is what makes "folders first" true of them rather than a
+ *  rule the name order happens to obey, and the whole folder at once for the one
+ *  somebody arranged. */
 function group(entries: readonly Entry[], mode: SortMode, listed: readonly string[]): Entry[] {
   const out = [...entries]
 
   if (mode === 'manual') {
     const at = placesIn(listed)
     // A name the list has not heard of - a note written since, or one nobody ever
-    // dragged - falls to the end of its group in name order, which is why a folder
-    // whose order is name order keeps no list at all; see `trimmed`.
+    // dragged - falls to the end in the order the list would have read in anyway,
+    // which is why a folder nobody arranged keeps no list at all; see `trimmed`.
     const place = (entry: Entry) => at.get(entry.name) ?? Infinity
-    out.sort((one, other) => place(one) - place(other) || byName(one.name, other.name))
+    out.sort((one, other) => place(one) - place(other) || byDefault(one, other))
     return out
   }
 
@@ -145,12 +167,24 @@ function group(entries: readonly Entry[], mode: SortMode, listed: readonly strin
   return out
 }
 
-/** One folder's children, in the order the list draws them. */
+/** One folder's children, in the order the list draws them.
+ *
+ *  Folders above files in every order but one. The exception is the order somebody
+ *  arranged by hand: there the list is the answer, and a rule that quietly lifted
+ *  every folder over it would be the app overruling the person who dragged the
+ *  rows. Emil: *"for the manual ordering mode in explorer, it should not be
+ *  enforced that directories display above files."*
+ *
+ *  So a hand-arranged folder is one group and the other six are two. Folders still
+ *  come first where nobody has said otherwise - that is `byDefault`, the order the
+ *  rows were already in - so choosing Manual moves nothing and only a drag does. */
 export function ordered(
   children: readonly Entry[],
   mode: SortMode,
   listed: readonly string[],
 ): Entry[] {
+  if (mode === 'manual') return group(children, mode, listed)
+
   const folders = children.filter((one) => one.is_dir)
   const files = children.filter((one) => !one.is_dir)
 

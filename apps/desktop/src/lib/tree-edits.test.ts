@@ -229,6 +229,8 @@ describe('the two halves together', () => {
       folder === '/N' ? ['c.md', 'b.md'] : [],
     )
 
-    expect(shape(drawn)).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/c.md', '/N/b.md', '/N/a.md'])
+    // The two arranged notes are above the folder, because that is where somebody
+    // put them; `a.md`, which the list says nothing about, falls in behind it.
+    expect(shape(drawn)).toEqual(['/N/c.md', '/N/b.md', '/N/Deep', '/N/Deep/inner.md', '/N/a.md'])
   })
 })

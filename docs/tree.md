@@ -27,7 +27,7 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
-| Alt and up, down | in Manual, moves the row one step within its own group: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
+| Alt and up, down | in Manual, moves the row one step up or down the folder, over a folder as readily as over a note: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
 | its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
@@ -178,10 +178,16 @@ sorting has always been, because one builder draws both.
 | Created, oldest first | |
 | Manual | the order somebody arranged by dragging the rows |
 
-Folders come first in all seven. That is what Obsidian, Finder and Explorer do, it
-is what a reader looking for a folder expects, and it means a row only ever moves
-within its own group: a note cannot be dragged above the last folder, and the gap
-does not open where it could not land.
+Folders come first in the six that are read off a key. That is what Obsidian,
+Finder and Explorer do, and it is what a reader looking for a folder expects.
+
+Not in Manual. Emil: *"for the manual ordering mode in explorer, it should not be
+enforced that directories display above files."* An order somebody arranged by hand
+is theirs, and lifting every folder back over it would be the app overruling the
+drag - so a hand-arranged folder is one list: a note can be dropped between two
+folders, or stepped above one with the keyboard, and it stays where it was put. A
+folder arranged by an older build wrote its folders first, which is a list this one
+reads back unchanged, so nothing anybody already arranged moves.
 
 The names are spelled out rather than built from a key and a direction. A row
 reading "Sort by modified" with an arrow beside it leaves the reader to work out
@@ -232,11 +238,11 @@ file into somebody's vault that every other tool walking it can see, which the s
 does not do.
 
 The list only runs as far as somebody actually arranged. A name the list does not
-hold falls to the end of its group in name order, so pulling three notes to the top
+hold falls to the end in name order, so pulling three notes to the top
 of a folder of four hundred writes three names, and a folder that reads in name
 order keeps no entry at all. Which is also why Manual starts out identical to Name,
 A to Z instead of freezing today's listing into the space; see `trimmed` in
-`tree-order.ts`.
+`tree-arranging.ts`.
 
 The saving is at the front, and only at the front: the list is read from the
 beginning, so saying that one row sits second from the bottom means naming every row

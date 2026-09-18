@@ -19,11 +19,12 @@
  *
  *  Names rather than paths, because a name is what the list draws and what a
  *  folder's children are told apart by; and only as far as somebody actually
- *  arranged, because a name the list does not hold falls to the end of its group in
- *  name order. Somebody who pulls three notes to the top of a folder of four
- *  hundred has arranged three names, and three names is all that is written, synced
- *  and rewritten when one of the four hundred is renamed. A folder that reads in
- *  name order keeps nothing at all; see `trimmed` in tree-order.ts.
+ *  arranged, because a name the list does not hold falls to the end in the order the
+ *  folder would have read in anyway. Somebody who pulls three notes to the top of a
+ *  folder of four hundred has arranged three names, and three names is all that is
+ *  written, synced and rewritten when one of the four hundred is renamed. A folder
+ *  nobody has moved a row in keeps nothing at all; see `trimmed` in
+ *  tree-arranging.ts.
  *
  *  Which order a space is read in is not here: that is a view rather than a fact
  *  about the notes, so it stays on the machine, in workspace/device.svelte.ts,
