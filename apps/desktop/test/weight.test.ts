@@ -310,6 +310,14 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
+ *  Raised 2026-09-18 from 3,237,000 for open-link.ts, which is where a pressed link
+ *  goes now that nib has pages of its own to put one in. 5,800 bytes of it, and it
+ *  cannot be lazy: the pane hands the editor its link opener as the editor is built,
+ *  and a module fetched on the first press would be a press that did nothing for a
+ *  frame. Nor is it a subsystem arriving early - it is one pure decision and four
+ *  lines of act, and the two stores it reaches for are both in this graph already.
+ *  Measured 3,239,422; this is that plus one percent.
+ *
  *  Raised again 2026-09-17, to 3,237,000, and this one is a debt rather than a
  *  cost. Fixing the glance card - so it draws a note's pictures at the space's own
  *  address and shows its metadata as rows instead of opening on raw YAML - made
@@ -330,7 +338,7 @@ function holds(tail: string): boolean {
  *  copy reporting its own words as that file's, and whichever saved last won - one
  *  person's writing under another note's name, on disk and on the account. Measured
  *  3,160,756; this is that plus one percent. */
-const BUDGET = 3_237_000
+const BUDGET = 3_271_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
