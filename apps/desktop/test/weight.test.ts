@@ -310,6 +310,17 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
+ *  Raised 2026-09-18 for open-link.ts, which is where a pressed link goes now that
+ *  nib has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
+ *  the pane hands the editor its link opener as the editor is built, and a module
+ *  fetched on the first press would be a press that did nothing for a frame. Nor is
+ *  it a subsystem arriving early - it is one pure decision and four lines of act, and
+ *  the two stores it reaches for are both in this graph already.
+ *
+ *  Not a raise: measured 3,259,980 with the chord below in the graph beside it, which
+ *  the ceiling that day was already raised past. So the figure stands where it is,
+ *  and the next thing to arrive has that much less room.
+ *
  *  Raised a third time 2026-09-17, to 3,277,000, for the Ctrl+T chord. The chord
  *  itself is not in here - new-kind-chord.ts is fetched at the launch's last turn
  *  with the other doors, which is why 279 lines cost nothing at the first paint.

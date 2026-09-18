@@ -48,7 +48,7 @@
     toSlide,
     typedSlide,
   } from './slides/stage'
-  import { openExternal } from './tauri'
+  import { followHref, MIDDLE, opensLink } from './open-link'
   import { theme } from './theme.svelte'
   import { views } from './views.svelte'
   import type { Tab } from './workspace.svelte'
@@ -357,9 +357,24 @@
 
   /** Half the screen forwards, half back, which is how every deck anybody has
    *  used behaves. A link is a link, though: it is followed rather than counted
-   *  as a press. */
+   *  as a press.
+   *
+   *  The middle button turns no page. It is a browser's "open that and leave me
+   *  here", and on a deck it is the only press that can mean nothing but the link
+   *  under it - which is what makes it safe here, where every other press is a page
+   *  turn. */
   function onClick(event: MouseEvent) {
     const target = event.target as Element | null
+    if (!opensLink(event)) return
+
+    if (event.button === MIDDLE) {
+      const address = target?.closest('a')?.getAttribute('href')
+      if (!address) return
+
+      event.preventDefault()
+      followHref(address, event)
+      return
+    }
 
     // The notes are read, not pressed: a tap in them is not a tap on the deck.
     if (target?.closest('.notes')) return
@@ -378,7 +393,7 @@
     const href = target?.closest('a')?.getAttribute('href')
     if (href && /^[a-z][a-z\d+.-]*:/i.test(href)) {
       event.preventDefault()
-      void openExternal(href)
+      followHref(href, event)
       return
     }
 
@@ -522,6 +537,7 @@
   style={stageStyle}
   bind:this={deck}
   onclick={onClick}
+  onauxclick={onClick}
   ontouchstart={onTouchStart}
   ontouchend={onTouchEnd}
 >

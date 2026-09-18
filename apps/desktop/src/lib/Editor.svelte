@@ -27,6 +27,7 @@
     EditorView,
     type FindAsk,
     HeldState,
+    type LinkPress,
     modeEffects,
     type NoteIndex,
     type NoteJump,
@@ -71,7 +72,7 @@
     kept: Tab[]
     onimage?: (file: File, tab: Tab) => Promise<string | null>
     resolveimage?: (src: string, tab: Tab) => string
-    openlink?: (href: string) => void
+    openlink?: (href: string, press: LinkPress) => void
     onselection?: (view: EditorView) => void
     /** The space around a note, so `[[links]]` can be drawn and completed. */
     notes?: (tab: Tab) => NoteIndex

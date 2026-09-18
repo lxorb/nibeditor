@@ -78,6 +78,7 @@ import { orderedTree, type SortMode } from './tree-order'
 import { Arranged } from './workspace/arranged.svelte'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
+import { plainOrigin } from './web-tab/address'
 import { asShortcut, convertWebsites } from './web-tab/convert'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
@@ -1336,6 +1337,55 @@ class Workspace {
     this.add(tab)
     this.dropScaffolding(tab)
     this.showNote()
+    this.persist()
+  }
+
+  /** A page somebody pressed a link to, as a tab in this window.
+   *
+   *  The address is already known, which is what makes this the other half of
+   *  `openWebsite`: there is nothing to type, so the tab arrives on the page. Whether
+   *  it arrives in front of the reader or only in the strip is the browser's own rule
+   *  about which modifier was held, decided in open-link.ts and not here.
+   *
+   *  Nothing is written down. A tab with no file is a browser tab until Ctrl+S makes a
+   *  shortcut of it, which is exactly what a link followed and closed again deserves:
+   *  a folder full of `.url` files nobody asked for is what writing here would leave
+   *  behind. See `keepWeb`.
+   *
+   *  `pane` is for a page asking for one of its own - `target="_blank"` - so the tab
+   *  it asks for lands beside it rather than wherever the interface last had focus. */
+  openPage(url: string, behind = false, pane?: string) {
+    if (viewport.device === 'phone') return
+
+    // A phone and a tablet hold one document, so there is no behind for a tab to be
+    // in: one put there would be one the reader has no strip to find it in. See
+    // `onlyOne`.
+    const back = behind && !viewport.touch
+
+    const file = this.document({
+      kind: 'web',
+      path: null,
+      name: plainOrigin(url),
+      text: '',
+      dirty: false,
+    })
+    const tab = new Tab(file, pane ?? this.panes.focusedId)
+    tab.address = url
+
+    // The site, so the strip and the bar read as the page before the page has
+    // answered - the same three lines `openSite` writes for a website with a file.
+    const page = pages.of(tab.id)
+    page.url = url
+    page.title = plainOrigin(url)
+
+    this.add(tab, !back)
+    if (!back) {
+      this.showNote()
+      // Only for a tab in front: a page arriving behind the reader is not a reason to
+      // close the blank note they are looking at.
+      this.dropScaffolding(tab)
+    }
+
     this.persist()
   }
 

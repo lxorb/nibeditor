@@ -25,7 +25,7 @@
   import { trustsHtmlIn } from './sharing.svelte'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
-  import { openExternal } from './tauri'
+  import { followHref, MIDDLE, opensLink } from './open-link'
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
@@ -285,8 +285,24 @@
   })
 
   /** A link, as the reading view has to read it: a place on this page, a note in
-   *  this space, or the web. */
+   *  this space, or the web.
+   *
+   *  Two buttons reach here. The main one is the page's own click. The middle one
+   *  arrives as `auxclick` and means one thing only - open that page and leave me
+   *  here - so it is answered on the link and nowhere else: a card, a query row and
+   *  a heading of this note are all the main button's, and a middle press that lands
+   *  on none of them does nothing at all. */
   function follow(event: MouseEvent) {
+    if (!opensLink(event)) return
+    if (event.button === MIDDLE) {
+      const address = (event.target as Element | null)?.closest('a')?.getAttribute('href')
+      if (!address) return
+
+      event.preventDefault()
+      followHref(address, event)
+      return
+    }
+
     // A card standing in for a page somewhere else shows that page here, in the
     // frame and the sandbox the provider needs, rather than sending the reader
     // out of the app. The card is a link so that a published page - which runs no
@@ -313,7 +329,7 @@
     event.preventDefault()
 
     if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) {
-      void openExternal(href)
+      followHref(href, event)
       return
     }
 
@@ -543,6 +559,7 @@
     bind:this={scroller}
     onscroll={moved}
     onclick={follow}
+    onauxclick={follow}
     oncontextmenu={showMenu}
   >
     <!-- A piece of writing, and an `article` says so: everything under here is the

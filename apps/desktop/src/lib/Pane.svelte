@@ -59,7 +59,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
   import Tabs from './Tabs.svelte'
-  import { openExternal } from './tauri'
+  import { followHref } from './open-link'
   import { usage } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
@@ -550,7 +550,7 @@
               kept={strip}
               onimage={saveImage}
               resolveimage={resolveImage}
-              openlink={(href: string) => void openExternal(href)}
+              openlink={followHref}
               notes={(which: Tab) => links.index(which.path)}
               opennote={(jump: NoteJump) => void workspace.followLink(jump)}
               nameblock={(path: string, line: number) => nameBlock(path, line)}
@@ -583,7 +583,7 @@
         kept={strip}
         onimage={saveImage}
         resolveimage={resolveImage}
-        openlink={(href: string) => void openExternal(href)}
+        openlink={followHref}
         notes={(one: Tab) => links.index(one.path)}
         opennote={(jump: NoteJump) => void workspace.followLink(jump)}
         nameblock={(path: string, line: number) => nameBlock(path, line)}

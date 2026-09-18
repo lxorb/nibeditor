@@ -77,9 +77,14 @@
 
     if (!callout) {
       above = false
+      // Kept inside the window on both edges. The lower clamp is the one that
+      // matters: a menu longer than the screen used to be placed by its bottom and
+      // lose its first rows off the top, with nothing to scroll them back. It is
+      // capped at the window's height in the styles below, so this is now only
+      // where it starts.
       position = {
-        x: Math.min(menu.x, window.innerWidth - width - 8),
-        y: Math.min(menu.y, window.innerHeight - height - 8),
+        x: Math.max(8, Math.min(menu.x, window.innerWidth - width - 8)),
+        y: Math.max(8, Math.min(menu.y, window.innerHeight - height - 8)),
       }
       return
     }
@@ -279,6 +284,20 @@
     min-width: 11rem;
     padding: var(--space-1);
     transform-origin: top left;
+    /* Never taller than the window. The editor's own menu is longer than a laptop
+       screen, and a menu placed by its bottom edge then hung its first rows above
+       the top of the window where nothing could reach them - Cut and Copy among
+       them, and the row that says where a link goes. Now the rows scroll instead,
+       and the scroll stops at their end rather than reaching the note behind. */
+    max-height: calc(100dvh - 16px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .menu:not(.sheet) > .rows {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   /* The rows are `.nib-row`, the same row every list in the app is made of; a
