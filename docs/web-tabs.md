@@ -318,6 +318,18 @@ no list in the web tab to keep in step with the app. The document is still asked
 well, at nine points rather than one, for the few things over the page that Escape
 does not close.
 
+**Nine points is too many for the corners, and it is open.** Any element that is not the
+hole counts, wherever it is - so the update notice, which sits in the bottom corner of
+the window and over the pane, keeps every page in the window out of sight for as long as
+it is up: the reader is looking at the still picture of a page and their presses go to
+the hole, not to the site. Measured on 2026-09-18 by asking the pane's own hit test what
+it found: `['hole' x 8, 'DIV.notice']`. Full screen is the same shape - `App.svelte` puts
+an overlay on the stack for the whole time it is on, so F11 on a web tab hides the page
+it is meant to fill the screen with. Both follow from the rule rather than from a slip in
+it: nothing of nib's can be drawn over a native webview, so the app's own furniture must
+not be placed over a page's rectangle in the first place. That is where the fix is, and
+it is a design decision about where a notice lives rather than a change to this test.
+
 **What is over the hole decides how the page is placed, and never whether there is
 one.** That distinction is worth a paragraph of its own, because losing it cost the
 whole feature. Asking for the page used to hang off the same measurement: a pane that
@@ -635,7 +647,60 @@ exists for `WKWebView` as for `WebView2`.
    carries the window's label, and a web tab's `web-...` is not among them.
 2. A remote origin matches no capability here, which Tauri refuses on its own.
 3. The globals that reach the crate are deleted before the page's first script
-   runs.
+   runs - **or rather, they are meant to be, and they are not. See below.**
+
+### What a page is given that a browser would not give it
+
+**This is open, it breaks Google Docs, Sheets and Slides, and it is the one thing on
+this page that is a lie about what ships.** Measured on 2026-09-18 by
+`scripts/web-globals-probe.py`, which is a page in a real web tab asking what it was
+handed:
+
+| | in a web tab | in Edge |
+| --- | --- | --- |
+| a classic script may declare `let ipc` at the top level | **no** | yes |
+| what is on `window` of the app's | **`ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__`** | nothing |
+
+A web tab is a Tauri webview, and a Tauri webview carries the app's own machinery into
+whatever page it shows. wry writes one of those globals for its message channel, before
+any script this crate supplies:
+
+```js
+Object.defineProperty(window, 'ipc', { value: Object.freeze({ postMessage: ... }) })
+```
+
+`Object.defineProperty` leaves `configurable` out, so it defaults to false - and **a
+classic script may not declare `let ipc`, `const ipc` or `class ipc` at the top level
+while the global object carries a non-configurable `ipc`.** The whole script is a
+`SyntaxError` before its first line runs. `ipc` is three letters and an ordinary name
+for a bundle to use, and Google's editors bundle uses it, so a sheet in a web tab
+rendered for a moment and was then replaced by Google's own *"Loading issue -
+Troubleshoot this issue by clearing application resources"* page. Its console said so
+outright: `Uncaught SyntaxError: Identifier 'ipc' has already been declared` at
+`m=core:1`, and then `RITZ_initializeModules is not defined`, `waffle_api is not
+defined`, `DOCS_initialLoadTiming is not defined`. **Nothing was wrong with the
+storage.** `navigator.storage.estimate()`, `navigator.cookieEnabled`, a cookie written
+and read back, `localStorage`, `sessionStorage`, IndexedDB written and read back, the
+Cache API, Web Locks, `getRegistrations()`, workers and the user agent all answer in a
+web tab exactly as they answer in Edge on this machine, and the browsing profile on
+disk has a `https_docs.google.com_0.indexeddb.leveldb` in it.
+
+`GUARD` cannot undo any of it. It is one of the injected scripts and it runs **in the
+middle** of them - after wry's and before Tauri's own - so the globals it deletes are
+not there yet and all of them are there by the time the site's first script runs. And
+`ipc` could not be deleted from anywhere: `delete window.ipc` answers false and
+`Object.defineProperty` throws `Cannot redefine property: ipc`, because a page may not
+redefine a non-configurable property of its own global object.
+
+So it cannot be answered from inside the page, and it has to be answered where the
+scripts are registered. The engine will take them back - `RemoveScriptToExecuteOnDocument
+Created` removed wry's and `window.ipc` was gone, measured - but an identifier is what it
+takes, `WebView2` hands those out as a counter this crate never sees, and the removal has
+to happen before the first document is created, which means a tab's webview being built
+on `about:blank` and navigated afterwards. That is a change to `web_open`'s shape and it
+belongs to a change of its own. The honest upstream fix is one word: wry writing
+`configurable: true` in that descriptor, which would let `GUARD` delete it and let a page
+declare its own `ipc` either way.
 
 ### What a site may do
 
@@ -782,6 +847,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
 | `scripts/web-open-probe.py` | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1` |
 | `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page |
+| `scripts/web-globals-probe.py` | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it" |
 | `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
 | `apps/desktop/test/effects/web-tab.effect.test.ts` | the pane, mounted, which is where a website used to take the window down with it |
@@ -794,6 +860,11 @@ versions and goes to the trash like every other document.
   in-page find bar of its own, which is not the one a note has; Copy and Paste are
   the page's own context menu already; and More tools' developer tools are reached by
   Inspect in that same menu. Each is a row the day the thing behind it exists.
+- **A page still gets `ipc` and the app's other globals, and Google's editors will not
+  load because of it.** The whole of it is in "What a page is given that a browser would
+  not give it" above, with the measurement and what the fix costs. It is the largest
+  thing open here: it is not one site, it is any site whose bundle happens to declare a
+  top level `ipc`, and nothing in the page can tell the reader why.
 - **A page's still picture is Windows only.** `CapturePreview` is WebView2's own;
   `WKWebView`'s `takeSnapshot` and WebKitGTK's equivalent are not reachable through
   what wry hands out, so an overlay over a page on a Mac still blinks the pane.
