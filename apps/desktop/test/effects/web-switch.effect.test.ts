@@ -18,12 +18,17 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 /** Every call the pane made to the crate, in order. */
 const asked: { command: string; args: Record<string, unknown> }[] = []
 
+/** A build held open, for the tests about a pane that goes away in the middle of one.
+ *  Null while `web_open` is to answer at once, which is every other test. */
+let holding: Promise<void> | null = null
+
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, args })
+    if (command === 'web_open' && holding) return holding
     return Promise.resolve(undefined)
   },
 }))
@@ -109,6 +114,7 @@ let target: HTMLElement
 beforeEach(() => {
   asked.length = 0
   over = null
+  holding = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -205,6 +211,78 @@ test('the page is hidden while anything of the app is over it, and comes back wh
   expect(shown?.args.visible).toBe(true)
 
   void unmount(app)
+})
+
+/** Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else.
+ *  For example when I switched to a note, there was still the browser open."*
+ *
+ *  A native webview is an operating system surface over the window and obeys nothing
+ *  about the app's stacking, so a page that is not put away covers the note, the tab
+ *  strip and every menu: the app is unreachable and nothing on screen says why. The
+ *  pane going away has to say so, and this is the assertion that it does. */
+test('a pane that goes away puts its page out of sight', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/away'
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).live).toBe(true)
+  expect(pages.of(tab.id).shown).toBe(true)
+
+  asked.length = 0
+  void unmount(app)
+  flushSync()
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+  expect(pages.of(tab.id).shown).toBe(false)
+})
+
+/** The same, for a pane that goes away while its page is still being built.
+ *
+ *  A page takes a hundred and forty milliseconds to arrive and a tab switch takes one
+ *  press, so this is not a rare order: the build answers into a window that has already
+ *  moved on, and what it must not do is show the page it was asked for. */
+test('a page that arrives after its pane has gone is never shown', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/late'
+
+  // The build held open, so the pane can go away in the middle of one - which is what
+  // switching tabs a moment after opening a website is.
+  let land: () => void = () => undefined
+  holding = new Promise<void>((go) => {
+    land = go
+  })
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(asked.map((one) => one.command)).toContain('web_open')
+
+  asked.length = 0
+  void unmount(app)
+  flushSync()
+  await frames()
+
+  land()
+  holding = null
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+  expect(pages.of(tab.id).shown).toBe(false)
 })
 
 /** A web tab opened from anywhere but a row in the file list.
