@@ -41,7 +41,6 @@ use tauri::{
     AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Rect, Url, Webview, WebviewBuilder,
     WebviewUrl,
 };
-use tauri_plugin_opener::OpenerExt;
 
 /// What a web tab's webview is labelled: this in front of the tab's own id, so a
 /// label says which tab it belongs to and nothing else in the window can be
@@ -62,6 +61,11 @@ const MOVED: &str = "nib://web-tab";
 /// the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
 #[cfg_attr(not(windows), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
+
+/// The event the window hears when a page asks for a window of its own, carrying
+/// the tab that asked and the address it wants. The window answers it with a tab,
+/// which is what a browser answers `target="_blank"` with; see `on_new_window`.
+const OPENED: &str = "nib://web-open";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
 /// is worse than a clip that stops early, and 4 MB is what the API takes; see
@@ -441,6 +445,14 @@ struct Moved {
     loading: bool,
 }
 
+/// What the window is told when a page asks for a window of its own: which tab
+/// asked, so the tab it gets lands in the same pane, and where it wants to go.
+#[derive(Clone, Serialize)]
+struct Opening {
+    tab: String,
+    url: String,
+}
+
 /// Where a page was left, and where it is put back.
 #[derive(Clone, Copy, Deserialize, Serialize)]
 pub struct Place {
@@ -538,13 +550,13 @@ fn allowed(url: &Url) -> bool {
     )
 }
 
-/// What the system is asked to open for a window the page asked for, or `None`
-/// for a window it does not get.
+/// The address the window opens as a tab of its own for a window the page asked
+/// for, or `None` for a window it does not get.
 ///
 /// The same rule the tab itself is held to, because the request is the page's
-/// either way: `window.open` is a scheme of the page's choosing, and the system
-/// opens whatever is registered for one. So `nib://` would be a site driving this
-/// app through its own links, `smb://` would be a site asking this machine to
+/// either way: `window.open` is a scheme of the page's choosing, and whatever is
+/// registered for one is another application. So `nib://` would be a site driving
+/// this app through its own links, `smb://` would be a site asking this machine to
 /// authenticate somewhere, and a scheme another program registered is a site
 /// starting that program - none of which the tab may do by navigating, and none
 /// of which it may do by asking for a window either. A page is handed over and
@@ -809,16 +821,28 @@ pub async fn web_open(
     let builder = crate::engine::web_store(builder, &app)?;
 
     let opening = app.clone();
+    let asking = tab.clone();
+    let holder = webview.window().label().to_string();
     // What the page asked for, unnamed: the type is the runtime's, and on nib's
     // own Chromium it carries two type parameters where the system's engine's
     // carries none. The closure infers it either way; naming it would compile on
     // one engine only. See src/engine.rs and docs/browser.md.
     let builder = builder.on_new_window(move |url: Url, _features| {
-        // A window the page asks for leaves the app the way every other link
-        // does: the system browser. A second webview over the pane would be a
-        // window with no way to close it.
+        // A window the page asks for - `target="_blank"`, `window.open` - becomes a
+        // tab in this window, which is what a browser answers it with and the whole
+        // of nib being one. It used to leave for the system browser, which made a
+        // browser that sent you to another browser on the commonest link on the web.
+        //
+        // The engine still gets no second webview of its own: one over the pane would
+        // be a window with no frame and no way to close it. The address is handed to
+        // the interface instead, and the interface opens a tab beside the one that
+        // asked; see `openPage` in workspace.svelte.ts.
         if let Some(address) = handed_over(&url) {
-            let _ = opening.opener().open_url(address, None::<&str>);
+            let payload = Opening {
+                tab: asking.clone(),
+                url: address,
+            };
+            let _ = opening.emit_to(&holder, OPENED, payload);
         }
         NewWindowResponse::Deny
     });

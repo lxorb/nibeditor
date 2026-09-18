@@ -140,6 +140,25 @@ function readMoved(value: unknown): Moved | null {
   }
 }
 
+/** What the crate says when a page asks for a window of its own: which tab asked,
+ *  and where it wants to go. Read rather than trusted, like everything else that
+ *  crosses that line - and this one carries an address a site chose, so the rule
+ *  about which addresses a tab may hold is asked again on the side that would open
+ *  one. */
+interface Opening {
+  tab: string
+  url: string
+}
+
+function readOpening(value: unknown): Opening | null {
+  if (typeof value !== 'object' || value === null) return null
+
+  const said = value as Record<string, unknown>
+  if (typeof said.tab !== 'string' || typeof said.url !== 'string') return null
+
+  return isWebAddress(said.url) ? { tab: said.tab, url: said.url } : null
+}
+
 /** One web tab's page. */
 export class Page {
   /** Where the page is. The tab's own address until the page says otherwise, so a
@@ -703,8 +722,15 @@ class Pages {
     }
   }
 
-  /** Two listeners for the window, started by the first web tab that needs them: where
-   *  every page in the window has got to, and what every site in it has asked for. */
+  /** The tab a page asked for, opened in the pane the page that asked is in. */
+  private async openAsked(said: Opening): Promise<void> {
+    const { workspace } = await import('../workspace.svelte')
+    workspace.openPage(said.url, false, workspace.tabs.find((one) => one.id === said.tab)?.paneId)
+  }
+
+  /** Three listeners for the window, started by the first web tab that needs them:
+   *  where every page in the window has got to, what every site in it has asked for,
+   *  and which of them has asked for a window of its own. */
   private async listen(): Promise<void> {
     // A window to listen on, because that is what the runtime's own `listen` needs and
     // this is now started with the first page in the window rather than with the first
@@ -723,6 +749,19 @@ class Pages {
     await listen('nib://web-ask', (event) => {
       const said = readAsked(event.payload)
       if (said && this.held.has(said.tab)) grants.heard(said)
+    })
+
+    // A page has asked for a window of its own - `target="_blank"`, or `window.open`.
+    // Every browser answers that with a tab, so this one does: in front, because a
+    // browser takes you to the tab a link asked for, and in the pane the page that
+    // asked is in. The crate refuses the engine its second webview and hands the
+    // address over; see `on_new_window` in web_tabs.rs.
+    //
+    // Opened through an import rather than a name at the top, because the workspace
+    // is what holds this store: asking for it by name here would be a circle.
+    await listen('nib://web-open', (event) => {
+      const said = readOpening(event.payload)
+      if (said && this.held.has(said.tab)) void this.openAsked(said)
     })
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
