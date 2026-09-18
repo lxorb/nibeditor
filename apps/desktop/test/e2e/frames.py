@@ -11,7 +11,8 @@ testing a policy the app does not ship.
 2. A block of the note's own HTML with a script in it is a card that runs the
    block in a frame of its own when pressed - never in the app - and says how much
    room it needs once it is running. That last part is the proof that the script
-   ran at all: the block sets its own height, and the card takes it.
+   ran at all: the block sets its own height, and the card takes it. In the editor
+   as well as in the reading view, since `80f4bb62`.
 3. Nothing the app already did stops working under the policy. A ` ```js ` fence
    still runs, which is the sharpest test of it there is - the runner is a
    sandboxed `srcdoc` document, and such a document inherits the policy of the
@@ -146,7 +147,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,
@@ -299,6 +300,8 @@ def drive(browser: Browser) -> None:
         wrong(f"the editor drew {counts['cards']} cards, not 3 (a page, a block and a video)")
     if counts["pages"] != 1:
         wrong(f"the editor drew {counts['pages']} cards for the tag, not 1")
+    if counts["blocks"] != 1:
+        wrong(f"the editor drew {counts['blocks']} cards for the block, not 1")
     if counts["frames"] != 0:
         wrong(f"the editor loaded {counts['frames']} frames before anybody asked")
     if counts["tags"]:

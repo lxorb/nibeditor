@@ -79,7 +79,7 @@ def build() -> None:
     say("building the web app")
     # A production build hides the app's stores, and the test drives them.
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,

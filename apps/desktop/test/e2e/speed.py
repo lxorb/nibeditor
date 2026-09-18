@@ -50,11 +50,11 @@ Two builds, each with the app's own handle on the page - a production build hide
 the stores this reads. From the repository root:
 
     cd apps/desktop
-    NODE_ENV=development pnpm exec vite build --mode development
+    NODE_ENV=development pnpm exec vite build --mode drive
 
 and, from a tree without the change in it, the same again into a folder of its own:
 
-    NODE_ENV=development pnpm exec vite build --mode development --outDir dist-before
+    NODE_ENV=development pnpm exec vite build --mode drive --outDir dist-before
 
 Then, from the repository root:
 
@@ -71,7 +71,7 @@ When a number here is bad, the next question is which function. The long animati
 frames this prints already name the file and the handler; for the function, build a
 third time with the names left in and take a sampling profile of the one thing:
 
-    NODE_ENV=development pnpm exec vite build --mode development \
+    NODE_ENV=development pnpm exec vite build --mode drive \
         --outDir dist-profile --minify false
 
 then drive that folder with Chrome's own profiler through `CDPSession`

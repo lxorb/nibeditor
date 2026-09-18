@@ -25,7 +25,7 @@ there rather than copied.
 
 Build the web app with the app's own handle on the page, from apps/desktop:
 
-    NODE_ENV=development pnpm exec vite build --mode development
+    NODE_ENV=development pnpm exec vite build --mode drive
 
 then, from the repository root:
 

@@ -11,8 +11,9 @@ And then the space next door, which is the other half of "every heading in the
 space": a second space, opened, offers its own and none of the first one's, from
 the moment it is opened rather than from the moment it has been read.
 
-Serves the built web app and drives it in the machine's own Chrome. The build is
-`--mode drive`, which is what keeps `window.nib` and `window.nibApp` in it.
+Serves the built web app and drives it in the machine's own Chrome. The build has
+to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
+are not there.
 
 Run it from the repository root:
 

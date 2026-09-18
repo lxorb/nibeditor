@@ -24,7 +24,7 @@ Build both, with the app's own handle on the page - a production build hides the
 stores this reads. From the repository root, with the change in place:
 
     cd apps/desktop
-    NODE_ENV=development pnpm exec vite build --mode development
+    NODE_ENV=development pnpm exec vite build --mode drive
 
 and then the same again from the commit before it, into a folder of its own. A
 worktree rather than a stash: the stash stack belongs to the whole repository, so a
@@ -32,7 +32,7 @@ worktree rather than a stash: the stash stack belongs to the whole repository, s
 sets of changes swap owners with nothing said. `git worktree add <path> <sha>` gives
 the other build a checkout of its own and costs nothing but disk.
 
-    NODE_ENV=development pnpm exec vite build --mode development --outDir dist-before
+    NODE_ENV=development pnpm exec vite build --mode drive --outDir dist-before
 
 Then, from the repository root:
 

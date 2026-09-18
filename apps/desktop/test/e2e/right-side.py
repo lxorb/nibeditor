@@ -15,7 +15,7 @@ changed for anybody who never moves a panel" is a number rather than a promise.
 
 Build first, with the app's own handle on the page:
 
-    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode development
+    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode drive
 
 Then, from the repository root:
 

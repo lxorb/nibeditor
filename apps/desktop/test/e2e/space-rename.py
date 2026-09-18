@@ -147,7 +147,7 @@ class Worker:
         # app's stores hidden. Both are set, so the built page keeps them.
         environment = {**os.environ, "VITE_NIB_API": ORIGIN, "NODE_ENV": "development"}
         built = subprocess.run(
-            [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+            [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
             cwd=APP,
             env=environment,
             capture_output=True,

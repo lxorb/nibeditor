@@ -16,7 +16,8 @@ copy still works; what this drive measures is the copy that is always there. See
 contrast.css in @nib/themes.
 
 Serves the built web app and drives it in the machine's own Chrome. The build has
-to be a development one or `window.nib` and `window.nibApp` are not there.
+to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
+are not there.
 
 Run it from the repository root:
 
@@ -181,7 +182,7 @@ def build() -> None:
     shutil.rmtree(DIST, ignore_errors=True)
     environment = {**os.environ, "NODE_ENV": "development"}
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env=environment,
         capture_output=True,

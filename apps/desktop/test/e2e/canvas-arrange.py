@@ -25,7 +25,7 @@ Run it from the repository root:
 It builds the app, serves it, drives the browser and stops everything again. Nothing it
 makes outlives it but the screenshots, which go beside it under `shots/`.
 
-The app is built in development mode on purpose, which is what leaves the app's own
+The app is built `--mode drive` on purpose, which is what leaves the app's own
 stores reachable from the page: the device class is settled from the window and no
 window on a desktop machine is a tablet, so the drive says so directly rather than
 pretending to be Android well enough to fool the whole Tauri bridge. Everything the
@@ -75,7 +75,7 @@ def build() -> None:
     # that photographs yesterday's canvas is worse than no drive at all.
     shutil.rmtree(DIST, ignore_errors=True)
     built = subprocess.run(
-        [shutil.which("npx") or "npx", "vite", "build", "--mode", "development"],
+        [shutil.which("npx") or "npx", "vite", "build", "--mode", "drive"],
         cwd=APP,
         env={**os.environ, "NODE_ENV": "development"},
         capture_output=True,
