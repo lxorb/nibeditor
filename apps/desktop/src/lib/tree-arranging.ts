@@ -37,7 +37,13 @@ function sortedFrom(rows: readonly Row[], at: number): boolean {
  *
  *  One list, folders and notes together, because that is how a hand-arranged folder
  *  reads; see `ordered`. A name no longer in the folder is read as a note, which
- *  only decides how much of a stale list is worth keeping. */
+ *  only decides how much of a stale list is worth keeping.
+ *
+ *  An older build wrote the folders and then the notes, each trimmed on its own,
+ *  and this reads that back as it stands. The one folder that reads differently is
+ *  one that had both a note arranged and a subfolder nobody had touched: the
+ *  subfolder used to be lifted over the arranged notes and now falls in after
+ *  them. One row, once, and the next drag writes the answer down. */
 export function trimmed(children: readonly Entry[], names: readonly string[]): string[] {
   const of = new Map(children.map((one) => [one.name, one]))
   const rows = names.map((name) => of.get(name) ?? { name, is_dir: false })

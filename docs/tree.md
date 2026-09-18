@@ -185,9 +185,17 @@ Not in Manual. Emil: *"for the manual ordering mode in explorer, it should not b
 enforced that directories display above files."* An order somebody arranged by hand
 is theirs, and lifting every folder back over it would be the app overruling the
 drag - so a hand-arranged folder is one list: a note can be dropped between two
-folders, or stepped above one with the keyboard, and it stays where it was put. A
-folder arranged by an older build wrote its folders first, which is a list this one
-reads back unchanged, so nothing anybody already arranged moves.
+folders, or stepped above one with the keyboard, and it stays where it was put.
+
+Rows nobody has moved still read folders first, by name - `byDefault` in
+`tree-order.ts`, which is where the other six leave the list. So choosing Manual
+moves nothing on the screen, a note written this afternoon into a folder arranged
+last week lands where a reader would look for it, and it is the drag and only the
+drag that puts a note over a folder. An older build wrote a folder's list as its
+folders and then its notes, which this one reads back as it stands; the one case
+where a row moves once is a folder that had both a note arranged and a subfolder
+nobody had touched, and that subfolder now reads after the arranged notes rather
+than before them.
 
 The names are spelled out rather than built from a key and a direction. A row
 reading "Sort by modified" with an arrow beside it leaves the reader to work out
