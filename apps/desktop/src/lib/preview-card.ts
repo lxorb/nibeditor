@@ -27,7 +27,7 @@ import { PROPERTY_CHOICES } from './property-choices'
 import { trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { insideSpace } from './space-paths'
-import { openExternal } from './tauri'
+import { followHref } from './open-link'
 import { workspace } from './workspace.svelte'
 
 /** How long the typing rests before the note is written.
@@ -81,7 +81,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     writeLink: pickedLink,
     shortcuts: shortcuts.forEditor,
     trustedMarkup: trustsHtmlAt(path),
-    openLink: (href: string) => void openExternal(href),
+    openLink: followHref,
     // Where the pictures in the card's note actually are. Resolved from that note
     // and from its own words - `![[shot.png]]` is looked for anywhere in the space
     // and a path is read beside the note that wrote it, and a note may say where its

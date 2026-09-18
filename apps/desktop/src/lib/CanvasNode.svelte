@@ -21,7 +21,7 @@
   import { t } from './i18n.svelte'
   import { links } from './link-index.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { openExternal } from './tauri'
+  import { followHref } from './open-link'
 
   const {
     node,
@@ -191,7 +191,7 @@
       // trust.ts.
       trustedMarkup: trusted,
       ...(onfollow ? { openNote: onfollow } : {}),
-      openLink: (href: string) => void openExternal(href),
+      openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
     editor.focus()

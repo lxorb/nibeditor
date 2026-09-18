@@ -18,7 +18,7 @@ import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { propertyChoices } from './live-preview/properties'
-import { linkClicks, linkOpener } from './links'
+import { linkClicks, type LinkPress, linkOpener } from './links'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
@@ -75,8 +75,10 @@ export interface StateOptions {
   onSelection?: (view: EditorView) => void
   /** Which palette colours code fences. Defaults to following the app theme. */
   codeTheme?: string
-  /** Follows a link the reader modifier-clicked. Defaults to a browser tab. */
-  openLink?: (href: string) => void
+  /** Follows a link the reader pressed, with the press that asked for it, so a host
+   *  with tabs of its own can put the page where that press meant. Defaults to a
+   *  browser tab, which is all a bare editor has. */
+  openLink?: (href: string, press: LinkPress) => void
   /** Keys the reader chose, as differences from the defaults. Changed later
    *  through `setShortcutKeys`; this is only what the editor opens with. */
   shortcuts?: KeyOverrides

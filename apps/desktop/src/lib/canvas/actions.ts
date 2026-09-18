@@ -50,7 +50,7 @@ import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { folderOf, insideSpace, relativeTo } from '../space-paths'
-import { openExternal } from '../tauri'
+import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
 
 /** How far a nudge moves a card: one pixel with a bare arrow key, one grid step
@@ -306,8 +306,11 @@ export const run = {
       case 'group':
         await askLabel(store, node.id)
         break
+      // A card on a plane holding an address is the reader's own content, so opening
+      // one opens the page here rather than handing them to another browser - the
+      // same answer a link in a note gets; see open-link.ts.
       case 'link':
-        await openExternal(node.url)
+        openHref(node.url)
         break
       case 'file': {
         const root = workspace.activeSpace?.root

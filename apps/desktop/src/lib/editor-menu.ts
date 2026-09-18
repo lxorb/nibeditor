@@ -34,7 +34,9 @@ import { composerEntries } from './composer-commands'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, menu } from './menu.svelte'
 import { modes } from './modes.svelte'
+import { webHref } from './open-link'
 import { recordingAt, transcribeEmbed } from './recorder/commands'
+import { openExternal } from './tauri'
 import { shortcuts } from './shortcuts.svelte'
 import { noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
@@ -500,6 +502,26 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
   return [DIVIDER, { label: t('Transcribe'), run: () => void transcribeEmbed(view, at) }]
 }
 
+/** The row a right click on a link offers: the way out to the real browser.
+ *
+ *  Pressing a link opens the page here now, which is what nib holding pages means -
+ *  so the deliberate "not here, over there" has to be somewhere a hand can find it,
+ *  and this is where every browser keeps it. Shift+click is the same answer without
+ *  the menu; see open-link.ts.
+ *
+ *  Only over a web address. A `mailto:` leaves for the system on a plain press
+ *  already, and a row offering to open an email address "in the browser" would be a
+ *  row that lied. The address is read off the decoration under the pointer rather
+ *  than out of the document, because that decoration is what the press landed on. */
+function linkEntries(event: MouseEvent): MenuEntry[] {
+  const target = event.target
+  const link = target instanceof Element ? target.closest('.nib-link') : null
+  const href = link?.getAttribute('data-href')
+  if (!href || webHref(href) === null) return []
+
+  return [{ label: t('Open in the browser'), run: () => void openExternal(href) }, DIVIDER]
+}
+
 /** Opens it at the pointer. One place, so the two things a right click on the
  *  text has to do - build the menu for this moment and place it - stay
  *  together. */
@@ -517,6 +539,7 @@ export function showEditorMenu(
   menu.show(
     event,
     [
+      ...linkEntries(event),
       ...editorMenu(view, blockEntries(view, at, path)),
       ...recordingEntries(view, at),
       ...spellingEntries(view, event),
