@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { callbackKind, isNibUri, readUri, withOutcome } from './uri'
+import { callbackKind, isFileUri, isNibUri, readUri, withOutcome } from './uri'
 
 describe('reading a link', () => {
   test('takes the action and the arguments', () => {
@@ -114,5 +114,14 @@ describe('writing the outcome onto a callback', () => {
 
   test('leaves an address with nothing to add alone', () => {
     expect(withOutcome('https://example.com/done', {})).toBe('https://example.com/done')
+  })
+})
+
+describe('a file the Finder opened', () => {
+  test('is a file, not a link', () => {
+    expect(isFileUri('file:///Users/me/Notes/Idea.md')).toBe(true)
+    expect(isFileUri(' FILE:///Users/me/Idea.md')).toBe(true)
+    expect(isFileUri('nib://open?path=Idea.md')).toBe(false)
+    expect(isNibUri('file:///Users/me/Notes/Idea.md')).toBe(false)
   })
 })

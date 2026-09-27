@@ -51,6 +51,8 @@ mod apple_text;
 mod assets;
 mod clock;
 #[cfg(desktop)]
+mod document_window;
+#[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
 mod endpoint;
@@ -64,6 +66,8 @@ mod highlights;
 mod history;
 #[cfg(desktop)]
 mod launch;
+#[cfg(desktop)]
+mod lifecycle;
 mod links;
 mod logs;
 mod matcher;
@@ -108,9 +112,9 @@ use paths::Opened;
 use paths::{note_from_outside, outside_spaces};
 #[cfg(desktop)]
 use std::path::Path;
-use tauri::Manager;
 #[cfg(desktop)]
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
+use tauri::Manager;
 
 /// The commands the window may call, as one list. A builder takes a single
 /// handler, so the desktop-only ones are passed in here rather than added
@@ -244,19 +248,12 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            // The window, not the webview window, which a window holding a page in
-            // a tab is not; see web_tabs.rs.
-            if let Some(window) = app.get_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
-            }
-
-            let files = launch::markdown_paths(argv);
-            remember(app, &files);
-            let _ = app.emit("nib://open-files", files);
-        }))
+        .plugin(tauri_plugin_single_instance::init(launch::second_launch))
         .manage(launch::Pending::default());
+    // Where the app is on its way out, and on a Mac where the window was; see
+    // lifecycle.rs.
+    #[cfg(desktop)]
+    let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
@@ -298,6 +295,8 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         apple_notes::open_full_disk_access,
         launch::take_startup_files,
         launch::new_window,
+        lifecycle::keep_running,
+        document_window::show_document,
         pandoc::has_pandoc,
         pandoc::run_pandoc,
         pandoc::import_document,
@@ -366,10 +365,23 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
 
-    builder.run(context).unwrap_or_else(|error| {
-        eprintln!("Nib could not start: {error}");
-        std::process::exit(1);
-    });
+    builder
+        .build(context)
+        .unwrap_or_else(|error| {
+            eprintln!("Nib could not start: {error}");
+            std::process::exit(1);
+        })
+        .run(on_event);
+}
+
+/// What the system asks of the app as a whole, rather than of a window: a file
+/// from the Finder, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
+/// none of the three.
+fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
+    #[cfg(desktop)]
+    lifecycle::on_event(app, event);
+    #[cfg(not(desktop))]
+    let _ = (app, event);
 }
 
 /// Everything that has to happen once, after the app is built and before the
@@ -412,15 +424,16 @@ fn ready(
 
     // A command line is a desktop's way of being handed a file. A phone app is
     // launched by tapping it, and there is nothing in `args` worth reading.
+    //
+    // Added to, not replaced: on a Mac a file the Finder opened the app with may
+    // already be waiting there; see lifecycle.rs.
     #[cfg(desktop)]
     {
         let files = launch::markdown_paths(std::env::args());
         if !files.is_empty() {
             remember(handle, &files);
             if let Some(pending) = handle.try_state::<launch::Pending>() {
-                if let Ok(mut waiting) = pending.0.lock() {
-                    *waiting = files;
-                }
+                pending.hold(files);
             }
         }
     }
@@ -467,6 +480,12 @@ fn ready(
         if let Some(window) = app.get_window("main") {
             window.show()?;
         }
+    }
+
+    // From here a file that finds no window at all is one that has to open one.
+    #[cfg(desktop)]
+    if let Some(pending) = handle.try_state::<launch::Pending>() {
+        pending.launched();
     }
 
     trace::mark("window shown");

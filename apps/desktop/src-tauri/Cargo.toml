@@ -15,9 +15,13 @@ missing_docs = "warn"
 # Unsafe is denied everywhere and excepted by name in the five functions that
 # call Windows directly: the shell's recent documents list, the two registry
 # calls behind Explorer's New menu, WebView2's print engine, and the launch
-# trace's question about when this process was created. None of the five has a
-# safe wrapper to use instead, and anything new that wants unsafe has to say so
-# at the function and say why.
+# trace's question about when this process was created. Two more on a Mac: the
+# window's AppKit object, which Tauri hands over as a bare pointer, to mark it
+# edited (see document_window.rs), and the method that lets a quit ask about
+# unsaved notes first, added to an application delegate that is tao's (see
+# lifecycle.rs). None of them has a safe wrapper to use
+# instead, and anything new that wants unsafe has to say so at the function and
+# say why.
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 
@@ -127,6 +131,26 @@ window-vibrancy = "0.6"
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# Where the main window was and how big it was, put back at the next launch the way
+# a Mac app puts back its frame. Only the size, the place and whether it was
+# maximised: whether it is visible is the launch's own decision (see ground.rs), and
+# which frame it wears is the reader's setting (see appearance.rs). The 2.4 line,
+# because 2.5 asks for a newer Tauri than the one this crate is built against. See
+# document_window.rs for why it is the Mac's alone.
+tauri-plugin-window-state = "~2.4"
+# The dot in a window's close button that says a note is unsaved, and the file a
+# window stands for, both of which AppKit keeps on the NSWindow and Tauri does not
+# reach. The versions tao is already built against. See document_window.rs.
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSApplication",
+  "NSResponder",
+  "NSWindow",
+] }
+# And the one method AppKit asks an app before it quits, which tao's application
+# delegate does not answer; see lifecycle.rs.
+objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString"] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
