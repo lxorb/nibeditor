@@ -69,7 +69,9 @@ pub fn shell_answer(printed: &str) -> Option<PathBuf> {
     last.starts_with('/').then(|| PathBuf::from(last))
 }
 
-#[cfg(test)]
+// A `PATH` is written with colons in every case below, which is a Mac's spelling and
+// not Windows', where none of this runs.
+#[cfg(all(test, unix))]
 mod tests {
     use super::{first_in, folders, shell_answer};
     use std::ffi::OsStr;

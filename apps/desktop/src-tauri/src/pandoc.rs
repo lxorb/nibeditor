@@ -24,7 +24,7 @@ const READ_AS: &str =
 /// What a note is written out from, which is what the editor writes.
 const WRITE_FROM: &str = "markdown+tex_math_dollars+pipe_tables+task_lists+footnotes+strikeout";
 
-#[cfg(any(target_os = "macos", test))]
+#[cfg(any(target_os = "macos", all(test, unix)))]
 mod finding;
 
 /// pandoc, started the way every call here starts it: found where this machine
