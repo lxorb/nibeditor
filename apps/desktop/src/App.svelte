@@ -61,7 +61,8 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { currentWindow, isDesktop } from './lib/tauri'
+  import { currentWindow, isDesktop, platform } from './lib/tauri'
+  import { keepsSystemMenu } from './lib/system-menu'
   import { theme } from './lib/theme.svelte'
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
@@ -666,10 +667,13 @@
   })
 </script>
 
-<!-- Nothing in the app ever shows the browser's own menu. -->
+<!-- Nothing in the app ever shows the browser's own menu. A text field on a Mac
+     keeps the Mac's, for Look Up and the spelling; see system-menu.ts. -->
 <svelte:window
   onkeydown={onKeydown}
-  oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+  oncontextmenu={(event: MouseEvent) => {
+    if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
+  }}
   onmousedown={onMouse}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
