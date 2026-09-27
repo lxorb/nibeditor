@@ -114,8 +114,22 @@ export const nibBindings: BindingSpec[] = [
   { id: 'format.bold', key: 'Mod-b', run: toggleWrap('**'), preventDefault: true },
   { id: 'format.italic', key: 'Mod-i', run: toggleWrap('*'), preventDefault: true },
   { id: 'format.underline', key: 'Mod-u', run: toggleWrap('<u>', '</u>'), preventDefault: true },
-  { id: 'format.code', key: 'Mod-Shift-`', run: toggleWrap('`'), preventDefault: true },
-  { id: 'format.strikethrough', key: 'Alt-Shift-5', run: toggleWrap('~~'), preventDefault: true },
+  // Typora's Mac keys on a Mac: Cmd+Shift+` steps through the windows there, and
+  // Opt+Shift+5 types a character.
+  {
+    id: 'format.code',
+    key: 'Mod-Shift-`',
+    mac: 'Ctrl-`',
+    run: toggleWrap('`'),
+    preventDefault: true,
+  },
+  {
+    id: 'format.strikethrough',
+    key: 'Alt-Shift-5',
+    mac: 'Ctrl-Shift-`',
+    run: toggleWrap('~~'),
+    preventDefault: true,
+  },
   { id: 'format.highlight', key: 'Mod-Shift-h', run: highlightSelection, preventDefault: true },
 
   { id: 'format.link', key: 'Mod-k', run: insertLink, preventDefault: true },
@@ -141,13 +155,16 @@ export const nibBindings: BindingSpec[] = [
   // Paragraph, was never available either: on AZERTY the nought needs Shift, so that
   // chord is Ctrl+0 there as well, and Ctrl+0 is the size. See the digit rule in the
   // app's shortcuts.test.ts.
+  //
+  // A Mac has them on Cmd+Opt, as Notion does there: Cmd and a digit is the tab.
   { id: 'paragraph.body', key: null, run: setHeading(0), preventDefault: true },
-  { id: 'paragraph.heading-1', key: 'Mod-1', run: setHeading(1), preventDefault: true },
-  { id: 'paragraph.heading-2', key: 'Mod-2', run: setHeading(2), preventDefault: true },
-  { id: 'paragraph.heading-3', key: 'Mod-3', run: setHeading(3), preventDefault: true },
-  { id: 'paragraph.heading-4', key: 'Mod-4', run: setHeading(4), preventDefault: true },
-  { id: 'paragraph.heading-5', key: 'Mod-5', run: setHeading(5), preventDefault: true },
-  { id: 'paragraph.heading-6', key: 'Mod-6', run: setHeading(6), preventDefault: true },
+  ...[1, 2, 3, 4, 5, 6].map((level): BindingSpec => ({
+    id: `paragraph.heading-${level}`,
+    key: `Mod-${level}`,
+    mac: `Mod-Alt-${level}`,
+    run: setHeading(level),
+    preventDefault: true,
+  })),
   { id: 'paragraph.heading-up', key: 'Mod-Shift-=', run: shiftHeading(1), preventDefault: true },
   { id: 'paragraph.heading-down', key: 'Mod-Shift--', run: shiftHeading(-1), preventDefault: true },
 
@@ -156,14 +173,29 @@ export const nibBindings: BindingSpec[] = [
   { id: 'paragraph.table', key: 'Mod-Alt-t', run: insertTableToEdit, preventDefault: true },
   { id: 'paragraph.code-block', key: 'Mod-Shift-k', run: insertCodeFence, preventDefault: true },
   { id: 'paragraph.math-block', key: 'Mod-Shift-m', run: insertMathBlock, preventDefault: true },
-  { id: 'paragraph.quote', key: 'Mod-Shift-q', run: toggleQuote, preventDefault: true },
+  // Cmd+Shift+Q is Log Out on a Mac; Typora's Mac quote is Cmd+Opt+Q.
+  {
+    id: 'paragraph.quote',
+    key: 'Mod-Shift-q',
+    mac: 'Mod-Alt-q',
+    run: toggleQuote,
+    preventDefault: true,
+  },
+  // No key on a Mac, as in Obsidian: the brackets walk the tabs there.
   {
     id: 'paragraph.ordered-list',
     key: 'Mod-Shift-[',
+    mac: null,
     run: toggleOrderedList,
     preventDefault: true,
   },
-  { id: 'paragraph.bullet-list', key: 'Mod-Shift-]', run: toggleBulletList, preventDefault: true },
+  {
+    id: 'paragraph.bullet-list',
+    key: 'Mod-Shift-]',
+    mac: null,
+    run: toggleBulletList,
+    preventDefault: true,
+  },
   { id: 'paragraph.rule', key: 'Mod-Shift-r', run: insertHorizontalRule, preventDefault: true },
 
   // The four blocks that are a menu row and not a chord anybody would guess.

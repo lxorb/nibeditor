@@ -88,6 +88,8 @@ export function defaultKeyFor(
   return own === undefined ? spec.key : own
 }
 
+const PLATFORMS = ['mac', 'win', 'linux'] as const
+
 /** Specs as CodeMirror bindings, with the reader's keys where they gave one.
  *
  *  A spec whose key was taken away is left out rather than bound to nothing:
@@ -110,11 +112,15 @@ export function bindings(specs: BindingSpec[], overrides: KeyOverrides): KeyBind
 
     if (chosen === undefined) {
       // The platform fields only mean something beside a `key`, so a spec
-      // that is unbound by default on this platform is left out here too.
-      if (spec.key !== null) binding.key = spec.key
-      if (spec.mac) binding.mac = spec.mac
-      if (spec.win) binding.win = spec.win
-      if (spec.linux) binding.linux = spec.linux
+      // that is unbound by default on this platform is left out here too. And
+      // CodeMirror reads an empty platform field as "use `key`", so a spec with
+      // no key on one platform spells the key out for each of the others.
+      const split = PLATFORMS.some((platform) => spec[platform] === null)
+      if (spec.key !== null && !split) binding.key = spec.key
+      for (const platform of PLATFORMS) {
+        const key = split ? defaultKeyFor(spec, platform) : spec[platform]
+        if (key) binding[platform] = key
+      }
       if (!binding.key && !binding.mac && !binding.win && !binding.linux) continue
     } else {
       binding.key = chosen
