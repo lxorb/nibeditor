@@ -91,6 +91,9 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
+// Only where there is a cookie store to reach: the system's own engine on Windows.
+#[cfg(all(windows, not(feature = "cef")))]
+mod web_cookies;
 #[cfg(desktop)]
 mod web_tabs;
 
@@ -277,6 +280,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // web_tabs.rs and docs/web-tabs.md.
     #[cfg(desktop)]
     let builder = builder.manage(web_tabs::WebTabs::default());
+
+    // A window with web tabs in it waits, as it closes, for their logins to be made
+    // to last; see web_cookies.rs.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = builder.on_window_event(web_cookies::leaving);
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![

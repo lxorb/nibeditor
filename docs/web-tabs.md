@@ -628,8 +628,8 @@ and never closed, and the session it holds open is the one every tab is built on
 
 `scripts/web-session-probe.py` is what measured it. It signs in to a page on the
 loopback with a session cookie, a lasting cookie and a `localStorage` token, reads them
-back out of the page, then closes the note, opens it again, and starts the app over. Run
-it after any change to this seam.
+back out of the page, then closes the note, opens it again, quits the app by closing its
+window and starts it over. Run it after any change to this seam.
 
 | | an environment per tab | one shared | shared, and held open |
 | --- | --- | --- | --- |
@@ -637,14 +637,42 @@ it after any change to this seam.
 | the session cookie after closing the note and opening it | no | **no** | **yes** |
 | a lasting cookie and `localStorage`, closed and opened | yes | yes | yes |
 | the same, after the app is started again | yes | yes | yes |
-| the session cookie after the app is started again | no | no | no |
+| the session cookie after the app is started again | no | no | no, until 2026-09-27 |
 
 The middle column is the whole reason the page that holds the session open exists:
 sharing the environment made two tabs one session and still lost it when the last webview
 went, because that is when `WebView2` ends the profile's session. The third and fourth
-rows were always true and are what the `web` folder on disk is for. The last row is gone
-either way, which is what a browser throws away when it quits; a login kept in a lasting
-cookie or in `localStorage` comes back off disk.
+rows were always true and are what the `web` folder on disk is for.
+
+**A session cookie survives a restart, the way Chrome's do with "Continue where you left
+off".** Emil, 2026-09-27: *"on moodle-app2.let.ethz.ch every time i reopen nib I have to
+reloggin."* The last row was the whole of it. Moodle's `MoodleSession`, Shibboleth's
+`_shibsession_...` and the identity provider's session at `aai-logon.ethz.ch` are all
+session cookies - no expiry - and `WebView2` threw them away when nib quit, while the
+lasting cookies and `localStorage` beside them came back off disk as they always had.
+
+`WebView2` has no setting for it. Chromium's own switch for the same thing,
+`--restore-last-session`, was tried and measured and is not enough: under it the engine
+writes session cookies to its database, but a quit that closes the pages before the
+process ends still ends the session and deletes them, so a login came back on some
+restarts and not others. What nib does instead is what the setting does: a session cookie
+is given an expiry, four hundred days out, in the profile's own cookie store, where the
+engine keeps and reloads it like any other cookie. The site never sees the difference
+(an expiry is not sent with a cookie) and keeps every say it had - a new value replaces
+it, a logout deletes it. It happens after every page a tab loads, which is after every
+step of a sign-in that goes through pages, and once more as the window closes, which
+holds the window for the engine's answer - two seconds at most - and catches a login a
+page made without loading another. See `apps/desktop/src-tauri/src/web_cookies.rs`.
+
+Measured 2026-09-27 on the probe, with the cookie database read between the quit and the
+next start:
+
+| | before | `--restore-last-session` | the expiry |
+| --- | --- | --- | --- |
+| the session cookie after a quit and a start | 0 of 5 | 7 of 12 | **7 of 7** |
+| the same, with the app killed seconds after signing in | - | 0 of 2 | **2 of 2** |
+| the same, killed 45 s after signing in | 0 of 1 | 2 of 2 | - |
+| a cookie a page set without loading another, just before the quit | - | - | **2 of 2** |
 
 **What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
@@ -656,8 +684,9 @@ gigabyte, and those are still parked and closed as they always were. See `sessio
 On Linux the runtime already keeps the web tabs' context alive for the app's life (it
 has to, to reuse the WebKit network process). On macOS the context is let go when the
 last tab closes, as it was on Windows; a login there rests on the persistent data store
-on disk - a lasting cookie survives, a session-only one does not - until the same seam
-exists for `WKWebView` as for `WebView2`.
+on disk - a lasting cookie survives, a session-only one does not, a restart included -
+until the same seam exists for `WKWebView` and `WebKitGTK` as for `WebView2`: wry hands
+out neither engine's cookie store, so there is nothing yet to give an expiry through.
 
 **No nib IPC reaches the site**, three times over:
 
@@ -872,7 +901,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
 | `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
 | `scripts/web-open-probe.py` | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1` |
-| `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page |
+| `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-globals-probe.py` | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it" |
 | `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
