@@ -55,6 +55,9 @@ const LEFT_OUT = new Set([
   // because the worker is asked for by URL.
   'pdfjs-dist',
   'pdfjs-dist/build/pdf.worker.min.mjs?url',
+  // And the legacy build an older WebKit reads PDFs through; see pdf/document.ts.
+  'pdfjs-dist/legacy/build/pdf.mjs',
+  'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url',
   // The icon sets that are data rather than drawing: the emoji index and the
   // coloured set. Half a megabyte of JSON between them, for a picker whose one job
   // on a phone is to put a mark on a folder, and the glasses draw a row as words
