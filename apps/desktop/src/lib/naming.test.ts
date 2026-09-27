@@ -73,6 +73,13 @@ describe('a name already in the folder', () => {
     expect(nameFault({ typed: 'plan', extension: '.md', taken: beside('Plan.md') })).toBe('taken')
   })
 
+  /** And APFS says the same of `Ü` typed as one letter and `Ü` a Mac tool wrote
+   *  as two, so those are one name too. */
+  test('however its letters are composed', () => {
+    const taken = beside('U\u0308bersicht.md')
+    expect(nameFault({ typed: 'Übersicht', extension: '.md', taken })).toBe('taken')
+  })
+
   /** Which is the folder-note layout: `A.md` becomes `A/A.md`, and a note beside
    *  the folder of its own name is the pair the whole convention is made of. */
   test('but a folder of the same name is not, because a note may sit beside one', () => {

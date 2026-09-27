@@ -1,6 +1,12 @@
 import { type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { isTabFile, type LinkKind, pageFragment, type Wikilink } from '@nib/markdown/links'
+import {
+  foldName,
+  isTabFile,
+  type LinkKind,
+  pageFragment,
+  type Wikilink,
+} from '@nib/markdown/links'
 
 /** What the editor knows about the space around the open note, and what it does
  *  when a link is followed.
@@ -269,7 +275,7 @@ function wikilinkFor(target: LinkWrite): string {
 export function fuzzy(text: string, needle: string): boolean {
   if (!needle) return true
 
-  const folded = text.toLowerCase()
+  const folded = foldName(text)
   let at = 0
 
   for (const character of needle) {
@@ -293,10 +299,10 @@ export function fuzzy(text: string, needle: string): boolean {
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
 /** A path as something to compare: `/` separators, no extension of our own, and
- *  folded case. Obsidian matches a link to a note by name whatever the case,
- *  and so do the two filesystems Nib runs on. */
+ *  folded case and composed letters (`foldName`). Obsidian matches a link to a
+ *  note by name whatever the case, and so do the two filesystems Nib runs on. */
 function comparable(path: string): string {
-  return path.replace(/\\/g, '/').replace(OWN, '').toLowerCase()
+  return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
 
 function folderOf(path: string): string {
@@ -386,13 +392,15 @@ function relativeParts(index: NoteIndex, target: string): string[] {
  *  was written in, and is matched whole. The extension is part of the name here:
  *  a file has nothing else to be told apart by. */
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const wanted = (
-    kind === 'markdown' ? relativeParts(index, target).join('/') : target.trim().replace(/\\/g, '/')
-  ).toLowerCase()
+  const wanted = foldName(
+    kind === 'markdown'
+      ? relativeParts(index, target).join('/')
+      : target.trim().replace(/\\/g, '/'),
+  )
   if (!wanted) return null
 
   const found = index.files.filter((path) => {
-    const held = path.toLowerCase()
+    const held = foldName(path)
     return kind === 'markdown' ? held === wanted : held === wanted || held.endsWith(`/${wanted}`)
   })
 

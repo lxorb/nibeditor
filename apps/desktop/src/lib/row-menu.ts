@@ -31,6 +31,7 @@ import {
 import { moveTargets, type MoveTarget } from './move-targets'
 import { rowName } from './note-name'
 import { isMarkdownPath } from './space-paths'
+import { isDesktop, platform } from './tauri'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -84,6 +85,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...(entry.is_dir || isPdfTarget(entry.name)
       ? []
       : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
+    ...revealEntry(entry),
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),
@@ -153,6 +155,13 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   })
 
   if (sure) await workspace.remove(entry.path, true)
+}
+
+/** The row in the file manager, in Obsidian's words on a Mac; see reveal.ts. */
+function revealEntry(entry: Entry): MenuEntry[] {
+  if (!isDesktop) return []
+  const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
+  return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
 }
 
 /** Only offered once there is something to take back. */

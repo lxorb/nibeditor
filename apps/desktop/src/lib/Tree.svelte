@@ -1076,6 +1076,9 @@
            wears the icon the note itself chose; the path is how it knows. -->
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
       <span class="nib-row-label">{name}</span>
+      {#if entry.evicted}
+        {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
+      {/if}
       <!-- Somebody else is in this note. The same mark the switcher puts on a
            shared space, in the slot a row keeps for what it has to add about
            a name; see SharedMark.svelte.

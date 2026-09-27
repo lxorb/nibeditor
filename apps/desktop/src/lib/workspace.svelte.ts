@@ -90,6 +90,8 @@ export interface Entry {
   modified: number
   created: number
   children: Entry[]
+  /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
+  evicted?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are

@@ -76,6 +76,12 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  // Where a right click keeps the Mac's own menu; see system-menu.ts.
+  let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
+  if (platform() === 'macos') {
+    void import('./lib/system-menu').then((one) => (keepsSystemMenu = one.keepsSystemMenu))
+  }
   /** The tab whose note is on the stage, while one is. The deck goes over the
    *  whole window, and the note stays open behind it. */
   const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
@@ -673,7 +679,9 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
-  oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+  oncontextmenu={(event: MouseEvent) => {
+    if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
+  }}
   onmousedown={onMouse}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}

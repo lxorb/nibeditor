@@ -5,6 +5,7 @@ import {
   embedKind,
   embedSize,
   findLinks,
+  foldName,
   formatWikilink,
   isAudioTarget,
   isNoteTarget,
@@ -493,5 +494,21 @@ describe('how many links one note is read for', () => {
 
   test('while a note anybody wrote is read whole', () => {
     expect(findLinks('see [[A]] and [[B]]')).toHaveLength(2)
+  })
+})
+
+/** A Mac can hand a note over under a decomposed name: `U` and a combining
+ *  diaeresis where a keyboard types one `Ü`. Both spellings are one name. */
+describe('a name as something to compare', () => {
+  const composed = 'Übersicht'
+  const decomposed = 'U\u0308bersicht'
+
+  test('is one name however its letters are composed', () => {
+    expect(decomposed).not.toBe(composed)
+    expect(foldName(decomposed)).toBe(foldName(composed))
+  })
+
+  test('and whatever its case', () => {
+    expect(foldName('ÜBERSICHT')).toBe(foldName(decomposed))
   })
 })

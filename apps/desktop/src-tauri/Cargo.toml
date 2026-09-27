@@ -150,7 +150,15 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
 # And the one method AppKit asks an app before it quits, which tao's application
 # delegate does not answer; see lifecycle.rs.
 objc2 = "0.6"
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString"] }
+# The strings the two calls above hand AppKit, and asking iCloud for a note it has
+# taken off the Mac, the call Finder makes; see notes/icloud.rs.
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSError",
+  "NSFileManager",
+  "NSString",
+  "NSURL",
+] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
