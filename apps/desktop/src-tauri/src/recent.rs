@@ -15,6 +15,15 @@ pub fn remember_recent(path: String) {
     add_to_recent(&path);
 }
 
+/// Empties the list, as File > Open Recent > Clear Menu does in any Mac app: the
+/// app's own menu and the Dock icon's menu are one list to a reader, and clearing
+/// one of them leaves the other naming the very notes they asked to forget.
+/// `TextEdit`'s Clear Menu empties both.
+#[tauri::command]
+pub fn forget_recent() {
+    clear_recent();
+}
+
 /// `SHARD_PATHW`: the thing being added is a path, given as a wide string.
 /// Spelled out because the crate offers it signed and the call wants it
 /// unsigned, and a cast between the two is worth less than a constant with a
@@ -62,6 +71,32 @@ fn add_to_recent(path: &str) {
     let url = NSURL::fileURLWithPath(&NSString::from_str(path));
     NSDocumentController::sharedDocumentController(main).noteNewRecentDocumentURL(&url);
 }
+
+/// Only this app's documents: the Dock menu and Recent Items under its name. Like
+/// `add_to_recent`, only ever on the main thread.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "objc2 marks the call unsafe only for the sender it may be handed, and none is"
+)]
+fn clear_recent() {
+    use objc2_app_kit::NSDocumentController;
+    use objc2_foundation::MainThreadMarker;
+
+    let Some(main) = MainThreadMarker::new() else {
+        return;
+    };
+
+    // SAFETY: on the main thread, with no sender, which is how a menu item that is
+    // not AppKit's own asks for it.
+    unsafe { NSDocumentController::sharedDocumentController(main).clearRecentDocuments(None) };
+}
+
+/// Nothing elsewhere. Windows has no call that empties one app's recent
+/// documents - the shell's only one empties the whole Recent folder, every app's -
+/// and nothing but the Mac's menu bar has a Clear Menu to ask for it.
+#[cfg(not(target_os = "macos"))]
+fn clear_recent() {}
 
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn add_to_recent(_path: &str) {
