@@ -196,3 +196,12 @@ describe('a link the app will not take at all', () => {
     expect(new URL(world.went[0] ?? '').searchParams.get('error')).toBe('no action called nonsense')
   })
 })
+
+describe('a file handed over beside the links', () => {
+  test('is left to the files road without a word', async () => {
+    await arrives('file:///Users/me/Notes/Idea.md')
+
+    expect(world.asked).toEqual([])
+    expect(world.said).toEqual([])
+  })
+})

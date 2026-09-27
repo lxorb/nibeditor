@@ -61,7 +61,7 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { currentWindow, isDesktop, platform } from './lib/tauri'
+  import { invoke, isDesktop, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
@@ -138,16 +138,20 @@
     },
   })
 
-  const title = $derived(
-    workspace.active ? `${workspace.active.shown}${workspace.active.unsaved ? ' ·' : ''}` : '',
-  )
+  const onMac = platform() === 'macos'
 
   // The header shows no title, so the note's name goes to the window itself -
-  // which is what the taskbar and the window switcher read.
+  // which is what the taskbar and the window switcher read. Fetched rather than
+  // carried, since nothing about it has to be there for the first paint; the
+  // facts are read here so the effect follows them. See window-document.ts.
   $effect(() => {
-    const next = title ? `${title} - Nib` : 'Nib'
-    document.title = next
-    if (isDesktop) void currentWindow().then((window) => window.setTitle(next))
+    const active = workspace.active
+    const facts = active && { shown: active.shown, unsaved: active.unsaved, path: active.path }
+    void import('./lib/window-document').then(({ windowDocument }) => {
+      const inWindow = windowDocument(facts, onMac)
+      document.title = inWindow.title
+      if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
+    })
   })
 
   // The account's settings come along with the account: when the session is
