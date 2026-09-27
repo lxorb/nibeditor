@@ -47,6 +47,13 @@ use tauri::{
 /// mistaken for one.
 const LABEL: &str = "web-";
 
+/// Whether a webview is one of the web's own - a tab's page, or the page that holds
+/// the session open - rather than the app's.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) fn is_page(label: &str) -> bool {
+    label.starts_with(LABEL)
+}
+
 /// The window's own page, which shares its label with the window it is in.
 const MAIN: &str = "main";
 
@@ -877,6 +884,11 @@ pub async fn web_open(
         if loading {
             return;
         }
+
+        // Every step of a sign-in that goes through pages ends here, so this is where
+        // a login it left in a session cookie is made to last; see web_cookies.rs.
+        #[cfg(all(windows, not(feature = "cef")))]
+        let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
 
         let marked = sending.clone();
         let named = moved.clone();

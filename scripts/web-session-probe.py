@@ -1,25 +1,26 @@
-"""Does a web note keep you logged in when you close it and open it again?
+"""Does a web note keep you logged in when you close it and open it again - and when
+you quit nib and start it again?
 
 Emil, 2026-09-13: *"When I close and then reopen a web note, all state is lost. For
 example, when I log in, then I would be logged out. That should not be the case."*
+And 2026-09-27: *"on moodle-app2.let.ethz.ch every time i reopen nib I have to
+reloggin."*
 
-A web note is a browser tab, and a browser tab keeps you logged in across being closed
-and reopened because the browser process - and the session in it - outlives the tab.
-This drive proves that nib's does now. It signs in to a page served on the loopback
-(a session cookie, a persistent cookie, and a localStorage token - the three shapes a
-login takes), closes the note so the webview is torn down, opens it again, and asks the
-page what it still has. Then it starts the app over and asks once more.
+A web note is a browser tab, and a browser that continues where it left off keeps you
+logged in across both. This drive proves that nib does. It signs in to a page served
+on the loopback (a session cookie, a persistent cookie, and a localStorage token - the
+three shapes a login takes), closes the note so the webview is torn down, opens it
+again, and asks the page what it still has. Then it quits the app the way a person
+does - the window closed - starts it over and asks once more.
 
-    session cookie   - kept in the browser session; survives close + reopen while the
-                       app runs, because the one shared WebView2 environment does; gone
-                       after a relaunch, which is a fresh session, the way a browser is
+    session cookie   - no expiry of its own. Survives close + reopen because the one
+                       shared WebView2 environment is held open; survives a restart
+                       because nib gives it an expiry in the engine's own cookie store
+                       (src-tauri/src/web_cookies.rs)
     persistent cookie- written to the `web` folder on disk; survives everything
     localStorage     - written to disk; survives everything
 
-The decisive line is the session cookie after a close and reopen: before the fix each
-tab carried a WebView2 environment of its own, so closing the only web tab dropped the
-session and the reopened note was signed out. See `session` in
-apps/desktop/src-tauri/src/web_tabs.rs and docs/web-tabs.md.
+See `session` in apps/desktop/src-tauri/src/web_tabs.rs and docs/web-tabs.md.
 
     pnpm --dir apps/desktop tauri build --no-bundle \
       --config '{"identifier":"ch.emilvinu.nib.probe"}'
@@ -54,6 +55,9 @@ from ctypes import wintypes
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
 PORT_TO = 22399
+
+# What a window is sent when its close button is pressed.
+WM_CLOSE = 0x0010
 
 # What says where the notes go. The identifier a probe build runs under does not keep
 # anybody's notes apart - it moves the settings and the browsing profile and leaves the
@@ -367,6 +371,23 @@ def launch(
     return app, App(port, secret)
 
 
+def quit(app: subprocess.Popen[bytes]) -> None:
+    """Closes the window the way a person does, and waits for the app to be gone.
+
+    Not `terminate`, which is the task manager's kill: the engine then gets no word that
+    the app is going, and a drive that only ever killed the app would be measuring a
+    crash rather than a quit."""
+
+    assert user32 is not None
+    for hwnd in windows_of(app.pid):
+        user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
+    try:
+        app.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        app.kill()
+        raise SystemExit("the app did not quit when its window was closed") from None
+
+
 def logged_in(state: dict[str, str]) -> bool:
     return state["sid"] == SID and state["pid"] == PID and state["token"] == TOKEN
 
@@ -464,10 +485,11 @@ def main() -> int:
         said["still logged in on reopen"] = logged_in(after)
         ok = ok and logged_in(after)
 
-        # And the app started over: a fresh session, so the session cookie is gone the
-        # way a browser's is - but the login on disk is not.
-        running.terminate()
-        running.wait(timeout=30)
+        # And the app quit the way a person quits it - the window closed - and started
+        # over. All three come back, the session cookie too: a browser that continues
+        # where it left off keeps a session-only login across a restart, and so does
+        # nib. See `RESTORE` in src-tauri/src/engine.rs.
+        quit(running)
         time.sleep(2)
         running, app = launch(args.exe, args.identifier, unlike=app.port)
         app.open(f"{NOTE}.md", SPACE)
@@ -477,10 +499,8 @@ def main() -> int:
         time.sleep(3)
         relaunched = seen(app, tab)
         said["after relaunch"] = relaunched
-        said["disk login kept on relaunch"] = (
-            relaunched["pid"] == PID and relaunched["token"] == TOKEN
-        )
-        ok = ok and relaunched["pid"] == PID and relaunched["token"] == TOKEN
+        said["still logged in on relaunch"] = logged_in(relaunched)
+        ok = ok and logged_in(relaunched)
     finally:
         if running is not None:
             running.terminate()
