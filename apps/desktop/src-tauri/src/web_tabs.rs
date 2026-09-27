@@ -1107,12 +1107,13 @@ fn say(
 /// This one and the three under it stay on the window's own thread - not `async`,
 /// which is what moves a command off it - because each is a single call into the
 /// engine and the engine takes them nowhere else: bounds, visibility, an address, a
-/// line of script, a controller closed. None of them waits for the platform to
-/// answer, so none of them runs a nested message loop, which is the one thing that
-/// cannot be done from inside `WebView2`'s own callback. `web_open` is the one that
-/// waits, and it is the one that had to move; see the note above it. A placement is
-/// also asked for on every drag of a pane divider, where a hop onto the async
-/// runtime and back would be two hops for one `SetBounds`.
+/// line of script. None of them waits for the platform to answer, so none of them
+/// runs a nested message loop, which is the one thing that cannot be done from inside
+/// `WebView2`'s own callback. `web_open` is the one that waits, and it is the one that
+/// had to move; see the note above it. `web_close` had to move as well, for the
+/// opposite reason; see the note above that. A placement is also asked for on every
+/// drag of a pane divider, where a hop onto the async runtime and back would be two
+/// hops for one `SetBounds`.
 #[tauri::command]
 pub fn web_place(app: AppHandle, tab: String, pane: Pane, visible: bool) -> Result<(), String> {
     let view = found(&app, &tab)?;
@@ -1279,10 +1280,42 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
 /// give the memory back keeps its trail, because the tab is still open and looking at
 /// it again has to put the arrows back the way they were. A tab being **closed** keeps
 /// nothing: nobody is coming back to it.
+///
+/// Async, and the closing posted to the window's own event loop, because a close that
+/// ran inline froze the whole app. A command that is not `async` runs inside the
+/// callback `WebView2` hands the app its IPC in, and that callback is also delivered
+/// *inside* the nested message loop `web_open` runs while the engine builds a page:
+/// the pump that waits for the new controller dispatches the window's messages, the
+/// window's IPC among them. Clicking one website after another in the file list is
+/// exactly that - the previewed tab is closed while the next one's page is being
+/// built - and a controller closed from in there never came back: the pump never
+/// finished, the old page kept playing, and nothing in the window answered again.
+///
+/// The event loop's own turn is not nested in anything: tao holds back what is posted
+/// to it while it is busy inside a turn of its own, which is where `web_open` builds.
+/// So the close waits for the page being built rather than cutting into it. And it is
+/// waited for here, so a tab parked and opened again at once finds its old page gone
+/// rather than still there; see `web_open`, which refuses a tab that has one.
 #[tauri::command]
-pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String, keep: bool) {
-    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
-        let _ = view.close();
+pub async fn web_close(
+    app: AppHandle,
+    tabs: tauri::State<'_, WebTabs>,
+    tab: String,
+    keep: bool,
+) -> Result<(), String> {
+    let label = format!("{LABEL}{tab}");
+    let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
+    let closing = app.clone();
+
+    let posted = app.run_on_main_thread(move || {
+        if let Some(view) = closing.get_webview(&label) {
+            let _ = view.close();
+        }
+        let _ = sending.try_send(());
+    });
+    // A window that cannot be reached has no page left in it to close.
+    if posted.is_ok() {
+        let _ = waiting.recv().await;
     }
 
     if let Ok(mut open) = tabs.trails.lock() {
@@ -1296,6 +1329,8 @@ pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String, k
             open.remove(&tab);
         }
     }
+
+    Ok(())
 }
 
 /// A still picture of the page as it is now, as a `data:` address the window can put
