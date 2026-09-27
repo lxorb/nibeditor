@@ -3457,6 +3457,30 @@ describe('a file that changes its name', () => {
     expect(workspace.documentAt('/space/renamed.md')).toBe(note)
   })
 
+  /** Every way a path changes owes the bookmarks what it owes the tabs and the
+   *  index. A bookmark keeps the path it was made with, so a note renamed, dragged
+   *  into a folder or put back by an undo left its bookmark on a name nothing
+   *  answered to, and its row was gone from the list. */
+  test('takes its bookmark with it, and an undo takes it back', async () => {
+    const mark = (path: string) => ({ kind: 'note' as const, path, text: '' })
+    workspace.bookmarks.toggle(mark('a.md'))
+
+    notes['/space/renamed.md'] = notes['/space/a.md'] ?? ''
+    await workspace.rename('/space/a.md', 'renamed.md')
+    expect(workspace.bookmarks.has(mark('renamed.md'))).toBe(true)
+    expect(workspace.bookmarks.has(mark('a.md'))).toBe(false)
+
+    await workspace.undoFileAction()
+    expect(workspace.bookmarks.has(mark('a.md'))).toBe(true)
+
+    await workspace.move('/space/a.md', '/space/deep')
+    expect(workspace.bookmarks.has(mark('deep/a.md'))).toBe(true)
+
+    await workspace.undoFileAction()
+    expect(workspace.bookmarks.has(mark('a.md'))).toBe(true)
+    workspace.bookmarks.toggle(mark('a.md'))
+  })
+
   /** And opening it under the new name is opening what is open, not a second
    *  document over the same file. */
   test('so opening it again under that name opens what is open', async () => {

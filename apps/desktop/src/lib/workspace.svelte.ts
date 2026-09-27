@@ -1937,15 +1937,7 @@ class Workspace {
     // A note that moved is a note every link to it has to be pointed at again;
     // see `rename` below, including why this comes before the index is told.
     const rewrote = (await this.retarget(from, target)) > 0
-    links.notesMoved(from, target)
-    paperMoved(from, target)
-    // A folder's icon is kept under its path, so a folder that moved takes its
-    // icon and its subfolders' icons with it.
-    this.folderIcons.moved(from, target)
-    // And the order it was arranged into: it leaves the list of the folder it was
-    // in, and a folder that moved takes its own list and every list under it along.
-    this.arranged.moved(from, target)
-    this.excluded.moved(from, target)
+    this.pathMoved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
 
     // One document per file, so a path that changes moves rather than being written
@@ -3108,12 +3100,7 @@ class Workspace {
     // Before the index is told the note moved, not after: finding the links that
     // pointed at the old name means resolving them against the space as it was.
     const rewrote = (await this.retarget(path, target)) > 0
-    links.notesMoved(path, target)
-    paperMoved(path, target)
-    this.folderIcons.moved(path, target)
-    // A row renamed keeps the place it was arranged into, under its new name.
-    this.arranged.moved(path, target)
-    this.excluded.moved(path, target)
+    this.pathMoved(path, target)
     this.undone.record({ kind: 'rename', from: path, to: target, ...(rewrote ? { rewrote } : {}) })
 
     const note = this.opened.at(path)
@@ -3135,6 +3122,29 @@ class Workspace {
     await this.movedOnAccount(path, target)
     await this.loadTree()
     this.persist()
+  }
+
+  /** Everything kept under a path, told that the path is another one now.
+   *
+   *  The index, the papers, a folder's icon, the order a folder was arranged into,
+   *  what was left out of the space and the bookmarks all keep a file by its path,
+   *  so each has to hear that it changed - and every way a path changes owes all of
+   *  them the same sentence: a rename, a move, and either of those put back. Said
+   *  here once rather than listed at each, because the list is what keeps growing:
+   *  undo was missing the arranged order until a test caught it, and the bookmarks
+   *  were missing everywhere. A folder carries everything under it along.
+   *
+   *  After the links are rewritten, never before: finding the links that pointed at
+   *  the old name means resolving them against the space as it was.
+   *
+   *  Not private because putting a rename back is a rename; see workspace/undoing.ts. */
+  pathMoved(from: string, to: string) {
+    links.notesMoved(from, to)
+    paperMoved(from, to)
+    this.folderIcons.moved(from, to)
+    this.arranged.moved(from, to)
+    this.excluded.moved(from, to)
+    this.bookmarks.moved(from, to)
   }
 
   /** And the account, which keeps a note under an id rather than under its name.

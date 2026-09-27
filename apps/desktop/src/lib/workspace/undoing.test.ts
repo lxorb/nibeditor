@@ -27,21 +27,20 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-/** The index, the papers and the two per-space stores all hear about a file that
- *  moved or went. What they do with that is their own business and tested there;
- *  what matters here is that they are told. */
+/** The index hears about a file that went or was written, and everything kept by
+ *  path hears about one that moved. What they do with that is their own business
+ *  and tested there; what matters here is that they are told. */
 const told: string[] = []
 
 vi.mock('../link-index.svelte', () => ({
   links: {
+    cameBack: (path: string) => {
+      told.push(`back ${path}`)
+      return Promise.resolve()
+    },
     noteGone: (path: string) => void told.push(`gone ${path}`),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
-    notesMoved: (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
   },
-}))
-
-vi.mock('../pdf/papers', () => ({
-  paperMoved: (from: string, to: string) => void told.push(`paper ${from} -> ${to}`),
 }))
 
 const { undoLastFileAction } = await import('./undoing')
@@ -49,9 +48,8 @@ const { FileActions } = await import('./undo.svelte')
 type PutsBack = import('./undoing').PutsBack
 type FileAction = import('./undo.svelte').FileAction
 
-/** A store with nothing open in it: no documents, no tabs, and the two per-space
- *  stores standing in as counters, since what they are asked is all this cares
- *  about. */
+/** A store with nothing open in it: no documents, no tabs, and everything kept by
+ *  path standing in as one call, since that it is asked is all this cares about. */
 function store(action: FileAction): PutsBack & { loaded: number; wrote: number } {
   const undone = new FileActions()
   undone.record(action)
@@ -62,12 +60,7 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     tabs: [],
     documentAt: () => null,
     positions: { move: (from: string, to: string) => void moved.push(`${from} -> ${to}`) },
-    folderIcons: { moved: (from: string, to: string) => void moved.push(`icon ${from} -> ${to}`) },
-    // The order a folder was arranged into. Missing here until now, so a name put
-    // back threw halfway down `putName` and the undo was swallowed by the catch
-    // around it - which every assertion below happened to be taken before.
-    arranged: { moved: (from: string, to: string) => void moved.push(`order ${from} -> ${to}`) },
-    excluded: { moved: (from: string, to: string) => void moved.push(`left out ${from} -> ${to}`) },
+    pathMoved: (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
     close: () => undefined,
     reload: (path: string) => void told.push(`reloaded ${path}`),
     retarget: (from: string, to: string) => {
@@ -181,7 +174,6 @@ describe('a name put back', () => {
     expect(told).toEqual([
       'retargeted /s/b.md -> /s/a.md',
       'moved /s/b.md -> /s/a.md',
-      'paper /s/b.md -> /s/a.md',
       'account /s/b.md -> /s/a.md',
     ])
   })
@@ -190,11 +182,7 @@ describe('a name put back', () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
 
-    expect(told).toEqual([
-      'moved /s/f/a.md -> /s/a.md',
-      'paper /s/f/a.md -> /s/a.md',
-      'account /s/f/a.md -> /s/a.md',
-    ])
+    expect(told).toEqual(['moved /s/f/a.md -> /s/a.md', 'account /s/f/a.md -> /s/a.md'])
   })
 })
 

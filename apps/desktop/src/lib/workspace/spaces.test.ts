@@ -59,7 +59,10 @@ function store(spaces: Space[]) {
     notes: [],
     tabs: [],
     documents: [],
-    bookmarks: { migrate: (roots: string[]) => void told.push(`migrated ${roots.join()}`) },
+    bookmarks: {
+      ...follows('bookmarks'),
+      migrate: (roots: string[]) => void told.push(`migrated ${roots.join()}`),
+    },
     device: {
       moveIcon: (from: string, to: string) => void told.push(`icon ${from} -> ${to}`),
       moveOrder: (from: string, to: string) => void told.push(`order ${from} -> ${to}`),
@@ -180,6 +183,7 @@ describe('a space renamed', () => {
       'arranged /spaces/Work -> /spaces/Studio',
       'graph /spaces/Work -> /spaces/Studio',
       'left out /spaces/Work -> /spaces/Studio',
+      'bookmarks /spaces/Work -> /spaces/Studio',
     ])
   })
 

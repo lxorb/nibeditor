@@ -10,6 +10,7 @@
  *  space that goes takes its bookmarks with it. */
 
 import { isMarkdownPath, relativeTo } from '../space-paths'
+import { without } from '../records'
 import { forget, isRecord, isString, keep, stored, stringList } from '../stored'
 
 const STORAGE_KEY = 'nib:bookmarks'
@@ -31,6 +32,11 @@ export const BOOKMARK_KINDS = [
   'graph',
 ] as const
 type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
+
+/** The kinds whose path names a file or a folder in the space, and so the kinds a
+ *  rename or a move has to carry along. A search and a graph view point at no file,
+ *  and a group's path is a name of its own. */
+const POINTS_AT_A_FILE: ReadonlySet<BookmarkKind> = new Set(['note', 'folder', 'heading', 'block'])
 
 export interface Bookmark {
   kind: BookmarkKind
@@ -321,6 +327,49 @@ export class Bookmarks {
           : one,
       ),
     )
+  }
+
+  /** A file or a folder that has been renamed or moved, with everything under it:
+   *  every bookmark of it, of a heading or a block in it, or of anything inside a
+   *  folder that moved goes with it. A bookmark keeps the path it was made with, so
+   *  without this one pointed at a name nothing answered to and its row was gone.
+   *
+   *  A bookmark that lands on one already held is the same bookmark twice, so only
+   *  the first of the two stays. */
+  moved(from: string, to: string) {
+    const root = this.root()
+    if (root === null || from === to) return
+
+    const was = relativeTo(root, from)
+    const now = relativeTo(root, to)
+    const held = this.of(root)
+    const next = held.map((one) => {
+      if (!POINTS_AT_A_FILE.has(one.kind)) return one
+
+      // A block bookmark names its note and the block together; the note is the
+      // part in front of the `#`. See forBlock.
+      const cut = one.kind === 'block' ? one.path.indexOf('#') : -1
+      const file = cut === -1 ? one.path : one.path.slice(0, cut)
+      if (file !== was && !file.startsWith(`${was}/`)) return one
+
+      return { ...one, path: now + one.path.slice(was.length) }
+    })
+
+    if (sameList(held, next)) return
+    this.put(
+      root,
+      next.filter((one, at) => next.findIndex((other) => sameBookmark(one, other)) === at),
+    )
+  }
+
+  /** A space folder that has been renamed, which re-keys its list at once: it is
+   *  kept under the root, and the root is what moved. */
+  spaceMoved(from: string, to: string) {
+    const kept = this.spaces[from]
+    if (!kept || from === to) return
+
+    this.spaces = { ...without(this.spaces, from), [to]: kept }
+    this.write()
   }
 
   /** Whether a group holds another, however far down. */

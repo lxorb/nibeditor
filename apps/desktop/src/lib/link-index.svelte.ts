@@ -100,6 +100,13 @@ const CACHED = 24
  *  resolver keeps and for the same reasons; see `OWN` in wikilink/notes.ts. */
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
+/** Whether the index reads what a file says rather than only knowing its name: a
+ *  note, and the files that link out of themselves or carry a mark of their own -
+ *  a canvas, a page note and a website. See `noteSaved`, which is what reads them. */
+function readsWords(path: string): boolean {
+  return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
+}
+
 /** A path as something to compare: no extension of our own, folded case. The same
  *  reading `resolveNote` does, so a candidate here is a candidate there. */
 function comparable(path: string): string {
@@ -113,6 +120,14 @@ function namesOf(note: { path: string; aliases: readonly string[] }): ReadonlySe
   return new Set([comparable(nameOf(note.path)), ...folded])
 }
 
+/** What the index holds of a space: its notes as they were read, and the path of
+ *  every other file in it. What a change made during a scan is made over again;
+ *  see `since`. */
+interface Held {
+  notes: ScannedNote[]
+  files: readonly string[]
+}
+
 class Links {
   /** Every note of the open space as the last scan read it.
    *
@@ -124,7 +139,7 @@ class Links {
    *  objects reactive that never change. The same trade the syncing loop makes with
    *  its mirrors, for the same reason; see sync.svelte.ts. */
   private notes = $state.raw<ScannedNote[]>([])
-  private files = $state.raw<string[]>([])
+  private files = $state.raw<readonly string[]>([])
   /** Which space the index is of, so a listing for another one is dropped. */
   private root: string | null = null
   /** Bumped whenever the index changed. The editor is handed a new object only
@@ -297,11 +312,18 @@ class Links {
     // scan - which on a launch is whatever a space opens onto and whatever the
     // account has just brought down - and nothing reads a space twice, so they
     // stayed dropped until the next one. See `edit`.
-    this.notes = this.since.reduce((notes, again) => again(notes), found?.notes ?? [])
+    //
+    // The files the same way. They used to be simply both lists - what the walk
+    // found and what was put there while it walked - which held while a file could
+    // only arrive; a file deleted or renamed during the scan came back under its
+    // old name with the rows.
+    const held = this.since.reduce<Held>((now, again) => again(now), {
+      notes: found?.notes ?? [],
+      files: found?.files ?? [],
+    })
+    this.notes = held.notes
+    this.files = held.files
     this.since = []
-    // A file has no words to be stale, so the two lists are simply both true: what
-    // the walk found, and what was put there while it walked.
-    this.files = [...new Set([...(found?.files ?? []), ...this.files])].sort()
     this.changed()
     landed()
   }
@@ -319,7 +341,7 @@ class Links {
    *  Empty except for the length of one scan, which is the first second of a
    *  space; the one piece of state here that lives for the length of a round trip,
    *  the way `coming` does in workspace/open.ts. */
-  private since: ((notes: readonly ScannedNote[]) => ScannedNote[])[] = []
+  private since: ((held: Held) => Held)[] = []
 
   /** One change to what the index holds, which is also what a change *is*: a new
    *  list of notes made out of the one there was.
@@ -329,9 +351,22 @@ class Links {
    *  index learns about one note goes through here, so there is nothing to
    *  remember at a call site and nothing to forget at a new one. */
   private edit(change: (notes: readonly ScannedNote[]) => ScannedNote[]) {
-    if (this.scanning) this.since.push(change)
+    if (this.scanning) this.since.push((held) => ({ ...held, notes: change(held.notes) }))
 
     this.notes = change(this.notes)
+    this.changed()
+  }
+
+  /** The same for the files beside the notes: a change to the list, made now and
+   *  again over what a scan in the air brings back. A change that finds nothing to
+   *  do hands back the list it was given, and then nothing is redrawn. */
+  private editFiles(change: (files: readonly string[]) => readonly string[]) {
+    if (this.scanning) this.since.push((held) => ({ ...held, files: change(held.files) }))
+
+    const files = change(this.files)
+    if (files === this.files) return
+
+    this.files = files
     this.changed()
   }
 
@@ -525,6 +560,12 @@ class Links {
     const relative = this.relative(path)
     if (!relative) return
 
+    // A file that was written is a file that is there, and whatever is not a note
+    // is listed among the files as well - which is where `[[Docs.url]]` is
+    // answered. A website just converted, or put back, was missing from them until
+    // the next scan.
+    if (!isMarkdownPath(relative)) this.fileAdded(relative)
+
     // A page note too: its pages are file nodes naming the PDF behind them, which
     // is a link out of it exactly as a canvas's cards are.
     if (isCanvasTarget(relative) || isPagesTarget(relative)) {
@@ -584,16 +625,15 @@ class Links {
     })
   }
 
-  /** One scanned file into the index, replacing whatever was there under its
+  /** Scanned files into the index, each replacing whatever was there under its
    *  path. */
-  private put(scanned: ScannedNote) {
-    this.edit((notes) => {
-      const at = notes.findIndex((note) => note.path === scanned.path)
-
-      return at === -1
-        ? [...notes, scanned]
-        : [...notes.slice(0, at), scanned, ...notes.slice(at + 1)]
-    })
+  private put(...scanned: ScannedNote[]) {
+    this.edit((notes) =>
+      scanned.reduce<ScannedNote[]>((held, one) => {
+        const at = held.findIndex((note) => note.path === one.path)
+        return at === -1 ? [...held, one] : [...held.slice(0, at), one, ...held.slice(at + 1)]
+      }, notes.slice()),
+    )
   }
 
   /** A note that has gone. */
@@ -605,12 +645,51 @@ class Links {
     // that: nothing here to take away, and a row for it on its way back. Without
     // the second half a note deleted in a space's first second came back with the
     // rows and stayed in `[[` until the next launch.
-    const gone = (notes: readonly ScannedNote[]) =>
-      notes.filter((note) => note.path !== relative && !note.path.startsWith(`${relative}/`))
+    const inside = (one: string) => one === relative || one.startsWith(`${relative}/`)
+    const gone = (notes: readonly ScannedNote[]) => notes.filter((note) => !inside(note.path))
+
+    // And the files, which is where a link spelled with its ending is answered:
+    // `[[Docs.url]]` and `[[report.pdf]]` went on resolving to a file that was no
+    // longer there until the next scan.
+    this.editFiles((files) => (files.some(inside) ? files.filter((one) => !inside(one)) : files))
 
     if (!this.scanning && gone(this.notes).length === this.notes.length) return
 
     this.edit(gone)
+  }
+
+  /** A file or a folder that has come back: a delete undone, or something put back
+   *  out of Recently deleted. Read in the way the scan of the space would have read
+   *  it, so a link to anything in it resolves again at once rather than after the
+   *  next launch.
+   *
+   *  A folder is scanned on its own - `scan_links` takes any folder in a space - and
+   *  one file is read if the index reads its words and listed if it does not. The
+   *  path is where it came back to, which the trash may have had to change. */
+  async cameBack(path: string, folder: boolean) {
+    const relative = this.relative(path)
+    if (!relative) return
+
+    // The index may be of another space by the time the read comes back.
+    const mine = this.scans
+
+    if (!folder) {
+      if (!readsWords(relative)) {
+        this.fileAdded(relative)
+        return
+      }
+
+      const content = await invoke<string>('read_note', { path }).catch(() => null)
+      if (content !== null && this.scans === mine) this.noteSaved(path, content)
+      return
+    }
+
+    const found = await invoke<SpaceLinks>('scan_links', { root: path }).catch(() => null)
+    if (!found || this.scans !== mine) return
+
+    const within = (one: string) => `${relative}/${one}`
+    this.fileAdded(...found.files.map(within))
+    this.put(...found.notes.map((note) => ({ ...note, path: within(note.path) })))
   }
 
   /** A note or a folder that has moved. The links inside the notes that moved
@@ -628,9 +707,9 @@ class Links {
     const moved = (path: string) =>
       path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path
 
-    if (this.files.some((path) => moved(path) !== path)) {
-      this.files = this.files.map(moved).sort()
-    }
+    this.editFiles((files) =>
+      files.some((path) => moved(path) !== path) ? files.map(moved).sort() : files,
+    )
 
     this.edit((notes) =>
       notes.map((note) => {
@@ -1183,11 +1262,11 @@ class Links {
    *  player. So one path, appended, kept in the order a walk would have found it in.
    *
    *  Relative to the space's root, which is how a walk reports one. */
-  fileAdded(relative: string) {
-    if (!relative || this.files.includes(relative)) return
-
-    this.files = [...this.files, relative].sort()
-    this.changed()
+  fileAdded(...relative: string[]) {
+    this.editFiles((files) => {
+      const fresh = relative.filter((one) => one && !files.includes(one))
+      return fresh.length ? [...files, ...fresh].sort() : files
+    })
   }
 }
 

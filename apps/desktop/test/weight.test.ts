@@ -353,8 +353,15 @@ function holds(tail: string): boolean {
  *  opens of one file one document. Without it a note could be open twice over, each
  *  copy reporting its own words as that file's, and whichever saved last won - one
  *  person's writing under another note's name, on disk and on the account. Measured
- *  3,160,756; this is that plus one percent. */
-const BUDGET = 3_277_000
+ *  3,160,756; this is that plus one percent.
+ *
+ *  Raised 2026-09-27, to 3,300,000. Main was already over the old ceiling before this
+ *  raise, at 3,283,539: the work since the last one landed a few kilobytes at a time
+ *  and nobody's gate ran in between. The round that raised it adds 6,461 bytes, all
+ *  of it in stores that are in this graph by nature - the link index, the bookmarks and
+ *  the workspace - for a rename, a move, a delete and a restore that now tell the
+ *  bookmarks and the index's list of files. Measured 3,290,000. */
+const BUDGET = 3_300_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

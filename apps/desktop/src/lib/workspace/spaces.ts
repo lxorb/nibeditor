@@ -161,6 +161,7 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   ws.arranged.spaceMoved(space.root, renamed.path)
   ws.graphSettings.spaceMoved(space.root, renamed.path)
   ws.excluded.spaceMoved(space.root, renamed.path)
+  ws.bookmarks.spaceMoved(space.root, renamed.path)
 
   space.name = renamed.name
   space.root = renamed.path

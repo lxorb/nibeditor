@@ -531,3 +531,88 @@ describe('a bookmark of one graph view', () => {
     expect(marks.list[0]?.view).toBe('{"filter":"tag:work"}')
   })
 })
+
+/** A bookmark keeps the path it was made with, so a file renamed or moved took its
+ *  row with it: the bookmark pointed at a name nothing answered to, and the list
+ *  drew nothing for it. */
+describe('a file that changes its name', () => {
+  test('takes its bookmark with it, and the group it sits in', () => {
+    const marks = store()
+    marks.toggle(note('Plan.md'))
+    const group = marks.addGroup('Work')
+    if (!group) throw new Error('no group')
+    marks.moveInto(note('Plan.md'), group.path)
+
+    marks.moved('/Notes/Plan.md', '/Notes/Roadmap.md')
+
+    expect(marks.list).toEqual([{ ...note('Roadmap.md'), parent: group.path }, group])
+  })
+
+  test('a folder takes everything under it, headings and blocks included', () => {
+    const marks = store()
+    marks.toggle(folder('Work'))
+    marks.toggle(note('Work/Plan.md'))
+    marks.toggle(heading('Work/Deep/Plan.md', 'Why'))
+    marks.toggle(marks.forBlock('Work/Plan.md', '#^a1b2c3', 'first words'))
+    marks.toggle(note('Working.md'))
+    marks.toggle(search('Work'))
+
+    marks.moved('/Notes/Work', '/Notes/Archive/Work')
+
+    expect(marks.list.map((one) => one.path)).toEqual([
+      'Archive/Work',
+      'Archive/Work/Plan.md',
+      'Archive/Work/Deep/Plan.md',
+      'Archive/Work/Plan.md#^a1b2c3',
+      'Working.md',
+      '',
+    ])
+  })
+
+  test('and back again, which is what undoing the rename asks for', () => {
+    const marks = store()
+    marks.toggle(note('Plan.md'))
+
+    marks.moved('/Notes/Plan.md', '/Notes/Roadmap.md')
+    marks.moved('/Notes/Roadmap.md', '/Notes/Plan.md')
+
+    expect(marks.list).toEqual([note('Plan.md')])
+  })
+
+  test('is offered to the account, and only when something moved', async () => {
+    const marks = store()
+    marks.toggle(note('Plan.md'))
+    await marks.offered
+    pushed.length = 0
+
+    marks.moved('/Notes/Other.md', '/Notes/Else.md')
+    await marks.offered
+    expect(pushed).toEqual([])
+
+    marks.moved('/Notes/Plan.md', '/Notes/Roadmap.md')
+    await marks.offered
+    expect(pushed).toEqual(['/Notes'])
+  })
+
+  /** A bookmark left behind by a file that was deleted, and a file renamed onto its
+   *  name: one bookmark, not the same one twice. */
+  test('landing on a bookmark already held leaves one of them', () => {
+    const marks = store()
+    marks.toggle(note('Roadmap.md'))
+    marks.toggle(note('Plan.md'))
+
+    marks.moved('/Notes/Plan.md', '/Notes/Roadmap.md')
+
+    expect(marks.list).toEqual([note('Roadmap.md')])
+  })
+
+  test('a space renamed takes its whole list along', () => {
+    const marks = store('/Notes')
+    marks.toggle(note('Plan.md'))
+
+    marks.spaceMoved('/Notes', '/Studio')
+
+    expect(marks.of('/Studio')).toEqual([note('Plan.md')])
+    expect(marks.of('/Notes')).toEqual([])
+  })
+})

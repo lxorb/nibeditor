@@ -9,6 +9,7 @@
 import { account } from './account.svelte'
 import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
+import { links } from './link-index.svelte'
 import { prompt } from './prompt.svelte'
 import { sync } from './sync.svelte'
 import { folderOf } from './space-paths'
@@ -113,11 +114,14 @@ class Trash {
   async restore(item: TrashItem) {
     await this.act(async () => {
       if (item.source === 'device') {
-        await invoke('restore_trash', { id: item.ref })
+        const at = await invoke<string>('restore_trash', { id: item.ref })
         // The undo entry that would have done the same has nothing left to do.
         workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
+        // And the links to what came back resolve again at once. A space is read
+        // whole when it is opened, like any other.
+        if (item.kind !== 'space') await links.cameBack(at, item.kind === 'folder')
         return
       }
 

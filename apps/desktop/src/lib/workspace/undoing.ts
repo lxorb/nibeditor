@@ -11,12 +11,8 @@
  *  tested by handing it a stand-in store rather than a workspace. */
 
 import { links } from '../link-index.svelte'
-import { paperMoved } from '../pdf/papers'
 import { nameOf } from '../space-paths'
 import { invoke } from '../tauri'
-import type { Arranged } from './arranged.svelte'
-import type { Excluded } from './excluded.svelte'
-import type { FolderIcons } from './folder-icons.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
 import type { Positions } from './positions'
 import type { FileAction, FileActions } from './undo.svelte'
@@ -26,14 +22,15 @@ export interface PutsBack {
   readonly undone: FileActions
   readonly tabs: Tab[]
   readonly positions: Positions
-  readonly folderIcons: FolderIcons
-  readonly arranged: Arranged
-  readonly excluded: Excluded
   /** The document a file is open as; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null
   close(id: string): void
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
+  /** Everything kept under a path told it is another now; see `pathMoved` in
+   *  workspace.svelte.ts. One call rather than the stores it tells, so a store that
+   *  starts keeping files by path is told here by being told there. */
+  pathMoved(from: string, to: string): void
   /** The account told which note moved, so it keeps the id it has always had; see
    *  `movedOnAccount` in workspace.svelte.ts. An undo is a rename like any other
    *  and owes the same sentence. */
@@ -50,7 +47,8 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
   try {
     switch (action.kind) {
       case 'delete':
-        await putBack(action)
+        // And the index reads it again, so the links to it resolve at once.
+        await links.cameBack(await putBack(action), false)
         break
       case 'merge':
         await unmerge(ws, action)
@@ -104,14 +102,15 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
   }
 }
 
-/** A deleted note back where it was. Out of the device's trash when it went
- *  there, and from the snapshot taken on the way out otherwise.
+/** A deleted note back where it was, answering with where that is. Out of the
+ *  device's trash when it went there - which moves it aside when something has
+ *  taken its name meanwhile - and from the snapshot taken on the way out otherwise.
  *
  *  The trash can refuse: the sweep runs daily and clears anything past its
  *  fourteen days, and Recently deleted can purge an entry by hand. The
  *  snapshot is still here either way, so it stands in rather than leaving
  *  the note gone with nothing said. */
-async function putBack(action: Extract<FileAction, { kind: 'delete' }>) {
+async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
   if (!action.trashId) {
     // Nothing kept and nothing in the trash, which is what a PDF deleted while
     // signed in looks like. Writing nothing would leave an empty file where the
@@ -119,17 +118,16 @@ async function putBack(action: Extract<FileAction, { kind: 'delete' }>) {
     if (!action.content) throw new Error('there is nothing to put back')
 
     await invoke('write_note', { path: action.path, content: action.content })
-    return
+    return action.path
   }
 
-  const restored = await invoke('restore_trash', { id: action.trashId })
-    .then(() => true)
-    .catch(() => false)
+  const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
 
-  if (restored) return
+  if (restored !== null) return restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
   await invoke('write_note', { path: action.path, content: action.content })
+  return action.path
 }
 
 /** Puts a replacement back: every note that was touched says what it said,
@@ -159,11 +157,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
   // back has to put those back too, which is the same rewrite the other way
   // round - and, again, before the index is told the note moved.
   if (action.rewrote) await ws.retarget(action.to, action.from)
-  links.notesMoved(action.to, action.from)
-  paperMoved(action.to, action.from)
-  ws.folderIcons.moved(action.to, action.from)
-  ws.arranged.moved(action.to, action.from)
-  ws.excluded.moved(action.to, action.from)
+  ws.pathMoved(action.to, action.from)
   await ws.movedOnAccount(action.to, action.from)
 }
 

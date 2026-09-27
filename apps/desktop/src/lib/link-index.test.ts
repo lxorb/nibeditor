@@ -49,9 +49,18 @@ vi.mock('./tauri', async (importOriginal) => ({
         // meanwhile is news the scan cannot have.
         const scan = holding.get(stringOf(args, 'root'))?.shift()
         if (!scan) {
+          // Any folder in the space can be read on its own, the way the desktop's
+          // `scan_links` reads one: the rows are relative to that folder.
+          const root = stringOf(args, 'root')
+          const folder = root.startsWith(`${ROOT}/`) ? `${root.slice(ROOT.length + 1)}/` : ''
+          const inside = (one: string) => one.startsWith(folder)
+          const own = (one: string) => one.slice(folder.length)
+
           return {
-            notes: Object.entries(notes).map(([one, content]) => scanNote(one, content)),
-            files,
+            notes: Object.entries(notes)
+              .filter(([one]) => inside(one))
+              .map(([one, content]) => scanNote(own(one), content)),
+            files: files.filter(inside).map(own),
           }
         }
 
@@ -148,10 +157,11 @@ async function space(contents: Record<string, string>, others: string[] = []) {
 async function opening(
   contents: Record<string, string>,
   root = ROOT,
+  others: string[] = [],
 ): Promise<{ land: () => Promise<void> }> {
   if (root === ROOT) {
     notes = { ...contents }
-    files = []
+    files = [...others]
     written = []
     snapshots = []
     reads = 0
@@ -165,7 +175,7 @@ async function opening(
   queue.push({
     rows: {
       notes: Object.entries(contents).map(([one, content]) => scanNote(one, content)),
-      files: [],
+      files: [...others],
     },
     gate,
     taken,
@@ -448,6 +458,22 @@ describe('a space still being read', () => {
     await scan.land()
 
     expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toEqual(['deep/One.md'])
+  })
+
+  /** A file is news the rows cannot hold as much as a note is: one deleted or
+   *  renamed while they were in the air came back with them under the name it no
+   *  longer has, and a link to it went on resolving. */
+  test('does not bring back a file deleted or moved while the rows were in the air', async () => {
+    const scan = await opening({ 'One.md': 'see [[report.pdf]]' }, ROOT, [
+      'Docs.url',
+      'Papers/report.pdf',
+    ])
+
+    links.noteGone(at('Docs.url'))
+    links.notesMoved(at('Papers'), at('Archive'))
+    await scan.land()
+
+    expect(links.index(null).files).toEqual(['Archive/report.pdf'])
   })
 
   test('keeps a file put beside the notes while the rows were in the air', async () => {
@@ -740,6 +766,72 @@ describe('renaming a note rewrites the links to it', () => {
   test('a note whose name did not change is left alone', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': '[[Plan]]' })
     expect(await links.retarget(at('Plan.md'), at('Plan.md'), ROOT)).toBe(0)
+  })
+})
+
+/** A link spelled with its ending - `[[Docs.url]]`, `[[report.pdf]]` - is answered
+ *  from the files beside the notes, and a delete used to leave them alone: the link
+ *  went on resolving to a file that was no longer there until the next scan. */
+describe('a file deleted and put back', () => {
+  const SITE = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
+
+  test('stops answering a link the moment it goes', async () => {
+    await space({ 'Docs.url': SITE, 'One.md': 'see [[Docs.url]]' }, [
+      'Docs.url',
+      'Papers/report.pdf',
+    ])
+
+    links.noteGone(at('Docs.url'))
+    links.noteGone(at('Papers'))
+
+    expect(links.fileNamed('Docs.url')).toBeNull()
+    expect(links.fileNamed('report.pdf')).toBeNull()
+    expect(links.index(null).files).toEqual([])
+  })
+
+  test('answers again the moment it is back, by its name and by its ending', async () => {
+    await space({ 'Docs.url': SITE, 'One.md': 'see [[Docs]] and [[Docs.url]]' }, ['Docs.url'])
+    links.noteGone(at('Docs.url'))
+    expect(links.backlinks(at('Docs.url'))).toEqual([])
+
+    await links.cameBack(at('Docs.url'), false)
+
+    expect(links.fileNamed('Docs.url')).toBe('Docs.url')
+    expect(links.backlinks(at('Docs.url')).map((one) => one.path)).toEqual(['One.md', 'One.md'])
+  })
+
+  test('a file whose words the index does not read is listed and not read', async () => {
+    await space({ 'One.md': 'see [[report.pdf]]' }, ['report.pdf'])
+    links.noteGone(at('report.pdf'))
+    reads = 0
+
+    await links.cameBack(at('report.pdf'), false)
+
+    expect(links.fileNamed('report.pdf')).toBe('report.pdf')
+    expect(reads).toBe(0)
+  })
+
+  test('a folder brings everything in it back, notes and files', async () => {
+    await space({ 'Papers/Notes.md': '# Notes', 'One.md': 'see [[Notes]] and [[report.pdf]]' }, [
+      'Papers/report.pdf',
+    ])
+    links.noteGone(at('Papers'))
+    expect(links.backlinks(at('Papers/Notes.md'))).toEqual([])
+
+    await links.cameBack(at('Papers'), true)
+
+    expect(links.fileNamed('report.pdf')).toBe('Papers/report.pdf')
+    expect(links.backlinks(at('Papers/Notes.md')).map((one) => one.path)).toEqual(['One.md'])
+  })
+
+  /** A website converted from a note, or written for the first time, is a file the
+   *  space holds from the moment it is written, not from the next scan. */
+  test('a website written is a file there to link to', async () => {
+    await space({ 'One.md': 'see [[Docs.url]]' })
+
+    links.noteSaved(at('Docs.url'), SITE)
+
+    expect(links.fileNamed('Docs.url')).toBe('Docs.url')
   })
 })
 
