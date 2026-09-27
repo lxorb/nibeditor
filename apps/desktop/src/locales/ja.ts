@@ -1428,6 +1428,7 @@ export const ja: Dictionary = {
   'Show in folder': 'フォルダに表示',
   'Show in Finder': 'Finderで表示',
   'Reveal in Finder': 'Finderで表示',
+  'In iCloud': 'iCloud上',
   Failed: '失敗',
   Camera: 'カメラ',
   Microphone: 'マイク',

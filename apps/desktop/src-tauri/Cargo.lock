@@ -2435,6 +2435,7 @@ dependencies = [
  "flate2",
  "getrandom 0.3.4",
  "keyring",
+ "objc2-foundation",
  "rusqlite",
  "serde",
  "serde_json",

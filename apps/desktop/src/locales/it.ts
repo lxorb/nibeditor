@@ -1483,6 +1483,7 @@ export const it: Dictionary = {
   'Show in folder': 'Mostra nella cartella',
   'Show in Finder': 'Mostra nel Finder',
   'Reveal in Finder': 'Mostra nel Finder',
+  'In iCloud': 'In iCloud',
   Failed: 'Non riuscito',
   Camera: 'Videocamera',
   Microphone: 'Microfono',

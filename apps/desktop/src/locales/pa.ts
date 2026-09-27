@@ -1439,6 +1439,7 @@ export const pa: Dictionary = {
   'Show in folder': 'ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ',
   'Show in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
   'Reveal in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
+  'In iCloud': 'iCloud ਵਿੱਚ',
   Failed: 'ਅਸਫਲ',
   Camera: 'ਕੈਮਰਾ',
   Microphone: 'ਮਾਈਕ੍ਰੋਫੋਨ',

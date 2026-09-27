@@ -1472,6 +1472,7 @@ export const ptPT: Dictionary = {
   'Show in folder': 'Mostrar na pasta',
   'Show in Finder': 'Mostrar no Finder',
   'Reveal in Finder': 'Mostrar no Finder',
+  'In iCloud': 'No iCloud',
   Failed: 'Falhou',
   Camera: 'Câmara',
   Microphone: 'Microfone',

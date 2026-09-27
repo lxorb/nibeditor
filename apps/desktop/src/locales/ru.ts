@@ -1500,6 +1500,7 @@ export const ru: Dictionary = {
   'Show in folder': 'Показать в папке',
   'Show in Finder': 'Показать в Finder',
   'Reveal in Finder': 'Показать в Finder',
+  'In iCloud': 'В iCloud',
   Failed: 'Ошибка',
   Camera: 'Камера',
   Microphone: 'Микрофон',

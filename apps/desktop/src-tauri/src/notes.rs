@@ -12,6 +12,9 @@ use std::io::Read as _;
 use std::path::Path;
 use tauri::AppHandle;
 
+#[cfg(any(target_os = "macos", test))]
+pub mod icloud;
+
 use crate::clock;
 use crate::paths::{
     cannot, chosen, drop_highlights, in_spaces, made, move_highlights, note_from_outside,
@@ -24,6 +27,9 @@ use crate::paths::{
 #[tauri::command(async)]
 pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
     let target = chosen(&path)?;
+    // A note iCloud took off this Mac is brought back before it is read.
+    #[cfg(target_os = "macos")]
+    icloud::fetched(&app, &target)?;
     let body = fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))?;
 
     if outside_spaces(&app, &target) {

@@ -1436,6 +1436,7 @@ export const te: Dictionary = {
   'Show in folder': 'ఫోల్డర్‌లో చూపించు',
   'Show in Finder': 'Finderలో చూపించు',
   'Reveal in Finder': 'Finderలో చూపించు',
+  'In iCloud': 'iCloudలో',
   Failed: 'విఫలమైంది',
   Camera: 'కెమెరా',
   Microphone: 'మైక్రోఫోన్',

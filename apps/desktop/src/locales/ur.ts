@@ -1431,6 +1431,7 @@ export const ur: Dictionary = {
   'Show in folder': 'فولڈر میں دکھائیں',
   'Show in Finder': 'Finder میں دکھائیں',
   'Reveal in Finder': 'Finder میں دکھائیں',
+  'In iCloud': 'iCloud میں',
   Failed: 'ناکام',
   Camera: 'کیمرا',
   Microphone: 'مائیکروفون',

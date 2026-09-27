@@ -1456,6 +1456,7 @@ export const ta: Dictionary = {
   'Show in folder': 'கோப்புறையில் காட்டு',
   'Show in Finder': 'Finder-இல் காட்டு',
   'Reveal in Finder': 'Finder-இல் காட்டு',
+  'In iCloud': 'iCloud-இல்',
   Failed: 'தோல்வி',
   Camera: 'கேமரா',
   Microphone: 'மைக்ரோஃபோன்',

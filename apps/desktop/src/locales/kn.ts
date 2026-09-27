@@ -1446,6 +1446,7 @@ export const kn: Dictionary = {
   'Show in folder': 'ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸಿ',
   'Show in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
   'Reveal in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
+  'In iCloud': 'iCloud ನಲ್ಲಿ',
   Failed: 'ವಿಫಲವಾಗಿದೆ',
   Camera: 'ಕ್ಯಾಮರಾ',
   Microphone: 'ಮೈಕ್ರೋಫೋನ್',

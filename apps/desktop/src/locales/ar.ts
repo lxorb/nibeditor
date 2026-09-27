@@ -1518,6 +1518,7 @@ export const ar: Dictionary = {
   'Show in folder': 'إظهار في المجلد',
   'Show in Finder': 'إظهار في Finder',
   'Reveal in Finder': 'إظهار في Finder',
+  'In iCloud': 'في iCloud',
   Failed: 'فشل',
   Camera: 'الكاميرا',
   Microphone: 'الميكروفون',

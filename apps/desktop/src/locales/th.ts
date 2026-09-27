@@ -1403,6 +1403,7 @@ export const th: Dictionary = {
   'Show in folder': 'แสดงในโฟลเดอร์',
   'Show in Finder': 'แสดงใน Finder',
   'Reveal in Finder': 'แสดงใน Finder',
+  'In iCloud': 'อยู่ใน iCloud',
   Failed: 'ล้มเหลว',
   Camera: 'กล้องถ่ายรูป',
   Microphone: 'ไมโครโฟน',

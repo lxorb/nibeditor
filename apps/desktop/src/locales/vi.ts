@@ -1421,6 +1421,7 @@ export const vi: Dictionary = {
   'Show in folder': 'Hiển thị trong thư mục',
   'Show in Finder': 'Hiển thị trong Finder',
   'Reveal in Finder': 'Hiển thị trong Finder',
+  'In iCloud': 'Trên iCloud',
   Failed: 'Không thành công',
   Camera: 'Camera',
   Microphone: 'Micrô',

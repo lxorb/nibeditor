@@ -1435,6 +1435,7 @@ export const fa: Dictionary = {
   'Show in folder': 'نمایش در پوشه',
   'Show in Finder': 'نمایش در Finder',
   'Reveal in Finder': 'نمایش در Finder',
+  'In iCloud': 'در iCloud',
   Failed: 'ناموفق',
   Camera: 'دوربین',
   Microphone: 'میکروفن',

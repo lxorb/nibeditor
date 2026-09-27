@@ -1411,6 +1411,7 @@ export const ko: Dictionary = {
   'Show in folder': '폴더에서 보기',
   'Show in Finder': 'Finder에서 보기',
   'Reveal in Finder': 'Finder에서 보기',
+  'In iCloud': 'iCloud에 있음',
   Failed: '실패',
   Camera: '카메라',
   Microphone: '마이크',

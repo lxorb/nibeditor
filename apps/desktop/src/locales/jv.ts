@@ -1427,6 +1427,7 @@ export const jv: Dictionary = {
   'Show in folder': 'Tampilake ing folder',
   'Show in Finder': 'Tampilake ing Finder',
   'Reveal in Finder': 'Tampilake ing Finder',
+  'In iCloud': 'Ing iCloud',
   Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

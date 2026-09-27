@@ -127,6 +127,16 @@ window-vibrancy = "0.6"
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# Asking iCloud for a note it has taken off the Mac, the call Finder makes; see
+# notes/icloud.rs. Already in the lock file as something the window is built on,
+# and only the four classes that call needs.
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSError",
+  "NSFileManager",
+  "NSString",
+  "NSURL",
+] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

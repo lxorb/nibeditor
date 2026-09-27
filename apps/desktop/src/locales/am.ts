@@ -1414,6 +1414,7 @@ export const am: Dictionary = {
   'Show in folder': 'በአቃፊ ውስጥ አሳይ',
   'Show in Finder': 'በFinder ውስጥ አሳይ',
   'Reveal in Finder': 'በFinder ውስጥ አሳይ',
+  'In iCloud': 'በiCloud ውስጥ',
   Failed: 'አልተሳካም',
   Camera: 'ካሜራ',
   Microphone: 'ማይክሮፎን',

@@ -1465,6 +1465,7 @@ export const fil: Dictionary = {
   'Show in folder': 'Ipakita sa folder',
   'Show in Finder': 'Ipakita sa Finder',
   'Reveal in Finder': 'Ipakita sa Finder',
+  'In iCloud': 'Nasa iCloud',
   Failed: 'Nabigo',
   Camera: 'Camera',
   Microphone: 'Mikropono',

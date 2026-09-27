@@ -1460,6 +1460,7 @@ export const ha: Dictionary = {
   'Show in folder': 'Nuna a cikin babban fayil',
   'Show in Finder': 'Nuna a cikin Finder',
   'Reveal in Finder': 'Nuna a cikin Finder',
+  'In iCloud': 'A cikin iCloud',
   Failed: 'Ya kasa',
   Camera: 'Kamara',
   Microphone: 'Makirufo',

@@ -1434,6 +1434,7 @@ export const mr: Dictionary = {
   'Show in folder': 'फोल्डरमध्ये दाखवा',
   'Show in Finder': 'Finder मध्ये दाखवा',
   'Reveal in Finder': 'Finder मध्ये दाखवा',
+  'In iCloud': 'iCloud मध्ये',
   Failed: 'अयशस्वी',
   Camera: 'कॅमेरा',
   Microphone: 'मायक्रोफोन',

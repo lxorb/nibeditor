@@ -1397,6 +1397,7 @@ export const zhHantHK: Dictionary = {
   'Show in folder': '在資料夾中顯示',
   'Show in Finder': '在 Finder 中顯示',
   'Reveal in Finder': '在 Finder 中顯示',
+  'In iCloud': '在 iCloud 中',
   Failed: '失敗',
   Camera: '相機',
   Microphone: '麥克風',

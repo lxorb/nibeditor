@@ -1473,6 +1473,7 @@ export const de: Dictionary = {
   'Show in folder': 'Im Ordner zeigen',
   'Show in Finder': 'Im Finder anzeigen',
   'Reveal in Finder': 'Im Finder anzeigen',
+  'In iCloud': 'In iCloud',
   Failed: 'Fehlgeschlagen',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

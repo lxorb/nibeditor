@@ -1397,6 +1397,7 @@ export const zhHans: Dictionary = {
   'Show in folder': '在文件夹中显示',
   'Show in Finder': '在访达中显示',
   'Reveal in Finder': '在访达中显示',
+  'In iCloud': '在 iCloud 中',
   Failed: '失败',
   Camera: '摄像头',
   Microphone: '麦克风',

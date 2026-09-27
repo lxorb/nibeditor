@@ -1431,6 +1431,7 @@ export const bn: Dictionary = {
   'Show in folder': 'ফোল্ডারে দেখান',
   'Show in Finder': 'Finder-এ দেখান',
   'Reveal in Finder': 'Finder-এ দেখান',
+  'In iCloud': 'iCloud-এ',
   Failed: 'ব্যর্থ হয়েছে',
   Camera: 'ক্যামেরা',
   Microphone: 'মাইক্রোফোন',

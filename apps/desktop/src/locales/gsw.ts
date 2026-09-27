@@ -1444,6 +1444,7 @@ export const gsw: Dictionary = {
   'Show in folder': 'Im Ordner zeige',
   'Show in Finder': 'Im Finder zeige',
   'Reveal in Finder': 'Im Finder zeige',
+  'In iCloud': 'Im iCloud',
   Failed: 'Fählgschlage',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

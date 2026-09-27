@@ -1436,6 +1436,7 @@ export const ps: Dictionary = {
   'Show in folder': 'په فولډر کې وښایاست',
   'Show in Finder': 'په Finder کې وښایاست',
   'Reveal in Finder': 'په Finder کې وښایاست',
+  'In iCloud': 'په iCloud کې',
   Failed: 'ناکام شو',
   Camera: 'کامره',
   Microphone: 'مایکروفون',

@@ -1459,6 +1459,7 @@ export const sw: Dictionary = {
   'Show in folder': 'Onyesha kwenye folda',
   'Show in Finder': 'Onyesha kwenye Finder',
   'Reveal in Finder': 'Onyesha kwenye Finder',
+  'In iCloud': 'Kwenye iCloud',
   Failed: 'Imeshindwa',
   Camera: 'Kamera',
   Microphone: 'Maikrofoni',

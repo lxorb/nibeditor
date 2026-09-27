@@ -1495,6 +1495,7 @@ export const uk: Dictionary = {
   'Show in folder': 'Показати в папці',
   'Show in Finder': 'Показати у Finder',
   'Reveal in Finder': 'Показати у Finder',
+  'In iCloud': 'В iCloud',
   Failed: 'Помилка',
   Camera: 'Камера',
   Microphone: 'Мікрофон',

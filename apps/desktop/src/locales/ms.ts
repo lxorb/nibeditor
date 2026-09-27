@@ -1432,6 +1432,7 @@ export const ms: Dictionary = {
   'Show in folder': 'Tunjukkan dalam folder',
   'Show in Finder': 'Tunjukkan dalam Finder',
   'Reveal in Finder': 'Tunjukkan dalam Finder',
+  'In iCloud': 'Dalam iCloud',
   Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

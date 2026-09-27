@@ -1421,6 +1421,7 @@ export const my: Dictionary = {
   'Show in folder': 'ဖိုင်တွဲတွင် ပြပါ',
   'Show in Finder': 'Finder တွင် ပြပါ',
   'Reveal in Finder': 'Finder တွင် ပြပါ',
+  'In iCloud': 'iCloud တွင်',
   Failed: 'မအောင်မြင်ပါ',
   Camera: 'ကင်မရာ',
   Microphone: 'မိုက်ခရိုဖုန်း',

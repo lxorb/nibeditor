@@ -1425,6 +1425,7 @@ export const gu: Dictionary = {
   'Show in folder': 'ફોલ્ડરમાં બતાવો',
   'Show in Finder': 'Finderમાં બતાવો',
   'Reveal in Finder': 'Finderમાં બતાવો',
+  'In iCloud': 'iCloudમાં',
   Failed: 'નિષ્ફળ',
   Camera: 'કૅમેરા',
   Microphone: 'માઇક્રોફોન',

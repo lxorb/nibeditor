@@ -1453,6 +1453,7 @@ export const ml: Dictionary = {
   'Show in folder': 'ഫോൾഡറിൽ കാണിക്കുക',
   'Show in Finder': 'Finder-ൽ കാണിക്കുക',
   'Reveal in Finder': 'Finder-ൽ കാണിക്കുക',
+  'In iCloud': 'iCloud-ൽ',
   Failed: 'പരാജയപ്പെട്ടു',
   Camera: 'ക്യാമറ',
   Microphone: 'മൈക്രോഫോൺ',

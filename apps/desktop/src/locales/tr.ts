@@ -1436,6 +1436,7 @@ export const tr: Dictionary = {
   'Show in folder': 'Klasörde göster',
   'Show in Finder': "Finder'da göster",
   'Reveal in Finder': "Finder'da göster",
+  'In iCloud': "iCloud'da",
   Failed: 'Başarısız',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
