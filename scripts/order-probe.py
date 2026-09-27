@@ -16,12 +16,16 @@ Windows only, and a probe build only: `--exe` must be a build made under its own
 identifier, because the notes it writes go wherever `NIB_SPACES_DIR` says and the
 settings folder it wipes is that identifier's.
 
-    pnpm --dir apps/desktop tauri build --no-bundle --config '{"identifier":"ch.emilvinu.nib.probe.order"}'
+    pnpm --dir apps/desktop tauri build --no-bundle \
+      --config '{"identifier":"ch.emilvinu.nib.probe.order","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/order-probe.py --exe "<the built exe>"
 
 An identifier of its own rather than the shared `ch.emilvinu.nib.probe`, because the
 single-instance plugin keys on it: two drives holding probe builds under one
-identifier hand off to each other, and the second one never gets a window.
+identifier hand off to each other, and the second one never gets a window. And one
+that never updates, because this drive closes the app's window - which is when an
+update installs; see scripts/probe_app.py.
 """
 
 from __future__ import annotations
@@ -40,12 +44,9 @@ import time
 import urllib.error
 import urllib.request
 
+from probe_app import close_app, main_window, refuse_updating
+
 SPACES_DIR = "NIB_SPACES_DIR"
-# What a reader does to a window. Asked for rather than killed, because a WebView
-# writes its local storage to disk on its own schedule and on a clean shutdown: a
-# process ended outright loses the last of what the app wrote down, which is exactly
-# what a drive about what survives a relaunch must not do.
-WM_CLOSE = 0x0010
 SPACE = "Order"
 SHOTS = pathlib.Path(__file__).resolve().parents[1] / "target" / "order-probe"
 
@@ -72,24 +73,6 @@ def say(words: str) -> None:
 def wrong(words: str) -> None:
     problems.append(words)
     print(f"  WRONG: {words}", flush=True)
-
-
-def windows_of(pid: int) -> list[int]:
-    """Every top-level window of one process. A Tauri window is often not the one
-    `MainWindowHandle` names, so they are enumerated."""
-    assert user32 is not None
-    found: list[int] = []
-    proto = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-
-    def each(hwnd: int, _lparam: int) -> bool:
-        owner = ctypes.c_ulong()
-        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-        if owner.value == pid and user32.IsWindowVisible(hwnd):
-            found.append(hwnd)
-        return True
-
-    user32.EnumWindows(proto(each), None)
-    return found
 
 
 def spaces_root() -> pathlib.Path:
@@ -236,14 +219,14 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     launch, and a read that arrives before the rewrite hands back a port nothing is
     listening on any more. Waiting for a port that is not the old one is what tells
     the two apart; see docs/automation.md."""
+    refuse_updating(exe)
     app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret = endpoint(identifier, 120, unlike)
 
     hwnd = 0
     until = time.perf_counter() + 120
     while time.perf_counter() < until and not hwnd:
-        found = windows_of(app.pid)
-        hwnd = found[0] if found else 0
+        hwnd = main_window(app.pid)
         time.sleep(0.2)
     if not hwnd:
         raise SystemExit("the app never showed a window")
@@ -251,10 +234,10 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     assert user32 is not None
     user32.SetWindowPos(hwnd, None, 0, 0, 1280, 900, 0x0004)
     time.sleep(2.0)
-    return app, App(port, secret), hwnd
+    return app, App(port, secret)
 
 
-def stop(app: subprocess.Popen, hwnd: int = 0) -> None:
+def stop(app: subprocess.Popen) -> None:
     """The window asked to close, and the process killed only if it will not.
 
     Asked rather than killed, because what this drive is about is what survives the
@@ -264,13 +247,9 @@ def stop(app: subprocess.Popen, hwnd: int = 0) -> None:
 
     Only ever the process this drive started, by its pid, and never by name: the
     reader's own app is running."""
-    if hwnd and user32 is not None:
-        user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
-        try:
-            app.wait(timeout=40)
-            return
-        except subprocess.TimeoutExpired:
-            say("the window would not close when it was asked, so it is being ended")
+    if close_app(app, 40):
+        return
+    say("the window would not close when it was asked, so it is being ended")
 
     subprocess.run(
         ["taskkill", "/T", "/F", "/PID", str(app.pid)], capture_output=True, check=False
@@ -350,12 +329,12 @@ def main() -> int:
 
     # The first launch only writes automation.json; `eval` is read when the socket
     # opens, so it is turned on between two launches.
-    app, first, hwnd = launch(args.exe, args.identifier)
-    stop(app, hwnd)
+    app, first = launch(args.exe, args.identifier)
+    stop(app)
     allow_eval(args.identifier)
     say(f"eval is on for the probe identifier, whose first launch listened on {first.port}")
 
-    app, talk, hwnd = launch(args.exe, args.identifier, first.port)
+    app, talk = launch(args.exe, args.identifier, first.port)
     was_on = talk.port
     arranged_order: list[str] = []
     try:
@@ -416,11 +395,11 @@ def main() -> int:
         # everything the gesture wrote; see SETTLING in workspace/arranged.svelte.ts.
         time.sleep(1.5)
     finally:
-        stop(app, hwnd)
+        stop(app)
 
     # And again, from cold: both halves of what is remembered are read off this
     # machine rather than held in a store that never went away.
-    app, talk, hwnd = launch(args.exe, args.identifier, was_on)
+    app, talk = launch(args.exe, args.identifier, was_on)
     try:
         ready(talk)
         showing(talk)
@@ -436,7 +415,7 @@ def main() -> int:
             wrong(f"the arranged order did not survive:\n  was {arranged_order}\n  now {names}")
         shot(app.pid, "order-relaunched")
     finally:
-        stop(app, hwnd)
+        stop(app)
 
     if problems:
         print("\n%d thing(s) were wrong:" % len(problems), flush=True)

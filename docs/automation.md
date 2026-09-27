@@ -295,6 +295,13 @@ A drive points it at a folder it made in the system's temp area and writes its s
 there, so a run touches nothing of anybody's. See `SPACES_DIR` and `spaces_named` in
 `src-tauri/src/paths.rs`, and `scripts/web-session-probe.py` for a drive that does it.
 
+**A probe never updates.** A build looks for a new version as it starts and runs the
+installer as it closes, over the reader's own nib; probes did exactly that on
+2026-09-27. So a probe is also built as version `99.0.0`, looking for updates at
+`https://127.0.0.1:9/latest.json`, and every drive refuses an exe of any other version.
+It closes only the app's own window, never the one tao keeps for its event loop, whose
+close leaves the app running for ever. Both are `scripts/probe_app.py`.
+
 ## Where the code is
 
 | File | What it owns |

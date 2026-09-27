@@ -27,7 +27,8 @@ touches nothing of anybody's; see docs/automation.md.
 The exe is a probe build, under an identifier of its own:
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 This wipes that identifier's settings folder and webview profile at the start of every
 run, and refuses to wipe one whose name does not say `probe`.
@@ -50,6 +51,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORT = 23760
@@ -292,6 +295,7 @@ def main() -> int:
     (spaces / SPACE / "A note.md").write_text("# A note\n\nWords.\n", encoding="utf-8")
     say(f"spaces root {spaces}")
 
+    refuse_updating(exe)
     wipe(args.identifier)
     environment = {**os.environ, SPACES_DIR: str(spaces)}
 

@@ -24,6 +24,8 @@ is the real proof that a file was written.
 Chrome's fake microphone is not available to a Tauri build, so this wants a real input:
 with no microphone at all the app is right to refuse, and the drive says which of the two
 it saw rather than passing on silence.
+
+Never an exe that would update itself; see scripts/probe_app.py.
 """
 
 from __future__ import annotations
@@ -38,6 +40,8 @@ import subprocess
 import sys
 import time
 import urllib.request
+
+from probe_app import refuse_updating
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -87,6 +91,7 @@ def allow_eval(path: pathlib.Path) -> None:
 
 
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
+    refuse_updating(app)
     SPACES.mkdir(parents=True, exist_ok=True)
     return subprocess.Popen(
         [str(app)],

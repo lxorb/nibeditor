@@ -34,7 +34,8 @@ The exe is a probe build, under an identifier of its own, so a run never touches
 installed app's settings or its browsing profile:
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 `eval` is turned on in that identifier's own endpoint file between two launches, because
 the crate reads the flag when it opens the socket. Nothing else can turn it on; see
@@ -64,6 +65,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 # Where this probe may listen; see docs/conventions.md.
 PORT_FROM = 23780
@@ -392,6 +395,7 @@ def opened(app: App, space_dir: pathlib.Path, at: int, veiled: bool) -> int | No
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App]:
+    refuse_updating(exe)
     app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != app.pid:

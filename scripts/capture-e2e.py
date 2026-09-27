@@ -20,6 +20,8 @@ Every app is launched with `NIB_SPACES_DIR` pointing inside `target/`, so nothin
 goes anywhere near anybody's notes.
 
 Windows only: it is the platform whose capture this is about.
+
+Never an exe that would update itself; see scripts/probe_app.py.
 """
 
 from __future__ import annotations
@@ -36,6 +38,8 @@ import sys
 import time
 import urllib.error
 import urllib.request
+
+from probe_app import refuse_updating
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -175,6 +179,7 @@ def identifier_of(app: pathlib.Path) -> str:
 
 def start(app: pathlib.Path, label: str) -> subprocess.Popen[bytes]:
     """One app, running, with its notes somewhere nobody keeps notes."""
+    refuse_updating(app)
     spaces = WORK / label / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 

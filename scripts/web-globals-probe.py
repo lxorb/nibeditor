@@ -44,7 +44,9 @@ tab reports out of a page without anything being granted to it.
 
     npx vite build --mode drive                     # in apps/desktop
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe.globals","build":{"beforeBuildCommand":""}}'
+      --config '{"identifier":"ch.emilvinu.nib.probe.globals","build":{"beforeBuildCommand":""},
+                 "version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/web-globals-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe
 
 `--mode drive` is not optional and is not what the other probes here say: `tauri build`
@@ -73,6 +75,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 # Where this probe may listen; see docs/conventions.md.
 PORT_FROM = 23860
@@ -287,6 +291,7 @@ ASK = r"""
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
+    refuse_updating(exe)
     running = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != running.pid:

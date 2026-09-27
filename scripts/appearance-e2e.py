@@ -21,6 +21,8 @@ app's own `eval` is turned on in the probe's endpoint file before it starts, whi
 how the two settings are pressed from out here; see docs/automation.md.
 
 Windows only, which is where Mica is.
+
+Never an exe that would update itself; see scripts/probe_app.py.
 """
 
 from __future__ import annotations
@@ -36,6 +38,8 @@ import subprocess
 import sys
 import time
 import urllib.request
+
+from probe_app import refuse_updating
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -171,6 +175,7 @@ def allow_eval(path: pathlib.Path) -> None:
 
 
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
+    refuse_updating(app)
     spaces = WORK / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 

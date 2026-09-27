@@ -48,7 +48,8 @@ not compile it at all, so it came out of a throwaway CI job on a `windows-11-arm
 runner:
 
     pnpm --filter @nib/desktop exec tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 An identifier of its own matters. The probe wipes that identifier's settings folder
 and webview profile at the start of every run, and refuses to wipe one whose name
@@ -75,6 +76,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORT_FROM = 21500
@@ -503,6 +506,7 @@ def main() -> int:
     shots = pathlib.Path(args.shots) if args.shots else pathlib.Path.cwd()
     shots.mkdir(parents=True, exist_ok=True)
 
+    refuse_updating(exe)
     wipe(args.identifier)
 
     port = free_port()

@@ -50,14 +50,12 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from ctypes import wintypes
+
+from probe_app import close_app, main_window, refuse_updating
 
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
 PORT_TO = 22399
-
-# What a window is sent when its close button is pressed.
-WM_CLOSE = 0x0010
 
 # What says where the notes go. The identifier a probe build runs under does not keep
 # anybody's notes apart - it moves the settings and the browsing profile and leaves the
@@ -77,24 +75,6 @@ PID = "NIBPERSIST"
 TOKEN = "NIBTOKEN"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
-
-
-def windows_of(pid: int) -> list[int]:
-    """The visible top level windows this process owns."""
-
-    assert user32 is not None
-    found: list[int] = []
-
-    def each(hwnd: int, _lparam: int) -> bool:
-        owner = wintypes.DWORD()
-        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-        if owner.value == pid and user32.IsWindowVisible(hwnd):
-            found.append(hwnd)
-        return True
-
-    kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-    user32.EnumWindows(kind(each), 0)
-    return found
 
 
 def free_port() -> int:
@@ -353,14 +333,14 @@ def seen(app: App, tab: str, seconds: float = 20) -> dict[str, str]:
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App]:
+    refuse_updating(exe)
     app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret = endpoint(identifier, 90, unlike)
 
     hwnd = 0
     until = time.perf_counter() + 90
     while time.perf_counter() < until and not hwnd:
-        found = windows_of(app.pid)
-        hwnd = found[0] if found else 0
+        hwnd = main_window(app.pid)
         time.sleep(0.2)
     if not hwnd:
         raise SystemExit("the app never showed a window")
@@ -378,14 +358,9 @@ def quit(app: subprocess.Popen[bytes]) -> None:
     the app is going, and a drive that only ever killed the app would be measuring a
     crash rather than a quit."""
 
-    assert user32 is not None
-    for hwnd in windows_of(app.pid):
-        user32.PostMessageW(hwnd, WM_CLOSE, 0, 0)
-    try:
-        app.wait(timeout=30)
-    except subprocess.TimeoutExpired:
+    if not close_app(app):
         app.kill()
-        raise SystemExit("the app did not quit when its window was closed") from None
+        raise SystemExit("the app did not quit when its window was closed")
 
 
 def logged_in(state: dict[str, str]) -> bool:

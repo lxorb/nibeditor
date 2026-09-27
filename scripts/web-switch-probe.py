@@ -37,7 +37,8 @@ The exe is a release build under an identifier of its own, so a run never touche
 installed app's session:
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
 `eval` is turned on in that identifier's own endpoint file by the probe, between two
 launches, because the crate reads it once when it opens the socket. Nothing else can
@@ -63,6 +64,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
@@ -408,6 +411,7 @@ def memory(pid: int) -> int:
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App, int]:
+    refuse_updating(exe)
     app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret = endpoint(identifier, 90, unlike)
 

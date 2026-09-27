@@ -24,7 +24,8 @@ and the probe can run beside somebody working. What it reads back is the folder 
 files arrive in, the tabs the window has, and the list of downloads the crate keeps.
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe.downloads"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe.downloads","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/web-downloads-probe.py --exe path/to/nib.exe \
       --identifier ch.emilvinu.nib.probe.downloads
 
@@ -54,6 +55,8 @@ import time
 import urllib.error
 import urllib.request
 from ctypes import wintypes
+
+from probe_app import refuse_updating
 
 PORT_FROM = 22400
 PORT_TO = 22499
@@ -354,6 +357,7 @@ def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
+    refuse_updating(exe)
     running = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     port, secret = endpoint(identifier, 90, unlike)
 
