@@ -125,4 +125,10 @@ so a width change lays out that one tab and nothing beside it.
 - **Ctrl+1..9 are Ctrl+Alt+1..9**, because Ctrl and a digit is a heading level.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active
   tab has something to be cut out of.
+- **The cross turns the danger colour on hover**, over Chrome's grey circle: nib's
+  own close.
+- **A web tab's active fill is the bar's `--surface`, a note's is the page's
+  `--bg`**: the active tab is filled with whatever is under the strip, which in
+  nib is not always a toolbar. With window translucency on, the page is the
+  wallpaper and the fill is still `--bg`, so the merge is only exact without it.
 - **No hover cards, groups, multi-select or tab search.** nib has none of them.
