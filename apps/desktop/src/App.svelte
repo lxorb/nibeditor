@@ -44,6 +44,7 @@
     iconPicker,
     importSheet,
     newKindChord,
+    newKindDialog,
     publishSheet,
     rewriteSheet,
     settingsSheet,
@@ -925,6 +926,13 @@
   {/await}
 {/if}
 <PromptSheet />
+<!-- What a new tab should be, from Ctrl+T: mounted at the launch's last turn, so the
+     first press already has it; see surfaces.svelte.ts. -->
+{#if newKindDialog.asked}
+  {#await newKindDialog.asked then NewKindSheet}
+    <NewKindSheet />
+  {/await}
+{/if}
 <ContextMenu />
 <!-- Over everything, because everything that wears an icon asks the same sheet
      for one: a space in the switcher, a note in the file list. -->

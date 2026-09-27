@@ -774,8 +774,8 @@ describe('the keys that move the keyboard about', () => {
   /** Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there
    *  should be a menu (as if you would click the +) where you can decide what type."*
    *  So Ctrl+T is a command of its own rather than a second key for New note, and it
-   *  presses the plus of the pane that has the keyboard; see chooseNewKind in focus.ts
-   *  and the one list of kinds in new-kinds.ts. */
+   *  opens the dialog of kinds on a web page; see new-kind-sheet.svelte.ts and the one
+   *  list of kinds in new-kinds.ts. */
   test('ask what kind a new tab is, and keep Ctrl+N for a note', () => {
     const { shortcuts } = registry
     expect(shortcuts.keyFor('app.new-kind')).toBe('Mod-t')

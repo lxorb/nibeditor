@@ -747,9 +747,10 @@ class Pages {
     workspace.openPage(said.url, false, workspace.tabs.find((one) => one.id === said.tab)?.paneId)
   }
 
-  /** Three listeners for the window, started by the first web tab that needs them:
+  /** Four listeners for the window, started by the first web tab that needs them:
    *  where every page in the window has got to, what every site in it has asked for,
-   *  and which of them has asked for a window of its own. */
+   *  which of them has asked for a window of its own, and the browser's own keys
+   *  pressed in one. */
   private async listen(): Promise<void> {
     // A window to listen on, because that is what the runtime's own `listen` needs and
     // this is now started with the first page in the window rather than with the first
@@ -781,6 +782,15 @@ class Pages {
     await listen('nib://web-open', (event) => {
       const said = readOpening(event.payload)
       if (said && this.held.has(said.tab)) void this.openAsked(said)
+    })
+    // A key the browser keeps for itself, pressed while a page had the keyboard: played
+    // on the window as the key it was, so it means what it means everywhere else. See
+    // keys.ts and web_keys.rs. Fetched with the first page rather than carried, like
+    // the listening itself.
+    const { readPressed, replay } = await import('./keys')
+    await listen('nib://web-key', (event) => {
+      const one = readPressed(event.payload)
+      if (one) replay(one)
     })
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)

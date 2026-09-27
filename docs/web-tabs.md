@@ -515,10 +515,14 @@ showing a page has no editor to shadow. It is in the registry like every other k
 - `web.address`, under View - so it can be found and changed. The canvas's keys are
 read the same way.
 
-**While the page itself has the keyboard, its keys are the page's.** After a click
-into a site, Ctrl+L is that site's shortcut and the app never sees the press: that
-is what a webview of its own means, and the alternative would be registering an
-accelerator with the operating system. The bar is one click away.
+**While the page itself has the keyboard, its keys are the page's - but for the
+browser's own.** After a click into a site, Ctrl+L is that site's shortcut and the app
+never sees the press: that is what a webview of its own means. The bar is one click
+away. The exception is Chrome's: the chords a browser never offers a page - a new tab,
+closing one, reopening the last, going round them and moving one along, a new window, Ctrl+1 to 9 - are
+taken before the page sees them and played on the app's own window, and the keyboard
+goes back to the app with them. On `WebView2` only; see `docs/keyboard.md` and
+`src-tauri/src/web_keys.rs`.
 
 The mark at the left of the field is the site: the page's own favicon, and a lock for
 a site that has none - or a warning for an `http:` page. Pressing it says what this

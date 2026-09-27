@@ -19,7 +19,7 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
-import { chooseNewKind, openSpaces, revealPanel, stepRegionFocus } from '../focus'
+import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
@@ -247,6 +247,16 @@ function runPrint() {
   })
 }
 
+/** The dialog Ctrl+T holds up, from a command: the palette and a press of the key
+ *  before the chord has landed. Fetched for the same reason as the export above; it
+ *  has landed by the time anybody could ask, because the chord that is its first
+ *  reader is fetched at the launch's last turn. See new-kind-sheet.svelte.ts. */
+function chooseNewKind() {
+  void import('../new-kind-sheet.svelte').then(({ newKindSheet }) => {
+    newKindSheet.show()
+  })
+}
+
 /** Runs an app-level command. The two that need the component say so through
  *  the context; everything else reaches the stores directly, the way the
  *  command palette does. */
@@ -267,19 +277,17 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-n',
     run: () => workspace.openBlank(),
   },
-  // Ctrl+T asks what kind, the way the plus does. It was a second key for New note,
-  // and Emil asked for the choice by name: "When you press Ctrl + T it shouldn't just
-  // be a new note, there should be a menu (as if you would click the +) where you can
-  // decide what type." The chooser opens under the plus of the pane that has the
-  // keyboard and lands on the kind that was chosen last; see chooseNewKind in focus.ts
+  // Ctrl+T asks what kind, in a dialog in the middle of the window standing on a web
+  // page: Emil, 2026-09-27, *"Ctrl + T should always open a webpage by default"*. It
+  // was a second key for New note before it asked at all; see new-kind-sheet.svelte.ts
   // and the list in new-kinds.ts.
   //
-  // From a key it is more than this: held, it is Alt+Tab's shape - the chooser stays
-  // up while Ctrl is down, each further T steps it round, and letting go chooses.
-  // That half cannot live here, because a command is handed the app's context and not
-  // the keystroke, and all of it turns on the keystroke: see new-kind-chord.ts. The
-  // entry stays what it was for the palette and the File menu, which have no modifier
-  // to hold.
+  // From a key it is more than this: tapped, it makes the web page outright, the way a
+  // browser does; held, it is Alt+Tab's shape - the dialog stays up while Ctrl is down,
+  // each further T steps it round, and letting go chooses. That half cannot live here,
+  // because a command is handed the app's context and not the keystroke, and all of it
+  // turns on the keystroke: see new-kind-chord.ts. The entry stays what it was for the
+  // palette, which has no modifier to hold.
   {
     id: 'app.new-kind',
     label: () => t('New'),

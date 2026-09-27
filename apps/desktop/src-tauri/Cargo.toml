@@ -138,6 +138,9 @@ windows = { version = "0.58", features = [
   # measure from inside it: everything before our first line is the machine loading
   # the binary. See trace.rs.
   "Win32_System_Threading",
+  # Whether Ctrl is down as a key is pressed inside a web tab's page, which the
+  # engine's own event does not say. See web_keys.rs.
+  "Win32_UI_Input_KeyboardAndMouse",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
