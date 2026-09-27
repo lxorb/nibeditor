@@ -1076,7 +1076,9 @@
            wears the icon the note itself chose; the path is how it knows. -->
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
       <span class="nib-row-label">{name}</span>
-      {#if entry.evicted}
+      <!-- Only a Mac's iCloud Drive evicts a file, so the plugin build leaves the
+           mark out rather than carry it. -->
+      {#if !__EVEN_PLUGIN__ && entry.evicted}
         {#await import('./CloudMark.svelte') then mark}<mark.default path={entry.path} />{/await}
       {/if}
       <!-- Somebody else is in this note. The same mark the switcher puts on a

@@ -181,8 +181,14 @@ export function newKindChord(event: KeyboardEvent): boolean {
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */
 export const slidesStage = held(() => import('./Slides.svelte'))
 
-/** The card a fresh install opens on; see space-chooser.svelte.ts. */
-export const spaceChooserCard = held(() => import('./SpaceChooser.svelte'))
+/** The card a fresh install opens on; see space-chooser.svelte.ts. The plugin never
+ *  shows it (see space-choice.ts), and a fetch that is only never called still puts
+ *  its chunk in the package, so that build is not given one to call. */
+export const spaceChooserCard = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no space chooser in the Even Realities plugin'))
+    : import('./SpaceChooser.svelte'),
+)
 
 /** The doors a key can reach at any moment, opened once the launch has nothing left to
  *  do.

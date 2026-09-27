@@ -261,6 +261,13 @@ describe('the bundle a package is made of', () => {
     // catalogue - Cantonese, which is Han and so ships: **8,112,017 bytes**, 24
     // catalogues of the 40, and 276,591 bytes under this ceiling.
     //
+    // Measured again on 2026-09-28, after the round that made the desktop app a Mac
+    // app: it went over, at 8,414,888 bytes against 8,355,431 for main at 278ff88f.
+    // Most of the difference was the Mac's own - the native menu bar and Tauri's menu
+    // API, the first-run space chooser, the iCloud mark - none of which the plugin
+    // can show, and all of which are now behind `__EVEN_PLUGIN__`. What is left is
+    // that round's words in the catalogues: **8,372,728 bytes**, 15,880 under.
+    //
     // The ceiling is still close on purpose: this number went from 11.8 MB to 6.0 by
     // leaving libraries out, and a megabyte back is a library that crept in again.
     // Speed is the selling point, and on a phone the download is part of it.
