@@ -57,6 +57,13 @@ const PRESENTING: Record<string, string> = {
   'setFocus()': 'core:window:allow-set-focus',
 }
 
+/** The one webview command the Mac's menu bar calls, for the same reason as the
+ *  list above: it is the Tauri API directly, on this window's own page. See
+ *  native-menu-bar.svelte.ts. */
+const MENU_BAR: Record<string, string> = {
+  'getCurrentWebview()': 'core:webview:allow-set-webview-focus',
+}
+
 /** The method names declared on the `WindowLike` interface. */
 function windowMethods(): string[] {
   const source = read('../src/lib/tauri.ts')
@@ -91,8 +98,23 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
+  test('every call the Mac menu bar makes is granted, and it makes each of them', () => {
+    const source = read('../src/lib/native-menu-bar.svelte.ts')
+
+    const missing = Object.entries(MENU_BAR).filter(
+      ([call, permission]) =>
+        !source.includes(call) || !capabilities.permissions.includes(permission),
+    )
+
+    expect(missing.map(([call]) => call)).toEqual([])
+  })
+
   test('nothing is granted that the app never calls', () => {
-    const used = new Set([...Object.values(NEEDS), ...Object.values(PRESENTING)])
+    const used = new Set([
+      ...Object.values(NEEDS),
+      ...Object.values(PRESENTING),
+      ...Object.values(MENU_BAR),
+    ])
     const stale = capabilities.permissions
       .filter((one) => one.startsWith('core:window:') || one.startsWith('core:webview:allow-'))
       // Dragging comes from `data-tauri-drag-region`, not a method call.

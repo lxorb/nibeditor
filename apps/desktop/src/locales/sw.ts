@@ -1481,4 +1481,14 @@ export const sw: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Kuhusu {name}',
+  Services: 'Huduma',
+  'Hide {name}': 'Ficha {name}',
+  'Hide others': 'Ficha zingine',
+  'Show all': 'Onyesha zote',
+  'Quit {name}': 'Ondoka {name}',
+  'Bring all to front': 'Leta zote mbele',
+  'Open recent': 'Fungua za hivi karibuni',
+  'Clear menu': 'Futa menyu',
 }

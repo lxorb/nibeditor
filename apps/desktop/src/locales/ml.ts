@@ -1475,4 +1475,14 @@ export const ml: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name}-നെ കുറിച്ച്',
+  Services: 'സേവനങ്ങൾ',
+  'Hide {name}': '{name} മറയ്ക്കുക',
+  'Hide others': 'മറ്റുള്ളവ മറയ്ക്കുക',
+  'Show all': 'എല്ലാം കാണിക്കുക',
+  'Quit {name}': '{name} അടയ്ക്കുക',
+  'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
+  'Open recent': 'സമീപകാലത്തുള്ളത് തുറക്കുക',
+  'Clear menu': 'മെനു മായ്ക്കുക',
 }

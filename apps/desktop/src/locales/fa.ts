@@ -1457,4 +1457,14 @@ export const fa: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'درباره {name}',
+  Services: 'خدمات',
+  'Hide {name}': 'پنهان کردن {name}',
+  'Hide others': 'پنهان کردن بقیه',
+  'Show all': 'نمایش همه',
+  'Quit {name}': 'خروج از {name}',
+  'Bring all to front': 'آوردن همه به جلو',
+  'Open recent': 'باز کردن اخیر',
+  'Clear menu': 'پاک کردن منو',
 }

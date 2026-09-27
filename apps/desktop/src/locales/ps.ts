@@ -1458,4 +1458,14 @@ export const ps: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'د {name} په اړه',
+  Services: 'خدمتونه',
+  'Hide {name}': '{name} پټ کړه',
+  'Hide others': 'نور پټ کړه',
+  'Show all': 'ټول وښایه',
+  'Quit {name}': 'له {name} څخه وځه',
+  'Bring all to front': 'ټول مخې ته راوړه',
+  'Open recent': 'وروستي پرانیزه',
+  'Clear menu': 'مینو پاک کړه',
 }

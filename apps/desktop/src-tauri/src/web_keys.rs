@@ -25,9 +25,16 @@
 //! speak through it either: the event is the engine's, raised in this process, and
 //! nothing in the page can raise it.
 //!
-//! `WebView2`'s alone. `WKWebView` and `WebKitGTK` have no such event reachable through
-//! what wry hands out, and on nib's own Chromium the webview has no controller to ask;
-//! on those a page keeps every key, as it did.
+//! `WebView2`'s alone. `WebKitGTK` has no such event reachable through what wry hands
+//! out, and on nib's own Chromium the webview has no controller to ask; on those a page
+//! keeps every key, as it did.
+//!
+//! **A Mac needs none of this.** There the chords are rows of the menu bar across the
+//! top of the screen - Cmd+T, Cmd+W, Ctrl+Tab and the rest are key equivalents - and
+//! `AppKit` offers a key equivalent to the menu bar before a web tab's page: wry's child
+//! webview declines every one (tauri-apps/tauri#9426), so the page never sees them. The
+//! menu's row runs the command in the app's own page and hands the keyboard back to it,
+//! which is what this file does by hand on Windows. See native-menu.ts in the frontend.
 
 use serde::Serialize;
 
@@ -195,7 +202,8 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
     }
 }
 
-/// Every other engine: a page keeps every key; see the top of this file.
+/// Every other engine: a page keeps every key, and on a Mac the menu bar takes the
+/// browser's own chords before the page is asked; see the top of this file.
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn listen(_webview: &tauri::webview::PlatformWebview, _app: tauri::AppHandle, _window: String) {
 }

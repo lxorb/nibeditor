@@ -1458,4 +1458,14 @@ export const te: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} గురించి',
+  Services: 'సేవలు',
+  'Hide {name}': '{name} దాచు',
+  'Hide others': 'ఇతరాలను దాచు',
+  'Show all': 'అన్నీ చూపు',
+  'Quit {name}': '{name} నుండి నిష్క్రమించు',
+  'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
+  'Open recent': 'ఇటీవలివి తెరువు',
+  'Clear menu': 'మెనూను క్లియర్ చేయి',
 }

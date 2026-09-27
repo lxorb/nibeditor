@@ -1443,4 +1443,14 @@ export const vi: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Giới thiệu về {name}',
+  Services: 'Dịch vụ',
+  'Hide {name}': 'Ẩn {name}',
+  'Hide others': 'Ẩn các ứng dụng khác',
+  'Show all': 'Hiện tất cả',
+  'Quit {name}': 'Thoát {name}',
+  'Bring all to front': 'Đưa tất cả ra trước',
+  'Open recent': 'Mở gần đây',
+  'Clear menu': 'Xóa menu',
 }

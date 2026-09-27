@@ -1455,4 +1455,14 @@ export const id: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Tentang {name}',
+  Services: 'Layanan',
+  'Hide {name}': 'Sembunyikan {name}',
+  'Hide others': 'Sembunyikan lainnya',
+  'Show all': 'Tampilkan semua',
+  'Quit {name}': 'Keluar dari {name}',
+  'Bring all to front': 'Bawa semua ke depan',
+  'Open recent': 'Buka terbaru',
+  'Clear menu': 'Bersihkan menu',
 }

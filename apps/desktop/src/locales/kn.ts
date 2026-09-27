@@ -1468,4 +1468,14 @@ export const kn: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} ಕುರಿತು',
+  Services: 'ಸೇವೆಗಳು',
+  'Hide {name}': '{name} ಮರೆಮಾಡಿ',
+  'Hide others': 'ಇತರವನ್ನು ಮರೆಮಾಡಿ',
+  'Show all': 'ಎಲ್ಲವನ್ನೂ ತೋರಿಸಿ',
+  'Quit {name}': '{name} ತ್ಯಜಿಸಿ',
+  'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
+  'Open recent': 'ಇತ್ತೀಚಿನದನ್ನು ತೆರೆಯಿರಿ',
+  'Clear menu': 'ಮೆನು ತೆರವುಗೊಳಿಸಿ',
 }

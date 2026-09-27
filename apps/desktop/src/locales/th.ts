@@ -1425,4 +1425,14 @@ export const th: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'เกี่ยวกับ {name}',
+  Services: 'บริการ',
+  'Hide {name}': 'ซ่อน {name}',
+  'Hide others': 'ซ่อนอื่นๆ',
+  'Show all': 'แสดงทั้งหมด',
+  'Quit {name}': 'ออกจาก {name}',
+  'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
+  'Open recent': 'เปิดรายการล่าสุด',
+  'Clear menu': 'ล้างเมนู',
 }

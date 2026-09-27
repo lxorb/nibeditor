@@ -61,7 +61,7 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { currentWindow, isDesktop } from './lib/tauri'
+  import { currentWindow, isDesktop, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
@@ -645,6 +645,24 @@
       fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
     }
   }
+  // On a Mac the app's menu is the menu bar across the top of the screen, which is
+  // why Titlebar.svelte draws no button for it there. Fetched at the launch's last
+  // turn, with the in-window menu's rows it is built from, since no other platform
+  // has one and nothing about it is needed to show a note. See native-menu.ts.
+  if (isDesktop && platform() === 'macos') {
+    void startup
+      .turn('doors')
+      .then(() => import('./lib/native-menu-bar.svelte'))
+      .then(({ followMenuBar }) =>
+        followMenuBar(() => ({
+          view,
+          onpalette: () => (palette = true),
+          onhistory: () => (settings.historyOpen = true),
+          app: appContext(),
+        })),
+      )
+  }
+
   /** Half of what the app tells somebody it tells with a colour: the gear in the
    *  panel's foot is lit while a pass is running and red when the last one failed,
    *  and the dot on a tab is amber until the note is on the disk. Neither has any

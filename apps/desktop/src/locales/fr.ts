@@ -1510,4 +1510,14 @@ export const fr: Dictionary = {
   'Web data': 'Données web',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'À propos de {name}',
+  Services: 'Services',
+  'Hide {name}': 'Masquer {name}',
+  'Hide others': 'Masquer les autres',
+  'Show all': 'Tout afficher',
+  'Quit {name}': 'Quitter {name}',
+  'Bring all to front': 'Tout ramener au premier plan',
+  'Open recent': 'Ouvrir l’élément récent',
+  'Clear menu': 'Effacer le menu',
 }

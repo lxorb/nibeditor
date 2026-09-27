@@ -1485,4 +1485,14 @@ export const ptBR: Dictionary = {
   'Web data': 'Dados da web',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Sobre o {name}',
+  Services: 'Serviços',
+  'Hide {name}': 'Ocultar {name}',
+  'Hide others': 'Ocultar outros',
+  'Show all': 'Mostrar tudo',
+  'Quit {name}': 'Encerrar {name}',
+  'Bring all to front': 'Trazer tudo para a frente',
+  'Open recent': 'Abrir recente',
+  'Clear menu': 'Limpar menu',
 }

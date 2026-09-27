@@ -1443,4 +1443,14 @@ export const my: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} အကြောင်း',
+  Services: 'ဝန်ဆောင်မှုများ',
+  'Hide {name}': '{name} ကို ဖျောက်ရန်',
+  'Hide others': 'အခြားများကို ဖျောက်ရန်',
+  'Show all': 'အားလုံးပြရန်',
+  'Quit {name}': '{name} မှ ထွက်ရန်',
+  'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
+  'Open recent': 'မကြာသေးမီကဟာကို ဖွင့်ရန်',
+  'Clear menu': 'မီနူးကို ရှင်းရန်',
 }

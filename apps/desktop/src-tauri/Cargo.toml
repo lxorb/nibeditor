@@ -127,6 +127,18 @@ window-vibrancy = "0.6"
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# A note opened goes on the Mac's own list of recent documents, which the Dock
+# reads; see recent.rs. Both are already in the lock file as what tao and wry reach
+# AppKit through, so this adds nothing to the build but the two features named.
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSDocumentController",
+] }
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSString",
+  "NSURL",
+] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]

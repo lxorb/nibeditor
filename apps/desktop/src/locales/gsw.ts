@@ -1466,4 +1466,14 @@ export const gsw: Dictionary = {
   'Web data': 'Webdate',
   Global: 'Global',
   Site: 'Websiite',
+  // The Mac's menu bar
+  'About {name}': 'Über {name}',
+  Services: 'Dienscht',
+  'Hide {name}': '{name} uusbländä',
+  'Hide others': 'Anderi uusbländä',
+  'Show all': 'Alli ybländä',
+  'Quit {name}': '{name} beändä',
+  'Bring all to front': 'Alli nach vorne bringä',
+  'Open recent': 'Zletscht göffnet',
+  'Clear menu': 'Menü löschä',
 }

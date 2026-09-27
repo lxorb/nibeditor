@@ -1450,4 +1450,14 @@ export const ja: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name}について',
+  Services: 'サービス',
+  'Hide {name}': '{name}を非表示',
+  'Hide others': 'ほかを非表示',
+  'Show all': 'すべてを表示',
+  'Quit {name}': '{name}を終了',
+  'Bring all to front': 'すべてを手前に移動',
+  'Open recent': '最近使った項目を開く',
+  'Clear menu': 'メニューを消去',
 }

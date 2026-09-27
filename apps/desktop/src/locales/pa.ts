@@ -1461,4 +1461,14 @@ export const pa: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} ਬਾਰੇ',
+  Services: 'ਸੇਵਾਵਾਂ',
+  'Hide {name}': '{name} ਲੁਕਾਓ',
+  'Hide others': 'ਹੋਰ ਲੁਕਾਓ',
+  'Show all': 'ਸਭ ਦਿਖਾਓ',
+  'Quit {name}': '{name} ਬੰਦ ਕਰੋ',
+  'Bring all to front': 'ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ',
+  'Open recent': 'ਹਾਲੀਆ ਖੋਲ੍ਹੋ',
+  'Clear menu': 'ਮੀਨੂ ਸਾਫ਼ ਕਰੋ',
 }

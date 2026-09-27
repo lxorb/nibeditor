@@ -1517,4 +1517,14 @@ export const uk: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Про {name}',
+  Services: 'Служби',
+  'Hide {name}': 'Сховати {name}',
+  'Hide others': 'Сховати інші',
+  'Show all': 'Показати всі',
+  'Quit {name}': 'Вийти з {name}',
+  'Bring all to front': 'Усе на передній план',
+  'Open recent': 'Відкрити недавні',
+  'Clear menu': 'Очистити меню',
 }

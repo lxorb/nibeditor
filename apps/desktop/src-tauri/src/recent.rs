@@ -1,7 +1,12 @@
 //! The system's own list of recently opened documents. Notes the reader opens are
 //! handed to the shell, which is what fills the taskbar Jump List's Recent
-//! category and the Start menu's recent documents. Windows keeps and orders the
+//! category and the Start menu's recent documents on Windows, and the Dock icon's
+//! menu and the Apple menu's Recent Items on a Mac. The system keeps and orders the
 //! list itself; there is nothing to store here.
+//!
+//! The app's own File > Open Recent on a Mac is not this list but the one the
+//! palette reads, so it names the same notes everywhere in the app; see
+//! native-menu.ts.
 
 /// Tells the shell a note was opened. Nothing is remembered on this side, so
 /// there is nothing here that can fail.
@@ -38,10 +43,30 @@ fn add_to_recent(path: &str) {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+/// `NSDocumentController` keeps the Mac's list even for an app that is not built on
+/// its documents, and the Dock shows it for every file type the bundle declares,
+/// which `.md` is; see `fileAssociations` in tauri.conf.json.
+#[cfg(target_os = "macos")]
+fn add_to_recent(path: &str) {
+    use objc2_app_kit::NSDocumentController;
+    use objc2_foundation::{MainThreadMarker, NSString, NSURL};
+
+    // AppKit is only ever called on the main thread. A command without `async` is
+    // run there (see the top of lib.rs), so this is always the answer; if it ever is
+    // not, the note is simply not listed, which is better than calling AppKit from
+    // the wrong thread.
+    let Some(main) = MainThreadMarker::new() else {
+        return;
+    };
+
+    let url = NSURL::fileURLWithPath(&NSString::from_str(path));
+    NSDocumentController::sharedDocumentController(main).noteNewRecentDocumentURL(&url);
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 fn add_to_recent(_path: &str) {
-    // Other desktops read recent documents from their own files, which the
-    // portal writes; nothing for the app to do.
+    // Linux desktops read recent documents from their own files, which the portal
+    // writes; nothing for the app to do.
 }
 
 #[cfg(all(test, target_os = "windows"))]

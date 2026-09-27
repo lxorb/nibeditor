@@ -1436,4 +1436,14 @@ export const am: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'ስለ {name}',
+  Services: 'አገልግሎቶች',
+  'Hide {name}': '{name}ን ደብቅ',
+  'Hide others': 'ሌሎችን ደብቅ',
+  'Show all': 'ሁሉንም አሳይ',
+  'Quit {name}': 'ከ{name} ውጣ',
+  'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
+  'Open recent': 'የቅርብ ጊዜውን ክፈት',
+  'Clear menu': 'ምናሌውን አጽዳ',
 }

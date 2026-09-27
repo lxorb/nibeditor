@@ -1499,4 +1499,14 @@ export const es: Dictionary = {
   'Web data': 'Datos web',
   Global: 'Global',
   Site: 'Sitio',
+  // The Mac's menu bar
+  'About {name}': 'Acerca de {name}',
+  Services: 'Servicios',
+  'Hide {name}': 'Ocultar {name}',
+  'Hide others': 'Ocultar otros',
+  'Show all': 'Mostrar todo',
+  'Quit {name}': 'Salir de {name}',
+  'Bring all to front': 'Traer todo al frente',
+  'Open recent': 'Abrir recientes',
+  'Clear menu': 'Borrar menú',
 }

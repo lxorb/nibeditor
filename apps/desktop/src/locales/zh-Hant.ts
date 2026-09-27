@@ -1419,4 +1419,14 @@ export const zhHant: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '關於{name}',
+  Services: '服務',
+  'Hide {name}': '隱藏{name}',
+  'Hide others': '隱藏其他',
+  'Show all': '顯示全部',
+  'Quit {name}': '結束{name}',
+  'Bring all to front': '全部移至最前',
+  'Open recent': '開啟最近使用的',
+  'Clear menu': '清除選單',
 }
