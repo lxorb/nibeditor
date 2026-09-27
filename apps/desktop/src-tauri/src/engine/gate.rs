@@ -443,6 +443,8 @@ fn web_tab(app: &AppHandle, at: usize, site: &str) -> Result<String, String> {
         site.to_owned(),
         pane,
         revived,
+        // The store every space shares, which is the only one this engine has.
+        None,
     ))?;
 
     Ok(format!("web-{tab}"))

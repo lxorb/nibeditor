@@ -1510,4 +1510,8 @@ export const uk: Dictionary = {
   'Bookmark these blocks': 'Додати блоки до закладок',
   Foldable: 'Згортуваний',
   'Starts folded': 'Відкривається згорнутим',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

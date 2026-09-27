@@ -70,6 +70,10 @@ const LEFT_OUT = new Set([
   // the absence is caught rather than thrown.
   'lucide-static/tags.json',
   'emojilib/emojis.json',
+  // The public suffix list, which says what a site is for a space that keeps its web
+  // data per site. A quarter of a megabyte, for a web tab with a store of its own
+  // behind it, which only a desktop has; see web-tab/web-data.svelte.ts.
+  'tldts',
 ])
 
 /** What a module that is not here answers with.

@@ -333,3 +333,41 @@ describe('a tab closed while its page is in front', () => {
     expect(commands()).toContain('web_close')
   })
 })
+
+describe('where a page keeps what the site stores', () => {
+  test('in the store every space shares, until its space keeps its own', async () => {
+    pages.of('a').space = 'w'
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+
+    expect(last('web_open')).toMatchObject({ tab: 'a', store: null })
+  })
+
+  test('a choice made for the space builds its open pages again in the new store', async () => {
+    const { webData } = await import('./web-data.svelte')
+    pages.of('a').space = 'w'
+    pages.of('b').space = 'h'
+    for (const tab of ['a', 'b']) {
+      const shown = pages.show(tab, SITE, PANE)
+      ;(await asked())()
+      building = null
+      await shown
+    }
+    calls.length = 0
+
+    webData.set('w', 'space')
+    const rebuilt = pages.restore('w')
+    ;(await asked())()
+    await rebuilt
+    await settle()
+
+    // The page in the space that chose is built again, where it was, in the space's own
+    // store; the other space's page is left alone.
+    expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
+      'a',
+    ])
+    expect(last('web_open')).toMatchObject({ tab: 'a', store: 'space_w', pane: PANE })
+    webData.set('w', 'global')
+  })
+})

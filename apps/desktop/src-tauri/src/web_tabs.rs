@@ -652,32 +652,87 @@ fn opening(place: Option<Place>, url: &str) -> String {
 ///
 /// The system engine's only: under nib's own Chromium there is nothing to share, because
 /// that runtime is one browser process by construction. See src/engine.rs.
+///
+/// **One per store.** A space that keeps its web data apart has stores of its own (see
+/// `web_stores.rs`), each a user data folder of its own and so an environment of its own:
+/// one folder is one environment, and the engine refuses a webview built on another
+/// folder's. So the environments are kept by store - the shared one under no name - and
+/// a tab is handed the one its own store was built on.
+///
+/// Only the shared store has the page that holds its session open. A store of its own
+/// is a browser process of its own, and one of those held open for every site anybody
+/// had opened would be the cost of a browser per site until nib quits; its process ends
+/// with its last tab instead, which is what it does in a browser too. A login there is
+/// kept all the same, because a session cookie is given an expiry as a page loads (see
+/// `web_cookies.rs`) - so the environment it was built on is let go when its process
+/// ends, and the next tab of that store starts a new one.
 #[cfg(all(windows, not(feature = "cef")))]
 mod session {
     use std::cell::RefCell;
+    use std::collections::HashMap;
 
-    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2Environment;
+    use webview2_com::BrowserProcessExitedEventHandler;
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        ICoreWebView2Environment, ICoreWebView2Environment5,
+    };
+    use windows_core::Interface as _;
 
     thread_local! {
-        /// The shared environment, on the window's own thread and nowhere else. A
-        /// `RefCell` rather than a lock because there is only ever one thread in here.
-        static ENV: RefCell<Option<ICoreWebView2Environment>> = const { RefCell::new(None) };
+        /// The environment of each store, on the window's own thread and nowhere else,
+        /// with the shared store under the empty name. A `RefCell` rather than a lock
+        /// because there is only ever one thread in here.
+        static ENV: RefCell<HashMap<String, ICoreWebView2Environment>> =
+            RefCell::new(HashMap::new());
     }
 
-    /// The environment every web tab shares, if one has been built yet. `None` before
-    /// the first web tab of the run, which is the tab that builds it.
-    pub fn shared() -> Option<ICoreWebView2Environment> {
-        ENV.with_borrow(Clone::clone)
+    /// The name a store is kept under here: the empty one for the store every space
+    /// shares.
+    fn key(store: Option<&str>) -> String {
+        store.unwrap_or_default().to_string()
     }
 
-    /// Keeps the first environment built, and only the first: every later tab is handed
-    /// this one, so the whole run shares one session. Called as the first page is built.
-    pub fn keep(env: ICoreWebView2Environment) {
-        ENV.with_borrow_mut(|held| {
-            if held.is_none() {
-                *held = Some(env);
+    /// The environment every web tab in this store shares, if one has been built yet.
+    /// `None` before the first web tab of the store, which is the tab that builds it.
+    pub fn shared(store: Option<&str>) -> Option<ICoreWebView2Environment> {
+        ENV.with_borrow(|held| held.get(&key(store)).cloned())
+    }
+
+    /// Keeps the first environment built for a store, and only the first: every later
+    /// tab of the store is handed this one, so the store's tabs share one session.
+    /// Called as each page is built.
+    ///
+    /// A store of its own lets go of it again when its browser process ends; see above.
+    #[allow(
+        unsafe_code,
+        reason = "the process ending is WebView2's own event, reached through its COM interfaces"
+    )]
+    pub fn keep(store: Option<&str>, env: ICoreWebView2Environment) {
+        let named = key(store);
+        let fresh = ENV.with_borrow_mut(|held| {
+            if held.contains_key(&named) {
+                return false;
             }
+            held.insert(named.clone(), env.clone());
+            true
         });
+
+        if !fresh || store.is_none() {
+            return;
+        }
+
+        let handler = BrowserProcessExitedEventHandler::create(Box::new(move |_env, _args| {
+            ENV.with_borrow_mut(|held| held.remove(&named));
+            Ok(())
+        }));
+        // Safe: the environment is this thread's, and the handler is held by the engine
+        // for as long as the environment is. An environment too old to say when its
+        // process ends is kept for the run, which is what every store did before.
+        unsafe {
+            if let Ok(env) = env.cast::<ICoreWebView2Environment5>() {
+                let mut token = 0i64;
+                let _ = env.add_BrowserProcessExited(&handler, &raw mut token);
+            }
+        }
     }
 
     /// What the page that holds the session open is called. Under the same `web-` prefix
@@ -719,7 +774,7 @@ mod session {
         // The same store every tab's page is given, through the same seam: which folder
         // that is belongs to the engine this build runs on and not to this module, and
         // the session is only shared if both are the one profile. See src/engine.rs.
-        let Ok(builder) = crate::engine::web_store(builder, app) else {
+        let Ok(builder) = crate::engine::web_store(builder, app, None) else {
             return;
         };
 
@@ -734,16 +789,16 @@ mod session {
             let _ = view.hide();
             // On the window's own thread already, so this runs inline; a clone of the
             // environment is what every tab after this is built on.
-            let _ = view.with_webview(|platform| keep(platform.environment()));
+            let _ = view.with_webview(|platform| keep(None, platform.environment()));
         }
     }
 }
 
-/// The builder, pointed at the one session this run shares - and that session opened, if
-/// this is the first page of the run.
+/// The builder, pointed at the one session its store shares - and the shared store's
+/// session opened, if this is the first page of the run.
 ///
-/// Both halves are `session`'s: the page nobody sees, which holds the session open past
-/// the last tab closing, and the environment every tab is then built on. On the window's
+/// Both halves are `session`'s: the page nobody sees, which holds the shared session open
+/// past the last tab closing, and the environment every tab of a store is then built on. On the window's
 /// own thread, because that is where a page is built and the only thread the engine's own
 /// objects may be touched from.
 ///
@@ -755,10 +810,11 @@ fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
     window: &tauri::Window,
     app: &AppHandle,
+    store: Option<&str>,
 ) -> WebviewBuilder<tauri::Wry> {
     session::anchor(window, app);
 
-    match session::shared() {
+    match session::shared(store) {
         Some(env) => builder.with_environment(env),
         None => builder,
     }
@@ -794,8 +850,13 @@ pub async fn web_open(
     url: String,
     pane: Pane,
     revived: Revived,
+    store: Option<String>,
 ) -> Result<(), String> {
     let address = address(&url)?;
+    // Which store the page's cookies and storage go in: the one every space shares, or
+    // one its space keeps apart. Checked before anything is built, because it is about
+    // to become a folder name. See web_stores.rs.
+    let store = crate::web_stores::named(store.as_deref())?.map(str::to_string);
     let label = format!("{LABEL}{tab}");
     let app = webview.app_handle().clone();
 
@@ -825,7 +886,7 @@ pub async fn web_open(
     // browsing profile, which is a different Chromium profile from the interface's,
     // under nib's own engine. One call, so this file no longer knows which platform
     // or which engine it is. See src/engine.rs.
-    let builder = crate::engine::web_store(builder, &app)?;
+    let builder = crate::engine::web_store(builder, &app, store.as_deref())?;
 
     let opening = app.clone();
     let asking = tab.clone();
@@ -909,6 +970,8 @@ pub async fn web_open(
     // below is moved into the closure and this file still needs it afterwards.
     #[cfg(all(windows, not(feature = "cef")))]
     let anchoring = app.clone();
+    #[cfg(all(windows, not(feature = "cef")))]
+    let storing = store.clone();
 
     let posted = app.run_on_main_thread(move || {
         // Built on the one session the run shares, so closing a note and opening it
@@ -917,7 +980,7 @@ pub async fn web_open(
         // ends it with the last webview on the profile however long the environment is
         // kept; see `session::anchor`, which is opened once here and never closed.
         #[cfg(all(windows, not(feature = "cef")))]
-        let builder = on_shared_session(builder, &window, &anchoring);
+        let builder = on_shared_session(builder, &window, &anchoring, storing.as_deref());
 
         let made = window
             .add_child(
@@ -946,7 +1009,7 @@ pub async fn web_open(
     tabs.built(&tab);
     made?;
 
-    listening(&app, &tab);
+    listening(&app, &tab, store);
     tabs.walked(&tab, &url);
     Ok(())
 }
@@ -956,7 +1019,11 @@ pub async fn web_open(
 /// After the build, because it is the engine's own event on the webview that has just
 /// been made, and on the window's thread, because that is the only thread the engine's
 /// objects may be touched from. See `ask`.
-fn listening(app: &AppHandle, tab: &str) {
+fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
+    // Only `WebView2` keeps an environment per store; see `session`.
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    let _ = store;
+
     let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) else {
         return;
     };
@@ -970,7 +1037,7 @@ fn listening(app: &AppHandle, tab: &str) {
         // opened again keeps its login; see `session`. Kept before `ask` looks at the
         // page because both want the one thread this runs on.
         #[cfg(all(windows, not(feature = "cef")))]
-        session::keep(platform.environment());
+        session::keep(store.as_deref(), platform.environment());
         ask::listen(&platform, asking, named, window);
     });
 }

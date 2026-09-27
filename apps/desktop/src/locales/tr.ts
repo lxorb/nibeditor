@@ -1451,4 +1451,8 @@ export const tr: Dictionary = {
   'Bookmark these blocks': 'Bu bloklara yer imi koy',
   Foldable: 'Katlanabilir',
   'Starts folded': 'Katlı başlar',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

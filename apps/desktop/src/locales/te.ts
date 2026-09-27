@@ -1451,4 +1451,8 @@ export const te: Dictionary = {
   'Bookmark these blocks': 'ఈ బ్లాక్‌లను బుక్‌మార్క్ చేయి',
   Foldable: 'ముడుచుకోగలదు',
   'Starts folded': 'ముడుచుకుని మొదలు',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

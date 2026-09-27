@@ -1429,4 +1429,8 @@ export const am: Dictionary = {
   'Bookmark these blocks': 'እነዚህን ብሎኮች ምልክት አድርግ',
   Foldable: 'ሊታጠፍ የሚችል',
   'Starts folded': 'ተጣጥፎ ይጀምራል',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

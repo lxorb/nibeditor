@@ -1454,4 +1454,8 @@ export const pa: Dictionary = {
   'Bookmark these blocks': 'ਇਹਨਾਂ ਬਲਾਕਾਂ ਨੂੰ ਨਿਸ਼ਾਨੀ ਲਾਓ',
   Foldable: 'ਮੋੜਿਆ ਜਾ ਸਕਦਾ',
   'Starts folded': 'ਮੋੜਿਆ ਹੋਇਆ ਸ਼ੁਰੂ',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

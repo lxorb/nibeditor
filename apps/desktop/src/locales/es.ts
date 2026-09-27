@@ -1492,4 +1492,8 @@ export const es: Dictionary = {
   'Bookmark these blocks': 'Marcar estos bloques',
   Foldable: 'Plegable',
   'Starts folded': 'Empieza plegado',
+  // Where a space keeps what websites store
+  'Web data': 'Datos web',
+  Global: 'Global',
+  Site: 'Sitio',
 }

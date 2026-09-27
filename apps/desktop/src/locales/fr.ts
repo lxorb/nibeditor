@@ -1503,4 +1503,8 @@ export const fr: Dictionary = {
   'Bookmark these blocks': 'Marquer ces blocs',
   Foldable: 'Repliable',
   'Starts folded': 'Replié au départ',
+  // Where a space keeps what websites store
+  'Web data': 'Données web',
+  Global: 'Global',
+  Site: 'Site',
 }

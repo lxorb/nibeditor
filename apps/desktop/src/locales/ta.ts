@@ -1471,4 +1471,8 @@ export const ta: Dictionary = {
   'Bookmark these blocks': 'இந்தத் தொகுதிகளைப் புத்தகக்குறியிடு',
   Foldable: 'மடக்கக்கூடியது',
   'Starts folded': 'மடித்த நிலையில் தொடங்கும்',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

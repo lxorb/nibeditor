@@ -1451,4 +1451,8 @@ export const ps: Dictionary = {
   'Bookmark these blocks': 'دې بلاکونو ته نښانه',
   Foldable: 'د غونډولو وړ',
   'Starts folded': 'غونډ پیل کیږي',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

@@ -1498,4 +1498,8 @@ export const it: Dictionary = {
   'Bookmark these blocks': 'Segna questi blocchi',
   Foldable: 'Richiudibile',
   'Starts folded': 'Inizia richiuso',
+  // Where a space keeps what websites store
+  'Web data': 'Dati web',
+  Global: 'Globale',
+  Site: 'Sito',
 }

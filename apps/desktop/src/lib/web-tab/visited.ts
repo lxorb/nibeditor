@@ -17,56 +17,64 @@ import { completion, suggested, type Completion } from './omnibox'
 import { named, typedTo, unvisited, visitKey, visited as arrived, visitsFrom } from './visits'
 import type { Visit } from './visits'
 
-const STORAGE_KEY = 'nib:web-visits'
+/** A history is kept under a storage key of its own, which is its whole name: the one
+ *  every space shares, or a space's own where the space keeps its web data apart. The
+ *  caller says which, from `webData.history`; see web-data.ts. */
+type Book = string
 
 class Visited {
-  private list: readonly Visit[] | null = null
+  /** The rows of each history read so far, each read the first time anything asks. */
+  private readonly books = new Map<Book, readonly Visit[]>()
 
   /** Where each tab was last counted as being, so the engine saying the same page
    *  again - its title arrived, its mark arrived - is not another visit. */
   private readonly counted = new Map<string, string>()
 
   /** The rows, read the first time anything asks. */
-  private get rows(): readonly Visit[] {
-    this.list ??= visitsFrom(stored(STORAGE_KEY))
-    return this.list
+  private rows(book: Book): readonly Visit[] {
+    let list = this.books.get(book)
+    if (!list) {
+      list = visitsFrom(stored(book))
+      this.books.set(book, list)
+    }
+    return list
   }
 
   /** Written as it changes, which is at most twice a page: the engine reports a page
    *  three times as it lands - the page, its title, its mark - and only the first two
    *  change a row. See `named` in visits.ts. */
-  private set rows(next: readonly Visit[]) {
-    if (next === this.list) return
+  private write(book: Book, next: readonly Visit[]) {
+    if (next === this.books.get(book)) return
 
-    this.list = next
-    keep(STORAGE_KEY, JSON.stringify(next))
+    this.books.set(book, next)
+    keep(book, JSON.stringify(next))
   }
 
   /** Reads the list now, because somebody is about to type. */
-  wake() {
-    this.list ??= visitsFrom(stored(STORAGE_KEY))
+  wake(book: Book) {
+    this.rows(book)
   }
 
   /** A tab is on `url`, and the page calls itself `title` (or has not said yet). A new
    *  address in the tab is a visit; the same one again is the page saying more about
    *  itself. */
-  saw(tab: string, url: string, title: string) {
+  saw(book: Book, tab: string, url: string, title: string) {
     const key = visitKey(url)
     if (key === null) return
 
     const now = Date.now()
     if (this.counted.get(tab) === key) {
-      this.rows = named(this.rows, key, title)
+      this.write(book, named(this.rows(book), key, title))
       return
     }
 
     this.counted.set(tab, key)
-    this.rows = arrived(this.rows, key, title, now)
+    this.write(book, arrived(this.rows(book), key, title, now))
   }
 
   /** Somebody typed their way to `url`. */
-  typed(url: string) {
-    this.rows = typedTo(this.rows, url, Date.now())
+  typed(book: Book, url: string) {
+    this.write(book, typedTo(this.rows(book), url, Date.now()))
   }
 
   /** The tab has closed. */
@@ -75,18 +83,18 @@ class Visited {
   }
 
   /** Takes one address out, which is Shift+Delete on a row of the list. */
-  remove(url: string) {
-    this.rows = unvisited(this.rows, url)
+  remove(book: Book, url: string) {
+    this.write(book, unvisited(this.rows(book), url))
   }
 
   /** The rest of an address `typed` is the start of; see omnibox.ts. */
-  complete(typed: string): Completion | null {
-    return completion(this.rows, typed, Date.now())
+  complete(book: Book, typed: string): Completion | null {
+    return completion(this.rows(book), typed, Date.now())
   }
 
   /** The pages worth offering under the field for `typed`. */
-  suggest(typed: string): Visit[] {
-    return suggested(this.rows, typed, Date.now())
+  suggest(book: Book, typed: string): Visit[] {
+    return suggested(this.rows(book), typed, Date.now())
   }
 }
 

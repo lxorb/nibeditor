@@ -1516,4 +1516,8 @@ export const pl: Dictionary = {
   'Bookmark these blocks': 'Dodaj zakładki do bloków',
   Foldable: 'Zwijalny',
   'Starts folded': 'Zaczyna zwinięty',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

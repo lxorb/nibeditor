@@ -1480,4 +1480,8 @@ export const fil: Dictionary = {
   'Bookmark these blocks': 'I-bookmark ang mga block na ito',
   Foldable: 'Natitiklop',
   'Starts folded': 'Nakatiklop sa simula',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

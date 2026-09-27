@@ -1412,4 +1412,8 @@ export const zhHans: Dictionary = {
   'Bookmark these blocks': '为这些块加书签',
   Foldable: '可折叠',
   'Starts folded': '默认折叠',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

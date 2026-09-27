@@ -168,6 +168,9 @@ importers:
       perfect-freehand:
         specifier: ^1.2.3
         version: 1.2.3
+      tldts:
+        specifier: ^7.4.16
+        version: 7.4.16
       unicode-emoji-json:
         specifier: ^0.9.0
         version: 0.9.0
@@ -3370,11 +3373,11 @@ packages:
     resolution: {integrity: sha512-yau8yJdTt989Mm0Bd/236QnzEiPf2xLLTqUZRUJOo/3CB078LSwzei343DgtJVmfJKJE3TMINY1u42SQsP6mXw==}
     engines: {node: '>=14.0.0'}
 
-  tldts-core@7.4.12:
-    resolution: {integrity: sha512-nYNzS2WRf4QJmjzFFgAxLOBjyBxAGRbCy9PVBPaglcYyYajh40VBn+v5Ngr96ZMc7oM0+aCJdtQnNejvdBnXMQ==}
+  tldts-core@7.4.16:
+    resolution: {integrity: sha512-MDolfaSJtlSK5Y0A1xl3277ekubZwobpBjugknDizI9O5Rm60a1m8k4ICK+MRsCDzPygT81mp3BBf5RKDlFRfA==}
 
-  tldts@7.4.12:
-    resolution: {integrity: sha512-WylhSDKVeYnWXL3a+vKTaOxjnOeEGw938hImY8zoRWJjRRK/Jp1K+IihBzIONpUmW4e3WmXT6q5FW6vlESVZCA==}
+  tldts@7.4.16:
+    resolution: {integrity: sha512-QwBER5KMR86IIjpIiO7H/Z3IMJPsZ1A6RKPAqzTTgOyUQUSt9FdnKcqhTaJmkY6HVrgouZHZR0ncK5QxvmnQeg==}
     hasBin: true
 
   tough-cookie@6.0.2:
@@ -6592,15 +6595,15 @@ snapshots:
   tinyrainbow@3.1.1:
     optional: true
 
-  tldts-core@7.4.12: {}
+  tldts-core@7.4.16: {}
 
-  tldts@7.4.12:
+  tldts@7.4.16:
     dependencies:
-      tldts-core: 7.4.12
+      tldts-core: 7.4.16
 
   tough-cookie@6.0.2:
     dependencies:
-      tldts: 7.4.12
+      tldts: 7.4.16
 
   tr46@6.0.0:
     dependencies:

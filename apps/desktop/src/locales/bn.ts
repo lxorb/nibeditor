@@ -1446,4 +1446,8 @@ export const bn: Dictionary = {
   'Bookmark these blocks': 'এই ব্লকগুলো বুকমার্ক',
   Foldable: 'ভাঁজযোগ্য',
   'Starts folded': 'ভাঁজ করা শুরু',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

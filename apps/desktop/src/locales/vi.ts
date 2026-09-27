@@ -1436,4 +1436,8 @@ export const vi: Dictionary = {
   'Bookmark these blocks': 'Đánh dấu các khối này',
   Foldable: 'Có thể gập',
   'Starts folded': 'Mở ra đã gập',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

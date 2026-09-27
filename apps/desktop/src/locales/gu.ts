@@ -1440,4 +1440,8 @@ export const gu: Dictionary = {
   'Bookmark these blocks': 'આ બ્લૉકો બુકમાર્ક કરો',
   Foldable: 'વાળી શકાય',
   'Starts folded': 'વાળેલું શરૂ થાય',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

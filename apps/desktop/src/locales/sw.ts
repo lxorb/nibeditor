@@ -1474,4 +1474,8 @@ export const sw: Dictionary = {
   'Bookmark these blocks': 'Alamisha vizuizi hivi',
   Foldable: 'Inaweza kukunjwa',
   'Starts folded': 'Huanza imekunjwa',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

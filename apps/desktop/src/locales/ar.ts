@@ -1533,4 +1533,8 @@ export const ar: Dictionary = {
   'Bookmark these blocks': 'إشارة على هذه الكتل',
   Foldable: 'قابل للطي',
   'Starts folded': 'يبدأ مطويًا',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

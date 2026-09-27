@@ -33,6 +33,7 @@
   const {
     resting,
     address,
+    book,
     onenter,
     ontyping,
   }: {
@@ -40,6 +41,8 @@
     resting: string
     /** What it holds the moment somebody starts: the address the tab is on. */
     address: string
+    /** Which history it offers from, which is its space's; see web-data.ts. */
+    book: string
     /** Somebody pressed Enter on something: an address, or words for the tab to make
      *  one of. */
     onenter: (said: string) => void
@@ -102,7 +105,7 @@
   function onFocus() {
     if (!here() || !field) return
 
-    visited.wake()
+    visited.wake(book)
     editing = true
     ontyping(true)
     field.value = address
@@ -127,7 +130,7 @@
     const box = field
     if (!box) return
 
-    const offer = visited.complete(typed)
+    const offer = visited.complete(book, typed)
     if (!offer || offer.text.length <= typed.length) return
 
     box.value = offer.text
@@ -141,7 +144,7 @@
     typed = box.value
     active = -1
     shut = false
-    rows = visited.suggest(typed)
+    rows = visited.suggest(book, typed)
 
     // Only a letter typed at the end: a deletion is somebody taking the offer away,
     // and offering it again would undo the key they pressed; a paste and a letter in
@@ -158,7 +161,7 @@
    *  goes back to the `http:` it was on rather than to a guess - and otherwise the words
    *  themselves, for the tab to make an address or a search of. */
   function resolved(said: string): string {
-    const offer = visited.complete(said)
+    const offer = visited.complete(book, said)
     return offer?.text === said ? offer.url : said
   }
 
@@ -198,8 +201,8 @@
     const row = rows[active]
     if (listing && row && event.key === 'Delete' && event.shiftKey) {
       event.preventDefault()
-      visited.remove(row.url)
-      rows = visited.suggest(typed)
+      visited.remove(book, row.url)
+      rows = visited.suggest(book, typed)
       active = Math.min(active, rows.length - 1)
       const next = rows[active]
       box.value = next ? shownAddress(next.url) : typed

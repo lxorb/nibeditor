@@ -40,6 +40,8 @@
     /** Whether the pane this bar is in has the focus, so the address key lands in
      *  one bar rather than in all of them. */
     focused,
+    /** Which history the address field offers from: its space's; see web-data.ts. */
+    book,
     onstep,
     onaddress,
     onclip,
@@ -50,6 +52,7 @@
     page: Page
     reads: boolean
     focused: boolean
+    book: string
     onstep: (step: 'back' | 'forward' | 'reload') => void
     onaddress: (typed: string) => void
     onclip: () => void
@@ -202,6 +205,7 @@
   <AddressField
     bind:this={field}
     {resting}
+    {book}
     address={page.url ?? ''}
     onenter={onaddress}
     {ontyping}

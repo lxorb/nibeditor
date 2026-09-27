@@ -1468,4 +1468,8 @@ export const ml: Dictionary = {
   'Bookmark these blocks': 'ഈ ബ്ലോക്കുകൾ ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Foldable: 'മടക്കാവുന്നത്',
   'Starts folded': 'മടക്കി തുടങ്ങുന്നു',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

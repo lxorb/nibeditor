@@ -132,11 +132,14 @@
     return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
   }
 
-  function choose(item: MenuItem) {
+  function choose(item: MenuItem, event: MouseEvent) {
     // A row that says so stays: the zoom rows on a web tab are pressed two or three
     // times in a row, and a menu that closed under each of them would be a menu
-    // somebody opens four times. See menu-item.ts.
-    if (!item.keep) menu.hide()
+    // somebody opens four times. See menu-item.ts. Its click goes no further than the
+    // row, too: the window closes the menu on any click that reaches it, which is what
+    // a click outside the menu is, and a kept row's click is not one.
+    if (item.keep) event.stopPropagation()
+    else menu.hide()
     item.run()
   }
 
@@ -256,7 +259,7 @@
             class:danger={item.danger}
             disabled={item.disabled}
             data-lands={item.stands ? '' : undefined}
-            onclick={() => choose(item)}
+            onclick={(event) => choose(item, event)}
           >
             <span class="nib-row-label">{item.label}</span>
             <!-- A row that is a switch says which way it is set. After the label
