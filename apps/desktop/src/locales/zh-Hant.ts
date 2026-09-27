@@ -1395,6 +1395,8 @@ export const zhHant: Dictionary = {
   'Site information': '網站資訊',
   Downloads: '下載',
   'Show in folder': '在資料夾中顯示',
+  'Show in Finder': '在 Finder 中顯示',
+  'Reveal in Finder': '在 Finder 中顯示',
   Failed: '失敗',
   Camera: '攝影機',
   Microphone: '麥克風',

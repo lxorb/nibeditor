@@ -1412,6 +1412,8 @@ export const am: Dictionary = {
   'Site information': 'የጣቢያ መረጃ',
   Downloads: 'ውርዶች',
   'Show in folder': 'በአቃፊ ውስጥ አሳይ',
+  'Show in Finder': 'በFinder ውስጥ አሳይ',
+  'Reveal in Finder': 'በFinder ውስጥ አሳይ',
   Failed: 'አልተሳካም',
   Camera: 'ካሜራ',
   Microphone: 'ማይክሮፎን',

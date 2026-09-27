@@ -1470,6 +1470,8 @@ export const ptPT: Dictionary = {
   'Site information': 'Informações do Website',
   Downloads: 'Transferências',
   'Show in folder': 'Mostrar na pasta',
+  'Show in Finder': 'Mostrar no Finder',
+  'Reveal in Finder': 'Mostrar no Finder',
   Failed: 'Falhou',
   Camera: 'Câmara',
   Microphone: 'Microfone',

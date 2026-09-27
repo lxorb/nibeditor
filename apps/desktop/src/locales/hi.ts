@@ -1430,6 +1430,8 @@ export const hi: Dictionary = {
   'Site information': 'साइट जानकारी',
   Downloads: 'डाउनलोड',
   'Show in folder': 'फ़ोल्डर में दिखाएँ',
+  'Show in Finder': 'Finder में दिखाएँ',
+  'Reveal in Finder': 'Finder में दिखाएँ',
   Failed: 'विफल',
   Camera: 'कैमरा',
   Microphone: 'माइक्रोफ़ोन',

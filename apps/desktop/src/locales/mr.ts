@@ -1432,6 +1432,8 @@ export const mr: Dictionary = {
   'Site information': 'साइटची माहिती',
   Downloads: 'डाउनलोड',
   'Show in folder': 'फोल्डरमध्ये दाखवा',
+  'Show in Finder': 'Finder मध्ये दाखवा',
+  'Reveal in Finder': 'Finder मध्ये दाखवा',
   Failed: 'अयशस्वी',
   Camera: 'कॅमेरा',
   Microphone: 'मायक्रोफोन',

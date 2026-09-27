@@ -1516,6 +1516,8 @@ export const ar: Dictionary = {
   'Site information': 'معلومات الموقع',
   Downloads: 'التنزيلات',
   'Show in folder': 'إظهار في المجلد',
+  'Show in Finder': 'إظهار في Finder',
+  'Reveal in Finder': 'إظهار في Finder',
   Failed: 'فشل',
   Camera: 'الكاميرا',
   Microphone: 'الميكروفون',

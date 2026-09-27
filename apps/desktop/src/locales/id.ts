@@ -1431,6 +1431,8 @@ export const id: Dictionary = {
   'Site information': 'Informasi situs',
   Downloads: 'Unduhan',
   'Show in folder': 'Tampilkan di folder',
+  'Show in Finder': 'Tampilkan di Finder',
+  'Reveal in Finder': 'Tampilkan di Finder',
   Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

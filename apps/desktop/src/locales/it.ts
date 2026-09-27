@@ -1481,6 +1481,8 @@ export const it: Dictionary = {
   'Site information': 'Informazioni sul sito',
   Downloads: 'Download',
   'Show in folder': 'Mostra nella cartella',
+  'Show in Finder': 'Mostra nel Finder',
+  'Reveal in Finder': 'Mostra nel Finder',
   Failed: 'Non riuscito',
   Camera: 'Videocamera',
   Microphone: 'Microfono',

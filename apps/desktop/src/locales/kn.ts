@@ -1444,6 +1444,8 @@ export const kn: Dictionary = {
   'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
   Downloads: 'ಡೌನ್‌ಲೋಡ್‌ಗಳು',
   'Show in folder': 'ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸಿ',
+  'Show in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
+  'Reveal in Finder': 'Finder ನಲ್ಲಿ ತೋರಿಸಿ',
   Failed: 'ವಿಫಲವಾಗಿದೆ',
   Camera: 'ಕ್ಯಾಮರಾ',
   Microphone: 'ಮೈಕ್ರೋಫೋನ್',

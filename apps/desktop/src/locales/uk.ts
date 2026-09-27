@@ -1493,6 +1493,8 @@ export const uk: Dictionary = {
   'Site information': 'Інформація про сайт',
   Downloads: 'Завантаження',
   'Show in folder': 'Показати в папці',
+  'Show in Finder': 'Показати у Finder',
+  'Reveal in Finder': 'Показати у Finder',
   Failed: 'Помилка',
   Camera: 'Камера',
   Microphone: 'Мікрофон',

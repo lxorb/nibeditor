@@ -1471,6 +1471,8 @@ export const de: Dictionary = {
   'Site information': 'Website-Informationen',
   Downloads: 'Downloads',
   'Show in folder': 'Im Ordner zeigen',
+  'Show in Finder': 'Im Finder anzeigen',
+  'Reveal in Finder': 'Im Finder anzeigen',
   Failed: 'Fehlgeschlagen',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

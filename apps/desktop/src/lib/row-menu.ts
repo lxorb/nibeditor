@@ -30,7 +30,9 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget } from './move-targets'
 import { rowName } from './note-name'
+import { reveal, revealLabel } from './reveal'
 import { isMarkdownPath } from './space-paths'
+import { isDesktop } from './tauri'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -84,6 +86,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...(entry.is_dir || isPdfTarget(entry.name)
       ? []
       : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
+    ...revealEntry(entry),
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),
@@ -153,6 +156,15 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   })
 
   if (sure) await workspace.remove(entry.path, true)
+}
+
+/** The row in the system's file manager: "Reveal in Finder" on a Mac, the words
+ *  Obsidian's own file list uses there. The row's own path, so a folder with a note
+ *  of its own is shown as the folder it is on disk. Only the desktop has a file
+ *  manager to show it in. */
+function revealEntry(entry: Entry): MenuEntry[] {
+  if (!isDesktop) return []
+  return [{ label: t(revealLabel('tree')), run: () => void reveal(entry.path) }]
 }
 
 /** Only offered once there is something to take back. */

@@ -1457,6 +1457,8 @@ export const sw: Dictionary = {
   'Site information': 'Maelezo ya tovuti',
   Downloads: 'Vipakuliwa',
   'Show in folder': 'Onyesha kwenye folda',
+  'Show in Finder': 'Onyesha kwenye Finder',
+  'Reveal in Finder': 'Onyesha kwenye Finder',
   Failed: 'Imeshindwa',
   Camera: 'Kamera',
   Microphone: 'Maikrofoni',

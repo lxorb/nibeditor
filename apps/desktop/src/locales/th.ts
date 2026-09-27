@@ -1401,6 +1401,8 @@ export const th: Dictionary = {
   'Site information': 'ข้อมูลเว็บไซต์',
   Downloads: 'ดาวน์โหลด',
   'Show in folder': 'แสดงในโฟลเดอร์',
+  'Show in Finder': 'แสดงใน Finder',
+  'Reveal in Finder': 'แสดงใน Finder',
   Failed: 'ล้มเหลว',
   Camera: 'กล้องถ่ายรูป',
   Microphone: 'ไมโครโฟน',

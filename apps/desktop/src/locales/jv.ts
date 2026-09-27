@@ -1425,6 +1425,8 @@ export const jv: Dictionary = {
   'Site information': 'Informasi situs',
   Downloads: 'Undhuhan',
   'Show in folder': 'Tampilake ing folder',
+  'Show in Finder': 'Tampilake ing Finder',
+  'Reveal in Finder': 'Tampilake ing Finder',
   Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

@@ -1433,6 +1433,8 @@ export const fa: Dictionary = {
   'Site information': 'اطلاعات سایت',
   Downloads: 'بارگیری‌ها',
   'Show in folder': 'نمایش در پوشه',
+  'Show in Finder': 'نمایش در Finder',
+  'Reveal in Finder': 'نمایش در Finder',
   Failed: 'ناموفق',
   Camera: 'دوربین',
   Microphone: 'میکروفن',

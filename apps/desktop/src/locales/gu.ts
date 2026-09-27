@@ -1423,6 +1423,8 @@ export const gu: Dictionary = {
   'Site information': 'સાઇટની માહિતી',
   Downloads: 'ડાઉનલોડ્સ',
   'Show in folder': 'ફોલ્ડરમાં બતાવો',
+  'Show in Finder': 'Finderમાં બતાવો',
+  'Reveal in Finder': 'Finderમાં બતાવો',
   Failed: 'નિષ્ફળ',
   Camera: 'કૅમેરા',
   Microphone: 'માઇક્રોફોન',

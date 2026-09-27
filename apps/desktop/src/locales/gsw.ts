@@ -1442,6 +1442,8 @@ export const gsw: Dictionary = {
   'Site information': 'Website-Infos',
   Downloads: 'Downloads',
   'Show in folder': 'Im Ordner zeige',
+  'Show in Finder': 'Im Finder zeige',
+  'Reveal in Finder': 'Im Finder zeige',
   Failed: 'Fählgschlage',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

@@ -1463,6 +1463,8 @@ export const fil: Dictionary = {
   'Site information': 'Impormasyon ng site',
   Downloads: 'Mga download',
   'Show in folder': 'Ipakita sa folder',
+  'Show in Finder': 'Ipakita sa Finder',
+  'Reveal in Finder': 'Ipakita sa Finder',
   Failed: 'Nabigo',
   Camera: 'Camera',
   Microphone: 'Mikropono',

@@ -1429,6 +1429,8 @@ export const bn: Dictionary = {
   'Site information': 'সাইটের তথ্য',
   Downloads: 'ডাউনলোড',
   'Show in folder': 'ফোল্ডারে দেখান',
+  'Show in Finder': 'Finder-এ দেখান',
+  'Reveal in Finder': 'Finder-এ দেখান',
   Failed: 'ব্যর্থ হয়েছে',
   Camera: 'ক্যামেরা',
   Microphone: 'মাইক্রোফোন',

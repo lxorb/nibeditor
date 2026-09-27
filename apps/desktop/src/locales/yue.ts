@@ -1396,6 +1396,8 @@ export const yue: Dictionary = {
   'Site information': '網站資料',
   Downloads: '下載',
   'Show in folder': '喺資料夾度顯示',
+  'Show in Finder': '喺 Finder 度顯示',
+  'Reveal in Finder': '喺 Finder 度顯示',
   Failed: '失敗',
   Camera: '相機',
   Microphone: '麥克風',

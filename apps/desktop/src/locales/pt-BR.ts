@@ -1461,6 +1461,8 @@ export const ptBR: Dictionary = {
   'Site information': 'Informações do site',
   Downloads: 'Downloads',
   'Show in folder': 'Mostrar na pasta',
+  'Show in Finder': 'Mostrar no Finder',
+  'Reveal in Finder': 'Mostrar no Finder',
   Failed: 'Falhou',
   Camera: 'Câmera',
   Microphone: 'Microfone',

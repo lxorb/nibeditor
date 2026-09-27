@@ -1458,6 +1458,8 @@ export const ha: Dictionary = {
   'Site information': 'Bayanin gidan yanar',
   Downloads: 'Abubuwan da aka sauke',
   'Show in folder': 'Nuna a cikin babban fayil',
+  'Show in Finder': 'Nuna a cikin Finder',
+  'Reveal in Finder': 'Nuna a cikin Finder',
   Failed: 'Ya kasa',
   Camera: 'Kamara',
   Microphone: 'Makirufo',

@@ -1499,6 +1499,8 @@ export const pl: Dictionary = {
   'Site information': 'Informacje o witrynie',
   Downloads: 'Pobrane',
   'Show in folder': 'Pokaż w folderze',
+  'Show in Finder': 'Pokaż w Finderze',
+  'Reveal in Finder': 'Pokaż w Finderze',
   Failed: 'Niepowodzenie',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

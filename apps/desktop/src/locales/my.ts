@@ -1419,6 +1419,8 @@ export const my: Dictionary = {
   'Site information': 'ဆိုက် အချက်အလက်များ',
   Downloads: 'ဒေါင်းလုဒ်များ',
   'Show in folder': 'ဖိုင်တွဲတွင် ပြပါ',
+  'Show in Finder': 'Finder တွင် ပြပါ',
+  'Reveal in Finder': 'Finder တွင် ပြပါ',
   Failed: 'မအောင်မြင်ပါ',
   Camera: 'ကင်မရာ',
   Microphone: 'မိုက်ခရိုဖုန်း',

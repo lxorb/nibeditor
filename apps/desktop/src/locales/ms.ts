@@ -1430,6 +1430,8 @@ export const ms: Dictionary = {
   'Site information': 'Maklumat tapak',
   Downloads: 'Muat turun',
   'Show in folder': 'Tunjukkan dalam folder',
+  'Show in Finder': 'Tunjukkan dalam Finder',
+  'Reveal in Finder': 'Tunjukkan dalam Finder',
   Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

@@ -1434,6 +1434,8 @@ export const tr: Dictionary = {
   'Site information': 'Site bilgileri',
   Downloads: 'İndirilenler',
   'Show in folder': 'Klasörde göster',
+  'Show in Finder': "Finder'da göster",
+  'Reveal in Finder': "Finder'da göster",
   Failed: 'Başarısız',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',

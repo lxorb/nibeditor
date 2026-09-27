@@ -1419,6 +1419,8 @@ export const vi: Dictionary = {
   'Site information': 'Thông tin trang web',
   Downloads: 'Tệp đã tải xuống',
   'Show in folder': 'Hiển thị trong thư mục',
+  'Show in Finder': 'Hiển thị trong Finder',
+  'Reveal in Finder': 'Hiển thị trong Finder',
   Failed: 'Không thành công',
   Camera: 'Camera',
   Microphone: 'Micrô',

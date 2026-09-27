@@ -1434,6 +1434,8 @@ export const ps: Dictionary = {
   'Site information': 'د ټاټوبي معلومات',
   Downloads: 'ډاونلوډونه',
   'Show in folder': 'په فولډر کې وښایاست',
+  'Show in Finder': 'په Finder کې وښایاست',
+  'Reveal in Finder': 'په Finder کې وښایاست',
   Failed: 'ناکام شو',
   Camera: 'کامره',
   Microphone: 'مایکروفون',

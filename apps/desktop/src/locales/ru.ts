@@ -1498,6 +1498,8 @@ export const ru: Dictionary = {
   'Site information': 'Сведения о сайте',
   Downloads: 'Загрузки',
   'Show in folder': 'Показать в папке',
+  'Show in Finder': 'Показать в Finder',
+  'Reveal in Finder': 'Показать в Finder',
   Failed: 'Ошибка',
   Camera: 'Камера',
   Microphone: 'Микрофон',

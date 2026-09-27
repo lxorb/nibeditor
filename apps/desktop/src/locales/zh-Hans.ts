@@ -1395,6 +1395,8 @@ export const zhHans: Dictionary = {
   'Site information': '网站信息',
   Downloads: '下载',
   'Show in folder': '在文件夹中显示',
+  'Show in Finder': '在访达中显示',
+  'Reveal in Finder': '在访达中显示',
   Failed: '失败',
   Camera: '摄像头',
   Microphone: '麦克风',

@@ -1437,6 +1437,8 @@ export const pa: Dictionary = {
   'Site information': 'ਸਾਈਟ ਜਾਣਕਾਰੀ',
   Downloads: 'ਡਾਊਨਲੋਡ',
   'Show in folder': 'ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ',
+  'Show in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
+  'Reveal in Finder': 'Finder ਵਿੱਚ ਦਿਖਾਓ',
   Failed: 'ਅਸਫਲ',
   Camera: 'ਕੈਮਰਾ',
   Microphone: 'ਮਾਈਕ੍ਰੋਫੋਨ',
