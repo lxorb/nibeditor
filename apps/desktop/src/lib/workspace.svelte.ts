@@ -79,7 +79,6 @@ import { Arranged } from './workspace/arranged.svelte'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
-import { asShortcut, convertWebsites } from './web-tab/convert'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 
@@ -1319,8 +1318,12 @@ class Workspace {
 
     // A website written when a website was a note becomes a shortcut the first time
     // it is opened, and it is the shortcut that opens. A note that turns out not to
-    // be one - somebody took the line out - opens as the note it is.
-    const opening = isWebTarget(path) ? path : await asShortcut(this, path)
+    // be one - somebody took the line out - opens as the note it is. The conversion
+    // is fetched by the first such note rather than carried: only a space an older
+    // nib wrote has any, and a window opens on a note. See test/weight.test.ts.
+    const opening = isWebTarget(path)
+      ? path
+      : await import('./web-tab/convert').then(({ asShortcut }) => asShortcut(this, path))
     if (opening === null) {
       await this.open(path, { preview })
       return
@@ -1370,6 +1373,7 @@ class Workspace {
   /** Every website still written as a note, converted where it stands; see
    *  web-tab/convert. Answers how many there were, for the palette. */
   async convertWebsites(): Promise<number> {
+    const { convertWebsites } = await import('./web-tab/convert')
     return convertWebsites(this)
   }
 

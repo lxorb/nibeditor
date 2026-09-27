@@ -371,8 +371,26 @@ function holds(tail: string): boolean {
  *  (1,297,791 to 1,310,419), and the shell with the strip's plus in it was up at a
  *  median of 341 ms against 342 ms before, forty loads each, alternated. The strip
  *  is on screen at launch, so its layout cannot be lazy; the drag could be, but a
- *  tab that is pressed has to answer that same frame. */
-const BUDGET = 3_350_000
+ *  tab that is pressed has to answer that same frame.
+ *
+ *  Lowered the same day, to 3,330,000, with where the rest of the raises went said.
+ *  The morning's main was 3,263,933, and the ceiling of 3,277,000 was gone before the
+ *  strip arrived: the address field's history hook in the page store (982), a website,
+ *  a plane, a deck and a paper previewed on one click (4,033), front matter hidden by
+ *  default (12,506, which is the commit that went over), a web note's doubled ending
+ *  (2,039) and the renames the bookmarks follow (6,461). None of that was a door left
+ *  open; it is the workspace, the link index and the editor doing more. What had no
+ *  business here went behind a door: the conversion of a website an older nib wrote
+ *  as a note, with the reader of that format and the word counter under it
+ *  (web-tab/convert.ts, note.ts, words.ts in @nib/markdown - 15,080 bytes and three
+ *  files), fetched by the first such note opened. Measured 3,325,127.
+ *
+ *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
+ *  and how it takes its first key: hidden is where every note starts, and a guard that
+ *  arrived after the first paint would let a word typed at the top of the page land in
+ *  front of the metadata's fence. The history the address field offers and the
+ *  omnibox were never here; see `history` in web-tab/pages.svelte.ts. */
+const BUDGET = 3_330_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
@@ -602,6 +620,10 @@ describe('what the app evaluates before it draws anything', () => {
     // scans a plane's cards for links and the sync mirror merges two versions of one,
     // so both reach it before anything is drawn. See workspace.createPages.
     ['/markdown/src/pages.ts', 'the pages engine'],
+    // The websites an older nib wrote as notes, turned into shortcuts: only a space
+    // from before shortcuts has any, and the first one opened fetches it. See
+    // workspace.openWeb.
+    ['/lib/web-tab/convert.ts', 'the old websites, converted'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
