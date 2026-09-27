@@ -181,6 +181,9 @@ export function newKindChord(event: KeyboardEvent): boolean {
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */
 export const slidesStage = held(() => import('./Slides.svelte'))
 
+/** The card a fresh install opens on; see space-chooser.svelte.ts. */
+export const spaceChooserCard = held(() => import('./SpaceChooser.svelte'))
+
 /** The doors a key can reach at any moment, opened once the launch has nothing left to
  *  do.
  *

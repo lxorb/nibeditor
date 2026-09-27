@@ -224,6 +224,9 @@ export default defineConfig({
     __EVEN_PLUGIN__: 'true',
     // A packed plugin is a release; nothing drives it.
     __DRIVEABLE__: 'false',
+    // Read by the space chooser, which the plugin never shows; defined so the page
+    // cannot trip over a name it was never given. See vite.config.ts.
+    __APP_VERSION__: JSON.stringify(manifest.version),
   },
   clearScreen: false,
   envPrefix: ['VITE_', 'TAURI_ENV_*'],

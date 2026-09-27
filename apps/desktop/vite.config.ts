@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import manifest from './even.app.json'
+import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
 
 const host = process.env.TAURI_DEV_HOST
@@ -59,6 +60,9 @@ export default defineConfig(({ command, mode }) => ({
   define: {
     __EVEN_BUILD__: JSON.stringify(stamp(command === 'serve')),
     __EVEN_PLUGIN__: 'false',
+    // The version the installer carries, for the one place the app says it: under
+    // the name on the space chooser, where Obsidian's vault chooser says its own.
+    __APP_VERSION__: JSON.stringify(tauri.version),
     __DRIVEABLE__: JSON.stringify(
       command === 'serve' || mode === 'drive' || mode === 'development',
     ),

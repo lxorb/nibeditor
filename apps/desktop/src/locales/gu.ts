@@ -58,6 +58,9 @@ export const gu: Dictionary = {
   'Use the plain mark instead': 'તેના બદલે સાદું ચિહ્ન વાપરો',
   'Loading…': 'લાવી રહ્યું છે…',
   'Create a space': 'જગ્યા બનાવો',
+  'Import a folder': 'ફોલ્ડર આયાત કરો',
+  'Sign in to sync': 'સમન્વય માટે સાઇન ઇન',
+  'Create account': 'ખાતું બનાવો',
   'Delete space': 'જગ્યા કાઢી નાખો',
   'Delete {name}?': '{name} કાઢી નાખવું?',
   'Every note in this space is deleted from your computer.':

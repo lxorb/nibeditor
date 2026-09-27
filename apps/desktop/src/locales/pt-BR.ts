@@ -58,6 +58,9 @@ export const ptBR: Dictionary = {
   'Use the plain mark instead': 'Usar a marca simples',
   'Loading…': 'Carregando…',
   'Create a space': 'Criar um espaço',
+  'Import a folder': 'Importar uma pasta',
+  'Sign in to sync': 'Entre para sincronizar',
+  'Create account': 'Criar conta',
   'Delete space': 'Excluir espaço',
   'Delete {name}?': 'Excluir {name}?',
   'Every note in this space is deleted from your computer.':

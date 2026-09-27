@@ -58,6 +58,9 @@ export const tr: Dictionary = {
   'Use the plain mark instead': 'Yerine düz işareti kullan',
   'Loading…': 'Yükleniyor…',
   'Create a space': 'Alan oluştur',
+  'Import a folder': 'Klasör içe aktar',
+  'Sign in to sync': 'Eşitlemek için oturum aç',
+  'Create account': 'Hesap oluştur',
   'Delete space': 'Alanı sil',
   'Delete {name}?': '{name} silinsin mi?',
   'Every note in this space is deleted from your computer.':

@@ -58,6 +58,9 @@ export const it: Dictionary = {
   'Use the plain mark instead': 'Usa invece il segno semplice',
   'Loading…': 'Caricamento…',
   'Create a space': 'Crea uno spazio',
+  'Import a folder': 'Importa una cartella',
+  'Sign in to sync': 'Accedi per sincronizzare',
+  'Create account': 'Crea un account',
   'Delete space': 'Elimina lo spazio',
   'Delete {name}?': 'Eliminare {name}?',
   'Every note in this space is deleted from your computer.':

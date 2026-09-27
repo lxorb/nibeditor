@@ -58,6 +58,9 @@ export const zhHans: Dictionary = {
   'Use the plain mark instead': '改用普通标记',
   'Loading…': '加载中…',
   'Create a space': '创建空间',
+  'Import a folder': '导入文件夹',
+  'Sign in to sync': '登录以同步',
+  'Create account': '创建账户',
   'Delete space': '删除空间',
   'Delete {name}?': '删除{name}？',
   'Every note in this space is deleted from your computer.':

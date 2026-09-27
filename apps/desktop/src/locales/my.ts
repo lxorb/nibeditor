@@ -58,6 +58,9 @@ export const my: Dictionary = {
   'Use the plain mark instead': 'အမှတ်အသားရိုးရိုးကိုသုံး',
   'Loading…': 'တင်နေသည်…',
   'Create a space': 'အလုပ်ခွင်ဖန်တီး',
+  'Import a folder': 'ဖိုင်တွဲသွင်းပါ',
+  'Sign in to sync': 'ချိန်ကိုက်ရန် အကောင့်ဝင်',
+  'Create account': 'အကောင့်ဖန်တီး',
   'Delete space': 'အလုပ်ခွင်ဖျက်',
   'Delete {name}?': '{name} ဖျက်မလား?',
   'Every note in this space is deleted from your computer.':

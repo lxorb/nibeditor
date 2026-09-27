@@ -58,6 +58,9 @@ export const zhHant: Dictionary = {
   'Use the plain mark instead': '改用一般標記',
   'Loading…': '載入中…',
   'Create a space': '建立空間',
+  'Import a folder': '匯入資料夾',
+  'Sign in to sync': '登入以同步',
+  'Create account': '建立帳號',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
   'Every note in this space is deleted from your computer.':

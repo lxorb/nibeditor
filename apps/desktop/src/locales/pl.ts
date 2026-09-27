@@ -58,6 +58,9 @@ export const pl: Dictionary = {
   'Use the plain mark instead': 'Użyj zamiast tego zwykłego znacznika',
   'Loading…': 'Wczytywanie…',
   'Create a space': 'Utwórz przestrzeń',
+  'Import a folder': 'Zaimportuj folder',
+  'Sign in to sync': 'Zaloguj się, by synchronizować',
+  'Create account': 'Utwórz konto',
   'Delete space': 'Usuń przestrzeń',
   'Delete {name}?': 'Usunąć {name}?',
   'Every note in this space is deleted from your computer.':

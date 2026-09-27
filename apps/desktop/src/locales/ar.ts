@@ -58,6 +58,9 @@ export const ar: Dictionary = {
   'Use the plain mark instead': 'استخدام العلامة العادية',
   'Loading…': 'جارٍ التحميل…',
   'Create a space': 'إنشاء مساحة',
+  'Import a folder': 'استيراد مجلد',
+  'Sign in to sync': 'سجّل الدخول للمزامنة',
+  'Create account': 'إنشاء حساب',
   'Delete space': 'حذف المساحة',
   'Delete {name}?': 'حذف {name}؟',
   'Every note in this space is deleted from your computer.':

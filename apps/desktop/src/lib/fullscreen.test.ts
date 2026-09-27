@@ -201,7 +201,7 @@ describe('the shell', () => {
   test('it is the command the keyboard already had', () => {
     expect(registry).toContain("id: 'app.fullscreen'")
     expect(registry).toContain("key: 'F11'")
-    expect(menu).toContain("hint: shortcuts.hint('app.fullscreen')")
+    expect(menu).toContain("...keyed('app.fullscreen')")
     expect(app).toContain('fullscreen: () => void fullscreen.toggle(workspace.activeTabId)')
   })
 

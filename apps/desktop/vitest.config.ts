@@ -39,6 +39,7 @@ export default defineConfig({
     __EVEN_BUILD__: JSON.stringify('under test'),
     __EVEN_PLUGIN__: 'false',
     __DRIVEABLE__: 'true',
+    __APP_VERSION__: JSON.stringify('under test'),
   },
   test: {
     projects: [

@@ -58,6 +58,9 @@ export const jv: Dictionary = {
   'Use the plain mark instead': 'Gunakake tandha lugu wae',
   'Loading…': 'Ngemot…',
   'Create a space': 'Gawe papan',
+  'Import a folder': 'Impor folder',
+  'Sign in to sync': 'Mlebu kanggo nyelarasake',
+  'Create account': 'Gawe akun',
   'Delete space': 'Busak papan',
   'Delete {name}?': 'Busak {name}?',
   'Every note in this space is deleted from your computer.':

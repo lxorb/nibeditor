@@ -30,9 +30,10 @@ export const WELCOME_PATH = '/Notes/Read me.md'
 /** What it is called inside its space, which is the shape syncing sees. */
 export const WELCOME_NAME = 'Read me.md'
 
+/** Written by every build - see first-space.svelte.ts - so it names none. */
 export const WELCOME = `# Welcome to Nib
 
-This is the browser version. Your notes live in this browser until you sign in
+Your notes live on this device until you sign in
 and turn on syncing, and then they follow you everywhere.
 
 - Everything is markdown, and nothing else
@@ -45,9 +46,17 @@ const hello = 'world'
 
 | What | Where |
 | ---- | ----- |
-| Notes | this browser |
+| Notes | this device |
 | Synced notes | your account |
 `
+
+/** What earlier versions wrote. Still untouched on the devices they seeded. */
+const EARLIER = [
+  WELCOME.replace(
+    'Your notes live on this device',
+    'This is the browser version. Your notes live in this browser',
+  ).replace('| this device |', '| this browser |'),
+]
 
 /** Whether a note is the seed exactly as the app wrote it.
  *
@@ -57,5 +66,5 @@ const hello = 'world'
  *  wrote. */
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
-  return name === WELCOME_NAME && content === WELCOME
+  return name === WELCOME_NAME && (content === WELCOME || EARLIER.includes(content))
 }

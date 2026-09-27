@@ -58,6 +58,9 @@ export const vi: Dictionary = {
   'Use the plain mark instead': 'Dùng dấu thường thay thế',
   'Loading…': 'Đang tải…',
   'Create a space': 'Tạo không gian',
+  'Import a folder': 'Nhập một thư mục',
+  'Sign in to sync': 'Đăng nhập để đồng bộ',
+  'Create account': 'Tạo tài khoản',
   'Delete space': 'Xoá không gian',
   'Delete {name}?': 'Xoá {name}?',
   'Every note in this space is deleted from your computer.':

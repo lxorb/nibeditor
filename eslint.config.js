@@ -47,7 +47,7 @@ export default tseslint.config(
   ...svelte.configs.recommended,
   {
     languageOptions: {
-      // The three constants the bundler substitutes, declared in
+      // The constants the bundler substitutes, declared in
       // apps/desktop/src/env.d.ts. TypeScript files take them from there because
       // typescript-eslint leaves `no-undef` to the compiler; a `.svelte` file is
       // parsed by the Svelte parser, which still asks this list. So a constant used
@@ -58,6 +58,7 @@ export default tseslint.config(
         __EVEN_BUILD__: 'readonly',
         __EVEN_PLUGIN__: 'readonly',
         __DRIVEABLE__: 'readonly',
+        __APP_VERSION__: 'readonly',
       },
       parserOptions: {
         projectService: true,

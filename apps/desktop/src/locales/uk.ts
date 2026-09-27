@@ -58,6 +58,9 @@ export const uk: Dictionary = {
   'Use the plain mark instead': 'Використати простий знак',
   'Loading…': 'Завантаження…',
   'Create a space': 'Створити простір',
+  'Import a folder': 'Імпорт теки',
+  'Sign in to sync': 'Увійти для синхронізації',
+  'Create account': 'Створити обліковий запис',
   'Delete space': 'Видалити простір',
   'Delete {name}?': 'Видалити {name}?',
   'Every note in this space is deleted from your computer.':

@@ -394,8 +394,17 @@ function holds(tail: string): boolean {
  *  Raised 2026-09-28, to 3,335,000, for the Mac's own default keys: the `mac` field on
  *  thirty entries of the registry and the editor's keymap, the keys the Mac keeps for
  *  itself, and the signs a Mac prints for Escape, Backspace and the rest. 2,767 bytes,
- *  all of it data the settings and the menus read at launch. Measured 3,331,295. */
-const BUDGET = 3_335_000
+ *  all of it data the settings and the menus read at launch. Measured 3,331,295.
+ *
+ *  Raised 2026-09-28 again, for the first launch: the gate in App.svelte that fetches
+ *  the space chooser only while there is no space (the card, its rows and the decision
+ *  behind it are all behind that door), the sign-in sheet's heading for the Create
+ *  account door, `restored` on the workspace, a first save that makes the first space
+ *  rather than doing nothing, and the words an earlier welcome note held so an old
+ *  seed still never syncs. 2,988 bytes. And for the rest of the Mac round: the native
+ *  menu's door, the window's title and edited dot, Finder's words and the print path.
+ *  Measured 3,338,398. */
+const BUDGET = 3_340_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

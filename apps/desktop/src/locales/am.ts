@@ -58,6 +58,9 @@ export const am: Dictionary = {
   'Use the plain mark instead': 'በምትኩ ተራውን ምልክት ተጠቀም',
   'Loading…': 'በመጫን ላይ…',
   'Create a space': 'ቦታ ፍጠር',
+  'Import a folder': 'አቃፊ አምጣ',
+  'Sign in to sync': 'ለማመሳሰል ግባ',
+  'Create account': 'መለያ ፍጠር',
   'Delete space': 'ቦታ አጥፋ',
   'Delete {name}?': '{name} ይጥፋ?',
   'Every note in this space is deleted from your computer.':

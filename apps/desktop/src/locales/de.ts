@@ -58,6 +58,10 @@ export const de: Dictionary = {
   'Use the plain mark instead': 'Stattdessen das einfache Zeichen verwenden',
   'Loading…': 'Wird geladen…',
   'Create a space': 'Bereich erstellen',
+  // The first launch's space chooser; see SpaceChooser.svelte.
+  'Import a folder': 'Ordner importieren',
+  'Sign in to sync': 'Anmelden zum Synchronisieren',
+  'Create account': 'Konto erstellen',
   'Delete space': 'Bereich löschen',
   'Delete {name}?': '{name} löschen?',
   'Every note in this space is deleted from your computer.':

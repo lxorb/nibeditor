@@ -520,7 +520,19 @@ class Workspace {
     arriving.showing && !this.spaces.length && !this.tree && !arriving.coming.size,
   )
 
+  /** Whether the launch has read the spaces and the session. Until then an empty
+   *  list says nothing, and the space chooser waits for it. */
+  restored = $state(false)
+
   async restore() {
+    try {
+      await this.readSitting()
+    } finally {
+      this.restored = true
+    }
+  }
+
+  private async readSitting() {
     // The browser build starts empty, so give a first visit something to read.
     //
     // Never in the plugin. Its page is served from a local port picked afresh
