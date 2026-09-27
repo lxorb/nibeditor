@@ -179,7 +179,7 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
 /// Only a name beside itself can be one: a move into another folder is never the
 /// same entry. Whether the two paths reach one entry is `same`'s to say, handed in
 /// so the decision can be tested on a filesystem that tells case apart.
-fn respelled(source: &Path, target: &Path, same: impl Fn(&Path, &Path) -> bool) -> bool {
+pub(crate) fn respelled(source: &Path, target: &Path, same: impl Fn(&Path, &Path) -> bool) -> bool {
     source != target && source.parent() == target.parent() && same(source, target)
 }
 
@@ -191,7 +191,7 @@ fn respelled(source: &Path, target: &Path, same: impl Fn(&Path, &Path) -> bool) 
 /// renaming over it would take that name away. A file with one link, or a folder
 /// (which cannot be hard-linked), reached under two spellings is one entry.
 #[cfg(unix)]
-fn same_entry(one: &Path, other: &Path) -> bool {
+pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     use std::os::unix::fs::MetadataExt as _;
 
     match (fs::symlink_metadata(one), fs::symlink_metadata(other)) {
@@ -208,7 +208,7 @@ fn same_entry(one: &Path, other: &Path) -> bool {
 /// for its final name, which comes back the same for both spellings of one file.
 /// The file index that would say it directly is not stable in `std` yet.
 #[cfg(not(unix))]
-fn same_entry(one: &Path, other: &Path) -> bool {
+pub(crate) fn same_entry(one: &Path, other: &Path) -> bool {
     match (fs::canonicalize(one), fs::canonicalize(other)) {
         (Ok(one), Ok(other)) => one == other,
         _ => false,
@@ -222,7 +222,7 @@ fn same_entry(one: &Path, other: &Path) -> bool {
 /// writing to the folder, which is as close as either platform gets: both renames
 /// replace the target without asking. A respelling is the exception, since what is
 /// there is the note itself; see `respell`.
-fn move_entry(source: &Path, target: &Path, respelling: bool) -> Result<(), String> {
+pub(crate) fn move_entry(source: &Path, target: &Path, respelling: bool) -> Result<(), String> {
     if respelling {
         return respell(source, target);
     }
