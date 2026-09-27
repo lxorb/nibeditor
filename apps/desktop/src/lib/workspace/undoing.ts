@@ -16,6 +16,7 @@ import { invoke } from '../tauri'
 import type { NoteDoc, Tab } from './documents.svelte'
 import type { Positions } from './positions'
 import type { FileAction, FileActions } from './undo.svelte'
+import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
 export interface PutsBack {
@@ -135,8 +136,7 @@ async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise
  *  so undoing costs nobody their caret either. */
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
   for (const note of action.notes) {
-    await invoke('write_note', { path: note.path, content: note.content })
-    links.noteSaved(note.path, note.content)
+    await writeFile(note.path, note.content)
     ws.documentAt(note.path)?.edited(note.edits, note.content)
   }
 }
@@ -164,11 +164,8 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
 /** Puts a merge back: both notes as they were, and the note that was folded
  *  in written again where it was. */
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {
-  await invoke('write_note', { path: action.into, content: action.intoContent })
-  await invoke('write_note', { path: action.from, content: action.fromContent })
-
-  links.noteSaved(action.into, action.intoContent)
-  links.noteSaved(action.from, action.fromContent)
+  await writeFile(action.into, action.intoContent)
+  await writeFile(action.from, action.fromContent)
   ws.reload(action.into, action.intoContent)
 
   // Links to the note that went away were pointed at the note it went into.
@@ -178,10 +175,8 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
 /** Puts a split or an extraction back: the note whole again, and the note that
  *  was carved out of it gone. */
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
-  await invoke('write_note', { path: action.from, content: action.fromContent })
+  await writeFile(action.from, action.fromContent)
   await invoke('delete_note', { path: action.created }).catch(() => undefined)
-
-  links.noteSaved(action.from, action.fromContent)
   links.noteGone(action.created)
 
   for (const tab of ws.tabs.filter((one) => one.path === action.created)) ws.close(tab.id)

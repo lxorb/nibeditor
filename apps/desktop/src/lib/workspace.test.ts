@@ -120,6 +120,8 @@ const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
 const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
+const { links } = await import('./link-index.svelte')
+const { startup } = await import('./startup.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -3530,6 +3532,72 @@ describe('a file asked for as a note and then as a website', () => {
     expect(workspace.documentAt(WEB_NOTE)).toBe(note)
     // And nothing was written under the document that was open on it.
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+})
+
+/** A website the app writes itself is a file `[[its name]]` reaches the moment it is
+ *  written, like a note is. Nothing rescans a space while it is open, so the index
+ *  knows what the writer tells it - and the website made from the file list, the
+ *  address typed into its bar and the Ctrl+S that first saves one all wrote straight
+ *  to the disk and told it nothing: `[[Docs]]` found no Docs until the next launch. */
+describe('a website the app writes', () => {
+  const LINKING = '/space/One.md'
+
+  beforeEach(async () => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    // The launch's turns, taken at once: the index reads a space after the first
+    // paint, and a test has no paint to wait for.
+    void startup.shown()
+    await links.build('/space')
+    links.noteSaved(LINKING, 'see [[Docs]] and [[Docs.url]]')
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    links.noteGone(LINKING)
+    startup.reset()
+  })
+
+  const linkedFrom = (path: string) => links.backlinks(path).map((one) => one.path)
+
+  test('is linked the moment the file list makes it', async () => {
+    await workspace.createWebsite('/space', 'Docs.url')
+
+    expect(links.fileNamed('Docs.url')).toBe('Docs.url')
+    expect(linkedFrom('/space/Docs.url')).toEqual(['One.md', 'One.md'])
+    links.noteGone('/space/Docs.url')
+  })
+
+  // A file the scan never saw - one a sync brought down after it - is the index's to
+  // hear about the moment the app writes it, and aiming the bar writes it.
+  test('and is linked once its bar is aimed somewhere', async () => {
+    notes['/space/Docs.url'] = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
+    await workspace.openWeb('/space/Docs.url')
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    expect(links.fileNamed('Docs.url')).toBeNull()
+
+    await workspace.webAimed(tab, 'https://svelte.dev/docs')
+
+    expect(links.fileNamed('Docs.url')).toBe('Docs.url')
+    expect(linkedFrom('/space/Docs.url')).toEqual(['One.md', 'One.md'])
+    links.noteGone('/space/Docs.url')
+    delete notes['/space/Docs.url']
+  })
+
+  test('and is linked once a tab nobody had saved is kept', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    tab.address = 'https://svelte.dev/'
+
+    await workspace.keepWeb(tab, '/space/Docs.url')
+
+    expect(links.fileNamed('Docs.url')).toBe('Docs.url')
+    expect(linkedFrom('/space/Docs.url')).toEqual(['One.md', 'One.md'])
+    links.noteGone('/space/Docs.url')
   })
 })
 

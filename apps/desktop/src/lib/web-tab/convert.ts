@@ -20,6 +20,7 @@ import { folderOf, isMarkdownPath, nameOf, withoutExtension } from '../space-pat
 import { invoke, joinPath } from '../tauri'
 import type { NoteDoc } from '../workspace/documents.svelte'
 import type { Entry, Space } from '../workspace.svelte'
+import { writeFile } from '../workspace/write-file'
 import { keptBody, webTitleOf, webUrlOf } from './note'
 import { writeShortcut } from './shortcut'
 
@@ -76,13 +77,16 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const target = free === null ? shortcut : joinPath(folderOf(path), free)
 
   ws.showEntry(ws.freshEntry(target, false))
-  await invoke('write_note', { path: target, content: written })
+  await writeFile(target, written)
 
+  // The note either goes or stays as the words somebody wrote into it, and the index
+  // is told whichever it was: a note that stays is still a note `[[its name]]` reaches.
   const kept = keptBody(text)
-  if (kept === null) await oldNoteGone(path)
-  else await invoke('write_note', { path, content: kept }).catch(() => undefined)
+  if (kept === null) {
+    await oldNoteGone(path)
+    links.noteGone(path)
+  } else await writeFile(path, kept).catch(() => undefined)
 
-  links.noteGone(path)
   await ws.loadTree()
   return target
 }

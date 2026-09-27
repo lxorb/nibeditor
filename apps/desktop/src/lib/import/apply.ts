@@ -30,12 +30,12 @@ import { freePath } from '@nib/markdown/paths'
 
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
-import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { folderOf, relativePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
+import { writeFile } from '../workspace/write-file'
 
 import type { ImportPlan, Planned } from './plan'
 
@@ -74,8 +74,7 @@ export async function applyImport(
     const path = joinPath(target.root, file.path)
 
     if (file.kind === 'note') {
-      await invoke('write_note', { path, content: file.text })
-      links.noteSaved(path, file.text)
+      await writeFile(path, file.text)
     } else {
       await invoke('write_bytes', { path, base64: toBase64(file.bytes) })
     }

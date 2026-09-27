@@ -44,6 +44,7 @@ vi.mock('../account.svelte', () => ({
 vi.mock('../link-index.svelte', () => ({
   links: {
     noteGone: (path: string) => void told.push(`gone ${path}`),
+    noteSaved: (path: string) => void told.push(`saved ${path}`),
     // The `url:` of a note, for convertWebsites' own filter. A note is a website
     // when its text has a url line; the fixtures below carry one.
     urlOf: (path: string) => (disk.get(path)?.includes('url:') ? 'https://x' : null),
@@ -116,7 +117,9 @@ describe('a note that is a website', () => {
     expect(disk.has(NOTE)).toBe(false)
     // The row appears before the filesystem has answered.
     expect(shown).toEqual([`${SPACE}/Svelte docs.url`])
-    expect(told).toEqual([`gone ${NOTE}`])
+    // And the index hears both, so `[[Svelte docs]]` reaches the shortcut now rather
+    // than after the next scan of the space.
+    expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
   })
 
   test('and its file is deleted when signed in, trashed when not', async () => {
@@ -163,6 +166,9 @@ describe('a note somebody also wrote in', () => {
     expect(disk.has(NOTE)).toBe(true)
     expect(disk.get(NOTE)).toContain('My own notes on it.')
     expect(disk.get(NOTE)).not.toContain('url: https://svelte.dev')
+    // A note that stays is still in the index, as what it says now; it was told the
+    // note had gone, and `[[Svelte]]` found nothing until the next scan.
+    expect(told).toEqual([`saved ${target}`, `saved ${NOTE}`])
   })
 })
 

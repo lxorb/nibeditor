@@ -69,6 +69,7 @@ import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { undoLastFileAction } from './workspace/undoing'
 import { FileActions } from './workspace/undo.svelte'
+import { writeFile } from './workspace/write-file'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
 import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
@@ -1495,7 +1496,7 @@ class Workspace {
     this.remember(path)
     this.dropScaffolding(tab)
 
-    await invoke('write_note', { path, content })
+    await writeFile(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -1526,7 +1527,7 @@ class Workspace {
     const content = writeShortcut(url, title, new Date())
     tab.note.replace(content, false)
 
-    await invoke('write_note', { path: tab.path, content }).catch(() => undefined)
+    await writeFile(tab.path, content).catch(() => undefined)
     this.persist()
   }
 
@@ -1599,7 +1600,7 @@ class Workspace {
       const text = writeShortcut(url, title, new Date(), undefined, page.icon ?? undefined)
 
       this.showEntry(this.freshEntry(path, false))
-      await invoke('write_note', { path, content: text })
+      await writeFile(path, text)
       await this.loadTree()
 
       tab.note.path = path
@@ -1699,7 +1700,7 @@ class Workspace {
     this.remember(path)
     this.dropScaffolding(tab)
 
-    await invoke('write_note', { path, content })
+    await writeFile(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -2856,8 +2857,7 @@ class Workspace {
     this.remember(path)
     this.dropScaffolding(tab)
 
-    await invoke('write_note', { path, content })
-    links.noteSaved(path, content)
+    await writeFile(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -2877,8 +2877,7 @@ class Workspace {
     const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
-    await invoke('write_note', { path, content: text })
-    links.noteSaved(path, text)
+    await writeFile(path, text)
     await this.loadTree()
     this.persist()
 
@@ -2918,7 +2917,7 @@ class Workspace {
     this.remember(path)
     this.dropScaffolding(tab)
 
-    await invoke('write_note', { path, content })
+    await writeFile(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -3365,8 +3364,7 @@ class Workspace {
 
     const path = insideSpace(root, safe)
     const content = `# ${noteName(relative)}\n\n`
-    await invoke('write_note', { path, content })
-    links.noteSaved(path, content)
+    await writeFile(path, content)
     await this.loadTree()
 
     return path
@@ -3428,8 +3426,7 @@ class Workspace {
     // typed leaves the timestamp alone.
     this.startRenaming(path, true)
 
-    await invoke('write_note', { path, content })
-    links.noteSaved(path, content)
+    await writeFile(path, content)
     await this.loadTree()
     this.persist()
   }
@@ -3451,7 +3448,7 @@ class Workspace {
     const content = await invoke<string>('read_note', { path })
     const name = this.freeName(folder, copyName(nameOf(path)))
 
-    await invoke('write_note', { path: joinPath(folder, name), content })
+    await writeFile(joinPath(folder, name), content)
     await this.loadTree()
   }
 

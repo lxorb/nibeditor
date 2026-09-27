@@ -16,6 +16,7 @@ import { folderOf } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
+import { writeFile } from './write-file'
 
 /** What composing needs of the store the notes are open in. */
 export interface Composes {
@@ -46,8 +47,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   const joined = merged(intoContent, fromContent)
 
   await invoke('snapshot_note', { path: into, content: intoContent }).catch(() => undefined)
-  await invoke('write_note', { path: into, content: joined })
-  links.noteSaved(into, joined)
+  await writeFile(into, joined)
   ws.reload(into, joined)
 
   // Before the note goes, so the links that pointed at it can still be found.
@@ -104,12 +104,10 @@ async function carve(
   const folder = folderOf(path)
   const created = joinPath(folder, ws.freeName(folder, `${carved.name}.md`))
 
-  await invoke('write_note', { path: created, content: carved.taken })
-  links.noteSaved(created, carved.taken)
+  await writeFile(created, carved.taken)
 
   await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
-  await invoke('write_note', { path, content: carved.kept })
-  links.noteSaved(path, carved.kept)
+  await writeFile(path, carved.kept)
   ws.reload(path, carved.kept)
 
   ws.undone.record({ kind, from: path, fromContent: before, created })

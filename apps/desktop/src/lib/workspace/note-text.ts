@@ -23,6 +23,7 @@ import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { FileAction, FileActions } from './undo.svelte'
+import { writeFile } from './write-file'
 
 /** What writing across a space needs of the store it belongs to. */
 export interface HoldsNotes {
@@ -191,10 +192,9 @@ export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[])
       content: change.before,
     }).catch(() => undefined)
 
-    await invoke('write_note', { path: change.path, content: change.after })
+    await writeFile(change.path, change.after)
 
     done.push({ path: change.path, content: change.before, edits: change.back })
-    links.noteSaved(change.path, change.after)
     ws.documentAt(change.path)?.edited(change.edits, change.after)
   }
 
