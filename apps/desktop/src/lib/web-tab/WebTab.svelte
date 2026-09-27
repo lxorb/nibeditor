@@ -100,9 +100,16 @@
    *  covers a corner of the page is just as much in front of it as one that covers the
    *  middle. That was the bug: the page went on being drawn over a menu it did not
    *  happen to cover the centre of, and a menu behind a page is a menu nobody can
-   *  see. */
+   *  see.
+   *
+   *  And a drag over the panes, whatever the hit test says. A tab carried out of its
+   *  strip, or a note out of the file list, puts the drop zones up in every pane, and
+   *  the carried tab hangs under the pointer over all of them: a page left in front
+   *  hid both, so the tab vanished the moment it left the strip and nobody could see
+   *  where it would land. The drag is asked rather than hit-tested because the page
+   *  has to go before the zones are there to be hit. */
   function covered(): boolean {
-    if (overlays.depth > 0) return true
+    if (overlays.depth > 0 || workspace.panes.dragging !== null) return true
 
     const box = hole?.getBoundingClientRect()
     if (!box || !hole) return false
@@ -152,8 +159,10 @@
   let leaving = 0
 
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
-   *  dragged reports every pixel. */
-  function follow() {
+   *  dragged reports every pixel. What set it off is taken and not looked at: an
+   *  observer and a listener hand it one anyway, and an effect names by it the state
+   *  it follows. */
+  function follow(_cause?: unknown) {
     if (!isDesktop || !ready) return
 
     cancelAnimationFrame(scheduled)
@@ -284,6 +293,11 @@
       if (last) pages.hide(tab.id, last)
     }
   })
+
+  // A drag over the panes began or ended. Neither is a press this pane hears - the
+  // tab lifts ten pixels after its own press, whenever the hand gets there - nor
+  // anything on the overlay stack, so the page is told here; see `covered`.
+  $effect(() => follow(workspace.panes.dragging))
 
   // The address the tab remembers, so a restart comes back on the page it was on
   // rather than at the site's front door.
