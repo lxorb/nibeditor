@@ -952,9 +952,31 @@ never settles is.
 Bluetooth, USB, serial, HID - and the credential store. Those are taken off
 `Navigator.prototype` before the page's first script, because a note-taking app has no
 business handing them to a page and because no sentence in a bubble would help anybody
-decide. **On macOS and Linux** the engine's own prompt is what a site gets: the same
-event exists there - a capture delegate and WebKitGTK's `permission-request` signal -
-and neither is reachable through what wry hands out.
+decide.
+
+**On macOS the camera and the microphone go through the same bubble.** What was here
+before said a Mac site got the engine's own prompt, and that was not true: wry sets a UI
+delegate on every `WKWebView` whose capture handler answers `WKPermissionDecisionGrant`
+for every origin and every frame, so a site in a web tab was handed the camera without a
+word, and so was a frame inside a note in the window's own page. The only prompt anybody
+saw was the system's, once, for nib itself. wry has no setting and no hook for it, so each
+webview is given a UI delegate of nib's own in front of wry's
+(`webView:requestMediaCapturePermissionForOrigin:...`), which holds the decision handler
+open while the window asks, exactly as the `WebView2` deferral is held, and passes every
+other question - the file picker, a window the page asked for - to wry's delegate by
+forwarding. A site that asks for both at once is two questions, camera first, because the
+window remembers each for the site on its own; the microphone is only asked about once
+the camera has been allowed. The window's own page is answered the Windows way: the app's
+own origin is allowed, anything else in it refused. The requesting frame's origin is the
+one asked about, as on Windows. Where, notifications and the clipboard have no request to
+answer in `WKWebView` - where is never offered, notifications are not there, and a
+clipboard read is WebKit's own Paste callout - so the bubble is the camera and the
+microphone. macOS before 12 has no such delegate method, and `WebKit` refuses capture
+there on its own.
+
+**On Linux** the engine's own default is what a site gets: the same event exists there -
+WebKitGTK's `permission-request` signal - and it is not reachable through what wry hands
+out.
 
 **Only http and https, and never the app itself.** `file:` would read this
 machine, a scheme the system knows would hand the page to another application, and
@@ -1049,8 +1071,8 @@ versions and goes to the trash like every other document.
 - **A page's still picture is Windows only.** `CapturePreview` is WebView2's own;
   `WKWebView`'s `takeSnapshot` and WebKitGTK's equivalent are not reachable through
   what wry hands out, so an overlay over a page on a Mac still blinks the pane.
-- **A permission on macOS and Linux is the engine's own prompt**, for the same
-  reason: the event that would let the app ask is not reachable there.
+- **A permission on Linux is the engine's own default**, for the same reason: the
+  event that would let the app ask is not reachable there.
 - **The place a page is put back at is the offset it was left at**, not the element
   that was under the reader's eye. A site that lays itself out differently at another
   width comes back near where it was rather than exactly on it, which is what a
