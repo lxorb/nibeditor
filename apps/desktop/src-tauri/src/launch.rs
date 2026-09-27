@@ -51,11 +51,12 @@ pub fn take_startup_files(pending: tauri::State<'_, Pending>) -> Vec<String> {
 pub fn new_window(app: AppHandle) -> Result<(), String> {
     let label = free_label(&app);
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::default())
+    let builder = WebviewWindowBuilder::new(&app, &label, WebviewUrl::default())
         .title("Nib")
         .inner_size(1180.0, 760.0)
-        .min_inner_size(520.0, 400.0)
-        .decorations(false)
+        .min_inner_size(520.0, 400.0);
+
+    crate::appearance::own_frame(builder)
         .build()
         .map(|_| ())
         .map_err(|error| format!("could not open another window: {error}"))

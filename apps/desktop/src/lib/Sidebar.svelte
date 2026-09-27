@@ -966,6 +966,12 @@
     padding: 0 var(--space-1);
   }
 
+  /* A Mac's traffic lights, over the head of a panel docked at the window's left
+     edge; see Titlebar.svelte. */
+  :global([data-lights]) .head {
+    padding-inline-start: var(--traffic-lights);
+  }
+
   .new {
     flex: none;
     width: var(--row-height);

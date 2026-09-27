@@ -30,14 +30,54 @@ fn ours(app: &AppHandle) -> Vec<Window> {
         .collect()
 }
 
+/// Where a Mac's traffic lights sit, from the window's top left corner: in the middle
+/// of the bar's height, `--titlebar-height` in the themes. tauri.macos.conf.json says
+/// the same for the first window.
+#[cfg(target_os = "macos")]
+const LIGHTS: tauri::LogicalPosition<f64> = tauri::LogicalPosition::new(16.0, 13.0);
+
+/// A window built with nib's own frame, the way the first one is in tauri.conf.json.
+///
+/// Everywhere but a Mac that is no frame at all, and the bar draws the three buttons.
+/// A Mac keeps its own traffic lights over the bar instead, the way VS Code and
+/// Obsidian do there: the lights are the one part of a window a Mac user reaches for
+/// without looking.
+pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
+    builder: tauri::WebviewWindowBuilder<'_, R, M>,
+) -> tauri::WebviewWindowBuilder<'_, R, M> {
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .decorations(true)
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .traffic_light_position(LIGHTS);
+
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.decorations(false);
+
+    builder
+}
+
 /// Who draws the frame. `system` asks for the platform's titlebar and border; false is
 /// nib's own, which is what every window starts as.
+///
+/// A Mac never loses its frame: nib's own is the system's titlebar made transparent
+/// under the bar, with the traffic lights left where they are, and the system's is that
+/// titlebar drawn above it.
 #[tauri::command]
 pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
     for window in ours(&app) {
-        window
-            .set_decorations(system)
-            .map_err(|error| format!("the frame could not be changed: {error}"))?;
+        #[cfg(target_os = "macos")]
+        let changed = window.set_title_bar_style(if system {
+            tauri::TitleBarStyle::Visible
+        } else {
+            tauri::TitleBarStyle::Overlay
+        });
+
+        #[cfg(not(target_os = "macos"))]
+        let changed = window.set_decorations(system);
+
+        changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
     }
 
     Ok(())

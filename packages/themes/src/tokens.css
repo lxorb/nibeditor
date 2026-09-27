@@ -145,6 +145,8 @@
 
   --sidebar-width: 252px;
   --titlebar-height: 38px;
+  /* Room for a Mac's traffic lights; see launch.rs for where they sit. */
+  --traffic-lights: 78px;
   /* The bar across the top of a column: the title bar over the note, and the
      list panel's own header beside it. One number, so the two columns read as
      one row rather than as two bars at two heights. */

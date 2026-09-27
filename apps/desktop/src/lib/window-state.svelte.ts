@@ -10,6 +10,7 @@
  *  test hands over. */
 export interface Resizable {
   isMaximized(): Promise<boolean>
+  isFullscreen(): Promise<boolean>
   toggleMaximize(): Promise<void>
   onResized(handler: () => void): Promise<() => void>
 }
@@ -18,6 +19,10 @@ export class WindowState {
   /** True while the window fills the screen. False until the window has been
    *  asked, which is the right answer for a window that has just opened. */
   maximized = $state(false)
+
+  /** True while the window is in full screen, where a Mac takes its traffic lights
+   *  away and the bar has no room to keep for them. */
+  fullscreen = $state(false)
 
   /** Follows a window until the teardown is called. `open` is asked for the
    *  window rather than handed one, because getting at it means loading Tauri's
@@ -56,7 +61,10 @@ export class WindowState {
   }
 
   private async read(window: Resizable, watching: { alive: boolean }) {
-    const on = await window.isMaximized()
-    if (watching.alive) this.maximized = on
+    const [on, full] = await Promise.all([window.isMaximized(), window.isFullscreen()])
+    if (!watching.alive) return
+
+    this.maximized = on
+    this.fullscreen = full
   }
 }

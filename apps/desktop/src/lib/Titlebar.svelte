@@ -7,7 +7,7 @@
   import SpaceMark from './SpaceMark.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
-  import { currentWindow, isDesktop } from './tauri'
+  import { currentWindow, isDesktop, platform } from './tauri'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -23,6 +23,24 @@
    *  restores it too; see window-state.svelte.ts. */
   const shape = new WindowState()
   const maximized = $derived(shape.maximized)
+
+  /** A Mac keeps its own traffic lights at the top left of every window, and its
+   *  menu in the bar at the top of the screen, so the bar draws neither: VS Code's
+   *  and Obsidian's shape on a Mac. What it keeps is room for the lights, except in
+   *  full screen, where the system takes them away. See launch.rs. */
+  const mac = isDesktop && platform() === 'macos'
+  const lights = $derived(mac && modes.frame === 'nib' && !shape.fullscreen)
+
+  /** Said on the root, because the lights sit over whatever is in the window's top
+   *  left corner: this bar, or the sidebar's head while the panel is docked open
+   *  beside it, which is where Obsidian has them. See Sidebar.svelte. */
+  $effect(() => {
+    if (lights) document.documentElement.dataset.lights = ''
+    else delete document.documentElement.dataset.lights
+  })
+
+  /** Whether the lights are over this bar rather than over the docked panel. */
+  const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
@@ -58,12 +76,12 @@
      its tab, so there is no separate title; a phone and a tablet hold one
      document, so the name is the middle of the row and the whole of the app is
      behind the dots at the end of it. -->
-<header>
+<header class:lights={cornered}>
   <!-- The application itself, at the top left corner of the screen, which is
        where it was when there was a column of spaces to put it above. A phone
        reaches it through the three dots at the other end of this same row
        instead: there the left corner is the file list. -->
-  {#if !viewport.touch}
+  {#if !viewport.touch && !mac}
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
@@ -132,7 +150,7 @@
        sets of them is one set that lies about which window it belongs to. The bar
        itself stays - it holds the menu, the sidebar toggle and the tabs - and so
        does the stretch the window is dragged by. See modes.svelte.ts. -->
-  {#if isDesktop}
+  {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls">
         <button onclick={minimize} aria-label={t('Minimize')}>
@@ -171,6 +189,11 @@
        with what is below: Chrome's active tab. See Tabs.svelte. */
     background: var(--tab-frame);
     box-shadow: inset 0 -1px var(--line);
+  }
+
+  /* The three lights and the gap after them, the room a Mac's own apps leave. */
+  header.lights {
+    padding-inline-start: var(--traffic-lights);
   }
 
   .drag {
