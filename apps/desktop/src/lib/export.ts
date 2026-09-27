@@ -13,12 +13,13 @@ import { mathCss } from './math-fonts'
 import {
   DEFAULT_PAGE_SETUP,
   type PageSetup,
+  type PaperInches,
   pageCss,
   pageSetupFor,
   runningDate,
   withRunningText,
 } from './page-setup'
-import { assetPath, invoke, isDesktop } from './tauri'
+import { assetPath, invoke, isDesktop, platform } from './tauri'
 import type { Scheme } from './theme.svelte'
 
 export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
@@ -216,10 +217,25 @@ export async function renderNote(
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 
-/** Shows the page to the browser's print dialog, which is where "Save as PDF"
+/** Shows the page to the system's print dialog, which is where "Save as PDF"
  *  lives when nothing better is available. The frame is kept until the dialog
- *  has closed; taking it away sooner cancels the print in some engines. */
-export function printInFrame(html: string): Promise<void> {
+ *  has closed; taking it away sooner cancels the print in some engines.
+ *
+ *  `page` is the paper the dialog opens on, where the caller knows it. Only the
+ *  Mac's own dialog is handed it; a frame's dialog reads the page's `@page` rule. */
+export function printInFrame(html: string, page?: PaperInches): Promise<void> {
+  // `WKWebView` ignores `print()` inside a frame - it is a UI delegate method wry does
+  // not have - so on a Mac the frame opened nothing and the caller waited five minutes
+  // for an `afterprint` that never came. The crate opens the system's own print sheet
+  // for the page instead, the one TextEdit and Safari show; see `print_page` in
+  // src-tauri/src/pdf.rs.
+  if (isDesktop && platform() === 'macos') {
+    return invoke('print_page', { html, page: page ?? null }).then(
+      () => undefined,
+      () => undefined,
+    )
+  }
+
   return new Promise((resolve) => {
     /** What had the keyboard before the frame took it. Read now, because by the
      *  time the dialog closes the answer is the frame. */

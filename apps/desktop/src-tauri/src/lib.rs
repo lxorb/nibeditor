@@ -304,6 +304,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         pandoc::import_document,
         pdf::pdf_supported,
         pdf::print_pdf,
+        pdf::print_page,
         recent::remember_recent,
         secrets::secret_forget,
         secrets::secret_read,

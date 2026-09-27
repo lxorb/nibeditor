@@ -9,6 +9,10 @@
 //! is what a PDF of a note is for. `WebKitGTK` offers only its print panel, so on
 //! Linux this says it cannot help and the window falls back to that panel.
 //!
+//! On a Mac the print dialog itself comes through here as well, because the window's
+//! own road to it - `print()` in a frame - is one `WKWebView` ignores; see
+//! `print_page`.
+//!
 //! And on nib's own Chromium - the `cef` feature, off in everything that ships -
 //! neither system engine is there any more, so the one call this module makes into
 //! it is not there to make: the printer here says no and the window falls back to
@@ -16,11 +20,11 @@
 //! and it is batch 6's; see docs/browser.md.
 
 use serde::Deserialize;
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tauri::webview::PageLoadEvent;
+use tauri::webview::{PageLoadEvent, PlatformWebview};
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::clock;
@@ -107,6 +111,85 @@ pub async fn print_pdf(
         return Err("printing to a file is not available here".into());
     }
 
+    in_hidden_window(&app, html, PATIENCE, move |webview, done| {
+        printer::print(webview, &output, &page, done)
+    })
+    .await
+    .map_err(|error| {
+        if error == TOO_LONG {
+            "the PDF took too long to write".into()
+        } else {
+            error
+        }
+    })
+}
+
+/// How long the system's print dialog may stay open before the hidden page behind it
+/// is taken away. Somebody choosing a printer takes their time; an hour is the point at
+/// which the dialog has been forgotten rather than considered.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+const DIALOG_PATIENCE: Duration = Duration::from_secs(60 * 60);
+
+/// What the wait says when the clock ran out before the engine answered.
+const TOO_LONG: &str = "the print took too long";
+
+/// The system's own print dialog for a finished page, on a Mac.
+///
+/// `window.print()` inside a frame is what the other desktops use for this, and
+/// `WKWebView` ignores it: a frame's print goes to a UI delegate method wry does not
+/// have, so nothing opened and the caller waited five minutes for an `afterprint` that
+/// never came. The page is loaded into the same hidden window a PDF is written from,
+/// and the print operation `WebKit` hands out for it is run with its panel showing, as
+/// a sheet on the window that asked - the File > Print of `TextEdit` and Safari, with the
+/// paper, the printer, the preview and the PDF menu the reader knows. `page` is the
+/// paper the dialog opens on, from the app's settings; the dialog can change it.
+#[tauri::command]
+#[cfg_attr(
+    not(all(target_os = "macos", not(feature = "cef"))),
+    allow(
+        clippy::unused_async,
+        reason = "one signature for every platform; only a Mac has a dialog to wait for"
+    )
+)]
+pub async fn print_page(
+    webview: tauri::Webview,
+    html: String,
+    page: Option<PdfPage>,
+) -> Result<(), String> {
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    {
+        use tauri::Manager as _;
+
+        let app = webview.app_handle().clone();
+        let parent = webview.window();
+        in_hidden_window(&app, html, DIALOG_PATIENCE, move |view, done| {
+            printer::dialog(view, &parent, page.as_ref(), done)
+        })
+        .await
+    }
+
+    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
+    {
+        let _ = (webview, html, page);
+        Err("the print dialog here is the page's own".into())
+    }
+}
+
+/// Loads a finished page into a window nobody sees, and once it has laid itself out
+/// hands its webview to `print`, which answers on the channel it is given. Waits at
+/// most `patience` for that answer, then takes the window and the page away however
+/// it went.
+async fn in_hidden_window<F>(
+    app: &AppHandle,
+    html: String,
+    patience: Duration,
+    print: F,
+) -> Result<(), String>
+where
+    F: FnOnce(&PlatformWebview, mpsc::Sender<Result<(), String>>) -> Result<(), String>
+        + Send
+        + 'static,
+{
     let job = format!(
         "{}-{}-{}",
         std::process::id(),
@@ -125,28 +208,30 @@ pub async fn print_pdf(
     };
 
     let (done, waited) = mpsc::channel::<Result<(), String>>();
-    // The load event can come more than once; the page is printed once.
-    let printed = Arc::new(AtomicBool::new(false));
+    // The load event can come more than once; the page is printed once, which is also
+    // why the printer is held where the first load can take it.
+    let print = Arc::new(Mutex::new(Some(print)));
 
-    let window = WebviewWindowBuilder::new(&app, format!("print-{job}"), WebviewUrl::External(url))
+    let window = WebviewWindowBuilder::new(app, format!("print-{job}"), WebviewUrl::External(url))
         .title("Nib")
         .visible(false)
         .inner_size(900.0, 1200.0)
         .on_page_load(move |window, payload| {
-            if payload.event() != PageLoadEvent::Finished || printed.swap(true, Ordering::SeqCst) {
+            if payload.event() != PageLoadEvent::Finished {
                 return;
             }
+            let Some(print) = print.lock().ok().and_then(|mut held| held.take()) else {
+                return;
+            };
 
             let done = done.clone();
-            let output = output.clone();
-            let page = page.clone();
 
             std::thread::spawn(move || {
                 std::thread::sleep(SETTLE);
 
                 let failed = done.clone();
                 let asked = window.with_webview(move |webview| {
-                    if let Err(error) = printer::print(&webview, &output, &page, done) {
+                    if let Err(error) = print(&webview, done) {
                         let _ = failed.send(Err(error));
                     }
                 });
@@ -166,14 +251,14 @@ pub async fn print_pdf(
         }
     };
 
-    let waiting = tauri::async_runtime::spawn_blocking(move || waited.recv_timeout(PATIENCE)).await;
+    let waiting = tauri::async_runtime::spawn_blocking(move || waited.recv_timeout(patience)).await;
 
     let _ = window.destroy();
     let _ = std::fs::remove_file(&path);
 
     waiting
         .map_err(|error| format!("the print was interrupted: {error}"))?
-        .unwrap_or_else(|_| Err("the PDF took too long to write".into()))
+        .unwrap_or_else(|_| Err(TOO_LONG.into()))
 }
 
 /// A failure before the printer was even reached cannot use the channel the
@@ -299,7 +384,9 @@ mod printer {
         NSPaperOrientation, NSPrintHeaderAndFooter, NSPrintInfo, NSPrintJobSavingURL,
         NSPrintOperation, NSPrintSaveJob, NSPrintingPaginationMode, NSWindow,
     };
-    use objc2_foundation::{MainThreadMarker, NSNumber, NSObjectProtocol, NSSize, NSString, NSURL};
+    use objc2_foundation::{
+        MainThreadMarker, NSCopying as _, NSNumber, NSObjectProtocol, NSSize, NSString, NSURL,
+    };
     use objc2_web_kit::WKWebView;
     use tauri::webview::PlatformWebview;
 
@@ -310,10 +397,11 @@ mod printer {
         WKWebView::class().responds_to(sel!(printOperationWithPrintInfo:))
     }
 
-    /// What the operation reports back to: where the file was to go, and the one
-    /// answer the caller is waiting for.
+    /// What the operation reports back to: where the file was to go - nowhere, for a
+    /// print dialog, where the reader chose - and the one answer the caller is waiting
+    /// for.
     struct Waiting {
-        output: String,
+        output: Option<String>,
         done: Cell<Option<Sender<Result<(), String>>>>,
     }
 
@@ -339,13 +427,16 @@ mod printer {
                     return;
                 };
 
-                // A job that says it succeeded and left no file behind did not, and
-                // the caller is about to tell somebody their PDF is where they asked.
-                let written = std::path::Path::new(&self.ivars().output).is_file();
-                let _ = done.send(if success && written {
-                    Ok(())
-                } else {
-                    Err("the PDF could not be written".into())
+                let _ = done.send(match &self.ivars().output {
+                    // A job that says it succeeded and left no file behind did not, and
+                    // the caller is about to tell somebody their PDF is where they
+                    // asked.
+                    Some(output) if !(success && std::path::Path::new(output).is_file()) => {
+                        Err("the PDF could not be written".into())
+                    }
+                    // A dialog somebody cancelled is a dialog answered: nothing went
+                    // wrong, and there is nothing to say about it.
+                    _ => Ok(()),
                 });
             }
         }
@@ -358,11 +449,11 @@ mod printer {
         )]
         fn new(
             mtm: MainThreadMarker,
-            output: &str,
+            output: Option<&str>,
             done: Sender<Result<(), String>>,
         ) -> Retained<Self> {
             let this = Self::alloc(mtm).set_ivars(Waiting {
-                output: output.to_owned(),
+                output: output.map(str::to_owned),
                 done: Cell::new(Some(done)),
             });
             // SAFETY: `init` is `NSObject`'s own initialiser, called once on an object
@@ -388,23 +479,16 @@ mod printer {
         static PRINTING: RefCell<Vec<Retained<Printed>>> = const { RefCell::new(Vec::new()) };
     }
 
-    /// Sets the operation going. The answer arrives later, on the channel, once the
-    /// engine has laid out every page and `AppKit` has written them.
+    /// The print window's webview and window, held for as long as the print needs them.
     #[allow(
         unsafe_code,
-        reason = "WKWebView's print operation is reached through the Objective-C runtime, from the pointer wry hands out"
+        reason = "wry hands the webview and its window out as bare Objective-C pointers"
     )]
-    pub fn print(
+    fn held(
         webview: &PlatformWebview,
-        output: &str,
-        page: &PdfPage,
-        done: Sender<Result<(), String>>,
-    ) -> Result<(), String> {
-        let mtm =
-            MainThreadMarker::new().ok_or("the print was not asked for on the main thread")?;
-
+    ) -> Result<(Retained<WKWebView>, Retained<NSWindow>), String> {
         // SAFETY: both pointers are the ones wry built for the print window, which is
-        // alive until `print_pdf` has its answer; retaining them keeps them so for as
+        // alive until the caller has its answer; retaining them keeps them so for as
         // long as this holds them. `with_webview` runs this on the main thread, which
         // is where both of them belong.
         let (view, window) = unsafe {
@@ -413,15 +497,14 @@ mod printer {
                 Retained::retain(webview.ns_window().cast::<NSWindow>()),
             )
         };
-        let (Some(view), Some(window)) = (view, window) else {
-            return Err("there was no page to print".into());
-        };
+        view.zip(window)
+            .ok_or_else(|| "there was no page to print".into())
+    }
 
+    /// The paper from the app's settings, on a print info.
+    fn lay_out(info: &NSPrintInfo, page: &PdfPage) {
         let (width, height, margin) = sheet_in_points(page);
 
-        // A print info of its own rather than the shared one, which is the app's and
-        // which a print dialog elsewhere would then open on this paper.
-        let info = NSPrintInfo::new();
         // Orientation before the paper: `AppKit` turns the paper when the orientation
         // changes, and the paper given here is already the way it lies.
         info.setOrientation(if page.landscape {
@@ -439,26 +522,26 @@ mod printer {
         info.setVerticallyCentered(false);
         info.setHorizontalPagination(NSPrintingPaginationMode::Automatic);
         info.setVerticalPagination(NSPrintingPaginationMode::Automatic);
+    }
 
-        // SAFETY: the keys are `AppKit`'s own and each value is the type its key is
-        // documented to take - a file URL, a boolean number. The job disposition is
-        // `AppKit`'s own constant.
-        unsafe {
-            info.setJobDisposition(NSPrintSaveJob);
-            let settings = info.dictionary();
-            let target = NSURL::fileURLWithPath(&NSString::from_str(output));
-            settings.insert(NSPrintJobSavingURL, target.as_ref() as &AnyObject);
+    /// The engine's print operation for the page, with backgrounds and without the
+    /// browser's header and footer, and with the frame it needs to print anything.
+    #[allow(
+        unsafe_code,
+        reason = "WKWebView's print operation is reached through the Objective-C runtime"
+    )]
+    fn operation(view: &WKWebView, info: &NSPrintInfo) -> Retained<NSPrintOperation> {
+        // SAFETY: the key is `AppKit`'s own and the value the boolean number it takes;
+        // the webview is alive and on its own thread, and every object below is used
+        // here and nowhere else.
+        let operation = unsafe {
             // The browser's own title and URL lines are not part of a note, as on
             // Windows.
-            settings.insert(
+            info.dictionary().insert(
                 NSPrintHeaderAndFooter,
                 NSNumber::new_bool(false).as_ref() as &AnyObject,
             );
-        }
 
-        // SAFETY: the webview is alive and on its own thread, and every object below is
-        // used here and nowhere else.
-        let operation = unsafe {
             // Tinted code and callouts are part of the page, as on Windows. The print
             // stylesheet already asks for its colours to be kept exactly; this is the
             // engine's own switch for the same thing, which it has from macOS 13.3.
@@ -467,15 +550,30 @@ mod printer {
                 preferences.setShouldPrintBackgrounds(true);
             }
 
-            view.printOperationWithPrintInfo(&info)
+            view.printOperationWithPrintInfo(info)
         };
 
-        operation.setShowsPrintPanel(false);
-        operation.setShowsProgressPanel(false);
         // Without a frame the operation's view prints nothing at all; see above.
         if let Some(printing) = operation.view() {
             printing.setFrame(view.frame());
         }
+        operation
+    }
+
+    /// Runs the operation as a sheet on `window` - which, with both panels off, shows
+    /// nothing at all - and says on the channel when it is over.
+    #[allow(
+        unsafe_code,
+        reason = "a modal print reports back through an Objective-C selector"
+    )]
+    fn run(
+        operation: &NSPrintOperation,
+        window: &NSWindow,
+        output: Option<&str>,
+        done: Sender<Result<(), String>>,
+    ) -> Result<(), String> {
+        let mtm =
+            MainThreadMarker::new().ok_or("the print was not asked for on the main thread")?;
 
         let printed = Printed::new(mtm, output, done);
         PRINTING.with_borrow_mut(|held| {
@@ -485,18 +583,89 @@ mod printer {
 
         // SAFETY: the delegate is an object this thread keeps alive until it has been
         // called, the selector is the one it implements with the signature `AppKit`
-        // documents for it, and there is no context to pass. The window is the print
-        // window's own, hidden, and no sheet is shown on it: both panels are off.
+        // documents for it, and there is no context to pass.
         unsafe {
             operation.runOperationModalForWindow_delegate_didRunSelector_contextInfo(
-                &window,
+                window,
                 Some(printed.as_ref() as &AnyObject),
                 Some(sel!(printOperationDidRun:success:contextInfo:)),
                 std::ptr::null_mut(),
             );
         }
-
         Ok(())
+    }
+
+    /// Sets the operation going, saving to `output`. The answer arrives later, on the
+    /// channel, once the engine has laid out every page and `AppKit` has written them.
+    #[allow(
+        unsafe_code,
+        reason = "a print info's save settings are an Objective-C dictionary"
+    )]
+    pub fn print(
+        webview: &PlatformWebview,
+        output: &str,
+        page: &PdfPage,
+        done: Sender<Result<(), String>>,
+    ) -> Result<(), String> {
+        let (view, window) = held(webview)?;
+
+        // A print info of its own rather than the shared one, which is the app's and
+        // which a print dialog elsewhere would then open on this paper.
+        let info = NSPrintInfo::new();
+        lay_out(&info, page);
+
+        // SAFETY: the key is `AppKit`'s own and the value the file URL it takes; the
+        // job disposition is `AppKit`'s own constant.
+        unsafe {
+            info.setJobDisposition(NSPrintSaveJob);
+            let target = NSURL::fileURLWithPath(&NSString::from_str(output));
+            info.dictionary()
+                .insert(NSPrintJobSavingURL, target.as_ref() as &AnyObject);
+        }
+
+        let operation = operation(&view, &info);
+        operation.setShowsPrintPanel(false);
+        operation.setShowsProgressPanel(false);
+
+        // The print window's own, hidden: no sheet is shown on it, both panels are off.
+        run(&operation, &window, Some(output), done)
+    }
+
+    /// The system's print dialog for the page, as a sheet on `parent`. The answer
+    /// arrives on the channel when the dialog has closed, printed or cancelled.
+    pub fn dialog(
+        webview: &PlatformWebview,
+        parent: &tauri::Window,
+        page: Option<&PdfPage>,
+        done: Sender<Result<(), String>>,
+    ) -> Result<(), String> {
+        let (view, _) = held(webview)?;
+        let parent = parent
+            .ns_window()
+            .ok()
+            .and_then(|pointer| {
+                // SAFETY: the pointer is the `NSWindow` tauri built for the window
+                // that asked, alive while it is, and retaining it keeps it so.
+                #[allow(unsafe_code, reason = "tauri hands a window out as a bare pointer")]
+                unsafe {
+                    Retained::retain(pointer.cast::<NSWindow>())
+                }
+            })
+            .ok_or("there is no window to show the print dialog on")?;
+
+        // The shared print info is where the dialog remembers the reader's printer and
+        // paper between prints, so it opens on a copy of that - with the app's own paper
+        // over it where the caller knows it, which is what the page was laid out for.
+        let info = NSPrintInfo::sharedPrintInfo().copy();
+        if let Some(page) = page {
+            lay_out(&info, page);
+        }
+
+        let operation = operation(&view, &info);
+        operation.setShowsPrintPanel(true);
+        operation.setShowsProgressPanel(true);
+
+        run(&operation, &parent, None, done)
     }
 }
 
