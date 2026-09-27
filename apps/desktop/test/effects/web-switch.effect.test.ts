@@ -213,6 +213,45 @@ test('the page is hidden while anything of the app is over it, and comes back wh
   void unmount(app)
 })
 
+/** A tab carried out of its strip hangs under the pointer over the panes, and every
+ *  pane puts its drop zones up under it. Neither is on the overlay stack, and the tab
+ *  lifts ten pixels after its own press - whenever the hand gets there - so nothing the
+ *  pane was already listening for said the page had to go. In the native app the page
+ *  stayed in front: the carried tab vanished as it left the strip and the zones were
+ *  lit behind the page. See `covered` in WebTab.svelte. */
+test('the page is hidden while a drag is over the panes, and comes back when it ends', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/carried'
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).shown).toBe(true)
+
+  asked.length = 0
+  workspace.panes.dragging = { tabId: tab.id }
+  flushSync()
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+  expect(asked.map((one) => one.command)).toContain('web_shot')
+
+  asked.length = 0
+  workspace.panes.dropped()
+  flushSync()
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(true)
+
+  void unmount(app)
+})
+
 /** Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else.
  *  For example when I switched to a note, there was still the browser open."*
  *
