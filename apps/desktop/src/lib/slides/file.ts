@@ -195,6 +195,6 @@ export async function exportDeckPdf(
     if (await writtenPdf(html, target, DECK_PAPER)) return target
   }
 
-  await printInFrame(html)
+  await printInFrame(html, DECK_PAPER)
   return
 }

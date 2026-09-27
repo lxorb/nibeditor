@@ -138,28 +138,64 @@ tempfile = "3"
 # because 2.5 asks for a newer Tauri than the one this crate is built against. See
 # document_window.rs for why it is the Mac's alone.
 tauri-plugin-window-state = "~2.4"
-# The dot in a window's close button that says a note is unsaved, and the file a
-# window stands for, both of which AppKit keeps on the NSWindow and Tauri does not
-# reach. The versions tao is already built against. See document_window.rs. And the
-# Mac's own list of recent documents, which the Dock reads; see recent.rs.
-objc2-app-kit = { version = "0.3", default-features = false, features = [
-  "std",
-  "NSApplication",
-  "NSDocumentController",
-  "NSResponder",
-  "NSWindow",
-] }
-# And the one method AppKit asks an app before it quits, which tao's application
-# delegate does not answer; see lifecycle.rs.
+# AppKit, Foundation and WebKit as the objects tao and wry hand out, at the versions
+# they are built against so the pointers line up. What each is for: the dot in a
+# window's close button and the file it stands for (document_window.rs), the one
+# method AppKit asks before it quits (lifecycle.rs), the Dock's recent documents
+# (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), and
+# WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
+# web_tabs.rs, web_cookies.rs).
 objc2 = "0.6"
-# The strings the two calls above hand AppKit, and asking iCloud for a note it has
-# taken off the Mac, the call Finder makes; see notes/icloud.rs.
+block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
   "std",
+  "NSArray",
+  "NSData",
+  "NSDate",
+  "NSDictionary",
   "NSError",
   "NSFileManager",
+  "NSGeometry",
+  "NSHTTPCookie",
+  "NSObject",
+  "NSProgress",
   "NSString",
   "NSURL",
+  "NSURLRequest",
+  "NSValue",
+] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-core-foundation",
+  "NSApplication",
+  "NSBitmapImageRep",
+  "NSDocumentController",
+  "NSGraphics",
+  "NSImage",
+  "NSImageRep",
+  "NSPrintInfo",
+  "NSPrintOperation",
+  "NSResponder",
+  "NSView",
+  "NSWindow",
+] }
+objc2-web-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-app-kit",
+  "block2",
+  "WKDownload",
+  "WKFrameInfo",
+  "WKHTTPCookieStore",
+  "WKNavigationAction",
+  "WKNavigationDelegate",
+  "WKNavigationResponse",
+  "WKPreferences",
+  "WKSecurityOrigin",
+  "WKSnapshotConfiguration",
+  "WKUIDelegate",
+  "WKWebView",
+  "WKWebViewConfiguration",
+  "WKWebsiteDataStore",
 ] }
 
 # Opened notes belong in the taskbar's own Recent list.

@@ -111,15 +111,15 @@ async function exportPdf(note: Note, options: RunOptions): Promise<string | null
   if (native && !target) return null
 
   const html = await pageOf(note, { ...options, scheme: 'light' })
+  const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
 
   if (target) {
-    const page = paperInches(pageSetupFor(note.source, options.page ?? DEFAULT_PAGE_SETUP))
     // The dialog can still save the file, so the person is not left with nothing
     // to show for the wait - and the line says the road changed; see print.ts.
     if (await writtenPdf(html, target, page)) return target
   }
 
-  await printInFrame(html)
+  await printInFrame(html, page)
   return null
 }
 

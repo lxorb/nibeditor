@@ -384,8 +384,11 @@ taken on the moment a page _stops_ loading rather than on every report that it i
 loading: the crate says where a page is again whenever its title or its mark arrives, so
 a page landing is three reports in a few milliseconds, and each of them used to throw the
 picture away and ask for another - three engine captures at once, in the breath the
-reader is watching the page appear. On macOS and Linux there is no
-snapshot to be had through what wry hands out, and the hole keeps its own ground there.
+reader is watching the page appear. On macOS the same picture is `WKWebView`'s own
+`takeSnapshotWithConfiguration:completionHandler:`, reached through the view wry hands
+out and turned into a PNG through `NSBitmapImageRep`, so the window gets the same `data:`
+address either way. On Linux there is no snapshot to be had through what wry hands out,
+and the hole keeps its own ground there.
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
@@ -579,9 +582,14 @@ desktop engines.
 - **A name is made safe on every platform**: no separators, nothing a file system
   refuses, no device name, no dot at either end, at most 180 characters with the
   extension kept. `NIB_DOWNLOADS_DIR` points a probe at a folder of its own.
-- **Progress is `WebView2`'s alone.** `downloads::progress` listens to the operation the
-  engine hands out a second time, after wry's handler, and matches it by the path that
-  handler chose; it is also what Cancel reaches. On macOS and Linux a file says when it
+- **Progress is `WebView2`'s and `WKWebView`'s.** On Windows `downloads::progress`
+  listens to the operation the engine hands out a second time, after wry's handler, and
+  matches it by the path that handler chose; it is also what Cancel reaches. On macOS wry
+  keeps the `WKDownload` to itself, so the tab's navigation delegate is given one of
+  nib's own in front of wry's: `didBecomeDownload` is passed to wry's delegate first,
+  unchanged, and the download is then kept and matched to the list by its address, the
+  way wry's word that it ended is matched. Its `NSProgress` is read a few times a second
+  while anything is going, and Cancel is its own `cancel:`. On Linux a file says when it
   starts and when it ends, the ring sweeps rather than fills, and Cancel only takes the
   row away.
 - **A tab a page opened for a file closes again**, the way Chrome's does: `target="_blank"`
@@ -738,12 +746,26 @@ paid once rather than per tab - the pages in the tabs are the part that costs a
 gigabyte, and those are still parked and closed as they always were. See `session` in
 `apps/desktop/src-tauri/src/web_tabs.rs`.
 
+**On macOS a session cookie is given the same expiry, through `WKHTTPCookieStore`.**
+wry hands out the `WKWebView` itself, and the view's configuration names its data store
+and the store its cookie store, so the seam `WebView2` has exists here too: every cookie
+of the store is read after each page a tab loads, and each session-only one is made again
+from its own properties with a lifetime four hundred days out - an expiry and a maximum
+age, because `NSHTTPCookie` reads one or the other by the cookie's version - `Discard`
+said outright as no, and `HttpOnly` written back by name where it had it (the key is not
+one `NSHTTPCookie` documents). The data store behind a tab is a persistent one - `nib-web-tabs`
+or a space's own - so a cookie with an expiry is written to disk and comes back on the
+next launch, where a session one lived only in the network process's memory and died with
+it. The window's close waits for it as on Windows. **What it does not catch:** a login a
+page made without loading another, followed straight by Cmd+Q. Quitting from the menu is
+not a window closing, so the close hook is never asked; the next page load after a
+sign-in is what keeps it.
+
 On Linux the runtime already keeps the web tabs' context alive for the app's life (it
-has to, to reuse the WebKit network process). On macOS the context is let go when the
-last tab closes, as it was on Windows; a login there rests on the persistent data store
-on disk - a lasting cookie survives, a session-only one does not, a restart included -
-until the same seam exists for `WKWebView` and `WebKitGTK` as for `WebView2`: wry hands
-out neither engine's cookie store, so there is nothing yet to give an expiry through.
+has to, to reuse the WebKit network process). A login there rests on the persistent data
+store on disk - a lasting cookie survives, a session-only one does not, a restart
+included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
+there, so there is nothing yet to give an expiry through.
 
 **No nib IPC reaches the site**, three times over:
 
@@ -952,9 +974,30 @@ never settles is.
 Bluetooth, USB, serial, HID - and the credential store. Those are taken off
 `Navigator.prototype` before the page's first script, because a note-taking app has no
 business handing them to a page and because no sentence in a bubble would help anybody
-decide. **On macOS and Linux** the engine's own prompt is what a site gets: the same
-event exists there - a capture delegate and WebKitGTK's `permission-request` signal -
-and neither is reachable through what wry hands out.
+decide.
+
+**On macOS the camera and the microphone go through the same bubble.** What was here
+before said a Mac site got the engine's own prompt, and that was not true: wry sets a UI
+delegate on every `WKWebView` whose capture handler answers `WKPermissionDecisionGrant`
+for every origin and every frame, so a site in a web tab was handed the camera without a
+word, and so was a frame inside a note in the window's own page. The only prompt anybody
+saw was the system's, once, for nib itself. wry has no setting and no hook for it, so each
+webview is given a UI delegate of nib's own in front of wry's
+(`webView:requestMediaCapturePermissionForOrigin:...`), which holds the decision handler
+open while the window asks, exactly as the `WebView2` deferral is held, and passes every
+other question - the file picker, a window the page asked for - to wry's delegate by
+forwarding. A site that asks for both at once is two questions, camera first, because the
+window remembers each for the site on its own; the microphone is only asked about once
+the camera has been allowed. The window's own page is answered the Windows way: the app's
+own origin is allowed, anything else in it refused. The requesting frame's origin is the
+one asked about, as on Windows. Where you are, notifications and a clipboard read are
+not raised through this delegate - `WKWebView` answers them itself, a clipboard read with
+its own Paste callout - so on a Mac the bubble is the camera and the microphone. macOS
+before 12 has no such delegate method.
+
+**On Linux** the engine's own default is what a site gets: the same event exists there -
+WebKitGTK's `permission-request` signal - and it is not reachable through what wry hands
+out.
 
 **Only http and https, and never the app itself.** `file:` would read this
 machine, a scheme the system knows would hand the page to another application, and
@@ -980,8 +1023,8 @@ versions and goes to the trash like every other document.
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
-| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
-| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` only. Unit tested |
+| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
+| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
@@ -1046,11 +1089,11 @@ versions and goes to the trash like every other document.
   not give it" above, with the measurement and what the fix costs. It is the largest
   thing open here: it is not one site, it is any site whose bundle happens to declare a
   top level `ipc`, and nothing in the page can tell the reader why.
-- **A page's still picture is Windows only.** `CapturePreview` is WebView2's own;
-  `WKWebView`'s `takeSnapshot` and WebKitGTK's equivalent are not reachable through
-  what wry hands out, so an overlay over a page on a Mac still blinks the pane.
-- **A permission on macOS and Linux is the engine's own prompt**, for the same
-  reason: the event that would let the app ask is not reachable there.
+- **A page's still picture is Windows and macOS only.** `CapturePreview` and
+  `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what
+  wry hands out, so an overlay over a page on Linux still blinks the pane.
+- **A permission on Linux is the engine's own default**, for the same reason: the
+  event that would let the app ask is not reachable there.
 - **The place a page is put back at is the offset it was left at**, not the element
   that was under the reader's eye. A site that lays itself out differently at another
   width comes back near where it was rather than exactly on it, which is what a

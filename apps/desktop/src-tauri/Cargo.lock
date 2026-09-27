@@ -2432,12 +2432,14 @@ name = "nib"
 version = "0.8.0"
 dependencies = [
  "base64 0.22.1",
+ "block2",
  "flate2",
  "getrandom 0.3.4",
  "keyring",
  "objc2",
  "objc2-app-kit",
  "objc2-foundation",
+ "objc2-web-kit",
  "rusqlite",
  "serde",
  "serde_json",
