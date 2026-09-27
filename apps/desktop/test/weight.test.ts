@@ -310,17 +310,6 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
- *  Raised 2026-09-27, to 3,350,000, for the tab strip that moves like Chrome's:
- *  tab-strip/layout.ts, drag.svelte.ts and closing.svelte.ts, and a Tabs.svelte that
- *  places every tab by hand. Measured 3,332,684 on top of that day's main, about
- *  53,000 of it the strip and most of that the prose that says which of Chrome's
- *  rules each number is. Asked against a measured launch, as the note below says the next raise
- *  should be: the production build fetches 12,628 more bytes before the first paint
- *  (1,297,791 to 1,310,419), and the shell with the strip's plus in it was up at a
- *  median of 341 ms against 342 ms before, forty loads each, alternated. The strip
- *  is on screen at launch, so its layout cannot be lazy; the drag could be, but a
- *  tab that is pressed has to answer that same frame.
- *
  *  Raised 2026-09-18 for open-link.ts, which is where a pressed link goes now that
  *  nib has pages of its own to put one in. 5,800 bytes of it, and it cannot be lazy:
  *  the pane hands the editor its link opener as the editor is built, and a module
@@ -371,8 +360,19 @@ function holds(tail: string): boolean {
  *  and nobody's gate ran in between. The round that raised it adds 6,461 bytes, all
  *  of it in stores that are in this graph by nature - the link index, the bookmarks and
  *  the workspace - for a rename, a move, a delete and a restore that now tell the
- *  bookmarks and the index's list of files. Measured 3,290,000. */
-const BUDGET = 3_300_000
+ *  bookmarks and the index's list of files. Measured 3,290,000.
+ *
+ *  Raised 2026-09-27, to 3,350,000, for the tab strip that moves like Chrome's:
+ *  tab-strip/layout.ts, drag.svelte.ts and closing.svelte.ts, and a Tabs.svelte that
+ *  places every tab by hand. Measured 3,339,374 on top of the raise above, 49,374
+ *  of it the strip and most of that the prose that says which of Chrome's rules each
+ *  number is. Asked against a measured launch, as the note on the Ctrl+T raise says the next raise
+ *  should be: the production build fetches 12,628 more bytes before the first paint
+ *  (1,297,791 to 1,310,419), and the shell with the strip's plus in it was up at a
+ *  median of 341 ms against 342 ms before, forty loads each, alternated. The strip
+ *  is on screen at launch, so its layout cannot be lazy; the drag could be, but a
+ *  tab that is pressed has to answer that same frame. */
+const BUDGET = 3_350_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
