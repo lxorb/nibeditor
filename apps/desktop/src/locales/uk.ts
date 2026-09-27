@@ -1491,6 +1491,9 @@ export const uk: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Інформація про сайт',
+  Downloads: 'Завантаження',
+  'Show in folder': 'Показати в папці',
+  Failed: 'Помилка',
   Camera: 'Камера',
   Microphone: 'Мікрофон',
   Location: 'Місцезнаходження',

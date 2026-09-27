@@ -1427,6 +1427,9 @@ export const ur: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'سائٹ کی معلومات',
+  Downloads: 'ڈاؤن لوڈز',
+  'Show in folder': 'فولڈر میں دکھائیں',
+  Failed: 'ناکام',
   Camera: 'کیمرا',
   Microphone: 'مائیکروفون',
   Location: 'مقام',

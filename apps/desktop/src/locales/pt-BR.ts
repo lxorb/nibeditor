@@ -1459,6 +1459,9 @@ export const ptBR: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do site',
+  Downloads: 'Downloads',
+  'Show in folder': 'Mostrar na pasta',
+  Failed: 'Falhou',
   Camera: 'Câmera',
   Microphone: 'Microfone',
   Location: 'Local',

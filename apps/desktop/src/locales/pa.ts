@@ -1435,6 +1435,9 @@ export const pa: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ਸਾਈਟ ਜਾਣਕਾਰੀ',
+  Downloads: 'ਡਾਊਨਲੋਡ',
+  'Show in folder': 'ਫੋਲਡਰ ਵਿੱਚ ਦਿਖਾਓ',
+  Failed: 'ਅਸਫਲ',
   Camera: 'ਕੈਮਰਾ',
   Microphone: 'ਮਾਈਕ੍ਰੋਫੋਨ',
   Location: 'ਨਿਰਧਾਰਿਤ ਸਥਾਨ',

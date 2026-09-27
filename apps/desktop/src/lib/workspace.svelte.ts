@@ -1417,8 +1417,8 @@ class Workspace {
    *
    *  `pane` is for a page asking for one of its own - `target="_blank"` - so the tab
    *  it asks for lands beside it rather than wherever the interface last had focus. */
-  openPage(url: string, behind = false, pane?: string) {
-    if (viewport.device === 'phone') return
+  openPage(url: string, behind = false, pane?: string): string | null {
+    if (viewport.device === 'phone') return null
 
     // A phone and a tablet hold one document, so there is no behind for a tab to be
     // in: one put there would be one the reader has no strip to find it in. See
@@ -1450,6 +1450,7 @@ class Workspace {
     }
 
     this.persist()
+    return tab.id
   }
 
   /** A website in a folder, named before it has an address.

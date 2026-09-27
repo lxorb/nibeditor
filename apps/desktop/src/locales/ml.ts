@@ -1449,6 +1449,9 @@ export const ml: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'സൈറ്റ് വിവരങ്ങൾ',
+  Downloads: 'ഡൗൺലോഡുകൾ',
+  'Show in folder': 'ഫോൾഡറിൽ കാണിക്കുക',
+  Failed: 'പരാജയപ്പെട്ടു',
   Camera: 'ക്യാമറ',
   Microphone: 'മൈക്രോഫോൺ',
   Location: 'ലൊക്കേഷൻ',

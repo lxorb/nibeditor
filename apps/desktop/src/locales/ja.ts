@@ -1424,6 +1424,9 @@ export const ja: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'サイト情報',
+  Downloads: 'ダウンロード',
+  'Show in folder': 'フォルダに表示',
+  Failed: '失敗',
   Camera: 'カメラ',
   Microphone: 'マイク',
   Location: '位置情報',

@@ -179,16 +179,18 @@ pub fn made(dir: &Path) -> Result<(), String> {
 /// every probe and drive sets it; see docs/automation.md.
 const SPACES_DIR: &str = "NIB_SPACES_DIR";
 
-/// The spaces root a variable names, or `None` for one it does not name.
+/// The folder a variable names, or `None` for one it does not name: the spaces root in
+/// `NIB_SPACES_DIR`, and a probe's downloads folder in `NIB_DOWNLOADS_DIR` (see
+/// downloads.rs).
 ///
 /// Absolute only. A relative path is read against whatever folder the app happened to be
-/// started in, which is not a place to decide somebody's notes live; and an empty value
+/// started in, which is not a place to decide somebody's files live; and an empty value
 /// is what a shell leaves behind when it clears a variable, so it reads as unset rather
 /// than as the root of the disk.
 ///
 /// Pure, and told what the variable said rather than reading it, so the rule is tested
 /// without an app, a documents folder, or a variable set across a running test suite.
-fn spaces_named(said: Option<&OsStr>) -> Option<PathBuf> {
+pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
     let path = PathBuf::from(said?);
     path.is_absolute().then_some(path)
 }
@@ -207,7 +209,7 @@ fn spaces_named(said: Option<&OsStr>) -> Option<PathBuf> {
 /// folder is asked for: a drive that says where the notes go must not be overruled by a
 /// documents folder, and must not need one to exist at all.
 pub fn spaces_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    if let Some(named) = spaces_named(std::env::var_os(SPACES_DIR).as_deref()) {
+    if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
     }
 
@@ -691,9 +693,9 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        a_shareable_folder, drop_highlights, files_in, folded, folder_key, free_spot,
+        a_shareable_folder, drop_highlights, files_in, folded, folder_key, folder_named, free_spot,
         highlights_of, inside, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged,
-        judged_space, link_to, move_highlights, space_root, spaces_named, write_atomically,
+        judged_space, link_to, move_highlights, space_root, write_atomically,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -719,7 +721,7 @@ mod tests {
         // What comes back is that folder itself: not joined with `Nib`, and with no
         // documents folder anywhere in it. That is what "wins" means - `spaces_dir`
         // answers this before it asks for a documents folder at all.
-        let said = spaces_named(Some(absolute.as_os_str())).expect("an absolute path");
+        let said = folder_named(Some(absolute.as_os_str())).expect("an absolute path");
         assert_eq!(said, absolute);
         assert!(!said.ends_with("Nib"));
     }
@@ -729,12 +731,12 @@ mod tests {
     /// shell leaves behind when it clears a variable.
     #[test]
     fn a_variable_that_names_no_absolute_folder_is_ignored() {
-        assert!(spaces_named(None).is_none());
-        assert!(spaces_named(Some(OsStr::new(""))).is_none());
-        assert!(spaces_named(Some(OsStr::new("notes"))).is_none());
-        assert!(spaces_named(Some(OsStr::new("./notes"))).is_none());
-        assert!(spaces_named(Some(OsStr::new("../notes"))).is_none());
-        assert!(spaces_named(Some(OsStr::new("Documents/Nib"))).is_none());
+        assert!(folder_named(None).is_none());
+        assert!(folder_named(Some(OsStr::new(""))).is_none());
+        assert!(folder_named(Some(OsStr::new("notes"))).is_none());
+        assert!(folder_named(Some(OsStr::new("./notes"))).is_none());
+        assert!(folder_named(Some(OsStr::new("../notes"))).is_none());
+        assert!(folder_named(Some(OsStr::new("Documents/Nib"))).is_none());
     }
 
     #[test]

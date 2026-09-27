@@ -1410,6 +1410,9 @@ export const am: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'የጣቢያ መረጃ',
+  Downloads: 'ውርዶች',
+  'Show in folder': 'በአቃፊ ውስጥ አሳይ',
+  Failed: 'አልተሳካም',
   Camera: 'ካሜራ',
   Microphone: 'ማይክሮፎን',
   Location: 'አካባቢ',

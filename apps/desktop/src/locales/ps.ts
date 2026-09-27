@@ -1432,6 +1432,9 @@ export const ps: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'د ټاټوبي معلومات',
+  Downloads: 'ډاونلوډونه',
+  'Show in folder': 'په فولډر کې وښایاست',
+  Failed: 'ناکام شو',
   Camera: 'کامره',
   Microphone: 'مایکروفون',
   Location: 'موقعیت',

@@ -1428,6 +1428,9 @@ export const hi: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइट जानकारी',
+  Downloads: 'डाउनलोड',
+  'Show in folder': 'फ़ोल्डर में दिखाएँ',
+  Failed: 'विफल',
   Camera: 'कैमरा',
   Microphone: 'माइक्रोफ़ोन',
   Location: 'जगह की जानकारी',

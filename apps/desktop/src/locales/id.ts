@@ -1429,6 +1429,9 @@ export const id: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
+  Downloads: 'Unduhan',
+  'Show in folder': 'Tampilkan di folder',
+  Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Lokasi',

@@ -1423,6 +1423,9 @@ export const jv: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informasi situs',
+  Downloads: 'Undhuhan',
+  'Show in folder': 'Tampilake ing folder',
+  Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Lokasi',

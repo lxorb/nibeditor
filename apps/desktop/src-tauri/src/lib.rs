@@ -51,6 +51,8 @@ mod apple_text;
 mod assets;
 mod clock;
 #[cfg(desktop)]
+mod downloads;
+#[cfg(desktop)]
 mod endpoint;
 #[cfg(desktop)]
 mod engine;
@@ -314,6 +316,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         web_tabs::web_print,
         web_tabs::web_shot,
         web_tabs::web_answer,
+        downloads::web_downloads,
+        downloads::web_download_open,
+        downloads::web_download_show,
+        downloads::web_download_cancel,
     ]);
 
     #[cfg(mobile)]

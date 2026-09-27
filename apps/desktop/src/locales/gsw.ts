@@ -1440,6 +1440,9 @@ export const gsw: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Website-Infos',
+  Downloads: 'Downloads',
+  'Show in folder': 'Im Ordner zeige',
+  Failed: 'Fählgschlage',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Standort',

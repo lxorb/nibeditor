@@ -1,5 +1,6 @@
 <script lang="ts">
-  /** The bar over a page: back, forward, reload, the address, a clip and the dots.
+  /** The bar over a page: back, forward, reload, the address, a clip, what has been
+   *  downloaded, and the dots.
    *
    *  A browser's row, in nib's shapes. The same `.nib-glyph` squares the find bar and
    *  the sidebar's foot are made of, the same `.nib-field` every box you type in is,
@@ -18,6 +19,9 @@
    *  Nothing here decides anything. Every press is handed up to the tab. */
 
   import { onMount, untrack } from 'svelte'
+  import { scale } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import ArrowDownToLine from 'lucide/dist/esm/icons/arrow-down-to-line.mjs'
   import ArrowLeft from 'lucide/dist/esm/icons/arrow-left.mjs'
   import ArrowRight from 'lucide/dist/esm/icons/arrow-right.mjs'
   import Ellipsis from 'lucide/dist/esm/icons/ellipsis.mjs'
@@ -26,9 +30,11 @@
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
+  import { dur } from '../motion'
   import { shortcuts } from '../shortcuts.svelte'
   import AddressField from './AddressField.svelte'
   import { plainOrigin } from './address'
+  import { downloads, progressOf } from './downloads.svelte'
   import { clipSource } from './note'
   import type { Page } from './pages.svelte'
 
@@ -45,6 +51,7 @@
     onclip,
     onmenu,
     onsite,
+    ondownloads,
     ontyping,
   }: {
     page: Page
@@ -55,8 +62,14 @@
     onclip: () => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void
+    ondownloads: () => void
     ontyping: (on: boolean) => void
   } = $props()
+
+  /** How far the files on their way have got, for the ring round the downloads glyph;
+   *  see `progressOf`. The circle's own length is 2πr with r = 10. */
+  const progress = $derived(progressOf(downloads.list))
+  const RING = 2 * Math.PI * 10
 
   /** Whether the site's own mark arrived. A site with none, or one the engine will not
    *  fetch, leaves a broken picture where a mark should be, and the lock reads better
@@ -221,6 +234,43 @@
     </svg>
   </button>
 
+  <!-- What has been downloaded, the way Chrome has it: a glyph that is not there until
+       the first file is, in the accent with a ring filling round it while anything is on
+       its way. -->
+  {#if downloads.list.length > 0}
+    <button
+      class="nib-glyph saving"
+      class:is-on={progress !== null}
+      title={t('Downloads')}
+      aria-label={t('Downloads')}
+      aria-haspopup="dialog"
+      onclick={ondownloads}
+      transition:scale={{ start: 0.6, duration: dur(160), easing: cubicOut }}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        {#each ArrowDownToLine as [tag, attrs], index (index)}
+          <svelte:element this={tag} {...attrs} />
+        {/each}
+      </svg>
+      {#if progress !== null}
+        <svg
+          class="ring"
+          class:sweeping={progress === 'unknown'}
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke-dasharray={RING}
+            stroke-dashoffset={RING * (1 - (progress === 'unknown' ? 0.25 : progress))}
+          />
+        </svg>
+      {/if}
+    </button>
+  {/if}
+
   <button
     class="nib-glyph"
     title={t('More')}
@@ -261,6 +311,33 @@
     border-radius: var(--radius-sm);
   }
 
+  /* The ring sits over the glyph's own square, a little inside its edge, and starts at
+     the top the way a clock's hand does. */
+  .saving {
+    position: relative;
+  }
+
+  .nib-glyph > .ring {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    height: calc(100% - 4px);
+    transform: rotate(-90deg);
+  }
+
+  .ring > circle {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+    transition: stroke-dashoffset var(--dur-base) var(--ease-out);
+  }
+
+  /* A file of no known size is a quarter of the ring going round. */
+  .nib-glyph > .ring.sweeping {
+    animation: turn 1s linear infinite;
+  }
+
   /* A page on its way says so where a browser says it: on the button that would
      stop it. One turn a second, which is slow enough to read as waiting rather
      than as an animation. */
@@ -269,6 +346,10 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .nib-glyph > .ring.sweeping {
+      animation: none;
+    }
+
     .turning > svg {
       animation: none;
       opacity: 0.6;

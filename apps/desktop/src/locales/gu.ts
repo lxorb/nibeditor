@@ -1421,6 +1421,9 @@ export const gu: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'સાઇટની માહિતી',
+  Downloads: 'ડાઉનલોડ્સ',
+  'Show in folder': 'ફોલ્ડરમાં બતાવો',
+  Failed: 'નિષ્ફળ',
   Camera: 'કૅમેરા',
   Microphone: 'માઇક્રોફોન',
   Location: 'સ્થાન',

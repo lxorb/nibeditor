@@ -1442,6 +1442,9 @@ export const kn: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ಸೈಟ್ ಮಾಹಿತಿ',
+  Downloads: 'ಡೌನ್‌ಲೋಡ್‌ಗಳು',
+  'Show in folder': 'ಫೋಲ್ಡರ್‌ನಲ್ಲಿ ತೋರಿಸಿ',
+  Failed: 'ವಿಫಲವಾಗಿದೆ',
   Camera: 'ಕ್ಯಾಮರಾ',
   Microphone: 'ಮೈಕ್ರೋಫೋನ್',
   Location: 'ಸ್ಥಳ',

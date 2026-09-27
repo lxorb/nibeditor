@@ -1399,6 +1399,9 @@ export const th: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'ข้อมูลเว็บไซต์',
+  Downloads: 'ดาวน์โหลด',
+  'Show in folder': 'แสดงในโฟลเดอร์',
+  Failed: 'ล้มเหลว',
   Camera: 'กล้องถ่ายรูป',
   Microphone: 'ไมโครโฟน',
   Location: 'ตำแหน่ง',

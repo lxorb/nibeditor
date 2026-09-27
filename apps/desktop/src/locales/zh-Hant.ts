@@ -1393,6 +1393,9 @@ export const zhHant: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': '網站資訊',
+  Downloads: '下載',
+  'Show in folder': '在資料夾中顯示',
+  Failed: '失敗',
   Camera: '攝影機',
   Microphone: '麥克風',
   Location: '位置',

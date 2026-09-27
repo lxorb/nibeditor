@@ -1461,6 +1461,9 @@ export const fil: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Impormasyon ng site',
+  Downloads: 'Mga download',
+  'Show in folder': 'Ipakita sa folder',
+  Failed: 'Nabigo',
   Camera: 'Camera',
   Microphone: 'Mikropono',
   Location: 'Lokasyon',

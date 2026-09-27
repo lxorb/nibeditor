@@ -38,6 +38,7 @@
   import { visited } from './visited'
   import WebAsk from './WebAsk.svelte'
   import WebBar from './WebBar.svelte'
+  import WebDownloads from './WebDownloads.svelte'
   import WebSite from './WebSite.svelte'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
@@ -335,6 +336,9 @@
   /** Whether the popover behind the site's mark is open. */
   let showingSite = $state(false)
 
+  /** Whether the list of downloads under the bar is open. */
+  let showingDownloads = $state(false)
+
   /** The site this tab is on, which is what a permission and the popover are about. */
   const site = $derived(siteOf(page.url))
 
@@ -391,7 +395,14 @@
       onclip={clip}
       onmenu={(event: MouseEvent) =>
         menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
-      onsite={() => (showingSite = !showingSite)}
+      onsite={() => {
+        showingSite = !showingSite
+        showingDownloads = false
+      }}
+      ondownloads={() => {
+        showingDownloads = !showingDownloads
+        showingSite = false
+      }}
       ontyping={(on: boolean) => {
         // Of the store rather than through `page`, for the reason the teardown above
         // says: the last blur arrives while the pane is being taken apart, and the page
@@ -409,6 +420,8 @@
       <WebAsk {asking} icon={page.icon} />
     {:else if showingSite && page.url !== null}
       <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
+    {:else if showingDownloads}
+      <WebDownloads onclose={() => (showingDownloads = false)} />
     {/if}
   </div>
 

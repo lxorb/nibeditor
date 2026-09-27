@@ -1456,6 +1456,9 @@ export const ha: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Bayanin gidan yanar',
+  Downloads: 'Abubuwan da aka sauke',
+  'Show in folder': 'Nuna a cikin babban fayil',
+  Failed: 'Ya kasa',
   Camera: 'Kamara',
   Microphone: 'Makirufo',
   Location: 'Wuri',
