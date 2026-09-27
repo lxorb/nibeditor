@@ -353,6 +353,15 @@ impl Trail {
     }
 }
 
+/// The app's builder with what web tabs keep in it: the trail of every tab, and - on
+/// the system's engine on Windows - a window that waits, as it closes, for its tabs'
+/// logins to be made to last; see `web_cookies.rs`.
+pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = builder.on_window_event(crate::web_cookies::leaving);
+    builder.manage(WebTabs::default())
+}
+
 /// Every web tab this app has open: where each of them has been, and which of them
 /// is in the middle of being given a page.
 #[derive(Default)]
@@ -924,53 +933,8 @@ pub async fn web_open(
     // this webview's own profile, and the window is told; see downloads.rs.
     let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
 
-    let moved = tab.clone();
-    let sending = app.clone();
-    let builder = builder.on_page_load(move |view, payload| {
-        let loading = matches!(payload.event(), PageLoadEvent::Started);
-        say(
-            &sending,
-            &view,
-            &moved,
-            payload.url().as_str(),
-            None,
-            None,
-            loading,
-        );
-
-        // The page is there, so it can be asked what its own mark is. Once per page,
-        // on the way in, because that is when a browser puts the site's icon on the
-        // tab; the answer comes back through the engine's own script callback and is
-        // said to the window the way the address is.
-        if loading {
-            return;
-        }
-
-        // Every step of a sign-in that goes through pages ends here, so this is where
-        // a login it left in a session cookie is made to last; see web_cookies.rs.
-        #[cfg(all(windows, not(feature = "cef")))]
-        let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
-
-        let marked = sending.clone();
-        let named = moved.clone();
-        let asked = view.clone();
-        let _ = view.eval_with_callback(ICON, move |answer| {
-            let icon = serde_json::from_str::<String>(&answer).unwrap_or_default();
-            if icon.is_empty() {
-                return;
-            }
-
-            let url = asked.url().map(|one| one.to_string()).unwrap_or_default();
-            say(&marked, &asked, &named, &url, None, Some(icon), false);
-        });
-    });
-
-    let titled = tab.clone();
-    let naming = app.clone();
-    let builder = builder.on_document_title_changed(move |view, title| {
-        let url = view.url().map(|one| one.to_string()).unwrap_or_default();
-        say(&naming, &view, &titled, &url, Some(title), None, false);
-    });
+    // Where the page has got to, and what it is called, said to the window.
+    let builder = reporting(builder, &app, &tab);
 
     let window = webview.window();
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
@@ -1021,6 +985,64 @@ pub async fn web_open(
     listening(&app, &tab, store);
     tabs.walked(&tab, &url);
     Ok(())
+}
+
+/// A tab's builder, with what the page does said to the window: each load started and
+/// ended, the site's own mark, and the title as it changes. Every page load is also
+/// where a login a sign-in left in a session cookie is made to last; see
+/// `web_cookies.rs`.
+fn reporting(
+    builder: WebviewBuilder<crate::Engine>,
+    app: &AppHandle,
+    tab: &str,
+) -> WebviewBuilder<crate::Engine> {
+    let moved = tab.to_string();
+    let sending = app.clone();
+    let builder = builder.on_page_load(move |view, payload| {
+        let loading = matches!(payload.event(), PageLoadEvent::Started);
+        say(
+            &sending,
+            &view,
+            &moved,
+            payload.url().as_str(),
+            None,
+            None,
+            loading,
+        );
+
+        // The page is there, so it can be asked what its own mark is. Once per page,
+        // on the way in, because that is when a browser puts the site's icon on the
+        // tab; the answer comes back through the engine's own script callback and is
+        // said to the window the way the address is.
+        if loading {
+            return;
+        }
+
+        // Every step of a sign-in that goes through pages ends here, so this is where
+        // a login it left in a session cookie is made to last; see web_cookies.rs.
+        #[cfg(all(windows, not(feature = "cef")))]
+        let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
+
+        let marked = sending.clone();
+        let named = moved.clone();
+        let asked = view.clone();
+        let _ = view.eval_with_callback(ICON, move |answer| {
+            let icon = serde_json::from_str::<String>(&answer).unwrap_or_default();
+            if icon.is_empty() {
+                return;
+            }
+
+            let url = asked.url().map(|one| one.to_string()).unwrap_or_default();
+            say(&marked, &asked, &named, &url, None, Some(icon), false);
+        });
+    });
+
+    let titled = tab.to_string();
+    let naming = app.clone();
+    builder.on_document_title_changed(move |view, title| {
+        let url = view.url().map(|one| one.to_string()).unwrap_or_default();
+        say(&naming, &view, &titled, &url, Some(title), None, false);
+    })
 }
 
 /// Starts listening for what the site in this tab asks to be given.

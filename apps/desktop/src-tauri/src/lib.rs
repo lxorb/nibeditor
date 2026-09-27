@@ -282,15 +282,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.manage(endpoint::Waiting::default());
 
     // Which page each web tab is on, so a back arrow is lit only where there is
-    // something behind it. A phone has no child webviews to keep a trail for; see
-    // web_tabs.rs and docs/web-tabs.md.
+    // something behind it, and a window with web tabs in it held, as it closes, until
+    // their logins are made to last. A phone has no child webviews to keep a trail
+    // for; see web_tabs.rs and docs/web-tabs.md.
     #[cfg(desktop)]
-    let builder = builder.manage(web_tabs::WebTabs::default());
-
-    // A window with web tabs in it waits, as it closes, for their logins to be made
-    // to last; see web_cookies.rs.
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.on_window_event(web_cookies::leaving);
+    let builder = web_tabs::managed(builder);
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
