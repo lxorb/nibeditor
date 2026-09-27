@@ -1490,4 +1490,14 @@ export const fil: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Tungkol sa {name}',
+  Services: 'Mga serbisyo',
+  'Hide {name}': 'Itago ang {name}',
+  'Hide others': 'Itago ang iba',
+  'Show all': 'Ipakita lahat',
+  'Quit {name}': 'Umalis sa {name}',
+  'Bring all to front': 'Dalhin lahat sa harap',
+  'Open recent': 'Buksan ang kamakailan',
+  'Clear menu': 'I-clear ang menu',
 }

@@ -1525,4 +1525,14 @@ export const ru: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'О программе {name}',
+  Services: 'Службы',
+  'Hide {name}': 'Скрыть {name}',
+  'Hide others': 'Скрыть остальные',
+  'Show all': 'Показать все',
+  'Quit {name}': 'Завершить {name}',
+  'Bring all to front': 'Все окна на передний план',
+  'Open recent': 'Открыть недавние',
+  'Clear menu': 'Очистить меню',
 }

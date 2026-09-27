@@ -1422,4 +1422,14 @@ export const zhHans: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '关于{name}',
+  Services: '服务',
+  'Hide {name}': '隐藏{name}',
+  'Hide others': '隐藏其他',
+  'Show all': '全部显示',
+  'Quit {name}': '退出{name}',
+  'Bring all to front': '前置全部窗口',
+  'Open recent': '打开最近使用',
+  'Clear menu': '清除菜单',
 }

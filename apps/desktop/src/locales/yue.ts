@@ -1423,4 +1423,14 @@ export const yue: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '關於{name}',
+  Services: '服務',
+  'Hide {name}': '隱藏{name}',
+  'Hide others': '隱藏其他',
+  'Show all': '全部顯示',
+  'Quit {name}': '結束{name}',
+  'Bring all to front': '全部擺到最前',
+  'Open recent': '打開最近用過嘅',
+  'Clear menu': '清除選單',
 }

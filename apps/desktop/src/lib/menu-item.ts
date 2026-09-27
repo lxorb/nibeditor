@@ -21,6 +21,14 @@ export interface MenuItem {
   /** Undefined where nothing is bound to it. `shortcuts.hint` answers undefined
    *  for an unbound command, so undefined is a real value here. */
   hint?: string | undefined
+  /** The shortcut registry's id for what the row runs, where it has one.
+   *
+   *  The hint is a key written for a reader, and a Mac's menu bar needs more than
+   *  that: the key itself, to make a key equivalent of, and which kind of command
+   *  it is, to know the system's own Undo and Copy from the app's and a command of
+   *  the window's from one of the note's. See native-menu.ts. The other lists
+   *  ignore it. */
+  command?: string
   /** Whether this row is the one already in force: the theme in use, the accent it
    *  is drawn in. Drawn as a tick by the lists that keep room for one. */
   checked?: boolean

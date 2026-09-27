@@ -1436,4 +1436,14 @@ export const ko: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name}에 관하여',
+  Services: '서비스',
+  'Hide {name}': '{name} 가리기',
+  'Hide others': '기타 가리기',
+  'Show all': '모두 보기',
+  'Quit {name}': '{name} 종료',
+  'Bring all to front': '모두 앞으로 가져오기',
+  'Open recent': '최근 항목 열기',
+  'Clear menu': '메뉴 지우기',
 }

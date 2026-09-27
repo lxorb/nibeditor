@@ -1481,4 +1481,14 @@ export const ta: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} பற்றி',
+  Services: 'சேவைகள்',
+  'Hide {name}': '{name} ஐ மறை',
+  'Hide others': 'மற்றவற்றை மறை',
+  'Show all': 'அனைத்தையும் காட்டு',
+  'Quit {name}': '{name} இலிருந்து வெளியேறு',
+  'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
+  'Open recent': 'சமீபத்தியதைத் திற',
+  'Clear menu': 'மெனுவை அழி',
 }

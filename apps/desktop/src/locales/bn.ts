@@ -1456,4 +1456,14 @@ export const bn: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} সম্পর্কে',
+  Services: 'পরিষেবা',
+  'Hide {name}': '{name} লুকান',
+  'Hide others': 'অন্যগুলো লুকান',
+  'Show all': 'সব দেখান',
+  'Quit {name}': '{name} বন্ধ করুন',
+  'Bring all to front': 'সব সামনে আনুন',
+  'Open recent': 'সাম্প্রতিক খুলুন',
+  'Clear menu': 'মেনু মুছুন',
 }

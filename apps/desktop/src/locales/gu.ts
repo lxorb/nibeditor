@@ -1450,4 +1450,14 @@ export const gu: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} વિશે',
+  Services: 'સેવાઓ',
+  'Hide {name}': '{name} છુપાવો',
+  'Hide others': 'અન્ય છુપાવો',
+  'Show all': 'બધું બતાવો',
+  'Quit {name}': '{name} બંધ કરો',
+  'Bring all to front': 'બધું આગળ લાવો',
+  'Open recent': 'તાજેતરનું ખોલો',
+  'Clear menu': 'મેનૂ સાફ કરો',
 }

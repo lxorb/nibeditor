@@ -1457,4 +1457,14 @@ export const ms: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Perihal {name}',
+  Services: 'Perkhidmatan',
+  'Hide {name}': 'Sembunyikan {name}',
+  'Hide others': 'Sembunyikan yang lain',
+  'Show all': 'Tunjukkan semua',
+  'Quit {name}': 'Keluar {name}',
+  'Bring all to front': 'Bawa semua ke hadapan',
+  'Open recent': 'Buka terkini',
+  'Clear menu': 'Kosongkan menu',
 }

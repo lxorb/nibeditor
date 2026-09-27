@@ -1485,4 +1485,14 @@ export const ha: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Game da {name}',
+  Services: 'Ayyuka',
+  'Hide {name}': 'Ɓoye {name}',
+  'Hide others': 'Ɓoye sauran',
+  'Show all': 'Nuna duka',
+  'Quit {name}': 'Fita daga {name}',
+  'Bring all to front': 'Kawo duka gaba',
+  'Open recent': 'Buɗe na kwanan nan',
+  'Clear menu': 'Share menu',
 }

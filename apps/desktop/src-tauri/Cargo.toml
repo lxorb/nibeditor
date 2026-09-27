@@ -140,10 +140,12 @@ tempfile = "3"
 tauri-plugin-window-state = "~2.4"
 # The dot in a window's close button that says a note is unsaved, and the file a
 # window stands for, both of which AppKit keeps on the NSWindow and Tauri does not
-# reach. The versions tao is already built against. See document_window.rs.
+# reach. The versions tao is already built against. See document_window.rs. And the
+# Mac's own list of recent documents, which the Dock reads; see recent.rs.
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
   "NSApplication",
+  "NSDocumentController",
   "NSResponder",
   "NSWindow",
 ] }

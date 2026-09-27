@@ -1456,4 +1456,14 @@ export const ur: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} کے بارے میں',
+  Services: 'خدمات',
+  'Hide {name}': '{name} چھپائیں',
+  'Hide others': 'دیگر چھپائیں',
+  'Show all': 'سب دکھائیں',
+  'Quit {name}': '{name} بند کریں',
+  'Bring all to front': 'سب کو سامنے لائیں',
+  'Open recent': 'حالیہ کھولیں',
+  'Clear menu': 'مینو صاف کریں',
 }

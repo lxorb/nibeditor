@@ -1452,4 +1452,14 @@ export const jv: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': 'Babagan {name}',
+  Services: 'Layanan',
+  'Hide {name}': 'Delikake {name}',
+  'Hide others': 'Delikake liyane',
+  'Show all': 'Tampilake kabeh',
+  'Quit {name}': 'Metu saka {name}',
+  'Bring all to front': 'Gawa kabeh menyang ngarep',
+  'Open recent': 'Bukak sing anyar',
+  'Clear menu': 'Resiki menu',
 }

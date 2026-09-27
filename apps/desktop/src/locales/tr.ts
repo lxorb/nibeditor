@@ -1461,4 +1461,14 @@ export const tr: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The Mac's menu bar
+  'About {name}': '{name} hakkında',
+  Services: 'Servisler',
+  'Hide {name}': '{name} uygulamasını gizle',
+  'Hide others': 'Diğerlerini gizle',
+  'Show all': 'Tümünü göster',
+  'Quit {name}': '{name} uygulamasından çık',
+  'Bring all to front': 'Tümünü öne getir',
+  'Open recent': 'Son kullanılanları aç',
+  'Clear menu': 'Menüyü temizle',
 }

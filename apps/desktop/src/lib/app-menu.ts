@@ -80,12 +80,22 @@ function exportRows(): MenuRow[] {
     rows.push({
       label: command.label,
       hint: command.hint,
+      // The export's own id is `export-pdf`; the registry's for the same row is
+      // `export.pdf`, which is the one a key is bound to.
+      command: command.id.replace(/^export-/, 'export.'),
       disabled: !!command.disabled,
       run: command.run,
     })
   }
 
   return rows
+}
+
+/** A row's key, both ways it is read: written for a reader as the hint, and as
+ *  the registry id the Mac's menu bar makes a key equivalent of. One call, so the
+ *  two can never name different commands; see `command` in menu-item.ts. */
+function keyed(id: string): Pick<MenuItem, 'hint' | 'command'> {
+  return { hint: shortcuts.hint(id), command: id }
 }
 
 /** Runs an editor command against whichever view is on screen. */
@@ -118,7 +128,7 @@ export function appMenu(context: Context): MenuGroup[] {
    *  the row can never say different things. */
   const edit = (id: string, label: string, command: StateCommand): MenuItem => ({
     label,
-    hint: shortcuts.hint(id),
+    ...keyed(id),
     disabled: !writable,
     run: () => run(view, command),
   })
@@ -142,6 +152,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: found.label,
           ...(found.hint === undefined ? {} : { hint: found.hint }),
+          command: found.id,
           ...(found.disabled === undefined ? {} : { disabled: found.disabled }),
           run: found.run,
         },
@@ -165,17 +176,17 @@ export function appMenu(context: Context): MenuGroup[] {
           label: one.label(),
           // One of the four carries a key of its own; the chord that asks which kind
           // is on the menu bar's own row for it rather than on any one of these.
-          ...(one.kind === 'note' ? { hint: shortcuts.hint('app.new') } : {}),
+          ...(one.kind === 'note' ? keyed('app.new') : {}),
           run: () => one.make(),
         })),
-        { label: t('Open file'), hint: shortcuts.hint('app.open'), run: () => void openFile() },
+        { label: t('Open file'), ...keyed('app.open'), run: () => void openFile() },
         ...(imported ? [{ label: imported.label, run: imported.run }] : []),
         { label: t('New space'), run: () => void newSpace() },
         ...(isDesktop
           ? [
               {
                 label: t('New window'),
-                hint: shortcuts.hint('app.new-window'),
+                ...keyed('app.new-window'),
                 run: () => void invoke('new_window'),
               },
             ]
@@ -183,7 +194,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         {
           label: t('Save'),
-          hint: shortcuts.hint('app.save'),
+          ...keyed('app.save'),
           disabled: !hasNote,
           run: () => void workspace.save(),
         },
@@ -208,7 +219,7 @@ export function appMenu(context: Context): MenuGroup[] {
           ? [
               {
                 label: t('Print'),
-                hint: shortcuts.hint('app.print'),
+                ...keyed('app.print'),
                 disabled: workspace.active?.kind !== 'note',
                 run: () => busy.start(t('Printing'), () => printNote()),
               },
@@ -216,17 +227,17 @@ export function appMenu(context: Context): MenuGroup[] {
           : []),
         DIVIDER,
         { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
-        { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+        { label: t('Settings'), ...keyed('app.settings'), run: () => settings.show() },
         DIVIDER,
         {
           label: t('Close note'),
-          hint: shortcuts.hint('app.close'),
+          ...keyed('app.close'),
           disabled: !hasNote,
           run: () => void workspace.closeActive(),
         },
         {
           label: t('Reopen closed tab'),
-          hint: shortcuts.hint('app.reopen'),
+          ...keyed('app.reopen'),
           disabled: !workspace.closed.any,
           run: () => void workspace.reopenClosed(),
         },
@@ -239,26 +250,26 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         {
           label: t('Undo'),
-          hint: shortcuts.hint('edit.undo'),
+          ...keyed('edit.undo'),
           disabled: !writable,
           run: () => view && undoEdit(view),
         },
         {
           label: t('Redo'),
-          hint: shortcuts.hint('edit.redo'),
+          ...keyed('edit.redo'),
           disabled: !writable,
           run: () => view && redoEdit(view),
         },
         DIVIDER,
         {
           label: t('Cut'),
-          hint: shortcuts.hint('fixed.cut'),
+          ...keyed('fixed.cut'),
           disabled: !selected || !writable,
           run: cutSelection,
         },
         {
           label: t('Copy'),
-          hint: shortcuts.hint('fixed.copy'),
+          ...keyed('fixed.copy'),
           disabled: !selected,
           run: copySelection,
         },
@@ -267,39 +278,39 @@ export function appMenu(context: Context): MenuGroup[] {
         // same two the keyboard offers.
         {
           label: t('Paste'),
-          hint: shortcuts.hint('fixed.paste'),
+          ...keyed('fixed.paste'),
           disabled: !writable,
           run: onView(pasteHere),
         },
         {
           label: t('Paste as plain text'),
-          hint: shortcuts.hint('edit.paste-plain'),
+          ...keyed('edit.paste-plain'),
           disabled: !writable,
           run: onView(pastePlain),
         },
         DIVIDER,
         {
           label: t('Select all'),
-          hint: shortcuts.hint('edit.select-all'),
+          ...keyed('edit.select-all'),
           disabled: !view,
           run: () => view?.dispatch({ selection: { anchor: 0, head: view.state.doc.length } }),
         },
         DIVIDER,
         {
           label: t('Find'),
-          hint: shortcuts.hint('edit.find'),
+          ...keyed('edit.find'),
           disabled: !view,
           run: onView(openFind),
         },
         {
           label: t('Replace'),
-          hint: shortcuts.hint('edit.replace'),
+          ...keyed('edit.replace'),
           disabled: !writable,
           run: onView(openReplace),
         },
         {
           label: t('Search'),
-          hint: shortcuts.hint('app.search'),
+          ...keyed('app.search'),
           run: () => workspace.showPanel('search'),
         },
       ],
@@ -349,25 +360,25 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         {
           label: t('Bold'),
-          hint: shortcuts.hint('format.bold'),
+          ...keyed('format.bold'),
           disabled: !writable,
           run: () => run(view, toggleWrap('**')),
         },
         {
           label: t('Italic'),
-          hint: shortcuts.hint('format.italic'),
+          ...keyed('format.italic'),
           disabled: !writable,
           run: () => run(view, toggleWrap('*')),
         },
         {
           label: t('Strikethrough'),
-          hint: shortcuts.hint('format.strikethrough'),
+          ...keyed('format.strikethrough'),
           disabled: !writable,
           run: () => run(view, toggleWrap('~~')),
         },
         {
           label: t('Highlight'),
-          hint: shortcuts.hint('format.highlight'),
+          ...keyed('format.highlight'),
           disabled: !writable,
           run: () => run(view, highlightSelection),
         },
@@ -392,7 +403,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         {
           label: t('Code'),
-          hint: shortcuts.hint('format.code'),
+          ...keyed('format.code'),
           disabled: !writable,
           run: () => run(view, toggleWrap('`')),
         },
@@ -402,7 +413,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         {
           label: t('Link'),
-          hint: shortcuts.hint('format.link'),
+          ...keyed('format.link'),
           disabled: !writable,
           run: () => run(view, insertLink),
         },
@@ -410,7 +421,7 @@ export function appMenu(context: Context): MenuGroup[] {
         DIVIDER,
         {
           label: t('Clear formatting'),
-          hint: shortcuts.hint('format.clear'),
+          ...keyed('format.clear'),
           disabled: !writable,
           run: () => run(view, clearFormatting),
         },
@@ -423,45 +434,45 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         {
           label: t('Command palette'),
-          hint: shortcuts.hint('app.palette'),
+          ...keyed('app.palette'),
           run: () => context.onpalette(),
         },
         DIVIDER,
         {
           label: t('Reading'),
-          hint: shortcuts.hint('app.reading'),
+          ...keyed('app.reading'),
           checked: !!workspace.active?.reading,
           disabled: workspace.active?.kind !== 'note',
           run: () => workspace.toggleReading(),
         },
         {
           label: t('Present'),
-          hint: shortcuts.hint('app.present'),
+          ...keyed('app.present'),
           checked: present.on,
           disabled: !present.on && !present.available,
           run: () => present.toggle(),
         },
         {
           label: t('Read-only'),
-          hint: shortcuts.hint('app.read-only'),
+          ...keyed('app.read-only'),
           checked: modes.readOnly,
           run: () => modes.toggleReadOnly(view),
         },
         {
           label: t('Source mode'),
-          hint: shortcuts.hint('app.source'),
+          ...keyed('app.source'),
           checked: modes.source,
           run: () => modes.toggleSource(view),
         },
         {
           label: t('Typewriter mode'),
-          hint: shortcuts.hint('app.typewriter'),
+          ...keyed('app.typewriter'),
           checked: modes.typewriter,
           run: () => modes.toggleTypewriter(view),
         },
         {
           label: t('Focus mode'),
-          hint: shortcuts.hint('app.focus'),
+          ...keyed('app.focus'),
           checked: modes.focus,
           run: () => modes.toggleFocus(view),
         },
@@ -469,7 +480,7 @@ export function appMenu(context: Context): MenuGroup[] {
         // leave. The same command the key is bound to; see fullscreen.svelte.ts.
         {
           label: t('Fullscreen'),
-          hint: shortcuts.hint('app.fullscreen'),
+          ...keyed('app.fullscreen'),
           checked: fullscreen.on,
           run: () => void fullscreen.toggle(workspace.activeTabId),
         },
@@ -491,19 +502,19 @@ export function appMenu(context: Context): MenuGroup[] {
           : [
               {
                 label: t('Split right'),
-                hint: shortcuts.hint('pane.split-right'),
+                ...keyed('pane.split-right'),
                 disabled: !workspace.canSplit('row'),
                 run: () => workspace.split('row'),
               },
               {
                 label: t('Split down'),
-                hint: shortcuts.hint('pane.split-down'),
+                ...keyed('pane.split-down'),
                 disabled: !workspace.canSplit('column'),
                 run: () => workspace.split('column'),
               },
               {
                 label: t('Other pane'),
-                hint: shortcuts.hint('pane.focus-next'),
+                ...keyed('pane.focus-next'),
                 disabled: workspace.panes.count < 2,
                 run: () => workspace.panes.focusNext(),
               },
@@ -511,50 +522,50 @@ export function appMenu(context: Context): MenuGroup[] {
             ]),
         {
           label: t('Show sidebar'),
-          hint: shortcuts.hint('app.sidebar'),
+          ...keyed('app.sidebar'),
           checked: !!workspace.panel,
           run: () => workspace.toggleSidebar(),
         },
         {
           label: t('Files'),
-          hint: shortcuts.hint('app.files'),
+          ...keyed('app.files'),
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
         DIVIDER,
         // Folding is a view operation, so these rows stand whether the note can
         // be written in or not.
-        { label: t('Fold'), hint: shortcuts.hint('view.fold'), run: () => run(view, toggleFold) },
+        { label: t('Fold'), ...keyed('view.fold'), run: () => run(view, toggleFold) },
         {
           label: t('Fold everything'),
-          hint: shortcuts.hint('view.fold-all'),
+          ...keyed('view.fold-all'),
           run: () => run(view, foldHeadings),
         },
         {
           label: t('Fold more'),
-          hint: shortcuts.hint('view.fold-more'),
+          ...keyed('view.fold-more'),
           run: () => run(view, foldMore),
         },
         {
           label: t('Fold less'),
-          hint: shortcuts.hint('view.fold-less'),
+          ...keyed('view.fold-less'),
           run: () => run(view, foldLess),
         },
         {
           label: t('Unfold everything'),
-          hint: shortcuts.hint('view.unfold-all'),
+          ...keyed('view.unfold-all'),
           run: () => run(view, unfoldEverything),
         },
         DIVIDER,
-        { label: t('Zoom in'), hint: shortcuts.hint('app.zoom-in'), run: () => modes.stepZoom(1) },
+        { label: t('Zoom in'), ...keyed('app.zoom-in'), run: () => modes.stepZoom(1) },
         {
           label: t('Zoom out'),
-          hint: shortcuts.hint('app.zoom-out'),
+          ...keyed('app.zoom-out'),
           run: () => modes.stepZoom(-1),
         },
         {
           label: t('Actual size'),
-          hint: shortcuts.hint('app.zoom-reset'),
+          ...keyed('app.zoom-reset'),
           run: () => modes.resetZoom(),
         },
       ],
