@@ -172,17 +172,29 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
     };
     use objc2_web_kit::WKWebView;
 
-    /// The cookie again, lasting: its own properties with an expiry and without the
-    /// two keys that would end it with the session anyway.
+    /// The cookie again, lasting: its own properties, with a lifetime and without the
+    /// discard that would end it with the session anyway.
     fn lasting(cookie: &NSHTTPCookie) -> Option<Retained<NSHTTPCookie>> {
         let properties = cookie.properties()?.mutableCopy();
         let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
         // SAFETY: every key is `NSHTTPCookie`'s own and every value is the type the key
-        // takes: a date for the expiry, the string `TRUE` for `HttpOnly`.
+        // takes: a date for the expiry, strings for the maximum age, the discard and
+        // `HttpOnly`.
         unsafe {
+            // Both kinds of lifetime, because `NSHTTPCookie` reads one or the other by
+            // the cookie's version - an expiry for the Netscape kind nearly every site
+            // sets, a maximum age for the RFC 2965 kind - and ignores the one that is not
+            // its own. And a discard said outright as no, because an RFC 2965 cookie with
+            // none said is taken to be discarded with the session.
             properties.insert(NSHTTPCookieExpires, until.as_ref() as &AnyObject);
-            properties.removeObjectForKey(NSHTTPCookieDiscard);
-            properties.removeObjectForKey(NSHTTPCookieMaximumAge);
+            properties.insert(
+                NSHTTPCookieMaximumAge,
+                NSString::from_str(&format!("{KEPT_FOR:.0}")).as_ref() as &AnyObject,
+            );
+            properties.insert(
+                NSHTTPCookieDiscard,
+                NSString::from_str("FALSE").as_ref() as &AnyObject,
+            );
             if cookie.isHTTPOnly() {
                 properties.insert(
                     &*NSString::from_str("HttpOnly"),

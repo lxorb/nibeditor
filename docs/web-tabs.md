@@ -750,9 +750,10 @@ gigabyte, and those are still parked and closed as they always were. See `sessio
 wry hands out the `WKWebView` itself, and the view's configuration names its data store
 and the store its cookie store, so the seam `WebView2` has exists here too: every cookie
 of the store is read after each page a tab loads, and each session-only one is made again
-from its own properties with an expiry four hundred days out, without `Discard` and
-`Max-Age`, and with `HttpOnly` written back by name where it had it (the key is not one
-`NSHTTPCookie` documents). The data store behind a tab is a persistent one - `nib-web-tabs`
+from its own properties with a lifetime four hundred days out - an expiry and a maximum
+age, because `NSHTTPCookie` reads one or the other by the cookie's version - `Discard`
+said outright as no, and `HttpOnly` written back by name where it had it (the key is not
+one `NSHTTPCookie` documents). The data store behind a tab is a persistent one - `nib-web-tabs`
 or a space's own - so a cookie with an expiry is written to disk and comes back on the
 next launch, where a session one lived only in the network process's memory and died with
 it. The window's close waits for it as on Windows. **What it does not catch:** a login a
