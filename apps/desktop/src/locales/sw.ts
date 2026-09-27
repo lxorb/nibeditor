@@ -1455,6 +1455,9 @@ export const sw: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Maelezo ya tovuti',
+  Downloads: 'Vipakuliwa',
+  'Show in folder': 'Onyesha kwenye folda',
+  Failed: 'Imeshindwa',
   Camera: 'Kamera',
   Microphone: 'Maikrofoni',
   Location: 'Mahali',

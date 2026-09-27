@@ -1432,6 +1432,9 @@ export const te: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'సైట్ సమాచారం',
+  Downloads: 'డౌన్‌లోడ్‌లు',
+  'Show in folder': 'ఫోల్డర్‌లో చూపించు',
+  Failed: 'విఫలమైంది',
   Camera: 'కెమెరా',
   Microphone: 'మైక్రోఫోన్',
   Location: 'లొకేషన్',

@@ -1431,6 +1431,9 @@ export const fa: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'اطلاعات سایت',
+  Downloads: 'بارگیری‌ها',
+  'Show in folder': 'نمایش در پوشه',
+  Failed: 'ناموفق',
   Camera: 'دوربین',
   Microphone: 'میکروفن',
   Location: 'مکان',

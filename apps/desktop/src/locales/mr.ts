@@ -1430,6 +1430,9 @@ export const mr: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'साइटची माहिती',
+  Downloads: 'डाउनलोड',
+  'Show in folder': 'फोल्डरमध्ये दाखवा',
+  Failed: 'अयशस्वी',
   Camera: 'कॅमेरा',
   Microphone: 'मायक्रोफोन',
   Location: 'स्थान',

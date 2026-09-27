@@ -1514,6 +1514,9 @@ export const ar: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'معلومات الموقع',
+  Downloads: 'التنزيلات',
+  'Show in folder': 'إظهار في المجلد',
+  Failed: 'فشل',
   Camera: 'الكاميرا',
   Microphone: 'الميكروفون',
   Location: 'الموقع الجغرافي',

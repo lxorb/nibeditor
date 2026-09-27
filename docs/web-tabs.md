@@ -6,8 +6,8 @@ document in the space like a note or a canvas: a row in the file list with a glo
 in front of it, a name somebody can rename, a bookmark, a `[[link]]`, a hit in the
 search, a file the sync carries.
 
-Emil, 2026-09-10: *"a tab can be a website rendered by Chromium, a URL bar,
-back/forward, and a NOTE TYPE for it so a website is a document in the space."*
+Emil, 2026-09-10: _"a tab can be a website rendered by Chromium, a URL bar,
+back/forward, and a NOTE TYPE for it so a website is a document in the space."_
 
 Chromium is half right, and the half that is wrong matters enough to say in the
 first paragraph: on Windows the engine is WebView2, which **is** Chromium; on
@@ -45,10 +45,10 @@ them does not carry them at all - a note nobody has followed a link out of is th
 three lines it always was.
 
 **`URL` is where the reading has got to, not where the note was pointed.** Emil,
-2026-09-13: *"I believe currently it resets the page every time you reopen it. That
+2026-09-13: _"I believe currently it resets the page every time you reopen it. That
 is extremely annoying and should not be. It should basically reopen the exact same
 page you had open last time when you open that page. So a web note should
-essentially correspond to what is otherwise a browser tab."* So following a link
+essentially correspond to what is otherwise a browser tab."_ So following a link
 inside the page moves `URL`, a couple of seconds after the reading settles, and
 opening the note tomorrow - or on another machine the space syncs to, because the
 file is what syncs - opens the page that was open. Double-clicking the file in
@@ -68,7 +68,7 @@ has is somewhere to be fetched from. It is here so the tab strip and the file li
 have the site's mark before the page has loaded and on a machine that has never
 opened it; a machine with no network falls back to the generic web mark.
 
-**What is *not* in the file is where the reading was on the page, or the trail behind
+**What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
 session's own walk, so both live in this device's own storage, keyed by the file's
 path - `nib:web-places`, beside the other things a device decides for itself. See
@@ -109,8 +109,9 @@ Everything else about a website in the space is unchanged, and the name is what
 carries it: the globe in the file list (`file-mark.ts`), open, rename, bookmark,
 `[[Svelte docs]]` with or without the extension (`links.ts`, `wikilink/notes.ts`),
 the sync and the versions (`services/sync/src/notes.ts`), the trash, and the search
+
 - which reads a shortcut as the small text file it is, so a site is found by its
-address as well as by its name (`search.rs`).
+  address as well as by its name (`search.rs`).
 
 ### A note that is still a website
 
@@ -143,11 +144,11 @@ own menu - and it asks the two questions Chrome asks when a page is bookmarked: 
 call it, and which folder. Then the shortcut goes down with the address the tab is on
 and the mark the page reported, and the tab becomes that file in place, still live.
 
-Emil, 2026-09-14: *"if you create a new webnote by clicking the plus for a new tab, then
+Emil, 2026-09-14: _"if you create a new webnote by clicking the plus for a new tab, then
 it should open it as a tab and not create it in the sidebar. Same for canvas and page
 notes. And like normal notes, then can then of course be saved as well, but they should
 be able to exist in an "unsaved" state. Just as a tab, like a browser tab normally
-would."* Which is one model for all four kinds: see `newCanvas` and `newPages` beside
+would."_ Which is one model for all four kinds: see `newCanvas` and `newPages` beside
 `openWebsite` in `workspace.svelte.ts`, and `pickSavePath` in `workspace/saving.svelte.ts`
 for the one sheet that names any of them. A restart brings unsaved tabs back the way a
 browser does - the session is the only place their words exist, so it keeps them whether
@@ -168,13 +169,13 @@ points.
 
 ## The tab, per platform
 
-| | what draws the page | why |
-| --- | --- | --- |
-| Windows | a child webview: WebView2, Chromium | the only embedding that renders a site the way a browser does |
-| macOS | a child webview: WKWebView, WebKit | same, with Safari's engine |
-| Linux | a child webview: WebKitGTK | same |
+|                   | what draws the page                                           | why                                                                                      |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Windows           | a child webview: WebView2, Chromium                           | the only embedding that renders a site the way a browser does                            |
+| macOS             | a child webview: WKWebView, WebKit                            | same, with Safari's engine                                                               |
+| Linux             | a child webview: WebKitGTK                                    | same                                                                                     |
 | the browser build | a card, and a sandboxed `<iframe>` once the reader presses it | a page in a browser has nowhere else to go, and no way to know whether a frame will work |
-| Android and iOS | the system browser, not a tab | see below |
+| Android and iOS   | the system browser, not a tab                                 | see below                                                                                |
 
 ### A desktop: a webview over the pane
 
@@ -202,14 +203,14 @@ asked for (`web_answer`), and take it away, parked or closed (`web_close`).
 #### Where a page may be built, which is not where the request arrived
 
 This is the one thing in this file that shipped wrong, and what it cost was the
-whole app. Emil, 2026-09-13: *"When I open one, nib just freezes and all the
-buttons don't do anything anymore."*
+whole app. Emil, 2026-09-13: _"When I open one, nib just freezes and all the
+buttons don't do anything anymore."_
 
 A `#[tauri::command]` that is not `async` runs **inline inside the callback
 WebView2 hands the app its IPC in** - on the window's own thread, inside one of the
 engine's own event handlers. Building a child webview from in there is a deadlock
 rather than a stall: the platform creates a `CoreWebView2Controller`
-asynchronously, wry waits for it by running a *nested message loop*
+asynchronously, wry waits for it by running a _nested message loop_
 (`webview2_com::wait_with_pump`), and the engine will not deliver that completion
 callback to a thread that is already inside one of its handlers. So the pump spins,
 the handler never returns, the request that started it is never answered, and every
@@ -223,11 +224,11 @@ is dead. So the probe asks the app itself as well, over its own automation endpo
 one cheap verb a second. Measured on this machine, before and after, by
 `scripts/web-freeze-probe.py`:
 
-| | before | after |
-| --- | --- | --- |
-| the message pump, worst reply | 0.55 ms, and never once dead | 2.4 ms, never dead |
+|                                            | before                                                                                                          | after                                  |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| the message pump, worst reply              | 0.55 ms, and never once dead                                                                                    | 2.4 ms, never dead                     |
 | the window's own answers while a tab opens | **4 of 8 asks unanswered**; by hand, two trivial verbs timed out at 30 s each, minutes after the tab was opened | **0 of 24 unanswered**, 31 ms at worst |
-| the page itself | never appeared: a bar over an empty pane | the page, in the pane |
+| the page itself                            | never appeared: a bar over an empty pane                                                                        | the page, in the pane                  |
 
 So `web_open` is `async`, which takes it off that callback and onto the async
 runtime, and the build itself is posted to the event loop with
@@ -259,14 +260,14 @@ when the answer has changed, so a keystroke in a note beside the page costs one
 layout read and no IPC.
 
 **Hidden when the tab is not showing, and never closed for it.** This is the one
-thing in this file that shipped wrong twice. Emil, 2026-09-13: *"if I switch between
+thing in this file that shipped wrong twice. Emil, 2026-09-13: _"if I switch between
 web windows then it has decent speed, but if I switch between a note and then back
-then it loads for an eternity till the web window shows the website."*
+then it loads for an eternity till the web window shows the website."_
 
 The pane's teardown asked the document where the hole had been, so that it could
 hide the page there - and closed the page outright when the answer was nothing.
 **The answer was always nothing.** Svelte's `destroy_effect` takes the DOM out of
-the document and *then* runs the teardowns, so an element measured from there is a
+the document and _then_ runs the teardowns, so an element measured from there is a
 box of zeroes; every switch away from a web tab closed the webview. Coming back was
 a fresh `add_child`, a fresh WebView2 environment where no other web tab was left
 alive to keep one warm - the profile is the app's own `web` folder, which is a
@@ -277,17 +278,17 @@ for the one arriving.
 Measured with `scripts/web-switch-probe.py`, which asks the crate itself whether the
 tab still has a page:
 
-| | before | after |
-| --- | --- | --- |
-| the page is still there after a switch to a note | **no** | **yes** |
-| note to web, until the tab has a page again | 293 ms, and a load of the site | 108 ms, and no load at all |
-| back to a web tab from another web tab | 107 ms, and a load of the site | 33 ms |
-| the page comes back where the reading left it | no | yes |
-| the same, after the app is started again | no | yes |
-| what the pages cost, with twelve web tabs open | 894 MB - because only one or two were ever alive | 1.29 GB for the six that are |
+|                                                  | before                                           | after                        |
+| ------------------------------------------------ | ------------------------------------------------ | ---------------------------- |
+| the page is still there after a switch to a note | **no**                                           | **yes**                      |
+| note to web, until the tab has a page again      | 293 ms, and a load of the site                   | 108 ms, and no load at all   |
+| back to a web tab from another web tab           | 107 ms, and a load of the site                   | 33 ms                        |
+| the page comes back where the reading left it    | no                                               | yes                          |
+| the same, after the app is started again         | no                                               | yes                          |
+| what the pages cost, with twelve web tabs open   | 894 MB - because only one or two were ever alive | 1.29 GB for the six that are |
 
 Those are a local page on this machine, which is the fairest measure of the app's own
-cost and the *kindest* possible reading of the old behaviour: the site the before column
+cost and the _kindest_ possible reading of the old behaviour: the site the before column
 reloaded came off `127.0.0.1` in a millisecond. Emil's eternity was a real site over a
 real network, loaded again every single time, and - when no other web tab was left alive
 to keep the engine warm - behind a cold WebView2 environment as well.
@@ -304,7 +305,7 @@ load and not a loss. Closing the tab takes the webview and the trail with it.
 
 **A native webview draws above every pixel of HTML in the window.** So while
 anything of the app's is over the page - a menu, a sheet, the palette, the settings,
-a permission bubble - the page is hidden, or the menu comes up *behind* it and
+a permission bubble - the page is hidden, or the menu comes up _behind_ it and
 nobody can see it. That was the second half of what Emil called "very fucked up":
 the app asked the document which element was on top **at the middle of the hole**,
 so a menu that covered a corner of the page was a menu drawn behind it, and the
@@ -336,7 +337,7 @@ whole feature. Asking for the page used to hang off the same measurement: a pane
 measured itself while something was over the hole asked for no page at all, and nothing
 asked again - the rectangle had not changed and the overlay stack was already empty.
 
-Emil, 2026-09-17: *"Browser tabs take AN ETERNITY to load."* The eternity was not a
+Emil, 2026-09-17: _"Browser tabs take AN ETERNITY to load."_ The eternity was not a
 load. Every way of opening a website except clicking its row in the file list goes
 through a layer, and a layer that has closed is still in the document for the 120 to 190
 milliseconds it takes to play its way out: the palette's scrim, the app menu's, the
@@ -351,12 +352,12 @@ overlay stack - which is exactly a layer on its way out - the pane looks again o
 next frame until it has gone. Measured with `scripts/web-open-probe.py`, on a local page
 so the number is about the app:
 
-| | before | after |
-| --- | --- | --- |
-| a tab opened from the file list, to the site on screen | 143 ms | 99 ms |
-| the first web tab of the run, which starts the engine as well | 474 ms | 388 ms |
-| a tab opened under a layer that is still leaving | **never** | 112 ms |
-| what the window does before the crate is asked at all | 54 ms | 1 ms |
+|                                                               | before    | after  |
+| ------------------------------------------------------------- | --------- | ------ |
+| a tab opened from the file list, to the site on screen        | 143 ms    | 99 ms  |
+| the first web tab of the run, which starts the engine as well | 474 ms    | 388 ms |
+| a tab opened under a layer that is still leaving              | **never** | 112 ms |
+| what the window does before the crate is asked at all         | 54 ms     | 1 ms   |
 
 That last row was three things in front of `web_open` that had nothing to do with this
 tab: two painted frames spent waiting for a launch stage that had already passed, a
@@ -379,7 +380,7 @@ waits is the first thing ever drawn over a page nothing has photographed yet, an
 wait is capped; a picture from a moment ago is used at once and refreshed behind the
 menu. Nothing photographs a page that is already hidden, because a hidden webview has no
 frame to hand over and a blank picture is worse than none. And one picture at a time,
-taken on the moment a page *stops* loading rather than on every report that it is not
+taken on the moment a page _stops_ loading rather than on every report that it is not
 loading: the crate says where a page is again whenever its title or its mark arrives, so
 a page landing is three reports in a few milliseconds, and each of them used to throw the
 picture away and ask for another - three engine captures at once, in the breath the
@@ -408,11 +409,11 @@ header the site sends and the browser obeys.
 **A page cannot find out whether framing worked.** That was measured rather than
 assumed, with all four cases served side by side:
 
-| the frame was pointed at | `load` | its location | its document | `length` | the resource entry |
-| --- | --- | --- | --- | --- | --- |
-| this origin, allowed | fires | reads back | readable | 0 | `iframe:200:363` |
-| another origin, allowed | fires | throws `SecurityError` | null | 0 | `iframe:0:0` |
-| another origin, refused | fires | throws `SecurityError` | null | 0 | `iframe:0:0` |
+| the frame was pointed at | `load` | its location           | its document | `length` | the resource entry |
+| ------------------------ | ------ | ---------------------- | ------------ | -------- | ------------------ |
+| this origin, allowed     | fires  | reads back             | readable     | 0        | `iframe:200:363`   |
+| another origin, allowed  | fires  | throws `SecurityError` | null         | 0        | `iframe:0:0`       |
+| another origin, refused  | fires  | throws `SecurityError` | null         | 0        | `iframe:0:0`       |
 
 The two rows that matter are identical in every column. No site is on the app's own
 origin, so there is nothing to read: the first design here tried to tell them apart
@@ -480,8 +481,8 @@ address bar, and a browser that quietly searches somewhere else reads as one tha
 found nothing. It was DuckDuckGo, for asking the least.
 
 **The field finishes what is typed from the pages already opened**, the way Chrome's
-omnibox does. Emil, 2026-09-27: *"if I already opened moodle-app2.let.ethz.ch then it
-should kinda of complete in the same way it does it for other browser"*. Typing `moo`
+omnibox does. Emil, 2026-09-27: _"if I already opened moodle-app2.let.ethz.ch then it
+should kinda of complete in the same way it does it for other browser"_. Typing `moo`
 writes `dle-app2.let.ethz.ch` after the caret, selected: typing on narrows it,
 Backspace drops it, Right or End takes it, and Enter goes there. It finishes to the
 site first and to a whole address only once the typing has gone past the site, with
@@ -498,22 +499,23 @@ typed visits, when, the title), the five hundred most recently open, in this dev
 storage and never on the account. It is not read at launch - the first focus of an
 address field or the first page a tab arrives at reads it.
 
-| key | |
-| --- | --- |
-| Ctrl+L | the address field, in the pane that has the focus |
+| key                     |                                                                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ctrl+L                  | the address field, in the pane that has the focus                                                                                                                                                 |
 | Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
-| Alt+Left, Alt+Right | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with |
-| Right, End in the field | takes the rest of the address the field wrote in |
-| Up, Down in the field | walks the pages under it; the field reads the row the arrows are on |
-| Shift+Delete on a row | forgets that page, which is how Chrome takes one out of its history |
-| Escape in the field | takes back what the field offered and closes the list; the second puts the resting face back and lets go of the field |
+| Alt+Left, Alt+Right     | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with                                                                                     |
+| Right, End in the field | takes the rest of the address the field wrote in                                                                                                                                                  |
+| Up, Down in the field   | walks the pages under it; the field reads the row the arrows are on                                                                                                                               |
+| Shift+Delete on a row   | forgets that page, which is how Chrome takes one out of its history                                                                                                                               |
+| Escape in the field     | takes back what the field offered and closes the list; the second puts the resting face back and lets go of the field                                                                             |
 
 Ctrl+L is the chord CodeMirror selects a line with, and both keep it. That works
 because the bar reads it where the bar is rather than off the window: an app-level
 binding never reaches the editor, so the two could not have shared it, while a pane
 showing a page has no editor to shadow. It is in the registry like every other key
+
 - `web.address`, under View - so it can be found and changed. The canvas's keys are
-read the same way.
+  read the same way.
 
 **While the page itself has the keyboard, its keys are the page's.** After a click
 into a site, Ctrl+L is that site's shortcut and the app never sees the press: that
@@ -526,8 +528,8 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 "What a site may do" below.
 
 **The dots hold Chrome's menu, in Chrome's order and Chrome's words**, because Emil
-asked for exactly that: *"Our browser related menu structure should be very similar
-to that of chrome. And in general we don't want to reinvent how a browser works."*
+asked for exactly that: _"Our browser related menu structure should be very similar
+to that of chrome. And in general we don't want to reinvent how a browser works."_
 New tab, Bookmarks, Zoom out / the size / Zoom in, Full screen, Print, Save page,
 Share, Copy link, Open in the browser, Settings - each bent onto what nib has where
 the two differ: a bookmark here is the space's own kept files, Save page is the
@@ -544,6 +546,57 @@ engine's own behaviour behind every row, and a second copy written in this app w
 be worse at every one of them. Inspect is how the developer tools are reached, which
 is why there is no More tools row. What is still missing against Chrome's menu is
 listed under "What is left".
+
+## Downloads
+
+A file a page hands over is saved the way Chrome saves it: into the Downloads folder,
+under the name the server or the link gave it, numbered `name (1).pdf` beside a file
+that is already there (`backup (1).tar.gz` for a two-part extension), with no dialog.
+A glyph appears at the right of the bar with the first file of the run, in the accent
+with a ring filling round it while anything is on its way; pressing it opens a list
+under it, newest first. A finished row opens the file, its folder glyph shows it in
+Explorer or Finder, a row on its way can be stopped, and a file that did not arrive
+says Failed. The list is this run's, like Chrome's bubble.
+
+**Why this was a bug and not a missing feature.** wry answers a download nobody has a
+handler for by accepting it silently: `WebViewAttributes::default()` carries a handler
+that returns true, so `WebView2`'s own download bubble was switched off and the file
+went to the engine's default path. A course PDF on Moodle was pressed, arrived in
+Downloads, and nothing on screen ever said so. `src-tauri/src/downloads.rs` is the
+handler now, through `WebviewBuilder::on_download`, which is one hook on all three
+desktop engines.
+
+- **The engine fetches the file, on the page's own webview.** So the request carries the
+  page's cookies and login from whichever profile or store `engine::web_store` put that
+  webview on; a file behind a sign-in (`pluginfile.php`) arrives whenever the page could
+  open it, and nothing about downloads has to know where the session is kept.
+- **The window names a download by id, never by path.** `web_download_open` and
+  `web_download_show` open only a file the crate itself saved and saw finish.
+- **A name is made safe on every platform**: no separators, nothing a file system
+  refuses, no device name, no dot at either end, at most 180 characters with the
+  extension kept. `NIB_DOWNLOADS_DIR` points a probe at a folder of its own.
+- **Progress is `WebView2`'s alone.** `downloads::progress` listens to the operation the
+  engine hands out a second time, after wry's handler, and matches it by the path that
+  handler chose; it is also what Cancel reaches. On macOS and Linux a file says when it
+  starts and when it ends, the ring sweeps rather than fills, and Cancel only takes the
+  row away.
+- **A tab a page opened for a file closes again**, the way Chrome's does: `target="_blank"`
+  on a download link opens a tab through `nib://web-open`, the file starts in it, and the
+  reader is put back on the page that asked. Only a tab a page asked for that never
+  showed a document of its own; see `downloaded` in `pages.svelte.ts`.
+- **A page closed while a file is on its way stays until the file is in**, out of sight.
+  The engine goes on fetching after its webview is gone but stops saying anything about
+  it, so the list would have turned for ever. `web_close` hides such a page instead
+  (`downloads::linger`), and it closes when its last file ends.
+- **An inline PDF stays in the tab**, in the engine's own viewer, the way a browser shows
+  one; its download button is a download like any other. nib's PDF viewer is for a file
+  in a space, and a page's PDF is the page's.
+- **Several files at once from one page without a press** is the engine's "automatic
+  downloads" question, asked in the bubble like any other permission.
+
+A phone has no web tabs - a site there opens in the system browser, whose downloads are
+its own. `scripts/web-downloads-probe.py` is the drive: every shape a download takes, on
+a probe build, read back out of the folder, the tabs and the crate's list.
 
 ## Clipping the page
 
@@ -611,9 +664,9 @@ profile.
 **Every web tab shares one session with the other web tabs, and a page nobody sees
 holds it open past the last of them.** A web note is a browser tab, and a browser tab
 keeps you logged in when you close it and open it again - because the browser process,
-and the session in it, do not die with the tab. Emil, 2026-09-13: *"When I close and
+and the session in it, do not die with the tab. Emil, 2026-09-13: _"When I close and
 then reopen a web note, all state is lost. For example, when I log in, then I would be
-logged out. That should not be the case."*
+logged out. That should not be the case."_
 
 Two things were wrong and only one of them was the obvious one. Each tab's webview
 carried a `WebView2` environment of its own, so two tabs were two sessions; every tab
@@ -631,13 +684,13 @@ loopback with a session cookie, a lasting cookie and a `localStorage` token, rea
 back out of the page, then closes the note, opens it again, and starts the app over. Run
 it after any change to this seam.
 
-| | an environment per tab | one shared | shared, and held open |
-| --- | --- | --- | --- |
-| two tabs open at once see one session | no | **yes** | yes |
-| the session cookie after closing the note and opening it | no | **no** | **yes** |
-| a lasting cookie and `localStorage`, closed and opened | yes | yes | yes |
-| the same, after the app is started again | yes | yes | yes |
-| the session cookie after the app is started again | no | no | no |
+|                                                          | an environment per tab | one shared | shared, and held open |
+| -------------------------------------------------------- | ---------------------- | ---------- | --------------------- |
+| two tabs open at once see one session                    | no                     | **yes**    | yes                   |
+| the session cookie after closing the note and opening it | no                     | **no**     | **yes**               |
+| a lasting cookie and `localStorage`, closed and opened   | yes                    | yes        | yes                   |
+| the same, after the app is started again                 | yes                    | yes        | yes                   |
+| the session cookie after the app is started again        | no                     | no         | no                    |
 
 The middle column is the whole reason the page that holds the session open exists:
 sharing the environment made two tabs one session and still lost it when the last webview
@@ -678,10 +731,10 @@ this page that is a lie about what ships.** Measured on 2026-09-18 by
 `scripts/web-globals-probe.py`, which is a page in a real web tab asking what it was
 handed:
 
-| | in a web tab | in Edge |
-| --- | --- | --- |
-| a classic script may declare `let ipc` at the top level | **no** | yes |
-| what is on `window` of the app's | **`ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__`** | nothing |
+|                                                         | in a web tab                                                                                                     | in Edge |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
+| a classic script may declare `let ipc` at the top level | **no**                                                                                                           | yes     |
+| what is on `window` of the app's                        | **`ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__`** | nothing |
 
 A web tab is a Tauri webview, and a Tauri webview carries the app's own machinery into
 whatever page it shows. wry writes one of those globals for its message channel, before
@@ -696,8 +749,8 @@ classic script may not declare `let ipc`, `const ipc` or `class ipc` at the top 
 while the global object carries a non-configurable `ipc`.** The whole script is a
 `SyntaxError` before its first line runs. `ipc` is three letters and an ordinary name
 for a bundle to use, and Google's editors bundle uses it, so a sheet in a web tab
-rendered for a moment and was then replaced by Google's own *"Loading issue -
-Troubleshoot this issue by clearing application resources"* page. Its console said so
+rendered for a moment and was then replaced by Google's own _"Loading issue -
+Troubleshoot this issue by clearing application resources"_ page. Its console said so
 outright: `Uncaught SyntaxError: Identifier 'ipc' has already been declared` at
 `m=core:1`, and then `RITZ_initializeModules is not defined`, `waffle_api is not
 defined`, `DOCS_initialLoadTiming is not defined`. **Nothing was wrong with the
@@ -727,15 +780,15 @@ declare its own `ipc` either way.
 ### What a site may do
 
 **A site is asked about at the moment it asks, in a bubble under the address bar.**
-Emil, 2026-09-13: *"a lot of stuff is still done extremely bad, e.g. having explicit
+Emil, 2026-09-13: _"a lot of stuff is still done extremely bad, e.g. having explicit
 buttons for allow clipboard or allow camera. I don't think chrome does it like
-this."*
+this."_
 
 He is right, and what was here before was exactly that. The camera, the microphone,
 the clipboard, where you are and `Notification` were taken off `Navigator.prototype`
 before the page's first script, so the engine never had a request to raise - and the
 only way to give a site the camera was a row in a menu saying "Allow the camera",
-which nobody goes looking for, which has to be pressed *before* the site asks rather
+which nobody goes looking for, which has to be pressed _before_ the site asks rather
 than when it does, and which cost the page being rebuilt because the guard script
 runs once.
 
@@ -753,7 +806,7 @@ somebody dismissed: they have not decided about the site, so the next time it as
 fair time to ask them again. And the refusing button says "Don't allow" rather than
 "Block" for a reason worth knowing: the app already has a row called Block - the kind of
 thing a paragraph is - and one English string cannot be two rows in a catalogue, so a
-German reader was being offered *Block*, the markdown block, as the way to refuse a site
+German reader was being offered _Block_, the markdown block, as the way to refuse a site
 the camera.
 
 Three things make that work, and each is load bearing: the deferral, because deciding
@@ -786,7 +839,7 @@ yet. Dictation was the same press and the same silence.
 
 `hearing` in `web_tabs.rs` attaches it at setup, before the window is shown, and the
 answer there is not a bubble: the app's own origin is allowed outright for the microphone
-and the camera, because pressing Record *is* the answer and a second bubble inside nib
+and the camera, because pressing Record _is_ the answer and a second bubble inside nib
 asking whether nib may use the microphone would be the app asking somebody to confirm
 what they just pressed. The permission that matters - the one the system keeps - is not
 this one. Every other origin in that webview is refused, which is what the whole webview
@@ -828,55 +881,59 @@ window it was never going to get.
 
 **No collaboration.** A website holds no words, so it is never in a room and the
 service never has a document for it. Said twice over, at both ends of the file:
-`holdsWords` answers no for a web tab, and `rooms/kind.ts` answers *no room at all*
+`holdsWords` answers no for a web tab, and `rooms/kind.ts` answers _no room at all_
 for a `.url` path, which is the end both machines can see. Not a switch that could
 be turned on by mistake, then, but two consequences of what the file is. It syncs,
 versions and goes to the trash like every other document.
 
 ## Where the code is
 
-| | |
-| --- | --- |
-| `apps/desktop/src-tauri/src/web_tabs.rs` | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
-| `apps/desktop/src-tauri/src/paths.rs` | `is_shortcut`, beside the other three kinds |
-| `apps/desktop/src-tauri/src/tree.rs` | the four kinds the file list shows |
-| `apps/desktop/src-tauri/src/search.rs` | a shortcut is searched as the text it is, so a site is found by its address |
-| `apps/desktop/src-tauri/src/links.rs` | a website as a node in the index, and `url:` off every note, which now means a note that wants converting |
-| `apps/desktop/src-tauri/capabilities/default.json` | webviews, not windows |
-| `apps/desktop/src/lib/web-tab/shortcut.ts` | the file: written, read, and `.webloc` read. Pure, tested |
-| `apps/desktop/src/lib/web-tab/note.ts` | what a clip says, and what the old format said. Pure, tested |
-| `apps/desktop/src/lib/web-tab/address.ts` | what somebody typed, and the origin plainly. Pure, tested |
-| `apps/desktop/src/lib/web-tab/frame.ts` | what a frame may do, and the measurements behind asking first |
-| `apps/desktop/src/lib/web-tab/pages.svelte.ts` | the page each tab is on, the webview's life, parking, the still picture. Tested |
-| `apps/desktop/src/lib/web-tab/place.ts` | where each note was left, per device: the offset and the trail. Tested |
-| `apps/desktop/src/lib/web-tab/keep.ts` | the file keeping up with the page, debounced. Tested |
-| `apps/desktop/src/lib/web-tab/permissions.svelte.ts` | what each site was told, and the requests waiting for an answer. Tested |
-| `apps/desktop/src/lib/web-tab/WebAsk.svelte` | the bubble a site is answered in |
-| `apps/desktop/src/lib/web-tab/WebSite.svelte` | what a site is, behind the mark in the bar |
-| `apps/desktop/src/lib/web-tab/clip.ts` | where the HTML comes from |
-| `apps/desktop/src/lib/web-tab/WebTab.svelte` | the pane: the hole, the frame, the card |
-| `apps/desktop/src/lib/web-tab/WebBar.svelte` | the bar |
-| `apps/desktop/src/lib/web-tab/AddressField.svelte` | the field an address is typed into: two faces, the rest of the address written in, the pages under it |
-| `apps/desktop/src/lib/web-tab/omnibox.ts` | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested |
-| `apps/desktop/src/lib/web-tab/visits.ts` | the history's rows and what a visit does to them, bounded. Pure, tested |
-| `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, read on first use |
-| `apps/desktop/src/lib/web-tab/menu.ts` | the dots: Chrome's rows, and the zoom ladder. Tested |
-| `apps/desktop/src/lib/file-mark.ts` | the globe, off the name like every other mark |
-| `packages/markdown/src/links.ts` | `isWebTarget`, and a website among the files a link resolves through |
-| `packages/editor/src/wikilink/notes.ts` | `[[Svelte docs]]` with the extension left out |
-| `apps/desktop/src/lib/rooms/kind.ts` | no room for a website, said at the file's end |
-| `services/sync/src/notes.ts` | the extensions the account carries |
-| `apps/desktop/src/lib/workspace.svelte.ts` | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry` |
-| `apps/desktop/src/lib/workspace/saving.svelte.ts` | `pickSavePath`: the one sheet that names an unsaved tab of any kind, and where a save writes it |
-| `scripts/web-tab-e2e.py` | the drive: the file, the mark, the tab, the card, the clip |
-| `scripts/web-freeze-probe.py` | the drive for the freeze: the pump, the window's own answers, and the log |
-| `scripts/web-switch-probe.py` | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost |
-| `scripts/web-open-probe.py` | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1` |
-| `scripts/web-session-probe.py` | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page |
-| `scripts/web-globals-probe.py` | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it" |
-| `apps/desktop/src/lib/overlays.ts` | the one place that says something is over the note, and tells the web tab |
-| `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed |
-| `apps/desktop/test/effects/web-tab.effect.test.ts` | the pane, mounted, which is where a website used to take the window down with it |
+|                                                       |                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
+| `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
+| `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
+| `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |
+| `apps/desktop/src-tauri/src/links.rs`                 | a website as a node in the index, and `url:` off every note, which now means a note that wants converting                                                                                                                                              |
+| `apps/desktop/src-tauri/capabilities/default.json`    | webviews, not windows                                                                                                                                                                                                                                  |
+| `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                           |
+| `apps/desktop/src/lib/web-tab/address.ts`             | what somebody typed, and the origin plainly. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                          |
+| `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                        |
+| `apps/desktop/src/lib/web-tab/place.ts`               | where each note was left, per device: the offset and the trail. Tested                                                                                                                                                                                 |
+| `apps/desktop/src/lib/web-tab/keep.ts`                | the file keeping up with the page, debounced. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/permissions.svelte.ts`  | what each site was told, and the requests waiting for an answer. Tested                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/WebAsk.svelte`          | the bubble a site is answered in                                                                                                                                                                                                                       |
+| `apps/desktop/src/lib/web-tab/WebSite.svelte`         | what a site is, behind the mark in the bar                                                                                                                                                                                                             |
+| `apps/desktop/src/lib/web-tab/downloads.svelte.ts`    | the list the glyph and the bubble draw, and the ring. Tested                                                                                                                                                                                           |
+| `apps/desktop/src/lib/web-tab/WebDownloads.svelte`    | the list under the glyph                                                                                                                                                                                                                               |
+| `apps/desktop/src/lib/web-tab/clip.ts`                | where the HTML comes from                                                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/WebTab.svelte`          | the pane: the hole, the frame, the card                                                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/WebBar.svelte`          | the bar                                                                                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/AddressField.svelte`    | the field an address is typed into: two faces, the rest of the address written in, the pages under it                                                                                                                                                  |
+| `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                        |
+| `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/visited.ts`             | this device's history, read on first use                                                                                                                                                                                                               |
+| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
+| `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |
+| `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
+| `apps/desktop/src/lib/rooms/kind.ts`                  | no room for a website, said at the file's end                                                                                                                                                                                                          |
+| `services/sync/src/notes.ts`                          | the extensions the account carries                                                                                                                                                                                                                     |
+| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepWeb`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                          |
+| `apps/desktop/src/lib/workspace/saving.svelte.ts`     | `pickSavePath`: the one sheet that names an unsaved tab of any kind, and where a save writes it                                                                                                                                                        |
+| `scripts/web-tab-e2e.py`                              | the drive: the file, the mark, the tab, the card, the clip                                                                                                                                                                                             |
+| `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
+| `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
+| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
+| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, and starts the app over - a session cookie, a lasting one and a `localStorage` token, read back out of the page                                        |
+| `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
+| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
+| `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
+| `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |
 
 ## What is left
 
@@ -885,9 +942,9 @@ versions and goes to the trash like every other document.
   clears the rest when it exists clears `nib:web-visits` too, and a private tab, when
   there is one, must not write to it. It is one list per device; a space whose web
   data is kept apart from the others would want its own list.
-- **Five of Chrome's menu rows are not here, because nothing is behind them yet.**
-  History and Downloads want surfaces nib does not have - a list of every page a
-  window has been through, and where the engine put what it saved; Find wants an
+- **Four of Chrome's menu rows are not here, because nothing is behind them yet.**
+  History wants a surface nib does not have - a list of every page a window has been
+  through; Downloads is the glyph in the bar rather than a row, see "Downloads"; Find wants an
   in-page find bar of its own, which is not the one a note has; Copy and Paste are
   the page's own context menu already; and More tools' developer tools are reached by
   Inspect in that same menu. Each is a row the day the thing behind it exists.

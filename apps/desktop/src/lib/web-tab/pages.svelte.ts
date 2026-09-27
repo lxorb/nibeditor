@@ -255,6 +255,11 @@ export class Page {
    *  see used.ts. Not drawn, and read only alongside `url`, which is. */
   landed: string | null = null
 
+  /** Whether a document of the page's own has arrived: the engine named one. A tab a
+   *  page asked for whose only address turned out to be a file never has one, and that
+   *  is the tab a browser closes again; see `downloaded`. Not drawn. */
+  titled = false
+
   /** When this tab was last looked at, so the least recently looked at is the one
    *  parked when there are more pages running than a window should hold. */
   looked = Date.now()
@@ -699,6 +704,7 @@ class Pages {
 
     clearTimeout(page.parking)
     void history().then((visited) => visited.left(tabId))
+    this.asked.delete(tabId)
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
@@ -741,15 +747,44 @@ class Pages {
     }
   }
 
+  /** The tabs opened because a page asked for a window, and the tab that asked for
+   *  each: the ones a download may take away again, and where the reader goes back to
+   *  when it does. */
+  private readonly asked = new Map<string, string>()
+
   /** The tab a page asked for, opened in the pane the page that asked is in. */
   private async openAsked(said: Opening): Promise<void> {
     const { workspace } = await import('../workspace.svelte')
-    workspace.openPage(said.url, false, workspace.tabs.find((one) => one.id === said.tab)?.paneId)
+    const opened = workspace.openPage(
+      said.url,
+      false,
+      workspace.tabs.find((one) => one.id === said.tab)?.paneId,
+    )
+    if (opened !== null) this.asked.set(opened, said.tab)
   }
 
-  /** Three listeners for the window, started by the first web tab that needs them:
+  /** A download has started in a tab.
+   *
+   *  A tab a page opened for a link that turned out to be a file is an empty tab with
+   *  nothing to show, and a browser takes it away the moment the file starts -
+   *  `target="_blank"` on a download link is common, and Moodle's own resource links
+   *  are one. So the reader is put back on the page that asked and the empty tab
+   *  closes; its webview stays out of sight until the file is in, because that webview
+   *  is what is fetching it (see `linger` in src-tauri/src/downloads.rs). Only that
+   *  kind of tab: one the reader opened, or one that has shown a page, stays. */
+  private async downloaded(tabId: string): Promise<void> {
+    const page = this.held.get(tabId)
+    const opener = this.asked.get(tabId)
+    if (opener === undefined || !page || page.titled) return
+
+    const { workspace } = await import('../workspace.svelte')
+    if (workspace.tabs.some((one) => one.id === opener)) workspace.activate(opener)
+    workspace.close(tabId)
+  }
+
+  /** Four listeners for the window, started by the first web tab that needs them:
    *  where every page in the window has got to, what every site in it has asked for,
-   *  and which of them has asked for a window of its own. */
+   *  which of them has asked for a window of its own, and what they are downloading. */
   private async listen(): Promise<void> {
     // A window to listen on, because that is what the runtime's own `listen` needs and
     // this is now started with the first page in the window rather than with the first
@@ -782,6 +817,15 @@ class Pages {
       const said = readOpening(event.payload)
       if (said && this.held.has(said.tab)) void this.openAsked(said)
     })
+    // A file one of the pages is saving has started, moved or ended; the crate saves it
+    // and this only keeps the list the bar draws. See downloads.svelte.ts. Fetched here
+    // rather than imported at the top, so the first paint does not carry it: nothing is
+    // downloaded before a page is open.
+    const { downloads, readDownload } = await import('./downloads.svelte')
+    await listen('nib://web-download', (event) => {
+      const said = readDownload(event.payload)
+      if (said && downloads.heard(said)) void this.downloaded(said.tab)
+    })
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return
@@ -794,7 +838,10 @@ class Pages {
       page.back = said.back
       page.forward = said.forward
       if (said.url && !page.typing) page.url = said.url
-      if (said.title) page.title = said.title
+      if (said.title) {
+        page.title = said.title
+        page.titled = true
+      }
       // Where the tab has got to is a page it has been to, for the address field to
       // offer; see visited.ts.
       if (said.url) void history().then((visited) => visited.saw(said.tab, said.url, said.title))

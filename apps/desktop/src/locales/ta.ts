@@ -1452,6 +1452,9 @@ export const ta: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'தள விவரங்கள்',
+  Downloads: 'பதிவிறக்கங்கள்',
+  'Show in folder': 'கோப்புறையில் காட்டு',
+  Failed: 'தோல்வி',
   Camera: 'கேமரா',
   Microphone: 'மைக்ரோஃபோன்',
   Location: 'இருப்பிடம்',

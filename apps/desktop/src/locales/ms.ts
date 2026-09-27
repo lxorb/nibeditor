@@ -1428,6 +1428,9 @@ export const ms: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Maklumat tapak',
+  Downloads: 'Muat turun',
+  'Show in folder': 'Tunjukkan dalam folder',
+  Failed: 'Gagal',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Lokasi',

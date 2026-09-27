@@ -1393,6 +1393,9 @@ export const zhHans: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': '网站信息',
+  Downloads: '下载',
+  'Show in folder': '在文件夹中显示',
+  Failed: '失败',
   Camera: '摄像头',
   Microphone: '麦克风',
   Location: '位置信息',

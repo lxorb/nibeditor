@@ -1497,6 +1497,9 @@ export const pl: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informacje o witrynie',
+  Downloads: 'Pobrane',
+  'Show in folder': 'Pokaż w folderze',
+  Failed: 'Niepowodzenie',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Lokalizacja',

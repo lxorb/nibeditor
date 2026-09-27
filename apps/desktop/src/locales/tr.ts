@@ -1432,6 +1432,9 @@ export const tr: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Site bilgileri',
+  Downloads: 'İndirilenler',
+  'Show in folder': 'Klasörde göster',
+  Failed: 'Başarısız',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
   Location: 'Konum',

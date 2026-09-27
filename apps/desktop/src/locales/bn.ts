@@ -1427,6 +1427,9 @@ export const bn: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'সাইটের তথ্য',
+  Downloads: 'ডাউনলোড',
+  'Show in folder': 'ফোল্ডারে দেখান',
+  Failed: 'ব্যর্থ হয়েছে',
   Camera: 'ক্যামেরা',
   Microphone: 'মাইক্রোফোন',
   Location: 'লোকেশন',

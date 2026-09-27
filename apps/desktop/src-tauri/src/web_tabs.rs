@@ -793,6 +793,11 @@ pub async fn web_open(
     let app = webview.app_handle().clone();
 
     if app.get_webview(&label).is_some() {
+        // A page closed while it was still fetching a file is kept, out of sight, until
+        // the file is in; a tab opened again in the meantime has its page already.
+        if crate::downloads::revive(&app, &tab) {
+            return Ok(());
+        }
         return Err("that tab already has a page".into());
     }
 
@@ -846,6 +851,10 @@ pub async fn web_open(
         }
         NewWindowResponse::Deny
     });
+
+    // A file the page hands over is saved the way a browser saves it, by the engine on
+    // this webview's own profile, and the window is told; see downloads.rs.
+    let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
 
     let moved = tab.clone();
     let sending = app.clone();
@@ -959,6 +968,7 @@ fn listening(app: &AppHandle, tab: &str) {
         // page because both want the one thread this runs on.
         #[cfg(all(windows, not(feature = "cef")))]
         session::keep(platform.environment());
+        crate::downloads::listen(&platform, asking.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });
 }
@@ -1282,7 +1292,14 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
 #[tauri::command]
 pub fn web_close(app: AppHandle, tabs: tauri::State<'_, WebTabs>, tab: String, keep: bool) {
     if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
-        let _ = view.close();
+        // A page still fetching a file stays until the file is in, out of sight; the
+        // engine stops reporting a download whose webview has gone. See
+        // `downloads::linger`.
+        if crate::downloads::linger(&app, &tab) {
+            let _ = view.hide();
+        } else {
+            let _ = view.close();
+        }
     }
 
     if let Ok(mut open) = tabs.trails.lock() {
@@ -1350,6 +1367,14 @@ pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, Str
 #[tauri::command]
 pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
     let _ = app.run_on_main_thread(move || ask::answer(id, allow));
+}
+
+/// Closes the page in a tab, for a page that was kept until its downloads were in; see
+/// `web_close`.
+pub(crate) fn close_page(app: &AppHandle, tab: &str) {
+    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
+        let _ = view.close();
+    }
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been

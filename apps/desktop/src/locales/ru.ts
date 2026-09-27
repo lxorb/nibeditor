@@ -1496,6 +1496,9 @@ export const ru: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Сведения о сайте',
+  Downloads: 'Загрузки',
+  'Show in folder': 'Показать в папке',
+  Failed: 'Ошибка',
   Camera: 'Камера',
   Microphone: 'Микрофон',
   Location: 'Местоположение',

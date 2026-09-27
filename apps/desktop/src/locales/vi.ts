@@ -1417,6 +1417,9 @@ export const vi: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Thông tin trang web',
+  Downloads: 'Tệp đã tải xuống',
+  'Show in folder': 'Hiển thị trong thư mục',
+  Failed: 'Không thành công',
   Camera: 'Camera',
   Microphone: 'Micrô',
   Location: 'Vị trí',

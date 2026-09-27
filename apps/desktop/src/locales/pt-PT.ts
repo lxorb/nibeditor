@@ -1468,6 +1468,9 @@ export const ptPT: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': 'Informações do Website',
+  Downloads: 'Transferências',
+  'Show in folder': 'Mostrar na pasta',
+  Failed: 'Falhou',
   Camera: 'Câmara',
   Microphone: 'Microfone',
   Location: 'Localização',

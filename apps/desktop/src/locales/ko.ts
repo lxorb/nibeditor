@@ -1407,6 +1407,9 @@ export const ko: Dictionary = {
 
   // What a site may do, behind the mark at the left of that field.
   'Site information': '사이트 정보',
+  Downloads: '다운로드',
+  'Show in folder': '폴더에서 보기',
+  Failed: '실패',
   Camera: '카메라',
   Microphone: '마이크',
   Location: '위치',
