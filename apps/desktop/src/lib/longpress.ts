@@ -82,6 +82,12 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
   node.addEventListener('touchmove', onMove, { passive: true })
   node.addEventListener('touchend', onEnd)
   node.addEventListener('touchcancel', cancel)
+  // Something nearer the finger has taken the press over, and it is the same finger
+  // on the same thing: a tab that has started to be dragged along its strip, which a
+  // finger can do inside the slop this allows. Said by whoever took it, so the menu
+  // stands down rather than opening over a tab that is already being carried; see
+  // Tabs.svelte.
+  node.addEventListener('nib-took-over', cancel)
 
   return {
     update(next: (event: MouseEvent) => void) {
@@ -93,6 +99,7 @@ export function longPress(node: HTMLElement, show: (event: MouseEvent) => void) 
       node.removeEventListener('touchmove', onMove)
       node.removeEventListener('touchend', onEnd)
       node.removeEventListener('touchcancel', cancel)
+      node.removeEventListener('nib-took-over', cancel)
     },
   }
 }

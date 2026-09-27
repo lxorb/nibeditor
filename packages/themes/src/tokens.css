@@ -151,11 +151,12 @@
   --header-height: var(--titlebar-height);
   --measure: 42rem;
 
-  /* A tab is drawn as wide as its name, up to this much of it, and never
-     narrower than that. Between the two the strip shares what it has; past the
-     minimum it scrolls sideways. See Tabs.svelte. */
-  --tab-name: 224px;
-  --tab-min: 80px;
+  /* The frame a strip of tabs is cut out of: one step off both the page and the
+     bars, so the active tab - which is filled with whichever of those is under it -
+     reads as the same surface running up into the frame. How wide a tab is, is
+     Chrome's rule rather than a token; see apps/desktop/src/lib/tab-strip/layout.ts
+     and docs/chrome-tabs.md. */
+  --tab-frame: var(--surface-2);
 
   /* What a thumb needs to land on, and how far a finger has to be from the
      left edge of the screen for a sideways drag to be the sidebar's rather

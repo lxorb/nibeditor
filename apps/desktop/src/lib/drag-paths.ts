@@ -12,7 +12,6 @@ const ONE = 'text/nib-path'
 const MANY = 'text/nib-paths'
 const BOOKMARK = 'text/nib-bookmark'
 const SECTION = 'text/nib-section'
-const TAB = 'text/nib-tab'
 
 /** What the drag under way carries, kept from its start to its end.
  *
@@ -59,25 +58,6 @@ export function dragged(transfer: DataTransfer | null): string[] {
   }
   const one = transfer.getData(ONE)
   return one ? [one] : []
-}
-
-/** A tab dragged out of a strip: which tab, so it can be dropped into another
- *  pane or against an edge to make one. Its own type, so a tab dropped on the
- *  file list is not read as a note to move. */
-export function carryTab(transfer: DataTransfer | null, id: string) {
-  if (!transfer) return
-
-  transfer.setData(TAB, id)
-  transfer.effectAllowed = 'move'
-}
-
-export function isTabDrag(transfer: DataTransfer | null): boolean {
-  return !!transfer?.types.includes(TAB)
-}
-
-export function draggedTab(transfer: DataTransfer | null): string | null {
-  const id = transfer?.getData(TAB) ?? ''
-  return id.length ? id : null
 }
 
 export function carryBookmark(transfer: DataTransfer | null, at: number) {

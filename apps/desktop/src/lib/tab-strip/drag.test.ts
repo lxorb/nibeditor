@@ -55,7 +55,16 @@ describe('a tab carried along the strip', () => {
     // Standard-width tabs, where the slack is the whole sixteen pixels.
     const wide = { widths: [238, 238, 238], room: 1000, pinnedRun: 0 }
     const drag = new TabDrag()
-    drag.down({ tabId: 't0', from: 0, pinned: false, along: 30, x: 30, y: 20, grab: 30, finger: false })
+    drag.down({
+      tabId: 't0',
+      from: 0,
+      pinned: false,
+      along: 30,
+      x: 30,
+      y: 20,
+      grab: 30,
+      finger: false,
+    })
     const at = (along: number) => drag.move(along, along, 20, true, wide)
 
     at(30 + 130)

@@ -20,7 +20,7 @@ import {
 /** A strip written as letters: `a` an inactive tab, `A` the active one, `p` a
  *  pinned tab and `P` the active pinned one. */
 function strip(shape: string) {
-  return [...shape].map((letter) => ({
+  return Array.from({ length: shape.length }, (_, at) => shape.charAt(at)).map((letter) => ({
     pinned: letter === 'p' || letter === 'P',
     active: letter === 'A' || letter === 'P',
   }))

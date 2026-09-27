@@ -31,7 +31,7 @@
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
-  import { dragged, draggedTab, isTabDrag, isTreeDrag } from './drag-paths'
+  import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
@@ -344,11 +344,10 @@
 
   /** Whether the pane answers for a drop, or leaves it to what is showing: a
    *  canvas makes a card of a note dropped on it, so the middle of the pane is
-   *  the canvas's and only the four sides are the pane's. A tab is nothing the
-   *  canvas knows about, so a tab is always the pane's. */
+   *  the canvas's and only the four sides are the pane's. A tab being dragged is
+   *  not a transfer at all - it is a pointer the strip it came out of follows, and
+   *  that strip asks the panes where it is; see Tabs.svelte. */
   function answers(event: DragEvent, zone: Zone): boolean {
-    if (isTabDrag(event.dataTransfer)) return true
-
     return isTreeDrag(event.dataTransfer) && !(ownSurface && zone === 'middle')
   }
 
@@ -371,14 +370,12 @@
 
     event.preventDefault()
     const landing: Landing = { kind: 'pane', paneId: pane.id, zone: where }
-    const id = draggedTab(event.dataTransfer)
     const paths = dragged(event.dataTransfer)
 
     workspace.panes.landing = null
     workspace.panes.dropped()
 
-    if (id) workspace.dropTab(id, landing)
-    else if (paths.length) void workspace.dropNotes(paths, landing)
+    if (paths.length) void workspace.dropNotes(paths, landing)
   }
 
   /** The zone of this pane the drop would land in, or undefined when the drag is
@@ -642,7 +639,10 @@
     align-items: stretch;
     flex: none;
     height: var(--titlebar-height);
-    border-bottom: 1px solid var(--line);
+    /* The window's own bar, again: the frame the tabs are cut out of, and the line
+       inside it that the active tab covers. See Titlebar.svelte. */
+    background: var(--tab-frame);
+    box-shadow: inset 0 -1px var(--line);
   }
 
   .editor {

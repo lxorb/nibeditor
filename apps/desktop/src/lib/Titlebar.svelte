@@ -107,11 +107,13 @@
          pane carries its own strip instead, so which tabs belong to which pane
          is never a question; see Pane.svelte. -->
     {#if only}
-      <Tabs paneId={only.id} />
+      <Tabs paneId={only.id} caption />
     {/if}
 
-    <!-- The empty stretch is what the window is dragged by. -->
-    <div class="drag" data-tauri-drag-region></div>
+    <!-- The empty stretch is what the window is dragged by. Beside a strip of tabs
+         it is only a sliver the strip leaves, because the strip's own empty stretch
+         is the caption as well; see Tabs.svelte. -->
+    <div class="drag" class:sliver={!!only} data-tauri-drag-region></div>
   {/if}
 
   <!-- The other side's own button, and only once that side holds a panel: a
@@ -163,12 +165,22 @@
     flex: none;
     padding-inline-start: var(--space-1);
     user-select: none;
-    border-bottom: 1px solid var(--line);
+    /* The frame the tabs are cut out of, and the hairline between it and the page.
+       The line is drawn inside the bar rather than under it, so the active tab -
+       which runs down to the bottom of the bar - covers it and becomes one surface
+       with what is below: Chrome's active tab. See Tabs.svelte. */
+    background: var(--tab-frame);
+    box-shadow: inset 0 -1px var(--line);
   }
 
   .drag {
     flex: 1;
     min-width: var(--space-5);
+  }
+
+  .drag.sliver {
+    flex: none;
+    width: var(--space-5);
   }
 
   .controls {
@@ -285,6 +297,9 @@
      to a comfortable target and clears the status bar. */
   :global([data-touch]) header {
     height: auto;
+    /* No tabs to cut out of the frame on a phone: the bar is the page's own ground,
+       as it always was. */
+    background: none;
     /* Under the clock and battery, and clear of a cutout on the side a tablet
        held sideways puts it. */
     padding-top: var(--inset-top);
