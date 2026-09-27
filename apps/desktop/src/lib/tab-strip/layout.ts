@@ -27,7 +27,7 @@ export const WIDTH = {
 
 /** From the tab's edge to its contents: half the gap between two tabs, and the
  *  padding inside the body. The contents of a tab are its width less twice this. */
-export const INSET = 3 + 8
+const INSET = 3 + 8
 
 /** The room a mark takes, and the room the close button takes with the gap in
  *  front of it. */
@@ -278,7 +278,7 @@ export function holds(strip: Rect, x: number, y: number, magnetism: number): boo
 /** After a tab is closed with the pointer, the others keep their widths until the
  *  pointer has left the strip: this far below it, and this far past its end. So a
  *  hand closing tab after tab finds the next close button already under it. */
-export const CLOSING_SLOP = { below: 40, past: 60 } as const
+const CLOSING_SLOP = { below: 40, past: 60 } as const
 
 /** Whether the pointer is still near enough the strip to keep the widths. The
  *  strip's end is the reading end, which `factor` says. */
