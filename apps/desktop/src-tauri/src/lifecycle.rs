@@ -120,11 +120,25 @@ pub fn quit(app: &AppHandle) {
 
         // A page that has not come up yet has nothing unsaved and nothing to ask
         // with, and waiting for it would be a quit that never ends.
-        if listening {
-            let _ = app.emit_to(label.as_str(), QUIT, ());
-        } else {
-            let _ = window.destroy();
-        }
+        let (app, going) = (app.clone(), window.clone());
+        let ask = move || {
+            if listening {
+                let _ = app.emit_to(label.as_str(), QUIT, ());
+            } else {
+                let _ = going.destroy();
+            }
+        };
+
+        // The window's web tab logins first, as its close button would keep them: a
+        // window that answers yes is destroyed rather than closed, so the close
+        // request that keeps them on the way out never comes. Kept before asking, so
+        // there is still only the one question, and a Cancel after it leaves nothing
+        // but a login that lasts, which every page load does anyway. See
+        // web_cookies.rs.
+        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+        crate::web_cookies::kept(&window, ask);
+        #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+        ask();
     }
 }
 

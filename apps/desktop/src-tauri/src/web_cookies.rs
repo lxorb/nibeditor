@@ -276,19 +276,11 @@ static LEAVING: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new()
 /// window with no web tab in it closes at once, and nothing here runs at all; so does
 /// the second request, which is this closing it.
 pub fn leaving(window: &tauri::Window, event: &tauri::WindowEvent) {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Arc;
-
     let tauri::WindowEvent::CloseRequested { api, .. } = event else {
         return;
     };
 
-    let pages: Vec<_> = window
-        .webviews()
-        .into_iter()
-        .filter(|one| crate::web_tabs::is_page(one.label()))
-        .collect();
-    if pages.is_empty() {
+    if pages(window).is_empty() {
         return;
     }
 
@@ -306,43 +298,70 @@ pub fn leaving(window: &tauri::Window, event: &tauri::WindowEvent) {
 
     api.prevent_close();
 
-    let close = {
-        let window = window.clone();
-        move || {
-            let _ = window.close();
+    let closing = window.clone();
+    kept(window, move || {
+        let _ = closing.close();
+    });
+}
+
+/// The window's web tabs, which are the pages whose logins are worth keeping.
+fn pages(window: &tauri::Window) -> Vec<tauri::Webview> {
+    window
+        .webviews()
+        .into_iter()
+        .filter(|one| crate::web_tabs::is_page(one.label()))
+        .collect()
+}
+
+/// Makes the logins of every web tab in a window last, then calls `then` - once,
+/// whether the engine answered or not. At once for a window with no web tab in it.
+///
+/// What closing a window does through `leaving`, and what quitting does for each
+/// window before asking it to go (see `quit` in lifecycle.rs): a quit ends a window
+/// without the close request `leaving` hears, so it has to ask for this itself.
+pub fn kept(window: &tauri::Window, then: impl FnOnce() + Send + 'static) {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{Arc, Mutex};
+
+    type Then = Mutex<Option<Box<dyn FnOnce() + Send>>>;
+
+    let pages = pages(window);
+    if pages.is_empty() {
+        then();
+        return;
+    }
+
+    // Held in one place and taken by whichever comes first: the last page's answer,
+    // or the patience running out.
+    let then: Arc<Then> = Arc::new(Mutex::new(Some(Box::new(then))));
+    let go = move |then: &Then| {
+        let taken = then.lock().ok().and_then(|mut then| then.take());
+        if let Some(then) = taken {
+            then();
         }
     };
 
-    // One count per page, down as each is answered; the last answer closes the window.
+    // One count per page, down as each is answered; the last answer goes on.
     let left = Arc::new(AtomicUsize::new(pages.len()));
-    let answered = move |left: &AtomicUsize, close: &dyn Fn()| {
-        if left.fetch_sub(1, Ordering::SeqCst) == 1 {
-            close();
-        }
-    };
-
     for page in pages {
-        let (waiting, closing) = (left.clone(), close.clone());
+        let (waiting, going) = (left.clone(), then.clone());
         let asked = page.with_webview(move |platform| {
-            keep(&platform, move || answered(&waiting, &closing));
+            keep(&platform, move || {
+                if waiting.fetch_sub(1, Ordering::SeqCst) == 1 {
+                    go(&going);
+                }
+            });
         });
-        if asked.is_err() {
-            answered(&left, &close);
+        if asked.is_err() && left.fetch_sub(1, Ordering::SeqCst) == 1 {
+            go(&then);
         }
     }
 
-    // And closed regardless, a moment later, should the engine never answer. Only if
-    // it is still waiting: a window already closed is not closed twice.
-    let window = window.clone();
+    // And on regardless, a moment later, should the engine never answer. A quit that
+    // hangs on a cookie store is worse than one sign-in more.
     std::thread::spawn(move || {
         std::thread::sleep(PATIENCE);
-        let waiting = window.label().to_string();
-        let still = LEAVING
-            .lock()
-            .is_ok_and(|leaving| leaving.contains(&waiting));
-        if still {
-            let _ = window.close();
-        }
+        go(&then);
     });
 }
 
