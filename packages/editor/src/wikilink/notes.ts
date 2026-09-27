@@ -299,9 +299,8 @@ export function fuzzy(text: string, needle: string): boolean {
 const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
 /** A path as something to compare: `/` separators, no extension of our own, and
- *  folded the way `foldName` folds. Obsidian matches a link to a note by name
- *  whatever the case and however its letters are composed, and so do the two
- *  filesystems a Mac and Windows format with. */
+ *  folded case and composed letters (`foldName`). Obsidian matches a link to a
+ *  note by name whatever the case, and so do the two filesystems Nib runs on. */
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }

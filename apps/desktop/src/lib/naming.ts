@@ -100,9 +100,7 @@ export function nameFault({ typed, extension, taken }: Naming): NameFault | null
   // Against the name that would be written rather than against what was typed,
   // so `A` collides with `A.md` and not with the folder `A` beside it - which is
   // the folder-note layout and a pair that is meant to exist. Case-insensitively,
-  // because two of the three platforms this runs on say those are one file - and
-  // composed, because a Mac's APFS also says `Ü` typed as one letter or as two is
-  // one file; see `foldName`.
+  // because two of the three platforms this runs on say those are one file.
   const written = foldName(nameToWrite(name, extension))
   return taken.some((one) => foldName(one) === written) ? 'taken' : null
 }

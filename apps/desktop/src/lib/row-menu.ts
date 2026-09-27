@@ -30,9 +30,8 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget } from './move-targets'
 import { rowName } from './note-name'
-import { reveal, revealLabel } from './reveal'
 import { isMarkdownPath } from './space-paths'
-import { isDesktop } from './tauri'
+import { isDesktop, platform } from './tauri'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -158,13 +157,11 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   if (sure) await workspace.remove(entry.path, true)
 }
 
-/** The row in the system's file manager: "Reveal in Finder" on a Mac, the words
- *  Obsidian's own file list uses there. The row's own path, so a folder with a note
- *  of its own is shown as the folder it is on disk. Only the desktop has a file
- *  manager to show it in. */
+/** The row in the file manager, in Obsidian's words on a Mac; see reveal.ts. */
 function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
-  return [{ label: t(revealLabel('tree')), run: () => void reveal(entry.path) }]
+  const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
+  return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
 }
 
 /** Only offered once there is something to take back. */

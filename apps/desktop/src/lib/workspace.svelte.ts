@@ -90,8 +90,7 @@ export interface Entry {
   modified: number
   created: number
   children: Entry[]
-  /** A note iCloud has taken off this Mac, listed under its own name; opening it
-   *  brings it back. See icloud.svelte.ts. */
+  /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
   evicted?: boolean
 }
 

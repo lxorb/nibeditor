@@ -10,8 +10,6 @@ import { foldName } from '@nib/markdown/links'
 export function fuzzy(query: string, text: string): number | null {
   if (!query) return 0
 
-  // Composed as well as folded, so a note whose name a Mac tool wrote with a
-  // decomposed `Ü` is found by the `Ü` a keyboard types; see `foldName`.
   const needle = foldName(query)
   const haystack = foldName(text)
 

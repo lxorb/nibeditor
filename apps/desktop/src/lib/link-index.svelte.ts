@@ -108,9 +108,8 @@ function readsWords(path: string): boolean {
   return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 }
 
-/** A path as something to compare: no extension of our own, folded case and
- *  composed letters. The same reading `resolveNote` does, so a candidate here is a
- *  candidate there; see `foldName`. */
+/** A path as something to compare: no extension of our own, folded. The same
+ *  reading `resolveNote` does, so a candidate here is a candidate there. */
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }

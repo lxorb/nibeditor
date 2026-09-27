@@ -124,9 +124,7 @@ function about(index: NoteIndex, note: NoteRef): LinkWrite {
 
 /** The name to write for a note: its own, unless the space holds another note by
  *  that name, in which case the path says which one is meant - the shortest form
- *  that is unambiguous, as Obsidian writes it. Composed, like every link a
- *  keyboard writes, so the note text never carries the decomposed spelling a file
- *  on disk may have; the resolver folds both alike. */
+ *  that is unambiguous, as Obsidian writes it. Composed; see `foldName`. */
 function nameFor(index: NoteIndex, note: NoteRef): string {
   const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
   return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
@@ -150,9 +148,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   if (!needle || matches(note, needle)) {
     rows.push({
-      // Composed, because the popup's own filter compares what was typed with the
-      // label letter by letter, and a keyboard types `Ü` as one letter where a
-      // name a Mac tool wrote may spell it as two; see `foldName`.
+      // Composed, for the popup's own filter; see `foldName`.
       label: note.name.normalize('NFC'),
       ...(folder === undefined ? {} : { detail: folder }),
       apply: insert(about(index, note)),

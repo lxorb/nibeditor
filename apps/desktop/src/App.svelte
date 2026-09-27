@@ -62,7 +62,6 @@
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
   import { currentWindow, isDesktop, platform } from './lib/tauri'
-  import { keepsSystemMenu } from './lib/system-menu'
   import { theme } from './lib/theme.svelte'
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
@@ -77,6 +76,12 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  // Where a right click keeps the Mac's own menu; see system-menu.ts.
+  let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
+  if (platform() === 'macos') {
+    void import('./lib/system-menu').then((one) => (keepsSystemMenu = one.keepsSystemMenu))
+  }
   /** The tab whose note is on the stage, while one is. The deck goes over the
    *  whole window, and the note stays open behind it. */
   const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
@@ -667,8 +672,7 @@
   })
 </script>
 
-<!-- Nothing in the app ever shows the browser's own menu. A text field on a Mac
-     keeps the Mac's, for Look Up and the spelling; see system-menu.ts. -->
+<!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
   oncontextmenu={(event: MouseEvent) => {

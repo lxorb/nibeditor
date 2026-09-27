@@ -1,22 +1,19 @@
 /** Showing a file where it sits, in the system's own file manager.
  *
- *  The words are each platform's own. A Mac says Finder, the way Safari's
- *  downloads say "Show in Finder" and Obsidian's file list says "Reveal in
- *  Finder"; Windows and Linux keep the one phrase they had, because a Linux
- *  desktop has no one file manager to name. */
+ *  The words are each platform's own. A Mac says Finder: "Show in Finder" on a
+ *  download, as Safari's downloads say it, and "Reveal in Finder" on a row of the
+ *  file list, as Obsidian's file list says it (row-menu.ts writes that one itself,
+ *  so the list does not fetch this module before it is needed). Windows and Linux
+ *  keep the one phrase they had, because a Linux desktop has no one file manager
+ *  to name. */
 
 import { key } from './i18n.svelte'
 import { isDesktop, platform } from './tauri'
 
-/** Where a row of a list says it will show a file: a download's own row, which
- *  reads as a browser's, or a row of the file list, which reads as Obsidian's. */
-export type RevealFrom = 'download' | 'tree'
-
-/** The words for showing a file in the file manager, untranslated: the caller
- *  hands them to `t`, so the catalogues see every one of them. */
-export function revealLabel(from: RevealFrom, system: string = platform()): string {
-  if (system !== 'macos') return key('Show in folder')
-  return from === 'download' ? key('Show in Finder') : key('Reveal in Finder')
+/** The words on a download's row for showing its file, untranslated: the caller
+ *  hands them to `t`, so the catalogues see them. */
+export function showLabel(system: string = platform()): string {
+  return system === 'macos' ? key('Show in Finder') : key('Show in folder')
 }
 
 /** Opens the file manager at a file, selected. Only the desktop has one to open. */
