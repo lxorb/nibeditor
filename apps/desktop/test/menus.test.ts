@@ -249,24 +249,13 @@ describe('what the plus in the tab strip offers', () => {
   )
 
   /** Which kinds are offered is new-kinds.ts now and has its own test beside it:
-   * three ways in - the plus, Ctrl+T, and the buttons a pane with nothing open
-   * shows - and a list written in any one of them is a list the other two can
+   * three ways in - the plus, the Ctrl+T dialog, and the buttons a pane with nothing
+   * open shows - and a list written in any one of them is a list the other two can
    * disagree with. What is left to read here is that the plus asks the shared one. */
   test('the kinds out of the one list, and no list of its own', () => {
     expect(tabs).toContain("import { showNewKinds } from './new-kinds'")
     expect(tabs).toContain('showNewKinds(event, paneId)')
     expect(tabs).not.toContain("t('New canvas')")
-  })
-
-  /** Ctrl+T presses this very button, so the chooser arrives under the plus rather
-   * than in the corner of the window; the pane's own name on it is how the key finds
-   * the plus of the pane that has the keyboard. See chooseNewKind in focus.ts. */
-  test('says which pane it belongs to, so a chord can press it', () => {
-    expect(plus).toContain('data-new={paneId}')
-
-    const focus = read('lib/focus.ts')
-    expect(focus).toContain('export function chooseNewKind()')
-    expect(focus).toContain('[data-new="${CSS.escape(workspace.panes.focusedId)}"]')
   })
 
   /** Emil, 2026-09-13: *"When you press on the plus for creating a new tab, then you

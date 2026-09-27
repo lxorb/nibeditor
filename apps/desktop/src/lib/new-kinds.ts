@@ -21,11 +21,12 @@
  *  should be able to choose between the different things (note, canvas, web note
  *  etc.)"*, and 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new
  *  note, there should be a menu (as if you would click the +) where you can decide
- *  what type."* */
+ *  what type."*, and 2026-09-27: *"Ctrl + T should always open a webpage by default
+ *  [...] we need an other modal, not just a small one but a proper modal in the centre
+ *  of the screen."* */
 
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
-import { rememberKind, standingAt } from './last-kind'
 import { menu, type MenuEntry } from './menu.svelte'
 import { viewport } from './viewport.svelte'
 import { type NewKind, workspace } from './workspace.svelte'
@@ -36,21 +37,18 @@ export interface NewKindRow {
   /** The shape the file list and the tab strip already draw for this kind, so the
    *  buttons in an empty pane wear what the rows wear; see file-mark.ts. */
   mark: FileMark
+  /** The key that picks it in the dialog: its own first letter, as the code names it
+   *  rather than as a language spells it, so the key is the same key in every one of
+   *  them and the dialog can show it on the card. See NewKindSheet.svelte. */
+  letter: string
   /** Makes one. In the pane named, where a caller has one - the pane whose plus was
    *  pressed takes the keyboard first - and otherwise in whichever pane has it. */
   make: (paneId?: string) => void
 }
 
 /** Makes one in the pane that asked, so a plus in the other pane does not open its
- *  note over here - and writes down which kind it was, so the chooser opens on it
- *  next time.
- *
- *  Here rather than at each door, because there are four of them: a row of the menu,
- *  a button in an empty pane, a row of the File menu, and the chord letting go of its
- *  modifier. A chooser that only remembered what the chord chose would open on the
- *  wrong kind for anybody who reaches for the plus. See last-kind.ts. */
-function inPane(kind: NewKind, paneId: string | undefined, make: () => unknown) {
-  rememberKind(kind)
+ *  note over here. */
+function inPane(paneId: string | undefined, make: () => unknown) {
   if (paneId !== undefined) workspace.focusPane(paneId)
   void make()
 }
@@ -64,13 +62,15 @@ export function newKinds(): NewKindRow[] {
       kind: 'note',
       label: () => t('New note'),
       mark: 'note',
-      make: (paneId) => inPane('note', paneId, () => workspace.openBlank()),
+      letter: 'n',
+      make: (paneId) => inPane(paneId, () => workspace.openBlank()),
     },
     {
       kind: 'canvas',
       label: () => t('New canvas'),
       mark: 'canvas',
-      make: (paneId) => inPane('canvas', paneId, () => workspace.newCanvas()),
+      letter: 'c',
+      make: (paneId) => inPane(paneId, () => workspace.newCanvas()),
     },
     // A website is a bookmark on a phone - it opens in the phone's own browser and
     // there is no tab to make - so the row is left out there rather than offered and
@@ -82,37 +82,30 @@ export function newKinds(): NewKindRow[] {
             kind: 'web' as const,
             label: () => t('New web note'),
             mark: 'web' as const,
-            make: (paneId: string | undefined) =>
-              inPane('web', paneId, () => workspace.openWebsite()),
+            letter: 'w',
+            make: (paneId: string | undefined) => inPane(paneId, () => workspace.openWebsite()),
           },
         ]),
     {
       kind: 'pages',
       label: () => t('New page note'),
       mark: 'pages',
-      make: (paneId) => inPane('pages', paneId, () => workspace.newPages()),
+      letter: 'p',
+      make: (paneId) => inPane(paneId, () => workspace.newPages()),
     },
   ]
 }
 
-/** The same kinds as menu rows, with the one that was chosen last standing: the
- *  keyboard lands there when the menu opens, so the chooser's memory is a ring on a
- *  row rather than anything a reader has to be told about. See last-kind.ts. */
+/** The same kinds as menu rows, in the same order and the same words. */
 export function newKindMenu(paneId?: string): MenuEntry[] {
-  const rows = newKinds()
-  const at = standingAt(rows.map((one) => one.kind))
-
-  return rows.map((one, index) => ({
-    label: one.label(),
-    stands: index === at,
-    run: () => one.make(paneId),
-  }))
+  return newKinds().map((one) => ({ label: one.label(), run: () => one.make(paneId) }))
 }
 
-/** The chooser, at the pointer. Every way in comes through here - the plus, a held
- *  finger, the menu key, Ctrl+T - so what is offered and what it is called cannot
- *  differ between them. On a phone the menu draws itself as a sheet from the bottom,
- *  which is what every other menu there does. */
+/** The chooser, at the pointer: the plus, a held finger on it, the menu key over it.
+ *  A menu rather than the dialog Ctrl+T opens, because the pointer is already at the
+ *  plus and the rows arrive under it, where a dialog would send the hand to the middle
+ *  of the window and back. On a phone the menu draws itself as a sheet from the
+ *  bottom, which is what every other menu there does. */
 export function showNewKinds(event: MouseEvent, paneId?: string) {
   menu.show(event, newKindMenu(paneId), { title: t('New') })
 }

@@ -92,6 +92,8 @@ mod tree;
 mod updates;
 mod uris;
 #[cfg(desktop)]
+mod web_keys;
+#[cfg(desktop)]
 mod web_tabs;
 
 use paths::Opened;

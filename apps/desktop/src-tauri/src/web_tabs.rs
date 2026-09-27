@@ -959,6 +959,8 @@ fn listening(app: &AppHandle, tab: &str) {
         // page because both want the one thread this runs on.
         #[cfg(all(windows, not(feature = "cef")))]
         session::keep(platform.environment());
+        // The browser's own chords, which the page is never offered; see web_keys.rs.
+        crate::web_keys::listen(&platform, asking.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });
 }

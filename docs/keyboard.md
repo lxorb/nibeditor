@@ -268,7 +268,7 @@ stops nothing, and the app still gets the key.
 | | |
 | --- | --- |
 | Ctrl+N | a new note |
-| Ctrl+T | **what kind**: the chooser the plus hangs - a note, a canvas, a website, a page note - under the plus of the pane that has the keyboard, on its first row, so Ctrl+T then Enter is still a new note |
+| Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
@@ -280,23 +280,27 @@ stops nothing, and the app still gets the key.
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.
 
-**Ctrl+T presses the plus**, rather than holding a copy of its list: the key finds the
-plus of the pane that has the keyboard - it is named after that pane - and clicks it at
-its own corner, so the chooser arrives where a pointer would have put it. Which kinds
-are offered is written once, in `new-kinds.ts`, and read by the plus, by this key and by
-the buttons a pane with nothing open shows. Where there is no plus - a phone, a tablet,
-the app in full screen - the chooser opens in the middle of the window, which on a touch
-screen is the sheet every menu there is.
+**Ctrl+T is a browser's key first.** Emil, 2026-09-27: *"Ctrl + T should always open
+a webpage by default. And that should always be the selected option in the modal when
+holding the Ctrl."* Tapped, it makes a web page and draws nothing. Held, it is Alt+Tab's
+shape: after a beat a dialog comes up in the middle of the window with the kinds as
+cards and the website standing, each further T steps one along (Shift+T back), the
+arrows walk them too, and letting Ctrl go makes the one that stands. Each card's letter
+- N, C, W, P - makes it outright, Enter and a click make the one pressed, Escape makes
+nothing. A phone has no web tab, so there the note stands. The palette's New opens the
+same dialog on the same card. See `new-kind-chord.ts`, `NewKindSheet.svelte` and
+`new-kind-choice.ts`.
 
-The chooser is the app's one menu, so it is walked like every other: the arrows move,
-letters spell a row's name, Enter and Space choose, Escape closes, and the keyboard
-lands on the first row when it opens.
+The plus keeps its menu at the pointer, because that is where the hand already is; the
+dialog is the keyboard's. Both read the one list in `new-kinds.ts`, and so do the
+buttons a pane with nothing open shows. Nothing remembers which kind was made last any
+more: every door opens on a place that never moves.
 
 **A pane with nothing open is a state the window is allowed to be in.** Closing the
 last note used to make a blank one; now the pane shows those same kinds as buttons and
-makes nothing until one is pressed. The keyboard lands on the first button, the arrows
-walk them, and Ctrl+T there only puts the keyboard back on them rather than hanging a
-second copy of the list over them. See `NewHere.svelte`.
+makes nothing until one is pressed. The keyboard lands on the first button and the
+arrows walk them. They are the dialog's cards, drawn in the pane; see `NewHere.svelte`
+and `KindCard.svelte`.
 
 **A web tab**
 
@@ -319,13 +323,19 @@ the bar reads the press where the bar is rather than off the window: an app-leve
 binding would never reach the editor, while a pane showing a page has no editor to
 shadow.
 
-**And these work even while the page has the keyboard**, which is new and is the
-whole reason the engine underneath matters. A child webview of the system's engine
-hands the host no chance at a key, so after a click into a site Ctrl+L used to be
-that site's shortcut and the app never saw the press. Chromium gives the host
-`OnPreKeyEvent`, in the browser process, before the page's own handlers - so these
-seven are the shell's and everything else is the page's, including a site that wants
-Ctrl+K for itself. See docs/browser.md.
+**The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
+*"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
+rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too) and Ctrl+1 to 9 are never
+offered to the page. The engine tells the host
+about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
+hands the keyboard back to the app and says which key it was, and the window plays it
+on itself - so it goes through the same handler, the same bindings and the same held
+Ctrl+T as anywhere else. A Ctrl let go of in the page is said too, which is the release
+a held Ctrl+T chooses on. Everything else, Ctrl+L and a site's own Ctrl+K among them, is
+the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
+`WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
+keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.
 
 **The spaces**
 

@@ -41,9 +41,6 @@ let was: 'phone' | 'tablet' | 'desktop'
 beforeEach(() => {
   was = viewport.device
   viewport.device = 'desktop'
-  // The chooser remembers what was made last, and one test in this file makes all
-  // four; a fresh pane is one nothing has chosen in yet. See last-kind.ts.
-  localStorage.clear()
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -90,24 +87,13 @@ test('offers every kind a new tab can be, in the order the plus offers them', ()
   ])
 })
 
-/** So Ctrl+T, Enter is the new note it used to make outright, and a hand that never
- *  touches the pointer is not slower than it was. */
+/** So Enter is the new note an empty pane used to make outright, and a hand that
+ *  never touches the pointer is not slower than it was. */
 test('lands the keyboard on the first of them', () => {
   makers()
   here()
 
   expect(document.activeElement).toBe(buttons()[0])
-})
-
-/** Emil, 2026-09-17: *"The last chosen one should be selected already."* The same
- *  memory the menu under the plus opens on, so a hand that has been making canvases
- *  finds the canvas under its finger here too; see last-kind.ts. */
-test('and on the kind that was chosen last, once one has been', () => {
-  makers()
-  localStorage.setItem('nib:new-kind', 'web')
-  here()
-
-  expect(document.activeElement).toBe(buttons()[2])
 })
 
 test('and the arrows walk the rest', () => {

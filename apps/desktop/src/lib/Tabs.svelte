@@ -180,9 +180,9 @@
     menu.show(event, tabMenu(tab), { title: tab.shown })
 
   /** A held finger is the right click a touch screen has, and the menu key is the one
-   *  a keyboard has: all three ask for the same list, and so does Ctrl+T, which presses
-   *  this very button. What the list holds is new-kinds.ts - one list for the plus, the
-   *  chord and the buttons an empty pane shows. */
+   *  a keyboard has: all three ask for the same list, at the plus. What the list holds
+   *  is new-kinds.ts - one list for the plus, the Ctrl+T dialog and the buttons an
+   *  empty pane shows. */
   const showNewMenu = (event: MouseEvent) => showNewKinds(event, paneId)
 
   /** The dot says one of three things, and says it in words to a reader who
@@ -963,11 +963,8 @@
          what makes one there. Left out rather than hidden, so no key reaches it
          and nothing reads it out. -->
     {#if !viewport.touch}
-      <!-- Named for the pane it belongs to, so Ctrl+T can press the plus of the pane
-           that has the keyboard rather than the first one on screen; see focus.ts. -->
       <button
         class="new"
-        data-new={paneId}
         title={t('New')}
         aria-label={t('New')}
         aria-haspopup="menu"
