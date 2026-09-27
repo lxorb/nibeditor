@@ -403,8 +403,8 @@ function holds(tail: string): boolean {
  *  rather than doing nothing, and the words an earlier welcome note held so an old
  *  seed still never syncs. 2,988 bytes. And for the rest of the Mac round: the native
  *  menu's door, the window's title and edited dot, Finder's words and the print path.
- *  Measured 3,338,398. */
-const BUDGET = 3_340_000
+ *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in. */
+const BUDGET = 3_345_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

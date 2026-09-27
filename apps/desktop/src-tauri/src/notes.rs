@@ -350,7 +350,7 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
 
 #[cfg(test)]
 mod tests {
-    use super::{move_entry, respelled, same_entry, write_bytes, write_note};
+    use super::{move_entry, respelled, write_bytes, write_note};
     use std::path::Path;
     // The trait the encoding method hangs off. The module above reaches it
     // through what it imports; a test module is its own scope and has to say so.
@@ -592,6 +592,8 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn a_hard_link_is_not_the_same_entry() {
+        use super::same_entry;
+
         let dir = tempfile::tempdir().expect("a temp dir");
         let (one, other) = (dir.path().join("a.md"), dir.path().join("b.md"));
         fs::write(&one, "a").expect("the note");

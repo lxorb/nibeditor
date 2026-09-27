@@ -1387,8 +1387,11 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 /// in every webview with a call into the app, `plugin:webview|print`, and a site's
 /// origin is refused every call into the app - so the row did nothing. There the tab's
 /// own print operation is run instead, as the sheet Safari shows; see `pdf::print_sheet`.
+///
+/// Async, because the Mac's print operation reaches the filesystem on the way to its
+/// sheet, and a command that may wait is kept off the thread that draws the window.
 #[tauri::command]
-pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
+pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
 
     #[cfg(all(target_os = "macos", not(feature = "cef")))]
