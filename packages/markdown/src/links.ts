@@ -91,6 +91,20 @@ function schemeOf(target: string): string {
   return /^([a-z][a-z\d+.-]*):/i.exec(target)?.[1]?.toLowerCase() ?? ''
 }
 
+/** A name as something to compare with another: composed, then folded.
+ *
+ *  Folded because Obsidian matches a link to a note whatever the case. Composed
+ *  because the same word has two spellings in Unicode: `Ü` as one character, which
+ *  is what a keyboard types, or as `U` followed by a combining diaeresis, which is
+ *  what a file made by some Mac tools, an older HFS+ copy or a zip from one is
+ *  called on disk. The two look identical and compare unequal, so `[[Übersicht]]`
+ *  would miss the file it names. NFC on both sides makes them one name; nothing is
+ *  ever renamed on disk, which is what APFS itself does - it keeps whichever
+ *  spelling it was given and looks the other one up as the same file. */
+export function foldName(name: string): string {
+  return name.normalize('NFC').toLowerCase()
+}
+
 /** Whether a markdown link's target points inside the space rather than out at
  *  the web. A `#fragment` on its own points inside the note it is written in,
  *  which counts: the Links panel lists it, and no rename touches it. */

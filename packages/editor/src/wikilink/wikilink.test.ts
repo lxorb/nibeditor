@@ -13,6 +13,7 @@ import {
   type NoteIndex,
   noteIndex,
   type NoteRef,
+  resolveFile,
   resolveNote,
   resolveRelative,
   resolves,
@@ -290,6 +291,19 @@ describe('which note a name means', () => {
   test('and a note of the same name wins, because a note is the older meaning', () => {
     const space = index([note('Plan.url'), note('Plan.md')])
     expect(resolveNote(space, 'Plan')?.path).toBe('Plan.md')
+  })
+
+  /** `Ü` as one letter, which a keyboard types, and as `U` with a combining mark,
+   *  which is how some Mac tools name a file. Neither side is ever renamed. */
+  test('a name matches however its letters are composed', () => {
+    const decomposed = 'U\u0308bersicht'
+    const space = index([note(`ideas/${decomposed}.md`)], null, {}, [`${decomposed}.pdf`])
+    expect(resolveNote(space, 'Übersicht')?.path).toBe(`ideas/${decomposed}.md`)
+    expect(resolveFile(space, 'Übersicht.pdf', 'wikilink')).toBe(`${decomposed}.pdf`)
+
+    const other = index([note('Übersicht.md')], null, {}, ['Übersicht.pdf'])
+    expect(resolveNote(other, decomposed)?.path).toBe('Übersicht.md')
+    expect(resolveFile(other, `${decomposed}.pdf`, 'wikilink')).toBe('Übersicht.pdf')
   })
 
   test('a relative markdown target folds against the note it was written in', () => {

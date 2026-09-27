@@ -1,7 +1,7 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
-import { blocksOf } from '@nib/markdown/links'
+import { blocksOf, foldName } from '@nib/markdown/links'
 import {
   fuzzy,
   type LinkWrite,
@@ -124,10 +124,12 @@ function about(index: NoteIndex, note: NoteRef): LinkWrite {
 
 /** The name to write for a note: its own, unless the space holds another note by
  *  that name, in which case the path says which one is meant - the shortest form
- *  that is unambiguous, as Obsidian writes it. */
+ *  that is unambiguous, as Obsidian writes it. Composed, like every link a
+ *  keyboard writes, so the note text never carries the decomposed spelling a file
+ *  on disk may have; the resolver folds both alike. */
 function nameFor(index: NoteIndex, note: NoteRef): string {
-  const same = index.notes.filter((one) => one.name.toLowerCase() === note.name.toLowerCase())
-  return same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name
+  const same = index.notes.filter((one) => foldName(one.name) === foldName(note.name))
+  return (same.length > 1 ? note.path.replace(MARKDOWN, '') : note.name).normalize('NFC')
 }
 
 /** A folder to read at a glance, or nothing for a note at the top of the space. */
@@ -148,7 +150,10 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   if (!needle || matches(note, needle)) {
     rows.push({
-      label: note.name,
+      // Composed, because the popup's own filter compares what was typed with the
+      // label letter by letter, and a keyboard types `Ü` as one letter where a
+      // name a Mac tool wrote may spell it as two; see `foldName`.
+      label: note.name.normalize('NFC'),
       ...(folder === undefined ? {} : { detail: folder }),
       apply: insert(about(index, note)),
       type: 'text',
@@ -157,7 +162,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   for (const alias of note.aliases) {
     if (!alias.trim()) continue
-    if (needle && !alias.toLowerCase().includes(needle)) continue
+    if (needle && !foldName(alias).includes(needle)) continue
 
     // The alias is the name, so a wikilink writes the alias and a markdown link
     // shows it over the note's own path - which is the same sentence either way.
@@ -173,7 +178,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 }
 
 function noteOptions(index: NoteIndex, typed: string): Completion[] {
-  const needle = typed.trim().toLowerCase()
+  const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
   // Cut after the rows are built rather than before: an alias is a row of its
@@ -193,17 +198,17 @@ function noteOptions(index: NoteIndex, typed: string): Completion[] {
  *  is being written, not searched for. */
 function matches(note: NoteRef, needle: string): boolean {
   return (
-    note.name.toLowerCase().includes(needle) ||
-    note.path.toLowerCase().includes(needle) ||
-    note.aliases.some((alias) => alias.toLowerCase().includes(needle))
+    foldName(note.name).includes(needle) ||
+    foldName(note.path).includes(needle) ||
+    note.aliases.some((alias) => foldName(alias).includes(needle))
   )
 }
 
 function headingOptions(target: LinkWrite, note: NoteRef, typed: string): Completion[] {
-  const needle = typed.trim().toLowerCase()
+  const needle = foldName(typed.trim())
 
   return note.headings
-    .filter((heading) => !needle || heading.toLowerCase().includes(needle))
+    .filter((heading) => !needle || foldName(heading).includes(needle))
     .slice(0, MOST_SHOWN)
     .map((heading) => ({
       label: heading,
@@ -224,11 +229,11 @@ async function blockOptions(
   const source = await index.read(note.path)
   if (source === null) return []
 
-  const needle = typed.trim().toLowerCase()
+  const needle = foldName(typed.trim())
 
   return blocksOf(source)
     .filter((block) => block.text !== '')
-    .filter((block) => !needle || block.text.toLowerCase().includes(needle))
+    .filter((block) => !needle || foldName(block.text).includes(needle))
     .slice(0, MOST_SHOWN)
     .map((block) => ({
       label: block.text,
@@ -266,7 +271,7 @@ function name(path: string, line: number, target: LinkWrite) {
  *  typed. The note's name is the row's detail, muted beside the heading, because
  *  the heading is what is being looked for and the note is which one it is. */
 function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
-  const needle = typed.trim().toLowerCase()
+  const needle = foldName(typed.trim())
   const rows: Completion[] = []
 
   for (const note of index.notes) {
@@ -345,7 +350,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock): Completion {
  *  asking again. Blocks of the note being written in are left to `[[#^`, which
  *  offers them out of the text on the screen rather than the copy on the disk. */
 async function spaceBlocks(index: NoteIndex, typed: string): Promise<Completion[]> {
-  const needle = typed.trim().toLowerCase()
+  const needle = foldName(typed.trim())
   const rows = namedBlocks(index, needle)
   const named = new Set(rows.map((row) => row.label))
 

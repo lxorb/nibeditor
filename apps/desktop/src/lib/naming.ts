@@ -14,6 +14,7 @@
  *  Pure, so the whole rule reads as a list of names and the field is left with
  *  nothing to decide; see naming.test.ts. */
 
+import { foldName } from '@nib/markdown/links'
 import { endingOf } from './note-name'
 
 /** Why a name will not do. One per sentence a row can show, which is why a
@@ -99,9 +100,11 @@ export function nameFault({ typed, extension, taken }: Naming): NameFault | null
   // Against the name that would be written rather than against what was typed,
   // so `A` collides with `A.md` and not with the folder `A` beside it - which is
   // the folder-note layout and a pair that is meant to exist. Case-insensitively,
-  // because two of the three platforms this runs on say those are one file.
-  const written = nameToWrite(name, extension).toLowerCase()
-  return taken.some((one) => one.toLowerCase() === written) ? 'taken' : null
+  // because two of the three platforms this runs on say those are one file - and
+  // composed, because a Mac's APFS also says `Ü` typed as one letter or as two is
+  // one file; see `foldName`.
+  const written = foldName(nameToWrite(name, extension))
+  return taken.some((one) => foldName(one) === written) ? 'taken' : null
 }
 
 /** The name a commit writes: what was typed with the file's own ending put back.
