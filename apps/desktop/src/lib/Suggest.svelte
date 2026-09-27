@@ -5,7 +5,11 @@
    *  value, the letters that were typed marked where they landed. Chosen on
    *  pointerdown rather than on click, because clicking takes the focus off
    *  the field first and a popup that has lost its field has nothing to
-   *  finish. */
+   *  finish.
+   *
+   *  A value is shown as itself unless the field says otherwise: the address bar
+   *  keeps an address as the value and shows it the way a browser does, with the
+   *  page's own name after it. See web-tab/AddressField.svelte. */
 
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
@@ -18,6 +22,8 @@
     id,
     label,
     onchoose,
+    shown = (value: string) => value,
+    aside,
   }: {
     values: string[]
     typed: string
@@ -27,6 +33,10 @@
     id: string
     label: string
     onchoose: (value: string) => void
+    /** What a row reads as, where that is not the value itself. */
+    shown?: (value: string) => string
+    /** A quieter second half after it, or the empty string for none. */
+    aside?: (value: string) => string
   } = $props()
 
   /** The value in three parts, so the letters that were typed can be marked
@@ -57,7 +67,8 @@
   transition:fly={{ y: -4, duration: dur(130), easing: cubicOut }}
 >
   {#each values as value, index (value)}
-    {@const parts = split(value)}
+    {@const parts = split(shown(value))}
+    {@const after = aside?.(value) ?? ''}
     <li role="none">
       <button
         id="{id}-{index}"
@@ -71,6 +82,7 @@
         }}
       >
         {parts.before}<span class="matched">{parts.hit}</span>{parts.after}
+        {#if after}<span class="aside">{after}</span>{/if}
       </button>
     </li>
   {/each}
@@ -118,6 +130,20 @@
   button.on {
     background: var(--accent-soft);
     color: var(--text-strong);
+  }
+
+  /* The second half, in the grey a row's quieter half is everywhere, a word's
+     space after the first. */
+  .aside {
+    margin-inline-start: var(--space-2);
+    color: var(--muted);
+  }
+
+  /* And steps up on a lit row, which is not the page `--muted` is measured
+     against; see `.nib-row.is-on kbd` in the themes package. */
+  button:hover .aside,
+  button.on .aside {
+    color: var(--muted-strong);
   }
 
   /* The letters that were typed, marked where they landed in the value. */

@@ -27,7 +27,8 @@
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
   import { shortcuts } from '../shortcuts.svelte'
-  import { dotCom, plainOrigin } from './address'
+  import AddressField from './AddressField.svelte'
+  import { plainOrigin } from './address'
   import { clipSource } from './note'
   import type { Page } from './pages.svelte'
 
@@ -67,10 +68,7 @@
     if (page.icon) marked = true
   })
 
-  let field = $state<HTMLInputElement>()
-  /** Whether the field itself has the keyboard, which is what swaps its two faces.
-   *  Not the same as `focused`, which is about the pane. */
-  let editing = $state(false)
+  let field = $state<{ take(): void }>()
 
   /** Whether there is a page to clip at all.
    *
@@ -89,14 +87,6 @@
 
     const site = plainOrigin(page.url)
     return page.title ? `${site} - ${page.title}` : site
-  })
-
-  /** Puts the resting face back on a field nobody is typing in. Done by writing the
-   *  value rather than by binding it: a bound value fights the keys somebody is
-   *  pressing, and this is a field with two faces rather than one value. */
-  $effect(() => {
-    const box = field
-    if (box && !editing && box.value !== resting) box.value = resting
   })
 
   /** Whether this tab had nowhere to go when the bar was built, which is the one thing
@@ -137,60 +127,7 @@
   })
 
   function take() {
-    field?.focus()
-    field?.select()
-  }
-
-  /** Whether this bar is still the one on screen.
-   *
-   *  A focus and a blur both arrive from the browser rather than from the app, and a
-   *  pane being swapped takes the keyboard off the field on its way out - so the last
-   *  blur this bar ever gets arrives *during* its own teardown, before any teardown of
-   *  ours could have set a flag. The element's own `isConnected` is the only signal
-   *  that does not depend on the order: a field out of the document is a field whose
-   *  bar has gone, and reading this component's own `$derived` from there is a read of
-   *  a graph Svelte has already marked inert. */
-  function here(): boolean {
-    return field?.isConnected === true
-  }
-
-  function onFocus() {
-    if (!here()) return
-
-    editing = true
-    ontyping(true)
-    if (field) field.value = page.url ?? ''
-    field?.select()
-  }
-
-  function onBlur() {
-    if (!here()) return
-
-    editing = false
-    ontyping(false)
-    if (field) field.value = resting
-  }
-
-  function onKeydown(event: KeyboardEvent) {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      // Ctrl+Enter is the `.com` press every browser has: one word becomes
-      // `https://www.word.com`, and anything that already reads as an address is left
-      // to the ordinary press. See `dotCom` in address.ts.
-      const typed = field?.value ?? ''
-      const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
-      onaddress(dotted ?? typed)
-      field?.blur()
-      return
-    }
-
-    if (event.key !== 'Escape') return
-
-    // The layer above the bar has its own Escape; a field being typed in keeps
-    // this one. See overlays.ts.
-    event.preventDefault()
-    event.stopPropagation()
-    field?.blur()
+    field?.take()
   }
 </script>
 
@@ -262,18 +199,12 @@
     {/if}
   </button>
 
-  <input
+  <AddressField
     bind:this={field}
-    class="nib-field address"
-    type="text"
-    spellcheck="false"
-    autocapitalize="off"
-    autocorrect="off"
-    placeholder={t('Address')}
-    aria-label={t('Address')}
-    onfocus={onFocus}
-    onblur={onBlur}
-    onkeydown={onKeydown}
+    {resting}
+    address={page.url ?? ''}
+    onenter={onaddress}
+    {ontyping}
   />
 
   <button
@@ -316,12 +247,6 @@
     padding: var(--space-1) var(--space-2);
     background: var(--surface);
     border-bottom: 1px solid var(--line);
-  }
-
-  /* The field takes whatever the glyphs leave, and never less than can be read. */
-  .address {
-    flex: 1 1 8rem;
-    min-width: 0;
   }
 
   /* The site's mark sits against the field rather than in the row of arrows, so the

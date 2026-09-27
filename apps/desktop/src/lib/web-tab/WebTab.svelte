@@ -34,6 +34,7 @@
   import { webRows, type WebActions } from './menu'
   import { pages, type Rect, type Step } from './pages.svelte'
   import { grants, siteOf } from './permissions.svelte'
+  import { visited } from './visited'
   import WebAsk from './WebAsk.svelte'
   import WebBar from './WebBar.svelte'
   import WebSite from './WebSite.svelte'
@@ -360,6 +361,9 @@
         const url = webAddress(typed)
         if (!url) return
 
+        // Typed, or chosen from what the field offered, which Chrome counts the same:
+        // either way it is an address somebody went to on purpose. See visits.ts.
+        visited.typed(url)
         void pages.go(tab.id, url)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.

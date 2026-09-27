@@ -479,12 +479,34 @@ words are a search - Google, because that is the answer most hands expect from a
 address bar, and a browser that quietly searches somewhere else reads as one that
 found nothing. It was DuckDuckGo, for asking the least.
 
+**The field finishes what is typed from the pages already opened**, the way Chrome's
+omnibox does. Emil, 2026-09-27: *"if I already opened moodle-app2.let.ethz.ch then it
+should kinda of complete in the same way it does it for other browser"*. Typing `moo`
+writes `dle-app2.let.ethz.ch` after the caret, selected: typing on narrows it,
+Backspace drops it, Right or End takes it, and Enter goes there. It finishes to the
+site first and to a whole address only once the typing has gone past the site, with
+or without `www.` and the scheme, and only ever to something the typing is the start
+of. A few pages hang under the field - a word from the middle of an address or a
+title is enough there - ranked roughly as Chrome ranks them: a typed visit counts ten
+followed ones, and all of it fades with time. Nothing is offered in the middle of an
+input method's composition. `web-tab/omnibox.ts` decides both halves and
+`web-tab/AddressField.svelte` is the field; every way a tab is given an address goes
+through it.
+
+The history behind it is `web-tab/visited.ts`: one row per address (the visits, the
+typed visits, when, the title), the five hundred most recently open, in this device's
+storage and never on the account. It is not read at launch - the first focus of an
+address field or the first page a tab arrives at reads it.
+
 | key | |
 | --- | --- |
 | Ctrl+L | the address field, in the pane that has the focus |
 | Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with |
-| Escape in the field | puts the resting face back and lets go of the field |
+| Right, End in the field | takes the rest of the address the field wrote in |
+| Up, Down in the field | walks the pages under it; the field reads the row the arrows are on |
+| Shift+Delete on a row | forgets that page, which is how Chrome takes one out of its history |
+| Escape in the field | takes back what the field offered and closes the list; the second puts the resting face back and lets go of the field |
 
 Ctrl+L is the chord CodeMirror selects a line with, and both keep it. That works
 because the bar reads it where the bar is rather than off the window: an app-level
@@ -834,6 +856,10 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/clip.ts` | where the HTML comes from |
 | `apps/desktop/src/lib/web-tab/WebTab.svelte` | the pane: the hole, the frame, the card |
 | `apps/desktop/src/lib/web-tab/WebBar.svelte` | the bar |
+| `apps/desktop/src/lib/web-tab/AddressField.svelte` | the field an address is typed into: two faces, the rest of the address written in, the pages under it |
+| `apps/desktop/src/lib/web-tab/omnibox.ts` | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested |
+| `apps/desktop/src/lib/web-tab/visits.ts` | the history's rows and what a visit does to them, bounded. Pure, tested |
+| `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, read on first use |
 | `apps/desktop/src/lib/web-tab/menu.ts` | the dots: Chrome's rows, and the zoom ladder. Tested |
 | `apps/desktop/src/lib/file-mark.ts` | the globe, off the name like every other mark |
 | `packages/markdown/src/links.ts` | `isWebTarget`, and a website among the files a link resolves through |
@@ -854,6 +880,11 @@ versions and goes to the trash like every other document.
 
 ## What is left
 
+- **The history has no Delete browsing data yet**, because nothing in nib clears a
+  browser's data today; Shift+Delete on a row is the one way out of it. Whatever
+  clears the rest when it exists clears `nib:web-visits` too, and a private tab, when
+  there is one, must not write to it. It is one list per device; a space whose web
+  data is kept apart from the others would want its own list.
 - **Five of Chrome's menu rows are not here, because nothing is behind them yet.**
   History and Downloads want surfaces nib does not have - a list of every page a
   window has been through, and where the engine put what it saved; Find wants an

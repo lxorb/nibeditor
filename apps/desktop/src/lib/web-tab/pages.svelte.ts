@@ -34,6 +34,15 @@ import { isWebAddress } from './address'
 import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
+/** This device's history, asked for by the first page that says where it is rather
+ *  than carried: this store is in front of the first paint, because the workspace
+ *  names a new web note's title through it, and the history is not. Every call waits
+ *  on the one import, so what the pages say lands in the order they said it. See
+ *  visited.ts and test/weight.test.ts. */
+function history(): Promise<typeof import('./visited').visited> {
+  return import('./visited').then((module) => module.visited)
+}
+
 /** How long a parked page's webview goes on running after the tab showing it went
  *  away.
  *
@@ -607,8 +616,12 @@ class Pages {
 
     // A browser build shows the page in whatever the pane already holds: a frame is
     // told where to go by its `src`, which the component watches `url` for, and a
-    // card that has not been pressed stays a card.
-    if (!isDesktop) return
+    // card that has not been pressed stays a card. The frame's document is the site's
+    // and says nothing back, so going there is the whole of the visit it can see.
+    if (!isDesktop) {
+      void history().then((visited) => visited.saw(tabId, url, ''))
+      return
+    }
 
     if (!page.live) return
 
@@ -680,6 +693,7 @@ class Pages {
     if (!page) return
 
     clearTimeout(page.parking)
+    void history().then((visited) => visited.left(tabId))
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
@@ -776,6 +790,9 @@ class Pages {
       page.forward = said.forward
       if (said.url && !page.typing) page.url = said.url
       if (said.title) page.title = said.title
+      // Where the tab has got to is a page it has been to, for the address field to
+      // offer; see visited.ts.
+      if (said.url) void history().then((visited) => visited.saw(said.tab, said.url, said.title))
       if (said.icon) page.icon = said.icon
 
       // The page has arrived, so the picture of the last one is no longer a picture of
