@@ -16,7 +16,7 @@
   import SharedMark from './SharedMark.svelte'
   import TabMark from './TabMark.svelte'
   import { ClosingWidths } from './tab-strip/closing.svelte'
-  import { TabDrag } from './tab-strip/drag.svelte'
+  import { arrival, handOver, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
   import {
     type Bounds,
     endOf,
@@ -31,7 +31,6 @@
     widthsFor,
     worthKeeping,
   } from './tab-strip/layout'
-  import { arrival, handOver, register, stripOf } from './tab-strip/strips'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { pinnedRun } from './workspace/pinning'

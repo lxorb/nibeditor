@@ -310,11 +310,11 @@ function holds(tail: string): boolean {
  *  every `rel="modulepreload"` beside it, which is exactly the eager graph as the
  *  bundler chunked it. Anything not in that list is behind a dynamic import.
  *
- *  Raised 2026-09-27, to 3,330,000, for the tab strip that moves like Chrome's:
- *  tab-strip/layout.ts, drag.svelte.ts, closing.svelte.ts and strips.ts, and a
- *  Tabs.svelte that places every tab by hand. Measured 3,313,078, about 53,000 over
- *  the day before, most of it the prose that says which of Chrome's rules each
- *  number is. Asked against a measured launch, as the note below says the next raise
+ *  Raised 2026-09-27, to 3,350,000, for the tab strip that moves like Chrome's:
+ *  tab-strip/layout.ts, drag.svelte.ts and closing.svelte.ts, and a Tabs.svelte that
+ *  places every tab by hand. Measured 3,332,684 on top of that day's main, about
+ *  53,000 of it the strip and most of that the prose that says which of Chrome's
+ *  rules each number is. Asked against a measured launch, as the note below says the next raise
  *  should be: the production build fetches 12,628 more bytes before the first paint
  *  (1,297,791 to 1,310,419), and the shell with the strip's plus in it was up at a
  *  median of 341 ms against 342 ms before, forty loads each, alternated. The strip
