@@ -8,8 +8,9 @@ import type { WebData } from './web-tab/web-data'
 import { type Space, workspace } from './workspace.svelte'
 
 /** Asks for a name and makes the space. Where it lives is the app's business,
- *  so that is the only question. */
-export async function newSpace() {
+ *  so that is the only question. Answers the space, or nothing where the question
+ *  was dismissed; the space chooser goes on to put a first note in it. */
+export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: t('Name the space'),
     placeholder: t('Journal'),
@@ -17,13 +18,14 @@ export async function newSpace() {
   })
 
   if (!name) return
-  await workspace.addSpace(name)
+  const space = await workspace.addSpace(name)
 
   // Until a pass has put it on the account there is nothing to share or to
   // publish, and a quiet loop can be a minute from its next one. Somebody who
   // has just made a space should not have to wait that out to share it.
   const { sync } = await import('./sync.svelte')
   sync.nudge()
+  return space
 }
 
 /** The space before or after this one, from anywhere in the app.

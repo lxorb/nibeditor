@@ -58,6 +58,9 @@ export const fil: Dictionary = {
   'Use the plain mark instead': 'Gamitin na lang ang simpleng marka',
   'Loading…': 'Ikinakarga…',
   'Create a space': 'Gumawa ng espasyo',
+  'Import a folder': 'Mag-import ng folder',
+  'Sign in to sync': 'Mag-sign in para mag-sync',
+  'Create account': 'Gumawa ng account',
   'Delete space': 'Tanggalin ang espasyo',
   'Delete {name}?': 'Tanggalin ang {name}?',
   'Every note in this space is deleted from your computer.':

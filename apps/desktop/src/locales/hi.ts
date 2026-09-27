@@ -58,6 +58,9 @@ export const hi: Dictionary = {
   'Use the plain mark instead': 'इसके बजाय सादा चिह्न',
   'Loading…': 'लोड हो रहा है…',
   'Create a space': 'स्पेस बनाएँ',
+  'Import a folder': 'फ़ोल्डर इंपोर्ट करें',
+  'Sign in to sync': 'सिंक के लिए साइन इन',
+  'Create account': 'खाता बनाएँ',
   'Delete space': 'स्पेस हटाएँ',
   'Delete {name}?': '{name} हटाएँ?',
   'Every note in this space is deleted from your computer.':

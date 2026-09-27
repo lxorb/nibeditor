@@ -17,10 +17,23 @@ import { tidyPath, type Picked } from './sources'
  *  file somebody actually has: exporters write `.zip`, `.enex`, `.json`, `.csv`,
  *  `.md`, `.html`, `.note`, `.textbundle` and a handful of others. */
 export function pickFiles(): Promise<Picked[]> {
+  return picked(false)
+}
+
+/** A whole folder, every file in it with its path inside: Obsidian's "Open folder as
+ *  vault", which is how the space chooser brings one in. The webview's own folder
+ *  dialog, for the reason above - it hands back bytes, where a path would have to be
+ *  read back out through the crate, and paths.rs keeps the crate to the spaces. */
+export function pickFolder(): Promise<Picked[]> {
+  return picked(true)
+}
+
+function picked(folder: boolean): Promise<Picked[]> {
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
     input.multiple = true
+    input.webkitdirectory = folder
 
     input.addEventListener('change', () => resolve([...(input.files ?? [])]))
     // A cancelled dialog resolves with nothing, so nothing is left waiting.

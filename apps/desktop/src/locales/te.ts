@@ -58,6 +58,9 @@ export const te: Dictionary = {
   'Use the plain mark instead': 'దానికి బదులు సాధారణ గుర్తు',
   'Loading…': 'లోడ్ అవుతోంది…',
   'Create a space': 'స్పేస్ సృష్టించు',
+  'Import a folder': 'ఫోల్డర్ ఇంపోర్ట్ చేయి',
+  'Sign in to sync': 'సింక్ కోసం సైన్ ఇన్',
+  'Create account': 'ఖాతా సృష్టించు',
   'Delete space': 'స్పేస్ తొలగించు',
   'Delete {name}?': '{name} తొలగించాలా?',
   'Every note in this space is deleted from your computer.':

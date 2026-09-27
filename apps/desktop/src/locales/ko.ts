@@ -58,6 +58,9 @@ export const ko: Dictionary = {
   'Use the plain mark instead': '대신 기본 표시 사용',
   'Loading…': '불러오는 중…',
   'Create a space': '공간 만들기',
+  'Import a folder': '폴더 가져오기',
+  'Sign in to sync': '로그인하여 동기화',
+  'Create account': '계정 만들기',
   'Delete space': '공간 삭제',
   'Delete {name}?': '{name}을 삭제할까요？',
   'Every note in this space is deleted from your computer.':

@@ -58,6 +58,9 @@ export const ja: Dictionary = {
   'Use the plain mark instead': '代わりに標準の記号を使う',
   'Loading…': '読み込み中…',
   'Create a space': 'スペースを作る',
+  'Import a folder': 'フォルダを読み込む',
+  'Sign in to sync': 'サインインして同期',
+  'Create account': 'アカウントを作成',
   'Delete space': 'スペースを削除',
   'Delete {name}?': '{name} を削除しますか？',
   'Every note in this space is deleted from your computer.':

@@ -58,6 +58,9 @@ export const ha: Dictionary = {
   'Use the plain mark instead': 'Yi amfani da alama mai sauƙi maimakon',
   'Loading…': 'Ana ɗauka…',
   'Create a space': 'Ƙirƙiri wuri',
+  'Import a folder': 'Shigar da babban fayil',
+  'Sign in to sync': 'Shiga don daidaitawa',
+  'Create account': 'Ƙirƙiri asusu',
   'Delete space': 'Share wuri',
   'Delete {name}?': 'A share {name}?',
   'Every note in this space is deleted from your computer.':

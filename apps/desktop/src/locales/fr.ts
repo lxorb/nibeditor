@@ -58,6 +58,9 @@ export const fr: Dictionary = {
   'Use the plain mark instead': 'Utiliser plutôt le repère simple',
   'Loading…': 'Chargement…',
   'Create a space': 'Créer un espace',
+  'Import a folder': 'Importer un dossier',
+  'Sign in to sync': 'Se connecter pour synchroniser',
+  'Create account': 'Créer un compte',
   'Delete space': 'Supprimer l’espace',
   'Delete {name}?': 'Supprimer {name} ?',
   'Every note in this space is deleted from your computer.':

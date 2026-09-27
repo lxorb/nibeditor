@@ -58,6 +58,9 @@ export const id: Dictionary = {
   'Use the plain mark instead': 'Pakai tanda biasa saja',
   'Loading…': 'Memuat…',
   'Create a space': 'Buat ruang',
+  'Import a folder': 'Impor folder',
+  'Sign in to sync': 'Masuk untuk sinkronisasi',
+  'Create account': 'Buat akun',
   'Delete space': 'Hapus ruang',
   'Delete {name}?': 'Hapus {name}?',
   'Every note in this space is deleted from your computer.':

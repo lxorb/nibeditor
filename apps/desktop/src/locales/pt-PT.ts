@@ -58,6 +58,9 @@ export const ptPT: Dictionary = {
   'Use the plain mark instead': 'Usar a marca simples',
   'Loading…': 'A carregar…',
   'Create a space': 'Criar um espaço',
+  'Import a folder': 'Importar uma pasta',
+  'Sign in to sync': 'Inicie sessão para sincronizar',
+  'Create account': 'Criar conta',
   'Delete space': 'Eliminar espaço',
   'Delete {name}?': 'Eliminar {name}?',
   'Every note in this space is deleted from your computer.':

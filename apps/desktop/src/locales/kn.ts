@@ -58,6 +58,9 @@ export const kn: Dictionary = {
   'Use the plain mark instead': 'ಬದಲಿಗೆ ಸರಳ ಗುರುತು',
   'Loading…': 'ಲೋಡ್ ಆಗುತ್ತಿದೆ…',
   'Create a space': 'ಸ್ಪೇಸ್ ರಚಿಸಿ',
+  'Import a folder': 'ಫೋಲ್ಡರ್ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
+  'Sign in to sync': 'ಸಿಂಕ್‌ಗಾಗಿ ಸೈನ್ ಇನ್',
+  'Create account': 'ಖಾತೆ ರಚಿಸಿ',
   'Delete space': 'ಸ್ಪೇಸ್ ಅಳಿಸಿ',
   'Delete {name}?': '{name} ಅಳಿಸಬೇಕೆ?',
   'Every note in this space is deleted from your computer.':

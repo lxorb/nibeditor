@@ -389,8 +389,17 @@ function holds(tail: string): boolean {
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in
  *  front of the metadata's fence. The history the address field offers and the
- *  omnibox were never here; see `history` in web-tab/pages.svelte.ts. */
-const BUDGET = 3_330_000
+ *  omnibox were never here; see `history` in web-tab/pages.svelte.ts.
+ *
+ *  Raised 2026-09-28, to 3,333,000, for the first launch. The macos-native base
+ *  measured 3,328,528 and the round adds 2,988: the gate in App.svelte that fetches
+ *  the space chooser only while there is no space (the card, its rows and the decision
+ *  behind it are all behind that door), the sign-in sheet's heading for the Create
+ *  account door, `restored` on the workspace, a first save that makes the first space
+ *  rather than doing nothing, and the words an earlier welcome note held so an old
+ *  seed still never syncs. Each is a store already in this graph doing one more thing.
+ *  Measured 3,331,516. */
+const BUDGET = 3_333_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

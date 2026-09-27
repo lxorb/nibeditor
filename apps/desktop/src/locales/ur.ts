@@ -58,6 +58,9 @@ export const ur: Dictionary = {
   'Use the plain mark instead': 'سادہ علامت استعمال کریں',
   'Loading…': 'لوڈ ہو رہا ہے…',
   'Create a space': 'اسپیس بنائیں',
+  'Import a folder': 'فولڈر امپورٹ کریں',
+  'Sign in to sync': 'سنک کے لیے سائن ان',
+  'Create account': 'اکاؤنٹ بنائیں',
   'Delete space': 'اسپیس حذف کریں',
   'Delete {name}?': '{name} حذف کریں؟',
   'Every note in this space is deleted from your computer.':

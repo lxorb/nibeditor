@@ -58,6 +58,9 @@ export const ta: Dictionary = {
   'Use the plain mark instead': 'அதற்குப் பதிலாக எளிய குறி',
   'Loading…': 'ஏற்றுகிறது…',
   'Create a space': 'இடத்தை உருவாக்கு',
+  'Import a folder': 'கோப்புறையை இறக்குமதி செய்',
+  'Sign in to sync': 'ஒத்திசைக்க உள்நுழை',
+  'Create account': 'கணக்கை உருவாக்கு',
   'Delete space': 'இடத்தை நீக்கு',
   'Delete {name}?': '{name} நீக்கவா?',
   'Every note in this space is deleted from your computer.':

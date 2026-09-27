@@ -58,6 +58,9 @@ export const sw: Dictionary = {
   'Use the plain mark instead': 'Tumia alama ya kawaida badala yake',
   'Loading…': 'Inapakia…',
   'Create a space': 'Unda nafasi',
+  'Import a folder': 'Ingiza folda',
+  'Sign in to sync': 'Ingia ili kusawazisha',
+  'Create account': 'Unda akaunti',
   'Delete space': 'Futa nafasi',
   'Delete {name}?': 'Futa {name}?',
   'Every note in this space is deleted from your computer.':

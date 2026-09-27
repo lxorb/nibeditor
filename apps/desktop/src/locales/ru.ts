@@ -58,6 +58,9 @@ export const ru: Dictionary = {
   'Use the plain mark instead': 'Использовать простой знак',
   'Loading…': 'Загрузка…',
   'Create a space': 'Создать пространство',
+  'Import a folder': 'Импорт папки',
+  'Sign in to sync': 'Войти для синхронизации',
+  'Create account': 'Создать аккаунт',
   'Delete space': 'Удалить пространство',
   'Delete {name}?': 'Удалить {name}?',
   'Every note in this space is deleted from your computer.':

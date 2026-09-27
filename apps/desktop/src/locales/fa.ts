@@ -58,6 +58,9 @@ export const fa: Dictionary = {
   'Use the plain mark instead': 'به جایش نشان ساده',
   'Loading…': 'در حال بارگذاری…',
   'Create a space': 'ساختن فضا',
+  'Import a folder': 'درون‌آوری پوشه',
+  'Sign in to sync': 'ورود برای همگام‌سازی',
+  'Create account': 'ساختن حساب',
   'Delete space': 'حذف فضا',
   'Delete {name}?': '{name} حذف شود؟',
   'Every note in this space is deleted from your computer.':

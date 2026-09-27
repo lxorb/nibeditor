@@ -58,6 +58,9 @@ export const ps: Dictionary = {
   'Use the plain mark instead': 'پر ځای يې ساده نښه',
   'Loading…': 'د راوړلو په حال کې…',
   'Create a space': 'ځای جوړول',
+  'Import a folder': 'فولډر واردول',
+  'Sign in to sync': 'د همغږۍ لپاره ننوتل',
+  'Create account': 'حساب جوړول',
   'Delete space': 'ځای ړنګول',
   'Delete {name}?': '{name} ړنګ شي؟',
   'Every note in this space is deleted from your computer.':

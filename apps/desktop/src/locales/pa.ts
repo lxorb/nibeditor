@@ -58,6 +58,9 @@ export const pa: Dictionary = {
   'Use the plain mark instead': 'ਇਸ ਦੀ ਥਾਂ ਸਾਦਾ ਨਿਸ਼ਾਨ ਵਰਤੋ',
   'Loading…': 'ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ…',
   'Create a space': 'ਥਾਂ ਬਣਾਓ',
+  'Import a folder': 'ਫੋਲਡਰ ਅੰਦਰ ਲਿਆਓ',
+  'Sign in to sync': 'ਸਮਕਾਲ ਲਈ ਸਾਈਨ ਇਨ',
+  'Create account': 'ਖਾਤਾ ਬਣਾਓ',
   'Delete space': 'ਥਾਂ ਮਿਟਾਓ',
   'Delete {name}?': '{name} ਮਿਟਾਉਣਾ ਹੈ?',
   'Every note in this space is deleted from your computer.':

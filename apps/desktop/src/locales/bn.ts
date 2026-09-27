@@ -58,6 +58,9 @@ export const bn: Dictionary = {
   'Use the plain mark instead': 'বদলে সাধারণ চিহ্ন',
   'Loading…': 'লোড হচ্ছে…',
   'Create a space': 'স্পেস তৈরি',
+  'Import a folder': 'ফোল্ডার ইমপোর্ট',
+  'Sign in to sync': 'সিংকের জন্য সাইন ইন',
+  'Create account': 'অ্যাকাউন্ট তৈরি',
   'Delete space': 'স্পেস মুছুন',
   'Delete {name}?': '{name} মুছবেন?',
   'Every note in this space is deleted from your computer.':

@@ -58,6 +58,9 @@ export const ml: Dictionary = {
   'Use the plain mark instead': 'പകരം ലളിതമായ അടയാളം',
   'Loading…': 'ലോഡ് ചെയ്യുന്നു…',
   'Create a space': 'സ്പേസ് സൃഷ്ടിക്കുക',
+  'Import a folder': 'ഫോൾഡർ ഇംപോർട്ട് ചെയ്യുക',
+  'Sign in to sync': 'സിങ്കിനായി സൈൻ ഇൻ',
+  'Create account': 'അക്കൗണ്ട് സൃഷ്ടിക്കുക',
   'Delete space': 'സ്പേസ് ഇല്ലാതാക്കുക',
   'Delete {name}?': '{name} ഇല്ലാതാക്കണോ?',
   'Every note in this space is deleted from your computer.':

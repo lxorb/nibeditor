@@ -50,6 +50,7 @@
     settingsSheet,
     shareSheet,
     slidesStage,
+    spaceChooserCard,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -886,6 +887,13 @@
 {/if}
 
 <Palette bind:this={paletteScreen} bind:open={palette} {view} />
+<!-- What a fresh install opens on, until there is a space. Fetched only then; the card
+     decides the rest itself. See SpaceChooser.svelte. -->
+{#if workspace.restored && !workspace.spaces.length}
+  {#await spaceChooserCard() then SpaceChooser}
+    <SpaceChooser />
+  {/await}
+{/if}
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />

@@ -58,6 +58,9 @@ export const th: Dictionary = {
   'Use the plain mark instead': 'ใช้เครื่องหมายธรรมดาแทน',
   'Loading…': 'กำลังโหลด…',
   'Create a space': 'สร้างพื้นที่',
+  'Import a folder': 'นำเข้าโฟลเดอร์',
+  'Sign in to sync': 'เข้าสู่ระบบเพื่อซิงก์',
+  'Create account': 'สร้างบัญชี',
   'Delete space': 'ลบพื้นที่',
   'Delete {name}?': 'ลบ {name}?',
   'Every note in this space is deleted from your computer.':

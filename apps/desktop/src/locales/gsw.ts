@@ -58,6 +58,9 @@ export const gsw: Dictionary = {
   'Use the plain mark instead': 'Lieber s eifach Zeiche bruuche',
   'Loading…': 'Wird glade…',
   'Create a space': 'Ablag mache',
+  'Import a folder': 'Ordner importiere',
+  'Sign in to sync': 'Aamelde zum Synchronisiere',
+  'Create account': 'Konto mache',
   'Delete space': 'Ablag lösche',
   'Delete {name}?': '{name} lösche?',
   'Every note in this space is deleted from your computer.':
