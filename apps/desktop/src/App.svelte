@@ -51,6 +51,7 @@
     shareSheet,
     slidesStage,
     spaceChooserCard,
+    menuBarDoor,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -659,11 +660,13 @@
   // On a Mac the app's menu is the menu bar across the top of the screen, which is
   // why Titlebar.svelte draws no button for it there. Fetched at the launch's last
   // turn, with the in-window menu's rows it is built from, since no other platform
-  // has one and nothing about it is needed to show a note. See native-menu.ts.
-  if (isDesktop && platform() === 'macos') {
+  // has one and nothing about it is needed to show a note. See native-menu.ts. The
+  // plugin build is never a Mac, and says so first so the bundler leaves the menu
+  // bar and Tauri's menu API out of its package; see vite.even.config.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
-      .then(() => import('./lib/native-menu-bar.svelte'))
+      .then(menuBarDoor)
       .then(({ followMenuBar }) =>
         followMenuBar(() => ({
           view,
@@ -918,8 +921,9 @@
 
 <Palette bind:this={paletteScreen} bind:open={palette} {view} />
 <!-- What a fresh install opens on, until there is a space. Fetched only then; the card
-     decides the rest itself. See SpaceChooser.svelte. -->
-{#if workspace.restored && !workspace.spaces.length}
+     decides the rest itself, and the plugin never shows it, so its build does not
+     carry it. See SpaceChooser.svelte and space-choice.ts. -->
+{#if !__EVEN_PLUGIN__ && workspace.restored && !workspace.spaces.length}
   {#await spaceChooserCard() then SpaceChooser}
     <SpaceChooser />
   {/await}

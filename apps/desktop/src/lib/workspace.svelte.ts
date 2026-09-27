@@ -2544,8 +2544,11 @@ class Workspace {
     if (isDesktop) void invoke('remember_recent', { path }).catch(() => undefined)
   }
 
+  /** Both lists, as the two calls above filled both: File > Open Recent > Clear
+   *  Menu on a Mac empties the Dock's too; see recent.rs. */
   forgetRecent() {
     this.device.forgetRecent()
+    if (isDesktop) void invoke('forget_recent').catch(() => undefined)
   }
 
   /** The icon a space shows in the switcher, if it has been given one. Keyed by

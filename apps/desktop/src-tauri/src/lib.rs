@@ -305,6 +305,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         pdf::print_pdf,
         pdf::print_page,
         recent::remember_recent,
+        recent::forget_recent,
         secrets::secret_forget,
         secrets::secret_read,
         secrets::secret_write,

@@ -9,7 +9,8 @@ use std::io::ErrorKind;
 use std::path::Path;
 use tauri::AppHandle;
 
-use crate::paths::{self, a_space, cannot, inside, is_reserved};
+use crate::notes::{move_entry, respelled, same_entry};
+use crate::paths::{self, a_space, cannot, is_reserved};
 
 /// Long enough for any real name, short enough to stay well inside the path
 /// limits once the space folder and a note name are added.
@@ -87,23 +88,40 @@ pub fn create_space(app: AppHandle, name: String) -> Result<Space, String> {
 /// Renames a space by renaming its folder.
 #[tauri::command(async)]
 pub fn rename_space(app: AppHandle, from: String, name: String) -> Result<Space, String> {
-    let dir = paths::spaces_root(&app)?;
     let source = a_space(&app, &from)?;
     let wanted = folder_name(&name).ok_or("that name cannot be used for a folder")?;
-    let target = dir.join(&wanted);
+    // Beside itself: `a_space` has already said the folder is directly inside the
+    // spaces folder, and a rename never moves it out.
+    let target = source.with_file_name(&wanted);
 
-    // Already there. On Windows that includes a name typed in another case,
-    // which names the same folder, so the space keeps the name it has.
-    if inside(&source, &target) && inside(&target, &source) {
-        return Ok(space_at(&source));
+    rename_folder(&source, &target, same_entry)?;
+    Ok(space_at(&target))
+}
+
+/// Renames a space's folder, the decision apart from the app, with whether two paths
+/// are one entry handed in so a test can answer it on a filesystem that tells case
+/// apart.
+///
+/// The same name is nothing to do. Another spelling of it - `work` to `Work` - is a
+/// rename on a Mac and on Windows, whose filesystems call both the same folder and so
+/// say the target already exists; it goes the way a note's respelling does, through a
+/// name of its own (see `respell` in notes.rs). Finder, Explorer and Obsidian's vault
+/// rename all take one. Anything else already there is another space.
+fn rename_folder(
+    source: &Path,
+    target: &Path,
+    same: impl Fn(&Path, &Path) -> bool,
+) -> Result<(), String> {
+    if source == target {
+        return Ok(());
     }
 
-    if target.exists() {
+    let respelling = respelled(source, target, same);
+    if !respelling && target.exists() {
         return Err("a space with that name already exists".into());
     }
 
-    fs::rename(&source, &target).map_err(|error| cannot("rename", &source, &error))?;
-    Ok(space_at(&target))
+    move_entry(source, target, respelling)
 }
 
 /// Deletes a space and every note in it. Only a folder directly inside the
@@ -175,7 +193,52 @@ fn folder_name(input: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{folder_name, MAX_NAME};
+    use super::{folder_name, rename_folder, MAX_NAME};
+    use std::fs;
+
+    /// `work` to `Work`, on a disk that calls both the same folder: the space takes
+    /// the new spelling with everything in it, rather than the rename being refused
+    /// as a clash with itself.
+    #[test]
+    fn respells_a_space_in_another_case() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let (from, to) = (dir.path().join("work"), dir.path().join("Work"));
+        fs::create_dir(&from).expect("the space");
+        fs::write(from.join("plan.md"), "plan").expect("a note in it");
+
+        rename_folder(&from, &to, |_, _| true).expect("the respelling");
+
+        let names: Vec<_> = fs::read_dir(dir.path())
+            .expect("the spaces folder")
+            .map(|one| one.expect("an entry").file_name())
+            .collect();
+        assert_eq!(names, vec!["Work"]);
+        assert_eq!(
+            fs::read_to_string(to.join("plan.md")).expect("the note"),
+            "plan"
+        );
+    }
+
+    #[test]
+    fn refuses_a_name_another_space_has() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let (from, to) = (dir.path().join("work"), dir.path().join("home"));
+        fs::create_dir(&from).expect("one space");
+        fs::create_dir(&to).expect("another");
+
+        assert!(rename_folder(&from, &to, |_, _| false).is_err());
+        assert!(from.is_dir());
+    }
+
+    #[test]
+    fn the_same_name_is_nothing_to_do() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let from = dir.path().join("work");
+        fs::create_dir(&from).expect("the space");
+
+        rename_folder(&from, &from, |_, _| true).expect("no change");
+        assert!(from.is_dir());
+    }
 
     #[test]
     fn keeps_an_ordinary_name() {
