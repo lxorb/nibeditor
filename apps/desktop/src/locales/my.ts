@@ -1439,4 +1439,8 @@ export const my: Dictionary = {
   'Bookmark these blocks': 'ဤဘလောက်များကိုစာမှတ်ထား',
   Foldable: 'ချိတ်ခေါက်နိုင်',
   'Starts folded': 'ခေါက်ပြီး စတင်',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

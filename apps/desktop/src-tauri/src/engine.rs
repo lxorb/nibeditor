@@ -40,7 +40,9 @@
 //!
 //! The default build keeps the directory it has always used - `<config>/web`, the
 //! whole of it, as one `WebView2` user data folder or one `WKWebView` data store -
-//! so nobody's cookies move because a feature exists.
+//! so nobody's cookies move because a feature exists. A space that keeps its web data
+//! apart has a folder of its own beside it, under `<config>/web-stores`; see
+//! `web_stores.rs`.
 
 use std::path::PathBuf;
 
@@ -110,13 +112,19 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
 /// page's storage goes once rather than once per platform per engine, and so the
 /// answer for nib's own Chromium is in the module that knows about engines.
 ///
-/// - The system's engine: the folder the app has always used, as a user data folder
-///   on Windows and Linux and as a data store identifier on a Mac. Unchanged, to
-///   the byte, from what shipped.
-/// - nib's own Chromium: nothing, deliberately. A web tab is in the engine's
-///   primary profile, which is where an extension installed by the command line or
-///   by policy lands, and nib's own interface is the named profile beside it; see
-///   this file's comment.
+/// `store` is the store the tab was asked to be in, already checked by
+/// `web_stores::named`: `None` for the one every space shares, a name for a space or a
+/// site that keeps its own. See `web_stores.rs`.
+///
+/// - The system's engine: for the shared store, the folder the app has always used,
+///   as a user data folder on Windows and Linux and as a data store identifier on a
+///   Mac, unchanged to the byte from what shipped. For a store of its own, a folder of
+///   its own under `web-stores`, or sixteen bytes of its own on a Mac.
+/// - nib's own Chromium: nothing, deliberately, and for every store. A web tab is in
+///   the engine's primary profile, which is where an extension installed by the
+///   command line or by policy lands, and nib's own interface is the named profile
+///   beside it; see this file's comment. A space that asks for a store of its own
+///   shares that one there, until the runtime can be asked for a profile per tab.
 #[cfg(all(desktop, not(feature = "cef")))]
 #[cfg_attr(
     target_os = "macos",
@@ -128,14 +136,22 @@ pub(crate) fn app_profile(app: &AppHandle) -> Result<PathBuf, String> {
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     app: &AppHandle,
+    store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
     #[cfg(any(windows, target_os = "linux"))]
-    let builder = builder.data_directory(root(app)?);
+    let builder = builder.data_directory(match store {
+        None => root(app)?,
+        Some(name) => {
+            let dir = config_dir(app)?.join(crate::web_stores::STORES).join(name);
+            made(&dir)?;
+            dir
+        }
+    });
 
     #[cfg(target_os = "macos")]
     let builder = {
         let _ = app;
-        builder.data_store_identifier(STORE_ID)
+        builder.data_store_identifier(store.map_or(STORE_ID, crate::web_stores::identifier))
     };
 
     Ok(builder)
@@ -151,6 +167,7 @@ pub(crate) fn web_store<R: Runtime>(
 pub(crate) fn web_store<R: Runtime>(
     builder: WebviewBuilder<R>,
     _app: &AppHandle,
+    _store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
     Ok(builder)
 }

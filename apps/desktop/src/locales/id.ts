@@ -1451,4 +1451,8 @@ export const id: Dictionary = {
   'Bookmark these blocks': 'Markahi blok-blok ini',
   Foldable: 'Dapat dilipat',
   'Starts folded': 'Mulai terlipat',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

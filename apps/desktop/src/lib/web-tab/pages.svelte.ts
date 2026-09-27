@@ -43,6 +43,12 @@ function history(): Promise<typeof import('./visited').visited> {
   return import('./visited').then((module) => module.visited)
 }
 
+/** Which store each space keeps its web data in, asked for the same way and for the
+ *  same reason: the first page is the first thing that needs it. See web-data.ts. */
+function stores(): Promise<typeof import('./web-data.svelte').webData> {
+  return import('./web-data.svelte').then((module) => module.webData)
+}
+
 /** How long a parked page's webview goes on running after the tab showing it went
  *  away.
  *
@@ -260,6 +266,15 @@ export class Page {
    *  is the tab a browser closes again; see `downloaded`. Not drawn. */
   titled = false
 
+  /** Which space the tab belongs to, which decides the store its page is built in and
+   *  the history it adds to. Set by the pane, which knows the space the way it knows the
+   *  file; see web-data.ts. */
+  space: string | null = null
+
+  /** Where the pane last put the page, so a page built again in another store goes back
+   *  where it was; see `restore`. */
+  pane: Rect | null = null
+
   /** When this tab was last looked at, so the least recently looked at is the one
    *  parked when there are more pages running than a window should hold. */
   looked = Date.now()
@@ -379,12 +394,17 @@ class Pages {
     const place = here ? { x: here.x, y: here.y } : null
     const trail = here?.trail ?? []
 
+    page.pane = pane
+
     try {
       await invoke('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
+        // Which store the site's cookies and storage go in, which is its space's
+        // choice; see web-data.ts.
+        store: await (await stores()).store(page.space, page.url),
       })
       page.live = true
       page.openable = true
@@ -458,6 +478,7 @@ class Pages {
 
     try {
       await invoke('web_place', { tab: tabId, pane, visible })
+      page.pane = pane
       page.shown = visible
     } catch {
       // The webview has gone - the window closed under it, or the page was taken
@@ -629,7 +650,7 @@ class Pages {
     // card that has not been pressed stays a card. The frame's document is the site's
     // and says nothing back, so going there is the whole of the visit it can see.
     if (!isDesktop) {
-      void history().then((visited) => visited.saw(tabId, url, ''))
+      void this.saw(tabId, url, '')
       return
     }
 
@@ -692,6 +713,28 @@ class Pages {
       // address and the title, which is what a browser build always writes. See
       // clip.ts.
       return null
+    }
+  }
+
+  /** A page the tab has been to, in the history of the tab's space; see visited.ts. */
+  private async saw(tabId: string, url: string, title: string): Promise<void> {
+    const space = this.held.get(tabId)?.space ?? null
+    const [visited, webData] = await Promise.all([history(), stores()])
+    visited.saw(webData.history(space), tabId, url, title)
+  }
+
+  /** Every running page of a space built again, in whichever store the space now keeps
+   *  its web data in. A webview's store is fixed when it is built, so a choice made in
+   *  the space's menu is a choice for the pages built after it - and a tab left in the
+   *  store it was opened in would be a setting that did nothing on screen. Each is parked
+   *  first, so it comes back on the page and at the place it was at; the one on screen is
+   *  built again where it was, the others as they are next looked at. */
+  async restore(space: string): Promise<void> {
+    const running = [...this.held.entries()].filter(([, page]) => page.live && page.space === space)
+    for (const [tabId, page] of running) {
+      const shown = page.shown ? page.pane : null
+      await this.park(tabId)
+      if (shown && page.url) await this.show(tabId, page.url, shown)
     }
   }
 
@@ -854,7 +897,7 @@ class Pages {
       }
       // Where the tab has got to is a page it has been to, for the address field to
       // offer; see visited.ts.
-      if (said.url) void history().then((visited) => visited.saw(said.tab, said.url, said.title))
+      if (said.url) void this.saw(said.tab, said.url, said.title)
       if (said.icon) page.icon = said.icon
 
       // The page has arrived, so the picture of the last one is no longer a picture of

@@ -1429,4 +1429,8 @@ export const ko: Dictionary = {
   'Bookmark these blocks': '이 블록들 북마크',
   Foldable: '접을 수 있음',
   'Starts folded': '접힌 채로 시작',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

@@ -1416,4 +1416,8 @@ export const yue: Dictionary = {
   'Bookmark these blocks': '為呢啲區塊加書籤',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

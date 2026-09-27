@@ -1449,4 +1449,8 @@ export const ur: Dictionary = {
   'Bookmark these blocks': 'ان بلاکس کو بک مارک کریں',
   Foldable: 'تہ کیا جا سکتا ہے',
   'Starts folded': 'تہ شدہ شروع',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

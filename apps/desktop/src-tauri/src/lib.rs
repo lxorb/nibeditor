@@ -99,6 +99,8 @@ mod web_cookies;
 #[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
+mod web_stores;
+#[cfg(desktop)]
 mod web_tabs;
 
 use paths::Opened;

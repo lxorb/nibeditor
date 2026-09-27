@@ -1453,4 +1453,8 @@ export const fa: Dictionary = {
   'Bookmark these blocks': 'نشانک این بلوک‌ها',
   Foldable: 'تاشو',
   'Starts folded': 'تاشده آغاز می‌شود',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

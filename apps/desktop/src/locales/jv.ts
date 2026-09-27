@@ -1445,4 +1445,8 @@ export const jv: Dictionary = {
   'Bookmark these blocks': 'Tandhani blok-blok iki',
   Foldable: 'Bisa dilempit',
   'Starts folded': 'Wiwit kelempit',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

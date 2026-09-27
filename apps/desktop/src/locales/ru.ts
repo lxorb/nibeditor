@@ -1518,4 +1518,8 @@ export const ru: Dictionary = {
   'Bookmark these blocks': 'Добавить блоки в закладки',
   Foldable: 'Сворачиваемый',
   'Starts folded': 'Открывается свёрнутым',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

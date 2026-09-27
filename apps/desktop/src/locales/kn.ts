@@ -1464,4 +1464,8 @@ export const kn: Dictionary = {
   'Bookmark these blocks': 'ಈ ಬ್ಲಾಕ್‌ಗಳನ್ನು ಬುಕ್‌ಮಾರ್ಕ್ ಮಾಡಿ',
   Foldable: 'ಮಡಚಬಹುದು',
   'Starts folded': 'ಮಡಚಿ ಆರಂಭ',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

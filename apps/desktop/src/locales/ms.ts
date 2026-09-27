@@ -1450,4 +1450,8 @@ export const ms: Dictionary = {
   'Bookmark these blocks': 'Tandakan blok-blok ini',
   Foldable: 'Boleh dilipat',
   'Starts folded': 'Mula terlipat',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

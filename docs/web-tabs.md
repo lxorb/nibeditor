@@ -757,6 +757,62 @@ out neither engine's cookie store, so there is nothing yet to give an expiry thr
 3. The globals that reach the crate are deleted before the page's first script
    runs - **or rather, they are meant to be, and they are not. See below.**
 
+### Where a space keeps its web data
+
+**A space can keep what websites store apart: Global, Space or Site, in the space's own
+menu under Web data.** Emil, 2026-09-27: *"there should be a setting for a space where
+you can set on which granularity to save the website data. either global (default)
+which just uses the global cookies and data store of nib or per space which saves it per
+space or per site which makes it separate for each site in this space."*
+
+- **Global**, which every space is until asked: the one store all spaces share, in
+  `web`, exactly as before. Signed in once, signed in everywhere.
+- **Space**: a store of the space's own, so a work space and a home space can be signed
+  in to the same site as two different people.
+- **Site**: within the space, a store per site, so no site sees what another one left.
+
+**A site is the registrable domain** - one label under a public suffix, from the public
+suffix list with its private section: `moodle-app2.let.ethz.ch` and `aai-logon.ethz.ch`
+are both `ethz.ch`, `a.github.io` and `b.github.io` are two sites. It is where a
+browser already draws the line between strangers (site isolation, `SameSite`, storage
+partitioning), and it is what keeps a sign-in through a sister host working: Moodle and
+ETH's identity provider are one site and so one store. A page's store is the site the
+tab is on when its page is built; a login that passes through somebody else's domain
+happens inside that tab and so inside that store. An address or `localhost` is its own
+site. See `siteOf` in `apps/desktop/src/lib/web-tab/web-data.ts`.
+
+What a store is, per engine (`apps/desktop/src-tauri/src/web_stores.rs`):
+
+| | Global | Space, Site |
+| --- | --- | --- |
+| Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/<name>`, a user data folder of its own |
+| Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/<name>`, a web context of its own |
+| macOS 14+ (`WKWebView`) | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name |
+| nib's own Chromium (`cef`) | the primary profile | **the primary profile** - the runtime cannot be asked for a profile per tab yet |
+
+On Windows a store of its own is a user data folder rather than a `WebView2` profile,
+because the runtime has no way to name a profile for a webview it builds. It costs a
+browser process per store while one of its tabs is open, and nothing after: only the
+global store has the page that holds a session open, and a login in a store of its own
+survives its last tab closing because its session cookies are given an expiry as its
+pages load. Measured on the probe build: a session cookie, a lasting cookie and
+`localStorage` all survive closing the tab twice and a restart, in a space's store and
+in a site's; a store of its own starts signed out; and going back to Global finds the
+global login where it was.
+
+**The name is the store.** `space_<id>` or `site_<id>_<site>`, from the space's id -
+which a rename keeps - and never from its name or its folder. So the same store comes
+back on every launch, and **changing the setting loses nothing**: the store left behind
+stays on disk with its logins in it, and choosing it again is choosing them. The choice
+is this device's (`nib:web-data`), because the stores are folders on this device.
+Choosing builds the space's open pages again in the new store, each where it was and on
+the page it was on, so the choice is on screen at once.
+
+**A space kept apart keeps its history apart too.** The address field's history of
+pages (`visited.ts`) is `nib:web-visits` for every space on Global and
+`nib:web-visits:<id>` for a space on Space or Site, so a space that signs in apart does
+not offer its pages to the others as they type.
+
 ### What a page is given that a browser would not give it
 
 **This is open, it breaks Google Docs, Sheets and Slides, and it is the one thing on
@@ -926,6 +982,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` only. Unit tested |
+| `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
 | `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |
@@ -949,7 +1006,9 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/AddressField.svelte`    | the field an address is typed into: two faces, the rest of the address written in, the pages under it                                                                                                                                                  |
 | `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                        |
 | `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
-| `apps/desktop/src/lib/web-tab/visited.ts`             | this device's history, read on first use                                                                                                                                                                                                               |
+| `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
+| `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
+| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
 | `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
 | `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |

@@ -1490,4 +1490,8 @@ export const ptPT: Dictionary = {
   'Bookmark these blocks': 'Marcar estes blocos',
   Foldable: 'Recolhível',
   'Starts folded': 'Começa recolhido',
+  // Where a space keeps what websites store
+  'Web data': 'Dados da web',
+  Global: 'Global',
+  Site: 'Site',
 }

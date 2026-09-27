@@ -1421,4 +1421,8 @@ export const th: Dictionary = {
   'Bookmark these blocks': 'บุ๊กมาร์กบล็อกเหล่านี้',
   Foldable: 'พับได้',
   'Starts folded': 'เริ่มแบบพับ',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

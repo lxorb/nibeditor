@@ -1478,4 +1478,8 @@ export const ha: Dictionary = {
   'Bookmark these blocks': 'Sa alamar shafi ga waɗannan sassa',
   Foldable: 'Mai naɗewa',
   'Starts folded': 'Yana farawa a naɗe',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

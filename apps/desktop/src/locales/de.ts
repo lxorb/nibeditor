@@ -1491,4 +1491,8 @@ export const de: Dictionary = {
   'Bookmark these blocks': 'Diese Blöcke merken',
   Foldable: 'Faltbar',
   'Starts folded': 'Startet zugeklappt',
+  // Where a space keeps what websites store
+  'Web data': 'Webdaten',
+  Global: 'Global',
+  Site: 'Website',
 }

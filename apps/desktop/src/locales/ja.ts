@@ -1446,4 +1446,8 @@ export const ja: Dictionary = {
   'Bookmark these blocks': 'これらのブロックをブックマーク',
   Foldable: '折りたためる',
   'Starts folded': '折りたたんで開く',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

@@ -1452,4 +1452,8 @@ export const mr: Dictionary = {
   'Bookmark these blocks': 'हे ब्लॉक बुकमार्क करा',
   Foldable: 'दुमडता येईल',
   'Starts folded': 'दुमडलेले सुरू',
+  // Where a space keeps what websites store
+  'Web data': 'Web data',
+  Global: 'Global',
+  Site: 'Site',
 }

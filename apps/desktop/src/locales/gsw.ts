@@ -1462,4 +1462,8 @@ export const gsw: Dictionary = {
   'Bookmark these blocks': 'Die Block merke',
   Foldable: 'Zämmefaltbar',
   'Starts folded': 'Faht zuegfaltet aa',
+  // Where a space keeps what websites store
+  'Web data': 'Webdate',
+  Global: 'Global',
+  Site: 'Websiite',
 }

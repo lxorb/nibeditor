@@ -36,6 +36,8 @@
   import { grants, siteOf } from './permissions.svelte'
   import { movedOn } from './used'
   import { visited } from './visited'
+  import { spaceOf } from './web-data'
+  import { webData } from './web-data.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebBar from './WebBar.svelte'
   import WebDownloads from './WebDownloads.svelte'
@@ -197,6 +199,10 @@
     if (said === told && page.live) return
 
     told = said
+    // Which space the tab is in, which decides the store its page is built in; said with
+    // the page rather than in an effect of its own, because a tab opened by hand asks for
+    // its page in the breath it mounts. See web-data.ts.
+    page.space = space
     void pages.show(tab.id, address, box, visible)
   }
 
@@ -204,6 +210,11 @@
    *  remembered, else what the file says - which is where the reading got to, because
    *  a web note is a browser tab and the file says so. See web-tab/keep.ts. */
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
+
+  /** Which history this tab's address field offers from and adds to: its space's, when
+   *  the space keeps its web data apart. See web-data.ts. */
+  const space = $derived(spaceOf(tab.path, workspace.spaces, workspace.activeSpaceId))
+  const book = $derived(webData.history(space))
 
   onMount(() => {
     // The page is the last thing the launch does. Everything below is watching for the
@@ -378,6 +389,7 @@
     <WebBar
       {page}
       {focused}
+      {book}
       reads={isDesktop}
       onstep={(step: Step) => void pages.step(tab.id, step)}
       onaddress={(typed: string) => {
@@ -386,7 +398,7 @@
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
-        visited.typed(url)
+        visited.typed(book, url)
         void pages.go(tab.id, url)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.
