@@ -667,6 +667,27 @@ mod printer {
 
         run(&operation, &parent, None, done)
     }
+
+    /// The system's print dialog for a page that is already on screen - a web tab's -
+    /// as a sheet on the window it is in. Nobody waits for the answer: the dialog is
+    /// the reader's from here.
+    pub fn sheet(webview: &PlatformWebview) -> Result<(), String> {
+        let (view, window) = held(webview)?;
+        let operation = operation(&view, &NSPrintInfo::sharedPrintInfo().copy());
+        operation.setShowsPrintPanel(true);
+        operation.setShowsProgressPanel(true);
+
+        let (done, _) = std::sync::mpsc::channel();
+        run(&operation, &window, None, done)
+    }
+}
+
+/// The system's print dialog for a page already on screen; see `printer::sheet`. A
+/// web tab's Print row reaches it, because the page's own `window.print()` is Tauri's
+/// on a Mac - a call into the app that a site's origin is refused.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+pub(crate) fn print_sheet(webview: &PlatformWebview) -> Result<(), String> {
+    printer::sheet(webview)
 }
 
 #[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]

@@ -1382,10 +1382,26 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 /// `window.print()` rather than anything of the app's: what a page prints as is the
 /// engine's business, the dialog is the one the reader knows from their browser, and
 /// nib's own printing is about a note.
+///
+/// Except on a Mac, where `window.print()` is not the engine's at all: Tauri replaces it
+/// in every webview with a call into the app, `plugin:webview|print`, and a site's
+/// origin is refused every call into the app - so the row did nothing. There the tab's
+/// own print operation is run instead, as the sheet Safari shows; see `pdf::print_sheet`.
 #[tauri::command]
 pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
-    found(&app, &tab)?
-        .eval("window.print()")
+    let view = found(&app, &tab)?;
+
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    return view
+        .with_webview(|platform| {
+            if let Err(error) = crate::pdf::print_sheet(&platform) {
+                eprintln!("web_print: {error}");
+            }
+        })
+        .map_err(|error| format!("that page could not be printed: {error}"));
+
+    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
+    view.eval("window.print()")
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
