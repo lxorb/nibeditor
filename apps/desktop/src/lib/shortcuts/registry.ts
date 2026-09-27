@@ -451,6 +451,44 @@ const APP_ENTRIES: Shortcut[] = [
     mac: 'Ctrl-Shift-Tab',
     run: () => cycleTab(-1),
   },
+  // Chrome's other pair for the same walk, which a hand that lives in a browser
+  // reaches for as often as Ctrl+Tab.
+  {
+    id: 'app.next-note.alt',
+    label: () => t('Next note'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-PageDown',
+    alias: true,
+    run: () => cycleTab(1),
+  },
+  {
+    id: 'app.previous-note.alt',
+    label: () => t('Previous note'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-PageUp',
+    alias: true,
+    run: () => cycleTab(-1),
+  },
+  // The strip's own order, by key: Chrome's Ctrl+Shift+PageUp and PageDown, one
+  // slot at a time, the same movement dragging the tab makes.
+  {
+    id: 'app.move-tab-left',
+    label: () => t('Move tab left'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-PageUp',
+    run: () => moveTab(-1),
+  },
+  {
+    id: 'app.move-tab-right',
+    label: () => t('Move tab right'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Shift-PageDown',
+    run: () => moveTab(1),
+  },
   // The panes. Named for what they do rather than for the key they are on, since
   // a later batch maps Obsidian's own keys onto the same actions.
   {
@@ -730,19 +768,24 @@ const APP_ENTRIES: Shortcut[] = [
   },
 ]
 
-/** The notes of the pane being worked in, by number. Nine of them, because a
- *  tenth would need two keys and nobody counts that far along a strip.
+/** The ninth digit, which is the last tab rather than the ninth. */
+const LAST = 8
+
+/** The notes of the pane being worked in, by number. Eight of them and then the
+ *  last, which is Chrome's rule and Obsidian's: nobody counts nine along a strip,
+ *  but everybody knows which tab is the last one.
  *
  *  Alt as well as Ctrl, because Ctrl and a digit is a heading level in the
  *  editor and has been since the first version. */
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   id: `app.note-${index + 1}`,
-  label: () => t('Note {number}', { number: index + 1 }),
+  label: () => (index === LAST ? t('Last note') : t('Note {number}', { number: index + 1 })),
   category: 'view' as const,
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
   run: () => {
-    const tab = workspace.tabsIn(workspace.panes.focusedId)[index]
+    const tabs = workspace.tabsIn(workspace.panes.focusedId)
+    const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
     if (tab) workspace.activate(tab.id)
   },
 }))
@@ -990,6 +1033,23 @@ function cycleTab(direction: number) {
 
   const next = tabs[(index + direction + tabs.length) % tabs.length]
   if (next) workspace.activate(next.id)
+}
+
+/** The tab being read, one slot along its own strip: the same movement dragging
+ *  it makes, for a hand that would rather not. It stops at either end rather than
+ *  wrapping round, as Chrome's does: walking a strip is a loop, moving a tab is a
+ *  rearrangement, and a key that carried the first tab of forty to the far end
+ *  because it was pressed once too often would be a key nobody could trust. A
+ *  pinned tab stays among the pinned; see `placeFor` in workspace/pinning.ts. */
+function moveTab(direction: number) {
+  const paneId = workspace.panes.focusedId
+  const tabs = workspace.tabsIn(paneId)
+  const at = tabs.findIndex((tab) => tab.id === workspace.activeTabId)
+  const tab = tabs[at]
+  const slot = at + direction
+  if (!tab || slot < 0 || slot >= tabs.length) return
+
+  workspace.moveTab(tab.id, paneId, slot)
 }
 
 /** Keys that are spoken for and cannot be handed to something else.

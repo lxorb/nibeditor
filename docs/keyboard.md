@@ -269,8 +269,9 @@ stops nothing, and the app still gets the key.
 | --- | --- |
 | Ctrl+N | a new note |
 | Ctrl+T | **what kind**: the chooser the plus hangs - a note, a canvas, a website, a page note - under the plus of the pane that has the keyboard, on its first row, so Ctrl+T then Enter is still a new note |
-| Ctrl+Tab, Ctrl+Shift+Tab | round the strip (already there) |
-| Ctrl+Alt+1 to 9 | the note at that place (already there) |
+| Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip |
+| Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
+| Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there) |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
