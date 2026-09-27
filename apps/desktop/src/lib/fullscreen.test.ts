@@ -191,9 +191,24 @@ describe('the shell', () => {
   test('there are four ways back', () => {
     // The button, Escape, back on Android, and the menu row that turned it on.
     expect(app).toContain("t('Leave fullscreen')")
-    expect(app).toContain('overlays.show(() => void fullscreen.leave())')
+    expect(app).toContain("if (event.key === 'Escape' && fullscreen.on) {")
     expect(app).toContain('closeOnBack(fullscreen.on, () => void fullscreen.leave())')
     expect(menu).toContain('run: () => void fullscreen.toggle(workspace.activeTabId)')
+  })
+
+  /** Escape leaves it from the window's own key handler rather than off the overlay
+   *  stack, and that is not a style: the stack answers a second question, which is
+   *  whether anything of the app's is drawn over a pane - and a web tab's page is a
+   *  native webview that has to be hidden while anything is. Full screen draws nothing
+   *  over the document, so an entry on that stack hid the page full screen exists to
+   *  fill the screen with. See overlays.ts and lib/web-tab/WebTab.svelte. */
+  test('is not an overlay, because nothing is drawn over the document for it', () => {
+    expect(app).not.toContain('fullscreen.on ? overlays.show')
+    // And it is still the layer Escape reaches after the overlays, not before them.
+    const escape = app.indexOf('overlays.escape(event)')
+    const leaving = app.indexOf("if (event.key === 'Escape' && fullscreen.on) {")
+    expect(escape).toBeGreaterThan(-1)
+    expect(leaving).toBeGreaterThan(escape)
   })
 
   /** One command, one key, one row: the menu shows what the key is bound to and

@@ -416,6 +416,9 @@ class Pages {
     } catch {
       // No webview to be had here. Reported by the pane rather than by a message:
       // it shows the card, which offers the page in the reader's own browser.
+      // The label is cleared first: the crate refuses a second page under a label that
+      // has one, and a page nothing places any more is drawn over the whole app.
+      await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       page.openable = false
     } finally {
       page.opening = false
@@ -449,7 +452,11 @@ class Pages {
    *  A page is hidden for two quite different reasons and closed for neither. The tab
    *  is not the one showing, which is `hide`; or something of the app's is over it,
    *  which is `covering` - and that one takes a picture of the page first, so what the
-   *  pane holds under the menu is the page rather than nothing. */
+   *  pane holds under the menu is the page rather than nothing.
+   *
+   *  **`live` gates showing a page and never hiding one.** It is only the window's
+   *  belief, and a page wrongly believed gone was left drawn over the whole app; see
+   *  docs/web-tabs.md. Hiding a page that has gone costs one refused call. */
   async place(tabId: string, pane: Rect, visible: boolean, covering = false): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
@@ -463,7 +470,7 @@ class Pages {
       return
     }
 
-    if (!page.live) return
+    if (!page.live && visible) return
 
     // Something is about to be drawn over the page, so the page is photographed first -
     // and how long that may hold the overlay up depends on whether there is already a
@@ -478,12 +485,19 @@ class Pages {
 
     try {
       await invoke('web_place', { tab: tabId, pane, visible })
+      // A picture is of one size of page. Shown at another - the notices row came or
+      // went, a divider moved - it would leave a band of empty pane under the next menu,
+      // so it goes and the next cover waits for a fresh one.
+      if (visible && (page.pane?.width !== pane.width || page.pane.height !== pane.height)) {
+        page.shot = null
+      }
       page.pane = pane
       page.shown = visible
     } catch {
-      // The webview has gone - the window closed under it, or the page was taken
-      // down while this was in the air. The next show opens it again.
-      page.live = false
+      // The webview has gone, and the next show opens it again. Only a refused show may
+      // conclude that: a page wrongly thought gone is built again, where one wrongly
+      // given up on is left over the app.
+      if (visible) page.live = false
     }
   }
 
@@ -659,10 +673,8 @@ class Pages {
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
-      // The webview has gone - unloaded while this was in the air, or the window
-      // closed under it. It holds the new address already, so the next placement
-      // opens it there.
-      page.live = false
+      // Not a page that has gone: the next placement finds that out, and opens the
+      // address the tab already holds. See `place`.
     }
   }
 
@@ -672,11 +684,8 @@ class Pages {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
 
-    await invoke('web_step', { tab: tabId, step }).catch(() => {
-      // Same as an address that could not be sent: the page has gone, and the next
-      // placement opens it again where it was.
-      page.live = false
-    })
+    // Nor is a refused step; see `place`.
+    await invoke('web_step', { tab: tabId, step }).catch(() => undefined)
   }
 
   /** How large the page is drawn: a browser's own zoom, on the tab it was asked for.

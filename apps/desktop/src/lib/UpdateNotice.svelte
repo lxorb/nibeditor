@@ -29,11 +29,11 @@
 </div>
 
 <style>
+  /* The last track of the notices row, which is the corner it used to float in. It
+     takes its room rather than covering the pane; App.svelte says why. */
   .notice {
-    position: fixed;
-    inset-inline-end: max(var(--space-4), var(--inset-end));
-    bottom: calc(var(--space-4) + var(--inset-bottom));
-    z-index: 40;
+    grid-column: 3;
+    justify-self: end;
     max-width: 22rem;
     display: flex;
     align-items: center;
@@ -69,10 +69,10 @@
   }
 
   /* A phone has no room beside the text, so the buttons go under it and the
-     whole thing spans the screen. */
+     whole thing spans the row. */
   :global([data-touch]) .notice {
-    inset-inline-start: max(var(--space-3), var(--inset-start));
-    inset-inline-end: max(var(--space-3), var(--inset-end));
+    grid-column: 1;
+    justify-self: stretch;
     max-width: none;
     flex-direction: column;
     align-items: stretch;

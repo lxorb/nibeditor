@@ -303,6 +303,47 @@ what a browser with six tabs in it costs and is the honest price of never reload
 A parked tab keeps its address, its place on the page and its trail, so reviving it is a
 load and not a loss. Closing the tab takes the webview and the trail with it.
 
+#### Putting a page away is never asked of what the window believes
+
+Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else. For
+example when I switched to a note, there was still the browser open."*
+
+A page left on screen over a note is not a page drawn in the wrong place - it is an
+operating system surface over the whole window. The note is under it, so is the tab
+strip, so is every menu, and nothing the reader can press reaches any of them. It is the
+worst thing this feature can do, so it is worth being precise about how it happened.
+
+`live` is the window's own idea of whether the crate is holding a webview for a tab, and
+it is an idea: nothing in the window can see a webview. Every command used to write it
+from its own failure. A refused address, a refused step, a refused placement - each of
+them set `live` to false, which reads as "the page has gone". And `place` would not act
+on a page it thought was gone, so from that moment the pane's *hide* did nothing at all:
+the webview stayed exactly where it was, on top of whatever the pane showed next, with
+nothing left in the window able to reach it. One refused call was the whole of it.
+
+A guess is fine; a guess that can only be wrong in one direction is not. So the belief
+gates **showing** a page and never **hiding** one. Hiding is asked of the crate whatever
+the window thinks, and a tab with no page costs one refused call for it. Only a
+placement that was meant to show the page may conclude the page has gone, because that
+conclusion is the safe one to be wrong about: a page wrongly thought gone is built again
+on the next placement, where a page wrongly given up on is the window. The same rule at
+the other end of a page's life: the crate refuses a second page under one label, so a
+build that comes back refused may have been refused *because* there is one - and the
+pane is told there is no page only once the label has been cleared. See `place` and
+`build` in `pages.svelte.ts`, and the tests in
+`test/effects/web-switch.effect.test.ts`.
+
+**What could not be reproduced.** The other half of the mechanism is the still picture,
+and it is the half a measurement cannot tell from the page: asking Windows whether the
+webview is hidden says yes while a photograph of the page is still drawn in the pane, and
+a reader cannot tell those apart either. It was looked for and is not there. The picture
+is drawn in exactly one place - the hole inside the web surface - the hole is keyed on
+the tab and goes with the pane, and the picture is state on a page the store holds per
+tab, so there is nowhere for one to be left over a note and no way for one tab's to be
+drawn in another's. That is asserted rather than argued in the same file. Driving the
+packaged app for the switch itself was done on 2026-09-17 and found nothing either: the
+page was out of sight every time the pane stopped showing it.
+
 **A native webview draws above every pixel of HTML in the window.** So while
 anything of the app's is over the page - a menu, a sheet, the palette, the settings,
 a permission bubble - the page is hidden, or the menu comes up _behind_ it and
@@ -319,17 +360,59 @@ no list in the web tab to keep in step with the app. The document is still asked
 well, at nine points rather than one, for the few things over the page that Escape
 does not close.
 
-**Nine points is too many for the corners, and it is open.** Any element that is not the
-hole counts, wherever it is - so the update notice, which sits in the bottom corner of
-the window and over the pane, keeps every page in the window out of sight for as long as
-it is up: the reader is looking at the still picture of a page and their presses go to
-the hole, not to the site. Measured on 2026-09-18 by asking the pane's own hit test what
-it found: `['hole' x 8, 'DIV.notice']`. Full screen is the same shape - `App.svelte` puts
-an overlay on the stack for the whole time it is on, so F11 on a web tab hides the page
-it is meant to fill the screen with. Both follow from the rule rather than from a slip in
-it: nothing of nib's can be drawn over a native webview, so the app's own furniture must
-not be placed over a page's rectangle in the first place. That is where the fix is, and
-it is a design decision about where a notice lives rather than a change to this test.
+**So nothing of the app's is placed over a page's rectangle at all.** The hit test is
+honest and that is the trouble with it: any element that is not the hole counts,
+wherever it is, so a card in the corner of the window is a page hidden for as long as
+the card is up. Three things were, and the first was measured on 2026-09-18 by asking the
+pane's own hit test what it found - `['hole' x 8, 'DIV.notice']`:
+
+- **The update notice**, which floated in the bottom corner over the pane. Emil,
+  2026-09-27, in the installed app: *"Nib 0.9.1 is ready to install"* in the corner and
+  the whole web page gone until **Later** was pressed. A notice stands until it is
+  dismissed, and a page hidden while nobody had pressed anything has no still picture to
+  stand in for it: the pane was empty. The storage card sat in the other corner and did
+  the same.
+- **The recording pill**, which floated over the foot of the note. It was far enough
+  down to miss the nine points, so the page stayed up - in front of it: a red dot
+  somebody started, drawn where nobody could see or press it.
+- **Full screen**, which put a layer on the overlay stack for the whole time it was on
+  and so hid the page it exists to fill the screen with.
+
+Neither was a slip in the test, so neither is fixed in it - a hit test with a list of
+class names in it is a list to keep in step with the app, which is the thing this one
+was written to stop being. They are fixed where they came from:
+
+- The storage card, the recording pill and the update notice now sit in a **row of their
+  own** between the panes and the foot - start, middle and end, the places they floated
+  in - in the flow of the window rather than over it, so the pane is shorter by the
+  height of whatever is in the row and the page keeps every pixel it is given, live.
+  Empty, the row is nothing: no padding of its own and no height. On every kind of tab,
+  so a note and a page are laid out by one rule. See `.notices` in `App.svelte`.
+- **Full screen is a mode and not an overlay.** It draws nothing over the document - the
+  document is the whole of what is left - and it was on that stack for one line of
+  Escape. Escape leaves it from the window's own key handler now, under the line that
+  asks the stack, which is the same order it had and the same four ways back.
+- The way out of full screen is the one piece of furniture that is *meant* to be over
+  the document, and over a page it would be drawn behind it. A strip across the top of
+  the panes would have cost every document in the window more than full screen gives a
+  web tab back - measured: 46 pixels taken for a title bar of 37 - so the **web tab's own
+  bar** makes the room instead, and only while full screen is on. The page grows from 745
+  to 774 pixels of an 820 pixel window instead of shrinking to 737.
+
+What is left on the overlay stack is only ever a layer somebody opened over the note -
+a menu, a dropdown, a sheet, a dialog, the address field's suggestions, a bubble under
+the bar, a site's question, a drawer, a deck - and each of those hides the page with its
+still picture standing in, photographed before the page goes. A picture is of one size
+of page: once the page is shown at another - the row came or went, a divider moved - it
+is dropped and the next cover waits for a fresh one, or the menu after **Later** stood
+over a picture with a band of empty pane under it. `overlays.test.ts` names
+every caller of the stack with what it is, so the next one fails until somebody has said
+which kind it is, and holds the furniture to the row: on no stack, positioned over
+nothing. The layout itself cannot be unit tested - jsdom has none, so a card over a pane
+and a card beside it are the same object graph there - so
+`apps/desktop/test/e2e/notices.py` asks it at the same nine points in a real browser, and
+`scripts/web-furniture-probe.py` photographs the installed shape of it: a page with the
+update notice up, and the same page under a menu.
 
 **What is over the hole decides how the page is placed, and never whether there is
 one.** That distinction is worth a paragraph of its own, because losing it cost the

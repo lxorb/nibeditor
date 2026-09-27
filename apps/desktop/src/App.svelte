@@ -46,6 +46,7 @@
     newKindChord,
     newKindDialog,
     publishSheet,
+    recordingPill,
     rewriteSheet,
     settingsSheet,
     shareSheet,
@@ -321,10 +322,8 @@
   )
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
-  // Full screen is one more thing Escape leaves, and one more layer back closes:
-  // a screen with nothing on it but the document has to be as easy to leave as
-  // everything else the app puts over it.
-  $effect(() => (fullscreen.on ? overlays.show(() => void fullscreen.leave()) : undefined))
+  // Full screen is one more thing back closes: a screen with nothing on it but the
+  // document has to be as easy to leave as everything else. Escape is in `onKeydown`.
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
 
   // And it belongs to the document it was entered on: closing that brings the app
@@ -433,6 +432,9 @@
         // taken back; see apps/desktop/test/e2e/share.py.
         sharedWithYou,
         sync,
+        // The update notice, which only a release server puts up; see
+        // test/e2e/notices.py.
+        updates,
         workspace,
         search,
         settings,
@@ -624,6 +626,15 @@
     // than the one it closed, which is what keeps a note's find bar open under a
     // palette somebody has just dismissed. See overlays.ts.
     if (event.key === 'Escape' && overlays.escape(event)) return
+
+    // Then full screen, which is a mode and not a layer: on the stack it hid a web
+    // tab's page, the thing it is meant to fill the screen with. See overlays.ts.
+    if (event.key === 'Escape' && fullscreen.on) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      void fullscreen.leave()
+      return
+    }
 
     // A deck covers the window, so anything the app would open under it is a
     // window nobody can see holding the keyboard nobody can get back. While a
@@ -854,6 +865,22 @@
         {/if}
       </div>
 
+      <!-- What the app says about itself, in a row under the panes rather than over
+           them: a web page is a native webview that draws above all of this, so a
+           card over it blanked the page and a pill over it was hidden. Empty, the
+           row has no height. See docs/web-tabs.md. -->
+      <div class="notices">
+        <StorageWarning />
+        {#if recordingPill.asked}
+          {#await recordingPill.asked then RecordingPill}
+            <RecordingPill />
+          {/await}
+        {/if}
+        {#if updates.ready}
+          <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
+        {/if}
+      </div>
+
       <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
@@ -912,12 +939,6 @@
 
 <!-- What the text size has just become, after a pinch or a key. -->
 <SizeBadge />
-
-<StorageWarning />
-
-{#if updates.ready}
-  <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
-{/if}
 
 <Palette bind:this={paletteScreen} bind:open={palette} {view} />
 <!-- What a fresh install opens on, until there is a space. Fetched only then; the card
@@ -987,6 +1008,9 @@
 
 <style>
   main {
+    /* The way out of full screen, which a web tab's bar makes room for; see `.head`
+       in lib/web-tab/WebTab.svelte. */
+    --leave-size: 30px;
     display: flex;
     flex-direction: column;
     /* Dynamic units: a phone's address bar eats into the viewport as it
@@ -1041,6 +1065,26 @@
     display: flex;
   }
 
+  /* Start, middle and end, whichever of them is up; each card names its track. */
+  .notices {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: end;
+    gap: var(--space-2);
+  }
+
+  /* One column on a phone, where the cards stack. */
+  :global([data-touch]) .notices {
+    grid-template-columns: 1fr;
+  }
+
+  /* Room only around something. `:global`, or the compiler drops a rule about
+     another component's element. */
+  .notices:has(> :global(*)) {
+    padding: var(--space-2) max(var(--space-4), var(--inset-end))
+      calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-start));
+  }
+
   /* Full screen: the panes are the whole window, so what the system keeps for
      its clock, its cutout and its gesture bar is kept clear here instead of by
      the bars that have gone. */
@@ -1065,8 +1109,8 @@
     color: var(--muted-strong);
     box-shadow: var(--shadow-sm);
     cursor: default;
-    width: 30px;
-    height: 30px;
+    width: var(--leave-size);
+    height: var(--leave-size);
     transition:
       opacity var(--dur-slow) var(--ease-out),
       color var(--dur-fast) var(--ease-out),
@@ -1120,9 +1164,8 @@
 
   /* A thumb's target rather than a pointer's, and drawn at the size every other
      icon on a touch screen is. */
-  :global([data-touch]) .leave {
-    width: var(--touch-target);
-    height: var(--touch-target);
+  :global([data-touch]) main {
+    --leave-size: var(--touch-target);
   }
 
   :global([data-touch]) .leave svg {

@@ -7,8 +7,12 @@
  *  kept as a stack rather than each asked in turn.
  *
  *  A key that reaches an empty stack was never about an overlay: Escape in the
- *  file list clears the selection and Escape in the editor steps off a picture,
- *  and both still get their turn. */
+ *  file list clears the selection, Escape in the editor steps off a picture, and
+ *  Escape leaves full screen, and all three still get their turn.
+ *
+ *  **Only what is drawn over the note belongs here**, because the stack also decides
+ *  whether a web page, a native webview, must hide. Full screen wants Escape and is
+ *  a mode, so it is in `onKeydown` in App.svelte; see overlays.test.ts. */
 
 interface Open {
   close: () => void
