@@ -88,7 +88,16 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
     std::mem::take(&mut *urls)
 }
 
-/// The links as the window reads them: strings, and none of them empty.
+/// The scheme a link into the app is written in, as the platform hands it over.
+const SCHEME: &str = "nib:";
+
+/// The links as the window reads them: strings, and only `nib:` ones.
+///
+/// Only those, because on a Mac the plugin hears everything the system asks the
+/// app to open, and a markdown file double-clicked in the Finder arrives as a
+/// `file://` address among them. That is a document, not a link: it takes the
+/// road every other file takes (see `hand_over` in launch.rs), and here it would
+/// only reach the window as a link that could not be followed.
 ///
 /// Written against anything that can say itself rather than against the URL type
 /// the plugin hands over, so this module has no opinion about which crate parsed
@@ -96,8 +105,16 @@ pub fn take_startup_uris(pending: tauri::State<'_, Pending>) -> Vec<String> {
 fn said<T: ToString>(urls: Vec<T>) -> Vec<String> {
     urls.iter()
         .map(ToString::to_string)
-        .filter(|one| !one.is_empty())
+        .filter(|one| is_ours(one))
         .collect()
+}
+
+/// Whether an address is a link into this app, in whichever case the scheme was
+/// written.
+fn is_ours(url: &str) -> bool {
+    url.trim_start()
+        .get(..SCHEME.len())
+        .is_some_and(|scheme| scheme.eq_ignore_ascii_case(SCHEME))
 }
 
 #[cfg(test)]
@@ -123,5 +140,22 @@ mod tests {
     fn leaves_out_an_address_that_says_nothing() {
         assert!(said(vec![String::new()]).is_empty());
         assert!(said(Vec::<String>::new()).is_empty());
+    }
+
+    #[test]
+    fn leaves_a_file_the_finder_opened_to_the_files_road() {
+        let urls = vec![
+            "file:///Users/me/Notes/Idea.md".to_string(),
+            "nib://open?path=Idea.md".to_string(),
+            "FILE:///Users/me/Other.md".to_string(),
+        ];
+        assert_eq!(said(urls), vec!["nib://open?path=Idea.md".to_string()]);
+    }
+
+    #[test]
+    fn reads_the_scheme_in_any_case() {
+        assert_eq!(said(vec!["NIB://search".to_string()]).len(), 1);
+        assert!(said(vec!["https://nibeditor.com".to_string()]).is_empty());
+        assert!(said(vec!["ni".to_string()]).is_empty());
     }
 }
