@@ -2,10 +2,10 @@
  *
  *  `record` and `meeting` are one command each, with one id each, and every way of
  *  reaching them runs the same function: the palette, the Paragraph menu, the editor's
- *  `/` menu, the plus on a phone, and the quick settings tile on Android. That is the
- *  whole reason this file exists rather than the store being reached for directly - an
- *  id is a thing another surface can call, and a row that built its own behaviour would
- *  be the second answer to the same question.
+ *  `/` menu, and then a meeting from the plus on a phone and a recording from the quick
+ *  settings tile on Android. That is the whole reason this file exists rather than the
+ *  store being reached for directly - an id is a thing another surface can call, and a
+ *  row that built its own behaviour would be the second answer to the same question.
  *
  *  `Transcribe` is the third: a row on the menu of a recording already in a note,
  *  which sends that file through the same Whisper path a meeting's live transcript goes

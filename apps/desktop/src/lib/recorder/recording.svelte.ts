@@ -1,7 +1,7 @@
 /** Recording, as one thing the whole app shares.
  *
  *  One store, because there is one microphone. The palette's row, the Paragraph menu,
- *  the plus on a phone and the quick settings tile on Android all run the same command
+ *  the `/` menu and the quick settings tile on Android all run the same command
  *  and all end up here; the pill in the status bar is this store, read. A second
  *  recorder anywhere would be a second red dot and a fight over the device.
  *

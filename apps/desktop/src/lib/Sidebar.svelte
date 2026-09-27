@@ -23,14 +23,7 @@
     SEARCH_MARK,
   } from './panel-marks'
   import { newSpace } from './space-actions'
-  import {
-    canRecord,
-    canTakeMeetingNotes,
-    meeting,
-    meetingLabel,
-    record,
-    recordLabel,
-  } from './recorder/commands'
+  import { canTakeMeetingNotes, meeting, meetingLabel } from './recorder/commands'
   import { arriving } from './arriving.svelte'
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
@@ -248,14 +241,16 @@
 
   /** What the space itself offers, wherever in the panel you ask for it.
    *
-   *  Two things to make, and two to record. A folder is not one of them: a note
+   *  The kinds of note to make, and a meeting. A folder is not one of them: a note
    *  that holds notes is how a space is organised, and that is a note made inside
    *  another note's row. See folder-notes.ts and docs/tree.md.
    *
    *  The plus at the top of this panel is the only one on a phone, which makes this
-   *  the whole of what a thumb can reach without the keyboard: a recording and a
-   *  meeting belong on it, and both make their own note where there is none. See
-   *  recorder/commands.ts and docs/mobile.md. */
+   *  the whole of what a thumb can reach without the keyboard: a meeting belongs on
+   *  it, and makes its own note where there is none. A plain recording does not - it
+   *  is not a kind of note, and it goes into the note being written, from the `/`
+   *  menu, the palette or the quick settings tile. See recorder/commands.ts and
+   *  docs/mobile.md. */
   function spaceMenu(): MenuEntry[] {
     return [
       { label: t('New note'), run: () => void workspace.createNote() },
@@ -263,7 +258,6 @@
       ...(viewport.device === 'phone'
         ? []
         : [{ label: t('New web note'), run: () => void workspace.createWebsite() }]),
-      ...(canRecord() ? [{ label: recordLabel(), run: () => void record() }] : []),
       ...(canTakeMeetingNotes() ? [{ label: meetingLabel(), run: () => void meeting() }] : []),
     ]
   }
