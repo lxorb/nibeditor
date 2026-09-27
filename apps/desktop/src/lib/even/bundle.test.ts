@@ -266,7 +266,7 @@ describe('the bundle a package is made of', () => {
     // Most of the difference was the Mac's own - the native menu bar and Tauri's menu
     // API, the first-run space chooser, the iCloud mark - none of which the plugin
     // can show, and all of which are now behind `__EVEN_PLUGIN__`. What is left is
-    // that round's words in the catalogues: **8,372,728 bytes**, 15,880 under.
+    // that round's words in the catalogues: **8,373,099 bytes**, 15,509 under.
     //
     // The ceiling is still close on purpose: this number went from 11.8 MB to 6.0 by
     // leaving libraries out, and a megabyte back is a library that crept in again.
