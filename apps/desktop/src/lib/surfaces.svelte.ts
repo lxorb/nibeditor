@@ -181,6 +181,13 @@ export function newKindChord(event: KeyboardEvent): boolean {
  *  while nothing is being presented, and it is left to the `{#if}` it always had. */
 export const slidesStage = held(() => import('./Slides.svelte'))
 
+/** The Mac's menu bar, fetched once the launch is done; see native-menu-bar.svelte.ts.
+ *  Never the plugin's, which is never a Mac: the same reason as the card below. */
+export const menuBarDoor = () =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no menu bar in the Even Realities plugin'))
+    : import('./native-menu-bar.svelte')
+
 /** The card a fresh install opens on; see space-chooser.svelte.ts. The plugin never
  *  shows it (see space-choice.ts), and a fetch that is only never called still puts
  *  its chunk in the package, so that build is not given one to call. */

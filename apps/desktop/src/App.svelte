@@ -51,6 +51,7 @@
     shareSheet,
     slidesStage,
     spaceChooserCard,
+    menuBarDoor,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -665,7 +666,7 @@
   if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
     void startup
       .turn('doors')
-      .then(() => import('./lib/native-menu-bar.svelte'))
+      .then(menuBarDoor)
       .then(({ followMenuBar }) =>
         followMenuBar(() => ({
           view,

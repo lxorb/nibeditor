@@ -48,7 +48,7 @@ import { matchesCombination, parseCombination } from './keys'
 import { DIVIDER, isSubmenu, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 
 /** The rows AppKit draws and answers itself. */
-export type SystemItem =
+type SystemItem =
   | 'About'
   | 'Services'
   | 'Hide'
@@ -99,14 +99,14 @@ export interface NativeSubmenu {
   role?: 'window'
 }
 
-export interface NativeSystem {
+interface NativeSystem {
   kind: 'system'
   id: string
   item: SystemItem
   text: string
 }
 
-export interface NativeRule {
+interface NativeRule {
   kind: 'rule'
   id: string
 }

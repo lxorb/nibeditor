@@ -13,7 +13,7 @@ import { SvelteSet } from 'svelte/reactivity'
 import { isDesktop } from './tauri'
 
 /** What the crate says about one file, as its event carries it. */
-export interface Fetching {
+interface Fetching {
   path: string
   done: boolean
 }
