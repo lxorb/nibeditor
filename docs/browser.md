@@ -1309,7 +1309,7 @@ x64, and every number below is theirs.
 **And two places where the flagged build is deliberately less than the app.** PDF
 export talks to `WebView2`'s print engine directly, which is not the engine any more,
 so under the flag `pdf_supported` says no and the window falls back to the system's
-print panel exactly as it does on a Mac; Chromium's own `PrintToPDF` is batch 6's.
+print panel exactly as it does on Linux; Chromium's own `PrintToPDF` is batch 6's.
 And on Linux `tauri-plugin-dialog` brings `rfd` with GTK 3 while the runtime is GTK 4,
 and GTK 4 aborts when it finds GTK 3 in the process - the plugin has an `xdg-portal`
 feature that would fix it, and turning it on is a change to the *shipping* Linux build

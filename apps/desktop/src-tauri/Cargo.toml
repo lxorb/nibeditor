@@ -127,6 +127,54 @@ window-vibrancy = "0.6"
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"
+# WKWebView's own printing, capture prompt, cookie store and snapshot, which wry
+# hands out as a bare pointer and nothing more: a PDF written without a dialog, a
+# site asked about before it gets the camera, a login kept across a restart, and a
+# still picture of a web tab. The versions are the ones wry is built against, so
+# the objects it hands out line up; see pdf.rs, web_tabs.rs and web_cookies.rs.
+objc2 = "0.6"
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "NSArray",
+  "NSData",
+  "NSDate",
+  "NSDictionary",
+  "NSError",
+  "NSGeometry",
+  "NSHTTPCookie",
+  "NSObject",
+  "NSString",
+  "NSURL",
+  "NSValue",
+] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-core-foundation",
+  "NSBitmapImageRep",
+  "NSGraphics",
+  "NSImage",
+  "NSImageRep",
+  "NSPrintInfo",
+  "NSPrintOperation",
+  "NSResponder",
+  "NSView",
+  "NSWindow",
+] }
+objc2-web-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "objc2-app-kit",
+  "block2",
+  "WKFrameInfo",
+  "WKHTTPCookieStore",
+  "WKPreferences",
+  "WKSecurityOrigin",
+  "WKSnapshotConfiguration",
+  "WKUIDelegate",
+  "WKWebView",
+  "WKWebViewConfiguration",
+  "WKWebsiteDataStore",
+] }
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
