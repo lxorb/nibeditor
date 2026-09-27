@@ -389,8 +389,13 @@ function holds(tail: string): boolean {
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in
  *  front of the metadata's fence. The history the address field offers and the
- *  omnibox were never here; see `history` in web-tab/pages.svelte.ts. */
-const BUDGET = 3_330_000
+ *  omnibox were never here; see `history` in web-tab/pages.svelte.ts.
+ *
+ *  Raised 2026-09-28, to 3,335,000, for the Mac's own default keys: the `mac` field on
+ *  thirty entries of the registry and the editor's keymap, the keys the Mac keeps for
+ *  itself, and the signs a Mac prints for Escape, Backspace and the rest. 2,767 bytes,
+ *  all of it data the settings and the menus read at launch. Measured 3,331,295. */
+const BUDGET = 3_335_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

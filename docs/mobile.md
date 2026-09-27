@@ -530,7 +530,7 @@ bar and the status bar all leave, and the panes fill the window behind whatever
 the system keeps for its clock and its gesture bar. Where there is a window to
 ask, it drops its frame too - the desktop's chrome, the browser's own bars.
 
-It is one command, `app.fullscreen`, which is F11 and which the View menu and the
+It is one command, `app.fullscreen`, which is F11 (⌃⌘F on a Mac) and which the View menu and the
 three dots both show. Nothing about it is written down: it belongs to the document
 it was entered on and to this sitting, so closing that document brings the app
 back, and so does starting the app again.

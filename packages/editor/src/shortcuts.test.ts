@@ -82,6 +82,26 @@ describe('building the keymap', () => {
     const redo = standardBindings.find((one) => one.id === 'edit.redo')!
     expect(defaultKeyFor(redo, 'mac')).toBe('Mod-Shift-z')
   })
+
+  /** CodeMirror reads a missing platform field as "use `key`", so a spec that
+   *  shares a key everywhere but one platform has to be bound per platform, or
+   *  the platform that said null would answer the shared key anyway. */
+  test('keeps a key off the one platform that has none', () => {
+    const list = nibBindings.find((one) => one.id === 'paragraph.bullet-list')!
+    expect(defaultKeyFor(list, 'mac')).toBeNull()
+
+    const [built] = bindings([list], {})
+    expect(built?.key).toBeUndefined()
+    expect(built?.mac).toBeUndefined()
+    expect(built?.win).toBe('Mod-Shift-]')
+    expect(built?.linux).toBe('Mod-Shift-]')
+  })
+
+  test('still binds a key the reader chose there', () => {
+    const list = nibBindings.find((one) => one.id === 'paragraph.bullet-list')!
+    const [built] = bindings([list], { 'paragraph.bullet-list': 'Mod-Alt-l' })
+    expect(built?.key).toBe('Mod-Alt-l')
+  })
 })
 
 describe('a state built with them', () => {

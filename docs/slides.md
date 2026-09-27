@@ -88,7 +88,7 @@ they are in Obsidian, Marp and Slidev; the ones after it are slide breaks.
 
 ## Presenting
 
-**F5**, or Present in the View menu and the palette. The key everyone's hand
+**F5** (⌥⌘P on a Mac, Keynote's), or Present in the View menu and the palette. The key everyone's hand
 already knows, and it sits with the app's other view keys along the F row.
 Obsidian's Slides plugin ships no key at all, so no preset takes it back; a
 browser keeps F5 for reloading, so on the web the palette is the way in.

@@ -202,6 +202,34 @@ describe('showing a combination', () => {
     expect(showCombination('F10', 'mac')).toBe('F10')
   })
 
+  /** A Mac's menus print these as signs, like its modifiers; everywhere else they
+   *  stay the words printed on the keys. */
+  test.each([
+    ['Escape', '⎋', 'Esc'],
+    ['Delete', '⌦', 'Del'],
+    ['Backspace', '⌫', 'Backspace'],
+    ['Enter', '↩', 'Enter'],
+    ['Tab', '⇥', 'Tab'],
+    ['PageUp', '⇞', 'PgUp'],
+    ['PageDown', '⇟', 'PgDn'],
+    ['Home', '↖', 'Home'],
+    ['End', '↘', 'End'],
+    ['ArrowLeft', '←', '←'],
+    ['Space', 'Space', 'Space'],
+  ])('writes %s as a sign on a Mac and as a word elsewhere', (key, mac, other) => {
+    expect(showCombination(key, 'mac')).toBe(mac)
+    expect(showCombination(key, 'win')).toBe(other)
+    expect(showCombination(key, 'linux')).toBe(other)
+  })
+
+  test('puts the key sign after the modifiers on a Mac', () => {
+    expect(showCombination('Mod-Backspace', 'mac')).toBe('⌘⌫')
+    expect(showCombination('Mod-Backspace', 'win')).toBe('Ctrl+Backspace')
+    expect(showCombination('Mod-Ctrl-f', 'mac')).toBe('⌃⌘F')
+    expect(showCombination('Ctrl-Shift-Tab', 'mac')).toBe('⌃⇧⇥')
+    expect(showCombination('Mod-Shift-PageDown', 'win')).toBe('Ctrl+Shift+PgDn')
+  })
+
   test('hands back what it cannot read rather than nothing', () => {
     expect(showCombination('Hyper-k', 'win')).toBe('Hyper-k')
   })

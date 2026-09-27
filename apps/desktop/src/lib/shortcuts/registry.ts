@@ -330,6 +330,7 @@ const APP_ENTRIES: Shortcut[] = [
     // browser uses - is indenting here. So it is the brackets under the other
     // modifier, which nothing on that platform is using, and which is a key
     // anybody who wants the browser's own can change in Settings.
+    // Obsidian's Mac back, Cmd+Opt and an arrow, is the pane split here.
     id: 'app.back',
     label: () => t('Back'),
     category: 'view',
@@ -461,12 +462,14 @@ const APP_ENTRIES: Shortcut[] = [
   },
   // Chrome's other pair for the same walk, which a hand that lives in a browser
   // reaches for as often as Ctrl+Tab.
+  // On a Mac it is Safari's, Chrome's and VS Code's Cmd+Shift and a bracket.
   {
     id: 'app.next-note.alt',
     label: () => t('Next note'),
     category: 'view',
     scope: 'app',
     key: 'Mod-PageDown',
+    mac: 'Mod-Shift-]',
     alias: true,
     run: () => cycleTab(1),
   },
@@ -476,6 +479,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-PageUp',
+    mac: 'Mod-Shift-[',
     alias: true,
     run: () => cycleTab(-1),
   },
@@ -618,6 +622,8 @@ const APP_ENTRIES: Shortcut[] = [
   // that walks out of the note, and F6 is the one every hand already has: Windows
   // cycles a window's elements with it, VS Code moves between its parts with it,
   // and Discord moves between its sections with it. Shift+F6 goes back.
+  // A Mac keeps it, as VS Code does there: Ctrl+F6 is the system's, and a laptop
+  // has Fn+F6.
   {
     id: 'app.region-next',
     label: () => t('Next section'),
@@ -688,6 +694,9 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F8',
+    // F8 to F10 are media keys on a Mac and Obsidian has none, so there these
+    // sit on Ctrl+Cmd beside Enter Full Screen, as Finder's Ctrl+Cmd+S does.
+    mac: 'Mod-Ctrl-o',
     run: (context) => modes.toggleFocus(context.view),
   },
   {
@@ -696,6 +705,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F9',
+    mac: 'Mod-Ctrl-t',
     run: (context) => modes.toggleTypewriter(context.view),
   },
   {
@@ -715,11 +725,13 @@ const APP_ENTRIES: Shortcut[] = [
     // own Slides plugin ships no key at all, so no preset takes this one back.
     // A browser keeps F5 for reloading, which the settings list warns about; the
     // palette and the View menu are the way in there.
+    // On a Mac, Keynote's Play Slideshow.
     id: 'app.present',
     label: () => t('Present'),
     category: 'view',
     scope: 'app',
     key: 'F5',
+    mac: 'Mod-Alt-p',
     run: () => present.toggle(),
   },
   {
@@ -730,6 +742,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F10',
+    mac: 'Mod-Ctrl-r',
     run: (context) => modes.toggleReadOnly(context.view),
   },
   {
@@ -738,6 +751,8 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'F11',
+    // F11 is Show Desktop on a Mac; Ctrl+Cmd+F is its Enter Full Screen.
+    mac: 'Mod-Ctrl-f',
     run: (context) => context.fullscreen(),
   },
   // The three keys every browser and every editor changes the size of the words
@@ -784,13 +799,15 @@ const LAST = 8
  *  but everybody knows which tab is the last one.
  *
  *  Alt as well as Ctrl, because Ctrl and a digit is a heading level in the
- *  editor and has been since the first version. */
+ *  editor and has been since the first version. On a Mac the two trade places:
+ *  Cmd and a digit is the tab in Obsidian and Safari. */
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   id: `app.note-${index + 1}`,
   label: () => (index === LAST ? t('Last note') : t('Note {number}', { number: index + 1 })),
   category: 'view' as const,
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
+  mac: `Mod-${index + 1}`,
   run: () => {
     const tabs = workspace.tabsIn(workspace.panes.focusedId)
     const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
@@ -818,12 +835,14 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Escape',
     contextual: true,
   },
+  // Cmd+Backspace on a Mac, as in Finder and Obsidian; a bare one deletes nothing.
   {
     id: 'tree.delete',
     label: () => t('Delete the selected files'),
     category: 'panel',
     scope: 'panel',
     key: 'Delete',
+    mac: 'Mod-Backspace',
     contextual: true,
   },
   {
@@ -832,6 +851,7 @@ const PANEL_ENTRIES: Shortcut[] = [
     category: 'panel',
     scope: 'panel',
     key: 'Backspace',
+    mac: 'Mod-Delete',
     contextual: true,
     alias: true,
   },
@@ -879,12 +899,15 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'Enter',
     contextual: true,
   },
+  // Finder renames on Return, which opens in every list here (roving.ts), so a
+  // Mac has Cmd+Return.
   {
     id: 'tree.rename',
     label: () => t('Rename'),
     category: 'panel',
     scope: 'panel',
     key: 'F2',
+    mac: 'Mod-Enter',
     contextual: true,
   },
   // Moving a row within the order somebody arranged, which is the one of the
@@ -1021,6 +1044,18 @@ const PAGES_ENTRIES: Shortcut[] = (
   key,
   contextual: true,
 }))
+
+// Cmd+1 and Cmd+Shift and a bracket are the tabs' on a Mac, and the plane answers
+// first, so these move there: beside Fit, and to Figma's Cmd+Opt and a bracket.
+const MAC_CANVAS: Record<string, string> = {
+  'canvas.frame': 'Mod-Alt-1',
+  'canvas.front': 'Mod-Alt-]',
+  'canvas.back': 'Mod-Alt-[',
+}
+for (const entry of CANVAS_ENTRIES) {
+  const mac = MAC_CANVAS[entry.id]
+  if (mac) entry.mac = mac
+}
 
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
@@ -1207,17 +1242,35 @@ export function runnable(id: string): boolean {
 
 /** Combinations the machine underneath usually swallows. Not a refusal - the
  *  app cannot know what a given system does with a given key - but a warning
- *  beside the binding, so nobody sets a key and wonders why nothing happens. */
+ *  beside the binding, so nobody sets a key and wonders why nothing happens.
+ *  The Globe key's chords are missing because it never reaches a page. */
 export const SYSTEM_KEYS: Record<Platform, string[]> = {
   mac: [
     'Mod-q',
     'Mod-h',
+    'Mod-Alt-h',
     'Mod-m',
+    'Mod-Shift-q',
+    'Mod-Alt-Escape',
+    'Mod-Ctrl-q',
     'Mod-Tab',
+    'Mod-Shift-Tab',
+    'Mod-`',
+    'Mod-Shift-`',
     'Mod-Space',
+    'Mod-Alt-Space',
+    'Ctrl-Space',
+    'Mod-Ctrl-Space',
     'Mod-Shift-3',
     'Mod-Shift-4',
     'Mod-Shift-5',
+    'Ctrl-ArrowUp',
+    'Ctrl-ArrowDown',
+    'Ctrl-ArrowLeft',
+    'Ctrl-ArrowRight',
+    'F11',
+    'Mod-Alt-d',
+    'Mod-Ctrl-d',
   ],
   win: ['Alt-F4', 'Alt-Tab', 'Meta-l', 'Ctrl-Shift-Escape'],
   linux: ['Alt-F4', 'Alt-Tab'],
