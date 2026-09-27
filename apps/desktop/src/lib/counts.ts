@@ -6,6 +6,9 @@
  *  does. It is only ever asked for while the numbers are on screen, but even
  *  then it should not be felt. */
 
+import { frontMatterBlock } from '@nib/markdown/front-matter'
+import type { PropertiesMode } from '@nib/markdown/properties'
+
 export interface Counts {
   words: number
   characters: number
@@ -45,4 +48,12 @@ export function countText(text: string): Counts {
     lines,
     minutes: Math.max(1, Math.round(words / 200)),
   }
+}
+
+/** What the status bar counts of a note: all of it, or what is on the page where the
+ *  reader keeps the front matter hidden. Metadata nobody can see is not three words
+ *  and forty characters of a note that says one line. */
+export function countNote(text: string, properties: PropertiesMode): Counts {
+  const block = properties === 'hidden' ? frontMatterBlock(text) : null
+  return countText(block ? text.slice(block.to) : text)
 }

@@ -814,3 +814,35 @@ describe('translucency', () => {
     expect(root.attributes.has('data-translucent')).toBe(false)
   })
 })
+
+/** What a note's front matter is drawn as. Hidden is where a reader starts, and an
+ *  entry written before it was can say `properties` without anybody having chosen
+ *  it: every build wrote the whole entry down whenever any setting moved. */
+describe('the front matter', () => {
+  const saved = () =>
+    JSON.parse(localStorage.getItem('nib:modes') ?? '{}') as Record<string, unknown>
+
+  test('starts hidden', () => {
+    expect(modes.properties).toBe('hidden')
+  })
+
+  test('is remembered across a restart when somebody asks to see it', async () => {
+    modes.setProperties('properties')
+    expect((await restarted()).properties).toBe('properties')
+    expect(saved()).toHaveProperty('frontMatter', 'properties')
+  })
+
+  test('takes no answer from rows an older build wrote down for everybody', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ properties: 'properties', vim: true }))
+
+    const back = await restarted()
+    expect(back.properties).toBe('hidden')
+    expect(back.vim).toBe(true)
+    expect(saved()).not.toHaveProperty('properties')
+  })
+
+  test('but keeps the source, which nobody had without asking for it', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ properties: 'source' }))
+    expect((await restarted()).properties).toBe('source')
+  })
+})

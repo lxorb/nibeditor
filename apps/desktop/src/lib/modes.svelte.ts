@@ -165,7 +165,8 @@ interface Saved {
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
-  properties: PropertiesMode
+  /** `properties` before hidden became the default; see `restore`. */
+  frontMatter: PropertiesMode
 }
 
 /** The word the status bar shows for each mode modal editing has, in Vim's own
@@ -406,13 +407,14 @@ class Modes {
   /** What a note's front matter is drawn as: the rows it says, the YAML it is
    *  written in, or nothing at all.
    *
-   *  The rows, which is where every note starts: what a note carries is worth
-   *  reading, and the source is one caret away. Somebody whose metadata holds a
-   *  shape nib cannot read wants the source all the time and says so here, and
-   *  somebody who never looks at it says that. The one answer is read by the editor
-   *  and by the reading view, so a note cannot say one thing written and another
-   *  read; see properties.ts in @nib/markdown. */
-  properties = $state<PropertiesMode>('properties')
+   *  Nothing, which is where every note starts: the metadata at the top of a file
+   *  is what the app reads - the icon a note wears, its cover - and not something
+   *  to read on the way into the note. Somebody who wants to edit it in rows says
+   *  so here, and somebody whose metadata holds a shape nib cannot read asks for
+   *  the source. The one answer is read by the editor and by the reading view, so a
+   *  note cannot say one thing written and another read; see properties.ts in
+   *  @nib/markdown and hidden-front-matter.ts in the editor. */
+  properties = $state<PropertiesMode>('hidden')
 
   constructor() {
     // The editor package reports a view's mode as it changes and null when
@@ -490,7 +492,17 @@ class Modes {
       }
       this.hardBreaks = saved.hardBreaks === true
       if (isLinkFormat(saved.linkFormat)) this.linkFormat = saved.linkFormat
-      this.properties = propertiesMode(saved.properties)
+      // Kept as `frontMatter` since hidden became the default. An older build wrote
+      // `properties` down for everybody who changed any setting at all, so the rows
+      // it says were the default rather than a choice; the source was always a
+      // choice, and is kept.
+      this.properties =
+        'frontMatter' in saved
+          ? propertiesMode(saved.frontMatter)
+          : saved.properties === 'source'
+            ? 'source'
+            : 'hidden'
+      stale ||= 'properties' in saved
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
@@ -1310,7 +1322,7 @@ class Modes {
       keepVersions: this.keepVersions,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
-      properties: this.properties,
+      frontMatter: this.properties,
       linkFormat: this.linkFormat,
     }
     keep(STORAGE_KEY, JSON.stringify(state))

@@ -109,6 +109,7 @@ vi.mock('../note-images', () => ({
 const { links } = await import('../link-index.svelte')
 const { startup } = await import('../startup.svelte')
 const { readingHtml } = await import('./render')
+const { modes } = await import('../modes.svelte')
 const { EditorState, noteIndexExtension, renderNote } = await import('@nib/editor')
 
 /** The exporter, loaded once rather than by whichever test rendered first; see
@@ -163,7 +164,11 @@ describe('the note behind a hover preview', () => {
   })
 
   test('has every kind of block the reading view has', async () => {
-    const html = await renderNote(FIXTURE, RELATIVE, shown())
+    // The rows, which a reader asks for: hidden is where the front matter starts.
+    modes.setProperties('properties')
+    const html = await renderNote(FIXTURE, RELATIVE, shown()).finally(() => {
+      modes.setProperties('hidden')
+    })
 
     // A fence with a language and a caption: framed, captioned and coloured.
     expect(html).toContain('<figure class="code"')

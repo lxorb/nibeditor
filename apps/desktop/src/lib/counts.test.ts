@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { countText } from './counts'
+import { countNote, countText } from './counts'
 
 describe('what the status bar counts', () => {
   test('an empty note counts nothing, and still reads in a minute', () => {
@@ -30,5 +30,22 @@ describe('what the status bar counts', () => {
 
   test('a no-break space between words still separates them', () => {
     expect(countText('one two').words).toBe(2)
+  })
+})
+
+describe('what it counts of a note', () => {
+  const NOTE = '---\nicon: list-checks\n---\nMilk and eggs.'
+
+  test('is what is on the page where the front matter is hidden', () => {
+    expect(countNote(NOTE, 'hidden')).toMatchObject({ words: 3, characters: 14, lines: 1 })
+  })
+
+  test('and all of it where the front matter is shown', () => {
+    expect(countNote(NOTE, 'properties')).toEqual(countText(NOTE))
+    expect(countNote(NOTE, 'source')).toEqual(countText(NOTE))
+  })
+
+  test('and all of a note with none', () => {
+    expect(countNote('Milk and eggs.', 'hidden')).toEqual(countText('Milk and eggs.'))
   })
 })

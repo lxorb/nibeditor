@@ -1,7 +1,8 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { blockDecorations, propertiesMode } from './blocks'
+import { blockDecorations } from './blocks'
+import { propertiesMode } from './hidden-front-matter'
 import { edgeBeside } from './stepping'
 import { dragFreeze } from './dragging'
 import { nibMarkdownExtensions } from '../markdown/extensions'
@@ -15,7 +16,7 @@ import { parsed } from '../../test/parsed'
  *  that were never drawn, and nothing here draws anything. What is here is the
  *  arithmetic underneath - which line a press aims at, and what is on it. */
 
-function state(doc: string, cursor = 0, mode?: 'hidden') {
+function state(doc: string, cursor = 0, mode: 'hidden' | 'properties' = 'properties') {
   return parsed(
     EditorState.create({
       doc,
@@ -24,7 +25,7 @@ function state(doc: string, cursor = 0, mode?: 'hidden') {
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         dragFreeze,
         blockDecorations,
-        ...(mode ? [propertiesMode.of(mode)] : []),
+        propertiesMode.of(mode),
       ],
     }),
   )

@@ -27,7 +27,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Tables with alignment (`:---`, `:---:`, `---:`)
 - [x] Footnote definitions `[^id]:`
 - [x] Horizontal rules (`***`, `---`, `___`)
-- [x] YAML front matter, drawn as the rows it says; see section 17
+- [x] YAML front matter, hidden until asked for, then drawn as the rows it says; see section 17
 - [x] Table of contents `[toc]`
 - [x] Callouts: GitHub's alerts and Obsidian's syntax in one. Thirteen types and
       the other names for them (`tldr` and `summary` are `abstract`, `hint` is
@@ -721,6 +721,14 @@ Features Typora does not have, which are the reason this exists.
       Settings > Editor, and a row each in the palette, with the same three answers
       Obsidian asks with: Properties, Source, Hidden. The editor and the reading view
       read the one answer, so a note cannot say one thing written and another read.
+      Hidden is where a reader starts: the metadata at the top of a file is what the
+      app reads - the icon a note wears, its cover - and not something to read on the
+      way into the note. Hidden holds: the caret put in those lines lands at the top
+      of the page, a word typed at the caret a note opens with goes there too, a
+      Backspace at the top joins nothing, Ctrl+A selects what is on the page, find
+      does not stop in it, and the counts in the foot row leave it out. Inserting
+      front matter shows the block while the caret is in it; see
+      `hidden-front-matter.ts`
       One rule for everything else: if any line of the block is a shape nib cannot
       read - a Dataview query, a comment - the **whole** block stays source, because
       half a table is a table that lies about the file. Nowhere outside the app,

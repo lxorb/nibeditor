@@ -43,6 +43,7 @@ import {
   type ViewUpdate,
 } from '@codemirror/view'
 import { type FindSpec, type FindTally, findShown, MOST_COUNTED, NO_TALLY } from './find'
+import { onThePage } from './live-preview/hidden-front-matter'
 
 /** Every match, up to the cap, and which of them the selection is sitting on.
  *
@@ -142,19 +143,28 @@ export function searching(): Extension {
   return [search(), findHighlighter, highlightSelectionMatches()]
 }
 
+/** Only what is on the page: a match in metadata the reader asked to hide would be a
+ *  place the bar takes them to and cannot show them, and a replacement made there one
+ *  they never saw. One function rather than one per query, because the library tells
+ *  two queries apart by it. */
+function onPage(_match: string, state: EditorState, from: number): boolean {
+  return onThePage(state, from)
+}
+
 /** What the bar is looking for, as the library's own query. */
-export function setQuery(view: EditorView, spec: FindSpec) {
-  view.dispatch({
-    effects: setSearchQuery.of(
-      new SearchQuery({
-        search: spec.query,
-        replace: spec.replace,
-        caseSensitive: spec.caseSensitive,
-        regexp: spec.regexp,
-        wholeWord: spec.wholeWord,
-      }),
-    ),
+export function queryFor(spec: FindSpec): SearchQuery {
+  return new SearchQuery({
+    search: spec.query,
+    replace: spec.replace,
+    caseSensitive: spec.caseSensitive,
+    regexp: spec.regexp,
+    wholeWord: spec.wholeWord,
+    test: onPage,
   })
+}
+
+export function setQuery(view: EditorView, spec: FindSpec) {
+  view.dispatch({ effects: setSearchQuery.of(queryFor(spec)) })
 }
 
 /** Whether there is anything to step through or replace. */

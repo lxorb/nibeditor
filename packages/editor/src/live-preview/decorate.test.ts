@@ -8,6 +8,7 @@ import '@nib/markdown/eager'
 import { buildDecorations } from './decorate'
 import { FenceHeaderWidget } from './widgets'
 import { buildBlockDecorations } from './blocks'
+import { propertiesMode } from './hidden-front-matter'
 import { trustedMarkup } from '../markup'
 import { nibMarkdownExtensions } from '../markdown/extensions'
 import { parsed } from '../../test/parsed'
@@ -23,6 +24,9 @@ function state(doc: string, cursor: number, trusted = false) {
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         trustedMarkup(trusted),
+        // The rows, which is what the front matter cases below are about; hidden,
+        // the default, is hidden-front-matter.test.ts.
+        propertiesMode.of('properties'),
       ],
     }),
   )

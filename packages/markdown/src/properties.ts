@@ -37,9 +37,11 @@ export type PropertiesMode = 'properties' | 'source' | 'hidden'
 /** The three, in the order they are offered, which is most shown to least. */
 export const PROPERTIES_MODES: readonly PropertiesMode[] = ['properties', 'source', 'hidden']
 
-/** The mode a saved or shared answer names, or the rows for anything else. */
+/** The mode a saved or shared answer names, or nothing on the page for anything
+ *  else: the metadata at the top of a note is what the app reads, and somebody who
+ *  wants to read it too says so. */
 export function propertiesMode(value: unknown): PropertiesMode {
-  return PROPERTIES_MODES.find((one) => one === value) ?? 'properties'
+  return PROPERTIES_MODES.find((one) => one === value) ?? 'hidden'
 }
 
 /** What a value looks like it is, which decides what it is drawn as. */

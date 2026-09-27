@@ -187,6 +187,8 @@ def fresh(browser: Browser, finger: bool) -> Page:
     wait_for(page, "window.nibApp", "the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
+    # The rows, which this drive reads; hidden is where a reader starts.
+    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page

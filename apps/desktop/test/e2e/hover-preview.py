@@ -397,6 +397,8 @@ def fresh(
     wait_for(page, "window.nibApp", f"[{label}] the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", f"[{label}] a space")
     say(f"[{label}] the space holds {page.evaluate(SEED, [TARGET, SOURCE])}")
+    # The rows, which this drive reads; hidden is where a reader starts.
+    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
     # Opened, and asked for again until the note asked for is the note in the
     # pane. Making a note opens it, so the two seeded notes are already opening

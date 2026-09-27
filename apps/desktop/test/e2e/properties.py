@@ -339,6 +339,8 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, NOTE)}")
+    # The rows, which this drive reads; hidden is where a reader starts.
+    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
     wait_for(
         page,
         "document.querySelector('#write .property[data-key=\\'tags\\']')",

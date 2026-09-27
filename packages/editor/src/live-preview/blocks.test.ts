@@ -2,7 +2,8 @@ import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { Compartment, EditorSelection, EditorState } from '@codemirror/state'
 import type { PropertiesMode } from '@nib/markdown/properties'
 import { describe, expect, test } from 'vitest'
-import { blockDecorations, propertiesMode } from './blocks'
+import { blockDecorations } from './blocks'
+import { propertiesMode } from './hidden-front-matter'
 import { ChartWidget, DiagramWidget, MathWidget } from './render'
 import { dragFreeze, setDragging } from './dragging'
 import { external } from '../external'
@@ -619,7 +620,7 @@ describe('what the front matter is drawn as', () => {
     return names
   }
 
-  test('is the rows, which is where a note with no answer starts', () => {
+  test('is the rows where the reader asked for the rows', () => {
     expect(widgets('properties')).toEqual(['PropertiesWidget'])
   })
 

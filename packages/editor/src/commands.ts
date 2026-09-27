@@ -8,6 +8,7 @@ import {
 import { type Callout, calloutOf } from '@nib/markdown/callouts'
 import { closesFence } from '@nib/markdown/fences'
 import { taskAt } from '@nib/markdown/tasks'
+import { showFrontMatter } from './live-preview/hidden-front-matter'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
  *  so the same shortcut turns emphasis on and off. */
@@ -443,11 +444,22 @@ export const insertToc = insertBlock(() => ({ text: '[toc]\n', caret: 6 }))
 
 /** The note's own metadata, at the top where every parser looks for it. A note
  *  that already has some gets the caret in it rather than a second block, since
- *  two front matters are one front matter and a paragraph of colons. */
+ *  two front matters are one front matter and a paragraph of colons.
+ *
+ *  Either way the block is shown while the caret is in it, where the reader's answer
+ *  is to hide it: a command that wrote something nobody could see, or put the caret
+ *  somewhere invisible, would look like a command that did nothing. See
+ *  hidden-front-matter.ts. */
 export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
   if (state.doc.line(1).text.trim() === '---') {
     const inside = state.doc.line(Math.min(2, state.doc.lines))
-    dispatch(state.update({ selection: EditorSelection.cursor(inside.to), scrollIntoView: true }))
+    dispatch(
+      state.update({
+        selection: EditorSelection.cursor(inside.to),
+        effects: showFrontMatter.of(null),
+        scrollIntoView: true,
+      }),
+    )
     return true
   }
 
@@ -456,6 +468,7 @@ export const insertFrontMatter: StateCommand = ({ state, dispatch }) => {
     state.update({
       changes: { from: 0, insert: block },
       selection: EditorSelection.cursor(block.indexOf('\n---\n')),
+      effects: showFrontMatter.of(null),
       scrollIntoView: true,
       userEvent: 'input',
     }),

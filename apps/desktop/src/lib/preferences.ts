@@ -517,7 +517,7 @@ export function preferences(view?: EditorView): Pane[] {
                 value: one,
                 label: t(PROPERTIES_WORDS[one]),
               })),
-              initial: 'properties',
+              initial: 'hidden',
               get: () => modes.properties,
               set: (value) => modes.setProperties(value, view),
             },

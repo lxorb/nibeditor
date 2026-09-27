@@ -189,11 +189,11 @@ describe('the three answers', () => {
     expect(PROPERTIES_MODES).toEqual(['properties', 'source', 'hidden'])
   })
 
-  test('read a saved or shared answer, and the rows for anything else', () => {
+  test('read a saved or shared answer, and nothing on the page for anything else', () => {
     expect(propertiesMode('source')).toBe('source')
-    expect(propertiesMode('hidden')).toBe('hidden')
+    expect(propertiesMode('properties')).toBe('properties')
     for (const said of [undefined, null, '', 'rows', true]) {
-      expect(propertiesMode(said), String(said)).toBe('properties')
+      expect(propertiesMode(said), String(said)).toBe('hidden')
     }
   })
 

@@ -20,7 +20,8 @@ import { fenceLanguage } from './languages'
 import type { PropertiesMode } from '@nib/markdown/properties'
 import { livePreview } from './live-preview'
 import { noReveal } from './live-preview/reveal'
-import { numberEquations, propertiesMode } from './live-preview/blocks'
+import { numberEquations } from './live-preview/blocks'
+import { propertiesMode } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { enclosing } from './nodes'
 import { flushTableEdits } from './table/widget'
@@ -293,9 +294,9 @@ export function modeExtensions(length = 0): Extension {
     typewriter.of(typewriterFor(false)),
     punctuation.of(punctuationFor(false)),
     equations.of(numberEquations.of(false)),
-    // The rows, which is where every note starts: the metadata a note carries is
-    // worth reading, and the source is one caret away.
-    metadata.of(propertiesMode.of('properties')),
+    // Nothing, which is where every note starts: the metadata a note carries is
+    // what the app reads, and the rows or the YAML are one setting away.
+    metadata.of(propertiesMode.of('hidden')),
     // Off until asked for: a checker's wavy lines under prose that is not in
     // its dictionary's language are noise, and most notes start that way.
     spelling.of(spellingFor(false)),

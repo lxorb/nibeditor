@@ -1,8 +1,8 @@
 <script lang="ts">
   import { tooLongToParse, type VimMode } from '@nib/editor'
-  import { countText } from './counts'
+  import { countNote, countText } from './counts'
   import { amount, t } from './i18n.svelte'
-  import { VIM_WORDS } from './modes.svelte'
+  import { modes, VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
   import { recordingPill } from './surfaces.svelte'
   import { views } from './views.svelte'
@@ -44,7 +44,7 @@
   /** Whether the numbers are on screen at all, by either road. */
   const asked = $derived(looking || held)
 
-  const counts = $derived(asked ? countText(doc) : null)
+  const counts = $derived(asked ? countNote(doc, modes.properties) : null)
 
   /** What is selected, counted. Only while the numbers are on screen and only
    *  while there is a selection at all: reading the words out of the view is as

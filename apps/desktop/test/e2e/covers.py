@@ -333,6 +333,8 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
     wait_for(page, "window.nibApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [COVERED, PLAIN])}")
+    # The rows, which this drive reads; hidden is where a reader starts.
+    page.evaluate("() => window.nibApp.modes.setProperties('properties')")
 
     # The note with no cover, before anything has touched a cover at all, and again
     # at the end: the same pixels either side is the proof that a note without one is
