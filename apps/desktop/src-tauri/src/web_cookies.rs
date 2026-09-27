@@ -26,10 +26,15 @@
 //! of a sign-in that goes through pages, and as the window closes, which catches a
 //! login a page made without loading another one.
 //!
-//! `WebView2` only, and only the system's: this module is not built anywhere else.
-//! `WKWebView` and `WebKitGTK` have cookie stores of their own that wry hands nothing
-//! of out; on those a lasting cookie survives a restart and a session one does not,
-//! which docs/web-tabs.md says out loud.
+//! `WebView2` and `WKWebView`, and only the system's engines: this module is not built
+//! anywhere else. The design is the same on both, because both hand out the profile's
+//! own cookie store - `ICoreWebView2CookieManager` on Windows, the data store's
+//! `WKHTTPCookieStore` on a Mac - and in both a cookie is a set of properties that can
+//! be read, given an expiry and written back. On a Mac a session cookie lives only in
+//! the network process's memory: a lasting one is written to the data store on disk
+//! and comes back on the next launch, a session one is simply gone. `WebKitGTK` has a
+//! store of its own that wry hands nothing of out; there a lasting cookie survives a
+//! restart and a session one does not, which docs/web-tabs.md says out loud.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -41,11 +46,19 @@ const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
 
 /// The expiry a session cookie is given at `now`, both in seconds since 1970, which
 /// is what the engine's own cookie object takes.
+#[cfg_attr(
+    target_os = "macos",
+    allow(dead_code, reason = "a Mac's own date counts from now")
+)]
 fn kept_until(now: f64) -> f64 {
     now + KEPT_FOR
 }
 
 /// Now, in the engine's own unit.
+#[cfg_attr(
+    target_os = "macos",
+    allow(dead_code, reason = "a Mac's own date counts from now")
+)]
 fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -60,6 +73,7 @@ fn now() -> f64 {
 /// several sites: the identity provider's session is set on a page that has already
 /// been left by the time the one after it loads. Called on the window's own thread,
 /// which is the only thread the engine's objects may be touched from.
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the cookie store is reached through WebView2's COM interfaces, which have no safe wrapper"
@@ -128,6 +142,111 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
             said();
         }
     }
+}
+
+/// Makes every session cookie in the data store this webview is on last, and says so
+/// through `done` - once, whether it could or not. The same promise as the Windows one
+/// above, kept with `WKHTTPCookieStore`: every cookie of the store is read, and each
+/// one that would end with the session is written back with an expiry.
+///
+/// A cookie is read as its properties and made again from them, which is the one way
+/// `NSHTTPCookie` has of changing anything about a cookie. `HttpOnly` is not one of the
+/// documented keys, so it is written back by name where the cookie had it: a cookie a
+/// page's script could not read before is not one it can read after.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "the cookie store is reached through WKWebView's Objective-C interface, from the pointer wry hands out"
+)]
+pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'static) {
+    use std::cell::Cell;
+    use std::ptr::NonNull;
+    use std::rc::Rc;
+
+    use block2::RcBlock;
+    use objc2::rc::Retained;
+    use objc2::runtime::AnyObject;
+    use objc2_foundation::{
+        NSArray, NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieExpires,
+        NSHTTPCookieMaximumAge, NSMutableCopying as _, NSString,
+    };
+    use objc2_web_kit::WKWebView;
+
+    /// The cookie again, lasting: its own properties with an expiry and without the
+    /// two keys that would end it with the session anyway.
+    fn lasting(cookie: &NSHTTPCookie) -> Option<Retained<NSHTTPCookie>> {
+        let properties = cookie.properties()?.mutableCopy();
+        let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
+        // SAFETY: every key is `NSHTTPCookie`'s own and every value is the type the key
+        // takes: a date for the expiry, the string `TRUE` for `HttpOnly`.
+        unsafe {
+            properties.insert(NSHTTPCookieExpires, until.as_ref() as &AnyObject);
+            properties.removeObjectForKey(NSHTTPCookieDiscard);
+            properties.removeObjectForKey(NSHTTPCookieMaximumAge);
+            if cookie.isHTTPOnly() {
+                properties.insert(
+                    &*NSString::from_str("HttpOnly"),
+                    NSString::from_str("TRUE").as_ref() as &AnyObject,
+                );
+            }
+            NSHTTPCookie::cookieWithProperties(&properties)
+        }
+    }
+
+    type Said = Rc<Cell<Option<Box<dyn FnOnce()>>>>;
+    fn say(done: &Said) {
+        if let Some(said) = done.take() {
+            said();
+        }
+    }
+
+    let done: Said = Rc::new(Cell::new(Some(Box::new(done) as Box<dyn FnOnce()>)));
+
+    // SAFETY: the pointer is the WKWebView wry built for this page, alive for as long
+    // as the page is, and retaining it keeps it so while the store is asked; this runs
+    // on the main thread, where it belongs.
+    let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
+        say(&done);
+        return;
+    };
+
+    // SAFETY: reading the webview's own configuration on its own thread.
+    let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
+    let writing = store.clone();
+    let answered = done.clone();
+
+    let handler = RcBlock::new(move |cookies: NonNull<NSArray<NSHTTPCookie>>| {
+        // SAFETY: the engine hands this block an array that is alive for its length.
+        let cookies = unsafe { cookies.as_ref() };
+        let kept: Vec<_> = cookies
+            .iter()
+            .filter(|cookie| cookie.isSessionOnly())
+            .filter_map(|cookie| lasting(&cookie))
+            .collect();
+
+        if kept.is_empty() {
+            say(&answered);
+            return;
+        }
+
+        // One count per cookie, down as each is stored; the last one says so.
+        let left = Rc::new(Cell::new(kept.len()));
+        for cookie in kept {
+            let (left, answered) = (left.clone(), answered.clone());
+            let stored = RcBlock::new(move || {
+                left.set(left.get().saturating_sub(1));
+                if left.get() == 0 {
+                    say(&answered);
+                }
+            });
+            // SAFETY: the store is the webview's own and is used on its own thread;
+            // the block is copied by the engine and outlives the call.
+            unsafe { writing.setCookie_completionHandler(&cookie, Some(&stored)) };
+        }
+    });
+
+    // SAFETY: as above; the engine copies the block and calls it once, on this thread.
+    unsafe { store.getAllCookies(&handler) };
 }
 
 /// How long the window waits for the engine before it closes anyway. A quit that

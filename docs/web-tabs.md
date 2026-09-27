@@ -738,12 +738,25 @@ paid once rather than per tab - the pages in the tabs are the part that costs a
 gigabyte, and those are still parked and closed as they always were. See `session` in
 `apps/desktop/src-tauri/src/web_tabs.rs`.
 
+**On macOS a session cookie is given the same expiry, through `WKHTTPCookieStore`.**
+wry hands out the `WKWebView` itself, and the view's configuration names its data store
+and the store its cookie store, so the seam `WebView2` has exists here too: every cookie
+of the store is read after each page a tab loads, and each session-only one is made again
+from its own properties with an expiry four hundred days out, without `Discard` and
+`Max-Age`, and with `HttpOnly` written back by name where it had it (the key is not one
+`NSHTTPCookie` documents). The data store behind a tab is a persistent one - `nib-web-tabs`
+or a space's own - so a cookie with an expiry is written to disk and comes back on the
+next launch, where a session one lived only in the network process's memory and died with
+it. The window's close waits for it as on Windows. **What it does not catch:** a login a
+page made without loading another, followed straight by Cmd+Q. Quitting from the menu is
+not a window closing, so the close hook is never asked; the next page load after a
+sign-in is what keeps it.
+
 On Linux the runtime already keeps the web tabs' context alive for the app's life (it
-has to, to reuse the WebKit network process). On macOS the context is let go when the
-last tab closes, as it was on Windows; a login there rests on the persistent data store
-on disk - a lasting cookie survives, a session-only one does not, a restart included -
-until the same seam exists for `WKWebView` and `WebKitGTK` as for `WebView2`: wry hands
-out neither engine's cookie store, so there is nothing yet to give an expiry through.
+has to, to reuse the WebKit network process). A login there rests on the persistent data
+store on disk - a lasting cookie survives, a session-only one does not, a restart
+included - until the same seam exists for `WebKitGTK`: wry hands out no cookie store
+there, so there is nothing yet to give an expiry through.
 
 **No nib IPC reaches the site**, three times over:
 
@@ -1002,7 +1015,7 @@ versions and goes to the trash like every other document.
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
-| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` only. Unit tested |
+| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |

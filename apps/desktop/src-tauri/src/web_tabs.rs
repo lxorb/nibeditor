@@ -49,7 +49,7 @@ const LABEL: &str = "web-";
 
 /// Whether a webview is one of the web's own - a tab's page, or the page that holds
 /// the session open - rather than the app's.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL)
 }
@@ -354,10 +354,10 @@ impl Trail {
 }
 
 /// The app's builder with what web tabs keep in it: the trail of every tab, and - on
-/// the system's engine on Windows - a window that waits, as it closes, for its tabs'
-/// logins to be made to last; see `web_cookies.rs`.
+/// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
+/// its tabs' logins to be made to last; see `web_cookies.rs`.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder.manage(WebTabs::default())
 }
@@ -1021,7 +1021,7 @@ fn reporting(
 
         // Every step of a sign-in that goes through pages ends here, so this is where
         // a login it left in a session cookie is made to last; see web_cookies.rs.
-        #[cfg(all(windows, not(feature = "cef")))]
+        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
         let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
 
         let marked = sending.clone();

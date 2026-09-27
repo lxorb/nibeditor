@@ -93,8 +93,9 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
-// Only where there is a cookie store to reach: the system's own engine on Windows.
-#[cfg(all(windows, not(feature = "cef")))]
+// Only where there is a cookie store to reach: the system's own engine on Windows and
+// on a Mac.
+#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_keys;
