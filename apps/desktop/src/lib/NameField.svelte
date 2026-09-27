@@ -37,6 +37,9 @@
     value: string
     /** What the commit puts back on the end; nothing for a folder or a space. */
     extension?: string
+    /** The name on disk, ending and all, where there is one: a file being renamed.
+     *  What the field shows cannot always be built back into it; see naming.ts. */
+    current?: string | undefined
     /** The names already beside it, its own left out; see naming.ts. */
     taken?: readonly string[]
     /** The caret goes to the end rather than the name arriving selected: a name
@@ -55,6 +58,7 @@
   let {
     value,
     extension = '',
+    current,
     taken = [],
     appending = false,
     oncommit,
@@ -119,7 +123,7 @@
     if (settled) return
     settled = true
 
-    const name = nameToCommit({ typed, extension, taken, was: value })
+    const name = nameToCommit({ typed, extension, taken, was: value, current })
     if (name === null) oncancel()
     else oncommit(name)
   }

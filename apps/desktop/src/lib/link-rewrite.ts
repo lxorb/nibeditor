@@ -16,7 +16,8 @@
  *  one. */
 
 import { findLinks, type FoundLink } from '@nib/markdown/links'
-import { folderOf, isMarkdownPath, nameOf, relativePath, withoutExtension } from './space-paths'
+import { shownName } from './note-name'
+import { folderOf, nameOf, relativePath } from './space-paths'
 
 export interface Move {
   /** Where the note was and where it is now, relative to the space. */
@@ -56,8 +57,12 @@ function targetFor(link: FoundLink, source: string, move: Move): string {
     return encodeTarget(relativePath(folderOf(source), move.to))
   }
 
+  // A link written without the file's ending stays without one, whichever kind of
+  // file it names: `[[Docs]]` to a website renamed `Handbook.url` is `[[Handbook]]`,
+  // the way a note's is. `shownName` is the one reading of which endings a name
+  // may leave off; a PDF's is not one of them, so a link to one keeps its ending.
   const written = link.target.includes('/') ? move.to : nameOf(move.to)
-  return isMarkdownPath(link.target) ? written : withoutExtension(written)
+  return shownName(link.target) === link.target ? shownName(written) : written
 }
 
 /** A path as a markdown target: the characters a browser or an editor would

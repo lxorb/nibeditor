@@ -54,7 +54,9 @@ export function rowName(name: string, isFolder: boolean): string {
  *
  *  Here beside `shownName` because the two are one rule read from either end: what
  *  a list leaves off is what a rename puts back, and `nameToWrite(shownName(name),
- *  endingOf(name))` is `name` again for every file nib lists. See naming.ts. */
+ *  endingOf(name))` is `name` again for every file nib lists but one that wears its
+ *  ending twice, `Blog.url.url`, which is why a rename compares against the file's
+ *  own name rather than that. See naming.ts. */
 export function endingOf(name: string): string | null {
   const own = OWN.exec(name)
   if (own) return own[0]

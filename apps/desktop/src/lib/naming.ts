@@ -141,10 +141,23 @@ export function extensionOf(name: string, isFolder: boolean): string {
  *  Nothing to do covers three endings that all leave the row exactly as it was:
  *  a name that cannot be written, a name nobody changed, and a row being made
  *  that never got one. So a blur is safe to treat as a commit, which is what
- *  every file manager does, and Escape is this answer taken without asking. */
-export function nameToCommit(naming: Naming & { was: string }): string | null {
+ *  every file manager does, and Escape is this answer taken without asking.
+ *
+ *  Whether anything changed is asked twice, of what was typed and of what would be
+ *  written, and the second is asked against the file's own name rather than one
+ *  built back up out of what the field showed. The two differ for a file that wears
+ *  its ending twice - `Blog.url.url`, which an earlier build wrote, is shown as
+ *  `Blog.url` - and building the name back up out of `Blog.url` gave `Blog.url`,
+ *  the very name deleting the ending asks for. So the rename that would have
+ *  mended the file was taken for a name nobody changed, and nothing happened.
+ *  Emil, 2026-09-27: *"if I try to rename something ending in .url e.g. removing
+ *  the ending it just doesn't work"*. */
+export function nameToCommit(
+  naming: Naming & { was: string; current?: string | undefined },
+): string | null {
   if (nameFault(naming)) return null
+  if (naming.typed.trim() === naming.was.trim()) return null
 
   const name = nameToWrite(naming.typed, naming.extension)
-  return name === nameToWrite(naming.was, naming.extension) ? null : name
+  return name === (naming.current ?? nameToWrite(naming.was, naming.extension)) ? null : name
 }

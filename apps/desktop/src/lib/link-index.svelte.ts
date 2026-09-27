@@ -614,17 +614,28 @@ class Links {
   }
 
   /** A note or a folder that has moved. The links inside the notes that moved
-   *  are unchanged; only where they live is. */
+   *  are unchanged; only where they live is.
+   *
+   *  The files move with them. A link spelled with an ending - `[[report.pdf]]`,
+   *  `[[Docs.url]]` - is answered from the files, so a list still holding the old
+   *  name lost the link until the next scan, and undoing the rename found nothing
+   *  pointing at the name it had to put back. */
   notesMoved(from: string, to: string) {
     const was = this.relative(from)
     const now = this.relative(to)
     if (!was || !now) return
 
+    const moved = (path: string) =>
+      path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path
+
+    if (this.files.some((path) => moved(path) !== path)) {
+      this.files = this.files.map(moved).sort()
+    }
+
     this.edit((notes) =>
       notes.map((note) => {
-        if (note.path !== was && !note.path.startsWith(`${was}/`)) return note
-        const path = now + note.path.slice(was.length)
-        return { ...note, path, name: noteName(path) }
+        const path = moved(note.path)
+        return path === note.path ? note : { ...note, path, name: noteName(path) }
       }),
     )
   }

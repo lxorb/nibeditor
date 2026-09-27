@@ -163,6 +163,46 @@ describe('leaving the field', () => {
   })
 })
 
+/** A file wearing its ending twice, which an earlier build wrote for a website made
+ *  from the file list: `Blog.url.url`, shown as `Blog.url`. Deleting the `.url` the
+ *  row shows asks for `Blog.url`, which is what the name the row showed builds back
+ *  up into as well - so the rename was taken for no change and nothing happened.
+ *  Emil, 2026-09-27. */
+describe('renaming a file whose name the row cannot say back', () => {
+  const site = { extension: '.url', taken: [], was: 'Blog.url', current: 'Blog.url.url' }
+
+  test('writes the name with the ending deleted, as that kind still', () => {
+    expect(nameToCommit({ ...site, typed: 'Blog' })).toBe('Blog.url')
+    expect(nameToCommit({ ...site, typed: 'Reading list' })).toBe('Reading list.url')
+  })
+
+  test('and a note the same way', () => {
+    const note = { extension: '.md', taken: [], was: 'Plan.md', current: 'Plan.md.md' }
+    expect(nameToCommit({ ...note, typed: 'Plan' })).toBe('Plan.md')
+  })
+
+  test('but still nothing for a name nobody changed', () => {
+    expect(nameToCommit({ ...site, typed: 'Blog.url' })).toBeNull()
+    expect(nameToCommit({ ...site, typed: ' Blog.url ' })).toBeNull()
+  })
+
+  test('and nothing for the name the file already has', () => {
+    const plain = { extension: '.url', taken: [], was: 'Blog', current: 'Blog.url' }
+    expect(nameToCommit({ ...plain, typed: 'Blog.url' })).toBeNull()
+    expect(nameToCommit({ ...plain, typed: 'Blog.URL' })).toBeNull()
+  })
+
+  /** The ending is the file's kind, so taking it off the name never takes it off
+   *  the file: a website stays a website, a canvas a canvas. */
+  test('never leaves a file without its ending', () => {
+    for (const ending of ['.url', '.webloc', '.canvas', '.pages', '.md', '.markdown']) {
+      const one = { extension: ending, taken: [], was: 'Thing', current: `Thing${ending}` }
+      expect(nameToCommit({ ...one, typed: 'Other' })).toBe(`Other${ending}`)
+      expect(nameToCommit({ ...one, typed: `Other${ending}` })).toBe(`Other${ending}`)
+    }
+  })
+})
+
 /** The device names are held in two languages: the crate refuses them when the
  *  rename lands, and this module refuses them while the name is being typed. Two
  *  copies of one list is two answers waiting to disagree, so this reads the

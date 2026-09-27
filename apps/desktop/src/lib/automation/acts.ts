@@ -15,6 +15,7 @@
 import { frontMatterEdit } from '@nib/markdown/front-matter'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
+import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
 import { folderOf, insideSpace, nameOf, relativeTo } from '../space-paths'
 import { views } from '../views.svelte'
@@ -318,20 +319,30 @@ export async function moveFile(args: Said): Promise<unknown> {
   }
 
   const folder = folderOf(to)
+  const name = movedName(nameOf(from), nameOf(to))
+  const moved = folder ? `${folder}/${name}` : name
   if (folder === folderOf(from)) {
-    await workspace.rename(source, withExtension(nameOf(to)))
-    return { from, to: withExtension(to) }
+    await workspace.rename(source, name)
+    return { from, to: moved }
   }
 
   await workspace.moveMany([source], folder ? insideSpace(space.root, folder) : space.root)
-  if (nameOf(to) !== nameOf(from)) {
+  if (name !== nameOf(from)) {
     await workspace.rename(
       insideSpace(space.root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),
-      withExtension(nameOf(to)),
+      name,
     )
   }
 
-  return { from, to: withExtension(to) }
+  return { from, to: moved }
+}
+
+/** What a moved file is called: the name asked for with the file's own ending on it,
+ *  so a move never changes what kind of file something is. A note may be asked for
+ *  under any of markdown's endings; anything else keeps its own, so `Blog.url` moved
+ *  to `Reading/Blog` is still a website rather than a note holding a shortcut. */
+function movedName(from: string, to: string): string {
+  return MARKDOWN.test(from) ? withExtension(to) : nameToWrite(to, extensionOf(from, false))
 }
 
 /** Takes a file away. It goes to Recently deleted, which is where every other

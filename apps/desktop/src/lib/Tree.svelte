@@ -1027,6 +1027,7 @@
       <NameField
         value={nameToEdit(entry)}
         extension={extensionOf(entry.name, entry.is_dir)}
+        current={named.making ? undefined : entry.name}
         taken={workspace.namesBeside(entry.path)}
         appending={named.appending}
         bind:wrong

@@ -708,6 +708,35 @@ describe('renaming a note rewrites the links to it', () => {
     expect(notes['One.md']).toBe('see [[Plan]] now')
   })
 
+  /** A website is listed among the space's files as well as among its notes, and a
+   *  link spelled with its ending is answered from the files. Renaming one used to
+   *  write its ending into every link that had left it off, and the files kept the
+   *  old name - so putting the name back found nothing to put back. Emil,
+   *  2026-09-27. */
+  test('a website renamed and put back keeps each link as it was written', async () => {
+    const site = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
+    const before = 'see [[Docs]], [[Docs.url]] and [the docs](Docs.url)'
+    await space({ 'Docs.url': site, 'One.md': before }, ['Docs.url'])
+
+    await links.retarget(at('Docs.url'), at('Handbook.url'), ROOT)
+    links.notesMoved(at('Docs.url'), at('Handbook.url'))
+    expect(notes['One.md']).toBe('see [[Handbook]], [[Handbook.url]] and [the docs](Handbook.url)')
+
+    await links.retarget(at('Handbook.url'), at('Docs.url'), ROOT)
+    links.notesMoved(at('Handbook.url'), at('Docs.url'))
+    expect(notes['One.md']).toBe(before)
+  })
+
+  /** The same for every file a link names by its ending: a PDF in a folder that
+   *  moved answers to its new place at once, not after the next scan. */
+  test('a file that moved is found where it went', async () => {
+    await space({ 'One.md': 'see [[report.pdf]]' }, ['Papers/report.pdf'])
+
+    links.notesMoved(at('Papers'), at('Archive'))
+
+    expect(links.fileNamed('report.pdf')).toBe('Archive/report.pdf')
+  })
+
   test('a note whose name did not change is left alone', async () => {
     await space({ 'Plan.md': '# Plan', 'One.md': '[[Plan]]' })
     expect(await links.retarget(at('Plan.md'), at('Plan.md'), ROOT)).toBe(0)
