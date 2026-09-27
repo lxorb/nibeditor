@@ -119,6 +119,7 @@ const { workspace } = await import('./workspace.svelte')
 const { panesOf } = await import('./workspace/session')
 const { noteId } = await import('./note-id')
 const { viewport } = await import('./viewport.svelte')
+const { pages } = await import('./web-tab/pages.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -245,6 +246,136 @@ describe('keeping a preview tab', () => {
     expect(keep).toHaveBeenCalledWith(tab.id)
     expect(workspace.previewTabId).toBeNull()
     expect(workspace.tabs).toHaveLength(1)
+  })
+})
+
+/** Emil: "browser tabs should open in the same italic way with the same behaviour
+ *  as notes when just clicked". One preview for every kind of file, so a website, a
+ *  plane, a page note and a paper clicked past in the list take one tab between them
+ *  and the note they are clicked past to. */
+describe('previewing every kind of file', () => {
+  const SITE = '/space/site.url'
+  const OTHER_SITE = '/space/other.url'
+  const DECK = '/space/deck.pages'
+  const PAPER = '/space/paper.pdf'
+  const PLANE = '/space/plan.canvas'
+
+  /** A single click on a row of the list, whatever the row is. */
+  async function look(path: string) {
+    await workspace.openEntry(path, { preview: true })
+    const tab = workspace.tabs.find((one) => one.path === path)
+    if (!tab) throw new Error(`${path} did not open`)
+    return tab
+  }
+
+  const paths = () => workspace.tabs.map((one) => one.path)
+
+  beforeEach(() => {
+    notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
+    notes[OTHER_SITE] = '[InternetShortcut]\r\nURL=https://example.org/\r\n'
+    notes[DECK] = '{}'
+    workspace.tabs = []
+    workspace.activeTabId = null
+    workspace.previewTabId = null
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/site.url']
+    delete notes['/space/other.url']
+    delete notes['/space/deck.pages']
+    vi.restoreAllMocks()
+  })
+
+  test('a website clicked in the list is the preview', async () => {
+    const tab = await look(SITE)
+
+    expect(tab.kind).toBe('web')
+    expect(workspace.previewTabId).toBe(tab.id)
+  })
+
+  test('the next website takes its place, and the page goes with the tab', async () => {
+    const forget = vi.spyOn(pages, 'forget')
+    const first = await look(SITE)
+    const second = await look(OTHER_SITE)
+
+    expect(paths()).toEqual([OTHER_SITE])
+    expect(workspace.previewTabId).toBe(second.id)
+    expect(forget).toHaveBeenCalledWith(first.id)
+  })
+
+  test('a note takes a previewed website’s place in the strip, and the other way', async () => {
+    await workspace.open('/space/a.md')
+    await look(SITE)
+    await workspace.open('/space/c.md')
+    expect(paths()).toEqual(['/space/a.md', SITE, '/space/c.md'])
+
+    const note = await look('/space/b.md')
+    expect(paths()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(workspace.previewTabId).toBe(note.id)
+
+    await look(OTHER_SITE)
+    expect(paths()).toEqual(['/space/a.md', OTHER_SITE, '/space/c.md'])
+  })
+
+  test('a plane, a page note and a paper are previews like the rest', async () => {
+    await look(PLANE)
+    expect(paths()).toEqual([PLANE])
+
+    await look(DECK)
+    expect(paths()).toEqual([DECK])
+
+    const paper = await look(PAPER)
+    expect(paths()).toEqual([PAPER])
+    expect(workspace.previewTabId).toBe(paper.id)
+  })
+
+  test('a replaced preview is nothing the closed stack brings back', async () => {
+    const record = vi.spyOn(workspace.closed, 'record')
+    await look(SITE)
+    await look('/space/a.md')
+
+    expect(record).not.toHaveBeenCalled()
+  })
+
+  test('opening the website for real keeps it, the double click on its row', async () => {
+    const tab = await look(SITE)
+    await workspace.openEntry(SITE)
+
+    expect(workspace.previewTabId).toBeNull()
+    await look('/space/a.md')
+    expect(paths()).toEqual([SITE, '/space/a.md'])
+    expect(workspace.tabs[0]?.id).toBe(tab.id)
+  })
+
+  test('the same for a paper, which opens without reading anything', async () => {
+    await look(PAPER)
+    workspace.openPdf(PAPER)
+
+    expect(workspace.previewTabId).toBeNull()
+  })
+
+  test('an address typed into the bar keeps it', async () => {
+    const tab = await look(SITE)
+    await workspace.webAimed(tab, 'https://example.com/elsewhere')
+
+    expect(workspace.previewTabId).toBeNull()
+  })
+
+  test('a pinned website is kept, and the next look gets a tab of its own', async () => {
+    const tab = await look(SITE)
+    workspace.togglePin(tab.id)
+    await look('/space/a.md')
+
+    expect(paths()).toEqual([SITE, '/space/a.md'])
+    workspace.togglePin(tab.id)
+  })
+
+  test('drawing on a previewed plane keeps it, the way typing keeps a note', async () => {
+    const tab = await look(PLANE)
+    tab.note.live.replace(`${DRAWN} `)
+
+    expect(workspace.previewTabId).toBeNull()
   })
 })
 

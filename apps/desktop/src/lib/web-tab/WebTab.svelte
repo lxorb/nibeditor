@@ -34,6 +34,7 @@
   import { webRows, type WebActions } from './menu'
   import { pages, type Rect, type Step } from './pages.svelte'
   import { grants, siteOf } from './permissions.svelte'
+  import { movedOn } from './used'
   import { visited } from './visited'
   import WebAsk from './WebAsk.svelte'
   import WebBar from './WebBar.svelte'
@@ -264,6 +265,12 @@
   // rather than at the site's front door.
   $effect(() => {
     if (page.url !== null && page.url !== tab.address) workspace.webWalked(tab, page.url)
+  })
+
+  // A website clicked past in the list is kept once the reader goes somewhere in it,
+  // the way a note is kept once they type in it; see used.ts for what counts.
+  $effect(() => {
+    if (movedOn(page.landed, page.url)) untrack(() => workspace.keep(tab.id))
   })
 
   // What the strip calls a tab with no file: what the page calls itself. Nothing is

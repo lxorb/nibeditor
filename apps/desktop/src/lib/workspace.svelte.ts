@@ -240,7 +240,8 @@ class Workspace {
    *  about this screen, the way the sidebar's width is. */
   right = $state<Panel[]>([])
   rightPanel = $state<Panel | null>(null)
-  /** The one tab holding a note that is only being looked at. */
+  /** The one tab holding a file that is only being looked at, of whatever kind:
+   *  a note, a website, a canvas, a page note or a PDF. See `previewIn`. */
   previewTabId = $state<string | null>(null)
   /** The row a name is being typed on, in place: a row that exists and is being
    *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
@@ -1147,12 +1148,13 @@ class Workspace {
    *  and, when a link named a page, turns to it.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  openPdf(path: string, page: number | null = null) {
+  openPdf(path: string, page: number | null = null, preview = false) {
     const paneId = this.panes.focusedId
     const existing = this.tabs.find((tab) => tab.kind === 'pdf' && tab.path === path)
 
     if (existing) {
       this.activeTabId = existing.id
+      if (!preview) this.keep(existing.id)
       if (page !== null) this.gotoPage = { path, page }
     } else {
       const file = this.document({
@@ -1164,8 +1166,7 @@ class Workspace {
       })
       const tab = new Tab(file, paneId)
       if (page !== null) tab.page = page
-      this.add(tab)
-      this.dropScaffolding(tab)
+      this.arrive(tab, preview)
     }
 
     this.showNote()
@@ -1180,25 +1181,84 @@ class Workspace {
    *  note's tab does: whether it keeps itself, the mark, Ctrl+S and the closing
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
-  async openCanvas(path: string) {
-    this.showTab(await this.opened.opening(path, () => this.openPlane(path)))
+  async openCanvas(path: string, preview = false) {
+    this.showTab(await this.opened.opening(path, () => this.openPlane(path, preview)), preview)
   }
 
   /** Brings the pane showing a document forward, and answers the tab it is in.
    *  What every opener ends with, whether this call did the opening or found the
-   *  file already open. Null for a file that could not be opened at all. */
-  private showTab(note: NoteDoc | null): Tab | null {
+   *  file already open. Null for a file that could not be opened at all.
+   *
+   *  Opened for real rather than looked at, the tab stays, whichever tab it is: the
+   *  same rule `open` keeps for a note, so a double click on the row of a website
+   *  that is only being previewed keeps it the way it keeps a note. */
+  private showTab(note: NoteDoc | null, preview = false): Tab | null {
     const tab = note && this.tabs.find((one) => one.note === note)
     if (!tab) return null
 
     this.activeTabId = tab.id
+    if (!preview) this.keep(tab.id)
     this.showNote()
     return tab
   }
 
+  /** A tab an open has just made, put in its pane: in the preview's place when the
+   *  open was only a look, and at the end of the strip otherwise. Every opener of a
+   *  file ends its making here, so no kind of file can forget the preview. */
+  private arrive(tab: Tab, preview: boolean, activate = true) {
+    this.add(tab, activate)
+    if (preview) this.previewIn(tab)
+    this.dropScaffolding(tab)
+  }
+
+  /** The preview tab the next look may take the place of, or null where there is
+   *  none to take: one only being looked at, in the pane being worked in, holding
+   *  nothing unsaved, and the one view of its document - taking over a tab another
+   *  pane is also showing would change what that pane shows. */
+  private replaceablePreview(): Tab | null {
+    return (
+      this.tabs.find(
+        (tab) =>
+          tab.id === this.previewTabId &&
+          !tab.dirty &&
+          !tab.pinned &&
+          tab.paneId === this.panes.focusedId &&
+          !this.tabs.some((one) => one.id !== tab.id && one.note === tab.note),
+      ) ?? null
+    )
+  }
+
+  /** Makes a freshly made tab the preview, in the place of the one that was.
+   *
+   *  One mechanism for every kind of file, because the rule is about looking rather
+   *  than about what is looked at: a website previewed goes when a note is clicked,
+   *  and a note previewed goes when a website is. A note replacing a note never gets
+   *  here - it takes the preview tab's document on instead, which keeps the editor
+   *  it is drawn in; see `openNote`.
+   *
+   *  The tab that goes is closed the plain way, so a web tab's page goes with it and
+   *  no browser is left running behind the strip with its sound on. It is not put on
+   *  the closed stack: a look the next look replaced is not a tab anybody closed, and
+   *  a note taken over in place never was either.
+   *
+   *  The page is not handed from the old web tab to the new one. It could be - one
+   *  webview pointed at the next address - but its back button would then walk into
+   *  the previous website, which is a different file, and the trail and the place a
+   *  web tab keeps are kept by file. A new file is a new page, as in a browser. */
+  private previewIn(tab: Tab) {
+    const was = this.replaceablePreview()
+    if (was && was.id !== tab.id) {
+      const at = this.tabsIn(was.paneId).findIndex((one) => one.id === was.id)
+      this.tabs = this.placed(tab, tab.paneId, at)
+      this.close(was.id, false)
+    }
+
+    this.previewTabId = tab.id
+  }
+
   /** The document one open of a canvas comes to. Only `openCanvas` calls it, and
    *  only through the one open. */
-  private async openPlane(path: string): Promise<NoteDoc | null> {
+  private async openPlane(path: string, preview: boolean): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
     // draw on: saving one over it would take the file with it.
@@ -1223,8 +1283,7 @@ class Workspace {
       dirty: false,
     })
     const tab = new Tab(file, this.panes.focusedId)
-    this.add(tab)
-    this.dropScaffolding(tab)
+    this.arrive(tab, preview)
 
     // The notes a canvas holds are links out of it, which is what the Links
     // panel shows while the canvas is the tab being looked at.
@@ -1245,7 +1304,7 @@ class Workspace {
    *  browser has all four, and the file is still theirs in the space - so a website is
    *  a bookmark there, which is what a website on a phone is worth being. Tauri has
    *  no child webviews on a phone either; see docs/web-tabs.md. */
-  async openWeb(path: string) {
+  async openWeb(path: string, preview = false) {
     // Not in front of a pair of glasses, for the reason a canvas is not: there is no
     // page on seven lines of a heads-up display, and the viewer is not in that build
     // at all. See vite.even.config.ts.
@@ -1254,7 +1313,7 @@ class Workspace {
     // Already open, before anything is written: the conversion below makes a file.
     const held = this.opened.at(path)
     if (held) {
-      this.showTab(held)
+      this.showTab(held, preview)
       return
     }
 
@@ -1263,16 +1322,16 @@ class Workspace {
     // be one - somebody took the line out - opens as the note it is.
     const opening = isWebTarget(path) ? path : await asShortcut(this, path)
     if (opening === null) {
-      await this.open(path)
+      await this.open(path, { preview })
       return
     }
 
-    this.showTab(await this.opened.opening(opening, () => this.openSite(opening)))
+    this.showTab(await this.opened.opening(opening, () => this.openSite(opening, preview)), preview)
   }
 
   /** The document one open of a website comes to. Only `openWeb` calls it, and only
    *  through the one open. */
-  private async openSite(opening: string): Promise<NoteDoc | null> {
+  private async openSite(opening: string, preview: boolean): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
 
@@ -1301,8 +1360,7 @@ class Workspace {
     page.url = said?.url ?? null
     page.title = said?.title ?? shownName(nameOf(opening))
 
-    this.add(tab)
-    this.dropScaffolding(tab)
+    this.arrive(tab, preview)
 
     this.remember(opening)
     this.persist()
@@ -1452,6 +1510,9 @@ class Workspace {
    *  points and the session remembers where the reading got to, so a file that moved
    *  under every click would be a file no link could point at. See `webWalked`. */
   async webAimed(tab: Tab, url: string) {
+    // An address typed is the reader using the tab, in either build, so a website
+    // that was only being previewed stays; see web-tab/used.ts.
+    this.keep(tab.id)
     if (tab.kind !== 'web' || tab.path === null) return
 
     const was = readWebFile(tab.path, tab.doc)
@@ -1554,8 +1615,11 @@ class Workspace {
    *  between words and a file works here without knowing what a page is.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  async openPages(path: string, page: number | null = null) {
-    const tab = this.showTab(await this.opened.opening(path, () => this.openDeck(path, page)))
+  async openPages(path: string, page: number | null = null, preview = false) {
+    const tab = this.showTab(
+      await this.opened.opening(path, () => this.openDeck(path, page, preview)),
+      preview,
+    )
     // A deck already open turns to the page the link named. One opening at it is
     // already there, which is what the page it was given says.
     if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
@@ -1563,7 +1627,11 @@ class Workspace {
 
   /** The document one open of a page note comes to. Only `openPages` calls it, and
    *  only through the one open. */
-  private async openDeck(path: string, page: number | null): Promise<NoteDoc | null> {
+  private async openDeck(
+    path: string,
+    page: number | null,
+    preview: boolean,
+  ): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
@@ -1578,8 +1646,7 @@ class Workspace {
     })
     const tab = new Tab(file, this.panes.focusedId)
     if (page !== null) tab.page = page
-    this.add(tab)
-    this.dropScaffolding(tab)
+    this.arrive(tab, preview)
 
     // A page note made from a PDF names that PDF on every page, which is a link out
     // of it: the same scan a canvas's file nodes go through, because they are file
@@ -1679,20 +1746,24 @@ class Workspace {
       isPlugin: isPlugin(),
     })
 
+    // A single click previews whatever the row is, not only a note: a website, a
+    // plane or a paper clicked past in the list is as much a look as a note is, and
+    // a strip that filled with every site somebody glanced at was what Emil saw.
+    const preview = options.preview === true
     switch (opener) {
       case null:
         return
       case 'pdf':
-        this.openPdf(path)
+        this.openPdf(path, null, preview)
         return
       case 'web':
-        await this.openWeb(path)
+        await this.openWeb(path, preview)
         return
       case 'pages':
-        await this.openPages(path)
+        await this.openPages(path, null, preview)
         return
       case 'canvas':
-        await this.openCanvas(path)
+        await this.openCanvas(path, preview)
         return
       case 'note':
         await this.open(path, options)
@@ -2022,17 +2093,12 @@ class Workspace {
     // that pane to a note nobody asked it for - the same hole `walk` had, reached by
     // the other door. Such a tab simply stops being the preview: the note opening
     // gets a tab of its own, and that one is the preview from here.
-    const reusable =
-      options.preview &&
-      this.tabs.find(
-        (tab) =>
-          tab.id === this.previewTabId &&
-          tab.kind === 'note' &&
-          !tab.dirty &&
-          !tab.pinned &&
-          tab.paneId === this.panes.focusedId &&
-          !this.tabs.some((one) => one.id !== tab.id && one.note === tab.note),
-      )
+    //
+    // A preview of another kind - a website, a plane - has no editor to hand the note
+    // to, so the note gets a tab of its own and that one takes the preview's place;
+    // see `previewIn`.
+    const previewing = options.preview ? this.replaceablePreview() : null
+    const reusable = previewing?.kind === 'note' ? previewing : null
 
     if (reusable) {
       reusable.note.adopt({ path, name: nameOf(path), text: doc })
@@ -2057,12 +2123,9 @@ class Workspace {
     const tab = new Tab(note, this.panes.focusedId)
     this.walked(tab, path)
     this.placeAt(tab, path)
-    this.add(tab, options.activate !== false)
+    this.arrive(tab, options.preview === true, options.activate !== false)
 
-    this.previewTabId = options.preview ? tab.id : this.previewTabId
     this.remember(path)
-
-    this.dropScaffolding(tab)
     this.persist()
     return note
   }
@@ -2338,7 +2401,9 @@ class Workspace {
     return !note.unsaved
   }
 
-  close(id: string) {
+  /** `reopenable` false is for a tab nobody closed - a preview the next look took
+   *  the place of - which the closed stack has no business bringing back. */
+  close(id: string, reopenable = true) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
 
@@ -2348,7 +2413,7 @@ class Workspace {
     // The words as they stand, since a tab closed with something unsaved in it
     // has to bring that back with it.
     this.flush()
-    if (worthReopening(tab)) {
+    if (reopenable && worthReopening(tab)) {
       this.closed.record({ draft: this.draftOf(tab), paneId, at: Math.max(at, 0) })
     }
 

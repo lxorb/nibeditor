@@ -250,6 +250,11 @@ export class Page {
    *  closing the tab and opening the note tomorrow lands back on it. See place.ts. */
   path: string | null = null
 
+  /** Where the first load in this tab finished, or null before it has. What the
+   *  page leaving it is measured against, which is what keeps a previewed website;
+   *  see used.ts. Not drawn, and read only alongside `url`, which is. */
+  landed: string | null = null
+
   /** When this tab was last looked at, so the least recently looked at is the one
    *  parked when there are more pages running than a window should hold. */
   looked = Date.now()
@@ -806,6 +811,7 @@ class Pages {
       // captures at once, a fifth of a second each, on the window's own thread in the
       // breath the reader is watching the page appear.
       if (was && !said.loading) {
+        page.landed ??= page.url
         page.shot = null
         void this.shoot(said.tab)
       }
