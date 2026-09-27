@@ -384,8 +384,11 @@ taken on the moment a page _stops_ loading rather than on every report that it i
 loading: the crate says where a page is again whenever its title or its mark arrives, so
 a page landing is three reports in a few milliseconds, and each of them used to throw the
 picture away and ask for another - three engine captures at once, in the breath the
-reader is watching the page appear. On macOS and Linux there is no
-snapshot to be had through what wry hands out, and the hole keeps its own ground there.
+reader is watching the page appear. On macOS the same picture is `WKWebView`'s own
+`takeSnapshotWithConfiguration:completionHandler:`, reached through the view wry hands
+out and turned into a PNG through `NSBitmapImageRep`, so the window gets the same `data:`
+address either way. On Linux there is no snapshot to be had through what wry hands out,
+and the hole keeps its own ground there.
 
 **Back and forward are the page's own history, until they cannot be.** Neither
 WebView2 nor WKWebView hands Tauri a Go Back, so for a page that has been running
@@ -1080,9 +1083,9 @@ versions and goes to the trash like every other document.
   not give it" above, with the measurement and what the fix costs. It is the largest
   thing open here: it is not one site, it is any site whose bundle happens to declare a
   top level `ipc`, and nothing in the page can tell the reader why.
-- **A page's still picture is Windows only.** `CapturePreview` is WebView2's own;
-  `WKWebView`'s `takeSnapshot` and WebKitGTK's equivalent are not reachable through
-  what wry hands out, so an overlay over a page on a Mac still blinks the pane.
+- **A page's still picture is Windows and macOS only.** `CapturePreview` and
+  `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what
+  wry hands out, so an overlay over a page on Linux still blinks the pane.
 - **A permission on Linux is the engine's own default**, for the same reason: the
   event that would let the app ask is not reachable there.
 - **The place a page is put back at is the offset it was left at**, not the element

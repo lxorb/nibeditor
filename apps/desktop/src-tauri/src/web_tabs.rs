@@ -1490,12 +1490,12 @@ pub async fn web_close(
 /// asks for this first, paints it in the hole, and then hides the webview, so what is
 /// behind the menu is the page.
 ///
-/// `WebView2` has `CapturePreview`, which is the engine photographing itself and is
-/// the only way to get at those pixels: the app's own webview cannot draw the page and
-/// nothing outside the process may copy the screen. Elsewhere there is nothing to call
-/// - `WKWebView`'s `takeSnapshot` is not reachable through what wry hands out - and the
-/// answer is `None`, which the window reads as "keep your own ground". Said in
-/// docs/web-tabs.md rather than hidden here.
+/// `WebView2` has `CapturePreview` and `WKWebView` has `takeSnapshot`, which are the
+/// engine photographing itself and the only way to get at those pixels: the app's own
+/// webview cannot draw the page and nothing outside the process may copy the screen.
+/// On Linux there is nothing to call - `WebKitGTK`'s snapshot is not reachable through
+/// what wry hands out - and the answer is `None`, which the window reads as "keep your
+/// own ground". Said in docs/web-tabs.md rather than hidden here.
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     let view = found(&app, &tab)?;
@@ -2220,15 +2220,81 @@ mod shot {
     }
 }
 
-// Every build but `WebView2`'s, nib's own Chromium among them. See the one above.
-#[cfg(any(not(windows), feature = "cef"))]
+// `WKWebView`'s own snapshot, on the system's engine on a Mac: the same still picture
+// `CapturePreview` takes on Windows, so an overlay over a page shows the page rather than
+// a blank pane.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+mod shot {
+    use block2::RcBlock;
+    use objc2::rc::Retained;
+    use objc2_app_kit::{NSBitmapImageFileType, NSBitmapImageRep, NSImage};
+    use objc2_foundation::{NSDictionary, NSError};
+    use objc2_web_kit::WKWebView;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+
+    /// The largest picture handed to the window, as on Windows.
+    const LARGEST: usize = 32 * 1024 * 1024;
+
+    /// Asks the engine to photograph the page as it is on screen. The answer arrives
+    /// later, on the channel, once `WebKit` has drawn it.
+    #[allow(
+        unsafe_code,
+        reason = "WKWebView's snapshot is reached through the Objective-C runtime, from the pointer wry hands out"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long
+        // as the tab's page is, and this runs on the main thread where it belongs.
+        let view = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }
+            .ok_or("there is no page to photograph")?;
+
+        let handler = RcBlock::new(move |image: *mut NSImage, _error: *mut NSError| {
+            // SAFETY: the engine hands this block either an image or nothing, alive for
+            // the block's length.
+            let bytes = unsafe { image.as_ref() }.and_then(png);
+            let _ = done.try_send(bytes);
+        });
+
+        // SAFETY: the webview is used on its own thread, no configuration means the
+        // whole of what is on screen, and the engine copies the block and calls it once.
+        unsafe { view.takeSnapshotWithConfiguration_completionHandler(None, &handler) };
+        Ok(())
+    }
+
+    /// The picture as a PNG, which is what the window puts in the pane.
+    #[allow(
+        unsafe_code,
+        reason = "a bitmap is encoded through AppKit's Objective-C interface"
+    )]
+    fn png(image: &NSImage) -> Option<Vec<u8>> {
+        let tiff = image.TIFFRepresentation()?;
+        let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
+        // SAFETY: an empty dictionary is a valid set of encoding properties.
+        let data = unsafe {
+            bitmap.representationUsingType_properties(
+                NSBitmapImageFileType::PNG,
+                &NSDictionary::new(),
+            )
+        }?;
+
+        let bytes = data.to_vec();
+        (!bytes.is_empty() && bytes.len() <= LARGEST).then_some(bytes)
+    }
+}
+
+// Every build but the two system engines that can photograph a page: Linux, and nib's
+// own Chromium. See the two above.
+#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WKWebView`'s own snapshot and `WebKitGTK`'s are not reachable
-    /// through what wry hands out, so the window keeps its own ground under an overlay
-    /// here; see the note on `web_shot`.
+    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
+    /// so the window keeps its own ground under an overlay here; see the note on
+    /// `web_shot`.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own
