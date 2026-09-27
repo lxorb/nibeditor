@@ -40,7 +40,19 @@
   import WebBar from './WebBar.svelte'
   import WebSite from './WebSite.svelte'
 
-  const { tab, focused }: { tab: Tab; focused: boolean } = $props()
+  const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
+
+  /** The tab this pane is for, held from the moment it is built.
+   *
+   *  The pane is keyed by the tab's id, so one of these is only ever one tab, and a
+   *  tab is one object for its whole life. The prop is not: it is the parent's
+   *  `$derived`, read through a getter, and it moves on before this pane is taken
+   *  apart. Closing the last tab makes it null, and swapping the tab makes it the next
+   *  one - and Chrome sends the address field its blur while the field is being
+   *  removed, still in the document, after the prop has moved. Read through the prop,
+   *  that blur threw on `null.id` when the last tab went with the field in use, and
+   *  told the next tab that nobody was typing in it when a tab was swapped. */
+  const tab = untrack(() => shown)
 
   /** How long a layer that has closed may still be in the document.
    *
@@ -381,9 +393,10 @@
         menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
       onsite={() => (showingSite = !showingSite)}
       ontyping={(on: boolean) => {
-        // By id, for the reason the teardown above says: a blur arrives while the pane is
-        // being taken apart, and the page this pane's `$derived` would answer with is a
-        // value nobody is keeping up to date any more.
+        // Of the store rather than through `page`, for the reason the teardown above
+        // says: the last blur arrives while the pane is being taken apart, and the page
+        // this pane's `$derived` would answer with is a value nobody is keeping up to
+        // date any more.
         pages.of(tab.id).typing = on
       }}
     />

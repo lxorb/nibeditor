@@ -124,3 +124,61 @@ test('the bar can report typing after its own pane has gone', () => {
     workspace.close(tab.id)
   }
 })
+
+/** The same blur in Chrome's order, which is not the order the test above makes.
+ *
+ *  Chrome sends a focused field its blur while the field is being removed - still in
+ *  the document, so nothing the bar asks of the element can tell - and by then the
+ *  pane's prop has already moved on: to null when the last tab was closed, to the next
+ *  tab when one was swapped in. The pane read its tab through that prop, so closing
+ *  the last tab with the address field in use threw `Cannot read properties of null
+ *  (reading 'id')`, and a swap told the tab arriving that nobody was typing in it.
+ *  Here the prop is a getter that moves, and the blur is sent with the field still in
+ *  place: exactly what the pane sees in that browser. */
+test.each([
+  ['closed, so there is no tab', () => null],
+  ['swapped, so there is another', () => workspace.tabs.at(-2) ?? null],
+])('the bar reports typing to its own tab after the pane’s tab was %s', (_, next) => {
+  workspace.openWebsite()
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  const other = workspace.tabs.at(-2)
+  if (!tab || !other) throw new Error('no tabs')
+
+  let current: typeof tab | null = tab
+  const app = mount(WebTab, {
+    target,
+    props: {
+      get tab() {
+        // Typed as always a tab, because that is what the pane promises; the moment
+        // this test is about is the one where it is not.
+        return current!
+      },
+      focused: true,
+    },
+  })
+
+  try {
+    flushSync()
+    const field = target.querySelector('input')
+    if (!field) throw new Error('no address field')
+
+    field.focus()
+    flushSync()
+    expect(pages.of(tab.id).typing).toBe(true)
+
+    // The tab after this one may already have the keyboard in its own bar.
+    pages.of(other.id).typing = true
+    current = next()
+    field.blur()
+
+    expect(pages.of(tab.id).typing).toBe(false)
+    expect(pages.of(other.id).typing).toBe(true)
+  } finally {
+    current = tab
+    void unmount(app)
+    pages.of(other.id).typing = false
+    workspace.close(tab.id)
+    workspace.close(other.id)
+  }
+})
