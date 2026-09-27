@@ -129,9 +129,10 @@ describe('the hamburger', () => {
 
     // The bars are the desktop's, at the left end of the bar where the column of
     // spaces used to keep them; a touch screen reaches the app through the dots
-    // at the other end of that same row instead.
+    // at the other end of that same row instead, and a Mac through the menu bar at
+    // the top of its screen, the way VS Code and Obsidian are reached there.
     expect(titlebar).toContain(
-      '{#if !viewport.touch}\n    <AppMenu {view} {onpalette} {onhistory} />',
+      '{#if !viewport.touch && !mac}\n    <AppMenu {view} {onpalette} {onhistory} />',
     )
   })
 })
