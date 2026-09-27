@@ -13,6 +13,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // time and is the same one under Vite and inside the app bundle. Asking for the
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { fileBytes } from '../bytes'
 import { hashOf } from './text-cache'
 
@@ -20,10 +21,38 @@ type Library = typeof import('pdfjs-dist')
 
 let loading: Promise<Library> | null = null
 
+/** Whether this engine runs the current pdf.js, which calls `Promise.try`,
+ *  `Uint8Array.fromBase64` and `Math.sumPrecise` without asking whether they are
+ *  there. A Mac's WebKit is as old as its macOS and has all three only from Safari
+ *  18.2, so an older Mac reads PDFs through the legacy build pdf.js ships for
+ *  exactly this, the way Firefox's own viewer is shipped to older browsers. Asked
+ *  of the engine rather than of the platform, so a Linux WebKit that lags behind is
+ *  covered by the same question. Both builds are chunks of their own and a window
+ *  only ever fetches one. */
+export function current(scope: object = globalThis): boolean {
+  const has = (name: string, member: string) => {
+    const owner: unknown = Reflect.get(scope, name)
+    return (
+      (typeof owner === 'object' || typeof owner === 'function') &&
+      owner !== null &&
+      typeof Reflect.get(owner, member) === 'function'
+    )
+  }
+
+  return has('Promise', 'try') && has('Uint8Array', 'fromBase64') && has('Math', 'sumPrecise')
+}
+
 /** The library, loaded once per window. */
 export function pdfjs(): Promise<Library> {
-  loading ??= import('pdfjs-dist').then((library) => {
-    library.GlobalWorkerOptions.workerSrc = workerUrl
+  loading ??= (
+    current()
+      ? import('pdfjs-dist').then((library) => ({ library, worker: workerUrl }))
+      : import('pdfjs-dist/legacy/build/pdf.mjs').then((library) => ({
+          library,
+          worker: legacyWorkerUrl,
+        }))
+  ).then(({ library, worker }) => {
+    library.GlobalWorkerOptions.workerSrc = worker
     return library
   })
 
