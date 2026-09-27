@@ -4,7 +4,6 @@
   import { amount, t } from './i18n.svelte'
   import { modes, VIM_WORDS } from './modes.svelte'
   import { pages } from './pages/showing.svelte'
-  import { recordingPill } from './surfaces.svelte'
   import { views } from './views.svelte'
 
   const {
@@ -62,24 +61,6 @@
      Muted while a keystroke is a command, in the accent while it is text. -->
 {#if vimMode}
   <span class="mode" class:writing={vimMode !== 'normal'}>{t(VIM_WORDS[vimMode])}</span>
-{/if}
-
-<!-- The one thing the app says about a microphone that is open: a dot, the time so
-     far, and a stop. Here because a recording belongs to the window rather than to the
-     note - it goes on while you move between notes - and this is where the window says
-     what is true of itself.
-
-     On a phone as well as on a desktop, which is why it is not inside the footer
-     below: those numbers are a hover away and there is no hover on a phone, while a
-     red dot somebody started has to be there to be pressed.
-
-     Fetched the first time a recording starts, with the recorder behind it, and kept
-     afterwards: nothing about a microphone is in the app until somebody presses
-     Record. See RecordingPill.svelte and surfaces.svelte.ts. -->
-{#if recordingPill.asked}
-  {#await recordingPill.asked then RecordingPill}
-    <RecordingPill />
-  {/await}
 {/if}
 
 <!-- The one place the app says what is true of the note it is showing, so the

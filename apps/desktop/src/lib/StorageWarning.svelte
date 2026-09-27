@@ -7,8 +7,8 @@
   import { dur } from './motion'
 </script>
 
-<!-- Bottom left, out of the way of the update notice on the right and of the
-     button that makes new notes. -->
+<!-- At the start of the notices row, with the update notice at its end; see
+     App.svelte for why none of the row floats over the pane any more. -->
 {#if usage.warning}
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>
@@ -34,11 +34,11 @@
 {/if}
 
 <style>
+  /* The first track of the notices row, which is the corner it used to float in. It
+     takes its room rather than covering the pane; App.svelte says why. */
   .toast {
-    position: fixed;
-    inset-inline-start: max(var(--space-4), var(--inset-start));
-    bottom: calc(var(--space-4) + var(--inset-bottom));
-    z-index: 40;
+    grid-column: 1;
+    justify-self: start;
     max-width: 20rem;
     display: flex;
     flex-direction: column;
@@ -85,7 +85,7 @@
   }
 
   :global([data-touch]) .toast {
-    inset-inline-end: max(var(--space-4), var(--inset-end));
+    justify-self: stretch;
     max-width: none;
   }
 

@@ -399,7 +399,7 @@
        this box rather than against the pane, because "under the bar" is what they mean:
        a rectangle the height of the whole pane would put them under the *page*, which is
        off the bottom of the window. -->
-  <div class="head">
+  <div class="head" class:roomy={fullscreen.on}>
     <WebBar
       {page}
       {focused}
@@ -532,6 +532,14 @@
     position: relative;
     z-index: 1;
     flex: none;
+  }
+
+  /* Full screen puts its way out in this corner, and a page draws above it: the bar
+     makes the room, down and across, so neither the page nor the dots sit under the
+     button. See `.leave` in App.svelte. */
+  .head.roomy {
+    min-height: calc(var(--leave-size) + var(--space-2) * 2);
+    padding-inline-end: calc(var(--leave-size) + var(--space-2) * 2);
   }
 
   /* The page's own room. `--bg` rather than nothing, because for one frame between

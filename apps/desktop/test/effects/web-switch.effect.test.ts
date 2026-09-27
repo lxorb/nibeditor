@@ -22,12 +22,19 @@ const asked: { command: string; args: Record<string, unknown> }[] = []
  *  Null while `web_open` is to answer at once, which is every other test. */
 let holding: Promise<void> | null = null
 
+/** A command the crate refuses, for the tests about what the window may conclude from
+ *  one. Every call into the crate can fail - a webview taken down while a call was in
+ *  the air, an engine that would not answer - and what the window does with that is the
+ *  difference between a page it builds again and a page left drawn over the app. */
+let refuses: string | null = null
+
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
   isNative: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, args })
+    if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
     return Promise.resolve(undefined)
   },
@@ -115,6 +122,7 @@ beforeEach(() => {
   asked.length = 0
   over = null
   holding = null
+  refuses = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -200,8 +208,13 @@ test('the page is hidden while anything of the app is over it, and comes back wh
   const hidden = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(hidden?.args.visible).toBe(false)
   // And the page was photographed first, so the pane holds the page rather than nothing
-  // while the menu is over it.
-  expect(asked.map((one) => one.command)).toContain('web_shot')
+  // while the menu is over it: a picture asked for after the page went out of sight is
+  // a picture of nothing.
+  const said = asked.map((one) => one.command)
+  expect(said).toContain('web_shot')
+  expect(said.indexOf('web_shot')).toBeLessThan(
+    asked.findIndex((one) => one.command === 'web_place' && one.args.visible === false),
+  )
 
   asked.length = 0
   off()
@@ -374,6 +387,160 @@ test('a web tab that mounts under a layer on its way out still asks for its page
 
   expect(asked.filter((one) => one.command === 'web_open')).toHaveLength(0)
   expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(true)
+
+  void unmount(app)
+})
+
+/** Mounts a web tab with a page behind it, for the tests below. */
+async function opened(url: string) {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) throw new Error('no web tab was opened')
+
+  pages.of(tab.id).url = url
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).live).toBe(true)
+
+  return { tab, app }
+}
+
+/** What the window may conclude from a call the crate refused.
+ *
+ *  `live` is the window's own idea of whether there is a webview behind a tab, and every
+ *  command used to write it from its own failure: one refused address, one refused step,
+ *  one refused placement, and the window had decided the page was gone. It is a guess,
+ *  and it is the guess that cost Emil his window - a page the window thinks is gone is a
+ *  page nothing places again, and a native webview nothing places is drawn over the
+ *  note, the tab strip and every menu until the tab is closed. See `place`. */
+test('a refused address is not a page that has gone', async () => {
+  const { tab, app } = await opened('https://example.com/refused')
+
+  refuses = 'web_navigate'
+  await pages.go(tab.id, 'https://example.com/elsewhere')
+  refuses = null
+
+  // The page is still there as far as anything here knows, so the pane goes on placing
+  // it - and if it really has gone, the next placement is what finds that out.
+  expect(pages.of(tab.id).live).toBe(true)
+
+  refuses = 'web_step'
+  await pages.step(tab.id, 'back')
+  refuses = null
+  expect(pages.of(tab.id).live).toBe(true)
+
+  void unmount(app)
+})
+
+/** Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else.
+ *  For example when I switched to a note, there was still the browser open."*
+ *
+ *  The pane going away says so - that is the test above this block - and it used to say
+ *  so only while the window believed there was a page to say it about. One refused call
+ *  anywhere took that belief away, and the hide then did nothing at all: the webview
+ *  stayed exactly where it was, on top of whatever the pane showed next, with nothing
+ *  left in the window able to reach it.
+ *
+ *  So the belief gates showing a page and never hiding one. Being wrong about a page
+ *  that is gone costs one refused call; being wrong the other way costs the window. */
+test('a page the window has given up on is still put out of sight', async () => {
+  const { tab, app } = await opened('https://example.com/given-up')
+
+  // A placement that was refused, which is the one direction allowed to conclude that
+  // the page has gone.
+  refuses = 'web_place'
+  await pages.place(tab.id, { x: 0, y: 40, width: 800, height: 560 }, true)
+  refuses = null
+  expect(pages.of(tab.id).live).toBe(false)
+
+  // The tab strip switches to a note.
+  asked.length = 0
+  void unmount(app)
+  flushSync()
+  await frames()
+
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+  expect(pages.of(tab.id).shown).toBe(false)
+})
+
+/** The other half of the same rule, at the other end of a page's life.
+ *
+ *  The crate refuses a second page under one label, so a build that comes back refused
+ *  may have been refused *because* there is already one - running, wherever it was last
+ *  placed, and about to be a page the window has no record of. The pane is told there is
+ *  no page only once the label is empty. */
+test('a build the crate refuses leaves no page behind it', async () => {
+  startup.reset()
+  await startup.shown()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+
+  pages.of(tab.id).url = 'https://example.com/refused-build'
+
+  refuses = 'web_open'
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  refuses = null
+
+  expect(pages.of(tab.id).live).toBe(false)
+  expect(pages.of(tab.id).openable).toBe(false)
+  const closed = asked.filter((one) => one.command === 'web_close').at(-1)
+  expect(closed?.args.keep).toBe(false)
+
+  void unmount(app)
+})
+
+/** The still picture, which is the half of this mechanism a photograph of the window
+ *  cannot tell from the page: a reader cannot either.
+ *
+ *  Asked because of the same report. A page put out of sight leaves the pane holding a
+ *  picture of it, and a picture left drawn where a note now is would look exactly like a
+ *  browser that never went away - and it would be a picture, so asking the window
+ *  whether the webview is hidden would say yes the whole time.
+ *
+ *  It is drawn in one place, which is the hole inside the web surface, and the hole goes
+ *  with the pane: there is nowhere for it to be left. That is what this holds to. */
+test('the still picture goes with the pane it was taken for', async () => {
+  const { tab, app } = await opened('https://example.com/still')
+
+  const shot = 'data:image/png;base64,iVBORw0KGgo='
+  pages.of(tab.id).shot = shot
+  flushSync()
+
+  const hole = target.querySelector('.hole')
+  expect(hole?.getAttribute('style')).toContain(shot)
+
+  void unmount(app)
+  flushSync()
+  await frames()
+
+  expect(document.querySelector('.hole')).toBe(null)
+  expect(document.body.innerHTML).not.toContain(shot)
+})
+
+/** A picture is of one size of page. The notices row coming or going, or a divider
+ *  moving, puts the page at another, and the old picture under the next menu then left
+ *  a band of empty pane below it - seen in the native app once the update notice went. */
+test('a picture of the page goes when the page is shown at another size', async () => {
+  const { tab, app } = await opened('https://example.com/resized')
+  const shot = 'data:image/png;base64,iVBORw0KGgo='
+  const pane = pages.of(tab.id).pane
+  if (!pane) throw new Error('the page was never placed')
+
+  pages.of(tab.id).shot = shot
+  await pages.place(tab.id, pane, true)
+  expect(pages.of(tab.id).shot).toBe(shot)
+
+  await pages.place(tab.id, { ...pane, height: pane.height - 78 }, true)
+  expect(pages.of(tab.id).shot).toBeNull()
 
   void unmount(app)
 })

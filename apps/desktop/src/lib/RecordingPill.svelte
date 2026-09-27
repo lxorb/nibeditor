@@ -2,12 +2,16 @@
   /** The one thing the app says about a microphone that is open: a dot, the time so
    *  far, and a stop.
    *
-   *  Its own component rather than a corner of the status bar, because the recorder
-   *  behind it is a subsystem - the microphone, the container, the WAV pieces, the
-   *  transcript, the summary - and nothing in it is worth a byte before somebody
-   *  presses Record. The bar asks for this the moment a recording starts and keeps it
-   *  afterwards, so the pill's own way in and out is exactly what it was; see
-   *  surfaces.svelte.ts and StatusBar.svelte.
+   *  Its own component because the recorder behind it is a subsystem - the
+   *  microphone, the container, the WAV pieces, the transcript, the summary - and
+   *  nothing in it is worth a byte before somebody presses Record. The window asks for
+   *  this the moment a recording starts and keeps it afterwards; see surfaces.svelte.ts.
+   *
+   *  In the middle of the row the app's own notices take under the panes, on every
+   *  kind of tab and in full screen: a red dot somebody started has to be there to be
+   *  pressed, and it used to float over the foot of the note - which over a web tab is
+   *  behind the page, because a native webview draws above every pixel of HTML in the
+   *  window. See `.notices` in App.svelte.
    *
    *  Read off the store rather than handed in: a recording belongs to the window
    *  rather than to any one note, and this is the one place that says so. */
@@ -40,33 +44,29 @@
 {/if}
 
 <style>
-  /* The recording pill: the middle of the bottom edge, clear of the numbers in one
-     corner, the vim mode in the other and the phone's own plus button.
-
-     Laid out the way the numbers and the mode beside it are - absolute, in the box
-     the bar is given - rather than fixed to the window. It looks like the same thing
-     and is not: a `fixed` element is positioned inside the nearest ancestor with a
-     transform on it, and on a phone that is the layer the drawer slides, so the pill
-     would have ridden the drawer sideways and sat on the gesture bar. The drive
-     measures where it actually lands. */
+  /* The middle track of the notices row, whatever is at either end of it. Laid out
+     rather than floated, so it takes its room instead of covering the pane; see
+     App.svelte. */
   .recording {
-    position: absolute;
-    z-index: 26;
-    left: 50%;
-    bottom: calc(var(--space-3) + var(--inset-bottom));
-    transform: translateX(-50%);
+    grid-column: 2;
     align-items: center;
     gap: var(--space-2);
     padding-inline-start: var(--space-3);
     animation: pill-in var(--dur-base) var(--ease-spring);
   }
 
-  /* Up from the edge it is pinned to, which is where a thing that has just started
+  /* One column on a phone, and the pill in the middle of it. */
+  :global([data-touch]) .recording {
+    grid-column: 1;
+    justify-self: center;
+  }
+
+  /* Up from the foot of the window, which is where a thing that has just started
      comes from. */
   @keyframes pill-in {
     from {
       opacity: 0;
-      transform: translate(-50%, var(--space-3));
+      transform: translateY(var(--space-3));
     }
   }
 
