@@ -582,9 +582,14 @@ desktop engines.
 - **A name is made safe on every platform**: no separators, nothing a file system
   refuses, no device name, no dot at either end, at most 180 characters with the
   extension kept. `NIB_DOWNLOADS_DIR` points a probe at a folder of its own.
-- **Progress is `WebView2`'s alone.** `downloads::progress` listens to the operation the
-  engine hands out a second time, after wry's handler, and matches it by the path that
-  handler chose; it is also what Cancel reaches. On macOS and Linux a file says when it
+- **Progress is `WebView2`'s and `WKWebView`'s.** On Windows `downloads::progress`
+  listens to the operation the engine hands out a second time, after wry's handler, and
+  matches it by the path that handler chose; it is also what Cancel reaches. On macOS wry
+  keeps the `WKDownload` to itself, so the tab's navigation delegate is given one of
+  nib's own in front of wry's: `didBecomeDownload` is passed to wry's delegate first,
+  unchanged, and the download is then kept and matched to the list by its address, the
+  way wry's word that it ended is matched. Its `NSProgress` is read a few times a second
+  while anything is going, and Cancel is its own `cancel:`. On Linux a file says when it
   starts and when it ends, the ring sweeps rather than fills, and Cancel only takes the
   row away.
 - **A tab a page opened for a file closes again**, the way Chrome's does: `target="_blank"`
@@ -1017,7 +1022,7 @@ versions and goes to the trash like every other document.
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
-| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
+| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
