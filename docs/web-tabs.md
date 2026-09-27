@@ -968,11 +968,10 @@ forwarding. A site that asks for both at once is two questions, camera first, be
 window remembers each for the site on its own; the microphone is only asked about once
 the camera has been allowed. The window's own page is answered the Windows way: the app's
 own origin is allowed, anything else in it refused. The requesting frame's origin is the
-one asked about, as on Windows. Where, notifications and the clipboard have no request to
-answer in `WKWebView` - where is never offered, notifications are not there, and a
-clipboard read is WebKit's own Paste callout - so the bubble is the camera and the
-microphone. macOS before 12 has no such delegate method, and `WebKit` refuses capture
-there on its own.
+one asked about, as on Windows. Where you are, notifications and a clipboard read are
+not raised through this delegate - `WKWebView` answers them itself, a clipboard read with
+its own Paste callout - so on a Mac the bubble is the camera and the microphone. macOS
+before 12 has no such delegate method.
 
 **On Linux** the engine's own default is what a site gets: the same event exists there -
 WebKitGTK's `permission-request` signal - and it is not reachable through what wry hands
