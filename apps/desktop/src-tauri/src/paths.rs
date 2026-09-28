@@ -610,6 +610,20 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
 /// a pulled cable leaves either the old file or the new one, never half of
 /// either, and never a temp file lying around.
 pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    written(target, bytes, false)
+}
+
+/// The same whole write, for a file nobody but this user may read: its temp file is
+/// made the owner's alone before a byte is in it, so what it holds is never on the
+/// disk where anybody else could read it - not even for the moment between the
+/// write and a permission set afterwards, which is what the first launch on a
+/// shared machine used to leave. On Windows there is no mode to set: the app's own
+/// folder is the user's already.
+pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    written(target, bytes, true)
+}
+
+fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
     let parent = target
         .parent()
         .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
@@ -623,7 +637,7 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
         WRITES.fetch_add(1, Ordering::Relaxed)
     ));
 
-    if let Err(error) = spill(&temp, bytes) {
+    if let Err(error) = spill(&temp, bytes, private) {
         let _ = fs::remove_file(&temp);
         return Err(error);
     }
@@ -654,8 +668,18 @@ fn temp_stem(target: &Path) -> &str {
 }
 
 /// The half of an atomic write that can fail with the temp file already there.
-fn spill(temp: &Path, bytes: &[u8]) -> Result<(), String> {
-    let mut file = fs::File::create(temp).map_err(|error| cannot("write", temp, &error))?;
+#[cfg_attr(not(unix), allow(unused_variables))]
+fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    if private {
+        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+    }
+
+    let mut file = options
+        .open(temp)
+        .map_err(|error| cannot("write", temp, &error))?;
     file.write_all(bytes)
         .map_err(|error| cannot("write", temp, &error))?;
     // The rename is only atomic if the bytes reached the disk before it.
@@ -984,6 +1008,25 @@ mod tests {
             .map(|entry| entry.file_name().to_string_lossy().to_string())
             .collect();
         assert_eq!(left, vec!["Note.md".to_string()]);
+    }
+
+    /// A private file is its owner's alone, and so was the temp file it was
+    /// written through, which is the file the rename leaves in its place.
+    #[test]
+    #[cfg(unix)]
+    fn a_private_file_is_the_owners_alone() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let secret = dir.path().join("automation.json");
+
+        super::write_privately(&secret, b"{}").expect("the private write");
+
+        let mode = std::fs::metadata(&secret)
+            .expect("the file")
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600);
     }
 
     /// A name as long as a disk allows is a note that can be saved. Its temp file
