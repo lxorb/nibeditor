@@ -43,6 +43,7 @@
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { PROPERTY_CHOICES } from './property-choices'
+  import { carriedNotes } from './row-links'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
@@ -113,6 +114,9 @@
       // Links setting reaches the popup the way it reaches the grip's Copy link.
       // See composer.ts.
       writeLink: pickedLink,
+      // A row dragged out of the file list and let go over the words is a link to
+      // it at the drop, spelled by the same writer; see row-links.ts.
+      carriedNotes,
       ...(onfind ? { onFind: onfind } : {}),
       // The keys the app has a fixed set of answers for, so a property row offers a
       // menu rather than a field somebody has to spell a colour into.

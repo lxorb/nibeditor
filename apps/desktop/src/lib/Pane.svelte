@@ -126,6 +126,15 @@
 
   let view = $state<EditorView>()
 
+  /** Whether what is showing takes a note dropped in the middle of the pane: a
+   *  canvas as a card, and a note that can be written in as a link to it at the
+   *  drop (see wikilink/drop.ts in @nib/editor). Read-only for the same reasons
+   *  the editor is, so the two cannot disagree about whose drop it is and a note
+   *  that cannot take a link opens the one dropped on it, as it always did. */
+  const keepsMiddle = $derived(
+    ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
+  )
+
   /** One editor per column, by the tab it is showing. The pane's bars - the find bar, the
    *  formatting bar, the menu over the words - talk to one editor, and in a stacked pane
    *  that one is the active column's; the effect below is what keeps `view` pointing at
@@ -343,12 +352,13 @@
   }
 
   /** Whether the pane answers for a drop, or leaves it to what is showing: a
-   *  canvas makes a card of a note dropped on it, so the middle of the pane is
-   *  the canvas's and only the four sides are the pane's. A tab being dragged is
-   *  not a transfer at all - it is a pointer the strip it came out of follows, and
-   *  that strip asks the panes where it is; see Tabs.svelte. */
+   *  canvas makes a card of a note dropped on it, and a note that can be written
+   *  in takes a link to it at the drop, so the middle of the pane is theirs and
+   *  only the four sides are the pane's. A tab being dragged is not a transfer at
+   *  all - it is a pointer the strip it came out of follows, and that strip asks
+   *  the panes where it is; see Tabs.svelte. */
   function answers(event: DragEvent, zone: Zone): boolean {
-    return isTreeDrag(event.dataTransfer) && !(ownSurface && zone === 'middle')
+    return isTreeDrag(event.dataTransfer) && !(keepsMiddle && zone === 'middle')
   }
 
   function over(event: DragEvent & { currentTarget: HTMLElement }) {
@@ -607,7 +617,7 @@
   {#if workspace.panes.dragging}
     <!-- The bands are drawn as deep as the geometry reads them, from the one
          number that says how deep that is. -->
-    <div class="zones" class:sides={ownSurface} style:--band="{EDGE * 100}%">
+    <div class="zones" class:sides={keepsMiddle} style:--band="{EDGE * 100}%">
       <div class="zone whole" class:lit={zone === 'middle'}></div>
       <div class="zone left" class:lit={zone === 'left'}></div>
       <div class="zone right" class:lit={zone === 'right'}></div>
@@ -769,7 +779,8 @@
     pointer-events: none;
   }
 
-  /* A surface that takes a note dropped on it keeps the middle of the pane. */
+  /* A surface that takes a note dropped on it keeps the middle of the pane: a
+     canvas, and a note that can be written in. */
   .zones.sides .zone.whole {
     pointer-events: none;
   }
