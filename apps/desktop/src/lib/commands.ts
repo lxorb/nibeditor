@@ -382,8 +382,12 @@ function tabCommands(): Command[] {
   ]
 }
 
-/** A browser's rows about the page in front, and Stop only while one is coming. */
+/** A browser's rows about the page in front, and Stop only while one is coming. None
+ *  in the plugin, whose phone has no web tab: left out of its package, which is at
+ *  its ceiling; see even/bundle.test.ts. */
 function webCommands(): Command[] {
+  if (__EVEN_PLUGIN__) return []
+
   const tab = workspace.active
   if (!isDesktop || tab?.kind !== 'web') return []
 
