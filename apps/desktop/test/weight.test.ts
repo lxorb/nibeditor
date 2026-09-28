@@ -438,7 +438,13 @@ function holds(tail: string): boolean {
  *  Settings sheet, which is the one place a keyboard is chosen, and the launch keeps a
  *  keyboard's name alone (shortcuts/preset-ids.ts). A block duplicated or moved from a
  *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
- *  this 3,296,054 and 380. */
+ *  this 3,296,054 and 380.
+ *
+ *  The editor's right-click menu went behind a door as it learned a link's and a
+ *  picture's rows (the power-user list's eighth batch), and so did what it asks of
+ *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
+ *  against 3,298,741 and 380 on the main it landed on. */
 const BUDGET = 3_310_000
 const MOST_FILES = 382
 
@@ -688,6 +694,11 @@ describe('what the app evaluates before it draws anything', () => {
     // The keyboards themselves, which only the Settings sheet offers; the launch reads
     // a keyboard's name alone. See shortcuts/preset-ids.ts.
     ['/lib/shortcuts/presets.ts', 'the keyboards'],
+    // The editor's right-click menu, with its rows for a link and a picture: nothing of
+    // it is on screen until a press asks, and it is fetched at the launch's last turn
+    // like a tab's menu. See Pane.svelte.
+    ['/lib/editor-menu.ts', "the editor's menu"],
+    ['/editor/src/menu.ts', 'what it asks of the editor'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

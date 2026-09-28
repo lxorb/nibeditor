@@ -1510,4 +1510,15 @@ export const ml: Dictionary = {
   'Duplicate the block': 'ബ്ലോക്കിന്റെ പകർപ്പ് ഉണ്ടാക്കുക',
   'Move the block up': 'ബ്ലോക്ക് മുകളിലേക്ക് നീക്കുക',
   'Move the block down': 'ബ്ലോക്ക് താഴേക്ക് നീക്കുക',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

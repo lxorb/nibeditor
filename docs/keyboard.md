@@ -231,6 +231,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+P | the palette. Type for a note, `>` for a command, the ones run lately first (already there). Empty, it lists the notes opened lately, the one before this first; a note is found by its folder too (`uni/lec`), and says its folder where another shares its name |
 | Enter, Shift+Enter in the palette | with nothing matching, Enter makes the note typed (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
 | Ctrl+Alt+Enter in the palette | the note in a pane to the right, the pane in front left as it was (Obsidian's chord; Ctrl+Alt+click too) |
+| Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
 | `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
 | Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |

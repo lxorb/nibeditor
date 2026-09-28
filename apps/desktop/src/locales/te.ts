@@ -1493,4 +1493,15 @@ export const te: Dictionary = {
   'Duplicate the block': 'బ్లాక్‌ను నకలు చేయి',
   'Move the block up': 'బ్లాక్‌ను పైకి తరలించు',
   'Move the block down': 'బ్లాక్‌ను కిందికి తరలించు',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

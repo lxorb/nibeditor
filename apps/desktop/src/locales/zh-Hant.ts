@@ -1454,4 +1454,15 @@ export const zhHant: Dictionary = {
   'Duplicate the block': '複製此區塊',
   'Move the block up': '此區塊上移',
   'Move the block down': '此區塊下移',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

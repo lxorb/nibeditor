@@ -1501,4 +1501,15 @@ export const gsw: Dictionary = {
   'Duplicate the block': 'De Block verdopple',
   'Move the block up': 'De Block ufe schiebe',
   'Move the block down': 'De Block abe schiebe',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadrässe kopiere',
+  'Edit link': 'Link bearbeite',
+  'Remove link': 'Link entferne',
+  'Copy picture': 'Bild kopiere',
+  'Open picture': 'Bild öffne',
+  'Delete picture': 'Bild lösche',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gspeicheret',
+  'That file is larger than a note can keep.': 'Die Datei isch grösser, als e Notiz cha bhalte.',
+  'That file could not be kept.': 'Die Datei het nöd chöne gspeicheret werde.',
 }

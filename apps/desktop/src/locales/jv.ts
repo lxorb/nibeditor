@@ -1484,4 +1484,15 @@ export const jv: Dictionary = {
   'Duplicate the block': 'Tulad blok',
   'Move the block up': 'Munggahake blok',
   'Move the block down': 'Mudhunake blok',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

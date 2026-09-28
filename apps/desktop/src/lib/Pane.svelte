@@ -35,7 +35,6 @@
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
-  import { showEditorMenu } from './editor-menu'
 
   import { without } from './graph'
   import { links } from './link-index.svelte'
@@ -57,7 +56,7 @@
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { storeImage } from './assets'
+  import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
   import { followHref, followNote } from './open-link'
   import type { OpenHow } from './new-tab'
@@ -313,6 +312,15 @@
     setDeck(current, isDeck(words))
   })
 
+  /** The editor's own menu; see editor-menu.ts. Fetched as the launch ends rather
+   *  than carried into it (see `warmDoors`), so the browser's own menu is refused
+   *  here, in the frame of the press, and the rows are built once the module is in. */
+  function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./editor-menu').then(({ showEditorMenu }) => showEditorMenu(event, on, path))
+  }
+
   /** A pasted or dropped image, stored once however often it is pasted. A large
    *  screenshot takes a moment to hash and write, and nothing appears in the
    *  note until it has, so the line at the top says so meanwhile.
@@ -320,6 +328,8 @@
    *  Which note the picture belongs beside comes from the tab that was written
    *  in, not from the pane: the pane's editor outlives the note in it. */
   async function saveImage(file: File, into: Tab): Promise<string | null> {
+    if (!file.type.startsWith('image/')) return saveAttachment(file, into)
+
     try {
       const src = await busy.run(t('Storing the image'), () => storeImage(file, into.path))
       void usage.refresh()
@@ -329,6 +339,17 @@
       // will work either until something is deleted.
       void usage.refresh()
       settings.error = message(error, key('That image does not fit in your storage.'))
+      return null
+    }
+  }
+
+  /** Any other file the editor keeps - a PDF, sound, a film - which stays beside the
+   *  note whatever the account holds; see `storeAttachment`. */
+  async function saveAttachment(file: File, into: Tab): Promise<string | null> {
+    try {
+      return await busy.run(t('Storing the file'), () => storeAttachment(file, into.path))
+    } catch (error) {
+      settings.error = message(error, key('That file could not be kept.'))
       return null
     }
   }
@@ -552,8 +573,7 @@
           </button>
           <div
             class="sheet"
-            oncontextmenu={(event: MouseEvent) =>
-              showEditorMenu(event, columnViews[one.id], one.path)}
+            oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
           >
             <Editor
               bind:view={columnViews[one.id]}
@@ -586,7 +606,7 @@
     <div
       class="editor"
       data-region="editor"
-      oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view, tab.path)}
+      oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}
     >
       <Editor
         bind:view

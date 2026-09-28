@@ -1489,4 +1489,15 @@ export const hi: Dictionary = {
   'Duplicate the block': 'ब्लॉक की नकल बनाएँ',
   'Move the block up': 'ब्लॉक ऊपर ले जाएँ',
   'Move the block down': 'ब्लॉक नीचे ले जाएँ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

@@ -1496,4 +1496,15 @@ export const pa: Dictionary = {
   'Duplicate the block': 'ਬਲਾਕ ਦੀ ਨਕਲ ਬਣਾਓ',
   'Move the block up': 'ਬਲਾਕ ਉੱਪਰ ਭੇਜੋ',
   'Move the block down': 'ਬਲਾਕ ਹੇਠਾਂ ਭੇਜੋ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

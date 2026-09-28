@@ -1489,4 +1489,15 @@ export const ms: Dictionary = {
   'Duplicate the block': 'Salin dua blok',
   'Move the block up': 'Alihkan blok ke atas',
   'Move the block down': 'Alihkan blok ke bawah',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

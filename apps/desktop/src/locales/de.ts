@@ -1530,4 +1530,16 @@ export const de: Dictionary = {
   'Duplicate the block': 'Block duplizieren',
   'Move the block up': 'Block nach oben schieben',
   'Move the block down': 'Block nach unten schieben',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadresse kopieren',
+  'Edit link': 'Link bearbeiten',
+  'Remove link': 'Link entfernen',
+  'Copy picture': 'Bild kopieren',
+  'Open picture': 'Bild öffnen',
+  'Delete picture': 'Bild löschen',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gespeichert',
+  'That file is larger than a note can keep.':
+    'Diese Datei ist größer, als eine Notiz behalten kann.',
+  'That file could not be kept.': 'Diese Datei konnte nicht gespeichert werden.',
 }

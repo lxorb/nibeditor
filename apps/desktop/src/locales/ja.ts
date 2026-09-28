@@ -1485,4 +1485,15 @@ export const ja: Dictionary = {
   'Duplicate the block': 'ブロックを複製',
   'Move the block up': 'ブロックを上へ移動',
   'Move the block down': 'ブロックを下へ移動',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }
