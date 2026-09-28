@@ -1086,7 +1086,8 @@ typing, and a collaborator's paragraph should appear.
 The editor's build writes `even.html` beside `index.html` out of one bundle.
 Almost all of the output is shared; the plugin's own code and the Even Hub SDK are
 chunks nothing in `index.html` reaches, so the plain web build carries none of it.
-Nothing checks that, though: the bundle test builds and reads `dist-even`, and no
+Nothing checks that, though: the bundle test reads a folder of its own run, built
+with `vite.even.config.ts` and staged through `scripts/even-stage.mjs`, and no
 test, script or workflow looks at the editor's own `dist`.
 
 The Worker in `services/sync` serves `apps/desktop/dist` through its assets
