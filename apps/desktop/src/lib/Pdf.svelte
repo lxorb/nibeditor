@@ -796,10 +796,6 @@
     stroke-linejoin: round;
   }
 
-  .nib-bar button:disabled {
-    opacity: 0.4;
-  }
-
   /* The pen says what colour it would leave, so the button is the answer. */
   .pen svg path:first-child {
     stroke: var(--accent);

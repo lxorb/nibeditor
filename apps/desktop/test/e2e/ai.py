@@ -594,7 +594,7 @@ def drive_rewrite(browser: Browser) -> None:
     if "A heron waits." in midway["text"]:
         wrong("[rewrite] the rewrite was written before it was accepted")
 
-    page.locator(".answers .primary").click()
+    page.locator(".answers .nib-button:not(.is-quiet)").click()
     page.wait_for_timeout(400)
 
     after = state(page)
@@ -633,7 +633,7 @@ def drive_discard(browser: Browser) -> None:
     page.locator(".verbs button").first.click()
     page.wait_for_timeout(1000)
 
-    page.locator(".answers .pill").click()
+    page.locator(".answers .nib-button.is-quiet").click()
     page.wait_for_timeout(300)
     shot(page, "50-discarded")
 
@@ -660,14 +660,14 @@ def drive_pane(browser: Browser) -> None:
     shot(page, "60-pane-empty")
 
     adds = page.evaluate(
-        "() => [...document.querySelectorAll('.action')].map((one) => one.textContent.trim())"
+        "() => [...document.querySelectorAll('.nib-action')].map((one) => one.textContent.trim())"
     )
     say(f"[pane] the kinds offered: {adds}")
     if len(adds) != 3:
         wrong(f"[pane] three kinds were expected, not {len(adds)}: {adds}")
 
     # The compatible one, which is the one a fake server can stand in for.
-    page.locator(".action").last.click()
+    page.locator(".nib-action").last.click()
     page.wait_for_timeout(300)
 
     page.evaluate(
@@ -679,7 +679,7 @@ def drive_pane(browser: Browser) -> None:
     )
     page.wait_for_timeout(200)
 
-    page.locator(".pill", has_text=re.compile("model", re.I)).first.click()
+    page.locator(".nib-chip", has_text=re.compile("model", re.I)).first.click()
     page.wait_for_timeout(900)
     shot(page, "61-models-listed")
 

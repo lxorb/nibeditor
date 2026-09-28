@@ -45,6 +45,7 @@ export class CheckboxWidget extends NibWidget {
     box.type = 'checkbox'
     box.className = 'nib-checkbox'
     box.checked = this.checked
+    box.setAttribute('aria-label', uiLabel('taskDone'))
 
     box.addEventListener('mousedown', (event) => {
       event.preventDefault()

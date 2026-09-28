@@ -186,7 +186,7 @@
        neighbour the sheet read as finished with no way to publish in sight. -->
   {#snippet foot()}
     <button
-      class="primary go"
+      class="nib-button go"
       disabled={!publish.confirmed || !publish.ready}
       onclick={() => void publish.publish(siteIcon(markBox))}
     >
@@ -396,7 +396,7 @@
           {/each}
           <span class="hint">{t('Add these at your registrar, then verify.')}</span>
           <button
-            class="action"
+            class="nib-action"
             disabled={publish.busy || !blog?.domain}
             onclick={() => void publish.verifyDomain()}
           >
@@ -517,7 +517,7 @@
       </label>
       {#if publish.hasPassword}
         <button
-          class="action danger"
+          class="nib-action is-danger"
           disabled={publish.busy}
           onclick={() => void publish.removePassword()}
         >
@@ -550,20 +550,20 @@
                 .map(([question, said]) => `${question}: ${said}`)
                 .join(' · ')}
             </span>
-            <button class="pill" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
+            <button class="nib-chip" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
           </div>
         {/each}
       </div>
 
       <div class="card">
-        <button class="action" onclick={() => void saveAnswers()}>
+        <button class="nib-action" onclick={() => void saveAnswers()}>
           {t('Save as CSV')}
         </button>
       </div>
     {/if}
 
     <div class="card">
-      <button class="action danger" onclick={() => void publish.unpublish()}>
+      <button class="nib-action is-danger" onclick={() => void publish.unpublish()}>
         {t('Stop publishing')}
       </button>
     </div>
@@ -582,10 +582,6 @@
     padding: 0;
     border: none;
     transition: opacity var(--dur-base) var(--ease-out);
-  }
-
-  fieldset:disabled {
-    opacity: 0.4;
   }
 
   /* The warning reads as a warning, and gates the controls behind it. */

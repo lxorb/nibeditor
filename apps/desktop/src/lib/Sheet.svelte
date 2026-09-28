@@ -306,101 +306,12 @@
     border-color: var(--accent);
   }
 
-  /* An action in a card: full width, quiet until pointed at. */
-  .sheet :global(.action) {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
+  /* An action in a card is `.nib-action` in the themes package, and a small action
+     at the end of a row is `.nib-chip`. */
 
-  @media (hover: hover) {
-    .sheet :global(.action:hover:not(:disabled)) {
-      color: var(--text-strong);
-    }
-
-    .sheet :global(.action.danger:hover:not(:disabled)) {
-      color: var(--danger);
-    }
-  }
-
-  /* A small action at the end of a row, where the control would be. */
-  .sheet :global(.pill) {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .sheet :global(.pill.quiet) {
-    border-color: transparent;
-    color: var(--muted);
-  }
-
-  @media (hover: hover) {
-    .sheet :global(.pill:hover) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .sheet :global(.pill.quiet:hover) {
-      border-color: transparent;
-      color: var(--text-strong);
-    }
-  }
-
-  .sheet :global(.pill:active) {
-    background: var(--accent-soft);
-  }
-
-  /* The one thing the sheet is for, once it can be done. Where it sits in the
-     row or the column holding it is that sheet's business. */
-  .sheet :global(.primary) {
-    flex: none;
-    padding: 8px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .sheet :global(.primary:hover:not(:disabled)) {
-    background: var(--accent-hover);
-  }
-
-  .sheet :global(.primary:active:not(:disabled)) {
-    background: var(--accent-press);
-  }
-
-  .sheet :global(.primary:disabled),
-  .sheet :global(.action:disabled) {
-    opacity: 0.5;
-  }
+  /* The one thing the sheet is for is `.nib-button` in the themes package, the
+     button every dialog in the app is pressed with. Where it sits in the row or
+     the column holding it is that sheet's business. */
 
   /* A phone's sheet is the bottom of the screen, and everything in it is the
      size a thumb needs. */
@@ -429,25 +340,9 @@
     min-height: var(--touch-target);
   }
 
-  :global([data-touch]) .sheet :global(.action) {
-    min-height: var(--touch-row);
-    font-size: var(--touch-text);
-  }
-
   :global([data-touch]) .sheet :global(input.field) {
     min-height: var(--touch-target);
     padding: 0 var(--touch-gap);
-    font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .sheet :global(.pill) {
-    min-height: var(--touch-target);
-    padding: 0 var(--touch-gap);
-    font-size: var(--text-base);
-  }
-
-  :global([data-touch]) .sheet :global(.primary) {
-    min-height: var(--touch-target);
     font-size: var(--touch-text);
   }
 

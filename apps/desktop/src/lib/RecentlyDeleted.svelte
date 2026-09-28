@@ -175,7 +175,7 @@
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
     color: var(--muted);
-    cursor: pointer;
+    cursor: default;
   }
 
   @media (hover: hover) {
@@ -186,10 +186,5 @@
     button.quiet.danger:hover:not(:disabled) {
       color: var(--danger);
     }
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: default;
   }
 </style>

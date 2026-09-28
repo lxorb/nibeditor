@@ -187,13 +187,13 @@
         <span class="name">{shortPath(clash.path)}</span>
         <span class="hint">{when(clash.at, 'short')}</span>
         <div class="answers">
-          <button class="pill" onclick={() => void settle(clash, 'mine')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'mine')}>
             {t('Keep mine')}
           </button>
-          <button class="pill" onclick={() => void settle(clash, 'theirs')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'theirs')}>
             {t('Take theirs')}
           </button>
-          <button class="pill" onclick={() => void settle(clash, 'both')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'both')}>
             {t('Keep both')}
           </button>
         </div>
@@ -230,7 +230,7 @@
   </div>
 
   <div class="card">
-    <button class="action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+    <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
   </div>
 {/if}
 
@@ -279,11 +279,11 @@
 
 <div class="card">
   {#if asked?.notes}
-    <button class="action danger" disabled={rolling} onclick={() => void roll()}>
+    <button class="nib-action is-danger" disabled={rolling} onclick={() => void roll()}>
       {rolling ? t('Going back') : t('Go back')}
     </button>
   {:else}
-    <button class="action" disabled={!spaceId} onclick={() => void look()}>
+    <button class="nib-action" disabled={!spaceId} onclick={() => void look()}>
       {t('What would change?')}
     </button>
   {/if}
@@ -339,38 +339,6 @@
     width: 14rem;
   }
 
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-
-    .action.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
-  }
-
-  .action:disabled {
-    opacity: 0.5;
-  }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
@@ -415,24 +383,6 @@
     font-size: var(--touch-text);
   }
 
-  :global(.sheet.phone) .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action {
-    position: relative;
-    min-height: var(--touch-row);
-    padding: var(--space-2) var(--touch-pad);
-    color: var(--accent);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action.danger {
-    color: var(--danger);
-  }
-
   /* One waiting note: what it is, when it happened, and the three answers. The
      answers are a row of their own, because on a phone three verbs do not fit
      beside a file name. */
@@ -453,40 +403,12 @@
     white-space: nowrap;
   }
 
+  /* The three answers, each `.nib-chip`, the small round action at the end of a
+     row: three of them read as a choice rather than as three rows. */
   .answers {
     display: flex;
     gap: var(--space-2);
     width: 100%;
-  }
-
-  /* The three answers, each the small round action the panel uses at the end of
-     a row: three of them read as a choice rather than as three rows. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
   }
 
   /* One pass: when, what moved, and which space. The middle column takes the

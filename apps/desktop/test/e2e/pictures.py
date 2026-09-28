@@ -463,6 +463,8 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
     An import writes a picture through `write_bytes` under a path it chose, rather
     than through the app's own naming: a name somebody else picked and not a hash,
     which is the other half of the addressing this drive is about."""
+    # Fetched after the space opens rather than with the app; see App.svelte.
+    page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
     page.evaluate("() => window.nibApp.importing.show()")
     page.wait_for_selector("button.drop", timeout=20000)
     page.wait_for_timeout(450)
@@ -473,7 +475,7 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
 
     page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
     say(f"[{where}] the sheet read a {page.evaluate('() => window.nibApp.importing.format')}")
-    page.click("button.primary")
+    page.click("button.nib-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
     page.evaluate("() => window.nibApp.importing.close()")
     page.wait_for_timeout(400)

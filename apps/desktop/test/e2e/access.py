@@ -346,8 +346,7 @@ KNOWN = {
     # dark scheme's, 3.25:1 on its hover shade - so the app's filled button is
     # under the floor on one side of the theme. The ink on an accent fill wants a
     # token of its own, per scheme, which is a palette decision rather than a
-    # markup one; see the report. `.active.item` in the settings is the same
-    # question asked of `--accent-soft`.
+    # markup one; see the report.
     "color-contrast": "the ink on an accent fill is a palette decision",
 }
 

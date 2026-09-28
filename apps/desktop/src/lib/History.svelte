@@ -301,7 +301,7 @@
           <div class="diff same"><p class="empty">{t('No changes')}</p></div>
         {/if}
 
-        <button class="primary" onclick={() => void restore()}>
+        <button class="nib-button" onclick={() => void restore()}>
           {t('Restore this version')}
         </button>
       </div>
@@ -537,30 +537,10 @@
     color: var(--text-strong);
   }
 
-  .primary {
+  /* Putting a version back is `.nib-button` in the themes package, which says its
+     size under a finger too; here it only keeps to its own width. */
+  .nib-button {
     align-self: flex-start;
-    padding: 9px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  .primary:hover {
-    background: var(--accent-hover);
-    transform: translateY(-1px);
-  }
-
-  .primary:active {
-    background: var(--accent-press);
-    transform: translateY(0);
   }
 
   :global([data-touch]) .sheet {
@@ -589,11 +569,5 @@
     min-height: var(--touch-target);
     padding: 0 var(--space-3);
     font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .primary {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--text-base);
   }
 </style>

@@ -64,6 +64,9 @@ const DEFAULTS = {
   removeFromList: 'Remove',
   /** The handle on a note's cover, which drags the band up and down the picture. */
   dragCover: 'Drag to reposition',
+  /** A task's box. The box says whether it is ticked, so its name is what the
+   *  tick means: a reader hears "Done, checkbox, not checked". */
+  taskDone: 'Done',
 }
 
 export type LabelKey = keyof typeof DEFAULTS
