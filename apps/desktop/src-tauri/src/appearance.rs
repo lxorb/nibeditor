@@ -30,18 +30,12 @@ fn ours(app: &AppHandle) -> Vec<Window> {
         .collect()
 }
 
-/// Where a Mac's traffic lights sit, from the window's top left corner: in the middle
-/// of the bar's height, `--titlebar-height` in the themes. tauri.macos.conf.json says
-/// the same for the first window.
-#[cfg(target_os = "macos")]
-const LIGHTS: tauri::LogicalPosition<f64> = tauri::LogicalPosition::new(16.0, 13.0);
-
 /// A window built with nib's own frame, the way the first one is in tauri.conf.json.
 ///
 /// Everywhere but a Mac that is no frame at all, and the bar draws the three buttons.
 /// A Mac keeps its own traffic lights over the bar instead, the way VS Code and
 /// Obsidian do there: the lights are the one part of a window a Mac user reaches for
-/// without looking.
+/// without looking. Where they sit in the bar is lights.rs, once the window is built.
 pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
     builder: tauri::WebviewWindowBuilder<'_, R, M>,
 ) -> tauri::WebviewWindowBuilder<'_, R, M> {
@@ -49,8 +43,7 @@ pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
     let builder = builder
         .decorations(true)
         .title_bar_style(tauri::TitleBarStyle::Overlay)
-        .hidden_title(true)
-        .traffic_light_position(LIGHTS);
+        .hidden_title(true);
 
     #[cfg(not(target_os = "macos"))]
     let builder = builder.decorations(false);

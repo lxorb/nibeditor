@@ -214,10 +214,16 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
 
-    crate::appearance::own_frame(builder)
+    let window = crate::appearance::own_frame(builder)
         .build()
-        .map(|_| ())
-        .map_err(|error| format!("could not open another window: {error}"))
+        .map_err(|error| format!("could not open another window: {error}"))?;
+
+    #[cfg(target_os = "macos")]
+    crate::lights::hold(&window);
+    #[cfg(not(target_os = "macos"))]
+    let _ = window;
+
+    Ok(())
 }
 
 /// The label a window opened because there was none gets: `main` again when it is

@@ -68,6 +68,8 @@ mod history;
 mod launch;
 #[cfg(desktop)]
 mod lifecycle;
+#[cfg(target_os = "macos")]
+mod lights;
 mod links;
 mod logs;
 mod matcher;
@@ -465,14 +467,14 @@ fn ready(
     #[cfg(all(desktop, not(feature = "cef")))]
     if let Some(config) = ui {
         let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
-        match ground::remembered(handle) {
-            Some(colour) => {
-                building.visible(true).background_color(colour).build()?;
-            }
-            None => {
-                building.build()?.show()?;
-            }
-        }
+        let window = match ground::remembered(handle) {
+            Some(colour) => building.visible(true).background_color(colour).build()?,
+            None => building.build()?,
+        };
+        // Before anything is drawn, so the lights are never seen anywhere else.
+        #[cfg(target_os = "macos")]
+        lights::hold(&window);
+        window.show()?;
     }
 
     // Nib's own Chromium builds it in `setup`, in a profile of its own, and it is built
