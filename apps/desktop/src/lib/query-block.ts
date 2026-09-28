@@ -151,7 +151,7 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
  *  row in the Search panel opens.
  *
  *  The workspace is imported here rather than at the top for the reason
- *  workspace/folder-icons gives about the syncing loop: the link index hands this
+ *  workspace/pushing.ts gives about the syncing loop: the link index hands this
  *  to the editor, and the workspace owns the link index. */
 async function openQueryRow(path: string, line: number): Promise<void> {
   const { workspace } = await import('./workspace.svelte')

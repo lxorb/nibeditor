@@ -33,7 +33,7 @@
 import { insideItsSpace, nameOf, relativeTo } from '../space-paths'
 import { renamedIn, withoutName } from '../tree-order'
 import { isRecord, isString, keep, stored } from '../stored'
-import { without } from '../records'
+import { filledIn, without } from '../records'
 
 export const STORAGE_KEY = 'nib:arranged'
 
@@ -186,18 +186,8 @@ export class Arranged {
    *  plugin, which reads a store seeded seconds after the page was built; see
    *  `reread` in device.svelte.ts, which is the same fact about the same storage. */
   reread(): void {
-    const held = read()
-    const spaces = { ...this.spaces }
-    let grew = false
-
-    for (const [root, kept] of Object.entries(held)) {
-      if (spaces[root]) continue
-
-      spaces[root] = kept
-      grew = true
-    }
-
-    if (grew) this.spaces = spaces
+    const grown = filledIn(this.spaces, read())
+    if (grown) this.spaces = grown
   }
 
   of(root: string): Record<string, string[]> {

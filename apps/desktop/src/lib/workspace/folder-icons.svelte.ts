@@ -28,7 +28,7 @@
 
 import { insideItsSpace, relativeTo } from '../space-paths'
 import { isRecord, isString, keep, stored } from '../stored'
-import { without, withOrWithout } from '../records'
+import { filledIn, without, withOrWithout } from '../records'
 
 export const STORAGE_KEY = 'nib:folder-icons'
 
@@ -136,23 +136,11 @@ export class FolderIcons {
    *  grows with the vault rather than with the settings, and a packed plugin keeps
    *  anything that shape in the phone app's own store - which answers seconds after
    *  this store was built and read an empty one. See lib/even/local.ts, and `reread`
-   *  in device.svelte.ts, which is the same fact about the same storage.
-   *
-   *  Filled in per space, never replaced: what is here was written this launch and is
-   *  newer than anything storage is only now getting round to mentioning. */
+   *  in device.svelte.ts, which is the same fact about the same storage. Filled in
+   *  per space, never replaced; see `filledIn` in records.ts. */
   reread(): void {
-    const held = read()
-    const spaces = { ...this.spaces }
-    let grew = false
-
-    for (const [root, kept] of Object.entries(held)) {
-      if (spaces[root]) continue
-
-      spaces[root] = kept
-      grew = true
-    }
-
-    if (grew) this.spaces = spaces
+    const grown = filledIn(this.spaces, read())
+    if (grown) this.spaces = grown
   }
 
   of(root: string): Record<string, string> {
@@ -337,44 +325,17 @@ export class FolderIcons {
   }
 
   /** The space's maps as they now stand, sent up so every other machine draws the
-   *  same rows in the same colours.
-   *
-   *  Signed out, in a space the account has never heard of, or in one shared to
-   *  read, they stay on this machine: the first two because there is nowhere to
-   *  send them yet, and the last because the account would refuse them anyway.
-   *
-   *  Sent from here rather than from the syncing loop, which is where the space's
-   *  own icon is sent from, because these maps are written by a gesture in the file
-   *  list and a pass is minutes away. Imported where it is used: the loop reads the
-   *  workspace this store belongs to, and the two would import each other. */
+   *  same rows in the same colours. The space's own icon is sent by the syncing
+   *  loop; these are written by a gesture in the file list, and a pass is minutes
+   *  away. See pushing.ts. */
   private async push(root: string) {
-    const [{ account }, { api }, { sync }] = await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-      import('../sync.svelte'),
-    ])
-
-    const token = account.token
-    const spaceId = sync.remoteIdFor(root)
-    const role = spaceId ? account.spaces.find((one) => one.id === spaceId)?.role : undefined
-
-    // Nowhere to send it, and nowhere it will ever go: signed out, a space no account
-    // has a copy of, or one shared to read. Said rather than left waiting - what is
-    // kept as unsaid is what the next pass folds over the account's copy, and a space
-    // whose owner's icons this machine may only read must not spend for ever refusing
-    // to take them on. A sign-in later is first contact and folds anyway.
-    if (!token || !spaceId || role === 'read') {
-      this.said(root, true)
-      return
-    }
-
-    const landed = await api
-      .saveFolderIcons(token, spaceId, this.of(root), this.colorsOf(root))
-      .then(() => true)
-      .catch(() => false)
-
-    this.said(root, landed)
-    if (landed) await account.loadSpaces().catch(() => undefined)
+    const { push } = await import('./pushing')
+    await push(
+      root,
+      (api, token, spaceId) =>
+        api.saveFolderIcons(token, spaceId, this.of(root), this.colorsOf(root)),
+      (landed) => this.said(root, landed),
+    )
   }
 
   /** Whether the account has heard the space's maps as they now stand. What the next

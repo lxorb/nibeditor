@@ -18,7 +18,7 @@
 
 import { insideItsSpace, relativeTo } from '../space-paths'
 import { isRecord, isString, keep, stored } from '../stored'
-import { without } from '../records'
+import { filledIn, without } from '../records'
 
 export const STORAGE_KEY = 'nib:excluded'
 
@@ -92,18 +92,8 @@ export class Excluded {
    *  plugin; see `reread` in folder-icons.svelte.ts, which is the same fact about
    *  the same storage. */
   reread(): void {
-    const saved = read()
-    const spaces = { ...this.spaces }
-    let grew = false
-
-    for (const [root, kept] of Object.entries(saved)) {
-      if (spaces[root]) continue
-
-      spaces[root] = kept
-      grew = true
-    }
-
-    if (grew) this.spaces = spaces
+    const grown = filledIn(this.spaces, read())
+    if (grown) this.spaces = grown
   }
 
   of(root: string): string[] {
@@ -249,26 +239,10 @@ export class Excluded {
   }
 
   /** The space's list as it now stands, sent up so every other machine leaves out
-   *  the same notes.
-   *
-   *  Signed out, in a space the account has never heard of, or in one shared to
-   *  read, it stays on this machine. Imported where it is used, for the reason
-   *  folder-icons gives: the syncing loop reads the workspace this store belongs
-   *  to, and the two would import each other. */
+   *  the same notes. See pushing.ts. */
   private async push(root: string) {
-    const [{ account }, { api }, { sync }] = await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-      import('../sync.svelte'),
-    ])
-
-    const token = account.token
-    const spaceId = sync.remoteIdFor(root)
-    if (!token || !spaceId) return
-    if (account.spaces.find((one) => one.id === spaceId)?.role === 'read') return
-
-    await api.saveExcluded(token, spaceId, this.of(root)).catch(() => undefined)
-    await account.loadSpaces().catch(() => undefined)
+    const { push } = await import('./pushing')
+    await push(root, (api, token, spaceId) => api.saveExcluded(token, spaceId, this.of(root)))
   }
 
   private write() {

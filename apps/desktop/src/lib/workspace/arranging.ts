@@ -55,38 +55,12 @@ export async function fold(
 }
 
 /** The space's map as it now stands, sent up so every other machine draws the rows in
- *  the same order.
- *
- *  Signed out, in a space the account has never heard of, or in one shared to read, it
- *  stays on this machine: the first two because there is nowhere to send it yet, and
- *  the last because the account would refuse it anyway. Said rather than left waiting,
- *  for the reason the folder icons say it - what is kept as unsaid is what the next
- *  pass folds over the account's copy.
- *
- *  The account, the api and the syncing loop are imported where they are used, for the
- *  reason the folder icons import them there: the loop reads the workspace this store
- *  belongs to, and the two would import each other. */
+ *  the same order. See pushing.ts. */
 export async function send(store: Arranged, root: string): Promise<void> {
-  const [{ account }, { api }, { sync }] = await Promise.all([
-    import('../account.svelte'),
-    import('../api'),
-    import('../sync.svelte'),
-  ])
-
-  const token = account.token
-  const spaceId = sync.remoteIdFor(root)
-  const role = spaceId ? account.spaces.find((one) => one.id === spaceId)?.role : undefined
-
-  if (!token || !spaceId || role === 'read') {
-    store.said(root, true)
-    return
-  }
-
-  const landed = await api
-    .saveArranged(token, spaceId, store.of(root))
-    .then(() => true)
-    .catch(() => false)
-
-  store.said(root, landed)
-  if (landed) await account.loadSpaces().catch(() => undefined)
+  const { push } = await import('./pushing')
+  await push(
+    root,
+    (api, token, spaceId) => api.saveArranged(token, spaceId, store.of(root)),
+    (landed) => store.said(root, landed),
+  )
 }

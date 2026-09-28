@@ -11,6 +11,20 @@ export function without<T>(record: Record<string, T>, key: string): Record<strin
   return Object.fromEntries(Object.entries(record).filter(([one]) => one !== key))
 }
 
+/** `record` with every entry of `from` it has no key for, or null when there is
+ *  none. What a store that read its storage too early does once the storage has
+ *  answered - the plugin's is seeded seconds after the page was built; see
+ *  lib/even/local.ts. Filled in, never replaced: what is here was written this
+ *  launch and is newer than anything storage is only now getting round to
+ *  mentioning. */
+export function filledIn<T>(
+  record: Record<string, T>,
+  from: Record<string, T>,
+): Record<string, T> | null {
+  const missing = Object.entries(from).filter(([key]) => record[key] === undefined)
+  return missing.length ? { ...record, ...Object.fromEntries(missing) } : null
+}
+
 /** `record` with `key` set, or with it dropped when the value is null. Both
  *  halves of "an icon, or no icon" in one place, since every caller wants
  *  exactly that pair. */

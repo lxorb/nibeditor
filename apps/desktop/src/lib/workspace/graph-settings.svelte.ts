@@ -22,7 +22,7 @@
  *  which account a space's settings have been folded into. */
 
 import { isBoolean, isNumber, isRecord, isString, keep, stored } from '../stored'
-import { without } from '../records'
+import { filledIn, without } from '../records'
 
 export const STORAGE_KEY = 'nib:graph'
 
@@ -245,18 +245,8 @@ export class SpaceGraphSettings {
    *  the plugin, whose store answers seconds after this one was built; see `reread`
    *  in folder-icons.svelte.ts, which is the same fact about the same storage. */
   reread(): void {
-    const saved = read()
-    const spaces = { ...this.spaces }
-    let grew = false
-
-    for (const [root, kept] of Object.entries(saved)) {
-      if (spaces[root]) continue
-
-      spaces[root] = kept
-      grew = true
-    }
-
-    if (grew) this.spaces = spaces
+    const grown = filledIn(this.spaces, read())
+    if (grown) this.spaces = grown
   }
 
   of(root: string): GraphSettings {
@@ -406,26 +396,10 @@ export class SpaceGraphSettings {
   }
 
   /** The space's settings as they now stand, sent up so every other machine draws
-   *  the same picture.
-   *
-   *  Signed out, in a space the account has never heard of, or in one shared to
-   *  read, they stay on this machine. Imported where they are used, for the reason
-   *  folder-icons gives: the syncing loop reads the workspace this store belongs
-   *  to, and the two would import each other. */
+   *  the same picture. See pushing.ts. */
   private async push(root: string) {
-    const [{ account }, { api }, { sync }] = await Promise.all([
-      import('../account.svelte'),
-      import('../api'),
-      import('../sync.svelte'),
-    ])
-
-    const token = account.token
-    const spaceId = sync.remoteIdFor(root)
-    if (!token || !spaceId) return
-    if (account.spaces.find((one) => one.id === spaceId)?.role === 'read') return
-
-    await api.saveGraphSettings(token, spaceId, this.of(root)).catch(() => undefined)
-    await account.loadSpaces().catch(() => undefined)
+    const { push } = await import('./pushing')
+    await push(root, (api, token, spaceId) => api.saveGraphSettings(token, spaceId, this.of(root)))
   }
 
   private write() {
