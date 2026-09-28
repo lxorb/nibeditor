@@ -960,9 +960,16 @@ pub async fn web_open(
     // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
+    let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .initialization_script(opening(revived.place, &url))
-        .on_navigation(allowed)
+        .on_navigation(move |to| {
+            let going = allowed(to);
+            if going {
+                started(&starting.0, &starting.1);
+            }
+            going
+        })
         // The page takes its own drops. A file dropped on a site is the site's
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
@@ -1272,6 +1279,20 @@ fn is_ours(known: &[String], asked: &str) -> bool {
     }
 
     OURS.contains(&origin.as_str()) || known.contains(&origin)
+}
+
+/// A page on its way, said the moment it sets off.
+///
+/// The engine's own "started" arrives only once the site has begun to answer, which on
+/// a slow site is seconds after the press: the reload glyph stayed a reload for all of
+/// them, and a cross that appears once there is nothing left to stop is no cross at
+/// all. Chrome's turns the moment a navigation starts, so this does too. No address -
+/// that is still the old page's until the new one arrives, and an empty one is "no
+/// news" to the window - so a load stopped before it answered leaves the bar as it was.
+fn started(app: &AppHandle, tab: &str) {
+    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
+        say(app, &view, tab, "", None, None, true);
+    }
 }
 
 /// Says where a page is, to the window that holds it and to nothing else.

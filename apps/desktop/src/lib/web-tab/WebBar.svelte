@@ -68,9 +68,9 @@
     reads: boolean
     focused: boolean
     book: string
-    /** An arrow or reload pressed, and how: an arrow with the middle button or a
-     *  modifier opens its step in a tab of its own; see new-tab.ts. A key has no
-     *  press. */
+    /** An arrow or reload pressed, and how: with the middle button or a modifier an
+     *  arrow opens its step in a tab of its own, and reload opens this page again in
+     *  one; see new-tab.ts. A key has no press. */
     onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
     /** A right click or a held finger on an arrow: the pages that way, as a list. */
     onhistory: (forward: boolean, event: MouseEvent) => void
@@ -221,12 +221,14 @@
 
   <!-- One glyph for both, the way a browser has one: a cross while the page is
        coming, which stops it, and the arrow again once it is here. The tab's own mark
-       turns meanwhile, so this says only what a press would do. -->
+       turns meanwhile, so this says only what a press would do. The middle button,
+       or Ctrl, opens the page again in a tab of its own. -->
   <button
     class="nib-glyph"
     title={page.loading ? t('Stop') : t('Reload')}
     aria-label={page.loading ? t('Stop') : t('Reload')}
     onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
+    use:middleOpens={(event) => onstep('reload', event)}
   >
     {#key page.loading}
       <svg

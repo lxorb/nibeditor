@@ -423,6 +423,9 @@
         const ask = press ? tabAsk(press) : 'plain'
         if (step === 'back') workspace.goBack(tab.id, ask)
         else if (step === 'forward') workspace.goForward(tab.id, ask)
+        // Reload with the middle button or Ctrl: this page again, in a tab of its own.
+        else if (step === 'reload' && ask !== 'plain' && page.url !== null)
+          workspace.openPage(page.url, ask, tab.id)
         else void pages.step(tab.id, step)
       }}
       onhistory={showTrail}
