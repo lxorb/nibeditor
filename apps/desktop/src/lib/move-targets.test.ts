@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { movesInto, moveTargets, type Space } from './move-targets'
+import { copiesInto, movesInto, moveTargets, type Space } from './move-targets'
 import type { Entry } from './workspace.svelte'
 
 /** Where a row of the file list may be moved to, read as a list of paths. */
@@ -318,5 +318,14 @@ describe('a path written with backslashes, as a desktop hands them over', () => 
     })
 
     expect(offered).toEqual([{ id: 'C:\\Nib\\Notes\\loose', label: 'loose', mark: 'note' }])
+  })
+})
+
+describe('copying a row', () => {
+  test('may land beside itself, but never inside itself', () => {
+    expect(copiesInto(['/s/a.md'], '/s')).toBe(true)
+    expect(copiesInto(['/s/Work'], '/s/Work')).toBe(false)
+    expect(copiesInto(['/s/Work'], '/s/Work/deep')).toBe(false)
+    expect(copiesInto(['/s/Work'], '/s/Workshop')).toBe(true)
   })
 })

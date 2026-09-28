@@ -181,6 +181,27 @@ Left and right are the arrows in a list that runs across (the strip, the panel
 tabs), and those two leave up and down alone so the page underneath still
 scrolls.
 
+#### In the file list
+
+What only a list of files has, on top of the walk above. The ones that are the
+app's keys elsewhere - Undo, Redo, New note, the clipboard - are read off the same
+entries, so a rebind of one is a rebind of both.
+
+| Key | What it does |
+| --- | --- |
+| Ctrl+A | select every row |
+| Shift+Up, Shift+Down | take the row above or below into the selection too |
+| Ctrl+Space | put the row in the selection or take it out |
+| F2 | rename |
+| Delete, Backspace | delete the selection |
+| Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
+| Ctrl+D | a copy of each selected row, beside it |
+| Ctrl+N | a new note in the folder the row is, or sits in, waiting for its name |
+| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
+| Alt+Up, Alt+Down | move the row in the order somebody arranged |
+
+See `docs/tree.md` for what a copy is called and where it lands.
+
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
 off on purpose: nib's markup puts what a row holds beside the row rather than
 inside it - one flat column, in which what a note holds is the rows under it - and

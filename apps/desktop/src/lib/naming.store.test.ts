@@ -112,6 +112,33 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (folders.delete(from)) folders.add(to)
         return undefined
       }
+      case 'write_bytes':
+        files.set(path, atob(text(args?.base64)))
+        return undefined
+      case 'copy_path': {
+        const from = text(args?.from)
+        const to = text(args?.to)
+        const under = (one: string, root: string) => one === root || one.startsWith(`${root}/`)
+        // Never over anything, like the crate; see `copy_path` in notes.rs.
+        if ([...files.keys(), ...folders].some((one) => under(one, to))) {
+          throw new Error('something already lives there')
+        }
+        for (const [one, words] of [...files]) {
+          if (under(one, from)) files.set(to + one.slice(from.length), words)
+        }
+        for (const one of [...folders])
+          if (under(one, from)) folders.add(to + one.slice(from.length))
+        return undefined
+      }
+      case 'delete_note':
+        files.delete(path)
+        return undefined
+      case 'delete_folder':
+        for (const one of [...files.keys()]) if (one.startsWith(`${path}/`)) files.delete(one)
+        for (const one of [...folders]) {
+          if (one === path || one.startsWith(`${path}/`)) folders.delete(one)
+        }
+        return undefined
       case 'read_tree':
         return listing(text(args?.root))
       default:
@@ -454,6 +481,113 @@ describe('duplicating a file', () => {
 
     await workspace.duplicate('/space/Board.canvas')
     expect([...files.keys()]).toContain('/space/Board copy.canvas')
+  })
+})
+
+/** Copying rows: a paste, a Ctrl-drag and Ctrl+D are all this, and a copy lands
+ *  under a name nothing has, as one thing to undo. See workspace/copying.ts. */
+describe('copying rows', () => {
+  test('keeps the name in another folder and says copy beside itself', async () => {
+    await workspace.copyMany(['/space/Beta.md'], '/space/Work')
+    await workspace.copyMany(['/space/Work/Plan.md'], '/space/Work')
+
+    expect(files.get('/space/Work/Beta.md')).toBe('# Beta')
+    expect(files.get('/space/Work/Plan copy.md')).toBe('# Plan')
+    expect(files.get('/space/Beta.md')).toBe('# Beta')
+  })
+
+  test('picks what arrived, so the next key acts on it', async () => {
+    await workspace.copyMany(['/space/Beta.md'], '/space/Work')
+    expect(workspace.selection).toEqual(['/space/Work/Beta.md'])
+  })
+
+  test('and a folder drawn as its note is still one', async () => {
+    folders.add('/space/Trip')
+    files.set('/space/Trip/Trip.md', '# Trip')
+    files.set('/space/Trip/Day one.md', '# Day one')
+    await workspace.loadTree()
+
+    await workspace.duplicate('/space/Trip')
+
+    expect(files.get('/space/Trip copy/Trip copy.md')).toBe('# Trip')
+    expect(files.get('/space/Trip copy/Day one.md')).toBe('# Day one')
+    expect([...files.keys()]).not.toContain('/space/Trip copy/Trip.md')
+  })
+
+  test('never copies a folder into itself', async () => {
+    await workspace.copyMany(['/space/Work'], '/space/Work')
+    expect(sent.some((one) => one.startsWith('copy_path'))).toBe(false)
+  })
+
+  test('is one undo however many rows it took, and one redo back', async () => {
+    await workspace.copyMany(['/space/Beta.md', '/space/Work/Plan.md'], '/space/Work')
+    expect(workspace.undoLabel).toBe('Undo the copy')
+
+    await workspace.undoFileAction()
+    expect([...files.keys()]).not.toContain('/space/Work/Beta.md')
+    expect([...files.keys()]).not.toContain('/space/Work/Plan copy.md')
+    expect(workspace.canRedo).toBe(true)
+
+    await workspace.redoFileAction()
+    expect(files.get('/space/Work/Beta.md')).toBe('# Beta')
+    expect(files.get('/space/Work/Plan copy.md')).toBe('# Plan')
+    expect(workspace.canRedo).toBe(false)
+  })
+})
+
+describe('doing a file operation again', () => {
+  test('moves a move that was undone', async () => {
+    await workspace.moveMany(['/space/Beta.md'], '/space/Work')
+    await workspace.undoFileAction()
+    expect(files.has('/space/Beta.md')).toBe(true)
+    expect(workspace.canRedo).toBe(true)
+
+    await workspace.redoFileAction()
+    expect(files.has('/space/Work/Beta.md')).toBe(true)
+    expect(workspace.undoLabel).toBe('Undo moving Beta')
+  })
+
+  test('and has nothing left to do once something new is done', async () => {
+    await workspace.rename('/space/Beta.md', 'Gamma.md')
+    await workspace.undoFileAction()
+    expect(workspace.canRedo).toBe(true)
+
+    await workspace.duplicate('/space/Beta.md')
+    expect(workspace.canRedo).toBe(false)
+  })
+})
+
+/** Files dropped on the list from outside the app: written in, words as words and
+ *  everything else as bytes, stepping aside from a name already here. */
+describe('files dropped from outside', () => {
+  const dropped = (path: string, words: string) => ({
+    name: path.split('/').pop() ?? path,
+    webkitRelativePath: path.includes('/') ? path : '',
+    arrayBuffer: () => Promise.resolve(new TextEncoder().encode(words).buffer),
+  })
+
+  test('arrive in the folder, a folder with everything in it', async () => {
+    await workspace.bringIn(
+      [dropped('Trip/Trip.md', '# Trip'), dropped('Trip/map.png', 'PNG'), dropped('Beta.md', 'b')],
+      '/space/Work',
+    )
+
+    expect(files.get('/space/Work/Trip/Trip.md')).toBe('# Trip')
+    expect(files.get('/space/Work/Trip/map.png')).toBe('PNG')
+    expect(sent).toContain('write_bytes /space/Work/Trip/map.png')
+    expect(files.get('/space/Work/Beta.md')).toBe('b')
+  })
+
+  test('step aside from a name that is taken, and go again in one undo', async () => {
+    await workspace.bringIn([dropped('Beta.md', 'new'), dropped('Trip/a.md', 'a')], '/space')
+
+    expect(files.get('/space/Beta.md')).toBe('# Beta')
+    expect(files.get('/space/Beta 2.md')).toBe('new')
+
+    await workspace.undoFileAction()
+    expect(files.has('/space/Beta 2.md')).toBe(false)
+    expect(files.has('/space/Trip/a.md')).toBe(false)
+    expect(files.get('/space/Beta.md')).toBe('# Beta')
   })
 })
 

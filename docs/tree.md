@@ -165,6 +165,31 @@ row menu's last row, off the same stack, so an undo from either takes the toast
 away. A folder deleted with what it held is not offered: there is no snapshot of a
 folder to put back. See `undo-toast.svelte.ts`.
 
+## Copying something
+
+The file manager's gestures, the way Explorer and VS Code have them. Ctrl+C or
+Ctrl+X on the selection (or on the row the keyboard is on), then Ctrl+V: the rows
+land in the folder the focused row is, or sits in. A cut row is drawn faint until
+the paste moves it, and the paste is the ordinary move. A copy pastes as often as
+asked. Ctrl+D copies a row beside itself; a drag with Ctrl held (Alt on a Mac) copies
+instead of moving; files and folders dragged in from Explorer or Finder are copied
+into the row they land on, or into the space below the last row.
+
+Nothing is written over. A copy beside itself is `Plan copy.md`, the word Duplicate
+has always used, stepped by number past a copy already there; a file from outside
+that meets a name steps aside as `Plan 2.md`, since it is a copy of nothing here. A
+copy is bytes, made by the crate (`copy_path`), so a PDF keeps its highlights and a
+folder keeps the pictures and dotted files the list leaves out. A folder drawn as its
+note stays one: `Trip/` copies to `Trip copy/`, and the note inside is renamed
+`Trip copy.md` to match.
+
+Every copy goes through the one write (`workspace/write-file.ts`), so `[[links]]` to
+it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z with
+the list focused undoes the last file change, Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a
+Mac) does it again. A move, a rename, a deletion and a copy can be done again; a
+merge, a split and a replacement kept only the way back, so a redo stops there. See
+`workspace/copying.ts` and `workspace/redoing.ts`.
+
 ## The order it is read in
 
 Emil: *"there should be settings to decide the order of notes displayed in the

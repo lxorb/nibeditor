@@ -1,10 +1,11 @@
 /** Putting the last file operation back.
  *
- *  Six kinds of operation and six ways back, each of them a write or two and then
+ *  Seven kinds of operation and seven ways back, each of them a write or two and then
  *  the same three things said to the rest of the app: the index hears what the
  *  file says now, a document open on it takes those words, and the row moves. What
  *  is on the stack and how long it stays there is workspace/undo.svelte.ts; this is
- *  what one entry means when somebody asks for it back.
+ *  what one entry means when somebody asks for it back; redoing.ts is the way
+ *  forward again.
  *
  *  Its own module because none of it is about the workspace's own state. Every one
  *  of these reads a recorded action and writes the disk, which is why it can be
@@ -68,6 +69,9 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
       case 'import':
         await unimport(ws, action)
         break
+      case 'copy':
+        await uncopy(ws, action)
+        break
     }
   } catch {
     // Something else has since changed the file; leave what is there alone.
@@ -99,6 +103,18 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
     if (!gone) continue
 
     for (const tab of ws.tabs.filter((entry) => entry.path === path)) ws.close(tab.id)
+    links.noteGone(path)
+  }
+}
+
+/** A copy taken back: what it made, gone again. Outright, like an import's: the
+ *  original is still where it was, so there is nothing in the copy the trash would
+ *  be keeping safe. A tab open on anything in it is closed. */
+async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
+  for (const { path, folder } of action.made) {
+    await invoke(folder ? 'delete_folder' : 'delete_note', { path })
+
+    for (const tab of ws.tabs.filter((one) => one.path?.startsWith(path))) ws.close(tab.id)
     links.noteGone(path)
   }
 }

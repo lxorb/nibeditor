@@ -403,9 +403,19 @@ function holds(tail: string): boolean {
  *  bytes, on a main that was at 3,327,115 with the palette's own round in it; measured
  *  3,335,903. The rule has to be in the first paint, because the file list and a link
  *  in the note on screen answer the first click. The production build fetches 2,111
- *  more bytes before the first paint (1,318,180 to 1,320,291). */
-const BUDGET = 3_340_000
-const MOST_FILES = 386
+ *  more bytes before the first paint (1,318,180 to 1,320,291).
+ *
+ *  Raised 2026-09-28, to 3,356,000 and 387 modules, for the file list's own keys and
+ *  drops: Ctrl+C, Ctrl+X and Ctrl+V, Ctrl+Z and Ctrl+Y, Ctrl+D, Shift and an arrow, a
+ *  Ctrl-drag that copies and files dropped in from Explorer. Main measured 3,338,855
+ *  and 385 modules, this 3,352,335 and 386. The list is the first paint, so what a key or a drop reads
+ *  in it is here: the clipboard's two fields and the drop (list-landing.svelte.ts), the
+ *  table of keys, a drop's files caught before the event ends, the redo half of the
+ *  undo stack. What they do is not - the copy itself, the walk of a dropped folder and
+ *  the redo are fetched by the first of each (workspace/copying.ts, import/picking.ts,
+ *  workspace/redoing.ts). */
+const BUDGET = 3_356_000
+const MOST_FILES = 387
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

@@ -1503,4 +1503,10 @@ export const ptPT: Dictionary = {
   'Web data': 'Dados da web',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Desfazer a cópia',
+  'Redo the last file change': 'Refazer a última alteração de ficheiro',
+  'Select down': 'Selecionar para baixo',
+  'Select up': 'Selecionar para cima',
+  'Select or deselect': 'Selecionar ou desmarcar',
 }

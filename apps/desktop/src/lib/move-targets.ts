@@ -65,6 +65,17 @@ export function movesInto(paths: readonly string[], folder: string): boolean {
   return paths.some((path) => folderOf(path) !== folder && !under(path, folder))
 }
 
+/** The same for a copy, which may land beside itself - that is Duplicate - and
+ *  never inside itself. */
+export function copiesInto(paths: readonly string[], folder: string): boolean {
+  return paths.some((path) => !under(path, folder))
+}
+
+/** Whether a drop that moves or copies would do anything. */
+export function landsIn(paths: readonly string[], folder: string, how: 'move' | 'copy'): boolean {
+  return how === 'copy' ? copiesInto(paths, folder) : movesInto(paths, folder)
+}
+
 /** One place a row can land: the folder it moves into, and what that folder is
  *  called. */
 interface Place {

@@ -934,6 +934,42 @@ const PANEL_ENTRIES: Shortcut[] = [
     key: 'F2',
     contextual: true,
   },
+  // The selection from the keyboard, the way Explorer and VS Code build one: Shift and
+  // an arrow take the next row too, Ctrl+Space puts the row in or takes it out. The
+  // clipboard, undo, redo and a new note are the app's own keys read in the list; see
+  // `fileKey` in Tree.svelte.
+  {
+    id: 'tree.extend-down',
+    label: () => t('Select down'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Shift-ArrowDown',
+    contextual: true,
+  },
+  {
+    id: 'tree.extend-up',
+    label: () => t('Select up'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Shift-ArrowUp',
+    contextual: true,
+  },
+  {
+    id: 'tree.toggle',
+    label: () => t('Select or deselect'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Ctrl-Space',
+    contextual: true,
+  },
+  {
+    id: 'tree.duplicate',
+    label: () => t('Duplicate'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Mod-d',
+    contextual: true,
+  },
   // Moving a row within the order somebody arranged, which is the one of the
   // list's seven orders a key can change: the other six are rules the notes
   // themselves decide. Alt and an arrow, because the plain arrows walk the list and

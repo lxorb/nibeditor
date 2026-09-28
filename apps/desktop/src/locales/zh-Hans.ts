@@ -1428,4 +1428,10 @@ export const zhHans: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': '撤销复制',
+  'Redo the last file change': '重做上一次文件更改',
+  'Select down': '向下选择',
+  'Select up': '向上选择',
+  'Select or deselect': '选择或取消选择',
 }

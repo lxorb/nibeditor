@@ -1459,4 +1459,10 @@ export const ja: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'コピーを元に戻す',
+  'Redo the last file change': '直前のファイル操作をやり直す',
+  'Select down': '下へ選択',
+  'Select up': '上へ選択',
+  'Select or deselect': '選択または選択解除',
 }

@@ -44,6 +44,7 @@ vi.mock('../link-index.svelte', () => ({
 }))
 
 const { undoLastFileAction } = await import('./undoing')
+const { redoLastFileAction } = await import('./redoing')
 const { FileActions } = await import('./undo.svelte')
 type PutsBack = import('./undoing').PutsBack
 type FileAction = import('./undo.svelte').FileAction
@@ -165,6 +166,93 @@ describe('an import taken back', () => {
  *  note under an id rather than under a name. Without that last one the note that
  *  came back from a mistaken rename is a third note up there, with the history of
  *  neither; see `movedHere` in sync/mirror.ts. */
+describe('a copy taken back', () => {
+  test('takes away what it made, a folder as a folder, and tells the index', async () => {
+    const ws = store({
+      kind: 'copy',
+      made: [
+        { path: '/s/a copy.md', folder: false, from: '/s/a.md' },
+        { path: '/s/Trip copy', folder: true, from: '/s/Trip' },
+      ],
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
+      'delete_note /s/a copy.md',
+      'delete_folder /s/Trip copy',
+    ])
+    expect(told).toEqual(['gone /s/a copy.md', 'gone /s/Trip copy'])
+    expect(ws.undone.next?.kind).toBe('copy')
+  })
+
+  test('and one dropped from outside cannot be made again', async () => {
+    const ws = store({ kind: 'copy', made: [{ path: '/s/map.png', folder: false }] })
+    await undoLastFileAction(ws)
+
+    expect(ws.undone.ahead).toEqual([])
+  })
+})
+
+describe('doing it again', () => {
+  /** The operations a redo asks for, standing in: each records what it did, the way
+   *  the store's own do. */
+  function again(action: FileAction, refuse = false) {
+    const ws = store(action)
+    const asked: string[] = []
+    const does = {
+      ...ws,
+      undone: ws.undone,
+      move: (from: string, into: string) => {
+        asked.push(`move ${from} -> ${into}`)
+        if (refuse) return Promise.reject(new Error('taken'))
+        ws.undone.record({ kind: 'move', from, to: `${into}/x` })
+        return Promise.resolve()
+      },
+      rename: (path: string, name: string) => {
+        asked.push(`rename ${path} -> ${name}`)
+        return Promise.resolve()
+      },
+      remove: (path: string) => {
+        asked.push(`remove ${path}`)
+        return Promise.resolve()
+      },
+    }
+    return { ws: does as unknown as PutsBack & import('./redoing').DoesAgain, asked }
+  }
+
+  test('asks for the same operation, and it is one undo away again', async () => {
+    const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
+    await undoLastFileAction(ws)
+    await redoLastFileAction(ws)
+
+    expect(asked).toEqual(['move /s/a.md -> /s/Work'])
+    expect(ws.undone.last?.kind).toBe('move')
+    expect(ws.undone.ahead).toEqual([])
+  })
+
+  test('keeps what it could not do, to be asked for again', async () => {
+    const { ws } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' }, true)
+    await undoLastFileAction(ws)
+    await redoLastFileAction(ws)
+
+    expect(ws.undone.next?.kind).toBe('move')
+  })
+
+  test('stops at a merge, which kept only the way back', async () => {
+    const ws = store({
+      kind: 'merge',
+      from: '/s/a.md',
+      fromContent: 'a',
+      into: '/s/b.md',
+      intoContent: 'b',
+    })
+    await undoLastFileAction(ws)
+
+    expect(ws.undone.ahead).toEqual([])
+    expect(ws.undone.canRedo).toBe(false)
+  })
+})
+
 describe('a name put back', () => {
   test('rewrites the links that followed it, and only when they were rewritten', async () => {
     const ws = store({ kind: 'rename', from: '/s/a.md', to: '/s/b.md', rewrote: true })

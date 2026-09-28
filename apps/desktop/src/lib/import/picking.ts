@@ -11,6 +11,7 @@
  *  its entries, which is every desktop and the web; a phone hands over files
  *  alone, and there a zip is what to drop. */
 
+import { caughtFiles, type CaughtFiles } from '../drag-paths'
 import { tidyPath, type Picked } from './sources'
 
 /** Anything the browser will let a reader choose. Narrowing it would hide the
@@ -31,19 +32,18 @@ export function pickFiles(): Promise<Picked[]> {
 
 /** Everything that was dropped, folders walked where the webview allows it. */
 export async function droppedFiles(transfer: DataTransfer | null): Promise<Picked[]> {
-  if (!transfer) return []
+  return transfer ? filesUnder(caughtFiles(transfer)) : []
+}
 
-  const entries = [...transfer.items]
-    .filter((one) => one.kind === 'file')
-    .map((one) => one.webkitGetAsEntry())
-    .filter((one): one is FileSystemEntry => !!one)
-
-  if (!entries.length) return [...transfer.files]
+/** The same, for a drop whose files were caught while it happened and are walked
+ *  afterwards; see `caughtFiles` in drag-paths.ts. */
+export async function filesUnder({ entries, loose }: CaughtFiles): Promise<Picked[]> {
+  if (!entries.length) return loose
 
   const found: Picked[] = []
   for (const entry of entries) await walk(entry, found)
 
-  return found.length ? found : [...transfer.files]
+  return found.length ? found : loose
 }
 
 /** How deep a dropped folder is followed. A graph is two or three deep; a

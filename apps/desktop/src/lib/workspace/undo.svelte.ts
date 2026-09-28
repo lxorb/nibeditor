@@ -35,6 +35,16 @@ export type FileAction =
    *  that were not there a minute ago, and a file nobody has touched yet needs no
    *  snapshot kept of it. */
   | { kind: 'import'; paths: string[] }
+  /** A paste, a Ctrl-drag, a duplicate or files dropped in: one thing to take
+   *  back however many it made. Where each landed, and what it was copied from so
+   *  it can be made again - which a file from outside the app has not got. */
+  | { kind: 'copy'; made: Copied[] }
+
+export interface Copied {
+  path: string
+  folder: boolean
+  from?: string
+}
 
 import { shownName } from '../note-name'
 import { nameOf } from '../space-paths'
@@ -52,13 +62,30 @@ export class FileActions {
     return this.stack.at(-1)
   }
 
-  record(action: FileAction) {
-    this.stack = [...this.stack, action].slice(-KEPT)
+  /** What was taken back and can be done again, newest last. Anything new done
+   *  empties it, as every redo does. */
+  ahead = $state<FileAction[]>([])
+
+  get next(): FileAction | undefined {
+    return this.ahead.at(-1)
   }
 
-  /** Drops the newest one, once it has actually been put back. */
+  record(action: FileAction) {
+    this.stack = [...this.stack, action].slice(-KEPT)
+    this.ahead = []
+  }
+
+  /** Drops the newest one, once it has actually been put back, and keeps it to do
+   *  again where that means something; one that cannot be ends the redo there. */
   drop() {
+    const last = this.last
     this.stack = this.stack.slice(0, -1)
+    if (last) this.ahead = doesAgain(last) ? [...this.ahead, last] : []
+  }
+
+  /** A redo recorded itself, which emptied what was ahead; this puts the rest back. */
+  redone(rest: FileAction[]) {
+    this.ahead = rest
   }
 
   /** The trash id of a deletion, once the trash has answered with one. */
@@ -103,6 +130,34 @@ export class FileActions {
         return t('Undo the replacement')
       case 'import':
         return t('Undo the import')
+      case 'copy':
+        return t('Undo the copy')
     }
+  }
+
+  /** Whether there is anything to do again. */
+  get canRedo(): boolean {
+    return this.next !== undefined
+  }
+}
+
+/** Whether an action can be done again from what it recorded: the composer's three
+ *  and a replacement kept only the way back. */
+function doesAgain(
+  action: FileAction,
+): action is Extract<FileAction, { kind: 'move' | 'rename' | 'delete' | 'copy' }> {
+  switch (action.kind) {
+    case 'move':
+    case 'rename':
+    case 'delete':
+      return true
+    case 'copy':
+      return action.made.every((one) => one.from !== undefined)
+    case 'merge':
+    case 'split':
+    case 'extract':
+    case 'replace':
+    case 'import':
+      return false
   }
 }

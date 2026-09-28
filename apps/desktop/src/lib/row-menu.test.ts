@@ -135,40 +135,32 @@ describe('a note', () => {
 })
 
 describe('a note that holds notes', () => {
-  test('is the same menu, without a copy of itself', () => {
-    expect(labels(nested)).toEqual([
-      'Open',
-      'New note inside',
-      'Rename',
-      'Move',
-      'Choose an icon',
-      'Set cover',
-      'Bookmark',
-      'Leave out of search',
-      'Delete',
-    ])
+  /** A copy of the folder, with its note renamed to match; see copying.ts. */
+  test('is the same menu', () => {
+    expect(labels(nested)).toEqual(labels(loose))
   })
 })
 
 describe('a folder nobody has written a note in', () => {
-  /** The same menu, less the two things that need a file: a copy of itself, and a
-   *  cover. An icon it can still have, because a folder with no note keeps one in the
-   *  space's own map; front matter needs somewhere to be written. */
-  test('offers exactly what a note offers, less the copy and the cover', () => {
+  /** The same menu, less the one thing that needs a file: a cover. An icon it can
+   *  still have, because a folder with no note keeps one in the space's own map;
+   *  front matter needs somewhere to be written. */
+  test('offers exactly what a note offers, less the cover', () => {
     expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
   })
 })
 
 describe('a paper', () => {
-  /** Nowhere to keep an icon and nothing to copy, and a paper cannot hold a note.
-   *  So the menu is what every row can do and nothing else. */
-  test('holds nothing, wears nothing and is not duplicated', () => {
+  /** Nowhere to keep an icon, and a paper cannot hold a note. It copies as the
+   *  bytes it is. So the menu is what every row can do and nothing else. */
+  test('holds nothing, wears nothing and duplicates as a paper', () => {
     expect(labels(paper)).toEqual([
       'Open',
       'Rename',
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Duplicate',
       'Delete',
     ])
   })
@@ -210,11 +202,12 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Leave out of search',
       'Share',
+      'Duplicate',
       'Delete',
     ])
   })
 
-  test('while a paper can be handed over too, and still not copied', () => {
+  test('and so can a paper', () => {
     shareable.yes = true
 
     expect(labels(paper)).toEqual([
@@ -224,6 +217,7 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Leave out of search',
       'Share',
+      'Duplicate',
       'Delete',
     ])
   })

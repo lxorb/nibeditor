@@ -16,7 +16,6 @@
  *  moment it is opened: what the undo would take back, which rows are selected and
  *  what a row can be moved into are all true only then. */
 
-import { isPdfTarget } from '@nib/markdown/links'
 import { folderNote, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
 import {
@@ -30,6 +29,7 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget } from './move-targets'
 import { rowName } from './note-name'
+import { shortcuts } from './shortcuts.svelte'
 import { isMarkdownPath } from './space-paths'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
@@ -77,13 +77,13 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    // Duplicating copies a file's words. A PDF has none - the copy would be an
-    // empty file wearing the name of a paper - and a row that is a folder has more
-    // than words: a copy of `A/A.md` is `A/A 2.md`, which is neither a note nested
-    // under A nor a note beside it.
-    ...(entry.is_dir || isPdfTarget(entry.name)
-      ? []
-      : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
+    // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
+    // as the folder with its note renamed to match; see workspace/copying.ts.
+    {
+      label: t('Duplicate'),
+      hint: shortcuts.hint('tree.duplicate'),
+      run: () => void workspace.duplicate(entry.path),
+    },
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),

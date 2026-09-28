@@ -1504,4 +1504,10 @@ export const de: Dictionary = {
   'Web data': 'Webdaten',
   Global: 'Global',
   Site: 'Website',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Kopie zurücknehmen',
+  'Redo the last file change': 'Letzte Dateiänderung wiederholen',
+  'Select down': 'Nach unten auswählen',
+  'Select up': 'Nach oben auswählen',
+  'Select or deselect': 'Auswählen oder abwählen',
 }

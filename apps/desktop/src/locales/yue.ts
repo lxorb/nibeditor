@@ -1429,4 +1429,10 @@ export const yue: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': '復原複製',
+  'Redo the last file change': '重做上一次檔案變更',
+  'Select down': '向下選取',
+  'Select up': '向上選取',
+  'Select or deselect': '選取或取消選取',
 }

@@ -946,6 +946,12 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.undoFileAction(),
     },
     {
+      id: 'redo-file',
+      label: t('Redo the last file change'),
+      disabled: !workspace.canRedo,
+      run: () => void workspace.redoFileAction(),
+    },
+    {
       id: 'settings',
       label: t('Settings'),
       hint: shortcuts.hint('app.settings'),

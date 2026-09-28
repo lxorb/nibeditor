@@ -1514,4 +1514,10 @@ export const it: Dictionary = {
   'Web data': 'Dati web',
   Global: 'Globale',
   Site: 'Sito',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Annulla la copia',
+  'Redo the last file change': "Ripeti l'ultima modifica ai file",
+  'Select down': 'Seleziona verso il basso',
+  'Select up': "Seleziona verso l'alto",
+  'Select or deselect': 'Seleziona o deseleziona',
 }

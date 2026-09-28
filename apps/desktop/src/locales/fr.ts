@@ -1519,4 +1519,10 @@ export const fr: Dictionary = {
   'Web data': 'Données web',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Annuler la copie',
+  'Redo the last file change': 'Rétablir la dernière modification de fichier',
+  'Select down': 'Sélectionner vers le bas',
+  'Select up': 'Sélectionner vers le haut',
+  'Select or deselect': 'Sélectionner ou désélectionner',
 }

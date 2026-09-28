@@ -1477,4 +1477,10 @@ export const kn: Dictionary = {
   'Web data': 'Web data',
   Global: 'Global',
   Site: 'Site',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Undo the copy',
+  'Redo the last file change': 'Redo the last file change',
+  'Select down': 'Select down',
+  'Select up': 'Select up',
+  'Select or deselect': 'Select or deselect',
 }

@@ -1508,4 +1508,10 @@ export const es: Dictionary = {
   'Web data': 'Datos web',
   Global: 'Global',
   Site: 'Sitio',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Deshacer la copia',
+  'Redo the last file change': 'Rehacer el último cambio de archivo',
+  'Select down': 'Seleccionar hacia abajo',
+  'Select up': 'Seleccionar hacia arriba',
+  'Select or deselect': 'Seleccionar o deseleccionar',
 }

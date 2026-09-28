@@ -1,18 +1,13 @@
 <script lang="ts">
-  import {
-    carried,
-    carrySection,
-    dragged,
-    draggedSection,
-    isSectionDrag,
-    isTreeDrag,
-  } from './drag-paths'
+  import { carried, carrySection, draggedSection, isSectionDrag, landing } from './drag-paths'
+  import { dropOnList } from './list-landing.svelte'
   import { movesSection } from './sections'
   import { fly, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { movesInto } from './move-targets'
+  import { landsIn } from './move-targets'
+  import { shortcuts } from './shortcuts.svelte'
   import {
     FILES_MARK,
     FOOTNOTES_MARK,
@@ -78,13 +73,14 @@
    *  themselves follow; see `takes` in Tree.svelte. */
   function overRoot(event: DragEvent) {
     const root = workspace.activeSpace?.root
-    if (!isTreeDrag(event.dataTransfer) || !root) return
+    const how = landing(event, shortcuts.platform)
+    if (!how || !root) return
 
     const paths = carried()
-    if (paths.length && !movesInto(paths, root)) return
+    if (paths.length && !landsIn(paths, root, how)) return
 
     event.preventDefault()
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = how
     dropTarget.over(root)
   }
 
@@ -92,9 +88,8 @@
     event.preventDefault()
     dropTarget.clear()
 
-    const paths = dragged(event.dataTransfer)
     const root = workspace.activeSpace?.root
-    if (paths.length && root) void workspace.moveMany(paths, root)
+    if (root) dropOnList(event, root)
   }
 
   /** A tack, seen from the side: the head, the shaft, the plate and the needle.

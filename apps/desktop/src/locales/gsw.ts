@@ -1475,4 +1475,10 @@ export const gsw: Dictionary = {
   'Web data': 'Webdate',
   Global: 'Global',
   Site: 'Websiite',
+  // The file list's clipboard, and redoing a file change
+  'Undo the copy': 'Kopie zurücknehmen',
+  'Redo the last file change': 'Letzte Dateiänderung wiederholen',
+  'Select down': 'Nach unten auswählen',
+  'Select up': 'Nach oben auswählen',
+  'Select or deselect': 'Auswählen oder abwählen',
 }
