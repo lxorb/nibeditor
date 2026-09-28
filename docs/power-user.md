@@ -145,10 +145,10 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Keys | A VS Code preset: Ctrl+G go to line, Ctrl+Shift+K delete line, Ctrl+Shift+L all occurrences, Ctrl+B sidebar, Ctrl+\ split, Shift+Alt+→/← expand/shrink, Ctrl+]/Ctrl+[ indent/outdent | VS Code | missing | `PRESETS` (`lib/shortcuts/presets.ts:107`) is Default, Notion, Obsidian and Vim | S | med |
-| Keys | The default indents on Ctrl+[ and outdents on Ctrl+], Typora's order and the reverse of VS Code, Obsidian and CodeMirror; the two presets swap them | VS Code, Obsidian | partial | `ed/keymap.ts:179-180` | S | med |
-| Keys | The Obsidian preset also gets Ctrl+O (quick switcher), Ctrl+Alt+←/→ (back and forward) and Ctrl+D (delete paragraph) | Obsidian | partial | `OBSIDIAN` (`lib/shortcuts/presets.ts:44-51`) | S | med |
-| Keys | The Notion preset gets Ctrl+D (duplicate block) and Ctrl+Shift+↑/↓ (move block) | Notion | missing | the grip has Duplicate and Move rows but no keys (`lib/editor-menu.ts:149-153`) | S | low |
+| Keys | A VS Code preset: Ctrl+G go to line, Ctrl+Shift+K delete line, Ctrl+Shift+L all occurrences, Ctrl+B sidebar, Ctrl+\ split, Shift+Alt+→/← expand/shrink, Ctrl+]/Ctrl+[ indent/outdent | VS Code | done f3ff7eb4; Ctrl+B stays Bold, so the sidebar has no key there | `PRESETS` (`lib/shortcuts/presets.ts:107`) is Default, Notion, Obsidian and Vim | S | med |
+| Keys | The default indents on Ctrl+[ and outdents on Ctrl+], Typora's order and the reverse of VS Code, Obsidian and CodeMirror; the two presets swap them | VS Code, Obsidian | done f3ff7eb4 | `ed/keymap.ts:179-180` | S | med |
+| Keys | The Obsidian preset also gets Ctrl+O (quick switcher), Ctrl+Alt+←/→ (back and forward) and Ctrl+D (delete paragraph) | Obsidian | done f3ff7eb4; Ctrl+P is the commands, Ctrl+O the notes | `OBSIDIAN` (`lib/shortcuts/presets.ts:44-51`) | S | med |
+| Keys | The Notion preset gets Ctrl+D (duplicate block) and Ctrl+Shift+↑/↓ (move block) | Notion | done f3ff7eb4 | the grip has Duplicate and Move rows but no keys (`lib/editor-menu.ts:149-153`) | S | low |
 
 ## Later: too large for a batch
 
