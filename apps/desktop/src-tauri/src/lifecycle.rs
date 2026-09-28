@@ -72,6 +72,22 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
+        // An iPad asked for a second window: New Window in the icon's menu, or a note
+        // dragged out to the side. tao takes scenes only with multiple scenes on (see
+        // Info.ios.plist), and the phone build is one window, so the scene is given
+        // back rather than shown blank.
+        #[cfg(target_os = "ios")]
+        RunEvent::SceneRequested { scene, .. } => {
+            if let Some(main) = objc2::MainThreadMarker::new() {
+                objc2_ui_kit::UIApplication::sharedApplication(main)
+                    .requestSceneSessionDestruction_options_errorHandler(
+                        &scene.session(),
+                        None,
+                        None,
+                    );
+            }
+        }
+
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         RunEvent::WindowEvent {

@@ -89,6 +89,30 @@ describe('the words a Mac and an iPhone ask with', () => {
   })
 })
 
+describe('what an iPhone needs before it will show the app at all', () => {
+  const plist = read(TAURI, 'Info.ios.plist')
+  const config = JSON.parse(read(TAURI, 'tauri.conf.json')) as {
+    bundle?: { iOS?: { minimumSystemVersion?: string } }
+  }
+
+  test('the app lives in a scene', () => {
+    // Built against the iOS 27 SDK, an app with no scenes is stopped by UIKit before
+    // its first frame, and tao only takes the scene road with multiple scenes on.
+    expect(plist).toMatch(
+      /<key>UIApplicationSceneManifest<\/key>\s*<dict>\s*<key>UIApplicationSupportsMultipleScenes<\/key>\s*<true\/>/,
+    )
+  })
+
+  test('the oldest iOS it installs on can read the page', () => {
+    // The page is built for `esnext` and not lowered, and its regular expressions look
+    // behind, which WebKit parses from 16.4: an older phone opens a blank app.
+    const [major = 0, minor = 0] = (config.bundle?.iOS?.minimumSystemVersion ?? '0')
+      .split('.')
+      .map(Number)
+    expect(major * 100 + minor).toBeGreaterThanOrEqual(1604)
+  })
+})
+
 describe('what the hardened runtime lets a Mac open', () => {
   const config = JSON.parse(read(TAURI, 'tauri.macos.conf.json')) as {
     bundle?: { macOS?: { entitlements?: string; hardenedRuntime?: boolean } }

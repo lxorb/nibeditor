@@ -17,7 +17,7 @@ One identity across every build, from `src-tauri/tauri.conf.json`.
 | Publisher | Emil Vinu |
 | Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
 | Minimum Android | API 24, and API 36 is what it is compiled against |
-| Minimum iOS | 14, which is Tauri's default |
+| Minimum iOS | 16.4 (`bundle.iOS.minimumSystemVersion`): the page is built for `esnext` and not lowered, and its regular expressions look behind, which WebKit parses from 16.4 - an older phone would open a blank app |
 
 The launch screen on Android is the window's own background, set in
 `res/values/themes.xml` to the page's `--bg` in light and dark, so a cold start
@@ -123,6 +123,14 @@ along with the `tauri.*` gradle files the CLI rewrites on every build.
 machine, and nothing in it is edited, so there is nothing a commit would
 preserve that `tauri ios init` does not produce again. The iOS job runs that
 first.
+
+What the iPhone's `Info.plist` has to say beyond the CLI's own is in
+`src-tauri/Info.ios.plist`, which `tauri ios init` merges over the Mac's
+`src-tauri/Info.plist`: the sentences the phone asks for the microphone, the camera
+and the speech recogniser with, and a scene manifest. The manifest is not a
+preference. Built against the iOS 27 SDK, an app that does not live in a scene is
+stopped by UIKit before its first frame, and tao takes the scene road only when
+multiple scenes are on. `test/apple.test.ts` holds both.
 
 Run `tauri android init` again through the package manager, as
 `pnpm --filter @nib/desktop exec tauri android init`, never as `node` and a path

@@ -133,6 +133,21 @@ window-vibrancy = "0.6"
 # the only way into them: Notes has no export. Bundled so the read does not depend
 # on whichever SQLite the machine happens to ship, and a temporary folder to copy
 # the database into, because Notes is very likely running while it is read.
+# UIKit as the objects tao hands out, at the version it is built against. For the one
+# thing the phone build answers itself: a second window an iPad asks for, which is
+# given back rather than left blank (lifecycle.rs).
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6"
+objc2-ui-kit = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "UIApplication",
+  "UIResponder",
+  "UIScene",
+  "UISceneOptions",
+  "UISceneSession",
+] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 rusqlite = { version = "0.32", features = ["bundled"] }
 tempfile = "3"

@@ -8,5 +8,14 @@
 	<string>Nib uses the camera when you take a photo into a note.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Nib turns what you say into words in your note while you dictate.</string>
+	<!-- An app built against the iOS 27 SDK that does not use scenes is stopped by
+	     UIKit as it launches. tao takes the scene road only when multiple scenes are
+	     on, so they are, and a scene the system asks for beyond the first is
+	     answered in lib.rs. -->
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
