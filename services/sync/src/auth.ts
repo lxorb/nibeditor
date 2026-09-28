@@ -13,7 +13,7 @@ import {
 } from './crypto'
 import { codeMessage, mailer } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
-import { machineOf, mailCeilings } from './limits'
+import { machineOf, mailCeilings, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
@@ -283,6 +283,13 @@ export async function verifyCode(
 
   if (pending.attempts >= MAX_ATTEMPTS) {
     return { error: 'too many tries - ask for a new code', status: 429 }
+  }
+
+  // And every code this address was sent, together: see `mayTryCode`. Asked only
+  // of a code that is there to be tried, so an address nobody asked a code for
+  // counts nothing against itself.
+  if (!(await mayTryCode(env, address))) {
+    return { error: 'too many tries - try again in an hour', status: 429 }
   }
 
   if (!equals(await sha256(pending.salt + entered), pending.code_hash)) {

@@ -167,6 +167,27 @@ export function mayTrySecondFrom(env: Env, machine: string | null): Promise<bool
   return within(env, 'second-from', machine, SECOND_TRIES_FROM_ONE_MACHINE, AN_HOUR)
 }
 
+/** How many sign-in codes one address may have checked in an hour, whichever
+ *  codes they were.
+ *
+ *  Five wrong tries spend one code, and that alone bounds nothing: asking for
+ *  another resets the count, an address may be sent one every thirty seconds, and
+ *  the machine ceiling on mail says nothing to a script spread over a few of them.
+ *  That was six hundred guesses an hour at somebody's account for as long as it
+ *  cared to run. Fifteen is three codes' worth of mistyping, and far below that.
+ *
+ *  Counted per address rather than per machine, because the address is what is
+ *  being guessed at. The price is that a script can make somebody wait an hour to
+ *  sign in, which is the trade every such ceiling makes, and a far better one than
+ *  the account. */
+const CODE_TRIES_AN_HOUR = 15
+
+/** Whether one more sign-in code may be checked for this address, counting this
+ *  one. */
+export function mayTryCode(env: Env, address: string): Promise<boolean> {
+  return within(env, 'code-tries', address, CODE_TRIES_AN_HOUR, AN_HOUR)
+}
+
 /** How many answers one machine may send through the forms on published pages
  *  in an hour, and how many any one site may take.
  *

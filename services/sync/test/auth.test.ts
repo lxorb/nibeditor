@@ -197,6 +197,33 @@ describe('verifying a code', () => {
     expect(response.status).toBe(429)
   })
 
+  test('stops at a number of tries for one address, however many codes it was sent', async () => {
+    // Five wrong tries spend a code, and a new code used to start the count again:
+    // one every thirty seconds, from as many machines as a script has, was six
+    // hundred guesses an hour at one account. See `mayTryCode`.
+    for (let code = 0; code < 3; code++) {
+      env.db.exec('delete from login_codes')
+      await requestCode('a@b.dev')
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const wrong = await call(env, '/v1/auth/verify', {
+          body: { email: 'a@b.dev', code: '000000' },
+          headers: { 'cf-connecting-ip': `203.0.113.${code}` },
+        })
+        expect(wrong.status).toBe(400)
+      }
+    }
+
+    env.db.exec('delete from login_codes')
+    const right = await requestCode('a@b.dev')
+    const refused = await call(env, '/v1/auth/verify', {
+      body: { email: 'a@b.dev', code: right },
+    })
+    expect(refused.status).toBe(429)
+
+    // Another address is its own count.
+    expect(await signIn(env, 'c@d.dev')).toBeTruthy()
+  })
+
   test('a used code cannot be replayed', async () => {
     const code = await requestCode('a@b.dev')
     await call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code } })
