@@ -180,7 +180,12 @@ fn walk(
                     // and a file list nobody can act on is noise.
                     room(left)?;
                     let meta = entry.metadata().ok();
+                    // A note iCloud left on a Mac as a name without its words; see
+                    // notes/icloud.rs, which is a Mac's alone.
+                    #[cfg(target_os = "macos")]
                     let dataless = meta.as_ref().is_some_and(crate::notes::icloud::is_dataless);
+                    #[cfg(not(target_os = "macos"))]
+                    let dataless = false;
                     let mut one = listed(&child, name, false, meta);
                     one.evicted = evicted || dataless;
                     children.push(one);
