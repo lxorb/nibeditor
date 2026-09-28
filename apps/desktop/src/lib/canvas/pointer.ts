@@ -339,9 +339,6 @@ export interface Context {
   fingerDraws: boolean
 }
 
-/** How wide the eraser is when nobody has said, in pixels on screen. */
-export const RUB = 10
-
 /** What the eraser reaches, in plane units, from what the bar says and how far
  *  in the plane a pixel goes. Held in one place, because a rub answers under the
  *  nib and again on every point of the drag, and the two have to agree.

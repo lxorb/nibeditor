@@ -142,12 +142,27 @@ export async function spacesFor(env: Env, userId: string): Promise<Space[]> {
 
 /** Accepts a name or an id, so an LLM can use whichever it saw last. Only the
  *  spaces the caller can reach are ever looked at, so an id belonging to
- *  somebody who shared nothing with them is simply not found. */
-async function findSpace(env: Env, userId: string, wanted: string): Promise<Space | null> {
+ *  somebody who shared nothing with them is simply not found.
+ *
+ *  A name is not an id, and two spaces can share one. Being invited is enough to
+ *  have a space in the list, so anybody who knows an address can put a space
+ *  called Notes beside that person's own Notes - and the first of two equal names
+ *  was whichever the database handed back first, which made "write this into
+ *  Notes" a way to write it into a stranger's space. So the account's own space
+ *  wins its own name, and two spaces nobody here owns are named back by id rather
+ *  than chosen between. */
+async function findSpace(env: Env, userId: string, wanted: string): Promise<Space | string | null> {
   const all = await spacesFor(env, userId)
-  const needle = wanted.trim().toLowerCase()
+  const byId = all.find((space) => space.id === wanted)
+  if (byId) return byId
 
-  return all.find((space) => space.id === wanted || space.name.toLowerCase() === needle) ?? null
+  const needle = wanted.trim().toLowerCase()
+  const named = all.filter((space) => space.name.toLowerCase() === needle)
+  const own = named.find((space) => space.role === 'owner')
+  if (own || named.length < 2) return own ?? named[0] ?? null
+
+  const ids = named.map((space) => space.id).join(', ')
+  return `${named.length} spaces shared with you are called ${wanted}: ${ids}. Name one by its id.`
 }
 
 export async function noteBody(env: Env, spaceId: string, noteId: string): Promise<string> {

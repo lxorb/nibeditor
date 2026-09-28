@@ -7,11 +7,11 @@ import {
   type Input,
   type Machine,
   NOTHING,
-  RUB,
   start,
   step,
   type Tool,
 } from './pointer'
+import { RUB } from './pens.svelte'
 
 /** The machine has no DOM in it, so a gesture is a list of values and a test is
  *  that list written down. Everything below is one sequence of events and what

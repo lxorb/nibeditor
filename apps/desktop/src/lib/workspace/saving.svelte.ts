@@ -13,9 +13,11 @@
  *  `workspace.save()` still means what it always did. */
 
 import { flushTableEdits } from '@nib/editor'
+import { saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { key, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { log } from '../log'
 import { endingOf, nameFromContent, shownName } from '../note-name'
 import { owesLast } from '../parting'
 import { without } from '../records'
@@ -201,6 +203,13 @@ export class Saving {
   /** The write that waits for a pause in the typing; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY)
 
+  /** Pauses in a row that ended in a refused write. */
+  private failures = 0
+  private readonly retry = afterQuiet(
+    () => void this.saveWaiting(),
+    () => saveRetryDelay(this.failures),
+  )
+
   /** Notes waiting to be written when the typing stops. A set rather than one
    *  note, because two panes may hold two different notes and both be edited
    *  between one pause and the next. */
@@ -289,11 +298,23 @@ export class Saving {
     this.soon()
   }
 
+  /** Each note on its own: a refused one is queued again, not lost with every
+   *  note behind it. */
   private async saveWaiting() {
     const notes = [...this.waiting]
     this.waiting.clear()
 
-    for (const note of notes) await this.write(note)
+    let refused = 0
+    for (const note of notes) {
+      await this.write(note).catch((error: unknown) => {
+        refused += 1
+        this.waiting.add(note)
+        log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
+      })
+    }
+
+    this.failures = refused ? this.failures + 1 : 0
+    if (refused) this.retry()
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
@@ -498,6 +519,9 @@ export class Saving {
         this.clearSaveState(note.key)
         return
       }
+
+      // Renamed mid-write: the words follow the file, not the old name.
+      if (note.path !== null) path = note.path
 
       await invoke('write_note', { path, content })
     } catch (error) {

@@ -719,6 +719,7 @@ export const ms: Dictionary = {
   'that path is not usable': 'laluan itu tidak boleh digunakan',
   'this note changed elsewhere': 'nota ini berubah di tempat lain',
   'too many tries - ask for a new code': 'terlalu banyak cubaan - minta kod baharu',
+  'too many tries - try again in an hour': 'terlalu banyak cubaan - cuba lagi dalam sejam',
   'too many messages from here - try again later':
     'terlalu banyak mesej dari sini - cuba lagi nanti',
   'too much mail today - try again tomorrow': 'terlalu banyak mel hari ini - cuba lagi esok',

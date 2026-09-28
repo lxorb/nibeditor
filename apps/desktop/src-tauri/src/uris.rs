@@ -50,8 +50,7 @@ pub fn watch(app: &AppHandle) {
         // The window, not the webview window, which a window with a page in a tab
         // is not; see web_tabs.rs.
         if let Some(window) = opened.get_window("main") {
-            let _ = window.unminimize();
-            let _ = window.set_focus();
+            crate::placement::raised(&window);
         }
 
         let _ = opened.emit(OPENED, urls);

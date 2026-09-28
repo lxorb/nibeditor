@@ -137,6 +137,9 @@ export interface Joined {
   waiting?: boolean
   /** The owner said no. */
   declined?: boolean
+  /** An invitation to an account that asks for a second code: half a sign-in. */
+  second?: boolean
+  holding?: string
 }
 
 export interface RemoteSpace {

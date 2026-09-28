@@ -723,6 +723,7 @@ export const ps: Dictionary = {
   'that path is not usable': 'هغه لار نه کارېدی شي',
   'this note changed elsewhere': 'دا يادښت بل چېرته بدله شوه',
   'too many tries - ask for a new code': 'ډېرې هڅې - نوی کوډ وغواړئ',
+  'too many tries - try again in an hour': 'ډېرې هڅې - له یو ساعت وروسته بيا هڅه وکړئ',
   'too many messages from here - try again later': 'له دې ځايه ډېر پيغامه - وروسته بيا هڅه وکړئ',
   'too much mail today - try again tomorrow': 'نن ډېر ليکونه - سبا بيا هڅه وکړئ',
   'that many people are already waiting to be let in': 'همدې کچې خلک دمخه د پرېښودلو انتظار کوي',

@@ -22,36 +22,18 @@ import { COVER_KEY, COVER_POSITION_KEY } from '@nib/markdown/cover'
 import { frontMatterEdits } from '@nib/markdown/front-matter'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
+import { chooseFiles, PICTURES } from './choose-files'
 import { key, message, t } from './i18n.svelte'
-import { reverse } from './search/replace'
+import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
 import { isMarkdownPath } from './space-paths'
 import { usage } from './usage.svelte'
 import { workspace } from './workspace.svelte'
 
-/** What a file chooser will offer: everything every surface that draws a note can
- *  draw. The same list the Picture row offers, because a cover is a picture. */
-const PICTURES = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'bmp']
-
 /** Whether a path is a thing that can have one. A note: a canvas and a set of pages
  *  are JSON with no front matter, and a folder is not a file. */
 export function canHaveCover(path: string | null | undefined): boolean {
   return !!path && isMarkdownPath(path)
-}
-
-/** The chooser. It only opens from inside a click, which a menu row is; the same
- *  input the Picture row uses, and for the same reason - a webview hands back a real
- *  `File`, which is what the storing wants. */
-function pickPicture(): Promise<File | null> {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = [...PICTURES.map((one) => `.${one}`), 'image/*'].join(',')
-
-  return new Promise((resolve) => {
-    input.onchange = () => resolve(input.files?.[0] ?? null)
-    input.oncancel = () => resolve(null)
-    input.click()
-  })
 }
 
 /** Writes the two keys, or takes both away when `src` is null. One write, so a
@@ -73,11 +55,8 @@ export async function setCover(path: string, src: string | null): Promise<void> 
   ])
   if (!edit) return
 
-  const after = before.slice(0, edit.from) + edit.insert + before.slice(edit.to)
-  const edits = [edit]
-
   try {
-    await workspace.replaceInNotes([{ path, before, after, edits, back: reverse(before, edits) }])
+    await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
     settings.error = message(error, key('That cover could not be written.'))
   }
@@ -85,7 +64,8 @@ export async function setCover(path: string, src: string | null): Promise<void> 
 
 /** Chooses a picture and makes it this note's cover. */
 export async function chooseCover(path: string): Promise<void> {
-  const file = await pickPicture()
+  // The list the Picture row offers, because a cover is a picture.
+  const [file] = await chooseFiles({ accept: PICTURES })
   if (!file) return
 
   try {

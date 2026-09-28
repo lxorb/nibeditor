@@ -13,6 +13,7 @@
  *  on a canvas - and each sits behind a small function of its own. The
  *  arithmetic and the markup are pure, and are what the tests read. */
 
+import { escapeAll } from '@nib/markdown/html'
 import { toXhtml } from './epub'
 
 export interface ImageOptions {
@@ -65,12 +66,6 @@ export function pagesOf(totalHeight: number, pageHeight: number | null | undefin
   })
 }
 
-/** The paper colour as an attribute can carry it. It comes from a setting, and
- *  nothing reaching XML goes in unescaped. */
-function attributeValue(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
-}
-
 /** The document with the XHTML namespace on its root element.
  *
  *  Inside a `foreignObject` the default namespace is SVG's, so an `<html>` that
@@ -99,7 +94,7 @@ function namespaced(xhtml: string): string {
 export function svgOf(html: string, size: { width: number; height: number }, background: string) {
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${size.width}" height="${size.height}" viewBox="0 0 ${size.width} ${size.height}">`,
-    `<rect width="100%" height="100%" fill="${attributeValue(background)}" />`,
+    `<rect width="100%" height="100%" fill="${escapeAll(background)}" />`,
     '<foreignObject width="100%" height="100%">',
     namespaced(toXhtml(html)),
     '</foreignObject>',

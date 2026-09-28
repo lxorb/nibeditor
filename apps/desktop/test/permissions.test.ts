@@ -185,7 +185,8 @@ describe('writing an export', () => {
   test('writes bytes through a command the crate registers and the frontend calls', () => {
     expect(read('../src-tauri/src/lib.rs')).toContain('notes::write_bytes')
     expect(read('../src-tauri/src/notes.rs')).toContain('pub fn write_bytes')
-    expect(read('../src/lib/export/save.ts')).toContain("invoke('write_bytes'")
+    expect(read('../src/lib/export/save.ts')).toContain('writeBytes(')
+    expect(read('../src/lib/workspace/write-file.ts')).toContain("invoke('write_bytes'")
   })
 
   /** And the reason it is a command of ours: the write is whole or it never

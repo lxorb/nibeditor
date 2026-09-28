@@ -170,6 +170,12 @@ class Joining {
    *  wait, a refusal, or - for a link followed by an account that was already
    *  signed in - the space on its own. */
   private async landed(joined: Joined) {
+    // Half a sign-in: once the second code is in, SignIn.svelte walks this link again.
+    if (joined.second && joined.holding) {
+      account.askForSecond(joined.holding)
+      return
+    }
+
     // A session the link established, which is the whole of what a link is for.
     if (joined.token) await account.arrive(joined.token, joined)
     else if (joined.guest) account.guest = joined.guest

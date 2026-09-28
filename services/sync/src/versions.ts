@@ -267,6 +267,18 @@ export async function versionAt(env: Env, noteId: string, at: number): Promise<s
   return object ? await object.text() : null
 }
 
+/** What the path of every note inside a folder starts with: the folder and a
+ *  slash, or nothing for the whole space.
+ *
+ *  Compared as the characters it is rather than as a `like` pattern. A pattern
+ *  reads `_` and `%` in a folder's name as wildcards and ignores the case of every
+ *  letter, so putting `Work` back put `work` back too, and `a_b` took `aXb` with it:
+ *  a rollback reaching notes the reader never asked it to touch. */
+function folderPrefix(under: string): string {
+  const folder = under.replace(/\/+$/, '')
+  return folder ? `${folder}/` : ''
+}
+
 /** What every note under a path said at a moment: the newest version at or
  *  before it, for the notes that have one.
  *
@@ -278,13 +290,13 @@ export async function versionsAt(
   under: string,
   at: number,
 ): Promise<{ note_id: string; path: string; hash: string; live: string }[]> {
-  const prefix = under ? `${under.replace(/\/+$/, '')}/%` : '%'
+  const prefix = folderPrefix(under)
 
   const { results } = await env.DB.prepare(
     `select v.note_id as note_id, n.path as path, v.hash as hash, n.hash as live
        from note_versions v
        join notes n on n.id = v.note_id
-      where n.space_id = ?1 and n.path like ?2 and v.at <= ?3
+      where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)
       order by n.path
       limit ?4`,
@@ -465,12 +477,12 @@ export async function countVersionsAt(
   under: string,
   at: number,
 ): Promise<number> {
-  const prefix = under ? `${under.replace(/\/+$/, '')}/%` : '%'
+  const prefix = folderPrefix(under)
 
   const found = await env.DB.prepare(
     `select count(*) as held from note_versions v
        join notes n on n.id = v.note_id
-      where n.space_id = ?1 and n.path like ?2 and v.at <= ?3
+      where n.space_id = ?1 and substr(n.path, 1, length(?2)) = ?2 and v.at <= ?3
         and v.hash != n.hash
         and v.at = (select max(at) from note_versions where note_id = v.note_id and at <= ?3)`,
   )

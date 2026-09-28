@@ -63,9 +63,9 @@ export function hasNotionId(name: string): boolean {
 
 /** Every part of a path made into a name a file may have, the extension kept.
  *
- *  Two formats need this: a folder of markdown, whose folders were named by
- *  whoever made them, and Apple Notes, whose folders are named after the ones in
- *  Notes. `each` is what a format does to a part before it is made safe - taking
+ *  Three formats need this: a folder of markdown, whose folders were named by
+ *  whoever made them, Apple Notes, whose folders are named after the ones in
+ *  Notes, and Notion, whose every name carries an id. `each` is what a format does to a part before it is made safe - taking
  *  the id off a Notion name, for one - and nothing by default. */
 export function safeParts(path: string, each: (part: string) => string = (part) => part): string {
   const parts = path.split('/').filter(Boolean)

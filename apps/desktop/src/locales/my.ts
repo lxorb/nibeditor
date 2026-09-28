@@ -716,6 +716,7 @@ export const my: Dictionary = {
   'that path is not usable': 'ထိုလမ်းကြောင်း အသုံးမပြုနိုင်ပါ',
   'this note changed elsewhere': 'ဤမှတ်စု အခြားနေရာတွင် ပြောင်းသွားပြီ',
   'too many tries - ask for a new code': 'ကြိုးပမ်းမှုများလွန်းသည် - ကုဒ်အသစ်တောင်းပါ',
+  'too many tries - try again in an hour': 'ကြိုးပမ်းမှုများလွန်းသည် - တစ်နာရီအကြာတွင် ထပ်စမ်းပါ',
   'too many messages from here - try again later': 'ဤနေရာမှ စာများလွန်းသည် - နောက်မှ ထပ်စမ်းပါ',
   'too much mail today - try again tomorrow': 'ဒီနေ့ စာများလွန်းသည် - မနက်ဖန် စမ်းပါ',
   'that many people are already waiting to be let in': 'ထိုမျှလူများ ဝင်ခွင့်စောင့်နေပြီးဖြစ်သည်',

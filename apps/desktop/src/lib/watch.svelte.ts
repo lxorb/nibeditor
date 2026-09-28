@@ -26,6 +26,7 @@ import { SvelteSet } from 'svelte/reactivity'
 import { t } from './i18n.svelte'
 import { isExternalFile } from './save-as'
 import { sync } from './sync.svelte'
+import { fileStamp, type Stamp } from './sync/mirror'
 import { invoke, isDesktop } from './tauri'
 import type { NoteDoc } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
@@ -34,19 +35,6 @@ import { workspace } from './workspace.svelte'
  *  enough that a file changed in another window is caught before anybody has
  *  finished reading the paragraph they are on. */
 const EVERY = 4000
-
-/** When a file was last written, and how long it is; see `file_stamp` in the
- *  crate. Enough to tell that something has changed it. */
-interface Stamp {
-  modified: number
-  len: number
-}
-
-function isStamp(value: unknown): value is Stamp {
-  if (typeof value !== 'object' || value === null) return false
-  const shape = value as { modified?: unknown; len?: unknown }
-  return typeof shape.modified === 'number' && typeof shape.len === 'number'
-}
 
 /** One stamp as one string, so two of them are compared with `===`. */
 const mark = (stamp: Stamp): string => `${stamp.modified}:${stamp.len}`
@@ -94,10 +82,10 @@ class Watch {
   }
 
   private async check(path: string, note: NoteDoc): Promise<void> {
-    const answer: unknown = await invoke('file_stamp', { path }).catch(() => null)
+    const answer = await fileStamp(path)
     // A file that is gone is not a change to follow: it may be halfway through
     // being replaced, and the note is the only copy of it left either way.
-    if (!isStamp(answer)) return
+    if (!answer) return
 
     const now = mark(answer)
     const before = this.seen.get(path)

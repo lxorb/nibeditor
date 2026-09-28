@@ -710,6 +710,7 @@ export const zhHantHK: Dictionary = {
   'that path is not usable': '該路徑無法使用',
   'this note changed elsewhere': '此筆記在別處已更改',
   'too many tries - ask for a new code': '嘗試次數過多，請重新索取驗證碼',
+  'too many tries - try again in an hour': '嘗試次數過多，請一小時後再試',
   'too many messages from here - try again later': '來自這裏的請求過多，請稍後再試',
   'too much mail today - try again tomorrow': '今天發出的郵件太多，請明天再試',
   'that many people are already waiting to be let in': '等待加入的人數已達上限',

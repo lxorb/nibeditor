@@ -25,7 +25,7 @@ import { Hono, type MiddlewareHandler } from 'hono'
 import { NOT_AN_EMAIL, NO_SUCH_NOTE, SPACE_IS_FULL } from '../refused'
 import { readBody } from '../body'
 import { isEmail, normaliseEmail, now, randomToken, sha256 } from '../crypto'
-import { forgetMailed, inviteMessage, mailer, mayMail } from '../email'
+import { forgetMailed, inviteMessage, mailer, mayMail, refusedMail } from '../email'
 import { forgetEmptyGuest } from '../guests'
 import { machineOf } from '../limits'
 import { roomsRevoked } from '../rooms'
@@ -399,10 +399,10 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
 
   // Asked before anything is written, because a ceiling is the one answer here
   // that is a refusal rather than a quiet no: the invitation itself is what lets
-  // somebody in, so a row written and then answered 429 would be an owner told
+  // somebody in, so a row written and then refused would be an owner told
   // nothing happened while it had.
   const may = await mayMail(context.env, email, machineOf(context.req))
-  if (may.error) return context.json({ error: may.error }, 429)
+  if (may.refusal) return refusedMail(context, may.refusal)
 
   const token = randomToken()
   await context.env.DB.prepare(

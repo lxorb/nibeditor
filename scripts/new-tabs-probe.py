@@ -52,7 +52,7 @@ import urllib.error
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import refuse_updating
+from probe_app import run_probe, refuse_updating
 
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORT = 23760
@@ -302,7 +302,7 @@ def main() -> int:
     # Twice, because `eval` is read once when the endpoint starts listening: the first
     # launch is what writes the file this turns it on in, and the second is the one that
     # answers. See `eval` in src-tauri/src/endpoint.rs.
-    first = subprocess.Popen([str(exe)], cwd=str(exe.parent), env=environment)
+    first = run_probe(exe, env=environment)
     was, _ = endpoint(args.identifier, 150)
     allow_eval(args.identifier)
     say(f"eval turned on in {config_dir(args.identifier) / 'automation.json'}")
@@ -316,7 +316,7 @@ def main() -> int:
     # of this process to wait for. See tauri-plugin-single-instance.
     time.sleep(6.0)
 
-    app = subprocess.Popen([str(exe)], cwd=str(exe.parent), env=environment)
+    app = run_probe(exe, env=environment)
     try:
         hwnd = wait_for_window(app, 120)
         if not hwnd:

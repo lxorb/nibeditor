@@ -18,9 +18,9 @@
  *  Nothing here writes and nothing here is reactive: it is asked, it answers, and
  *  the surface that asked draws the answer. */
 
-import { taskAt } from '@nib/markdown/tasks'
+import { escapeAll } from '@nib/markdown/html'
 import { shownName } from './note-name'
-import type { Hit } from './search/match'
+import { type Hit, taskOf } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 
@@ -33,18 +33,6 @@ const MOST = 40
  *  answer. The panel has no such limit because it is a panel; a fence is a
  *  paragraph. */
 const PER_NOTE = 5
-
-const ESCAPES: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-}
-
-function escape(text: string): string {
-  return text.replace(/[&<>"']/g, (one) => ESCAPES[one] ?? one)
-}
 
 /** The query a fence holds. Every line of it, joined, because a fence is a box
  *  and a reader will put a long query on two lines; the grammar reads a newline
@@ -73,12 +61,12 @@ function marked(text: string, ranges: readonly { from: number; to: number }[]): 
   let at = 0
 
   for (const range of ranges) {
-    if (range.from > at) out += escape(text.slice(at, range.from))
-    out += `<mark>${escape(text.slice(range.from, range.to))}</mark>`
+    if (range.from > at) out += escapeAll(text.slice(at, range.from))
+    out += `<mark>${escapeAll(text.slice(range.from, range.to))}</mark>`
     at = range.to
   }
 
-  return out + escape(text.slice(at))
+  return out + escapeAll(text.slice(at))
 }
 
 /** One row: a button carrying the note and the line it is, and a box in front of
@@ -89,24 +77,18 @@ function marked(text: string, ranges: readonly { from: number; to: number }[]): 
  *  carries `data-task` so the surface drawing it can tell a press on the box from a
  *  press on the row. */
 function row(hit: Hit): string {
-  const where = `data-path="${escape(hit.path)}" data-line="${hit.line}"`
-  const task = taskAt(hit.text)
+  const where = `data-path="${escapeAll(hit.path)}" data-line="${hit.line}"`
+  const task = taskOf(hit)
 
   if (!task) {
     return `<button type="button" class="nib-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
   }
 
-  const words = hit.text.slice(task.marker)
-  const moved = hit.ranges
-    .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
-    .filter((range) => range.to > 0)
-    .map((range) => ({ from: Math.max(range.from, 0), to: range.to }))
-
   const box =
     `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
-    `${task.done ? ' checked' : ''} aria-label="${escape(words)}">`
+    `${task.done ? ' checked' : ''} aria-label="${escapeAll(task.text)}">`
 
-  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(words, moved)}</button>`
+  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
 }
 
 /** What one fence answers with, or null where there is nothing to answer from:
@@ -134,13 +116,13 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
   ).catch(() => undefined)
 
   if (!hits.length)
-    return `<div class="nib-query"><p class="nib-query-none">${escape(nothing)}</p></div>`
+    return `<div class="nib-query"><p class="nib-query-none">${escapeAll(nothing)}</p></div>`
 
   const groups = grouped(hits)
     .map((group) => {
       const rows = group.hits.map(row).join('')
 
-      return `<p class="nib-section">${escape(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
+      return `<p class="nib-section">${escapeAll(shownName(group.name))}<span>${group.hits.length}</span></p>${rows}`
     })
     .join('')
 
@@ -151,7 +133,7 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
  *  row in the Search panel opens.
  *
  *  The workspace is imported here rather than at the top for the reason
- *  workspace/folder-icons gives about the syncing loop: the link index hands this
+ *  workspace/pushing.ts gives about the syncing loop: the link index hands this
  *  to the editor, and the workspace owns the link index. */
 async function openQueryRow(path: string, line: number): Promise<void> {
   const { workspace } = await import('./workspace.svelte')

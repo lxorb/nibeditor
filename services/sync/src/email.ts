@@ -1,6 +1,7 @@
+import type { Context } from 'hono'
 import { now } from './crypto'
 import { note } from './failed'
-import { mailCeilings } from './limits'
+import { mailCeilings, mailNotSent, type MailRefusal } from './limits'
 import type { EmailSender, Env } from './types'
 
 /** How long an address waits between two messages about sharing. The same gap
@@ -8,38 +9,37 @@ import type { EmailSender, Env } from './types'
  *  person receiving it who is being protected, whoever asked for the send. */
 const MAIL_GAP = 30 * 1000
 
-/** Whether a message may go, and what to say when it may not. A sentence is
- *  meant to be shown; null with `ok` false is the gap below, which keeps its
- *  silence on purpose. */
+/** Whether a message may go, and why not when it may not. A refusal is meant
+ *  to be answered; null with `ok` false is the gap below, or a ceiling on the
+ *  address, which keep their silence on purpose. */
 export interface Mailable {
   ok: boolean
-  error: string | null
+  refusal: MailRefusal | null
 }
 
 /** Whether this address may be written to now, marking it as written to when it
  *  may. One call rather than a question and an answer, so nothing can ask, be
  *  told no, and send anyway.
  *
- *  Three things stand between an address and a message: the two ceilings on the
- *  service as a whole, which are in limits.ts and have something to say, and the
- *  gap this one address keeps, which has not. The gap is asked last, so a message
- *  held back by it costs nothing against the day. */
+ *  For a message somebody causes to somebody else: an invitation, an owner told
+ *  that somebody is waiting. The gap this one address keeps is asked first, so a
+ *  message held back by it costs nothing against any ceiling. Then the ceilings
+ *  in limits.ts, where the ones about the service and the asker have something to
+ *  say and the ones about the address have not - for the gap's reason: a sentence
+ *  would tell whoever asked that somebody else had been writing to that address. */
 export async function mayMail(
   env: Env,
   address: string,
   machine: string | null,
 ): Promise<Mailable> {
-  const ceiling = await mailCeilings(env, address, machine)
-  if (ceiling) return { ok: false, error: ceiling }
-
   const last = await env.DB.prepare('select sent_at from mailed where email = ?')
     .bind(address)
     .first<{ sent_at: number }>()
 
-  // Nothing is said about it. The gate is per address across every space there
-  // is, so a sentence here would tell whoever asked whether somebody else had
-  // just written to that address.
-  if (last && now() - last.sent_at < MAIL_GAP) return { ok: false, error: null }
+  if (last && now() - last.sent_at < MAIL_GAP) return { ok: false, refusal: null }
+
+  const refusal = await mailCeilings(env, address, machine)
+  if (refusal) return { ok: false, refusal: refusal.aboutTheAddress ? null : refusal }
 
   // Rows past the gap say nothing any more, so they go as new ones arrive - the
   // way the sessions and the sign-in codes are cleared. One row per address ever
@@ -56,17 +56,32 @@ export async function mayMail(
     .bind(address, now())
     .run()
 
-  return { ok: true, error: null }
+  return { ok: true, refusal: null }
 }
 
-/** Takes back the gap `mayMail` wrote, for a message that then did not go.
+/** Takes back what `mayMail` wrote, for a message that then did not go.
  *
  *  The row is there so one address is not written to twice in half a minute. A
  *  message that never left the building wrote to nobody, and a row left behind
  *  for it would answer the next try with the gap's silent no - so whoever asked
- *  would press the button again, be told nothing, and still receive nothing. */
+ *  would press the button again, be told nothing, and still receive nothing. The
+ *  ceilings give back what they counted, for the same reason. */
 export async function forgetMailed(env: Env, address: string): Promise<void> {
   await env.DB.prepare('delete from mailed where email = ?').bind(address).run()
+  await mailNotSent(env, address)
+}
+
+/** A refusal as the service answers it: the sentence, the status, and when to
+ *  come back where that is known. */
+export function refusedMail(
+  context: Context,
+  refusal: { error: string; status: 400 | 429 | 503; retryAfter: number | null },
+): Response {
+  return context.json(
+    { error: refusal.error },
+    refusal.status,
+    refusal.retryAfter ? { 'retry-after': String(refusal.retryAfter) } : {},
+  )
 }
 
 export interface Mailer {

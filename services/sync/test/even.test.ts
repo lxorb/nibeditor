@@ -40,6 +40,17 @@ describe('the Even Realities plugin', () => {
     expect((await call(env, '/somewhere')).text).toBe('/index.html')
   })
 
+  test('and the editor, unlike the plugin, is no other site’s to frame', async () => {
+    for (const path of ['/', '/somewhere']) {
+      const page = await call(env, path)
+      expect(page.headers.get('content-security-policy'), path).toBe("frame-ancestors 'none'")
+      expect(page.headers.get('x-frame-options'), path).toBe('DENY')
+    }
+
+    // The plugin is shown by the glasses' own app, which is not a thing to guess at.
+    expect((await call(env, '/even/')).headers.get('x-frame-options')).toBe(null)
+  })
+
   test('says so when there is nothing to serve', async () => {
     const bare = testEnv()
     expect((await call(bare, '/even/')).status).toBe(404)

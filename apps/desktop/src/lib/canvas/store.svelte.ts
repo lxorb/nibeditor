@@ -462,7 +462,7 @@ export class CanvasStore implements PlaneSurface {
    *  leaving the view unset is also what says the canvas has not been framed yet,
    *  so the first cards to arrive are framed when they do. */
   fit(width: number, height: number) {
-    const box = bounds(this.canvas.nodes, this.canvas.ink.map(strokeBox))
+    const box = bounds([...this.canvas.nodes, ...this.canvas.ink.map(strokeBox)])
     if (box) this.camera = framingBox(box, width, height, PADDING)
   }
 

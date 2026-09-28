@@ -235,8 +235,7 @@ class Session {
     // An account with a second factor is not signed in yet: what came back is
     // half a sign-in, and the code out of the app finishes it.
     if (session.second && session.holding) {
-      this.holding = session.holding
-      this.step = 'second'
+      this.askForSecond(session.holding)
       return false
     }
 
@@ -248,6 +247,14 @@ class Session {
 
     await this.settleIn(token, user)
     return true
+  }
+
+  /** Half a sign-in: the sheet asks for the code out of the app. */
+  askForSecond(holding: string) {
+    this.holding = holding
+    this.error = null
+    this.step = 'second'
+    this.open = true
   }
 
   /** Everything about a session that has just been established, whichever of the

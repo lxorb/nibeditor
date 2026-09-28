@@ -104,6 +104,16 @@ vi.mock('./i18n.svelte', () => ({
     error instanceof Error ? error.message : fallback,
 }))
 
+// Listing the spaces also asks after the files shared on their own, and the store
+// that holds those reads the workspace, the sync and the rooms: the whole app, built
+// again in the first test to sign in and after every `resetModules`. That test spent
+// most of its thirty seconds compiling and ran out of them under load. What the list
+// holds is sharing.test.ts's; here it is a call that answers nothing, which is what
+// the account's stand-in network answered it with anyway.
+vi.mock('./sharing.svelte', () => ({
+  sharedWithYou: { load: () => Promise.resolve() },
+}))
+
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
 

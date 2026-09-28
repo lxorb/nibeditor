@@ -497,25 +497,29 @@ fn ready(
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
-        // On screen at once, in the colour it was last seen in, except where the config
-        // names a place of its own - a probe off the screen, built hidden and put there
-        // before it is shown; see `placed` in placement.rs - and on a Mac, where it is
-        // built hidden so its traffic lights are placed before anything is drawn (see
-        // lights.rs). A Mac's webview starts in fourteen milliseconds, not in the third
-        // of a second Windows needs, which is what showing it at once is for.
-        let colour = ground::remembered(handle);
-        let at_once =
-            colour.is_some() && !placement::names_its_place(&config) && !cfg!(target_os = "macos");
-        let building = match colour {
-            Some(colour) => building.background_color(colour),
-            None => building,
-        };
-        let window = building.visible(at_once).build()?;
-        if !at_once {
-            #[cfg(target_os = "macos")]
-            lights::hold(&window);
-            placement::placed(&window, &config);
-            window.show()?;
+        // A window sent somewhere of its own - a probe off the screen - is built hidden,
+        // put there, and shown without coming forward; see `built_away` in placement.rs.
+        // A place that was only remembered is in the config and needs none of that.
+        //
+        // Otherwise on screen at once, in the colour it was last seen in, except on a
+        // Mac, where it is built hidden so its traffic lights are placed before anything
+        // is drawn (see lights.rs). A Mac's webview starts in fourteen milliseconds, not
+        // in the third of a second Windows needs, which is what showing it at once is for.
+        if let Some(at) = placement::away() {
+            placement::built_away(building, at)?;
+        } else {
+            let colour = ground::remembered(handle);
+            let at_once = colour.is_some() && !cfg!(target_os = "macos");
+            let building = match colour {
+                Some(colour) => building.background_color(colour),
+                None => building,
+            };
+            let window = building.visible(at_once).build()?;
+            if !at_once {
+                #[cfg(target_os = "macos")]
+                lights::hold(&window);
+                window.show()?;
+            }
         }
     }
 

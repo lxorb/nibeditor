@@ -727,6 +727,7 @@ export const kn: Dictionary = {
   'that path is not usable': 'ಆ ಪಾತ್ ಬಳಸಲು ಯೋಗ್ಯವಲ್ಲ',
   'this note changed elsewhere': 'ಈ ಟಿಪ್ಪಣಿ ಬೇರೆಡೆ ಬದಲಾಗಿದೆ',
   'too many tries - ask for a new code': 'ತುಂಬಾ ಪ್ರಯತ್ನಗಳು - ಹೊಸ ಕೋಡ್ ಕೇಳಿ',
+  'too many tries - try again in an hour': 'ತುಂಬಾ ಪ್ರಯತ್ನಗಳು - ಒಂದು ಗಂಟೆಯ ನಂತರ ಪ್ರಯತ್ನಿಸಿ',
   'too many messages from here - try again later': 'ಇಲ್ಲಿಂದ ತುಂಬಾ ಸಂದೇಶಗಳು - ನಂತರ ಪ್ರಯತ್ನಿಸಿ',
   'too much mail today - try again tomorrow': 'ಇಂದು ತುಂಬಾ ಮೇಲ್ - ನಾಳೆ ಪ್ರಯತ್ನಿಸಿ',
   'that many people are already waiting to be let in':

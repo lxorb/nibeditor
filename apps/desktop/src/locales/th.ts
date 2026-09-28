@@ -713,6 +713,7 @@ export const th: Dictionary = {
   'that path is not usable': 'พาธนั้นใช้ไม่ได้',
   'this note changed elsewhere': 'โน้ตนี้ถูกแก้ที่อื่น',
   'too many tries - ask for a new code': 'ลองมากเกินไป - ขอรหัสใหม่',
+  'too many tries - try again in an hour': 'ลองมากเกินไป - ลองใหม่ในอีกหนึ่งชั่วโมง',
   'too many messages from here - try again later': 'ส่งจากที่นี่มากเกินไป - ลองใหม่ภายหลัง',
   'too much mail today - try again tomorrow': 'ส่งเมลวันนี้มากเกินไป - ลองใหม่พรุ่งนี้',
   'that many people are already waiting to be let in': 'มีคนรออนุมัติมากเท่านี้แล้ว',

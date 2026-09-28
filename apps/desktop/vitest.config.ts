@@ -42,6 +42,13 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify('under test'),
   },
   test: {
+    // Every run used to compile the app from nothing: two thirds of a cold run is
+    // Vite turning the same unchanged modules into the same code, one at a time in
+    // the one process that hands them to the workers. This keeps what it made on
+    // the disk, keyed by each module's own text and this config's, and throws the
+    // lot away when the lockfile changes. 259 s cold and 120 s warm, measured
+    // 2026-09-28 on the whole of this package.
+    fsModuleCache: true,
     projects: [
       {
         extends: true,

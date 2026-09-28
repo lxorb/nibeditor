@@ -230,6 +230,49 @@ describe('doing it again', () => {
     expect(ws.undone.ahead).toEqual([])
   })
 
+  test('renames to the name it had been given, and deletes what it had deleted', async () => {
+    const renamed = again({ kind: 'rename', from: '/s/a.md', to: '/s/Plan.md' })
+    await undoLastFileAction(renamed.ws)
+    await redoLastFileAction(renamed.ws)
+
+    const deleted = again({ kind: 'delete', path: '/s/old.md', content: 'kept words' })
+    await undoLastFileAction(deleted.ws)
+    await redoLastFileAction(deleted.ws)
+
+    expect(renamed.asked).toEqual(['rename /s/a.md -> Plan.md'])
+    expect(deleted.asked).toEqual(['remove /s/old.md'])
+    // Done again, and nothing is left ahead of it.
+    expect(deleted.ws.undone.canRedo).toBe(false)
+  })
+
+  /** Two taken back, one done again: the other is still ahead, which is what a second
+   *  Ctrl+Y is for. The redo records itself, and recording empties what is ahead, so
+   *  this is the part that has to put it back. */
+  test('keeps what is further ahead when it does the nearer one again', async () => {
+    const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
+    ws.undone.record({ kind: 'move', from: '/s/b.md', to: '/s/Work/b.md' })
+
+    await undoLastFileAction(ws)
+    await undoLastFileAction(ws)
+    expect(ws.undone.ahead.map((one) => one.kind === 'move' && one.from)).toEqual([
+      '/s/b.md',
+      '/s/a.md',
+    ])
+
+    await redoLastFileAction(ws)
+
+    expect(asked).toEqual(['move /s/a.md -> /s/Work'])
+    expect(ws.undone.next).toEqual({ kind: 'move', from: '/s/b.md', to: '/s/Work/b.md' })
+  })
+
+  test('does nothing at all when nothing was taken back', async () => {
+    const { ws, asked } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' })
+    await redoLastFileAction(ws)
+
+    expect(asked).toEqual([])
+    expect(ws.undone.last?.kind).toBe('move')
+  })
+
   test('keeps what it could not do, to be asked for again', async () => {
     const { ws } = again({ kind: 'move', from: '/s/a.md', to: '/s/Work/a.md' }, true)
     await undoLastFileAction(ws)

@@ -9,7 +9,8 @@
   import { scrollbar } from './scrollbar'
   import { readableSize } from './usage.svelte'
   import { sync } from './sync.svelte'
-  import { i18n, t } from './i18n.svelte'
+  import { t } from './i18n.svelte'
+  import { when } from './when'
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { invoke } from './tauri'
@@ -165,24 +166,6 @@
   const changes = $derived(trimmed(difference))
   const counted = $derived(diffCount(difference))
 
-  /** A moment, said as shortly as it can be said without becoming ambiguous.
-   *
-   *  A version from today is a time and nothing else: the date would be the same
-   *  words on every row, and the width it takes is the width the device that
-   *  wrote it needs. Anything older says its day as well. */
-  const when = (stamp: number) => {
-    const at = new Date(stamp)
-    const now = new Date()
-    const today =
-      at.getFullYear() === now.getFullYear() &&
-      at.getMonth() === now.getMonth() &&
-      at.getDate() === now.getDate()
-
-    return today
-      ? i18n.when(at, { timeStyle: 'short' })
-      : i18n.when(at, { dateStyle: 'medium', timeStyle: 'short' })
-  }
-
   /** One row of the list: a version, or the month a run of them is in. */
   interface Row {
     month?: string
@@ -272,7 +255,7 @@
                 class:active={selected?.at === version.at}
                 onclick={() => (selected = version)}
               >
-                <span>{when(version.at)}</span>
+                <span>{when(version.at, 'medium')}</span>
                 <!-- Where it came from, said only where that is worth saying: a
                      version this machine kept needs no label, and one the account
                      holds is worth knowing the device for. -->

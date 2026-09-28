@@ -752,6 +752,7 @@ export const pl: Dictionary = {
   'that path is not usable': 'ta ścieżka nie nadaje się do użycia',
   'this note changed elsewhere': 'ta notatka zmieniła się gdzie indziej',
   'too many tries - ask for a new code': 'za dużo prób - poproś o nowy kod',
+  'too many tries - try again in an hour': 'za dużo prób - spróbuj za godzinę',
   'too many messages from here - try again later':
     'za dużo wiadomości z tego miejsca - spróbuj później',
   'too much mail today - try again tomorrow': 'za dużo poczty dziś - spróbuj jutro',

@@ -588,6 +588,79 @@ describe('an <iframe> a note wrote', () => {
   })
 })
 
+/** A document of the reader's own is markup, and it is put into the app's own page,
+ *  so nothing in it may make a frame, a navigation or a program there. Each of these
+ *  ran in the app under its content policy, measured in headless Chromium: the
+ *  policy stops a handler and a script that arrived through `innerHTML`, and none
+ *  of these is either. See `ownMarkup` in html-block.ts. */
+describe('the markup of a document that is the reader’s own', () => {
+  test('makes no frame inside a block, only the card a frame on its own is', () => {
+    const html = renderMarkdown('<div>\n<iframe src="https://x.dev/a"></iframe>\n</div>\n')
+    expect(html).toContain('class="embed-web')
+    expect(html).not.toContain('<iframe')
+
+    for (const block of [
+      '<div>\n<iframe src="javascript:parent.ran=1"></iframe>\n</div>\n',
+      '<div><iframe srcdoc="&lt;script&gt;parent.ran=1&lt;/script&gt;"></iframe></div>\n',
+      '<div><IFRAME\nsrcdoc="&lt;script&gt;parent.ran=1&lt;/script&gt;"></IFRAME></div>\n',
+      '<div><iframe title="<iframe srcdoc=x>" srcdoc="&lt;script&gt;1&lt;/script&gt;"></div>\n',
+    ]) {
+      expect(renderMarkdown(block), block).not.toMatch(/<iframe/i)
+    }
+  })
+
+  test('sends the window nowhere and names no frame or plugin of its own', () => {
+    for (const source of [
+      '<meta http-equiv="refresh" content="0;url=https://x.dev/">\n',
+      'text <meta http-equiv="refresh" content="0;url=https://x.dev/"> text\n',
+      '<div><frameset><frame src="https://x.dev/"></frameset></div>\n',
+      '<p>a <object data="x.svg"></object></p>\n',
+      '<div><embed src="x.svg"></div>\n',
+      '<div><base href="https://x.dev/"></div>\n',
+      '<div><link rel="stylesheet" href="https://x.dev/a.css"></div>\n',
+    ]) {
+      expect(renderMarkdown(source), source).not.toMatch(
+        /<(?:meta|frame|frameset|object|embed|base|link)\b/i,
+      )
+    }
+  })
+
+  test('has no script mid-sentence, which runs in the frame an export is printed in', () => {
+    const html = renderMarkdown('a <script>parent.ran = 1</script> b\n')
+    expect(html).not.toMatch(/<script/i)
+    expect(html).toContain('&lt;script&gt;')
+  })
+
+  test('has no target that runs, however it is spelled', () => {
+    for (const source of [
+      'text <svg><a xlink:href="javascript:parent.ran=1"><text>x</text></a></svg>\n',
+      '<a href="javascript:parent.ran=1">x</a>\n',
+      '<a href="&#106;avascript:parent.ran=1">x</a>\n',
+      '<a href="&#x6A;avascript:parent.ran=1">x</a>\n',
+      '<a href="javascript&colon;parent.ran=1">x</a>\n',
+      '<a href="java&Tab;script:parent.ran=1">x</a>\n',
+      '<a href="java\tscript:parent.ran=1">x</a>\n',
+      '<div><svg><a><set attributeName="href" to="javascript:parent.ran=1"/></a></svg></div>\n',
+      '<p><a href="vbscript:msgbox(1)">x</a></p>\n',
+    ]) {
+      const html = renderMarkdown(source)
+      expect(html, source).not.toMatch(/<(?:a|set)\b/i)
+    }
+  })
+
+  test('and markup that only shows something is markup as it always was', () => {
+    for (const source of [
+      '<div class="two-up">text</div>\n',
+      '<details><summary>More</summary>text</details>\n',
+      'a <u>word</u> and <kbd>Ctrl</kbd>\n',
+      '<svg viewBox="0 0 10 10"><linearGradient id="g"/><rect width="10" height="10"/></svg>\n',
+      '<a href="https://x.dev/">a page</a>\n',
+    ]) {
+      expect(renderMarkdown(source), source).not.toContain('&lt;')
+    }
+  })
+})
+
 /** The one place a note's own code runs, and the two answers about whose note it
  *  is. `escapeHtml` is how the app says which: a document of the reader's own is
  *  markup, and one in a room, in a shared space or on a published page is the

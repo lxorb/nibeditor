@@ -723,6 +723,7 @@ export const gu: Dictionary = {
   'that path is not usable': 'એ પથ વાપરી શકાતો નથી',
   'this note changed elsewhere': 'આ નોંધ બીજે બદલાઈ',
   'too many tries - ask for a new code': 'બહુ પ્રયત્ન - નવો કોડ માંગો',
+  'too many tries - try again in an hour': 'બહુ પ્રયત્ન - એક કલાક પછી ફરી પ્રયત્ન કરો',
   'too many messages from here - try again later': 'અહીંથી બહુ સંદેશા - પછી ફરી પ્રયત્ન કરો',
   'too much mail today - try again tomorrow': 'આજે બહુ ટપાલ - કાલે ફરી પ્રયત્ન કરો',
   'that many people are already waiting to be let in': 'એટલા લોકો પહેલેથી અંદર આવવાની વાટ જુએ છે',

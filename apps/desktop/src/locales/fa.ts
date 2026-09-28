@@ -725,6 +725,7 @@ export const fa: Dictionary = {
   'that path is not usable': 'آن مسیر به‌کار نمی‌آید',
   'this note changed elsewhere': 'این یادداشت جای دیگری تغییر کرد',
   'too many tries - ask for a new code': 'کوشش بسیار - کد تازه بخواهید',
+  'too many tries - try again in an hour': 'کوشش بسیار - یک ساعت دیگر بیازمایید',
   'too many messages from here - try again later': 'پیام بسیار از اینجا - بعداً بیازمایید',
   'too much mail today - try again tomorrow': 'نامه بسیار امروز - فردا بیازمایید',
   'that many people are already waiting to be let in': 'همین‌قدر آدم از پیش در انتظار پذیرش‌اند',

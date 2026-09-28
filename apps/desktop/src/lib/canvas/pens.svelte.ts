@@ -92,6 +92,8 @@ export const MOST_WIDTH = 30
  *  judges it. */
 export const LEAST_RUB = 4
 export const MOST_RUB = 64
+/** And how wide it is when nobody has said. */
+export const RUB = 10
 
 export function clampSize(value: number): number {
   if (!Number.isFinite(value)) return 3
@@ -99,7 +101,7 @@ export function clampSize(value: number): number {
 }
 
 export function clampRub(value: number): number {
-  if (!Number.isFinite(value)) return 10
+  if (!Number.isFinite(value)) return RUB
   return Math.min(MOST_RUB, Math.max(LEAST_RUB, Math.round(value)))
 }
 
@@ -148,7 +150,7 @@ function blank(): Kept {
     dock: 'bottom',
     shut: false,
     whole: false,
-    rub: 10,
+    rub: RUB,
     straighten: true,
     box: false,
     partly: false,
@@ -206,7 +208,7 @@ export function readPens(raw: string | null): Kept {
     dock: DOCKS.find((one) => one === held.dock) ?? 'bottom',
     shut: held.shut === true,
     whole: held.whole === true,
-    rub: typeof held.rub === 'number' ? clampRub(held.rub) : 10,
+    rub: typeof held.rub === 'number' ? clampRub(held.rub) : RUB,
     straighten: held.straighten !== false,
     box: held.box === true,
     partly: held.partly === true,
@@ -227,7 +229,7 @@ class Pens {
   /** Whether the eraser takes a whole stroke rather than the part under it. */
   whole = $state(false)
   /** How wide the eraser is, in pixels on screen. */
-  rub = $state(10)
+  rub = $state(RUB)
   /** Whether a stroke held still is tidied into the line, ring or box it was
    *  aiming at. */
   straighten = $state(true)

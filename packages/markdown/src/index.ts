@@ -12,7 +12,7 @@ import { withoutComments } from './comments'
 import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
-import { htmlBlockCard } from './html-block'
+import { htmlBlockCard, ownMarkup } from './html-block'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { iframeCard, isIframeTag, webCard } from './web-embed'
@@ -364,7 +364,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         if (isIframeTag(token.text)) return iframeCard(token.text) ?? ''
         if (options.escapeHtml) return escape(token.text)
 
-        return htmlBlockCard(token.text) ?? defaults.html.call(this, token)
+        return htmlBlockCard(token.text) ?? ownMarkup(token.text)
       },
     },
   })

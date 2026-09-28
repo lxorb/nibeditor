@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 
 import worker from '../src/index'
-import { call, signIn, type TestEnv, testEnv } from './harness'
+import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 import { sha256 } from '../src/crypto'
 import {
   base32,
@@ -382,6 +382,154 @@ describe('signing in with it on', () => {
 
     const said = await call<SecondView>(env, '/v1/second', { token })
     expect(said.json.on).toBe(false)
+  })
+})
+
+/** Every way an address alone opens an account, held to the second factor the
+ *  way the app's own sign-in is. The consent page for a connector and an
+ *  invitation link each proved the address and then handed out a credential that
+ *  reads every note, so somebody who could read the mail had the account however
+ *  many factors it asked for. */
+describe('a second factor is asked wherever an address alone would sign in', () => {
+  let env: TestEnv
+
+  beforeEach(() => {
+    env = testEnv(KEPT)
+  })
+
+  afterEach(() => env.close())
+
+  async function enrolled(email: string): Promise<{ token: string; secret: string }> {
+    const token = await signIn(env, email)
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const secret = secretOf(env)
+
+    await call(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    return { token, secret }
+  }
+
+  /** The consent page's form, as a browser posts it. */
+  function consent(fields: Record<string, string>) {
+    return call(env, '/oauth/authorize', {
+      raw: new URLSearchParams(fields).toString(),
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+  }
+
+  /** A client, and the fields every step of its consent page carries. */
+  async function asking(): Promise<Record<string, string>> {
+    const redirect = 'https://chatgpt.com/connector/oauth/abc123'
+    const registered = await call(env, '/oauth/register', {
+      body: {
+        client_name: 'ChatGPT',
+        redirect_uris: [redirect],
+        token_endpoint_auth_method: 'none',
+      },
+    })
+
+    return {
+      client_id: registered.json.client_id,
+      redirect_uri: redirect,
+      state: 'xyz',
+      code_challenge: 'c'.repeat(43),
+      resource: 'https://nibeditor.com/mcp',
+    }
+  }
+
+  /** The six digits a mail carried. */
+  async function emailed(work: () => Promise<unknown>): Promise<string> {
+    env.db.exec('delete from login_codes')
+    const said = /(\d{3}) (\d{3})/.exec(await mail(work))
+    return `${said?.[1]}${said?.[2]}`
+  }
+
+  test('on the consent page, before a connector is given a code', async () => {
+    const { secret } = await enrolled('a@b.dev')
+    const ask = await asking()
+
+    const code = await emailed(() => consent({ ...ask, action: 'send', email: 'a@b.dev' }))
+    const allowed = await consent({ ...ask, action: 'allow', email: 'a@b.dev', code, write: '1' })
+
+    // A page asking for the app's code, not the client's callback with a grant.
+    expect(allowed.status).toBe(200)
+    expect(allowed.headers.get('location')).toBe(null)
+    const holding = /name="holding" value="([a-f0-9]+)"/.exec(allowed.text)?.[1] ?? ''
+    expect(holding).not.toBe('')
+    expect(allowed.text).toContain('name="write" value="1"')
+
+    const wrong = await consent({ ...ask, action: 'second', holding, code: '000000' })
+    expect(wrong.status).toBe(200)
+    expect(wrong.headers.get('location')).toBe(null)
+
+    const right = await consent({
+      ...ask,
+      action: 'second',
+      holding,
+      write: '1',
+      code: await codeAt(secret, step() + 1),
+    })
+    expect(right.status).toBe(302)
+    expect(new URL(right.headers.get('location') ?? '').searchParams.get('code')).toBeTruthy()
+
+    // And the half is spent: the same page cannot be posted twice for two grants.
+    const again = await consent({
+      ...ask,
+      action: 'second',
+      holding,
+      code: await codeAt(secret, step() - 1),
+    })
+    expect(again.status).toBe(400)
+  })
+
+  test('and nothing but the page itself can stand in for the emailed half', async () => {
+    await enrolled('a@b.dev')
+    const ask = await asking()
+
+    const made = await consent({ ...ask, action: 'second', holding: 'f'.repeat(64), code: '1' })
+    expect(made.status).toBe(400)
+    expect(made.headers.get('location')).toBe(null)
+  })
+
+  test('on an invitation, which lets the address in without signing it in', async () => {
+    const { secret } = await enrolled('a@b.dev')
+    const owner = await signIn(env, 'owner@b.dev')
+    const listed = await call(env, '/v1/spaces', { token: owner })
+    const space = (listed.json.spaces as { id: string }[])[0]?.id ?? ''
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
+
+    const joined = await call<SecondView>(env, `/v1/join/${link}`, { method: 'POST', body: {} })
+    expect(joined.status).toBe(200)
+    expect(joined.json.token).toBeUndefined()
+    expect(joined.json.second).toBe(true)
+
+    // What finishes it is the app's own second step, and what it opens is a session.
+    const finished = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: joined.json.holding, code: await codeAt(secret, step() + 1) },
+    })
+    expect(finished.status).toBe(200)
+    const session = finished.json.token ?? ''
+    expect(session).not.toBe('')
+
+    // And the invitation is still there to walk through, now as the account.
+    const walked = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      token: session,
+      body: {},
+    })
+    expect(walked.status).toBe(200)
+    const theirs = await call(env, '/v1/spaces', { token: session })
+    expect(theirs.json.spaces.map((one: { id: string }) => one.id)).toContain(space)
   })
 })
 

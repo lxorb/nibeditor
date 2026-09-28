@@ -23,7 +23,7 @@
     type Transform,
   } from './pdf/highlights'
   import { t } from './i18n.svelte'
-  import { PDF_TO_CSS, type PageBox, type Size } from './pdf/pages'
+  import { PDF_TO_CSS, type PageBox, sheetFor, type Size } from './pdf/pages'
   import { pdfjs } from './pdf/document'
 
   const {
@@ -125,19 +125,11 @@
       const context = sheet.getContext('2d', { alpha: false })
       if (!context) return
 
-      // Crisp on the screen it is on: the canvas holds device pixels and CSS
-      // sizes it back down to the page's box.
-      const room = Math.sqrt(MOST_PIXELS / (at.width * at.height))
-      const density = Math.min(window.devicePixelRatio || 1, Math.max(1, room))
-      sheet.width = Math.floor(at.width * density)
-      sheet.height = Math.floor(at.height * density)
+      const fit = sheetFor(at, MOST_PIXELS, window.devicePixelRatio || 1)
+      sheet.width = fit.width
+      sheet.height = fit.height
 
-      render = view.render({
-        canvas: sheet,
-        canvasContext: context,
-        viewport: at,
-        ...(density === 1 ? {} : { transform: [density, 0, 0, density, 0, 0] }),
-      })
+      render = view.render({ canvas: sheet, canvasContext: context, viewport: at, ...fit.drawn })
       await render.promise
       if (!current()) return
 

@@ -9,11 +9,13 @@
 
 import { type Context, Hono } from 'hono'
 import { sendCode, verifyCode } from '../auth'
+import { WRONG_CODE } from '../refused'
+import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from '../second'
 import { normaliseEmail, now, randomToken, sha256 } from '../crypto'
 import { machineOf } from '../limits'
 import type { Env } from '../types'
 import { type Client, clientFor, clientWasUsed } from './clients'
-import { codeStep, emailStep, page, refusal } from './consent'
+import { codeStep, emailStep, page, refusal, secondStep } from './consent'
 import {
   type Ask,
   askFrom,
@@ -202,42 +204,82 @@ authorize.post('/authorize', async (context) => {
       return page(context.env, codeStep(client, ask, { email, error: verified.error }))
     }
 
-    if (!(await roomToConnect(context.env, verified.user.id, client.id))) {
-      return page(
-        context.env,
-        refusal('That is as many apps as one account connects. Disconnect one in Nib first.'),
-        409,
-      )
+    // The emailed code is half a sign-in for an account that asks for two, here
+    // as in the app: a connector's token reads every note, and handing one out on
+    // the address alone was a way round the second factor for anybody who could
+    // read the mail. See `secondStep`.
+    if (await asksForSecond(context.env, verified.user.id)) {
+      const holding = await halfWay(context.env, verified.user)
+      return page(context.env, secondStep(ask, { holding, write: form.write === '1' }))
     }
 
-    const readOnly = !(wantsWrite(ask) && form.write === '1')
-    const code = randomToken()
+    return await grant(context, client, ask, verified.user.id, form.write === '1')
+  }
 
-    // Codes that were never redeemed go with this one, so the table holds what
-    // is live rather than every attempt anyone ever started.
-    await context.env.DB.prepare('delete from oauth_codes where expires_at < ?').bind(now()).run()
+  if (form.action === 'second') {
+    const holding = form.holding ?? ''
+    const whose =
+      holding && holding.length <= HOLDING_LIMIT ? await whoseHalf(context.env, holding) : null
+    if (!whose)
+      return page(context.env, refusal('That took too long. Start again from the app.'), 400)
 
-    await context.env.DB.prepare(
-      `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, read_only, expires_at)
-       values (?, ?, ?, ?, ?, ?, ?)`,
-    )
-      .bind(
-        await sha256(code),
-        client.id,
-        verified.user.id,
-        ask.redirect_uri,
-        ask.code_challenge,
-        readOnly ? 1 : 0,
-        now() + CODE_TTL,
-      )
-      .run()
+    const write = form.write === '1'
+    if (!(await accepted(context.env, whose, form.code ?? '', machineOf(context.req)))) {
+      return page(context.env, secondStep(ask, { holding, write, error: WRONG_CODE }))
+    }
 
-    // The client is in use, whatever becomes of the code: a registration that got
-    // this far is not one of the dead ones the nightly sweep collects.
-    await clientWasUsed(context.env, client.id)
-
-    return backToClient(context.env, ask, { code })
+    await spendHalf(context.env, holding)
+    return await grant(context, client, ask, whose, write)
   }
 
   return page(context.env, refusal('That is not something this page does.'), 400)
 })
+
+/** The half a sign-in a page may carry: a session token's length, and no more. */
+const HOLDING_LIMIT = 128
+
+/** The code the client exchanges for its token, once whoever is at the page has
+ *  proved all an account asks for. Sends the browser back with it. */
+async function grant(
+  context: Context<{ Bindings: Env }>,
+  client: Client,
+  ask: Ask,
+  userId: string,
+  write: boolean,
+): Promise<Response> {
+  if (!(await roomToConnect(context.env, userId, client.id))) {
+    return page(
+      context.env,
+      refusal('That is as many apps as one account connects. Disconnect one in Nib first.'),
+      409,
+    )
+  }
+
+  const readOnly = !(wantsWrite(ask) && write)
+  const code = randomToken()
+
+  // Codes that were never redeemed go with this one, so the table holds what
+  // is live rather than every attempt anyone ever started.
+  await context.env.DB.prepare('delete from oauth_codes where expires_at < ?').bind(now()).run()
+
+  await context.env.DB.prepare(
+    `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, read_only, expires_at)
+     values (?, ?, ?, ?, ?, ?, ?)`,
+  )
+    .bind(
+      await sha256(code),
+      client.id,
+      userId,
+      ask.redirect_uri,
+      ask.code_challenge,
+      readOnly ? 1 : 0,
+      now() + CODE_TTL,
+    )
+    .run()
+
+  // The client is in use, whatever becomes of the code: a registration that got
+  // this far is not one of the dead ones the nightly sweep collects.
+  await clientWasUsed(context.env, client.id)
+
+  return backToClient(context.env, ask, { code })
+}

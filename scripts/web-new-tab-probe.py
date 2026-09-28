@@ -23,18 +23,13 @@ which has tests of its own.
 
     pnpm --dir apps/desktop tauri build --no-bundle \\
       --config '{"identifier":"ch.emilvinu.nib.probe.new-tab","version":"99.0.0",
-                 "app":{"windows":[{"title":"Nib","width":1180,"height":760,
-                   "minWidth":520,"minHeight":400,"decorations":false,"transparent":true,
-                   "dragDropEnabled":false,"visible":false,
-                   "x":-32000,"y":-32000,"focus":false}]},
                  "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/web-new-tab-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
       --identifier ch.emilvinu.nib.probe.new-tab
 
-The whole window entry, because `--config` replaces an array rather than merging into
-it. The window opens off the screen and without the keyboard, and this probe never
-moves it. The popup is asked for off the screen too, which is where a page's own `left` and
-`top` put it.
+The window opens off the screen and without the keyboard, which `run_probe` in
+scripts/probe_app.py sees to, and this probe never moves it. The popup is asked for off
+the screen too, which is where a page's own `left` and `top` put it.
 """
 
 from __future__ import annotations
@@ -58,7 +53,7 @@ import urllib.parse
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import close_app, main_window, refuse_updating
+from probe_app import close_app, run_probe, main_window
 
 PORT_FROM = 23900
 PORT_TO = 23919
@@ -283,8 +278,7 @@ def windows_of(pid: int) -> list[str]:
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
-    refuse_updating(exe)
-    app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    app = run_probe(exe, quiet=True)
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != app.pid:
         raise SystemExit(f"another nib is already listening (pid {listening}): close it first")

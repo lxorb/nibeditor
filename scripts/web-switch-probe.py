@@ -65,7 +65,7 @@ import urllib.error
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import refuse_updating
+from probe_app import run_probe, sized
 
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
@@ -411,8 +411,7 @@ def memory(pid: int) -> int:
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App, int]:
-    refuse_updating(exe)
-    app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 90, unlike)
 
     hwnd = 0
@@ -424,10 +423,9 @@ def launch(
     if not hwnd:
         raise SystemExit("the app never showed a window")
 
-    assert user32 is not None
     # A size that fits on one screen, so the pane the page is placed over is a pane
-    # with room in it. SWP_NOZORDER: nothing about which window is in front changes.
-    user32.SetWindowPos(hwnd, None, 0, 0, 1280, 860, 0x0004)
+    # with room in it.
+    sized(hwnd, 1280, 860)
     time.sleep(1.5)
     return app, App(port, secret), hwnd
 

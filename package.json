@@ -9,7 +9,7 @@
     "web": "pnpm --filter @nib/desktop dev",
     "build": "pnpm --filter @nib/desktop app:build",
     "check": "pnpm -r --no-bail check",
-    "test": "pnpm -r --no-bail --workspace-concurrency=2 test -- --maxWorkers=50%",
+    "test": "pnpm -r --no-bail --no-sort --workspace-concurrency=2 test --fsModuleCache",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

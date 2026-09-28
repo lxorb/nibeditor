@@ -32,8 +32,8 @@
 
 import { insideItsSpace, nameOf, relativeTo } from '../space-paths'
 import { renamedIn, withoutName } from '../tree-order'
-import { isRecord, isString, keep, stored } from '../stored'
-import { without } from '../records'
+import { isRecord, isString, keep } from '../stored'
+import { filledIn, type Folded, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:arranged'
 
@@ -114,13 +114,8 @@ export function arrangedMap(value: unknown): Record<string, string[]> {
 
 /** One space's map, and which account it has already been reconciled with. The
  *  three fields the folder icons keep, for the three reasons they keep them. */
-interface Kept {
+interface Kept extends Folded {
   folders: Record<string, string[]>
-  /** The account this map has been folded into, or null while there was none. A
-   *  different account signing in on this machine merges again; the same one
-   *  signing in twice does not, or an order it rearranged on another machine would
-   *  be handed straight back to it. */
-  account: string | null
   /** Whether the account has heard what is here. False for a push that did not
    *  land, and then the next pass keeps this machine's map and sends it again
    *  instead of taking the account's word for a drag the account never heard. */
@@ -128,20 +123,10 @@ interface Kept {
 }
 
 function read(): Record<string, Kept> {
-  const saved = stored(STORAGE_KEY)
-  if (!isRecord(saved)) return {}
-
-  const out: Record<string, Kept> = {}
-  for (const [root, one] of Object.entries(saved)) {
-    if (!isRecord(one)) continue
-    out[root] = {
-      folders: arrangedMap(one.folders),
-      account: isString(one.account) ? one.account : null,
-      sent: one.sent !== false,
-    }
-  }
-
-  return out
+  return readSpaces(STORAGE_KEY, (one) => ({
+    folders: arrangedMap(one.folders),
+    sent: one.sent !== false,
+  }))
 }
 
 /** Two lists as one. */
@@ -186,18 +171,8 @@ export class Arranged {
    *  plugin, which reads a store seeded seconds after the page was built; see
    *  `reread` in device.svelte.ts, which is the same fact about the same storage. */
   reread(): void {
-    const held = read()
-    const spaces = { ...this.spaces }
-    let grew = false
-
-    for (const [root, kept] of Object.entries(held)) {
-      if (spaces[root]) continue
-
-      spaces[root] = kept
-      grew = true
-    }
-
-    if (grew) this.spaces = spaces
+    const grown = filledIn(this.spaces, read())
+    if (grown) this.spaces = grown
   }
 
   of(root: string): Record<string, string[]> {

@@ -30,6 +30,10 @@ export const SIGN_IN = 'sign in first'
  *  words for both: which of the two was wrong is not for somebody guessing. */
 export const WRONG_CODE = 'that code is not right'
 
+/** An address that has had its fill for the hour: of codes tried at it, or of
+ *  mail sent to it. */
+export const TRY_IN_AN_HOUR = 'too many tries - try again in an hour'
+
 export const TOOK_TOO_LONG = 'start again - that took too long'
 
 /** A path that climbs out of its space, names a disk, or is not a path at all. */

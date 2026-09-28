@@ -724,6 +724,7 @@ export const hi: Dictionary = {
   'that path is not usable': 'वह पथ काम का नहीं',
   'this note changed elsewhere': 'यह नोट कहीं और बदल गया',
   'too many tries - ask for a new code': 'बहुत कोशिशें - नया कोड मँगाएँ',
+  'too many tries - try again in an hour': 'बहुत कोशिशें - एक घंटे बाद कोशिश करें',
   'too many messages from here - try again later': 'यहाँ से बहुत संदेश - बाद में कोशिश करें',
   'too much mail today - try again tomorrow': 'आज बहुत मेल - कल कोशिश करें',
   'that many people are already waiting to be let in':

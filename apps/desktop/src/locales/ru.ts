@@ -754,6 +754,7 @@ export const ru: Dictionary = {
   'that path is not usable': 'этот путь не подходит',
   'this note changed elsewhere': 'эта заметка изменилась в другом месте',
   'too many tries - ask for a new code': 'слишком много попыток - запросите новый код',
+  'too many tries - try again in an hour': 'слишком много попыток - попробуйте через час',
   'too many messages from here - try again later':
     'слишком много запросов отсюда - попробуйте позже',
   'too much mail today - try again tomorrow': 'слишком много писем за сегодня - попробуйте завтра',

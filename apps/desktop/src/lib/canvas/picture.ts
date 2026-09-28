@@ -14,6 +14,7 @@
  *  the same picture with the cards set as plain wrapped lines instead, which is
  *  the one thing that both reads the same and rasterises at all. */
 
+import { escapeAll } from '@nib/markdown/html'
 import { inlineImages, printInFrame } from '../export'
 import { writtenPdf } from '../export/print'
 import { chooseTarget, download } from '../export/save'
@@ -39,14 +40,6 @@ import { message, t } from '../i18n.svelte'
 
 /** Room left round the drawing, in plane units. */
 const PADDING = 32
-
-function escaped(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-}
 
 function colourOf(node: { color?: string }, palette: Palette, fallback: string): string {
   const colour = node.color
@@ -141,7 +134,7 @@ function plainCard(text: string, box: Box, palette: Palette): string {
   const spans = lines
     .map(
       (line, index) =>
-        `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escaped(line)}</tspan>`,
+        `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`,
     )
     .join('')
 
@@ -157,10 +150,10 @@ function cardBody(node: CanvasNode, canvasPath: string | null): string {
       // see trust.ts.
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, true))}</div>`
     case 'link':
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escaped(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escaped(node.url)}</span></div>`
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
     case 'file':
       if (isPicture(node.file)) return ''
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml" style="opacity:.75">${escaped(node.file)}</div>`
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml" style="opacity:.75">${escapeAll(node.file)}</div>`
     case 'group':
     case 'shape':
     case 'page':
@@ -211,7 +204,7 @@ function drawnNode(
 
   if (node.type === 'group') {
     const name = node.label
-      ? `<text class="label" x="${box.x + 2}" y="${box.y - 6}" fill="${line}">${escaped(node.label)}</text>`
+      ? `<text class="label" x="${box.x + 2}" y="${box.y - 6}" fill="${line}">${escapeAll(node.label)}</text>`
       : ''
     return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="10" fill="${line}" fill-opacity="0.07" stroke="${line}" stroke-dasharray="6 5"/>${name}</g>`
   }
@@ -248,7 +241,7 @@ function drawnNode(
   }
 
   if (node.type === 'file' && isPicture(node.file)) {
-    return `<image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid slice" href="${escaped(fileUrl(node.file, root))}"/>`
+    return `<image x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" preserveAspectRatio="xMidYMid slice" href="${escapeAll(fileUrl(node.file, root))}"/>`
   }
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
@@ -306,7 +299,7 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
     const label =
       typeof middle === 'string' || edge.label === undefined
         ? ''
-        : `<text x="${middle.x}" y="${middle.y}" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="${palette.text ?? '#111'}" paint-order="stroke" stroke="${palette.bg ?? '#fff'}" stroke-width="4" stroke-linejoin="round" class="label">${escaped(edge.label)}</text>`
+        : `<text x="${middle.x}" y="${middle.y}" font-size="12" text-anchor="middle" dominant-baseline="middle" fill="${palette.text ?? '#111'}" paint-order="stroke" stroke="${palette.bg ?? '#fff'}" stroke-width="4" stroke-linejoin="round" class="label">${escapeAll(edge.label)}</text>`
 
     out.push(
       `<g><path d="${edgePath(ends)}" fill="none" stroke="${colour}" stroke-width="2" stroke-linecap="round"/>${heads.join('')}${label}</g>`,
@@ -329,7 +322,7 @@ export function canvasSvg(
   root: string | null,
   plain = false,
 ): string {
-  const box = bounds(canvas.nodes, canvas.ink.map(strokeBox)) ?? {
+  const box = bounds([...canvas.nodes, ...canvas.ink.map(strokeBox)]) ?? {
     x: 0,
     y: 0,
     width: 400,
@@ -473,7 +466,7 @@ export async function exportCanvasPdf(drawing: Drawing) {
 
   // The paper is the drawing: a plane has no columns to break into pages, so it
   // goes on one sheet of its own size rather than being cut across A4.
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escaped(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null

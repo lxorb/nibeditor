@@ -734,6 +734,7 @@ export const ptBR: Dictionary = {
   'that path is not usable': 'esse caminho não serve',
   'this note changed elsewhere': 'esta nota mudou em outro lugar',
   'too many tries - ask for a new code': 'tentativas demais - pedir um novo código',
+  'too many tries - try again in an hour': 'tentativas demais - tentar daqui a uma hora',
   'too many messages from here - try again later': 'mensagens demais daqui - tentar mais tarde',
   'too much mail today - try again tomorrow': 'e-mail demais hoje - tentar amanhã',
   'that many people are already waiting to be let in':

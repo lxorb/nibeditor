@@ -39,7 +39,7 @@ import time
 import urllib.error
 import urllib.request
 
-from probe_app import refuse_updating
+from probe_app import run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -61,10 +61,6 @@ def wrong(what: str) -> None:
 # ── the window in front, and where a window is ──────────────────────────────
 
 user32 = ctypes.windll.user32 if sys.platform == "win32" else None
-
-SWP_NOSIZE = 0x0001
-SWP_NOZORDER = 0x0004
-SWP_NOACTIVATE = 0x0010
 
 
 class Rect(ctypes.Structure):
@@ -105,22 +101,6 @@ def windows_of(pid: int) -> list[tuple[int, int, int, int, int]]:
 
     user32.EnumWindows(each, None)
     return sorted(found, key=lambda one: -one[3])
-
-
-def moved(hwnd: int, x: int, y: int) -> None:
-    """A window put somewhere, without touching which one is in front or has focus."""
-    assert user32
-    user32.SetWindowPos(hwnd, None, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE)
-
-
-def sized(hwnd: int, x: int, y: int, wide: int, tall: int) -> None:
-    """A window put somewhere and given a size, and still not raised or focused.
-
-    The size is what makes the two windows tell each other apart in a picture: a capture
-    of the wrong one is the wrong shape, whatever is drawn in it.
-    """
-    assert user32
-    user32.SetWindowPos(hwnd, None, x, y, wide, tall, SWP_NOZORDER | SWP_NOACTIVATE)
 
 
 def off_the_screen(hwnd: int, out: pathlib.Path) -> bool:
@@ -179,15 +159,10 @@ def identifier_of(app: pathlib.Path) -> str:
 
 def start(app: pathlib.Path, label: str) -> subprocess.Popen[bytes]:
     """One app, running, with its notes somewhere nobody keeps notes."""
-    refuse_updating(app)
     spaces = WORK / label / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 
-    return subprocess.Popen(
-        [str(app)],
-        env={**os.environ, "NIB_SPACES_DIR": str(spaces)},
-        cwd=str(app.parent),
-    )
+    return run_probe(app, env={**os.environ, "NIB_SPACES_DIR": str(spaces)})
 
 
 def waited_for(path: pathlib.Path, patience: float = 60) -> dict:
@@ -295,8 +270,8 @@ def drive(apps: list[pathlib.Path]) -> None:
             wrong(f"a window is missing: {len(first)} and {len(second)}")
             return
 
-        sized(first[0][0], 80, 80, 1000, 700)
-        sized(second[0][0], 110, 110, 760, 560)
+        sized(first[0][0], 1000, 700)
+        sized(second[0][0], 760, 560)
         time.sleep(1.5)
 
         before = in_front()

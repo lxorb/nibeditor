@@ -20,6 +20,8 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
+import { sha256 } from '../bytes'
+import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
@@ -90,14 +92,6 @@ export interface Mirror {
  *  place, so a new field cannot be forgotten at one of the five call sites. */
 export function newMirror(spaceId: string, root: string, shared = false): Mirror {
   return { spaceId, root, cursor: 0, notes: {}, offered: {}, files: {}, dropped: false, shared }
-}
-
-function hex(digest: ArrayBuffer): string {
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
-async function sha256(text: string): Promise<string> {
-  return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))
 }
 
 /** A file's path as the account names it - relative to the space's folder, with
@@ -208,8 +202,22 @@ export async function writeDown(path: string, content: string, was?: string | nu
  *  that theirs is newer: the copy that travelled is the one more likely to have
  *  been written last, and the other is in this device's history either way. */
 async function theirsIsNewer(path: string, updatedAt: number): Promise<boolean> {
-  const stamp = await invoke<number | null>('file_stamp', { path }).catch(() => null)
-  return stamp === null || updatedAt > stamp
+  const stamp = await fileStamp(path)
+  return stamp === null || updatedAt > stamp.modified
+}
+
+export interface Stamp {
+  modified: number
+  len: number
+}
+
+/** A file's last write, in ms, and length; see `file_stamp` in the crate. Null for
+ *  no file, the browser, or no answer. The watcher reads it too. */
+export async function fileStamp(path: string): Promise<Stamp | null> {
+  const found: unknown = await invoke('file_stamp', { path }).catch(() => null)
+  return isRecord(found) && isNumber(found.modified) && isNumber(found.len)
+    ? { modified: found.modified, len: found.len }
+    : null
 }
 
 function flatten(entry: Entry): Entry[] {
@@ -346,6 +354,12 @@ export async function pull(
       // one nobody has any more. The entry is left exactly as it is, so the push sees
       // the gap and deletes the note the way it always has.
       if (local === null && tracked !== undefined) continue
+
+      // There but unreadable (an encoding, a lock) is not a gap to fill.
+      if (local === null && (await fileStamp(target)) !== null) {
+        log('warn', `sync: ${target} unreadable, not written over`)
+        continue
+      }
 
       // The file and the account already say the same thing, so there is nothing
       // to bring down and nothing to settle: the entry is recorded and the note is
@@ -649,7 +663,15 @@ export async function push(
     // on both sides: this is the one file the pass deliberately leaves alone.
     if (held.has(file.path)) continue
 
-    const content = await invoke<string>('read_note', { path: file.path })
+    // Left out when unreadable, rather than ending the pass for all after it.
+    const content = await invoke<string>('read_note', { path: file.path }).catch(
+      (error: unknown) => {
+        log('warn', `sync: ${file.path} not sent - ${String(error)}`)
+        return null
+      },
+    )
+    if (content === null) continue
+
     const hash = await sha256(content)
     const tracked = mirror.notes[path]
 
@@ -708,13 +730,28 @@ export async function push(
   for (const [path, tracked] of Object.entries(mirror.notes)) {
     if (seen.has(path)) continue
 
-    await api.deleteNote(token, tracked.id).catch(() => undefined)
+    if (!(await deletedOnAccount(token, tracked.id))) continue
+
     mirror.notes = without(mirror.notes, path)
     mirror.offered = without(mirror.offered, path)
     moved = true
   }
 
   return moved
+}
+
+/** Whether the account took a delete, or never will. If not, the entry stays for
+ *  the next pass: dropped, the next pull wrote the note back. */
+async function deletedOnAccount(token: string, id: string): Promise<boolean> {
+  try {
+    await api.deleteNote(token, id)
+    return true
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return true
+
+    log('warn', `sync: delete of ${id} not taken - ${String(error)}`)
+    return false
+  }
 }
 
 /** The PDFs of a space, offered to the account so that a published note linking
@@ -798,7 +835,7 @@ function contentTypeOf(path: string): string {
  *  between the listing and here is nothing to report. */
 async function hashFile(path: string): Promise<string | null> {
   const bytes = await invoke<ArrayBuffer>('read_file', { path }).catch(() => null)
-  return bytes === null ? null : hex(await crypto.subtle.digest('SHA-256', bytes))
+  return bytes === null ? null : sha256(bytes)
 }
 
 /** Whether two lists of files say the same thing, so a space nobody has changed

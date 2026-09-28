@@ -32,6 +32,7 @@ import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } fro
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
 import { claimGuest, newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
+import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import { EMAIL_LIMIT, itemName, MOST_MEMBERS, personName, presentItem } from './share'
 import { presentSpace, type Given } from './space'
@@ -394,14 +395,24 @@ async function redeemInvitation(context: Reply, found: Leads, guest: Guest | nul
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
   const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
+
+  // Whatever this device held as a guest, and whatever any guest said it was at
+  // this address, is the account's now: proving the address is what that turns on.
+  if (guest) await claimGuest(context.env, guest.id, user)
+  await claimWhatWasGuested(context.env, user, null)
+
+  // An account that asks for a second code is not signed in by a mail any more
+  // than by the emailed code: the link proved the address, which is half, and the
+  // app finishes it the way it finishes a sign-in - `/v1/auth/second` with this.
+  // The invitation is left standing, so that the account walks through it once it
+  // is signed in, the way an account already signed in does. See auth.ts.
+  if (await asksForSecond(context.env, user.id)) {
+    return context.json({ second: true, holding: await halfWay(context.env, user) })
+  }
+
   const role = await memberNow(context.env, found, user.email, found.role)
   if (!role) return spaceIsFull(context)
   await spendInvitation(context.env, found.hash)
-
-  // Whatever this device held as a guest, and whatever any guest said it was at
-  // this address, is the account's now.
-  if (guest) await claimGuest(context.env, guest.id, user)
-  await claimWhatWasGuested(context.env, user, null)
 
   return context.json({
     token: await openSession(context.env, user.id),

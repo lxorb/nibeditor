@@ -389,9 +389,10 @@ function readNode(value: unknown): CanvasNode | null {
   }
 }
 
-/** One edge, once it reads as one. Both ends have to name a node the canvas
- *  actually holds: an edge into nothing is drawn from nowhere to nowhere. */
-function readEdge(value: unknown, nodes: ReadonlySet<string>): CanvasEdge | null {
+/** One edge out of a record, once it reads as one. Both ends have to name a node
+ *  the canvas actually holds, `nodes`: an edge into nothing is drawn from nowhere
+ *  to nowhere. */
+export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge | null {
   if (!isRecord(value) || !isString(value.id) || !value.id) return null
   if (!isString(value.fromNode) || !isString(value.toNode)) return null
   if (!nodes.has(value.fromNode) || !nodes.has(value.toNode)) return null
@@ -478,7 +479,8 @@ function inkColourOf(value: unknown): CanvasColour {
   return colourOf(value) ?? DEFAULT_INK
 }
 
-function readStroke(value: unknown): InkStroke | null {
+/** One stroke of ink out of a record. */
+export function strokeOf(value: unknown): InkStroke | null {
   if (!isRecord(value) || !isString(value.id) || !value.id) return null
   if (!isInkTool(value.tool) || !isString(value.color)) return null
   if (!Array.isArray(value.points)) return null
@@ -671,16 +673,6 @@ export function nodeOf(value: unknown): CanvasNode | null {
   return readNode(value)
 }
 
-/** One edge out of a record, given the nodes there are to end on. */
-export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge | null {
-  return readEdge(value, nodes)
-}
-
-/** One stroke of ink out of a record. */
-export function strokeOf(value: unknown): InkStroke | null {
-  return readStroke(value)
-}
-
 /** A canvas out of the text of a file. An empty one for a file that is not JSON
  *  at all, which is what a new or a truncated file looks like: an empty plane is
  *  something to draw on, and an error message is not. */
@@ -727,7 +719,7 @@ export function readCanvas(text: string): Canvas {
 
   if (Array.isArray(nib.ink)) {
     for (const entry of nib.ink) {
-      const stroke = readStroke(entry)
+      const stroke = strokeOf(entry)
       if (!stroke || inked.has(stroke.id)) continue
 
       inked.add(stroke.id)
@@ -740,7 +732,7 @@ export function readCanvas(text: string): Canvas {
 
   if (Array.isArray(parsed.edges)) {
     for (const entry of parsed.edges) {
-      const edge = readEdge(entry, ids)
+      const edge = edgeOf(entry, ids)
       if (!edge || seen.has(edge.id)) continue
 
       seen.add(edge.id)

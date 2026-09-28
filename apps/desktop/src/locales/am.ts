@@ -717,6 +717,7 @@ export const am: Dictionary = {
   'that path is not usable': 'ያ መንገድ አይሠራም',
   'this note changed elsewhere': 'ይህ ማስታወሻ በሌላ ቦታ ተቀይሯል',
   'too many tries - ask for a new code': 'ብዙ ሙከራ - አዲስ ኮድ ጠይቅ',
+  'too many tries - try again in an hour': 'ብዙ ሙከራ - ከአንድ ሰዓት በኋላ ሞክር',
   'too many messages from here - try again later': 'ከዚህ ብዙ መልእክት - ቆይተህ ሞክር',
   'too much mail today - try again tomorrow': 'ዛሬ ብዙ ደብዳቤ - ነገ ሞክር',
   'that many people are already waiting to be let in': 'ያን ያህል ሰው አስቀድሞ እንዲገባ ይጠብቃል',

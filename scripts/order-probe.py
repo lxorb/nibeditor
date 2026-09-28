@@ -44,7 +44,7 @@ import time
 import urllib.error
 import urllib.request
 
-from probe_app import close_app, main_window, refuse_updating
+from probe_app import close_app, run_probe, main_window, sized
 
 SPACES_DIR = "NIB_SPACES_DIR"
 SPACE = "Order"
@@ -219,8 +219,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     launch, and a read that arrives before the rewrite hands back a port nothing is
     listening on any more. Waiting for a port that is not the old one is what tells
     the two apart; see docs/automation.md."""
-    refuse_updating(exe)
-    app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 120, unlike)
 
     hwnd = 0
@@ -231,8 +230,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0):
     if not hwnd:
         raise SystemExit("the app never showed a window")
 
-    assert user32 is not None
-    user32.SetWindowPos(hwnd, None, 0, 0, 1280, 900, 0x0004)
+    sized(hwnd, 1280, 900)
     time.sleep(2.0)
     return app, App(port, secret)
 

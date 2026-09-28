@@ -18,6 +18,7 @@ import { documentOf, type EditorView } from '@nib/editor'
 import { account } from './account.svelte'
 import type { PlaneSurface } from './canvas/shared'
 import { busy } from './busy.svelte'
+import { sha256 } from './bytes'
 import { without } from './records'
 import { roomKind } from './rooms/kind'
 import type { PlaneRoom } from './rooms/plane'
@@ -72,14 +73,6 @@ type Joined = {
 interface Engine {
   Room: typeof import('./rooms/room').Room
   PlaneRoom: typeof import('./rooms/plane').PlaneRoom
-}
-
-function hex(digest: ArrayBuffer): string {
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
-async function sha256(text: string): Promise<string> {
-  return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))
 }
 
 class Rooms {

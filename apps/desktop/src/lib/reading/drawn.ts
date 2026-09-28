@@ -220,7 +220,10 @@ function into(card: HTMLElement): HTMLElement {
  *  Null for a page the paper has not got, which is a link that says `#page=400`
  *  about a paper of twelve: the card is the honest answer there. */
 async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement | null> {
-  const { openDocument } = await import('../pdf/document')
+  const [{ openDocument }, { sheetFor }] = await Promise.all([
+    import('../pdf/document'),
+    import('../pdf/pages'),
+  ])
   const held = await openDocument(joinPath(file.root, file.path))
 
   try {
@@ -233,23 +236,16 @@ async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement 
       const at = page.getViewport({ scale: width / page.getViewport({ scale: 1 }).width })
       const sheet = document.createElement('canvas')
 
-      // Crisp on the screen it is on: the canvas holds device pixels and the
-      // stylesheet sizes it back down to the column. The same arithmetic
-      // PdfPage.svelte does, against this file's own smaller ceiling.
-      const room = Math.sqrt(MOST_PIXELS / (at.width * at.height))
-      const density = Math.min(window.devicePixelRatio || 1, Math.max(1, room))
-      sheet.width = Math.floor(at.width * density)
-      sheet.height = Math.floor(at.height * density)
+      // The stylesheet sizes it back down to the column; see `sheetFor`.
+      const fit = sheetFor(at, MOST_PIXELS, window.devicePixelRatio || 1)
+      sheet.width = fit.width
+      sheet.height = fit.height
 
       const context = sheet.getContext('2d', { alpha: false })
       if (!context) return null
 
-      await page.render({
-        canvas: sheet,
-        canvasContext: context,
-        viewport: at,
-        ...(density === 1 ? {} : { transform: [density, 0, 0, density, 0, 0] }),
-      }).promise
+      await page.render({ canvas: sheet, canvasContext: context, viewport: at, ...fit.drawn })
+        .promise
 
       return sheet
     } finally {

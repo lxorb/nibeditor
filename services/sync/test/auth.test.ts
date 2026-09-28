@@ -146,6 +146,19 @@ describe('a provider that will not take the message', () => {
     expect(again.status).toBe(503)
   })
 
+  test('spends none of the hour an address has on messages that never went', async () => {
+    let failing = 10
+    refusing(() => (failing-- > 0 ? Promise.reject(new Error('down')) : Promise.resolve({})))
+
+    for (let at = 0; at < 10; at++) {
+      await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+    }
+
+    // Ten presses while the provider was down, and the eleventh still goes.
+    const sent = await call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } })
+    expect(sent.status).toBe(200)
+  })
+
   test('leaves no gap behind for an address that heard nothing', async () => {
     refusing(() => Promise.reject(new Error('the sender is not answering')))
     await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
@@ -195,6 +208,33 @@ describe('verifying a code', () => {
       body: { email: 'a@b.dev', code: '000000' },
     })
     expect(response.status).toBe(429)
+  })
+
+  test('stops at a number of tries for one address, however many codes it was sent', async () => {
+    // Five wrong tries spend a code, and a new code used to start the count again:
+    // one every thirty seconds, from as many machines as a script has, was six
+    // hundred guesses an hour at one account. See `mayTryCode`.
+    for (let code = 0; code < 3; code++) {
+      env.db.exec('delete from login_codes')
+      await requestCode('a@b.dev')
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const wrong = await call(env, '/v1/auth/verify', {
+          body: { email: 'a@b.dev', code: '000000' },
+          headers: { 'cf-connecting-ip': `203.0.113.${code}` },
+        })
+        expect(wrong.status).toBe(400)
+      }
+    }
+
+    env.db.exec('delete from login_codes')
+    const right = await requestCode('a@b.dev')
+    const refused = await call(env, '/v1/auth/verify', {
+      body: { email: 'a@b.dev', code: right },
+    })
+    expect(refused.status).toBe(429)
+
+    // Another address is its own count.
+    expect(await signIn(env, 'c@d.dev')).toBeTruthy()
   })
 
   test('a used code cannot be replayed', async () => {

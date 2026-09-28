@@ -268,7 +268,10 @@ const fake = vi.hoisted(() => {
     },
     reorderSpaces: async () => ({ ok: true as const }),
     setSpaceIcon: async () => ({ space: listed(firstRemoteSpace(), 0) }),
-    renameSpace: async () => ({ space: listed(firstRemoteSpace(), 0) }),
+    renameSpace: async (_token: string, id: string, name: string) => {
+      remote.calls.push(`renameSpace ${id} ${name}`)
+      return { space: listed(firstRemoteSpace(), 0) }
+    },
     saveBookmarks: async (_token: string, id: string, bookmarks: Bookmark[]) => {
       remote.calls.push(`saveBookmarks ${id}`)
       const space = remote.spaces.find((one) => one.id === id)
@@ -709,6 +712,36 @@ describe('a mirror whose folder is gone', () => {
 
     await sync.run()
     expect(fake.remote.calls).toEqual([])
+  })
+})
+
+/** The folder a space is has a new name. The mirror is kept by the folder, so without
+ *  being told the next pass would find a folder the account has never heard of - and
+ *  send it up as a second space - and a space whose folder has gone. */
+describe('a space whose folder was renamed here', () => {
+  test('keeps its one space on the account and gives it the new name', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+    fake.remote.calls.length = 0
+
+    // The rename, as the disk sees it.
+    for (const [path, text] of [...fake.disk]) {
+      if (!path.startsWith('/Account/')) continue
+      fake.disk.delete(path)
+      fake.disk.set(path.replace('/Account/', '/Journal/'), text)
+    }
+    workspace.spaces = workspace.spaces.map((one) =>
+      one.root === '/Account' ? { ...one, name: 'Journal', root: '/Journal' } : one,
+    )
+
+    await sync.renamed('/Account', '/Journal', 'Journal')
+    await sync.run()
+
+    expect(fake.remote.calls).toEqual(['renameSpace s-Account Journal'])
+    expect(sync.remoteIdFor('/Journal')).toBe('s-Account')
+    expect(sync.remoteIdFor('/Account')).toBeNull()
   })
 })
 
@@ -1524,6 +1557,30 @@ describe('a pass that fails partway through', () => {
   afterEach(() => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
+  })
+
+  /** A pass that has already paired its spaces and then falls over moving notes: the
+   *  words the server used are the whole of what a reader can act on, so they are
+   *  what the light says and what the log keeps. */
+  test('says what the account said, on the light and in the log', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    const { record } = await import('./sync/record.svelte')
+    const real = fake.api.changes
+    fake.api.changes = () => Promise.reject(new Error('the account is having a day'))
+    try {
+      expect(await sync.run()).toBe(false)
+    } finally {
+      fake.api.changes = real
+    }
+
+    expect(sync.status).toBe('error')
+    expect(sync.lastError).toBe('the account is having a day')
+    expect(record.passes[0]?.failed).toBe('the account is having a day')
+    expect(sync.passing).toBe(false)
   })
 
   test('says so, lets anybody waiting in, and leaves the loop looping', async () => {

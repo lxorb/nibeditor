@@ -727,6 +727,7 @@ export const pa: Dictionary = {
   'that path is not usable': 'ਉਹ ਰਾਹ ਵਰਤਣ ਯੋਗ ਨਹੀਂ',
   'this note changed elsewhere': 'ਇਹ ਨੋਟ ਹੋਰ ਥਾਂ ਬਦਲੀ',
   'too many tries - ask for a new code': 'ਬਹੁਤ ਕੋਸ਼ਿਸ਼ਾਂ - ਨਵਾਂ ਕੋਡ ਮੰਗੋ',
+  'too many tries - try again in an hour': 'ਬਹੁਤ ਕੋਸ਼ਿਸ਼ਾਂ - ਇੱਕ ਘੰਟੇ ਬਾਅਦ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'too many messages from here - try again later': 'ਇੱਥੋਂ ਬਹੁਤ ਸੁਨੇਹੇ - ਬਾਅਦ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'too much mail today - try again tomorrow': 'ਅੱਜ ਬਹੁਤ ਡਾਕ - ਕੱਲ੍ਹ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'that many people are already waiting to be let in':

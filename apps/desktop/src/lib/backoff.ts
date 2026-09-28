@@ -50,3 +50,9 @@ export function roomDelay(tries: number, spread = Math.random()): number {
   const wait = Math.min(ROOM_FIRST * 2 ** Math.max(0, tries - 1), ROOM_MAX)
   return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
 }
+
+/** A note the disk refused, tried again: soon, since most locks let go in a
+ *  moment, then doubling to a minute. */
+export function saveRetryDelay(tries: number): number {
+  return Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
+}

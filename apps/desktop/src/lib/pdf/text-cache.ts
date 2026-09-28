@@ -94,17 +94,6 @@ export function textWork(): { read: number; wrote: number } {
   return done
 }
 
-/** The hash of a file's bytes: the same digest, over the same bytes, that the
- *  mirror addresses a paper by. Cheap where the bytes are in hand already, which
- *  is the only place this is called from. */
-export async function hashOf(bytes: Uint8Array): Promise<string> {
-  // A `Uint8Array` says which kind of buffer it sits on, and `digest` takes only
-  // one on a plain `ArrayBuffer`. These bytes came off a disk or out of a row, and
-  // neither of those hands back shared memory.
-  const digest = await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer>)
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
 function isPages(value: unknown): value is [number, string][] {
   return (
     Array.isArray(value) &&

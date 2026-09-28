@@ -629,34 +629,26 @@ export const clearFormatting: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** Wraps the selection as a link, putting the caret in the empty target. */
-export const insertLink: StateCommand = ({ state, dispatch }) => {
-  const update = state.changeByRange((range) => {
-    const label = state.doc.sliceString(range.from, range.to)
-    const insert = `[${label}]()`
-    return {
-      changes: { from: range.from, to: range.to, insert },
-      range: EditorSelection.cursor(range.from + insert.length - 1),
-    }
-  })
+/** Wraps the selection as a link, or with `!` as a picture, putting the caret in
+ *  the empty target. */
+function wrapped(bang: '' | '!'): StateCommand {
+  return ({ state, dispatch }) => {
+    const update = state.changeByRange((range) => {
+      const label = state.doc.sliceString(range.from, range.to)
+      const insert = `${bang}[${label}]()`
+      return {
+        changes: { from: range.from, to: range.to, insert },
+        range: EditorSelection.cursor(range.from + insert.length - 1),
+      }
+    })
 
-  dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
-  return true
+    dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
+    return true
+  }
 }
 
-export const insertImage: StateCommand = ({ state, dispatch }) => {
-  const update = state.changeByRange((range) => {
-    const label = state.doc.sliceString(range.from, range.to)
-    const insert = `![${label}]()`
-    return {
-      changes: { from: range.from, to: range.to, insert },
-      range: EditorSelection.cursor(range.from + insert.length - 1),
-    }
-  })
-
-  dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
-  return true
-}
+export const insertLink = wrapped('')
+export const insertImage = wrapped('!')
 
 // Find, Replace and the steps through the matches are next door in find.ts.
 // Undo and redo are in shared.ts, which is where the history of a note open in

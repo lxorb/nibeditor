@@ -723,6 +723,7 @@ export const bn: Dictionary = {
   'that path is not usable': 'পাথটি ব্যবহারযোগ্য নয়',
   'this note changed elsewhere': 'নোটটি অন্য কোথাও বদলেছে',
   'too many tries - ask for a new code': 'অনেকবার চেষ্টা - নতুন কোড চান',
+  'too many tries - try again in an hour': 'অনেকবার চেষ্টা - এক ঘণ্টা পরে আবার চেষ্টা করুন',
   'too many messages from here - try again later': 'এখান থেকে অনেক বার্তা - পরে আবার চেষ্টা করুন',
   'too much mail today - try again tomorrow': 'আজ অনেক মেইল - কাল আবার চেষ্টা করুন',
   'that many people are already waiting to be let in': 'এত লোক আগেই ঢোকার অপেক্ষায় আছে',

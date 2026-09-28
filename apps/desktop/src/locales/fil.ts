@@ -730,6 +730,8 @@ export const fil: Dictionary = {
   'that path is not usable': 'hindi magagamit ang path na iyon',
   'this note changed elsewhere': 'nagbago ang talang ito sa ibang lugar',
   'too many tries - ask for a new code': 'sobrang dami nang subok - humiling ng bagong code',
+  'too many tries - try again in an hour':
+    'sobrang dami nang subok - subukan muli pagkalipas ng isang oras',
   'too many messages from here - try again later':
     'sobrang dami nang mensahe mula rito - subukan mamaya',
   'too much mail today - try again tomorrow': 'sobrang dami nang mail ngayon - subukan bukas',

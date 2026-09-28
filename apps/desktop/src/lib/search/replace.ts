@@ -6,6 +6,7 @@
  *  each caret through untouched. The rewritten string comes out of the same
  *  edits, for the file. */
 
+import type { Change } from './apply'
 import { lineAt, lineStarts, type Span } from './match'
 
 export interface Edit {
@@ -32,8 +33,9 @@ export function expand(
   })
 }
 
-/** The note rewritten, and the edits that rewrote it. Null when nothing on the
- *  kept lines matched, so a caller writes no file and takes no snapshot.
+/** The edits that rewrite the note; see `changeOf` for the note they leave. Null
+ *  when nothing on the kept lines matched, so a caller writes no file and takes no
+ *  snapshot.
  *
  *  Two operators that found the same words replace them once: the edits are in
  *  the order they sit in the note and never overlap. */
@@ -42,7 +44,7 @@ export function replaceIn(
   spans: readonly Span[],
   lines: ReadonlySet<number>,
   replacement: string,
-): { text: string; edits: Edit[] } | null {
+): Edit[] | null {
   const starts = lineStarts(body)
   const wanted = spans
     .filter((span) => lines.has(lineAt(starts, span.from)))
@@ -62,8 +64,12 @@ export function replaceIn(
     reached = span.to
   }
 
-  if (!edits.length) return null
+  return edits.length ? edits : null
+}
 
+/** The note as the edits leave it. They are in the order they sit in the note and
+ *  never overlap, which every caller here holds to. */
+export function applied(body: string, edits: readonly Edit[]): string {
   let text = ''
   let at = 0
   for (const edit of edits) {
@@ -71,7 +77,15 @@ export function replaceIn(
     at = edit.to
   }
 
-  return { text: text + body.slice(at), edits }
+  return text + body.slice(at)
+}
+
+/** One note's change, whole, from the edits that make it: what the workspace writes,
+ *  snapshots and records as one thing to undo. Every road that writes words into
+ *  notes without opening them hands it one of these - a replacement, a tag renamed,
+ *  an icon, a cover, a syntax converted, a hover card. */
+export function changeOf(path: string, before: string, edits: Edit[]): Change {
+  return { path, before, after: applied(before, edits), edits, back: reverse(before, edits) }
 }
 
 /** The edits that put a replacement back, in the coordinates of the note the

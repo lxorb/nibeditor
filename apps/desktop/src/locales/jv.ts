@@ -720,6 +720,7 @@ export const jv: Dictionary = {
   'that path is not usable': 'dalan kuwi ora bisa dipakai',
   'this note changed elsewhere': 'cathetan iki owah ing papan liya',
   'too many tries - ask for a new code': 'kakehan nyoba - njaluk kode anyar',
+  'too many tries - try again in an hour': 'kakehan nyoba - coba maneh sejam engkas',
   'too many messages from here - try again later': 'kakehan pesen saka kene - coba maneh mengko',
   'too much mail today - try again tomorrow': 'kakehan layang dina iki - coba maneh sesuk',
   'that many people are already waiting to be let in': 'wis sakehe wong ngenteni dilebokake',

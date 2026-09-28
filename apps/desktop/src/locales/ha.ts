@@ -729,6 +729,7 @@ export const ha: Dictionary = {
   'that path is not usable': 'ba za a iya amfani da wannan hanyar ba',
   'this note changed elsewhere': 'wannan bayanin kula ya sauya a wani wuri',
   'too many tries - ask for a new code': 'ƙoƙari da yawa - nemi sabuwar lamba',
+  'too many tries - try again in an hour': 'ƙoƙari da yawa - sake gwadawa bayan awa ɗaya',
   'too many messages from here - try again later':
     'saƙonni da yawa daga nan - sake gwadawa daga baya',
   'too much mail today - try again tomorrow': 'imel da yawa yau - sake gwadawa gobe',

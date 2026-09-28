@@ -23,6 +23,7 @@ describe('what the service refuses with', () => {
     expect(refused.NO_SUCH_NOTE).toBe('no such note')
     expect(refused.SIGN_IN).toBe('sign in first')
     expect(refused.WRONG_CODE).toBe('that code is not right')
+    expect(refused.TRY_IN_AN_HOUR).toBe('too many tries - try again in an hour')
     expect(refused.TOOK_TOO_LONG).toBe('start again - that took too long')
     expect(refused.NOT_A_PATH).toBe('that path is not usable')
     expect(refused.OUT_OF_SPACE).toBe('out of space')

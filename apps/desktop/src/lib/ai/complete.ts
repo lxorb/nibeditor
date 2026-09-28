@@ -76,7 +76,7 @@ export async function complete(ask: Ask): Promise<string> {
     // "Failed to fetch", which says nothing about which of the three it was, so the
     // address is what the sentence carries instead. An abort is rethrown as itself:
     // stopping is not a failure and the caller has to be able to see that it was one.
-    if (isAbort(error)) throw error
+    if (wasStopped(error)) throw error
     throw new Error(t('Could not reach {url}', { url: askUrl(provider) }))
   })
 
@@ -88,10 +88,6 @@ export async function complete(ask: Ask): Promise<string> {
 
 /** Whether something thrown was a stop rather than a failure. */
 export function wasStopped(error: unknown): boolean {
-  return isAbort(error)
-}
-
-function isAbort(error: unknown): boolean {
   return error instanceof DOMException && error.name === 'AbortError'
 }
 
@@ -189,7 +185,7 @@ export async function listModels(provider: Provider, signal?: AbortSignal): Prom
     headers: headersFor(provider, apiKey),
     ...(signal ? { signal } : {}),
   }).catch((error: unknown) => {
-    if (isAbort(error)) throw error
+    if (wasStopped(error)) throw error
     throw new Error(t('Could not reach {url}', { url: modelsUrl(provider) }))
   })
 

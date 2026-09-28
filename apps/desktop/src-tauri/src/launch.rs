@@ -247,16 +247,24 @@ fn window_builder<'a>(
 }
 
 fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result<(), String> {
-    let window = crate::appearance::own_frame(builder)
-        .build()
-        .map_err(|error| format!("could not open another window: {error}"))?;
+    let building = crate::appearance::own_frame(builder);
+    // Where the first window was sent off the screen, every other goes after it.
+    let window = match crate::placement::away() {
+        Some(at) => crate::placement::built_away(building, at),
+        None => building.build(),
+    }
+    .map_err(|error| format!("could not open another window: {error}"))?;
 
+    // Shown here only where it was not sent away: `built_away` has shown it already,
+    // without bringing it forward, which showing it again would.
     #[cfg(target_os = "macos")]
     {
         crate::lights::hold(&window);
-        window
-            .show()
-            .map_err(|error| format!("could not show the window: {error}"))?;
+        if crate::placement::away().is_none() {
+            window
+                .show()
+                .map_err(|error| format!("could not show the window: {error}"))?;
+        }
     }
     #[cfg(not(target_os = "macos"))]
     let _ = window;
@@ -295,10 +303,10 @@ fn is_document_window(label: &str) -> bool {
             .is_some_and(|number| !number.is_empty() && number.bytes().all(|b| b.is_ascii_digit()))
 }
 
-/// Up from the Dock and in front of everything else.
+/// Up from the Dock and in front of everything else, unless this run's windows were
+/// sent off the screen; see `raised` in placement.rs.
 fn bring_forward(window: &tauri::Window) {
-    let _ = window.unminimize();
-    let _ = window.set_focus();
+    crate::placement::raised(window);
 }
 
 /// One of the app's windows as `receiver` weighs it.

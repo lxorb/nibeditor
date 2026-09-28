@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process'
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
-import { beforeAll, describe, expect, test } from 'vitest'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { undrawable } from '@nib/glasses'
 import manifest from '../../../even.app.json'
 
@@ -25,7 +26,11 @@ import manifest from '../../../even.app.json'
  *  release from failing at the last step. */
 
 const app = resolve(import.meta.dirname, '../../..')
-const staged = join(app, 'dist-even')
+/** A folder of this run's own rather than `dist-even`. That one is what
+ *  `pnpm build:even` stages for packing, and a test run used to build over it; and two
+ *  runs in one checkout - a gate and a single file run beside it - emptied it under each
+ *  other halfway through a read. */
+const staged = mkdtempSync(join(tmpdir(), 'nib-even-'))
 
 /** The origins the manifest allows. Anything else must not be in the package at
  *  all, whether or not it is ever asked for. */
@@ -51,11 +56,15 @@ let files: { name: string; text: string }[] = []
 beforeAll(() => {
   // The plugin's own build, not the editor's: what it ships is decided by leaving
   // code out, and only this build leaves it out. See vite.even.config.ts.
-  execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.even.config.ts'], {
-    cwd: app,
-    stdio: 'pipe',
-    shell: process.platform === 'win32',
-  })
+  execFileSync(
+    'pnpm',
+    ['exec', 'vite', 'build', '--config', 'vite.even.config.ts', '--outDir', staged],
+    {
+      cwd: app,
+      stdio: 'pipe',
+      shell: process.platform === 'win32',
+    },
+  )
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {
     cwd: app,
     stdio: 'pipe',
@@ -65,6 +74,10 @@ beforeAll(() => {
     .filter((one) => /\.(js|css|html|json|webmanifest)$/.test(one))
     .map((one) => ({ name: one.slice(staged.length + 1), text: readFileSync(one, 'utf8') }))
 }, 300_000)
+
+afterAll(() => {
+  rmSync(staged, { recursive: true, force: true })
+})
 
 describe('the bundle a package is made of', () => {
   test('is there at all, and is the plugin under both names', () => {
@@ -307,10 +320,10 @@ describe('the bundle a package is made of', () => {
     // emoji the firmware cannot draw as its own `:name:` rather than as a box, is
     // already down to its names; see below.
     //
-    // The number is the same on every run: `emptyOutDir` in vite.even.config.ts wipes
-    // the package directory before the build, so nothing a previous run left can be
-    // counted twice. That is said here because the sum looks like it would - it walks
-    // a directory two steps write into, the build and then even-stage.mjs.
+    // The number is the same on every run: each run builds into a folder of its own
+    // that starts empty, so nothing a previous run left can be counted twice. That is
+    // said here because the sum looks like it would - it walks a directory two steps
+    // write into, the build and then even-stage.mjs.
     //
     // 8,167,705 bytes on 2026-09-28, down from 8,382,180 the same morning: the emoji
     // table ships as its names and characters alone; see `SLIM_EMOJI`.

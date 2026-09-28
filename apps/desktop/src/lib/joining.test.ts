@@ -219,6 +219,31 @@ describe('a mailed invitation', () => {
   })
 })
 
+describe('a mailed invitation to an account that asks for a second code', () => {
+  beforeEach(() => {
+    world.about = invite
+    world.through = { second: true, holding: 'half' }
+  })
+
+  test('signs nobody in, and asks for the code out of the app', async () => {
+    await joining.start()
+
+    expect(account.signedIn).toBe(false)
+    expect(account.open).toBe(true)
+    expect(account.step).toBe('second')
+    expect(world.shown).toBeNull()
+  })
+
+  test('and keeps the link, which the account walks through once it is in', async () => {
+    await joining.start()
+
+    world.through = { space }
+    await joining.walkThrough()
+
+    expect(world.asked.map((one) => one.key)).toEqual([TOKEN, TOKEN])
+  })
+})
+
 describe('a link anybody may follow', () => {
   beforeEach(() => {
     world.about = open

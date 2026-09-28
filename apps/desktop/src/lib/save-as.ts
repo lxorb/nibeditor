@@ -10,7 +10,6 @@
  *  way every editor's Save as does: what is in front of them afterwards is the new
  *  file, and the old one is left as it was. */
 
-import { chooseTarget, writeFile } from './export/save'
 import { t } from './i18n.svelte'
 import { isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
@@ -40,6 +39,10 @@ export async function saveAs(): Promise<void> {
   const note = workspace.active
   if (!note) return
 
+  // The dialog and the writer are fetched by the press that asks for them: this file is
+  // in the first paint for `isExternalFile`, which the watch on outside files reads,
+  // and the writer behind it is eleven kilobytes nobody needs to open a note.
+  const { chooseTarget, writeFile } = await import('./export/save')
   const target = await chooseTarget(note.name, 'md', t('Markdown'))
   if (!target) return
 

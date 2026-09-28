@@ -22,7 +22,6 @@ import { type ExportId, EXPORT_KEYS, labelOf } from '../export/offer'
 import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
-import { openFile } from '../open-file'
 import { searchFrom } from '../search.svelte'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
@@ -325,7 +324,9 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-o',
-    run: () => void openFile(),
+    // Fetched by the press, and already here by then: the app menu's rows hold it,
+    // and they are fetched as the launch ends; see `warmDoors`.
+    run: () => void import('../open-file').then(({ openFile }) => openFile()),
   },
   {
     id: 'app.close',

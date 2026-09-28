@@ -762,6 +762,7 @@ export const ar: Dictionary = {
   'that path is not usable': 'المسار غير قابل للاستخدام',
   'this note changed elsewhere': 'تغيّرت الملاحظة في مكان آخر',
   'too many tries - ask for a new code': 'محاولات كثيرة - اطلب رمزًا جديدًا',
+  'too many tries - try again in an hour': 'محاولات كثيرة - حاول بعد ساعة',
   'too many messages from here - try again later': 'رسائل كثيرة من هنا - حاول لاحقًا',
   'too much mail today - try again tomorrow': 'بريد كثير اليوم - حاول غدًا',
   'that many people are already waiting to be let in': 'هذا عدد من ينتظرون الدخول بالفعل',

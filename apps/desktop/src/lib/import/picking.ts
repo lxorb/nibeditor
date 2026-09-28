@@ -11,6 +11,7 @@
  *  its entries, which is every desktop and the web; a phone hands over files
  *  alone, and there a zip is what to drop. */
 
+import { chooseFiles } from '../choose-files'
 import { caughtFiles, type CaughtFiles } from '../drag-paths'
 import { tidyPath, type Picked } from './sources'
 
@@ -18,7 +19,7 @@ import { tidyPath, type Picked } from './sources'
  *  file somebody actually has: exporters write `.zip`, `.enex`, `.json`, `.csv`,
  *  `.md`, `.html`, `.note`, `.textbundle` and a handful of others. */
 export function pickFiles(): Promise<Picked[]> {
-  return picked(false)
+  return chooseFiles({ multiple: true })
 }
 
 /** A whole folder, every file in it with its path inside: Obsidian's "Open folder as
@@ -32,21 +33,7 @@ export function pickFiles(): Promise<Picked[]> {
  *  web_tabs.rs puts in front of it hands that selector straight through, so the
  *  app's own page keeps it. */
 export function pickFolder(): Promise<Picked[]> {
-  return picked(true)
-}
-
-function picked(folder: boolean): Promise<Picked[]> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-    input.webkitdirectory = folder
-
-    input.addEventListener('change', () => resolve([...(input.files ?? [])]))
-    // A cancelled dialog resolves with nothing, so nothing is left waiting.
-    input.addEventListener('cancel', () => resolve([]))
-    input.click()
-  })
+  return chooseFiles({ multiple: true, folder: true })
 }
 
 /** Everything that was dropped, folders walked where the webview allows it. */

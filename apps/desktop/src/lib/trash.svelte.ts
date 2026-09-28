@@ -177,17 +177,24 @@ class Trash {
     if (this.loaded) await this.load()
   }
 
+  /** Does one thing to the list and reads it again, whether or not it worked.
+   *
+   *  What went wrong is said after the list is read, not before: reading starts from
+   *  no error, and saying it first had the reload wipe it - a restore the disk refused
+   *  left the row where it was and the sheet saying nothing at all. */
   private async act(work: () => Promise<void>) {
     this.busy = true
     this.error = null
+    let failed: string | null = null
     try {
       await work()
     } catch (error) {
-      this.error = message(error, t('that did not work'))
-    } finally {
-      this.busy = false
-      await this.load()
+      failed = message(error, t('that did not work'))
     }
+
+    this.busy = false
+    await this.load()
+    if (failed !== null) this.error = failed
   }
 }
 

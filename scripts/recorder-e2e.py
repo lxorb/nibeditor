@@ -41,7 +41,7 @@ import sys
 import time
 import urllib.request
 
-from probe_app import refuse_updating
+from probe_app import run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -91,16 +91,14 @@ def allow_eval(path: pathlib.Path) -> None:
 
 
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
-    refuse_updating(app)
     SPACES.mkdir(parents=True, exist_ok=True)
-    return subprocess.Popen(
-        [str(app)],
+    return run_probe(
+        app,
         # The launch trace as well, which is where the crate says what it did with a
         # permission request: which origin asked for what, and what it was told. A
         # refusal is invisible from the window - all a reader sees is a clock that does
         # not move - so a drive about a microphone reads it. See trace.rs.
         env={**os.environ, "NIB_SPACES_DIR": str(SPACES), "NIB_TRACE_STARTUP": "1"},
-        cwd=str(app.parent),
     )
 
 

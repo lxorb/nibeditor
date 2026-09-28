@@ -19,6 +19,8 @@ interface Entry {
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
 const notes = new Map<string, string>()
+/** Notes that are there and will not read: another encoding, or a lock. */
+const unreadable = new Set<string>()
 let deviceTrash: Entry[] = []
 
 /** The one entry a test has just made. Reaching for it by index everywhere
@@ -40,6 +42,7 @@ vi.mock('./tauri', async (importOriginal) => ({
     const path = text(args?.path)
     switch (command) {
       case 'read_note':
+        if (unreadable.has(path)) throw new Error(`stream did not contain valid UTF-8: ${path}`)
         return notes.get(path) ?? ''
       case 'snapshot_note':
       case 'write_note':
@@ -153,10 +156,12 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
 const { trash } = await import('./trash.svelte')
+const { prompt } = await import('./prompt.svelte')
 
 beforeEach(() => {
   notes.clear()
   notes.set('/space/Idea.md', '# Idea')
+  unreadable.clear()
   deviceTrash = []
   calls.length = 0
   apiCalls.length = 0
@@ -258,6 +263,36 @@ describe('signed out', () => {
     expect(workspace.undoLabel).toBe('Undo deleting Idea')
   })
 
+  test('purging takes it away for good rather than putting it back', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    calls.length = 0
+
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    await trash.purge(only)
+
+    expect(calls).toContain('purge_trash')
+    expect(calls).not.toContain('restore_trash')
+    expect(notes.has('/space/Idea.md')).toBe(false)
+    expect(trash.items).toEqual([])
+  })
+
+  test('a restore the disk refuses says so, and the list is read again', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+
+    // Swept by another window between the listing and the press.
+    deviceTrash = []
+    await trash.restore(only)
+
+    expect(trash.error).toBe('nothing to restore')
+    expect(trash.busy).toBe(false)
+    expect(trash.items).toEqual([])
+  })
+
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
     onlyTrashed().trashedAt = Date.now() - 15 * DAY
@@ -280,6 +315,21 @@ describe('signed in', () => {
 
     expect(calls).toContain('delete_note')
     expect(calls).not.toContain('trash_item')
+  })
+
+  /** Nothing could be read, so no snapshot was taken, and the account never had
+   *  the words either: deleting the file was the end of the only copy. */
+  test('a note that would not read goes to the device trash instead', async () => {
+    unreadable.add('/space/Idea.md')
+
+    await workspace.remove('/space/Idea.md', false)
+
+    expect(calls).not.toContain('delete_note')
+    expect(onlyTrashed()).toMatchObject({ kind: 'note', from: '/space/Idea.md' })
+
+    // And the undo puts it back from there.
+    await workspace.undoFileAction()
+    expect(deviceTrash).toEqual([])
   })
 
   test('the list is the account’s, with any device leftovers', async () => {
@@ -335,5 +385,56 @@ describe('signed in', () => {
     await trash.restore(trash.items.find((item) => item.id === 'space:s2')!)
     expect(apiCalls).toEqual(['restoreNote n1', 'restoreSpace s2'])
     expect(trash.items).toEqual([])
+  })
+
+  test('purging a note asks the account to forget it', async () => {
+    const at = Date.now()
+    remote.notes = [
+      { id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at },
+    ]
+    await trash.load()
+
+    await trash.purge(trash.items.find((item) => item.id === 'note:n1')!)
+
+    expect(apiCalls).toEqual(['purgeNote n1'])
+    expect(trash.items).toEqual([])
+  })
+
+  describe('emptying', () => {
+    beforeEach(async () => {
+      const at = Date.now()
+      remote.notes = [
+        { id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at },
+      ]
+      deviceTrash = [
+        { id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at },
+      ]
+      await trash.load()
+      calls.length = 0
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    test('takes the leftovers here and everything up there, once asked', async () => {
+      vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+
+      await trash.empty()
+
+      expect(calls).toContain('purge_trash')
+      expect(apiCalls).toEqual(['emptyTrash'])
+      expect(trash.items).toEqual([])
+    })
+
+    test('touches nothing when the question is answered no', async () => {
+      vi.spyOn(prompt, 'confirm').mockResolvedValue(false)
+
+      await trash.empty()
+
+      expect(calls).not.toContain('purge_trash')
+      expect(apiCalls).toEqual([])
+      expect(trash.items).toHaveLength(2)
+    })
   })
 })

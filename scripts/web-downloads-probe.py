@@ -56,7 +56,7 @@ import urllib.error
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import refuse_updating
+from probe_app import run_probe, sized
 
 PORT_FROM = 22400
 PORT_TO = 22499
@@ -357,8 +357,7 @@ def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
-    refuse_updating(exe)
-    running = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    running = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 90, unlike)
 
     hwnd = 0
@@ -370,8 +369,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     if not hwnd:
         raise SystemExit("the app never showed a window")
 
-    assert user32 is not None
-    user32.SetWindowPos(hwnd, None, 40, 40, 1280, 860, 0x0004)
+    sized(hwnd, 1280, 860)
     time.sleep(1.5)
     return running, App(port, secret)
 

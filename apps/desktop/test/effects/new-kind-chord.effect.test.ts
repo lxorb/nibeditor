@@ -44,8 +44,9 @@ Element.prototype.animate = () =>
   }) as unknown as Animation
 
 /** The beat the dialog waits out before it draws itself; see BEAT in
- *  new-kind-chord.ts. Waited through for real rather than faked, so the timer is the
- *  one the app sets. */
+ *  new-kind-chord.ts. The timer is the one the app sets, on a clock these tests move
+ *  by hand: a real one let a busy machine decide which of two timers went first, and
+ *  cost every test a quarter of a second of nothing. */
 const BEAT = 200
 
 let target: HTMLElement
@@ -87,6 +88,7 @@ function makers(): string[] {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
   was = viewport.device
   viewport.device = 'desktop'
   target = document.createElement('div')
@@ -109,6 +111,7 @@ afterEach(() => {
   target.remove()
   viewport.device = was
   vi.restoreAllMocks()
+  vi.useRealTimers()
 })
 
 /** A press of the chord, as a keyboard sends one. `code` as well as `key`, which is
@@ -143,8 +146,8 @@ function letGo() {
 }
 
 /** Long enough for the beat to go off and the dialog to be drawn. */
-async function settle(ms = BEAT + 60) {
-  await new Promise((done) => setTimeout(done, ms))
+async function settle() {
+  await vi.advanceTimersByTimeAsync(BEAT)
   flushSync()
 }
 

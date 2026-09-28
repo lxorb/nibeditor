@@ -716,6 +716,7 @@ export const vi: Dictionary = {
   'that path is not usable': 'đường dẫn đó không dùng được',
   'this note changed elsewhere': 'ghi chú này đã đổi ở nơi khác',
   'too many tries - ask for a new code': 'thử quá nhiều - xin mã mới',
+  'too many tries - try again in an hour': 'thử quá nhiều - thử lại sau một giờ',
   'too many messages from here - try again later': 'quá nhiều tin từ đây - thử lại sau',
   'too much mail today - try again tomorrow': 'quá nhiều thư hôm nay - thử lại mai',
   'that many people are already waiting to be let in':

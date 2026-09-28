@@ -728,6 +728,8 @@ export const ta: Dictionary = {
   'that path is not usable': 'அந்தப் பாதை பயன்படுத்த முடியாதது',
   'this note changed elsewhere': 'இந்தக் குறிப்பு வேறு இடத்தில் மாறியது',
   'too many tries - ask for a new code': 'மிக அதிக முயற்சிகள் - புதிய குறியீடு கேட்கவும்',
+  'too many tries - try again in an hour':
+    'மிக அதிக முயற்சிகள் - ஒரு மணி நேரம் கழித்து முயற்சிக்கவும்',
   'too many messages from here - try again later':
     'இங்கிருந்து மிக அதிக செய்திகள் - பிறகு முயற்சிக்கவும்',
   'too much mail today - try again tomorrow': 'இன்று மிக அதிக அஞ்சல் - நாளை முயற்சிக்கவும்',

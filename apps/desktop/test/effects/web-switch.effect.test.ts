@@ -116,9 +116,31 @@ const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { startup } = await import('../../src/lib/startup.svelte')
 const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
 
+// What the pages store fetches the first time it is asked for something, loaded before
+// any clock is stopped. A module that has to be compiled is the one wait below that no
+// clock can move, and it is how a busy machine used to make a page arrive after the
+// frames a test had given it; see `frames`.
+await Promise.all([
+  import('../../src/lib/web-tab/visited'),
+  import('../../src/lib/web-tab/web-data.svelte'),
+  import('../../src/lib/web-tab/keys'),
+  import('../../src/lib/web-tab/downloads.svelte'),
+])
+
 let target: HTMLElement
 
 beforeEach(() => {
+  vi.useFakeTimers({
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'Date',
+    ],
+  })
   asked.length = 0
   over = null
   holding = null
@@ -132,15 +154,30 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-/** A frame, twice over: `startup.turn` waits for one painted frame and jsdom's
- *  `requestAnimationFrame` is a timer. */
-function frames(): Promise<void> {
-  return new Promise((go) => setTimeout(go, 300))
+/** Long enough for every frame, turn and timer the pane sets going to have had its
+ *  go, on a clock the test moves: `startup.turn` waits for a painted frame, a layer on
+ *  its way out is looked at again every frame until it has gone, and each of those is a
+ *  timer.
+ *
+ *  Moved by hand rather than waited for. With a real clock a machine busy enough could
+ *  hold the process past the test's timer and a chain of the pane's own, and the test's
+ *  went first: the page was asked for after the test had looked. Here the timers go off
+ *  in the order they are due whatever the machine is doing, and nothing waits. */
+async function frames(): Promise<void> {
+  await vi.advanceTimersByTimeAsync(300)
+}
+
+/** The launch, over: every stage has had its turn, so a pane asks for its page in the
+ *  breath it mounts. */
+async function launched(): Promise<void> {
+  startup.reset()
+  const shown = startup.shown()
+  await frames()
+  await shown
 }
 
 test('switching away from a web tab keeps the page and switching back does not build one', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   const tab = workspace.tabs.find((one) => one.kind === 'web') ?? null
   workspace.openWebsite()
@@ -186,8 +223,7 @@ test('switching away from a web tab keeps the page and switching back does not b
  *  element was on top at the middle of the hole, which left a menu over a corner of the
  *  page drawn behind the page. See `covered` in WebTab.svelte and overlays.ts. */
 test('the page is hidden while anything of the app is over it, and comes back when it goes', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -233,8 +269,7 @@ test('the page is hidden while anything of the app is over it, and comes back wh
  *  stayed in front: the carried tab vanished as it left the strip and the zones were
  *  lit behind the page. See `covered` in WebTab.svelte. */
 test('the page is hidden while a drag is over the panes, and comes back when it ends', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -273,8 +308,7 @@ test('the page is hidden while a drag is over the panes, and comes back when it 
  *  strip and every menu: the app is unreachable and nothing on screen says why. The
  *  pane going away has to say so, and this is the assertion that it does. */
 test('a pane that goes away puts its page out of sight', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -303,8 +337,7 @@ test('a pane that goes away puts its page out of sight', async () => {
  *  press, so this is not a rare order: the build answers into a window that has already
  *  moved on, and what it must not do is show the page it was asked for. */
 test('a page that arrives after its pane has gone is never shown', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -352,8 +385,7 @@ test('a page that arrives after its pane has gone is never shown', async () => {
  *  Counted rather than timed. The page is asked for exactly once, whatever was over the
  *  pane when it mounted, and it is placed out of sight until the layer has gone. */
 test('a web tab that mounts under a layer on its way out still asks for its page', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -393,8 +425,7 @@ test('a web tab that mounts under a layer on its way out still asks for its page
 
 /** Mounts a web tab with a page behind it, for the tests below. */
 async function opened(url: string) {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)
@@ -475,8 +506,7 @@ test('a page the window has given up on is still put out of sight', async () => 
  *  placed, and about to be a page the window has no record of. The pane is told there is
  *  no page only once the label is empty. */
 test('a build the crate refuses leaves no page behind it', async () => {
-  startup.reset()
-  await startup.shown()
+  await launched()
 
   workspace.openWebsite()
   const tab = workspace.tabs.at(-1)

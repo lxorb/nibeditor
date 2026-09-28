@@ -724,6 +724,7 @@ export const tr: Dictionary = {
   'that path is not usable': 'bu yol kullanılabilir değil',
   'this note changed elsewhere': 'bu not başka yerde değişti',
   'too many tries - ask for a new code': 'çok fazla deneme - yeni bir kod isteyin',
+  'too many tries - try again in an hour': 'çok fazla deneme - bir saat sonra yine deneyin',
   'too many messages from here - try again later': 'buradan çok fazla ileti - sonra yine deneyin',
   'too much mail today - try again tomorrow': 'bugün çok fazla posta - yarın yine deneyin',
   'that many people are already waiting to be let in': 'o kadar kişi zaten alınmayı bekliyor',

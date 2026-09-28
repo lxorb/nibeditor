@@ -1,9 +1,9 @@
 /** Writing an import, through the same road every other file in the app takes.
  *
- *  `write_note` for a note and `write_bytes` for anything else: the two commands
- *  saving and pasting already use, so sync sees the files, the link index sees
- *  them, version history has them, and the file list has the rows before the
- *  sheet is closed. Nothing here writes to disk itself and nothing here knows
+ *  `writeFile` for a note and `writeBytes` for anything else: the one write path
+ *  every other file the app makes takes, so sync sees the files, the link index
+ *  sees them, version history has them, and the file list has the rows before
+ *  the sheet is closed. Nothing here writes to disk itself and nothing here knows
  *  whether the app is on a desktop, in a browser or on a phone.
  *
  *  Every path is judged here before any of them is written, by the same
@@ -32,10 +32,10 @@ import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
 import { folderOf, relativePath } from '../space-paths'
-import { invoke, joinPath } from '../tauri'
+import { joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
-import { writeFile } from '../workspace/write-file'
+import { writeBytes, writeFile } from '../workspace/write-file'
 
 import type { ImportPlan, Planned } from './plan'
 
@@ -70,28 +70,34 @@ export async function applyImport(
   const paths: string[] = []
   let done = 0
 
-  for (const file of files) {
-    const path = joinPath(target.root, file.path)
+  try {
+    for (const file of files) {
+      const path = joinPath(target.root, file.path)
 
-    if (file.kind === 'note') {
-      await writeFile(path, file.text)
-    } else {
-      await invoke('write_bytes', { path, base64: toBase64(file.bytes) })
+      if (file.kind === 'note') await writeFile(path, file.text)
+      else await writeBytes(path, toBase64(file.bytes))
+
+      paths.push(path)
+      done += 1
+      options.onWritten?.(done, files.length)
     }
-
-    paths.push(path)
-    done += 1
-    options.onWritten?.(done, files.length)
-  }
-
-  if (paths.length) {
-    workspace.undone.record({ kind: 'import', paths })
-    await workspace.loadTree()
-    const { sync } = await import('../sync.svelte')
-    sync.nudge()
+  } finally {
+    // Whatever was written is one import to undo, and in the file list, even when a
+    // write partway through failed. The failure still reaches the sheet, which says
+    // so; before, the half that had landed was on the disk with no undo that could
+    // take it back, and trying again put a `Plan 2.md` beside every one of them.
+    if (paths.length) await landed(paths)
   }
 
   return { paths, stepped: stamped.stepped }
+}
+
+/** What an import that wrote something owes the rest of the app. */
+async function landed(paths: string[]) {
+  workspace.undone.record({ kind: 'import', paths })
+  await workspace.loadTree()
+  const { sync } = await import('../sync.svelte')
+  sync.nudge()
 }
 
 /** The plan's files with every path judged, and the judge's own answer as the

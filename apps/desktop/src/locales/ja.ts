@@ -718,6 +718,7 @@ export const ja: Dictionary = {
   'that path is not usable': 'そのパスは使えません',
   'this note changed elsewhere': 'このノートは別の場所で変更されました',
   'too many tries - ask for a new code': '試行回数が多すぎます - 新しいコードを取得してください',
+  'too many tries - try again in an hour': '試行回数が多すぎます - 1時間後にもう一度お試しください',
   'too many messages from here - try again later':
     'この端末からの送信が多すぎます - あとでもう一度お試しください',
   'too much mail today - try again tomorrow': '本日の送信が多すぎます - 明日もう一度お試しください',

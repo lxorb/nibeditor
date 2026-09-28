@@ -437,6 +437,35 @@ describe('prose typed away from every construct', () => {
     ])
   })
 
+  test('an equation uncovered by deleting the word in front of it is found', () => {
+    // A letter deleted at the head of a line is a prose deletion, and what it leaves
+    // there can open a block: here `$$`, which was inline behind the `x` and is a
+    // display equation without it.
+    const covered = `${PROSE}x$$E = mc^2$$\n\ntail\n`
+    const at = covered.indexOf('x$$')
+    const { was, is, state: after } = afterTyping(covered, at, '', at + 1)
+    const text = after.doc.toString()
+
+    // The caret is in it, so it shows its source - and is a place the caret changes
+    // something, which is what the walk records.
+    expect(was.spans).toEqual([])
+    expect(is.spans.map((span) => text.slice(span.from, span.to))).toEqual(['$$E = mc^2$$'])
+  })
+
+  test('punctuation typed inside a line moves the constructs along', () => {
+    const { is, state: after } = afterTyping(doc, 4, '. Then: (a) - b!')
+    expect(drawn(is, after.doc.toString())).toEqual([TABLE])
+  })
+
+  test('but punctuation at the head of a line is looked at properly', () => {
+    // A third dash at the very top of a note opens its front matter, which the line
+    // under it closes: a block that was a heading a keystroke ago.
+    const top = '--\ntitle: x\n---\n\nbody\n'
+    const { was, is } = afterTyping(top, 0, '-')
+    expect(was.decorations.size).toBe(0)
+    expect(is.decorations.size).toBe(1)
+  })
+
   test('a toc completed by deleting the words after it is drawn', () => {
     // A construct is decided by what remains, not by what moved: deleting `draft`
     // is a prose deletion, and it makes the line a toc. Written the way the search

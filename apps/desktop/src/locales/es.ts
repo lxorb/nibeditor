@@ -736,6 +736,7 @@ export const es: Dictionary = {
   'that path is not usable': 'esa ruta no se puede usar',
   'this note changed elsewhere': 'esta nota cambió en otro sitio',
   'too many tries - ask for a new code': 'demasiados intentos - pedir un código nuevo',
+  'too many tries - try again in an hour': 'demasiados intentos - probar dentro de una hora',
   'too many messages from here - try again later':
     'demasiados mensajes desde aquí - probar más tarde',
   'too much mail today - try again tomorrow': 'demasiado correo hoy - probar mañana',
