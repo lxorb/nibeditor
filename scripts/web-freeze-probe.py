@@ -77,7 +77,7 @@ import urllib.error
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import refuse_updating
+from probe_app import run_probe, refuse_updating, sized
 
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORT_FROM = 21500
@@ -409,28 +409,6 @@ def log_lines(identifier: str) -> list[str]:
     return path.read_text(encoding="utf-8", errors="replace").splitlines()
 
 
-def onto_the_screen(hwnd: int) -> None:
-    """Puts the window at the top left corner, at a size that fits on one screen.
-
-    A photograph is copied off the screen, so a window hanging over an edge of it
-    comes back with a black band where the pixels were not. Moving it is also a
-    resize, which is the one thing a page in a tab has to follow."""
-
-    assert user32 is not None
-    user32.SetWindowPos.argtypes = [
-        wintypes.HWND,
-        wintypes.HWND,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        ctypes.c_int,
-        wintypes.UINT,
-    ]
-    # SWP_NOZORDER, so nothing about which window is in front changes.
-    user32.SetWindowPos(hwnd, None, 0, 0, 1280, 860, 0x0004)
-    time.sleep(1.0)
-
-
 def picture(pid: int, out: pathlib.Path) -> None:
     """A photograph of the window, taken by the platform: a webview cannot photograph
     the window it is drawn in. The same script `nib screenshot` shells out to.
@@ -518,7 +496,7 @@ def main() -> int:
     print(f"space  {space}")
     print(f"page   {url}\n")
 
-    app = subprocess.Popen([str(exe)], cwd=str(exe.parent))
+    app = run_probe(exe)
     began = time.perf_counter()
     hwnd = wait_for_window(app, 40)
     if not hwnd:
@@ -563,7 +541,8 @@ def main() -> int:
         print(f"  the app said: {one}")
     if len(said) < 2:
         print("  and did not answer the second time it was asked")
-    onto_the_screen(hwnd)
+    sized(hwnd, 1280, 860)
+    time.sleep(1.0)
     picture(app.pid, shots / "web-freeze-open.png")
 
     beating.stop()
@@ -571,7 +550,7 @@ def main() -> int:
     print("\nrestart: the app again, on the session it was left with")
     app.kill()
     app.wait(timeout=15)
-    app = subprocess.Popen([str(exe)], cwd=str(exe.parent))
+    app = run_probe(exe)
     again = time.perf_counter()
     hwnd = wait_for_window(app, 40)
     beats: Heartbeat | None = None
@@ -584,7 +563,8 @@ def main() -> int:
         since = time.perf_counter() - began
         measure(hwnd, args.watch, began, restored)
         beats.stop()
-        onto_the_screen(hwnd)
+        sized(hwnd, 1280, 860)
+        time.sleep(1.0)
         picture(app.pid, shots / "web-freeze-restored.png")
     else:
         print("  the window never appeared on the second launch")

@@ -31,11 +31,14 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Mutex, OnceLock};
 
 use serde::{Deserialize, Serialize};
 use tauri::utils::config::WindowConfig;
-use tauri::{AppHandle, Manager, Monitor, Window, WindowEvent};
+use tauri::{
+    AppHandle, LogicalPosition, Manager, Monitor, Runtime, WebviewWindow, WebviewWindowBuilder,
+    Window, WindowEvent,
+};
 
 use crate::paths::{config_dir, made, write_atomically};
 
@@ -50,6 +53,18 @@ const STAYS: f64 = 64.0;
 
 /// Anything longer than this is not a placement and is not read.
 const MOST: u64 = 512;
+
+/// The variable a drive sets to have every window of the run opened off the screen,
+/// whatever the build's own config says; `scripts/probe_app.py` sets it on every
+/// probe it starts.
+const OFF_SCREEN: &str = "NIB_OFF_SCREEN";
+
+/// Where off the screen: the corner Windows parks a minimised window in, well past
+/// any desk of monitors.
+const OFF: f64 = -32000.0;
+
+/// Where this run's windows were sent, once the first of them was; see `away`.
+static AWAY: OnceLock<(f64, f64)> = OnceLock::new();
 
 /// Where a window is: its top left corner and its inner size, in logical pixels, and
 /// whether it is maximised over them.
@@ -155,7 +170,10 @@ fn file(app: &AppHandle) -> Result<PathBuf, String> {
 /// The main window's config with the last place put into it, or the config as it was
 /// where there is no place yet, or where the config names a place of its own.
 pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
-    let mut config = config.clone();
+    let mut config = named(config, asked_away());
+    if let (Some(x), Some(y)) = (config.x, config.y) {
+        let _ = AWAY.set((x, y));
+    }
     if names_its_place(&config) {
         return config;
     }
@@ -187,17 +205,65 @@ pub fn names_its_place(config: &WindowConfig) -> bool {
     config.x.is_some() || config.y.is_some()
 }
 
-/// Puts a window where its config says, off every screen included.
-///
-/// Said again after the window is built because the platform does not always take it
-/// at build time: on Windows, tao keeps a starting place only when it falls on a
-/// screen, and hands any other to the system, which cascades it onto the primary one.
-/// So a probe that asked to open off the screen opened in the middle of it. Moving a
-/// window that is still hidden is honoured wherever it goes.
-pub fn placed<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, config: &WindowConfig) {
-    if let (Some(x), Some(y)) = (config.x, config.y) {
-        let _ = window.set_position(tauri::LogicalPosition::new(x, y));
+/// The config a window is built from, with what a drive asked for put into it: off the
+/// screen where `NIB_OFF_SCREEN` says so, and - wherever the place is named, by the
+/// switch or by the build's own config - never taking the keyboard. A window that
+/// opens somewhere nobody is looking has no business taking the typing from whoever
+/// is working in front of it.
+fn named(config: &WindowConfig, away: bool) -> WindowConfig {
+    let mut config = config.clone();
+    if away {
+        config.x = Some(OFF);
+        config.y = Some(OFF);
     }
+    if names_its_place(&config) {
+        config.focus = false;
+    }
+    config
+}
+
+/// Whether the drive that started this run asked for every window off the screen.
+/// Any value but `0`, as with the launch trace's switch.
+fn asked_away() -> bool {
+    std::env::var_os(OFF_SCREEN).is_some_and(|value| !value.is_empty() && value != "0")
+}
+
+/// Where this run's windows open, where a place was named for them: the first
+/// window's, which `restored` notes, so that a second window a probe opens goes where
+/// the first went rather than into the middle of the screen.
+pub fn away() -> Option<(f64, f64)> {
+    AWAY.get().copied()
+}
+
+/// Builds a window at a named place without a frame of it anywhere else.
+///
+/// Hidden, put there, and only then shown, whatever the config says about being
+/// visible. Two reasons it cannot simply be built there: on Windows, tao keeps a
+/// starting place only when it falls on a screen and hands any other to the system,
+/// which cascades it onto the primary one - so a window built visible appeared there,
+/// in the middle of somebody's work, and only then went where it was sent. Moving a
+/// window that is still hidden is honoured wherever it goes. And it is shown without
+/// being brought forward: built unfocused, tao shows it the way `SW_SHOWNOACTIVATE`
+/// does, so the window that was in front stays in front.
+pub fn built_away<R: Runtime, M: Manager<R>>(
+    building: WebviewWindowBuilder<'_, R, M>,
+    (x, y): (f64, f64),
+) -> tauri::Result<WebviewWindow<R>> {
+    let window = building.visible(false).focused(false).build()?;
+    window.set_position(LogicalPosition::new(x, y))?;
+    window.show()?;
+    Ok(window)
+}
+
+/// Brings a window forward because somebody asked for the app - a second launch, a
+/// link - unless this run's windows were sent off the screen, where coming forward
+/// would take the keyboard from whoever is working and show them nothing.
+pub fn raised<R: Runtime>(window: &Window<R>) {
+    if away().is_some() {
+        return;
+    }
+    let _ = window.unminimize();
+    let _ = window.set_focus();
 }
 
 fn read(app: &AppHandle) -> Option<Placement> {
@@ -375,7 +441,7 @@ fn keep(window: &Window) {
 
 #[cfg(test)]
 mod tests {
-    use super::{names_its_place, onto, sane, Area, Followed, Placement};
+    use super::{named, names_its_place, onto, sane, Area, Followed, Placement, OFF};
     use tauri::utils::config::WindowConfig;
 
     fn placed(x: f64, y: f64, width: f64, height: f64) -> Placement {
@@ -548,6 +614,36 @@ mod tests {
             serde_json::from_str(include_str!("../tauri.conf.json")).expect("the app's config");
         let window = &config["app"]["windows"][0];
         assert!(window["x"].is_null() && window["y"].is_null());
+    }
+
+    /// `NIB_OFF_SCREEN` sends the window off the screen whatever the build said, and a
+    /// window sent there never takes the keyboard.
+    #[test]
+    fn a_drive_that_asks_gets_its_window_off_the_screen_and_unfocused() {
+        let away = named(&WindowConfig::default(), true);
+        assert_eq!((away.x, away.y), (Some(OFF), Some(OFF)));
+        assert!(!away.focus);
+    }
+
+    /// A build whose config names a place keeps it, and loses the keyboard with it.
+    #[test]
+    fn a_named_place_is_kept_and_never_focused() {
+        let built = WindowConfig {
+            x: Some(-20000.0),
+            y: Some(-20000.0),
+            ..WindowConfig::default()
+        };
+        let away = named(&built, false);
+        assert_eq!((away.x, away.y), (Some(-20000.0), Some(-20000.0)));
+        assert!(!away.focus);
+    }
+
+    /// Somebody who opened the app gets the window they opened, in front of them.
+    #[test]
+    fn nothing_named_and_nothing_asked_changes_nothing() {
+        let plain = named(&WindowConfig::default(), false);
+        assert_eq!(plain.x, None);
+        assert!(plain.focus);
     }
 
     #[test]

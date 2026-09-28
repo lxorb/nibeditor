@@ -381,9 +381,12 @@ The window opens where it was left: its size, its place and whether it was
 maximised are written to `window.json` beside the settings as it closes, and put
 into the window's config before it is built, so the first frame is already in the
 right place. A place on a screen that is no longer plugged in is pulled onto one
-that is. A window whose config names a place of its own - a probe opened off the
-screen - is left where it says; see `apps/desktop/src-tauri/src/placement.rs`. It is
-on the trace as `window placement`.
+that is. A window whose config names a place of its own, or any window of a run with
+`NIB_OFF_SCREEN` set, is a probe's: it is built hidden, sent there, and shown without
+coming forward, so no frame of it is ever in front of anybody; see
+`apps/desktop/src-tauri/src/placement.rs`. `scripts/probe_app.py` starts every probe
+that way and ends one that shows up on a screen. It is on the trace as `window
+placement`.
 
 ## Types
 
