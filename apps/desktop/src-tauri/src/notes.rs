@@ -602,4 +602,98 @@ mod tests {
         assert!(!same_entry(&one, &other));
         assert!(same_entry(dir.path(), dir.path()));
     }
+
+    /// Whether this disk looks a name up the way a Mac's does: `a` found as `A`.
+    /// The three tests below ask the real disk, so on one that tells case apart they
+    /// have nothing to show and say nothing.
+    fn ignores_case(dir: &tempfile::TempDir) -> bool {
+        let probe = dir.path().join("case-probe");
+        fs::write(&probe, "").expect("the probe");
+        let answer = dir.path().join("CASE-PROBE").exists();
+        fs::remove_file(&probe).expect("the probe, gone");
+        answer
+    }
+
+    /// What is in a folder, by name as the disk spells it.
+    fn names(dir: &Path) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(dir)
+            .expect("the folder")
+            .map(|entry| {
+                entry
+                    .expect("an entry")
+                    .file_name()
+                    .to_string_lossy()
+                    .into_owned()
+            })
+            .collect();
+        names.sort();
+        names
+    }
+
+    /// `idea.md` to `Idea.md` on a disk that calls both one file: the whole
+    /// decision, with the disk's own answer to whether they are one entry.
+    #[cfg(unix)]
+    #[test]
+    fn a_capital_is_changed_on_a_disk_that_ignores_case() {
+        use super::same_entry;
+
+        let dir = tempfile::tempdir().expect("a temp dir");
+        if !ignores_case(&dir) {
+            return;
+        }
+        let (from, to) = (dir.path().join("idea.md"), dir.path().join("Idea.md"));
+        fs::write(&from, "words").expect("the note");
+
+        assert!(respelled(&from, &to, same_entry));
+        move_entry(&from, &to, true).expect("the rename");
+
+        assert_eq!(names(dir.path()), ["Idea.md"]);
+        assert_eq!(fs::read_to_string(&to).expect("the note"), "words");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_folder_changes_its_capital_with_its_notes_in_it() {
+        use super::same_entry;
+
+        let dir = tempfile::tempdir().expect("a temp dir");
+        if !ignores_case(&dir) {
+            return;
+        }
+        let (from, to) = (dir.path().join("work"), dir.path().join("Work"));
+        fs::create_dir(&from).expect("the folder");
+        fs::write(from.join("plan.md"), "plan").expect("a note in it");
+
+        assert!(respelled(&from, &to, same_entry));
+        move_entry(&from, &to, true).expect("the rename");
+
+        assert_eq!(names(dir.path()), ["Work"]);
+        assert_eq!(
+            fs::read_to_string(to.join("plan.md")).expect("the note"),
+            "plan"
+        );
+    }
+
+    /// `Übersicht` written the way a Mac keyboard composes it, one letter and a
+    /// combining mark, renamed to the way it is typed elsewhere, one letter. A Mac's
+    /// disk calls both the same name, so it is a respelling like a capital is.
+    #[cfg(unix)]
+    #[test]
+    fn a_name_composed_another_way_is_the_same_note() {
+        use super::same_entry;
+
+        let dir = tempfile::tempdir().expect("a temp dir");
+        if !ignores_case(&dir) {
+            return;
+        }
+        let decomposed = dir.path().join("U\u{308}bersicht.md");
+        let composed = dir.path().join("\u{dc}bersicht.md");
+        fs::write(&decomposed, "overview").expect("the note");
+
+        assert!(respelled(&decomposed, &composed, same_entry));
+        move_entry(&decomposed, &composed, true).expect("the rename");
+
+        assert_eq!(names(dir.path()).len(), 1);
+        assert_eq!(fs::read_to_string(&composed).expect("the note"), "overview");
+    }
 }
