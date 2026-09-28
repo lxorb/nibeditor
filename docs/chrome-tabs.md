@@ -120,7 +120,17 @@ so a width change lays out that one tab and nothing beside it.
 - **The floating tab has a shadow.** Chrome moves a whole window; nib carries the
   tab itself over the panes, so it is lifted to read as out of the strip.
 - **The strip scrolls when even the minimum widths do not fit**, rather than
-  cutting tabs off: a tab that cannot be seen cannot be pressed.
+  cutting tabs off: a tab that cannot be seen cannot be pressed. The mouse wheel
+  goes along it then, as VS Code's does; a strip that fits leaves the wheel alone,
+  as Chrome's does. See `tab-strip/wheel.ts`.
+- **A link dropped on the strip opens where it was let go**, as Chrome's does, and
+  the strip makes room for it the way it does for a tab; it never replaces the tab
+  under it. See `tab-strip/dropped.ts`.
+- **The tab menu is Chrome's, VS Code's and Obsidian's rows** that nib has
+  something behind: Reload and Copy link on a web tab, Rename, Duplicate, Pin,
+  Close, Close others, Close tabs to the right (to the left in a language that
+  reads the other way), Close all, Reopen, Split, Move to other pane. A pinned tab
+  is never one the closes around a tab take. See `tab-strip/menu.ts`.
 - **Double click on a tab keeps a preview** (VS Code's rule; nib opens previews).
 - **Ctrl+1..9 are Ctrl+Alt+1..9**, because Ctrl and a digit is a heading level.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active

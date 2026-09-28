@@ -122,6 +122,7 @@ const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
+const ops = await import('./tab-strip/ops')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -1247,7 +1248,7 @@ describe('a tab held at the head of its strip', () => {
     const id = await opened()
     workspace.togglePin(id('/space/c.md'))
 
-    await workspace.closeOthers(id('/space/a.md'))
+    await workspace.closeAround(id('/space/a.md'), 'others')
 
     expect(strip()).toEqual(['/space/c.md', '/space/a.md'])
   })
@@ -3652,5 +3653,179 @@ describe('a preview landing on a note that is already open', () => {
     expect(workspace.documentAt('/space/a.md')).toBe(first)
     // The preview tab is still on the note it was previewing.
     expect(previewed.path).toBe('/space/b.md')
+  })
+})
+
+/** The rows of a tab's own menu that act on more than the tab: Chrome's, VS Code's
+ *  and Obsidian's, which nib's menu had only two of. See tab-strip/menu.ts. */
+describe('what a tab s own menu does to the strip', () => {
+  const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
+    name: path.split('/').pop() ?? path,
+    path,
+    is_dir: isDir,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
+
+  async function opened(...paths: string[]): Promise<(path: string) => string> {
+    for (const path of paths) await workspace.open(path)
+
+    return (path: string) => {
+      const tab = workspace.tabs.find((one) => one.path === path)
+      if (!tab) throw new Error(`${path} is not open`)
+      return tab.id
+    }
+  }
+
+  test('closes the tabs to the right of one, and leaves it in front', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+
+    await workspace.closeAround(id('/space/a.md'), 'right')
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.active?.path).toBe('/space/a.md')
+  })
+
+  test('closes every tab of the strip but a pinned one', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+    workspace.togglePin(id('/space/b.md'))
+
+    await workspace.closeAround(id('/space/c.md'), 'all')
+
+    expect(strip()).toEqual(['/space/b.md'])
+  })
+
+  test('says how many tabs each close would take', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+
+    expect(workspace.closesAround(id('/space/c.md'), 'right')).toBe(0)
+    expect(workspace.closesAround(id('/space/a.md'), 'right')).toBe(2)
+    expect(workspace.closesAround(id('/space/a.md'), 'all')).toBe(3)
+  })
+
+  /** Chrome's duplicate: right after the tab, in front, at the same place. */
+  test('duplicates a tab right after it, on the same document and the same place', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    const original = workspace.tabs.find((one) => one.id === id('/space/a.md'))
+    if (!original) throw new Error('nothing opened')
+    workspace.noteView(original.id, 2, 40, 1)
+
+    ops.duplicateTab(original.id)
+
+    expect(strip()).toEqual(['/space/a.md', '/space/a.md', '/space/b.md'])
+    const copy = workspace.active
+    expect(copy?.id).not.toBe(original.id)
+    expect(copy?.note).toBe(original.note)
+    expect(copy?.cursor).toBe(2)
+  })
+
+  test('duplicates a pinned tab as a pinned one', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    workspace.togglePin(id('/space/b.md'))
+
+    ops.duplicateTab(id('/space/b.md'))
+
+    expect(workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.pinned)).toEqual([
+      true,
+      true,
+      false,
+    ])
+  })
+
+  test('does not duplicate the graph, which is one to a pane', () => {
+    workspace.openGraph()
+    const graph = workspace.active
+    if (!graph) throw new Error('no graph')
+
+    ops.duplicateTab(graph.id)
+
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  /** VS Code's "move editor into next group", which makes the group when there is
+   *  none. */
+  test('moves a tab into a new pane beside its own when there is no other', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    expect(workspace.panes.count).toBe(2)
+    const [left, right] = workspace.panes.all
+    expect(workspace.tabsIn(left?.id ?? '').map((tab) => tab.path)).toEqual(['/space/a.md'])
+    expect(workspace.tabsIn(right?.id ?? '').map((tab) => tab.path)).toEqual(['/space/b.md'])
+    expect(workspace.panes.focusedId).toBe(right?.id)
+  })
+
+  test('moves a tab into the other pane, and the pane it leaves empty goes', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    expect(workspace.panes.count).toBe(1)
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md'])
+  })
+
+  test('does not move the only tab of the only pane anywhere', async () => {
+    const id = await opened('/space/a.md')
+
+    expect(workspace.canMoveToOtherPane(id('/space/a.md'))).toBe(false)
+    ops.moveToOtherPane(id('/space/a.md'))
+    expect(workspace.panes.count).toBe(1)
+  })
+
+  /** Renaming from a tab is renaming on the file's own row, with the list brought
+   *  out and the folder down to the row opened. */
+  test('renames on the file s own row, with the file list out and its folder open', async () => {
+    workspace.tree = entry(
+      '/space',
+      [entry('/space/a.md'), entry('/space/f', [entry('/space/f/b.md')], true)],
+      true,
+    )
+    workspace.closePanel('left')
+    notes['/space/f/b.md'] = '# b'
+    const id = await opened('/space/f/b.md')
+
+    ops.renameFromTab(id('/space/f/b.md'))
+
+    expect(workspace.openOn(workspace.sideOf('tree'))).toBe('tree')
+    expect(workspace.isExpanded('/space/f')).toBe(true)
+    expect(workspace.naming?.path).toBe('/space/f/b.md')
+    workspace.cancelNaming()
+  })
+
+  /** A folder that is also a note is one row, named for the folder; renaming it
+   *  there renames both. See folder-notes.ts. */
+  test('renames a folder s own note on the folder s row', async () => {
+    workspace.tree = entry(
+      '/space',
+      [entry('/space/f', [entry('/space/f/f.md'), entry('/space/f/c.md')], true)],
+      true,
+    )
+    notes['/space/f/f.md'] = '# f'
+    const id = await opened('/space/f/f.md')
+
+    ops.renameFromTab(id('/space/f/f.md'))
+
+    expect(workspace.naming?.path).toBe('/space/f')
+    workspace.cancelNaming()
+  })
+
+  test('offers no rename for a file with no row in the list', async () => {
+    workspace.tree = entry('/space', [entry('/space/a.md')], true)
+    await opened(OUTSIDE)
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    expect(workspace.canRenameFromTab(tab)).toBe(false)
   })
 })

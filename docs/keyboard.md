@@ -272,13 +272,20 @@ stops nothing, and the app still gets the key.
 | --- | --- |
 | Ctrl+N | a new note |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
-| Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip |
+| Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there) |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
 | Ctrl+Alt+O | the other pane (already there) |
+| Ctrl+Alt+Shift+Right | carry the tab to the other pane, or into a new one beside its own when there is none: split right, taking the tab along rather than a copy. VS Code has it on Ctrl+Alt+Right, which is Split right here |
+| F2, on a tab in the strip | rename its file, on its row in the file list, which comes out for it |
+
+The rest of a tab's own menu has no key out of the box and is in the palette and the
+shortcut list so one can be given: close the tabs to the right, close all tabs,
+duplicate the tab. Chrome gives none of them a key, and VS Code's are two-stroke
+chords, which the registry does not hold.
 
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.

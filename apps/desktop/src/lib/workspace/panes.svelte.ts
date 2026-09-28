@@ -41,6 +41,9 @@ export interface Dragging {
 export class Panes {
   frame = $state<Frame>(pane(identifier()))
   focusedId = $state('')
+  /** Tab ids, the one last in front first, for Ctrl+Tab in that order; see
+   *  recency.ts. Here because every tab coming to the front comes through `activate`. */
+  used: string[] = []
 
   /** The divider under a pointer, while one is, so that split follows the finger
    *  instead of easing after it. */
@@ -234,6 +237,7 @@ export class Panes {
     if (!one || one.activeTabId === tabId) return
 
     one.activeTabId = tabId
+    if (tabId) this.used = [tabId, ...this.used.filter((one) => one !== tabId)].slice(0, 200)
     this.changed()
   }
 

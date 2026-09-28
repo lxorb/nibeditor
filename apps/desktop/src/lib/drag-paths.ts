@@ -46,6 +46,13 @@ export function isTreeDrag(transfer: DataTransfer | null): boolean {
   return !!transfer?.types.includes(ONE)
 }
 
+/** Whether a drag from another app may carry a link: not a file, not one of ours.
+ *  The drop itself is judged in tab-strip/dropped.ts. */
+export function mayCarryAddress(types: readonly string[]): boolean {
+  if (types.includes('Files') || types.some((one) => one.startsWith('text/nib-'))) return false
+  return types.includes('text/uri-list') || types.includes('text/plain')
+}
+
 export function dragged(transfer: DataTransfer | null): string[] {
   if (!transfer) return []
   try {

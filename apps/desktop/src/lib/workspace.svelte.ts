@@ -59,6 +59,7 @@ import { OpenDocuments } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { byPin, pinnedRun, placeFor } from './workspace/pinning'
+import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import * as composing from './workspace/composing'
@@ -2330,16 +2331,19 @@ class Workspace {
     if (id) await this.closeAsking(id)
   }
 
-  /** Every other tab of one pane, asking about whatever is unsaved among them. */
-  async closeOthers(keepId: string) {
-    const tab = this.tabs.find((one) => one.id === keepId)
-    if (!tab) return
+  /** The tabs of a pane around one, asking once about anything unsaved; which tabs
+   *  is workspace/closing-around.ts. */
+  async closeAround(id: string, which: Around) {
+    const tab = this.tabs.find((one) => one.id === id)
+    const going = tab ? closedAround(this.tabsIn(tab.paneId), id, which) : []
+    if (!(await this.mayClose(going))) return
 
-    // A pinned tab is not one of the others: it was pinned to stay.
-    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== keepId && !one.pinned)
-    if (!(await this.mayClose(others))) return
+    for (const one of going) this.close(one.id)
+  }
 
-    for (const other of others) this.close(other.id)
+  closesAround(id: string, which: Around): number {
+    const tab = this.tabs.find((one) => one.id === id)
+    return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
   /** Whether the window may go, which is the same question over every tab in it.
@@ -2990,10 +2994,17 @@ class Workspace {
    *  sidebar is open at all. */
   startRenaming(path: string, appending = false) {
     const inHeader = this.spaces.some((space) => space.root === path)
-    if (!(inHeader ? this.panel !== null : this.panel === 'tree')) return
+    // The file list on whichever side it was moved to.
+    const listed = this.openOn(this.sideOf('tree')) === 'tree'
+    if (!(inHeader ? this.panel !== null : listed)) return
 
     this.cancelNaming()
     this.naming = { path, appending, making: null }
+  }
+
+  /** Whether a tab's file has a row in the file list; see tab-strip/ops.ts. */
+  canRenameFromTab(tab: Tab): boolean {
+    return tab.path !== null && this.entryAt(tab.path) !== null
   }
 
   /** A row for something that does not exist yet, waiting for the name that will
@@ -3568,6 +3579,11 @@ class Workspace {
     this.persist()
   }
 
+  /** The graph is one to a pane, and a phone has one document; see tab-strip/ops.ts. */
+  canDuplicateTab(tab: Tab): boolean {
+    return !viewport.touch && tab.kind !== 'graph'
+  }
+
   /** Whether a pane can still be split that way, which is what hides the entry
    *  rather than offering one that does nothing. */
   canSplit(along: Along, tabId?: string): boolean {
@@ -3623,6 +3639,15 @@ class Workspace {
 
     const made = this.panes.split(alongOf(landing.zone), landing.paneId, madeFirst(landing.zone))
     if (made) this.moveTab(id, made.id)
+  }
+
+  /** Another pane to carry a tab to, or room beside its own and a tab left behind
+   *  in it; see tab-strip/ops.ts. */
+  canMoveToOtherPane(id: string): boolean {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab || viewport.touch) return false
+
+    return this.panes.count > 1 || this.canLand('right', tab.paneId, id)
   }
 
   /** Notes dragged out of the file list onto a pane, opened where they were
