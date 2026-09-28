@@ -120,11 +120,11 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Editor | On a link: Copy link address, Edit link, Remove link | Chrome, Obsidian, Notion, Typora | missing | `linkEntries` (`lib/editor-menu.ts:516-523`) offers only Open in the browser | S | high |
-| Editor | On a note link: Open in new tab, Open to the right, Copy link | Obsidian | missing | same; note links get no rows at all (the new-tab path comes from `ctrl-click`) | S | med |
-| Editor | Ctrl+Alt+click on a note link opens it to the right | Obsidian | missing | `noteClicks` (`ed/wikilink/follow.ts:63-78`) reads button 0 plus the modifier only | S | med |
-| Editor | On a picture: Copy picture, Open picture, Show in file list, Delete | Typora, Obsidian, Chrome | missing | `lib/editor-menu.ts` has no picture rows | M | med |
-| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | missing | `ed/images.ts:108-121` accepts pictures only | M | med |
+| Editor | On a link: Copy link address, Edit link, Remove link | Chrome, Obsidian, Notion, Typora | done 67fa46a5; on `[[wikilinks]]` too, and no Remove for an address written out, which would still be one | `linkEntries` (`lib/editor-menu.ts:516-523`) offers only Open in the browser | S | high |
+| Editor | On a note link: Open in new tab, Open to the right, Copy link | Obsidian | done a60e7d71; "Open to the side", the file list's word for it, and not on a phone | same; note links get no rows at all (the new-tab path comes from `ctrl-click`) | S | med |
+| Editor | Ctrl+Alt+click on a note link opens it to the right | Obsidian | done a60e7d71; `linkAsk` in `lib/new-tab.ts`, so `follow.ts` is unchanged | `noteClicks` (`ed/wikilink/follow.ts:63-78`) reads button 0 plus the modifier only | S | med |
+| Editor | On a picture: Copy picture, Open picture, Show in file list, Delete | Typora, Obsidian, Chrome | done 67fa46a5, but for Show in file list: skipped, the file list shows no pictures (`rs/tree.rs` lists notes, PDFs, canvases, page notes and shortcuts) | `lib/editor-menu.ts` has no picture rows | M | med |
+| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | done 61a8e008 for what a note can show (PDF, sound, film, canvas) as `![[name]]`; a zip or anything else is left alone, since nothing in nib opens it | `ed/images.ts:108-121` accepts pictures only | M | med |
 
 ## Batch 9: file list menu, reveal, drag into a note
 

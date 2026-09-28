@@ -431,7 +431,13 @@ function holds(tail: string): boolean {
  *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
  *  over at the launch's last turn now; see `warmDoors`. Measured 3,298,741 and 380.
  *  Dictation went from the list of doors below with it: it is behind the command
- *  list's. */
+ *  list's.
+ *
+ *  The editor's right-click menu went behind a door as it learned a link's and a
+ *  picture's rows (the power-user list's eighth batch), and so did what it asks of
+ *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
+ *  against 3,298,741 and 380 on the main it landed on. */
 const BUDGET = 3_310_000
 const MOST_FILES = 382
 
