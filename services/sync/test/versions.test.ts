@@ -386,6 +386,36 @@ describe('putting a space back to a moment', () => {
     expect(outside.json.content).toBe('changed as well')
   })
 
+  test('and only that folder, whatever its name has in it', async () => {
+    // A folder's name used to be read as a `like` pattern: `_` matched any one
+    // character and case was ignored, so these three were all "under" `a_b`.
+    const at = Date.now() - 5 * 60 * 1000
+    for (const [id, path] of [
+      ['wanted', 'a_b/x.md'],
+      ['wild', 'aXb/y.md'],
+      ['cased', 'A_B/z.md'],
+    ] as const) {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+           values (?, ?, ?, ?, 1, ?, 0, 4, 'now')`,
+        )
+        .run(id, space, path, 500, at)
+      env.db
+        .prepare(
+          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
+        )
+        .run(id, at - 1000)
+    }
+
+    const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now(), under: 'a_b', dry: true },
+    })
+
+    expect(asked.json.paths).toEqual(['a_b/x.md'])
+  })
+
   test('refuses a moment nobody named', async () => {
     const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, { token, body: {} })
 
