@@ -1046,7 +1046,6 @@ API's own, read off the error it answers an invalid one with.
 | `even/key.svelte.ts` | the two facts about the key this machine may know |
 | `even/offered.svelte.ts` | the models on offer, and the line under the field |
 | `even/settings.ts` | every glasses setting, once, for both surfaces |
-| `even/scroll.ts` | who scrolls the note: the app, or the glasses |
 | `even/frame.svelte.ts` | following a finger, or springing into place |
 | `even/bridge.svelte.ts` | the tie to the app's own stores |
 | `even/Glasses.svelte` | the card, the voice readout, and the phone's half of the binding |

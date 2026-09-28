@@ -297,6 +297,7 @@ stops nothing, and the app still gets the key.
 | | |
 | --- | --- |
 | Ctrl+N | a new note |
+| Ctrl+Shift+N | a new window |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
@@ -369,8 +370,8 @@ Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts
 
 **A web tab**
 
-Four keys that only mean anything while the pane is showing a website, and they are
-the four a browser has taught everybody. They are in the registry like the rest, so
+The keys that only mean anything while the pane is showing a website, and they are
+the ones a browser has taught everybody. They are in the registry like the rest, so
 they show in Settings, show in the palette and can be rebound.
 
 | | |
@@ -378,7 +379,6 @@ they show in Settings, show in the palette and can be rebound.
 | Ctrl+T | a new tab. In a web tab that is a new web tab, on the new tab page |
 | Ctrl+W | close, which is the same key every other tab closes with (already there) |
 | Ctrl+L | the address field, in the pane that has the focus |
-| Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
 | Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
 | F12 | the engine's developer tools |
