@@ -16,5 +16,10 @@
         "hiddenTitle": true
       }
     ]
+  },
+  "bundle": {
+    "macOS": {
+      "entitlements": "Entitlements.plist"
+    }
   }
 }

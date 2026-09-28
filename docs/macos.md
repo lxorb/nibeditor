@@ -21,6 +21,7 @@ What the Mac build does differently from Windows and Linux, and the checklist it
   - Web tabs keep logins across restarts, and have download progress and snapshots.
   - pdf.js falls back to its legacy build on WebKit older than Safari 18.2.
 - **Signing.** Ad hoc (`signingIdentity: "-"`) until a Developer ID exists. `release.yml` switches to real signing and notarization by itself once the `APPLE_*` secrets are set.
+- **Devices.** The bundle is signed with the hardened runtime, so the microphone and the camera need two things, and both were missing until 2026-09-29: a sentence for each in `src-tauri/Info.plist`, without which WebKit leaves `navigator.mediaDevices` out of the page (Record greyed out) and dictation answers `not-allowed`; and `Entitlements.plist`, without which the runtime refuses the device whatever the sentence says. `test/apple.test.ts` holds both.
 
 ## Checklist
 
