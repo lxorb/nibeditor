@@ -1531,4 +1531,11 @@ export const es: Dictionary = {
   'Upper case': 'Mayúsculas',
   'Lower case': 'Minúsculas',
   'Title case': 'Tipo título',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
 }

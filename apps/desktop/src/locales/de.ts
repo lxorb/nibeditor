@@ -1527,4 +1527,11 @@ export const de: Dictionary = {
   'Upper case': 'Großbuchstaben',
   'Lower case': 'Kleinbuchstaben',
   'Title case': 'Wortanfänge groß',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadresse kopieren',
+  'Edit link': 'Link bearbeiten',
+  'Remove link': 'Link entfernen',
+  'Copy picture': 'Bild kopieren',
+  'Open picture': 'Bild öffnen',
+  'Delete picture': 'Bild löschen',
 }

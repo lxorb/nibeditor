@@ -252,9 +252,11 @@ export async function warmDoors(): Promise<void> {
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here
     // and answers that question right from the first menu; see ai/hears.ts.
     import('./ai/store.svelte'),
-    // A tab's own menu, a row's, and Ctrl+Tab in order of use, asked for at any moment.
+    // A tab's own menu, a row's, the editor's, and Ctrl+Tab in order of use, asked for
+    // at any moment.
     import('./tab-strip/menu'),
     import('./row-menu'),
+    import('./editor-menu'),
     import('./tab-cycle.svelte'),
   ])
 }

@@ -677,6 +677,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/lines.ts', 'the line commands'],
     ['/editor/src/grow.ts', 'the selection a step outwards'],
     ['/editor/src/paste-link.ts', 'an address pasted over words'],
+    // The editor's right-click menu, with its rows for a link and a picture: nothing of
+    // it is on screen until a press asks, and it is fetched at the launch's last turn
+    // like a tab's menu. See Pane.svelte.
+    ['/lib/editor-menu.ts', "the editor's menu"],
+    ['/editor/src/menu.ts', 'what it asks of the editor'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

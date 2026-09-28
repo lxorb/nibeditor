@@ -1498,4 +1498,11 @@ export const gsw: Dictionary = {
   'Upper case': 'Grossbuechstabe',
   'Lower case': 'Chliibuechstabe',
   'Title case': 'Wortaafäng gross',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadrässe kopiere',
+  'Edit link': 'Link bearbeite',
+  'Remove link': 'Link entferne',
+  'Copy picture': 'Bild kopiere',
+  'Open picture': 'Bild öffne',
+  'Delete picture': 'Bild lösche',
 }

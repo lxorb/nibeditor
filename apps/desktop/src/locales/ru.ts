@@ -1554,4 +1554,11 @@ export const ru: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
 }

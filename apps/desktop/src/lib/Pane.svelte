@@ -35,7 +35,6 @@
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
   import { busy } from './busy.svelte'
-  import { showEditorMenu } from './editor-menu'
 
   import { without } from './graph'
   import { links } from './link-index.svelte'
@@ -313,6 +312,15 @@
     setDeck(current, isDeck(words))
   })
 
+  /** The editor's own menu; see editor-menu.ts. Fetched as the launch ends rather
+   *  than carried into it (see `warmDoors`), so the browser's own menu is refused
+   *  here, in the frame of the press, and the rows are built once the module is in. */
+  function showMenu(event: MouseEvent, on: EditorView | undefined, path: string | null) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./editor-menu').then(({ showEditorMenu }) => showEditorMenu(event, on, path))
+  }
+
   /** A pasted or dropped image, stored once however often it is pasted. A large
    *  screenshot takes a moment to hash and write, and nothing appears in the
    *  note until it has, so the line at the top says so meanwhile.
@@ -552,8 +560,7 @@
           </button>
           <div
             class="sheet"
-            oncontextmenu={(event: MouseEvent) =>
-              showEditorMenu(event, columnViews[one.id], one.path)}
+            oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
           >
             <Editor
               bind:view={columnViews[one.id]}
@@ -586,7 +593,7 @@
     <div
       class="editor"
       data-region="editor"
-      oncontextmenu={(event: MouseEvent) => showEditorMenu(event, view, tab.path)}
+      oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}
     >
       <Editor
         bind:view
