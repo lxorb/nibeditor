@@ -50,3 +50,15 @@ export function roomDelay(tries: number, spread = Math.random()): number {
   const wait = Math.min(ROOM_FIRST * 2 ** Math.max(0, tries - 1), ROOM_MAX)
   return Math.round(wait * (1 + ROOM_SPREAD * (spread * 2 - 1)))
 }
+
+/** A note that would not go down - a full disk, a file another program has
+ *  locked, a folder that went read-only - tried again. Soon at first, because the
+ *  usual lock is a virus scanner or a sync client that lets go a moment later;
+ *  then doubling, to a cap, so a disk that stays full is asked about once a minute
+ *  rather than written to the log every second. */
+const SAVE_RETRY_FIRST = 2_000
+const SAVE_RETRY_MAX = 60_000
+
+export function saveRetryDelay(tries: number): number {
+  return Math.min(SAVE_RETRY_FIRST * 2 ** Math.max(0, tries - 1), SAVE_RETRY_MAX)
+}

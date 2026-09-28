@@ -14,6 +14,9 @@ const sent: { command: string; path: string; content: string }[] = []
 /** A write held open, so a test can move the document on mid-flight. */
 let holding: Promise<void> | null = null
 
+/** Paths the disk refuses a write to, and how many more times it will. */
+const refusing = new Map<string, number>()
+
 vi.mock('../tauri', () => ({
   invoke: async (command: string, args?: Record<string, unknown>) => {
     sent.push({
@@ -22,8 +25,16 @@ vi.mock('../tauri', () => ({
       content: typeof args?.content === 'string' ? args.content : '',
     })
     if (command === 'write_note' && holding) await holding
+
+    const path = typeof args?.path === 'string' ? args.path : ''
+    const left = refusing.get(path) ?? 0
+    if (command === 'write_note' && left > 0) {
+      refusing.set(path, left - 1)
+      throw new Error(`could not write ${path}: the disk is full`)
+    }
     return ''
   },
+  isNative: false,
   joinPath: (dir: string, relative: string) => `${dir}/${relative}`,
 }))
 
@@ -124,12 +135,28 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
     ws.documents.length = 0
   }
 
-  return { saving, note, tab, ws, deleted, closed }
+  /** A second note open beside the first, in the same space and the same store. */
+  const beside = (other: string, words = '# b') => {
+    tree = listing([...(path ? [path] : []), other])
+    const second: Doc = new NoteDoc(
+      { kind: 'note', path: other, name: nameOfPath(other), text: words, dirty: false },
+      (one) => saving.edited(one),
+      () => kept,
+    )
+    ws.tabs.push(new Tab(second, 'p2'))
+    ws.documents.push(second)
+    return second
+  }
+
+  return { saving, note, tab, ws, deleted, closed, beside }
 }
+
+const nameOfPath = (path: string) => path.slice(path.lastIndexOf('/') + 1)
 
 beforeEach(() => {
   sent.length = 0
   holding = null
+  refusing.clear()
   vi.useRealTimers()
 })
 
@@ -317,5 +344,44 @@ describe('what is worth keeping a version of', () => {
   test('and never a note that has no file yet', () => {
     const { saving } = open(null)
     expect(saving.worthKeeping).toEqual([])
+  })
+})
+
+describe('a write the disk refuses', () => {
+  /** A full disk, a file a virus scanner is holding, a folder gone read-only. The
+   *  pause used to throw out of the queue: the note was never tried again unless
+   *  somebody typed in it, and every note behind it in the queue went unwritten. */
+  const A = `${SPACE}/a.md`
+  const B = `${SPACE}/b.md`
+  const written = (path: string) =>
+    sent.filter((one) => one.command === 'write_note' && one.path === path)
+
+  test('is tried again a moment later without another keystroke', async () => {
+    vi.useFakeTimers()
+    const { note } = open(A)
+    refusing.set(A, 1)
+
+    note.replace('# a\n\nthe last sentence')
+    await vi.advanceTimersByTimeAsync(1200)
+    expect(written(A)).toHaveLength(1)
+    expect(note.dirty).toBe(true)
+
+    await vi.advanceTimersByTimeAsync(2000)
+    expect(written(A)).toHaveLength(2)
+    expect(note.dirty).toBe(false)
+  })
+
+  test('and does not keep the notes waiting behind it from going down', async () => {
+    vi.useFakeTimers()
+    const { note, beside } = open(A)
+    const other = beside(B)
+    refusing.set(A, 1)
+
+    note.replace('# a typed')
+    other.replace('# b typed')
+    await vi.advanceTimersByTimeAsync(1200)
+
+    expect(written(B)).toEqual([{ command: 'write_note', path: B, content: '# b typed' }])
+    expect(other.dirty).toBe(false)
   })
 })

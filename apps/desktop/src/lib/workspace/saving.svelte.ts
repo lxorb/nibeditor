@@ -13,9 +13,11 @@
  *  `workspace.save()` still means what it always did. */
 
 import { flushTableEdits } from '@nib/editor'
+import { saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { key, t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
+import { log } from '../log'
 import { endingOf, nameFromContent, shownName } from '../note-name'
 import { owesLast } from '../parting'
 import { without } from '../records'
@@ -190,6 +192,14 @@ export class Saving {
   /** The write that waits for a pause in the typing; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY)
 
+  /** How many times in a row a pause has ended with a note that would not go
+   *  down, and the second try that waits longer the more there have been. */
+  private failures = 0
+  private readonly retry = afterQuiet(
+    () => void this.saveWaiting(),
+    () => saveRetryDelay(this.failures),
+  )
+
   /** Notes waiting to be written when the typing stops. A set rather than one
    *  note, because two panes may hold two different notes and both be edited
    *  between one pause and the next. */
@@ -278,11 +288,36 @@ export class Saving {
     this.soon()
   }
 
+  /** Writes every note waiting for the pause, each on its own.
+   *
+   *  A write that fails puts its note back in the queue and asks again later; see
+   *  `saveRetryDelay`. It used to throw out of here, which lost two things at once:
+   *  the notes after it in the queue, which had already been taken off it, and the
+   *  note itself, which nothing wrote until the next keystroke - and for somebody
+   *  who had stopped typing, there was none. The words were in the session all
+   *  along, so a relaunch still had them; the file did not. */
   private async saveWaiting() {
     const notes = [...this.waiting]
     this.waiting.clear()
 
-    for (const note of notes) await this.write(note)
+    let failed = false
+    for (const note of notes) {
+      try {
+        await this.write(note)
+      } catch (error) {
+        failed = true
+        this.waiting.add(note)
+        log('error', `save: ${note.path ?? note.name} could not be written - ${String(error)}`)
+      }
+    }
+
+    if (!failed) {
+      this.failures = 0
+      return
+    }
+
+    this.failures += 1
+    this.retry()
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
