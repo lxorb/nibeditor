@@ -252,10 +252,30 @@ app.all('*', async (context) => {
   // The web build of the editor. It stores notes in the browser until someone
   // signs in, so it is served to anyone who asks.
   const assets = context.env.ASSETS
-  if (assets) return assets.fetch(context.req.raw)
+  if (assets) return unframed(await assets.fetch(context.req.raw))
 
   return context.text('Not found', 404)
 })
+
+/** The editor's page, which no other site may put in a frame.
+ *
+ *  Said here because nowhere else can say it: the page carries its content policy
+ *  in a `<meta>`, and `frame-ancestors` is the one directive a `<meta>` cannot hold
+ *  (see apps/desktop/src/csp.ts). Without it any page could lay the editor under a
+ *  button of its own and have a click land on Share or Delete. The policy here is
+ *  that one directive and nothing else, so it narrows nothing the page's own says. */
+function unframed(response: Response): Response {
+  if (!response.headers.get('content-type')?.includes('text/html')) return response
+
+  const headers = new Headers(response.headers)
+  headers.set('content-security-policy', "frame-ancestors 'none'")
+  headers.set('x-frame-options', 'DENY')
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
+}
 
 /** The daily job: everything that has run out of time.
  *
