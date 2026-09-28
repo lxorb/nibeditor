@@ -31,6 +31,7 @@
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
+  import { middleOpens } from '../new-tab'
   import { shortcuts } from '../shortcuts.svelte'
   import AddressField from './AddressField.svelte'
   import { plainOrigin } from './address'
@@ -60,7 +61,9 @@
     reads: boolean
     focused: boolean
     book: string
-    onstep: (step: 'back' | 'forward' | 'reload') => void
+    /** An arrow or reload pressed, and how: an arrow with the middle button or a
+     *  modifier opens its step in a tab of its own; see new-tab.ts. */
+    onstep: (step: 'back' | 'forward' | 'reload', press: MouseEvent) => void
     onaddress: (typed: string) => void
     onclip: () => void
     onmenu: (event: MouseEvent) => void
@@ -153,7 +156,8 @@
     title={t('Back')}
     aria-label={t('Back')}
     disabled={!page.back}
-    onclick={() => onstep('back')}
+    onclick={(event) => onstep('back', event)}
+    use:middleOpens={(event) => onstep('back', event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
@@ -167,7 +171,8 @@
     title={t('Forward')}
     aria-label={t('Forward')}
     disabled={!page.forward}
-    onclick={() => onstep('forward')}
+    onclick={(event) => onstep('forward', event)}
+    use:middleOpens={(event) => onstep('forward', event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
@@ -183,7 +188,7 @@
     class:turning={page.loading}
     title={t('Reload')}
     aria-label={t('Reload')}
-    onclick={() => onstep('reload')}
+    onclick={(event) => onstep('reload', event)}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
       {#each RotateCw as [tag, attrs], index (index)}

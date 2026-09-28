@@ -18,6 +18,7 @@
   import { links, type Outgoing, type Reference } from './link-index.svelte'
   import { insideSpace } from './space-paths'
   import { workspace } from './workspace.svelte'
+  import { howFor, middleOpens, type OpenHow, tabAsk } from './new-tab'
   import { roving } from './roving'
   import HitList, { HIT_WALK } from './HitList.svelte'
 
@@ -105,15 +106,18 @@
     }
   })
 
-  async function openAt(reference: Reference) {
+  /** A line pressed: its note opens at that line - in a tab of its own, beside this
+   *  one, when the press asked for one. A note left behind is not scrolled to. */
+  async function openAt(reference: Reference, press: MouseEvent) {
     if (!root) return
-    await workspace.open(insideSpace(root, reference.path))
-    ongoto?.(reference.line)
+    const ask = tabAsk(press)
+    await workspace.open(insideSpace(root, reference.path), howFor(ask))
+    if (ask !== 'behind') ongoto?.(reference.line)
   }
 
-  async function openTarget(link: Outgoing) {
+  async function openTarget(link: Outgoing, press: MouseEvent) {
     if (!root || !link.to) return
-    await workspace.openEntry(insideSpace(root, link.to))
+    await workspace.openEntry(insideSpace(root, link.to), howFor(tabAsk(press)))
   }
 </script>
 
@@ -127,7 +131,7 @@
     <Graph
       graph={around}
       current={workspace.panelNote}
-      onopen={(target: string, keep: boolean) => workspace.openRelative(target, keep)}
+      onopen={(target: string, how: OpenHow) => workspace.openRelative(target, how)}
       onescape={() => onlist?.()}
     />
   {/await}
@@ -152,7 +156,8 @@
           <button
             class="nib-row hit"
             class:missing={!link.to}
-            onclick={() => (link.to ? openTarget(link) : ongoto?.(link.line))}
+            onclick={(event) => (link.to ? openTarget(link, event) : ongoto?.(link.line))}
+            use:middleOpens={(event) => void (link.to && openTarget(link, event))}
           >
             <span class="hit-note">{shownName(link.name)}</span>
             <span class="hit-line">{link.text}</span>

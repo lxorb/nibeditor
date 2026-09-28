@@ -7,6 +7,7 @@
   import { longPress } from './longpress'
   import { menu, type MenuEntry } from './menu.svelte'
   import { showNewKinds } from './new-kinds'
+  import { middleOpens, tabAsk } from './new-tab'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -618,7 +619,9 @@
       )
       void import('./tab-strip/dropped').then(({ droppedAddress }) => {
         const address = droppedAddress((type) => held.get(type) ?? '')
-        const id = address === null ? null : workspace.openPage(address, false, paneId)
+        // Opened from the tab in front of that pane, so it lands in that pane.
+        const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
+        const id = address === null ? null : workspace.openPage(address, 'plain', from)
         if (id !== null) workspace.moveTab(id, paneId, at)
       })
       return
@@ -687,7 +690,8 @@
         title={t('Back')}
         aria-label={t('Back')}
         disabled={!walking.canGoBack}
-        onclick={() => workspace.goBack(walking.id)}
+        onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
+        use:middleOpens={(event) => workspace.goBack(walking.id, tabAsk(event))}
         oncontextmenu={(event) =>
           walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
         use:longPress={(event) =>
@@ -700,7 +704,8 @@
         title={t('Forward')}
         aria-label={t('Forward')}
         disabled={!walking.canGoForward}
-        onclick={() => workspace.goForward(walking.id)}
+        onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
+        use:middleOpens={(event) => workspace.goForward(walking.id, tabAsk(event))}
       >
         <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
       </button>

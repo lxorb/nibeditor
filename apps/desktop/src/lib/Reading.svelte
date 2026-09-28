@@ -26,6 +26,7 @@
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { followHref, MIDDLE, opensLink } from './open-link'
+  import { tabAsk } from './new-tab'
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
@@ -288,26 +289,20 @@
    *  this space, or the web.
    *
    *  Two buttons reach here. The main one is the page's own click. The middle one
-   *  arrives as `auxclick` and means one thing only - open that page and leave me
-   *  here - so it is answered on the link and nowhere else: a card, a query row and
-   *  a heading of this note are all the main button's, and a middle press that lands
-   *  on none of them does nothing at all. */
+   *  arrives as `auxclick` and means one thing only - open that in a tab and leave me
+   *  here - so it is answered on a link and nowhere else: a card, a query row and a
+   *  heading of this note are all the main button's, and a middle press that lands on
+   *  none of them does nothing at all. A modifier on either asks for a tab of its own
+   *  the same way; see new-tab.ts. */
   function follow(event: MouseEvent) {
     if (!opensLink(event)) return
-    if (event.button === MIDDLE) {
-      const address = (event.target as Element | null)?.closest('a')?.getAttribute('href')
-      if (!address) return
-
-      event.preventDefault()
-      followHref(address, event)
-      return
-    }
+    const middle = event.button === MIDDLE
 
     // A card standing in for a page somewhere else shows that page here, in the
     // frame and the sandbox the provider needs, rather than sending the reader
     // out of the app. The card is a link so that a published page - which runs no
     // script - still goes somewhere; here there is a script.
-    const card = (event.target as Element | null)?.closest('.embed-web')
+    const card = middle ? null : (event.target as Element | null)?.closest('.embed-web')
     if (card instanceof HTMLElement && loadEmbed(card)) {
       event.preventDefault()
       return
@@ -317,7 +312,7 @@
     // the way the Search panel's rows do. Asked before the links, because a row is
     // a button rather than a link: a published page has no script to run and so
     // answers no query either.
-    if (pressRow(event.target)) {
+    if (!middle && pressRow(event.target)) {
       event.preventDefault()
       return
     }
@@ -340,9 +335,10 @@
     // A `#fragment` on its own is a heading of this note, and the note is already
     // on the page.
     if (!target) {
-      if (fragment) jump(fragment)
+      if (fragment && !middle) jump(fragment)
       return
     }
+    const ask = tabAsk(event)
 
     // A wikilink already carries the note it resolved to; a markdown link carries
     // the path it was written as, which is read from where it was written.
@@ -356,13 +352,16 @@
       const file = wiki ? target : resolveFile(index, target, 'markdown')
       if (file === null) return
 
-      void workspace.followLink({
-        path: file,
-        target,
-        heading: null,
-        block: null,
-        page: pageFragment(fragment ? written(fragment) : null),
-      })
+      void workspace.followLink(
+        {
+          path: file,
+          target,
+          heading: null,
+          block: null,
+          page: pageFragment(fragment ? written(fragment) : null),
+        },
+        ask,
+      )
       return
     }
 
@@ -371,13 +370,16 @@
       : (resolveRelative(index, target) ?? resolveNote(index, target))
     if (!found) return
 
-    void workspace.followLink({
-      path: found.path,
-      target,
-      heading: fragment ? written(fragment) : null,
-      block: null,
-      page: null,
-    })
+    void workspace.followLink(
+      {
+        path: found.path,
+        target,
+        heading: fragment ? written(fragment) : null,
+        block: null,
+        page: null,
+      },
+      ask,
+    )
   }
 
   /** A target as the name it stands for: what a note writes in a link is a URL. */

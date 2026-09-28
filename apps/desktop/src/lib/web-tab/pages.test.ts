@@ -80,7 +80,7 @@ vi.mock('@tauri-apps/api/event', () => ({
   },
 }))
 
-const { pages } = await import('./pages.svelte')
+const { pages, readOpening } = await import('./pages.svelte')
 
 const SITE = 'https://example.com/'
 const PANE = { x: 0, y: 0, width: 800, height: 600 }
@@ -369,5 +369,30 @@ describe('where a page keeps what the site stores', () => {
     ])
     expect(last('web_open')).toMatchObject({ tab: 'a', store: 'space_w', pane: PANE })
     webData.set('w', 'global')
+  })
+})
+
+/** A page asking for a window of its own, as the crate tells it: which tab, where, and
+ *  whether the press that asked left the tab behind. Read, not trusted; see
+ *  src-tauri/src/web_opens.rs for how the crate knows. */
+describe('what a page asking for a window says', () => {
+  test('carries whether the tab goes behind', () => {
+    expect(readOpening({ tab: 't', url: 'https://example.com/', behind: true })).toEqual({
+      tab: 't',
+      url: 'https://example.com/',
+      behind: true,
+    })
+  })
+
+  test('is in front when it does not say, as a crate from before this said nothing', () => {
+    expect(readOpening({ tab: 't', url: 'https://example.com/' })?.behind).toBe(false)
+    expect(readOpening({ tab: 't', url: 'https://example.com/', behind: 'yes' })?.behind).toBe(
+      false,
+    )
+  })
+
+  test('names nothing a tab may not hold', () => {
+    expect(readOpening({ tab: 't', url: 'file:///C:/Windows/', behind: true })).toBeNull()
+    expect(readOpening({ url: 'https://example.com/' })).toBeNull()
   })
 })

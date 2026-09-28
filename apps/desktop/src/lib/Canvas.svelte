@@ -25,7 +25,6 @@
 
   import { untrack } from 'svelte'
   import { fade } from 'svelte/transition'
-  import type { NoteJump } from '@nib/editor'
   import CanvasBar from './CanvasBar.svelte'
   import CanvasEdges from './CanvasEdges.svelte'
   import CanvasFind from './CanvasFind.svelte'
@@ -93,6 +92,7 @@
   import { dragged as draggedPaths, isTreeDrag } from './drag-paths'
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
+  import { followNote } from './open-link'
   import { dur } from './motion'
   import { rooms } from './rooms.svelte'
   import { canWriteIn, trustsHtmlIn } from './sharing.svelte'
@@ -1727,7 +1727,7 @@
         offset={STILL}
         ontext={(text: string) => store.edit(withText(store.canvas, node.id, text))}
         onleave={() => (store.editing = null)}
-        onfollow={(jump: NoteJump) => void workspace.followLink(jump)}
+        onfollow={followNote}
       />
     {/each}
 

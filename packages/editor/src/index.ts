@@ -91,6 +91,7 @@ export {
   type NoteIndex,
   noteIndexExtension,
   type NoteJump,
+  type NoteOpener,
   type NoteRef,
   resolveFile,
   resolveNote,

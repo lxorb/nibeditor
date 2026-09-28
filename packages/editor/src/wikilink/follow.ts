@@ -2,7 +2,7 @@ import type { EditorState } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { isTabFile, linkTarget, type Wikilink } from '@nib/markdown/links'
 import { label } from '../labels'
-import { MAC, modifier } from '../links'
+import { type LinkPress, MAC, modifier } from '../links'
 import { linkAt } from './at'
 import { jumpFor, noteIndex, type NoteJump, noteOpener } from './notes'
 
@@ -38,12 +38,13 @@ export function jumpAt(state: EditorState, pos: number): NoteJump | null {
   return link && jumpFor(state.facet(noteIndex), link, link.kind)
 }
 
-/** Opens the note a click landed on, if it landed on one. */
-function followNoteAt(view: EditorView, pos: number): boolean {
+/** Opens the note a click landed on, if it landed on one, saying how it was
+ *  pressed so the app can put it in a tab of its own. */
+function followNoteAt(view: EditorView, pos: number, press?: LinkPress): boolean {
   const jump = jumpAt(view.state, pos)
   if (!jump) return false
 
-  view.state.facet(noteOpener)(jump)
+  view.state.facet(noteOpener)(jump, press)
   return true
 }
 
@@ -54,9 +55,13 @@ function followNoteAt(view: EditorView, pos: number): boolean {
 export const followNoteAtCaret: Command = (view) =>
   followNoteAt(view, view.state.selection.main.head)
 
+/** The middle button follows a link to a note either way, as it does a link to the
+ *  web: it places no caret, so it is ambiguous nowhere. See `linkClicks`. */
 export const noteClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
-    if (event.button !== 0 || !(modifier(event) || view.state.readOnly)) return false
+    const asked =
+      event.button === 1 || (event.button === 0 && (modifier(event) || view.state.readOnly))
+    if (!asked) return false
 
     // An event's target is only an element some of the time, so it is asked
     // rather than assumed - the same reading links.ts does.
@@ -68,6 +73,6 @@ export const noteClicks = EditorView.domEventHandlers({
     if (pos === null) return false
 
     event.preventDefault()
-    return followNoteAt(view, pos)
+    return followNoteAt(view, pos, event)
   },
 })

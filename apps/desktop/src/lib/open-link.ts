@@ -11,7 +11,8 @@
  *  an issue tracker and somebody's account page all want the browser they are already
  *  signed in to; those still call `openExternal` where they stand. */
 
-import { type LinkPress, linkModifier } from '@nib/editor'
+import type { LinkPress, NoteJump } from '@nib/editor'
+import { type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -23,15 +24,6 @@ import { workspace } from './workspace.svelte'
  *  a note asking for a scheme nib hands nobody deserves. */
 export type LinkPlace = 'here' | 'behind' | 'system' | 'nowhere'
 
-/** A press, read down to the three facts the rules turn on. The platform's own
- *  modifier - Cmd on a Mac, Ctrl everywhere else - is read off the event here, so no
- *  rule below has to know which machine it is on. */
-export interface LinkAsk {
-  middle: boolean
-  modifier: boolean
-  shift: boolean
-}
-
 /** The buttons a link answers, in the DOM's numbering. Said once, because the surfaces
  *  that read a press off the page rather than out of the editor ask the same thing. */
 const MAIN = 0
@@ -40,10 +32,6 @@ export const MIDDLE = 1
 /** Whether a press is one a link answers at all: the right button is the menu's. */
 export function opensLink(press: LinkPress): boolean {
   return press.button === MAIN || press.button === MIDDLE
-}
-
-export function askOf(press: LinkPress): LinkAsk {
-  return { middle: press.button === MIDDLE, modifier: linkModifier(press), shift: press.shiftKey }
 }
 
 /** The page a link means, or null when it is not one a tab may hold: a `mailto:` and a
@@ -72,29 +60,25 @@ function holdsPages(): boolean {
  *
  *  * A scheme nib hands nobody goes nowhere, and anything that is not a page goes to
  *    the system whatever is held down. No modifier turns an email address into a page.
- *  * The middle button opens it behind, which is what it has meant since tabs existed
- *    and the one gesture on a link that means the same thing on every surface.
- *  * The modifier opens it behind and the modifier with Shift opens it in front,
- *    exactly as Ctrl+click and Ctrl+Shift+click do in Chrome, Firefox and Safari.
- *  * Shift alone is a browser's new window, and nib is one window; the nearest honest
- *    thing to a window that is not this one is the browser that is not this app. That
- *    makes it the deliberate way out, which a press that opens a page here needs.
+ *  * Otherwise it is the browser's rule every surface keeps, in new-tab.ts: the middle
+ *    button and the modifier open it behind, the modifier with Shift and Shift alone
+ *    in front. The way out to the system browser is the link's own right-click row;
+ *    see `linkEntries` in editor-menu.ts.
  *  * A plain press opens it in front. A browser would use the tab the link was in;
  *    nib will not, because that tab is a note somebody is reading and replacing it
  *    loses their place. A tab in front is as near as that gets - the page is what they
  *    are looking at, and the note is one tab away. */
-export function placeFor(href: string, ask: LinkAsk, pages = holdsPages()): LinkPlace {
+export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkPlace {
   if (!isOpenable(href)) return 'nowhere'
   if (webHref(href) === null || !pages) return 'system'
 
-  if (ask.middle) return 'behind'
-  if (ask.modifier) return ask.shift ? 'here' : 'behind'
-  return ask.shift ? 'system' : 'here'
+  return ask === 'behind' ? 'behind' : 'here'
 }
 
 /** A link the reader pressed, followed. What every surface hands its own event to. */
 export function followHref(href: string, press: LinkPress): void {
-  const place = placeFor(href, askOf(press))
+  const ask = tabAsk(press, true)
+  const place = placeFor(href, ask)
   if (place === 'nowhere') return
 
   if (place === 'system') {
@@ -103,7 +87,14 @@ export function followHref(href: string, press: LinkPress): void {
   }
 
   const page = webHref(href)
-  if (page !== null) workspace.openPage(page, place === 'behind')
+  if (page !== null) workspace.openPage(page, ask)
+}
+
+/** A link to a note the reader pressed, followed: the same rule as a link to a page,
+ *  in the same place, so the two kinds of link in one note never disagree. Nothing
+ *  pressed is a link followed from the keyboard. */
+export function followNote(jump: NoteJump, press?: LinkPress): void {
+  void workspace.followLink(jump, press ? tabAsk(press) : 'plain')
 }
 
 /** Nothing held down, for the places a link is opened by something that is not a click

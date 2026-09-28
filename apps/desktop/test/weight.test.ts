@@ -395,8 +395,16 @@ function holds(tail: string): boolean {
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in
  *  front of the metadata's fence. The history the address field offers and the
- *  omnibox were never here; see `history` in web-tab/pages.svelte.ts. */
-const BUDGET = 3_330_000
+ *  omnibox were never here; see `history` in web-tab/pages.svelte.ts.
+ *
+ *  Raised 2026-09-28, to 3,340,000, for Ctrl+click and the middle button opening a tab
+ *  of its own on every surface: new-tab.ts, the file list, the Links panel, the
+ *  bookmarks, the arrows and the workspace's opens taking where a tab goes. 8,788
+ *  bytes, on a main that was at 3,327,115 with the palette's own round in it; measured
+ *  3,335,903. The rule has to be in the first paint, because the file list and a link
+ *  in the note on screen answer the first click. The production build fetches 2,111
+ *  more bytes before the first paint (1,318,180 to 1,320,291). */
+const BUDGET = 3_340_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

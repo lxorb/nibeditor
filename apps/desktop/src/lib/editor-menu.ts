@@ -506,8 +506,8 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
  *
  *  Pressing a link opens the page here now, which is what nib holding pages means -
  *  so the deliberate "not here, over there" has to be somewhere a hand can find it,
- *  and this is where every browser keeps it. Shift+click is the same answer without
- *  the menu; see open-link.ts.
+ *  and this is where every browser keeps it. It is the only one: Shift+click is a tab
+ *  in front, as in the rest of the app; see new-tab.ts.
  *
  *  Only over a web address. A `mailto:` leaves for the system on a plain press
  *  already, and a row offering to open an email address "in the browser" would be a

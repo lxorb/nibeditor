@@ -682,6 +682,29 @@ be worse at every one of them. Inspect is how the developer tools are reached, w
 is why there is no More tools row. What is still missing against Chrome's menu is
 listed under "What is left".
 
+## A link in a tab of its own
+
+Chrome's convention, the same on every surface of the app that opens something (a
+link in a note, a row of the file list, a bookmark, a search hit, the Links panel, a
+node of the graph, the palette, the arrows over a note or a page): Ctrl+click (Cmd on
+a Mac) and the middle button open it in a tab beside the one it was pressed in and
+leave the reader where they are; with Shift as well the tab comes forward. Shift alone
+on a web link is Chrome's new window, and a nib window is a second workspace rather
+than one page, so it is a tab in front too; in the file list Shift picks a run of rows
+and Alt picks one row at a time, since Ctrl is the tab's. Ctrl+Enter in the palette is
+the keyboard's Ctrl+click. A tab asked for this way is never the preview. The rule is
+`lib/new-tab.ts`.
+
+Inside a page the engine opens every such link as a window it asks the app for, and
+`WebView2` does not say how it was pressed. `src-tauri/src/web_opens.rs` works it out
+at the moment the request is raised: a page script answers the middle button and opens
+the link under a window name that says so, Ctrl and Shift are read off the keyboard,
+and the page's own "open link" menu row is recognised by the link the menu was raised
+on. A plain `target="_blank"` opens in front. A page that asks for a window at a size of
+its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
+because that page reports back through `window.opener` and closes itself; on the
+other engines it is a tab, as before.
+
 ## Downloads
 
 A file a page hands over is saved the way Chrome saves it: into the Downloads folder,

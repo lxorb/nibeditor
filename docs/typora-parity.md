@@ -771,7 +771,8 @@ Features Typora does not have, which are the reason this exists.
       while another is written beside it, exactly as the Outline and the Links panel
       can; see section 17
 - [x] Recently deleted: notes and spaces wait 14 days before they are gone
-- [x] Selecting several notes with Ctrl and Shift, moved or deleted together
+- [x] Selecting several notes with Alt and Shift, moved or deleted together;
+      Ctrl+click opens a row in a tab of its own
 - [x] Running a JavaScript fence from the note (`Ctrl+Enter`, or the play button
       on the block), with console output, the value of the last expression and
       errors in a panel under it. The code runs in a sandboxed iframe with an
