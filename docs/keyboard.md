@@ -338,6 +338,33 @@ makes nothing until one is pressed. The keyboard lands on the first button and t
 arrows walk them. They are the dialog's cards, drawn in the pane; see `NewHere.svelte`
 and `KindCard.svelte`.
 
+**Lines and the selection**
+
+What VS Code, Sublime and Obsidian taught every hand that writes, in the editor. Each is
+in the registry and the palette like the rest; the ones with no key have none in VS Code
+either, or want a key nib already spends.
+
+| | |
+| --- | --- |
+| Shift+Alt+Right, Shift+Alt+Left | the selection a step outwards - the word, the words inside the marks, the marks, the block, the list, the section, the note - and back down the same steps. Ctrl+Shift+Cmd and the arrow on a Mac, where Alt, Shift and an arrow is a word at a time |
+| Ctrl+Enter | ticks the task; on words, a bullet, a number or an empty line it makes the task first, so the next press ticks it (Obsidian). A JavaScript fence runs instead, and in code, a heading, a quote or a table the press is the library's line below (already there) |
+| Ctrl+Shift+Enter | a new line above, indented like this one |
+| Ctrl+J | the next line joined onto this one, its indent and marker gone, or every selected line onto the first |
+| Alt+Enter, in the find bar | a cursor on every match, and the bar goes |
+| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case |
+
+Delete the line has no key because both of the ones people know are taken: VS Code's
+Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Select word. A
+preset gives it one. Sort reads past list markers and boxes, ignores case and counts
+`2` before `10`; with nothing selected it sorts the list or paragraph the caret is in.
+None of these reaches into front matter that is hidden: they stop at the first line
+that shows. See `lines.ts`, `case.ts` and `grow.ts` in `packages/editor/src`.
+
+**An address pasted over words links them.** Selected words and a URL on the clipboard
+make `[words](url)`, which is what Obsidian, Notion and GitHub do with that paste. In
+code, in a link, in a formula or in markup the paste goes in as it stands, and
+Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts`.
+
 **A web tab**
 
 Four keys that only mean anything while the pane is showing a website, and they are
@@ -545,6 +572,9 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |
 | `apps/desktop/src/lib/Pages.svelte` | the paper's own keys and the four other ways it is zoomed |
 | `packages/editor/src/fold.ts` | the five folding commands, and what a level is |
+| `packages/editor/src/lines.ts` | delete, join, sort and reverse lines, and a line above |
+| `packages/editor/src/grow.ts` | the selection a step outwards, and back |
+| `packages/editor/src/case.ts` | upper, lower and title case |
 | `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |
 | `apps/desktop/test/e2e/fold-levels.py` | Fold more and Fold less, driven from the palette |
