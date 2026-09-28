@@ -7,7 +7,7 @@
  *  | group | rows |
  *  | --- | --- |
  *  | the page | Reload and Copy link, on a web tab only |
- *  | the tab | Rename, Duplicate, Pin |
+ *  | the tab | Rename, Duplicate, Pin, Show in the file list |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane |
  *
@@ -20,6 +20,7 @@ import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
+import { withinSpace } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
@@ -132,6 +133,23 @@ function tabEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
+/** The file in the list, the rows above it unfolded and its own scrolled to. Only
+ *  for a file that has a row there: the graph, a note from outside the space and one
+ *  nobody has saved have none. */
+function revealEntry(tab: Tab): MenuEntry[] {
+  const root = workspace.activeSpace?.root
+  const path = tab.path
+  if (path === null || root === undefined || withinSpace(root, path) === null) return []
+
+  return [
+    {
+      label: t('Show in the file list'),
+      hint: shortcuts.hint('app.reveal'),
+      run: () => workspace.revealNote(path),
+    },
+  ]
+}
+
 /** Left out while nothing has been closed, rather than offered as a row that does
  *  nothing. */
 function reopenEntry(): MenuEntry[] {
@@ -200,6 +218,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...readingEntry(tab),
     ...pageEntries(tab),
     ...tabEntries(tab),
+    ...revealEntry(tab),
     DIVIDER,
     ...closeEntries(tab),
     DIVIDER,
