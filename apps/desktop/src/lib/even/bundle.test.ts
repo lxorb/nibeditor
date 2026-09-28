@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, join, resolve } from 'node:path'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { undrawable } from '@nib/glasses'
 import manifest from '../../../even.app.json'
@@ -240,6 +241,34 @@ describe('the bundle a package is made of', () => {
     }
   })
 
+  /** The emoji table without what the glasses never ask of it; see `SLIM_EMOJI` in
+   *  vite.even.config.ts. The names and their characters are all here, and the
+   *  keywords, categories and skin tones are not. */
+  test('carries every emoji by name, and nothing else of the table', () => {
+    const code = files.filter((one) => one.name.endsWith('.js'))
+
+    expect(code.some((one) => one.text.includes('slightly_smiling_face'))).toBe(true)
+    expect(code.some((one) => one.text.includes('fitzpatrick_scale'))).toBe(false)
+  })
+
+  /** Which is only the same answer if the slim map is the same names for the same
+   *  characters, in the same order, as the table `node-emoji` would have read - the
+   *  order being what picks a name for a character two names share. Asked of the
+   *  copy `node-emoji` itself resolves, so an update to either is caught here. */
+  test('and that slim map is the full one, row for row', () => {
+    const glasses = createRequire(resolve(app, '../../packages/glasses/package.json'))
+    const table = createRequire(glasses.resolve('node-emoji'))
+    const folder = dirname(table.resolve('emojilib'))
+    const read = (name: string) => JSON.parse(readFileSync(join(folder, name), 'utf8')) as unknown
+
+    const full = read('emojis.json') as Record<string, { char: string }>
+    const slim = read('simplemap.json') as Record<string, string>
+
+    expect(Object.entries(slim)).toEqual(
+      Object.entries(full).map(([name, row]) => [name, row.char]),
+    )
+  })
+
   test('is small enough for the platform to be comfortable with', () => {
     const bytes = walk(staged).reduce((sum, one) => sum + statSync(one).size, 0)
     // 7.82 MiB as this is written: 8,200,559 bytes, measured on 2026-09-14. The
@@ -266,15 +295,18 @@ describe('the bundle a package is made of', () => {
     // Speed is the selling point, and on a phone the download is part of it.
     //
     // What is left that is not the app, and what to weigh if this has to come down
-    // again: node-emoji's table, 1.1 MB, which `insteadOf` in
-    // packages/glasses/src/firmware.ts uses to write an emoji the firmware cannot
-    // draw as its own `:name:` rather than as a box; and the 23 catalogues that are
-    // shipped, about 1.3 MB between them.
+    // again: the 23 catalogues that are shipped, about 1.3 MB between them. The
+    // emoji table `insteadOf` in packages/glasses/src/firmware.ts reads, to write an
+    // emoji the firmware cannot draw as its own `:name:` rather than as a box, is
+    // already down to its names; see below.
     //
     // The number is the same on every run: `emptyOutDir` in vite.even.config.ts wipes
     // the package directory before the build, so nothing a previous run left can be
     // counted twice. That is said here because the sum looks like it would - it walks
     // a directory two steps write into, the build and then even-stage.mjs.
+    //
+    // 8,167,705 bytes on 2026-09-28, down from 8,382,180 the same morning: the emoji
+    // table ships as its names and characters alone; see `SLIM_EMOJI`.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 
