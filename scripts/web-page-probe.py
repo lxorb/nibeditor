@@ -7,6 +7,10 @@ docs/web-tabs.md.
 
 * **find** - Ctrl+F on the pane opens the find bar, a word typed into it comes back as
   the engine's tally (`1 of 3`), Enter and Shift+Enter walk it, and Escape closes it.
+* **page first** - Ctrl+F pressed inside a page is the page's first, as in Chrome: a
+  page with no find of its own gets nib's bar, and one that answers Ctrl+F itself keeps
+  it and no bar opens. The key is pressed in the page through the engine's own devtools
+  protocol, which is a trusted key in that page and nothing on the screen.
 * **sound** - a page playing a tone puts the speaker on its tab; Mute site in the tab's
   own menu strikes it through, keeps the site muted, and the engine says it is.
 * **zoom** - Zoom in, in the dots, is kept for the site: another site in the same tab
@@ -15,12 +19,13 @@ docs/web-tabs.md.
 * **source** - `view-source:` and a page's address opens as a tab and loads.
 
 A tone that plays by itself needs the engine's autoplay rule relaxed, which a page on
-the web never gets without a press; the probe asks for it in the process it starts, and
-nothing the app ships changes.
+the web never gets without a press, and a key pressed inside a page needs the engine's
+devtools port; the probe asks for both in the process it starts, and nothing the app
+ships changes.
 
 What it does not drive, and why: a page's own full screen and the developer tools each
-put a window of their own on the screen, which a probe may not do, and the keys pressed
-inside a page need a real keyboard in the foreground. Those are the crate's unit tests.
+put a window of their own on the screen, which a probe may not do. Those are the crate's
+unit tests.
 
     python scripts/web-page-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
       --identifier ch.emilvinu.nib.probe.<name>
@@ -37,6 +42,7 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import base64
 import http.server
 import io
 import json
@@ -99,6 +105,18 @@ PAGES = {
     "/sound": b"""<!doctype html><title>Sound page</title>
 <body style="font:16px system-ui;padding:2rem"><p>A tone.</p>
 <audio src="/tone.wav" autoplay loop></audio></body>""",
+    # A site with a find of its own, the way Google Docs and Notion have one.
+    "/own": b"""<!doctype html><title>Own find</title>
+<body style="font:16px system-ui;padding:2rem"><p>A needle of its own.</p>
+<script>
+window.ownFind = 0
+addEventListener('keydown', function (event) {
+  if (event.ctrlKey && event.key === 'f') {
+    event.preventDefault()
+    window.ownFind++
+  }
+})
+</script></body>""",
 }
 
 
@@ -141,7 +159,7 @@ def space(port: int) -> pathlib.Path:
     made = root / SPACE
     made.mkdir(parents=True)
     (made / "Idea.md").write_text("# Idea\n\nA note to open the space on.\n", encoding="utf-8")
-    for name in ("find", "sound"):
+    for name in ("find", "sound", "own"):
         (made / f"{name.title()}.url").write_text(
             shortcut(f"http://127.0.0.1:{port}/{name}", name.title()), encoding="utf-8"
         )
@@ -213,14 +231,134 @@ class App:
         return value
 
 
-#: The engine's own switch for a sound that starts without a press, for the probe's
-#: process only: the tone below has nobody to press play.
-AUTOPLAY = "--autoplay-policy=no-user-gesture-required"
+#: The engine's own switches for the probe's process only: a sound that starts without a
+#: press, since the tone below has nobody to press play, and a devtools port on every
+#: browser process, which is how a key is pressed inside a page without a keyboard. Each
+#: process picks its own port and writes it beside its data.
+ENGINE_ARGS = "--autoplay-policy=no-user-gesture-required --remote-debugging-port=0"
+
+
+def debug_ports(identifier: str) -> list[int]:
+    """The devtools port of every engine process the app started."""
+
+    ports: list[int] = []
+    for base in (os.environ["APPDATA"], os.environ["LOCALAPPDATA"]):
+        for found in (pathlib.Path(base) / identifier).rglob("DevToolsActivePort"):
+            try:
+                ports.append(int(found.read_text(encoding="utf-8").split()[0]))
+            except (OSError, ValueError, IndexError):
+                continue
+    return ports
+
+
+def page_socket(identifier: str, path: str) -> str | None:
+    """The devtools socket of the page whose address ends in `path`."""
+
+    for port in debug_ports(identifier):
+        try:
+            with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/list", timeout=5) as said:
+                targets = json.loads(said.read())
+        except (OSError, ValueError):
+            continue
+        for one in targets:
+            if one.get("type") == "page" and str(one.get("url", "")).endswith(path):
+                return str(one["webSocketDebuggerUrl"])
+    return None
+
+
+class Devtools:
+    """The least of a WebSocket that speaks the devtools protocol to one page."""
+
+    def __init__(self, url: str) -> None:
+        rest = url.removeprefix("ws://")
+        host, _, path = rest.partition("/")
+        name, _, port = host.partition(":")
+        self.sock = socket.create_connection((name, int(port)), timeout=10)
+        key = base64.b64encode(os.urandom(16)).decode()
+        self.sock.sendall(
+            (
+                f"GET /{path} HTTP/1.1\r\nHost: {host}\r\nUpgrade: websocket\r\n"
+                f"Connection: Upgrade\r\nSec-WebSocket-Key: {key}\r\nSec-WebSocket-Version: 13\r\n\r\n"
+            ).encode()
+        )
+        head = b""
+        while b"\r\n\r\n" not in head:
+            head += self.sock.recv(1)
+        if b" 101 " not in head.split(b"\r\n")[0]:
+            raise OSError(f"devtools refused the socket: {head[:80]!r}")
+        self.next = 0
+
+    def _exactly(self, count: int) -> bytes:
+        out = b""
+        while len(out) < count:
+            got = self.sock.recv(count - len(out))
+            if not got:
+                raise OSError("devtools closed the socket")
+            out += got
+        return out
+
+    def call(self, method: str, params: dict[str, object]) -> dict[str, object]:
+        self.next += 1
+        body = json.dumps({"id": self.next, "method": method, "params": params}).encode()
+        mask = os.urandom(4)
+        if len(body) < 126:
+            head = bytes([0x81, 0x80 | len(body)])
+        else:
+            head = bytes([0x81, 0x80 | 126]) + struct.pack(">H", len(body))
+        self.sock.sendall(head + mask + bytes(b ^ mask[i % 4] for i, b in enumerate(body)))
+        while True:
+            first, second = self._exactly(2)
+            size = second & 0x7F
+            if size == 126:
+                size = struct.unpack(">H", self._exactly(2))[0]
+            elif size == 127:
+                size = struct.unpack(">Q", self._exactly(8))[0]
+            payload = self._exactly(size)
+            if first & 0x0F != 1:
+                continue
+            said = json.loads(payload)
+            if said.get("id") == self.next:
+                return said
+
+    def ctrl_f(self) -> None:
+        """Ctrl+F, pressed in the page: a trusted key, the page's handlers first."""
+
+        key = {"modifiers": 2, "key": "f", "code": "KeyF", "windowsVirtualKeyCode": 70}
+        self.call("Input.dispatchKeyEvent", {"type": "rawKeyDown", **key})
+        self.call("Input.dispatchKeyEvent", {"type": "keyUp", **key})
+
+    def value(self, expression: str) -> object:
+        said = self.call("Runtime.evaluate", {"expression": expression, "returnByValue": True})
+        result = said.get("result", {})
+        return result.get("result", {}).get("value") if isinstance(result, dict) else None
+
+    def close(self) -> None:
+        self.sock.close()
+
+
+def press_in_page(identifier: str, path: str) -> dict[str, object]:
+    """Ctrl+F in the page at `path`, and how many times the page's own find answered."""
+
+    url = None
+    until = time.perf_counter() + 20
+    while url is None and time.perf_counter() < until:
+        url = page_socket(identifier, path)
+        if url is None:
+            time.sleep(0.5)
+    if url is None:
+        return {"page": False, "ports": debug_ports(identifier)}
+    tools = Devtools(url)
+    try:
+        tools.ctrl_f()
+        time.sleep(1)
+        return {"page": True, "own": tools.value("window.ownFind ?? null")}
+    finally:
+        tools.close()
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
     refuse_updating(exe)
-    env = {**os.environ, "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": AUTOPLAY}
+    env = {**os.environ, "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
     running = subprocess.Popen(
         [str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env
     )
@@ -327,6 +465,21 @@ def main() -> int:
 """,
         )
 
+        # Ctrl+F inside a page with no find of its own: nib's bar, with the keyboard.
+        shut = step(app, "return !document.querySelector('.findbar')")
+        pressed = press_in_page(args.identifier, "/find")
+        opened = step(
+            app,
+            """
+  const field = await wait(() => document.querySelector('.findbar input'), 5000)
+  const focused = document.activeElement === field
+  if (field) key(field, { key: 'Escape' })
+  await wait(() => !document.querySelector('.findbar'), 3000)
+  return { bar: !!field, focused }
+""",
+        )
+        said["page first"] = {"shut before": shut, "plain": {**pressed, **opened}}
+
         said["zoom"] = step(
             app,
             f"""
@@ -387,6 +540,27 @@ def main() -> int:
 """,
         )
 
+        # And inside one that answers Ctrl+F itself: the page's find, and no bar.
+        own = step(
+            app,
+            f"""
+  ws.openWeb({json.dumps(str(made / 'Own.url'))})
+  return !!(await wait(() => bar()?.value.includes('Own find')))
+""",
+        )
+        time.sleep(1)
+        pressed = press_in_page(args.identifier, "/own")
+        kept = step(
+            app,
+            """
+  const opened = await wait(() => document.querySelector('.findbar'), 3000)
+  return { bar: !!opened }
+""",
+        )
+        first = said["page first"]
+        if isinstance(first, dict):
+            first["own"] = {"loaded": own, **pressed, **kept}
+
         said["source"] = step(
             app,
             f"""
@@ -410,6 +584,13 @@ def main() -> int:
         wrong.append(f"find: a word typed in the bar should read 1 of 3, not {find}")
     elif find.get("second") != "2/3" or find.get("back") != "1/3" or not find.get("closed"):
         wrong.append(f"find: Enter, Shift+Enter and Escape did not walk and close: {find}")
+    first = said.get("page first", {})
+    plain = first.get("plain", {}) if isinstance(first, dict) else {}
+    own = first.get("own", {}) if isinstance(first, dict) else {}
+    if not isinstance(plain, dict) or not plain.get("bar"):
+        wrong.append(f"page first: Ctrl+F in a page with no find of its own opened no bar: {first}")
+    elif not isinstance(own, dict) or own.get("own") != 1 or own.get("bar"):
+        wrong.append(f"page first: a page with its own find did not keep Ctrl+F: {first}")
     zoom = said.get("zoom", {})
     if not isinstance(zoom, dict) or zoom.get("zoomed") != "110%" or site not in str(zoom.get("kept")):
         wrong.append(f"zoom: Zoom in was not kept for the site: {zoom}")
