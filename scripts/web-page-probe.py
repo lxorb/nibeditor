@@ -466,7 +466,7 @@ def main() -> int:
         )
 
         # Ctrl+F inside a page with no find of its own: nib's bar, with the keyboard.
-        shut = step(app, "return !document.querySelector('.findbar')")
+        shut = step(app, "return { shut: !document.querySelector('.findbar') }")
         pressed = press_in_page(args.identifier, "/find")
         opened = step(
             app,
@@ -545,7 +545,7 @@ def main() -> int:
             app,
             f"""
   ws.openWeb({json.dumps(str(made / 'Own.url'))})
-  return !!(await wait(() => bar()?.value.includes('Own find')))
+  return {{ loaded: !!(await wait(() => bar()?.value.includes('Own find'))) }}
 """,
         )
         time.sleep(1)
@@ -559,7 +559,7 @@ def main() -> int:
         )
         first = said["page first"]
         if isinstance(first, dict):
-            first["own"] = {"loaded": own, **pressed, **kept}
+            first["own"] = {**own, **pressed, **kept}
 
         said["source"] = step(
             app,
