@@ -89,6 +89,11 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 # app installs its own updates, and files are chosen and saved in a dialog. A
 # phone has none of the three.
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+# The engine's developer tools, for a web tab's page in the build that ships: F12,
+# Ctrl+Shift+I and the page menu's Inspect, as in a browser. A desktop's only, so a
+# phone's webview is never debuggable from outside, and nib's own window turns them
+# off again outside a development build; see `ready` in src/lib.rs.
+tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 # The `deep-link` feature is what makes a second launch hand over a `nib://` link

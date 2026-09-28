@@ -1291,6 +1291,11 @@ export const tr: Dictionary = {
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',
   'Convert website notes': 'Web sitesi notlarını dönüştür',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Kaydet',
   Recording: 'Kayıt',

@@ -1274,6 +1274,11 @@ export const am: Dictionary = {
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',
   'Convert website notes': 'የድረ ገጽ ማስታወሻዎችን ቀይር',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ቅረጽ',
   Recording: 'ቀረጻ',

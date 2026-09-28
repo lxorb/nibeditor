@@ -3,10 +3,9 @@
  *  Emil, 2026-09-27: *"if I press Ctrl+T right now while I'm in a browser window,
  *  nothing happens."* The page is a webview of its own, so the key went to the site.
  *  The crate now takes the chords every browser keeps for itself - a new tab, closing
- *  one, going round them, moving one along, reopening the last, a new window, the three
- *  ways to the address field - before
- *  the page sees them, hands the keyboard back to the app, and says which key it was;
- *  see web_keys.rs. It also says when a modifier is let go of inside the page, because
+ *  one, going round them, moving one along, reopening the last, a new window, F6 to the
+ *  address field - before the page sees them, hands the keyboard back to the app, and
+ *  says which key it was; see web_keys.rs. It also says when a modifier is let go of inside the page, because
  *  Ctrl+T held chooses on that release.
  *
  *  What arrives is played on the window as the key it was, so every chord answers the

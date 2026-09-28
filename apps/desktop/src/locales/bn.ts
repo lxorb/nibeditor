@@ -1289,6 +1289,11 @@ export const bn: Dictionary = {
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',
   'Convert website notes': 'ওয়েবসাইট নোট রূপান্তর করুন',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'রেকর্ড করুন',
   Recording: 'রেকর্ডিং',

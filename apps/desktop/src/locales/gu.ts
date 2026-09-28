@@ -1284,6 +1284,11 @@ export const gu: Dictionary = {
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',
   'Convert website notes': 'વેબસાઇટ નોંધો રૂપાંતરિત કરો',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'રેકૉર્ડ કરો',
   Recording: 'રેકૉર્ડિંગ',

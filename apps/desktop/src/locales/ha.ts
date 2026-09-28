@@ -1311,6 +1311,11 @@ export const ha: Dictionary = {
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',
   'Convert website notes': 'Juya bayanan yanar gizo',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Yi rikodi',
   Recording: 'Rikodi',

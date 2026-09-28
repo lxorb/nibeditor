@@ -1311,6 +1311,11 @@ export const fil: Dictionary = {
   Website: 'Website',
   'Open a website': 'Buksan ang website',
   'Convert website notes': 'I-convert ang mga talang website',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Mag-record',
   Recording: 'Recording',

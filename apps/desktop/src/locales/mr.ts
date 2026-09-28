@@ -1289,6 +1289,11 @@ export const mr: Dictionary = {
   Website: 'संस्थळ',
   'Open a website': 'संस्थळ उघडा',
   'Convert website notes': 'संस्थळ नोंदी रूपांतरित करा',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ध्वनिमुद्रण करा',
   Recording: 'ध्वनिमुद्रण',

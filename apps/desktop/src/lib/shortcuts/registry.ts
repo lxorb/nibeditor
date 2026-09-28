@@ -368,6 +368,35 @@ const APP_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   {
+    // Read by the tab, so a note keeps Ctrl+Shift+I for a picture. In a page the
+    // engine answers both keys itself.
+    id: 'web.devtools',
+    label: () => t('Developer tools'),
+    category: 'view',
+    scope: 'panel',
+    key: 'F12',
+    contextual: true,
+  },
+  {
+    id: 'web.devtools.alt',
+    label: () => t('Developer tools'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-Shift-i',
+    mac: 'Mod-Alt-i',
+    contextual: true,
+    alias: true,
+  },
+  {
+    // Chrome's Mute site has no key; a reader may give it one.
+    id: 'web.mute',
+    label: () => t('Mute site'),
+    category: 'view',
+    scope: 'panel',
+    key: null,
+    contextual: true,
+  },
+  {
     id: 'app.forward',
     label: () => t('Forward'),
     category: 'view',

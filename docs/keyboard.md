@@ -386,8 +386,10 @@ they show in Settings, show in the palette and can be rebound.
 | Alt+Enter in the address field | the address in a tab of its own |
 | Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
-| Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
-| F12 | the engine's developer tools |
+| Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
+| F12, Ctrl+Shift+I | the engine's developer tools for the page (Cmd+Alt+I on a Mac): `web.devtools` |
+| Escape, F11 | give the screen back from a video in full screen |
+| none | Mute site, which Chrome gives no key either: `web.mute`, for a reader to bind |
 
 Ctrl+L is also the chord CodeMirror selects a line with, and both keep it, because
 the bar reads the press where the bar is rather than off the window: an app-level
@@ -400,8 +402,12 @@ inside the page is Chrome's way back to the address field.
 **The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
-Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, and the three
-ways to the address field - Ctrl+L, Alt+D and F6 - are never offered to the page. The engine tells the host
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, and F6 to the
+address field are never offered to the page. The find keys - Ctrl+F, Ctrl+G,
+Ctrl+Shift+G, F3 and Shift+F3 - and the address field's other two, Ctrl+L and Alt+D, are
+the page's first, as they are in Chrome, so a site with its own find (Google Docs,
+Notion, VS Code on the web) or its own Ctrl+L keeps them; a line of script in the page
+asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`). The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held

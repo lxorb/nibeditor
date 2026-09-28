@@ -99,11 +99,15 @@ mod uris;
 #[cfg(all(windows, not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
+mod web_find;
+#[cfg(desktop)]
 mod web_icons;
 #[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
+#[cfg(desktop)]
+mod web_page;
 #[cfg(desktop)]
 mod web_reload;
 #[cfg(desktop)]
@@ -178,6 +182,58 @@ macro_rules! commands {
             uris::take_startup_uris,
             trace::trace_startup,
             $($desktop)*
+        ]
+    };
+}
+
+/// The desktop's own commands, with the ones both builds share: a list of its own
+/// rather than a block inside `run_on`, which is about the order a launch happens in.
+#[cfg(desktop)]
+macro_rules! desktop_commands {
+    () => {
+        commands![
+            endpoint::automation_result,
+            appearance::set_frame,
+            appearance::set_translucency,
+            ground::remember_ground,
+            apple_notes::read_apple_notes,
+            apple_notes::open_full_disk_access,
+            launch::take_startup_files,
+            launch::new_window,
+            pandoc::has_pandoc,
+            pandoc::run_pandoc,
+            pandoc::import_document,
+            pdf::pdf_supported,
+            pdf::print_pdf,
+            recent::remember_recent,
+            secrets::secret_forget,
+            secrets::secret_read,
+            secrets::secret_write,
+            shell_menu::new_menu_registered,
+            shell_menu::set_new_menu,
+            updates::check_update,
+            web_tabs::web_open,
+            web_tabs::web_place,
+            web_tabs::web_navigate,
+            web_tabs::web_step,
+            web_tabs::web_trail,
+            web_tabs::web_clip,
+            web_tabs::web_close,
+            web_tabs::web_look,
+            web_tabs::web_scroll,
+            web_tabs::web_zoom,
+            web_tabs::web_print,
+            web_tabs::web_devtools,
+            web_page::web_mute,
+            web_page::web_unfill,
+            web_find::web_find,
+            web_find::web_find_stop,
+            web_tabs::web_shot,
+            web_tabs::web_answer,
+            downloads::web_downloads,
+            downloads::web_download_open,
+            downloads::web_download_show,
+            downloads::web_download_cancel,
         ]
     };
 }
@@ -299,45 +355,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = placement::managed(web_tabs::managed(builder));
 
     #[cfg(desktop)]
-    let builder = builder.invoke_handler(commands![
-        endpoint::automation_result,
-        appearance::set_frame,
-        appearance::set_translucency,
-        ground::remember_ground,
-        apple_notes::read_apple_notes,
-        apple_notes::open_full_disk_access,
-        launch::take_startup_files,
-        launch::new_window,
-        pandoc::has_pandoc,
-        pandoc::run_pandoc,
-        pandoc::import_document,
-        pdf::pdf_supported,
-        pdf::print_pdf,
-        recent::remember_recent,
-        secrets::secret_forget,
-        secrets::secret_read,
-        secrets::secret_write,
-        shell_menu::new_menu_registered,
-        shell_menu::set_new_menu,
-        updates::check_update,
-        web_tabs::web_open,
-        web_tabs::web_place,
-        web_tabs::web_navigate,
-        web_tabs::web_step,
-        web_tabs::web_trail,
-        web_tabs::web_clip,
-        web_tabs::web_close,
-        web_tabs::web_look,
-        web_tabs::web_scroll,
-        web_tabs::web_zoom,
-        web_tabs::web_print,
-        web_tabs::web_shot,
-        web_tabs::web_answer,
-        downloads::web_downloads,
-        downloads::web_download_open,
-        downloads::web_download_show,
-        downloads::web_download_cancel,
-    ]);
+    let builder = builder.invoke_handler(desktop_commands!());
 
     #[cfg(mobile)]
     let builder = builder.invoke_handler(commands![]);
@@ -464,7 +482,10 @@ fn ready(
     if let Some(config) = ui {
         let config = placement::restored(handle, config);
         trace::mark("window placement");
-        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?;
+        // Developer tools are for the pages in web tabs, which the build that ships has for
+        // them; nib's own window keeps them to a development build, as it always did.
+        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?
+            .devtools(cfg!(debug_assertions));
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);

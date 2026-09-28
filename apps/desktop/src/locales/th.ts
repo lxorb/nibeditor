@@ -1263,6 +1263,11 @@ export const th: Dictionary = {
   Website: 'เว็บไซต์',
   'Open a website': 'เปิดเว็บไซต์',
   'Convert website notes': 'แปลงโน้ตเว็บไซต์',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'บันทึกเสียง',
   Recording: 'การบันทึก',

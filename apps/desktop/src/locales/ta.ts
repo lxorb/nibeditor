@@ -1309,6 +1309,11 @@ export const ta: Dictionary = {
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',
   'Convert website notes': 'இணையதளக் குறிப்புகளை மாற்று',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'பதிவு செய்',
   Recording: 'பதிவு',

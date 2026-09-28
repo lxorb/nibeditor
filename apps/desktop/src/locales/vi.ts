@@ -1275,6 +1275,11 @@ export const vi: Dictionary = {
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',
   'Convert website notes': 'Chuyển đổi ghi chú trang web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Ghi âm',
   Recording: 'Bản ghi',

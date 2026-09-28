@@ -1376,6 +1376,11 @@ export const ar: Dictionary = {
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',
   'Convert website notes': 'تحويل ملاحظات المواقع',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'تسجيل',
   Recording: 'تسجيل',

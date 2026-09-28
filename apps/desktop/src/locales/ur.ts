@@ -1290,6 +1290,11 @@ export const ur: Dictionary = {
   Website: 'ویب سائٹ',
   'Open a website': 'ویب سائٹ کھولیں',
   'Convert website notes': 'ویب سائٹ نوٹ تبدیل کریں',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ریکارڈ کریں',
   Recording: 'ریکارڈنگ',

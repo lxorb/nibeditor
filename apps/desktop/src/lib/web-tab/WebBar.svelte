@@ -42,6 +42,7 @@
   import { barKey, stops } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
+  import { addressing } from './passed.svelte'
   import { clipSource } from './note'
   import type { Page } from './pages.svelte'
 
@@ -180,6 +181,15 @@
   function take() {
     field?.take()
   }
+
+  // Ctrl+L or Alt+D pressed inside this bar's page, which the page let go by: the
+  // address field takes the keyboard, as Chrome's does. See passed.svelte.ts.
+  // Only an ask made while this bar is up: one from before it was built was answered.
+  const answered = untrack(() => addressing.asked)
+  $effect(() => {
+    const asked = addressing.asked
+    if (asked && asked !== answered && asked.page === page) untrack(take)
+  })
 </script>
 
 <div class="webbar">

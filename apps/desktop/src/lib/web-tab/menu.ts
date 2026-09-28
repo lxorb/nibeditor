@@ -10,6 +10,7 @@
  *  | New tab | a web tab with nowhere to go yet, which is what the address field is for |
  *  | Bookmarks | the space's own web notes, which is what a bookmark is here |
  *  | Zoom | the engine's own zoom, on Chrome's own ladder of steps |
+ *  | Find | nib's find bar, over the engine's own find |
  *  | Save page | the clipper: the page, written into the space as a note |
  *  | Share | nib's share sheet |
  *  | Settings | the app's settings |
@@ -28,6 +29,7 @@
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
+import { shortcuts } from '../shortcuts.svelte'
 import { openExternal } from '../tauri'
 import type { Page } from './pages.svelte'
 
@@ -80,6 +82,8 @@ export interface WebActions {
   zoom: (factor: number) => void
   fullScreen: () => void
   print: () => void
+  /** The find bar, under the bar, where the page can be searched: not a frame's. */
+  find?: (() => void) | undefined
   /** The clipper: the page, written into the space as a note. */
   save: () => void
   share: () => void
@@ -122,6 +126,9 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     { label: t('Full screen'), run: actions.fullScreen },
     DIVIDER,
     { label: t('Print…'), disabled: !has, run: actions.print },
+    ...(actions.find
+      ? [{ label: t('Find'), hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
+      : []),
     DIVIDER,
     { label: t('Save page'), disabled: !has, run: actions.save },
     { label: t('Share…'), disabled: !has, run: actions.share },
