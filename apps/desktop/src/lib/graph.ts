@@ -302,10 +302,20 @@ export function without(graph: NoteGraph, excluded: readonly string[]): NoteGrap
     if (node.path === null && !asked.has(at)) dropped.add(at)
   }
 
+  return sliced(
+    graph,
+    [...graph.nodes.keys()].filter((at) => !dropped.has(at)),
+  )
+}
+
+/** The nodes at these indices, in this order, as a graph of their own: the links
+ *  between two of them kept, and every degree counted again over what is left. */
+function sliced(graph: NoteGraph, kept: Iterable<number>): NoteGraph {
   const place = new Map<number, number>()
   const nodes: GraphNode[] = []
-  for (const [at, node] of graph.nodes.entries()) {
-    if (dropped.has(at)) continue
+  for (const at of kept) {
+    const node = graph.nodes[at]
+    if (!node) continue
 
     place.set(at, nodes.length)
     nodes.push({ ...node, degree: 0 })
@@ -388,23 +398,5 @@ export function neighbourhood(graph: NoteGraph, centre: string, depth: number): 
     ring = next
   }
 
-  const kept = [...reached]
-  const place = new Map(kept.map((index, order) => [index, order]))
-  const nodes = kept
-    .map((index) => graph.nodes[index])
-    .filter((node): node is GraphNode => node !== undefined)
-    .map((node) => ({ ...node, degree: 0 }))
-
-  const edges: GraphEdge[] = []
-  for (const edge of graph.edges) {
-    const a = place.get(edge.a)
-    const b = place.get(edge.b)
-    if (a === undefined || b === undefined) continue
-
-    edges.push({ a, b, both: edge.both })
-    count(nodes, a)
-    count(nodes, b)
-  }
-
-  return { nodes, edges }
+  return sliced(graph, reached)
 }
