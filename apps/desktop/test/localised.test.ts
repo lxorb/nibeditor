@@ -149,8 +149,8 @@ describe('the walk', () => {
       expect(skipped(name), name).toBe(true)
     }
 
-    // Asked of the path inside the app, not the whole of it: a checkout that sits in
-    // a folder called `dist-something` of its own is not build output.
+    // Asked of the path below ROOT, not the whole of it: a checkout that sits in a
+    // folder called `dist-something` of its own is not build output.
     expect(files.some((path) => /(?:^|\/)dist/.test(relative(path)))).toBe(false)
   })
 
@@ -160,7 +160,9 @@ describe('the walk', () => {
     }
 
     expect(files.some((path) => path.endsWith('.svelte'))).toBe(true)
-    expect(files.some((path) => /[\\/]src[\\/]lib[\\/]/.test(path))).toBe(true)
+    // Below ROOT for the same reason: a checkout that sits under a `src/lib` of its
+    // own would find one in every path, whatever the walk had left out.
+    expect(files.some((path) => /(?:^|\/)src\/lib\//.test(relative(path)))).toBe(true)
   })
 })
 
