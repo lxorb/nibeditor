@@ -1354,6 +1354,11 @@ export const pl: Dictionary = {
   Website: 'Witryna',
   'Open a website': 'Otwórz witrynę',
   'Convert website notes': 'Przekształć notatki witryn',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Nagraj',
   Recording: 'Nagranie',

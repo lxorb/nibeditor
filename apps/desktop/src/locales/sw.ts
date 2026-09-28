@@ -1306,6 +1306,11 @@ export const sw: Dictionary = {
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',
   'Convert website notes': 'Badilisha madokezo ya tovuti',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Rekodi',
   Recording: 'Rekodi',

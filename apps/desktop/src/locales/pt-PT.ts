@@ -1323,6 +1323,11 @@ export const ptPT: Dictionary = {
   Website: 'Sítio web',
   'Open a website': 'Abrir um sítio web',
   'Convert website notes': 'Converter notas de sítios',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',

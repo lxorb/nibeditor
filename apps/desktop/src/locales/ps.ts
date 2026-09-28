@@ -1292,6 +1292,11 @@ export const ps: Dictionary = {
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',
   'Convert website notes': 'د ټاټوبي يادښتونه اړول',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ثبتول',
   Recording: 'ثبت',

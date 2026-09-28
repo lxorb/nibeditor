@@ -1304,6 +1304,11 @@ export const ml: Dictionary = {
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
   'Convert website notes': 'വെബ്‌സൈറ്റ് കുറിപ്പുകൾ പരിവർത്തനം ചെയ്യുക',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'റെക്കോർഡ് ചെയ്യുക',
   Recording: 'റെക്കോർഡിംഗ്',

@@ -1257,6 +1257,11 @@ export const zhHans: Dictionary = {
   Website: '网站',
   'Open a website': '打开网站',
   'Convert website notes': '转换网站笔记',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '录音',
   Recording: '录音',

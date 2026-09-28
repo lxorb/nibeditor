@@ -1288,6 +1288,11 @@ export const hi: Dictionary = {
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',
   'Convert website notes': 'वेबसाइट नोट बदलें',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'रिकॉर्ड करें',
   Recording: 'रिकॉर्डिंग',

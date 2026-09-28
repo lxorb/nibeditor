@@ -1274,6 +1274,11 @@ export const my: Dictionary = {
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
   'Convert website notes': 'ဝဘ်ဆိုက်မှတ်စုများ ပြောင်းပါ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'အသံသွင်းပါ',
   Recording: 'အသံဖိုင်',

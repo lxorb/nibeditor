@@ -285,6 +285,13 @@ export class Page {
 
   /** The countdown to being parked, running while nobody is looking at this tab. */
   parking: ReturnType<typeof setTimeout> | undefined
+
+  /** What the engine says beside where the page is; see heard.ts. */
+  playing = $state(false)
+  muted = $state(false)
+  filling = $state(false)
+  zoom = $state(1)
+  find = $state({ open: false, query: '', count: 0, at: -1 })
 }
 
 class Pages {
@@ -535,6 +542,7 @@ class Pages {
     await this.look(tabId)
     page.live = false
     page.loading = false
+    page.playing = false
     clearTimeout(page.parking)
     // The trail stays in the crate, so the arrows over a page that has just been
     // revived are right from the first frame.
@@ -909,6 +917,8 @@ class Pages {
       const said = readDownload(event.payload)
       if (said && downloads.heard(said)) void this.downloaded(said.tab)
     })
+    // Sound, full screen, zoom and find; see heard.ts.
+    await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return

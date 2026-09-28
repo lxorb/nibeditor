@@ -83,6 +83,7 @@ import { invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
+import { pages } from './web-tab/pages.svelte'
 import { openFile } from './open-file'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
@@ -370,6 +371,34 @@ function tabCommands(): Command[] {
       hint: shortcuts.hint('tabs.rename'),
       disabled: !tab || !workspace.canRenameFromTab(tab),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
+    },
+  ]
+}
+
+/** A browser's rows about the page in front. */
+function webPageCommands(): Command[] {
+  const tab = workspace.active
+  if (!isDesktop || tab?.kind !== 'web') return []
+
+  const page = pages.of(tab.id)
+  return [
+    {
+      id: 'web-find',
+      label: t('Find'),
+      hint: shortcuts.hint('edit.find'),
+      run: () => (page.find.open = true),
+    },
+    {
+      id: 'web-mute',
+      label: page.muted ? t('Unmute site') : t('Mute site'),
+      hint: shortcuts.hint('web.mute'),
+      run: () => void import('./web-tab/mute').then((one) => one.muteSite(tab.id, !page.muted)),
+    },
+    {
+      id: 'web-devtools',
+      label: t('Developer tools'),
+      hint: shortcuts.hint('web.devtools'),
+      run: () => void invoke('web_devtools', { tab: tab.id }).catch(() => undefined),
     },
   ]
 }
@@ -976,6 +1005,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.reopenClosed(),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
+    ...webPageCommands(),
     ...paneCommands(),
     ...layoutCommands(),
     {

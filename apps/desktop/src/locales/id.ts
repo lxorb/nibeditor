@@ -1282,6 +1282,11 @@ export const id: Dictionary = {
   Website: 'Situs web',
   'Open a website': 'Buka situs web',
   'Convert website notes': 'Ubah catatan situs web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',

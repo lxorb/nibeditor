@@ -1315,6 +1315,11 @@ export const ptBR: Dictionary = {
   Website: 'Site',
   'Open a website': 'Abrir um site',
   'Convert website notes': 'Converter notas de sites',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',

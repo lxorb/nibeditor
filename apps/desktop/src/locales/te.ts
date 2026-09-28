@@ -1292,6 +1292,11 @@ export const te: Dictionary = {
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',
   'Convert website notes': 'వెబ్‌సైట్ నోట్లను మార్చు',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'రికార్డు చేయి',
   Recording: 'రికార్డింగ్',

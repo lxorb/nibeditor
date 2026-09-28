@@ -1277,6 +1277,11 @@ export const ja: Dictionary = {
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
   'Convert website notes': 'ウェブノートを変換',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '録音',
   Recording: '録音',

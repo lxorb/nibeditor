@@ -1298,6 +1298,11 @@ export const kn: Dictionary = {
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
   'Convert website notes': 'ಜಾಲತಾಣ ಟಿಪ್ಪಣಿಗಳನ್ನು ಪರಿವರ್ತಿಸಿ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
   Recording: 'ಧ್ವನಿಮುದ್ರಣ',

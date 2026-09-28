@@ -29,6 +29,7 @@ const actions = {
   zoom: () => undefined,
   fullScreen: () => undefined,
   print: () => undefined,
+  find: () => undefined,
   save: () => undefined,
   share: () => undefined,
   settings: () => undefined,
@@ -48,6 +49,7 @@ test('is Chromes own menu, in Chromes own order', () => {
     'Zoom in',
     'Full screen',
     'Print…',
+    'Find',
     'Save page',
     'Share…',
     'Copy link',
@@ -68,6 +70,7 @@ test('a tab with nowhere to go has no rows about a page', () => {
   const off = rows.filter((one) => one.disabled).map((one) => one.label)
 
   expect(off).toContain('Print…')
+  expect(off).toContain('Find')
   expect(off).toContain('Save page')
   expect(off).toContain('Copy link')
   expect(rows.find((one) => one.label === 'New tab')?.disabled).toBe(undefined)

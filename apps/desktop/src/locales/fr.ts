@@ -1334,6 +1334,11 @@ export const fr: Dictionary = {
   Website: 'Site web',
   'Open a website': 'Ouvrir un site web',
   'Convert website notes': 'Convertir les notes web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Enregistrer',
   Recording: 'Enregistrement',

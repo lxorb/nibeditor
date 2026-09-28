@@ -563,6 +563,17 @@ pub enum Step {
 /// `lib/web-tab/address.ts`); this is the rule that cannot be talked round,
 /// because it is also what every link inside the page is judged by.
 fn allowed(url: &Url) -> bool {
+    // Chrome's "View page source" is a page's own address behind `view-source:`, and it
+    // is judged as that address: the source of anything a tab may open, and nothing
+    // else. The engine's menu asks for it as a window, which is a tab here.
+    if url.scheme() == "view-source" {
+        return url
+            .as_str()
+            .strip_prefix("view-source:")
+            .and_then(|inner| Url::parse(inner).ok())
+            .is_some_and(|inner| inner.scheme() != "view-source" && allowed(&inner));
+    }
+
     if !matches!(url.scheme(), "http" | "https") {
         return false;
     }
@@ -1162,6 +1173,10 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
         // How a window it asks for was pressed for; see web_opens.rs.
         crate::web_opens::listen(&platform, named.clone());
+        // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
+        // see web_find.rs.
+        crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
+        crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
         crate::downloads::listen(&platform, asking.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });
@@ -1453,6 +1468,15 @@ pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
+/// The engine's developer tools for the page in the tab: F12 and Ctrl+Shift+I pressed
+/// in the app rather than in the page, which the engine already answers itself. Only
+/// the pages have them; nib's own window does not in a build that ships.
+#[tauri::command]
+pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
+    found(&app, &tab)?.open_devtools();
+    Ok(())
+}
+
 /// The page, read for a clip.
 ///
 /// The script runs in the site's document and the answer comes back through the
@@ -1517,6 +1541,8 @@ pub async fn web_close(
             // A page still fetching a file stays until the file is in, out of sight; the
             // engine stops reporting a download whose webview has gone. See
             // `downloads::linger`.
+            // Its find goes with it, whichever way the page goes.
+            crate::web_find::forget(&named);
             if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -1610,7 +1636,7 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
 /// The webview for a tab, or a reason there is none. A tab whose page has been
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
-fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
+pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&format!("{LABEL}{tab}"))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
@@ -2081,6 +2107,22 @@ mod tests {
         assert!(!allowed(&at("https://TAURI.localhost/")));
         assert!(!allowed(&at("http://ipc.localhost/notes")));
         assert!(!allowed(&at("http://asset.localhost/a.png")));
+    }
+
+    #[test]
+    fn the_source_of_a_page_is_that_page() {
+        assert!(allowed(&at("view-source:https://example.com/a?b=1")));
+        assert_eq!(
+            handed_over(&at("view-source:https://example.com/a")),
+            Some("view-source:https://example.com/a".to_string())
+        );
+        // And the source of nothing a tab may open is nothing either.
+        assert!(!allowed(&at("view-source:file:///C:/notes/Idea.md")));
+        assert!(!allowed(&at("view-source:http://tauri.localhost/")));
+        assert!(!allowed(&at(
+            "view-source:view-source:https://example.com/"
+        )));
+        assert!(!allowed(&at("view-source:")));
     }
 
     #[test]

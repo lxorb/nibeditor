@@ -1269,6 +1269,11 @@ export const ko: Dictionary = {
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',
   'Convert website notes': '웹 노트 변환',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '녹음',
   Recording: '녹음',

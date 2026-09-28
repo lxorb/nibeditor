@@ -24,6 +24,16 @@ describe('what a web tab may open', () => {
     expect(isWebAddress('http://example.com')).toBe(true)
   })
 
+  /** Chrome's "View page source", which the page's own menu asks for as a window. */
+  test('takes the source of a page it would take', () => {
+    expect(isWebAddress('view-source:https://example.com/a')).toBe(true)
+    expect(isWebAddress('view-source:file:///C:/notes/Idea.md')).toBe(false)
+    expect(isWebAddress('view-source:http://tauri.localhost/')).toBe(false)
+    expect(isWebAddress('view-source:view-source:https://example.com/')).toBe(false)
+    expect(webAddress('view-source:https://example.com/')).toBe('view-source:https://example.com/')
+    expect(plainOrigin('view-source:https://www.example.com/a')).toBe('view-source:example.com')
+  })
+
   test('refuses every other scheme', () => {
     expect(isWebAddress('file:///C:/notes/Idea.md')).toBe(false)
     expect(isWebAddress('javascript:alert(1)')).toBe(false)

@@ -1295,6 +1295,11 @@ export const pa: Dictionary = {
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
   'Convert website notes': 'ਵੈੱਬਸਾਈਟ ਨੋਟਾਂ ਬਦਲੋ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ਰਿਕਾਰਡ ਕਰੋ',
   Recording: 'ਰਿਕਾਰਡਿੰਗ',

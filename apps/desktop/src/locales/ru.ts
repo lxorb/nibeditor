@@ -1356,6 +1356,11 @@ export const ru: Dictionary = {
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',
   'Convert website notes': 'Преобразовать веб-заметки',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  'Muted': 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Записать',
   Recording: 'Запись',
