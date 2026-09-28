@@ -438,9 +438,18 @@ function holds(tail: string): boolean {
  *  Settings sheet, which is the one place a keyboard is chosen, and the launch keeps a
  *  keyboard's name alone (shortcuts/preset-ids.ts). A block duplicated or moved from a
  *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
- *  this 3,296,054 and 380. */
-const BUDGET = 3_310_000
-const MOST_FILES = 382
+ *  this 3,296,054 and 380.
+ *
+ *  Lowered 2026-09-28, to 3,250,000 and 376 modules, from a main at 3,309,965 - 35
+ *  bytes under the old ceiling. Three things nobody needs to open a note: the sheet a
+ *  question is asked in (PromptSheet.svelte and the Select under it, 29,437 bytes),
+ *  mounted at the launch's last turn like the palette; what the space's papers are
+ *  known to say (pdf/papers.ts and its cache, 28,065), fetched with the launch's own
+ *  read of them; and the writer behind Save as (export/save.ts, 11,060), fetched by the
+ *  press. Measured 3,244,278 and 374; the production build preloads 1,301,758 bytes in
+ *  82 chunks, from 1,317,450 in 88. */
+const BUDGET = 3_250_000
+const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -688,6 +697,12 @@ describe('what the app evaluates before it draws anything', () => {
     // The keyboards themselves, which only the Settings sheet offers; the launch reads
     // a keyboard's name alone. See shortcuts/preset-ids.ts.
     ['/lib/shortcuts/presets.ts', 'the keyboards'],
+    // What is fetched by the press that asks for it, or at the launch's last turn: the
+    // sheet a question is asked in, the writer behind Save as, and what the space's
+    // papers are known to say. See surfaces.svelte.ts, save-as.ts and workspace.papers.
+    ['/lib/PromptSheet.svelte', 'the question sheet'],
+    ['/lib/export/save.ts', 'the writer behind Save as'],
+    ['/lib/pdf/papers.ts', "the papers' words"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
