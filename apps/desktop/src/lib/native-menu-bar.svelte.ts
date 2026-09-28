@@ -56,7 +56,7 @@ import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
 import { present } from './slides/present.svelte'
 import { nameOf } from './space-paths'
 import { appMenuRows } from './surfaces.svelte'
-import { currentWindow, invoke } from './tauri'
+import { currentWindow } from './tauri'
 import { afterQuiet } from './timing'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -263,10 +263,6 @@ class MenuBar {
    *  another window's may have been the last one said. */
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
-    // Every row on the key it was given, not one AppKit rewrote for the layout; see
-    // menu_bar.rs. A failure leaves the rows on AppKit's keys, which still work, so
-    // there is nothing to tell anybody.
-    await invoke('keep_keys_as_written').catch(() => undefined)
     if (this.windows && this.windows !== this.told) {
       await this.windows.setAsWindowsMenuForNSApp()
       this.told = this.windows

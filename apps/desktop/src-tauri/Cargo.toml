@@ -179,8 +179,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSGraphics",
   "NSImage",
   "NSImageRep",
-  "NSMenu",
-  "NSMenuItem",
   "NSPrintInfo",
   "NSPrintOperation",
   "NSResponder",
