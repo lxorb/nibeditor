@@ -719,6 +719,7 @@ export const te: Dictionary = {
   'that path is not usable': 'ఆ పాత్ వాడదగినది కాదు',
   'this note changed elsewhere': 'ఈ నోట్ వేరే చోట మారింది',
   'too many tries - ask for a new code': 'చాలా ప్రయత్నాలు - కొత్త కోడ్ అడగండి',
+  'too many tries - try again in an hour': 'చాలా ప్రయత్నాలు - గంట తర్వాత ప్రయత్నించండి',
   'too many messages from here - try again later':
     'ఇక్కడి నుండి చాలా సందేశాలు - తర్వాత ప్రయత్నించండి',
   'too much mail today - try again tomorrow': 'ఈ రోజు చాలా మెయిల్ - రేపు ప్రయత్నించండి',

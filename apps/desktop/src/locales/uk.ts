@@ -750,6 +750,7 @@ export const uk: Dictionary = {
   'that path is not usable': 'цей шлях не підходить',
   'this note changed elsewhere': 'ця нотатка змінилася в іншому місці',
   'too many tries - ask for a new code': 'надто багато спроб - запросіть новий код',
+  'too many tries - try again in an hour': 'надто багато спроб - спробуйте за годину',
   'too many messages from here - try again later':
     'надто багато запитів звідси - спробуйте пізніше',
   'too much mail today - try again tomorrow': 'надто багато листів за сьогодні - спробуйте завтра',

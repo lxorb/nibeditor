@@ -725,6 +725,7 @@ export const sw: Dictionary = {
   'that path is not usable': 'njia hiyo haitumiki',
   'this note changed elsewhere': 'dokezo hili limebadilika mahali pengine',
   'too many tries - ask for a new code': 'majaribio mengi mno - omba kodi mpya',
+  'too many tries - try again in an hour': 'majaribio mengi mno - jaribu tena baada ya saa moja',
   'too many messages from here - try again later':
     'jumbe nyingi mno kutoka hapa - jaribu tena baadaye',
   'too much mail today - try again tomorrow': 'barua nyingi mno leo - jaribu tena kesho',

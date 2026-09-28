@@ -146,6 +146,19 @@ describe('a provider that will not take the message', () => {
     expect(again.status).toBe(503)
   })
 
+  test('spends none of the hour an address has on messages that never went', async () => {
+    let failing = 10
+    refusing(() => (failing-- > 0 ? Promise.reject(new Error('down')) : Promise.resolve({})))
+
+    for (let at = 0; at < 10; at++) {
+      await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))
+    }
+
+    // Ten presses while the provider was down, and the eleventh still goes.
+    const sent = await call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } })
+    expect(sent.status).toBe(200)
+  })
+
   test('leaves no gap behind for an address that heard nothing', async () => {
     refusing(() => Promise.reject(new Error('the sender is not answering')))
     await quietly(() => call(env, '/v1/auth/code', { body: { email: 'a@b.dev' } }))

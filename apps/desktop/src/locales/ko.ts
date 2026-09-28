@@ -711,6 +711,7 @@ export const ko: Dictionary = {
   'that path is not usable': '그 경로는 쓸 수 없습니다',
   'this note changed elsewhere': '이 노트가 다른 곳에서 바뀌었습니다',
   'too many tries - ask for a new code': '시도가 너무 많습니다 - 새 코드를 받으세요',
+  'too many tries - try again in an hour': '시도가 너무 많습니다 - 한 시간 뒤에 다시 하세요',
   'too many messages from here - try again later':
     '여기서 보낸 메시지가 너무 많습니다 - 나중에 다시 하세요',
   'too much mail today - try again tomorrow': '오늘 메일이 너무 많습니다 - 내일 다시 하세요',

@@ -720,6 +720,7 @@ export const ur: Dictionary = {
   'that path is not usable': 'یہ راستہ قابلِ استعمال نہیں',
   'this note changed elsewhere': 'یہ نوٹ کہیں اور بدل گیا',
   'too many tries - ask for a new code': 'بہت زیادہ کوششیں - نیا کوڈ منگوائیں',
+  'too many tries - try again in an hour': 'بہت زیادہ کوششیں - ایک گھنٹے بعد کوشش کریں',
   'too many messages from here - try again later': 'یہاں سے بہت پیغامات - بعد میں کوشش کریں',
   'too much mail today - try again tomorrow': 'آج بہت میل - کل کوشش کریں',
   'that many people are already waiting to be let in': 'اتنے لوگ پہلے ہی اندر آنے کے منتظر ہیں',

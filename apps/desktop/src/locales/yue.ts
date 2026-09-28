@@ -707,6 +707,7 @@ export const yue: Dictionary = {
   'that path is not usable': '嗰個路徑用唔到',
   'this note changed elsewhere': '呢篇筆記喺別處已更改',
   'too many tries - ask for a new code': '嘗試次數過多，請重新索取驗證碼',
+  'too many tries - try again in an hour': '嘗試次數過多，請一個鐘之後再試',
   'too many messages from here - try again later': '來自呢度嘅請求過多，請等一陣再試',
   'too much mail today - try again tomorrow': '今日發出嘅郵件太多，請聽日再試',
   'that many people are already waiting to be let in': '等待加入嘅人數已達上限',

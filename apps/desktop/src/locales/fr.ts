@@ -735,6 +735,7 @@ export const fr: Dictionary = {
   'that path is not usable': 'Ce chemin n’est pas utilisable',
   'this note changed elsewhere': 'Cette note a changé ailleurs',
   'too many tries - ask for a new code': 'Trop de tentatives - demandez un nouveau code',
+  'too many tries - try again in an hour': 'Trop de tentatives - réessayez dans une heure',
   'too many messages from here - try again later':
     'Trop de messages depuis cet appareil - réessayez plus tard',
   'too much mail today - try again tomorrow': 'Trop de courrier aujourd’hui - réessayez demain',

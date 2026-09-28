@@ -143,6 +143,154 @@ describe('the people the service writes to in a day', () => {
   })
 })
 
+/** The thirty seconds an address keeps between two codes, moved on, the way a
+ *  flood from outside waits it out. */
+function gapPassed(): void {
+  env.db.prepare('update login_codes set sent_at = 0').run()
+  env.db.prepare('delete from mailed').run()
+}
+
+/** A machine each time, as a flood spread over several would arrive. */
+function fromSomewhere(at: number): string {
+  return `198.51.100.${at + 1}`
+}
+
+describe('mail to one address', () => {
+  test('stops at a few messages an hour, however many machines ask', async () => {
+    for (let at = 0; at < 6; at++) {
+      gapPassed()
+      expect((await askForACode('victim@example.com', fromSomewhere(at))).status).toBe(200)
+    }
+
+    gapPassed()
+    const refused = await askForACode('victim@example.com', fromSomewhere(6))
+    expect(refused.status).toBe(429)
+    expect(refused.json.error).toBe('too many tries - try again in an hour')
+  })
+
+  test('does not hold another address to what that one was sent', async () => {
+    for (let at = 0; at < 10; at++) {
+      gapPassed()
+      await askForACode('victim@example.com', fromSomewhere(at))
+    }
+
+    // From one of the very machines that did the flooding, even.
+    const sent = await mail(() => askForACode('bystander@example.com', fromSomewhere(0)))
+    expect(sent).toMatch(/\d{3} \d{3}/)
+  })
+
+  test('and a day of them stops at a ceiling of its own', async () => {
+    for (let hour = 0; hour < 4; hour++) {
+      for (let at = 0; at < 6; at++) {
+        gapPassed()
+        expect((await askForACode('victim@example.com', fromSomewhere(at))).status).toBe(200)
+      }
+      // The hour ends and the day does not.
+      env.db.prepare('update limits set until = ? where scope = ?').run(Date.now() - 1, 'mail-to')
+    }
+
+    gapPassed()
+    const refused = await askForACode('victim@example.com', fromSomewhere(7))
+    expect(refused.status).toBe(429)
+    expect(refused.json.error).toBe('too much mail today - try again tomorrow')
+  })
+
+  test('counts every kind of message, and keeps quiet to somebody inviting it', async () => {
+    const owner = await signIn(env, 'owner@example.com')
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json
+      .space.id
+
+    for (let at = 0; at < 6; at++) {
+      gapPassed()
+      await askForACode('victim@example.com', fromSomewhere(at))
+    }
+
+    gapPassed()
+    let answer = { status: 0 }
+    const sent = await mail(async () => {
+      answer = await call(env, `/v1/spaces/${space}/share/invite`, {
+        token: owner,
+        body: { email: 'victim@example.com', role: 'write' },
+      })
+    })
+
+    // The invitation stands and nothing went: the owner is not told that somebody
+    // else has been writing to that address.
+    expect(answer.status).toBe(200)
+    expect(sent).not.toContain('shared Plans with you')
+    const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
+    expect(sheet.json.members.map((one) => one.email)).toEqual(['victim@example.com'])
+  })
+})
+
+/** Messages sent in the last day, as the hourly rows they would have left. */
+function alreadySent(many: number, until = Date.now() + 60 * 60 * 1000): void {
+  env.db
+    .prepare(`insert into limits (scope, key, count, until) values ('mail-sent', 'earlier', ?, ?)`)
+    .run(many, until)
+}
+
+function sentToday(): number {
+  const row = env.db
+    .prepare(`select coalesce(sum(count), 0) as sent from limits where scope = 'mail-sent'`)
+    .get() as { sent: number }
+  return row.sent
+}
+
+describe('the mail the service sends in a day', () => {
+  test('is counted once for each message that goes', async () => {
+    await askForACode('one@example.com', '203.0.113.7')
+    await askForACode('two@example.com', '203.0.113.7')
+    expect(sentToday()).toBe(2)
+  })
+
+  test('says no before the provider would, with when to come back', async () => {
+    alreadySent(900)
+
+    const refused = await askForACode('new@example.com', '203.0.113.7')
+    expect(refused.status).toBe(503)
+    expect(refused.json.error).toBe('too much mail today - try again tomorrow')
+
+    const wait = Number(refused.headers.get('retry-after'))
+    expect(wait).toBeGreaterThan(3500)
+    expect(wait).toBeLessThanOrEqual(3600)
+  })
+
+  test('holds an invitation too, before it writes anything', async () => {
+    const owner = await signIn(env, 'owner@example.com')
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json
+      .space.id
+
+    alreadySent(900)
+
+    const refused = await call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: 'guest@example.com', role: 'write' },
+    })
+    expect(refused.status).toBe(503)
+    expect(refused.headers.get('retry-after')).toBeTruthy()
+
+    const sheet = await call<ShareView>(env, `/v1/spaces/${space}/share`, { token: owner })
+    expect(sheet.json.members).toEqual([])
+  })
+
+  test('is not spent by one address being flooded', async () => {
+    for (let at = 0; at < 30; at++) {
+      gapPassed()
+      await askForACode('victim@example.com', fromSomewhere(at % 10))
+    }
+
+    // Six went, and only those six count against everybody else's sign-in.
+    expect(sentToday()).toBe(6)
+  })
+
+  test('rolls on as the oldest hour stops counting', async () => {
+    alreadySent(900, Date.now() - 1)
+
+    expect((await askForACode('new@example.com', '203.0.113.7')).status).toBe(200)
+  })
+})
+
 describe('telling an owner that somebody is waiting', () => {
   let owner: string
   let space: string

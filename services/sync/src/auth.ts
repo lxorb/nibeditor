@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { NOT_AN_EMAIL, TOOK_TOO_LONG, WRONG_CODE } from './refused'
+import { NOT_AN_EMAIL, TOOK_TOO_LONG, TRY_IN_AN_HOUR, WRONG_CODE } from './refused'
 import { readBody } from './body'
 import {
   equals,
@@ -11,9 +11,9 @@ import {
   randomToken,
   sha256,
 } from './crypto'
-import { codeMessage, mailer } from './email'
+import { codeMessage, mailer, refusedMail } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
-import { machineOf, mailCeilings, mayTryCode } from './limits'
+import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
@@ -198,8 +198,11 @@ export async function sendCode(
   env: Env,
   address: string,
   machine: string | null = null,
-): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503 }> {
-  if (!isEmail(address)) return { error: NOT_AN_EMAIL, status: 400 }
+): Promise<
+  | { ok: true; resendIn: number }
+  | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
+> {
+  if (!isEmail(address)) return { error: NOT_AN_EMAIL, status: 400, retryAfter: null }
 
   const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
     .bind(address)
@@ -211,9 +214,12 @@ export async function sendCode(
 
   // Asked here rather than at the top, so that the gap this address already
   // keeps holds a resend back without spending anything against the ceilings: a
-  // message that is not going out is not mail.
+  // message that is not going out is not mail. Every refusal is said here, the
+  // ones about the address included: whoever asks for a code is asking about
+  // their own address, and one that has been flooded should hear why nothing
+  // comes rather than wait for it.
   const ceiling = await mailCeilings(env, address, machine)
-  if (ceiling) return { error: ceiling, status: 429 }
+  if (ceiling) return ceiling
 
   const code = randomCode()
   const salt = randomToken()
@@ -250,8 +256,11 @@ export async function sendCode(
     // nothing - which is how one failed send became a sign-in that could not be
     // retried at all.
     await env.DB.prepare('update login_codes set sent_at = 0 where email = ?').bind(address).run()
+    await mailNotSent(env, address)
 
-    return { error: 'could not send the mail - try again', status: 503 }
+    // A provider having a bad minute is worth trying again straight away, and
+    // saying so is what keeps a client from treating it as a dead end.
+    return { error: 'could not send the mail - try again', status: 503, retryAfter: 5 }
   }
 
   return { ok: true, resendIn: RESEND_GAP / 1000 }
@@ -289,7 +298,7 @@ export async function verifyCode(
   // of a code that is there to be tried, so an address nobody asked a code for
   // counts nothing against itself.
   if (!(await mayTryCode(env, address))) {
-    return { error: 'too many tries - try again in an hour', status: 429 }
+    return { error: TRY_IN_AN_HOUR, status: 429 }
   }
 
   if (!equals(await sha256(pending.salt + entered), pending.code_hash)) {
@@ -322,14 +331,7 @@ auth.post('/code', async (context) => {
 
   const sent = await sendCode(context.env, normaliseEmail(email ?? ''), machineOf(context.req))
 
-  if ('error' in sent) {
-    // A provider having a bad minute is worth trying again straight away, and
-    // saying so is what keeps a client from treating it as a dead end. The
-    // ceilings are the other kind of no and name their own wait in words.
-    return sent.status === 503
-      ? context.json({ error: sent.error }, 503, { 'retry-after': '5' })
-      : context.json({ error: sent.error }, sent.status)
-  }
+  if ('error' in sent) return refusedMail(context, sent)
 
   return context.json(sent)
 })

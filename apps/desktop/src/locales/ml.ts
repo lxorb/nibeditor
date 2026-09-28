@@ -727,6 +727,7 @@ export const ml: Dictionary = {
   'that path is not usable': 'ആ പാത്ത് ഉപയോഗിക്കാനാകില്ല',
   'this note changed elsewhere': 'ഈ കുറിപ്പ് മറ്റൊരിടത്ത് മാറി',
   'too many tries - ask for a new code': 'വളരെയധികം ശ്രമങ്ങൾ - പുതിയ കോഡ് ചോദിക്കുക',
+  'too many tries - try again in an hour': 'വളരെയധികം ശ്രമങ്ങൾ - ഒരു മണിക്കൂർ കഴിഞ്ഞ് ശ്രമിക്കുക',
   'too many messages from here - try again later':
     'ഇവിടെനിന്ന് വളരെയധികം സന്ദേശങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
   'too much mail today - try again tomorrow': 'ഇന്ന് വളരെയധികം മെയിൽ - നാളെ ശ്രമിക്കുക',

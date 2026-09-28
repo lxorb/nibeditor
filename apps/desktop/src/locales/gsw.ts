@@ -720,6 +720,7 @@ export const gsw: Dictionary = {
   'that path is not usable': 'De Pfad gaht nöd',
   'this note changed elsewhere': 'Die Notiz isch anderswo gänderet worde',
   'too many tries - ask for a new code': 'Z vill Versüech - frag en nöie Code aa',
+  'too many tries - try again in an hour': 'Z vill Versüech - probier s in ere Stund no einisch',
   'too many messages from here - try again later':
     'Z vill Nachrichte vo da - probier s spöter no einisch',
   'too much mail today - try again tomorrow': 'Hüt scho z vill Poscht - probier s morn',

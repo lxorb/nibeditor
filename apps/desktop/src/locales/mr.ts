@@ -720,6 +720,7 @@ export const mr: Dictionary = {
   'that path is not usable': 'तो पथ वापरता येत नाही',
   'this note changed elsewhere': 'ही नोंद इतरत्र बदलली',
   'too many tries - ask for a new code': 'फार प्रयत्न - नवीन कोड मागा',
+  'too many tries - try again in an hour': 'फार प्रयत्न - एका तासाने पुन्हा पाहा',
   'too many messages from here - try again later': 'येथून फार संदेश - नंतर पुन्हा पाहा',
   'too much mail today - try again tomorrow': 'आज फार मेल - उद्या पुन्हा पाहा',
   'that many people are already waiting to be let in': 'आत येण्यासाठी इतकी माणसे आधीच थांबली आहेत',

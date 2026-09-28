@@ -732,6 +732,7 @@ export const ptPT: Dictionary = {
   'that path is not usable': 'esse caminho não serve',
   'this note changed elsewhere': 'esta nota mudou noutro lado',
   'too many tries - ask for a new code': 'demasiadas tentativas - pedir um novo código',
+  'too many tries - try again in an hour': 'demasiadas tentativas - tentar daqui a uma hora',
   'too many messages from here - try again later': 'demasiadas mensagens daqui - tentar mais tarde',
   'too much mail today - try again tomorrow': 'demasiado correio hoje - tentar amanhã',
   'that many people are already waiting to be let in': 'já são essas as pessoas à espera de entrar',
