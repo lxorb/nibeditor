@@ -70,28 +70,37 @@ export async function applyImport(
   const paths: string[] = []
   let done = 0
 
-  for (const file of files) {
-    const path = joinPath(target.root, file.path)
+  try {
+    for (const file of files) {
+      const path = joinPath(target.root, file.path)
 
-    if (file.kind === 'note') {
-      await writeFile(path, file.text)
-    } else {
-      await invoke('write_bytes', { path, base64: toBase64(file.bytes) })
+      if (file.kind === 'note') {
+        await writeFile(path, file.text)
+      } else {
+        await invoke('write_bytes', { path, base64: toBase64(file.bytes) })
+      }
+
+      paths.push(path)
+      done += 1
+      options.onWritten?.(done, files.length)
     }
-
-    paths.push(path)
-    done += 1
-    options.onWritten?.(done, files.length)
-  }
-
-  if (paths.length) {
-    workspace.undone.record({ kind: 'import', paths })
-    await workspace.loadTree()
-    const { sync } = await import('../sync.svelte')
-    sync.nudge()
+  } finally {
+    // Whatever was written is one import to undo, and in the file list, even when a
+    // write partway through failed. The failure still reaches the sheet, which says
+    // so; before, the half that had landed was on the disk with no undo that could
+    // take it back, and trying again put a `Plan 2.md` beside every one of them.
+    if (paths.length) await landed(paths)
   }
 
   return { paths, stepped: stamped.stepped }
+}
+
+/** What an import that wrote something owes the rest of the app. */
+async function landed(paths: string[]) {
+  workspace.undone.record({ kind: 'import', paths })
+  await workspace.loadTree()
+  const { sync } = await import('../sync.svelte')
+  sync.nudge()
 }
 
 /** The plan's files with every path judged, and the judge's own answer as the
