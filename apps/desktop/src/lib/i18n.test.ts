@@ -187,6 +187,22 @@ const placeholders = (text: string): string[] =>
 const forms = (value: string | Forms): string[] =>
   typeof value === 'string' ? [value] : Object.values<string>(value)
 
+/** Every form in a catalogue that breaks a rule, as the English row and what it says.
+ *
+ *  One assertion over the list rather than one per string: forty catalogues of a few
+ *  thousand rows was a quarter of a million `expect` calls, which was most of this
+ *  file's time, and a failure now names every row at once instead of the first. */
+function offenders(
+  catalogue: Dictionary,
+  breaks: (written: string, english: string) => boolean,
+): string[] {
+  return Object.entries(catalogue).flatMap(([english, value]) =>
+    forms(value)
+      .filter((written) => breaks(written, english))
+      .map((written) => `${english} -> ${written}`),
+  )
+}
+
 describe('the folder, the list and the loader', () => {
   test('hold the same languages', () => {
     expect(CATALOGUES.map(([id]) => id)).toEqual([...CATALOGUE_IDS].sort())
@@ -320,11 +336,8 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
   })
 
   test('has something to say for every row', () => {
-    for (const [english, value] of Object.entries(catalogue)) {
-      for (const written of forms(value)) {
-        expect(written.trim(), `${language}: ${english}`).not.toBe('')
-      }
-    }
+    const empty = offenders(catalogue, (written) => written.trim() === '')
+    expect(empty, language).toEqual([])
   })
 
   test('translates most of what it holds', () => {
@@ -333,12 +346,11 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
   })
 
   test('keeps every placeholder the English string uses', () => {
-    for (const [english, value] of Object.entries(catalogue)) {
-      const wanted = placeholders(english)
-      for (const written of forms(value)) {
-        expect(placeholders(written), `${language}: ${english}`).toEqual(wanted)
-      }
-    }
+    const lost = offenders(
+      catalogue,
+      (written, english) => placeholders(written).join() !== placeholders(english).join(),
+    )
+    expect(lost, language).toEqual([])
   })
 
   /** A count row holds the forms `Intl.PluralRules` has for the language and no
@@ -359,11 +371,11 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
   })
 
   test('holds one string for every row a count does not decide', () => {
-    for (const [english, value] of Object.entries(catalogue)) {
-      if (COUNTED.includes(english)) continue
+    const counted = Object.entries(catalogue)
+      .filter(([english, value]) => !COUNTED.includes(english) && typeof value !== 'string')
+      .map(([english]) => english)
 
-      expect(typeof value, `${language}: ${english}`).toBe('string')
-    }
+    expect(counted, language).toEqual([])
   })
 
   test('survived the file encoding', () => {
@@ -373,28 +385,28 @@ describe.each(CATALOGUES)('the %s catalogue', (language, catalogue) => {
     // writes ÇÃO and Ã before a capital is a word, not a fault.
     const mangled = /[ÃÂ][-¿]|â€/
 
-    for (const value of Object.values(catalogue)) {
-      for (const written of forms(value)) expect(written).not.toMatch(mangled)
-    }
+    expect(
+      offenders(catalogue, (written) => mangled.test(written)),
+      language,
+    ).toEqual([])
   })
 
   test('writes no em dashes', () => {
-    for (const value of Object.values(catalogue)) {
-      for (const written of forms(value)) {
-        expect(written).not.toContain(String.fromCharCode(0x2014))
-      }
-    }
+    const dash = String.fromCharCode(0x2014)
+    expect(
+      offenders(catalogue, (written) => written.includes(dash)),
+      language,
+    ).toEqual([])
   })
 
   /** No bidi control character in a string. Right-to-left layout is the app's
    *  business, and a mark buried in a catalogue would fight whatever the layout
    *  decides. */
   test('carries no direction marks', () => {
-    for (const [english, value] of Object.entries(catalogue)) {
-      for (const written of forms(value)) {
-        expect(written, `${language}: ${english}`).not.toMatch(/[‎‏؜‪-‮]/)
-      }
-    }
+    expect(
+      offenders(catalogue, (written) => /[‎‏؜‪-‮]/.test(written)),
+      language,
+    ).toEqual([])
   })
 
   test('translates every string the app asks for', () => {
