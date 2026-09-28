@@ -1555,4 +1555,10 @@ export const ar: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'فتح في علامة تبويب جديدة',
+  'Open to the side': 'فتح بجانبه',
+  'Open all': 'فتح الكل',
+  'Show in the file list': 'إظهار في قائمة الملفات',
+  'Collapse the file list': 'طي قائمة الملفات',
 }

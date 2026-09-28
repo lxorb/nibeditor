@@ -1434,4 +1434,10 @@ export const zhHans: Dictionary = {
   'Select down': '向下选择',
   'Select up': '向上选择',
   'Select or deselect': '选择或取消选择',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': '在新标签页中打开',
+  'Open to the side': '在侧边打开',
+  'Open all': '全部打开',
+  'Show in the file list': '在文件列表中显示',
+  'Collapse the file list': '折叠文件列表',
 }

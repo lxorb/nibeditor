@@ -1465,4 +1465,10 @@ export const ja: Dictionary = {
   'Select down': '下へ選択',
   'Select up': '上へ選択',
   'Select or deselect': '選択または選択解除',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': '新しいタブで開く',
+  'Open to the side': '横に開く',
+  'Open all': 'すべて開く',
+  'Show in the file list': 'ファイル一覧で表示',
+  'Collapse the file list': 'ファイル一覧を折りたたむ',
 }

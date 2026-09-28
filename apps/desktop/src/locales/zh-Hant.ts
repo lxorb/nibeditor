@@ -1434,4 +1434,10 @@ export const zhHant: Dictionary = {
   'Select down': '向下選取',
   'Select up': '向上選取',
   'Select or deselect': '選取或取消選取',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': '在新分頁中開啟',
+  'Open to the side': '在側邊開啟',
+  'Open all': '全部開啟',
+  'Show in the file list': '在檔案列表中顯示',
+  'Collapse the file list': '收合檔案列表',
 }

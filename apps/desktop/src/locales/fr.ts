@@ -1525,4 +1525,10 @@ export const fr: Dictionary = {
   'Select down': 'Sélectionner vers le bas',
   'Select up': 'Sélectionner vers le haut',
   'Select or deselect': 'Sélectionner ou désélectionner',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Ouvrir dans un nouvel onglet',
+  'Open to the side': 'Ouvrir à côté',
+  'Open all': 'Tout ouvrir',
+  'Show in the file list': 'Afficher dans la liste des fichiers',
+  'Collapse the file list': 'Replier la liste des fichiers',
 }

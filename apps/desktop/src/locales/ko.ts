@@ -1448,4 +1448,10 @@ export const ko: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': '새 탭에서 열기',
+  'Open to the side': '옆에 열기',
+  'Open all': '모두 열기',
+  'Show in the file list': '파일 목록에서 보기',
+  'Collapse the file list': '파일 목록 접기',
 }

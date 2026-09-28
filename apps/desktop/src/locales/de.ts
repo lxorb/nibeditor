@@ -1510,4 +1510,10 @@ export const de: Dictionary = {
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',
   'Select or deselect': 'Auswählen oder abwählen',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'In neuem Tab öffnen',
+  'Open to the side': 'Daneben öffnen',
+  'Open all': 'Alle öffnen',
+  'Show in the file list': 'In der Dateiliste zeigen',
+  'Collapse the file list': 'Dateiliste zuklappen',
 }

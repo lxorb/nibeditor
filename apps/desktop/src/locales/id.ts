@@ -1470,4 +1470,10 @@ export const id: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Buka di tab baru',
+  'Open to the side': 'Buka di samping',
+  'Open all': 'Buka semua',
+  'Show in the file list': 'Tampilkan di daftar file',
+  'Collapse the file list': 'Ciutkan daftar file',
 }

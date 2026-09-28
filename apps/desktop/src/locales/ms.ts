@@ -1469,4 +1469,10 @@ export const ms: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Buka dalam tab baharu',
+  'Open to the side': 'Buka di sebelah',
+  'Open all': 'Buka semua',
+  'Show in the file list': 'Tunjukkan dalam senarai fail',
+  'Collapse the file list': 'Runtuhkan senarai fail',
 }

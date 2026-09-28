@@ -1473,4 +1473,10 @@ export const te: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Open in new tab',
+  'Open to the side': 'Open to the side',
+  'Open all': 'Open all',
+  'Show in the file list': 'Show in the file list',
+  'Collapse the file list': 'Collapse the file list',
 }

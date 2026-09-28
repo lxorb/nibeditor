@@ -1500,4 +1500,10 @@ export const ptBR: Dictionary = {
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',
   'Select or deselect': 'Selecionar ou desmarcar',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Abrir em nova aba',
+  'Open to the side': 'Abrir ao lado',
+  'Open all': 'Abrir tudo',
+  'Show in the file list': 'Mostrar na lista de arquivos',
+  'Collapse the file list': 'Recolher a lista de arquivos',
 }

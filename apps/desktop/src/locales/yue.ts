@@ -1435,4 +1435,10 @@ export const yue: Dictionary = {
   'Select down': '向下選取',
   'Select up': '向上選取',
   'Select or deselect': '選取或取消選取',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': '喺新分頁開',
+  'Open to the side': '喺側邊開',
+  'Open all': '全部開',
+  'Show in the file list': '喺檔案列表度顯示',
+  'Collapse the file list': '收埋檔案列表',
 }

@@ -1520,4 +1520,10 @@ export const it: Dictionary = {
   'Select down': 'Seleziona verso il basso',
   'Select up': "Seleziona verso l'alto",
   'Select or deselect': 'Seleziona o deseleziona',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Apri in una nuova scheda',
+  'Open to the side': 'Apri a lato',
+  'Open all': 'Apri tutto',
+  'Show in the file list': 'Mostra nell’elenco dei file',
+  'Collapse the file list': 'Comprimi l’elenco dei file',
 }

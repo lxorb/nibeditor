@@ -1440,4 +1440,10 @@ export const th: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'เปิดในแท็บใหม่',
+  'Open to the side': 'เปิดด้านข้าง',
+  'Open all': 'เปิดทั้งหมด',
+  'Show in the file list': 'แสดงในรายการไฟล์',
+  'Collapse the file list': 'ยุบรายการไฟล์',
 }

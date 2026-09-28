@@ -1537,4 +1537,10 @@ export const ru: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Открыть в новой вкладке',
+  'Open to the side': 'Открыть рядом',
+  'Open all': 'Открыть все',
+  'Show in the file list': 'Показать в списке файлов',
+  'Collapse the file list': 'Свернуть список файлов',
 }

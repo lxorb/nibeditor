@@ -1502,4 +1502,10 @@ export const fil: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Buksan sa bagong tab',
+  'Open to the side': 'Buksan sa tabi',
+  'Open all': 'Buksan lahat',
+  'Show in the file list': 'Ipakita sa listahan ng file',
+  'Collapse the file list': 'I-collapse ang listahan ng file',
 }

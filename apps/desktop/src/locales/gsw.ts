@@ -1481,4 +1481,10 @@ export const gsw: Dictionary = {
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',
   'Select or deselect': 'Auswählen oder abwählen',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Im neue Tab öffne',
+  'Open to the side': 'Dänebe öffne',
+  'Open all': 'Alli öffne',
+  'Show in the file list': 'I de Dateilischte zeige',
+  'Collapse the file list': 'Dateilischte zuechlappe',
 }

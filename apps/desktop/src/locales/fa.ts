@@ -1472,4 +1472,10 @@ export const fa: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'باز کردن در زبانهٔ جدید',
+  'Open to the side': 'باز کردن در کنار',
+  'Open all': 'باز کردن همه',
+  'Show in the file list': 'نمایش در فهرست فایل‌ها',
+  'Collapse the file list': 'جمع کردن فهرست فایل‌ها',
 }

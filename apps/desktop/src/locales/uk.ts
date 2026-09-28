@@ -1532,4 +1532,10 @@ export const uk: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Відкрити в новій вкладці',
+  'Open to the side': 'Відкрити поруч',
+  'Open all': 'Відкрити всі',
+  'Show in the file list': 'Показати в списку файлів',
+  'Collapse the file list': 'Згорнути список файлів',
 }

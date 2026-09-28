@@ -1458,4 +1458,10 @@ export const vi: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Mở trong thẻ mới',
+  'Open to the side': 'Mở bên cạnh',
+  'Open all': 'Mở tất cả',
+  'Show in the file list': 'Hiện trong danh sách tệp',
+  'Collapse the file list': 'Thu gọn danh sách tệp',
 }

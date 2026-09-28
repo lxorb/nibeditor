@@ -1473,4 +1473,10 @@ export const tr: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Yeni sekmede aç',
+  'Open to the side': 'Yanında aç',
+  'Open all': 'Tümünü aç',
+  'Show in the file list': 'Dosya listesinde göster',
+  'Collapse the file list': 'Dosya listesini daralt',
 }

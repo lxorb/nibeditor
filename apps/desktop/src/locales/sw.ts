@@ -1496,4 +1496,10 @@ export const sw: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Fungua katika kichupo kipya',
+  'Open to the side': 'Fungua pembeni',
+  'Open all': 'Fungua zote',
+  'Show in the file list': 'Onyesha kwenye orodha ya faili',
+  'Collapse the file list': 'Kunja orodha ya faili',
 }

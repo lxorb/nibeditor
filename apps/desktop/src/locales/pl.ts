@@ -1538,4 +1538,10 @@ export const pl: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'Otwórz w nowej karcie',
+  'Open to the side': 'Otwórz obok',
+  'Open all': 'Otwórz wszystkie',
+  'Show in the file list': 'Pokaż na liście plików',
+  'Collapse the file list': 'Zwiń listę plików',
 }

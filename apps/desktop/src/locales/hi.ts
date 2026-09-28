@@ -1469,4 +1469,10 @@ export const hi: Dictionary = {
   'Select down': 'Select down',
   'Select up': 'Select up',
   'Select or deselect': 'Select or deselect',
+  // A row of the file list opened elsewhere, and the list folded and searched
+  'Open in new tab': 'नए टैब में खोलें',
+  'Open to the side': 'बगल में खोलें',
+  'Open all': 'सब खोलें',
+  'Show in the file list': 'फ़ाइल सूची में दिखाएँ',
+  'Collapse the file list': 'फ़ाइल सूची समेटें',
 }
