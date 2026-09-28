@@ -18,9 +18,10 @@ import manifest from '../../../even.app.json'
  *       evaluates dynamic code (same risk class as `eval()`)."
  *
  *  Neither is something a unit test of the app could have caught, because neither
- *  is about the app: they are about which libraries came along. So this builds the
- *  plugin the way a release does and reads the folder that is packed, which is the
- *  only place either question has an answer.
+ *  is about the app: they are about which libraries came along. So this builds and
+ *  stages the plugin the way a release does and reads what comes out: the package in
+ *  everything but the folder it sits in, and the package is the only place either
+ *  question has an answer.
  *
  *  It is slow, and that is the price of the only test that could have prevented a
  *  release from failing at the last step. */
