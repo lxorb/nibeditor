@@ -34,6 +34,7 @@ import {
 } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
+import { growing } from './grow'
 import { closeFence, leaveQuote } from './commands'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
@@ -171,6 +172,9 @@ export function editorState(options: StateOptions): EditorState {
       // Finding words, with the app drawing the bar: the library's engine and
       // nib's surface. See find.ts.
       findExtensions(options.onFind),
+      // The steps a grown selection came out through, for Shrink to go back
+      // down; see grow.ts.
+      growing,
       EditorView.lineWrapping,
       // The writing surface carries Typora's `#write` id, so Typora themes
       // that target `#write` style our editor directly.

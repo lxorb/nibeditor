@@ -1454,4 +1454,15 @@ export const ko: Dictionary = {
   'Open all': '모두 열기',
   'Show in the file list': '파일 목록에서 보기',
   'Collapse the file list': '파일 목록 접기',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Expand the selection',
+  'Shrink the selection': 'Shrink the selection',
+  'Insert a line above': 'Insert a line above',
+  'Delete the line': 'Delete the line',
+  'Join the lines': 'Join the lines',
+  'Sort the lines': 'Sort the lines',
+  'Reverse the lines': 'Reverse the lines',
+  'Upper case': 'Upper case',
+  'Lower case': 'Lower case',
+  'Title case': 'Title case',
 }

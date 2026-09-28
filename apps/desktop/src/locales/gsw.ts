@@ -1487,4 +1487,15 @@ export const gsw: Dictionary = {
   'Open all': 'Alli öffne',
   'Show in the file list': 'I de Dateilischte zeige',
   'Collapse the file list': 'Dateilischte zuechlappe',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Uswahl erwiitere',
+  'Shrink the selection': 'Uswahl verchliinere',
+  'Insert a line above': 'Zyyle drüber iifüege',
+  'Delete the line': 'Zyyle lösche',
+  'Join the lines': 'Zyyle verbinde',
+  'Sort the lines': 'Zyyle sortiere',
+  'Reverse the lines': 'Zyyle umchehre',
+  'Upper case': 'Grossbuechstabe',
+  'Lower case': 'Chliibuechstabe',
+  'Title case': 'Wortaafäng gross',
 }

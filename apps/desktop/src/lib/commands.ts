@@ -1,6 +1,8 @@
 import {
   CODE_PALETTES,
+  deleteLine,
   EditorView,
+  expandSelection,
   foldHeadings,
   foldLess,
   foldMore,
@@ -17,12 +19,19 @@ import {
   insertPageBreak,
   insertSlideBreak,
   insertTableToEdit,
+  insertLineAbove,
   insertToc,
+  joinLines,
+  lowerCase,
   reformatDocument,
+  reverseLines,
   setHeading,
   shiftHeading,
+  shrinkSelection,
   type SlashBlock,
+  sortLines,
   type StateCommand,
+  titleCase,
   toggleBulletList,
   toggleFold,
   toggleOrderedList,
@@ -30,6 +39,7 @@ import {
   toggleTaskList,
   type Transaction,
   unfoldEverything,
+  upperCase,
 } from '@nib/editor'
 import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
@@ -536,6 +546,41 @@ function foldingCommands(view?: EditorView): Command[] {
   ]
 }
 
+/** The lines and the letters: the rows for what a code editor does to lines, to
+ *  case, and to the selection a step at a time. Here as well as on their keys -
+ *  most of them have none - because the palette is where somebody looks for a
+ *  thing they know from another editor. See lines.ts, case.ts and grow.ts in the
+ *  editor package.
+ *
+ *  The selection rows only move the selection, so a note nobody may write in still
+ *  offers them; the rest write, and are greyed out there. */
+function lineCommands(view?: EditorView): Command[] {
+  const row = (id: string, label: string, command: StateCommand, writes = true): Command => ({
+    id,
+    label,
+    hint: shortcuts.hint(id),
+    disabled: !view || (writes && view.state.readOnly),
+    run: () => {
+      if (!view) return
+      command(view)
+      view.focus()
+    },
+  })
+
+  return [
+    row('edit.expand-selection', t('Expand the selection'), expandSelection, false),
+    row('edit.shrink-selection', t('Shrink the selection'), shrinkSelection, false),
+    row('edit.insert-line-above', t('Insert a line above'), insertLineAbove),
+    row('edit.delete-line', t('Delete the line'), deleteLine),
+    row('edit.join-lines', t('Join the lines'), joinLines),
+    row('edit.sort-lines', t('Sort the lines'), sortLines),
+    row('edit.reverse-lines', t('Reverse the lines'), reverseLines),
+    row('edit.upper-case', t('Upper case'), upperCase),
+    row('edit.lower-case', t('Lower case'), lowerCase),
+    row('edit.title-case', t('Title case'), titleCase),
+  ]
+}
+
 /** One block a note can be written out of.
  *
  *  `apply` takes the view rather than closing over one, because the same block
@@ -1013,6 +1058,7 @@ export function appCommands(view?: EditorView): Command[] {
     // not among the writing rows above and are not greyed out on a note nobody
     // may write in. See fold.ts in the editor package.
     ...foldingCommands(view),
+    ...lineCommands(view),
     {
       id: 'reading',
       label: workspace.active?.reading ? t('Leave reading') : t('Reading'),

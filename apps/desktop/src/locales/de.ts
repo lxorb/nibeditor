@@ -1516,4 +1516,15 @@ export const de: Dictionary = {
   'Open all': 'Alle öffnen',
   'Show in the file list': 'In der Dateiliste zeigen',
   'Collapse the file list': 'Dateiliste zuklappen',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Auswahl erweitern',
+  'Shrink the selection': 'Auswahl verkleinern',
+  'Insert a line above': 'Zeile darüber einfügen',
+  'Delete the line': 'Zeile löschen',
+  'Join the lines': 'Zeilen verbinden',
+  'Sort the lines': 'Zeilen sortieren',
+  'Reverse the lines': 'Zeilen umkehren',
+  'Upper case': 'Großbuchstaben',
+  'Lower case': 'Kleinbuchstaben',
+  'Title case': 'Wortanfänge groß',
 }

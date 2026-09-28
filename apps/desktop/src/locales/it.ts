@@ -1526,4 +1526,15 @@ export const it: Dictionary = {
   'Open all': 'Apri tutto',
   'Show in the file list': 'Mostra nell’elenco dei file',
   'Collapse the file list': 'Comprimi l’elenco dei file',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Espandi la selezione',
+  'Shrink the selection': 'Riduci la selezione',
+  'Insert a line above': 'Inserisci una riga sopra',
+  'Delete the line': 'Elimina la riga',
+  'Join the lines': 'Unisci le righe',
+  'Sort the lines': 'Ordina le righe',
+  'Reverse the lines': 'Inverti le righe',
+  'Upper case': 'Maiuscolo',
+  'Lower case': 'Minuscolo',
+  'Title case': 'Iniziali maiuscole',
 }

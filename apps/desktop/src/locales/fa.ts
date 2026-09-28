@@ -1478,4 +1478,15 @@ export const fa: Dictionary = {
   'Open all': 'باز کردن همه',
   'Show in the file list': 'نمایش در فهرست فایل‌ها',
   'Collapse the file list': 'جمع کردن فهرست فایل‌ها',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Expand the selection',
+  'Shrink the selection': 'Shrink the selection',
+  'Insert a line above': 'Insert a line above',
+  'Delete the line': 'Delete the line',
+  'Join the lines': 'Join the lines',
+  'Sort the lines': 'Sort the lines',
+  'Reverse the lines': 'Reverse the lines',
+  'Upper case': 'Upper case',
+  'Lower case': 'Lower case',
+  'Title case': 'Title case',
 }

@@ -1531,4 +1531,15 @@ export const fr: Dictionary = {
   'Open all': 'Tout ouvrir',
   'Show in the file list': 'Afficher dans la liste des fichiers',
   'Collapse the file list': 'Replier la liste des fichiers',
+  // Lines, case and the selection a step at a time
+  'Expand the selection': 'Étendre la sélection',
+  'Shrink the selection': 'Réduire la sélection',
+  'Insert a line above': 'Insérer une ligne au-dessus',
+  'Delete the line': 'Supprimer la ligne',
+  'Join the lines': 'Joindre les lignes',
+  'Sort the lines': 'Trier les lignes',
+  'Reverse the lines': 'Inverser les lignes',
+  'Upper case': 'Majuscules',
+  'Lower case': 'Minuscules',
+  'Title case': 'Initiales en majuscule',
 }
