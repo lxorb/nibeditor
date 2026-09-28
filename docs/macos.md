@@ -100,6 +100,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 5. Right-clicking in a text field shows the system menu (Look Up, Spelling). Right-clicking in a note still shows Nib's own menu.
 6. Reveal in Finder selects the file.
 
+> macOS 26.6 (25G72), Apple M5. 1 was not run: Homebrew is not installed on this Mac. 2: renaming a note, a folder with notes in it and a space by their capitals alone goes through, which tests in notes.rs now check on the Mac's own case-insensitive disk. 3: a note whose name the disk keeps decomposed is reached by `[[Übersicht]]` and links back (link-index.test.ts). 4 was not run: this Mac is not signed in to iCloud. `notes/icloud.rs` now also knows the dataless file macOS 14 and later leave under the note's own name, where it knew only the `.icloud` placeholder of macOS 13. 5: the sidebar's search field gives the system's menu (Look Up, Translate, Spelling and Grammar, Substitutions), and a note gives Nib's own. 6: Reveal in Finder opens the space's folder with the note selected.
+
 ### WebKit
 
 1. PDF export of a long note, of a canvas and of slides:
@@ -115,6 +117,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 4. Sign in to a site, then quit with the window closed or with Cmd+Q, and relaunch: still signed in.
 5. Downloads in a web tab show real progress, and Cancel stops them.
 6. PDFs open on macOS 13 or 14. This is the legacy pdf.js path.
+
+> macOS 26.6 (25G72), Apple M5. 1: a long note comes out as six A4 pages, the German locale's paper, upright, with one 20 mm margin on every side, the code block's and the table head's backgrounds printed, no blank page at the end, and no window on screen but the save sheet. A canvas is one page the size of the drawing, with its colours, arrows and labels. A deck came out portrait, each slide small in the corner of a tall page, because `pdf.rs` told AppKit "portrait" beside a sixteen by nine sheet; it is one 960 by 540 point page per slide now (`on_its_side`). WebKit's pagination has two limits Chromium's does not: it does not keep a heading with what follows it (`break-after: avoid` in export.css), so a heading can end a page, and it does not repeat a table's head on the next page. 2: Cmd+P is Command palette on a Mac, as in Obsidian, so the key the item names is not Nib's; File > Print opens the system's print sheet with all six pages. Opening it made macOS ask whether Nib may find devices on local networks, which is the sheet looking for printers, with no sentence of Nib's in the question: `NSLocalNetworkUsageDescription` belongs in the bundle's Info.plist. 3 was not run: the camera and microphone need the usage sentences the mac/bundle branch adds. 4: a login in a session cookie was lost whenever the window was closed before the quit. On this macOS a cookie made from properties that hold `Discard` at all is session-only, "FALSE" included, so every cookie `web_cookies.rs` wrote back was the same session cookie again; the key is left out now, and a session cookie set on httpbin.org came back after closing the window and quitting, and after Cmd+Q. 5 was not run: it downloads a file. 6 does not arise on macOS 26, which takes the modern pdf.js build; there the exported long note opens from the file list with its six pages.
 
 ### First launch
 
