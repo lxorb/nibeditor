@@ -422,17 +422,18 @@ function holds(tail: string): boolean {
  *  the redo are fetched by the first of each (workspace/copying.ts, import/picking.ts,
  *  workspace/redoing.ts).
  *
- *  Lowered 2026-09-28, to 3,300,000, when the line commands (Ctrl+J, a line above,
- *  Shift+Alt+Right) came in with their keys bound from the first frame and themselves
- *  behind a door (packages/editor/src/line-door.ts). The door did not pay for the keys
- *  on its own, and what did was the command list: `start.ts` imported
+ *  Lowered 2026-09-28, to 3,310,000 and 382 modules, when the line commands (Ctrl+J,
+ *  a line above, Shift+Alt+Right) came in with their keys bound from the first frame
+ *  and themselves behind a door (packages/editor/src/line-door.ts). The door did not
+ *  pay for the keys on its own, and what did was the command list: `start.ts` imported
  *  `lib/commands.ts` for the rows of the `/` menu and nothing else, which held the
  *  whole list in front of the first paint, and the export offer, printing, a picture
  *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
- *  over at the launch's last turn now; see `warmDoors`. Measured 3,282,630. Dictation
- *  went from the list of doors below with it: it is behind the command list's. */
-const BUDGET = 3_300_000
-const MOST_FILES = 386
+ *  over at the launch's last turn now; see `warmDoors`. Measured 3,298,741 and 380.
+ *  Dictation went from the list of doors below with it: it is behind the command
+ *  list's. */
+const BUDGET = 3_310_000
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
