@@ -74,6 +74,8 @@ mod papers;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
+#[cfg(desktop)]
+mod placement;
 mod query;
 #[cfg(desktop)]
 mod recent;
@@ -286,9 +288,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // Which page each web tab is on, so a back arrow is lit only where there is
     // something behind it, and a window with web tabs in it held, as it closes, until
     // their logins are made to last. A phone has no child webviews to keep a trail
-    // for; see web_tabs.rs and docs/web-tabs.md.
+    // for; see web_tabs.rs and docs/web-tabs.md. And where each window is, written
+    // down as it closes so the next launch opens there; see placement.rs.
     #[cfg(desktop)]
-    let builder = web_tabs::managed(builder);
+    let builder = placement::managed(web_tabs::managed(builder));
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(commands![
@@ -361,7 +364,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.setup(move |app| {
         engine::gate::say("\"event\":\"cef-initialised\"");
         if let Some(ui) = &ui {
-            engine::open_ui_window(app, ui)?;
+            engine::open_ui_window(app, &placement::restored(app.handle(), ui))?;
         }
         ready(app, None)
     });
@@ -448,9 +451,14 @@ fn ready(
     // there. See ground.rs, which says why that is right rather than merely careful.
     //
     // The window, not the webview window; see web_tabs.rs.
+    //
+    // Where it was left, too, put into the config rather than applied afterwards, so the
+    // first frame is already in the right place; see placement.rs.
     #[cfg(all(desktop, not(feature = "cef")))]
     if let Some(config) = ui {
-        let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
+        let config = placement::restored(handle, config);
+        trace::mark("window placement");
+        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?;
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);

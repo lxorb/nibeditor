@@ -65,7 +65,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Window | Size, position and maximised state come back at launch | every desktop app | missing | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
+| Window | Size, position and maximised state come back at launch | every desktop app | done | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
 | Fields | Right-click in a text field (address, search, find, rename, settings) gives Cut, Copy, Paste and Select all | every OS, Chrome | missing | `App.svelte:683` blocks every native menu, and the fields have none of their own | S | high |
 | Undo | A deleted or moved file gets a short "Undo" toast | Notion, Gmail | missing | undo is reachable only through the menus (`lib/row-menu.ts:158-162`) | S | med |
 

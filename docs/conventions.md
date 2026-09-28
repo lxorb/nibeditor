@@ -377,6 +377,14 @@ Off costs one environment read and a push onto an array, so there is no build to
 make and no flag to pass: the app somebody already has is the app that answers
 this.
 
+The window opens where it was left: its size, its place and whether it was
+maximised are written to `window.json` beside the settings as it closes, and put
+into the window's config before it is built, so the first frame is already in the
+right place. A place on a screen that is no longer plugged in is pulled onto one
+that is. A window whose config names a place of its own - a probe opened off the
+screen - is left where it says; see `apps/desktop/src-tauri/src/placement.rs`. It is
+on the trace as `window placement`.
+
 ## Types
 
 Every package extends `tsconfig.base.json`. Beyond `strict`: an index may
