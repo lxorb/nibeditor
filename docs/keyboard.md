@@ -367,8 +367,8 @@ Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts
 
 **A web tab**
 
-Four keys that only mean anything while the pane is showing a website, and they are
-the four a browser has taught everybody. They are in the registry like the rest, so
+The keys that only mean anything while the pane is showing a website, and they are
+the ones a browser has taught everybody. They are in the registry like the rest, so
 they show in Settings, show in the palette and can be rebound.
 
 | | |
@@ -378,8 +378,10 @@ they show in Settings, show in the palette and can be rebound.
 | Ctrl+L | the address field, in the pane that has the focus |
 | Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
-| Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
-| F12 | the engine's developer tools |
+| Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
+| F12, Ctrl+Shift+I | the engine's developer tools for the page (Cmd+Alt+I on a Mac): `web.devtools` |
+| Escape, F11 | give the screen back from a video in full screen |
+| none | Mute site, which Chrome gives no key either: `web.mute`, for a reader to bind |
 
 Ctrl+L is also the chord CodeMirror selects a line with, and both keep it, because
 the bar reads the press where the bar is rather than off the window: an app-level
@@ -390,7 +392,8 @@ shadow.
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
 Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too) and Ctrl+1 to 9 are never
-offered to the page. The engine tells the host
+offered to the page, and nor are the find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and
+Shift+F3 - because the find bar is the app's. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
