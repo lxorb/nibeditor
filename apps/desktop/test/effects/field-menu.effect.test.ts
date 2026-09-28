@@ -14,7 +14,8 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import ContextMenu from '../../src/lib/ContextMenu.svelte'
-import { fieldEntries, textFieldOf } from '../../src/lib/field-menu'
+import { fieldEntries, showFieldMenu } from '../../src/lib/field-menu'
+import { textFieldOf } from '../../src/lib/text-field'
 import { menu, type MenuItem } from '../../src/lib/menu.svelte'
 
 /** jsdom has no animations, and the menu grows out of its corner. */
@@ -70,9 +71,7 @@ function rows(entries = fieldEntries(field)): MenuItem[] {
 
 function open() {
   shown = mount(ContextMenu, { target: host })
-  menu.show(new MouseEvent('contextmenu', { clientX: 10, clientY: 10 }), fieldEntries(field), {
-    keepFocus: true,
-  })
+  showFieldMenu(new MouseEvent('contextmenu', { clientX: 10, clientY: 10 }), field)
   flushSync()
 }
 

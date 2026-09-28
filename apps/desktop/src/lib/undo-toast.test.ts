@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { UNDO_LINGER } from './backoff'
-import { nextBatch, undoToast } from './undo-toast.svelte'
+import { nextBatch, UNDO_LINGER, undoToast } from './undo-toast.svelte'
 import type { FileAction } from './workspace/undo.svelte'
 
 /** When the toast is up, what it offers, and what its one press takes back. */

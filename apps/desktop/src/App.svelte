@@ -11,7 +11,7 @@
   import FormatBar from './lib/FormatBar.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu } from './lib/menu.svelte'
-  import { fieldEntries, textFieldOf } from './lib/field-menu'
+  import { textFieldOf } from './lib/text-field'
   import { overlays } from './lib/overlays'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
@@ -21,7 +21,6 @@
   import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
-  import UndoToast from './lib/UndoToast.svelte'
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
@@ -53,6 +52,7 @@
     settingsSheet,
     shareSheet,
     slidesStage,
+    undoToastNotice,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -499,19 +499,20 @@
     }
   }
 
+  /** A text field's own menu, on the way down so a row holding the field does not
+   *  offer its own instead; see field-menu.ts. A phone has the system's. */
+  function onFieldMenu(event: MouseEvent) {
+    const field = viewport.touch ? null : textFieldOf(event.target)
+    if (!field) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+  }
+
   /** The two buttons on the side of a mouse. They are the browser's back and
    *  forward everywhere else, so they are the tab's here - and the browser's own
    *  is taken off them, or the web build would leave the app entirely. */
-  /** A right click in a text field gets the field's own menu, wherever the field is.
-   *  On the way down, so a row holding a field - a name being renamed in the file list -
-   *  does not offer its own menu instead. A phone has the system's bar for this. */
-  function onFieldMenu(event: MouseEvent) {
-    if (viewport.touch) return
-
-    const field = textFieldOf(event.target)
-    if (field) menu.show(event, fieldEntries(field), { keepFocus: true })
-  }
-
   function onMouse(event: MouseEvent) {
     if (event.button !== 3 && event.button !== 4) return
 
@@ -701,7 +702,7 @@
   })
 </script>
 
-<!-- Nothing in the app ever shows the browser's own menu; a text field gets nib's. -->
+<!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
   oncontextmenucapture={onFieldMenu}
@@ -862,7 +863,11 @@
            row has no height. See docs/web-tabs.md. -->
       <div class="notices">
         <StorageWarning />
-        <UndoToast />
+        {#if undoToastNotice.asked}
+          {#await undoToastNotice.asked then UndoToast}
+            <UndoToast />
+          {/await}
+        {/if}
         {#if recordingPill.asked}
           {#await recordingPill.asked then RecordingPill}
             <RecordingPill />

@@ -14,12 +14,16 @@
  *  join it, and Undo takes all of them back. A different kind of action is a
  *  different gesture and starts again. */
 
-import { UNDO_LINGER } from './backoff'
 import type { FileAction } from './workspace/undo.svelte'
 
 /** What the toast is about: a delete, or a move. Everything else on the stack is
  *  taken back from the menus. */
 type Offered = FileAction & { kind: 'delete' | 'move' }
+
+/** How long it stays, unless the pointer is on it. Long enough to read one word and
+ *  reach for it; Gmail's is about the same. Here rather than in backoff.ts because
+ *  that module is in front of the first paint and this one is not. */
+export const UNDO_LINGER = 6_000
 
 function offered(action: FileAction): action is Offered {
   return action.kind === 'delete' || action.kind === 'move'

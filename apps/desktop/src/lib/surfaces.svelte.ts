@@ -151,6 +151,9 @@ export const recordingPill = latched(() => import('./RecordingPill.svelte'))
  *  presses the bars; see AppMenu.svelte. */
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
+/** The Undo after a delete or a move; see undo-toast.svelte.ts. */
+export const undoToastNotice = latched(() => import('./UndoToast.svelte'))
+
 /** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,
  *  as cards, on the website. Latched like the sheets, and asked for at the launch's
  *  last turn rather than behind the first press, because that press is a hand holding
@@ -224,6 +227,9 @@ export async function warmDoors(): Promise<void> {
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
     paletteDoor.ask(),
+    undoToastNotice.ask(),
+    // So the first right click in a text field does not wait for its menu.
+    import('./field-menu'),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here

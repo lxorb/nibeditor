@@ -25,9 +25,7 @@ interface MenuOptions {
   /** Stay by the finger as a callout instead of rising from the bottom: for
    *  a selection in the text, which has to stay in view. */
   near?: boolean
-  /** Leave the keyboard where it is: a text field's menu, whose field would commit a
-   *  name or forget an address if it lost it. The rows are walked from the field
-   *  instead; see field-menu.ts and ContextMenu.svelte. */
+  /** Leave the keyboard in the text field it is about; see field-menu.ts. */
   keepFocus?: boolean
 }
 
@@ -39,6 +37,8 @@ class ContextMenu {
   title = $state<string | null>(null)
   near = $state(false)
   keepFocus = $state(false)
+  /** The row a key lit while the keyboard stays in a field, or -1. */
+  lit = $state(-1)
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
@@ -53,6 +53,7 @@ class ContextMenu {
     this.title = options.title ?? null
     this.near = !!options.near
     this.keepFocus = !!options.keepFocus
+    this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
     this.open = true
