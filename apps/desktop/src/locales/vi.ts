@@ -298,6 +298,7 @@ export const vi: Dictionary = {
   // PDFs
   'Copy a link': 'Sao chép liên kết',
   'That PDF could not be opened': 'Không mở được PDF đó',
+  'That file could not be read': 'Không đọc được tệp đó',
   // Modes and view
   Reading: 'Đọc',
   'Leave reading': 'Thoát chế độ đọc',

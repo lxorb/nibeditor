@@ -298,6 +298,7 @@ export const bn: Dictionary = {
   // PDFs
   'Copy a link': 'লিংক কপি',
   'That PDF could not be opened': 'PDF খোলা গেল না',
+  'That file could not be read': 'ফাইলটি পড়া গেল না',
   // Modes and view
   Reading: 'পড়া',
   'Leave reading': 'পড়া বন্ধ',

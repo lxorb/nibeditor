@@ -298,6 +298,7 @@ export const zhHantHK: Dictionary = {
   // PDFs
   'Copy a link': '複製連結',
   'That PDF could not be opened': '無法開啟該PDF',
+  'That file could not be read': '無法讀取該檔案',
   // Modes and view
   Reading: '閱讀',
   'Leave reading': '離開閱讀',

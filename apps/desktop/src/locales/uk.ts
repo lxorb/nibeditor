@@ -313,6 +313,7 @@ export const uk: Dictionary = {
   // PDFs
   'Copy a link': 'Копіювати посилання',
   'That PDF could not be opened': 'Не вдалося відкрити цей PDF',
+  'That file could not be read': 'Не вдалося прочитати цей файл',
   // Modes and view
   Reading: 'Читання',
   'Leave reading': 'Вийти з читання',

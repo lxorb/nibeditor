@@ -298,6 +298,7 @@ export const my: Dictionary = {
   // PDFs
   'Copy a link': 'လင့်ကူးယူ',
   'That PDF could not be opened': 'ထို PDF ဖွင့်မရပါ',
+  'That file could not be read': 'ထိုဖိုင်ကို ဖတ်မရပါ',
   // Modes and view
   Reading: 'ဖတ်မုဒ်',
   'Leave reading': 'ဖတ်မုဒ်မှထွက်',

@@ -14,6 +14,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 /** The disk: what is on it, and what the store asked of it. */
 const files = new Map<string, string>()
 const folders = new Set<string>()
+/** Files that are on the disk and will not read: another program holds them, or
+ *  they are not UTF-8. The crate fails the read and still stamps the file. */
+const locked = new Set<string>()
 const sent: string[] = []
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -81,6 +84,8 @@ vi.mock('./tauri', async (importOriginal) => ({
 
     switch (command) {
       case 'read_note': {
+        if (locked.has(path))
+          throw new Error(`could not read ${path}: stream did not contain valid UTF-8`)
         const held = files.get(path)
         // The crate fails on a file that is not there, and what the store does
         // about a note that has not been written yet depends on that: see `open`
@@ -141,6 +146,8 @@ vi.mock('./tauri', async (importOriginal) => ({
         return undefined
       case 'read_tree':
         return listing(text(args?.root))
+      case 'file_stamp':
+        return files.has(path) || locked.has(path) ? { modified: 1, len: 1 } : null
       default:
         return undefined
     }
@@ -165,6 +172,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
+const { unread } = await import('./unread.svelte')
 
 /** Every path the list shows, in the order it shows them. */
 function rows(): string[] {
@@ -183,6 +191,8 @@ function rows(): string[] {
 beforeEach(async () => {
   files.clear()
   folders.clear()
+  locked.clear()
+  unread.dismiss()
   sent.length = 0
   files.set('/space/Beta.md', '# Beta')
   folders.add('/space/Work')
@@ -327,6 +337,34 @@ describe('opening a row that is a folder', () => {
   test('and a row that is a note opens that note', async () => {
     await workspace.openRow('/space/Beta.md')
     expect(workspace.active?.path).toBe('/space/Beta.md')
+  })
+
+  test('and a note that is there and will not read opens nothing, and says so', async () => {
+    locked.add('/space/Beta.md')
+
+    await workspace.openRow('/space/Beta.md')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+  })
+
+  test('but one that has gone is simply not there, and says nothing', async () => {
+    files.delete('/space/Beta.md')
+
+    await workspace.openRow('/space/Beta.md')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(false)
+  })
+
+  // The list is a listing and a listing is behind the disk: a note another program
+  // wrote into the folder a moment ago is not a row yet. Opened as the empty page
+  // the folder would be, the first keystroke saved over it.
+  test('and a folder note the list has not seen, which will not read, is never an empty page', async () => {
+    locked.add('/space/Work/Work.md')
+
+    await workspace.openRow('/space/Work')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+    expect(sent.filter((one) => one.startsWith('write_note'))).toEqual([])
   })
 })
 

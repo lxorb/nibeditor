@@ -301,6 +301,7 @@ export const sw: Dictionary = {
   // PDFs
   'Copy a link': 'Nakili kiungo',
   'That PDF could not be opened': 'PDF hiyo haikuweza kufunguliwa',
+  'That file could not be read': 'Faili hiyo haikuweza kusomwa',
   // Modes and view
   Reading: 'Kusoma',
   'Leave reading': 'Toka kwenye kusoma',

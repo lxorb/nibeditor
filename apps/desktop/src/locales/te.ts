@@ -298,6 +298,7 @@ export const te: Dictionary = {
   // PDFs
   'Copy a link': 'ఒక లింక్ కాపీ చేయి',
   'That PDF could not be opened': 'ఆ PDF తెరవలేకపోయింది',
+  'That file could not be read': 'ఆ ఫైల్‌ను చదవలేకపోయింది',
   // Modes and view
   Reading: 'చదవడం',
   'Leave reading': 'చదవడం వదిలివేయి',

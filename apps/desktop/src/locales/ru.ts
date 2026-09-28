@@ -313,6 +313,7 @@ export const ru: Dictionary = {
   // PDFs
   'Copy a link': 'Копировать ссылку',
   'That PDF could not be opened': 'Не удалось открыть этот PDF',
+  'That file could not be read': 'Не удалось прочитать этот файл',
   // Modes and view
   Reading: 'Чтение',
   'Leave reading': 'Выйти из чтения',

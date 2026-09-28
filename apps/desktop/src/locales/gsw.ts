@@ -298,6 +298,7 @@ export const gsw: Dictionary = {
   // PDFs
   'Copy a link': 'Link kopiere',
   'That PDF could not be opened': 'Das PDF hät me nöd chöne uufmache',
+  'That file could not be read': 'Die Datei hät me nöd chöne läse',
   // Modes and view
   Reading: 'Läse',
   'Leave reading': 'Läse verlaa',

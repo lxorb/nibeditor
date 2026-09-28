@@ -298,6 +298,7 @@ export const zhHans: Dictionary = {
   // PDFs
   'Copy a link': '复制链接',
   'That PDF could not be opened': '无法打开该PDF',
+  'That file could not be read': '无法读取该文件',
   // Modes and view
   Reading: '阅读',
   'Leave reading': '退出阅读',

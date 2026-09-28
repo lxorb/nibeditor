@@ -176,6 +176,8 @@ const SESSION_DELAY = 400
  *  sitting, short enough that a trail is never what a session is made of. */
 const TRAIL = 30
 
+const unread = (path: string) => import('./unread.svelte').then((one) => one.unread.there(path))
+
 /** Which line of a note a followed link lands on: the heading it names, or the
  *  line the block name sits on. Null when the note holds neither, which leaves
  *  the note opened where it was left rather than somewhere arbitrary.
@@ -1305,7 +1307,7 @@ class Workspace {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
     // draw on: saving one over it would take the file with it.
-    if (text === null) return null
+    if (text === null) return unread(path).then(() => null)
 
     // The plane read here and the thread handed over before the tab is built, so
     // the parse and the surface's mount are two tasks rather than one. A canvas of
@@ -1684,7 +1686,7 @@ class Workspace {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
-    if (text === null) return null
+    if (text === null) return unread(path).then(() => null)
 
     const file = this.document({
       kind: 'pages',
@@ -2112,12 +2114,9 @@ class Workspace {
       return waiting
     }
 
-    // Gone, or unreadable: nothing to open, and no tab that pretends otherwise.
-    // Unless the caller knows the file is not there yet and means to open it all
-    // the same: a folder whose note nobody has written. It opens as the empty page
-    // it is, and it is written when there are words in it - which is the ordinary
-    // save, since a note in a space keeps itself.
-    const doc = found ?? (options.blank ? '' : null)
+    // Gone, or there and unreadable, which says so: no tab either way. Only a note
+    // not there yet opens blank - for a folder whose note nobody has written.
+    const doc = found ?? ((await unread(path)) || !options.blank ? null : '')
     if (doc === null) return null
 
     // A preview reuses the one preview tab rather than opening another, and only
@@ -2276,7 +2275,7 @@ class Workspace {
    *  read the file a second time. */
   private async stepped(tab: Tab, path: string): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
-    if (text === null) return null
+    if (text === null) return unread(path).then(() => null)
 
     const note = this.document({ kind: 'note', path, name: nameOf(path), text, dirty: false })
     tab.note = note

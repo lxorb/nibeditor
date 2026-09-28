@@ -301,6 +301,7 @@ export const ml: Dictionary = {
   // PDFs
   'Copy a link': 'ഒരു ലിങ്ക് പകർത്തുക',
   'That PDF could not be opened': 'ആ PDF തുറക്കാനായില്ല',
+  'That file could not be read': 'ആ ഫയൽ വായിക്കാനായില്ല',
   // Modes and view
   Reading: 'വായന',
   'Leave reading': 'വായന വിടുക',

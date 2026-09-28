@@ -298,6 +298,7 @@ export const ko: Dictionary = {
   // PDFs
   'Copy a link': '링크 복사',
   'That PDF could not be opened': '그 PDF를 열 수 없었습니다',
+  'That file could not be read': '그 파일을 읽을 수 없었습니다',
   // Modes and view
   Reading: '읽기',
   'Leave reading': '읽기 끝내기',

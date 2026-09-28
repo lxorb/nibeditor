@@ -5,6 +5,7 @@
   import { t } from './i18n.svelte'
   import { dur } from './motion'
   import { undoToast } from './undo-toast.svelte'
+  import { unread } from './unread.svelte'
   import { workspace } from './workspace.svelte'
 
   // What is on the stack already, before this was on the page, is nobody's news.
@@ -17,8 +18,11 @@
     untrack(() => undoToast.heard(stack))
   })
 
-  // Gone with the component, and the timer with it.
-  $effect(() => () => undoToast.dismiss())
+  // Gone with the component, and the timers with it.
+  $effect(() => () => {
+    undoToast.dismiss()
+    unread.dismiss()
+  })
 </script>
 
 <!-- One word for what happened and one for the way back: the row it was about has
@@ -33,6 +37,13 @@
   >
     <p>{undoToast.kind === 'delete' ? t('Deleted') : t('Moved')}</p>
     <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
+  </div>
+  <!-- A row clicked that opened nothing, because the file is there and would not
+       read; see unread.svelte.ts. Nothing to press: there is no way back from a
+       file another program holds, only the news that it does. -->
+{:else if unread.shown}
+  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+    <p>{t('That file could not be read')}</p>
   </div>
 {/if}
 

@@ -319,6 +319,7 @@ export const ar: Dictionary = {
   // PDFs
   'Copy a link': 'نسخ رابط',
   'That PDF could not be opened': 'تعذّر فتح ملف PDF',
+  'That file could not be read': 'تعذّرت قراءة ذلك الملف',
   // Modes and view
   Reading: 'القراءة',
   'Leave reading': 'إنهاء القراءة',

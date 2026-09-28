@@ -298,6 +298,7 @@ export const ps: Dictionary = {
   // PDFs
   'Copy a link': 'تړنه لمېسل',
   'That PDF could not be opened': 'هغه PDF ونه پرانيستل شو',
+  'That file could not be read': 'هغه دوتنه ونه لوستل شوه',
   // Modes and view
   Reading: 'لوستل',
   'Leave reading': 'له لوستلو وتل',

@@ -298,6 +298,7 @@ export const yue: Dictionary = {
   // PDFs
   'Copy a link': '複製連結',
   'That PDF could not be opened': '冇辦法開啟嗰個PDF',
+  'That file could not be read': '冇辦法讀取嗰個檔案',
   // Modes and view
   Reading: '閱讀',
   'Leave reading': '離開閱讀',

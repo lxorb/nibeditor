@@ -298,6 +298,7 @@ export const gu: Dictionary = {
   // PDFs
   'Copy a link': 'કડી નકલ કરો',
   'That PDF could not be opened': 'એ PDF ખોલી શકાયું નહીં',
+  'That file could not be read': 'એ ફાઇલ વાંચી શકાઈ નહીં',
   // Modes and view
   Reading: 'વાંચન',
   'Leave reading': 'વાંચનમાંથી બહાર',

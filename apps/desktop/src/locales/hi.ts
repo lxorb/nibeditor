@@ -298,6 +298,7 @@ export const hi: Dictionary = {
   // PDFs
   'Copy a link': 'लिंक कॉपी करें',
   'That PDF could not be opened': 'वह PDF खुल नहीं सका',
+  'That file could not be read': 'वह फ़ाइल पढ़ी नहीं जा सकी',
   // Modes and view
   Reading: 'पठन',
   'Leave reading': 'पठन से बाहर',

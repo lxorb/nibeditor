@@ -301,6 +301,7 @@ export const de: Dictionary = {
   // PDFs
   'Copy a link': 'Link kopieren',
   'That PDF could not be opened': 'Dieses PDF konnte nicht geöffnet werden',
+  'That file could not be read': 'Diese Datei konnte nicht gelesen werden',
   // Modes and view
   Reading: 'Lesen',
   'Leave reading': 'Lesen verlassen',

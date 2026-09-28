@@ -298,6 +298,7 @@ export const id: Dictionary = {
   // PDFs
   'Copy a link': 'Salin tautan',
   'That PDF could not be opened': 'PDF itu tidak dapat dibuka',
+  'That file could not be read': 'File itu tidak dapat dibaca',
   // Modes and view
   Reading: 'Membaca',
   'Leave reading': 'Keluar dari mode baca',
