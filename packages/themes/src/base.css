@@ -1982,6 +1982,25 @@ select:focus-visible,
   text-align: start;
 }
 
+/* A column the note aligned keeps its side. The renderer says it with `align`,
+   and any declaration at all outranks an attribute, the `start` above included,
+   so the side is said again here. Physical rather than logical, because a
+   `---:` column is the right-hand one whichever way the note reads. */
+#write th[align='left'],
+#write td[align='left'] {
+  text-align: left;
+}
+
+#write th[align='center'],
+#write td[align='center'] {
+  text-align: center;
+}
+
+#write th[align='right'],
+#write td[align='right'] {
+  text-align: right;
+}
+
 /* The grid is a hairline; the one rule worth reading is the one under the
    header, which is what says where the data starts. */
 #write th {
