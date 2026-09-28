@@ -51,13 +51,13 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Files | Ctrl+C / Ctrl+X, then Ctrl+V into the focused folder, copies or moves the selected notes | Explorer, VS Code | missing | `onKey` (`lib/Tree.svelte:299-345`) handles only select all, delete, rename and move up/down | M | high |
-| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | missing | tree drops accept `text/nib-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
-| Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | partial | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
-| Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | missing | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
-| Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | missing | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
-| Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | partial | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
-| Files | Ctrl+D duplicates the selected note | Finder, Notion | missing | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
+| Files | Ctrl+C / Ctrl+X, then Ctrl+V into the focused folder, copies or moves the selected notes | Explorer, VS Code | done `3864ecf8` | `onKey` (`lib/Tree.svelte:299-345`) handles only select all, delete, rename and move up/down | M | high |
+| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | done `3864ecf8` | tree drops accept `text/nib-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
+| Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | done `3864ecf8` | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
+| Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | done `3864ecf8` | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
+| Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | done `3864ecf8` | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
+| Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | done `3864ecf8` | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
+| Files | Ctrl+D duplicates the selected note | Finder, Notion | done `3864ecf8` | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
 
 ## Batch 4: everywhere
 
