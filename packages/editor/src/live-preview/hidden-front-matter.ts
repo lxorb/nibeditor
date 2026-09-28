@@ -66,7 +66,7 @@ export interface FrontMatterSpan {
  *  note, and hiding that would hide the note.
  *
  *  Asked of the tree's first node, so it costs the same however long the note is. */
-function frontMatterSpan(state: EditorState): FrontMatterSpan | null {
+export function frontMatterSpan(state: EditorState): FrontMatterSpan | null {
   const first = syntaxTree(state).topNode.firstChild
   if (first?.name !== 'FrontMatter' || first.from !== 0) return null
   if (first.getChildren('FrontMatterMark').length < 2) return null

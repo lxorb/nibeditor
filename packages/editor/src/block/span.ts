@@ -15,7 +15,7 @@
  *  press landed in. */
 
 import { foldable, syntaxTree } from '@codemirror/language'
-import type { EditorState } from '@codemirror/state'
+import type { EditorState, Line } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { headingLevel } from '../headings'
 import { enclosing } from '../nodes'
@@ -138,4 +138,18 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   }
 
   return found
+}
+
+/** The nearest line with something on it, from line `number` on towards `delta`, that
+ *  line included; null past the end of the note. Blank lines are stepped over: they
+ *  are the separation between blocks rather than blocks of their own. */
+export function writtenLine(state: EditorState, number: number, delta: -1 | 1): Line | null {
+  const doc = state.doc
+
+  for (let at = number; at >= 1 && at <= doc.lines; at += delta) {
+    const line = doc.line(at)
+    if (line.text.trim()) return line
+  }
+
+  return null
 }
