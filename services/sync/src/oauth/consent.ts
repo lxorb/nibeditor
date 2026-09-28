@@ -137,3 +137,27 @@ ${write}
 </form>
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
+
+/** The third step, for an account that asks for a second code: the one out of the
+ *  authenticator app, or a recovery code. The emailed code proved the address and
+ *  nothing more, which is exactly what a second factor is there to be more than -
+ *  a connector's token reads every note, so it is not handed out on less than the
+ *  app's own sign-in asks for. See `/v1/auth/second` in auth.ts.
+ *
+ *  What the page carries between the two is the half a sign-in the app's own flow
+ *  holds, never the address, and whether the person said the client may write. */
+export function secondStep(
+  ask: Ask,
+  given: { holding: string; write: boolean; error?: string },
+): string {
+  return `<h1>Enter the code from your app</h1>
+<p>Or one of your recovery codes.</p>
+<form method="post" action="/oauth/authorize">
+${hidden(ask, { holding: given.holding, ...(given.write ? { write: '1' } : {}) })}
+<div class="field"><label for="code">Code</label>
+<input type="text" class="code" id="code" name="code" autocomplete="one-time-code" maxlength="32" required autofocus spellcheck="false"></div>
+${given.error ? sentence(given.error) : ''}
+<div class="actions"><button name="action" value="second">Allow</button><button class="quiet" name="action" value="deny" formnovalidate>Cancel</button></div>
+</form>
+<p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
+}
