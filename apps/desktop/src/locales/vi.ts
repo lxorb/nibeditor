@@ -301,6 +301,7 @@ export const vi: Dictionary = {
   // PDFs
   'Copy a link': 'Sao chép liên kết',
   'That PDF could not be opened': 'Không mở được PDF đó',
+  'That file could not be read': 'Không đọc được tệp đó',
   // Modes and view
   Reading: 'Đọc',
   'Leave reading': 'Thoát chế độ đọc',
@@ -1271,6 +1272,7 @@ export const vi: Dictionary = {
   'Add to {name}': 'Thêm vào {name}',
   // Web tabs
   Reload: 'Tải lại',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Lưu trang này',
   'Clip the link': 'Lưu liên kết',
   'Open in the browser': 'Mở trong trình duyệt',
@@ -1278,6 +1280,11 @@ export const vi: Dictionary = {
   Website: 'Trang web',
   'Open a website': 'Mở một trang web',
   'Convert website notes': 'Chuyển đổi ghi chú trang web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Ghi âm',
   Recording: 'Bản ghi',
@@ -1495,4 +1502,15 @@ export const vi: Dictionary = {
   'Duplicate the block': 'Tạo bản sao khối',
   'Move the block up': 'Chuyển khối lên',
   'Move the block down': 'Chuyển khối xuống',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

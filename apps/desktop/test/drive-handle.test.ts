@@ -84,6 +84,8 @@ describe('the handle a drive reads the app through', () => {
     'iconChoice',
     'links',
     'modes',
+    // How many layers are up, which the keyboard and access drives read.
+    'overlays',
     'pages',
     // The stage has no chrome in the page, so this is the only way to read it.
     'present',

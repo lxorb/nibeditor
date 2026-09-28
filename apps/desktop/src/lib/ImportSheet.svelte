@@ -147,7 +147,7 @@
                app's name is its name in every language. -->
           <span class="name">{FORMATS['apple-notes']}</span>
           <button
-            class="pill"
+            class="nib-chip"
             onclick={() => void importing.readMac()}
             disabled={importing.stage === 'reading'}
           >
@@ -156,7 +156,7 @@
         </div>
         {#if importing.noAccess}
           <p class="hint">{t('Turn nibeditor on under Full Disk Access, then ask again.')}</p>
-          <button class="pill" onclick={() => void importing.openAccess()}>
+          <button class="nib-chip" onclick={() => void importing.openAccess()}>
             {t('Open the setting')}
           </button>
         {/if}
@@ -183,7 +183,7 @@
            to count, since what comes back is one note in a pane. -->
       {#if settings.pandoc}
         <p class="note">{t('Pandoc reads this one, from the file on your disk.')}</p>
-        <button class="primary" onclick={() => void importing.readWithPandoc()}>
+        <button class="nib-button" onclick={() => void importing.readWithPandoc()}>
           {t('Read it with pandoc')}
         </button>
       {:else}
@@ -220,7 +220,7 @@
       <div class="card">
         <div class="row">
           <span class="name">{t('Into')}</span>
-          <button class="pill" onclick={() => void importing.chooseTarget()}>{target}</button>
+          <button class="nib-chip" onclick={() => void importing.chooseTarget()}>{target}</button>
         </div>
         <div class="row">
           <!-- The name everything lands under. Not "folder": a row that holds
@@ -262,9 +262,9 @@
             })}
           </p>
         {/if}
-        <button class="primary" onclick={() => importing.close()}>{t('Done')}</button>
+        <button class="nib-button" onclick={() => importing.close()}>{t('Done')}</button>
       {:else}
-        <button class="primary" disabled={!ready} onclick={() => void importing.run()}>
+        <button class="nib-button" disabled={!ready} onclick={() => void importing.run()}>
           {importing.stage === 'writing' ? t('Importing') : t('Import')}
         </button>
         {#if importing.stage === 'writing'}

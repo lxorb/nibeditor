@@ -153,6 +153,14 @@
     }
   }
 
+  /* With movement turned down the dot simply sits there, which still says the
+     request is out. */
+  @media (prefers-reduced-motion: reduce) {
+    .pulse {
+      animation: none;
+    }
+  }
+
   form {
     display: flex;
     flex-direction: column;

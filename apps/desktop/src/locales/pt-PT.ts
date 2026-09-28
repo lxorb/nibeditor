@@ -309,6 +309,7 @@ export const ptPT: Dictionary = {
   // PDFs
   'Copy a link': 'Copiar uma ligação',
   'That PDF could not be opened': 'Não foi possível abrir esse PDF',
+  'That file could not be read': 'Não foi possível ler esse ficheiro',
   // Modes and view
   Reading: 'Leitura',
   'Leave reading': 'Sair da leitura',
@@ -1320,6 +1321,7 @@ export const ptPT: Dictionary = {
   'Add to {name}': 'Adicionar a {name}',
   // Web tabs
   Reload: 'Recarregar',
+  'Hard reload': 'Recarregamento forçado',
   'Clip this page': 'Guardar esta página',
   'Clip the link': 'Guardar a ligação',
   'Open in the browser': 'Abrir no navegador',
@@ -1327,6 +1329,11 @@ export const ptPT: Dictionary = {
   Website: 'Sítio web',
   'Open a website': 'Abrir um sítio web',
   'Convert website notes': 'Converter notas de sítios',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Gravar',
   Recording: 'Gravação',
@@ -1546,4 +1553,15 @@ export const ptPT: Dictionary = {
   'Duplicate the block': 'Duplicar o bloco',
   'Move the block up': 'Subir o bloco',
   'Move the block down': 'Descer o bloco',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

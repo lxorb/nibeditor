@@ -610,10 +610,24 @@ pub fn relative_to(root: &Path, path: &Path) -> String {
 /// a pulled cable leaves either the old file or the new one, never half of
 /// either, and never a temp file lying around.
 pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    written(target, bytes, false)
+}
+
+/// The same whole write, for a file nobody but this user may read: its temp file is
+/// made the owner's alone before a byte is in it, so what it holds is never on the
+/// disk where anybody else could read it - not even for the moment between the
+/// write and a permission set afterwards, which is what the first launch on a
+/// shared machine used to leave. On Windows there is no mode to set: the app's own
+/// folder is the user's already.
+pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
+    written(target, bytes, true)
+}
+
+fn written(target: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
     let parent = target
         .parent()
         .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
-    let name = target.file_name().and_then(OsStr::to_str).unwrap_or("file");
+    let name = temp_stem(target);
 
     // Hidden, so a half-written note never shows up in the tree beside the real
     // one, and named after this process so two windows cannot collide.
@@ -623,7 +637,7 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
         WRITES.fetch_add(1, Ordering::Relaxed)
     ));
 
-    if let Err(error) = spill(&temp, bytes) {
+    if let Err(error) = spill(&temp, bytes, private) {
         let _ = fs::remove_file(&temp);
         return Err(error);
     }
@@ -634,9 +648,38 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
     })
 }
 
+/// How many bytes of the target's name its temp file carries.
+const TEMP_STEM: usize = 64;
+
+/// The front of the target's name, for its temp file to be recognisable by.
+///
+/// Only the front. A file system holds a name to 255 bytes or 255 UTF-16 units,
+/// and the temp file's name is the target's with a dot and a counter around it -
+/// so a note whose own name was near that limit, which is 85 characters of
+/// Chinese on a Mac or on Linux, had a temp file no disk would create, and could
+/// be opened but never saved. Counted in bytes, and cut between two characters.
+fn temp_stem(target: &Path) -> &str {
+    let name = target.file_name().and_then(OsStr::to_str).unwrap_or("file");
+    let mut end = name.len().min(TEMP_STEM);
+    while !name.is_char_boundary(end) {
+        end -= 1;
+    }
+    &name[..end]
+}
+
 /// The half of an atomic write that can fail with the temp file already there.
-fn spill(temp: &Path, bytes: &[u8]) -> Result<(), String> {
-    let mut file = fs::File::create(temp).map_err(|error| cannot("write", temp, &error))?;
+#[cfg_attr(not(unix), allow(unused_variables))]
+fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create(true).truncate(true);
+    #[cfg(unix)]
+    if private {
+        std::os::unix::fs::OpenOptionsExt::mode(&mut options, 0o600);
+    }
+
+    let mut file = options
+        .open(temp)
+        .map_err(|error| cannot("write", temp, &error))?;
     file.write_all(bytes)
         .map_err(|error| cannot("write", temp, &error))?;
     // The rename is only atomic if the bytes reached the disk before it.
@@ -965,6 +1008,49 @@ mod tests {
             .map(|entry| entry.file_name().to_string_lossy().to_string())
             .collect();
         assert_eq!(left, vec!["Note.md".to_string()]);
+    }
+
+    /// A private file is its owner's alone, and so was the temp file it was
+    /// written through, which is the file the rename leaves in its place.
+    #[test]
+    #[cfg(unix)]
+    fn a_private_file_is_the_owners_alone() {
+        use std::os::unix::fs::PermissionsExt as _;
+
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let secret = dir.path().join("automation.json");
+
+        super::write_privately(&secret, b"{}").expect("the private write");
+
+        let mode = std::fs::metadata(&secret)
+            .expect("the file")
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600);
+    }
+
+    /// A name as long as a disk allows is a note that can be saved. Its temp file
+    /// is named after it, and used to be the whole name and a counter more, which
+    /// no disk would create.
+    #[test]
+    fn a_note_with_the_longest_name_a_disk_allows_can_be_saved() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join(format!("{}.md", "a".repeat(240)));
+
+        write_atomically(&target, b"words").expect("the write to land");
+        assert_eq!(std::fs::read(&target).expect("the note"), b"words");
+    }
+
+    /// The temp file carries the front of the name, cut between two characters
+    /// however many bytes each of them is.
+    #[test]
+    fn a_temp_file_is_named_after_the_front_of_the_note() {
+        assert_eq!(super::temp_stem(Path::new("dir/Idea.md")), "Idea.md");
+
+        let long = "\u{1F600}".repeat(40);
+        let stem = super::temp_stem(Path::new(&long));
+        assert!(stem.len() <= 64, "{} bytes", stem.len());
+        assert_eq!(stem, "\u{1F600}".repeat(16));
     }
 
     #[test]

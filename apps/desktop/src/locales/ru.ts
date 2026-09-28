@@ -316,6 +316,7 @@ export const ru: Dictionary = {
   // PDFs
   'Copy a link': 'Копировать ссылку',
   'That PDF could not be opened': 'Не удалось открыть этот PDF',
+  'That file could not be read': 'Не удалось прочитать этот файл',
   // Modes and view
   Reading: 'Чтение',
   'Leave reading': 'Выйти из чтения',
@@ -1353,6 +1354,7 @@ export const ru: Dictionary = {
   'Add to {name}': 'Добавить в {name}',
   // Web tabs
   Reload: 'Обновить',
+  'Hard reload': 'Жёсткая перезагрузка',
   'Clip this page': 'Сохранить эту страницу',
   'Clip the link': 'Сохранить ссылку',
   'Open in the browser': 'Открыть в браузере',
@@ -1360,6 +1362,11 @@ export const ru: Dictionary = {
   Website: 'Сайт',
   'Open a website': 'Открыть сайт',
   'Convert website notes': 'Преобразовать веб-заметки',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Записать',
   Recording: 'Запись',
@@ -1574,4 +1581,15 @@ export const ru: Dictionary = {
   'Duplicate the block': 'Дублировать блок',
   'Move the block up': 'Переместить блок выше',
   'Move the block down': 'Переместить блок ниже',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

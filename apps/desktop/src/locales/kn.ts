@@ -304,6 +304,7 @@ export const kn: Dictionary = {
   // PDFs
   'Copy a link': 'ಒಂದು ಲಿಂಕ್ ನಕಲಿಸಿ',
   'That PDF could not be opened': 'ಆ PDF ತೆರೆಯಲಾಗಲಿಲ್ಲ',
+  'That file could not be read': 'ಆ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ',
   // Modes and view
   Reading: 'ಓದುವಿಕೆ',
   'Leave reading': 'ಓದುವಿಕೆ ಬಿಡಿ',
@@ -1295,6 +1296,7 @@ export const kn: Dictionary = {
   'Add to {name}': '{name} ಗೆ ಸೇರಿಸು',
   // Web tabs
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
   'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
@@ -1302,6 +1304,11 @@ export const kn: Dictionary = {
   Website: 'ಜಾಲತಾಣ',
   'Open a website': 'ಜಾಲತಾಣ ತೆರೆ',
   'Convert website notes': 'ಜಾಲತಾಣ ಟಿಪ್ಪಣಿಗಳನ್ನು ಪರಿವರ್ತಿಸಿ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ಧ್ವನಿಮುದ್ರಿಸು',
   Recording: 'ಧ್ವನಿಮುದ್ರಣ',
@@ -1520,4 +1527,15 @@ export const kn: Dictionary = {
   'Duplicate the block': 'ಬ್ಲಾಕ್ ನಕಲು ಮಾಡಿ',
   'Move the block up': 'ಬ್ಲಾಕ್ ಅನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the block down': 'ಬ್ಲಾಕ್ ಅನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

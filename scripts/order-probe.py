@@ -279,6 +279,20 @@ def shot(pid: int, name: str) -> None:
 TOP_NAMES = """JSON.stringify(nib.workspace.shownTree
   ? nib.workspace.shownTree.children.map((one) => one.name) : [])"""
 
+# Alt and the up arrow on zeta's row, which is how a person moves it without a drag.
+# False when the row is not in the page to press on.
+MOVE_ZETA_UP = r"""(() => {
+  const path = nib.workspace.activeSpace.root + '\\zeta.md'
+  const row = [...document.querySelectorAll('.row[data-path]')].find(
+    (one) => one.dataset.path === path,
+  )
+  if (!row) return false
+  row.dispatchEvent(new KeyboardEvent('keydown', {
+    key: 'ArrowUp', code: 'ArrowUp', altKey: true, bubbles: true, cancelable: true,
+  }))
+  return true
+})()"""
+
 KEPT = """JSON.stringify({
   mode: nib.workspace.sortMode,
   arranged: nib.workspace.arranged.of(nib.workspace.activeSpace.root),
@@ -363,21 +377,17 @@ def main() -> int:
         if orders.get("manual") != by_name:
             wrong("Manual did not start out as name order for a space nobody has arranged")
 
-        # A row moved within the order somebody arranged, through the same call the
-        # Alt and an arrow keys make; see `moveInOrder` in workspace.svelte.ts.
+        # A row moved within the order somebody arranged, with the keys a person uses;
+        # see `moveInOrder` in tree-lift.ts. Whether it moved is the order read after.
         talk.ask("nib.workspace.setSort('manual')")
         time.sleep(0.3)
         before = talk.ask(TOP_NAMES)
-        moved = talk.ask(
-            "JSON.stringify(nib.workspace.moveInOrder("
-            "nib.workspace.activeSpace.root + '\\\\zeta.md', -1))"
-        )
+        pressed = talk.ask(MOVE_ZETA_UP)
         time.sleep(0.6)
         after = talk.ask(TOP_NAMES)
-        say(f"moving zeta up said {moved}")
         say(f"after: {' | '.join(after[:12]) if isinstance(after, list) else after}")
-        if moved is not True:
-            wrong(f"the move was refused: {moved}")
+        if pressed is not True:
+            wrong(f"zeta's row was not in the page to press on: {pressed}")
         if before == after:
             wrong("the move changed nothing")
         if isinstance(after, list):

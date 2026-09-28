@@ -304,6 +304,7 @@ export const pa: Dictionary = {
   // PDFs
   'Copy a link': 'ਕੜੀ ਨਕਲ ਕਰੋ',
   'That PDF could not be opened': 'ਉਹ PDF ਨਹੀਂ ਖੁੱਲ੍ਹ ਸਕੀ',
+  'That file could not be read': 'ਉਹ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ',
   // Modes and view
   Reading: 'ਪੜ੍ਹਨਾ',
   'Leave reading': 'ਪੜ੍ਹਨ ਤੋਂ ਬਾਹਰ',
@@ -1292,6 +1293,7 @@ export const pa: Dictionary = {
   'Add to {name}': '{name} ਵਿੱਚ ਜੋੜੋ',
   // Web tabs
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
   'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
@@ -1299,6 +1301,11 @@ export const pa: Dictionary = {
   Website: 'ਵੈੱਬਸਾਈਟ',
   'Open a website': 'ਵੈੱਬਸਾਈਟ ਖੋਲ੍ਹੋ',
   'Convert website notes': 'ਵੈੱਬਸਾਈਟ ਨੋਟਾਂ ਬਦਲੋ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ਰਿਕਾਰਡ ਕਰੋ',
   Recording: 'ਰਿਕਾਰਡਿੰਗ',
@@ -1513,4 +1520,15 @@ export const pa: Dictionary = {
   'Duplicate the block': 'ਬਲਾਕ ਦੀ ਨਕਲ ਬਣਾਓ',
   'Move the block up': 'ਬਲਾਕ ਉੱਪਰ ਭੇਜੋ',
   'Move the block down': 'ਬਲਾਕ ਹੇਠਾਂ ਭੇਜੋ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

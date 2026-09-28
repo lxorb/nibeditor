@@ -6,7 +6,7 @@
  *
  *  | group | rows |
  *  | --- | --- |
- *  | the page | Reload and Copy link, on a web tab only |
+ *  | the page | Reload, Copy link and Mute site, on a web tab only |
  *  | the tab | Rename, Duplicate, Pin, Show in the file list |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane |
@@ -79,8 +79,8 @@ function readingEntry(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** What Chrome's tab menu has about the page itself. Mute joins them once a tab
- *  can hear its page play. */
+/** What Chrome's tab menu has about the page itself. Mute is the site's, as in
+ *  Chrome: every tab on it, and the next time it plays; see web-tab/mute.ts. */
 function pageEntries(tab: Tab): MenuEntry[] {
   if (tab.kind !== 'web') return []
 
@@ -98,8 +98,21 @@ function pageEntries(tab: Tab): MenuEntry[] {
         if (url !== null) void copyText(url)
       },
     },
+    {
+      label: pages.of(tab.id).muted ? t('Unmute site') : t('Mute site'),
+      hint: shortcuts.hint('web.mute'),
+      disabled: url === null,
+      run: () => void muting(tab.id),
+    },
     DIVIDER,
   ]
+}
+
+/** The site's mute turned over, fetched with the press: nothing of it is on screen
+ *  before a tab's menu is. */
+async function muting(tabId: string): Promise<void> {
+  const { muteSite } = await import('../web-tab/mute')
+  await muteSite(tabId, !pages.of(tabId).muted)
 }
 
 /** Renaming on the file's own row, and a second tab on the same thing. Each only

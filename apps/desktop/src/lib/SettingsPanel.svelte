@@ -402,12 +402,14 @@
             <div class="group">
               {#each group as item (item.id)}
                 <button
-                  class="item"
-                  class:active={!viewport.touch && !query && settings.section === item.id}
+                  class="item nib-row"
+                  class:is-on={!viewport.touch && !query && settings.section === item.id}
                   onclick={() => go(item.id)}
                 >
-                  <svg class="glyph" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
-                  <span class="text">{item.label}</span>
+                  <svg class="glyph nib-row-mark" viewBox="0 0 16 16"
+                    ><path d={ICONS[item.id]} /></svg
+                  >
+                  <span class="nib-row-label">{item.label}</span>
                   <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
                   >
                 </button>
@@ -679,7 +681,9 @@
     <!-- Everything above, back to how it came. -->
     {#if resettable(current)}
       <div class="card">
-        <button class="action" onclick={() => resetPane(current)}>{t('Reset to defaults')}</button>
+        <button class="nib-action" onclick={() => resetPane(current)}
+          >{t('Reset to defaults')}</button
+        >
       </div>
     {/if}
   {:else if settings.section === 'account'}
@@ -744,7 +748,9 @@
       <Security />
 
       <div class="card">
-        <button class="action danger" onclick={() => account.signOut()}>{t('Sign out')}</button>
+        <button class="nib-action is-danger" onclick={() => account.signOut()}
+          >{t('Sign out')}</button
+        >
       </div>
     {:else if account.guest}
       <!-- A guest a link let in. There is no account here to show, and the one
@@ -765,7 +771,7 @@
       <p class="hint caption">{t('What the others in this space see.')}</p>
 
       <button
-        class="primary"
+        class="nib-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -776,7 +782,7 @@
     {:else}
       <p class="lead">{t('Not signed in')}</p>
       <button
-        class="primary"
+        class="nib-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -812,7 +818,7 @@
   <h3>{t('This note')}</h3>
   <div class="card">
     {#each exportActions() as action (action.id)}
-      <button class="action" disabled={action.disabled} onclick={action.run}>
+      <button class="nib-action" disabled={action.disabled} onclick={action.run}>
         {action.label}
       </button>
     {/each}
@@ -917,7 +923,9 @@
   <p class="hint">{t('Esc stops recording, Backspace takes the key away.')}</p>
 
   <div class="card">
-    <button class="action" onclick={() => shortcuts.resetAll()}>{t('Reset all shortcuts')}</button>
+    <button class="nib-action" onclick={() => shortcuts.resetAll()}
+      >{t('Reset all shortcuts')}</button
+    >
   </div>
 {/snippet}
 
@@ -984,7 +992,7 @@
   </div>
 
   <div class="card">
-    <button class="action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
+    <button class="nib-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
       {t('Reset the bar')}
     </button>
   </div>
@@ -1055,8 +1063,10 @@
         <span class="name">{t('OpenAI key')}</span>
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-          <button class="action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
-          <button class="action danger" onclick={() => void offered.remove()}>{t('Remove')}</button>
+          <button class="nib-action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
+          <button class="nib-action is-danger" onclick={() => void offered.remove()}
+            >{t('Remove')}</button
+          >
         </div>
       </div>
     {:else}
@@ -1123,7 +1133,7 @@
   <div class="card">
     <div class="nib-setting setting">
       <span class="name">{t('Themes')}</span>
-      <button class="pill" onclick={() => store.show()}>{t('Browse')}</button>
+      <button class="nib-chip" onclick={() => store.show()}>{t('Browse')}</button>
     </div>
   </div>
 
@@ -1152,7 +1162,7 @@
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
     <div class="card">
-      <button class="action" onclick={() => theme.reload()}
+      <button class="nib-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
 
@@ -1213,7 +1223,7 @@
 
   nav h1 {
     margin: 0 0 var(--space-3);
-    padding: 0 10px;
+    padding: 0 var(--row-pad);
     font-family: var(--font-ui);
     font-size: var(--text-base);
     font-weight: var(--weight-strong);
@@ -1239,55 +1249,21 @@
     margin-top: var(--space-2);
   }
 
-  .item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 8px 10px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .item:hover {
-      background: var(--surface-2);
-      color: var(--text);
-    }
-  }
-
-  .item.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
+  /* The sections are a list of names like any other, so each is `.nib-row` in the
+     themes package: the same height, hover, press and open fill as a note in the
+     file list. They were a row of their own here, and the open one was the accent
+     on the accent's own wash - 4.07 to one on a dark theme, under the floor. */
 
   /* Whatever a row is named, placed as one piece: a pane's own name is the app's
      word, but the rows below hold an address, a folder, a font and a key, and
      one of those in the other direction would otherwise take the row's
      punctuation with it. See .nib-row-label in base.css. */
-  .item .text,
   .setting .name .what,
   .setting .value {
     unicode-bidi: isolate;
   }
 
-  .item .text {
-    flex: 1;
-    min-width: 0;
-  }
-
   .item .glyph {
-    width: var(--icon-md);
-    height: var(--icon-md);
-    flex: none;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.3;
@@ -1425,68 +1401,6 @@
   .setting.pressable:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
-  }
-
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-
-    .action.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
-  }
-
-  .action:disabled {
-    opacity: 0.5;
-  }
-
-  /* A small action at the end of a row, where the control would be. Quiet
-     until pointed at, like every other action in a pane. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
   }
 
   /* ── A button on the phone's bar ───────────────────────────────── */
@@ -1732,35 +1646,10 @@
     color: var(--danger);
   }
 
-  button.primary {
+  /* Signing in is `.nib-button` in the themes package, the same button the
+     sign-in panel it opens is pressed with; here it keeps to its own width. */
+  .nib-button {
     align-self: flex-start;
-    padding: 9px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  button.primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  @media (hover: hover) {
-    button.primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-  }
-
-  button:disabled {
-    opacity: 0.5;
   }
 
   .row {
@@ -2024,14 +1913,12 @@
     margin-top: var(--space-4);
   }
 
+  /* The row's size is the touch scale already; what a grouped card asks of it is
+     square corners, and the words at full strength because the card is the list. */
   .sheet.phone .item {
     position: relative;
-    gap: var(--touch-gap);
-    min-height: var(--touch-row);
-    padding: 0 var(--touch-pad);
     border-radius: 0;
     color: var(--text);
-    font-size: var(--touch-text);
   }
 
   /* A hairline between rows, starting where the text does: past the row's own
@@ -2044,10 +1931,6 @@
     inset-inline-end: 0;
     height: 1px;
     background: var(--line);
-  }
-
-  .sheet.phone .item:active {
-    background: var(--surface-2);
   }
 
   .sheet.phone .item .glyph {
@@ -2111,8 +1994,8 @@
   }
 
   .sheet.phone .setting + .setting::before,
-  .sheet.phone .action + .setting::before,
-  .sheet.phone .action + .action::before {
+  .sheet.phone :global(.nib-action + .setting::before),
+  .sheet.phone :global(.nib-action + .nib-action::before) {
     content: '';
     position: absolute;
     top: 0;
@@ -2151,20 +2034,22 @@
     max-width: 60%;
   }
 
-  .sheet.phone .action {
+  /* An action in a card is a row of the grouped list on a phone: the card's own
+     side padding, the accent, and the hairline above it. The panes drawn inside
+     this sheet - security, sync, the AI providers - hold actions too, so it is
+     said here once for all of them rather than once in each. */
+  .sheet.phone :global(.nib-action) {
     position: relative;
-    min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     color: var(--accent);
-    font-size: var(--touch-text);
   }
 
-  .sheet.phone .action.danger {
+  .sheet.phone :global(.nib-action.is-danger) {
     color: var(--danger);
   }
 
-  .sheet.phone .action:active:not(:disabled) {
-    background: var(--surface-2);
+  .sheet.phone :global(.nib-action:active:not(:disabled)) {
+    background: var(--surface-press);
   }
 
   /* Every one of these is something a thumb has to land on, so every one of them
@@ -2175,12 +2060,6 @@
     min-height: var(--touch-target);
     padding: 7px 10px;
     font-size: var(--text-sm);
-  }
-
-  .sheet.phone .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--touch-text);
   }
 
   /* The floor, not a size of its own: three of these in a row is what a button
@@ -2225,12 +2104,8 @@
     font-size: var(--touch-text);
   }
 
-  .sheet.phone button.primary {
+  .sheet.phone .nib-button {
     align-self: stretch;
-    min-height: var(--touch-target);
-    padding: 12px 16px;
-    font-size: var(--touch-text);
-    text-align: center;
   }
 
   .sheet.phone .accents {

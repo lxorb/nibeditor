@@ -234,11 +234,15 @@
               {name(person)}
               <small>{person.email ?? t('Guest')}</small>
             </span>
-            <button class="pill" disabled={share.busy} onclick={() => void share.accept(person)}>
+            <button
+              class="nib-chip"
+              disabled={share.busy}
+              onclick={() => void share.accept(person)}
+            >
               {t('Accept')}
             </button>
             <button
-              class="pill quiet"
+              class="nib-chip is-quiet"
               disabled={share.busy}
               onclick={() => void share.decline(person)}
             >
@@ -368,7 +372,7 @@
         </div>
 
         <button
-          class="action danger"
+          class="nib-action is-danger"
           disabled={!link || share.busy}
           onclick={() => link && void share.reset(link.role, link.mode)}
         >
@@ -424,10 +428,6 @@
 
   .send:hover:not(:disabled) {
     background: var(--accent-hover);
-  }
-
-  .send:disabled {
-    opacity: 0.5;
   }
 
   /* ── The people ──────────────────────────────────────────────────

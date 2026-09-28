@@ -76,14 +76,14 @@ pub fn hold(window: &tauri::WebviewWindow) {
         return;
     };
     let pointer = pointer as usize;
-    let on = move || native::hold(pointer as *mut std::ffi::c_void);
+    let placing = move || native::hold(pointer as *mut std::ffi::c_void);
 
     // At once where it can be, so a window that is shown as it is built is never
     // seen with the lights where they started.
     if objc2::MainThreadMarker::new().is_some() {
-        on();
+        placing();
     } else {
-        let _ = window.run_on_main_thread(on);
+        let _ = window.run_on_main_thread(placing);
     }
 }
 

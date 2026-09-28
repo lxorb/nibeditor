@@ -304,6 +304,7 @@ export const fil: Dictionary = {
   // PDFs
   'Copy a link': 'Kopyahin ang link',
   'That PDF could not be opened': 'Hindi mabuksan ang PDF na iyon',
+  'That file could not be read': 'Hindi mabasa ang file na iyon',
   // Modes and view
   Reading: 'Pagbasa',
   'Leave reading': 'Lumabas sa pagbasa',
@@ -1308,6 +1309,7 @@ export const fil: Dictionary = {
   'Add to {name}': 'Idagdag sa {name}',
   // Web tabs
   Reload: 'I-reload',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'I-clip ang pahinang ito',
   'Clip the link': 'I-clip ang link',
   'Open in the browser': 'Buksan sa browser',
@@ -1315,6 +1317,11 @@ export const fil: Dictionary = {
   Website: 'Website',
   'Open a website': 'Buksan ang website',
   'Convert website notes': 'I-convert ang mga talang website',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Mag-record',
   Recording: 'Recording',
@@ -1540,4 +1547,15 @@ export const fil: Dictionary = {
   'Duplicate the block': 'Gumawa ng kopya ng block',
   'Move the block up': 'Iakyat ang block',
   'Move the block down': 'Ibaba ang block',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

@@ -304,6 +304,7 @@ export const sw: Dictionary = {
   // PDFs
   'Copy a link': 'Nakili kiungo',
   'That PDF could not be opened': 'PDF hiyo haikuweza kufunguliwa',
+  'That file could not be read': 'Faili hiyo haikuweza kusomwa',
   // Modes and view
   Reading: 'Kusoma',
   'Leave reading': 'Toka kwenye kusoma',
@@ -1303,6 +1304,7 @@ export const sw: Dictionary = {
   'Add to {name}': 'Ongeza kwenye {name}',
   // Web tabs
   Reload: 'Pakia tena',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Hifadhi ukurasa huu',
   'Clip the link': 'Hifadhi kiungo',
   'Open in the browser': 'Fungua kwenye kivinjari',
@@ -1310,6 +1312,11 @@ export const sw: Dictionary = {
   Website: 'Tovuti',
   'Open a website': 'Fungua tovuti',
   'Convert website notes': 'Badilisha madokezo ya tovuti',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Rekodi',
   Recording: 'Rekodi',
@@ -1533,4 +1540,15 @@ export const sw: Dictionary = {
   'Duplicate the block': 'Nakili kizuizi',
   'Move the block up': 'Panda kizuizi juu',
   'Move the block down': 'Shusha kizuizi chini',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

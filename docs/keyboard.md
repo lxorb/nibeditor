@@ -231,6 +231,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+P | the palette. Type for a note, `>` for a command, the ones run lately first (already there). Empty, it lists the notes opened lately, the one before this first; a note is found by its folder too (`uni/lec`), and says its folder where another shares its name |
 | Enter, Shift+Enter in the palette | with nothing matching, Enter makes the note typed (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
 | Ctrl+Alt+Enter in the palette | the note in a pane to the right, the pane in front left as it was (Obsidian's chord; Ctrl+Alt+click too) |
+| Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
 | `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
 | Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
@@ -297,6 +298,7 @@ stops nothing, and the app still gets the key.
 | | |
 | --- | --- |
 | Ctrl+N | a new note |
+| Ctrl+Shift+N | a new window |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
@@ -369,35 +371,49 @@ Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts
 
 **A web tab**
 
-Four keys that only mean anything while the pane is showing a website, and they are
-the four a browser has taught everybody. They are in the registry like the rest, so
+The keys that only mean anything while the pane is showing a website, and they are
+the ones a browser has taught everybody. They are in the registry like the rest, so
 they show in Settings, show in the palette and can be rebound.
 
 | | |
 | --- | --- |
 | Ctrl+T | a new tab. In a web tab that is a new web tab, on the new tab page |
 | Ctrl+W | close, which is the same key every other tab closes with (already there) |
-| Ctrl+L | the address field, in the pane that has the focus |
-| Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
+| Ctrl+L, Alt+D | the address field, in the pane that has the focus. F6 too, from inside the page |
+| F5, Ctrl+R | reload. F5 is Present over a note; over a page there is no note to present |
+| Ctrl+Shift+R, Ctrl+F5 | reload past the cache |
+| Escape | stop a page on its way in, once whatever is open over it has had its Escape |
+| Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there |
+| Alt+Enter in the address field | the address in a tab of its own |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
-| Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
-| F12 | the engine's developer tools |
+| Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
+| F12, Ctrl+Shift+I | the engine's developer tools for the page (Cmd+Alt+I on a Mac): `web.devtools` |
+| Escape, F11 | give the screen back from a video in full screen |
+| none | Mute site, which Chrome gives no key either: `web.mute`, for a reader to bind |
 
 Ctrl+L is also the chord CodeMirror selects a line with, and both keep it, because
 the bar reads the press where the bar is rather than off the window: an app-level
 binding would never reach the editor, while a pane showing a page has no editor to
-shadow.
+shadow. F5, Ctrl+Shift+R and Ctrl and a digit share keys with Present, the editor
+and a heading level the same way, and the bar reads them before the window does; see
+`lib/web-tab/bar-keys.ts`. F6 in the app still walks its regions: only an F6 pressed
+inside the page is Chrome's way back to the address field.
 
 **The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
-Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too) and Ctrl+1 to 9 are never
-offered to the page. The engine tells the host
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, and F6 to the
+address field are never offered to the page. The find keys - Ctrl+F, Ctrl+G,
+Ctrl+Shift+G, F3 and Shift+F3 - and the address field's other two, Ctrl+L and Alt+D, are
+the page's first, as they are in Chrome, so a site with its own find (Google Docs,
+Notion, VS Code on the web) or its own Ctrl+L keeps them; a line of script in the page
+asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`). The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
 Ctrl+T as anywhere else. A Ctrl let go of in the page is said too, which is the release
-a held Ctrl+T chooses on. Everything else, Ctrl+L and a site's own Ctrl+K among them, is
+a held Ctrl+T chooses on. F5 and Ctrl+R need nothing: pressed in a page they are the
+engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among them, is
 the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
 `WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
 keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.

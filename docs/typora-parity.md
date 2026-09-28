@@ -55,6 +55,11 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Shortcut reference links `[text][]`
 - [x] Internal heading links `[text](#heading)`
 - [x] Autolinks `<url>` and bare `www.` / `http(s)://`
+- [x] A link's right-click menu: Open in the browser, Copy link address, Edit link
+      (selects where it points, so the next thing typed is the new address) and
+      Remove link (the words stay). Every spelling, `[[wikilinks]]` too; an address
+      written out has no Remove, since without the link it is still one. See
+      `link-edit.ts` in the editor
 - [x] Images `![alt](path "title")`
 - [x] Emphasis `*` / `_`
 - [x] Strong `**` / `__`
@@ -204,6 +209,17 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] `![[shot.png]]` is a picture wherever it is written, and a bare file name
       is looked for anywhere in the space. Sound and film go the same way; see
       section 17
+- [x] A picture's right-click menu: Copy picture (as a PNG, not its path), Open
+      picture (the lightbox a double click opens) and Delete picture (out of the
+      note; the file stays, since a pasted picture is named by its bytes and
+      another note may show it). There is no "Show in file list": the file list
+      shows notes, PDFs, canvases, page notes and shortcuts, and a picture is none
+      of them. See `image/pressed.ts` in the editor
+- [x] A PDF, a recording or a film dropped or pasted from the file manager is kept
+      beside the note, where a pasted picture goes, and written as `![[paper.pdf]]`,
+      which is what Obsidian writes; see `images.ts` in the editor and
+      `storeAttachment`. A zip or anything else nib cannot show is left alone:
+      a link nothing in the app can open is a dead end in the note
 - [-] Custom image uploader integration - a hook for third-party upload CLIs
       (PicGo, uPic). Sync already carries images; a second upload path would be
       a second place for them to live.

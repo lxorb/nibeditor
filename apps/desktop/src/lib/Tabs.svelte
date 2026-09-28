@@ -33,6 +33,7 @@
     widthsFor,
     worthKeeping,
   } from './tab-strip/layout'
+  import { pages } from './web-tab/pages.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { pinnedRun } from './workspace/pinning'
@@ -857,6 +858,26 @@
           {#if !tab.pinned}
             <span class="label" class:hidden={!parts.title}>{tab.shown}</span>
           {/if}
+          <!-- Chrome's speaker, struck through on a muted site. -->
+          {#if tab.kind === 'web' && parts.title}
+            {@const heard = pages.of(tab.id)}
+            {#if heard.playing}
+              <svg
+                class="reading"
+                viewBox="0 0 14 14"
+                role="img"
+                aria-label={heard.muted ? t('Muted') : t('Playing audio')}
+                transition:fade={{ duration: dur(140) }}
+              >
+                <path d="M2.5 5.2h2L7.6 2.8v8.4L4.5 8.8h-2z" />
+                <path
+                  d={heard.muted
+                    ? 'M9.6 5.4l3 3m0-3-3 3'
+                    : 'M9.8 5a2.9 2.9 0 0 1 0 4M11.6 3.4a5.2 5.2 0 0 1 0 7.2'}
+                />
+              </svg>
+            {/if}
+          {/if}
           <!-- Not yours: this document is one somebody else shared on its own, and
                the tab says so in the mark the whole app says it with. On the tab
                because there is nowhere else it could be said - a shared file has no
@@ -1470,10 +1491,6 @@
 
   .step:active:not(:disabled) {
     background: var(--surface-press);
-  }
-
-  .step:disabled {
-    opacity: 0.35;
   }
 
   .step svg {

@@ -14,6 +14,8 @@ export interface LinkPress extends Modified {
   /** In the DOM's numbering: 0 the main button, 1 the middle one. */
   button: number
   shiftKey: boolean
+  /** With the modifier, a link to a note asks for a pane to the right. */
+  altKey?: boolean
 }
 
 /** Opens a link the reader asked for, and says how they asked. The host supplies

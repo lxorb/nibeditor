@@ -13,7 +13,7 @@ vi.mock('../i18n.svelte', async (importOriginal) => ({
   t: (one: string) => one,
 }))
 
-const { webRows, zoomed, ZOOMS } = await import('./menu')
+const { trailSteps, webRows, zoomed, ZOOMS } = await import('./menu')
 const { Page } = await import('./pages.svelte')
 
 /** A tab's page, on a site. */
@@ -29,6 +29,7 @@ const actions = {
   zoom: () => undefined,
   fullScreen: () => undefined,
   print: () => undefined,
+  find: () => undefined,
   save: () => undefined,
   share: () => undefined,
   settings: () => undefined,
@@ -48,6 +49,7 @@ test('is Chromes own menu, in Chromes own order', () => {
     'Zoom in',
     'Full screen',
     'Print…',
+    'Find',
     'Save page',
     'Share…',
     'Copy link',
@@ -68,6 +70,7 @@ test('a tab with nowhere to go has no rows about a page', () => {
   const off = rows.filter((one) => one.disabled).map((one) => one.label)
 
   expect(off).toContain('Print…')
+  expect(off).toContain('Find')
   expect(off).toContain('Save page')
   expect(off).toContain('Copy link')
   expect(rows.find((one) => one.label === 'New tab')?.disabled).toBe(undefined)
@@ -99,4 +102,23 @@ test('ends the two ends of the ladder where a browser ends them', () => {
   expect(ZOOMS[0]).toBe(0.25)
   expect(ZOOMS.at(-1)).toBe(3)
   expect(ZOOMS).toContain(1)
+})
+
+/** The list under a held arrow, which is the trail read outwards from where the tab is. */
+test('lists the pages behind and ahead, the nearest first, and how far each is', () => {
+  const urls = ['a', 'b', 'c', 'd']
+  expect(trailSteps(urls, 2, false)).toEqual([
+    { url: 'b', by: 1 },
+    { url: 'a', by: 2 },
+  ])
+  expect(trailSteps(urls, 2, true)).toEqual([{ url: 'd', by: 1 }])
+  expect(trailSteps(urls, 0, false)).toEqual([])
+  expect(trailSteps([], 0, true)).toEqual([])
+})
+
+test('stops at a dozen rows however long the reading was', () => {
+  const urls = Array.from({ length: 40 }, (_unused, index) => String(index))
+  const back = trailSteps(urls, 39, false)
+  expect(back).toHaveLength(12)
+  expect(back[11]).toEqual({ url: '27', by: 12 })
 })

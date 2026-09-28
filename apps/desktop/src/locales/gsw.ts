@@ -301,6 +301,7 @@ export const gsw: Dictionary = {
   // PDFs
   'Copy a link': 'Link kopiere',
   'That PDF could not be opened': 'Das PDF hät me nöd chöne uufmache',
+  'That file could not be read': 'Die Datei hät me nöd chöne läse',
   // Modes and view
   Reading: 'Läse',
   'Leave reading': 'Läse verlaa',
@@ -1293,6 +1294,7 @@ export const gsw: Dictionary = {
   'Add to {name}': 'Zu {name} dezuetue',
   // Web tabs
   Reload: 'Neu lade',
+  'Hard reload': 'Vollständig neu lade',
   'Clip this page': 'Die Siite spichere',
   'Clip the link': 'De Link spichere',
   'Open in the browser': 'Im Browser ufmache',
@@ -1300,6 +1302,11 @@ export const gsw: Dictionary = {
   Website: 'Webssite',
   'Open a website': 'Webssite ufmache',
   'Convert website notes': 'Webnotize umwandle',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Ufnäh',
   Recording: 'Ufnahm',
@@ -1518,4 +1525,15 @@ export const gsw: Dictionary = {
   'Duplicate the block': 'De Block verdopple',
   'Move the block up': 'De Block ufe schiebe',
   'Move the block down': 'De Block abe schiebe',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadrässe kopiere',
+  'Edit link': 'Link bearbeite',
+  'Remove link': 'Link entferne',
+  'Copy picture': 'Bild kopiere',
+  'Open picture': 'Bild öffne',
+  'Delete picture': 'Bild lösche',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gspeicheret',
+  'That file is larger than a note can keep.': 'Die Datei isch grösser, als e Notiz cha bhalte.',
+  'That file could not be kept.': 'Die Datei het nöd chöne gspeicheret werde.',
 }

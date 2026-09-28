@@ -242,7 +242,7 @@
                   </div>
                 {:else}
                   <button
-                    class="primary"
+                    class="nib-button"
                     disabled={connectors.busy}
                     onclick={() => connectors.createToken()}
                   >
@@ -492,9 +492,14 @@
     color: var(--muted-strong);
   }
 
-  /* ── Buttons, the way the panel draws them ─────────────────────── */
+  /* ── Buttons ───────────────────────────────────────────────────── */
 
-  button.primary,
+  /* The one thing to press is `.nib-button` in the themes package; here it only
+     keeps to its own width in the column. */
+  .nib-button {
+    align-self: flex-start;
+  }
+
   button.quiet {
     align-self: flex-start;
     flex: none;
@@ -511,11 +516,6 @@
       transform var(--dur-fast) var(--ease-spring);
   }
 
-  button.primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
   button.quiet {
     background: none;
     color: var(--muted);
@@ -523,11 +523,6 @@
   }
 
   @media (hover: hover) {
-    button.primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
     button.quiet:hover:not(:disabled) {
       color: var(--text);
     }
@@ -535,10 +530,6 @@
     button.quiet.danger:hover:not(:disabled) {
       color: var(--danger);
     }
-  }
-
-  button:disabled {
-    opacity: 0.5;
   }
 
   /* The switch, drawn like the panel's so the two read as one control. */

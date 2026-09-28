@@ -33,7 +33,7 @@ pub fn show_document(
         .map_err(|error| format!("the window could not be retitled: {error}"))?;
 
     #[cfg(target_os = "macos")]
-    mark(&window, edited, path.unwrap_or_default())?;
+    mark_document(&window, edited, path.unwrap_or_default())?;
     #[cfg(not(target_os = "macos"))]
     let _ = (edited, path);
 
@@ -43,7 +43,7 @@ pub fn show_document(
 /// The edited dot and the represented file, set on the `NSWindow` on the main
 /// thread, which is the only thread `AppKit` lets touch a window.
 #[cfg(target_os = "macos")]
-fn mark(window: &Window, edited: bool, path: String) -> Result<(), String> {
+fn mark_document(window: &Window, edited: bool, path: String) -> Result<(), String> {
     let on = window.clone();
     window
         .run_on_main_thread(move || {

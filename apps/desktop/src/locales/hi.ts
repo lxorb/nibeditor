@@ -301,6 +301,7 @@ export const hi: Dictionary = {
   // PDFs
   'Copy a link': 'लिंक कॉपी करें',
   'That PDF could not be opened': 'वह PDF खुल नहीं सका',
+  'That file could not be read': 'वह फ़ाइल पढ़ी नहीं जा सकी',
   // Modes and view
   Reading: 'पठन',
   'Leave reading': 'पठन से बाहर',
@@ -1285,6 +1286,7 @@ export const hi: Dictionary = {
   'Add to {name}': '{name} में जोड़ें',
   // Web tabs
   Reload: 'फिर लोड करें',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'यह पृष्ठ सहेजें',
   'Clip the link': 'लिंक सहेजें',
   'Open in the browser': 'ब्राउज़र में खोलें',
@@ -1292,6 +1294,11 @@ export const hi: Dictionary = {
   Website: 'वेबसाइट',
   'Open a website': 'वेबसाइट खोलें',
   'Convert website notes': 'वेबसाइट नोट बदलें',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'रिकॉर्ड करें',
   Recording: 'रिकॉर्डिंग',
@@ -1506,4 +1513,15 @@ export const hi: Dictionary = {
   'Duplicate the block': 'ब्लॉक की नकल बनाएँ',
   'Move the block up': 'ब्लॉक ऊपर ले जाएँ',
   'Move the block down': 'ब्लॉक नीचे ले जाएँ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

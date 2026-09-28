@@ -203,22 +203,20 @@ fn is_format(format: &str) -> bool {
 
 /// Converts markdown with pandoc, the same way Typora does. The source is piped
 /// in rather than written to a temp file, so nothing is left behind.
+///
+/// The file it writes is wherever the reader chose to save it, so it is judged the
+/// way `write_bytes` judges the same choice; see `chosen`.
 #[tauri::command(async)]
 pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), String> {
     if !is_format(&format) {
         return Err(format!("{format} is not a format pandoc writes"));
     }
+    let target = chosen(&output)?;
 
     let mut child = pandoc()
-        .args([
-            "--from",
-            WRITE_FROM,
-            "--to",
-            &format,
-            "--standalone",
-            "--output",
-            &output,
-        ])
+        .args(["--from", WRITE_FROM, "--to", &format, "--standalone"])
+        .arg("--output")
+        .arg(&target)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -262,6 +260,16 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{complaint, is_format, reading};
+
+    /// The file an export is written to is judged before pandoc is started, the
+    /// way the other writers judge theirs, so the refusal is the same sentence
+    /// whether pandoc is installed or not.
+    #[test]
+    fn writes_only_to_a_path_that_names_a_file() {
+        let error = super::run_pandoc("# Plan".into(), "/".into(), "odt".into())
+            .expect_err("a root that is not a file");
+        assert!(error.contains("does not name a file"), "{error}");
+    }
 
     /// A path is the reader's own, and pandoc reads a leading dash as an option.
     #[test]

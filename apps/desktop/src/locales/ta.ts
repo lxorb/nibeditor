@@ -301,6 +301,7 @@ export const ta: Dictionary = {
   // PDFs
   'Copy a link': 'ஒரு இணைப்பை நகலெடு',
   'That PDF could not be opened': 'அந்த PDF ஐத் திறக்க முடியவில்லை',
+  'That file could not be read': 'அந்தக் கோப்பைப் படிக்க முடியவில்லை',
   // Modes and view
   Reading: 'வாசிப்பு',
   'Leave reading': 'வாசிப்பை விடு',
@@ -1306,6 +1307,7 @@ export const ta: Dictionary = {
   'Add to {name}': '{name} இல் சேர்',
   // Web tabs
   Reload: 'மீண்டும் ஏற்று',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'இந்தப் பக்கத்தை எடு',
   'Clip the link': 'இணைப்பை எடு',
   'Open in the browser': 'உலாவியில் திற',
@@ -1313,6 +1315,11 @@ export const ta: Dictionary = {
   Website: 'இணையதளம்',
   'Open a website': 'இணையதளத்தைத் திற',
   'Convert website notes': 'இணையதளக் குறிப்புகளை மாற்று',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'பதிவு செய்',
   Recording: 'பதிவு',
@@ -1531,4 +1538,15 @@ export const ta: Dictionary = {
   'Duplicate the block': 'தொகுதியை நகலாக்கு',
   'Move the block up': 'தொகுதியை மேலே நகர்த்து',
   'Move the block down': 'தொகுதியை கீழே நகர்த்து',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

@@ -309,6 +309,7 @@ export const it: Dictionary = {
   // PDFs
   'Copy a link': 'Copia un link',
   'That PDF could not be opened': 'Quel PDF non si è aperto',
+  'That file could not be read': 'Quel file non si è potuto leggere',
   // Modes and view
   Reading: 'Lettura',
   'Leave reading': 'Esci dalla lettura',
@@ -1329,6 +1330,7 @@ export const it: Dictionary = {
   'Add to {name}': 'Aggiungi a {name}',
   // Web tabs
   Reload: 'Ricarica',
+  'Hard reload': 'Ricaricamento forzato',
   'Clip this page': 'Salva questa pagina',
   'Clip the link': 'Salva il link',
   'Open in the browser': 'Apri nel browser',
@@ -1336,6 +1338,11 @@ export const it: Dictionary = {
   Website: 'Sito web',
   'Open a website': 'Apri un sito web',
   'Convert website notes': 'Converti le note web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Registra',
   Recording: 'Registrazione',
@@ -1557,4 +1564,15 @@ export const it: Dictionary = {
   'Duplicate the block': 'Duplica il blocco',
   'Move the block up': 'Sposta il blocco in alto',
   'Move the block down': 'Sposta il blocco in basso',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

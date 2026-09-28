@@ -182,7 +182,8 @@
       {#if factor?.on}
         <span class="text">{t('On')}</span>
       {:else}
-        <button class="pill" disabled={busy} onclick={() => void begin()}>{t('Turn on')}</button>
+        <button class="nib-chip" disabled={busy} onclick={() => void begin()}>{t('Turn on')}</button
+        >
       {/if}
     </div>
   </div>
@@ -211,7 +212,9 @@
           autocomplete="one-time-code"
           spellcheck="false"
         />
-        <button class="pill" disabled={busy} onclick={() => void confirm()}>{t('Confirm')}</button>
+        <button class="nib-chip" disabled={busy} onclick={() => void confirm()}
+          >{t('Confirm')}</button
+        >
       </div>
     </div>
   {/if}
@@ -250,10 +253,10 @@
           spellcheck="false"
         />
       </div>
-      <button class="action" disabled={busy} onclick={() => void freshCodes()}>
+      <button class="nib-action" disabled={busy} onclick={() => void freshCodes()}>
         {t('New recovery codes')}
       </button>
-      <button class="action danger" disabled={busy} onclick={() => void turnOff()}>
+      <button class="nib-action is-danger" disabled={busy} onclick={() => void turnOff()}>
         {t('Turn off')}
       </button>
     </div>
@@ -275,14 +278,14 @@
       </span>
       <span class="text">{when(session.lastUsedAt)}</span>
       {#if !session.current}
-        <button class="pill" onclick={() => void end(session)}>{t('End')}</button>
+        <button class="nib-chip" onclick={() => void end(session)}>{t('End')}</button>
       {/if}
     </div>
   {/each}
 </div>
 
 {#if sessions.length > 1}
-  <button class="action danger" onclick={() => void endOthers()}>
+  <button class="nib-action is-danger" onclick={() => void endOthers()}>
     {t('End every other session')}
   </button>
 {/if}
@@ -385,71 +388,10 @@
     width: 8rem;
   }
 
-  /* A small action at the end of a row, where the control would be. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
-  }
-
-  .pill:disabled {
-    opacity: 0.5;
-  }
-
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
   @media (hover: hover) {
     .inline:hover {
       border-color: var(--line);
     }
-
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-
-    .action.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
-  }
-
-  .action:disabled {
-    opacity: 0.5;
   }
 
   .note {
@@ -507,26 +449,7 @@
     font-size: var(--touch-text);
   }
 
-  :global(.sheet.phone) .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action {
-    position: relative;
-    min-height: var(--touch-row);
-    padding: var(--space-2) var(--touch-pad);
-    color: var(--accent);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action.danger {
-    color: var(--danger);
-  }
-
-  :global(.sheet.phone) .setting + .setting::before,
-  :global(.sheet.phone) .action + .action::before {
+  :global(.sheet.phone) .setting + .setting::before {
     content: '';
     position: absolute;
     top: 0;

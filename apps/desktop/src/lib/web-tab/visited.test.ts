@@ -32,3 +32,13 @@ test('a space that keeps its web data apart keeps its history apart', () => {
   expect(localStorage.getItem('nib:web-visits:0-work')).toContain('moodle-app2')
   expect(localStorage.getItem('nib:web-visits')).not.toContain('moodle-app2')
 })
+
+/** The words a row of the history under a held arrow reads. */
+test("says what a page called itself, whatever the address's fragment", () => {
+  visited.saw('nib:web-visits:titles', 'c', 'https://svelte.dev/docs', 'Svelte docs')
+
+  expect(visited.titleOf('nib:web-visits:titles', 'https://svelte.dev/docs#intro')).toBe(
+    'Svelte docs',
+  )
+  expect(visited.titleOf('nib:web-visits:titles', 'https://svelte.dev/blog')).toBe('')
+})

@@ -316,6 +316,7 @@ export const uk: Dictionary = {
   // PDFs
   'Copy a link': 'Копіювати посилання',
   'That PDF could not be opened': 'Не вдалося відкрити цей PDF',
+  'That file could not be read': 'Не вдалося прочитати цей файл',
   // Modes and view
   Reading: 'Читання',
   'Leave reading': 'Вийти з читання',
@@ -1349,6 +1350,7 @@ export const uk: Dictionary = {
   'Add to {name}': 'Додати до {name}',
   // Web tabs
   Reload: 'Оновити',
+  'Hard reload': 'Жорстке перезавантаження',
   'Clip this page': 'Зберегти цю сторінку',
   'Clip the link': 'Зберегти посилання',
   'Open in the browser': 'Відкрити в браузері',
@@ -1356,6 +1358,11 @@ export const uk: Dictionary = {
   Website: 'Сайт',
   'Open a website': 'Відкрити сайт',
   'Convert website notes': 'Перетворити вебнотатки',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Записати',
   Recording: 'Запис',
@@ -1569,4 +1576,15 @@ export const uk: Dictionary = {
   'Duplicate the block': 'Дублювати блок',
   'Move the block up': 'Перемістити блок вище',
   'Move the block down': 'Перемістити блок нижче',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

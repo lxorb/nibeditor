@@ -28,7 +28,7 @@ use tauri::webview::{PageLoadEvent, PlatformWebview};
 use tauri::{AppHandle, WebviewUrl, WebviewWindowBuilder};
 
 use crate::clock;
-use crate::paths::cannot;
+use crate::paths::{cannot, chosen};
 
 /// How long the page is given to lay itself out before it is measured for paper.
 /// Fonts and pictures are already inside it; this is the layout settling.
@@ -120,6 +120,9 @@ pub async fn print_pdf(
     if !pdf_supported() {
         return Err("printing to a file is not available here".into());
     }
+    // Wherever the reader chose to save it, judged the way every writer of such a
+    // choice judges it; see `chosen`.
+    let output = chosen(&output)?.to_string_lossy().into_owned();
 
     in_hidden_window(&app, html, PATIENCE, move |webview, done| {
         printer::print(webview, &output, &page, done)

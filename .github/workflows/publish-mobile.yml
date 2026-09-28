@@ -95,11 +95,13 @@ jobs:
           targets: aarch64-linux-android,x86_64-linux-android
           components: clippy
 
+      # Shared by name with check.yml's android-check, which builds the same APK on a
+      # pull request and reads this cache rather than keeping one of its own.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: |
             apps/desktop/src-tauri
-          key: android
+          shared-key: android
 
       - run: pnpm install --frozen-lockfile
 

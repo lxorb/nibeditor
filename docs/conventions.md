@@ -160,10 +160,11 @@ quietly: a change that touches one says so where it is made.
 `chosen` is the deliberate exception, not a gap in the other three: nib edits
 files, and a file worth editing is wherever it already is, so `read_note`,
 `write_note`, `write_bytes`, `file_stamp` and `import_document` take whatever
-path they are handed. It checks that the string names a file, and `folded`
+path they are handed, and so do `run_pandoc` and `print_pdf` for the file an
+export is saved as. It checks that the string names a file, and `folded`
 _collapses_ a `..` rather than refusing it, so a path climbing out of a space
 is not an error there: it is a different file, created if it is missing and
-replaced if it is not. Those five are safe because of what
+replaced if it is not. Those seven are safe because of what
 stands in front of them, which means a new caller of one of them is exactly
 where that stops being true:
 

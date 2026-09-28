@@ -462,6 +462,12 @@ function holds(tail: string): boolean {
  *  key typed. The menu bar's own share of the round is behind its door. Measured
  *  3,345,483.
  *
+ *  The editor's right-click menu went behind a door as it learned a link's and a
+ *  picture's rows (the power-user list's eighth batch), and so did what it asks of
+ *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
+ *  against 3,298,741 and 380 on the main it landed on.
+ *
  *  Lowered 2026-09-28, to 3,250,000 and 376 modules, from a main at 3,309,965 - 35
  *  bytes under the old ceiling. Three things nobody needs to open a note: the sheet a
  *  question is asked in (PromptSheet.svelte and the Select under it, 29,437 bytes),
@@ -469,12 +475,14 @@ function holds(tail: string): boolean {
  *  known to say (pdf/papers.ts and its cache, 28,065), fetched with the launch's own
  *  read of them; and the writer behind Save as (export/save.ts, 11,060), fetched by the
  *  press. Measured 3,244,278 and 374, and 3,247,448 and 375 on the main it landed on; the
- *  production build preloads 1,301,758 bytes in 82 chunks, from 1,317,450 in 88.
+ *  production build preloads 1,301,758 bytes in 82 chunks, from 1,317,450 in 88. With
+ *  the web tab's batches (find, keys, favicons, the page menu) merged over it, 3,235,605
+ *  and 373.
  *
- *  And met again when the Mac round came in on top of main's, which each had been
- *  measured without the other: 3,264,205 and 376 modules. */
-const BUDGET = 3_268_000
-const MOST_FILES = 378
+ *  And met again when the Mac round came in on top of all of that, which each had
+ *  been measured without the other: 3,252,387 and 374 modules. */
+const BUDGET = 3_256_000
+const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -728,6 +736,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/PromptSheet.svelte', 'the question sheet'],
     ['/lib/export/save.ts', 'the writer behind Save as'],
     ['/lib/pdf/papers.ts', "the papers' words"],
+    // The editor's right-click menu, with its rows for a link and a picture: nothing of
+    // it is on screen until a press asks, and it is fetched at the launch's last turn
+    // like a tab's menu. See Pane.svelte.
+    ['/lib/editor-menu.ts', "the editor's menu"],
+    ['/editor/src/menu.ts', 'what it asks of the editor'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

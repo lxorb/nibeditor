@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { besideAt, howFor, type Press, tabAsk } from './new-tab'
+import { besideAt, howFor, linkAsk, type Press, tabAsk } from './new-tab'
 
 /** Which press asks for a tab of its own, and what an open makes of it.
  *
@@ -13,6 +13,20 @@ const PLAIN: Press = { button: 0, ctrlKey: false, metaKey: false, shiftKey: fals
 function ask(press: Partial<Press>, shiftOpens = false) {
   return tabAsk({ ...PLAIN, ...press }, shiftOpens)
 }
+
+describe('what a press on a link to a note asks for', () => {
+  const on = (press: Partial<Press>) => linkAsk({ ...PLAIN, ...press })
+
+  test('Ctrl+Alt+click is a pane to the right, as in Obsidian', () => {
+    expect(on({ ctrlKey: true, altKey: true })).toBe('aside')
+  })
+
+  test('Alt alone is a plain click, and the rest is the browser rule', () => {
+    expect(on({ altKey: true })).toBe('plain')
+    expect(on({ ctrlKey: true })).toBe('behind')
+    expect(on({ button: 1, altKey: true })).toBe('behind')
+  })
+})
 
 describe('what a press asks for', () => {
   test('a plain click asks for nothing beyond the surface of its own', () => {

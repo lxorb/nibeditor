@@ -177,26 +177,6 @@ const LOOKED: &str = r"(function () {
   }
 })()";
 
-/// The site's own mark, as an address.
-///
-/// What the page says its icon is, and `/favicon.ico` where it says nothing - which is
-/// the same order a browser looks in, and the reason a tab has the site's mark on it
-/// rather than a generic one. Asked of the page rather than of the engine: `WebView2`
-/// has an event for it, `WKWebView` has nothing at all, and the page's own `<link>` is
-/// what both of them read.
-const ICON: &str = r"(function () {
-  try {
-    var links = document.querySelectorAll('link[rel]')
-    for (var index = links.length - 1; index >= 0; index--) {
-      var rel = (links[index].getAttribute('rel') || '').toLowerCase()
-      if (rel.split(/\s+/).indexOf('icon') >= 0 && links[index].href) return links[index].href
-    }
-    return new URL('/favicon.ico', location.href).href
-  } catch (error) {
-    return ''
-  }
-})()";
-
 /// The page, read for a clip, in the site's own document.
 ///
 /// It reads what is on screen rather than what the server sent: a page that writes
@@ -309,14 +289,12 @@ impl Trail {
         }
     }
 
-    /// The address one step back or forward, for a tab whose engine cannot step
-    /// itself.
-    fn step_to(&self, forward: bool) -> Option<&String> {
-        if forward {
-            self.urls.get(self.at + 1)
-        } else {
-            self.at.checked_sub(1).and_then(|back| self.urls.get(back))
-        }
+    /// The address `by` steps along the trail - back where it is negative - for a tab
+    /// whose engine cannot step itself, and for the history under the arrows.
+    fn step_to(&self, by: isize) -> Option<&String> {
+        self.at
+            .checked_add_signed(by)
+            .and_then(|there| self.urls.get(there))
     }
     /// A page that has arrived. A step back or forward lands on the address next
     /// to where the trail is, and anything else is somewhere new, which forgets
@@ -425,14 +403,21 @@ impl WebTabs {
     /// Where a step goes: the address to send the tab to, or `None` for a tab whose
     /// own engine can take the step. Stepping by address is what a revived page does,
     /// and from the first one this tab does it for good; see `Trail::engine`.
-    fn stepping(&self, tab: &str, forward: bool) -> Option<String> {
+    ///
+    /// A step of more than one - a row of the history under the arrows - lands on an
+    /// address that is not next to where the trail was, which `Trail::visited` would
+    /// take for somewhere new and cut everything ahead of it off for. So the trail is
+    /// moved there first, and the page arriving finds it already in place.
+    fn stepping(&self, tab: &str, by: isize) -> Option<String> {
         let mut trails = self.trails.lock().ok()?;
         let trail = trails.get_mut(tab)?;
-        if trail.engine {
-            return None;
+        let url = trail.step_to(by)?.clone();
+
+        if by.unsigned_abs() > 1 {
+            trail.at = trail.at.checked_add_signed(by)?;
         }
 
-        trail.step_to(forward).cloned()
+        (!trail.engine).then_some(url)
     }
 }
 
@@ -447,15 +432,14 @@ pub struct Pane {
 
 /// What the window is told when a page moves.
 ///
-/// A field that says nothing is a field the window leaves as it was: the title and the
-/// mark arrive later than the address and on their own, and an empty one here is "no
-/// news" rather than "gone".
+/// A field that says nothing is a field the window leaves as it was: the title arrives
+/// later than the address and on its own, and an empty one here is "no news" rather
+/// than "gone". The site's mark is an event of its own; see `web_icons.rs`.
 #[derive(Clone, Serialize)]
 struct Moved {
     tab: String,
     url: String,
     title: String,
-    icon: String,
     back: bool,
     forward: bool,
     loading: bool,
@@ -553,6 +537,10 @@ pub enum Step {
     Back,
     Forward,
     Reload,
+    /// Chrome's Ctrl+Shift+R: the page again, past the cache.
+    Fresh,
+    /// The cross the reload glyph turns into while a page is coming.
+    Stop,
 }
 
 /// Whether an address is one a web tab may go to.
@@ -564,6 +552,17 @@ pub enum Step {
 /// `lib/web-tab/address.ts`); this is the rule that cannot be talked round,
 /// because it is also what every link inside the page is judged by.
 fn allowed(url: &Url) -> bool {
+    // Chrome's "View page source" is a page's own address behind `view-source:`, and it
+    // is judged as that address: the source of anything a tab may open, and nothing
+    // else. The engine's menu asks for it as a window, which is a tab here.
+    if url.scheme() == "view-source" {
+        return url
+            .as_str()
+            .strip_prefix("view-source:")
+            .and_then(|inner| Url::parse(inner).ok())
+            .is_some_and(|inner| inner.scheme() != "view-source" && allowed(&inner));
+    }
+
     if !matches!(url.scheme(), "http" | "https") {
         return false;
     }
@@ -952,9 +951,16 @@ pub async fn web_open(
     // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
+    let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
         .initialization_script(opening(revived.place, &url))
-        .on_navigation(allowed)
+        .on_navigation(move |to| {
+            let going = allowed(to);
+            if going {
+                started(&starting.0, &starting.1);
+            }
+            going
+        })
         // The page takes its own drops. A file dropped on a site is the site's
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
@@ -962,7 +968,7 @@ pub async fn web_open(
     // The middle button on a link, answered in the page so the tab it opens can be
     // left behind; see web_opens.rs. In every frame, since a link in a frame is a link.
     #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.initialization_script_for_all_frames(crate::web_opens::MIDDLE);
+    let builder = builder.initialization_script_for_all_frames(crate::web_opens::SCRIPT);
 
     // Where the site's own storage goes, decided once by the engine this build runs
     // on rather than here: a store the app's own session is not in under the system
@@ -1095,14 +1101,9 @@ fn reporting(
             &moved,
             payload.url().as_str(),
             None,
-            None,
             loading,
         );
 
-        // The page is there, so it can be asked what its own mark is. Once per page,
-        // on the way in, because that is when a browser puts the site's icon on the
-        // tab; the answer comes back through the engine's own script callback and is
-        // said to the window the way the address is.
         if loading {
             return;
         }
@@ -1112,25 +1113,28 @@ fn reporting(
         #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
         let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
 
-        let marked = sending.clone();
-        let named = moved.clone();
-        let asked = view.clone();
-        let _ = view.eval_with_callback(ICON, move |answer| {
-            let icon = serde_json::from_str::<String>(&answer).unwrap_or_default();
-            if icon.is_empty() {
-                return;
-            }
-
-            let url = asked.url().map(|one| one.to_string()).unwrap_or_default();
-            say(&marked, &asked, &named, &url, None, Some(icon), false);
-        });
+        // An engine that cannot say when the page's mark changes is asked for it once
+        // the page is there, which is when a browser puts the site's icon on the tab.
+        // `WebView2` says so itself, from inside the page's own profile; see web_icons.rs.
+        #[cfg(any(not(windows), feature = "cef"))]
+        {
+            let marked = sending.clone();
+            let named = moved.clone();
+            let holder = view.window().label().to_string();
+            let _ = view.eval_with_callback(crate::web_icons::ASK, move |answer| {
+                let declaring = serde_json::from_str(&answer).unwrap_or_default();
+                if let Some(icon) = crate::web_icons::best(&declaring) {
+                    crate::web_icons::said(&marked, &holder, &named, &icon);
+                }
+            });
+        }
     });
 
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {
         let url = view.url().map(|one| one.to_string()).unwrap_or_default();
-        say(&naming, &view, &titled, &url, Some(title), None, false);
+        say(&naming, &view, &titled, &url, Some(title), false);
     })
 }
 
@@ -1162,8 +1166,15 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
         // How a window it asks for was pressed for; see web_opens.rs.
-        crate::web_opens::listen(&platform, named.clone());
+        crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
+        // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
+        // see web_find.rs.
+        crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());
+        crate::web_find::listen(&platform, asking.clone(), named.clone(), window.clone());
         crate::downloads::listen(&platform, asking.clone(), window.clone());
+        // The site's own mark, followed for as long as the page is open; see
+        // web_icons.rs.
+        crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });
 }
@@ -1291,6 +1302,20 @@ fn origin_written(protocol: &str, host: &str, port: isize) -> String {
     }
 }
 
+/// A page on its way, said the moment it sets off.
+///
+/// The engine's own "started" arrives only once the site has begun to answer, which on
+/// a slow site is seconds after the press: the reload glyph stayed a reload for all of
+/// them, and a cross that appears once there is nothing left to stop is no cross at
+/// all. Chrome's turns the moment a navigation starts, so this does too. No address -
+/// that is still the old page's until the new one arrives, and an empty one is "no
+/// news" to the window - so a load stopped before it answered leaves the bar as it was.
+fn started(app: &AppHandle, tab: &str) {
+    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
+        say(app, &view, tab, "", None, true);
+    }
+}
+
 /// Says where a page is, to the window that holds it and to nothing else.
 fn say(
     app: &AppHandle,
@@ -1298,7 +1323,6 @@ fn say(
     tab: &str,
     url: &str,
     title: Option<String>,
-    icon: Option<String>,
     loading: bool,
 ) {
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
@@ -1316,7 +1340,6 @@ fn say(
         tab: tab.to_string(),
         url: url.to_string(),
         title: title.unwrap_or_default(),
-        icon: icon.unwrap_or_default(),
         back,
         forward,
         loading,
@@ -1379,35 +1402,47 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
 /// reading. So the step is an address off the trail this crate keeps, and from the
 /// first of those this tab steps that way for good; see `Trail::engine`.
 ///
-/// Reload goes through the engine either way, which is the one of the three it offers.
+/// Reload goes through the engine either way, which is the one of the three it offers;
+/// loading past the cache and stopping are the engine's too, see `web_reload.rs`.
+///
+/// `by` is how many steps back or forward, for a row of the history under the arrows,
+/// and one when it is not said.
 #[tauri::command]
 pub fn web_step(
     app: AppHandle,
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
     step: Step,
+    by: Option<u32>,
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
+    let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
-    let walked = match step {
-        Step::Reload => None,
-        Step::Back => tabs.stepping(&tab, false),
-        Step::Forward => tabs.stepping(&tab, true),
+    let by = match step {
+        Step::Reload => return view.reload().map_err(|error| error.to_string()),
+        Step::Fresh => return crate::web_reload::fresh(&view),
+        Step::Stop => return crate::web_reload::stop(&view),
+        Step::Back => -steps,
+        Step::Forward => steps,
     };
 
-    if let Some(url) = walked {
+    if let Some(url) = tabs.stepping(&tab, by) {
         let at = address(&url)?;
         return view
             .navigate(at)
             .map_err(|error| format!("that page could not be stepped: {error}"));
     }
 
-    match step {
-        Step::Reload => view.reload(),
-        Step::Back => view.eval("history.back()"),
-        Step::Forward => view.eval("history.forward()"),
-    }
-    .map_err(|error| format!("that page could not be stepped: {error}"))
+    view.eval(format!("history.go({by})"))
+        .map_err(|error| format!("that page could not be stepped: {error}"))
+}
+
+/// Where a tab has been and where along it it is, for the history under a held Back
+/// or Forward. Nothing is asked of the page, so a page busy in a loop of its own still
+/// lists where it came from.
+#[tauri::command]
+pub fn web_trail(tabs: tauri::State<'_, WebTabs>, tab: String) -> (Vec<String>, usize) {
+    tabs.walk(&tab)
 }
 
 /// Where the tab is: the page, how far down it the reading has got, and the trail
@@ -1498,6 +1533,15 @@ pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
+/// The engine's developer tools for the page in the tab: F12 and Ctrl+Shift+I pressed
+/// in the app rather than in the page, which the engine already answers itself. Only
+/// the pages have them; nib's own window does not in a build that ships.
+#[tauri::command]
+pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
+    found(&app, &tab)?.open_devtools();
+    Ok(())
+}
+
 /// The page, read for a clip.
 ///
 /// The script runs in the site's document and the answer comes back through the
@@ -1562,6 +1606,8 @@ pub async fn web_close(
             // A page still fetching a file stays until the file is in, out of sight; the
             // engine stops reporting a download whose webview has gone. See
             // `downloads::linger`.
+            // Its find goes with it, whichever way the page goes.
+            crate::web_find::forget(&named);
             if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -1655,7 +1701,7 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
 /// The webview for a tab, or a reason there is none. A tab whose page has been
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
-fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
+pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
     app.get_webview(&format!("{LABEL}{tab}"))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
@@ -2294,9 +2340,10 @@ mod shot {
         }
     }
 
-    /// The PNG out of the stream the engine wrote it into.
+    /// The bytes out of a stream the engine wrote a picture into: a photograph here,
+    /// and a page's favicon in `web_icons.rs`.
     #[allow(unsafe_code, reason = "a COM stream is read through its own interface")]
-    fn png(stream: &IStream) -> Option<Vec<u8>> {
+    pub fn png(stream: &IStream) -> Option<Vec<u8>> {
         // Safe: the stream was written by the engine before this is called, and every
         // length below is the one the stream itself reports.
         unsafe {
@@ -2393,6 +2440,11 @@ mod shot {
         (!bytes.is_empty() && bytes.len() <= LARGEST).then_some(bytes)
     }
 }
+
+/// A picture out of the stream the engine wrote it into, for the favicon a page is
+/// showing as much as for a photograph of it; see `web_icons.rs`.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) use shot::png as read_stream;
 
 // Every build but the two system engines that can photograph a page: Linux, and nib's
 // own Chromium. See the two above.
@@ -2519,6 +2571,22 @@ mod tests {
     }
 
     #[test]
+    fn the_source_of_a_page_is_that_page() {
+        assert!(allowed(&at("view-source:https://example.com/a?b=1")));
+        assert_eq!(
+            handed_over(&at("view-source:https://example.com/a")),
+            Some("view-source:https://example.com/a".to_string())
+        );
+        // And the source of nothing a tab may open is nothing either.
+        assert!(!allowed(&at("view-source:file:///C:/notes/Idea.md")));
+        assert!(!allowed(&at("view-source:http://tauri.localhost/")));
+        assert!(!allowed(&at(
+            "view-source:view-source:https://example.com/"
+        )));
+        assert!(!allowed(&at("view-source:")));
+    }
+
+    #[test]
     fn a_window_the_page_asked_for_is_a_page_or_is_nothing() {
         assert_eq!(
             handed_over(&at("https://example.com/a")),
@@ -2581,6 +2649,62 @@ mod tests {
         assert_eq!(trail.urls, ["https://a.example/", "https://c.example/"]);
         assert!(trail.back());
         assert!(!trail.forward());
+    }
+
+    #[test]
+    fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
+        // A page built on one address, which the engine's own history holds from there.
+        let tabs = WebTabs::default();
+        tabs.restore("t", vec!["https://a.example/".into()], 0);
+        for url in ["https://b.example/", "https://c.example/"] {
+            tabs.walked("t", url);
+        }
+
+        // Two back, in the engine's own history: the engine takes the step, and the
+        // trail is already where the page will say it has arrived.
+        assert_eq!(tabs.stepping("t", -2), None);
+        tabs.walked("t", "https://a.example/");
+        assert_eq!(
+            tabs.walk("t"),
+            (
+                vec![
+                    "https://a.example/".to_string(),
+                    "https://b.example/".to_string(),
+                    "https://c.example/".to_string(),
+                ],
+                0,
+            )
+        );
+
+        // Nowhere past either end.
+        assert_eq!(tabs.stepping("t", -1), None);
+        assert_eq!(tabs.stepping("t", 3), None);
+        assert_eq!(tabs.walk("t").1, 0);
+    }
+
+    #[test]
+    fn a_revived_page_jumps_by_address() {
+        let tabs = WebTabs::default();
+        tabs.restore(
+            "t",
+            vec![
+                "https://a.example/".into(),
+                "https://b.example/".into(),
+                "https://c.example/".into(),
+            ],
+            2,
+        );
+
+        assert_eq!(
+            tabs.stepping("t", -2),
+            Some("https://a.example/".to_string())
+        );
+        tabs.walked("t", "https://a.example/");
+        assert_eq!(tabs.walk("t").0.len(), 3);
+        assert_eq!(
+            tabs.stepping("t", 1),
+            Some("https://b.example/".to_string())
+        );
     }
 
     /// The app is not in the page, and neither are the buses. What a browser asks about

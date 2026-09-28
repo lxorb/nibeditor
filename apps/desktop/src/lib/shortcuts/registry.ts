@@ -370,6 +370,35 @@ const APP_ENTRIES: Shortcut[] = [
     contextual: true,
   },
   {
+    // Read by the tab, so a note keeps Ctrl+Shift+I for a picture. In a page the
+    // engine answers both keys itself.
+    id: 'web.devtools',
+    label: () => t('Developer tools'),
+    category: 'view',
+    scope: 'panel',
+    key: 'F12',
+    contextual: true,
+  },
+  {
+    id: 'web.devtools.alt',
+    label: () => t('Developer tools'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-Shift-i',
+    mac: 'Mod-Alt-i',
+    contextual: true,
+    alias: true,
+  },
+  {
+    // Chrome's Mute site has no key; a reader may give it one.
+    id: 'web.mute',
+    label: () => t('Mute site'),
+    category: 'view',
+    scope: 'panel',
+    key: null,
+    contextual: true,
+  },
+  {
     id: 'app.forward',
     label: () => t('Forward'),
     category: 'view',
@@ -814,7 +843,7 @@ const APP_ENTRIES: Shortcut[] = [
     // because the app's other view keys are already along that row. Obsidian's
     // own Slides plugin ships no key at all, so no preset takes this one back.
     // A browser keeps F5 for reloading, which the settings list warns about; the
-    // palette and the View menu are the way in there.
+    // palette and the View menu are the way in there. Over a page it is `web.reload`.
     // On a Mac, Keynote's Play Slideshow.
     id: 'app.present',
     label: () => t('Present'),
@@ -898,12 +927,17 @@ const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
   mac: `Mod-${index + 1}`,
-  run: () => {
-    const tabs = workspace.tabsIn(workspace.panes.focusedId)
-    const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
-    if (tab) workspace.activate(tab.id)
-  },
+  run: () => showNumbered(index),
 }))
+
+/** The tab at a place along the focused pane's strip, counting from nought, and the
+ *  last one for the ninth. Also Chrome's own Ctrl and a digit while a page is in
+ *  front, where no heading is waiting for it; see WebBar.svelte. */
+export function showNumbered(index: number) {
+  const tabs = workspace.tabsIn(workspace.panes.focusedId)
+  const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
+  if (tab) workspace.activate(tab.id)
+}
 
 /** The file list's own keys. They are read where the list is - see
  *  Tree.svelte - and only fire while the focus is in it, which is why they
@@ -1045,7 +1079,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   // because it is the key every list that can be rearranged uses. Contextual, like
   // the walk itself, so sharing it with the editor's own move-a-line-up is not
   // reported as a clash: it only means anything while the focus is in the list, and
-  // only in Manual. See `moveInOrder` in workspace.svelte.ts.
+  // only in Manual. See `moveInOrder` in tree-lift.ts.
   {
     id: 'tree.move-up',
     label: () => t('Move up'),
@@ -1185,6 +1219,29 @@ for (const entry of CANVAS_ENTRIES) {
   const mac = MAC_CANVAS[entry.id]
   if (mac) entry.mac = mac
 }
+
+/** A web tab's other keys, Chrome's, read by the bar in the focused pane before the
+ *  window is: F5 is Present over a note, and a pane showing a page has no note. See
+ *  web-tab/bar-keys.ts. A Mac types a character with Alt+D. */
+const WEB_ENTRIES: Shortcut[] = (
+  [
+    ['web.address.alt', () => t('Address'), 'Alt-d', null],
+    ['web.reload', () => t('Reload'), 'F5', 'Mod-r'],
+    ['web.reload.alt', () => t('Reload'), 'Mod-r', null],
+    ['web.fresh', () => t('Hard reload'), 'Mod-Shift-r', undefined],
+    ['web.fresh.alt', () => t('Hard reload'), 'Mod-F5', null],
+    ['web.stop', () => t('Stop'), 'Escape', undefined],
+  ] as const
+).map(([id, label, key, mac]) => ({
+  id,
+  label,
+  category: 'view' as const,
+  scope: 'panel' as const,
+  key,
+  ...(mac === undefined ? {} : { mac }),
+  contextual: true,
+  ...(id.endsWith('.alt') ? { alias: true } : {}),
+}))
 
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
@@ -1336,6 +1393,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...PANEL_ENTRIES,
   ...CANVAS_ENTRIES,
   ...PAGES_ENTRIES,
+  ...WEB_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 

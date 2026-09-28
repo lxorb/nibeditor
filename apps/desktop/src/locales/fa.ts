@@ -301,6 +301,7 @@ export const fa: Dictionary = {
   // PDFs
   'Copy a link': 'رونوشت پیوند',
   'That PDF could not be opened': 'آن PDF گشوده نشد',
+  'That file could not be read': 'آن پرونده خوانده نشد',
   // Modes and view
   Reading: 'خواندن',
   'Leave reading': 'بیرون آمدن از خواندن',
@@ -1288,6 +1289,7 @@ export const fa: Dictionary = {
   'Add to {name}': 'افزودن به {name}',
   // Web tabs
   Reload: 'بارگذاری دوباره',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ذخیره این صفحه',
   'Clip the link': 'ذخیره پیوند',
   'Open in the browser': 'گشودن در مرورگر',
@@ -1295,6 +1297,11 @@ export const fa: Dictionary = {
   Website: 'وب‌گاه',
   'Open a website': 'گشودن وب‌گاه',
   'Convert website notes': 'تبدیل یادداشت‌های وب',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ضبط',
   Recording: 'ضبط',
@@ -1509,4 +1516,15 @@ export const fa: Dictionary = {
   'Duplicate the block': 'همسان‌سازی بلوک',
   'Move the block up': 'جابه‌جایی بلوک به بالا',
   'Move the block down': 'جابه‌جایی بلوک به پایین',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

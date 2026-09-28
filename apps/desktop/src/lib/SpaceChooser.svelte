@@ -70,7 +70,7 @@
         <div class="nib-setting">
           <span class="name">{t('Import a folder')}</span>
           <button
-            class="nib-button is-quiet"
+            class="nib-button is-quiet is-soft"
             type="button"
             disabled={firstSpace.working}
             onclick={() => void firstSpace.importFolder()}
@@ -84,14 +84,14 @@
         <span class="name">{t('Sign in to sync')}</span>
         <span class="pair">
           <button
-            class="nib-button is-quiet"
+            class="nib-button is-quiet is-soft"
             type="button"
             onclick={() => firstSpace.signIn('sign-in')}
           >
             {t('Sign in')}
           </button>
           <button
-            class="nib-button is-quiet"
+            class="nib-button is-quiet is-soft"
             type="button"
             onclick={() => firstSpace.signIn('create')}
           >
@@ -187,16 +187,8 @@
     gap: var(--space-2);
   }
 
-  /* Obsidian's second buttons are filled a step off the card, so each row reads as
-     having one thing to press. The press and the hover are the class's own. */
-  .rows .nib-button.is-quiet {
-    background: var(--surface-2);
-    color: var(--text);
-  }
-
   .rows .nib-button {
     flex: none;
-    font-size: var(--text-row);
   }
 
   .foot {
@@ -216,8 +208,7 @@
     padding-bottom: calc(var(--space-5) + var(--inset-bottom));
   }
 
-  :global([data-touch]) .name,
-  :global([data-touch]) .rows .nib-button {
+  :global([data-touch]) .name {
     font-size: var(--touch-text);
   }
 </style>

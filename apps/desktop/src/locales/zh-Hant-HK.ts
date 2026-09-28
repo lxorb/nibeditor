@@ -301,6 +301,7 @@ export const zhHantHK: Dictionary = {
   // PDFs
   'Copy a link': '複製連結',
   'That PDF could not be opened': '無法開啟該PDF',
+  'That file could not be read': '無法讀取該檔案',
   // Modes and view
   Reading: '閱讀',
   'Leave reading': '離開閱讀',
@@ -1254,6 +1255,7 @@ export const zhHantHK: Dictionary = {
   'Add to {name}': '加入 {name}',
   // Web tabs
   Reload: '重新載入',
+  'Hard reload': 'Hard reload',
   'Clip this page': '儲存此頁',
   'Clip the link': '儲存連結',
   'Open in the browser': '在瀏覽器開啟',
@@ -1261,6 +1263,11 @@ export const zhHantHK: Dictionary = {
   Website: '網站',
   'Open a website': '開啟網站',
   'Convert website notes': '轉換網站筆記',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '錄音',
   Recording: '錄音',
@@ -1471,4 +1478,15 @@ export const zhHantHK: Dictionary = {
   'Duplicate the block': '複製此區塊',
   'Move the block up': '此區塊上移',
   'Move the block down': '此區塊下移',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

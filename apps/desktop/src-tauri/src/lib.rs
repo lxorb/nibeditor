@@ -26,8 +26,9 @@
 //!
 //! Four kinds of command deliberately do not. The ones that only read state this
 //! builder manages, which is a mutex and no wait at all. `write_log`, whose lines
-//! are appended in the order they were written and would not be if two could be in
-//! the air at once. The two that reach Windows through COM or the registry, since
+//! have to leave in the order they were written and would not if two could be in
+//! the air at once; it hands each to the log's own thread, which is the one that
+//! waits. The two that reach Windows through COM or the registry, since
 //! an apartment belongs to the thread that made it. And `new_window`, which builds
 //! a window.
 
@@ -64,6 +65,7 @@ mod fuzzy;
 mod ground;
 mod highlights;
 mod history;
+mod lane;
 #[cfg(desktop)]
 mod launch;
 #[cfg(desktop)]
@@ -108,9 +110,17 @@ mod uris;
 #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
+mod web_find;
+#[cfg(desktop)]
+mod web_icons;
+#[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
+#[cfg(desktop)]
+mod web_page;
+#[cfg(desktop)]
+mod web_reload;
 #[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
@@ -183,6 +193,63 @@ macro_rules! commands {
             uris::take_startup_uris,
             trace::trace_startup,
             $($desktop)*
+        ]
+    };
+}
+
+/// The desktop's own commands, with the ones both builds share: a list of its own
+/// rather than a block inside `run_on`, which is about the order a launch happens in.
+#[cfg(desktop)]
+macro_rules! desktop_commands {
+    () => {
+        commands![
+            endpoint::automation_result,
+            appearance::set_frame,
+            appearance::set_translucency,
+            ground::remember_ground,
+            apple_notes::read_apple_notes,
+            apple_notes::open_full_disk_access,
+            launch::take_startup_files,
+            launch::new_window,
+            lifecycle::keep_running,
+            document_window::show_document,
+            menu_bar::hand_to_keyboard,
+            pandoc::has_pandoc,
+            pandoc::run_pandoc,
+            pandoc::import_document,
+            pdf::pdf_supported,
+            pdf::print_pdf,
+            pdf::print_page,
+            recent::remember_recent,
+            recent::forget_recent,
+            secrets::secret_forget,
+            secrets::secret_read,
+            secrets::secret_write,
+            shell_menu::new_menu_registered,
+            shell_menu::set_new_menu,
+            updates::check_update,
+            web_tabs::web_open,
+            web_tabs::web_place,
+            web_tabs::web_navigate,
+            web_tabs::web_step,
+            web_tabs::web_trail,
+            web_tabs::web_clip,
+            web_tabs::web_close,
+            web_tabs::web_look,
+            web_tabs::web_scroll,
+            web_tabs::web_zoom,
+            web_tabs::web_print,
+            web_tabs::web_devtools,
+            web_page::web_mute,
+            web_page::web_unfill,
+            web_find::web_find,
+            web_find::web_find_stop,
+            web_tabs::web_shot,
+            web_tabs::web_answer,
+            downloads::web_downloads,
+            downloads::web_download_open,
+            downloads::web_download_show,
+            downloads::web_download_cancel,
         ]
     };
 }
@@ -296,7 +363,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = placement::managed(web_tabs::managed(builder));
 
-    let builder = with_commands(builder);
+    #[cfg(desktop)]
+    let builder = builder.invoke_handler(desktop_commands!());
+
+    #[cfg(mobile)]
+    let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
@@ -350,61 +421,6 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     lifecycle::on_event(app, event);
     #[cfg(not(desktop))]
     let _ = (app, event);
-}
-
-/// The commands the window may call on a desktop: every build's, and the ones a
-/// desktop has because it has windows, a filesystem and web tabs of its own.
-#[cfg(desktop)]
-fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
-    builder.invoke_handler(commands![
-        endpoint::automation_result,
-        appearance::set_frame,
-        appearance::set_translucency,
-        ground::remember_ground,
-        apple_notes::read_apple_notes,
-        apple_notes::open_full_disk_access,
-        launch::take_startup_files,
-        launch::new_window,
-        lifecycle::keep_running,
-        document_window::show_document,
-        menu_bar::hand_to_keyboard,
-        pandoc::has_pandoc,
-        pandoc::run_pandoc,
-        pandoc::import_document,
-        pdf::pdf_supported,
-        pdf::print_pdf,
-        pdf::print_page,
-        recent::remember_recent,
-        recent::forget_recent,
-        secrets::secret_forget,
-        secrets::secret_read,
-        secrets::secret_write,
-        shell_menu::new_menu_registered,
-        shell_menu::set_new_menu,
-        updates::check_update,
-        web_tabs::web_open,
-        web_tabs::web_place,
-        web_tabs::web_navigate,
-        web_tabs::web_step,
-        web_tabs::web_clip,
-        web_tabs::web_close,
-        web_tabs::web_look,
-        web_tabs::web_scroll,
-        web_tabs::web_zoom,
-        web_tabs::web_print,
-        web_tabs::web_shot,
-        web_tabs::web_answer,
-        downloads::web_downloads,
-        downloads::web_download_open,
-        downloads::web_download_show,
-        downloads::web_download_cancel,
-    ])
-}
-
-/// And a phone's, which are every build's alone.
-#[cfg(mobile)]
-fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
-    builder.invoke_handler(commands![])
 }
 
 /// Everything that has to happen once, after the app is built and before the
@@ -493,7 +509,10 @@ fn ready(
     if let Some(config) = ui {
         let config = placement::restored(handle, config);
         trace::mark("window placement");
-        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?;
+        // Developer tools are for the pages in web tabs, which the build that ships has for
+        // them; nib's own window keeps them to a development build, as it always did.
+        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?
+            .devtools(cfg!(debug_assertions));
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
@@ -578,8 +597,10 @@ mod tests {
     /// file, a subprocess or the registry, and the reason each may. The note at the
     /// top of this file is where they are explained; this is that list, held to.
     ///
-    /// `write_log` appends its lines in the order they were written, which two of
-    /// them in the air at once would not be. The other two reach Windows through the
+    /// `write_log` hands its lines on in the order they were written, which two of
+    /// them in the air at once would not; the disk is its own thread's, and this
+    /// reader follows a call into a closure without knowing it runs on another
+    /// thread. The other two reach Windows through the
     /// registry, and a key is opened and closed inside one call.
     const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
 

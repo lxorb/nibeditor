@@ -301,6 +301,7 @@ export const bn: Dictionary = {
   // PDFs
   'Copy a link': 'লিংক কপি',
   'That PDF could not be opened': 'PDF খোলা গেল না',
+  'That file could not be read': 'ফাইলটি পড়া গেল না',
   // Modes and view
   Reading: 'পড়া',
   'Leave reading': 'পড়া বন্ধ',
@@ -1285,6 +1286,7 @@ export const bn: Dictionary = {
   'Add to {name}': '{name}-এ যোগ করুন',
   // Web tabs
   Reload: 'আবার লোড করুন',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'এই পাতা রাখুন',
   'Clip the link': 'লিঙ্ক রাখুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
@@ -1292,6 +1294,11 @@ export const bn: Dictionary = {
   Website: 'ওয়েবসাইট',
   'Open a website': 'ওয়েবসাইট খুলুন',
   'Convert website notes': 'ওয়েবসাইট নোট রূপান্তর করুন',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'রেকর্ড করুন',
   Recording: 'রেকর্ডিং',
@@ -1505,4 +1512,15 @@ export const bn: Dictionary = {
   'Duplicate the block': 'ব্লক ডুপ্লিকেট করুন',
   'Move the block up': 'ব্লক উপরে সরান',
   'Move the block down': 'ব্লক নিচে সরান',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

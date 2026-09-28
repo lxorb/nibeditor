@@ -301,6 +301,7 @@ export const jv: Dictionary = {
   // PDFs
   'Copy a link': 'Salin pranala',
   'That PDF could not be opened': 'PDF kuwi ora bisa dibukak',
+  'That file could not be read': 'File kuwi ora bisa diwaca',
   // Modes and view
   Reading: 'Maca',
   'Leave reading': 'Metu saka maca',
@@ -1274,6 +1275,7 @@ export const jv: Dictionary = {
   'Add to {name}': 'Tambahake menyang {name}',
   // Web tabs
   Reload: 'Emot maneh',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Simpen kaca iki',
   'Clip the link': 'Simpen pranalane',
   'Open in the browser': 'Bukak ing panjelajah',
@@ -1281,6 +1283,11 @@ export const jv: Dictionary = {
   Website: 'Situs web',
   'Open a website': 'Bukak situs web',
   'Convert website notes': 'Ngowahi cathetan situs web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',
@@ -1501,4 +1508,15 @@ export const jv: Dictionary = {
   'Duplicate the block': 'Tulad blok',
   'Move the block up': 'Munggahake blok',
   'Move the block down': 'Mudhunake blok',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

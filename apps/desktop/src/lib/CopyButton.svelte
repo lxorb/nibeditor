@@ -90,10 +90,6 @@
     background: var(--press);
   }
 
-  .copy:disabled {
-    opacity: 0.5;
-  }
-
   .copy:focus-visible {
     outline-offset: 2px;
   }

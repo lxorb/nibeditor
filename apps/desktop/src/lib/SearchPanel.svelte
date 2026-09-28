@@ -595,10 +595,6 @@
     background: var(--accent-press);
   }
 
-  .apply:disabled {
-    opacity: 0.45;
-  }
-
   .apply .count {
     color: inherit;
     opacity: 0.75;

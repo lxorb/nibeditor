@@ -27,7 +27,7 @@ URL=https://svelte.dev/docs/svelte/what-are-runes
 Title=Svelte docs
 Nib-Added=2026-09-12T08:30:00.000Z
 Nib-Home=https://svelte.dev/docs
-Nib-Icon=https://svelte.dev/favicon.png
+Nib-Icon=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0...
 ```
 
 The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
@@ -61,12 +61,31 @@ become the eighth page of somebody's browsing is a note no link could point at, 
 because "take me back to the site" is worth being able to answer. Absent means it is
 the same as `URL`.
 
-**`Nib-Icon` is the site's own mark, as an address.** A picture inside a text file is
-a text file nothing else will read, and `IconFile` in this format names an `.ico` on
-this machine, which is not a thing that travels - but the one thing a favicon always
-has is somewhere to be fetched from. It is here so the tab strip and the file list
-have the site's mark before the page has loaded and on a machine that has never
-opened it; a machine with no network falls back to the generic web mark.
+**`Nib-Icon` is the site's own mark, as the picture itself**: a `data:` address
+holding the PNG the page arrived with the last time it was open. An address to fetch
+it from was what this used to hold, and it failed exactly where it mattered. WhatsApp
+adds its mark with a script a second after the page has loaded and serves it with
+`Cross-Origin-Resource-Policy: same-origin`, so only its own page may draw it; a site
+behind a login serves its mark to the login's cookies, which the app's own page does
+not have. Chrome keeps a bookmark's favicon as the picture for the same reason, and a
+picture is also a file list that draws every web note's mark on launch without one
+request. It is here so the tab strip and the file list have the site's mark before
+the page has loaded and on a machine that has never opened it. A file written before
+this holds an address, which is drawn as one until the page is next open.
+
+**Where the picture comes from is the engine.** `WebView2` chooses a page's icon the
+way Chrome does, fetches it inside the page's own profile, and says whenever the
+choice changes (`FaviconChanged`). The picture it chose is read again inside the page,
+at the size the site drew it, because the engine's own decoded copy (`GetFavicon`) is
+sixteen pixels and blurred on a double density screen; that copy is what stands in
+where the page will not hand the original over. So a
+mark set by a script, an SVG, a `data:` mark, a bare `/favicon.ico`, a mark behind a
+login and one served by a service worker all arrive the same way, and a mark a site
+redraws with an unread count is redrawn in the tab. The file keeps the first mark each
+load shows rather than every one, so an unread count never rewrites the note. Engines
+with no such event are asked for every `<link>` the page declares once it has loaded,
+and the best for a sixteen pixel box on a double density screen is chosen. See
+`src-tauri/src/web_icons.rs`.
 
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
@@ -486,6 +505,24 @@ answer either way, because the engine will not give one and a back arrow that is
 always lit is an arrow that lies half the time. A redirect can leave an extra entry
 in the trail; that is the price of not having the engine's own answer.
 
+**A right click or a held finger on either arrow lists the pages that way**, Chrome's
+list: the nearest first, a dozen at most, each by what the page called itself (off the
+address field's history) or its address. A row goes straight there - `history.go(n)`
+in the page, or the address off the trail for a revived one - and the trail is moved
+to where it lands before the page arrives, so the jump reads as a step and not as
+somewhere new. The trail comes from `web_trail`, which asks nothing of the page.
+
+**The reload glyph is a cross while a page is coming**, and pressing it stops the page,
+which is what Chrome's does; Escape does the same once whatever is open over the page
+has had its Escape. The tab's mark turns meanwhile, so the bar only says what a press
+would do. It turns the moment a navigation sets off rather than when the engine's own
+"started" arrives, which is only once the site has begun to answer: a cross that
+appears when there is nothing left to stop is no cross at all. The middle button or
+Ctrl on it opens the page again in a tab behind, as Chrome's does. Ctrl+Shift+R and Ctrl+F5 load the page past the cache. Stopping and loading
+fresh are `WebView2`'s own - `Stop`, and the DevTools Protocol's `Page.reload` with
+`ignoreCache` - and elsewhere the nearest a page can do, `window.stop()` and an
+ordinary reload; see `src-tauri/src/web_reload.rs`.
+
 #### The pointer is never hidden while somebody types
 
 Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser
@@ -636,6 +673,11 @@ address field or the first page a tab arrives at reads it.
 | key                     |                                                                                                                                                                                                   |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ctrl+L                  | the address field, in the pane that has the focus                                                                                                                                                 |
+| Alt+D, and F6 in a page | the address field too, Chrome's other two ways to it                                                                                                                                              |
+| F5, Ctrl+R              | reload; Ctrl+Shift+R and Ctrl+F5 past the cache                                                                                                                                                   |
+| Escape                  | stops a page on its way in                                                                                                                                                                        |
+| Ctrl+1 to 9             | the tab at that place along the strip, the ninth the last                                                                                                                                         |
+| Alt+Enter in the field  | the address in a tab of its own, in front                                                                                                                                                         |
 | Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
 | Alt+Left, Alt+Right     | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with                                                                                     |
 | Right, End in the field | takes the rest of the address the field wrote in                                                                                                                                                  |
@@ -652,13 +694,21 @@ showing a page has no editor to shadow. It is in the registry like every other k
   read the same way.
 
 **While the page itself has the keyboard, its keys are the page's - but for the
-browser's own.** After a click into a site, Ctrl+L is that site's shortcut and the app
-never sees the press: that is what a webview of its own means. The bar is one click
-away. The exception is Chrome's: the chords a browser never offers a page - a new tab,
-closing one, reopening the last, going round them and moving one along, a new window, Ctrl+1 to 9 - are
-taken before the page sees them and played on the app's own window, and the keyboard
-goes back to the app with them. On `WebView2` only; see `docs/keyboard.md` and
+browser's own.** After a click into a site the app never sees the press: that is what a
+webview of its own means. The exception is Chrome's: the chords a browser never offers
+a page - a new tab, closing one, reopening the last, going round them and moving one
+along, a new window, Ctrl+1 to 9, and F6 back to the address field - are taken before
+the page sees them and played on the app's own window, and the keyboard goes back to the
+app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
+need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
+Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
+Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
+itself". On `WebView2` only; see `docs/keyboard.md` and
 `src-tauri/src/web_keys.rs`.
+
+The bar reads F5, the reload keys and Ctrl and a digit before the window's own handler
+does, and only in the focused pane, because they share their keys with Present and a
+heading level: a pane showing a page has neither. See `web-tab/bar-keys.ts`.
 
 The mark at the left of the field is the site: the page's own favicon, and a lock for
 a site that has none - or a warning for an `http:` page. Pressing it says what this
@@ -668,7 +718,7 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 **The dots hold Chrome's menu, in Chrome's order and Chrome's words**, because Emil
 asked for exactly that: _"Our browser related menu structure should be very similar
 to that of chrome. And in general we don't want to reinvent how a browser works."_
-New tab, Bookmarks, Zoom out / the size / Zoom in, Full screen, Print, Save page,
+New tab, Bookmarks, Zoom out / the size / Zoom in, Full screen, Print, Find, Save page,
 Share, Copy link, Open in the browser, Settings - each bent onto what nib has where
 the two differ: a bookmark here is the space's own kept files, Save page is the
 clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
@@ -681,8 +731,8 @@ copy a link address; open an image in a new tab, copy an image, save an image as
 copy a selection and search the web for it. Those are the engine's own context menus -
 Chromium's on Windows, `WebKit`'s elsewhere - in the reader's own language, with the
 engine's own behaviour behind every row, and a second copy written in this app would
-be worse at every one of them. Inspect is how the developer tools are reached, which
-is why there is no More tools row. What is still missing against Chrome's menu is
+be worse at every one of them. Inspect is how the developer tools are reached, as are
+F12 and Ctrl+Shift+I, which is why there is no More tools row. What is still missing against Chrome's menu is
 listed under "What is left".
 
 ## A link in a tab of its own
@@ -707,6 +757,56 @@ on. A plain `target="_blank"` opens in front. A page that asks for a window at a
 its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
 because that page reports back through `window.opener` and closes itself; on the
 other engines it is a tab, as before.
+
+## The page itself
+
+What a browser does with the page in front of it without being asked, each on
+`WebView2`'s own event or call, and each said to the window as `nib://web-page` or
+`nib://web-found` and landed on the tab's state by `web-tab/heard.ts`. Elsewhere the
+engines say nothing, and what each one does there is said with it.
+
+- **Find.** Ctrl+F opens the app's find bar under the bar - the one a note, a note
+  being read and a PDF find with - and the engine's own find does the finding
+  (`ICoreWebView2Find`): every match marked in the page, the lit one scrolled to, the
+  tally and which one is lit said back as they change. Enter and Shift+Enter, Ctrl+G and
+  F3 step; Escape closes it and the marks go. It is also a row in the dots and in the
+  palette. Inside the page the keys are the page's first, which is Chrome's order: Google
+  Docs, Notion, VS Code on the web and Figma have a find of their own on Ctrl+F and keep
+  it. A line of script in every page listens last and, when nothing in the page took the
+  key, asks for the bar under one of the window names `web_opens.rs` reads - find, next,
+  previous, and the address field for Ctrl+L and Alt+D - for that tab alone, said to the
+  window as `nib://web-passed`. Never a command name, so a page can reach its own find
+  and its own address field and nothing else (see `lib/web-tab/passed.svelte.ts`). The
+  script answers after every handler the page has, including the ones the page added
+  after it. A page the tab
+  arrives on while the bar is open is looked in again. An engine without the find (an
+  older runtime, a Mac, Linux) is asked through the page: `window.find` walks and
+  selects one match at a time and the page's text is counted for the tally. See
+  `src-tauri/src/web_find.rs`.
+- **The whole screen.** A video's own full screen button, or YouTube's `f`, asks for the
+  whole screen and the engine can only give it the whole webview, which was the pane. The
+  engine says when a page holds a full screen element, and the window goes full screen
+  with the page placed over all of it; Escape or F11 give it back, and so does switching
+  to another tab. A window the reader had already put full screen stays so. Any other
+  pane's page steps out of the way while one holds the screen. See
+  `web-tab/filling.svelte.ts`.
+- **Sound.** A tab playing sound wears Chrome's speaker after its name. **Mute site**, in
+  the tab's own menu, in the palette and on a key a reader may give it (`web.mute`),
+  silences that site in every tab it is open in and the next time it plays anywhere,
+  until it is unmuted - the speaker is struck through while it would be playing. By
+  site, as the bar shows it, on this device; see `web-tab/sites.ts` and
+  `web-tab/mute.ts`. Elsewhere a mute is the page's media elements told to be quiet.
+- **Zoom.** Ctrl and the wheel, Ctrl and a sign, and the dots' three rows all move one
+  zoom, and the menu's percentage says what it is however it was made. Each site opens
+  at the size it was left at and every other at a hundred per cent, the way Chrome keeps
+  zoom by site.
+- **Developer tools.** F12, Ctrl+Shift+I (Cmd+Alt+I on a Mac) and the page menu's
+  Inspect open the engine's own tools for the page, from inside it or from the bar. The
+  build that ships has them for web tabs only - the `devtools` feature, on desktops -
+  and nib's own window keeps them to a development build.
+- **View page source.** The page menu's row asks for `view-source:` and the address,
+  which opens as a tab: the source of anything a tab may hold and nothing else. The
+  address field takes it typed, as Chrome's does.
 
 ## Downloads
 
@@ -1192,7 +1292,10 @@ versions and goes to the trash like every other document.
 
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
+| `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom; and a mute. Unit tested |
+| `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
@@ -1222,7 +1325,14 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
-| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, Escape. Pure, tested |
+| `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |
+| `apps/desktop/src/lib/web-tab/sites.ts` | a site muted, and the size a site is drawn at, per device. Tested |
+| `apps/desktop/src/lib/web-tab/mute.ts` | Mute site, in every tab showing it |
+| `apps/desktop/src/lib/web-tab/filling.svelte.ts` | a page holding the whole screen, and the window following it |
+| `apps/desktop/src/lib/web-tab/seek.ts` | finding in the page from the bar and from the keys. Tested |
+| `apps/desktop/src/lib/web-tab/passed.svelte.ts` | a key the page let go by - find, a step, the address field - answered for that tab alone. Tested |
 | `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
 | `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |
 | `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
@@ -1237,6 +1347,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
@@ -1251,10 +1362,13 @@ versions and goes to the trash like every other document.
   data is kept apart from the others would want its own list.
 - **Four of Chrome's menu rows are not here, because nothing is behind them yet.**
   History wants a surface nib does not have - a list of every page a window has been
-  through; Downloads is the glyph in the bar rather than a row, see "Downloads"; Find wants an
-  in-page find bar of its own, which is not the one a note has; Copy and Paste are
-  the page's own context menu already; and More tools' developer tools are reached by
-  Inspect in that same menu. Each is a row the day the thing behind it exists.
+  through; Downloads is the glyph in the bar rather than a row, see "Downloads"; Copy
+  and Paste are the page's own context menu already; and More tools' developer tools
+  are reached by Inspect in that same menu and by F12. Each is a row the day the thing
+  behind it exists.
+- **A page holding the whole screen, the speaker and the find's marks are `WebView2`'s
+  alone.** A Mac and Linux have no event for the first two reachable through wry, and
+  their find marks one match at a time; see "The page itself".
 - **A page still gets `ipc` and the app's other globals, and Google's editors will not
   load because of it.** The whole of it is in "What a page is given that a browser would
   not give it" above, with the measurement and what the fix costs. It is the largest

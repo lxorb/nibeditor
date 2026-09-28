@@ -301,6 +301,7 @@ export const ps: Dictionary = {
   // PDFs
   'Copy a link': 'تړنه لمېسل',
   'That PDF could not be opened': 'هغه PDF ونه پرانيستل شو',
+  'That file could not be read': 'هغه دوتنه ونه لوستل شوه',
   // Modes and view
   Reading: 'لوستل',
   'Leave reading': 'له لوستلو وتل',
@@ -1289,6 +1290,7 @@ export const ps: Dictionary = {
   'Add to {name}': '{name} ته ورزياتول',
   // Web tabs
   Reload: 'بېرته راوړل',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'دا مخ خوندول',
   'Clip the link': 'تړنه خوندول',
   'Open in the browser': 'په کوټګر کې پرانيستل',
@@ -1296,6 +1298,11 @@ export const ps: Dictionary = {
   Website: 'ټاټوبی',
   'Open a website': 'ټاټوبی پرانيستل',
   'Convert website notes': 'د ټاټوبي يادښتونه اړول',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ثبتول',
   Recording: 'ثبت',
@@ -1510,4 +1517,15 @@ export const ps: Dictionary = {
   'Duplicate the block': 'د بلاک کاپي جوړول',
   'Move the block up': 'بلاک پورته خوځول',
   'Move the block down': 'بلاک ښکته خوځول',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

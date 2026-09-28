@@ -304,6 +304,7 @@ export const ml: Dictionary = {
   // PDFs
   'Copy a link': 'ഒരു ലിങ്ക് പകർത്തുക',
   'That PDF could not be opened': 'ആ PDF തുറക്കാനായില്ല',
+  'That file could not be read': 'ആ ഫയൽ വായിക്കാനായില്ല',
   // Modes and view
   Reading: 'വായന',
   'Leave reading': 'വായന വിടുക',
@@ -1301,6 +1302,7 @@ export const ml: Dictionary = {
   'Add to {name}': '{name}-ൽ ചേർക്കുക',
   // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ഈ താൾ എടുക്കുക',
   'Clip the link': 'കണ്ണി എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
@@ -1308,6 +1310,11 @@ export const ml: Dictionary = {
   Website: 'വെബ്‌സൈറ്റ്',
   'Open a website': 'വെബ്‌സൈറ്റ് തുറക്കുക',
   'Convert website notes': 'വെബ്‌സൈറ്റ് കുറിപ്പുകൾ പരിവർത്തനം ചെയ്യുക',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'റെക്കോർഡ് ചെയ്യുക',
   Recording: 'റെക്കോർഡിംഗ്',
@@ -1527,4 +1534,15 @@ export const ml: Dictionary = {
   'Duplicate the block': 'ബ്ലോക്കിന്റെ പകർപ്പ് ഉണ്ടാക്കുക',
   'Move the block up': 'ബ്ലോക്ക് മുകളിലേക്ക് നീക്കുക',
   'Move the block down': 'ബ്ലോക്ക് താഴേക്ക് നീക്കുക',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

@@ -13,10 +13,14 @@ export interface Press {
   ctrlKey: boolean
   metaKey: boolean
   shiftKey: boolean
+  altKey?: boolean
 }
 
 /** Nothing beyond the surface's own click, a tab left behind, or a tab to go to. */
 export type TabAsk = 'plain' | 'behind' | 'front'
+
+/** And for a link to a note, a pane to the right as well. */
+export type LinkAsk = TabAsk | 'aside'
 
 /** The middle button, in the DOM's numbering. */
 const MIDDLE = 1
@@ -24,6 +28,13 @@ const MIDDLE = 1
 export function tabAsk(press: Press, shiftOpens = false): TabAsk {
   if (press.button === MIDDLE || linkModifier(press)) return press.shiftKey ? 'front' : 'behind'
   return shiftOpens && press.shiftKey ? 'front' : 'plain'
+}
+
+/** What a press on a link to a note asked for. Ctrl+Alt+click (Cmd+Alt on a Mac) is a
+ *  pane to the right, which is Obsidian's chord for it and the palette's with Enter;
+ *  everything else is Chrome's rule above. */
+export function linkAsk(press: Press): LinkAsk {
+  return press.altKey && linkModifier(press) ? 'aside' : tabAsk(press)
 }
 
 /** How a listing opens a file, as `openEntry` takes it. */

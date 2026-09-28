@@ -361,7 +361,7 @@ def opened(page: Page, label: str, name: str, note_id: str) -> None:
     wait_for(page, "() => !!document.querySelector('canvas.ink.settled')", f"[{label}] the plane")
     wait_for(
         page,
-        f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
+        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the plane to join its room",
     )
 
@@ -745,7 +745,7 @@ def main() -> int:
                     )
                     wait_for(
                         joining,
-                        f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
+                        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
                         f"[three] {name} to join its room",
                         90,
                     )

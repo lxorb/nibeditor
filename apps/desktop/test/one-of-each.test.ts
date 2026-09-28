@@ -134,9 +134,7 @@ describe('the row a list is made of', () => {
       .map((one) => one.name)
       .sort()
 
-    // The settings sheet is a sheet of cards rather than a list of names: its
-    // rows are settings, and what they light is the card they sit in.
-    expect(own).toEqual(['lib/SettingsPanel.svelte'])
+    expect(own).toEqual([])
   })
 
   test('and the row every list wears is the one in the themes package', () => {
@@ -155,6 +153,7 @@ describe('the row a list is made of', () => {
       'lib/Links.svelte',
       'lib/Palette.svelte',
       'lib/SearchPanel.svelte',
+      'lib/SettingsPanel.svelte',
       'lib/Sidebar.svelte',
       'lib/TagTree.svelte',
       'lib/Tree.svelte',
@@ -436,6 +435,87 @@ describe('the switch', () => {
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
     ])
+  })
+})
+
+/** The one thing a dialog or a sheet is there to do. Seven components had their own
+ *  and were brought onto `.nib-button`; five more - the version history, the theme
+ *  gallery, the settings, the connectors and every sheet built on Sheet.svelte -
+ *  still drew a `.primary` of their own, at three paddings and two type sizes, and
+ *  half of them lifted under the pointer. */
+describe('the button with words in it', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-button')
+
+    // A notice is a line of words, and its two buttons are read at that size.
+    expect(draw(/\.nib-button/)).toEqual(['lib/UpdateNotice.svelte'])
+  })
+
+  test('and no component draws a primary of its own', () => {
+    const own = components
+      .filter((one) => rules(one.style).some((rule) => /\.primary\b/.test(rule.selector)))
+      .map((one) => one.name)
+
+    expect(own).toEqual([])
+  })
+})
+
+/** A line of words in a card that does something: Sign out, Reset all shortcuts.
+ *  Five components drew their own, at three weights. */
+describe('the action in a card', () => {
+  test('is drawn in the themes package', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-action')
+    expect(shared).toContain('[data-touch] .nib-action')
+  })
+
+  test('and laid into a grouped card on a phone by the one sheet that has those', () => {
+    // The panes inside the settings sheet hold actions too, and Svelte scopes a
+    // component's rules to its own markup, so the sheet says it once with
+    // `:global` rather than each pane saying it again.
+    expect(draw(/\.nib-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
+  })
+})
+
+/** The outlined action at the end of a row: Browse, Turn on, Accept, Keep mine.
+ *  Five components drew their own, with three weights and two sizes between them. */
+describe('the small action at the end of a row', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-chip')
+    expect(shared).toContain('[data-touch] .nib-chip')
+    expect(draw(/\.nib-chip|\.pill\b/)).toEqual([])
+  })
+})
+
+/** How a control that cannot be pressed looks. The themes package says it once, at
+ *  0.4, and then eighteen rules in fifteen components said it again at 0.3, 0.35,
+ *  0.45, 0.5 and 0.55 - so a refused button in the settings was a different grey from
+ *  one in a sheet, and the Publish form, which fades as a whole, faded the controls
+ *  inside it a second time. */
+describe('the fade on something refused', () => {
+  test('is said in the themes package, for a fieldset too', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain(':where(fieldset):disabled')
+  })
+
+  test('and no component says it again', () => {
+    const own = components.flatMap((one) =>
+      rules(one.style)
+        .filter(
+          (rule) =>
+            /:disabled|aria-disabled/.test(rule.selector) &&
+            // `1` is a control that says it another way and takes the fade off.
+            valuesOf(rule.declarations, 'opacity').some((value) => value !== '1'),
+        )
+        .map((rule) => `${one.name}: ${rule.selector}`),
+    )
+
+    // The drop zone of an import is disabled while it reads the file, and while it
+    // is it says so in words - `Reading` - which is a sentence to read rather than
+    // a control to pass over.
+    expect(own).toEqual(['lib/ImportSheet.svelte: .drop:disabled'])
   })
 })
 

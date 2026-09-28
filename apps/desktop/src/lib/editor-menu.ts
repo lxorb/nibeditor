@@ -8,6 +8,7 @@ import {
   duplicateBlocks,
   type EditorView,
   indentBlocks,
+  type NoteJump,
   insertCodeFence,
   insertHorizontalRule,
   insertLink,
@@ -26,8 +27,19 @@ import {
   type Transaction,
   turnBlocksInto,
 } from '@nib/editor'
+import {
+  deletePicture,
+  editLink,
+  jumpAt,
+  linkPartsAt,
+  pictureUrl,
+  pressedPicture,
+  removeLink,
+  showPicture,
+} from '@nib/editor/menu'
 import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
+import { copyPicture } from './copy-picture'
 import { countText } from './counts'
 import { linkTo } from './composer'
 import { composerEntries } from './composer-commands'
@@ -502,24 +514,105 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
   return [DIVIDER, { label: t('Transcribe'), run: () => void transcribeEmbed(view, at) }]
 }
 
-/** The row a right click on a link offers: the way out to the real browser.
+/** The rows a right click on a link offers: where it goes, and changing it.
  *
- *  Pressing a link opens the page here now, which is what nib holding pages means -
- *  so the deliberate "not here, over there" has to be somewhere a hand can find it,
- *  and this is where every browser keeps it. It is the only one: Shift+click is a tab
- *  in front, as in the rest of the app; see new-tab.ts.
+ *  The way out to the real browser first. Pressing a link opens the page here now,
+ *  which is what nib holding pages means - so the deliberate "not here, over there" has
+ *  to be somewhere a hand can find it, and this is where every browser keeps it. It is
+ *  the only one: Shift+click is a tab in front, as in the rest of the app; see
+ *  new-tab.ts. Only over a web address: a `mailto:` leaves for the system on a plain
+ *  press already, and a row offering to open an email address "in the browser" would be
+ *  a row that lied.
  *
- *  Only over a web address. A `mailto:` leaves for the system on a plain press
- *  already, and a row offering to open an email address "in the browser" would be a
- *  row that lied. The address is read off the decoration under the pointer rather
- *  than out of the document, because that decoration is what the press landed on. */
-function linkEntries(event: MouseEvent): MenuEntry[] {
+ *  Then Chrome's Copy link address, and what every editor offers on a link it holds:
+ *  pointing it somewhere else, and taking it away with its words kept. The address is
+ *  read off the decoration under the pointer rather than out of the document, because
+ *  that decoration is what the press landed on; the document says where the link is
+ *  written, which is what the two edits change. See link-edit.ts in @nib/editor. */
+function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
   const target = event.target
   const link = target instanceof Element ? target.closest('.nib-link') : null
-  const href = link?.getAttribute('data-href')
-  if (!href || webHref(href) === null) return []
+  if (!link) return []
 
-  return [{ label: t('Open in the browser'), run: () => void openExternal(href) }, DIVIDER]
+  const href = link.getAttribute('data-href')
+  const at = view?.contentDOM.contains(link) ? view.posAtDOM(link) : null
+  const parts = view && at !== null && !view.state.readOnly ? linkPartsAt(view.state, at) : null
+  const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
+
+  return [
+    ...(jump ? noteEntries(jump) : []),
+    ...(href && webHref(href) !== null
+      ? [{ label: t('Open in the browser'), run: () => void openExternal(href) }]
+      : []),
+    ...(href ? [{ label: t('Copy link address'), run: () => void copyText(href) }] : []),
+    ...(view && parts
+      ? [
+          { label: t('Edit link'), run: () => runCommand(view, editLink(parts.from)) },
+          ...(parts.words === null
+            ? []
+            : [{ label: t('Remove link'), run: () => runCommand(view, removeLink(parts.from)) }]),
+        ]
+      : []),
+    DIVIDER,
+  ]
+}
+
+/** Where else a link to a note can take it, as Obsidian's link menu offers: a tab of
+ *  its own behind this one, which is the middle button's answer, and a pane to the
+ *  right, which is Ctrl+Alt+click's. Not on a phone, which has no pane to put beside
+ *  another. And the link itself, written the way the space writes links and from
+ *  nowhere in particular, so it reads the same wherever it is pasted; see `linkTo`. */
+function noteEntries(jump: NoteJump): MenuEntry[] {
+  return [
+    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind') },
+    ...(viewport.touch
+      ? []
+      : [{ label: t('Open to the side'), run: () => void workspace.followLink(jump, 'aside') }]),
+    { label: t('Copy link'), run: () => void copyText(linkOf(jump)) },
+  ]
+}
+
+/** The link a followed jump would take, written afresh. A note the space has not got
+ *  is named as the link names it, since there is no path to spell. */
+function linkOf(jump: NoteJump): string {
+  const fragment =
+    jump.block !== null
+      ? `^${jump.block}`
+      : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
+
+  return linkTo(jump.path ? noteName(jump.path) : jump.target, null, {
+    path: jump.path,
+    fragment,
+  })
+}
+
+/** The rows a right click on a picture offers, which are the ones Chrome, Typora and
+ *  Obsidian all put there: the picture itself on the clipboard, the picture on its own,
+ *  and the picture gone. Open is the full-window view a double click opens, and Delete
+ *  is the bin on the picture's toolbar: it takes the picture out of the note and leaves
+ *  the file, which another note may be showing. See image/pressed.ts in @nib/editor. */
+function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
+  const picture = view ? pressedPicture(view, event.target) : null
+  if (!view || !picture) return []
+
+  return [
+    {
+      label: t('Copy picture'),
+      // A picture that will not load has nothing to copy, and the menu is gone by then.
+      run: () => void copyPicture(pictureUrl(view.state, picture)).catch(() => undefined),
+    },
+    { label: t('Open picture'), run: () => showPicture(view, picture) },
+    ...(view.state.readOnly
+      ? []
+      : [
+          {
+            label: t('Delete picture'),
+            danger: true,
+            run: () => runCommand(view, deletePicture(picture)),
+          },
+        ]),
+    DIVIDER,
+  ]
 }
 
 /** Opens it at the pointer. One place, so the two things a right click on the
@@ -539,7 +632,8 @@ export function showEditorMenu(
   menu.show(
     event,
     [
-      ...linkEntries(event),
+      ...pictureEntries(view, event),
+      ...linkEntries(view, event),
       ...editorMenu(view, blockEntries(view, at, path)),
       ...recordingEntries(view, at),
       ...spellingEntries(view, event),

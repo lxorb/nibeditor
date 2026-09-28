@@ -48,8 +48,7 @@
   }
 
   /* On its way. The slowest duration the app has, twice over, so it reads as
-     waiting rather than as an alarm; a reader who asked for less movement gets a
-     still cloud, since every duration token goes to zero for them. */
+     waiting rather than as an alarm. */
   .coming {
     color: var(--accent);
     animation: waiting calc(var(--dur-slower) * 2) ease-in-out infinite alternate;
@@ -58,6 +57,13 @@
   @keyframes waiting {
     to {
       opacity: 0.35;
+    }
+  }
+
+  /* A still cloud, in the accent, for a reader who asked for less movement. */
+  @media (prefers-reduced-motion: reduce) {
+    .coming {
+      animation: none;
     }
   }
 </style>

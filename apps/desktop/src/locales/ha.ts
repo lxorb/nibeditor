@@ -304,6 +304,7 @@ export const ha: Dictionary = {
   // PDFs
   'Copy a link': 'Kwafa haɗi',
   'That PDF could not be opened': 'Ba a iya buɗe wannan PDF ba',
+  'That file could not be read': 'Ba a iya karanta wannan fayil ba',
   // Modes and view
   Reading: 'Karatu',
   'Leave reading': 'Fita daga karatu',
@@ -1307,6 +1308,7 @@ export const ha: Dictionary = {
   'Add to {name}': 'Ƙara zuwa {name}',
   // Web tabs
   Reload: 'Sake ɗauko',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Ajiye wannan shafi',
   'Clip the link': 'Ajiye haɗin',
   'Open in the browser': 'Buɗe a birawuza',
@@ -1314,6 +1316,11 @@ export const ha: Dictionary = {
   Website: 'Gidan yanar',
   'Open a website': 'Buɗe gidan yanar',
   'Convert website notes': 'Juya bayanan yanar gizo',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Yi rikodi',
   Recording: 'Rikodi',
@@ -1534,4 +1541,15 @@ export const ha: Dictionary = {
   'Duplicate the block': 'Kwafi sashen',
   'Move the block up': 'Matsar da sashen sama',
   'Move the block down': 'Matsar da sashen ƙasa',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

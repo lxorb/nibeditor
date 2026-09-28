@@ -14,6 +14,8 @@
    *    Enter or a press, closed with Escape, and taken out of the history with
    *    Shift+Delete, which is how Chrome forgets one.
    *
+   *  Alt+Enter goes there in a tab of its own, which is Chrome's too.
+   *
    *  Nothing is offered in the middle of a composition: an input method's letters are
    *  not the reader's until the composition ends, and a completion written into them
    *  would be written into a word that is not finished being made.
@@ -44,8 +46,8 @@
     /** Which history it offers from, which is its space's; see web-data.ts. */
     book: string
     /** Somebody pressed Enter on something: an address, or words for the tab to make
-     *  one of. */
-    onenter: (said: string) => void
+     *  one of - and `aside` when it was Alt+Enter, which wants a tab of its own. */
+    onenter: (said: string, aside: boolean) => void
     ontyping: (on: boolean) => void
   } = $props()
 
@@ -183,8 +185,8 @@
     if (!row) finish()
   }
 
-  function go(said: string) {
-    onenter(said)
+  function go(said: string, aside = false) {
+    onenter(said, aside)
     field?.blur()
   }
 
@@ -220,7 +222,7 @@
       // Ctrl+Enter is the `.com` press every browser has, and it is about what was
       // typed rather than what the field offered after it; see `dotCom` in address.ts.
       const dotted = event.ctrlKey || event.metaKey ? dotCom(typed) : null
-      go(row?.url ?? dotted ?? resolved(box.value))
+      go(row?.url ?? dotted ?? resolved(box.value), event.altKey)
       return
     }
 
