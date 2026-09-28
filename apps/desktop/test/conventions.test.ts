@@ -33,9 +33,9 @@ const PATH = /`((?:apps|packages|services|scripts|spike|docs)\/[A-Za-z0-9_./*-]+
  *  directory-ness off the filesystem - so with the build absent, which is the whole
  *  point, it reports the path as not ignored.
  *
- *  A list instead, two long and deliberate. Something added to it is a new kind of
+ *  A list instead, three long and deliberate. Something added to it is a new kind of
  *  output somebody wrote a document about, which is worth a line. */
-const MADE = ['apps/desktop/dist', 'apps/desktop/test/e2e/shots']
+const MADE = ['apps/desktop/dist', 'apps/desktop/dist-even', 'apps/desktop/test/e2e/shots']
 
 function exists(path: string): boolean {
   if (MADE.some((made) => path === made || path.startsWith(`${made}/`))) return true
