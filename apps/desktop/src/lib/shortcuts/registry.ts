@@ -23,6 +23,7 @@ import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
+import { searchFrom } from '../search.svelte'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
@@ -598,7 +599,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
-    run: () => revealPanel('search'),
+    run: (context) => searchFrom(context.view),
   },
   {
     // What links here and what this links to. On B for the backlinks half, which

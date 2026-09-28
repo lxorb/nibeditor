@@ -6,8 +6,11 @@
  *  to show what it asked. */
 
 import { SvelteSet } from 'svelte/reactivity'
+import type { EditorView } from '@nib/editor'
+import { revealPanel } from './focus'
 import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
+import { selectedWords } from './search/seed'
 import { searchSpace } from './search/space'
 import { isBoolean, isRecord, keep, stored } from './stored'
 import { afterQuiet } from './timing'
@@ -280,3 +283,13 @@ class Search {
 }
 
 export const search = new Search()
+
+/** The panel, from its key. Pressed in a note over a few selected words, it asks
+ *  about them straight away; see search/seed.ts. Anywhere else it is the panel as
+ *  it was left, and the same key again gives the note the keyboard back. */
+export function searchFrom(view: EditorView | undefined): void {
+  const words = view?.hasFocus ? selectedWords(view.state) : null
+  if (words) search.ask(words)
+
+  revealPanel('search')
+}
