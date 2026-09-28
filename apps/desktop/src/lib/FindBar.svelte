@@ -21,8 +21,9 @@
    *  stated once in base.css, and the two transitions from slide.ts. What is left
    *  here is where things sit inside the field.
    *
-   *  The keys: Enter steps on, Shift+Enter steps back, Escape closes and the
-   *  caller puts the caret back where it was. Tab is not swallowed - the bar is a
+   *  The keys: Enter steps on, Shift+Enter steps back, Alt+Enter selects every
+   *  match where the caller can, Escape closes and the caller puts the caret back
+   *  where it was. Tab is not swallowed - the bar is a
    *  bar, not a dialog, and the steps beside the field are where Tab should go. */
 
   import type { FindSpec } from '@nib/editor'
@@ -60,6 +61,7 @@
     onreplace,
     onreplaceall,
     onstep,
+    onselectall,
     onclose,
     onquery,
   }: {
@@ -80,6 +82,9 @@
     onreplace?: (() => void) | undefined
     onreplaceall?: (() => void) | undefined
     onstep: (by: number) => void
+    /** Every match selected at once, VS Code's Alt+Enter. Undefined where there is
+     *  no selection to put them in: the note being read, a PDF. */
+    onselectall?: (() => void) | undefined
     onclose: () => void
     /** What was typed. The caller holds the query, because the caller is what
      *  searches with it. */
@@ -131,7 +136,8 @@
 
     if (event.key !== 'Enter') return
     event.preventDefault()
-    onstep(event.shiftKey ? -1 : 1)
+    if (event.altKey && onselectall) onselectall()
+    else onstep(event.shiftKey ? -1 : 1)
   }
 </script>
 

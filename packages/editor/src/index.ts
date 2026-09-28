@@ -45,6 +45,7 @@ export {
   openReplace,
   replaceEverywhere,
   replaceHere,
+  selectEveryMatch,
   setFind,
 } from './find'
 export {

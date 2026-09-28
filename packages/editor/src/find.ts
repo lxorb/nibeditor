@@ -243,6 +243,15 @@ export function replaceEverywhere(view: EditorView): boolean {
   return loaded.replaceEvery(view)
 }
 
+/** Every match selected at once, a cursor on each, to be written over together -
+ *  VS Code's Alt+Enter in its find field. False where nothing is being looked for or
+ *  nothing matched, which leaves the selection where it was. */
+export function selectEveryMatch(view: EditorView): boolean {
+  if (!loaded?.asked(view.state)) return false
+
+  return loaded.selectEvery(view)
+}
+
 /** One of the library's own commands, run through the door.
  *
  *  The key is bound from the first frame and spends the press whether the engine is

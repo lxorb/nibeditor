@@ -21,6 +21,7 @@
     NO_TALLY,
     replaceEverywhere,
     replaceHere,
+    selectEveryMatch,
     setDeck,
     setFind,
     setReadOnlyMode,
@@ -214,6 +215,12 @@
     if (by < 0) findPreviousMatch(view)
     else findNextMatch(view)
     tally = findTally(view.state)
+  }
+
+  /** Every match selected, and the bar out of the way, so what is typed next is
+   *  typed at each of them. Nothing happens where nothing matched. */
+  function selectEvery() {
+    if (view && selectEveryMatch(view)) shutFinding()
   }
 
   function replaceOne() {
@@ -440,6 +447,7 @@
         onreplace={canReplace ? replaceOne : undefined}
         onreplaceall={canReplace ? replaceEvery : undefined}
         onstep={stepFinding}
+        onselectall={selectEvery}
         onclose={shutFinding}
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
