@@ -11,6 +11,7 @@
  *  nothing either; the three methods it reaches are public for this file alone. */
 
 import { arrangedMap, type Arranged } from './arranged.svelte'
+import { type Folding, meet } from '../records'
 
 /** Two maps of lists as one. */
 function same(one: Record<string, string[]>, other: Record<string, string[]>): boolean {
@@ -24,14 +25,18 @@ function same(one: Record<string, string[]>, other: Record<string, string[]>): b
   })
 }
 
+/** Folded by folder rather than by name: two machines that arranged two different
+ *  folders both keep their work, and a folder both of them arranged is this
+ *  machine's, because this machine is the one somebody is sitting at. */
+const ORDERS: Folding<Record<string, string[]>> = {
+  fold: (theirs, mine) => ({ ...theirs, ...mine }),
+  same,
+}
+
 /** Takes over what the account holds for one space: this machine's own orders folded
  *  in the first time an account sees the space, and the account's map outright on
- *  every pass after that.
- *
- *  Folded by folder rather than by name: two machines that arranged two different
- *  folders both keep their work, and a folder both of them arranged is this machine's,
- *  because this machine is the one somebody is sitting at. Exactly what
- *  `folderIcons.adopt` does, and for the same reason. */
+ *  every pass after that; see `ORDERS`. Exactly what `folderIcons.adopt` does, and
+ *  for the same reason. */
 export async function fold(
   store: Arranged,
   root: string,
@@ -42,16 +47,11 @@ export async function fold(
   // older than this app answers with no arranged orders at all.
   const account = arrangedMap(theirs)
   const held = store.kept(root)
-  const first = held.account !== accountId
-  // First contact, or a push that never landed. Either way what is here has not been
-  // said yet, so it is folded in and sent rather than replaced.
-  const ours = first || !held.sent
-  const folders = ours ? { ...account, ...held.folders } : account
+  const met = meet(held, accountId, held.folders, account, ORDERS)
+  if (!met) return
 
-  if (!ours && same(held.folders, folders)) return
-
-  store.took(root, folders, accountId)
-  if (ours && !same(folders, account)) await send(store, root)
+  store.took(root, met.value, accountId)
+  if (met.tell) await send(store, root)
 }
 
 /** The space's map as it now stands, sent up so every other machine draws the rows in

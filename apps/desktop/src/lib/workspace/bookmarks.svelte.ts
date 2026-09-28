@@ -10,7 +10,7 @@
  *  space that goes takes its bookmarks with it. */
 
 import { isMarkdownPath, relativeTo } from '../space-paths'
-import { without } from '../records'
+import { type Folded, type Folding, meet, readSpaces, without } from '../records'
 import { forget, isRecord, isString, keep, stored, stringList } from '../stored'
 
 const STORAGE_KEY = 'nib:bookmarks'
@@ -169,30 +169,16 @@ export function bookmarksFromPins(
 }
 
 /** One space's list, and which account it has already been reconciled with. */
-interface Kept {
+interface Kept extends Folded {
   list: Bookmark[]
-  /** The account this list has been folded into, or null while there was none.
-   *  A different account signing in on this machine merges again; the same one
-   *  signing in twice does not, or a bookmark it dropped on another machine
-   *  would be handed straight back to it. */
-  account: string | null
 }
 
 function read(): Record<string, Kept> {
-  const saved = stored(STORAGE_KEY)
-  if (!isRecord(saved)) return {}
-
-  const out: Record<string, Kept> = {}
-  for (const [root, one] of Object.entries(saved)) {
-    if (!isRecord(one)) continue
-    out[root] = {
-      list: bookmarkList(one.list),
-      account: isString(one.account) ? one.account : null,
-    }
-  }
-
-  return out
+  return readSpaces(STORAGE_KEY, (one) => ({ list: bookmarkList(one.list) }))
 }
+
+/** This machine's bookmarks after the account's; see `mergeBookmarks`. */
+const LISTS: Folding<Bookmark[]> = { fold: mergeBookmarks, same: sameList }
 
 export class Bookmarks {
   private spaces = $state<Record<string, Kept>>(read())
@@ -460,15 +446,13 @@ export class Bookmarks {
     // of it older than this app answers with no bookmarks at all.
     const account = bookmarkList(theirs)
     const held = this.spaces[root]
-    const first = held?.account !== accountId
-    const list = first ? mergeBookmarks(account, held?.list ?? []) : account
+    const met = meet(held, accountId, held?.list ?? [], account, LISTS)
+    if (!met) return null
 
-    if (held && !first && sameList(held.list, list)) return null
-
-    this.spaces = { ...this.spaces, [root]: { list, account: accountId } }
+    this.spaces = { ...this.spaces, [root]: { list: met.value, account: accountId } }
     this.write()
 
-    return first && list.length > account.length ? list : null
+    return met.tell ? met.value : null
   }
 
   /** Turns the pins an older build kept into bookmarks. Silent, and once: a

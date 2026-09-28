@@ -21,8 +21,8 @@
  *  `nib:folder-icons` is this store's twin in every respect, down to remembering
  *  which account a space's settings have been folded into. */
 
-import { isBoolean, isNumber, isRecord, isString, keep, stored } from '../stored'
-import { filledIn, without } from '../records'
+import { isBoolean, isNumber, isRecord, isString, keep } from '../stored'
+import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:graph'
 
@@ -206,29 +206,20 @@ export function sameGraph(one: GraphSettings, other: GraphSettings): boolean {
 }
 
 /** One space's settings, and which account they have already been folded into. */
-interface Kept {
+interface Kept extends Folded {
   settings: GraphSettings
-  /** The account these have been folded into, or null while there was none. A
-   *  different account signing in on this machine merges again; the same one
-   *  signing in twice does not, or a filter it cleared on another machine would be
-   *  handed straight back to it. */
-  account: string | null
 }
 
 function read(): Record<string, Kept> {
-  const saved = stored(STORAGE_KEY)
-  if (!isRecord(saved)) return {}
+  return readSpaces(STORAGE_KEY, (one) => ({ settings: graphSettingsOf(one.settings) }))
+}
 
-  const out: Record<string, Kept> = {}
-  for (const [root, one] of Object.entries(saved)) {
-    if (!isRecord(one)) continue
-    out[root] = {
-      settings: graphSettingsOf(one.settings),
-      account: isString(one.account) ? one.account : null,
-    }
-  }
-
-  return out
+/** This machine's settings where the account has only the defaults. There is nothing
+ *  to merge the way there is with a map of icons - a filter is one string, not a set
+ *  of pairs. */
+const SETTINGS: Folding<GraphSettings> = {
+  fold: (theirs, mine) => (sameGraph(theirs, DEFAULT_GRAPH) ? mine : theirs),
+  same: sameGraph,
 }
 
 export class SpaceGraphSettings {
@@ -326,25 +317,20 @@ export class SpaceGraphSettings {
    *  the first time an account sees the space, and the account's outright on every
    *  pass after that.
    *
-   *  There is nothing to merge here the way there is with a map of icons - a
-   *  filter is one string, not a set of pairs - so first contact keeps whatever
-   *  this machine has where the account has only the defaults, and sends it up.
-   *  Exactly what `bookmarks.adopt` does about which copy wins, and why. */
+   *  First contact keeps whatever this machine has where the account has only the
+   *  defaults, and sends it up; see `SETTINGS`. Exactly what `bookmarks.adopt` does about which copy wins, and why. */
   adopt(root: string, theirs: unknown, accountId: string) {
     // Read rather than trusted: the service is deployed on its own, so a build of
     // it older than this app answers with no graph settings at all.
     const account = graphSettingsOf(theirs)
     const kept = this.spaces[root]
-    const first = kept?.account !== accountId
-    const mine = kept?.settings ?? DEFAULT_GRAPH
-    const settings = first && sameGraph(account, DEFAULT_GRAPH) ? mine : account
+    const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, SETTINGS)
+    if (!met) return
 
-    if (kept && !first && sameGraph(kept.settings, settings)) return
-
-    this.spaces = { ...this.spaces, [root]: { settings, account: accountId } }
+    this.spaces = { ...this.spaces, [root]: { settings: met.value, account: accountId } }
     this.write()
 
-    if (first && !sameGraph(settings, account)) void this.push(root)
+    if (met.tell) void this.push(root)
   }
 
   private put(root: string, settings: GraphSettings) {

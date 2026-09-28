@@ -27,8 +27,16 @@
  *  remembering which account a space's map has been folded into. */
 
 import { insideItsSpace, relativeTo } from '../space-paths'
-import { isRecord, isString, keep, stored } from '../stored'
-import { filledIn, without, withOrWithout } from '../records'
+import { isRecord, isString, keep } from '../stored'
+import {
+  filledIn,
+  type Folded,
+  type Folding,
+  meet,
+  readSpaces,
+  without,
+  withOrWithout,
+} from '../records'
 
 export const STORAGE_KEY = 'nib:folder-icons'
 
@@ -72,7 +80,7 @@ export function folderIconMap(value: unknown): Record<string, string> {
 }
 
 /** One space's map, and which account it has already been reconciled with. */
-interface Kept {
+interface Kept extends Folded {
   icons: Record<string, string>
   /** The colour each stroked icon is drawn in, where one was chosen. A second map
    *  rather than a second field on each entry, because the first is a map of strings
@@ -80,11 +88,6 @@ interface Kept {
    *  not a string is a value they drop. The account holds both, under the same keys;
    *  see spaces/icons.ts in the service. */
   colors: Record<string, string>
-  /** The account this map has been folded into, or null while there was none. A
-   *  different account signing in on this machine merges again; the same one
-   *  signing in twice does not, or an icon it took away on another machine would
-   *  be handed straight back to it. */
-  account: string | null
   /** Whether the account has heard what is here. False for a push that did not
    *  land - offline, a token that had expired, a Worker that was being deployed -
    *  and then the next pass keeps this machine's maps and sends them again instead
@@ -95,29 +98,31 @@ interface Kept {
 }
 
 function read(): Record<string, Kept> {
-  const saved = stored(STORAGE_KEY)
-  if (!isRecord(saved)) return {}
-
-  const out: Record<string, Kept> = {}
-  for (const [root, one] of Object.entries(saved)) {
-    if (!isRecord(one)) continue
-    out[root] = {
-      icons: folderIconMap(one.icons),
-      colors: folderIconMap(one.colors),
-      account: isString(one.account) ? one.account : null,
-      // Anything but a false written by this build reads as said: a record an older
-      // one wrote back has no such field, and what it holds did reach the account.
-      sent: one.sent !== false,
-    }
-  }
-
-  return out
+  return readSpaces(STORAGE_KEY, (one) => ({
+    icons: folderIconMap(one.icons),
+    colors: folderIconMap(one.colors),
+    // Anything but a false written by this build reads as said: a record an older
+    // one wrote back has no such field, and what it holds did reach the account.
+    sent: one.sent !== false,
+  }))
 }
 
 /** Two maps as one. */
 function same(one: Record<string, string>, other: Record<string, string>): boolean {
   const keys = Object.keys(one)
   return keys.length === Object.keys(other).length && keys.every((key) => one[key] === other[key])
+}
+
+/** The two maps travel together and are adopted together: they are written by one
+ *  gesture and sent in one request, so a pass that took one and left the other would
+ *  draw an icon in last week's colour. Folded folder by folder, this machine's
+ *  choice winning where both made one. */
+const MAPS: Folding<Pick<Kept, 'icons' | 'colors'>> = {
+  fold: (theirs, mine) => ({
+    icons: { ...theirs.icons, ...mine.icons },
+    colors: { ...theirs.colors, ...mine.colors },
+  }),
+  same: (one, other) => same(one.icons, other.icons) && same(one.colors, other.colors),
 }
 
 export class FolderIcons {
@@ -269,33 +274,20 @@ export class FolderIcons {
     // Read rather than trusted: the service is deployed on its own, so a build of
     // it older than this app answers with no folder icons at all - and one older
     // than this route with the icons and no colours.
-    const account = folderIconMap(theirs)
-    // Null for a service with no column for the colours at all, which is not the
-    // same answer as a space with no colours in it: the first leaves what is here
-    // alone, the second takes it away.
-    const painted = theirTints === undefined ? null : folderIconMap(theirTints)
+    const icons = folderIconMap(theirs)
     const held = this.spaces[root]
-    const first = held?.account !== accountId
-    // First contact, or a push that never landed. Either way what is here has not
-    // been said yet, so it is folded in and sent rather than replaced: the account
-    // cannot be the one copy of a choice it has not heard. Nothing is held for a
-    // space nothing was ever chosen in, and that space is first contact, which is
-    // why the second half of this only runs where there is a record to read.
-    const ours = first || !held.sent
-    const icons = ours ? { ...account, ...(held?.icons ?? {}) } : account
-    const mine = held?.colors ?? {}
-    const colors = painted === null ? mine : ours ? { ...painted, ...mine } : painted
+    const mine = { icons: held?.icons ?? {}, colors: held?.colors ?? {} }
+    // A service with no column for the colours at all is not the same answer as a
+    // space with no colours in it: the first leaves what is here alone, the second
+    // takes it away.
+    const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints)
+    const met = meet(held, accountId, mine, { icons, colors }, MAPS)
+    if (!met) return
 
-    if (held && !ours && same(held.icons, icons) && same(mine, colors)) return
-
-    // The two maps travel together and are adopted together: they are written by one
-    // gesture and sent in one request, so a pass that took one and left the other
-    // would draw an icon in last week's colour.
-    this.spaces = { ...this.spaces, [root]: { icons, colors, account: accountId, sent: true } }
+    this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent: true } }
     this.write()
 
-    const told = same(icons, account) && (painted === null || same(colors, painted))
-    if (ours && !told) void this.push(root)
+    if (met.tell) void this.push(root)
   }
 
   private put(root: string, icons: Record<string, string>, colors: Record<string, string>) {

@@ -17,8 +17,8 @@
  *  which account a space's list has been folded into. */
 
 import { insideItsSpace, relativeTo } from '../space-paths'
-import { isRecord, isString, keep, stored } from '../stored'
-import { filledIn, without } from '../records'
+import { isString, keep } from '../stored'
+import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
 export const STORAGE_KEY = 'nib:excluded'
 
@@ -46,34 +46,23 @@ export function excludedPaths(value: unknown): string[] {
 }
 
 /** One space's list, and which account it has already been folded into. */
-interface Kept {
+interface Kept extends Folded {
   paths: string[]
-  /** The account this list has been folded into, or null while there was none. A
-   *  different account signing in on this machine merges again; the same one
-   *  signing in twice does not, or a path it took back on another machine would be
-   *  handed straight back to it. */
-  account: string | null
 }
 
 function read(): Record<string, Kept> {
-  const saved = stored(STORAGE_KEY)
-  if (!isRecord(saved)) return {}
-
-  const out: Record<string, Kept> = {}
-  for (const [root, one] of Object.entries(saved)) {
-    if (!isRecord(one)) continue
-    out[root] = {
-      paths: excludedPaths(one.paths),
-      account: isString(one.account) ? one.account : null,
-    }
-  }
-
-  return out
+  return readSpaces(STORAGE_KEY, (one) => ({ paths: excludedPaths(one.paths) }))
 }
 
 /** Two lists as one. */
 function same(one: readonly string[], other: readonly string[]): boolean {
   return one.length === other.length && one.every((path, at) => path === other[at])
+}
+
+/** This machine's paths after the account's, the ones it already has left out. */
+const PATHS: Folding<string[]> = {
+  fold: (theirs, mine) => [...theirs, ...mine.filter((one) => !theirs.includes(one))],
+  same,
 }
 
 /** Whether a path is the one excluded, or inside a folder that is. */
@@ -217,16 +206,13 @@ export class Excluded {
     // it older than this app answers with nothing at all.
     const account = excludedPaths(theirs)
     const held = this.spaces[root]
-    const first = held?.account !== accountId
-    const mine = held?.paths ?? []
-    const paths = first ? [...account, ...mine.filter((one) => !account.includes(one))] : account
+    const met = meet(held, accountId, held?.paths ?? [], account, PATHS)
+    if (!met) return
 
-    if (held && !first && same(held.paths, paths)) return
-
-    this.spaces = { ...this.spaces, [root]: { paths, account: accountId } }
+    this.spaces = { ...this.spaces, [root]: { paths: met.value, account: accountId } }
     this.write()
 
-    if (first && !same(paths, account)) void this.push(root)
+    if (met.tell) void this.push(root)
   }
 
   private put(root: string, paths: string[]) {
