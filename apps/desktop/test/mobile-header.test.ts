@@ -59,6 +59,16 @@ describe('the button that opens the file list', () => {
     }
   })
 
+  /** A fresh install's space chooser covers everything under the bar with an opaque
+   *  scrim, and the panel is under that scrim: pressed there, the button opened a
+   *  list nobody could see, of a space that did not exist yet. So the bar does not
+   *  offer it until the chooser has gone - Obsidian's chooser has no such button
+   *  either. The plus stays, because a tab is how a note is written with no space
+   *  yet, and a tab is what sends the chooser away. */
+  test('is not in the bar while the space chooser covers the panel', () => {
+    expect(titlebar).toMatch(/\{#if !spaceChooser\.showing\}\s*<SidebarToggle \/>\s*\{\/if\}/)
+  })
+
   /** One glyph and one movement, wherever it is drawn: the bar over the note and
    *  the drawer's own head show the same button in the same state. Nothing else
    *  in the app draws a sidebar button of its own. */

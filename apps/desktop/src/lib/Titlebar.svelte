@@ -4,6 +4,7 @@
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
+  import { spaceChooser } from './space-chooser.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
@@ -85,7 +86,12 @@
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <SidebarToggle />
+  <!-- Not while a fresh install's space chooser is up: its scrim covers the panel,
+       so the button opened a list nobody could see of a space that did not exist
+       yet. The plus beside the tabs stays; a tab is what sends the chooser away. -->
+  {#if !spaceChooser.showing}
+    <SidebarToggle />
+  {/if}
 
   <!-- With the list shut there is nothing on the screen saying which space
        these notes are in, and the panel's own header is what usually says it.
