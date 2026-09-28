@@ -228,8 +228,9 @@ export async function warmDoors(): Promise<void> {
     newKindDialog.ask(),
     paletteDoor.ask(),
     undoToastNotice.ask(),
-    // So the first right click in a text field does not wait for its menu.
-    import('./field-menu'),
+    // So the first right click in a text field does not wait for its menu. Never on a
+    // phone, which is the whole of the glasses' plugin.
+    __EVEN_PLUGIN__ ? undefined : import('./field-menu'),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here

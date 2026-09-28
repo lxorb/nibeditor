@@ -507,7 +507,10 @@
 
     event.preventDefault()
     event.stopPropagation()
-    void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+    // Not in the glasses' plugin, which is a phone's and so never asks.
+    if (!__EVEN_PLUGIN__) {
+      void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+    }
   }
 
   /** The two buttons on the side of a mouse. They are the browser's back and
