@@ -59,7 +59,7 @@ function asked(site: string) {
 
 function button(name: string): HTMLButtonElement {
   const found = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent?.trim() === name,
+    (one) => one.textContent.trim() === name,
   )
   if (!found) throw new Error(`no ${name} button`)
   return found
@@ -86,7 +86,7 @@ test('Allow reaches the engine and is remembered for the site', () => {
   expect(told).toEqual([{ id: asking.id, allow: true }])
   expect(grants.said('mail.example', 'notifications')).toBe('allow')
   expect(grants.asking).toEqual([])
-  unmount(app)
+  void unmount(app)
 })
 
 test('Don’t allow reaches the engine and is remembered too', () => {
@@ -97,7 +97,7 @@ test('Don’t allow reaches the engine and is remembered too', () => {
 
   expect(told).toEqual([{ id: asking.id, allow: false }])
   expect(grants.said('ads.example', 'notifications')).toBe('block')
-  unmount(app)
+  void unmount(app)
 })
 
 test('Escape dismisses it, tells the site no, and decides nothing', () => {
@@ -110,7 +110,7 @@ test('Escape dismisses it, tells the site no, and decides nothing', () => {
 
   expect(told).toEqual([{ id: asking.id, allow: false }])
   expect(grants.said('maybe.example', 'notifications')).toBeNull()
-  unmount(app)
+  void unmount(app)
 })
 
 test('the keyboard is the bubble’s, taken back from the page that asked', async () => {
@@ -124,7 +124,7 @@ test('the keyboard is the bubble’s, taken back from the page that asked', asyn
   await vi.waitFor(() => expect(focused).toHaveBeenCalledTimes(1))
   // Neither answer is the one a stray Enter gives: Tab reaches them, in order.
   expect(document.activeElement?.tagName).not.toBe('BUTTON')
-  unmount(app)
+  void unmount(app)
 })
 
 test('and is left where it is when the app already has it', async () => {
@@ -134,5 +134,5 @@ test('and is left where it is when the app already has it', async () => {
   expect(document.activeElement).toBe(target.querySelector('[role=dialog]'))
   await new Promise((done) => setTimeout(done, 20))
   expect(focused).not.toHaveBeenCalled()
-  unmount(app)
+  void unmount(app)
 })

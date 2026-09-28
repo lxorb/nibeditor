@@ -310,6 +310,8 @@ describe('the ring a keyboard leaves', () => {
       'lib/Pdf.svelte',
       'lib/Reading.svelte',
       'lib/Slides.svelte',
+      // A site's question, which holds the keys so neither answer is a stray Enter.
+      'lib/web-tab/WebAsk.svelte',
     ])
   })
 
