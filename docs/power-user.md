@@ -132,12 +132,12 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Files | Dragging a row into a note's text inserts a link to it | Obsidian | done a3574d23 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
-| Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | done 282753f1 (Open to the side) | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
-| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done 282753f1 | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
-| Files | With several rows selected: Move, Bookmark and Open all, besides Delete | Explorer, Obsidian | done 282753f1 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
-| Files | Collapse all folders | VS Code, Obsidian | done 64699147 | no command and no button | S | med |
-| Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | done 64699147, 72255809 | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
+| Files | Dragging a row into a note's text inserts a link to it | Obsidian | done 3e836808 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
+| Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | done ef25c471 (Open to the side) | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
+| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done ef25c471 | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
+| Files | With several rows selected: Move, Bookmark and Open all, besides Delete | Explorer, Obsidian | done ef25c471 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
+| Files | Collapse all folders | VS Code, Obsidian | done 5930123a | no command and no button | S | med |
+| Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | done 5930123a, 2ab8bf2c | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
 
 ## Batch 10: keyboard presets
 
