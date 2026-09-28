@@ -16,7 +16,8 @@
 
   import { account } from './account.svelte'
   import { api } from './api'
-  import { i18n, plural, t } from './i18n.svelte'
+  import { plural, t } from './i18n.svelte'
+  import { when } from './when'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
@@ -50,22 +51,6 @@
   const spaceId = $derived(
     workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null,
   )
-
-  /** A moment, as shortly as it can be said: a pass from today is a time, and
-   *  almost every pass worth reading is from today. The same rule the history
-   *  sheet reads by; see History.svelte. */
-  const when = (stamp: number) => {
-    const at = new Date(stamp)
-    const now = new Date()
-    const today =
-      at.getFullYear() === now.getFullYear() &&
-      at.getMonth() === now.getMonth() &&
-      at.getDate() === now.getDate()
-
-    return today
-      ? i18n.when(at, { timeStyle: 'short' })
-      : i18n.when(at, { dateStyle: 'short', timeStyle: 'short' })
-  }
 
   function moment(): number {
     return Date.now() - chosen * 24 * 60 * 60 * 1000
@@ -200,7 +185,7 @@
     {#each record.clashes as clash (clash.path)}
       <div class="clash">
         <span class="name">{shortPath(clash.path)}</span>
-        <span class="hint">{when(clash.at)}</span>
+        <span class="hint">{when(clash.at, 'short')}</span>
         <div class="answers">
           <button class="pill" onclick={() => void settle(clash, 'mine')}>
             {t('Keep mine')}
@@ -225,7 +210,7 @@
   <div class="card">
     {#each record.passes.slice(0, 20) as pass (pass.at)}
       <div class="pass" class:bad={!!pass.failed}>
-        <span class="at">{when(pass.at)}</span>
+        <span class="at">{when(pass.at, 'short')}</span>
         <span class="what">
           {#if pass.failed}
             {pass.failed}
