@@ -264,6 +264,7 @@ vi.mock('../api', async (importOriginal) => ({
 }))
 
 const { movedHere, newMirror, pull, push, within } = await import('./mirror')
+type Clash = import('./conflicts').Clash
 
 const ROOT = '/Notes'
 const NOBODY: ReadonlySet<string> = new Set()
@@ -500,6 +501,52 @@ describe('a note both sides changed', () => {
     expect(await push(mirror, 'token', NOBODY)).toBe(true)
     expect(fake.calls).toContain('writeNote note.md')
     expect(fake.remote.get(id)?.content).toBe('base\nwritten here\n')
+  })
+})
+
+/** The same disagreement, when somebody chose to be asked about it. Nothing is
+ *  touched until they answer: not the file here, not the copy up there, and no copy
+ *  beside either. `both` is the block above and `newest` is further down. See
+ *  sync/conflicts.ts. */
+describe('a note both sides changed, when somebody chose to be asked', () => {
+  async function disagreeing() {
+    const both = await paired('note.md', 'base\n')
+    fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
+    fake.editRemote(both.id, 'base\nwritten there\n')
+    fake.calls.length = 0
+    return both
+  }
+
+  test('asking leaves both copies where they are and says which note', async () => {
+    const { mirror, id } = await disagreeing()
+    const clashes: Clash[] = []
+
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+
+    expect(clashes).toEqual([
+      {
+        path: `${ROOT}/note.md`,
+        id,
+        version: 2,
+        theirs: 'base\nwritten there\n',
+        at: expect.any(Number) as number,
+      },
+    ])
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here\n')
+    expect(conflicts()).toEqual([])
+    expect(fake.calls).toEqual([])
+    // The version is seen, so the pass stops asking; the empty hash is no body the two
+    // sides agree on, which a room joining the note reads as "ask again".
+    expect(mirror.notes['note.md']).toEqual({ id, version: 2, hash: '' })
+  })
+
+  test('and a push while the question waits sends nothing over the other copy', async () => {
+    const { mirror, id } = await disagreeing()
+    await pull(mirror, 'token', NOBODY, { rule: 'ask' })
+
+    expect(await push(mirror, 'token', NOBODY, { held: new Set([`${ROOT}/note.md`]) })).toBe(false)
+    expect(fake.calls).toEqual([])
+    expect(fake.remote.get(id)?.content).toBe('base\nwritten there\n')
   })
 })
 
