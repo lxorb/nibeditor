@@ -4,7 +4,6 @@
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
-  import { spaceChooser } from './space-chooser.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
@@ -39,6 +38,11 @@
     if (lights) document.documentElement.dataset.lights = ''
     else delete document.documentElement.dataset.lights
   })
+
+  /** Nothing yet for the file list to show: no space, and no tab either. */
+  const listless = $derived(
+    workspace.restored && !workspace.spaces.length && !workspace.tabs.length,
+  )
 
   /** Whether the lights are over this bar rather than over the docked panel. */
   const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
@@ -86,10 +90,12 @@
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <!-- Not while a fresh install's space chooser is up: its scrim covers the panel,
-       so the button opened a list nobody could see of a space that did not exist
-       yet. The plus beside the tabs stays; a tab is what sends the chooser away. -->
-  {#if !spaceChooser.showing}
+  <!-- Not while there is no space and no tab: the list has nothing to list, and on a
+       fresh install the space chooser's scrim covers the panel, so the button opened
+       a list nobody could see. Asked of the workspace rather than of the chooser,
+       which is fetched with its card and stays out of the first paint. The plus
+       beside the tabs stays; a tab is what sends the chooser away. -->
+  {#if !listless}
     <SidebarToggle />
   {/if}
 
