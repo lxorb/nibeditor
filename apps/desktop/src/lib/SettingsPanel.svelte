@@ -402,12 +402,14 @@
             <div class="group">
               {#each group as item (item.id)}
                 <button
-                  class="item"
-                  class:active={!viewport.touch && !query && settings.section === item.id}
+                  class="item nib-row"
+                  class:is-on={!viewport.touch && !query && settings.section === item.id}
                   onclick={() => go(item.id)}
                 >
-                  <svg class="glyph" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
-                  <span class="text">{item.label}</span>
+                  <svg class="glyph nib-row-mark" viewBox="0 0 16 16"
+                    ><path d={ICONS[item.id]} /></svg
+                  >
+                  <span class="nib-row-label">{item.label}</span>
                   <svg class="chevron nib-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
                   >
                 </button>
@@ -1213,7 +1215,7 @@
 
   nav h1 {
     margin: 0 0 var(--space-3);
-    padding: 0 10px;
+    padding: 0 var(--row-pad);
     font-family: var(--font-ui);
     font-size: var(--text-base);
     font-weight: var(--weight-strong);
@@ -1239,55 +1241,21 @@
     margin-top: var(--space-2);
   }
 
-  .item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 8px 10px;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    text-align: start;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .item:hover {
-      background: var(--surface-2);
-      color: var(--text);
-    }
-  }
-
-  .item.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
+  /* The sections are a list of names like any other, so each is `.nib-row` in the
+     themes package: the same height, hover, press and open fill as a note in the
+     file list. They were a row of their own here, and the open one was the accent
+     on the accent's own wash - 4.07 to one on a dark theme, under the floor. */
 
   /* Whatever a row is named, placed as one piece: a pane's own name is the app's
      word, but the rows below hold an address, a folder, a font and a key, and
      one of those in the other direction would otherwise take the row's
      punctuation with it. See .nib-row-label in base.css. */
-  .item .text,
   .setting .name .what,
   .setting .value {
     unicode-bidi: isolate;
   }
 
-  .item .text {
-    flex: 1;
-    min-width: 0;
-  }
-
   .item .glyph {
-    width: var(--icon-md);
-    height: var(--icon-md);
-    flex: none;
     fill: none;
     stroke: currentColor;
     stroke-width: 1.3;
@@ -2016,14 +1984,12 @@
     margin-top: var(--space-4);
   }
 
+  /* The row's size is the touch scale already; what a grouped card asks of it is
+     square corners, and the words at full strength because the card is the list. */
   .sheet.phone .item {
     position: relative;
-    gap: var(--touch-gap);
-    min-height: var(--touch-row);
-    padding: 0 var(--touch-pad);
     border-radius: 0;
     color: var(--text);
-    font-size: var(--touch-text);
   }
 
   /* A hairline between rows, starting where the text does: past the row's own
@@ -2036,10 +2002,6 @@
     inset-inline-end: 0;
     height: 1px;
     background: var(--line);
-  }
-
-  .sheet.phone .item:active {
-    background: var(--surface-2);
   }
 
   .sheet.phone .item .glyph {

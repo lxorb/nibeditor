@@ -134,9 +134,7 @@ describe('the row a list is made of', () => {
       .map((one) => one.name)
       .sort()
 
-    // The settings sheet is a sheet of cards rather than a list of names: its
-    // rows are settings, and what they light is the card they sit in.
-    expect(own).toEqual(['lib/SettingsPanel.svelte'])
+    expect(own).toEqual([])
   })
 
   test('and the row every list wears is the one in the themes package', () => {
@@ -155,6 +153,7 @@ describe('the row a list is made of', () => {
       'lib/Links.svelte',
       'lib/Palette.svelte',
       'lib/SearchPanel.svelte',
+      'lib/SettingsPanel.svelte',
       'lib/Sidebar.svelte',
       'lib/TagTree.svelte',
       'lib/Tree.svelte',
