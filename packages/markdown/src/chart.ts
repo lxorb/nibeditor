@@ -185,6 +185,14 @@ const WIDTH = 640
 const HEIGHT = 340
 const PAD = { top: 24, right: 16, bottom: 40, left: 48 }
 
+/** The box inside the padding that every kind of chart draws its values in. */
+const PLOT = {
+  x: PAD.left,
+  y: PAD.top,
+  w: WIDTH - PAD.left - PAD.right,
+  h: HEIGHT - PAD.top - PAD.bottom,
+}
+
 /** How many lines across a bar or line chart, counting the baseline. */
 const GRID = 4
 
@@ -272,26 +280,20 @@ function text(words: string, x: number, y: number, className: string, anchor = '
 /** The axes: the value lines across, and the labels along the bottom. */
 function frame(chart: Chart, low: number, high: number, step: number, said: Said): string {
   const out: string[] = []
-  const plot = {
-    x: PAD.left,
-    y: PAD.top,
-    w: WIDTH - PAD.left - PAD.right,
-    h: HEIGHT - PAD.top - PAD.bottom,
-  }
 
   // One line per step of the scale rather than a fixed number of them, so every
   // label is a number the step reaches exactly.
   for (let value = low; value <= high + step / 2; value += step) {
-    const y = plot.y + plot.h * ((high - value) / (high - low))
+    const y = PLOT.y + PLOT.h * ((high - value) / (high - low))
     out.push(
-      `<line class="chart-grid" x1="${plot.x}" y1="${round(y)}" x2="${plot.x + plot.w}" y2="${round(y)}"/>`,
+      `<line class="chart-grid" x1="${PLOT.x}" y1="${round(y)}" x2="${PLOT.x + PLOT.w}" y2="${round(y)}"/>`,
     )
-    out.push(text(said(value), plot.x - 8, y + 4, 'chart-tick', 'end'))
+    out.push(text(said(value), PLOT.x - 8, y + 4, 'chart-tick', 'end'))
   }
 
-  const across = plot.w / Math.max(1, longest(chart))
+  const across = PLOT.w / Math.max(1, longest(chart))
   for (const [at, label] of chart.labels.slice(0, longest(chart)).entries()) {
-    out.push(text(label, plot.x + across * (at + 0.5), HEIGHT - PAD.bottom + 20, 'chart-label'))
+    out.push(text(label, PLOT.x + across * (at + 0.5), HEIGHT - PAD.bottom + 20, 'chart-label'))
   }
 
   return out.join('')
@@ -303,24 +305,18 @@ function longest(chart: Chart): number {
 }
 
 function bars(chart: Chart, low: number, high: number, said: Said): string {
-  const plot = {
-    x: PAD.left,
-    y: PAD.top,
-    w: WIDTH - PAD.left - PAD.right,
-    h: HEIGHT - PAD.top - PAD.bottom,
-  }
   const points = longest(chart)
-  const step = plot.w / points
+  const step = PLOT.w / points
   const room = step * 0.72
   const each = room / chart.series.length
-  const zero = plot.y + plot.h * (high / (high - low))
+  const zero = PLOT.y + PLOT.h * (high / (high - low))
   const out: string[] = []
 
   for (const [which, series] of chart.series.entries()) {
     for (const [at, value] of series.data.entries()) {
-      const top = plot.y + plot.h * ((high - Math.max(value, 0)) / (high - low))
-      const bottom = plot.y + plot.h * ((high - Math.min(value, 0)) / (high - low))
-      const x = plot.x + step * at + (step - room) / 2 + each * which
+      const top = PLOT.y + PLOT.h * ((high - Math.max(value, 0)) / (high - low))
+      const bottom = PLOT.y + PLOT.h * ((high - Math.min(value, 0)) / (high - low))
+      const x = PLOT.x + step * at + (step - room) / 2 + each * which
       const height = Math.max(1, bottom - top)
       out.push(
         `<rect class="chart-bar" x="${round(x)}" y="${round(top)}" width="${round(Math.max(1, each - 2))}" height="${round(height)}" fill="${colour(which)}"><title>${escape(`${series.title ? `${series.title}: ` : ''}${said(value)}`)}</title></rect>`,
@@ -329,7 +325,7 @@ function bars(chart: Chart, low: number, high: number, said: Said): string {
   }
 
   out.push(
-    `<line class="chart-axis" x1="${plot.x}" y1="${round(zero)}" x2="${plot.x + plot.w}" y2="${round(zero)}"/>`,
+    `<line class="chart-axis" x1="${PLOT.x}" y1="${round(zero)}" x2="${PLOT.x + PLOT.w}" y2="${round(zero)}"/>`,
   )
   return out.join('')
 }
@@ -339,20 +335,14 @@ function bars(chart: Chart, low: number, high: number, said: Said): string {
  *  happened between them. One function because they are one drawing - a second copy
  *  of the arithmetic would be a second place for the scale to drift. */
 function lines(chart: Chart, low: number, high: number, said: Said, joined = true): string {
-  const plot = {
-    x: PAD.left,
-    y: PAD.top,
-    w: WIDTH - PAD.left - PAD.right,
-    h: HEIGHT - PAD.top - PAD.bottom,
-  }
   const points = longest(chart)
-  const step = plot.w / points
+  const step = PLOT.w / points
   const out: string[] = []
 
   for (const [which, series] of chart.series.entries()) {
     const drawn = series.data.map((value, at) => {
-      const x = plot.x + step * (at + 0.5)
-      const y = plot.y + plot.h * ((high - value) / (high - low))
+      const x = PLOT.x + step * (at + 0.5)
+      const y = PLOT.y + PLOT.h * ((high - value) / (high - low))
       return `${round(x)},${round(y)}`
     })
     if (drawn.length === 0) continue
@@ -363,8 +353,8 @@ function lines(chart: Chart, low: number, high: number, said: Said, joined = tru
       )
     }
     for (const [at, value] of series.data.entries()) {
-      const x = plot.x + step * (at + 0.5)
-      const y = plot.y + plot.h * ((high - value) / (high - low))
+      const x = PLOT.x + step * (at + 0.5)
+      const y = PLOT.y + PLOT.h * ((high - value) / (high - low))
       out.push(
         `<circle class="chart-dot" cx="${round(x)}" cy="${round(y)}" r="3" fill="${colour(which)}"><title>${escape(`${series.title ? `${series.title}: ` : ''}${said(value)}`)}</title></circle>`,
       )
