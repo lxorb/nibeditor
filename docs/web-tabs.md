@@ -483,6 +483,54 @@ answer either way, because the engine will not give one and a back arrow that is
 always lit is an arrow that lies half the time. A redirect can leave an extra entry
 in the trail; that is the price of not having the engine's own answer.
 
+#### The pointer is never hidden while somebody types
+
+Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser
+bin. dann muss ich ihn aus dem browserfenster raus und dann wieder rein bewegen"_ - no
+pointer over a web tab, and it only came back after leaving the page and coming back in.
+
+The engine did it, for a Windows setting that is on by default: _Hide pointer while
+typing_. `WebView2`'s Chromium honours it now - `ShowCursor(FALSE)` on its own thread when
+a key types into something editable, `ShowCursor(TRUE)` on the next mouse event that same
+browser process receives. In a browser that is one process under one window, so any move
+brings the pointer back. In nib it is two at least: the app's own page and the web pages
+keep separate profiles, so separate browser processes, and a store of a space's own is
+one more. And the count `ShowCursor` moves is not the process's, it is the **input
+queue's**, which every thread with a window in nib's window shares - a child window from
+another thread attaches the two. So typing an address with the pointer resting on the page
+(Ctrl+L, Ctrl+T) hid it over the whole window, and moving about the page reached only the
+page's process, which had never hidden it. Only crossing into the app's own page - the bar,
+the strip - brought it back. The same held the other way round: typing into a site and
+then having the page go under a menu or another tab left the pointer gone over the app.
+
+Measured by `scripts/web-cursor-probe.py`, which reads the queue's count without touching
+the real mouse - it attaches to the window's queue for a `ShowCursor(TRUE)` and a
+`ShowCursor(FALSE)`, which answer the count and leave it as it was - and posts the keys and
+the moves to the engine windows themselves. Before, and after:
+
+|                                                            | before | after |
+| ---------------------------------------------------------- | ------ | ----- |
+| typed in the address field                                 | -1     | 0     |
+| ... then moved about the page                              | **-1** | 0     |
+| ... then moved over the app's own page                     | 0      | 0     |
+| typed in the page                                          | -1     | 0     |
+| ... then switched to a note and moved about it             | **-1** | 0     |
+| ... then back on the page and moved about it               | 0      | 0     |
+
+Below nought is no pointer anywhere over nib's window; two runs of each build, the same
+numbers. The address field held what was typed and the page heard its own, so the keys
+arrived either way. The same thing was seen from outside in the installed app while Emil
+used it: a page opened from the Ctrl+T dialog under a resting pointer, and the pointer
+stayed hidden while it moved about the new page.
+
+The engine has no way to show a pointer another process hid, and nothing nib can call
+would put it back short of faking mouse moves into the other process - so the hiding goes:
+every `WebView2` page nib starts has `HideCursorWhileTyping` switched off. The pointer
+stays where it was while somebody types, which is how nib always behaved until the runtime
+began hiding it. See `BROWSER_ARGS` in `src-tauri/src/engine.rs`: one list, because every
+webview on one user data folder has to be started with the same switches or the engine
+refuses the second one.
+
 ### The browser build: a card, and a frame when asked
 
 A page in a browser can only be shown in a frame, and a great deal of the web
@@ -1123,6 +1171,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
 | `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |
