@@ -101,6 +101,9 @@ pub fn quit(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
+    // Before any window is asked, and so before any has gone.
+    crate::placement::note_every_window(app);
+
     let windows = launch::document_windows(app);
     if windows.is_empty() {
         leave(app);

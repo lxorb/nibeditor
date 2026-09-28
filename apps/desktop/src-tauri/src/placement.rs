@@ -330,6 +330,18 @@ fn noted(window: &Window, event: &WindowEvent) {
     }
 }
 
+/// Notes where every window is, now, while each of them still exists. What a quit does
+/// before it asks any window to go (see `quit` in lifecycle.rs), because a window that
+/// is being destroyed can no longer say where it is, and the last move it was heard
+/// of is not where it is: on a Mac the resize a drag ends on is not reported, so the
+/// place written was a step short of where the drag ended. The close that follows
+/// writes it down as ever.
+pub fn note_every_window(app: &AppHandle) {
+    for window in app.windows().values() {
+        follow(window);
+    }
+}
+
 fn follow(window: &Window) {
     // Neither minimised nor full screen is a place to come back to; see the top of
     // this file. Nothing about the window is changed by either, so nothing is noted.
@@ -552,6 +564,20 @@ mod tests {
             followed.placement(),
             Some(placed(100.0, 80.0, 1000.0, 700.0))
         );
+    }
+
+    /// What a quit noted while the window was there is what its close writes, although
+    /// a window being destroyed can no longer be read: bounds that cannot be had leave
+    /// the last ones alone. See `note_every_window`.
+    #[test]
+    fn a_window_that_cannot_be_read_keeps_the_place_last_noted() {
+        let dragged = placed(300.0, 140.0, 940.0, 640.0);
+
+        let mut followed = Followed::starting(None);
+        followed.saw(Some(placed(300.0, 140.0, 943.0, 642.0)), false);
+        followed.saw(Some(dragged), false);
+        followed.saw(None, false);
+        assert_eq!(followed.placement(), Some(dragged));
     }
 
     /// The app's own config leaves the place to this file; a probe's puts the window
