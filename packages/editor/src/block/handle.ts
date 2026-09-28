@@ -29,7 +29,7 @@ import {
 } from '@codemirror/view'
 import { label } from '../labels'
 import { NibWidget } from '../live-preview/widget'
-import { moveBlock } from './move'
+import { landing, moveBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan } from './span'
 
 /** A block on its way somewhere: what is being moved, and the line it would land
@@ -125,10 +125,12 @@ function landingAt(view: EditorView, y: number): number | null {
 
 /** Where a block would land, or nothing when it would not move at all: dropping
  *  a block on itself, or back where it already is. Asked of move.ts rather than
- *  worked out again here, so the line drawn and the edit made agree. */
+ *  worked out again here, so the line drawn and the edit made agree - a drop
+ *  between an item and the items nested under it is drawn where the block really
+ *  goes, in front of the item. */
 function landingFor(view: EditorView, span: BlockSpan, y: number): number | null {
   const at = landingAt(view, y)
-  return at !== null && moveBlock(view.state, span, at) ? at : null
+  return at === null ? null : landing(view.state, span, at)
 }
 
 /** How far the pointer travels before a press becomes a drag. Short enough that
