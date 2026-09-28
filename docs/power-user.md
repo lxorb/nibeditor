@@ -22,14 +22,14 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | missing | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
-| Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | partial | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
-| Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | missing | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
+| Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | done a2eb354f, the page's first 555612bf | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
+| Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | done d68541d7 (agent `ctrl-click`) | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
+| Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | done a2eb354f (not driven natively: it would take the screen) | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
 | Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | partial | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
-| Web | Audio indicator on the tab, and Mute site | Chrome | missing | nothing reads `IsDocumentPlayingAudio`/`IsMuted` in `rs/web_tabs.rs`; no Mute row | M | med |
-| Web | Page zoom stays in sync with Ctrl+wheel inside the page and is remembered per site | Chrome | partial | `lib/web-tab/WebTab.svelte:359` resets `zoom = 1` on every mount; `rs/web_tabs.rs:1348` only sets it, with no zoom-changed listener | M | med |
-| Web | F12, Ctrl+Shift+I and Inspect open DevTools | Chrome | missing | the `devtools` feature is not in `src-tauri/Cargo.toml:64`, so release builds have none, although `docs/keyboard.md:319` lists F12 | S | med |
-| Web | "View page source" in the engine's menu opens a tab | Chrome | partial | the `view-source:` window it asks for is dropped by `handed_over` (`rs/web_tabs.rs:557-583`) | S | low |
+| Web | Audio indicator on the tab, and Mute site | Chrome | done a2eb354f | nothing reads `IsDocumentPlayingAudio`/`IsMuted` in `rs/web_tabs.rs`; no Mute row | M | med |
+| Web | Page zoom stays in sync with Ctrl+wheel inside the page and is remembered per site | Chrome | done a2eb354f | `lib/web-tab/WebTab.svelte:359` resets `zoom = 1` on every mount; `rs/web_tabs.rs:1348` only sets it, with no zoom-changed listener | M | med |
+| Web | F12, Ctrl+Shift+I and Inspect open DevTools | Chrome | done a2eb354f (not driven natively: it opens a window) | the `devtools` feature is not in `src-tauri/Cargo.toml:64`, so release builds have none, although `docs/keyboard.md:319` lists F12 | S | med |
+| Web | "View page source" in the engine's menu opens a tab | Chrome | done a2eb354f | the `view-source:` window it asks for is dropped by `handed_over` (`rs/web_tabs.rs:557-583`) | S | low |
 
 ## Batch 2: the quick switcher and palette
 
@@ -80,7 +80,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Tabs | Duplicate tab | Chrome, Obsidian | done 536bebb9 | no row and no command | S | med |
 | Tabs | Move the tab to the other pane, or split and move, by menu and by key | VS Code (move editor), Obsidian | done 536bebb9 (Ctrl+Alt+Shift+Right) | `split` copies the tab (`lib/workspace.svelte.ts:3552-3569`); a tab can only be moved by dragging | S | med |
 | Tabs | Rename the note from its tab (a menu row, F2 on a focused tab) | Obsidian, VS Code | done 536bebb9 | no Rename row in `tabMenu` | S | med |
-| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | partial 536bebb9: Reload and Copy link; Mute waits for batch 1 | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
+| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | done 536bebb9, Mute site a2eb354f | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
 | Tabs | Dropping a URL or a link from another app onto the strip opens a web tab | Chrome | done 536bebb9 | `over` (`lib/Tabs.svelte:681`) accepts tree drags only | S | low |
 | Tabs | The mouse wheel scrolls an overflowing strip | VS Code | done 536bebb9 | `.tabs` has `overflow-x: auto` and no wheel handler | S | low |
 | Tabs | Ctrl+Tab in most-recently-used order, as an option | VS Code | done 536bebb9 (Settings, General) | `cycleTab` walks the strip in order (`lib/shortcuts/registry.ts:1037`) | M | low |
