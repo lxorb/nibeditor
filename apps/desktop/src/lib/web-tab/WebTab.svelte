@@ -38,6 +38,7 @@
   import { webRows, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { pages, type Rect, type Step } from './pages.svelte'
+  import { seek, shut, sought } from './seek'
   import { grants, siteOf } from './permissions.svelte'
   import { isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
@@ -412,50 +413,34 @@
    *  tab nobody has answered. One at a time, the way a browser asks. */
   const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
 
-  /** Looks for words in the page: a new word from the top, or the next or the one
-   *  before. The engine marks and counts, and the tally comes back on the page's state;
-   *  see web_find.rs and heard.ts. */
-  function seek(query: string, how: 'fresh' | 'next' | 'previous') {
-    page.find.query = query
-    if (!query) {
-      page.find.count = 0
-      page.find.at = -1
-      void invoke('web_find_stop', { tab: tab.id }).catch(() => undefined)
-      return
-    }
-    void invoke('web_find', { tab: tab.id, term: query, look: how }).catch(() => undefined)
-  }
-
-  function shutFinding() {
-    page.find.open = false
-    void invoke('web_find_stop', { tab: tab.id }).catch(() => undefined)
-  }
-
   // Open, and every page the tab arrives on while it is: the words are looked for again,
-  // because the matches were the last page's.
+  // because the matches were the last page's. See seek.ts.
   $effect(() => {
     if (!page.find.open || page.loading) return
-    untrack(() => seek(page.find.query, 'fresh'))
+    untrack(() => seek(tab.id, page, page.find.query, 'fresh'))
   })
 
-  /** The page's keys that the app hears: Find and its steps, the developer tools and a
-   *  key for Mute site, if a reader gave it one.
+  /** The keys the app hears while it has the keyboard: Find and its steps, the developer
+   *  tools and a key for Mute site, if a reader gave it one.
    *  Read off the window, because a pane with a page has no editor to read them, and
-   *  the same find keys the notes and a PDF answer; the crate sends Ctrl+F, Ctrl+G and
-   *  F3 here from inside the page too. See web_keys.rs. */
+   *  the same find keys the notes and a PDF answer. Inside the page, find is the page's
+   *  first and asks for this one when the page lets it go by; see seek.ts. */
   function onKeydown(event: KeyboardEvent) {
     if (!focused || !isDesktop || !page.live) return
 
     const either = (id: string) =>
       shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
-    const step = either('edit.find-next') ? 1 : either('edit.find-previous') ? -1 : 0
+    const look = shortcuts.pressed('edit.find', event)
+      ? 'open'
+      : either('edit.find-next')
+        ? 'next'
+        : either('edit.find-previous')
+          ? 'previous'
+          : null
 
-    if (shortcuts.pressed('edit.find', event) || (step !== 0 && !page.find.open)) {
+    if (look) {
       event.preventDefault()
-      page.find.open = true
-    } else if (step !== 0) {
-      event.preventDefault()
-      seek(page.find.query, step > 0 ? 'next' : 'previous')
+      sought(tab.id, page, look)
     } else if (either('web.devtools')) {
       event.preventDefault()
       void invoke('web_devtools', { tab: tab.id }).catch(() => undefined)
@@ -563,9 +548,9 @@
         query={page.find.query}
         count={page.find.count}
         current={page.find.at}
-        onstep={(by: number) => seek(page.find.query, by > 0 ? 'next' : 'previous')}
-        onclose={shutFinding}
-        onquery={(typed: string) => seek(typed, 'fresh')}
+        onstep={(by: number) => seek(tab.id, page, page.find.query, by > 0 ? 'next' : 'previous')}
+        onclose={() => shut(tab.id, page)}
+        onquery={(typed: string) => seek(tab.id, page, typed, 'fresh')}
       />
     {/await}
   {/if}

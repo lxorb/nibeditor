@@ -8,10 +8,14 @@
 //!
 //! Chrome's rule is the one kept here. A handful of chords are the browser's and a page
 //! is never offered them: a new tab, closing one, going round them, moving one along,
-//! reopening the last, a new window - and finding in the page, whose bar is nib's (Ctrl+F,
-//! Ctrl+G and F3, with Shift for the one before). Everything else is the page's, which is
-//! what lets a site's own Ctrl+K or Ctrl+L work, so nothing else is touched. See
-//! docs/web-tabs.md.
+//! reopening the last, a new window. Everything else is the page's, which is what lets a
+//! site's own Ctrl+K or Ctrl+L work, so nothing else is touched. See docs/web-tabs.md.
+//!
+//! Finding is not among them, because Chrome asks the page first: Google Docs, Notion and
+//! VS Code on the web have a find of their own on Ctrl+F, and the browser's opens only
+//! when the page let the key go by. So the page has Ctrl+F, Ctrl+G and F3, and a line of
+//! script in it asks for nib's find when nothing in the page took them; see
+//! `web_opens.rs`.
 //!
 //! **How they get out.** `WebView2` tells the host about every key pressed with Ctrl or
 //! Alt held before the page sees it (`AcceleratorKeyPressed`), and a key the host marks
@@ -80,11 +84,6 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         };
     }
 
-    // Find's next and previous on the key that is not a character anywhere.
-    if vk == 0x72 && !held.ctrl && !held.alt {
-        return Some(pressed("F3", "F3"));
-    }
-
     // Chrome's reserved chords are all Ctrl and never Alt: Ctrl+Alt is AltGr on half
     // the keyboards in Europe, and a character typed with it is the page's.
     if !held.ctrl || held.alt {
@@ -98,9 +97,6 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         (0x57, true) => Some(pressed("W", "KeyW")),
         (0x4E, false) => Some(pressed("n", "KeyN")),
         (0x4E, true) => Some(pressed("N", "KeyN")),
-        (0x46, false) => Some(pressed("f", "KeyF")),
-        (0x47, false) => Some(pressed("g", "KeyG")),
-        (0x47, true) => Some(pressed("G", "KeyG")),
         (0x09, _) => Some(pressed("Tab", "Tab")),
         // Going round the strip and moving a tab along it, with Shift.
         (0x21, _) => Some(pressed("PageUp", "PageUp")),
@@ -250,32 +246,26 @@ mod tests {
     }
 
     #[test]
-    fn finding_is_the_browser_s() {
-        assert_eq!(down(0x46, false), Some(("f", "KeyF")));
-        assert_eq!(down(0x47, false), Some(("g", "KeyG")));
-        assert_eq!(down(0x47, true), Some(("G", "KeyG")));
-        let bare = |shift| {
-            meaning(
-                0x72,
-                Held {
-                    shift,
-                    ..Held::default()
-                },
-                true,
-                false,
-            )
-            .map(|one| one.key)
-        };
-        assert_eq!(bare(false), Some("F3"));
-        assert_eq!(bare(true), Some("F3"));
-        // Ctrl+Shift+F is the space's own search, and the page's while it has the keys.
-        assert_eq!(down(0x46, true), None);
+    fn finding_is_the_page_s_first() {
+        // Ctrl+F, Ctrl+G and Ctrl+Shift+G, and F3 either way: a site's own find has them
+        // before nib's does; see web_opens.rs.
+        for (vk, shift) in [(0x46, false), (0x47, false), (0x47, true), (0x46, true)] {
+            assert_eq!(down(vk, shift), None, "{vk:#x}");
+        }
+        for shift in [false, true] {
+            let bare = Held {
+                shift,
+                ..Held::default()
+            };
+            assert_eq!(meaning(0x72, bare, true, false), None);
+        }
     }
 
     #[test]
     fn everything_else_is_the_page_s() {
-        // Ctrl+L, Ctrl+K, Ctrl+P: a site's own shortcuts, and the reason there is a rule.
-        for vk in [0x4C, 0x4B, 0x50] {
+        // Ctrl+L, Ctrl+K, Ctrl+F, Ctrl+P: a site's own shortcuts, and the reason there
+        // is a rule.
+        for vk in [0x4C, 0x4B, 0x46, 0x50] {
             assert_eq!(down(vk, false), None, "{vk:#x}");
         }
         // A letter with no Ctrl is typing.

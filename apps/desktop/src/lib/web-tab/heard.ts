@@ -5,7 +5,8 @@
  *  inside the page; and how many matches a find found and which one is lit. The crate
  *  says them (see web_page.rs and web_find.rs); this reads them, because an event is a
  *  boundary like any other, and puts them where the tab strip, the bar and the find bar
- *  read them.
+ *  read them. And one thing the page asks: its find, when its own keys for one went by
+ *  it; see seek.ts.
  *
  *  Two of them are also where a site's own memory is kept honest. A site somebody muted
  *  is muted in whichever tab it starts playing in, and a site that is not is heard again
@@ -18,6 +19,7 @@ import { isRecord } from '../stored'
 import { mute } from './mute'
 import type { Page } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
+import { readAsked, sought } from './seek'
 import { isMuted, keepZoom } from './sites'
 
 /** What the crate said about one tab's page. */
@@ -83,7 +85,7 @@ export function found(page: Page, said: Found): void {
   page.find.at = said.at
 }
 
-/** The two events, heard for every page in the window: `page` is the tab's state, or
+/** The three events, heard for every page in the window: `page` is the tab's state, or
  *  nothing for a tab that has gone. Started with the first page; see `listen` in
  *  pages.svelte.ts. */
 export async function listening(
@@ -99,5 +101,11 @@ export async function listening(
     const said = readFound(event.payload)
     const one = said && page(said.tab)
     if (one) found(one, said)
+  })
+  // The page's own find keys that nothing in it took; see seek.ts.
+  await listen('nib://web-seek', (event) => {
+    const asked = readAsked(event.payload)
+    const one = asked && page(asked.tab)
+    if (one) sought(asked.tab, one, asked.look)
   })
 }

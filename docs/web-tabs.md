@@ -654,8 +654,9 @@ never sees the press: that is what a webview of its own means. The bar is one cl
 away. The exception is Chrome's: the chords a browser never offers a page - a new tab,
 closing one, reopening the last, going round them and moving one along, a new window, Ctrl+1 to 9 - are
 taken before the page sees them and played on the app's own window, and the keyboard
-goes back to the app with them. So are the find keys, Ctrl+F, Ctrl+G and F3, because the
-find bar is the app's; see "The page itself". On `WebView2` only; see `docs/keyboard.md` and
+goes back to the app with them. The find keys, Ctrl+F, Ctrl+G and F3, are the page's
+first, as in Chrome, and open the app's find bar when the page lets them go by; see "The
+page itself". On `WebView2` only; see `docs/keyboard.md` and
 `src-tauri/src/web_keys.rs`.
 
 The mark at the left of the field is the site: the page's own favicon, and a lock for
@@ -718,9 +719,13 @@ engines say nothing, and what each one does there is said with it.
   (`ICoreWebView2Find`): every match marked in the page, the lit one scrolled to, the
   tally and which one is lit said back as they change. Enter and Shift+Enter, Ctrl+G and
   F3 step; Escape closes it and the marks go. It is also a row in the dots and in the
-  palette. The keys are taken from the page as well as from the app, because the bar is
-  the app's (see `web_keys.rs`); a site with a find of its own - a canvas editor - loses
-  its Ctrl+F to the browser's, as a site's reserved chords always have. A page the tab
+  palette. Inside the page the keys are the page's first, which is Chrome's order: Google
+  Docs, Notion, VS Code on the web and Figma have a find of their own on Ctrl+F and keep
+  it. A line of script in every page listens last and, when nothing in the page took the
+  key, asks for the bar under one of three window names, which the crate reads into
+  open, next or previous for that tab alone and says to the window as `nib://web-seek` -
+  never a command name, so a page can reach its own find and nothing else (see
+  `web_opens.rs` and `lib/web-tab/seek.ts`). A page the tab
   arrives on while the bar is open is looked in again. An engine without the find (an
   older runtime, a Mac, Linux) is asked through the page: `window.find` walks and
   selects one match at a time and the page's text is counted for the tally. See

@@ -972,7 +972,7 @@ pub async fn web_open(
     // The middle button on a link, answered in the page so the tab it opens can be
     // left behind; see web_opens.rs. In every frame, since a link in a frame is a link.
     #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.initialization_script_for_all_frames(crate::web_opens::MIDDLE);
+    let builder = builder.initialization_script_for_all_frames(crate::web_opens::SCRIPT);
 
     // Where the site's own storage goes, decided once by the engine this build runs
     // on rather than here: a store the app's own session is not in under the system
@@ -1172,7 +1172,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
         // How a window it asks for was pressed for; see web_opens.rs.
-        crate::web_opens::listen(&platform, named.clone());
+        crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
         // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
         // see web_find.rs.
         crate::web_page::listen(&platform, asking.clone(), named.clone(), window.clone());

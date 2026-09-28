@@ -392,8 +392,10 @@ shadow.
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
 Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too) and Ctrl+1 to 9 are never
-offered to the page, and nor are the find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and
-Shift+F3 - because the find bar is the app's. The engine tells the host
+offered to the page. The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - are
+the page's first, as they are in Chrome, so a site with its own find (Google Docs,
+Notion, VS Code on the web) keeps them; a line of script in the page asks for nib's find
+bar when nothing in it took the key (`src-tauri/src/web_opens.rs`). The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held

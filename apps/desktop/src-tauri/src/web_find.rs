@@ -11,14 +11,58 @@
 //! walks and selects the matches, and the page's text is counted for the tally. It marks
 //! one match rather than all of them, which is the honest difference.
 //!
-//! The keys reach the window rather than the page: Ctrl+F, Ctrl+G and F3 are the
-//! browser's in a web tab; see `web_keys.rs`.
+//! The keys are the page's first, as in Chrome: a site with a find of its own keeps
+//! Ctrl+F, and one without asks for this one - `nib://web-seek`, which is a `Sought` and
+//! nothing else, for the tab it came from and no other. See `web_opens.rs`.
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Webview};
 
 /// The event the window hears the tally on.
 const FOUND: &str = "nib://web-found";
+
+/// The event the window hears a page ask for its find on.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+const SOUGHT: &str = "nib://web-seek";
+
+/// What a page's own keys, which nothing in the page took, ask of the find: to open it
+/// (Ctrl+F), or to step to the next match or the one before (Ctrl+G and F3, with Shift
+/// for the one before). The whole of what a page can say this way.
+#[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub enum Sought {
+    Open,
+    Next,
+    Previous,
+}
+
+/// One page's ask, named by the tab it came from.
+#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+struct Ask {
+    tab: String,
+    look: Sought,
+}
+
+/// Says a page's ask to its window, with the keyboard handed back to the app: the find
+/// field is the window's, and so are the keys a hand presses next.
+///
+/// `tab` is the tab whose page this was heard on, which the caller knows from where it
+/// was listening; nothing the page says names it.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn asked(app: &AppHandle, window: &str, tab: &str, look: Sought) {
+    use tauri::Manager;
+
+    if let Some(ours) = app.get_webview(window) {
+        let _ = ours.set_focus();
+    }
+    let ask = Ask {
+        tab: tab.to_string(),
+        look,
+    };
+    let _ = app.emit_to(window, SOUGHT, ask);
+}
 
 /// Which way a look goes: a new word, or the next or the previous match of the last.
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
@@ -325,7 +369,22 @@ mod native {
 
 #[cfg(test)]
 mod tests {
-    use super::{looked, Found, Look};
+    use super::{looked, Ask, Found, Look, Sought};
+
+    #[test]
+    fn a_page_s_ask_reaches_the_window_as_one_of_three_words() {
+        let said = |look| {
+            serde_json::to_value(Ask {
+                tab: "t1".into(),
+                look,
+            })
+            .expect("an ask")
+        };
+        assert_eq!(said(Sought::Open)["look"], "open");
+        assert_eq!(said(Sought::Next)["look"], "next");
+        assert_eq!(said(Sought::Previous)["look"], "previous");
+        assert_eq!(said(Sought::Open)["tab"], "t1");
+    }
 
     #[test]
     fn a_word_is_handed_to_the_page_as_a_string_and_nothing_else() {

@@ -14,7 +14,7 @@
 //! the moment the engine raises the request:
 //!
 //! 1. **The window name.** The middle button leaves no key held, so a small script in
-//!    every page (`MIDDLE`) answers that press itself and opens the link under a name
+//!    every page (`SCRIPT`) answers that press itself and opens the link under a name
 //!    that says so. A site that opens a window under the same name gets a tab behind
 //!    it, which is less than it could already do by asking for one in front.
 //! 2. **The keys held.** Ctrl, and Shift, as the input this thread shares with the
@@ -26,9 +26,21 @@
 //! in front, or for one that asked for a size - an OAuth sign-in, a share dialog - a
 //! window of its own, so the page that opened it can still hear from it.
 //!
+//! **Find, the same way.** Chrome gives Ctrl+F to the page first and opens its own find
+//! only when nothing in the page took the key, which is what lets Google Docs, Notion
+//! and VS Code on the web keep theirs. The engine cannot say whether a page took a key -
+//! it offers the host every Ctrl chord before the page has seen it; see `web_keys.rs` -
+//! so the same script listens last, and asks for a window under one of three more names
+//! when the key went by: `nib-find`, `nib-find-next`, `nib-find-previous`. Those are
+//! read here into a `Sought`, said to the window for this tab alone (see `web_find.rs`),
+//! and never become a window, since `about:blank` is not an address a tab may open.
+//! Any page can ask by those names, and all it can get is its own tab's find opened, or
+//! a step through it - which is what its keys already get it.
+//!
 //! `WebView2`'s alone, like `web_keys.rs`: elsewhere nothing is known, and every tab a
 //! page asks for opens in front, as before.
 
+use crate::web_find::Sought;
 use crate::web_keys::Held;
 
 /// Where the tab a page asked for goes.
@@ -40,27 +52,68 @@ pub enum Asked {
     Front,
 }
 
-/// The window names `MIDDLE` opens a link under.
+/// The window names `SCRIPT` opens a link under.
 const BEHIND: &str = "nib-behind";
 const FRONT: &str = "nib-front";
 
-/// Opens a link pressed with the middle button as a window under a name that says how
-/// it was pressed, and keeps the engine from opening it a second time. Only a press a
-/// person made, on a web address, that the page itself has not already answered; with
-/// Shift it is a tab in front, as in Chrome.
+/// And the ones it asks for the find under.
+const FIND: &str = "nib-find";
+const FIND_NEXT: &str = "nib-find-next";
+const FIND_PREVIOUS: &str = "nib-find-previous";
+
+/// The script in every page and every frame.
 ///
-/// On the window rather than the document, so it runs after every handler the page
-/// put on the way there and can see whether one of them took the press.
+/// The middle button on a link opens it as a window under a name that says how it was
+/// pressed, and keeps the engine from opening it a second time. Only a press a person
+/// made, on a web address, that the page itself has not already answered; with Shift it
+/// is a tab in front, as in Chrome.
+///
+/// Ctrl+F, Ctrl+G and F3 (Shift for the one before) that nothing in the page took ask
+/// for the find by name, and are taken so the engine does not answer them too. By
+/// Windows' key code, which is what the engine and Chrome read a chord by, so a layout
+/// whose letters are not Latin still has them. Ctrl+Alt types a character on half the
+/// keyboards in Europe, and is left alone.
+///
+/// On the window rather than the document, and bubbling, so it runs after every handler
+/// the page put on the way there and can see whether one of them took the key or the
+/// press. `window.open` is held from before the page's own first script, so a page that
+/// replaces it has not replaced this.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-pub const MIDDLE: &str = r"(function () {
+pub const SCRIPT: &str = r"(function () {
+  var open = window.open.bind(window)
+
   addEventListener('auxclick', function (event) {
     if (!event.isTrusted || event.button !== 1 || event.defaultPrevented) return
     var link = event.target instanceof Element ? event.target.closest('a[href], area[href]') : null
     if (!link || typeof link.href !== 'string' || !/^https?:/i.test(link.href)) return
     event.preventDefault()
-    window.open(link.href, event.shiftKey ? 'nib-front' : 'nib-behind')
+    open(link.href, event.shiftKey ? 'nib-front' : 'nib-behind')
+  })
+
+  addEventListener('keydown', function (event) {
+    if (!event.isTrusted || event.defaultPrevented || event.altKey || event.metaKey) return
+    var back = event.shiftKey
+    var name = null
+    if (event.ctrlKey && event.keyCode === 70 && !back) name = 'nib-find'
+    else if (event.ctrlKey && event.keyCode === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
+    else if (!event.ctrlKey && event.keyCode === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
+    if (!name) return
+    event.preventDefault()
+    open('about:blank', name)
   })
 })()";
+
+/// What a window asked for under `name` asks of the find, or `None` for a window.
+/// Pure, and the only reading of those names.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn sought(name: &str) -> Option<Sought> {
+    match name {
+        FIND => Some(Sought::Open),
+        FIND_NEXT => Some(Sought::Next),
+        FIND_PREVIOUS => Some(Sought::Previous),
+        _ => None,
+    }
+}
 
 /// What one request said, down to where its tab goes, or `None` for a request nobody
 /// pressed anything for - the page's own, which `web_tabs.rs` answers.
@@ -93,8 +146,8 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     menu.then_some(Asked::Behind)
 }
 
-/// Starts listening on one page, under the tab it belongs to. Called on the window's
-/// thread, once, as the page is built.
+/// Starts listening on one page, under the tab it belongs to and in the window it is in.
+/// Called on the window's thread, once, as the page is built.
 #[cfg(all(windows, not(feature = "cef")))]
 pub use heard::{closing, listen, taken};
 
@@ -116,7 +169,7 @@ mod heard {
     };
     use windows_core::Interface;
 
-    use super::{placed, Asked, Held};
+    use super::{placed, sought, Asked, Held};
 
     thread_local! {
         /// What each tab's last request said, until `on_new_window` takes it. The
@@ -161,7 +214,7 @@ mod heard {
         unsafe_code,
         reason = "a page asking for a window is one of WebView2's own events, and its objects are reached through COM"
     )]
-    pub fn listen(webview: &PlatformWebview, tab: String) {
+    pub fn listen(webview: &PlatformWebview, app: tauri::AppHandle, tab: String, window: String) {
         // Whether a key is down, asked the two ways `web_keys.rs` asks it.
         let held = |key: VIRTUAL_KEY| {
             let code = i32::from(key.0);
@@ -197,6 +250,18 @@ mod heard {
                         Some(webview2_com::take_pwstr(name))
                     })
                     .unwrap_or_default();
+
+                // A find the page's keys asked for, said to the window for this tab. The
+                // engine's own answer - wry's, a turn later - denies the window, since
+                // `about:blank` is not an address a tab may open. Only when a person
+                // pressed something, so a page cannot take the keyboard from wherever
+                // the reader is typing by asking on its own.
+                if let Some(look) = sought(&name) {
+                    if user.as_bool() {
+                        crate::web_find::asked(&app, &window, &asking, look);
+                    }
+                    return Ok(());
+                }
 
                 let menu = MENU
                     .with_borrow_mut(|menu| menu.remove(&asking).is_some_and(|link| link == uri));
@@ -250,7 +315,13 @@ mod heard {
 /// Every other engine: nothing is known about a request, and every tab a page asks for
 /// opens in front; see the top of this file.
 #[cfg(any(not(windows), feature = "cef"))]
-pub fn listen(_webview: &tauri::webview::PlatformWebview, _tab: String) {}
+pub fn listen(
+    _webview: &tauri::webview::PlatformWebview,
+    _app: tauri::AppHandle,
+    _tab: String,
+    _window: String,
+) {
+}
 
 #[cfg(any(not(windows), feature = "cef"))]
 pub fn taken(_tab: &str) -> Option<Asked> {
@@ -259,7 +330,7 @@ pub fn taken(_tab: &str) -> Option<Asked> {
 
 #[cfg(test)]
 mod tests {
-    use super::{placed, Asked, Held};
+    use super::{placed, sought, Asked, Held, Sought, SCRIPT};
 
     const NONE: Held = Held {
         ctrl: false,
@@ -314,5 +385,31 @@ mod tests {
             placed("nib-behind", false, NONE, false),
             Some(Asked::Behind)
         );
+    }
+
+    #[test]
+    fn three_names_ask_for_the_find_and_nothing_else_does() {
+        assert_eq!(sought("nib-find"), Some(Sought::Open));
+        assert_eq!(sought("nib-find-next"), Some(Sought::Next));
+        assert_eq!(sought("nib-find-previous"), Some(Sought::Previous));
+        // A name is one of the three exactly, or a window.
+        for name in [
+            "",
+            "_blank",
+            "nib-behind",
+            "nib-front",
+            "NIB-FIND",
+            "nib-find ",
+            "nib-find-all",
+        ] {
+            assert_eq!(sought(name), None, "{name:?}");
+        }
+    }
+
+    #[test]
+    fn the_script_asks_by_the_names_read_here() {
+        for name in ["'nib-find'", "'nib-find-next'", "'nib-find-previous'"] {
+            assert!(SCRIPT.contains(name), "{name}");
+        }
     }
 }
