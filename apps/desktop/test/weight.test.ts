@@ -385,6 +385,12 @@ function holds(tail: string): boolean {
  *  (web-tab/convert.ts, note.ts, words.ts in @nib/markdown - 15,080 bytes and three
  *  files), fetched by the first such note opened. Measured 3,325,127.
  *
+ *  The palette learned recent notes, folders, making a note, headings and lines (the
+ *  power-user list's second batch), and went behind a door with them: nothing of it is
+ *  on screen when the window opens, and it is fetched at the launch's last turn like
+ *  the Ctrl+T dialog, or by the first press in front of that. Measured 3,320,977 and
+ *  382 modules, with everything it learned.
+ *
  *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in

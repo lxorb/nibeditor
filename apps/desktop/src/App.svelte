@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy } from 'svelte'
+  import { onDestroy, tick } from 'svelte'
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
@@ -12,7 +12,6 @@
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
-  import Palette from './lib/Palette.svelte'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
@@ -45,6 +44,7 @@
     importSheet,
     newKindChord,
     newKindDialog,
+    paletteDoor,
     publishSheet,
     recordingPill,
     rewriteSheet,
@@ -308,6 +308,11 @@
       palette = false
     }),
   )
+  // Asked to open before the launch's last turn has fetched it: fetched now, and it
+  // opens as it lands, since it arrives already open. See surfaces.svelte.ts.
+  $effect(() => {
+    if (palette) void paletteDoor.ask()
+  })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
   // Full screen is one more thing back closes: a screen with nothing on it but the
@@ -639,6 +644,13 @@
     shortcuts.handle(event, appContext())
   }
 
+  /** The palette on the commands, waiting for it the once it has not arrived yet. */
+  async function showCommands() {
+    await paletteDoor.ask()
+    await tick()
+    paletteScreen?.showCommands()
+  }
+
   /** What a command from the registry needs that only the running app has. Built
    *  here rather than twice, because the keyboard is not the only thing that
    *  presses one: the buttons on the format bar are registry commands too, and a
@@ -648,7 +660,7 @@
     return {
       view,
       palette: (mode) => {
-        if (mode === 'commands') paletteScreen?.showCommands()
+        if (mode === 'commands') void showCommands()
         else palette = true
       },
       // The document alone, with the app out of the way and the window's own
@@ -906,7 +918,11 @@
 <!-- What the text size has just become, after a pinch or a key. -->
 <SizeBadge />
 
-<Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
+{#if paletteDoor.asked}
+  {#await paletteDoor.asked then Palette}
+    <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
+  {/await}
+{/if}
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />
