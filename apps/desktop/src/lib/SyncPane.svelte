@@ -245,7 +245,7 @@
   </div>
 
   <div class="card">
-    <button class="action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+    <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
   </div>
 {/if}
 
@@ -294,11 +294,11 @@
 
 <div class="card">
   {#if asked?.notes}
-    <button class="action danger" disabled={rolling} onclick={() => void roll()}>
+    <button class="nib-action is-danger" disabled={rolling} onclick={() => void roll()}>
       {rolling ? t('Going back') : t('Go back')}
     </button>
   {:else}
-    <button class="action" disabled={!spaceId} onclick={() => void look()}>
+    <button class="nib-action" disabled={!spaceId} onclick={() => void look()}>
       {t('What would change?')}
     </button>
   {/if}
@@ -354,34 +354,6 @@
     width: 14rem;
   }
 
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-
-    .action.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
-  }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);
@@ -424,18 +396,6 @@
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action {
-    position: relative;
-    min-height: var(--touch-row);
-    padding: var(--space-2) var(--touch-pad);
-    color: var(--accent);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action.danger {
-    color: var(--danger);
   }
 
   /* One waiting note: what it is, when it happened, and the three answers. The

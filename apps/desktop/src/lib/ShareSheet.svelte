@@ -372,7 +372,7 @@
         </div>
 
         <button
-          class="action danger"
+          class="nib-action is-danger"
           disabled={!link || share.busy}
           onclick={() => link && void share.reset(link.role, link.mode)}
         >

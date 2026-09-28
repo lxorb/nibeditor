@@ -306,35 +306,8 @@
     border-color: var(--accent);
   }
 
-  /* An action in a card: full width, quiet until pointed at. */
-  .sheet :global(.action) {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .sheet :global(.action:hover:not(:disabled)) {
-      color: var(--text-strong);
-    }
-
-    .sheet :global(.action.danger:hover:not(:disabled)) {
-      color: var(--danger);
-    }
-  }
-
-  /* A small action at the end of a row is `.nib-chip` in the themes package. */
+  /* An action in a card is `.nib-action` in the themes package, and a small action
+     at the end of a row is `.nib-chip`. */
 
   /* The one thing the sheet is for is `.nib-button` in the themes package, the
      button every dialog in the app is pressed with. Where it sits in the row or
@@ -365,11 +338,6 @@
 
   :global([data-touch]) .sheet :global(.row) {
     min-height: var(--touch-target);
-  }
-
-  :global([data-touch]) .sheet :global(.action) {
-    min-height: var(--touch-row);
-    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .sheet :global(input.field) {

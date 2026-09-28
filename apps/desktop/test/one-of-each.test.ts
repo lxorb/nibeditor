@@ -461,6 +461,23 @@ describe('the button with words in it', () => {
   })
 })
 
+/** A line of words in a card that does something: Sign out, Reset all shortcuts.
+ *  Five components drew their own, at three weights. */
+describe('the action in a card', () => {
+  test('is drawn in the themes package', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-action')
+    expect(shared).toContain('[data-touch] .nib-action')
+  })
+
+  test('and laid into a grouped card on a phone by the one sheet that has those', () => {
+    // The panes inside the settings sheet hold actions too, and Svelte scopes a
+    // component's rules to its own markup, so the sheet says it once with
+    // `:global` rather than each pane saying it again.
+    expect(draw(/\.nib-action|\.action\b/)).toEqual(['lib/SettingsPanel.svelte'])
+  })
+})
+
 /** The outlined action at the end of a row: Browse, Turn on, Accept, Keep mine.
  *  Five components drew their own, with three weights and two sizes between them. */
 describe('the small action at the end of a row', () => {

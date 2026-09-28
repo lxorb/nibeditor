@@ -227,7 +227,7 @@
      here after the other two have gone. -->
 <div class="card">
   {#each addable as kind (kind)}
-    <button class="action" onclick={() => ai.add(kind)}>
+    <button class="nib-action" onclick={() => ai.add(kind)}>
       {t('Add {name}', { name: t(KIND_NAMES[kind]) })}
     </button>
   {/each}
@@ -315,30 +315,6 @@
     font-size: var(--text-sm);
   }
 
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: 550;
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-  }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);
@@ -368,14 +344,6 @@
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .action {
-    position: relative;
-    min-height: var(--touch-row);
-    padding: var(--space-2) var(--touch-pad);
-    color: var(--accent);
     font-size: var(--touch-text);
   }
 </style>

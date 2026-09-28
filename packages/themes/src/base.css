@@ -1117,6 +1117,49 @@ select option {
   font-size: var(--touch-text);
 }
 
+/* ── An action in a card ───────────────────── */
+
+/* A line of words in a card that does something when pressed: Sign out, Change
+   the password, Reset the shortcuts, Stop publishing. The words are the whole of
+   the control, so it is quiet until pointed at and the words step up to say so.
+   The settings, the sync pane, security, the AI pane and every sheet drew their
+   own, at three weights (one of them a bare 550).
+
+   On a phone it is a row a thumb lands on; where it sits in a grouped card - the
+   hairline between it and the next, the padding the card's rows share - is the
+   card's business. */
+.nib-action {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 0;
+  border: none;
+  background: none;
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-row);
+  text-align: start;
+  cursor: default;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .nib-action:hover:not(:disabled) {
+    color: var(--text-strong);
+  }
+
+  .nib-action.is-danger:hover:not(:disabled) {
+    color: var(--danger);
+  }
+}
+
+[data-touch] .nib-action {
+  min-height: var(--touch-row);
+  font-size: var(--touch-text);
+}
+
 /* ── A small action at the end of a row ────── */
 
 /* Where the control would be: Browse beside the theme, Turn on beside two-factor,

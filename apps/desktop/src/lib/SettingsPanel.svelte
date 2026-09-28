@@ -681,7 +681,9 @@
     <!-- Everything above, back to how it came. -->
     {#if resettable(current)}
       <div class="card">
-        <button class="action" onclick={() => resetPane(current)}>{t('Reset to defaults')}</button>
+        <button class="nib-action" onclick={() => resetPane(current)}
+          >{t('Reset to defaults')}</button
+        >
       </div>
     {/if}
   {:else if settings.section === 'account'}
@@ -746,7 +748,9 @@
       <Security />
 
       <div class="card">
-        <button class="action danger" onclick={() => account.signOut()}>{t('Sign out')}</button>
+        <button class="nib-action is-danger" onclick={() => account.signOut()}
+          >{t('Sign out')}</button
+        >
       </div>
     {:else if account.guest}
       <!-- A guest a link let in. There is no account here to show, and the one
@@ -814,7 +818,7 @@
   <h3>{t('This note')}</h3>
   <div class="card">
     {#each exportActions() as action (action.id)}
-      <button class="action" disabled={action.disabled} onclick={action.run}>
+      <button class="nib-action" disabled={action.disabled} onclick={action.run}>
         {action.label}
       </button>
     {/each}
@@ -919,7 +923,9 @@
   <p class="hint">{t('Esc stops recording, Backspace takes the key away.')}</p>
 
   <div class="card">
-    <button class="action" onclick={() => shortcuts.resetAll()}>{t('Reset all shortcuts')}</button>
+    <button class="nib-action" onclick={() => shortcuts.resetAll()}
+      >{t('Reset all shortcuts')}</button
+    >
   </div>
 {/snippet}
 
@@ -986,7 +992,7 @@
   </div>
 
   <div class="card">
-    <button class="action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
+    <button class="nib-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
       {t('Reset the bar')}
     </button>
   </div>
@@ -1057,8 +1063,10 @@
         <span class="name">{t('OpenAI key')}</span>
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
-          <button class="action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
-          <button class="action danger" onclick={() => void offered.remove()}>{t('Remove')}</button>
+          <button class="nib-action" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
+          <button class="nib-action is-danger" onclick={() => void offered.remove()}
+            >{t('Remove')}</button
+          >
         </div>
       </div>
     {:else}
@@ -1154,7 +1162,7 @@
   {#if isDesktop}
     <h3>{t('Custom')}</h3>
     <div class="card">
-      <button class="action" onclick={() => theme.reload()}
+      <button class="nib-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
 
@@ -1393,34 +1401,6 @@
   .setting.pressable:focus-visible {
     outline-offset: 2px;
     border-radius: var(--radius-sm);
-  }
-
-  /* An action in a card: full width, quiet until pointed at. */
-  .action {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 34px;
-    padding: 6px 0;
-    border: none;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    text-align: start;
-    cursor: default;
-    transition: color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .action:hover:not(:disabled) {
-      color: var(--text-strong);
-    }
-
-    .action.danger:hover:not(:disabled) {
-      color: var(--danger);
-    }
   }
 
   /* ── A button on the phone's bar ───────────────────────────────── */
@@ -2014,8 +1994,8 @@
   }
 
   .sheet.phone .setting + .setting::before,
-  .sheet.phone .action + .setting::before,
-  .sheet.phone .action + .action::before {
+  .sheet.phone :global(.nib-action + .setting::before),
+  .sheet.phone :global(.nib-action + .nib-action::before) {
     content: '';
     position: absolute;
     top: 0;
@@ -2054,20 +2034,22 @@
     max-width: 60%;
   }
 
-  .sheet.phone .action {
+  /* An action in a card is a row of the grouped list on a phone: the card's own
+     side padding, the accent, and the hairline above it. The panes drawn inside
+     this sheet - security, sync, the AI providers - hold actions too, so it is
+     said here once for all of them rather than once in each. */
+  .sheet.phone :global(.nib-action) {
     position: relative;
-    min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
     color: var(--accent);
-    font-size: var(--touch-text);
   }
 
-  .sheet.phone .action.danger {
+  .sheet.phone :global(.nib-action.is-danger) {
     color: var(--danger);
   }
 
-  .sheet.phone .action:active:not(:disabled) {
-    background: var(--surface-2);
+  .sheet.phone :global(.nib-action:active:not(:disabled)) {
+    background: var(--surface-press);
   }
 
   /* Every one of these is something a thumb has to land on, so every one of them

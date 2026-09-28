@@ -396,7 +396,7 @@
           {/each}
           <span class="hint">{t('Add these at your registrar, then verify.')}</span>
           <button
-            class="action"
+            class="nib-action"
             disabled={publish.busy || !blog?.domain}
             onclick={() => void publish.verifyDomain()}
           >
@@ -517,7 +517,7 @@
       </label>
       {#if publish.hasPassword}
         <button
-          class="action danger"
+          class="nib-action is-danger"
           disabled={publish.busy}
           onclick={() => void publish.removePassword()}
         >
@@ -556,14 +556,14 @@
       </div>
 
       <div class="card">
-        <button class="action" onclick={() => void saveAnswers()}>
+        <button class="nib-action" onclick={() => void saveAnswers()}>
           {t('Save as CSV')}
         </button>
       </div>
     {/if}
 
     <div class="card">
-      <button class="action danger" onclick={() => void publish.unpublish()}>
+      <button class="nib-action is-danger" onclick={() => void publish.unpublish()}>
         {t('Stop publishing')}
       </button>
     </div>
