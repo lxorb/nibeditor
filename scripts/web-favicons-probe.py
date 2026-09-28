@@ -26,11 +26,10 @@ is a failure.
     python scripts/web-favicons-probe.py --exe path/to/nib.exe \\
         --identifier ch.emilvinu.nib.probe.<name> [--real]
 
-Build the exe as `scripts/probe_app.py` says, with the window off every screen and never
-taking the keyboard: `"app":{"windows":[{...the config's own window..., "x":-32000,
-"y":-32000, "focus":false, "visible":true}]}`. The drive refuses a window that opens on
-screen. Nothing here moves the pointer, presses a key or looks
-at the screen: the app is driven through its automation endpoint.
+Build the exe as `scripts/probe_app.py` says. The switch drive's launch starts it through
+`run_probe`, off every screen and never taking the keyboard. Nothing here moves the
+pointer, presses a key or looks at the screen: the app is driven through its automation
+endpoint.
 """
 
 from __future__ import annotations
@@ -48,7 +47,7 @@ import threading
 import time
 import zlib
 
-from probe_app import close_app, main_window
+from probe_app import close_app
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -246,46 +245,6 @@ DRAWN = """(async () => {
 })()"""
 
 
-def launch(switch, exe: pathlib.Path, identifier: str, unlike: int = 0):
-    """The switch probe's launch, without putting the window on screen: the build's own
-    window config keeps it off every screen and unfocused, and this only checks that it
-    did. Moving it, as the switch probe does, would bring it back into view."""
-
-    import ctypes
-    import subprocess
-    from ctypes import wintypes
-
-    from probe_app import refuse_updating
-
-    refuse_updating(exe)
-    app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    port, secret = switch.endpoint(identifier, 90, unlike)
-    until = time.perf_counter() + 90
-    hwnd = 0
-    while time.perf_counter() < until and not hwnd:
-        hwnd = main_window(app.pid)
-        time.sleep(0.05)
-    if not hwnd:
-        raise SystemExit("the app never showed a window")
-
-    # The app puts its window where the config says a moment after it first exists.
-    box = wintypes.RECT()
-    settle = time.perf_counter() + 3
-    while True:
-        switch.user32.GetWindowRect(hwnd, ctypes.byref(box))
-        if box.left <= -10000 or time.perf_counter() > settle:
-            break
-        time.sleep(0.05)
-    if box.left > -10000:
-        app.terminate()
-        raise SystemExit(
-            f"the window opened on screen at {box.left},{box.top}: build the exe with "
-            '"x": -32000, "y": -32000 and "focus": false in its window config'
-        )
-    time.sleep(1.5)
-    return app, switch.App(port, secret)
-
-
 def kept(space: pathlib.Path, name: str) -> str:
     """The `Nib-Icon` the file now keeps, shortened, with the colour of its first pixel
     where it is one of the plain squares this probe serves."""
@@ -342,14 +301,14 @@ def main() -> int:
     said: dict[str, object] = {}
     running = None
     try:
-        running, app = launch(switch, args.exe, args.identifier)
+        running, app, _ = switch.launch(args.exe, args.identifier)
         if not close_app(running):
             running.terminate()
             running.wait(timeout=30)
         switch.allow_eval(args.identifier)
         time.sleep(2)
 
-        running, app = launch(switch, args.exe, args.identifier, unlike=app.port)
+        running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         app.open("Idea.md", switch.SPACE)
         time.sleep(3)
 

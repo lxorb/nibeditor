@@ -31,12 +31,8 @@ unit tests.
     python scripts/web-page-probe.py --exe apps/desktop/src-tauri/target/release/nib.exe \\
       --identifier ch.emilvinu.nib.probe.<name>
 
-The exe is a probe build that opens off the screen and never updates:
-
-    pnpm --dir apps/desktop tauri build --no-bundle --config <file>
-
-with the identifier, `"version": "99.0.0"`, the updater on `https://127.0.0.1:9/latest.json`
-and the window at `"x": -32000, "y": -32000, "focus": false`.
+The exe is a probe build that never updates, built as `scripts/probe_app.py` says;
+`run_probe` starts it off the screen and without the keyboard, and nothing here moves it.
 """
 
 from __future__ import annotations
@@ -61,9 +57,8 @@ import time
 import urllib.error
 import urllib.request
 import wave
-from ctypes import byref, windll, wintypes
 
-from probe_app import close_app, main_window, refuse_updating
+from probe_app import close_app, main_window, run_probe
 
 PORT_FROM = 23800
 PORT_TO = 23819
@@ -370,11 +365,8 @@ def press_in_page(identifier: str, path: str, letter: str = "f") -> dict[str, ob
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
-    refuse_updating(exe)
     env = {**os.environ, "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": ENGINE_ARGS}
-    running = subprocess.Popen(
-        [str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env
-    )
+    running = run_probe(exe, env=env, quiet=True)
     port, secret, pid = endpoint(identifier, unlike)
     if pid and pid != running.pid:
         raise SystemExit(f"another nib (pid {pid}) is listening under {identifier}: close it first")
@@ -384,13 +376,6 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     hwnd = main_window(running.pid)
     if not hwnd:
         raise SystemExit("the app never showed a window")
-    # Off the screen, or not at all: a probe that opened where somebody is working stops
-    # here, before it does anything else in their face.
-    box = wintypes.RECT()
-    windll.user32.GetWindowRect(hwnd, byref(box))
-    if box.left > -10000:
-        running.terminate()
-        raise SystemExit(f"the window opened on the screen at {box.left},{box.top}: build it off it")
     time.sleep(1.5)
     return running, App(port, secret)
 

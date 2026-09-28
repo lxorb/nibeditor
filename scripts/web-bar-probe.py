@@ -23,10 +23,9 @@ tests.
 
     python scripts/web-bar-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.<name>
 
-Build the exe as `scripts/probe_app.py` says, with its window opening off the screen
-and without the focus, so the drive never comes up in front of anybody; the switch
-drive's launch puts it on the screen, and this puts it back off. Nothing here needs the
-window on screen: the keys are posted and the rest is read out of the page.
+Build the exe as `scripts/probe_app.py` says. The switch drive's launch starts it through
+`run_probe`, off the screen and without the keyboard, and nothing here moves it: the keys
+are posted and the rest is read out of the page.
 """
 
 from __future__ import annotations
@@ -138,14 +137,6 @@ def bar(app) -> object:
     )
 
 
-def away(window: int) -> None:
-    """The window off the screen again, at the size the launch gave it, without taking
-    the focus: SWP_NOZORDER | SWP_NOACTIVATE."""
-
-    assert cursor.user32 is not None
-    cursor.user32.SetWindowPos(window, None, -32000, -32000, 1280, 860, 0x0004 | 0x0010)
-
-
 def invoke(app, command: str, args: dict[str, object]) -> object:
     return app.ask(
         "(async () => { try { return JSON.stringify(await window.__TAURI_INTERNALS__.invoke("
@@ -185,16 +176,14 @@ def main() -> int:
     said: dict[str, object] = {}
     running = None
     try:
-        running, app, shown_at = switch.launch(args.exe, args.identifier)
-        away(shown_at)
+        running, app, _ = switch.launch(args.exe, args.identifier)
         if not close_app(running):
             running.terminate()
             running.wait(timeout=30)
         switch.allow_eval(args.identifier)
         time.sleep(2)
 
-        running, app, shown_at = switch.launch(args.exe, args.identifier, unlike=app.port)
-        away(shown_at)
+        running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         window = 0
         until = time.perf_counter() + 90
         while not window and time.perf_counter() < until:
