@@ -137,6 +137,30 @@ body {
     break-inside: avoid;
   }
 
+  /* Where `break-after` is not honoured, which is WebKit - the engine a Mac prints
+     with - a heading ended a page and its section began the next. So there each
+     heading also carries room for the start of what follows: a box three lines of
+     body text tall, handed back by a margin as tall again, so it takes no room in
+     the layout and is still part of the heading, which is not split. A heading
+     with less room than that under it goes to the next sheet, with its section.
+     Not the last thing in the document, which has no section to keep with and
+     would only have made a sheet of its own. `hanging-punctuation` is how this asks
+     for WebKit, the one engine that has it; Chromium keeps a heading with its
+     section already, and is left as it was. */
+  @supports (hanging-punctuation: first) {
+    #write h1:not(:last-child)::after,
+    #write h2:not(:last-child)::after,
+    #write h3:not(:last-child)::after,
+    #write h4:not(:last-child)::after,
+    #write h5:not(:last-child)::after,
+    #write h6:not(:last-child)::after {
+      content: '';
+      display: block;
+      height: calc(11pt * 1.55 * 3);
+      margin-bottom: calc(11pt * 1.55 * -3);
+    }
+  }
+
   #write p,
   #write li,
   #write dd,
