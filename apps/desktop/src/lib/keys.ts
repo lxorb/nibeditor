@@ -142,7 +142,7 @@ export function withShift(text: string): string {
  *  Ctrl+Shift+= arrives as `+`, Ctrl+Shift+3 as `#`, and on a Mac Alt+5
  *  arrives as `[`. What was pressed is the same key either way, and the
  *  written combination names it unshifted, so the code is what to compare. */
-const PHYSICAL: Record<string, string> = {
+export const PHYSICAL: Record<string, string> = {
   Minus: '-',
   Equal: '=',
   BracketLeft: '[',

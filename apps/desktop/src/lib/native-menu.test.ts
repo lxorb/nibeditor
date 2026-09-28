@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { matchesCombination, readCombination } from './keys'
 import { DIVIDER, type MenuGroup, type MenuItem } from './menu-item'
 import {
   changesBetween,
   describeMenuBar,
   documentWindows,
   keyRuns,
+  keystrokeOf,
   letPass,
   leftFullscreen,
   type MenuBarSources,
@@ -251,16 +253,47 @@ describe('the strip', () => {
     expect(itemIn(recent, 'Clear menu').enabled).toBe(false)
   })
 
-  test('Edit’s own rows are the system’s, so they reach a field and a web page', () => {
+  test('Edit’s clipboard rows are the system’s, so they reach a field and a web page', () => {
     expect(read(menu(bar(), 'edit'))).toEqual([
-      '[Undo] Undo',
-      '[Redo] Redo',
+      'Undo',
+      'Redo',
       '---',
       '[Copy] Copy',
       '[Paste] Paste',
       'Paste as plain text',
-      '[SelectAll] Select all',
+      'Select all',
     ])
+  })
+
+  /** AppKit's Undo reached WebKit's history, which holds only what was typed. */
+  test('and its Undo, Redo and Select All are the app’s, standing in for the system’s', () => {
+    const edit = menu(bar(), 'edit')
+    expect(itemIn(edit, 'Undo')).toMatchObject({
+      accelerator: 'Cmd+Z',
+      key: 'Mod-z',
+      standIn: 'undo',
+    })
+    expect(itemIn(edit, 'Redo')).toMatchObject({ accelerator: 'Cmd+Shift+Z', standIn: 'redo' })
+    expect(itemIn(edit, 'Select all')).toMatchObject({
+      accelerator: 'Cmd+A',
+      standIn: 'selectAll',
+    })
+    expect(itemIn(edit, 'Paste as plain text').standIn).toBeUndefined()
+  })
+
+  /** A canvas has no note behind it, and its own undo is what the key is for. */
+  test('which serve whatever has the keyboard, so the note cannot grey them', () => {
+    const greyed: MenuGroup = {
+      id: 'edit',
+      label: 'Edit',
+      rows: [
+        row('Undo', 'edit.undo', { disabled: true }),
+        row('Paste as plain text', 'edit.paste-plain', { disabled: true }),
+      ],
+    }
+    const edit = menu(bar({ groups: [greyed] }), 'edit')
+    expect(itemIn(edit, 'Undo')).toMatchObject({ enabled: true, anywhere: true })
+    expect(itemIn(edit, 'Paste as plain text')).toMatchObject({ enabled: false, anywhere: false })
   })
 
   test('Window is the system’s, with walking the tabs in it', () => {
@@ -453,5 +486,36 @@ describe('a row pressed by its key', () => {
     expect(keyRuns(false, 'note')).toBe(true)
     expect(keyRuns(false, 'page')).toBe(false)
     expect(keyRuns(false, 'away')).toBe(false)
+  })
+})
+
+describe('a key a stand-in hands the page', () => {
+  test('is the keystroke it names, by the key and by the character', () => {
+    expect(keystrokeOf('Mod-Shift-z')).toEqual({
+      key: 'z',
+      code: 'KeyZ',
+      ctrlKey: false,
+      metaKey: true,
+      altKey: false,
+      shiftKey: true,
+    })
+    expect(keystrokeOf('Mod-Alt-[')).toMatchObject({ key: '[', code: 'BracketLeft' })
+    expect(keystrokeOf('Ctrl-Tab')).toMatchObject({ key: 'Tab', code: 'Tab' })
+    expect(keystrokeOf('Mod-Space')).toMatchObject({ key: ' ', code: 'Space' })
+  })
+
+  /** It has to be the very key the page is waiting for. */
+  test('is matched by the combination and read back as it', () => {
+    for (const written of ['Mod-z', 'Mod-Shift-z', 'Mod-a', 'Mod-Alt-5', 'Mod-Shift-/', 'Mod--']) {
+      const keystroke = keystrokeOf(written)
+      if (!keystroke) throw new Error(`no keystroke for ${written}`)
+      expect(matchesCombination(written, keystroke, 'mac')).toBe(true)
+      expect(readCombination(keystroke, 'mac')).toBe(written)
+    }
+  })
+
+  test('is nothing for a combination that cannot be read', () => {
+    expect(keystrokeOf('')).toBeNull()
+    expect(keystrokeOf('Hyper-k')).toBeNull()
   })
 })

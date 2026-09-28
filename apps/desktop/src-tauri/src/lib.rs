@@ -73,7 +73,7 @@ mod lights;
 mod links;
 mod logs;
 mod matcher;
-#[cfg(target_os = "macos")]
+#[cfg(desktop)]
 mod menu_bar;
 mod notes;
 #[cfg(desktop)]
@@ -292,52 +292,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = web_tabs::managed(builder);
 
-    #[cfg(desktop)]
-    let builder = builder.invoke_handler(commands![
-        endpoint::automation_result,
-        appearance::set_frame,
-        appearance::set_translucency,
-        ground::remember_ground,
-        apple_notes::read_apple_notes,
-        apple_notes::open_full_disk_access,
-        launch::take_startup_files,
-        launch::new_window,
-        lifecycle::keep_running,
-        document_window::show_document,
-        pandoc::has_pandoc,
-        pandoc::run_pandoc,
-        pandoc::import_document,
-        pdf::pdf_supported,
-        pdf::print_pdf,
-        pdf::print_page,
-        recent::remember_recent,
-        recent::forget_recent,
-        secrets::secret_forget,
-        secrets::secret_read,
-        secrets::secret_write,
-        shell_menu::new_menu_registered,
-        shell_menu::set_new_menu,
-        updates::check_update,
-        web_tabs::web_open,
-        web_tabs::web_place,
-        web_tabs::web_navigate,
-        web_tabs::web_step,
-        web_tabs::web_clip,
-        web_tabs::web_close,
-        web_tabs::web_look,
-        web_tabs::web_scroll,
-        web_tabs::web_zoom,
-        web_tabs::web_print,
-        web_tabs::web_shot,
-        web_tabs::web_answer,
-        downloads::web_downloads,
-        downloads::web_download_open,
-        downloads::web_download_show,
-        downloads::web_download_cancel,
-    ]);
-
-    #[cfg(mobile)]
-    let builder = builder.invoke_handler(commands![]);
+    let builder = with_commands(builder);
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
@@ -391,6 +346,61 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     lifecycle::on_event(app, event);
     #[cfg(not(desktop))]
     let _ = (app, event);
+}
+
+/// The commands the window may call on a desktop: every build's, and the ones a
+/// desktop has because it has windows, a filesystem and web tabs of its own.
+#[cfg(desktop)]
+fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder.invoke_handler(commands![
+        endpoint::automation_result,
+        appearance::set_frame,
+        appearance::set_translucency,
+        ground::remember_ground,
+        apple_notes::read_apple_notes,
+        apple_notes::open_full_disk_access,
+        launch::take_startup_files,
+        launch::new_window,
+        lifecycle::keep_running,
+        document_window::show_document,
+        menu_bar::hand_to_keyboard,
+        pandoc::has_pandoc,
+        pandoc::run_pandoc,
+        pandoc::import_document,
+        pdf::pdf_supported,
+        pdf::print_pdf,
+        pdf::print_page,
+        recent::remember_recent,
+        recent::forget_recent,
+        secrets::secret_forget,
+        secrets::secret_read,
+        secrets::secret_write,
+        shell_menu::new_menu_registered,
+        shell_menu::set_new_menu,
+        updates::check_update,
+        web_tabs::web_open,
+        web_tabs::web_place,
+        web_tabs::web_navigate,
+        web_tabs::web_step,
+        web_tabs::web_clip,
+        web_tabs::web_close,
+        web_tabs::web_look,
+        web_tabs::web_scroll,
+        web_tabs::web_zoom,
+        web_tabs::web_print,
+        web_tabs::web_shot,
+        web_tabs::web_answer,
+        downloads::web_downloads,
+        downloads::web_download_open,
+        downloads::web_download_show,
+        downloads::web_download_cancel,
+    ])
+}
+
+/// And a phone's, which are every build's alone.
+#[cfg(mobile)]
+fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder.invoke_handler(commands![])
 }
 
 /// Everything that has to happen once, after the app is built and before the
@@ -478,13 +488,23 @@ fn ready(
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
+        // Except on a Mac, where it is built hidden and shown below, once it has been
+        // put back where it was left (see `show_where_left` in document_window.rs), so
+        // the move is never seen. A Mac's webview starts in fourteen milliseconds, not in
+        // the third of a second Windows needs, which is what showing it at once is for.
         let window = match ground::remembered(handle) {
-            Some(colour) => building.visible(true).background_color(colour).build()?,
+            Some(colour) => building
+                .visible(!cfg!(target_os = "macos"))
+                .background_color(colour)
+                .build()?,
             None => building.build()?,
         };
         // Before anything is drawn, so the lights are never seen anywhere else.
         #[cfg(target_os = "macos")]
         lights::hold(&window);
+        #[cfg(target_os = "macos")]
+        document_window::show_where_left(&window);
+        #[cfg(not(target_os = "macos"))]
         window.show()?;
     }
 
@@ -612,7 +632,8 @@ mod tests {
     }
 
     /// Every name a body calls. A name after a dot is a method on something else and
-    /// not one of ours.
+    /// not one of ours, and so is one after a type's path: `DispatchQueue::main()` is
+    /// the queue's, and not the `main` that runs the app.
     fn calls(body: &str) -> HashSet<String> {
         let mut found = HashSet::new();
         let letters: Vec<char> = body.chars().collect();
@@ -630,12 +651,26 @@ mod tests {
             }
 
             let after_a_dot = from > 0 && letters[from - 1] == '.';
-            if !after_a_dot && letters.get(at) == Some(&'(') {
+            if !after_a_dot && !after_a_type(&letters, from) && letters.get(at) == Some(&'(') {
                 found.insert(letters[from..at].iter().collect());
             }
         }
 
         found
+    }
+
+    /// Whether the name starting at `from` follows `Type::`, a path whose last part is
+    /// written with a capital, which is how a type is written and a module is not.
+    fn after_a_type(letters: &[char], from: usize) -> bool {
+        if from < 2 || letters[from - 1] != ':' || letters[from - 2] != ':' {
+            return false;
+        }
+
+        let mut start = from - 2;
+        while start > 0 && (letters[start - 1].is_alphanumeric() || letters[start - 1] == '_') {
+            start -= 1;
+        }
+        letters[start].is_uppercase()
     }
 
     /// Every function that waits, by name: the ones that say so themselves, and then
@@ -750,5 +785,8 @@ mod tests {
         // A name read off a method call is not one of ours.
         assert!(!calls("one.read(two)").contains("read"));
         assert!(calls("read(two)").contains("read"));
+        // Nor is one a type answers, though a module's is.
+        assert!(!calls("DispatchQueue::main()").contains("main"));
+        assert!(calls("crate::launch::main()").contains("main"));
     }
 }

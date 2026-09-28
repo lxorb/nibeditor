@@ -213,6 +213,9 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     // config is dropped there for the same reason, so the two stay alike.
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
+    // A Mac's is shown once it stands where it should; see `show_where_left`.
+    #[cfg(target_os = "macos")]
+    let builder = builder.visible(false);
 
     // The same switches as the first window, which is running on the same user data
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
@@ -224,7 +227,10 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
         .map_err(|error| format!("could not open another window: {error}"))?;
 
     #[cfg(target_os = "macos")]
-    crate::lights::hold(&window);
+    {
+        crate::lights::hold(&window);
+        crate::document_window::show_where_left(&window);
+    }
     #[cfg(not(target_os = "macos"))]
     let _ = window;
 

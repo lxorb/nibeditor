@@ -2406,9 +2406,20 @@ class Workspace {
   }
 
   /** Whether the window may go, which is the same question over every tab in it.
-   *  See start.ts, which is what prevents the close until this answers. */
+   *  See start.ts, which is what prevents the close until this answers.
+   *
+   *  A note somebody answered Don't save about is closed before the window goes, as
+   *  closing its tab would close it, and the session is written at once. The window
+   *  goes with its tabs, and the next window - the Dock's, the next launch's - opens
+   *  the session they were written into, so the words came back, and the question with
+   *  them on every quit after. */
   async mayCloseWindow(): Promise<boolean> {
-    return this.mayClose(this.tabs)
+    const letGo: NoteDoc[] = []
+    if (!(await this.mayClose(this.tabs, letGo))) return false
+
+    for (const tab of this.tabs.filter((one) => letGo.includes(one.note))) this.close(tab.id)
+    this.persist()
+    return true
   }
 
   /** Whether a set of tabs may all go: the closing question once per note,
@@ -2417,8 +2428,9 @@ class Workspace {
    *  closing is one gesture and half of it done is worse than none.
    *
    *  Asked of documents rather than of tabs throughout: a note is the thing with
-   *  words in it, and a tab is only a way of looking at one. */
-  private async mayClose(closing: readonly Tab[]): Promise<boolean> {
+   *  words in it, and a tab is only a way of looking at one. `letGo` is told which
+   *  notes were answered Don't save. */
+  private async mayClose(closing: readonly Tab[], letGo: NoteDoc[] = []): Promise<boolean> {
     this.flush()
 
     const going = closing.map((tab) => tab.id)
@@ -2431,7 +2443,7 @@ class Workspace {
       if (!tab.note.unsaved) continue
       // A note another pane keeps showing is not going anywhere.
       if (this.tabs.some((one) => one.note === tab.note && !going.includes(one.id))) continue
-      if (!(await this.askToClose(tab.note))) return false
+      if (!(await this.askToClose(tab.note, letGo))) return false
     }
 
     return true
@@ -2444,7 +2456,7 @@ class Workspace {
    *  Saving a note with no home yet goes through the name prompt, the way saving
    *  one always does. A name nobody gives leaves the note unsaved, and then the
    *  close does not happen either. */
-  private async askToClose(note: NoteDoc): Promise<boolean> {
+  private async askToClose(note: NoteDoc, letGo: NoteDoc[]): Promise<boolean> {
     const { prompt } = await import('./prompt.svelte')
 
     const answer = await prompt.choose({
@@ -2456,6 +2468,7 @@ class Workspace {
       ],
     })
 
+    if (answer === 'discard') letGo.push(note)
     if (answer !== 'save') return answer === 'discard'
 
     await this.saving.write(note)

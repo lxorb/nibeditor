@@ -34,6 +34,7 @@ import {
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
 import { closeFence, leaveQuote } from './commands'
+import { refuseControlCharacters } from './control'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
 import { richPaste } from './paste'
@@ -144,6 +145,8 @@ export function editorState(options: StateOptions): EditorState {
           },
         }),
       ),
+      // A Ctrl chord a Mac hands over as a character nobody can see; see control.ts.
+      refuseControlCharacters(),
       sharing(),
       // Before the modes, so the folds are a field the live preview's own
       // fields can already ask about while they build.

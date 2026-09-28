@@ -96,6 +96,16 @@ fn sheet_in_points(page: &PdfPage) -> (f64, f64, f64) {
     )
 }
 
+/// Whether the sheet, as `sheet_in_points` lays it, is wider than it is tall, which is
+/// what `AppKit`'s orientation has to say. Not the page's own `landscape`: a deck's
+/// sheet is sixteen by nine as it stands and says nothing about lying down, and told
+/// "portrait" beside a paper wider than it is tall, `AppKit` stood the paper upright
+/// and every slide came out small in the corner of a tall page.
+#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+fn on_its_side(width: f64, height: f64) -> bool {
+    width > height
+}
+
 /// Loads a finished page in a window nobody sees and asks the webview's own print
 /// engine for a PDF. The page comes in complete, pictures and fonts inside it, so
 /// nothing has to be fetched. It goes through a temporary file because the webview
@@ -380,7 +390,7 @@ mod printer {
 /// given the webview's frame, or it has none and every page is blank as well.
 #[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod printer {
-    use super::{sheet_in_points, PdfPage};
+    use super::{on_its_side, sheet_in_points, PdfPage};
     use std::cell::{Cell, RefCell};
     use std::ffi::c_void;
     use std::sync::mpsc::Sender;
@@ -515,7 +525,7 @@ mod printer {
 
         // Orientation before the paper: `AppKit` turns the paper when the orientation
         // changes, and the paper given here is already the way it lies.
-        info.setOrientation(if page.landscape {
+        info.setOrientation(if on_its_side(width, height) {
             NSPaperOrientation::Landscape
         } else {
             NSPaperOrientation::Portrait
@@ -722,7 +732,7 @@ mod printer {
 
 #[cfg(test)]
 mod tests {
-    use super::{sheet_in_points, PdfPage};
+    use super::{on_its_side, sheet_in_points, PdfPage};
 
     fn page(width: f64, height: f64, margin: f64, landscape: bool) -> PdfPage {
         PdfPage {
@@ -759,6 +769,22 @@ mod tests {
         assert!((width - 720.0).abs() < f64::EPSILON);
         assert!((height - 360.0).abs() < f64::EPSILON);
         assert!(margin.abs() < f64::EPSILON);
+    }
+
+    /// A deck's sheet is sixteen by nine without saying it lies down, and it is still
+    /// on its side, as is any turned sheet; an upright one is not.
+    #[test]
+    fn a_wide_sheet_is_on_its_side_whatever_the_page_says() {
+        let (width, height, _) = sheet_in_points(&page(1280.0 / 96.0, 720.0 / 96.0, 0.0, false));
+        assert!((width - 960.0).abs() < 0.01);
+        assert!((height - 540.0).abs() < 0.01);
+        assert!(on_its_side(width, height));
+
+        let (width, height, _) = sheet_in_points(&page(8.5, 11.0, 0.5, true));
+        assert!(on_its_side(width, height));
+
+        let (width, height, _) = sheet_in_points(&page(8.27, 11.69, 1.0, false));
+        assert!(!on_its_side(width, height));
     }
 
     /// A margin below nothing is no margin, not a page drawn off its own edge.

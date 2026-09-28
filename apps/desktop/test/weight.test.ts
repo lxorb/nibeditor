@@ -419,6 +419,14 @@ function holds(tail: string): boolean {
  *  a link in the note on screen answer the first click. The production build fetches
  *  2,111 more bytes before the first paint (1,318,180 to 1,320,291).
  *
+ *  Raised 2026-09-28 a third time, to 3,348,000, for what the Mac round found on a
+ *  real Mac: the traffic lights' room in the bar and the sidebar's head, the sidebar
+ *  button left out while the space chooser covers the panel, a note let go of on the way
+ *  out, and packages/editor/src/control.ts, which keeps a Ctrl chord a Mac hands over
+ *  as an invisible character out of the note. That last has to be there for the first
+ *  key typed. The menu bar's own share of the round is behind its door. Measured
+ *  3,345,483.
+ *
  *  Raised again when the Mac round and that one met, which each had been measured
  *  without the other: 3,350,993, under a ceiling of 3,355,000. */
 const BUDGET = 3_355_000

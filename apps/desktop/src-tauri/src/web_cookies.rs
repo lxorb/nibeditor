@@ -165,45 +165,8 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
 
     use block2::RcBlock;
     use objc2::rc::Retained;
-    use objc2::runtime::AnyObject;
-    use objc2_foundation::{
-        NSArray, NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieExpires,
-        NSHTTPCookieMaximumAge, NSMutableCopying as _, NSString,
-    };
+    use objc2_foundation::{NSArray, NSHTTPCookie};
     use objc2_web_kit::WKWebView;
-
-    /// The cookie again, lasting: its own properties, with a lifetime and without the
-    /// discard that would end it with the session anyway.
-    fn lasting(cookie: &NSHTTPCookie) -> Option<Retained<NSHTTPCookie>> {
-        let properties = cookie.properties()?.mutableCopy();
-        let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
-        // SAFETY: every key is `NSHTTPCookie`'s own and every value is the type the key
-        // takes: a date for the expiry, strings for the maximum age, the discard and
-        // `HttpOnly`.
-        unsafe {
-            // Both kinds of lifetime, because `NSHTTPCookie` reads one or the other by
-            // the cookie's version - an expiry for the Netscape kind nearly every site
-            // sets, a maximum age for the RFC 2965 kind - and ignores the one that is not
-            // its own. And a discard said outright as no, because an RFC 2965 cookie with
-            // none said is taken to be discarded with the session.
-            properties.insert(NSHTTPCookieExpires, until.as_ref() as &AnyObject);
-            properties.insert(
-                NSHTTPCookieMaximumAge,
-                NSString::from_str(&format!("{KEPT_FOR:.0}")).as_ref() as &AnyObject,
-            );
-            properties.insert(
-                NSHTTPCookieDiscard,
-                NSString::from_str("FALSE").as_ref() as &AnyObject,
-            );
-            if cookie.isHTTPOnly() {
-                properties.insert(
-                    &*NSString::from_str("HttpOnly"),
-                    NSString::from_str("TRUE").as_ref() as &AnyObject,
-                );
-            }
-            NSHTTPCookie::cookieWithProperties(&properties)
-        }
-    }
 
     type Said = Rc<Cell<Option<Box<dyn FnOnce()>>>>;
     fn say(done: &Said) {
@@ -259,6 +222,51 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
 
     // SAFETY: as above; the engine copies the block and calls it once, on this thread.
     unsafe { store.getAllCookies(&handler) };
+}
+
+/// The cookie again, lasting: its own properties, with a lifetime and without the
+/// discard that would end it with the session anyway.
+///
+/// The discard is taken out rather than said as no. The engine hands a session
+/// cookie over with `Discard` set, and on macOS 26 a cookie made from properties that
+/// hold the key at all is session-only, "FALSE" included - so every cookie this wrote
+/// back was the same session cookie again, and a login lasted only as long as a quit
+/// with the page still open happened to keep it. Without the key, an expiry makes the
+/// Netscape kind nearly every site sets last, and a maximum age the RFC 2965 kind,
+/// which is the one that would otherwise default to being discarded.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "a cookie's properties are a dictionary whose values the type system does not check"
+)]
+fn lasting(
+    cookie: &objc2_foundation::NSHTTPCookie,
+) -> Option<objc2::rc::Retained<objc2_foundation::NSHTTPCookie>> {
+    use objc2::runtime::AnyObject;
+    use objc2_foundation::{
+        NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieExpires, NSHTTPCookieMaximumAge,
+        NSMutableCopying as _, NSString,
+    };
+
+    let properties = cookie.properties()?.mutableCopy();
+    let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
+    // SAFETY: every key is `NSHTTPCookie`'s own and every value is the type the key
+    // takes: a date for the expiry, strings for the maximum age and `HttpOnly`.
+    unsafe {
+        properties.insert(NSHTTPCookieExpires, until.as_ref() as &AnyObject);
+        properties.insert(
+            NSHTTPCookieMaximumAge,
+            NSString::from_str(&format!("{KEPT_FOR:.0}")).as_ref() as &AnyObject,
+        );
+        properties.removeObjectForKey(NSHTTPCookieDiscard);
+        if cookie.isHTTPOnly() {
+            properties.insert(
+                &*NSString::from_str("HttpOnly"),
+                NSString::from_str("TRUE").as_ref() as &AnyObject,
+            );
+        }
+        NSHTTPCookie::cookieWithProperties(&properties)
+    }
 }
 
 /// How long the window waits for the engine before it closes anyway. A quit that
@@ -378,5 +386,59 @@ mod tests {
         let at = now();
         assert!(at > 1_700_000_000.0, "the clock reads a real day");
         assert!((kept_until(at) - at - KEPT_FOR).abs() < 1.0);
+    }
+
+    /// A session cookie the way the engine hands one over, with `Discard` set, of
+    /// either version: what comes back lasts, and for about four hundred days.
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[allow(
+        unsafe_code,
+        reason = "a cookie's properties are a dictionary whose values the type system does not check"
+    )]
+    fn a_session_cookie_is_made_again_as_one_that_lasts() {
+        use objc2::runtime::AnyObject;
+        use objc2_foundation::{
+            NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieDomain, NSHTTPCookieName,
+            NSHTTPCookiePath, NSHTTPCookieValue, NSHTTPCookieVersion, NSMutableDictionary,
+            NSString,
+        };
+
+        for version in ["0", "1"] {
+            let properties = NSMutableDictionary::<NSString, AnyObject>::new();
+            // SAFETY: every key is `NSHTTPCookie`'s own, and every value a string.
+            let session = unsafe {
+                for (key, value) in [
+                    (NSHTTPCookieName, "sessionid"),
+                    (NSHTTPCookieValue, "1"),
+                    (NSHTTPCookieDomain, "example.org"),
+                    (NSHTTPCookiePath, "/"),
+                    (NSHTTPCookieVersion, version),
+                    (NSHTTPCookieDiscard, "TRUE"),
+                ] {
+                    properties.insert(key, NSString::from_str(value).as_ref() as &AnyObject);
+                }
+                NSHTTPCookie::cookieWithProperties(&properties).expect("a cookie")
+            };
+            assert!(
+                session.isSessionOnly(),
+                "version {version} starts as a session cookie"
+            );
+
+            let kept = super::lasting(&session).expect("made again");
+            assert!(
+                !kept.isSessionOnly(),
+                "version {version} still ends with the session"
+            );
+            let left = kept
+                .expiresDate()
+                .map(|until| until.timeIntervalSinceDate(&NSDate::now()))
+                .expect("an expiry");
+            assert!(
+                (left - KEPT_FOR).abs() < 60.0,
+                "version {version} lasts {left} seconds"
+            );
+            assert_eq!(kept.name().to_string(), "sessionid");
+        }
     }
 }
