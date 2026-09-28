@@ -9,6 +9,7 @@
  *  its own at the stage's size, so one route builds both.
  */
 
+import { escapeAll } from '@nib/markdown/html'
 import {
   DECK_HEIGHT,
   DECK_LAYOUT_SCRIPT,
@@ -35,12 +36,6 @@ import type { Scheme } from '../theme.svelte'
 interface Note {
   text: string
   path: string | null
-}
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
-
-function escape(text: string): string {
-  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
 }
 
 interface DeckOptions {
@@ -122,7 +117,7 @@ export function buildDeckHtml(
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="generator" content="Nib">
-<title>${escape(title)}</title>
+<title>${escapeAll(title)}</title>
 <style>
 ${styles}
 </style>

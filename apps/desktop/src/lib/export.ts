@@ -1,3 +1,4 @@
+import { escapeAll } from '@nib/markdown/html'
 import { CODE_PALETTES } from '@nib/editor'
 import { frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { sourcesOf } from '@nib/markdown/sources'
@@ -25,12 +26,6 @@ export { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 // Where they live now, and still named here because an export is one of the three
 // surfaces that waits for them; see before-render.ts.
 export { type Drawer, type Fence, prepareEmbeds, prepareFences } from './before-render'
-
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
-
-function escape(text: string): string {
-  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
-}
 
 export interface HtmlOptions {
   /** Leave the stylesheet out, for pasting into a site that has its own. The
@@ -127,14 +122,14 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 
   const meta = [
     '<meta charset="utf-8">',
-    author ? `<meta name="author" content="${escape(author)}">` : '',
-    `<title>${escape(title)}</title>`,
+    author ? `<meta name="author" content="${escapeAll(author)}">` : '',
+    `<title>${escapeAll(title)}</title>`,
   ]
     .filter(Boolean)
     .join('\n')
 
   if (options.bare) {
-    return `<!doctype html>\n<html lang="${escape(lang)}">\n<head>\n${meta}\n</head>\n<body>\n${body}</body>\n</html>\n`
+    return `<!doctype html>\n<html lang="${escapeAll(lang)}">\n<head>\n${meta}\n</head>\n<body>\n${body}</body>\n</html>\n`
   }
 
   const scheme = options.scheme ?? 'light'
@@ -145,7 +140,7 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
   const page = withRunningText(`<div id="write">\n${body}</div>\n`, setup, title, date)
 
   return `<!doctype html>
-<html lang="${escape(lang)}" data-theme="${scheme}">
+<html lang="${escapeAll(lang)}" data-theme="${scheme}">
 <head>
 ${meta}
 <meta name="viewport" content="width=device-width,initial-scale=1">

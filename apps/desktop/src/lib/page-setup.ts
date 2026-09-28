@@ -1,3 +1,4 @@
+import { escapeAll } from '@nib/markdown/html'
 import { frontMatter, frontMatterValue } from '@nib/markdown'
 
 /** Paper the print dialog understands, in `@page size` spelling. */
@@ -131,12 +132,6 @@ export function pageCss(setup: PageSetup): string {
   return `@page { size: ${setup.paper} ${setup.orientation}; margin: ${margin}; }`
 }
 
-const ESCAPES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }
-
-function escape(text: string): string {
-  return text.replace(/[&<>"]/g, (character) => ESCAPES[character] ?? character)
-}
-
 /** Wraps the page body so a header repeats at the top of every sheet and a
  *  footer sits at the bottom of each. Browsers repeat a table's head and foot
  *  across pages and reserve their room, which is what makes running text
@@ -150,10 +145,10 @@ export function withRunningText(
   if (!setup.header && !setup.footer) return body
 
   const header = setup.header
-    ? `<thead><tr><td><div class="running-header">${escape(fill(setup.header, title, date))}</div></td></tr></thead>\n`
+    ? `<thead><tr><td><div class="running-header">${escapeAll(fill(setup.header, title, date))}</div></td></tr></thead>\n`
     : ''
   const footer = setup.footer
-    ? `<tfoot><tr><td></td></tr></tfoot>\n<div class="running-footer">${escape(fill(setup.footer, title, date))}</div>\n`
+    ? `<tfoot><tr><td></td></tr></tfoot>\n<div class="running-footer">${escapeAll(fill(setup.footer, title, date))}</div>\n`
     : ''
 
   return `<table class="sheet">\n${header}<tbody><tr><td>\n${body}</td></tr></tbody>\n</table>\n${footer}`

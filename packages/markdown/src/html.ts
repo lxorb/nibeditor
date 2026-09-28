@@ -29,6 +29,14 @@ export function escape(text: string): string {
   return text.replace(/&(?!#?\w+;)|[<>"']/g, (character) => ESCAPES[character] ?? character)
 }
 
+/** Text as HTML with every ampersand escaped, for words that are not a note's prose:
+ *  a title, a label, a colour a file wrote, a path. There an `&amp;` means the five
+ *  characters, and nothing the app writes on its own behalf is an entity. Safe in
+ *  element content and in an attribute quoted either way. */
+export function escapeAll(text: string): string {
+  return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
+}
+
 /** The schemes a link may name. Everything else is dropped rather than written:
  *  `javascript:` and `vbscript:` run code, and a `data:` document is a page of
  *  the author's own served inside the reader's origin. */
