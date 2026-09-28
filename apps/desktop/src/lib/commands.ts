@@ -58,9 +58,8 @@ import {
 } from './recorder/commands'
 import { canSaveAs, saveAs } from './save-as'
 import { moveTargets } from './move-targets'
-import { shownName } from './note-name'
+import { closeAfterLabel } from './workspace/closing-around'
 import { prompt } from './prompt.svelte'
-import { nameOf } from './space-paths'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
@@ -325,6 +324,46 @@ export interface Command extends MenuItem {
   byHand?: boolean
 }
 
+/** Fetched as the launch ends; see `warmDoors`. */
+const tabOps = () => import('./tab-strip/ops')
+
+/** A tab's own menu, about the tab being read; see tab-strip/menu.ts. */
+function tabCommands(): Command[] {
+  const id = workspace.activeTabId ?? ''
+  const tab = workspace.active
+
+  return [
+    {
+      id: 'close-right',
+      label: closeAfterLabel(),
+      hint: shortcuts.hint('app.close-right'),
+      disabled: workspace.closesAround(id, 'right') === 0,
+      run: () => void workspace.closeAround(id, 'right'),
+    },
+    {
+      id: 'close-all',
+      label: t('Close all tabs'),
+      hint: shortcuts.hint('app.close-all'),
+      disabled: workspace.closesAround(id, 'all') === 0,
+      run: () => void workspace.closeAround(id, 'all'),
+    },
+    {
+      id: 'duplicate-tab',
+      label: t('Duplicate tab'),
+      hint: shortcuts.hint('app.duplicate-tab'),
+      disabled: !tab || !workspace.canDuplicateTab(tab),
+      run: () => void tabOps().then((ops) => ops.duplicateTab(id)),
+    },
+    {
+      id: 'rename',
+      label: t('Rename'),
+      hint: shortcuts.hint('tabs.rename'),
+      disabled: !tab || !workspace.canRenameFromTab(tab),
+      run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
+    },
+  ]
+}
+
 /** Splitting, moving between panes, and closing one. Left out entirely on a
  *  phone, which shows one note at a time and has no panes to talk about. */
 function paneCommands(): Command[] {
@@ -344,6 +383,13 @@ function paneCommands(): Command[] {
       hint: shortcuts.hint('pane.split-down'),
       disabled: !workspace.canSplit('column'),
       run: () => workspace.split('column'),
+    },
+    {
+      id: 'move-tab-pane',
+      label: t('Move to other pane'),
+      hint: shortcuts.hint('pane.move-tab'),
+      disabled: !workspace.canMoveToOtherPane(workspace.activeTabId ?? ''),
+      run: () => void tabOps().then((ops) => ops.moveToOtherPane(workspace.activeTabId ?? '')),
     },
     {
       id: 'focus-pane',
@@ -852,6 +898,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeActive(),
     },
+    ...tabCommands(),
     {
       id: 'back',
       label: t('Back'),
@@ -926,15 +973,6 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => void import('./automation/link').then((m) => m.copyNoteLink()),
           },
         ]),
-
-    ...workspace.recent
-      .filter((path) => !workspace.tabs.some((tab) => tab.path === path))
-      .slice(0, 8)
-      .map((path) => ({
-        id: `recent:${path}`,
-        label: t('Recent: {name}', { name: shownName(nameOf(path)) }),
-        run: () => void workspace.openEntry(path),
-      })),
 
     ...exportCommands(),
     ...spaceCommands(),

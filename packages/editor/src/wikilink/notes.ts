@@ -7,6 +7,7 @@ import {
   pageFragment,
   type Wikilink,
 } from '@nib/markdown/links'
+import type { LinkPress } from '../links'
 
 /** What the editor knows about the space around the open note, and what it does
  *  when a link is followed.
@@ -218,10 +219,13 @@ export interface NoteJump {
   page: number | null
 }
 
-/** Follows a link. The app opens the note, scrolls to the heading or the block,
- *  or makes the note when there is none; on its own the editor does nothing,
- *  since none of that is the editor's to do. */
-export const noteOpener = Facet.define<(jump: NoteJump) => void, (jump: NoteJump) => void>({
+/** Follows a link, and says how it was pressed - nothing, for a link followed from
+ *  the keyboard. The app opens the note, scrolls to the heading or the block, or
+ *  makes the note when there is none, and decides what a modifier means; on its own
+ *  the editor does nothing, since none of that is the editor's to do. */
+export type NoteOpener = (jump: NoteJump, press?: LinkPress) => void
+
+export const noteOpener = Facet.define<NoteOpener, NoteOpener>({
   combine: (values) => values[0] ?? (() => undefined),
 })
 

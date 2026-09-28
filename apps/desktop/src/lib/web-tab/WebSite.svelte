@@ -46,7 +46,7 @@
 </script>
 
 <div
-  class="site nib-bubble"
+  class="site nib-bubble is-pressable"
   role="dialog"
   aria-label={site}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}

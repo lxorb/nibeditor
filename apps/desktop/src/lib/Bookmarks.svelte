@@ -12,6 +12,7 @@
   import { bookmarkEntry, DIVIDER, type MenuEntry, menu } from './menu.svelte'
   import Twist from './Twist.svelte'
   import { longPress } from './longpress'
+  import { howFor, middleOpens, type OpenHow, tabAsk } from './new-tab'
   import { roving } from './roving'
   import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
   import { rowName } from './note-name'
@@ -124,24 +125,27 @@
    *  came from. */
   let dragging = $state<number | null>(null)
 
-  function open(row: Row, preview: boolean) {
+  /** A row pressed: a look on one click, kept on two, and in a tab of its own with a
+   *  modifier or the middle button - which only a row naming a note has; see
+   *  new-tab.ts. */
+  function open(row: Row, how: OpenHow) {
     const mark = row.mark
 
     switch (mark.kind) {
       case 'note':
-        if (row.path) void workspace.openEntry(row.path, preview ? { preview: true } : {})
+        if (row.path) void workspace.openEntry(row.path, how)
         break
       case 'folder':
         if (row.path) workspace.revealFolder(row.path)
         break
       case 'heading':
-        void workspace.openAtHeading(mark.path, mark.text)
+        void workspace.openAtHeading(mark.path, mark.text, how)
         break
       case 'search':
         onsearch(mark.text)
         break
       case 'block':
-        void workspace.openAtBlock(mark.path)
+        void workspace.openAtBlock(mark.path, how)
         break
       case 'group':
         workspace.toggleGroup(mark.path)
@@ -312,8 +316,9 @@
             style:--level={row.depth}
             data-at={row.at}
             draggable="true"
-            onclick={() => open(row, true)}
-            ondblclick={() => open(row, false)}
+            onclick={(event) => open(row, howFor(tabAsk(event), { preview: true }))}
+            ondblclick={(event) => tabAsk(event) === 'plain' && open(row, {})}
+            use:middleOpens={(event) => open(row, howFor(tabAsk(event)))}
             oncontextmenu={(event) => menu.show(event, rowMenu(row), { title: titleOf(row) })}
             use:longPress={(event) => menu.show(event, rowMenu(row), { title: titleOf(row) })}
             ondragstart={(event) => startDrag(event, row)}

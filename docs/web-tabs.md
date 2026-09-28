@@ -486,6 +486,54 @@ answer either way, because the engine will not give one and a back arrow that is
 always lit is an arrow that lies half the time. A redirect can leave an extra entry
 in the trail; that is the price of not having the engine's own answer.
 
+#### The pointer is never hidden while somebody types
+
+Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser
+bin. dann muss ich ihn aus dem browserfenster raus und dann wieder rein bewegen"_ - no
+pointer over a web tab, and it only came back after leaving the page and coming back in.
+
+The engine did it, for a Windows setting that is on by default: _Hide pointer while
+typing_. `WebView2`'s Chromium honours it now - `ShowCursor(FALSE)` on its own thread when
+a key types into something editable, `ShowCursor(TRUE)` on the next mouse event that same
+browser process receives. In a browser that is one process under one window, so any move
+brings the pointer back. In nib it is two at least: the app's own page and the web pages
+keep separate profiles, so separate browser processes, and a store of a space's own is
+one more. And the count `ShowCursor` moves is not the process's, it is the **input
+queue's**, which every thread with a window in nib's window shares - a child window from
+another thread attaches the two. So typing an address with the pointer resting on the page
+(Ctrl+L, Ctrl+T) hid it over the whole window, and moving about the page reached only the
+page's process, which had never hidden it. Only crossing into the app's own page - the bar,
+the strip - brought it back. The same held the other way round: typing into a site and
+then having the page go under a menu or another tab left the pointer gone over the app.
+
+Measured by `scripts/web-cursor-probe.py`, which reads the queue's count without touching
+the real mouse - it attaches to the window's queue for a `ShowCursor(TRUE)` and a
+`ShowCursor(FALSE)`, which answer the count and leave it as it was - and posts the keys and
+the moves to the engine windows themselves. Before, and after:
+
+|                                                            | before | after |
+| ---------------------------------------------------------- | ------ | ----- |
+| typed in the address field                                 | -1     | 0     |
+| ... then moved about the page                              | **-1** | 0     |
+| ... then moved over the app's own page                     | 0      | 0     |
+| typed in the page                                          | -1     | 0     |
+| ... then switched to a note and moved about it             | **-1** | 0     |
+| ... then back on the page and moved about it               | 0      | 0     |
+
+Below nought is no pointer anywhere over nib's window; two runs of each build, the same
+numbers. The address field held what was typed and the page heard its own, so the keys
+arrived either way. The same thing was seen from outside in the installed app while Emil
+used it: a page opened from the Ctrl+T dialog under a resting pointer, and the pointer
+stayed hidden while it moved about the new page.
+
+The engine has no way to show a pointer another process hid, and nothing nib can call
+would put it back short of faking mouse moves into the other process - so the hiding goes:
+every `WebView2` page nib starts has `HideCursorWhileTyping` switched off. The pointer
+stays where it was while somebody types, which is how nib always behaved until the runtime
+began hiding it. See `BROWSER_ARGS` in `src-tauri/src/engine.rs`: one list, because every
+webview on one user data folder has to be started with the same switches or the engine
+refuses the second one.
+
 ### The browser build: a card, and a frame when asked
 
 A page in a browser can only be shown in a frame, and a great deal of the web
@@ -636,6 +684,29 @@ engine's own behaviour behind every row, and a second copy written in this app w
 be worse at every one of them. Inspect is how the developer tools are reached, which
 is why there is no More tools row. What is still missing against Chrome's menu is
 listed under "What is left".
+
+## A link in a tab of its own
+
+Chrome's convention, the same on every surface of the app that opens something (a
+link in a note, a row of the file list, a bookmark, a search hit, the Links panel, a
+node of the graph, the palette, the arrows over a note or a page): Ctrl+click (Cmd on
+a Mac) and the middle button open it in a tab beside the one it was pressed in and
+leave the reader where they are; with Shift as well the tab comes forward. Shift alone
+on a web link is Chrome's new window, and a nib window is a second workspace rather
+than one page, so it is a tab in front too; in the file list Shift picks a run of rows
+and Alt picks one row at a time, since Ctrl is the tab's. Ctrl+Enter in the palette is
+the keyboard's Ctrl+click. A tab asked for this way is never the preview. The rule is
+`lib/new-tab.ts`.
+
+Inside a page the engine opens every such link as a window it asks the app for, and
+`WebView2` does not say how it was pressed. `src-tauri/src/web_opens.rs` works it out
+at the moment the request is raised: a page script answers the middle button and opens
+the link under a window name that says so, Ctrl and Shift are read off the keyboard,
+and the page's own "open link" menu row is recognised by the link the menu was raised
+on. A plain `target="_blank"` opens in front. A page that asks for a window at a size of
+its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
+because that page reports back through `window.opener` and closes itself; on the
+other engines it is a tab, as before.
 
 ## Downloads
 
@@ -1003,6 +1074,22 @@ thing a paragraph is - and one English string cannot be two rows in a catalogue,
 German reader was being offered _Block_, the markdown block, as the way to refuse a site
 the camera.
 
+**The bubble answers the pointer and holds the keyboard.** Emil, 2026-09-28, of a mail
+site asking to show notifications: _"and this thing here is not clickable."_ For two
+weeks it was not. The card is `.nib-bubble`, the shape a one-sentence hint is drawn in,
+and a hint lets every press through to the row it sits over - so both answers were
+drawn over the page's hole and every press landed on the hole. The native side was
+never in the way: the page is hidden while the bubble is up, and Windows sends a click
+there to the app's own webview. Every probe had pressed the buttons with `click()`,
+which skips the hit test a hand goes through. A bubble with something to press in it is
+now `.nib-bubble.is-pressable` - the site's question, the site information and the
+downloads - and `bubble.test.ts` reads every component to keep it that way. The keyboard
+had the same shape of trouble: the page that asked held it, and a hidden webview keeps
+it, so Escape went to a page nobody could see. The bubble takes the keyboard back to the
+app's own webview as it appears, without bringing the window forward, and holds it
+itself rather than on either answer, so a key meant for the site allows nothing. Measured
+with `scripts/web-overlays-probe.py`, which now asks the window what a pointer lands on.
+
 Three things make that work, and each is load bearing: the deferral, because deciding
 inside the engine's own event handler would mean either refusing everything or running
 a nested message loop - which is the freeze this file spent a day on; **one thread**,
@@ -1150,6 +1237,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
 | `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |

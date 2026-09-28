@@ -79,6 +79,36 @@ const APP_PROFILE: &str = "app";
 #[cfg(all(not(feature = "cef"), target_os = "macos"))]
 const STORE_ID: [u8; 16] = *b"nib-web-tabs\0\0\0\0";
 
+/// The switches every `WebView2` browser process of this app starts with: the app's own
+/// page and every web tab's, in every store.
+///
+/// Three are wry's own defaults, written out again because passing any switches
+/// replaces them: Edge's mini menu over a selection, in a page and in a PDF, and
+/// `SmartScreen`. One is nib's: **`HideCursorWhileTyping` is off**. Emil, 2026-09-28:
+/// *"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser bin. dann
+/// muss ich ihn aus dem browserfenster raus und dann wieder rein bewegen."*
+///
+/// The engine hides the pointer while somebody types, for Windows' *Hide pointer while
+/// typing*, with `ShowCursor(FALSE)` on its own thread, and shows it again on the next
+/// mouse event that same browser process receives. That is sound in a browser, which
+/// is one process under one window. Here it is two or more: the app's page and the web
+/// pages keep separate profiles, so separate browser processes, and every thread with a
+/// window in nib's window shares one input queue and so one pointer count. Type an
+/// address with the pointer resting on the page, and the app's process hides the pointer
+/// over the whole window; moving it about the page reaches only the page's process,
+/// which never hid it, so it stays gone until it crosses into the app's own page. The
+/// same holds the other way round, and between two stores. Measured with
+/// `scripts/web-cursor-probe.py`.
+///
+/// The engine offers no way to show a pointer another process hid, so the hiding goes:
+/// the pointer stays where it was while somebody types, as it always had in nib until the
+/// runtime started hiding it. One `--disable-features`, because Chromium reads only the
+/// last of a repeated switch. Every webview on one user data folder must be started with
+/// the same switches, which is why there is one list and not one per caller.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) const BROWSER_ARGS: &str =
+    "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,HideCursorWhileTyping";
+
 /// The folder the web's own storage lives in, made if it is not there yet.
 #[cfg(desktop)]
 #[cfg_attr(
@@ -138,6 +168,9 @@ pub(crate) fn web_store<R: Runtime>(
     app: &AppHandle,
     store: Option<&str>,
 ) -> Result<WebviewBuilder<R>, String> {
+    #[cfg(windows)]
+    let builder = builder.additional_browser_args(BROWSER_ARGS);
+
     #[cfg(any(windows, target_os = "linux"))]
     let builder = builder.data_directory(match store {
         None => root(app)?,
@@ -243,6 +276,33 @@ mod tests {
             !manifest.contains("\ndefault = ["),
             "this crate has a default feature list, so something is on that nobody asked for"
         );
+    }
+
+    /// The pointer is never hidden by one browser process where another one has it, and
+    /// wry's own three switches survive being replaced: all in the one
+    /// `--disable-features`, because Chromium reads only the last of a repeated switch.
+    #[cfg(all(windows, not(feature = "cef")))]
+    #[test]
+    fn the_engine_never_hides_the_pointer_and_keeps_wry_s_switches() {
+        let features: Vec<&str> = super::BROWSER_ARGS
+            .split_whitespace()
+            .filter_map(|one| one.strip_prefix("--disable-features="))
+            .collect();
+
+        assert_eq!(
+            features.len(),
+            1,
+            "one --disable-features, or all but the last are lost"
+        );
+        let off: Vec<&str> = features[0].split(',').collect();
+        for feature in [
+            "HideCursorWhileTyping",
+            "msWebOOUI",
+            "msPdfOOUI",
+            "msSmartScreenProtection",
+        ] {
+            assert!(off.contains(&feature), "{feature} is not switched off");
+        }
     }
 
     /// A profile is a direct child of the user data directory, which is the only

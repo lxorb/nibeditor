@@ -95,22 +95,44 @@ function logging(): Mailer {
 }
 
 /** Cloudflare Email Sending. No API key: the binding is the credential, and
- *  SPF, DKIM and DMARC come from the enabled sending domain. */
-function cloudflare(sender: EmailSender, from: string): Mailer {
+ *  SPF, DKIM and DMARC come from the sending domain.
+ *
+ *  That domain has to be onboarded to Email Sending (Email Service > Email
+ *  Sending in the dashboard), and the account has to be on Workers Paid. Without
+ *  both, the same binding still works - as Email Routing's, which reaches only
+ *  the account's own verified addresses. Every sign-in from the owner then goes
+ *  through and every other one fails with "destination address is not a
+ *  verified address", which is how this looked fixed for months. */
+function cloudflare(binding: EmailSender, from: string): Mailer {
+  const named = sender(from)
+
   return {
     async send(to, subject, body) {
       try {
-        await sender.send({ from, to, subject, text: body.text, html: body.html })
+        await binding.send({ from: named, to, subject, text: body.text, html: body.html })
         return true
       } catch (error) {
         // The one call in a sign-in that leaves the building, and the only thing
         // in it that no amount of care here can keep from failing. Written down
-        // with the provider's own words, and answered no.
+        // with the provider's own words and code, and answered no.
         note('mail', error, null)
         return false
       }
     },
   }
+}
+
+/** `MAIL_FROM` as the binding takes it. The variable is written the way a
+ *  person writes a sender, `Nib <nib@nibeditor.com>`, and Email Sending wants
+ *  the name and the address apart: handed the whole line as a string, it is
+ *  asked to send from an address that has a space and two brackets in it. */
+export function sender(from: string): string | { name: string; email: string } {
+  const parts = /^(.*)<([^<>\s]+@[^<>\s]+)>$/.exec(from.trim())
+  if (!parts) return from.trim()
+
+  const name = (parts[1] ?? '').trim().replace(/^"(.*)"$/, '$1')
+  const email = parts[2] ?? ''
+  return name ? { name, email } : email
 }
 
 export function mailer(env: Env): Mailer {

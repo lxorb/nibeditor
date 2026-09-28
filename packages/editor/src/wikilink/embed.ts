@@ -108,16 +108,16 @@ export class EmbedWidget extends NibWidget {
     caption.className = 'nib-embed-name'
     caption.type = 'button'
     caption.textContent = this.link.alias ?? linkTarget(this.link)
-    const open = () => {
+    const open = (press?: MouseEvent) => {
       const state = view.state
-      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind), press)
     }
     caption.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      open()
+      open(event)
     })
-    pressedByKey(caption, open)
+    pressedByKey(caption, () => open())
     frame.append(caption)
 
     const missing = () => {
@@ -374,16 +374,16 @@ export class EmbedFileWidget extends NibWidget {
     name.textContent = this.link.alias ?? linkTarget(this.link)
     card.append(name)
 
-    const open = () => {
+    const open = (press?: MouseEvent) => {
       const state = view.state
-      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind))
+      state.facet(noteOpener)(jumpFor(state.facet(noteIndex), this.link, this.link.kind), press)
     }
     card.addEventListener('mousedown', (event) => {
       event.preventDefault()
       event.stopPropagation()
-      open()
+      open(event)
     })
-    pressedByKey(card, open)
+    pressedByKey(card, () => open())
 
     // And then the page, or the plane, over the top of it - if the app can draw
     // one. Given the card rather than asked for a picture: the app waits until the

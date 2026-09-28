@@ -1292,6 +1292,14 @@ select:focus-visible,
   pointer-events: none;
 }
 
+/* The same card with something in it to press: a site's question, what a site is
+   allowed, the downloads. The rule above is inherited, so a bubble that did not say
+   this drew its buttons and let every press fall through them to whatever was behind -
+   under a web tab's bar that is the page's hole, and Allow did nothing at all. */
+.nib-bubble.is-pressable {
+  pointer-events: auto;
+}
+
 /* Read at arm's length, with the width of the screen to do it in. */
 [data-touch] .nib-bubble {
   max-width: min(20rem, 70vw);

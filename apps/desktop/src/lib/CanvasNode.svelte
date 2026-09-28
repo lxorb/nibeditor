@@ -11,7 +11,13 @@
    *  gestures; this is the card itself. */
 
   import { onDestroy } from 'svelte'
-  import { createEditor, type EditorView, embedClicks, type NoteJump, type Text } from '@nib/editor'
+  import {
+    createEditor,
+    type EditorView,
+    embedClicks,
+    type NoteOpener,
+    type Text,
+  } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
   import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
@@ -55,7 +61,7 @@
     offset: { x: number; y: number }
     ontext?: (text: string) => void
     onleave?: () => void
-    onfollow?: (jump: NoteJump) => void
+    onfollow?: NoteOpener
   } = $props()
 
   /** The card's own colour, as a border and a wash. Null for one with none,

@@ -41,10 +41,17 @@ export function note(at: string, error: unknown, id: string | null): void {
   const named = error instanceof Error ? error : null
   const said = named ? named.message : String(error)
 
+  // Cloudflare's own errors carry a code beside the sentence - Email Sending's
+  // `E_SENDER_NOT_VERIFIED`, `E_RECIPIENT_SUPPRESSED` - and the code is the part
+  // a query can count and the docs can be searched for.
+  const coded = (error as { code?: unknown } | null)?.code
+  const code = typeof coded === 'string' ? coded : undefined
+
   console.error(
     JSON.stringify({
       failed: at,
       name: named?.name ?? typeof error,
+      code,
       said: withoutAddresses(said).slice(0, SAID_LIMIT),
       id,
     }),

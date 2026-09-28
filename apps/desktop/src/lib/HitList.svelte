@@ -41,6 +41,7 @@
 
   import { tick } from 'svelte'
   import type { Reference } from './link-index.svelte'
+  import { middleOpens } from './new-tab'
   import { roving } from './roving'
   import { shownName } from './note-name'
   import { offsetOf, type Rows, windowFor } from './row-window'
@@ -51,7 +52,9 @@
     onpick,
   }: {
     rows: readonly Reference[]
-    onpick: (reference: Reference) => void
+    /** A row pressed, and how: a modifier or the middle button asks for a tab of
+     *  its own; see new-tab.ts. */
+    onpick: (reference: Reference, press: MouseEvent) => void
   } = $props()
 
   /** How many rows are kept beyond either edge of the view, so a wheel click
@@ -176,7 +179,11 @@
       class:away={one.away}
       style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}
     >
-      <button class="nib-row hit" onclick={() => onpick(one.row)}>
+      <button
+        class="nib-row hit"
+        onclick={(event) => onpick(one.row, event)}
+        use:middleOpens={(event) => onpick(one.row, event)}
+      >
         <span class="hit-note">{shownName(one.row.name)}</span>
         <span class="hit-line">{one.row.text}</span>
       </button>

@@ -212,7 +212,15 @@ where
     // why the printer is held where the first load can take it.
     let print = Arc::new(Mutex::new(Some(print)));
 
-    let window = WebviewWindowBuilder::new(app, format!("print-{job}"), WebviewUrl::External(url))
+    let building =
+        WebviewWindowBuilder::new(app, format!("print-{job}"), WebviewUrl::External(url));
+
+    // The same switches as the app's own window, which is running on the same user data
+    // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let building = building.additional_browser_args(crate::engine::BROWSER_ARGS);
+
+    let window = building
         .title("Nib")
         .visible(false)
         .inner_size(900.0, 1200.0)

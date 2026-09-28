@@ -122,6 +122,7 @@ const { viewport } = await import('./viewport.svelte')
 const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
+const ops = await import('./tab-strip/ops')
 type Entry = import('./workspace.svelte').Entry
 
 /** A single click in the file list, and the tab it lands in. */
@@ -944,6 +945,30 @@ describe('a note in two panes', () => {
     onePane()
   })
 
+  test('opens to the side, leaving the pane in front on what it showed', async () => {
+    await workspace.open('/space/a.md')
+    const [first] = workspace.panes.all
+
+    await workspace.openAside('/space/b.md')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.showing(first?.id ?? '')?.path).toBe('/space/a.md')
+    expect(workspace.active?.path).toBe('/space/b.md')
+    expect(workspace.active?.paneId).not.toBe(first?.id)
+  })
+
+  test('opens a note already open to the side as a second view of it', async () => {
+    await workspace.open('/space/a.md')
+    const shown = workspace.active
+
+    await workspace.openAside('/space/a.md')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabs).toHaveLength(2)
+    expect(workspace.active?.note).toBe(shown?.note)
+    expect(workspace.active?.id).not.toBe(shown?.id)
+  })
+
   test('is one document, in a pane of its own', async () => {
     await workspace.open('/space/a.md')
     const first = workspace.active
@@ -1223,7 +1248,7 @@ describe('a tab held at the head of its strip', () => {
     const id = await opened()
     workspace.togglePin(id('/space/c.md'))
 
-    await workspace.closeOthers(id('/space/a.md'))
+    await workspace.closeAround(id('/space/a.md'), 'others')
 
     expect(strip()).toEqual(['/space/c.md', '/space/a.md'])
   })
@@ -3628,5 +3653,322 @@ describe('a preview landing on a note that is already open', () => {
     expect(workspace.documentAt('/space/a.md')).toBe(first)
     // The preview tab is still on the note it was previewing.
     expect(previewed.path).toBe('/space/b.md')
+  })
+})
+
+/** The rows of a tab's own menu that act on more than the tab: Chrome's, VS Code's
+ *  and Obsidian's, which nib's menu had only two of. See tab-strip/menu.ts. */
+describe('what a tab s own menu does to the strip', () => {
+  const entry = (path: string, children: Entry[] = [], isDir = false): Entry => ({
+    name: path.split('/').pop() ?? path,
+    path,
+    is_dir: isDir,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
+
+  async function opened(...paths: string[]): Promise<(path: string) => string> {
+    for (const path of paths) await workspace.open(path)
+
+    return (path: string) => {
+      const tab = workspace.tabs.find((one) => one.path === path)
+      if (!tab) throw new Error(`${path} is not open`)
+      return tab.id
+    }
+  }
+
+  test('closes the tabs to the right of one, and leaves it in front', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+
+    await workspace.closeAround(id('/space/a.md'), 'right')
+
+    expect(strip()).toEqual(['/space/a.md'])
+    expect(workspace.active?.path).toBe('/space/a.md')
+  })
+
+  test('closes every tab of the strip but a pinned one', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+    workspace.togglePin(id('/space/b.md'))
+
+    await workspace.closeAround(id('/space/c.md'), 'all')
+
+    expect(strip()).toEqual(['/space/b.md'])
+  })
+
+  test('says how many tabs each close would take', async () => {
+    const id = await opened('/space/a.md', '/space/b.md', '/space/c.md')
+
+    expect(workspace.closesAround(id('/space/c.md'), 'right')).toBe(0)
+    expect(workspace.closesAround(id('/space/a.md'), 'right')).toBe(2)
+    expect(workspace.closesAround(id('/space/a.md'), 'all')).toBe(3)
+  })
+
+  /** Chrome's duplicate: right after the tab, in front, at the same place. */
+  test('duplicates a tab right after it, on the same document and the same place', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    const original = workspace.tabs.find((one) => one.id === id('/space/a.md'))
+    if (!original) throw new Error('nothing opened')
+    workspace.noteView(original.id, 2, 40, 1)
+
+    ops.duplicateTab(original.id)
+
+    expect(strip()).toEqual(['/space/a.md', '/space/a.md', '/space/b.md'])
+    const copy = workspace.active
+    expect(copy?.id).not.toBe(original.id)
+    expect(copy?.note).toBe(original.note)
+    expect(copy?.cursor).toBe(2)
+  })
+
+  test('duplicates a pinned tab as a pinned one', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    workspace.togglePin(id('/space/b.md'))
+
+    ops.duplicateTab(id('/space/b.md'))
+
+    expect(workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.pinned)).toEqual([
+      true,
+      true,
+      false,
+    ])
+  })
+
+  test('does not duplicate the graph, which is one to a pane', () => {
+    workspace.openGraph()
+    const graph = workspace.active
+    if (!graph) throw new Error('no graph')
+
+    ops.duplicateTab(graph.id)
+
+    expect(workspace.tabs).toHaveLength(1)
+  })
+
+  /** VS Code's "move editor into next group", which makes the group when there is
+   *  none. */
+  test('moves a tab into a new pane beside its own when there is no other', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    expect(workspace.panes.count).toBe(2)
+    const [left, right] = workspace.panes.all
+    expect(workspace.tabsIn(left?.id ?? '').map((tab) => tab.path)).toEqual(['/space/a.md'])
+    expect(workspace.tabsIn(right?.id ?? '').map((tab) => tab.path)).toEqual(['/space/b.md'])
+    expect(workspace.panes.focusedId).toBe(right?.id)
+  })
+
+  test('moves a tab into the other pane, and the pane it leaves empty goes', async () => {
+    const id = await opened('/space/a.md', '/space/b.md')
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    ops.moveToOtherPane(id('/space/b.md'))
+
+    expect(workspace.panes.count).toBe(1)
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md'])
+  })
+
+  test('does not move the only tab of the only pane anywhere', async () => {
+    const id = await opened('/space/a.md')
+
+    expect(workspace.canMoveToOtherPane(id('/space/a.md'))).toBe(false)
+    ops.moveToOtherPane(id('/space/a.md'))
+    expect(workspace.panes.count).toBe(1)
+  })
+
+  /** Renaming from a tab is renaming on the file's own row, with the list brought
+   *  out and the folder down to the row opened. */
+  test('renames on the file s own row, with the file list out and its folder open', async () => {
+    workspace.tree = entry(
+      '/space',
+      [entry('/space/a.md'), entry('/space/f', [entry('/space/f/b.md')], true)],
+      true,
+    )
+    workspace.closePanel('left')
+    notes['/space/f/b.md'] = '# b'
+    const id = await opened('/space/f/b.md')
+
+    ops.renameFromTab(id('/space/f/b.md'))
+
+    expect(workspace.openOn(workspace.sideOf('tree'))).toBe('tree')
+    expect(workspace.isExpanded('/space/f')).toBe(true)
+    expect(workspace.naming?.path).toBe('/space/f/b.md')
+    workspace.cancelNaming()
+  })
+
+  /** A folder that is also a note is one row, named for the folder; renaming it
+   *  there renames both. See folder-notes.ts. */
+  test('renames a folder s own note on the folder s row', async () => {
+    workspace.tree = entry(
+      '/space',
+      [entry('/space/f', [entry('/space/f/f.md'), entry('/space/f/c.md')], true)],
+      true,
+    )
+    notes['/space/f/f.md'] = '# f'
+    const id = await opened('/space/f/f.md')
+
+    ops.renameFromTab(id('/space/f/f.md'))
+
+    expect(workspace.naming?.path).toBe('/space/f')
+    workspace.cancelNaming()
+  })
+
+  test('offers no rename for a file with no row in the list', async () => {
+    workspace.tree = entry('/space', [entry('/space/a.md')], true)
+    await opened(OUTSIDE)
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    expect(workspace.canRenameFromTab(tab)).toBe(false)
+  })
+})
+
+/** A tab asked for with Ctrl+click, the middle button or Ctrl+Enter: beside the tab
+ *  in front, never the preview, and in front of the reader only when Shift said so.
+ *  The press is read in new-tab.ts; this is what every open does with the answer. */
+describe('a tab asked for with a modifier', () => {
+  const strip = () => workspace.tabs.map((one) => one.path ?? one.address)
+  const jump = (path: string) => ({ path, target: path, heading: null, block: null, page: null })
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+  })
+
+  test('behind opens it beside the tab in front, and leaves that tab in front', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+    expect(workspace.previewTabId).toBeNull()
+  })
+
+  test('a run of them from one tab keeps the order they were asked for in', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+    await workspace.openEntry('/space/plan.canvas', { activate: false, beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/plan.canvas', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+  })
+
+  test('in front opens it beside the tab and goes there', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('a tab left behind closes no blank note, which may be the one being read', async () => {
+    workspace.openBlank()
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+
+    expect(workspace.tabs).toHaveLength(2)
+    expect(workspace.active?.path).toBeNull()
+  })
+
+  test('a link to a note followed with the modifier opens it behind', async () => {
+    await workspace.open('/space/a.md')
+    const reading = workspace.active
+
+    await workspace.followLink(jump('b.md'), 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md'])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a paper followed the same way opens behind too', async () => {
+    await workspace.open('/space/a.md')
+    const reading = workspace.active
+
+    await workspace.followLink({ ...jump('paper.pdf'), page: 2 }, 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/paper.pdf'])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a page a link opened behind lands beside the tab it was pressed in', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    workspace.openPage('https://example.com/', 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', 'https://example.com/', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+  })
+
+  test('a page a page asked for lands beside that page, even one not in front', async () => {
+    await workspace.open('/space/a.md')
+    const asking = workspace.openPage('https://example.com/')
+    await workspace.open('/space/c.md')
+    const reading = workspace.active
+
+    workspace.openPage('https://example.org/', 'behind', asking ?? undefined)
+
+    expect(strip()).toEqual([
+      '/space/a.md',
+      'https://example.com/',
+      'https://example.org/',
+      '/space/c.md',
+    ])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a plain page still goes to the end and in front, as it did', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    workspace.openPage('https://example.com/')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/c.md', 'https://example.com/'])
+    expect(workspace.active?.address).toBe('https://example.com/')
+  })
+
+  test('the back arrow with the middle button opens the step behind', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    workspace.keep(looking.id)
+
+    workspace.goBack(looking.id, 'behind')
+    await vi.waitFor(() => expect(workspace.tabs).toHaveLength(2))
+
+    expect(strip()).toEqual(['/space/b.md', '/space/a.md'])
+    expect(workspace.active?.id).toBe(looking.id)
+    expect(looking.path).toBe('/space/b.md')
   })
 })

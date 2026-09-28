@@ -108,6 +108,8 @@ mod web_cookies;
 #[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
+mod web_opens;
+#[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;
@@ -473,6 +475,9 @@ fn ready(
     #[cfg(all(desktop, not(feature = "cef")))]
     if let Some(config) = ui {
         let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
+        // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
+        #[cfg(windows)]
+        let building = building.additional_browser_args(engine::BROWSER_ARGS);
         let window = match ground::remembered(handle) {
             Some(colour) => building.visible(true).background_color(colour).build()?,
             None => building.build()?,

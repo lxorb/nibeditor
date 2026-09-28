@@ -13,6 +13,7 @@ import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './page-setup'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
 import { settings } from './settings.svelte'
+import { tabCycle } from './tab-cycle.svelte'
 import { isDesktop } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, type SchemeChoice, theme } from './theme.svelte'
 import { asChannel } from './updater'
@@ -175,6 +176,21 @@ export function preferences(view?: EditorView): Pane[] {
               initial: String(DEFAULT_DAYS),
               get: () => String(recovery.days),
               set: (value) => recovery.setDays(Number(value)),
+            },
+          ],
+        },
+        {
+          // Chrome's order is the default, and VS Code's is the option: the tab
+          // used last, and further back for each press while Ctrl is held. See
+          // tab-cycle.svelte.ts.
+          title: t('Tabs'),
+          fields: [
+            {
+              kind: 'switch',
+              label: t('Ctrl+Tab in order of use'),
+              initial: false,
+              get: () => tabCycle.byUse,
+              set: (on) => tabCycle.setByUse(on),
             },
           ],
         },

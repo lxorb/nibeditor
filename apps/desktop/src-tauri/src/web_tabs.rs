@@ -462,12 +462,20 @@ struct Moved {
 }
 
 /// What the window is told when a page asks for a window of its own: which tab
-/// asked, so the tab it gets lands in the same pane, and where it wants to go.
+/// asked, so the tab it gets lands beside it, where it wants to go, and whether the
+/// press that asked left it behind; see `web_opens.rs`.
 #[derive(Clone, Serialize)]
 struct Opening {
     tab: String,
     url: String,
+    behind: bool,
 }
+
+/// What a window a page asked for at a size of its own is labelled, in front of a
+/// number. Neither `web-`, so nothing takes it for a tab's page, nor anything the
+/// capabilities name, so it is granted nothing; see `popup`.
+#[cfg(all(windows, not(feature = "cef")))]
+const POPUP: &str = "popup-";
 
 /// Where a page was left, and where it is put back.
 #[derive(Clone, Copy, Deserialize, Serialize)]
@@ -581,6 +589,62 @@ fn allowed(url: &Url) -> bool {
 /// had nothing here been listening.
 fn handed_over(url: &Url) -> Option<String> {
     allowed(url).then(|| url.to_string())
+}
+
+/// A window a page asked for at a size of its own, as a window: the page that opened
+/// it keeps hold of it, which is the whole of how a sign-in in a popup reports back -
+/// `window.opener`, and the popup closing itself. A tab could hold the page but not the
+/// hold, and the sign-in never finished.
+///
+/// Framed and at the size asked for, and on the opener's own store, which is what
+/// `window_features` hands it: the engine refuses a new window on any other, and a
+/// sign-in in a store the page is not in would be a sign-in to nothing. Guarded and
+/// kept to the web like a tab's page, and labelled so it is granted nothing. What it
+/// asks for in turn opens as a tab beside the page that opened it. It closes when its
+/// page does; see `WindowCloseRequested` in wry.
+#[cfg(all(windows, not(feature = "cef")))]
+fn popup(
+    app: &AppHandle,
+    url: &Url,
+    features: tauri::webview::NewWindowFeatures,
+    tab: &str,
+    holder: &str,
+) -> Option<tauri::WebviewWindow> {
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+
+    let label = format!("{POPUP}{}", NEXT.fetch_add(1, Ordering::Relaxed));
+    let blank = Url::parse("about:blank").ok()?;
+    let opening = app.clone();
+    let asking = tab.to_string();
+    let holding = holder.to_string();
+
+    let window = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
+        .window_features(features)
+        .title(url.host_str().unwrap_or_default())
+        .initialization_script(guard())
+        .on_navigation(allowed)
+        .on_new_window(move |url, _| {
+            if let Some(address) = handed_over(&url) {
+                let payload = Opening {
+                    tab: asking.clone(),
+                    url: address,
+                    behind: false,
+                };
+                let _ = opening.emit_to(&holding, OPENED, payload);
+            }
+            NewWindowResponse::Deny
+        })
+        .on_document_title_changed(|window, title| {
+            let _ = window.set_title(&title);
+        })
+        .build()
+        .ok()?;
+
+    let closing = window.clone();
+    let _ = window.with_webview(move |platform| crate::web_opens::closing(&platform, closing));
+    Some(window)
 }
 
 /// The address, read and judged, or a reason it is not one.
@@ -895,6 +959,11 @@ pub async fn web_open(
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
 
+    // The middle button on a link, answered in the page so the tab it opens can be
+    // left behind; see web_opens.rs. In every frame, since a link in a frame is a link.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = builder.initialization_script_for_all_frames(crate::web_opens::MIDDLE);
+
     // Where the site's own storage goes, decided once by the engine this build runs
     // on rather than here: a store the app's own session is not in under the system
     // engine, in the folder web tabs have always used and unchanged to the byte; the
@@ -910,23 +979,42 @@ pub async fn web_open(
     // own Chromium it carries two type parameters where the system's engine's
     // carries none. The closure infers it either way; naming it would compile on
     // one engine only. See src/engine.rs and docs/browser.md.
-    let builder = builder.on_new_window(move |url: Url, _features| {
-        // A window the page asks for - `target="_blank"`, `window.open` - becomes a
-        // tab in this window, which is what a browser answers it with and the whole
-        // of nib being one. It used to leave for the system browser, which made a
-        // browser that sent you to another browser on the commonest link on the web.
+    let builder = builder.on_new_window(move |url: Url, features| {
+        // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
+        // or the middle button on a link - becomes a tab in this window, which is what
+        // a browser answers it with and the whole of nib being one. It used to leave
+        // for the system browser, which made a browser that sent you to another
+        // browser on the commonest link on the web.
         //
         // The engine still gets no second webview of its own: one over the pane would
         // be a window with no frame and no way to close it. The address is handed to
         // the interface instead, and the interface opens a tab beside the one that
-        // asked; see `openPage` in workspace.svelte.ts.
-        if let Some(address) = handed_over(&url) {
-            let payload = Opening {
-                tab: asking.clone(),
-                url: address,
-            };
-            let _ = opening.emit_to(&holder, OPENED, payload);
+        // asked - behind it or in front, as the press said; see web_opens.rs and
+        // `openPage` in workspace.svelte.ts.
+        let Some(address) = handed_over(&url) else {
+            return NewWindowResponse::Deny;
+        };
+        let said = crate::web_opens::taken(&asking);
+
+        // Unless nobody pressed anything and the page asked for a size: a sign-in or a
+        // share dialog, whose page talks to the one that opened it and closes itself.
+        // That is a window of its own, as in a browser; see `popup`.
+        #[cfg(all(windows, not(feature = "cef")))]
+        if said.is_none() && features.size().is_some() {
+            // One that could not be built is a tab, like any other window asked for.
+            if let Some(window) = popup(&opening, &url, features, &asking, &holder) {
+                return NewWindowResponse::Create { window };
+            }
         }
+        #[cfg(not(all(windows, not(feature = "cef"))))]
+        let _ = features;
+
+        let payload = Opening {
+            tab: asking.clone(),
+            url: address,
+            behind: said == Some(crate::web_opens::Asked::Behind),
+        };
+        let _ = opening.emit_to(&holder, OPENED, payload);
         NewWindowResponse::Deny
     });
 
@@ -1073,6 +1161,8 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         // The browser's own chords, which the page is never offered, on a page in any
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
+        // How a window it asks for was pressed for; see web_opens.rs.
+        crate::web_opens::listen(&platform, named.clone());
         crate::downloads::listen(&platform, asking.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });

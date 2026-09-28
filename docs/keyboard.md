@@ -207,7 +207,10 @@ in the palette, and it can be rebound. What was already there is marked.
 | | |
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
-| Ctrl+P | the palette. Type for a note, `>` for a command (already there) |
+| Ctrl+P | the palette. Type for a note, `>` for a command, the ones run lately first (already there). Empty, it lists the notes opened lately, the one before this first; a note is found by its folder too (`uni/lec`), and says its folder where another shares its name |
+| Enter, Shift+Enter in the palette | with nothing matching, Enter makes the note typed (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
+| Ctrl+Alt+Enter in the palette | the note in a pane to the right, the pane in front left as it was (Obsidian's chord; Ctrl+Alt+click too) |
+| `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
 | Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings |
@@ -218,7 +221,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | --- | --- |
 | Ctrl+Shift+E | Files |
 | Ctrl+Shift+O | Outline |
-| Ctrl+Shift+F | Search (already there) |
+| Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 
@@ -269,13 +272,20 @@ stops nothing, and the app still gets the key.
 | --- | --- |
 | Ctrl+N | a new note |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
-| Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip |
+| Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there) |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
 | Ctrl+Alt+O | the other pane (already there) |
+| Ctrl+Alt+Shift+Right | carry the tab to the other pane, or into a new one beside its own when there is none: split right, taking the tab along rather than a copy. VS Code has it on Ctrl+Alt+Right, which is Split right here |
+| F2, on a tab in the strip | rename its file, on its row in the file list, which comes out for it |
+
+The rest of a tab's own menu has no key out of the box and is in the palette and the
+shortcut list so one can be given: close the tabs to the right, close all tabs,
+duplicate the tab. Chrome gives none of them a key, and VS Code's are two-stroke
+chords, which the registry does not hold.
 
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.

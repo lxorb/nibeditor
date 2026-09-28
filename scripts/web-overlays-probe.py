@@ -349,6 +349,20 @@ def main() -> int:
         # provider involved in saying it. Allow is the other half of the pair and cannot
         # be read this way on a machine with no location to give: it answers with code 2
         # after a wait, or not at all.
+        #
+        # First, whether a hand could press them at all. `click()` goes straight to the
+        # button and a pointer does not: it lands on whatever the window's hit test finds
+        # there, and for two weeks that was the page's hole under a card that let every
+        # press through - drawn, and pressed here, and never once by a person. So the
+        # window is asked what is at the middle of each answer, as a pointer would be.
+        said["the answers can be pressed"] = app.ask(
+            "JSON.stringify([...document.querySelectorAll('.ask .nib-button')].map((one) => {"
+            " const box = one.getBoundingClientRect();"
+            " const hit = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);"
+            " return hit !== null && one.contains(hit) }))"
+        )
+        if said["the answers can be pressed"] != [True, True]:
+            print("FAIL: a pointer over the bubble's answers lands on something else")
         app.ask("document.querySelectorAll('.ask .nib-button')[0].click()")
 
         told = ""

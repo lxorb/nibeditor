@@ -44,6 +44,7 @@
   import { longPress } from './longpress'
   import { movesInto } from './move-targets'
   import NameField from './NameField.svelte'
+  import { howFor, middleOpens, tabAsk } from './new-tab'
   import { extensionOf } from './naming'
   import { rowName } from './note-name'
   import { rowMenu } from './row-menu'
@@ -201,11 +202,18 @@
     return at.get(path) ?? null
   }
 
-  /** Ctrl and Shift build a selection and do nothing else; a plain click makes
-   *  the row the one selected and goes on to what it always did. Returns
-   *  whether the click was taken by the selection. */
+  /** Ctrl+click (Cmd on a Mac) opens the row in a tab of its own, as a link does in
+   *  a browser and a row does in Obsidian; see new-tab.ts. Alt and Shift build a
+   *  selection and do nothing else - Alt a row at a time, which is Obsidian's key for
+   *  it, since Ctrl is the tab's. A plain click makes the row the one selected and
+   *  goes on to what it always did. Returns whether the click was taken. */
   function pick(event: MouseEvent, entry: Entry): boolean {
-    if (event.ctrlKey || event.metaKey) {
+    const ask = tabAsk(event)
+    if (ask !== 'plain') {
+      void workspace.openRow(entry.path, howFor(ask))
+      return true
+    }
+    if (event.altKey) {
       workspace.toggleSelect(entry.path)
       return true
     }
@@ -1059,7 +1067,8 @@
       aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
-      ondblclick={() => workspace.openRow(entry.path)}
+      ondblclick={(event) => tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
+      use:middleOpens={(event) => void workspace.openRow(entry.path, howFor(tabAsk(event)))}
       oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
       use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
       ontouchstart={(event) => onRowTouchStart(event, entry)}

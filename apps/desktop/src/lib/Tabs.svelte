@@ -2,11 +2,12 @@
   import { onDestroy, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
-  import { dragged, isTreeDrag } from './drag-paths'
+  import { dragged, isTreeDrag, mayCarryAddress } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { DIVIDER, menu, shareEntry, stackEntries, type MenuEntry } from './menu.svelte'
+  import { menu, type MenuEntry } from './menu.svelte'
   import { showNewKinds } from './new-kinds'
+  import { middleOpens, tabAsk } from './new-tab'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
@@ -16,6 +17,7 @@
   import SharedMark from './SharedMark.svelte'
   import TabMark from './TabMark.svelte'
   import { ClosingWidths } from './tab-strip/closing.svelte'
+  import { wheelAlong } from './tab-strip/wheel'
   import { arrival, handOver, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
   import {
     type Bounds,
@@ -69,115 +71,16 @@
       .map((row) => ({ label: row.label, run: () => void workspace.walk(row.at, tab.id) }))
   }
 
-  /** What a double click on the tab does, for a finger that cannot double
-   *  click. Only offered while the tab is still a preview: once kept, there is
-   *  nothing left to keep. */
-  function keepEntry(tab: Tab): MenuEntry[] {
-    if (tab.id !== workspace.previewTabId) return []
-    return [{ label: t('Keep open'), run: () => workspace.keep(tab.id) }]
+  /** Everything a tab offers; see tab-strip/menu.ts. Fetched as the launch ends
+   *  rather than carried into it (see `warmDoors`), so the browser's own menu is
+   *  refused here, in the frame of the press. */
+  function showMenu(event: MouseEvent, tab: Tab) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./tab-strip/menu').then(({ tabMenu }) =>
+      menu.show(event, tabMenu(tab, paneId), { title: tab.shown }),
+    )
   }
-
-  /** Beside, and below. Left out where the pane has split as far as it may,
-   *  rather than offered as a row that does nothing. */
-  function splitEntries(tab: Tab): MenuEntry[] {
-    const entries: MenuEntry[] = []
-
-    if (workspace.canSplit('row', tab.id)) {
-      entries.push({
-        label: t('Split right'),
-        hint: shortcuts.hint('pane.split-right'),
-        run: () => workspace.split('row', tab.id),
-      })
-    }
-    if (workspace.canSplit('column', tab.id)) {
-      entries.push({
-        label: t('Split down'),
-        hint: shortcuts.hint('pane.split-down'),
-        run: () => workspace.split('column', tab.id),
-      })
-    }
-
-    return entries.length ? [...entries, DIVIDER] : []
-  }
-
-  /** The note's other face. Not offered for the graph, which has only one. */
-  function readingEntry(tab: Tab): MenuEntry[] {
-    if (tab.kind !== 'note') return []
-
-    return [
-      {
-        label: tab.reading ? t('Leave reading') : t('Reading'),
-        hint: shortcuts.hint('app.reading'),
-        run: () => workspace.toggleReading(tab.id),
-      },
-      DIVIDER,
-    ]
-  }
-
-  /** Left out while nothing has been closed, rather than offered as a row that
-   *  does nothing. */
-  function reopenEntry(): MenuEntry[] {
-    if (!workspace.closed.any) return []
-
-    return [
-      {
-        label: t('Reopen closed tab'),
-        hint: shortcuts.hint('app.reopen'),
-        run: () => void workspace.reopenClosed(),
-      },
-    ]
-  }
-
-  /** Only for a tab with no file: every other kind of tab is written as the typing
-   *  pauses and has nothing to save. The row is here because a tab is where somebody
-   *  looking at an unsaved one is pointing; the key and the menu bar say the same thing.
-   *  See `save` in workspace/saving.svelte.ts. */
-  function saveEntry(tab: Tab): MenuEntry[] {
-    if (tab.path !== null) return []
-
-    return [
-      {
-        label: t('Save'),
-        hint: shortcuts.hint('app.save'),
-        run: () => void workspace.save(tab),
-      },
-    ]
-  }
-
-  function tabMenu(tab: Tab): MenuEntry[] {
-    return [
-      ...saveEntry(tab),
-      ...readingEntry(tab),
-      {
-        label: tab.pinned ? t('Unpin') : t('Pin'),
-        hint: shortcuts.hint('app.pin'),
-        run: () => workspace.togglePin(tab.id),
-      },
-      {
-        // A pinned tab has no cross, so this row and the key beside it are the
-        // two ways it closes - which is why the row says the key as well.
-        label: t('Close'),
-        hint: shortcuts.hint('app.close'),
-        run: () => void workspace.closeAsking(tab.id),
-      },
-      {
-        label: t('Close others'),
-        disabled: tabs.length < 2,
-        run: () => void workspace.closeOthers(tab.id),
-      },
-      ...reopenEntry(),
-      DIVIDER,
-      // Who else may have the file this tab is showing, in the same word and the
-      // same sheet the tree's row and the space's own menu use.
-      ...shareEntry(tab.path),
-      ...stackEntries(paneId),
-      ...splitEntries(tab),
-      ...keepEntry(tab),
-    ]
-  }
-
-  const showMenu = (event: MouseEvent, tab: Tab) =>
-    menu.show(event, tabMenu(tab), { title: tab.shown })
 
   /** A held finger is the right click a touch screen has, and the menu key is the one
    *  a keyboard has: all three ask for the same list, at the plus. What the list holds
@@ -676,37 +579,90 @@
     return { duration: dur(210), easing: quintOut, css: (t: number) => `width: ${t * width}px` }
   }
 
-  /* ── A note out of the file list ─────────────────────────────────── */
+  /* ── A note out of the file list, or a link out of another app ─────── */
+
+  /** Whether a drag is one the strip takes: rows out of the file list, or what may be
+   *  a link dragged in from another app. See tab-strip/dropped.ts. */
+  const takes = (transfer: DataTransfer | null) =>
+    isTreeDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
 
   function over(event: DragEvent) {
-    if (!isTreeDrag(event.dataTransfer)) return
+    if (!takes(event.dataTransfer)) return
 
     event.preventDefault()
     event.stopPropagation()
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer && isTreeDrag(event.dataTransfer)) {
+      event.dataTransfer.dropEffect = 'move'
+    }
 
     const at = slotAt(base, alongOf(event.clientX), run)
     const where: Landing = { kind: 'strip', paneId, at }
     if (keyOf(workspace.panes.landing) !== keyOf(where)) workspace.panes.landing = where
   }
 
-  function dropNotes(event: DragEvent) {
-    if (!isTreeDrag(event.dataTransfer)) return
+  function dropped(event: DragEvent) {
+    const transfer = event.dataTransfer
+    if (!takes(transfer)) return
 
     event.preventDefault()
     event.stopPropagation()
 
-    const where: Landing = {
-      kind: 'strip',
-      paneId,
-      at: slotAt(base, alongOf(event.clientX), run),
-    }
-    const paths = dragged(event.dataTransfer)
-
+    const at = slotAt(base, alongOf(event.clientX), run)
     workspace.panes.landing = null
     workspace.panes.dropped()
 
-    if (paths.length) void workspace.dropNotes(paths, where)
+    if (!isTreeDrag(transfer)) {
+      // A page, as a tab of its own where it was let go, in front: Chrome's drop. The
+      // transfer is read now, while the drop still holds it.
+      const held = new Map(
+        ['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']),
+      )
+      void import('./tab-strip/dropped').then(({ droppedAddress }) => {
+        const address = droppedAddress((type) => held.get(type) ?? '')
+        // Opened from the tab in front of that pane, so it lands in that pane.
+        const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
+        const id = address === null ? null : workspace.openPage(address, 'plain', from)
+        if (id !== null) workspace.moveTab(id, paneId, at)
+      })
+      return
+    }
+
+    const paths = dragged(transfer)
+    if (paths.length) void workspace.dropNotes(paths, { kind: 'strip', paneId, at })
+  }
+
+  /* ── The wheel, and F2 ───────────────────────────────────────────── */
+
+  // Along a strip too full to show every tab; see tab-strip/wheel.ts. Not passive,
+  // because a turn the strip takes must not also scroll whatever is under it.
+  $effect(() => {
+    const node = strip
+    if (!node) return
+
+    const turned = (event: WheelEvent) => {
+      if (node.scrollWidth <= node.clientWidth) return
+      const along = wheelAlong(event, node.clientWidth)
+      if (along === 0) return
+
+      event.preventDefault()
+      node.scrollLeft += along * i18n.factor
+    }
+
+    node.addEventListener('wheel', turned, { passive: false })
+    return () => node.removeEventListener('wheel', turned)
+  })
+
+  /** F2 on a tab renames its file, which is the key a file list renames with; see
+   *  `renameFromTab`. */
+  function renameKey(event: KeyboardEvent) {
+    if (!shortcuts.pressed('tabs.rename', event) || !(event.target instanceof Element)) return
+
+    const id = event.target.closest<HTMLElement>('.pick')?.dataset.tab
+    const tab = tabs.find((one) => one.id === id)
+    if (!tab || !workspace.canRenameFromTab(tab)) return
+
+    event.preventDefault()
+    void import('./tab-strip/ops').then((ops) => ops.renameFromTab(tab.id))
   }
 
   /** Puts an element at the end of the page, where no strip can clip it and no
@@ -734,7 +690,8 @@
         title={t('Back')}
         aria-label={t('Back')}
         disabled={!walking.canGoBack}
-        onclick={() => workspace.goBack(walking.id)}
+        onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
+        use:middleOpens={(event) => workspace.goBack(walking.id, tabAsk(event))}
         oncontextmenu={(event) =>
           walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
         use:longPress={(event) =>
@@ -747,7 +704,8 @@
         title={t('Forward')}
         aria-label={t('Forward')}
         disabled={!walking.canGoForward}
-        onclick={() => workspace.goForward(walking.id)}
+        onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
+        use:middleOpens={(event) => workspace.goForward(walking.id, tabAsk(event))}
       >
         <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M4.5 2.5 8 6l-3.5 3.5" /></svg>
       </button>
@@ -795,7 +753,8 @@
 
       workspace.panes.landing = null
     }}
-    ondrop={dropNotes}
+    ondrop={dropped}
+    onkeydown={renameKey}
   >
     {#each tabs as tab, at (tab.id)}
       <!-- How many other devices are in this note, once and at most three: the

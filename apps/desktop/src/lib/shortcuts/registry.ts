@@ -23,6 +23,7 @@ import { openSpaces, revealPanel, stepRegionFocus } from '../focus'
 import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { openFile } from '../open-file'
+import { searchFrom } from '../search.svelte'
 import { settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
@@ -31,6 +32,7 @@ import { present } from '../slides/present.svelte'
 import { invoke } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
+import { type Around, closeAfterLabel } from '../workspace/closing-around'
 
 /** Where an entry sits in the list. The first five are the app's own menus,
  *  so a reader looking for Bold looks under Format either way. */
@@ -386,6 +388,32 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-t',
     run: () => void workspace.reopenClosed(),
   },
+  // A tab's own menu, for a reader who wants a key: Chrome gives these none, and
+  // VS Code's are two-stroke chords. See tab-strip/menu.ts.
+  {
+    id: 'app.close-right',
+    label: () => closeAfterLabel(),
+    category: 'file',
+    scope: 'app',
+    key: null,
+    run: () => closeAroundActive('right'),
+  },
+  {
+    id: 'app.close-all',
+    label: () => t('Close all tabs'),
+    category: 'file',
+    scope: 'app',
+    key: null,
+    run: () => closeAroundActive('all'),
+  },
+  {
+    id: 'app.duplicate-tab',
+    label: () => t('Duplicate tab'),
+    category: 'file',
+    scope: 'app',
+    key: null,
+    run: () => void tabOps().then((ops) => ops.duplicateTab(workspace.activeTabId ?? '')),
+  },
   {
     id: 'app.settings',
     label: () => t('Settings'),
@@ -449,7 +477,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Tab',
     mac: 'Ctrl-Tab',
-    run: () => cycleTab(1),
+    run: () => cycleTab(1, true),
   },
   {
     id: 'app.previous-note',
@@ -458,7 +486,7 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-Tab',
     mac: 'Ctrl-Shift-Tab',
-    run: () => cycleTab(-1),
+    run: () => cycleTab(-1, true),
   },
   // Chrome's other pair for the same walk, which a hand that lives in a browser
   // reaches for as often as Ctrl+Tab.
@@ -501,6 +529,15 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-PageDown',
     run: () => moveTab(1),
   },
+  // F2 on a tab, the file list's key, read by the strip itself.
+  {
+    id: 'tabs.rename',
+    label: () => t('Rename'),
+    category: 'view',
+    scope: 'panel',
+    key: 'F2',
+    contextual: true,
+  },
   // The panes. Named for what they do rather than for the key they are on, since
   // a later batch maps Obsidian's own keys onto the same actions.
   {
@@ -518,6 +555,16 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-ArrowDown',
     run: () => workspace.split('column'),
+  },
+  // VS Code's "move editor into next group" is Ctrl+Alt+Right, which is Split right
+  // here; with Shift, the split takes the tab along rather than a copy.
+  {
+    id: 'pane.move-tab',
+    label: () => t('Move to other pane'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-Shift-ArrowRight',
+    run: () => void tabOps().then((ops) => ops.moveToOtherPane(workspace.activeTabId ?? '')),
   },
   {
     id: 'pane.focus-next',
@@ -602,7 +649,7 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-f',
-    run: () => revealPanel('search'),
+    run: (context) => searchFrom(context.view),
   },
   {
     // What links here and what this links to. On B for the backlinks half, which
@@ -1067,15 +1114,28 @@ CANVAS_ENTRIES.push({
   alias: true,
 })
 
-/** Round the strip of the pane being worked in. Every key stays inside its own
- *  pane: the other pane is somebody's reference, not their next tab. */
-function cycleTab(direction: number) {
-  const tabs = workspace.tabsIn(workspace.panes.focusedId)
-  const index = tabs.findIndex((tab) => tab.id === workspace.activeTabId)
-  if (index < 0) return
+// Both fetched as the launch ends; see `warmDoors`.
+const tabOps = () => import('../tab-strip/ops')
 
-  const next = tabs[(index + direction + tabs.length) % tabs.length]
-  if (next) workspace.activate(next.id)
+/** Kept once fetched, so a step lands in the frame of its press and a held Ctrl is
+ *  still held when it does. */
+let cycling: typeof import('../tab-cycle.svelte') | null = null
+
+function cycleTab(direction: number, mayUseOrder = false) {
+  if (cycling) {
+    cycling.cycleTab(direction, mayUseOrder)
+    return
+  }
+
+  void import('../tab-cycle.svelte').then((one) => {
+    cycling = one
+    one.cycleTab(direction, mayUseOrder)
+  })
+}
+
+function closeAroundActive(which: Around) {
+  const id = workspace.activeTabId
+  if (id) void workspace.closeAround(id, which)
 }
 
 /** The tab being read, one slot along its own strip: the same movement dragging

@@ -49,7 +49,7 @@ export interface Env {
 /** The `send_email` binding's surface, which workers-types does not yet cover. */
 export interface EmailSender {
   send(message: {
-    from: string
+    from: string | { name: string; email: string }
     to: string | string[]
     subject: string
     text?: string

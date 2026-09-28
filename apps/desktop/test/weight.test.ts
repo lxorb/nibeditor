@@ -385,6 +385,12 @@ function holds(tail: string): boolean {
  *  (web-tab/convert.ts, note.ts, words.ts in @nib/markdown - 15,080 bytes and three
  *  files), fetched by the first such note opened. Measured 3,325,127.
  *
+ *  The palette learned recent notes, folders, making a note, headings and lines (the
+ *  power-user list's second batch), and went behind a door with them: nothing of it is
+ *  on screen when the window opens, and it is fetched at the launch's last turn like
+ *  the Ctrl+T dialog, or by the first press in front of that. Measured 3,320,977 and
+ *  382 modules, with everything it learned.
+ *
  *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in
@@ -403,8 +409,19 @@ function holds(tail: string): boolean {
  *  rather than doing nothing, and the words an earlier welcome note held so an old
  *  seed still never syncs. 2,988 bytes. And for the rest of the Mac round: the native
  *  menu's door, the window's title and edited dot, Finder's words and the print path.
- *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in. */
-const BUDGET = 3_345_000
+ *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in.
+ *
+ *  Raised 2026-09-28, to 3,340,000, on main, for Ctrl+click and the middle button
+ *  opening a tab of its own on every surface: new-tab.ts, the file list, the Links
+ *  panel, the bookmarks, the arrows and the workspace's opens taking where a tab goes.
+ *  8,788 bytes, on a main that was at 3,327,115 with the palette's own round in it;
+ *  measured 3,335,903. The rule has to be in the first paint, because the file list and
+ *  a link in the note on screen answer the first click. The production build fetches
+ *  2,111 more bytes before the first paint (1,318,180 to 1,320,291).
+ *
+ *  Raised again when the Mac round and that one met, which each had been measured
+ *  without the other: 3,350,993, under a ceiling of 3,355,000. */
+const BUDGET = 3_355_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

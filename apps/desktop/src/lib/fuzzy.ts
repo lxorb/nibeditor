@@ -35,10 +35,53 @@ export function fuzzy(query: string, text: string): number | null {
   return score - Math.floor(text.length / 12)
 }
 
-export function rank<T>(query: string, items: T[], label: (item: T) => string): T[] {
+/** The best any of several readings of one thing scores: a note is found by its
+ *  name and by the path to it, and whichever answers better is how well it matched. */
+export function fuzzyAny(query: string, texts: readonly string[]): number | null {
+  let best: number | null = null
+  for (const text of texts) {
+    const score = fuzzy(query, text)
+    if (score !== null && (best === null || score > best)) best = score
+  }
+
+  return best
+}
+
+/** The items that match, best first. A tie keeps the order the items came in -
+ *  the sort is stable - which is what `recentFirst` leans on. */
+export function rank<T>(
+  query: string,
+  items: readonly T[],
+  label: (item: T) => string | readonly string[],
+): T[] {
   return items
-    .map((item) => ({ item, score: fuzzy(query, label(item)) }))
+    .map((item) => {
+      const said = label(item)
+      return { item, score: typeof said === 'string' ? fuzzy(query, said) : fuzzyAny(query, said) }
+    })
     .filter((entry): entry is { item: T; score: number } => entry.score !== null)
     .sort((a, b) => b.score - a.score)
     .map((entry) => entry.item)
+}
+
+/** The items with the ones `recent` names moved to the front, most recent first,
+ *  and the rest in the order they came.
+ *
+ *  Ranked afterwards, this is the whole order of a field with nothing typed in it,
+ *  since every item then scores the same, and it breaks every tie once something
+ *  is: of two notes that match equally well, the one opened last comes first. What
+ *  VS Code's and Obsidian's quick open both do. */
+export function recentFirst<T>(
+  items: readonly T[],
+  recent: readonly string[],
+  keyOf: (item: T) => string,
+): T[] {
+  const place = new Map(recent.map((key, index) => [key, index]))
+  const head: T[] = []
+  const rest: T[] = []
+
+  for (const item of items) (place.has(keyOf(item)) ? head : rest).push(item)
+
+  const at = (item: T) => place.get(keyOf(item)) ?? 0
+  return [...head.sort((one, other) => at(one) - at(other)), ...rest]
 }

@@ -20,6 +20,7 @@
   import { type NoteGraph, neighbours, signature } from './graph'
   import { graphFilter, type Keeps } from './graph-filter'
   import { Layout } from './graph-layout'
+  import { howFor, type OpenHow, type TabAsk, tabAsk } from './new-tab'
   import { type Camera, framing, graphPoint, nodeAt, zoomed } from './camera'
   import { type GraphColours, paint, radiusOf } from './graph-paint'
   import { t } from './i18n.svelte'
@@ -45,9 +46,9 @@
      *  played are about a space; a neighbourhood is already the answer to a
      *  question, and narrowing it further would be asking the same thing twice. */
     whole?: boolean
-    /** A node was clicked: opened as a preview, or kept on a double click, the
-     *  way a row in the file list opens. */
-    onopen?: ((path: string, keep: boolean) => void) | undefined
+    /** A node was clicked: opened as a preview, kept on a double click, or in a tab
+     *  of its own with a modifier, the way a row in the file list opens. */
+    onopen?: ((path: string, how: OpenHow) => void) | undefined
     onescape?: (() => void) | undefined
   } = $props()
 
@@ -592,6 +593,16 @@
   }
 
   function onPointerDown(event: PointerEvent) {
+    // The middle button opens the note under it in a tab behind this one, the way it
+    // opens a link; it drags nothing. Answered on the press, and the platform's own
+    // scrolling on that button with it. See new-tab.ts.
+    if (event.button === 1) {
+      const node = nodeUnder(event)
+      if (node < 0) return
+      event.preventDefault()
+      open(node, tabAsk(event))
+      return
+    }
     if (event.button !== 0) return
 
     canvas?.setPointerCapture(event.pointerId)
@@ -661,20 +672,22 @@
     panning = false
     if (canvas?.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId)
 
-    if (wasHolding >= 0 && wasClick) open(wasHolding, false)
+    if (wasHolding >= 0 && wasClick) open(wasHolding, tabAsk(event))
   }
 
-  function onDoubleClick() {
-    if (clicked) onopen?.(clicked, true)
+  /** Keeps what the click before it previewed - unless that click asked for a tab of
+   *  its own, which is kept already and must not be brought forward. */
+  function onDoubleClick(event: MouseEvent) {
+    if (clicked && tabAsk(event) === 'plain') onopen?.(clicked, {})
   }
 
-  function open(node: number, keep: boolean) {
+  function open(node: number, ask: TabAsk) {
     // A node standing for a note the space does not hold has nothing to open.
     const path = graph.nodes[node]?.path
     if (!path) return
 
     clicked = path
-    onopen?.(path, keep)
+    onopen?.(path, howFor(ask, { preview: true }))
   }
 
   function onWheel(event: WheelEvent) {

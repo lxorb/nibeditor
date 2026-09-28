@@ -158,6 +158,13 @@ export const appMenuRows = held(async () => ({ default: (await import('./app-men
  *  See NewKindSheet.svelte and new-kind-sheet.svelte.ts. */
 export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
 
+/** Ctrl+P: the notes, the commands, and the headings and lines of the note in front,
+ *  with everything that ranks them and makes a note out of a name nothing answered.
+ *  Latched like the dialog above and asked for at the same last turn, for the same
+ *  reason: the press is a hand that expects the box under it at once. A press in
+ *  front of that fetches it and opens it as it lands; see App.svelte. */
+export const paletteDoor = latched(() => import('./Palette.svelte'))
+
 /** The held form of the new-tab chord: the state a hand is in between pressing Ctrl+T
  *  and letting go of Ctrl, which is Alt+Tab's shape applied to the dialog above. See
  *  new-kind-chord.ts.
@@ -232,10 +239,14 @@ export async function warmDoors(): Promise<void> {
     // see above.
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
+    paletteDoor.ask(),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here
     // and answers that question right from the first menu; see ai/hears.ts.
     import('./ai/store.svelte'),
+    // A tab's own menu and Ctrl+Tab in order of use, asked for at any moment.
+    import('./tab-strip/menu'),
+    import('./tab-cycle.svelte'),
   ])
 }

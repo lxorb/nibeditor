@@ -30,7 +30,7 @@
     type LinkPress,
     modeEffects,
     type NoteIndex,
-    type NoteJump,
+    type NoteOpener,
     noteIndexEffect,
     type StateEffect,
     type StateOptions,
@@ -76,7 +76,7 @@
     onselection?: (view: EditorView) => void
     /** The space around a note, so `[[links]]` can be drawn and completed. */
     notes?: (tab: Tab) => NoteIndex
-    opennote?: (jump: NoteJump) => void
+    opennote?: NoteOpener
     nameblock?: (path: string, line: number) => Promise<string | null>
     /** Ctrl+F and Ctrl+H, which are keys in the editor and a bar in the pane;
      *  null when something in the editor closed it. See find.ts. */

@@ -59,6 +59,7 @@ import { OpenDocuments } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { byPin, pinnedRun, placeFor } from './workspace/pinning'
+import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
 import * as composing from './workspace/composing'
@@ -82,6 +83,7 @@ import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
+import { besideAt, howFor, type OpenHow, type TabAsk } from './new-tab'
 
 export interface Entry {
   name: string
@@ -245,6 +247,9 @@ class Workspace {
   /** The one tab holding a file that is only being looked at, of whatever kind:
    *  a note, a website, a canvas, a page note or a PDF. See `previewIn`. */
   previewTabId = $state<string | null>(null)
+  /** The tab last opened beside another, and which one it was opened from, so the
+   *  next opened from the same tab lands after it; see `besideAt` in new-tab.ts. */
+  private besideLast: { opener: string; tab: string } | null = null
   /** The row a name is being typed on, in place: a row that exists and is being
    *  renamed, or a fresh one that nothing on disk answers to yet, waiting for the
    *  name that will make it. `making` says which, and what to make.
@@ -1094,14 +1099,29 @@ class Workspace {
 
   /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
    *  was there goes as this one arrives; see `onlyOne`. */
-  private add(tab: Tab, activate = true): Tab {
-    this.tabs = [...this.tabs, tab]
+  private add(tab: Tab, activate = true, opener: string | null = null): Tab {
+    this.tabs = opener === null ? [...this.tabs, tab] : this.besideOf(tab, opener)
     if (activate) {
       this.panes.activate(tab.paneId, tab.id)
       this.onlyOne(tab)
     }
 
     return tab
+  }
+
+  /** The tab a tab asked for beside another is opened from: the one in front of its
+   *  pane. Null for a tab that goes at the end. */
+  private openedFrom(how: OpenHow, paneId: string): string | null {
+    return how.beside ? (this.panes.at(paneId)?.activeTabId ?? null) : null
+  }
+
+  /** The strip with a tab put right after the tab it was opened from, the way a
+   *  browser puts a tab a link opened: next to where the reader is rather than at the
+   *  far end. See `besideAt`. */
+  private besideOf(tab: Tab, opener: string): Tab[] {
+    const previous = this.besideLast?.opener === opener ? this.besideLast.tab : null
+    this.besideLast = { opener, tab: tab.id }
+    return this.placed(tab, tab.paneId, besideAt(this.tabsIn(tab.paneId), opener, previous))
   }
 
   /** One document open at a time, which is what a phone and a tablet get: a
@@ -1162,13 +1182,13 @@ class Workspace {
    *  and, when a link named a page, turns to it.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  openPdf(path: string, page: number | null = null, preview = false) {
+  openPdf(path: string, page: number | null = null, how: OpenHow = {}) {
     const paneId = this.panes.focusedId
     const existing = this.tabs.find((tab) => tab.kind === 'pdf' && tab.path === path)
 
     if (existing) {
-      this.activeTabId = existing.id
-      if (!preview) this.keep(existing.id)
+      if (how.activate !== false) this.activeTabId = existing.id
+      if (!how.preview) this.keep(existing.id)
       if (page !== null) this.gotoPage = { path, page }
     } else {
       const file = this.document({
@@ -1180,10 +1200,10 @@ class Workspace {
       })
       const tab = new Tab(file, paneId)
       if (page !== null) tab.page = page
-      this.arrive(tab, preview)
+      this.arrive(tab, how)
     }
 
-    this.showNote()
+    if (how.activate !== false) this.showNote()
     this.remember(path)
     this.persist()
   }
@@ -1195,8 +1215,8 @@ class Workspace {
    *  note's tab does: whether it keeps itself, the mark, Ctrl+S and the closing
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
-  async openCanvas(path: string, preview = false) {
-    this.showTab(await this.opened.opening(path, () => this.openPlane(path, preview)), preview)
+  async openCanvas(path: string, how: OpenHow = {}) {
+    this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
 
   /** Brings the pane showing a document forward, and answers the tab it is in.
@@ -1206,23 +1226,30 @@ class Workspace {
    *  Opened for real rather than looked at, the tab stays, whichever tab it is: the
    *  same rule `open` keeps for a note, so a double click on the row of a website
    *  that is only being previewed keeps it the way it keeps a note. */
-  private showTab(note: NoteDoc | null, preview = false): Tab | null {
+  private showTab(note: NoteDoc | null, how: OpenHow = {}): Tab | null {
     const tab = note && this.tabs.find((one) => one.note === note)
     if (!tab) return null
 
-    this.activeTabId = tab.id
-    if (!preview) this.keep(tab.id)
-    this.showNote()
+    if (!how.preview) this.keep(tab.id)
+    if (how.activate !== false) {
+      this.activeTabId = tab.id
+      this.showNote()
+    }
     return tab
   }
 
   /** A tab an open has just made, put in its pane: in the preview's place when the
-   *  open was only a look, and at the end of the strip otherwise. Every opener of a
-   *  file ends its making here, so no kind of file can forget the preview. */
-  private arrive(tab: Tab, preview: boolean, activate = true) {
-    this.add(tab, activate)
-    if (preview) this.previewIn(tab)
-    this.dropScaffolding(tab)
+   *  open was only a look, beside the tab in front when it was asked for with a
+   *  modifier, and at the end of the strip otherwise. Every opener of a file ends its
+   *  making here, so no kind of file can forget the preview.
+   *
+   *  A tab left behind the reader closes no blank note: the blank note may be the page
+   *  they are looking at. */
+  private arrive(tab: Tab, how: OpenHow) {
+    const activate = how.activate !== false
+    this.add(tab, activate, this.openedFrom(how, tab.paneId))
+    if (how.preview) this.previewIn(tab)
+    if (activate) this.dropScaffolding(tab)
   }
 
   /** The preview tab the next look may take the place of, or null where there is
@@ -1272,7 +1299,7 @@ class Workspace {
 
   /** The document one open of a canvas comes to. Only `openCanvas` calls it, and
    *  only through the one open. */
-  private async openPlane(path: string, preview: boolean): Promise<NoteDoc | null> {
+  private async openPlane(path: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A canvas that cannot be read is not a blank plane to
     // draw on: saving one over it would take the file with it.
@@ -1297,7 +1324,7 @@ class Workspace {
       dirty: false,
     })
     const tab = new Tab(file, this.panes.focusedId)
-    this.arrive(tab, preview)
+    this.arrive(tab, how)
 
     // The notes a canvas holds are links out of it, which is what the Links
     // panel shows while the canvas is the tab being looked at.
@@ -1318,7 +1345,7 @@ class Workspace {
    *  browser has all four, and the file is still theirs in the space - so a website is
    *  a bookmark there, which is what a website on a phone is worth being. Tauri has
    *  no child webviews on a phone either; see docs/web-tabs.md. */
-  async openWeb(path: string, preview = false) {
+  async openWeb(path: string, how: OpenHow = {}) {
     // Not in front of a pair of glasses, for the reason a canvas is not: there is no
     // page on seven lines of a heads-up display, and the viewer is not in that build
     // at all. See vite.even.config.ts.
@@ -1327,7 +1354,7 @@ class Workspace {
     // Already open, before anything is written: the conversion below makes a file.
     const held = this.opened.at(path)
     if (held) {
-      this.showTab(held, preview)
+      this.showTab(held, how)
       return
     }
 
@@ -1340,16 +1367,16 @@ class Workspace {
       ? path
       : await import('./web-tab/convert').then(({ asShortcut }) => asShortcut(this, path))
     if (opening === null) {
-      await this.open(path, { preview })
+      await this.open(path, how)
       return
     }
 
-    this.showTab(await this.opened.opening(opening, () => this.openSite(opening, preview)), preview)
+    this.showTab(await this.opened.opening(opening, () => this.openSite(opening, how)), how)
   }
 
   /** The document one open of a website comes to. Only `openWeb` calls it, and only
    *  through the one open. */
-  private async openSite(opening: string, preview: boolean): Promise<NoteDoc | null> {
+  private async openSite(opening: string, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path: opening }).catch(() => null)
     const said = readWebFile(opening, text)
 
@@ -1378,7 +1405,7 @@ class Workspace {
     page.url = said?.url ?? null
     page.title = said?.title ?? shownName(nameOf(opening))
 
-    this.arrive(tab, preview)
+    this.arrive(tab, how)
 
     this.remember(opening)
     this.persist()
@@ -1429,15 +1456,19 @@ class Workspace {
    *  a folder full of `.url` files nobody asked for is what writing here would leave
    *  behind. See `keepWeb`.
    *
-   *  `pane` is for a page asking for one of its own - `target="_blank"` - so the tab
-   *  it asks for lands beside it rather than wherever the interface last had focus. */
-  openPage(url: string, behind = false, pane?: string): string | null {
+   *  A press with a modifier puts the tab beside the one it was pressed in, as a
+   *  browser does; see new-tab.ts. `opener` is for a page asking for a window of its
+   *  own - `target="_blank"`, a Ctrl+click inside the page - so the tab lands beside
+   *  that page, in its pane, rather than wherever the interface last had focus. */
+  openPage(url: string, ask: TabAsk = 'plain', opener?: string): string | null {
     if (viewport.device === 'phone') return null
 
     // A phone and a tablet hold one document, so there is no behind for a tab to be
     // in: one put there would be one the reader has no strip to find it in. See
     // `onlyOne`.
-    const back = behind && !viewport.touch
+    const back = ask === 'behind' && !viewport.touch
+    const from = this.tabs.find((one) => one.id === opener)
+    const pane = from?.paneId ?? this.panes.focusedId
 
     const file = this.document({
       kind: 'web',
@@ -1446,7 +1477,7 @@ class Workspace {
       text: '',
       dirty: false,
     })
-    const tab = new Tab(file, pane ?? this.panes.focusedId)
+    const tab = new Tab(file, pane)
     tab.address = url
 
     // The site, so the strip and the bar read as the page before the page has
@@ -1455,7 +1486,7 @@ class Workspace {
     page.url = url
     page.title = plainOrigin(url)
 
-    this.add(tab, !back)
+    this.add(tab, !back, from?.id ?? this.openedFrom(howFor(ask), pane))
     if (!back) {
       this.showNote()
       // Only for a tab in front: a page arriving behind the reader is not a reason to
@@ -1635,10 +1666,10 @@ class Workspace {
    *  between words and a file works here without knowing what a page is.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  async openPages(path: string, page: number | null = null, preview = false) {
+  async openPages(path: string, page: number | null = null, how: OpenHow = {}) {
     const tab = this.showTab(
-      await this.opened.opening(path, () => this.openDeck(path, page, preview)),
-      preview,
+      await this.opened.opening(path, () => this.openDeck(path, page, how)),
+      how,
     )
     // A deck already open turns to the page the link named. One opening at it is
     // already there, which is what the page it was given says.
@@ -1647,11 +1678,7 @@ class Workspace {
 
   /** The document one open of a page note comes to. Only `openPages` calls it, and
    *  only through the one open. */
-  private async openDeck(
-    path: string,
-    page: number | null,
-    preview: boolean,
-  ): Promise<NoteDoc | null> {
+  private async openDeck(path: string, page: number | null, how: OpenHow): Promise<NoteDoc | null> {
     const text = await invoke<string>('read_note', { path }).catch(() => null)
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
@@ -1666,7 +1693,7 @@ class Workspace {
     })
     const tab = new Tab(file, this.panes.focusedId)
     if (page !== null) tab.page = page
-    this.arrive(tab, preview)
+    this.arrive(tab, how)
 
     // A page note made from a PDF names that PDF on every page, which is a link out
     // of it: the same scan a canvas's file nodes go through, because they are file
@@ -1757,7 +1784,7 @@ class Workspace {
     this.close(only.id)
   }
 
-  async openEntry(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
+  async openEntry(path: string, options: OpenHow = {}) {
     // Which kind of tab this path is for, or null where this build has no surface
     // for it - a PDF, a canvas or a page note in the plugin. Every reason is in
     // `openerFor`; making the tab is the class's own, below.
@@ -1769,21 +1796,20 @@ class Workspace {
     // A single click previews whatever the row is, not only a note: a website, a
     // plane or a paper clicked past in the list is as much a look as a note is, and
     // a strip that filled with every site somebody glanced at was what Emil saw.
-    const preview = options.preview === true
     switch (opener) {
       case null:
         return
       case 'pdf':
-        this.openPdf(path, null, preview)
+        this.openPdf(path, null, options)
         return
       case 'web':
-        await this.openWeb(path, preview)
+        await this.openWeb(path, options)
         return
       case 'pages':
-        await this.openPages(path, null, preview)
+        await this.openPages(path, null, options)
         return
       case 'canvas':
-        await this.openCanvas(path, preview)
+        await this.openCanvas(path, options)
         return
       case 'note':
         await this.open(path, options)
@@ -2022,7 +2048,7 @@ class Workspace {
    *  somebody's vault has no note of its own until somebody writes in it, so this
    *  opens the empty page it is: nothing is written by looking, and the first
    *  keystroke is what makes the file. See folder-notes.ts and docs/tree.md. */
-  async openRow(path: string, options: { activate?: boolean; preview?: boolean } = {}) {
+  async openRow(path: string, options: OpenHow = {}) {
     const entry = this.entryAt(path)
     if (!entry) return
     if (!entry.is_dir) return this.openEntry(path, options)
@@ -2031,10 +2057,7 @@ class Workspace {
     await this.open(own?.path ?? folderNotePath(path), { ...options, blank: !own })
   }
 
-  async open(
-    path: string,
-    options: { activate?: boolean; preview?: boolean; blank?: boolean } = {},
-  ) {
+  async open(path: string, options: OpenHow & { blank?: boolean } = {}) {
     // One open of a file at a time, whoever asked: a second click on the row, a link
     // followed twice, a note clicked while the session is still reading that very
     // note. A file already open answers with its document and reads nothing; one
@@ -2058,7 +2081,7 @@ class Workspace {
    *  opened at all. Only `open` above calls it, and only through the one open. */
   private async openNote(
     path: string,
-    options: { activate?: boolean; preview?: boolean; blank?: boolean },
+    options: OpenHow & { blank?: boolean },
   ): Promise<NoteDoc | null> {
     const found = await invoke<string>('read_note', { path }).catch(() => null)
 
@@ -2080,7 +2103,7 @@ class Workspace {
       })
       const tab = new Tab(waiting, this.panes.focusedId)
       tab.coming = true
-      this.add(tab, options.activate !== false)
+      this.add(tab, options.activate !== false, this.openedFrom(options, tab.paneId))
 
       this.dropScaffolding(tab)
       this.persist()
@@ -2135,7 +2158,7 @@ class Workspace {
     const tab = new Tab(note, this.panes.focusedId)
     this.walked(tab, path)
     this.placeAt(tab, path)
-    this.arrive(tab, options.preview === true, options.activate !== false)
+    this.arrive(tab, options)
 
     this.remember(path)
     this.persist()
@@ -2153,12 +2176,12 @@ class Workspace {
 
   /** A note named the way the space speaks of it, which is how the link index and
    *  the graph name them, opened the way a row in the file list opens: a look on
-   *  one click, a tab of its own on two. */
-  openRelative(relative: string, keep: boolean) {
+   *  one click, a tab of its own on two or with a modifier. */
+  openRelative(relative: string, how: OpenHow) {
     const root = this.activeSpace?.root
     if (!root) return
 
-    void this.openEntry(insideSpace(root, relative), keep ? {} : { preview: true })
+    void this.openEntry(insideSpace(root, relative), how)
   }
 
   activate(id: string) {
@@ -2258,10 +2281,15 @@ class Workspace {
     return note
   }
 
-  /** One step back, and one step on. */
-  goBack(id: string | null = this.activeTabId) {
+  /** One step back, and one step on - or, for an arrow pressed with the middle button
+   *  or a modifier, that step opened in a tab of its own; see `stepAside`. */
+  goBack(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
+    if (ask !== 'plain') {
+      void this.stepAside(tab, -1, ask)
+      return
+    }
 
     // In a web tab the trail is the page's own history, which is the browser's
     // meaning of the same key rather than a second one; see web-tab/pages.svelte.ts.
@@ -2269,12 +2297,30 @@ class Workspace {
     else void this.walk(tab.at - 1, tab.id)
   }
 
-  goForward(id: string | null = this.activeTabId) {
+  goForward(id: string | null = this.activeTabId, ask: TabAsk = 'plain') {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
+    if (ask !== 'plain') {
+      void this.stepAside(tab, 1, ask)
+      return
+    }
 
     if (tab.kind === 'web') void pages.step(tab.id, 'forward')
     else void this.walk(tab.at + 1, tab.id)
+  }
+
+  /** Where a step along a tab's trail would land, opened in a tab of its own beside
+   *  it and the tab itself left where it is: Chrome's middle click on its arrows. A
+   *  page's trail is the crate's, and asked for; a note tab's is its own. */
+  private async stepAside(tab: Tab, by: -1 | 1, ask: TabAsk) {
+    if (tab.kind === 'web') {
+      const url = await pages.stepAddress(tab.id, by)
+      if (url !== null) this.openPage(url, ask, tab.id)
+      return
+    }
+
+    const path = tab.trail[tab.at + by]
+    if (path !== undefined) await this.openEntry(path, howFor(ask))
   }
 
   /** Holds a tab at the front of its strip, or lets it go again.
@@ -2344,16 +2390,19 @@ class Workspace {
     if (id) await this.closeAsking(id)
   }
 
-  /** Every other tab of one pane, asking about whatever is unsaved among them. */
-  async closeOthers(keepId: string) {
-    const tab = this.tabs.find((one) => one.id === keepId)
-    if (!tab) return
+  /** The tabs of a pane around one, asking once about anything unsaved; which tabs
+   *  is workspace/closing-around.ts. */
+  async closeAround(id: string, which: Around) {
+    const tab = this.tabs.find((one) => one.id === id)
+    const going = tab ? closedAround(this.tabsIn(tab.paneId), id, which) : []
+    if (!(await this.mayClose(going))) return
 
-    // A pinned tab is not one of the others: it was pinned to stay.
-    const others = this.tabsIn(tab.paneId).filter((one) => one.id !== keepId && !one.pinned)
-    if (!(await this.mayClose(others))) return
+    for (const one of going) this.close(one.id)
+  }
 
-    for (const other of others) this.close(other.id)
+  closesAround(id: string, which: Around): number {
+    const tab = this.tabs.find((one) => one.id === id)
+    return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
   /** Whether the window may go, which is the same question over every tab in it.
@@ -2753,7 +2802,7 @@ class Workspace {
    *  The whole of what a link would say is in the path - `Plan.md#^a1b2c3` or
    *  `Plan.md#The plan` - so this is the same walk a followed link makes, from a
    *  row instead of from a link. */
-  async openAtBlock(target: string) {
+  async openAtBlock(target: string, how: OpenHow = {}) {
     const root = this.activeSpace?.root
     if (!root) return
 
@@ -2762,7 +2811,7 @@ class Workspace {
     const said = cut < 0 ? '' : target.slice(cut + 1)
 
     const path = insideSpace(root, relative)
-    await this.open(path)
+    await this.open(path, how)
     if (!said) return
 
     const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
@@ -2793,12 +2842,12 @@ class Workspace {
   /** Opens a note and lands on one of its headings, the way a link into a
    *  heading does: the note that was just loaded says which line the words are
    *  on, because a bookmark keeps the words and not the line. */
-  async openAtHeading(relative: string, heading: string) {
+  async openAtHeading(relative: string, heading: string, how: OpenHow = {}) {
     const root = this.activeSpace?.root
     if (!root) return
 
     const path = insideSpace(root, relative)
-    await this.open(path)
+    await this.open(path, how)
 
     const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
     const line = lineOfHeading(scanHeadings(doc), heading)
@@ -3007,10 +3056,17 @@ class Workspace {
    *  sidebar is open at all. */
   startRenaming(path: string, appending = false) {
     const inHeader = this.spaces.some((space) => space.root === path)
-    if (!(inHeader ? this.panel !== null : this.panel === 'tree')) return
+    // The file list on whichever side it was moved to.
+    const listed = this.openOn(this.sideOf('tree')) === 'tree'
+    if (!(inHeader ? this.panel !== null : listed)) return
 
     this.cancelNaming()
     this.naming = { path, appending, making: null }
+  }
+
+  /** Whether a tab's file has a row in the file list; see tab-strip/ops.ts. */
+  canRenameFromTab(tab: Tab): boolean {
+    return tab.path !== null && this.entryAt(tab.path) !== null
   }
 
   /** A row for something that does not exist yet, waiting for the name that will
@@ -3311,27 +3367,31 @@ class Workspace {
    *
    *  Where the caret ends up is worked out from the note that has just been
    *  loaded rather than from the index, because the index knows a heading's words
-   *  and not which line they are on - and the note on disk is the authority. */
-  async followLink(jump: NoteJump) {
+   *  and not which line they are on - and the note on disk is the authority.
+   *
+   *  `ask` is what the press held down: with a modifier the file opens in a tab
+   *  beside this one, behind it or in front; see new-tab.ts. */
+  async followLink(jump: NoteJump, ask: TabAsk = 'plain') {
     const root = this.activeSpace?.root
     if (!root) return
+    const how = howFor(ask)
 
     // A PDF, a canvas and a page note are files: a link to one the space does not
     // hold is a link to nothing, never a reason to make a note under that name.
     if (isPdfTarget(jump.target)) {
-      if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page)
+      if (jump.path) this.openPdf(insideSpace(root, jump.path), jump.page, how)
       return
     }
 
     if (isPagesTarget(jump.target)) {
       // `#page=3` means the same thing here as it does in a PDF, because it is the
       // same question about the same kind of thing; see links.ts.
-      if (jump.path) await this.openPages(insideSpace(root, jump.path), jump.page)
+      if (jump.path) await this.openPages(insideSpace(root, jump.path), jump.page, how)
       return
     }
 
     if (isCanvasTarget(jump.target)) {
-      if (jump.path) await this.openCanvas(insideSpace(root, jump.path))
+      if (jump.path) await this.openCanvas(insideSpace(root, jump.path), how)
       return
     }
 
@@ -3344,11 +3404,11 @@ class Workspace {
     // A heading or a block in such a link means nothing, and the early return is the
     // honest answer to it.
     if (isWebTarget(path) || links.urlOf(path) !== null) {
-      await this.openWeb(path)
+      await this.openWeb(path, how)
       return
     }
 
-    await this.open(path)
+    await this.open(path, how)
     if (jump.heading === null && jump.block === null) return
 
     const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
@@ -3585,6 +3645,11 @@ class Workspace {
     this.persist()
   }
 
+  /** The graph is one to a pane, and a phone has one document; see tab-strip/ops.ts. */
+  canDuplicateTab(tab: Tab): boolean {
+    return !viewport.touch && tab.kind !== 'graph'
+  }
+
   /** Whether a pane can still be split that way, which is what hides the entry
    *  rather than offering one that does nothing. */
   canSplit(along: Along, tabId?: string): boolean {
@@ -3642,6 +3707,15 @@ class Workspace {
     if (made) this.moveTab(id, made.id)
   }
 
+  /** Another pane to carry a tab to, or room beside its own and a tab left behind
+   *  in it; see tab-strip/ops.ts. */
+  canMoveToOtherPane(id: string): boolean {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab || viewport.touch) return false
+
+    return this.panes.count > 1 || this.canLand('right', tab.paneId, id)
+  }
+
   /** Notes dragged out of the file list onto a pane, opened where they were
    *  dropped: at their place in that pane's strip, or in a pane made against the
    *  side they were held against.
@@ -3669,6 +3743,34 @@ class Workspace {
 
     const made = this.panes.split(alongOf(landing.zone), landing.paneId, madeFirst(landing.zone))
     if (made) for (const id of opened) this.moveTab(id, made.id)
+  }
+
+  /** A file opened in a pane of its own to the right of the one in front: VS Code's
+   *  quick open does it for Ctrl+Enter and Obsidian's switcher for Ctrl+Alt+Enter.
+   *
+   *  A file that is not open yet is opened and carried over, the way a row dropped on
+   *  that side is. One that is open already becomes a second view of itself there,
+   *  as `split` makes one, rather than being taken away from the pane it is in. Where
+   *  no pane can be made - a phone, a pane split as far as it goes - it is the
+   *  ordinary open. */
+  async openAside(path: string) {
+    const from = this.panes.focusedId
+    if (viewport.touch || !this.panes.splittable('row', from)) {
+      await this.openEntry(path)
+      return
+    }
+
+    const open = this.tabs.find((one) => one.path === path)
+    if (!open) {
+      await this.dropNotes([path], { kind: 'pane', paneId: from, zone: 'right' })
+      return
+    }
+
+    const made = this.panes.split('row', from)
+    if (!made) return
+
+    this.add(new Tab(open.note, made.id))
+    this.persist()
   }
 
   /** Whether a tab dropped against that side of a pane would do anything: the

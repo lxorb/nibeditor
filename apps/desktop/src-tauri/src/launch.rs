@@ -214,6 +214,11 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
 
+    // The same switches as the first window, which is running on the same user data
+    // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
+
     let window = crate::appearance::own_frame(builder)
         .build()
         .map_err(|error| format!("could not open another window: {error}"))?;

@@ -156,22 +156,26 @@ function readMoved(value: unknown): Moved | null {
 }
 
 /** What the crate says when a page asks for a window of its own: which tab asked,
- *  and where it wants to go. Read rather than trusted, like everything else that
- *  crosses that line - and this one carries an address a site chose, so the rule
- *  about which addresses a tab may hold is asked again on the side that would open
- *  one. */
+ *  where it wants to go, and whether the reader asked for it behind - a Ctrl+click,
+ *  the middle button, the page's own "open in a new tab" - or in front. Read rather
+ *  than trusted, like everything else that crosses that line - and this one carries an
+ *  address a site chose, so the rule about which addresses a tab may hold is asked
+ *  again on the side that would open one. */
 interface Opening {
   tab: string
   url: string
+  behind: boolean
 }
 
-function readOpening(value: unknown): Opening | null {
+export function readOpening(value: unknown): Opening | null {
   if (typeof value !== 'object' || value === null) return null
 
   const said = value as Record<string, unknown>
   if (typeof said.tab !== 'string' || typeof said.url !== 'string') return null
 
-  return isWebAddress(said.url) ? { tab: said.tab, url: said.url } : null
+  return isWebAddress(said.url)
+    ? { tab: said.tab, url: said.url, behind: said.behind === true }
+    : null
 }
 
 /** One web tab's page. */
@@ -542,31 +546,51 @@ class Pages {
    *  went. */
   private async look(tabId: string): Promise<void> {
     const page = this.held.get(tabId)
-    if (!isDesktop || !page?.live || !page.path) return
+    if (!page?.path) return
+
+    const said = await this.whereIs(tabId)
+    if (!said) return
+
+    placeKept(page.path, {
+      url: said.url,
+      x: said.x,
+      y: said.y,
+      trail: said.trail,
+      at: said.at,
+    })
+  }
+
+  /** Where a live page is, and the trail behind it, or null for a page that has gone
+   *  or will not say.
+   *
+   *  Raced against a clock, because the answer comes out of the page itself: a page
+   *  busy in a loop of its own answers nothing, and parking is what takes the memory
+   *  back - so a page that will not say where it is is parked without its place rather
+   *  than left running for ever. */
+  private async whereIs(
+    tabId: string,
+  ): Promise<{ url: string; x: number; y: number; trail: string[]; at: number } | null> {
+    if (!isDesktop || !this.held.get(tabId)?.live) return null
 
     try {
-      // Raced against a clock, because the answer comes out of the page itself: a page
-      // busy in a loop of its own answers nothing, and parking is what takes the memory
-      // back - so a page that will not say where it is is parked without its place
-      // rather than left running for ever.
-      const said = await Promise.race([
+      return await Promise.race([
         invoke<{ url: string; x: number; y: number; trail: string[]; at: number }>('web_look', {
           tab: tabId,
         }),
         new Promise<null>((go) => setTimeout(() => go(null), LOOK_WAITS)),
       ])
-      if (!said) return
-
-      placeKept(page.path, {
-        url: said.url,
-        x: said.x,
-        y: said.y,
-        trail: said.trail,
-        at: said.at,
-      })
     } catch {
-      // Nothing to write down. The next look answers, or the tab has closed.
+      // Nothing to read. The next look answers, or the tab has closed.
+      return null
     }
+  }
+
+  /** The address one step back or on would land on, for the arrow pressed with the
+   *  middle button or a modifier, which opens it in a tab of its own the way Chrome
+   *  does; see `workspace.stepAside`. Null where there is no step to take. */
+  async stepAddress(tabId: string, by: -1 | 1): Promise<string | null> {
+    const said = await this.whereIs(tabId)
+    return said?.trail[said.at + by] ?? null
   }
 
   /** A still picture of the page as it is now, kept on the page's state for the hole to
@@ -804,14 +828,11 @@ class Pages {
    *  when it does. */
   private readonly asked = new Map<string, string>()
 
-  /** The tab a page asked for, opened in the pane the page that asked is in. */
+  /** The tab a page asked for, beside the page that asked and in its pane: behind it
+   *  or in front, as the press that asked said. */
   private async openAsked(said: Opening): Promise<void> {
     const { workspace } = await import('../workspace.svelte')
-    const opened = workspace.openPage(
-      said.url,
-      false,
-      workspace.tabs.find((one) => one.id === said.tab)?.paneId,
-    )
+    const opened = workspace.openPage(said.url, said.behind ? 'behind' : 'front', said.tab)
     if (opened !== null) this.asked.set(opened, said.tab)
   }
 
@@ -858,11 +879,11 @@ class Pages {
       if (said && this.held.has(said.tab)) grants.heard(said)
     })
 
-    // A page has asked for a window of its own - `target="_blank"`, or `window.open`.
-    // Every browser answers that with a tab, so this one does: in front, because a
-    // browser takes you to the tab a link asked for, and in the pane the page that
-    // asked is in. The crate refuses the engine its second webview and hands the
-    // address over; see `on_new_window` in web_tabs.rs.
+    // A page has asked for a window of its own - `target="_blank"`, `window.open`, a
+    // Ctrl+click or the middle button on a link. Every browser answers that with a tab,
+    // so this one does: beside the page that asked, in its pane, and in front unless
+    // the reader asked for it behind. The crate refuses the engine its second webview
+    // and hands the address over; see `on_new_window` in web_tabs.rs.
     //
     // Opened through an import rather than a name at the top, because the workspace
     // is what holds this store: asking for it by name here would be a circle.
