@@ -95,6 +95,25 @@ async function asked(): Promise<() => void> {
   throw new Error('no page was ever asked for')
 }
 
+/** Waits until the window is listening for `name`, and hands back what it heard with.
+ *
+ *  The listeners are started with the first page and fetched on the way - see `listen`
+ *  in pages.svelte.ts - so `nib://web-tab` is three imports behind the first of them,
+ *  and nothing in the store waits for the last. Nor can a count of turns: in a whole
+ *  gate those imports are compiled cold on a busy machine, which has outlasted every
+ *  test that runs before the first one here to listen. So this waits for the listener
+ *  itself. */
+async function hearing(name: string): Promise<(event: { payload: unknown }) => void> {
+  return vi.waitFor(
+    () => {
+      const tell = heard.get(name)
+      if (!tell) throw new Error(`nothing is listening for ${name}`)
+      return tell
+    },
+    { timeout: 10_000 },
+  )
+}
+
 /** Lets everything that was waiting on a microtask run. */
 async function settle(): Promise<void> {
   for (let turns = 0; turns < 5; turns += 1) await new Promise<void>((go) => setTimeout(go, 0))
@@ -260,15 +279,13 @@ test('a page that lands is photographed once, not once per report', async () => 
   arrive()
   await shown
   await settle()
+  const moved = await hearing('nib://web-tab')
   calls.length = 0
 
-  const moved = heard.get('nib://web-tab')
-  expect(moved).toBeDefined()
-
   const said = { tab: 'a', url: SITE, title: '', back: false, forward: false }
-  moved?.({ payload: { ...said, loading: true } })
-  moved?.({ payload: { ...said, loading: false, title: 'Example Domain' } })
-  moved?.({ payload: { ...said, loading: false } })
+  moved({ payload: { ...said, loading: true } })
+  moved({ payload: { ...said, loading: false, title: 'Example Domain' } })
+  moved({ payload: { ...said, loading: false } })
   await settle()
 
   expect(commands().filter((one) => one === 'web_shot')).toHaveLength(1)
@@ -293,14 +310,12 @@ describe("a page's mark", () => {
     await shown
     await settle()
 
-    const moved = heard.get('nib://web-tab')
-    const iconed = heard.get('nib://web-icon')
-    expect(moved).toBeDefined()
-    expect(iconed).toBeDefined()
+    const moved = await hearing('nib://web-tab')
+    const iconed = await hearing('nib://web-icon')
 
     const load = (loading: boolean) =>
-      moved?.({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
-    const mark = (icon: string) => iconed?.({ payload: { tab: 'a', icon } })
+      moved({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
+    const mark = (icon: string) => iconed({ payload: { tab: 'a', icon } })
     return { load, mark, page: pages.of('a') }
   }
 
