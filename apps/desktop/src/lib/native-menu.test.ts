@@ -4,6 +4,7 @@ import {
   changesBetween,
   describeMenuBar,
   documentWindows,
+  keyRuns,
   letPass,
   leftFullscreen,
   type MenuBarSources,
@@ -433,5 +434,24 @@ describe('the windows that have a strip of their own', () => {
   test('and not the presenter, a print, or anything else', () => {
     expect(documentWindows(['main', 'nib-presenter', 'print-3', 'nib-', 'nib-2a'])).toBe(1)
     expect(documentWindows([])).toBe(0)
+  })
+})
+
+/** On macOS 26 a key a row holds never reaches the page: the menu bar answers it
+ *  first, so a Cmd+B typed into the sidebar's search field arrived as the Bold row
+ *  and bolded the note behind the field. A row of the note's pressed by its key runs
+ *  only while the note has the keyboard, which is when the editor's own keymap would
+ *  have run it; a row of the window's runs from anywhere. */
+describe('a row pressed by its key', () => {
+  test('of the window’s runs wherever the keyboard is', () => {
+    expect(keyRuns(true, 'note')).toBe(true)
+    expect(keyRuns(true, 'page')).toBe(true)
+    expect(keyRuns(true, 'away')).toBe(true)
+  })
+
+  test('of the note’s runs only while the note has the keyboard', () => {
+    expect(keyRuns(false, 'note')).toBe(true)
+    expect(keyRuns(false, 'page')).toBe(false)
+    expect(keyRuns(false, 'away')).toBe(false)
   })
 })

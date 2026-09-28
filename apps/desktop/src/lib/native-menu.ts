@@ -274,6 +274,20 @@ export function documentWindows(labels: string[]): number {
   return labels.filter((label) => label === 'main' || /^nib-\d+$/.test(label)).length
 }
 
+/** Where the keyboard is when a row is chosen: in the note, somewhere else in this
+ *  page (a field, a list), or in another webview altogether (a web tab). */
+export type KeyboardAt = 'note' | 'page' | 'away'
+
+/** Whether a row that holds a key runs, given where the keyboard is. On macOS 26 the
+ *  page never sees such a key at all - the menu bar answers it first - so this is the
+ *  one place that can say what the editor's own keymap would have said: a row of the
+ *  note's acts on the note only while the note has the keyboard, and a row of the
+ *  window's runs from anywhere. A Cmd+B typed into the search field bolded the note
+ *  behind it until this. */
+export function keyRuns(anywhere: boolean, at: KeyboardAt): boolean {
+  return anywhere || at === 'note'
+}
+
 /** Whether the page saw this very key a moment ago and let it pass, which is the
  *  one case where a row's action must not run: the app had the key and declined
  *  it. A key the page never saw - one pressed in a web tab - and a click on the

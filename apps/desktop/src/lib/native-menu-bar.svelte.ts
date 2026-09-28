@@ -41,6 +41,8 @@ import {
   describeMenuBar,
   documentWindows,
   flatten,
+  type KeyboardAt,
+  keyRuns,
   leftFullscreen,
   letPass,
   type MenuBarWords,
@@ -371,11 +373,13 @@ class MenuBar {
     // The page had this key and let it pass: the app declined it.
     if (entry.key && letPass(entry.key, this.seen, performance.now())) return
 
-    // The keyboard is in a web tab. A row of the note's has nothing in front of it
-    // to act on; a row of the window's runs, and brings the keyboard back with it,
-    // the way the same key does on Windows: see web_keys.rs.
+    // A row of the note's acts on the note only while the note has the keyboard; see
+    // `keyRuns`. With the keyboard in a web tab a row of the window's runs, and
+    // brings the keyboard back with it, the way the same key does on Windows: see
+    // web_keys.rs.
     const away = !document.hasFocus()
-    if (away && entry.key && !entry.anywhere) return
+    const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
+    if (entry.key && !keyRuns(entry.anywhere, at)) return
     if (away) void this.takeKeyboard()
 
     run()
