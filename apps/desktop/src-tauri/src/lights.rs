@@ -87,6 +87,22 @@ pub fn hold(window: &tauri::WebviewWindow) {
     }
 }
 
+/// Lays the window's titlebar out afresh after its frame has been switched, so the
+/// lights are where the new frame wants them: centred in nib's own bar, or where
+/// `AppKit` keeps them in the system's titlebar. Switching the style alone moves
+/// nothing, and the lights stayed where nib's frame had put them, three points low
+/// in a titlebar of `AppKit`'s own.
+#[cfg(target_os = "macos")]
+pub fn refresh(window: &tauri::Window) {
+    let Ok(pointer) = window.ns_window() else {
+        return;
+    };
+    let pointer = pointer as usize;
+    // After the style change, which is a message to the same main thread ahead of
+    // this one.
+    let _ = window.run_on_main_thread(move || native::refresh(pointer as *mut std::ffi::c_void));
+}
+
 #[cfg(target_os = "macos")]
 mod native {
     use std::cell::Cell;
@@ -97,7 +113,7 @@ mod native {
     use block2::RcBlock;
     use objc2::rc::{Retained, Weak};
     use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, NSObject, ProtocolObject, Sel};
-    use objc2::{define_class, msg_send, sel, AllocAnyThread};
+    use objc2::{define_class, msg_send, sel, AllocAnyThread, DefinedClass};
     use objc2_app_kit::{
         NSView, NSViewFrameDidChangeNotification, NSWindow, NSWindowButton, NSWindowStyleMask,
     };
@@ -120,18 +136,24 @@ mod native {
     /// The key the watch is kept under on its window. Its address is the key.
     static KEPT: u8 = 0;
 
-    /// The observers one window's lights are kept in place by, given back to the
-    /// notification centre when the window goes.
-    struct Observers(Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>);
+    /// What one window keeps for its lights: the observers they are kept in place by,
+    /// given back to the notification centre when the window goes, and where `AppKit`
+    /// had them before nib moved them, which is where they go back to under the
+    /// system's frame.
+    struct Held {
+        observers: Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>,
+        /// Each light's distance from its holder's left and top edges, close first.
+        own: [(f64, f64); 3],
+    }
 
-    impl Drop for Observers {
+    impl Drop for Held {
         #[allow(
             unsafe_code,
             reason = "an observer is taken off the notification centre through the Objective-C runtime"
         )]
         fn drop(&mut self) {
             let centre = NSNotificationCenter::defaultCenter();
-            for observer in &self.0 {
+            for observer in &self.observers {
                 // SAFETY: each is a token the default centre handed back from
                 // `addObserverForName:object:queue:usingBlock:`, which is exactly
                 // what `removeObserver:` takes.
@@ -141,13 +163,41 @@ mod native {
     }
 
     define_class!(
-        /// What a window carries for as long as it exists: the observers that keep
-        /// its lights in the bar.
+        /// What a window carries for as long as it exists: see `Held`.
         #[unsafe(super(NSObject))]
         #[name = "NibLightsWatch"]
-        #[ivars = Observers]
+        #[ivars = Held]
         struct Watch;
     );
+
+    /// The watch a window was given in `hold`, if it was given one.
+    #[allow(
+        unsafe_code,
+        reason = "an associated object is read through the Objective-C runtime"
+    )]
+    fn kept(window: &NSWindow) -> Option<Retained<Watch>> {
+        // SAFETY: the key is this module's own, and the only object ever stored under
+        // it is a `Watch`, which the window retains for as long as it exists.
+        unsafe {
+            let found = objc2::ffi::objc_getAssociatedObject(
+                std::ptr::from_ref(window).cast::<AnyObject>(),
+                (&raw const KEPT).cast::<c_void>(),
+            );
+            Retained::retain(found.cast::<Watch>().cast_mut())
+        }
+    }
+
+    /// Where a light is inside the view that holds it, as its distance from that
+    /// view's left and top edges, whichever way up the view counts.
+    fn edges(light: &NSView, holder: &NSView) -> (f64, f64) {
+        let frame = light.frame();
+        let top = if holder.isFlipped() {
+            frame.origin.y
+        } else {
+            holder.bounds().size.height - frame.origin.y - frame.size.height
+        };
+        (frame.origin.x, top)
+    }
 
     /// The view a view is in.
     #[allow(
@@ -175,19 +225,53 @@ mod native {
         ])
     }
 
-    /// Centres the lights in the bar, where the bar is nib's own. A window in full
-    /// screen lends its lights to a titlebar window of `AppKit`'s own, which slides
-    /// down over the page, and a window with the system's frame has the system's
-    /// titlebar: both are left exactly as `AppKit` has them.
+    /// Whether the window wears nib's own frame: a transparent titlebar with the page
+    /// running up under it. The system's frame is an opaque one, whichever way the
+    /// content view is laid out, since Tauri switches to it at runtime by making the
+    /// titlebar opaque and leaves the page where it was.
+    fn nibs_frame(window: &NSWindow) -> bool {
+        window.titlebarAppearsTransparent()
+            && window
+                .styleMask()
+                .contains(NSWindowStyleMask::FullSizeContentView)
+    }
+
+    /// Where the lights go in nib's own bar: centred in it, see `spot`.
+    fn centred(
+        window: &NSWindow,
+        lights: &[Retained<NSView>; 3],
+        holder: &NSView,
+    ) -> [(f64, f64); 3] {
+        let seen = holder.convertRect_toView(holder.bounds(), None);
+        let holder_top = window.frame().size.height - (seen.origin.y + seen.size.height);
+        let width = holder.bounds().size.width;
+        let (first, last) = (lights[0].frame().origin.x, lights[2].frame().origin.x);
+        let pitch = (lights[1].frame().origin.x - first).abs();
+        let leftward = first > last;
+
+        let mut index = 0u8;
+        lights.each_ref().map(|light| {
+            let size = light.frame().size;
+            let at = spot(
+                (size.width, size.height),
+                width,
+                holder_top,
+                pitch,
+                index,
+                leftward,
+            );
+            index += 1;
+            at
+        })
+    }
+
+    /// Puts the lights where the window's frame wants them: centred in nib's own bar,
+    /// or back where `AppKit` had them under the system's titlebar, which a change of
+    /// style does not do by itself. A window in full screen lends its lights to a
+    /// titlebar window of `AppKit`'s own, which slides down over the page, and they
+    /// are left exactly as it has them.
     fn place(window: &NSWindow) {
-        // The system's frame is an opaque titlebar, whichever way the content view
-        // is laid out: Tauri switches to it at runtime by making the titlebar opaque
-        // and leaves the page running up under it.
-        let style = window.styleMask();
-        if !window.titlebarAppearsTransparent()
-            || !style.contains(NSWindowStyleMask::FullSizeContentView)
-            || style.contains(NSWindowStyleMask::FullScreen)
-        {
+        if window.styleMask().contains(NSWindowStyleMask::FullScreen) {
             return;
         }
         let Some(lights) = buttons(window) else {
@@ -209,28 +293,22 @@ mod native {
         // A view `AppKit` made again since is one that has to be taught again.
         adopt(&holder);
 
-        let seen = holder.convertRect_toView(holder.bounds(), None);
-        let holder_top = window.frame().size.height - (seen.origin.y + seen.size.height);
-        let room = holder.bounds().size;
-        let (first, last) = (lights[0].frame().origin.x, lights[2].frame().origin.x);
-        let pitch = (lights[1].frame().origin.x - first).abs();
-        let leftward = first > last;
+        let spots = if nibs_frame(window) {
+            centred(window, &lights, &holder)
+        } else if let Some(watch) = kept(window) {
+            watch.ivars().own
+        } else {
+            return;
+        };
 
+        let height = holder.bounds().size.height;
         PLACING.set(true);
-        for (index, light) in (0u8..).zip(&lights) {
+        for (light, (x, top)) in lights.iter().zip(spots) {
             let size = light.frame().size;
-            let (x, top) = spot(
-                (size.width, size.height),
-                room.width,
-                holder_top,
-                pitch,
-                index,
-                leftward,
-            );
             let y = if holder.isFlipped() {
                 top
             } else {
-                room.height - top - size.height
+                height - top - size.height
             };
             let now = light.frame().origin;
             // Only a real move, so a placement that finds everything where it
@@ -314,6 +392,23 @@ mod native {
         }
     }
 
+    /// The lights where the window's frame now wants them; see `place`.
+    #[allow(
+        unsafe_code,
+        reason = "Tauri hands the NSWindow over as a bare pointer"
+    )]
+    pub fn refresh(pointer: *mut c_void) {
+        if pointer.is_null() {
+            return;
+        }
+        // SAFETY: as in `hold`: the window's own NSWindow, retained while this runs on
+        // the main thread.
+        let Some(window) = (unsafe { Retained::retain(pointer.cast::<NSWindow>()) }) else {
+            return;
+        };
+        place(&window);
+    }
+
     /// Places the lights on the window behind `pointer`, which is the `NSWindow`
     /// Tauri hands out, and places them again whenever `AppKit` moves them.
     #[allow(
@@ -330,11 +425,14 @@ mod native {
             return;
         };
 
-        place(&window);
-
         let Some(lights) = buttons(&window) else {
             return;
         };
+        let Some(holder) = parent(&lights[0]) else {
+            return;
+        };
+        // Where `AppKit` has them now, before anything here has moved them.
+        let own = lights.each_ref().map(|light| edges(light, &holder));
 
         // The block holds the window weakly: the window holds the observers, through
         // the watch below, and a strong hold back would keep both for ever.
@@ -375,7 +473,7 @@ mod native {
             observers.push(observer);
         }
 
-        let watch = Watch::alloc().set_ivars(Observers(observers));
+        let watch = Watch::alloc().set_ivars(Held { observers, own });
         // SAFETY: `init` is NSObject's own initialiser, on an object just allocated
         // and given its instance variables.
         let watch: Retained<Watch> = unsafe { msg_send![super(watch), init] };
@@ -391,6 +489,9 @@ mod native {
                 objc2::ffi::OBJC_ASSOCIATION_RETAIN_NONATOMIC,
             );
         }
+
+        // Last, so what `AppKit` had is written down before the lights move.
+        place(&window);
     }
 }
 
