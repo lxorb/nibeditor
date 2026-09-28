@@ -73,6 +73,8 @@ mod lights;
 mod links;
 mod logs;
 mod matcher;
+#[cfg(target_os = "macos")]
+mod menu_bar;
 mod notes;
 #[cfg(desktop)]
 mod pandoc;
@@ -402,6 +404,10 @@ fn ready(
     trace::mark("app built, window created");
 
     let handle = app.handle();
+
+    // Before the page can put its menu strip up; see menu_bar.rs.
+    #[cfg(target_os = "macos")]
+    menu_bar::leave_out_system_rows();
 
     // A picture in a note is loaded by the webview itself, over the asset
     // protocol, which has a scope of its own. The spaces folder is in it from the
