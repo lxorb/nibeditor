@@ -420,7 +420,7 @@ def open_the_file(page: Page, label: str, note_id: str, path: str) -> None:
 
     wait_for(
         page,
-        f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
+        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] {path} to join its room",
     )
 
@@ -1072,7 +1072,7 @@ def main() -> int:
                 )
                 wait_for(
                     alone,
-                    f"() => window.nibApp.rooms.joined.has({json.dumps(one['id'])})",
+                    f"() => window.nibApp.rooms.carries({json.dumps(one['id'])})",
                     "[alone] the shared note to join its room",
                 )
                 alone.wait_for_timeout(250)
@@ -1149,7 +1149,7 @@ def main() -> int:
                 )
                 wait_for(
                     drawer,
-                    f"() => window.nibApp.rooms.joined.has({json.dumps(plane['id'])})",
+                    f"() => window.nibApp.rooms.carries({json.dumps(plane['id'])})",
                     "[drawer] the canvas to join its room",
                 )
                 settled(drawer, "drawer")
