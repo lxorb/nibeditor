@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { EditorView } from '@nib/editor'
   import AppMenu from './AppMenu.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceMark from './SpaceMark.svelte'
@@ -44,8 +44,12 @@
     workspace.restored && !workspace.spaces.length && !workspace.tabs.length,
   )
 
-  /** Whether the lights are over this bar rather than over the docked panel. */
-  const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
+  /** Whether the lights are over this bar rather than over the docked panel. They are
+   *  at the window's left however the words run, and with the words running right to
+   *  left the panel docks at the right, so the corner is this bar's either way. */
+  const cornered = $derived(
+    lights && (i18n.direction === 'rtl' || !(workspace.panel && !viewport.drawer)),
+  )
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
@@ -203,9 +207,11 @@
     box-shadow: inset 0 -1px var(--line);
   }
 
-  /* The three lights and the gap after them, the room a Mac's own apps leave. */
+  /* The three lights and the gap after them, the room a Mac's own apps leave. On the
+     left whichever way the words run: the lights are the system's, about the screen
+     rather than about reading, and AppKit keeps them at the window's left edge. */
   header.lights {
-    padding-inline-start: var(--traffic-lights);
+    padding-left: var(--traffic-lights);
   }
 
   .drag {
