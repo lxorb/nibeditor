@@ -27,15 +27,18 @@ const PATH = /`((?:apps|packages|services|scripts|spike|docs)\/[A-Za-z0-9_./*-]+
 /** What a command makes rather than what is committed.
  *
  *  A document names these as well, and they are there on a machine that has built and
- *  absent on a fresh runner - so neither is rot. Git knows which is which and is the
+ *  absent on a fresh runner - so none is rot. Git knows which is which and is the
  *  obvious thing to ask, but it cannot answer the case that matters: `.gitignore` says
  *  `dist/`, a pattern that matches only a directory, and `git check-ignore` decides
  *  directory-ness off the filesystem - so with the build absent, which is the whole
  *  point, it reports the path as not ignored.
  *
- *  A list instead, two long and deliberate. Something added to it is a new kind of
- *  output somebody wrote a document about, which is worth a line. */
-const MADE = ['apps/desktop/dist', 'apps/desktop/test/e2e/shots']
+ *  A list instead, three long and deliberate. Something added to it is a new kind of
+ *  output somebody wrote a document about, which is worth a line. `dist-even` is the
+ *  plugin package `build:even` stages and `pnpm even:pack` packs. It went a while
+ *  without a line because the bundle test built it on every run; since that test
+ *  builds into a folder of its own, a fresh runner has no `dist-even` at all. */
+const MADE = ['apps/desktop/dist', 'apps/desktop/dist-even', 'apps/desktop/test/e2e/shots']
 
 function exists(path: string): boolean {
   if (MADE.some((made) => path === made || path.startsWith(`${made}/`))) return true
