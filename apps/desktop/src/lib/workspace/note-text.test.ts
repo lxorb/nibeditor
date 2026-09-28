@@ -41,7 +41,7 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged') } }))
 
-const { loadTags, noteText, replaceInNotes, toggleTaskAt, writeNoteText } =
+const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
   await import('./note-text')
 const { FileActions } = await import('./undo.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
@@ -214,6 +214,41 @@ describe('a task ticked from a row', () => {
   test('and says no for a line the note does not have', async () => {
     const { ws } = space({ [NOTE]: '- [ ] one\n' })
     expect(await toggleTaskAt(ws, NOTE, 40)).toBe(false)
+  })
+})
+
+/** Which notes a rename touches and what each becomes is tag-edits.test.ts's. What is
+ *  here is the rest of it: a note open in a pane is read as it stands rather than as it
+ *  was saved, a note with no such tag is not written at all, and the whole rename is
+ *  one thing to undo. */
+describe('a tag renamed everywhere', () => {
+  test('rewrites every note that wears it, and only those, as one thing to undo', async () => {
+    const { ws } = space({
+      [`${SPACE}/a.md`]: 'Plan #work\n',
+      [`${SPACE}/b.md`]: 'Nothing tagged\n',
+      [`${SPACE}/c.md`]: 'Also #work/q3\n',
+    })
+
+    expect(await retagNotes(ws, 'work', 'job')).toBe(2)
+
+    expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #job\n')
+    expect(disk.get(`${SPACE}/b.md`)).toBe('Nothing tagged\n')
+    expect(disk.get(`${SPACE}/c.md`)).toBe('Also #job/q3\n')
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
+      `${SPACE}/a.md`,
+      `${SPACE}/c.md`,
+    ])
+    expect(ws.undone.stack).toHaveLength(1)
+    expect(ws.undone.last?.kind).toBe('replace')
+  })
+
+  test('reads an open note as it stands on screen, not as it was saved', async () => {
+    const { ws, edits } = space({ [`${SPACE}/a.md`]: 'Typed #work\n' }, `${SPACE}/a.md`)
+    // Saved before the typing; the pane holds what the rename has to work on.
+    disk.set(`${SPACE}/a.md`, 'Saved\n')
+
+    expect(await retagNotes(ws, 'work', null)).toBe(1)
+    expect(edits).toEqual(['Typed\n'])
   })
 })
 
