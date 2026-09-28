@@ -462,13 +462,16 @@ fn ready(
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
-        match ground::remembered(handle) {
-            Some(colour) => {
-                building.visible(true).background_color(colour).build()?;
-            }
-            None => {
-                building.build()?.show()?;
-            }
+        // A window whose config names its own place - a probe off the screen - is built
+        // hidden and put there before it is shown; see `placed` in placement.rs.
+        if let Some(colour) =
+            ground::remembered(handle).filter(|_| !placement::names_its_place(&config))
+        {
+            building.visible(true).background_color(colour).build()?;
+        } else {
+            let window = building.build()?;
+            placement::placed(&window, &config);
+            window.show()?;
         }
     }
 

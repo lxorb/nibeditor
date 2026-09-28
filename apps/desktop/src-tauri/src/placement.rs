@@ -183,8 +183,21 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
 /// does. A build that says so meant it: a probe or a drive opens its window off the
 /// screen on purpose, so that it never lands in front of somebody working, and a
 /// remembered place would pull it back on.
-fn names_its_place(config: &WindowConfig) -> bool {
+pub fn names_its_place(config: &WindowConfig) -> bool {
     config.x.is_some() || config.y.is_some()
+}
+
+/// Puts a window where its config says, off every screen included.
+///
+/// Said again after the window is built because the platform does not always take it
+/// at build time: on Windows, tao keeps a starting place only when it falls on a
+/// screen, and hands any other to the system, which cascades it onto the primary one.
+/// So a probe that asked to open off the screen opened in the middle of it. Moving a
+/// window that is still hidden is honoured wherever it goes.
+pub fn placed<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>, config: &WindowConfig) {
+    if let (Some(x), Some(y)) = (config.x, config.y) {
+        let _ = window.set_position(tauri::LogicalPosition::new(x, y));
+    }
 }
 
 fn read(app: &AppHandle) -> Option<Placement> {
