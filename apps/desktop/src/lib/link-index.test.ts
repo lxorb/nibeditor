@@ -295,6 +295,18 @@ describe('links out', () => {
     await space({ 'One.md': '# Today\n\nsee [[#Today]]' })
     expect(links.outgoing(at('One.md'))).toEqual([])
   })
+
+  /** What `touch "$(printf 'U\xcc\x88bersicht.md')"` leaves on a Mac: the name as the
+   *  disk keeps it, a `U` and a combining mark, while the link is typed with one `Ü`. */
+  test('reach a note whose name the disk keeps decomposed, and back', async () => {
+    const decomposed = 'Übersicht.md'
+    await space({ [decomposed]: '# Overview', 'One.md': 'see [[Übersicht]]' })
+
+    expect(links.outgoing(at('One.md'))).toEqual([
+      expect.objectContaining({ target: 'Übersicht', to: decomposed }),
+    ])
+    expect(links.backlinks(at(decomposed)).map((one) => one.name)).toEqual(['One.md'])
+  })
 })
 
 describe('mentions', () => {
