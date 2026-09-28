@@ -183,6 +183,9 @@ def opened(browser, width, height, agent, finger, scheme, name):
     page.goto(ORIGIN, wait_until="domcontentloaded")
     page.wait_for_function("() => !!window.nibApp", timeout=20000)
     page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=20000)
+    # The import sheet's store is fetched after the space opens, not with the app;
+    # see the end of the drive handle in App.svelte.
+    page.wait_for_function("() => !!window.nibApp.importing", timeout=20000)
     page.evaluate(f"() => window.nibApp.theme.setScheme('{scheme}')")
     page.wait_for_timeout(200)
     return context, page
