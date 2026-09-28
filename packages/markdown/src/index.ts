@@ -13,6 +13,7 @@ import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard } from './html-block'
+import { ownMarkup } from './own-markup'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { iframeCard, isIframeTag, webCard } from './web-embed'
@@ -359,12 +360,16 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  A block that has a whole `<script>` in it is the third: markup that does
        *  something. In a document that is trusted it becomes a card that runs the
        *  block in a frame of its own when pressed - never in the app - and in one
-       *  that is not it was already escaped by the line above. See html-block.ts. */
+       *  that is not it was already escaped by the line above. See html-block.ts.
+       *
+       *  And the rest of a trusted document's markup is still held to one rule:
+       *  nothing in it may make a frame, a navigation or a program of its own in
+       *  the app's page. See own-markup.ts. */
       html(token: Tokens.HTML | Tokens.Tag) {
         if (isIframeTag(token.text)) return iframeCard(token.text) ?? ''
         if (options.escapeHtml) return escape(token.text)
 
-        return htmlBlockCard(token.text) ?? defaults.html.call(this, token)
+        return htmlBlockCard(token.text) ?? ownMarkup(token.text)
       },
     },
   })
