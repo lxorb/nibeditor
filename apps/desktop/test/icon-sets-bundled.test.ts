@@ -20,7 +20,8 @@ import { describe, expect, test } from 'vitest'
  *
  *  Read out of the source rather than out of a build, which is what makes it a test
  *  somebody runs. The build itself is held to the same line by the plugin's own bundle
- *  test, which reads the folder that is packed; see src/lib/even/bundle.test.ts. */
+ *  test, which builds and stages the package the way a release does and reads that;
+ *  see src/lib/even/bundle.test.ts. */
 
 const APP = fileURLToPath(new URL('..', import.meta.url))
 const SOURCE = join(APP, 'src')

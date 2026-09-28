@@ -1085,7 +1085,8 @@ typing, and a collaborator's paragraph should appear.
 The editor's build writes `even.html` beside `index.html` out of one bundle.
 Almost all of the output is shared; the plugin's own code and the Even Hub SDK are
 chunks nothing in `index.html` reaches, so the plain web build carries none of it.
-Nothing checks that, though: the bundle test builds and reads `dist-even`, and no
+Nothing checks that, though: the bundle test reads a folder of its own run, built
+with `vite.even.config.ts` and staged through `scripts/even-stage.mjs`, and no
 test, script or workflow looks at the editor's own `dist`.
 
 The Worker in `services/sync` serves `apps/desktop/dist` through its assets
@@ -1349,15 +1350,15 @@ with the escape their own file's syntax reads as a slash - `http:\/\/` in a scri
 `http%3A//` inside a `data:` URI in a stylesheet, `http&#58;//` in a page - which is
 the same string to whatever reads it and no URL at all to whatever scans it.
 
-`src/lib/even/bundle.test.ts` builds the plugin the way a release does, stages it,
-and reads the folder that is packed - because that folder is the only place either
-of the review's questions has an answer. It holds it to both findings and to the
-consequences: no URL outside the manifest's own whitelist (read from
-`even.app.json`, so the two cannot drift), no `new Function`, `Function(`, `eval(`
-or timer given a string, no play button and none of the sandbox's protocol in any
-`.js`, none of the named libraries, and under 8 MB. It is the slowest test in the
-repository and it is the only one that could have caught either finding before an
-upload did.
+`src/lib/even/bundle.test.ts` builds and stages the plugin the way a release does,
+into a folder of its own run, and reads that: the package in everything but the
+folder it sits in, because the package is the only place either of the review's
+questions has an answer. It holds it to both findings and to the consequences: no
+URL outside the manifest's own whitelist (read from `even.app.json`, so the two
+cannot drift), no `new Function`, `Function(`, `eval(` or timer given a string, no
+play button and none of the sandbox's protocol in any `.js`, none of the named
+libraries, and under 8 MB. It is the slowest test in the repository and it is the
+only one that could have caught either finding before an upload did.
 
 One thing it deliberately does not check: the panel's CSS. The rules come from the
 theme's stylesheet rather than from the module, and a rule for an element nothing
