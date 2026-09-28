@@ -164,6 +164,12 @@ export const undoToastNotice = latched(() => {
  *  See NewKindSheet.svelte and new-kind-sheet.svelte.ts. */
 export const newKindDialog = latched(() => import('./NewKindSheet.svelte'))
 
+/** The one question the app asks in a sheet: a name for a new note, a folder to move one
+ *  to, one of many answers to pick. Latched and asked for at the same last turn, so the
+ *  first question is already mounted; one asked in front of that is fetched and opens as
+ *  it lands. See prompt.svelte.ts and App.svelte. */
+export const promptSheet = latched(() => import('./PromptSheet.svelte'))
+
 /** Ctrl+P: the notes, the commands, and the headings and lines of the note in front,
  *  with everything that ranks them and makes a note out of a name nothing answered.
  *  Latched like the dialog above and asked for at the same last turn, for the same
@@ -242,6 +248,7 @@ export async function warmDoors(): Promise<void> {
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
     paletteDoor.ask(),
+    promptSheet.ask(),
     // The Undo toast, and the menu of a text field so the first right click in one
     // does not wait for it. Neither in the glasses' plugin, which is a phone's and
     // has no room left in its package; see even/bundle.test.ts.

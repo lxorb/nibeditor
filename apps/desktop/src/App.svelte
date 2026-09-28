@@ -12,7 +12,6 @@
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
-  import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
   import JoinSheet from './lib/JoinSheet.svelte'
@@ -37,6 +36,7 @@
   import { rooms } from './lib/rooms.svelte'
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
+  import { prompt } from './lib/prompt.svelte'
   import { settings } from './lib/settings.svelte'
   import {
     historySheet,
@@ -45,6 +45,7 @@
     newKindChord,
     newKindDialog,
     paletteDoor,
+    promptSheet,
     publishSheet,
     recordingPill,
     rewriteSheet,
@@ -313,6 +314,10 @@
   // opens as it lands, since it arrives already open. See surfaces.svelte.ts.
   $effect(() => {
     if (palette) void paletteDoor.ask()
+  })
+  // And the same for a question asked before then.
+  $effect(() => {
+    if (prompt.open) void promptSheet.ask()
   })
   $effect(() => closeOnBack(menu.open, () => menu.hide()))
 
@@ -983,7 +988,11 @@
     <RewriteSheet />
   {/await}
 {/if}
-<PromptSheet />
+{#if promptSheet.asked}
+  {#await promptSheet.asked then PromptSheet}
+    <PromptSheet />
+  {/await}
+{/if}
 <!-- What a new tab should be, from Ctrl+T: mounted at the launch's last turn, so the
      first press already has it; see surfaces.svelte.ts. -->
 {#if newKindDialog.asked}
