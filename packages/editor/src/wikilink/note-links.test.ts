@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { noteLinks } from './drop'
+import { noteLinks } from './note-links'
 import type { LinkWrite, NoteIndex, NoteRef } from './notes'
 
 function note(path: string): NoteRef {

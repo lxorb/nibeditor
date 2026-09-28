@@ -96,9 +96,8 @@ export interface StateOptions {
    *  Links setting asks for. The app's one writer; without it the editor writes a
    *  wikilink, which is that setting's default. */
   writeLink?: (target: LinkWrite) => string
-  /** Which notes a drag over the words carries, as paths inside the space, so a
-   *  row dragged out of the app's file list lands as a link; see wikilink/drop.ts.
-   *  Without it nothing dragged is read as a note. */
+  /** Which notes a drag over the words carries, so a row of the app's file list
+   *  lands as a link; see wikilink/drop.ts. */
   carriedNotes?: (transfer: DataTransfer | null) => readonly string[]
   /** What was folded when this note was last read on this device, as lines; see
    *  fold.ts. In the state rather than dispatched afterwards, so the note is

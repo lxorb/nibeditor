@@ -16,8 +16,12 @@
  *  moment it is opened: what the undo would take back, which rows are selected and
  *  what a row can be moved into are all true only then. */
 
+import { noteLinksCode } from '@nib/editor'
+import { copyText } from './clipboard'
+import { pickedLink } from './composer'
 import { folderNote, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
+import { links } from './link-index.svelte'
 import {
   bookmarkEntry,
   coverEntries,
@@ -29,7 +33,7 @@ import {
 } from './menu.svelte'
 import { moveTargets, type MoveTarget, movesInto } from './move-targets'
 import { rowName } from './note-name'
-import { copyRowLinks } from './row-links'
+import { linkedPaths } from './row-links'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath } from './space-paths'
 import { entryAt } from './tree-edits'
@@ -82,8 +86,8 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
     // A link to the row, spelled the way the Links setting says and the `[[`
-    // popup writes it, to paste into any note; see row-links.ts.
-    { label: t('Copy link'), run: () => void copyRowLinks([entry.path]) },
+    // popup writes it, to paste into any note.
+    { label: t('Copy link'), run: () => void copyLinks([entry.path]) },
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
     {
@@ -109,7 +113,7 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
     DIVIDER,
     { label: t('Move'), run: () => void moveAllTo(paths) },
     ...bookmarkAll(paths),
-    { label: t('Copy link'), run: () => void copyRowLinks(paths) },
+    { label: t('Copy link'), run: () => void copyLinks(paths) },
     DIVIDER,
     {
       label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
@@ -165,6 +169,18 @@ function bookmarkAll(paths: readonly string[]): MenuEntry[] {
       run: () => workspace.bookmarks.toggleAll(marks),
     },
   ]
+}
+
+/** A link to each row, a line each, written through the app's one writer; see
+ *  composer.ts. From nowhere in particular, so a relative link starts at the top of
+ *  the space. */
+async function copyLinks(rows: readonly string[]) {
+  const root = workspace.activeSpace?.root
+  if (!root) return
+
+  const paths = linkedPaths(workspace.tree, root, rows)
+  const { noteLinks } = await noteLinksCode()
+  if (paths.length) await copyText(noteLinks(links.index(null), paths, pickedLink))
 }
 
 /** Moving a row, said rather than dragged.

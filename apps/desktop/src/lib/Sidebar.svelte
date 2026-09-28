@@ -619,9 +619,7 @@
          tree-order.ts and docs/tree.md. -->
     {#if showing === 'tree' && listing}
       <div class="tools">
-        <!-- Every row folded shut, offered only while one is open: a button that
-             would do nothing is not drawn, the way the depth stepper beside the graph
-             is there only while the graph is. -->
+        <!-- Every row folded, drawn only while one is open. -->
         {#if workspace.unfolded}
           <button
             class="nib-glyph tool"

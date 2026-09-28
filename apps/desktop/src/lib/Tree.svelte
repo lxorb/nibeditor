@@ -47,7 +47,6 @@
   import { howFor, middleOpens, tabAsk } from './new-tab'
   import { extensionOf } from './naming'
   import { rowName } from './note-name'
-  import { rowMenu } from './row-menu'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
   import { isSharedItem, othersIn } from './sharing.svelte'
@@ -728,6 +727,14 @@
    *  the name opens the thing, the twist discloses it. A folder that has no note
    *  of its own opens the empty page it is - see `openRow` in workspace.svelte.ts
    *  - and writes nothing by being looked at. */
+  /** A row's own menu, behind a door warmed at the launch's last turn. The press is
+   *  spent first: after the await it is too late to stop the browser's menu. */
+  function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./row-menu').then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
+  }
+
   function openRowAt(event: MouseEvent, entry: Entry) {
     const twist = event.target instanceof Element ? event.target.closest('.twist') : null
     if (twist) {
@@ -956,9 +963,8 @@
     void reach(index)
   })
 
-  // A note somebody asked to see in the list, whether or not it is the one open; see
-  // `revealNote`. The rows above it unfold in the same turn the ask is made and the
-  // row is there a pass later, so this waits for the row rather than giving up on it.
+  // A note asked to be shown; see `revealNote`. Its row arrives a pass after the rows
+  // above it unfold, so this waits for the row.
   $effect(() => {
     const asked = workspace.revealing
     if (asked === null) return
@@ -1141,8 +1147,8 @@
       onclick={(event) => openRowAt(event, entry)}
       ondblclick={(event) => tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
       use:middleOpens={(event) => void workspace.openRow(entry.path, howFor(tabAsk(event)))}
-      oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
-      use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
+      oncontextmenu={(event) => showRowMenu(event, entry, name)}
+      use:longPress={(event) => showRowMenu(event, entry, name)}
       ontouchstart={(event) => onRowTouchStart(event, entry)}
       ontouchmove={(event) => lift?.touchMoved(event)}
       ontouchend={endPress}

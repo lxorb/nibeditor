@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Rows of the file list as links, which is what a row dragged into a note and a
- *  row's Copy link both write. The store reads storage the moment it is made, so
- *  that is stood in for before it is imported, and the clipboard is caught. */
+/** Rows of the file list as the files a link names, which is what a row dragged into
+ *  a note and a row's Copy link both write. The store reads storage the moment it is
+ *  made, so that is stood in for before it is imported. */
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -20,15 +20,7 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
-const copied: string[] = []
-vi.mock('./clipboard', () => ({
-  copyText: (text: string) => {
-    copied.push(text)
-    return Promise.resolve()
-  },
-}))
-
-const { carriedNotes, copyRowLinks, linkedPaths } = await import('./row-links')
+const { carriedNotes, linkedPaths } = await import('./row-links')
 const { carry, carriedNothing } = await import('./drag-paths')
 const { workspace } = await import('./workspace.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -65,7 +57,6 @@ beforeEach(() => {
   workspace.spaces = [{ id: 's', name: 'Notes', root: '/s' }]
   workspace.activeSpaceId = 's'
   workspace.tree = tree
-  copied.length = 0
   carriedNothing()
 })
 
@@ -102,13 +93,5 @@ describe('a drag over a note', () => {
 
     expect(carriedNotes(transfer as unknown as DataTransfer)).toEqual(['A/A.md', 'paper.pdf'])
     expect(carriedNotes({ types: ['Files'] } as unknown as DataTransfer)).toEqual([])
-  })
-})
-
-describe('Copy link', () => {
-  test('copies a line per row, in the spelling the Links setting asks for', async () => {
-    await copyRowLinks(['/s/A/B.md', '/s/Trips'])
-
-    expect(copied).toEqual(['[[B]]\n[[Trips]]'])
   })
 })

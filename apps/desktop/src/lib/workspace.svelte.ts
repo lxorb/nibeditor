@@ -2888,15 +2888,12 @@ class Workspace {
     }
   }
 
-  /** The note the file list was last asked to show, until the list has scrolled to
-   *  it; see Tree.svelte, which clears it. */
+  /** The note the file list is to scroll to; Tree.svelte clears it. */
   revealing = $state<string | null>(null)
 
-  /** A note shown where it sits in the file list: the rows above it unfolded, the
-   *  list on screen, and its row scrolled to. Obsidian's "Reveal file in
-   *  navigation" and VS Code's "Reveal in Explorer View". A note its folder is
-   *  drawn as is that folder's row, which needs nothing unfolded but the rows
-   *  above it. The note in front, unless another is named. */
+  /** The note in front, or the one named, in the file list: the rows above it
+   *  unfolded and its own scrolled to, as Obsidian's Reveal file in navigation. A
+   *  folder's own note is the folder's row. */
   revealNote(path = this.active?.path) {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
@@ -2908,8 +2905,7 @@ class Workspace {
     this.revealing = path
   }
 
-  /** Every row of the open space folded, the way it was before anything was
-   *  unfolded. */
+  /** Every row of the open space folded. */
   foldList() {
     const root = this.activeSpace?.root
     if (root !== undefined) this.device.foldUnder(root)

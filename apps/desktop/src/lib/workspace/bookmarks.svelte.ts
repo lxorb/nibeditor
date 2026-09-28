@@ -236,9 +236,7 @@ export class Bookmarks {
     this.put(root, next)
   }
 
-  /** Several in or out with one press, the way a selection of rows asks: in, every
-   *  one not held yet, unless all of them are already, and then all of them out.
-   *  One write, because it is one row that was pressed. */
+  /** A selection in, or out once all of it is in: one press, one write. */
   toggleAll(marks: readonly Bookmark[]) {
     const root = this.root()
     if (!marks.length || root === null) return

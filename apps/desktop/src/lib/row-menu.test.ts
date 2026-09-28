@@ -40,6 +40,14 @@ vi.mock('./sharing.svelte', () => ({
   shareThisFile: () => undefined,
 }))
 
+const copied: string[] = []
+vi.mock('./clipboard', () => ({
+  copyText: (text: string) => {
+    copied.push(text)
+    return Promise.resolve()
+  },
+}))
+
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -264,6 +272,19 @@ describe('a row that is part of a selection of several', () => {
 
     press('Remove bookmark')
     expect(workspace.bookmarks.list).toEqual([])
+  })
+
+  test('and copies a link a line, in the spelling the Links setting asks for', async () => {
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/A')
+    copied.length = 0
+
+    rowMenu(loose)
+      .find((one) => one?.label === 'Copy link')
+      ?.run()
+    await vi.waitFor(() => {
+      expect(copied).toEqual(['[[loose]]\n[[A]]'])
+    })
   })
 
   test('while a selection of one is an ordinary row', () => {

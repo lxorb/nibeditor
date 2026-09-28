@@ -240,7 +240,7 @@ export class DeviceView {
     this.toggleFolder(path)
   }
 
-  /** Folds every row under a space's folder, and nothing in any other space. */
+  /** Folds every row of one space. */
   foldUnder(root: string) {
     const kept = Object.fromEntries(
       Object.entries(this.expanded).filter(([path]) => withinSpace(root, path) === null),

@@ -391,6 +391,13 @@ function holds(tail: string): boolean {
  *  the Ctrl+T dialog, or by the first press in front of that. Measured 3,320,977 and
  *  382 modules, with everything it learned.
  *
+ *  The file list's own batch (a row dragged into a note is a link, a row's menu opens
+ *  it elsewhere and acts on a selection, the list folds and finds the open note) put
+ *  two doors up to fit: a row's menu is fetched by the press that opens it, warmed at
+ *  the launch's last turn like a tab's, and the link a drop writes is fetched by the
+ *  first drop. What stays is the drop's handlers, which have to answer a `dragover`
+ *  in its own frame. Measured 3,329,402 and 385 modules.
+ *
  *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in

@@ -126,11 +126,9 @@
 
   let view = $state<EditorView>()
 
-  /** Whether what is showing takes a note dropped in the middle of the pane: a
-   *  canvas as a card, and a note that can be written in as a link to it at the
-   *  drop (see wikilink/drop.ts in @nib/editor). Read-only for the same reasons
-   *  the editor is, so the two cannot disagree about whose drop it is and a note
-   *  that cannot take a link opens the one dropped on it, as it always did. */
+  /** Whether what is showing takes a note dropped in the middle: a canvas as a card,
+   *  and a note that can be written in as a link (wikilink/drop.ts in the editor). A
+   *  read-only note opens the one dropped on it, as it always did. */
   const keepsMiddle = $derived(
     ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
   )
@@ -352,9 +350,8 @@
   }
 
   /** Whether the pane answers for a drop, or leaves it to what is showing: a
-   *  canvas makes a card of a note dropped on it, and a note that can be written
-   *  in takes a link to it at the drop, so the middle of the pane is theirs and
-   *  only the four sides are the pane's. A tab being dragged is not a transfer at
+   *  canvas or a note that takes a link keeps the middle, and only the four sides
+   *  are the pane's; see `keepsMiddle`. A tab being dragged is not a transfer at
    *  all - it is a pointer the strip it came out of follows, and that strip asks
    *  the panes where it is; see Tabs.svelte. */
   function answers(event: DragEvent, zone: Zone): boolean {
@@ -779,8 +776,7 @@
     pointer-events: none;
   }
 
-  /* A surface that takes a note dropped on it keeps the middle of the pane: a
-     canvas, and a note that can be written in. */
+  /* A surface that takes a note dropped on it keeps the middle of the pane. */
   .zones.sides .zone.whole {
     pointer-events: none;
   }

@@ -35,7 +35,5 @@ export const GRAPH_MARK =
  *  knows. */
 export const ORDER_MARK = 'M2 3.5h5M2 6.5h4M2 9.5h3M10 2.6v7.8M8.5 8.9 10 10.4l1.5-1.5'
 
-/** Two chevrons pointing at each other: every row folded shut. The glyph VS Code
- *  and Obsidian both draw on the button that does it, turned to meet in the middle
- *  so it reads as closing rather than as a direction. */
+/** Two chevrons meeting: every row folded, as VS Code and Obsidian draw it. */
 export const FOLD_MARK = 'M3.5 1.8 6.5 4.6l3-2.8M3.5 11.2l3-2.8 3 2.8'
