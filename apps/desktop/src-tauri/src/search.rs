@@ -30,7 +30,7 @@
 
 use serde::Serialize;
 use std::cmp::Reverse;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
@@ -62,6 +62,9 @@ struct Warm {
     /// Which space was read whole, where one has been.
     root: Option<PathBuf>,
     notes: HashMap<PathBuf, Kept>,
+    /// The same notes by size, the largest first, which is the order the cap lets
+    /// them go in; see `hold`.
+    by_size: BTreeSet<(Reverse<usize>, PathBuf)>,
     /// How many notes that space had when it was last read whole.
     of: usize,
     characters: usize,
@@ -78,6 +81,7 @@ impl Default for Warm {
         Self {
             root: None,
             notes: HashMap::new(),
+            by_size: BTreeSet::new(),
             of: 0,
             characters: 0,
             dropped: 0,
@@ -122,9 +126,13 @@ impl Warm {
             },
         ) {
             self.characters = self.characters.saturating_sub(was.body.len());
+            self.by_size
+                .remove(&(Reverse(was.body.len()), path.to_path_buf()));
         }
 
         self.characters += body.len();
+        self.by_size
+            .insert((Reverse(body.len()), path.to_path_buf()));
         self.hold();
     }
 
@@ -132,22 +140,16 @@ impl Warm {
     /// hundred ordinary ones cost, so letting it go buys the most room for the
     /// fewest notes read again. One that was let go is read again the next time a
     /// search reaches it.
+    ///
+    /// Off an index kept in that order rather than a sort of everything held. The
+    /// sort ran once for every note read past the cap, which is every note a search
+    /// reads again in a space larger than the cap, so a search there cost the
+    /// square of the space rather than the space.
     fn hold(&mut self) {
-        if self.characters <= self.cap {
-            return;
-        }
-
-        let mut sizes: Vec<(PathBuf, usize)> = self
-            .notes
-            .iter()
-            .map(|(path, kept)| (path.clone(), kept.body.len()))
-            .collect();
-        sizes.sort_by_key(|(_path, len)| Reverse(*len));
-
-        for (path, len) in sizes {
-            if self.characters <= self.cap {
-                break;
-            }
+        while self.characters > self.cap {
+            let Some((Reverse(len), path)) = self.by_size.pop_first() else {
+                return;
+            };
             if self.notes.remove(&path).is_some() {
                 self.characters = self.characters.saturating_sub(len);
                 self.dropped += 1;
@@ -528,6 +530,30 @@ mod tests {
         assert!(warm.characters <= warm.cap);
         assert!(!warm.notes.contains_key(Path::new("Novel.md")));
         assert!(warm.notes.contains_key(Path::new("Plan.md")));
+    }
+
+    /// A note written again is held at its new size, and the cap judges it by that
+    /// size rather than by the one it was first read at.
+    #[test]
+    fn a_note_rewritten_is_held_at_its_new_size() {
+        let mut warm = Warm {
+            cap: 100,
+            ..Warm::default()
+        };
+
+        warm.keep(Path::new("Draft.md"), stamp(80), &words(20));
+        warm.keep(Path::new("Draft.md"), stamp(8), &words(2));
+        warm.keep(Path::new("Plan.md"), stamp(60), &words(15));
+
+        assert_eq!(warm.characters, 68);
+        assert_eq!(warm.dropped, 0);
+
+        // Past the cap, the largest goes - which is Plan now, not Draft.
+        warm.keep(Path::new("Ink.md"), stamp(40), &words(10));
+        assert_eq!(warm.dropped, 1);
+        assert!(!warm.notes.contains_key(Path::new("Plan.md")));
+        assert!(warm.notes.contains_key(Path::new("Draft.md")));
+        assert_eq!(warm.characters, 48);
     }
 
     /// The one test that touches the cache the searches share, so that nothing

@@ -280,7 +280,7 @@ pub fn trace_startup(app: AppHandle, origin: f64, steps: Vec<Said>) {
 
     let shift = offset(origin);
     for said in steps {
-        let at = Duration::from_secs_f64(said.at.max(0.0) / 1000.0);
+        let at = span_of(said.at);
         // On the same axis as this side's own steps, which starts before our first
         // line rather than at it; see `BEFORE`.
         let at = at.saturating_add(shift).saturating_add(*BEFORE);
@@ -300,7 +300,15 @@ fn offset(origin: f64) -> Duration {
     }
 
     // Both are milliseconds since the epoch; the window's is fractional.
-    Duration::from_secs_f64(((origin - millis_since_epoch()) / 1000.0).max(0.0))
+    span_of(origin - millis_since_epoch())
+}
+
+/// Milliseconds the window counted, as a span: nothing for a count below zero,
+/// and nothing for one no span can hold. The count crosses the bridge as any
+/// number JSON can spell, and `Duration::from_secs_f64` panics on one past its
+/// range - which in a build that aborts on a panic is the app gone.
+fn span_of(millis: f64) -> Duration {
+    Duration::try_from_secs_f64(millis.max(0.0) / 1000.0).unwrap_or(Duration::ZERO)
 }
 
 /// This side's zero on the wall clock, in the milliseconds the window counts in.
@@ -439,7 +447,7 @@ fn before_main() -> Option<Duration> {
 
 #[cfg(test)]
 mod tests {
-    use super::{line, millis, page, push, Mark, COLUMN, MARKS};
+    use super::{line, millis, offset, page, push, span_of, Mark, COLUMN, MARKS};
     use std::time::Duration;
 
     /// The marks are one list for the whole process, so a test that writes to them
@@ -589,5 +597,16 @@ mod tests {
 
         // Thirty less the eight already spent, not thirty.
         assert!(second.contains("22.0 cpu"), "{written}");
+    }
+
+    /// A count the window sent is any number JSON can spell, and one past what a
+    /// span can hold is a clock gone wrong rather than a reason to stop the app.
+    #[test]
+    fn a_count_no_span_can_hold_is_nothing() {
+        assert_eq!(span_of(1500.0), Duration::from_millis(1500));
+        assert_eq!(span_of(-5.0), Duration::ZERO);
+        assert_eq!(span_of(f64::NAN), Duration::ZERO);
+        assert_eq!(span_of(f64::MAX), Duration::ZERO);
+        assert_eq!(offset(f64::MAX), Duration::ZERO);
     }
 }

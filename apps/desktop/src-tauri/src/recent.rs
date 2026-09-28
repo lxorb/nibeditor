@@ -5,9 +5,36 @@
 
 /// Tells the shell a note was opened. Nothing is remembered on this side, so
 /// there is nothing here that can fail.
+///
+/// Not `async`, because the shell orders the list by when each note was added and
+/// a pool of threads would add them in any order; but not done on the calling
+/// thread either, which is the one the window's message loop is on. The shell
+/// takes about two milliseconds to file a note and, now and then, most of a tenth
+/// of a second - 85 ms measured on Windows 11, for every note opened. So the note
+/// goes to a thread of the shell's own, in order. See lane.rs.
 #[tauri::command]
 pub fn remember_recent(path: String) {
-    add_to_recent(&path);
+    handed(path);
+}
+
+#[cfg(target_os = "windows")]
+fn handed(path: String) {
+    use std::sync::mpsc::Sender;
+    use std::sync::OnceLock;
+
+    static SHELL: OnceLock<Sender<String>> = OnceLock::new();
+
+    // A thread that has gone takes nothing with it but a note missing from a list
+    // the shell keeps for convenience.
+    let _ = SHELL
+        .get_or_init(|| crate::lane::lane(|path: String| add_to_recent(&path)))
+        .send(path);
+}
+
+#[cfg(not(target_os = "windows"))]
+fn handed(_path: String) {
+    // Other desktops read recent documents from their own files, which the
+    // portal writes; nothing for the app to do.
 }
 
 /// `SHARD_PATHW`: the thing being added is a path, given as a wide string.
@@ -32,16 +59,11 @@ fn add_to_recent(path: &str) {
         .collect();
 
     // Safe: the pointer is a null-terminated buffer that outlives the call, and
-    // the shell only reads from it.
+    // the shell only reads from it. The call needs nothing of the thread it is made
+    // on - no COM started first - which is what lets it be made off the window's.
     unsafe {
         SHAddToRecentDocs(PATH_AS_WIDE_STRING, Some(wide.as_ptr().cast()));
     }
-}
-
-#[cfg(not(target_os = "windows"))]
-fn add_to_recent(_path: &str) {
-    // Other desktops read recent documents from their own files, which the
-    // portal writes; nothing for the app to do.
 }
 
 #[cfg(all(test, target_os = "windows"))]

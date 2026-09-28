@@ -30,14 +30,14 @@ use std::fmt::Write as _;
 use std::fs;
 use std::io::{Read, Write as _};
 use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::paths::{cannot, config_dir, made};
+use crate::paths::{config_dir, made, write_privately};
 
 /// What the window hears a request on.
 const ASKED: &str = "nib://automation";
@@ -190,8 +190,9 @@ fn remember(app: &AppHandle, port: u16) -> Result<Kept, String> {
 
     let written = serde_json::to_string_pretty(&kept)
         .map_err(|error| format!("could not write the endpoint file: {error}"))?;
-    fs::write(&path, written).map_err(|error| cannot("write", &path, &error))?;
-    only_the_owner(&path);
+    // Whole, so a launch that dies halfway leaves the secret there was rather than a
+    // file nothing can read; and the owner's alone before the secret is in it.
+    write_privately(&path, written.as_bytes())?;
 
     Ok(kept)
 }
@@ -224,19 +225,6 @@ fn as_hex(bytes: &[u8]) -> String {
 
     out
 }
-
-/// Readable by this user and nobody else, where the platform says so in a mode.
-/// On Windows the config folder is already the user's own and there is no mode to
-/// set.
-#[cfg(unix)]
-fn only_the_owner(path: &Path) {
-    use std::os::unix::fs::PermissionsExt as _;
-
-    let _ = fs::set_permissions(path, fs::Permissions::from_mode(0o600));
-}
-
-#[cfg(not(unix))]
-fn only_the_owner(_path: &Path) {}
 
 /// One request, from the first byte to the last.
 ///
