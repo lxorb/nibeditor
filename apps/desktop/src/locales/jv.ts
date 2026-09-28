@@ -1481,4 +1481,7 @@ export const jv: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Tulad blok',
+  'Move the block up': 'Munggahake blok',
+  'Move the block down': 'Mudhunake blok',
 }

@@ -351,12 +351,14 @@ either, or want a key nib already spends.
 | Ctrl+Shift+Enter | a new line above, indented like this one |
 | Ctrl+J | the next line joined onto this one, its indent and marker gone, or every selected line onto the first |
 | Alt+Enter, in the find bar | a cursor on every match, and the bar goes |
-| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case |
+| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case. Duplicate the block and Move the block up or down, the grip's own rows, for the block the caret is in or every block the selection lies across |
 
 Delete the line has no key because both of the ones people know are taken: VS Code's
-Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Select word. A
-preset gives it one. Sort reads past list markers and boxes, ignores case and counts
-`2` before `10`; with nothing selected it sorts the list or paragraph the caret is in.
+Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Select word. The
+VS Code and Obsidian keyboards give it theirs, and the Notion one puts the block rows on
+Notion's keys; see the keyboards below. Sort reads past list markers and boxes, ignores
+case and counts `2` before `10`; with nothing selected it sorts the list or paragraph the
+caret is in.
 None of these reaches into front matter that is hidden: they stop at the first line
 that shows. See `lines.ts`, `case.ts` and `grow.ts` in `packages/editor/src`.
 
@@ -465,6 +467,72 @@ One surface for seven things, because the alternative is seven popups with seven
 sets of keys and one of them getting Escape wrong. It is CodeMirror's own
 completion tooltip, which is why it behaves the same at the caret on a phone as
 it does on a desktop.
+
+### The keyboards
+
+Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or
+Vim. Each holds only where it differs from Default, so a key Default gains later reaches
+all of them. The rule for a clash is the other app's: its key goes to what it does there,
+and the Nib action that held it is left with no key rather than moved somewhere nobody
+would look. Those rows read "Not set" in the list, and are still in the menus and the
+palette. `presets.test.ts` fails if a keyboard writes one chord twice, or leaves any two
+actions on one key.
+
+Default indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
+Obsidian and CodeMirror have it the other way round, and so do those two keyboards.
+
+**VS Code**
+
+| | |
+| --- | --- |
+| Ctrl+G | go to line; Ctrl+G on a Mac too, as there |
+| Ctrl+Shift+K | delete the line |
+| Ctrl+Shift+L | a cursor on every one like the selection |
+| Ctrl+\ | split right |
+| Ctrl+], Ctrl+[ | indent, outdent |
+| Shift+Alt+Right, Shift+Alt+Left | the selection outwards and back, which Default has already |
+| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar |
+
+Ctrl+B stays Bold. It is the sidebar in VS Code, but in a note it is bold, which is what
+VS Code's own markdown extensions do with it too. So the sidebar has no key, and
+Ctrl+Shift+E, VS Code's key for the files, opens them.
+
+**Obsidian**
+
+| | |
+| --- | --- |
+| Ctrl+O | the palette on the notes, which is the quick switcher |
+| Ctrl+P | the palette on the commands, which is the command palette; Ctrl+Shift+P as well |
+| Ctrl+1 to 9 | the notes on the strip |
+| Ctrl+Alt+Left, Ctrl+Alt+Right | back, forward |
+| Ctrl+D | delete the line, Obsidian's delete paragraph |
+| Ctrl+\, Ctrl+Shift+\ | split right, split down |
+| Ctrl+G | the graph |
+| Alt+Enter | follow the link |
+| Ctrl+], Ctrl+[ | indent, outdent |
+| no key | Open file, the heading levels, find next (F3 stays), Select word, Clear formatting, the canvas's zoom to what is picked |
+
+**Notion**
+
+| | |
+| --- | --- |
+| Ctrl+Shift+1, 2, 3 | headings |
+| Ctrl+Shift+4, 5, 6 | task list, bulleted list, numbered list |
+| Ctrl+Shift+8 | code block |
+| Ctrl+E | inline code |
+| Ctrl+Shift+S | strikethrough |
+| Ctrl+\ | show or hide the sidebar |
+| Ctrl+D | duplicate the block |
+| Ctrl+Shift+Up, Ctrl+Shift+Down | move the block |
+| no key | the reading view, Clear formatting, Select word |
+
+On a Mac, Notion's Cmd+Shift+Up and Down move the block here too, which takes selecting to
+either end of the note away from those keys, as Notion does.
+
+**Vim** is Default's keys with modal editing on top; see `packages/editor/src/vim.ts`.
+
+The keyboards are fetched with the Settings sheet, and the launch reads only a keyboard's
+name. See `lib/shortcuts/presets.ts` and `lib/shortcuts/preset-ids.ts`.
 
 ### Layers
 

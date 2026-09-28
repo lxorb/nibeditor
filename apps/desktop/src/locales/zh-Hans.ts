@@ -1451,4 +1451,7 @@ export const zhHans: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': '复制此块',
+  'Move the block up': '上移此块',
+  'Move the block down': '下移此块',
 }

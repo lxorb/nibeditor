@@ -1452,4 +1452,7 @@ export const yue: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': '複製呢個區塊',
+  'Move the block up': '呢個區塊上移',
+  'Move the block down': '呢個區塊下移',
 }

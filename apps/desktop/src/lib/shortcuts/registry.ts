@@ -188,6 +188,9 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'edit.upper-case': ['edit', () => t('Upper case')],
   'edit.lower-case': ['edit', () => t('Lower case')],
   'edit.title-case': ['edit', () => t('Title case')],
+  'edit.duplicate-block': ['edit', () => t('Duplicate the block')],
+  'edit.move-block-up': ['edit', () => t('Move the block up')],
+  'edit.move-block-down': ['edit', () => t('Move the block down')],
   'edit.follow-link': ['edit', () => t('Follow the link')],
 
   'table.below': ['table', () => t('Into the table below')],
@@ -605,6 +608,18 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-Shift-p',
+    run: (context) => context.palette('commands'),
+  },
+  // A second key for the same palette on commands, with none of its own: the Obsidian
+  // keyboard puts it on Ctrl+P, which is Obsidian's command palette, and leaves
+  // Ctrl+Shift+P where every other editor has it. See presets.ts.
+  {
+    id: 'app.commands.alt',
+    label: () => t('Commands'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    alias: true,
     run: (context) => context.palette('commands'),
   },
   {

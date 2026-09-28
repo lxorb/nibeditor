@@ -1514,4 +1514,7 @@ export const ha: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Kwafi sashen',
+  'Move the block up': 'Matsar da sashen sama',
+  'Move the block down': 'Matsar da sashen ƙasa',
 }

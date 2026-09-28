@@ -18,7 +18,7 @@
 
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { indentLess, indentMore } from '@codemirror/commands'
-import type { EditorView } from '@codemirror/view'
+import type { Command, EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds } from '@nib/markdown/links'
 import { headingText } from '../headings'
 import { copyBlock, cutBlock, moveBlock } from './move'
@@ -80,6 +80,20 @@ export function deleteBlocks(view: EditorView, pos: number): boolean {
   view.focus()
   return true
 }
+
+/** Three of them again, for a key rather than a menu row: the block the caret is in,
+ *  or every block the selection lies across, which is what `blocksFor` reads off a
+ *  press at the caret's end of it. None has a key out of the box - the grip's menu is
+ *  where they live - and the Notion keyboard puts them on Notion's own. A note nobody
+ *  may write in is left alone, and the press goes on to whatever else holds the key. */
+const atCaret =
+  (act: (view: EditorView, pos: number) => boolean): Command =>
+  (view) =>
+    !view.state.readOnly && act(view, view.state.selection.main.head)
+
+export const duplicateBlock = atCaret(duplicateBlocks)
+export const moveBlockUp = atCaret((view, pos) => moveBlocks(view, pos, -1))
+export const moveBlockDown = atCaret((view, pos) => moveBlocks(view, pos, 1))
 
 /** What a link into this note would point at: `#A heading` for a heading, since
  *  that is what a heading is already called, and `#^name` for anything else.

@@ -1498,4 +1498,7 @@ export const gsw: Dictionary = {
   'Upper case': 'Grossbuechstabe',
   'Lower case': 'Chliibuechstabe',
   'Title case': 'Wortaafäng gross',
+  'Duplicate the block': 'De Block verdopple',
+  'Move the block up': 'De Block ufe schiebe',
+  'Move the block down': 'De Block abe schiebe',
 }

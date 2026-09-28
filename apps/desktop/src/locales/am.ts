@@ -1468,4 +1468,7 @@ export const am: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ብሎኩን አባዛ',
+  'Move the block up': 'ብሎኩን ወደ ላይ አንቀሳቅስ',
+  'Move the block down': 'ብሎኩን ወደ ታች አንቀሳቅስ',
 }

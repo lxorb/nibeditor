@@ -1572,4 +1572,7 @@ export const ar: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'تكرار الكتلة',
+  'Move the block up': 'نقل الكتلة لأعلى',
+  'Move the block down': 'نقل الكتلة لأسفل',
 }

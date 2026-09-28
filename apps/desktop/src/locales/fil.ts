@@ -1519,4 +1519,7 @@ export const fil: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Gumawa ng kopya ng block',
+  'Move the block up': 'Iakyat ang block',
+  'Move the block down': 'Ibaba ang block',
 }

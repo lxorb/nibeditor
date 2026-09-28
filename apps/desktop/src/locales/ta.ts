@@ -1510,4 +1510,7 @@ export const ta: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'தொகுதியை நகலாக்கு',
+  'Move the block up': 'தொகுதியை மேலே நகர்த்து',
+  'Move the block down': 'தொகுதியை கீழே நகர்த்து',
 }

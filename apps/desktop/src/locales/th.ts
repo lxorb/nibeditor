@@ -1457,4 +1457,7 @@ export const th: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ทำสำเนาบล็อก',
+  'Move the block up': 'ย้ายบล็อกขึ้น',
+  'Move the block down': 'ย้ายบล็อกลง',
 }

@@ -1542,4 +1542,7 @@ export const fr: Dictionary = {
   'Upper case': 'Majuscules',
   'Lower case': 'Minuscules',
   'Title case': 'Initiales en majuscule',
+  'Duplicate the block': 'Dupliquer le bloc',
+  'Move the block up': 'Monter le bloc',
+  'Move the block down': 'Descendre le bloc',
 }

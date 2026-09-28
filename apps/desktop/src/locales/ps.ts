@@ -1490,4 +1490,7 @@ export const ps: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'د بلاک کاپي جوړول',
+  'Move the block up': 'بلاک پورته خوځول',
+  'Move the block down': 'بلاک ښکته خوځول',
 }

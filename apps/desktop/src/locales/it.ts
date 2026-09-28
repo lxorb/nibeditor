@@ -1537,4 +1537,7 @@ export const it: Dictionary = {
   'Upper case': 'Maiuscolo',
   'Lower case': 'Minuscolo',
   'Title case': 'Iniziali maiuscole',
+  'Duplicate the block': 'Duplica il blocco',
+  'Move the block up': 'Sposta il blocco in alto',
+  'Move the block down': 'Sposta il blocco in basso',
 }

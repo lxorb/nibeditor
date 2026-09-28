@@ -1513,4 +1513,7 @@ export const sw: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Nakili kizuizi',
+  'Move the block up': 'Panda kizuizi juu',
+  'Move the block down': 'Shusha kizuizi chini',
 }

@@ -1479,4 +1479,7 @@ export const gu: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'બ્લૉકની નકલ કરો',
+  'Move the block up': 'બ્લૉક ઉપર ખસેડો',
+  'Move the block down': 'બ્લૉક નીચે ખસેડો',
 }

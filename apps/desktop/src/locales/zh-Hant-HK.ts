@@ -1451,4 +1451,7 @@ export const zhHantHK: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': '複製此區塊',
+  'Move the block up': '此區塊上移',
+  'Move the block down': '此區塊下移',
 }

@@ -1488,4 +1488,7 @@ export const mr: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ब्लॉकची प्रत करा',
+  'Move the block up': 'ब्लॉक वर हलवा',
+  'Move the block down': 'ब्लॉक खाली हलवा',
 }

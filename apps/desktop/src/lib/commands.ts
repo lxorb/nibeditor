@@ -1,6 +1,7 @@
 import {
   CODE_PALETTES,
   deleteLine,
+  duplicateBlock,
   EditorView,
   expandSelection,
   foldHeadings,
@@ -23,6 +24,8 @@ import {
   insertToc,
   joinLines,
   lowerCase,
+  moveBlockDown,
+  moveBlockUp,
   reformatDocument,
   reverseLines,
   setHeading,
@@ -556,13 +559,19 @@ function foldingCommands(view?: EditorView): Command[] {
 /** The lines and the letters: the rows for what a code editor does to lines, to
  *  case, and to the selection a step at a time. Here as well as on their keys -
  *  most of them have none - because the palette is where somebody looks for a
- *  thing they know from another editor. See lines.ts, case.ts and grow.ts in the
- *  editor package.
+ *  thing they know from another editor. The grip's Duplicate and Move rows are here
+ *  too, for the block the caret is in. See lines.ts, case.ts, grow.ts and
+ *  block/commands.ts in the editor package.
  *
  *  The selection rows only move the selection, so a note nobody may write in still
  *  offers them; the rest write, and are greyed out there. */
 function lineCommands(view?: EditorView): Command[] {
-  const row = (id: string, label: string, command: StateCommand, writes = true): Command => ({
+  const row = (
+    id: string,
+    label: string,
+    command: (view: EditorView) => boolean,
+    writes = true,
+  ): Command => ({
     id,
     label,
     hint: shortcuts.hint(id),
@@ -585,6 +594,9 @@ function lineCommands(view?: EditorView): Command[] {
     row('edit.upper-case', t('Upper case'), upperCase),
     row('edit.lower-case', t('Lower case'), lowerCase),
     row('edit.title-case', t('Title case'), titleCase),
+    row('edit.duplicate-block', t('Duplicate the block'), duplicateBlock),
+    row('edit.move-block-up', t('Move the block up'), moveBlockUp),
+    row('edit.move-block-down', t('Move the block down'), moveBlockDown),
   ]
 }
 

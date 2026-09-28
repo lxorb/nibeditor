@@ -44,6 +44,14 @@ await Promise.all([
   import('./app-menu'),
 ])
 
+/** A keyboard by its name, handed over the way the Settings sheet hands one over. */
+const { presetById } = await import('./shortcuts/presets')
+const keyboard = (id: string) => {
+  const found = presetById(id)
+  if (!found) throw new Error(`no keyboard called ${id}`)
+  return found
+}
+
 /** The store as a fresh start of the app would find it. */
 async function restarted() {
   vi.resetModules()
@@ -326,7 +334,7 @@ describe('choosing a keyboard', () => {
   test('rewrites the whole map rather than adding to it', () => {
     const { shortcuts } = registry
     shortcuts.set('format.bold', 'Mod-Alt-b')
-    shortcuts.choose('obsidian')
+    shortcuts.choose(keyboard('obsidian'))
 
     expect(shortcuts.preset).toBe('obsidian')
     // The hand-made key is gone: a preset is a keyboard, not a patch.
@@ -337,7 +345,7 @@ describe('choosing a keyboard', () => {
 
   test('and Notion puts inline code where the reading view was', () => {
     const { shortcuts } = registry
-    shortcuts.choose('notion')
+    shortcuts.choose(keyboard('notion'))
 
     expect(shortcuts.keyFor('format.code')).toBe('Mod-e')
     expect(shortcuts.keyFor('app.reading')).toBeNull()
@@ -346,8 +354,8 @@ describe('choosing a keyboard', () => {
 
   test('goes back to the defaults by choosing the default one', () => {
     const { shortcuts } = registry
-    shortcuts.choose('obsidian')
-    shortcuts.choose('default')
+    shortcuts.choose(keyboard('obsidian'))
+    shortcuts.choose(keyboard('default'))
 
     expect(shortcuts.overrides).toEqual({})
     expect(shortcuts.keyFor('paragraph.heading-1')).toBe('Mod-1')
@@ -355,7 +363,7 @@ describe('choosing a keyboard', () => {
 
   test('is what resetting every key does', () => {
     const { shortcuts } = registry
-    shortcuts.choose('notion')
+    shortcuts.choose(keyboard('notion'))
     shortcuts.resetAll()
 
     expect(shortcuts.preset).toBe('default')
@@ -366,10 +374,10 @@ describe('choosing a keyboard', () => {
     const { shortcuts } = registry
     const modes = await currentModes()
 
-    shortcuts.choose('vim')
+    shortcuts.choose(keyboard('vim'))
     expect(modes.vim).toBe(true)
 
-    shortcuts.choose('obsidian')
+    shortcuts.choose(keyboard('obsidian'))
     expect(modes.vim).toBe(false)
   })
 
@@ -381,19 +389,12 @@ describe('choosing a keyboard', () => {
     const { shortcuts } = registry
     const modes = await currentModes()
 
-    shortcuts.choose('notion')
+    shortcuts.choose(keyboard('notion'))
     modes.setVimKeys(true)
 
     expect(modes.vim).toBe(true)
     expect(shortcuts.preset).toBe('notion')
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-  })
-
-  test('leaves a name this version has never heard of alone', () => {
-    const { shortcuts } = registry
-    shortcuts.choose('emacs')
-
-    expect(shortcuts.preset).toBe('default')
   })
 
   /** Modal editing changes what every key on the keyboard does, so nothing but a
@@ -405,14 +406,14 @@ describe('choosing a keyboard', () => {
       const { shortcuts } = registry
       const modes = await currentModes()
 
-      for (const id of ['default', 'notion', 'obsidian']) {
-        shortcuts.choose(id)
+      for (const id of ['default', 'notion', 'obsidian', 'vscode']) {
+        shortcuts.choose(keyboard(id))
         expect(modes.vim, id).toBe(false)
       }
     })
 
     test('stays off when a name written down before is read back', async () => {
-      for (const id of ['default', 'notion', 'obsidian', 'vim', 'custom']) {
+      for (const id of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
         localStorage.clear()
         localStorage.setItem('nib:preset', id)
 
@@ -440,7 +441,7 @@ describe('choosing a keyboard', () => {
       const { shortcuts } = registry
       const modes = await currentModes()
 
-      shortcuts.choose('vim')
+      shortcuts.choose(keyboard('vim'))
       expect(modes.vim).toBe(true)
 
       shortcuts.resetAll()
@@ -459,7 +460,7 @@ describe('choosing a keyboard', () => {
   })
 
   test('is remembered across a restart', async () => {
-    registry.shortcuts.choose('obsidian')
+    registry.shortcuts.choose(keyboard('obsidian'))
     const { shortcuts } = await restarted()
 
     expect(shortcuts.preset).toBe('obsidian')
@@ -470,7 +471,7 @@ describe('choosing a keyboard', () => {
 describe('a map made by hand', () => {
   test('is Custom as soon as one key is rebound', () => {
     const { shortcuts } = registry
-    shortcuts.choose('obsidian')
+    shortcuts.choose(keyboard('obsidian'))
     shortcuts.set('format.bold', 'Mod-Alt-b')
 
     expect(shortcuts.preset).toBe('custom')
@@ -478,7 +479,7 @@ describe('a map made by hand', () => {
 
   test('is Custom when one key is put back on its own, too', () => {
     const { shortcuts } = registry
-    shortcuts.choose('obsidian')
+    shortcuts.choose(keyboard('obsidian'))
     shortcuts.reset('app.note-1')
 
     expect(shortcuts.preset).toBe('custom')
@@ -515,7 +516,7 @@ describe('the keyboard the account carries', () => {
 
   test('keeps the one this machine has when the account carries none', () => {
     const { shortcuts } = registry
-    shortcuts.choose('obsidian')
+    shortcuts.choose(keyboard('obsidian'))
     shortcuts.receive({ ligatures: true })
 
     expect(shortcuts.preset).toBe('obsidian')

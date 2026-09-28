@@ -25,6 +25,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 let registry: typeof import('./registry')
 let presets: typeof import('./presets')
+let names: typeof import('./preset-ids')
 
 /** A budget of its own, because what this hook does is compile the registry's graph -
  *  half the app, cold, on whatever cores are left. Thirty seconds is enough on a quiet
@@ -34,6 +35,7 @@ let presets: typeof import('./presets')
 beforeAll(async () => {
   registry = await import('./registry')
   presets = await import('./presets')
+  names = await import('./preset-ids')
 }, 240_000)
 
 const PLATFORMS: Platform[] = ['mac', 'win', 'linux']
@@ -57,6 +59,11 @@ describe('every keyboard there is', () => {
     expect(ids).toContain('vim')
   })
 
+  /** The launch reads the names without the maps, so the two lists are one list. */
+  test('is every name the launch knows, in the same order', () => {
+    expect(presets.PRESETS.map((one) => one.id)).toEqual([...names.PRESET_IDS])
+  })
+
   test('leaves the default map alone, which is what Default means', () => {
     expect(presets.presetById('default')?.keys).toEqual({})
   })
@@ -65,10 +72,11 @@ describe('every keyboard there is', () => {
     expect(presets.presetById('vim')?.vim).toBe(true)
     expect(presets.presetById('obsidian')?.vim).toBe(false)
     expect(presets.presetById('notion')?.vim).toBe(false)
+    expect(presets.presetById('vscode')?.vim).toBe(false)
   })
 })
 
-describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) => {
+describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
   const keysOf = () => presets.presetById(id)?.keys ?? {}
 
   /** A preset that names a shortcut this version does not have would be a key
@@ -104,6 +112,23 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
     }
 
     expect(wrong).toEqual([])
+  })
+
+  /** The narrowest form of the guard below, and the one a hand-written map gets wrong
+   *  first: the same chord written twice in the preset itself. */
+  test.each(PLATFORMS)('writes no chord twice (%s)', (platform) => {
+    const written = Object.entries(keysOf()).filter(
+      (pair): pair is [string, string] => pair[1] !== null,
+    )
+    const twice: string[] = []
+
+    written.forEach(([one, key], index) => {
+      for (const [other, held] of written.slice(index + 1)) {
+        if (sameCombination(key, held, platform)) twice.push(`${one} and ${other} on ${key}`)
+      }
+    })
+
+    expect(twice).toEqual([])
   })
 
   /** The guard the whole idea hangs on. Two actions on one key means one of
@@ -172,7 +197,7 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
  *  binds that chord to anything of its own. So the default reaches all of them, which
  *  is what a preset holding only its differences means - and Paragraph, which held the
  *  chord, is without a key under every one of them. */
-describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) => {
+describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboard', (id) => {
   test('opens the commands on Ctrl+Shift+P, and leaves Paragraph no key', () => {
     const keys = presets.presetById(id)?.keys ?? {}
 
@@ -217,11 +242,89 @@ describe('the Obsidian keyboard', () => {
   test('leaves what Nib and Obsidian already agree on alone', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
-    // Ctrl+E reading, Ctrl+P palette, Ctrl+N new note, Ctrl+W close,
-    // Ctrl+Shift+F search, Ctrl+K link: all of them are Nib's own already.
-    for (const id of ['app.reading', 'app.palette', 'app.new', 'app.close', 'format.link']) {
+    // Ctrl+E reading, Ctrl+N new note, Ctrl+W close, Ctrl+Shift+F search, Ctrl+K
+    // link: all of them are Nib's own already.
+    for (const id of ['app.reading', 'app.new', 'app.close', 'format.link']) {
       expect(keys[id], id).toBeUndefined()
     }
+  })
+
+  /** Obsidian's two: the quick switcher on Ctrl+O and the command palette on Ctrl+P,
+   *  which are Nib's one palette opened on the notes and on the commands. */
+  test('opens the palette on the notes on Ctrl+O and on the commands on Ctrl+P', () => {
+    const keys = presets.presetById('obsidian')?.keys ?? {}
+
+    expect(keys['app.palette']).toBe('Mod-o')
+    expect(keys['app.commands.alt']).toBe('Mod-p')
+    expect(keys['app.open']).toBeNull()
+    expect(registry.BY_ID.get('app.commands.alt')?.alias).toBe(true)
+  })
+
+  test('goes back and forward on Ctrl+Alt and an arrow, and deletes the line on Ctrl+D', () => {
+    const keys = presets.presetById('obsidian')?.keys ?? {}
+
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, 'app.back', platform), platform).toBe('Mod-Alt-ArrowLeft')
+      expect(keyUnder(keys, 'app.forward', platform), platform).toBe('Mod-Alt-ArrowRight')
+      expect(keyUnder(keys, 'edit.delete-line', platform), platform).toBe('Mod-d')
+      expect(keyUnder(keys, 'edit.select-word', platform), platform).toBeNull()
+    }
+  })
+})
+
+/** Nib indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
+ *  Obsidian and CodeMirror have it the other way round, and so do their keyboards
+ *  here; the default is left as Typora's. */
+describe('the brackets', () => {
+  test('indent on Ctrl+[ under the default keyboard', () => {
+    for (const platform of PLATFORMS) {
+      expect(keyUnder({}, 'edit.indent', platform), platform).toBe('Mod-[')
+      expect(keyUnder({}, 'edit.outdent', platform), platform).toBe('Mod-]')
+    }
+  })
+
+  test.each(['vscode', 'obsidian'])('indent on Ctrl+] under %s', (id) => {
+    const keys = presets.presetById(id)?.keys ?? {}
+
+    expect(keys['edit.indent']).toBe('Mod-]')
+    expect(keys['edit.outdent']).toBe('Mod-[')
+  })
+})
+
+describe('the VS Code keyboard', () => {
+  const keys = () => presets.presetById('vscode')?.keys ?? {}
+
+  test("puts VS Code's keys on the editor's commands", () => {
+    for (const platform of PLATFORMS) {
+      const on = (id: string) => keyUnder(keys(), id, platform)
+
+      expect(on('edit.goto-line'), platform).toBe('Ctrl-g')
+      expect(on('edit.delete-line'), platform).toBe('Mod-Shift-k')
+      expect(on('edit.select-all-occurrences'), platform).toBe('Mod-Shift-l')
+      expect(on('pane.split-right'), platform).toBe('Mod-\\')
+    }
+  })
+
+  /** Already Nib's own, so the preset says nothing about them and they reach it. */
+  test('grows and shrinks the selection on Shift+Alt and an arrow, as Nib already does', () => {
+    expect(keys()['edit.expand-selection']).toBeUndefined()
+    expect(keyUnder(keys(), 'edit.expand-selection', 'win')).toBe('Shift-Alt-ArrowRight')
+    expect(keyUnder(keys(), 'edit.shrink-selection', 'linux')).toBe('Shift-Alt-ArrowLeft')
+  })
+
+  /** Ctrl+B is VS Code's sidebar and every markdown editor's bold, and a note is
+   *  markdown: bold keeps it, and the sidebar is left without a key. */
+  test('keeps Ctrl+B on bold', () => {
+    expect(keys()['format.bold']).toBeUndefined()
+    expect(keys()['app.sidebar']).toBeNull()
+    expect(keyUnder(keys(), 'app.files', 'win')).toBe('Mod-Shift-e')
+  })
+
+  test('leaves find next on F3, and Code block and clear formatting without a key', () => {
+    expect(keys()['edit.find-next']).toBeNull()
+    expect(keyUnder(keys(), 'edit.find-next.alt', 'win')).toBe('F3')
+    expect(keys()['paragraph.code-block']).toBeNull()
+    expect(keys()['format.clear']).toBeNull()
   })
 })
 
@@ -249,23 +352,35 @@ describe('the Notion keyboard', () => {
     expect(keys['app.reading']).toBeNull()
     expect(keys['format.clear']).toBeNull()
   })
+
+  test('duplicates the block on Ctrl+D and moves it on Ctrl+Shift and an arrow', () => {
+    const keys = presets.presetById('notion')?.keys ?? {}
+
+    expect(keys['edit.duplicate-block']).toBe('Mod-d')
+    expect(keys['edit.move-block-up']).toBe('Mod-Shift-ArrowUp')
+    expect(keys['edit.move-block-down']).toBe('Mod-Shift-ArrowDown')
+    expect(keys['edit.select-word']).toBeNull()
+  })
 })
 
 describe('a name written down or carried by the account', () => {
   test('is taken when it is one this version has', () => {
-    expect(presets.knownPreset('obsidian')).toBe('obsidian')
-    expect(presets.knownPreset('custom')).toBe('custom')
+    expect(names.knownPreset('obsidian')).toBe('obsidian')
+    expect(names.knownPreset('vscode')).toBe('vscode')
+    expect(names.knownPreset('custom')).toBe('custom')
   })
 
   test('is no opinion at all when there is none', () => {
-    expect(presets.knownPreset(undefined)).toBeNull()
-    expect(presets.knownPreset('')).toBeNull()
-    expect(presets.knownPreset(7)).toBeNull()
+    expect(names.knownPreset(undefined)).toBeNull()
+    expect(names.knownPreset('')).toBeNull()
+    expect(names.knownPreset(7)).toBeNull()
   })
 
   /** A preset a newer app added is a map this one cannot put a name to, which
    *  is what Custom is for. The keys themselves still arrive. */
   test('reads as Custom when it is one this version has never heard of', () => {
-    expect(presets.knownPreset('emacs')).toBe('custom')
+    expect(names.knownPreset('emacs')).toBe('custom')
+    // And the Settings sheet, handed one, chooses nothing.
+    expect(presets.presetById('emacs')).toBeUndefined()
   })
 })

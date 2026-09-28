@@ -1490,4 +1490,7 @@ export const te: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'బ్లాక్‌ను నకలు చేయి',
+  'Move the block up': 'బ్లాక్‌ను పైకి తరలించు',
+  'Move the block down': 'బ్లాక్‌ను కిందికి తరలించు',
 }

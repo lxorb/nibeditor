@@ -1475,4 +1475,7 @@ export const my: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ဘလောက်ကို မိတ္တူပွား',
+  'Move the block up': 'ဘလောက်ကို အထက်ရွှေ့ပါ',
+  'Move the block down': 'ဘလောက်ကို အောက်ရွှေ့ပါ',
 }

@@ -1482,4 +1482,7 @@ export const ja: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ブロックを複製',
+  'Move the block up': 'ブロックを上へ移動',
+  'Move the block down': 'ブロックを下へ移動',
 }

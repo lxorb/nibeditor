@@ -1486,4 +1486,7 @@ export const ms: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Salin dua blok',
+  'Move the block up': 'Alihkan blok ke atas',
+  'Move the block down': 'Alihkan blok ke bawah',
 }

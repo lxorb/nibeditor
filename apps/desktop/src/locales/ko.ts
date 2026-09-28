@@ -1465,4 +1465,7 @@ export const ko: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': '블록 복제',
+  'Move the block up': '블록을 위로 이동',
+  'Move the block down': '블록을 아래로 이동',
 }

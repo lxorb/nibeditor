@@ -1549,4 +1549,7 @@ export const uk: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Дублювати блок',
+  'Move the block up': 'Перемістити блок вище',
+  'Move the block down': 'Перемістити блок нижче',
 }

@@ -1490,4 +1490,7 @@ export const tr: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Bloğu çoğalt',
+  'Move the block up': 'Bloğu yukarı taşı',
+  'Move the block down': 'Bloğu aşağı taşı',
 }

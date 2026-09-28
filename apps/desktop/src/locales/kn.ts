@@ -1500,4 +1500,7 @@ export const kn: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ಬ್ಲಾಕ್ ನಕಲು ಮಾಡಿ',
+  'Move the block up': 'ಬ್ಲಾಕ್ ಅನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
+  'Move the block down': 'ಬ್ಲಾಕ್ ಅನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
 }

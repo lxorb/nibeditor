@@ -1527,4 +1527,7 @@ export const de: Dictionary = {
   'Upper case': 'Großbuchstaben',
   'Lower case': 'Kleinbuchstaben',
   'Title case': 'Wortanfänge groß',
+  'Duplicate the block': 'Block duplizieren',
+  'Move the block up': 'Block nach oben schieben',
+  'Move the block down': 'Block nach unten schieben',
 }

@@ -3,7 +3,7 @@
  *  A preset holds only the keys that differ from Nib's own, the same shape a
  *  reader's own map has: what a preset does not name is at whatever the app
  *  says today, so a default that improves later reaches everybody rather than
- *  being frozen into four copies of it.
+ *  being frozen into five copies of it.
  *
  *  One rule decides the awkward cases, and it is the rule the other app
  *  already follows: the key goes to the action that app uses it for. Where that
@@ -12,17 +12,16 @@
  *  guess. It keeps its place in the menus, the palette and the shortcut list,
  *  and its row reads "Not set", which is something a reader can see and change.
  *
- *  Data only. Choosing one is the store next door. */
+ *  Data only, and not in front of the first paint: the Settings sheet is the one
+ *  place a keyboard is chosen, and it hands the one it chose to the store next door.
+ *  What the launch reads is the name alone; see preset-ids.ts. */
 
 import type { KeyOverrides } from '@nib/editor'
 import { t } from '../i18n.svelte'
-
-/** Custom is not chosen, it is arrived at: the map becomes it the moment one
- *  key is rebound by hand. */
-export type PresetId = 'default' | 'notion' | 'obsidian' | 'vim' | 'custom'
+import type { PresetId } from './preset-ids'
 
 export interface Preset {
-  id: PresetId
+  id: Exclude<PresetId, 'custom'>
   label: () => string
   /** Differences from Nib's defaults, by shortcut id. Null takes a key away. */
   keys: KeyOverrides
@@ -32,16 +31,20 @@ export interface Preset {
 
 /** Obsidian's own keys.
  *
- *  Most of Nib's already are Obsidian's - Ctrl+E for reading, Ctrl+P for the
- *  palette, Ctrl+N, Ctrl+W, Ctrl+Shift+T for the last closed tab,
- *  Ctrl+Tab, Ctrl+K, Ctrl+comma, Ctrl+Shift+F and Ctrl+Shift+V - so what is
- *  written here is only where the two differ.
+ *  Most of Nib's already are Obsidian's - Ctrl+E for reading, Ctrl+N, Ctrl+W,
+ *  Ctrl+Shift+T for the last closed tab, Ctrl+Tab, Ctrl+K, Ctrl+comma,
+ *  Ctrl+Shift+F and Ctrl+Shift+V - so what is written here is only where the two
+ *  differ.
  *
- *  Nib's palette answers for two of Obsidian's. Typed into, it is the quick
- *  switcher; `>` turns it into the command palette. It stays on Ctrl+P, and
- *  Ctrl+O keeps Open file, which is the same gesture arriving at a note either
- *  way. */
+ *  Nib's palette is both of Obsidian's, and here it answers on both of their keys:
+ *  Ctrl+O opens it on the notes, which is the quick switcher, and Ctrl+P on the
+ *  commands, which is the command palette. Ctrl+Shift+P stays the commands as well,
+ *  where every editor has them. Open file is left with no key, since Obsidian opens
+ *  nothing from outside its vault. */
 const OBSIDIAN: KeyOverrides = {
+  'app.palette': 'Mod-o',
+  'app.commands.alt': 'Mod-p',
+  'app.open': null,
   'pane.split-right': 'Mod-\\',
   'pane.split-down': 'Mod-Shift-\\',
   // Ctrl+\ is the split, and Obsidian has nothing that clears formatting.
@@ -50,6 +53,18 @@ const OBSIDIAN: KeyOverrides = {
   // Find next keeps F3, which is its second key.
   'edit.find-next': null,
   'edit.follow-link': 'Alt-Enter',
+  // Back and forward on Obsidian's Ctrl+Alt and an arrow, which the split held here
+  // and gave up for Ctrl+\ above.
+  'app.back': 'Mod-Alt-ArrowLeft',
+  'app.forward': 'Mod-Alt-ArrowRight',
+  // Obsidian's Ctrl+D deletes the paragraph, which in a markdown file is the line.
+  // Selecting the word, which held it, has no counterpart there.
+  'edit.delete-line': 'Mod-d',
+  'edit.select-word': null,
+  // Ctrl+] indents and Ctrl+[ outdents, the way round Obsidian and VS Code have it.
+  // Nib's own order is Typora's; see `edit.indent` in @nib/editor's keymap.
+  'edit.indent': 'Mod-]',
+  'edit.outdent': 'Mod-[',
 }
 
 // The digits are the change worth knowing about. Obsidian gives Ctrl+1 to
@@ -97,32 +112,64 @@ const NOTION: KeyOverrides = {
   'paragraph.bullet-list': 'Mod-Shift-5',
   'paragraph.ordered-list': 'Mod-Shift-6',
   'paragraph.code-block': 'Mod-Shift-8',
+  // The block the caret is in, as the grip's own Duplicate and Move rows. Selecting the
+  // word, which held Ctrl+D, has no counterpart in Notion. On a Mac the move is
+  // Cmd+Shift and an arrow, which takes selecting to either end of the note away, the
+  // way Notion does itself.
+  'edit.duplicate-block': 'Mod-d',
+  'edit.select-word': null,
+  'edit.move-block-up': 'Mod-Shift-ArrowUp',
+  'edit.move-block-down': 'Mod-Shift-ArrowDown',
 }
 
-/** Every keyboard there is to choose from, in the order the select shows them.
+/** VS Code's own keys.
+ *
+ *  Nib already has most of them: Ctrl+P and Ctrl+Shift+P, Ctrl+D for the next one
+ *  like it, Ctrl+L for the line, Alt and Shift+Alt with Up and Down for moving and
+ *  copying lines, Ctrl+Shift+Enter for a line above, Shift+Alt+Right and Left for
+ *  the selection outwards and back, Ctrl+Shift+E for the files, Ctrl+Shift+F,
+ *  Ctrl+H and F3. What is here is where they part.
+ *
+ *  Ctrl+B is the one key of VS Code's that stays where it is. There it shows and
+ *  hides the sidebar; in a note it is Bold, which is what the markdown extensions
+ *  for VS Code put on it as well, and a writing app with no key for bold is broken.
+ *  So the sidebar is left without a key of its own, and a code editor's hand has
+ *  Ctrl+Shift+E, VS Code's key for the files, which opens them and gives the note
+ *  the keyboard back on the second press. */
+const VSCODE: KeyOverrides = {
+  // Ctrl+G on every platform, which is VS Code's on a Mac as well, rather than Cmd+G.
+  // Find next keeps F3, its second key and VS Code's own.
+  'edit.goto-line': 'Ctrl-g',
+  'edit.find-next': null,
+  // Ctrl+Shift+K deletes the line. It was Code block, which VS Code has no key for.
+  'edit.delete-line': 'Mod-Shift-k',
+  'paragraph.code-block': null,
+  // Ctrl+Shift+L selects every one like it, and the sidebar gives it up; see above.
+  'edit.select-all-occurrences': 'Mod-Shift-l',
+  'app.sidebar': null,
+  // Ctrl+\ splits the pane to the right, and VS Code has nothing that clears formatting.
+  'pane.split-right': 'Mod-\\',
+  'format.clear': null,
+  // Ctrl+] indents and Ctrl+[ outdents. Nib's own order is Typora's, the other way
+  // round; see `edit.indent` in @nib/editor's keymap.
+  'edit.indent': 'Mod-]',
+  'edit.outdent': 'Mod-[',
+}
+
+/** Every keyboard there is to choose from, in the order the select shows them,
+ *  which is PRESET_IDS' order.
  *
  *  Vim is Nib's own map with modal editing on top of it: what a Vim reader
  *  wants back is the modes, not somebody else's Ctrl chords, and every one of
  *  those chords goes on working in every mode. See packages/editor/src/vim.ts. */
 export const PRESETS: Preset[] = [
   { id: 'default', label: () => t('Default'), keys: {}, vim: false },
-  // Three names of three programs, which is what they are called in every
+  // Four names of four programs, which is what they are called in every
   // language. Only Default is a word, so only Default is translated.
   { id: 'notion', label: () => 'Notion', keys: NOTION, vim: false },
   { id: 'obsidian', label: () => 'Obsidian', keys: OBSIDIAN, vim: false },
+  { id: 'vscode', label: () => 'VS Code', keys: VSCODE, vim: false },
   { id: 'vim', label: () => 'Vim', keys: {}, vim: true },
 ]
 
 export const presetById = (id: string): Preset | undefined => PRESETS.find((one) => one.id === id)
-
-/** What a name written down here or carried by the account means.
- *
- *  Nothing at all is no opinion, and the machine keeps what it had. A name
- *  this version has never heard of - a preset a newer app added - is a map
- *  this one cannot put a name to, which is what Custom is for. */
-export function knownPreset(value: unknown): PresetId | null {
-  if (typeof value !== 'string' || !value) return null
-  if (value === 'custom' || presetById(value)) return value as PresetId
-
-  return 'custom'
-}

@@ -61,11 +61,14 @@ export {
 export { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'
 export {
   deleteLine,
+  duplicateBlock,
   expandSelection,
   insertLineAbove,
   joinLines,
   loadLineCommands,
   lowerCase,
+  moveBlockDown,
+  moveBlockUp,
   reverseLines,
   shrinkSelection,
   sortLines,

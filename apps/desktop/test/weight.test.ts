@@ -431,7 +431,14 @@ function holds(tail: string): boolean {
  *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
  *  over at the launch's last turn now; see `warmDoors`. Measured 3,298,741 and 380.
  *  Dictation went from the list of doors below with it: it is behind the command
- *  list's. */
+ *  list's.
+ *
+ *  The VS Code keyboard, and the Obsidian and Notion ones learning their own apps'
+ *  keys, came in under it rather than raising it: the keyboards went behind the
+ *  Settings sheet, which is the one place a keyboard is chosen, and the launch keeps a
+ *  keyboard's name alone (shortcuts/preset-ids.ts). A block duplicated or moved from a
+ *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
+ *  this 3,296,054 and 380. */
 const BUDGET = 3_310_000
 const MOST_FILES = 382
 
@@ -677,6 +684,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/editor/src/lines.ts', 'the line commands'],
     ['/editor/src/grow.ts', 'the selection a step outwards'],
     ['/editor/src/paste-link.ts', 'an address pasted over words'],
+    ['/editor/src/block/commands.ts', 'a block duplicated or moved from a key'],
+    // The keyboards themselves, which only the Settings sheet offers; the launch reads
+    // a keyboard's name alone. See shortcuts/preset-ids.ts.
+    ['/lib/shortcuts/presets.ts', 'the keyboards'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -707,6 +718,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
+    ['/lib/shortcuts/preset-ids.ts', 'the names of the keyboards'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })

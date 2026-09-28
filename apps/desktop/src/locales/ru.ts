@@ -1554,4 +1554,7 @@ export const ru: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Дублировать блок',
+  'Move the block up': 'Переместить блок выше',
+  'Move the block down': 'Переместить блок ниже',
 }

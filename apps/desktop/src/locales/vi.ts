@@ -1475,4 +1475,7 @@ export const vi: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Tạo bản sao khối',
+  'Move the block up': 'Chuyển khối lên',
+  'Move the block down': 'Chuyển khối xuống',
 }

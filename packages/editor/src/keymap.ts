@@ -50,10 +50,13 @@ import { highlightSelection } from './highlight'
 import { copyMarkdown } from './copy'
 import {
   deleteLine,
+  duplicateBlock,
   expandSelection,
   insertLineAbove,
   joinLines,
   lowerCase,
+  moveBlockDown,
+  moveBlockUp,
   reverseLines,
   shrinkSelection,
   sortLines,
@@ -275,6 +278,15 @@ export const nibBindings: BindingSpec[] = [
   { id: 'edit.upper-case', key: null, run: upperCase, preventDefault: true },
   { id: 'edit.lower-case', key: null, run: lowerCase, preventDefault: true },
   { id: 'edit.title-case', key: null, run: titleCase, preventDefault: true },
+
+  // The block the caret is in - or every block the selection lies across - again under
+  // itself, or a step up or down past its neighbour: the grip's Duplicate, Move up and
+  // Move down, from the keyboard. No key here, since the lines already move on
+  // Alt+Up and Alt+Down; the Notion keyboard puts them on Notion's Ctrl+D and
+  // Ctrl+Shift+Up and Down. See block/commands.ts.
+  { id: 'edit.duplicate-block', key: null, run: duplicateBlock, preventDefault: true },
+  { id: 'edit.move-block-up', key: null, run: moveBlockUp, preventDefault: true },
+  { id: 'edit.move-block-down', key: null, run: moveBlockDown, preventDefault: true },
 
   // Every one like what is selected, in one press. No key out of the box: the
   // chord every other editor uses for it, Ctrl+Shift+L, is the sidebar here.

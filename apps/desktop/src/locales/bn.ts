@@ -1485,4 +1485,7 @@ export const bn: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ব্লক ডুপ্লিকেট করুন',
+  'Move the block up': 'ব্লক উপরে সরান',
+  'Move the block down': 'ব্লক নিচে সরান',
 }

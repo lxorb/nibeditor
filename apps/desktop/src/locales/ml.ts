@@ -1507,4 +1507,7 @@ export const ml: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ബ്ലോക്കിന്റെ പകർപ്പ് ഉണ്ടാക്കുക',
+  'Move the block up': 'ബ്ലോക്ക് മുകളിലേക്ക് നീക്കുക',
+  'Move the block down': 'ബ്ലോക്ക് താഴേക്ക് നീക്കുക',
 }

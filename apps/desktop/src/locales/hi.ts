@@ -1486,4 +1486,7 @@ export const hi: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ब्लॉक की नकल बनाएँ',
+  'Move the block up': 'ब्लॉक ऊपर ले जाएँ',
+  'Move the block down': 'ब्लॉक नीचे ले जाएँ',
 }

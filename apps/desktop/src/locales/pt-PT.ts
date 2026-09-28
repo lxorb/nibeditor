@@ -1526,4 +1526,7 @@ export const ptPT: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'Duplicar o bloco',
+  'Move the block up': 'Subir o bloco',
+  'Move the block down': 'Descer o bloco',
 }

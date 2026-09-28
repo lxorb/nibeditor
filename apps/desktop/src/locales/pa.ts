@@ -1493,4 +1493,7 @@ export const pa: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'ਬਲਾਕ ਦੀ ਨਕਲ ਬਣਾਓ',
+  'Move the block up': 'ਬਲਾਕ ਉੱਪਰ ਭੇਜੋ',
+  'Move the block down': 'ਬਲਾਕ ਹੇਠਾਂ ਭੇਜੋ',
 }

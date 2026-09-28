@@ -1485,4 +1485,7 @@ export const ur: Dictionary = {
   'Upper case': 'Upper case',
   'Lower case': 'Lower case',
   'Title case': 'Title case',
+  'Duplicate the block': 'بلاک کی نقل بنائیں',
+  'Move the block up': 'بلاک اوپر لے جائیں',
+  'Move the block down': 'بلاک نیچے لے جائیں',
 }
