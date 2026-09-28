@@ -5,7 +5,8 @@ import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { copiedFlavours } from './copy'
 import { nibMarkdownExtensions } from './markdown/extensions'
-import { delimitedToTable, linkedPaste, pastedMarkdown } from './paste'
+import { delimitedToTable, pastedMarkdown } from './paste'
+import { linkedPaste } from './paste-link'
 
 /** The conversion itself is `@nib/markdown/from-html`, tested there. What is
  *  tested here is the choosing: a clipboard carries two flavours at once, and

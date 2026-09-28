@@ -3,7 +3,6 @@ import { EditorSelection, EditorState, type StateCommand } from '@codemirror/sta
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { expandSelection, shrinkSelection } from './grow'
-import { growing } from './grow-steps'
 import { hiddenFrontMatterGuard } from './live-preview/hidden-front-matter'
 import { nibMarkdownExtensions } from './markdown/extensions'
 
@@ -15,7 +14,6 @@ function stateOf(doc: string, caret: number): EditorState {
       extensions: [
         markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
         hiddenFrontMatterGuard,
-        growing,
       ],
     }),
   )

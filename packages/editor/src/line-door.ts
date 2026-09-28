@@ -1,17 +1,17 @@
 /** The line, case and grow-the-selection commands, fetched rather than carried.
  *
- *  Deleting, joining, sorting and reversing lines, a line above, the three cases, and
- *  the selection a step outwards and back: sixteen kilobytes of source that a window
- *  has no use for until somebody presses one of them, and most of them have no key at
- *  all. So they are not in front of the first paint. The app asks for them at the
+ *  Deleting, joining, sorting and reversing lines, a line above, the three cases, the
+ *  selection a step outwards and back, and the link an address pasted over words
+ *  makes: twenty-two kilobytes of source that a window has no use for until somebody
+ *  presses one of them, and most of them have no key at all. So they are not in front
+ *  of the first paint. The app asks for them at the
  *  launch's last turn - see `warmDoors` in the app - and a key pressed before that
  *  runs its command as soon as it lands, which is the next few milliseconds.
  *
  *  The keys are bound from the first frame either way, and each spends its press
  *  whether the commands are here or not: a key that returned false would fall through
- *  to whatever is bound under it. The one thing growing the selection needs from the
- *  first press on, the steps it came out through, is carried; see grow-steps.ts. The
- *  same shape as find.ts, which is the door the search engine comes through. */
+ *  to whatever is bound under it. The same shape as find.ts, which is the door the
+ *  search engine comes through. */
 
 import type { StateCommand } from '@codemirror/state'
 
