@@ -92,6 +92,13 @@ export class CanvasStore implements PlaneSurface {
    *  Yjs undo stack is not something a surface can watch. */
   private reachable = $state.raw<Reachable>({ undo: false, redo: false })
 
+  /** The same two answers for the snapshot stack, which is the history out of a
+   *  room. The stack is plain arrays, and the bar cannot watch those any more than
+   *  it can watch the room's: asked of the stack itself, the arrows stayed dark over
+   *  a plane that had just been drawn on. So this is said again after every change
+   *  to the stack; see `stackChanged`. */
+  private local = $state.raw<Reachable>({ undo: false, redo: false })
+
   /** Whether this plane is one to look at rather than one to draw on: a space
    *  somebody shared to read.
    *
@@ -200,11 +207,11 @@ export class CanvasStore implements PlaneSurface {
   }
 
   get canUndo(): boolean {
-    return this.shared ? this.reachable.undo : this.history.canUndo
+    return this.shared ? this.reachable.undo : this.local.undo
   }
 
   get canRedo(): boolean {
-    return this.shared ? this.reachable.redo : this.history.canRedo
+    return this.shared ? this.reachable.redo : this.local.redo
   }
 
   /** The box round everything picked, or null. What the handles are drawn on. */
@@ -247,7 +254,10 @@ export class CanvasStore implements PlaneSurface {
     // In a room the room is the history, and what changed goes to the other devices
     // as the objects it touched. Out of one, the snapshot stack is the history.
     if (this.shared) this.shared.push(before, after)
-    else if (!carrying) this.history.record(before)
+    else if (!carrying) {
+      this.history.record(before)
+      this.stackChanged()
+    }
 
     this.soon()
   }
@@ -262,6 +272,7 @@ export class CanvasStore implements PlaneSurface {
 
     const before = this.history.undo(this.canvas)
     if (!before) return
+    this.stackChanged()
 
     // Stamped forwards, not restored: taking an edit back is itself an edit, and
     // a card put back with its old time would be deleted again by the next
@@ -279,6 +290,7 @@ export class CanvasStore implements PlaneSurface {
 
     const after = this.history.redo(this.canvas)
     if (!after) return
+    this.stackChanged()
 
     this.canvas = stamped(this.canvas, after, Date.now())
     this.keepPicked()
@@ -316,6 +328,15 @@ export class CanvasStore implements PlaneSurface {
 
   historyIs(reachable: Reachable) {
     this.reachable = reachable
+  }
+
+  /** The snapshot stack's two answers, as state the bar can follow.
+   *
+   *  Written without reading what was there before. `follow` runs inside an effect
+   *  in Canvas.svelte and Pages.svelte, and an effect that reads what it writes runs
+   *  itself again. */
+  private stackChanged() {
+    this.local = { undo: this.history.canUndo, redo: this.history.canRedo }
   }
 
   /** Anything owing, written now: the room is being left, or the last tab on this
@@ -359,6 +380,7 @@ export class CanvasStore implements PlaneSurface {
 
     this.at = this.note.revision
     this.history.clear()
+    this.stackChanged()
 
     if (!mine) {
       this.canvas = arrived
