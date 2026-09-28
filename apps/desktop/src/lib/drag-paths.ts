@@ -89,6 +89,16 @@ export function landing(
   return (platform === 'mac' ? event.altKey : event.ctrlKey) ? 'copy' : 'move'
 }
 
+/** The rows a drag out of the list carries, wherever it is over: the ones this
+ *  window remembers until the drop, which can read the transfer's own. Nothing for a
+ *  drag from anywhere else. */
+export function carriedRows(transfer: DataTransfer | null): readonly string[] {
+  if (!isTreeDrag(transfer)) return []
+
+  const rows = dragged(transfer)
+  return rows.length ? rows : carrying
+}
+
 export function dragged(transfer: DataTransfer | null): string[] {
   if (!transfer) return []
   try {

@@ -27,7 +27,7 @@
  *  Pure, and the whole rule: the tree, the drop zones, the Move sheet, the icon a
  *  row wears and the way back out all ask here. See folder-notes.test.ts. */
 
-import { folderOf, isMarkdownPath, nameOf, withoutExtension } from './space-paths'
+import { folderOf, isMarkdownPath, nameOf, withinSpace, withoutExtension } from './space-paths'
 import { joinPath } from './tauri'
 import { entryAt } from './tree-edits'
 import type { Entry } from './workspace.svelte'
@@ -161,4 +161,17 @@ export function renameSteps(note: string, typed: string): { path: string; name: 
     { path: note, name: name + extension },
     { path: folder, name },
   ]
+}
+
+/** The files links to these rows name, relative to the space: a row that is a folder
+ *  is the note it is drawn as, written or not, since that is what opening it opens. A
+ *  row outside the space has no link. What a row dropped on a note's words and a
+ *  row's Copy link both write; see wikilink/drop.ts in @nib/editor and row-menu.ts. */
+export function linkedFiles(tree: Entry | null, root: string, rows: readonly string[]): string[] {
+  return rows.flatMap((row) => {
+    const entry = entryAt(tree, row)
+    const file = entry?.is_dir ? (folderNote(entry)?.path ?? folderNotePath(row)) : row
+    const inside = withinSpace(root, file)
+    return inside === null ? [] : [inside]
+  })
 }

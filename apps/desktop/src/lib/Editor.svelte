@@ -43,12 +43,13 @@
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import { PROPERTY_CHOICES } from './property-choices'
-  import { carriedNotes } from './row-links'
+  import { carriedRows } from './drag-paths'
+  import { linkedFiles } from './folder-notes'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
-  import type { Tab } from './workspace.svelte'
+  import { type Tab, workspace } from './workspace.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
   let {
@@ -87,6 +88,13 @@
   } = $props()
   /* eslint-enable prefer-const */
 
+  /** Which notes a drag over the words carries, so a row of the file list lands as
+   *  a link; see wikilink/drop.ts in the editor. */
+  function carriedNotes(transfer: DataTransfer | null): readonly string[] {
+    const root = workspace.activeSpace?.root
+    return root ? linkedFiles(workspace.tree, root, carriedRows(transfer)) : []
+  }
+
   let host: HTMLDivElement
   const rise = firstOfTheSession()
   const states = new EditorStates()
@@ -114,8 +122,6 @@
       // Links setting reaches the popup the way it reaches the grip's Copy link.
       // See composer.ts.
       writeLink: pickedLink,
-      // A row dragged out of the file list and let go over the words is a link to
-      // it at the drop, spelled by the same writer; see row-links.ts.
       carriedNotes,
       ...(onfind ? { onFind: onfind } : {}),
       // The keys the app has a fixed set of answers for, so a property row offers a

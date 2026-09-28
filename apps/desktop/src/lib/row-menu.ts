@@ -19,7 +19,7 @@
 import { noteLinksCode } from '@nib/editor'
 import { copyText } from './clipboard'
 import { pickedLink } from './composer'
-import { folderNote, nestedIn } from './folder-notes'
+import { folderNote, linkedFiles, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import {
@@ -32,8 +32,8 @@ import {
   shareEntry,
 } from './menu.svelte'
 import { moveTargets, type MoveTarget, movesInto } from './move-targets'
+import { howFor } from './new-tab'
 import { rowName } from './note-name'
-import { linkedPaths } from './row-links'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath } from './space-paths'
 import { entryAt } from './tree-edits'
@@ -125,14 +125,15 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
 }
 
 /** A row somewhere other than where Open puts it: a tab of its own left behind the
- *  one in front, as a link's menu offers in a browser, and a pane beside this one,
+ *  one in front, as a link's menu offers in a browser and Ctrl+click does on the row
+ *  (see new-tab.ts), and a pane beside this one,
  *  as VS Code's Open to the Side does. The pane is not offered where there is none
  *  to make - a phone - nor for a folder with no note, which has no file to show
  *  beside anything yet. */
 function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
   const behind = {
     label: t('Open in new tab'),
-    run: () => void workspace.openRow(entry.path, { activate: false }),
+    run: () => void workspace.openRow(entry.path, howFor('behind')),
   }
   if (viewport.touch || (entry.is_dir && !own)) return [behind]
 
@@ -149,7 +150,7 @@ async function openAll(paths: readonly string[]) {
   if (first === undefined) return
 
   await workspace.openRow(first)
-  for (const path of rest) await workspace.openRow(path, { activate: false })
+  for (const path of rest) await workspace.openRow(path, howFor('behind'))
 }
 
 /** The selection bookmarked with one press, as a row bookmarks itself: the note a
@@ -178,7 +179,7 @@ async function copyLinks(rows: readonly string[]) {
   const root = workspace.activeSpace?.root
   if (!root) return
 
-  const paths = linkedPaths(workspace.tree, root, rows)
+  const paths = linkedFiles(workspace.tree, root, rows)
   const { noteLinks } = await noteLinksCode()
   if (paths.length) await copyText(noteLinks(links.index(null), paths, pickedLink))
 }
