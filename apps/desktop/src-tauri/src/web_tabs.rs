@@ -177,26 +177,6 @@ const LOOKED: &str = r"(function () {
   }
 })()";
 
-/// The site's own mark, as an address.
-///
-/// What the page says its icon is, and `/favicon.ico` where it says nothing - which is
-/// the same order a browser looks in, and the reason a tab has the site's mark on it
-/// rather than a generic one. Asked of the page rather than of the engine: `WebView2`
-/// has an event for it, `WKWebView` has nothing at all, and the page's own `<link>` is
-/// what both of them read.
-const ICON: &str = r"(function () {
-  try {
-    var links = document.querySelectorAll('link[rel]')
-    for (var index = links.length - 1; index >= 0; index--) {
-      var rel = (links[index].getAttribute('rel') || '').toLowerCase()
-      if (rel.split(/\s+/).indexOf('icon') >= 0 && links[index].href) return links[index].href
-    }
-    return new URL('/favicon.ico', location.href).href
-  } catch (error) {
-    return ''
-  }
-})()";
-
 /// The page, read for a clip, in the site's own document.
 ///
 /// It reads what is on screen rather than what the server sent: a page that writes
@@ -447,15 +427,14 @@ pub struct Pane {
 
 /// What the window is told when a page moves.
 ///
-/// A field that says nothing is a field the window leaves as it was: the title and the
-/// mark arrive later than the address and on their own, and an empty one here is "no
-/// news" rather than "gone".
+/// A field that says nothing is a field the window leaves as it was: the title arrives
+/// later than the address and on its own, and an empty one here is "no news" rather
+/// than "gone". The site's mark is an event of its own; see `web_icons.rs`.
 #[derive(Clone, Serialize)]
 struct Moved {
     tab: String,
     url: String,
     title: String,
-    icon: String,
     back: bool,
     forward: bool,
     loading: bool,
@@ -1094,14 +1073,9 @@ fn reporting(
             &moved,
             payload.url().as_str(),
             None,
-            None,
             loading,
         );
 
-        // The page is there, so it can be asked what its own mark is. Once per page,
-        // on the way in, because that is when a browser puts the site's icon on the
-        // tab; the answer comes back through the engine's own script callback and is
-        // said to the window the way the address is.
         if loading {
             return;
         }
@@ -1111,25 +1085,28 @@ fn reporting(
         #[cfg(all(windows, not(feature = "cef")))]
         let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
 
-        let marked = sending.clone();
-        let named = moved.clone();
-        let asked = view.clone();
-        let _ = view.eval_with_callback(ICON, move |answer| {
-            let icon = serde_json::from_str::<String>(&answer).unwrap_or_default();
-            if icon.is_empty() {
-                return;
-            }
-
-            let url = asked.url().map(|one| one.to_string()).unwrap_or_default();
-            say(&marked, &asked, &named, &url, None, Some(icon), false);
-        });
+        // An engine that cannot say when the page's mark changes is asked for it once
+        // the page is there, which is when a browser puts the site's icon on the tab.
+        // `WebView2` says so itself, from inside the page's own profile; see web_icons.rs.
+        #[cfg(any(not(windows), feature = "cef"))]
+        {
+            let marked = sending.clone();
+            let named = moved.clone();
+            let holder = view.window().label().to_string();
+            let _ = view.eval_with_callback(crate::web_icons::ASK, move |answer| {
+                let declaring = serde_json::from_str(&answer).unwrap_or_default();
+                if let Some(icon) = crate::web_icons::best(&declaring) {
+                    crate::web_icons::said(&marked, &holder, &named, &icon);
+                }
+            });
+        }
     });
 
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {
         let url = view.url().map(|one| one.to_string()).unwrap_or_default();
-        say(&naming, &view, &titled, &url, Some(title), None, false);
+        say(&naming, &view, &titled, &url, Some(title), false);
     })
 }
 
@@ -1163,6 +1140,9 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         // How a window it asks for was pressed for; see web_opens.rs.
         crate::web_opens::listen(&platform, named.clone());
         crate::downloads::listen(&platform, asking.clone(), window.clone());
+        // The site's own mark, followed for as long as the page is open; see
+        // web_icons.rs.
+        crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
     });
 }
@@ -1272,7 +1252,6 @@ fn say(
     tab: &str,
     url: &str,
     title: Option<String>,
-    icon: Option<String>,
     loading: bool,
 ) {
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
@@ -1290,7 +1269,6 @@ fn say(
         tab: tab.to_string(),
         url: url.to_string(),
         title: title.unwrap_or_default(),
-        icon: icon.unwrap_or_default(),
         back,
         forward,
         loading,
@@ -1953,9 +1931,10 @@ mod shot {
         }
     }
 
-    /// The PNG out of the stream the engine wrote it into.
+    /// The bytes out of a stream the engine wrote a picture into: a photograph here,
+    /// and a page's favicon in `web_icons.rs`.
     #[allow(unsafe_code, reason = "a COM stream is read through its own interface")]
-    fn png(stream: &IStream) -> Option<Vec<u8>> {
+    pub fn png(stream: &IStream) -> Option<Vec<u8>> {
         // Safe: the stream was written by the engine before this is called, and every
         // length below is the one the stream itself reports.
         unsafe {
@@ -1987,6 +1966,11 @@ mod shot {
         }
     }
 }
+
+/// A picture out of the stream the engine wrote it into, for the favicon a page is
+/// showing as much as for a photograph of it; see `web_icons.rs`.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) use shot::png as read_stream;
 
 // Every build but `WebView2`'s, nib's own Chromium among them. See the one above.
 #[cfg(any(not(windows), feature = "cef"))]

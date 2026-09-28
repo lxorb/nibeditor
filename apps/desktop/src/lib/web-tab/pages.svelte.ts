@@ -92,6 +92,13 @@ const LOOK_WAITS = 500
  *  actually takes, which is about 105 ms for a pane-sized PNG on this machine. */
 const SHOT_WAITS = 300
 
+/** How long after a page has loaded its mark still counts as the one it arrived with,
+ *  which is the one its file keeps. Three seconds: a site that sets its mark with a
+ *  script does it in the breath after the load - web.whatsapp.com adds its own 1.3 s
+ *  after it, measured - and one that redraws its mark with an unread count does it when
+ *  a message comes, which is later than that. */
+const ARRIVES = 3000
+
 /** Where the pane left room for the page, in the window's own pixels. */
 export interface Rect {
   x: number
@@ -132,7 +139,6 @@ interface Moved {
   tab: string
   url: string
   title: string
-  icon: string
   back: boolean
   forward: boolean
   loading: boolean
@@ -148,11 +154,27 @@ function readMoved(value: unknown): Moved | null {
     tab: said.tab,
     url: said.url,
     title: typeof said.title === 'string' ? said.title : '',
-    icon: typeof said.icon === 'string' ? said.icon : '',
     back: said.back === true,
     forward: said.forward === true,
     loading: said.loading === true,
   }
+}
+
+/** What the crate says when a page's mark changes: which tab, and the picture, as an
+ *  address nothing has to fetch again - or the empty string for a page with none. See
+ *  web_icons.rs. */
+interface Iconed {
+  tab: string
+  icon: string
+}
+
+function readIconed(value: unknown): Iconed | null {
+  if (typeof value !== 'object' || value === null) return null
+
+  const said = value as Record<string, unknown>
+  if (typeof said.tab !== 'string' || typeof said.icon !== 'string') return null
+
+  return { tab: said.tab, icon: said.icon }
 }
 
 /** What the crate says when a page asks for a window of its own: which tab asked,
@@ -185,14 +207,24 @@ export class Page {
   url = $state<string | null>(null)
   /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
-  /** The site's own mark, as an address the window can load: what the page's
-   *  `<link rel=icon>` says, or the site's `/favicon.ico` where it says nothing.
+  /** The site's own mark as the page shows it now, as an address the window draws
+   *  without fetching anything: the picture the engine chose for the page, from inside
+   *  the page's own profile. It follows the page, so a site that redraws its mark with
+   *  an unread count is redrawn here too. See web_icons.rs.
    *
-   *  Null until the page has loaded, and the tab strip draws the one the file
+   *  Null until the page has said, and the tab strip draws the one the file
    *  remembered until then - so a tab has the site's mark before the page is there
-   *  and on a machine that has never opened it. See shortcut.ts for where it is
-   *  kept. */
+   *  and on a machine that has never opened it. */
   icon = $state<string | null>(null)
+  /** The mark the page arrived with: the last one it showed between its load
+   *  beginning and `ARRIVES` after the load ended, which is the one its file keeps.
+   *  Not every one after that, because a mark a site redraws with an unread count
+   *  would rewrite the note - and sync it - on every message; the next visit brings a
+   *  site's new mark to the file instead. See keep.ts and shortcut.ts. */
+  kept = $state<string | null>(null)
+  /** Until when the mark the page shows is the one it arrived with, as a time; while
+   *  it is loading, for ever. Not drawn. */
+  arriving = Infinity
   back = $state(false)
   forward = $state(false)
   loading = $state(false)
@@ -285,6 +317,19 @@ export class Page {
 
   /** The countdown to being parked, running while nobody is looking at this tab. */
   parking: ReturnType<typeof setTimeout> | undefined
+
+  /** The page's mark has changed. Empty is a page with none, which leaves the tab
+   *  the file's mark again and the file its own. */
+  marked(icon: string) {
+    this.icon = icon || null
+    if (icon && Date.now() <= this.arriving) this.kept = icon
+  }
+
+  /** A load began or ended, which opens the window a mark arrives in or starts it
+   *  closing. */
+  loaded(loading: boolean) {
+    this.arriving = loading ? Infinity : Date.now() + ARRIVES
+  }
 }
 
 class Pages {
@@ -909,6 +954,11 @@ class Pages {
       const said = readDownload(event.payload)
       if (said && downloads.heard(said)) void this.downloaded(said.tab)
     })
+    // A page's mark has changed, which the engine says for as long as the page is open.
+    await listen('nib://web-icon', (event) => {
+      const said = readIconed(event.payload)
+      if (said) this.held.get(said.tab)?.marked(said.icon)
+    })
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return
@@ -918,6 +968,9 @@ class Pages {
 
       const was = page.loading
       page.loading = said.loading
+      // A load beginning is a page arriving, and the mark it settles on is the one the
+      // file keeps.
+      if (said.loading !== was) page.loaded(said.loading)
       page.back = said.back
       page.forward = said.forward
       if (said.url && !page.typing) page.url = said.url
@@ -928,15 +981,14 @@ class Pages {
       // Where the tab has got to is a page it has been to, for the address field to
       // offer; see visited.ts.
       if (said.url) void this.saw(said.tab, said.url, said.title)
-      if (said.icon) page.icon = said.icon
 
       // The page has arrived, so the picture of the last one is no longer a picture of
       // this page - and the new one is taken now rather than when something is waiting
       // for it. Nothing is drawn from either while the webview is on top.
       //
       // On the moment it stops loading rather than on every report that it is not
-      // loading. The engine says where a page is again whenever its title or its mark
-      // arrives, which is three reports in the eight milliseconds after a page lands,
+      // loading. The engine says where a page is again whenever its title arrives, and
+      // with the mark that was three reports in the eight milliseconds after a page lands,
       // and each of them threw the picture away and asked for another: three engine
       // captures at once, a fifth of a second each, on the window's own thread in the
       // breath the reader is watching the page appear.

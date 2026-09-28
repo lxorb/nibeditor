@@ -1645,7 +1645,7 @@ class Workspace {
 
     this.keeping.add(tab.id)
     try {
-      const text = writeShortcut(url, title, new Date(), undefined, page.icon ?? undefined)
+      const text = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
 
       this.showEntry(this.freshEntry(path, false))
       await writeFile(path, text)
