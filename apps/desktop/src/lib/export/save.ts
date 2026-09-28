@@ -16,6 +16,7 @@ import { toBase64 } from '../bytes'
 import { keep, storedText } from '../stored'
 import { folderOf } from '../space-paths'
 import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
+import { writeBytes, writeFile as writeText } from '../workspace/write-file'
 import { fileNameFor, freeName } from './naming'
 
 /** What a converter produced. Text where the format is text, so a note that is
@@ -79,16 +80,15 @@ export function download(name: string, payload: Payload) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-/** One file onto the disk, text as text and bytes as bytes. */
+/** One file onto the disk, text as text and bytes as bytes. Through the app's one
+ *  write path, so an export saved into a space is a file its links reach at once;
+ *  see workspace/write-file.ts. */
 export async function writeFile(path: string, body: string | Uint8Array): Promise<void> {
-  if (typeof body === 'string') {
-    await invoke('write_note', { path, content: body })
-    return
-  }
+  if (typeof body === 'string') return writeText(path, body)
 
   // Base64 rather than an array of numbers: a two megabyte picture as JSON
   // digits is twenty megabytes of text for the bridge to parse.
-  await invoke('write_bytes', { path, base64: toBase64(body) })
+  return writeBytes(path, toBase64(body))
 }
 
 /** Whether a path out of a payload names one file under the folder it is joined

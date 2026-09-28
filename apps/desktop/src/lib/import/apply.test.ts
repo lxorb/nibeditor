@@ -32,13 +32,22 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
-vi.mock('../link-index.svelte', () => ({ links: { noteSaved: () => undefined } }))
+/** What the link index was told, in order. */
+const heard: string[] = []
+
+vi.mock('../link-index.svelte', () => ({
+  links: {
+    noteSaved: (path: string) => void heard.push(`saved ${path}`),
+    cameBack: (path: string) => void heard.push(`came back ${path}`),
+  },
+}))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 const { applyImport, restamped } = await import('./apply')
 
 beforeEach(() => {
   wrote.length = 0
+  heard.length = 0
   recorded.length = 0
   refusing = null
 })
@@ -165,6 +174,15 @@ describe('a path no space would take', () => {
       { command: 'write_bytes', path: '/Work/In/assets/x.png' },
     ])
     expect(landed.paths).toEqual(['/Work/In/Plan.md', '/Work/In/assets/x.png'])
+  })
+
+  test('and tells the link index about each of them, a picture as much as a note', async () => {
+    await applyImport(planOf([note('Plan.md', '# Plan'), file('assets/x.png')]), {
+      root: '/Work',
+      folder: '',
+    })
+
+    expect(heard).toEqual(['saved /Work/Plan.md', 'came back /Work/assets/x.png'])
   })
 })
 

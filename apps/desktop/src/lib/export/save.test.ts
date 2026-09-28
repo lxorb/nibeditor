@@ -24,10 +24,21 @@ vi.mock('../tauri', () => ({
   },
 }))
 
+/** What the link index was told, in order. */
+const heard: string[] = []
+
+vi.mock('../link-index.svelte', () => ({
+  links: {
+    noteSaved: (path: string) => void heard.push(`saved ${path}`),
+    cameBack: (path: string) => void heard.push(`came back ${path}`),
+  },
+}))
+
 const { insideFolder, writeFile } = await import('./save')
 
 beforeEach(() => {
   calls.length = 0
+  heard.length = 0
 })
 
 describe('writing a file', () => {
@@ -46,6 +57,13 @@ describe('writing a file', () => {
     expect(calls).toEqual([
       { command: 'write_bytes', args: { path: 'C:/notes/Note.docx', base64: toBase64(bytes) } },
     ])
+  })
+
+  test('either way the link index is told, so an export saved into a space is linkable', async () => {
+    await writeFile('C:/notes/Note.md', 'the words')
+    await writeFile('C:/notes/Note.docx', new Uint8Array([1]))
+
+    expect(heard).toEqual(['saved C:/notes/Note.md', 'came back C:/notes/Note.docx'])
   })
 
   test('bytes never reach the note writer, which would mangle them', async () => {
