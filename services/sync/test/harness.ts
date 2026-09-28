@@ -5,12 +5,14 @@ import app from '../src/index'
 import type { Env } from '../src/types'
 
 // Read rather than listed: a migration that exists but was never added here
-// would leave every test running against yesterday's schema.
+// would leave every test running against yesterday's schema. And read once, when
+// a file of tests starts, rather than by every test: each test builds a database
+// of its own, and it was thirty-odd files off the disk for each of them.
 const FOLDER = fileURLToPath(new URL('../migrations/', import.meta.url))
 const MIGRATIONS = readdirSync(FOLDER)
   .filter((name) => name.endsWith('.sql'))
   .sort()
-  .map((name) => FOLDER + name)
+  .map((name) => readFileSync(FOLDER + name, 'utf8'))
 
 /** D1's shape over Node's built-in SQLite, so routes run against real SQL.
  *
@@ -141,7 +143,7 @@ export interface TestEnv extends Env {
 
 export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   const database = new DatabaseSync(':memory:')
-  for (const migration of MIGRATIONS) database.exec(readFileSync(migration, 'utf8'))
+  for (const migration of MIGRATIONS) database.exec(migration)
 
   let losing: RegExp | null = null
   let caught = 0
