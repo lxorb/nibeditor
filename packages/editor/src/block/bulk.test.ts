@@ -1,13 +1,21 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type Extension,
+  type TransactionSpec,
+} from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import {
   blockTargets,
   deleteBlocks,
+  duplicateBlock,
   duplicateBlocks,
   indentBlocks,
+  moveBlockDown,
   moveBlocks,
+  moveBlockUp,
   outdentBlocks,
   turnBlocksInto,
 } from './commands'
@@ -43,12 +51,15 @@ const NOTE = [
 
 /** A view that is a state and somewhere to put a transaction. `focus` is called by
  *  every one of these and does nothing anywhere without a screen. */
-function viewOf(doc: string, from: number, to = from) {
+function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
   let state = parsed(
     EditorState.create({
       doc,
       selection: EditorSelection.range(from, to),
-      extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }),
+        ...extra,
+      ],
     }),
   )
 
@@ -261,5 +272,45 @@ describe('the two that were already there', () => {
     expect(deleteBlocks(deleted.view, deleted.at)).toBe(true)
     expect(deleted.said()).not.toContain('Second words.')
     expect(deleted.said()).toContain('Last words.')
+  })
+})
+
+/** The same three from a key, which has no press position of its own: the caret is
+ *  where it landed, and a selection still means every block it lies across. */
+describe('from a key', () => {
+  test('duplicates the block the caret is in', () => {
+    const doc = 'a\n\nb\n\nc\n'
+    const { view, said } = viewOf(doc, doc.indexOf('b'))
+
+    expect(duplicateBlock(view)).toBe(true)
+    expect(said()).toBe('a\n\nb\n\nb\n\nc\n')
+  })
+
+  test('moves it a step up and a step down', () => {
+    const doc = 'a\n\nb\n\nc\n\nd\n'
+    const up = viewOf(doc, doc.indexOf('b'))
+    expect(moveBlockUp(up.view)).toBe(true)
+    expect(up.said()).toBe('b\n\na\n\nc\n\nd\n')
+
+    const down = viewOf(doc, doc.indexOf('b'))
+    expect(moveBlockDown(down.view)).toBe(true)
+    expect(down.said()).toBe('a\n\nc\n\nb\n\nd\n')
+  })
+
+  test('and every block a selection lies across, as one run', () => {
+    const doc = 'a\n\nb\n\nc\n\nd\n'
+    const { view, said } = viewOf(doc, doc.indexOf('a'), doc.indexOf('b') + 1)
+
+    expect(moveBlockDown(view)).toBe(true)
+    expect(said()).toBe('c\n\na\n\nb\n\nd\n')
+  })
+
+  test('leaves a note nobody may write in alone', () => {
+    const doc = 'a\n\nb\n'
+    const { view, said } = viewOf(doc, 0, 0, [EditorState.readOnly.of(true)])
+
+    expect(duplicateBlock(view)).toBe(false)
+    expect(moveBlockDown(view)).toBe(false)
+    expect(said()).toBe(doc)
   })
 })

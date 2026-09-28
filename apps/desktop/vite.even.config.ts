@@ -123,6 +123,27 @@ export function runFence() {
  *  asks for it: two files import it under two different relative names. */
 const RUNNER = 'packages/editor/src/run/run'
 
+/** The emoji table `node-emoji` reads, by the file it is in: emojilib's own entry.
+ *
+ *  The glasses ask one question of it in each direction - the character a
+ *  `:shortcode:` names, and the name of a character the firmware cannot draw - and
+ *  `node-emoji` reads only the character out of each row to answer both. The row
+ *  also carries the keywords, the category and whether it takes a skin tone, which
+ *  is most of the table and nothing the glasses ask. So the plugin gets emojilib's
+ *  own slim map of the same names to the same characters, in the same order, and
+ *  nothing else; see `SLIM_EMOJI`. The app and the web build keep the whole table. */
+const EMOJI_TABLE = /\/emojilib\/index\.js$/
+
+/** The table rebuilt out of `simplemap.json`, which emojilib ships beside the full
+ *  one, in the shape `node-emoji` reads: `lib[name].char`. */
+const SLIM_EMOJI = (folder: string) => `
+import names from ${JSON.stringify(`${folder}/simplemap.json`)}
+
+export default {
+  lib: Object.fromEntries(Object.entries(names).map(([name, char]) => [name, { char }])),
+}
+`
+
 /** An interface catalogue, by the file it is in. */
 const CATALOGUE = /\/locales\/([\w-]+)\.ts$/
 
@@ -167,6 +188,7 @@ function withoutWhatTheGlassesCannotUse() {
   const absent = '\0nib-absent'
   const runner = '\0nib-no-running'
   const catalogue = '\0nib-no-catalogue:'
+  const emoji = '\0nib-slim-emoji:'
 
   return {
     name: 'nib-even-without',
@@ -188,11 +210,14 @@ function withoutWhatTheGlassesCannotUse() {
       const id = CATALOGUE.exec(path)?.[1]
       if (id !== undefined && NOT_DRAWN.has(id)) return `${catalogue}${id}`
 
+      if (EMOJI_TABLE.test(path)) return `${emoji}${path.replace(/\/index\.js$/, '')}`
+
       return path.includes(RUNNER) ? runner : null
     },
     load(asked: string) {
       if (asked === absent) return ABSENT
       if (asked === runner) return NO_RUNNING
+      if (asked.startsWith(emoji)) return SLIM_EMOJI(asked.slice(emoji.length))
 
       // An empty catalogue rather than a module that throws: every string in this app
       // is filed under what it says in English, so a catalogue with nothing in it

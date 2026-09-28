@@ -10,7 +10,7 @@
   import ContextMenu from './lib/ContextMenu.svelte'
   import FormatBar from './lib/FormatBar.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
-  import { menu } from './lib/menu.svelte'
+  import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
@@ -53,6 +53,7 @@
     slidesStage,
     spaceChooserCard,
     menuBarDoor,
+    undoToastNotice,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
@@ -509,6 +510,20 @@
     }
   }
 
+  /** A text field's own menu, on the way down so a row holding the field does not
+   *  offer its own instead; see field-menu.ts. A phone has the system's. */
+  function onFieldMenu(event: MouseEvent) {
+    const field = viewport.touch ? null : textFieldOf(event.target)
+    if (!field) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    // Not in the glasses' plugin, which is a phone's and so never asks.
+    if (!__EVEN_PLUGIN__) {
+      void import('./lib/field-menu').then((one) => one.showFieldMenu(event, field))
+    }
+  }
+
   /** The two buttons on the side of a mouse. They are the browser's back and
    *  forward everywhere else, so they are the tab's here - and the browser's own
    *  is taken off them, or the web build would leave the app entirely. */
@@ -724,6 +739,12 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
+  oncontextmenucapture={(event: MouseEvent) => {
+    // A Mac's text field keeps the system's own menu, which has Look Up and the
+    // spelling in it as well as the four; see system-menu.ts. Every other field gets
+    // nib's.
+    if (!keepsSystemMenu(event.target, platform())) onFieldMenu(event)
+  }}
   oncontextmenu={(event: MouseEvent) => {
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
@@ -883,6 +904,11 @@
            row has no height. See docs/web-tabs.md. -->
       <div class="notices">
         <StorageWarning />
+        {#if undoToastNotice.asked}
+          {#await undoToastNotice.asked then UndoToast}
+            <UndoToast />
+          {/await}
+        {/if}
         {#if recordingPill.asked}
           {#await recordingPill.asked then RecordingPill}
             <RecordingPill />

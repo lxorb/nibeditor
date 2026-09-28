@@ -20,7 +20,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Nested lists, indent/outdent with `Tab` / `Shift+Tab`
 - [x] Loose vs tight list rendering
 - [x] Task lists `- [ ]` / `- [x]`, clickable checkboxes, a menu row that makes
-      one and `Ctrl+Enter` to tick the one under the caret
+      one and `Ctrl+Enter` to tick the one under the caret - or, on any other
+      line, to make it one first, which is Obsidian's key
 - [x] Fenced code blocks with language identifier
 - [x] Indented code blocks
 - [x] Math blocks `$$`

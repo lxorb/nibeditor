@@ -117,10 +117,10 @@ describe('moving a block', () => {
     expect(moveBlock(one, quote, quote.to)).toBeNull()
   })
 
-  test('the last block of a note keeps a blank line around it', () => {
+  test('the last block of a note takes its blank line with it', () => {
     const one = state('a\n\nb')
     const last = blockAt(one, 3)!
-    expect(after(one, moveBlock(one, last, 0))).toBe('b\n\na\n\n')
+    expect(after(one, moveBlock(one, last, 0))).toBe('b\n\na')
   })
 
   test('a block dropped at the end lands after everything', () => {

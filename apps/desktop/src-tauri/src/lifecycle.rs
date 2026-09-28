@@ -39,13 +39,9 @@ impl Quitting {
     }
 }
 
-/// The state this module keeps, and on a Mac the plugin that puts the main window
-/// back where it was (see `document_window`), added to the builder.
+/// The state this module keeps, added to the builder.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    let builder = builder.manage(Quitting::default());
-    #[cfg(target_os = "macos")]
-    let builder = builder.plugin(crate::document_window::remembered_frame());
-    builder
+    builder.manage(Quitting::default())
 }
 
 /// The app's own answer to everything the event loop reports; handed to
@@ -104,10 +100,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
 pub fn quit(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
-
-    // Before any window is asked, and so before any has gone.
-    #[cfg(target_os = "macos")]
-    crate::document_window::remember_frame(app);
 
     let windows = launch::document_windows(app);
     if windows.is_empty() {

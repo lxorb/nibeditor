@@ -2,11 +2,14 @@
  *
  *  Out of the tree: one row, or the whole selection when the row dragged is
  *  part of it. The single path travels alongside the list, so every target
- *  keeps recognising a tree drag by the type it always had.
+ *  keeps recognising a tree drag by the type it always had. Into it, from
+ *  outside the app: files, which a browser hands over only at the drop.
  *
  *  Within the bookmarks: which row is moving, by its place in the list. Its own
  *  type, so a bookmark dragged over the tree is not read as a note to move and
  *  a note dropped on the bookmarks does not reorder them. */
+
+import type { Platform } from './keys'
 
 const ONE = 'text/nib-path'
 const MANY = 'text/nib-paths'
@@ -28,7 +31,7 @@ export function carry(transfer: DataTransfer | null, paths: string[]) {
   if (!transfer || !first) return
   transfer.setData(ONE, first)
   transfer.setData(MANY, JSON.stringify(paths))
-  transfer.effectAllowed = 'move'
+  transfer.effectAllowed = 'copyMove'
   carrying = paths
 }
 
@@ -51,6 +54,47 @@ export function isTreeDrag(transfer: DataTransfer | null): boolean {
 export function mayCarryAddress(types: readonly string[]): boolean {
   if (types.includes('Files') || types.some((one) => one.startsWith('text/nib-'))) return false
   return types.includes('text/uri-list') || types.includes('text/plain')
+}
+
+/** Files from outside the app rather than rows of the list. */
+export function isFileDrop(transfer: DataTransfer | null): boolean {
+  return !!transfer?.types.includes('Files') && !isTreeDrag(transfer)
+}
+
+/** A drop's files, read while it is still happening: the transfer is emptied once
+ *  the event is over, and a folder is only an entry until it is walked. */
+export interface CaughtFiles {
+  entries: FileSystemEntry[]
+  loose: File[]
+}
+
+export function caughtFiles(transfer: DataTransfer): CaughtFiles {
+  const entries = [...transfer.items]
+    .filter((one) => one.kind === 'file')
+    .map((one) => one.webkitGetAsEntry())
+    .filter((one): one is FileSystemEntry => !!one)
+
+  return { entries, loose: [...transfer.files] }
+}
+
+/** What a drop on the file list would do: move its own rows, copy them - Ctrl held,
+ *  Alt on a Mac, as Explorer, Finder and VS Code read it - or copy files in. */
+export function landing(
+  event: Pick<DragEvent, 'dataTransfer' | 'ctrlKey' | 'altKey'>,
+  platform: Platform,
+): 'move' | 'copy' | null {
+  if (isFileDrop(event.dataTransfer)) return 'copy'
+  if (!isTreeDrag(event.dataTransfer)) return null
+
+  return (platform === 'mac' ? event.altKey : event.ctrlKey) ? 'copy' : 'move'
+}
+
+/** The rows a drag out of the list carries, read off the transfer where it can be. */
+export function carriedRows(transfer: DataTransfer | null): readonly string[] {
+  if (!isTreeDrag(transfer)) return []
+
+  const rows = dragged(transfer)
+  return rows.length ? rows : carrying
 }
 
 export function dragged(transfer: DataTransfer | null): string[] {

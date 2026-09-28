@@ -42,17 +42,17 @@
   import { t } from './i18n.svelte'
   import { menu } from './menu.svelte'
   import { longPress } from './longpress'
-  import { movesInto } from './move-targets'
+  import { landsIn } from './move-targets'
   import NameField from './NameField.svelte'
   import { howFor, middleOpens, tabAsk } from './new-tab'
   import { extensionOf } from './naming'
   import { rowName } from './note-name'
-  import { rowMenu } from './row-menu'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
   import { isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { carried, carriedNothing, carry, dragged, isTreeDrag } from './drag-paths'
+  import { carried, carriedNothing, carry, landing } from './drag-paths'
+  import { dropOnList, fileClipboard } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
@@ -324,7 +324,24 @@
     }
 
     const here = rowPath(event)
-    if (here === null) return
+    if (fileKey(event, here) || here === null) return
+
+    const step = shortcuts.pressed('tree.extend-down', event)
+      ? 1
+      : shortcuts.pressed('tree.extend-up', event)
+        ? -1
+        : 0
+    if (step !== 0) {
+      event.preventDefault()
+      stretch(here, step)
+      return
+    }
+
+    if (shortcuts.pressed('tree.toggle', event)) {
+      event.preventDefault()
+      workspace.toggleSelect(here)
+      return
+    }
 
     if (shortcuts.pressed('tree.rename', event)) {
       event.preventDefault()
@@ -335,25 +352,63 @@
     // A row a step up or down the order somebody arranged, with the same slide a drag
     // gets. Nothing at all in the other six orders, which are the notes' own rules
     // rather than anybody's arrangement; see `moveInOrder` in workspace.svelte.ts.
-    const step = shortcuts.pressed('tree.move-up', event)
+    const moving = shortcuts.pressed('tree.move-up', event)
       ? -1
       : shortcuts.pressed('tree.move-down', event)
         ? 1
         : 0
 
-    if (step !== 0) {
+    if (moving !== 0) {
       event.preventDefault()
       const code = lift
       // Before the gesture has arrived - a key pressed in the same breath as the order
       // was chosen - the row still moves; it simply arrives rather than slides.
       if (!code) {
-        void liftCode().then((then) => then.moveInOrder(here, step))
+        void liftCode().then((then) => then.moveInOrder(here, moving))
         return
       }
 
       const was = code.placesOf(held)
-      if (code.moveInOrder(here, step)) void code.slideInto(held, was)
+      if (code.moveInOrder(here, moving)) void code.slideInto(held, was)
     }
+  }
+
+  /** The keys a file manager has, read off the ids the rest of the app keeps them
+   *  under - Ctrl+Z is Undo's, Ctrl+N is New note's - so one rebind moves both. They
+   *  act on the selection, or on the row the keyboard is on, and what they make goes
+   *  into the folder that row is, or sits in. */
+  const FILE_KEYS: [string[], (rows: string[], into: string) => unknown][] = [
+    [['fixed.copy'], (rows) => fileClipboard.hold(rows, false)],
+    [['fixed.cut'], (rows) => fileClipboard.hold(rows, true)],
+    [['fixed.paste'], (_, into) => fileClipboard.paste(into)],
+    [['edit.undo'], () => workspace.undoFileAction()],
+    [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction()],
+    [['tree.duplicate'], (rows) => workspace.duplicateMany(rows)],
+    [['app.new'], (_, into) => workspace.createNote(into)],
+  ]
+
+  /** True when the press was one of those, and spent. */
+  function fileKey(event: KeyboardEvent, here: string | null): boolean {
+    const found = FILE_KEYS.find(([ids]) => ids.some((id) => shortcuts.pressed(id, event)))
+    const entry = here === null ? null : entryFor(here)
+    const into =
+      entry?.is_dir === false ? folderOf(entry.path) : (entry?.path ?? workspace.activeSpace?.root)
+    if (!found || into === undefined) return false
+
+    event.preventDefault()
+    const rows = workspace.selection.length ? workspace.selection : here === null ? [] : [here]
+    void found[1](rows, into)
+    return true
+  }
+
+  /** Shift and an arrow: the next row joins the selection and takes the keyboard. */
+  function stretch(here: string, step: number) {
+    const index = at.get(here)
+    const next = index === undefined ? undefined : flat[index + step]
+    if (index === undefined || !next) return
+
+    workspace.extendSelection(here, next.entry.path)
+    void reach(index + step).then((row) => row?.focus())
   }
 
   /** Left and right in a list that holds lists: right shows what a row holds and
@@ -592,11 +647,11 @@
    *  A note held over itself is the same nothing, and the row itself is what says
    *  so: the folder a drop would make out of a note does not exist yet, so no rule
    *  about paths can tell it from the note it would be made of. */
-  function takes(entry: Entry): boolean {
+  function takes(entry: Entry, how: 'move' | 'copy' = 'move'): boolean {
     const paths = carried()
     if (paths.includes(entry.path)) return false
 
-    return paths.length === 0 || movesInto(paths, targetFor(entry.path, entry.is_dir))
+    return paths.length === 0 || landsIn(paths, targetFor(entry.path, entry.is_dir), how)
   }
 
   /** Whether a drop would land in this row: in the folder it is, or in the folder
@@ -608,14 +663,16 @@
   }
 
   function overRow(event: DragEvent, entry: Entry) {
-    if (!isTreeDrag(event.dataTransfer)) return
+    const how = landing(event, shortcuts.platform)
+    if (!how) return
 
     const row = event.currentTarget
     // The thin bands at the top and the bottom of a row are the spaces between rows,
     // and in Manual that is where a new order is; the middle of the row is the row
     // itself, which is the move into a folder the list has always had. See
-    // tree-lift.ts, which is also where the bands are.
-    if (lift && row instanceof HTMLElement && lift.aimAt(held, row, event.clientY, entry)) {
+    // tree-lift.ts, which is also where the bands are. A copy is never an order.
+    const ordering = how === 'move' && row instanceof HTMLElement
+    if (lift && ordering && lift.aimAt(held, row, event.clientY, entry)) {
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
       dropTarget.clear()
@@ -623,10 +680,10 @@
       return
     }
 
-    if (!takes(entry)) return
+    if (!takes(entry, how)) return
 
     event.preventDefault()
-    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = how
     lift?.slideBack(held)
     dropTarget.over(targetFor(entry.path, entry.is_dir))
     lift?.dwellOver(entry.path, entry.is_dir)
@@ -657,8 +714,7 @@
       return
     }
 
-    const paths = dragged(event.dataTransfer)
-    if (paths.length) void workspace.moveMany(paths, targetFor(entry.path, entry.is_dir))
+    dropOnList(event, targetFor(entry.path, entry.is_dir))
   }
 
   /** Clicking the row opens what it is; clicking the twist at the end of it shows
@@ -671,6 +727,13 @@
    *  the name opens the thing, the twist discloses it. A folder that has no note
    *  of its own opens the empty page it is - see `openRow` in workspace.svelte.ts
    *  - and writes nothing by being looked at. */
+  /** A row's menu, behind a door. The press is spent before the await. */
+  function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./row-menu').then(({ rowMenu }) => menu.show(event, rowMenu(entry), { title }))
+  }
+
   function openRowAt(event: MouseEvent, entry: Entry) {
     const twist = event.target instanceof Element ? event.target.closest('.twist') : null
     if (twist) {
@@ -745,7 +808,7 @@
 
   function onDragOver(event: DragEvent) {
     const box = where.box
-    if (!box || !isTreeDrag(event.dataTransfer)) return
+    if (!box || !landing(event, shortcuts.platform)) return
 
     edgeAt = event.clientY - box.getBoundingClientRect().top
     rolling ??= requestAnimationFrame(rollOn)
@@ -896,6 +959,18 @@
     const index = rowOfNote(note)
     if (index === null) return
 
+    void reach(index)
+  })
+
+  // A note asked to be shown; see `revealNote`. Waits for its row to be drawn.
+  $effect(() => {
+    const asked = workspace.revealing
+    if (asked === null) return
+
+    const index = rowOfNote(asked)
+    if (index === null) return
+
+    workspace.revealing = null
     void reach(index)
   })
 
@@ -1058,6 +1133,7 @@
       class="nib-row row"
       data-path={entry.path}
       class:is-left-out={workspace.excluded.has(entry.path)}
+      class:is-cut={fileClipboard.isCut(entry.path)}
       class:is-quiet={unwritten}
       class:is-taking={nesting(entry)}
       class:is-lifted={carrying.includes(entry.path)}
@@ -1069,8 +1145,8 @@
       onclick={(event) => openRowAt(event, entry)}
       ondblclick={(event) => tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
       use:middleOpens={(event) => void workspace.openRow(entry.path, howFor(tabAsk(event)))}
-      oncontextmenu={(event) => menu.show(event, rowMenu(entry), { title: name })}
-      use:longPress={(event) => menu.show(event, rowMenu(entry), { title: name })}
+      oncontextmenu={(event) => showRowMenu(event, entry, name)}
+      use:longPress={(event) => showRowMenu(event, entry, name)}
       ontouchstart={(event) => onRowTouchStart(event, entry)}
       ontouchmove={(event) => lift?.touchMoved(event)}
       ontouchend={endPress}
@@ -1189,6 +1265,12 @@
      stopped asking it things. Opacity rather than a colour, so the mark in front
      of the name goes quiet with it. See workspace/excluded.svelte.ts. */
   .row.is-left-out {
+    opacity: 0.5;
+  }
+
+  /* A row cut and waiting for a paste to move it, drawn faint the way Explorer
+     draws one. */
+  .row.is-cut {
     opacity: 0.5;
   }
 

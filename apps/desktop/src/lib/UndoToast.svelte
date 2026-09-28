@@ -1,0 +1,81 @@
+<script lang="ts">
+  import { untrack } from 'svelte'
+  import { fly } from 'svelte/transition'
+  import { cubicOut } from 'svelte/easing'
+  import { t } from './i18n.svelte'
+  import { dur } from './motion'
+  import { undoToast } from './undo-toast.svelte'
+  import { workspace } from './workspace.svelte'
+
+  // What is on the stack already, before this was on the page, is nobody's news.
+  undoToast.know(workspace.undone.stack)
+
+  // The stack is what this follows. The toast's own batch is read and written in the
+  // same call, and an effect that depended on it would run again on its own write.
+  $effect(() => {
+    const stack = workspace.undone.stack
+    untrack(() => undoToast.heard(stack))
+  })
+
+  // Gone with the component, and the timer with it.
+  $effect(() => () => undoToast.dismiss())
+</script>
+
+<!-- One word for what happened and one for the way back: the row it was about has
+     already gone or moved, which says the rest. -->
+{#if undoToast.kind}
+  <div
+    class="toast"
+    role="status"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    onpointerenter={() => undoToast.hold()}
+    onpointerleave={() => undoToast.linger()}
+  >
+    <p>{undoToast.kind === 'delete' ? t('Deleted') : t('Moved')}</p>
+    <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
+  </div>
+{/if}
+
+<style>
+  /* The first track of the notices row, under the file list the change was made in,
+     where Gmail puts its own. Stacked under the storage warning when both are up. */
+  .toast {
+    grid-column: 1;
+    justify-self: start;
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-md);
+    background: var(--surface-3);
+    box-shadow: var(--shadow-lg);
+  }
+
+  p {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    color: var(--text);
+  }
+
+  .undo {
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-strong);
+    color: var(--accent);
+    cursor: default;
+    transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .undo:active {
+    opacity: 0.6;
+  }
+
+  :global([data-touch]) .undo {
+    min-height: var(--touch-target);
+  }
+</style>

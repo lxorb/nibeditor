@@ -15,9 +15,17 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
-import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
+import {
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  nameOf,
+  noteName,
+  relativeTo,
+  withinSpace,
+} from './space-paths'
 import { key, t } from './i18n.svelte'
-import { copyName, nameFromContent, nameFromTitle, shownName } from './note-name'
+import { nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -69,11 +77,19 @@ import * as spaces from './workspace/spaces'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
 import { undoLastFileAction } from './workspace/undoing'
+import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
-import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
+import {
+  folderFor,
+  folderNote,
+  folderNotePath,
+  isFolderNote,
+  noteToNest,
+  unnesting,
+} from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
@@ -2681,6 +2697,12 @@ class Workspace {
     this.picked.all(this.visibleRows())
   }
 
+  /** Shift and an arrow: the selection stretched from the row the keyboard was on
+   *  to the next one. */
+  extendSelection(from: string, to: string) {
+    this.picked.extend(from, to, this.visibleRows())
+  }
+
   clearSelection() {
     this.picked.clear()
   }
@@ -2713,22 +2735,66 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
-    // A drop on a note lands in the folder that note is about to become, so the
-    // note goes in first and what was dropped on it follows: `A.md` becomes
-    // `A/A.md`, and the folder is open afterwards because otherwise the row a
-    // note was just dragged into swallowed it without a word. See folder-notes.ts.
-    const nesting = noteToNest(this.tree, intoFolder)
-    if (nesting && !paths.includes(nesting)) {
-      // The folder is on the tree before the note is in it. Otherwise the row
-      // blinks out - the note has left and the folder it went into does not exist
-      // yet - and comes back a round trip later; see tree-edits.ts.
-      this.showEntry(this.freshEntry(intoFolder, true))
-      await this.move(nesting, intoFolder)
-      this.device.expand(intoFolder)
-    }
-
+    await this.nestFor(intoFolder, paths)
     for (const path of outermost(paths)) await this.move(path, intoFolder)
     this.clearSelection()
+  }
+
+  /** A drop on a note lands in the folder that note is about to become, so the
+   *  note goes in first and what was dropped on it follows: `A.md` becomes
+   *  `A/A.md`, and the folder is open afterwards because otherwise the row a note
+   *  was just dragged into swallowed it without a word. See folder-notes.ts. The
+   *  same for a move, a copy and files from outside the app. */
+  private async nestFor(intoFolder: string, arriving: string[]) {
+    const nesting = noteToNest(this.tree, intoFolder)
+    if (!nesting || arriving.includes(nesting)) return
+
+    // The folder is on the tree before the note is in it. Otherwise the row
+    // blinks out - the note has left and the folder it went into does not exist
+    // yet - and comes back a round trip later; see tree-edits.ts.
+    this.showEntry(this.freshEntry(intoFolder, true))
+    await this.move(nesting, intoFolder)
+    this.device.expand(intoFolder)
+  }
+
+  /** Copies rows into a folder: a paste, or a drag with Ctrl held. What copying
+   *  means is workspace/copying.ts, fetched with the first copy: a window that
+   *  never copies anything never reads it. */
+  async copyMany(paths: string[], intoFolder: string) {
+    await this.nestFor(intoFolder, paths)
+    const { copyRows } = await import('./workspace/copying')
+    const rows = outermost(paths).map((from) => ({ from, into: intoFolder }))
+    await this.copied(await copyRows(this, rows), intoFolder)
+  }
+
+  /** A second copy of each row, beside the first. */
+  async duplicateMany(paths: string[]) {
+    const { copyRows } = await import('./workspace/copying')
+    const rows = outermost(paths).map((from) => ({ from, into: folderOf(from) }))
+    await this.copied(await copyRows(this, rows), null)
+  }
+
+  /** Files dropped on the list from outside the app, copied into a folder. */
+  async bringIn(files: readonly Picked[], intoFolder: string) {
+    await this.nestFor(intoFolder, [])
+    const { bringIn } = await import('./workspace/copying')
+    await this.copied(await bringIn(this, files, intoFolder), intoFolder)
+  }
+
+  /** What every copy ends with: the listing read again, the folder the rows went
+   *  into open, and the rows that arrived picked, which is where Explorer and VS
+   *  Code leave them - the next key acts on what was just made. And the account
+   *  hears sooner than it would have, the way it does after an import. */
+  private async copied(landed: string[], into: string | null) {
+    if (!landed.length) return
+
+    if (into !== null && into !== this.activeSpace?.root) this.device.expand(into)
+    await this.loadTree()
+    this.picked.all(landed)
+    this.persist()
+
+    const { sync } = await import('./sync.svelte')
+    sync.nudge()
   }
 
   async removeMany(paths: string[]) {
@@ -2850,6 +2916,34 @@ class Workspace {
       here = joinPath(here, part)
       this.device.expand(here)
     }
+  }
+
+  /** The note the file list is to scroll to; Tree.svelte clears it. */
+  revealing = $state<string | null>(null)
+
+  /** The note in front, or the one named, unfolded to and scrolled to in the file
+   *  list. A folder's own note is the folder's row. */
+  revealNote(path = this.active?.path) {
+    const root = this.activeSpace?.root
+    if (!path || root === undefined || withinSpace(root, path) === null) return
+
+    const holder = folderOf(isFolderNote(path) ? folderOf(path) : path)
+    if (holder !== root) this.revealFolder(holder)
+
+    this.showPanel('tree')
+    this.revealing = path
+  }
+
+  /** Every row of the open space folded. */
+  foldList() {
+    const root = this.activeSpace?.root
+    if (root !== undefined) this.device.foldUnder(root)
+  }
+
+  /** Whether folding the list would change anything. */
+  get unfolded(): boolean {
+    const root = this.activeSpace?.root ?? ''
+    return Object.keys(this.device.expanded).some((path) => withinSpace(root, path) !== null)
   }
 
   /** Opens a note and lands on one of its headings, the way a link into a
@@ -3317,6 +3411,12 @@ class Workspace {
     await undoLastFileAction(this)
   }
 
+  /** Does the last undone file operation again; see workspace/redoing.ts. */
+  async redoFileAction() {
+    const { redoLastFileAction } = await import('./workspace/redoing')
+    await redoLastFileAction(this)
+  }
+
   /** A note the first pass has just written, by the path it landed at.
    *
    *  A tab that was holding its place takes the words and becomes an ordinary
@@ -3527,20 +3627,24 @@ class Workspace {
     return this.undone.label
   }
 
+  /** Whether a file change undone can be done again. */
+  get canRedo(): boolean {
+    return this.undone.canRedo
+  }
+
   /** A second copy of a file, beside the first.
    *
    *  `Plan.md` copies to `Plan copy.md`: the word goes beside the name rather than
    *  after the ending, so the copy is still a note in a vault opened next door, and
    *  `copyName` is where that is said. Through `freeName` like every other name the
    *  app writes, because a second copy used to be written straight over the first -
-   *  `write_note` replaces what is there, and nothing asked. */
+   *  `write_note` replaces what is there, and nothing asked.
+   *
+   *  The same copy a paste makes, which is bytes rather than words: a PDF and a
+   *  folder drawn as its note duplicate as well, and the copy is one undo away. See
+   *  workspace/copying.ts. */
   async duplicate(path: string) {
-    const folder = folderOf(path)
-    const content = await invoke<string>('read_note', { path })
-    const name = this.freeName(folder, copyName(nameOf(path)))
-
-    await writeFile(joinPath(folder, name), content)
-    await this.loadTree()
+    await this.duplicateMany([path])
   }
 
   /** The three panel fields together, for the rules next door to work out the

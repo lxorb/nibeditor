@@ -29,7 +29,7 @@
  *    markup can read. `ask()` is called from a command, a gesture or an effect -
  *    never from the markup, which would be a write during a render. */
 
-import { loadFind } from '@nib/editor'
+import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
@@ -151,6 +151,12 @@ export const recordingPill = latched(() => import('./RecordingPill.svelte'))
  *  presses the bars; see AppMenu.svelte. */
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
+/** The Undo after a delete or a move; see undo-toast.svelte.ts. */
+export const undoToastNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
+  return import('./UndoToast.svelte')
+})
+
 /** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,
  *  as cards, on the website. Latched like the sheets, and asked for at the launch's
  *  last turn rather than behind the first press, because that press is a hand holding
@@ -234,19 +240,37 @@ export async function warmDoors(): Promise<void> {
     appMenuRows(),
     readingSurface(),
     loadFind(),
+    // The line, case and grow-the-selection commands, so that the first Ctrl+J or
+    // Shift+Alt+Right is answered in the frame it is pressed; see line-door.ts in
+    // @nib/editor.
+    loadLineCommands(),
+    // The blocks the editor's `/` menu offers, which are the app's rows rather than a
+    // list the editor keeps: handed over as a function so the words follow the
+    // language without anything having to hand them over again. Here rather than in
+    // the launch, because they are rows of the command list, and the command list
+    // reaches half the app - exports, printing, the recorder, dictation - for a `/`
+    // nobody has typed yet. Until it lands a `/` offers nothing; see slash.ts in
+    // @nib/editor.
+    import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
     // The held chooser and the dialog it holds up, which are here rather than behind
     // their own first press because the first press is the one they exist to answer;
     // see above.
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
     paletteDoor.ask(),
+    // The Undo toast, and the menu of a text field so the first right click in one
+    // does not wait for it. Neither in the glasses' plugin, which is a phone's and
+    // has no room left in its package; see even/bundle.test.ts.
+    __EVEN_PLUGIN__ ? undefined : undoToastNotice.ask(),
+    __EVEN_PLUGIN__ ? undefined : import('./field-menu'),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the
     // moment a menu opens. Restoring them costs fifteen kilobytes nobody waits for here
     // and answers that question right from the first menu; see ai/hears.ts.
     import('./ai/store.svelte'),
-    // A tab's own menu and Ctrl+Tab in order of use, asked for at any moment.
+    // A tab's own menu, a row's, and Ctrl+Tab in order of use, asked for at any moment.
     import('./tab-strip/menu'),
+    import('./row-menu'),
     import('./tab-cycle.svelte'),
   ])
 }

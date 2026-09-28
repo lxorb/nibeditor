@@ -16,9 +16,12 @@
  *  moment it is opened: what the undo would take back, which rows are selected and
  *  what a row can be moved into are all true only then. */
 
-import { isPdfTarget } from '@nib/markdown/links'
-import { folderNote, nestedIn } from './folder-notes'
+import { noteLinksCode } from '@nib/editor'
+import { copyText } from './clipboard'
+import { pickedLink } from './composer'
+import { folderNote, linkedFiles, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
+import { links } from './link-index.svelte'
 import {
   bookmarkEntry,
   coverEntries,
@@ -28,10 +31,14 @@ import {
   type MenuEntry,
   shareEntry,
 } from './menu.svelte'
-import { moveTargets, type MoveTarget } from './move-targets'
+import { moveTargets, type MoveTarget, movesInto } from './move-targets'
+import { howFor } from './new-tab'
 import { rowName } from './note-name'
-import { isMarkdownPath } from './space-paths'
+import { shortcuts } from './shortcuts.svelte'
+import { folderOf, isMarkdownPath } from './space-paths'
 import { isDesktop, platform } from './tauri'
+import { entryAt } from './tree-edits'
+import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -55,6 +62,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
 
   return [
     { label: t('Open'), run: () => void workspace.openRow(entry.path) },
+    ...openElsewhere(entry, own),
     DIVIDER,
     ...(holds
       ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
@@ -78,13 +86,16 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    // Duplicating copies a file's words. A PDF has none - the copy would be an
-    // empty file wearing the name of a paper - and a row that is a folder has more
-    // than words: a copy of `A/A.md` is `A/A 2.md`, which is neither a note nested
-    // under A nor a note beside it.
-    ...(entry.is_dir || isPdfTarget(entry.name)
-      ? []
-      : [{ label: t('Duplicate'), run: () => void workspace.duplicate(entry.path) }]),
+    // A link to the row, spelled the way the Links setting says and the `[[`
+    // popup writes it, to paste into any note.
+    { label: t('Copy link'), run: () => void copyLinks([entry.path]) },
+    // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
+    // as the folder with its note renamed to match; see workspace/copying.ts.
+    {
+      label: t('Duplicate'),
+      hint: shortcuts.hint('tree.duplicate'),
+      run: () => void workspace.duplicate(entry.path),
+    },
     ...revealEntry(entry),
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
@@ -96,16 +107,83 @@ export function rowMenu(entry: Entry): MenuEntry[] {
  *  acts on the lot, and offers only what makes sense for a lot. */
 function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
-  const count = workspace.selection.length
+  const paths = [...workspace.selection]
+  const count = paths.length
 
   return [
+    { label: t('Open all'), run: () => void openAll(paths) },
+    DIVIDER,
+    { label: t('Move'), run: () => void moveAllTo(paths) },
+    ...bookmarkAll(paths),
+    { label: t('Copy link'), run: () => void copyLinks(paths) },
+    DIVIDER,
     {
       label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
       danger: true,
-      run: () => void workspace.removeMany(workspace.selection),
+      run: () => void workspace.removeMany(paths),
     },
     ...undoEntry(),
   ]
+}
+
+/** A row somewhere other than where Open puts it: a tab of its own left behind the
+ *  one in front, as a link's menu offers in a browser and Ctrl+click does on the row
+ *  (see new-tab.ts), and a pane beside this one,
+ *  as VS Code's Open to the Side does. The pane is not offered where there is none
+ *  to make - a phone - nor for a folder with no note, which has no file to show
+ *  beside anything yet. */
+function openElsewhere(entry: Entry, own: Entry | null): MenuEntry[] {
+  const behind = {
+    label: t('Open in new tab'),
+    run: () => void workspace.openRow(entry.path, howFor('behind')),
+  }
+  if (viewport.touch || (entry.is_dir && !own)) return [behind]
+
+  return [
+    behind,
+    { label: t('Open to the side'), run: () => void workspace.openAside(own?.path ?? entry.path) },
+  ]
+}
+
+/** Every row of the selection in a tab, in the order they were picked, landing on
+ *  the first: the rest open behind it, as the tabs a browser opens from links do. */
+async function openAll(paths: readonly string[]) {
+  const [first, ...rest] = paths
+  if (first === undefined) return
+
+  await workspace.openRow(first)
+  for (const path of rest) await workspace.openRow(path, howFor('behind'))
+}
+
+/** The selection bookmarked with one press, as a row bookmarks itself: the note a
+ *  folder is drawn as where it has one. The word says which way the press goes. */
+function bookmarkAll(paths: readonly string[]): MenuEntry[] {
+  const marks = paths.flatMap((path) => {
+    const entry = entryAt(workspace.tree, path)
+    const mark = entry && workspace.bookmarks.forEntry(folderNote(entry) ?? entry)
+    return mark ? [mark] : []
+  })
+  if (!marks.length) return []
+
+  const all = marks.every((mark) => workspace.bookmarks.has(mark))
+  return [
+    {
+      label: all ? t('Remove bookmark') : t('Bookmark'),
+      run: () => workspace.bookmarks.toggleAll(marks),
+    },
+  ]
+}
+
+/** A link to each row, a line each, written through the app's one writer; see
+ *  composer.ts. From nowhere in particular, so a relative link starts at the top of
+ *  the space. */
+async function copyLinks(rows: readonly string[]) {
+  const root = workspace.activeSpace?.root
+  if (!root) return
+
+  const paths = linkedFiles(workspace.tree, root, rows)
+  const { noteLinks } = await noteLinksCode()
+  if (paths.length) await copyText(noteLinks(links.index(null), paths, pickedLink))
 }
 
 /** Moving a row, said rather than dragged.
@@ -126,6 +204,29 @@ function moveEntry(entry: Entry): MenuEntry[] {
   if (!targets.length) return []
 
   return [{ label: t('Move'), run: () => void moveTo(entry, targets) }]
+}
+
+/** The selection moved together, somewhere every row of it may go: never into one
+ *  of themselves, and a place some of them already are is fine as long as the rest
+ *  would move. The same sheet and the same call as one row's Move. */
+async function moveAllTo(paths: readonly string[]) {
+  const asked = (moving: string | null) =>
+    moveTargets({
+      moving,
+      tree: workspace.tree,
+      spaces: workspace.spaces,
+      here: workspace.activeSpace?.root ?? null,
+    })
+  const each = paths.map((path) => new Set(asked(path).map((target) => target.id)))
+  const targets = asked(null).filter(
+    (target) =>
+      movesInto(paths, target.id) &&
+      paths.every((path, at) => each[at]?.has(target.id) === true || folderOf(path) === target.id),
+  )
+
+  const { prompt } = await import('./prompt.svelte')
+  const into = await prompt.find({ title: t('Move to'), options: targets })
+  if (into) await workspace.moveMany([...paths], into)
 }
 
 async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {

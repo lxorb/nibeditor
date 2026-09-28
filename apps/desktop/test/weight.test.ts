@@ -391,6 +391,13 @@ function holds(tail: string): boolean {
  *  the Ctrl+T dialog, or by the first press in front of that. Measured 3,320,977 and
  *  382 modules, with everything it learned.
  *
+ *  The file list's own batch (a row dragged into a note is a link, a row's menu opens
+ *  it elsewhere and acts on a selection, the list folds and finds the open note) put
+ *  two doors up to fit: a row's menu is fetched by the press that opens it, warmed at
+ *  the launch's last turn like a tab's, and the link a drop writes is fetched by the
+ *  first drop. What stays is the drop's handlers, which have to answer a `dragover`
+ *  in its own frame. Measured 3,339,359 and 385 modules, on top of the raise below.
+ *
  *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
  *  and how it takes its first key: hidden is where every note starts, and a guard that
  *  arrived after the first paint would let a word typed at the top of the page land in
@@ -411,13 +418,41 @@ function holds(tail: string): boolean {
  *  menu's door, the window's title and edited dot, Finder's words and the print path.
  *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in.
  *
- *  Raised 2026-09-28, to 3,340,000, on main, for Ctrl+click and the middle button
- *  opening a tab of its own on every surface: new-tab.ts, the file list, the Links
- *  panel, the bookmarks, the arrows and the workspace's opens taking where a tab goes.
- *  8,788 bytes, on a main that was at 3,327,115 with the palette's own round in it;
- *  measured 3,335,903. The rule has to be in the first paint, because the file list and
- *  a link in the note on screen answer the first click. The production build fetches
- *  2,111 more bytes before the first paint (1,318,180 to 1,320,291).
+ *  Raised 2026-09-28, to 3,340,000, for Ctrl+click and the middle button opening a tab
+ *  of its own on every surface: new-tab.ts, the file list, the Links panel, the
+ *  bookmarks, the arrows and the workspace's opens taking where a tab goes. 8,788
+ *  bytes, on a main that was at 3,327,115 with the palette's own round in it; measured
+ *  3,335,903. The rule has to be in the first paint, because the file list and a link
+ *  in the note on screen answer the first click. The production build fetches 2,111
+ *  more bytes before the first paint (1,318,180 to 1,320,291).
+ *
+ *  Raised 2026-09-28, to 3,356,000 and 387 modules, for the file list's own keys and
+ *  drops: Ctrl+C, Ctrl+X and Ctrl+V, Ctrl+Z and Ctrl+Y, Ctrl+D, Shift and an arrow, a
+ *  Ctrl-drag that copies and files dropped in from Explorer. Main measured 3,338,855
+ *  and 385 modules, this 3,352,335 and 386. The list is the first paint, so what a key or a drop reads
+ *  in it is here: the clipboard's two fields and the drop (list-landing.svelte.ts), the
+ *  table of keys, a drop's files caught before the event ends, the redo half of the
+ *  undo stack. What they do is not - the copy itself, the walk of a dropped folder and
+ *  the redo are fetched by the first of each (workspace/copying.ts, import/picking.ts,
+ *  workspace/redoing.ts).
+ *
+ *  Lowered 2026-09-28, to 3,310,000 and 382 modules, when the line commands (Ctrl+J,
+ *  a line above, Shift+Alt+Right) came in with their keys bound from the first frame
+ *  and themselves behind a door (packages/editor/src/line-door.ts). The door did not
+ *  pay for the keys on its own, and what did was the command list: `start.ts` imported
+ *  `lib/commands.ts` for the rows of the `/` menu and nothing else, which held the
+ *  whole list in front of the first paint, and the export offer, printing, a picture
+ *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
+ *  over at the launch's last turn now; see `warmDoors`. Measured 3,298,741 and 380.
+ *  Dictation went from the list of doors below with it: it is behind the command
+ *  list's.
+ *
+ *  The VS Code keyboard, and the Obsidian and Notion ones learning their own apps'
+ *  keys, came in under it rather than raising it: the keyboards went behind the
+ *  Settings sheet, which is the one place a keyboard is chosen, and the launch keeps a
+ *  keyboard's name alone (shortcuts/preset-ids.ts). A block duplicated or moved from a
+ *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
+ *  this 3,296,054 and 380.
  *
  *  Raised 2026-09-28 a third time, to 3,348,000, for what the Mac round found on a
  *  real Mac: the traffic lights' room in the bar and the sidebar's head, the sidebar
@@ -427,10 +462,10 @@ function holds(tail: string): boolean {
  *  key typed. The menu bar's own share of the round is behind its door. Measured
  *  3,345,483.
  *
- *  Raised again when the Mac round and that one met, which each had been measured
- *  without the other: 3,350,993, under a ceiling of 3,355,000. */
-const BUDGET = 3_355_000
-const MOST_FILES = 386
+ *  And met again when the Mac round came in on top of main's, which each had been
+ *  measured without the other: 3,324,148 and 382 modules. */
+const BUDGET = 3_328_000
+const MOST_FILES = 384
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -663,6 +698,21 @@ describe('what the app evaluates before it draws anything', () => {
     // from before shortcuts has any, and the first one opened fetches it. See
     // workspace.openWeb.
     ['/lib/web-tab/convert.ts', 'the old websites, converted'],
+    // The command list, which the launch held for the rows of the `/` menu alone, and
+    // what hangs off it: the export offer, printing and dictation. Handed over at the
+    // launch's last turn; see `warmDoors` in surfaces.svelte.ts.
+    ['/lib/commands.ts', 'the command list'],
+    ['/lib/export/print.ts', 'printing'],
+    ['/lib/mobile/dictation.ts', 'dictation'],
+    // And the line commands, whose keys are bound from the first frame; see
+    // packages/editor/src/line-door.ts.
+    ['/editor/src/lines.ts', 'the line commands'],
+    ['/editor/src/grow.ts', 'the selection a step outwards'],
+    ['/editor/src/paste-link.ts', 'an address pasted over words'],
+    ['/editor/src/block/commands.ts', 'a block duplicated or moved from a key'],
+    // The keyboards themselves, which only the Settings sheet offers; the launch reads
+    // a keyboard's name alone. See shortcuts/preset-ids.ts.
+    ['/lib/shortcuts/presets.ts', 'the keyboards'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -693,7 +743,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
-    ['/lib/mobile/dictation.ts', 'whether anything can hear'],
+    ['/lib/shortcuts/preset-ids.ts', 'the names of the keyboards'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })

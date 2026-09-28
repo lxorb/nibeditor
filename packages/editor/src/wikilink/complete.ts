@@ -118,7 +118,7 @@ function insert(target: LinkWrite) {
 /** Everything a link the popup writes knows about its target except which part of
  *  the note it points at: the name to write, where the note sits, and the note the
  *  link is being written in. The rows add the heading or the block. */
-function about(index: NoteIndex, note: NoteRef): LinkWrite {
+export function about(index: NoteIndex, note: NoteRef): LinkWrite {
   return { name: nameFor(index, note), path: note.path, from: index.path }
 }
 

@@ -82,6 +82,8 @@ mod papers;
 mod paths;
 #[cfg(desktop)]
 mod pdf;
+#[cfg(desktop)]
+mod placement;
 mod query;
 #[cfg(desktop)]
 mod recent;
@@ -134,6 +136,7 @@ macro_rules! commands {
             notes::write_bytes,
             notes::delete_note,
             notes::rename_note,
+            notes::copy_path,
             notes::create_folder,
             notes::delete_folder,
             notes::remove_empty_folder,
@@ -288,9 +291,10 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // Which page each web tab is on, so a back arrow is lit only where there is
     // something behind it, and a window with web tabs in it held, as it closes, until
     // their logins are made to last. A phone has no child webviews to keep a trail
-    // for; see web_tabs.rs and docs/web-tabs.md.
+    // for; see web_tabs.rs and docs/web-tabs.md. And where each window is, written
+    // down as it closes so the next launch opens there; see placement.rs.
     #[cfg(desktop)]
-    let builder = web_tabs::managed(builder);
+    let builder = placement::managed(web_tabs::managed(builder));
 
     let builder = with_commands(builder);
     trace::mark("commands registered");
@@ -322,7 +326,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = builder.setup(move |app| {
         engine::gate::say("\"event\":\"cef-initialised\"");
         if let Some(ui) = &ui {
-            engine::open_ui_window(app, ui)?;
+            engine::open_ui_window(app, &placement::restored(app.handle(), ui))?;
         }
         ready(app, None)
     });
@@ -482,30 +486,37 @@ fn ready(
     // there. See ground.rs, which says why that is right rather than merely careful.
     //
     // The window, not the webview window; see web_tabs.rs.
+    //
+    // Where it was left, too, put into the config rather than applied afterwards, so the
+    // first frame is already in the right place; see placement.rs.
     #[cfg(all(desktop, not(feature = "cef")))]
     if let Some(config) = ui {
-        let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
+        let config = placement::restored(handle, config);
+        trace::mark("window placement");
+        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?;
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
-        // Except on a Mac, where it is built hidden and shown below, once it has been
-        // put back where it was left (see `show_where_left` in document_window.rs), so
-        // the move is never seen. A Mac's webview starts in fourteen milliseconds, not in
-        // the third of a second Windows needs, which is what showing it at once is for.
-        let window = match ground::remembered(handle) {
-            Some(colour) => building
-                .visible(!cfg!(target_os = "macos"))
-                .background_color(colour)
-                .build()?,
-            None => building.build()?,
+        // On screen at once, in the colour it was last seen in, except where the config
+        // names a place of its own - a probe off the screen, built hidden and put there
+        // before it is shown; see `placed` in placement.rs - and on a Mac, where it is
+        // built hidden so its traffic lights are placed before anything is drawn (see
+        // lights.rs). A Mac's webview starts in fourteen milliseconds, not in the third
+        // of a second Windows needs, which is what showing it at once is for.
+        let colour = ground::remembered(handle);
+        let at_once =
+            colour.is_some() && !placement::names_its_place(&config) && !cfg!(target_os = "macos");
+        let building = match colour {
+            Some(colour) => building.background_color(colour),
+            None => building,
         };
-        // Before anything is drawn, so the lights are never seen anywhere else.
-        #[cfg(target_os = "macos")]
-        lights::hold(&window);
-        #[cfg(target_os = "macos")]
-        document_window::show_where_left(&window);
-        #[cfg(not(target_os = "macos"))]
-        window.show()?;
+        let window = building.visible(at_once).build()?;
+        if !at_once {
+            #[cfg(target_os = "macos")]
+            lights::hold(&window);
+            placement::placed(&window, &config);
+            window.show()?;
+        }
     }
 
     // Nib's own Chromium builds it in `setup`, in a profile of its own, and it is built

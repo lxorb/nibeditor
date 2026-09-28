@@ -22,7 +22,7 @@
   import { runnable } from './shortcuts/registry'
   import { markFor, nameFor, toolbar } from './toolbar.svelte'
   import { NOTHING, pull } from './pull.svelte'
-  import { PRESETS } from './shortcuts/presets'
+  import { PRESETS, presetById } from './shortcuts/presets'
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
   import { Rebind } from './settings/rebind.svelte'
@@ -200,6 +200,10 @@
    *  so that one case asks first. Choosing between two presets replaces
    *  nothing anybody wrote and goes straight through. */
   async function choosePreset(id: string) {
+    // A name this version does not have changes nothing.
+    const preset = presetById(id)
+    if (!preset) return
+
     if (shortcuts.preset === 'custom') {
       const sure = await prompt.confirm({
         title: t('Replace your own keys?'),
@@ -209,7 +213,7 @@
       if (!sure) return
     }
 
-    shortcuts.choose(id)
+    shortcuts.choose(preset)
   }
 
   /** The list, grouped the way the menus group the same commands, and cut

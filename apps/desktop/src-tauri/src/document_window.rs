@@ -13,9 +13,6 @@
 //! (`TextEdit`, Typora, Pages), and the file it stands for, which is what a
 //! Cmd+click on the title shows the folders of wherever the title is on screen.
 //! Elsewhere neither exists, and the title is all there is.
-//!
-//! And, on a Mac only, the plugin that puts the main window back where it was at
-//! the last launch; see `remembered_frame`.
 
 use tauri::Window;
 
@@ -80,76 +77,4 @@ fn set_document_state(handle: *mut std::ffi::c_void, edited: bool, path: &str) {
     ns_window.setDocumentEdited(edited);
     // An empty path is AppKit's own way of saying the window stands for no file.
     ns_window.setRepresentedFilename(&NSString::from_str(path));
-}
-
-/// The plugin that puts the main window back where it was at the last launch, the
-/// way a Mac app reopens its window where it was left. Only the main window, which
-/// is the one a launch opens; a second window opens at the default size, as it
-/// did.
-///
-/// Only the size, the place and whether it was maximised. Not whether it is
-/// visible: the launch shows the window itself, at once in the colour it was last
-/// seen in or once the page is up (see ground.rs), and the plugin showing it
-/// would undo exactly that. Nor its frame, which is the reader's setting (see
-/// appearance.rs). A place on a display that is no longer connected is not put
-/// back - the plugin checks it lands on a screen there is - so the system chooses
-/// one instead.
-///
-/// A Mac's alone for now, since the window has to be put back before it is shown:
-/// see `show_where_left`, which is why the plugin is told not to do that part itself.
-/// Elsewhere the window is built on screen at once, before a webview that takes a
-/// third of a second to start on Windows, and the move would be seen.
-#[cfg(target_os = "macos")]
-pub fn remembered_frame() -> tauri::plugin::TauriPlugin<crate::Engine> {
-    tauri_plugin_window_state::Builder::new()
-        .with_state_flags(REMEMBERED)
-        .with_filter(|label| label == MAIN)
-        .skip_initial_state(MAIN)
-        .build()
-}
-
-/// Shows a window, and the main one where it was left: at launch, and when the Dock
-/// brings it back after the last window was closed (see `open_window` in launch.rs).
-///
-/// The plugin would put the main window back by itself, but only when the event loop
-/// next comes round, and the window was shown before that: it stood at the default
-/// size and place for a moment and then jumped, which `jumpwatch` caught at fourteen
-/// milliseconds. Putting it back here first is not enough either, because tao moves
-/// and sizes a Mac window on the main queue rather than at once, and shows it at
-/// once. So the showing goes on that queue too, behind the move, and the window is
-/// first seen where it was left. The window is built hidden for it.
-#[cfg(target_os = "macos")]
-pub fn show_where_left(window: &tauri::WebviewWindow) {
-    use tauri_plugin_window_state::WindowExt as _;
-    if window.label() == MAIN {
-        let _ = window.restore_state(REMEMBERED);
-    }
-
-    let window = window.clone();
-    dispatch2::DispatchQueue::main().exec_async(move || {
-        let _ = window.show();
-    });
-}
-
-/// The one window whose frame is remembered, the one a launch opens.
-#[cfg(target_os = "macos")]
-const MAIN: &str = "main";
-
-/// What is remembered of the main window: its size, its place and whether it was
-/// maximised.
-#[cfg(target_os = "macos")]
-const REMEMBERED: tauri_plugin_window_state::StateFlags =
-    tauri_plugin_window_state::StateFlags::SIZE
-        .union(tauri_plugin_window_state::StateFlags::POSITION)
-        .union(tauri_plugin_window_state::StateFlags::MAXIMIZED);
-
-/// Writes down where the main window is, now, while it still exists. A quit takes the
-/// windows down without the close request the plugin reads a window's frame on, so it
-/// kept whatever the last resize it heard had said: a step short of where a drag
-/// ended, which the next launch opened a few points larger, or the size the window
-/// was built at when nothing it heard was a drag.
-#[cfg(target_os = "macos")]
-pub fn remember_frame(app: &tauri::AppHandle) {
-    use tauri_plugin_window_state::AppHandleExt as _;
-    let _ = app.save_window_state(REMEMBERED);
 }

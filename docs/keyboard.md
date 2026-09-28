@@ -181,6 +181,27 @@ Left and right are the arrows in a list that runs across (the strip, the panel
 tabs), and those two leave up and down alone so the page underneath still
 scrolls.
 
+#### In the file list
+
+What only a list of files has, on top of the walk above. The ones that are the
+app's keys elsewhere - Undo, Redo, New note, the clipboard - are read off the same
+entries, so a rebind of one is a rebind of both.
+
+| Key | What it does |
+| --- | --- |
+| Ctrl+A | select every row |
+| Shift+Up, Shift+Down | take the row above or below into the selection too |
+| Ctrl+Space | put the row in the selection or take it out |
+| F2 | rename |
+| Delete, Backspace | delete the selection |
+| Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
+| Ctrl+D | a copy of each selected row, beside it |
+| Ctrl+N | a new note in the folder the row is, or sits in, waiting for its name |
+| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
+| Alt+Up, Alt+Down | move the row in the order somebody arranged |
+
+See `docs/tree.md` for what a copy is called and where it lands.
+
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
 off on purpose: nib's markup puts what a row holds beside the row rather than
 inside it - one flat column, in which what a note holds is the rows under it - and
@@ -224,6 +245,11 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
+| no key | Show in the file list: the note in front, its rows unfolded and scrolled to. Collapse the file list: every row folded |
+
+The two without a key ship unbound in Obsidian and VS Code as well. Both are rows in
+the palette, Show in the file list is a row in a tab's own menu too, and while a row
+is unfolded the collapse is a glyph beside the order of the files.
 
 Footnotes is the fifth panel and has no key of its own. The four above are the four
 that had one, and a fifth combination nobody asked for is a key taken away from
@@ -311,6 +337,35 @@ last note used to make a blank one; now the pane shows those same kinds as butto
 makes nothing until one is pressed. The keyboard lands on the first button and the
 arrows walk them. They are the dialog's cards, drawn in the pane; see `NewHere.svelte`
 and `KindCard.svelte`.
+
+**Lines and the selection**
+
+What VS Code, Sublime and Obsidian taught every hand that writes, in the editor. Each is
+in the registry and the palette like the rest; the ones with no key have none in VS Code
+either, or want a key nib already spends.
+
+| | |
+| --- | --- |
+| Shift+Alt+Right, Shift+Alt+Left | the selection a step outwards - the word, the words inside the marks, the marks, the block, the list, the section, the note - and back down the same steps. Ctrl+Shift+Cmd and the arrow on a Mac, where Alt, Shift and an arrow is a word at a time |
+| Ctrl+Enter | ticks the task; on words, a bullet, a number or an empty line it makes the task first, so the next press ticks it (Obsidian). A JavaScript fence runs instead, and in code, a heading, a quote or a table the press is the library's line below (already there) |
+| Ctrl+Shift+Enter | a new line above, indented like this one |
+| Ctrl+J | the next line joined onto this one, its indent and marker gone, or every selected line onto the first |
+| Alt+Enter, in the find bar | a cursor on every match, and the bar goes |
+| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case. Duplicate the block and Move the block up or down, the grip's own rows, for the block the caret is in or every block the selection lies across |
+
+Delete the line has no key because both of the ones people know are taken: VS Code's
+Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Select word. The
+VS Code and Obsidian keyboards give it theirs, and the Notion one puts the block rows on
+Notion's keys; see the keyboards below. Sort reads past list markers and boxes, ignores
+case and counts `2` before `10`; with nothing selected it sorts the list or paragraph the
+caret is in.
+None of these reaches into front matter that is hidden: they stop at the first line
+that shows. See `lines.ts`, `case.ts` and `grow.ts` in `packages/editor/src`.
+
+**An address pasted over words links them.** Selected words and a URL on the clipboard
+make `[words](url)`, which is what Obsidian, Notion and GitHub do with that paste. In
+code, in a link, in a formula or in markup the paste goes in as it stands, and
+Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts`.
 
 **A web tab**
 
@@ -440,6 +495,72 @@ F6 stays: VS Code walks its parts with it on a Mac too, and ⌃F6 is the system'
 settings warn about the keys a Mac keeps for itself - Spotlight, the switchers, the
 screenshots, Mission Control, ⌘\` and the rest - see `SYSTEM_KEYS` in the registry.
 
+### The keyboards
+
+Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or
+Vim. Each holds only where it differs from Default, so a key Default gains later reaches
+all of them. The rule for a clash is the other app's: its key goes to what it does there,
+and the Nib action that held it is left with no key rather than moved somewhere nobody
+would look. Those rows read "Not set" in the list, and are still in the menus and the
+palette. `presets.test.ts` fails if a keyboard writes one chord twice, or leaves any two
+actions on one key.
+
+Default indents on Ctrl+[ and outdents on Ctrl+], which is Typora's order. VS Code,
+Obsidian and CodeMirror have it the other way round, and so do those two keyboards.
+
+**VS Code**
+
+| | |
+| --- | --- |
+| Ctrl+G | go to line; Ctrl+G on a Mac too, as there |
+| Ctrl+Shift+K | delete the line |
+| Ctrl+Shift+L | a cursor on every one like the selection |
+| Ctrl+\ | split right |
+| Ctrl+], Ctrl+[ | indent, outdent |
+| Shift+Alt+Right, Shift+Alt+Left | the selection outwards and back, which Default has already |
+| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar |
+
+Ctrl+B stays Bold. It is the sidebar in VS Code, but in a note it is bold, which is what
+VS Code's own markdown extensions do with it too. So the sidebar has no key, and
+Ctrl+Shift+E, VS Code's key for the files, opens them.
+
+**Obsidian**
+
+| | |
+| --- | --- |
+| Ctrl+O | the palette on the notes, which is the quick switcher |
+| Ctrl+P | the palette on the commands, which is the command palette; Ctrl+Shift+P as well |
+| Ctrl+1 to 9 | the notes on the strip |
+| Ctrl+Alt+Left, Ctrl+Alt+Right | back, forward |
+| Ctrl+D | delete the line, Obsidian's delete paragraph |
+| Ctrl+\, Ctrl+Shift+\ | split right, split down |
+| Ctrl+G | the graph |
+| Alt+Enter | follow the link |
+| Ctrl+], Ctrl+[ | indent, outdent |
+| no key | Open file, the heading levels, find next (F3 stays), Select word, Clear formatting, the canvas's zoom to what is picked |
+
+**Notion**
+
+| | |
+| --- | --- |
+| Ctrl+Shift+1, 2, 3 | headings |
+| Ctrl+Shift+4, 5, 6 | task list, bulleted list, numbered list |
+| Ctrl+Shift+8 | code block |
+| Ctrl+E | inline code |
+| Ctrl+Shift+S | strikethrough |
+| Ctrl+\ | show or hide the sidebar |
+| Ctrl+D | duplicate the block |
+| Ctrl+Shift+Up, Ctrl+Shift+Down | move the block |
+| no key | the reading view, Clear formatting, Select word |
+
+On a Mac, Notion's Cmd+Shift+Up and Down move the block here too, which takes selecting to
+either end of the note away from those keys, as Notion does.
+
+**Vim** is Default's keys with modal editing on top; see `packages/editor/src/vim.ts`.
+
+The keyboards are fetched with the Settings sheet, and the launch reads only a keyboard's
+name. See `lib/shortcuts/presets.ts` and `lib/shortcuts/preset-ids.ts`.
+
 ### Layers
 
 Sheets, menus, the settings, the pickers, the palette. All of them:
@@ -455,6 +576,15 @@ also a combobox now - the keyboard never leaves the box, the arrows move which
 row it is pointing at, and the rows are out of the tab sequence, because forty
 notes would otherwise be forty presses of Tab between the palette and the note
 behind it.
+
+A text field's own menu is the other exception. A right click, Shift+F10 or the
+Menu key in any field - the address bar, the search box, the find bar, a name
+being renamed, a field in the settings - gives Cut, Copy, Paste and Select all,
+and the field keeps the keyboard while it is up, the way it does under the
+system's own menu: a name commits and an address goes back to the page's when
+its field loses it. So the menu is walked from the field. The arrows, Home and
+End light a row, Enter chooses it, Escape closes the menu and nothing else, and
+any other key closes it and goes on into the field. See `lib/field-menu.ts`.
 
 ### The ring
 
@@ -537,6 +667,9 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |
 | `apps/desktop/src/lib/Pages.svelte` | the paper's own keys and the four other ways it is zoomed |
 | `packages/editor/src/fold.ts` | the five folding commands, and what a level is |
+| `packages/editor/src/lines.ts` | delete, join, sort and reverse lines, and a line above |
+| `packages/editor/src/grow.ts` | the selection a step outwards, and back |
+| `packages/editor/src/case.ts` | upper, lower and title case |
 | `packages/editor/src/emoji.ts` | the one popup every completion source shares |
 | `apps/desktop/test/e2e/keyboard.py` | the whole thing driven with nothing but `page.keyboard` |
 | `apps/desktop/test/e2e/fold-levels.py` | Fold more and Fold less, driven from the palette |

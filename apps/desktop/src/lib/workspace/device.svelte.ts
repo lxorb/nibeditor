@@ -27,6 +27,7 @@ import {
   stringList,
 } from '../stored'
 import { without, withOrWithout } from '../records'
+import { withinSpace } from '../space-paths'
 import { FIRST_MODE, isSortMode, type SortMode } from '../tree-order'
 
 export const RECENT_KEY = 'nib:recent'
@@ -237,6 +238,17 @@ export class DeviceView {
   expand(path: string) {
     if (this.isExpanded(path)) return
     this.toggleFolder(path)
+  }
+
+  /** Folds every row of one space. */
+  foldUnder(root: string) {
+    const kept = Object.fromEntries(
+      Object.entries(this.expanded).filter(([path]) => withinSpace(root, path) === null),
+    )
+    if (Object.keys(kept).length === Object.keys(this.expanded).length) return
+
+    this.expanded = kept
+    keep(EXPANDED_KEY, JSON.stringify(this.expanded))
   }
 
   iconOf(root: string): string | null {

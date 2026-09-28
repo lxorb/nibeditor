@@ -147,6 +147,19 @@ pub fn move_highlights(from: &Path, to: &Path) {
     }
 }
 
+/// And a copy of it has them too, for the reason they follow a move. Quiet about
+/// failure for the same reason as well.
+pub fn copy_highlights(from: &Path, to: &Path) {
+    if !is_pdf(from) {
+        return;
+    }
+
+    let source = highlights_of(from);
+    if source.exists() {
+        let _ = fs::copy(&source, highlights_of(to));
+    }
+}
+
 /// And they go when it goes.
 pub fn drop_highlights(pdf: &Path) {
     if is_pdf(pdf) {

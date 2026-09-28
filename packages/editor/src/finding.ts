@@ -24,6 +24,7 @@ import {
   replaceNext as libraryReplaceNext,
   search,
   SearchQuery,
+  selectMatches as librarySelectEvery,
   selectNextOccurrence as librarySelectNext,
   selectSelectionMatches as librarySelectMatches,
   setSearchQuery,
@@ -177,5 +178,6 @@ export const previous: Command = libraryPrevious
 export const replaceOne: Command = libraryReplaceNext
 export const replaceEvery: Command = libraryReplaceAll
 export const gotoLine: Command = libraryGotoLine
+export const selectEvery: Command = librarySelectEvery
 export const selectNextOccurrence: StateCommand = librarySelectNext
 export const selectSelectionMatches: StateCommand = librarySelectMatches

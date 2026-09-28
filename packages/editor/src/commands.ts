@@ -1,3 +1,4 @@
+import { syntaxTree } from '@codemirror/language'
 import {
   type ChangeSpec,
   type EditorState,
@@ -8,7 +9,10 @@ import {
 import { type Callout, calloutOf } from '@nib/markdown/callouts'
 import { closesFence } from '@nib/markdown/fences'
 import { taskAt } from '@nib/markdown/tasks'
+import { inCode } from './code'
+import { headingLevel } from './headings'
 import { showFrontMatter } from './live-preview/hidden-front-matter'
+import { enclosing } from './nodes'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
  *  so the same shortcut turns emphasis on and off. */
@@ -179,25 +183,60 @@ export const toggleTaskList: StateCommand = ({ state, dispatch }) => {
   return true
 }
 
-/** The box on the line the caret is on, ticked or cleared. Gives way where there
- *  is no task, so it shares its key with running a code fence: a line is one or
- *  the other and never both. */
+/** Where a line is something other than prose a box could be put in front of: code,
+ *  a table, a heading, a quote, a formula, markup or metadata. Ctrl+Enter gives way
+ *  there, so a fence of JavaScript still runs and the library's line below still
+ *  opens under a heading. */
+const NO_TASK_HERE = new Set([
+  'Table',
+  'Blockquote',
+  'HTMLBlock',
+  'CommentBlock',
+  'FrontMatter',
+  'BlockMath',
+  'LinkReference',
+  'HorizontalRule',
+])
+
+function taskable(state: EditorState, line: Line): boolean {
+  if (inCode(state, line.from)) return false
+  for (const node of enclosing(syntaxTree(state).resolveInner(line.from, 1))) {
+    if (NO_TASK_HERE.has(node.name) || headingLevel(node.name) !== null) return false
+  }
+  return true
+}
+
+/** Obsidian's Ctrl+Enter, line by line: a task is ticked or cleared, and any other
+ *  line - words, a bullet, a number, nothing yet - becomes a task, so the next press
+ *  ticks it. Shares its key with running a code fence and gives way wherever a box
+ *  cannot go, a fence among them; see `taskable`. */
 export const toggleTask: StateCommand = ({ state, dispatch }) => {
   const changes: ChangeSpec[] = []
 
   for (const line of selectedLines(state)) {
-    const task = taskAt(line.text)
-    if (!task) continue
+    if (!taskable(state, line)) continue
 
-    // One character, inside the brackets: see tasks.ts in @nib/markdown, which is
-    // what says where they are.
-    const at = line.from + task.box + 1
-    changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
+    const task = taskAt(line.text)
+    if (task) {
+      // One character, inside the brackets: see tasks.ts in @nib/markdown, which
+      // is what says where they are.
+      const at = line.from + task.box + 1
+      changes.push({ from: at, to: at + 1, insert: task.done ? ' ' : 'x' })
+      continue
+    }
+
+    // The same box Task list puts there: the indent kept, a marker traded for it.
+    const indent = (INDENT.exec(line.text)?.[0] ?? '').length
+    const marker = MARKER.exec(line.text)?.[0].length ?? indent
+    changes.push({ from: line.from + indent, to: line.from + marker, insert: '- [ ] ' })
   }
 
   if (!changes.length) return false
 
-  dispatch(state.update({ changes, userEvent: 'input' }))
+  const set = state.changes(changes)
+  dispatch(
+    state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' }),
+  )
   return true
 }
 

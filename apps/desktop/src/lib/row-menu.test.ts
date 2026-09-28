@@ -9,7 +9,8 @@ import { de } from '../locales/de'
  *  a PDF - differing only in the entries that mean something for it.
  *
  *  The store reads storage the moment it is made, so that is stood in for before
- *  it is imported; nothing here runs an entry, so nothing reaches a disk. */
+ *  it is imported; the entries run here keep what they change in memory, so
+ *  nothing reaches a disk. */
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -37,6 +38,14 @@ const shareable = { yes: false }
 vi.mock('./sharing.svelte', () => ({
   canShareItem: () => shareable.yes,
   shareThisFile: () => undefined,
+}))
+
+const copied: string[] = []
+vi.mock('./clipboard', () => ({
+  copyText: (text: string) => {
+    copied.push(text)
+    return Promise.resolve()
+  },
 }))
 
 const { rowMenu } = await import('./row-menu')
@@ -121,6 +130,8 @@ describe('a note', () => {
   test('can hold a note, and can be copied', () => {
     expect(labels(loose)).toEqual([
       'Open',
+      'Open in new tab',
+      'Open to the side',
       'New note inside',
       'Rename',
       'Move',
@@ -128,6 +139,7 @@ describe('a note', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -135,40 +147,37 @@ describe('a note', () => {
 })
 
 describe('a note that holds notes', () => {
-  test('is the same menu, without a copy of itself', () => {
-    expect(labels(nested)).toEqual([
-      'Open',
-      'New note inside',
-      'Rename',
-      'Move',
-      'Choose an icon',
-      'Set cover',
-      'Bookmark',
-      'Leave out of search',
-      'Delete',
-    ])
+  /** A copy of the folder, with its note renamed to match; see copying.ts. */
+  test('is the same menu', () => {
+    expect(labels(nested)).toEqual(labels(loose))
   })
 })
 
 describe('a folder nobody has written a note in', () => {
-  /** The same menu, less the two things that need a file: a copy of itself, and a
-   *  cover. An icon it can still have, because a folder with no note keeps one in the
-   *  space's own map; front matter needs somewhere to be written. */
-  test('offers exactly what a note offers, less the copy and the cover', () => {
-    expect(labels(plain)).toEqual(labels(nested).filter((one) => one !== 'Set cover'))
+  /** The same menu, less the things that need a file: a cover, and a pane to show
+   *  it in beside another. An icon it can still have, because a folder with no note
+   *  keeps one in the space's own map; front matter needs somewhere to be written. */
+  test('offers exactly what a note offers, less the cover and the side', () => {
+    expect(labels(plain)).toEqual(
+      labels(nested).filter((one) => one !== 'Set cover' && one !== 'Open to the side'),
+    )
   })
 })
 
 describe('a paper', () => {
-  /** Nowhere to keep an icon and nothing to copy, and a paper cannot hold a note.
-   *  So the menu is what every row can do and nothing else. */
-  test('holds nothing, wears nothing and is not duplicated', () => {
+  /** Nowhere to keep an icon, and a paper cannot hold a note. It copies as the
+   *  bytes it is. So the menu is what every row can do and nothing else. */
+  test('holds nothing, wears nothing and duplicates as a paper', () => {
     expect(labels(paper)).toEqual([
       'Open',
+      'Open in new tab',
+      'Open to the side',
       'Rename',
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Copy link',
+      'Duplicate',
       'Delete',
     ])
   })
@@ -182,6 +191,8 @@ describe('a file the account has a copy of', () => {
 
     expect(labels(loose)).toEqual([
       'Open',
+      'Open in new tab',
+      'Open to the side',
       'New note inside',
       'Rename',
       'Move',
@@ -190,6 +201,7 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Leave out of search',
       'Share',
+      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -202,6 +214,8 @@ describe('a file the account has a copy of', () => {
 
     expect(labels(nested)).toEqual([
       'Open',
+      'Open in new tab',
+      'Open to the side',
       'New note inside',
       'Rename',
       'Move',
@@ -210,20 +224,26 @@ describe('a file the account has a copy of', () => {
       'Bookmark',
       'Leave out of search',
       'Share',
+      'Copy link',
+      'Duplicate',
       'Delete',
     ])
   })
 
-  test('while a paper can be handed over too, and still not copied', () => {
+  test('and so can a paper', () => {
     shareable.yes = true
 
     expect(labels(paper)).toEqual([
       'Open',
+      'Open in new tab',
+      'Open to the side',
       'Rename',
       'Move',
       'Bookmark',
       'Leave out of search',
       'Share',
+      'Copy link',
+      'Duplicate',
       'Delete',
     ])
   })
@@ -234,7 +254,37 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual(['Delete 2 items'])
+    expect(labels(loose)).toEqual(['Open all', 'Move', 'Bookmark', 'Copy link', 'Delete 2 items'])
+  })
+
+  test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/A')
+
+    const press = (label: string) =>
+      rowMenu(loose)
+        .find((one) => one?.label === label)
+        ?.run()
+    press('Bookmark')
+
+    expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
+    expect(labels(loose)).toContain('Remove bookmark')
+
+    press('Remove bookmark')
+    expect(workspace.bookmarks.list).toEqual([])
+  })
+
+  test('and copies a link a line, in the spelling the Links setting asks for', async () => {
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/A')
+    copied.length = 0
+
+    rowMenu(loose)
+      .find((one) => one?.label === 'Copy link')
+      ?.run()
+    await vi.waitFor(() => {
+      expect(copied).toEqual(['[[loose]]\n[[A]]'])
+    })
   })
 
   test('while a selection of one is an ordinary row', () => {

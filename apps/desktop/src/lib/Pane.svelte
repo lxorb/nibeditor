@@ -21,6 +21,7 @@
     NO_TALLY,
     replaceEverywhere,
     replaceHere,
+    selectEveryMatch,
     setDeck,
     setFind,
     setReadOnlyMode,
@@ -126,6 +127,12 @@
 
   let view = $state<EditorView>()
 
+  /** Whether a note dropped in the middle is the surface's: a canvas makes a card, a
+   *  note that can be written in a link. */
+  const keepsMiddle = $derived(
+    ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
+  )
+
   /** One editor per column, by the tab it is showing. The pane's bars - the find bar, the
    *  formatting bar, the menu over the words - talk to one editor, and in a stacked pane
    *  that one is the active column's; the effect below is what keeps `view` pointing at
@@ -208,6 +215,12 @@
     if (by < 0) findPreviousMatch(view)
     else findNextMatch(view)
     tally = findTally(view.state)
+  }
+
+  /** Every match selected, and the bar out of the way, so what is typed next is
+   *  typed at each of them. Nothing happens where nothing matched. */
+  function selectEvery() {
+    if (view && selectEveryMatch(view)) shutFinding()
   }
 
   function replaceOne() {
@@ -343,12 +356,12 @@
   }
 
   /** Whether the pane answers for a drop, or leaves it to what is showing: a
-   *  canvas makes a card of a note dropped on it, so the middle of the pane is
-   *  the canvas's and only the four sides are the pane's. A tab being dragged is
-   *  not a transfer at all - it is a pointer the strip it came out of follows, and
-   *  that strip asks the panes where it is; see Tabs.svelte. */
+   *  canvas or a note that takes a link keeps the middle, and only the four sides
+   *  are the pane's; see `keepsMiddle`. A tab being dragged is not a transfer at
+   *  all - it is a pointer the strip it came out of follows, and that strip asks
+   *  the panes where it is; see Tabs.svelte. */
   function answers(event: DragEvent, zone: Zone): boolean {
-    return isTreeDrag(event.dataTransfer) && !(ownSurface && zone === 'middle')
+    return isTreeDrag(event.dataTransfer) && !(keepsMiddle && zone === 'middle')
   }
 
   function over(event: DragEvent & { currentTarget: HTMLElement }) {
@@ -434,6 +447,7 @@
         onreplace={canReplace ? replaceOne : undefined}
         onreplaceall={canReplace ? replaceEvery : undefined}
         onstep={stepFinding}
+        onselectall={selectEvery}
         onclose={shutFinding}
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
@@ -607,7 +621,7 @@
   {#if workspace.panes.dragging}
     <!-- The bands are drawn as deep as the geometry reads them, from the one
          number that says how deep that is. -->
-    <div class="zones" class:sides={ownSurface} style:--band="{EDGE * 100}%">
+    <div class="zones" class:sides={keepsMiddle} style:--band="{EDGE * 100}%">
       <div class="zone whole" class:lit={zone === 'middle'}></div>
       <div class="zone left" class:lit={zone === 'left'}></div>
       <div class="zone right" class:lit={zone === 'right'}></div>

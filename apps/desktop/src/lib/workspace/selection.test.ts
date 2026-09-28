@@ -32,6 +32,23 @@ describe('picking rows', () => {
     expect(picked.paths).toEqual(['/a.md', '/f', '/f/b.md', '/f/c.md'])
   })
 
+  test('shift and an arrow stretch from the row the keyboard is on', () => {
+    picked.select('/a.md')
+    picked.extend('/a.md', '/f', ROWS)
+    picked.extend('/f', '/f/b.md', ROWS)
+    expect(picked.paths).toEqual(['/a.md', '/f', '/f/b.md'])
+
+    // Back up again narrows, since the range is still anchored where it began.
+    picked.extend('/f/b.md', '/f', ROWS)
+    expect(picked.paths).toEqual(['/a.md', '/f'])
+  })
+
+  test('and start again from where the arrows walked to', () => {
+    picked.select('/a.md')
+    picked.extend('/f/c.md', '/d.md', ROWS)
+    expect(picked.paths).toEqual(['/f/c.md', '/d.md'])
+  })
+
   test('shift back the other way narrows rather than growing', () => {
     picked.select('/f/c.md')
     picked.range('/a.md', ROWS)

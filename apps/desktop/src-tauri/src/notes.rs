@@ -1,6 +1,6 @@
-//! A note is a file. This module owns the nine things the window can ask of one:
+//! A note is a file. This module owns the ten things the window can ask of one:
 //! read it, write it back as text, write it back as bytes, rename or move it,
-//! delete it, ask when it was last written and how long it is, make the folder it
+//! copy it, delete it, ask when it was last written and how long it is, make the folder it
 //! is going to live in, take that folder away, and take it away only if nothing
 //! whatever is left in it. Whether a path is allowed at all is decided by `paths`,
 //! not here.
@@ -17,8 +17,8 @@ pub mod icloud;
 
 use crate::clock;
 use crate::paths::{
-    cannot, chosen, drop_highlights, in_spaces, made, move_highlights, note_from_outside,
-    outside_spaces, write_atomically,
+    cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights,
+    note_from_outside, outside_spaces, write_atomically,
 };
 
 /// Reads a note, whatever folder it is in. Opening a file from outside the
@@ -270,6 +270,74 @@ fn stepping_name(source: &Path) -> Option<std::path::PathBuf> {
     Some(source.with_file_name(name))
 }
 
+/// Copies a note, a file or a folder with everything in it, which is what pasting a
+/// copied row and a Ctrl-drag in the file list both mean.
+///
+/// Here rather than read and written back through the window, because the file
+/// list is not the folder: it leaves out the pictures a note was written around,
+/// the dotted files and a PDF's own highlights, and a copy made out of what the
+/// list shows would be a copy with holes in it. Bytes, so a PDF or a picture
+/// arrives the way it left.
+///
+/// Like a rename it never writes over anything: the window picks a name nothing
+/// answers to first, and a copy that lands on something anyway is a race the
+/// reader is told about rather than a file lost.
+#[tauri::command(async)]
+pub fn copy_path(app: AppHandle, from: String, to: String) -> Result<(), String> {
+    let source = in_spaces(&app, &from)?;
+    let target = in_spaces(&app, &to)?;
+    copied(&source, &target)
+}
+
+/// The copy itself, with the two paths already judged.
+fn copied(source: &Path, target: &Path) -> Result<(), String> {
+    if target.exists() {
+        return Err("something already lives there".into());
+    }
+
+    // A folder copied into itself would go on finding the copy it is making.
+    if target.starts_with(source) {
+        return Err(format!("{} cannot be copied into itself", source.display()));
+    }
+
+    if let Some(parent) = target.parent() {
+        made(parent)?;
+    }
+
+    copy_all(source, target)?;
+
+    // A PDF's highlights are part of it, so the copy has them too. A folder's
+    // come along with everything else in it.
+    copy_highlights(source, target);
+    Ok(())
+}
+
+/// One file, or one folder and everything under it.
+///
+/// A link to a folder is not followed: it can lead back to a folder above it, and
+/// a copy that follows it never ends. A link to a file is copied as the file it
+/// leads to, which is what a person copying it sees.
+fn copy_all(source: &Path, target: &Path) -> Result<(), String> {
+    let kind = fs::symlink_metadata(source).map_err(|error| cannot("read", source, &error))?;
+
+    if kind.is_dir() {
+        made(target)?;
+        let entries = fs::read_dir(source).map_err(|error| cannot("read", source, &error))?;
+        for entry in entries.flatten() {
+            copy_all(&entry.path(), &target.join(entry.file_name()))?;
+        }
+        return Ok(());
+    }
+
+    if kind.file_type().is_symlink() && source.is_dir() {
+        return Ok(());
+    }
+
+    fs::copy(source, target)
+        .map(|_| ())
+        .map_err(|error| cannot("copy", source, &error))
+}
+
 /// Makes a folder inside a space, and every folder above it.
 #[tauri::command(async)]
 pub fn create_folder(app: AppHandle, path: String) -> Result<(), String> {
@@ -350,7 +418,7 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
 
 #[cfg(test)]
 mod tests {
-    use super::{move_entry, respelled, write_bytes, write_note};
+    use super::{copied, move_entry, respelled, write_bytes, write_note};
     use std::path::Path;
     // The trait the encoding method hangs off. The module above reaches it
     // through what it imports; a test module is its own scope and has to say so.
@@ -363,6 +431,79 @@ mod tests {
 
     fn path(dir: &tempfile::TempDir, name: &str) -> String {
         dir.path().join(name).to_string_lossy().to_string()
+    }
+
+    #[test]
+    fn copies_a_file_byte_for_byte() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("picture.png");
+        fs::write(&source, PNG).expect("the picture");
+
+        copied(&source, &dir.path().join("Copies/picture.png")).expect("the copy");
+        assert_eq!(
+            fs::read(dir.path().join("Copies/picture.png")).expect("the copy back"),
+            PNG
+        );
+        assert_eq!(fs::read(&source).expect("the original"), PNG);
+    }
+
+    #[test]
+    fn copies_a_folder_with_what_the_list_leaves_out() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Trip");
+        fs::create_dir_all(source.join("assets")).expect("the folders");
+        fs::write(source.join("Trip.md"), "# Trip").expect("the note");
+        fs::write(source.join("assets/map.png"), PNG).expect("the picture");
+        fs::write(source.join(".hidden"), "kept").expect("the dotted file");
+
+        let target = dir.path().join("Trip copy");
+        copied(&source, &target).expect("the copy");
+
+        assert_eq!(
+            fs::read_to_string(target.join("Trip.md")).expect("note"),
+            "# Trip"
+        );
+        assert_eq!(
+            fs::read(target.join("assets/map.png")).expect("picture"),
+            PNG
+        );
+        assert_eq!(
+            fs::read_to_string(target.join(".hidden")).expect("dotted"),
+            "kept"
+        );
+    }
+
+    #[test]
+    fn copies_a_papers_highlights_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("paper.pdf");
+        fs::write(&source, b"%PDF").expect("the paper");
+        fs::write(dir.path().join("paper.pdf.highlights.json"), "[]").expect("highlights");
+
+        copied(&source, &dir.path().join("paper copy.pdf")).expect("the copy");
+        assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
+    }
+
+    #[test]
+    fn never_writes_over_anything() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::write(dir.path().join("a.md"), "a").expect("a");
+        fs::write(dir.path().join("b.md"), "b").expect("b");
+
+        let error = copied(&dir.path().join("a.md"), &dir.path().join("b.md"))
+            .expect_err("a taken name to be refused");
+        assert!(error.contains("already lives there"), "{error}");
+        assert_eq!(fs::read_to_string(dir.path().join("b.md")).expect("b"), "b");
+    }
+
+    #[test]
+    fn refuses_a_folder_into_itself() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Trip");
+        fs::create_dir_all(&source).expect("the folder");
+
+        let error = copied(&source, &source.join("Trip")).expect_err("a copy into itself");
+        assert!(error.contains("into itself"), "{error}");
     }
 
     #[test]

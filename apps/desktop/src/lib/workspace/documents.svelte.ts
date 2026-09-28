@@ -144,6 +144,17 @@ export class NoteDoc {
     return this.words
   }
 
+  /** The words as the views hold them this moment, for a reader that may not
+   *  bring `words` forward: a derivation, which Svelte forbids to write, and so
+   *  anything that builds a list of rows. The same pass `flush` makes when the
+   *  typing is ahead and nothing when it is not.
+   *
+   *  A derivation over the rope does not hear the next keystroke, which is what
+   *  keeps a list built on opening from being built again on every one. */
+  get latest(): string {
+    return this.behind ? this.live.text.toString() : this.words
+  }
+
   /** Whether markup has been pasted into this document from outside the app.
    *
    *  Once it has, the HTML in it is not only this person's own writing, so it is

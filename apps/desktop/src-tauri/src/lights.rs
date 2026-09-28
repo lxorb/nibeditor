@@ -175,7 +175,7 @@ mod native {
         unsafe_code,
         reason = "an associated object is read through the Objective-C runtime"
     )]
-    fn kept(window: &NSWindow) -> Option<Retained<Watch>> {
+    fn watch_on(window: &NSWindow) -> Option<Retained<Watch>> {
         // SAFETY: the key is this module's own, and the only object ever stored under
         // it is a `Watch`, which the window retains for as long as it exists.
         unsafe {
@@ -295,7 +295,7 @@ mod native {
 
         let spots = if nibs_frame(window) {
             centred(window, &lights, &holder)
-        } else if let Some(watch) = kept(window) {
+        } else if let Some(watch) = watch_on(window) {
             watch.ivars().own
         } else {
             return;

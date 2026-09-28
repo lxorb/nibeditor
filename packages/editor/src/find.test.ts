@@ -1,7 +1,8 @@
 import { getSearchQuery, SearchQuery, setSearchQuery } from '@codemirror/search'
-import { EditorSelection, EditorState } from '@codemirror/state'
+import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { findExtensions, findTally, loadFind, NO_FIND, termAt } from './find'
+import { findExtensions, findTally, loadFind, NO_FIND, selectEveryMatch, termAt } from './find'
 
 /** The two answers the find bar needs that CodeMirror does not give it.
  *
@@ -128,5 +129,39 @@ describe('the term the bar opens on', () => {
     // A term with a real newline in it cannot be typed into a one-line field;
     // the library escapes it the same way for the same reason.
     expect(termAt(stateOf('one\ntwo', { anchor: 0, head: 7 }))).toBe('one\\ntwo')
+  })
+})
+
+/** Alt+Enter in the bar: a cursor on every match. Through a stand-in for the view,
+ *  which is all a command asks of one. */
+describe('selecting every match', () => {
+  function selected(state: EditorState): string[] | false {
+    let after = state
+    const view = {
+      get state() {
+        return after
+      },
+      dispatch: (spec: TransactionSpec) => {
+        after = after.update(spec).state
+      },
+    } as unknown as EditorView
+
+    if (!selectEveryMatch(view)) return false
+    return after.selection.ranges.map((range) => after.sliceDoc(range.from, range.to))
+  }
+
+  test('puts a selection on each of them', () => {
+    const state = looking(
+      EditorState.create({
+        doc: NOTE,
+        extensions: [findExtensions(), EditorState.allowMultipleSelections.of(true)],
+      }),
+      { query: 'wind', wholeWord: true },
+    )
+    expect(selected(state)).toEqual(['wind', 'Wind', 'wind'])
+  })
+
+  test('does nothing where nothing is being looked for', () => {
+    expect(selected(stateOf(NOTE))).toBe(false)
   })
 })

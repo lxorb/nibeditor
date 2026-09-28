@@ -236,6 +236,20 @@ export class Bookmarks {
     this.put(root, next)
   }
 
+  /** A selection in, or out once all of it is in: one press, one write. */
+  toggleAll(marks: readonly Bookmark[]) {
+    const root = this.root()
+    if (!marks.length || root === null) return
+
+    const held = this.of(root)
+    const holds = (mark: Bookmark) => held.some((one) => sameBookmark(one, mark))
+    const next = marks.every(holds)
+      ? held.filter((one) => !marks.some((mark) => sameBookmark(one, mark)))
+      : [...held, ...marks.filter((mark) => !holds(mark))].slice(0, MOST_BOOKMARKS)
+
+    this.put(root, next)
+  }
+
   /** Drags a row to another place in the list. Out-of-range indexes are what a
    *  drop that landed on nothing looks like, so they leave the order alone. */
   move(from: number, to: number) {

@@ -104,7 +104,7 @@ const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 /** Whether the index reads what a file says rather than only knowing its name: a
  *  note, and the files that link out of themselves or carry a mark of their own -
  *  a canvas, a page note and a website. See `noteSaved`, which is what reads them. */
-function readsWords(path: string): boolean {
+export function readsWords(path: string): boolean {
   return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 }
 

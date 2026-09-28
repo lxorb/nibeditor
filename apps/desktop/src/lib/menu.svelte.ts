@@ -25,6 +25,8 @@ interface MenuOptions {
   /** Stay by the finger as a callout instead of rising from the bottom: for
    *  a selection in the text, which has to stay in view. */
   near?: boolean
+  /** Leave the keyboard in the text field it is about; see field-menu.ts. */
+  keepFocus?: boolean
 }
 
 class ContextMenu {
@@ -34,6 +36,9 @@ class ContextMenu {
   items = $state<MenuEntry[]>([])
   title = $state<string | null>(null)
   near = $state(false)
+  keepFocus = $state(false)
+  /** The row a key lit while the keyboard stays in a field, or -1. */
+  lit = $state(-1)
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
@@ -47,6 +52,8 @@ class ContextMenu {
     this.items = usable
     this.title = options.title ?? null
     this.near = !!options.near
+    this.keepFocus = !!options.keepFocus
+    this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
     this.open = true
@@ -79,6 +86,19 @@ export function trim(items: MenuEntry[]): MenuEntry[] {
 }
 
 export const menu = new ContextMenu()
+
+/** Something a person types a line or a paragraph into. */
+export type TextField = HTMLInputElement | HTMLTextAreaElement
+
+const TEXT_TYPES = new Set(['text', 'search', 'url', 'tel', 'email', 'password', 'number'])
+
+/** The text field a right click landed in, which gets a menu of its own; see
+ *  field-menu.ts. Null for anything else, a checkbox and a slider included. */
+export function textFieldOf(target: EventTarget | null): TextField | null {
+  if (target instanceof HTMLTextAreaElement) return target
+  if (target instanceof HTMLInputElement && TEXT_TYPES.has(target.type)) return target
+  return null
+}
 
 /** One gesture and one word for everything that can be kept above the file
  *  list: a note, a folder, a heading, a search. Nothing to offer where there is

@@ -22,6 +22,7 @@ import { linkClicks, type LinkPress, linkOpener } from './links'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/complete'
+import { noteCarrier, noteDrops } from './wikilink/drop'
 import { type PreviewMount, previewEditor } from './wikilink/hover'
 import {
   type LinkWrite,
@@ -96,6 +97,8 @@ export interface StateOptions {
    *  Links setting asks for. The app's one writer; without it the editor writes a
    *  wikilink, which is that setting's default. */
   writeLink?: (target: LinkWrite) => string
+  /** The notes a drag over the words carries; see wikilink/drop.ts. */
+  carriedNotes?: (transfer: DataTransfer | null) => readonly string[]
   /** What was folded when this note was last read on this device, as lines; see
    *  fold.ts. In the state rather than dispatched afterwards, so the note is
    *  already folded on the frame it appears. */
@@ -122,7 +125,7 @@ export interface EditorOptions extends StateOptions {
 export function editorState(options: StateOptions): EditorState {
   const { doc = '', onChange, onImage, resolveImage, onSelection } = options
   const { openLink, openNote, nameBlock, writeLink, shared, selection, folds } = options
-  const { editPreview } = options
+  const { editPreview, carriedNotes } = options
   const text = shared ? shared.text : doc
 
   const state = EditorState.create({
@@ -211,6 +214,8 @@ export function editorState(options: StateOptions): EditorState {
       ...(openNote ? [noteOpener.of(openNote)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
       ...(writeLink ? [linkWriter.of(writeLink)] : []),
+      noteDrops,
+      ...(carriedNotes ? [noteCarrier.of(carriedNotes)] : []),
       ...(editPreview ? [previewEditor.of(editPreview)] : []),
       nibTheme,
       // Above the markdown keys below, which continue a list or a quote and

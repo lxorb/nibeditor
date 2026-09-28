@@ -18,12 +18,14 @@
 
 import type { ChangeSpec, EditorState, StateCommand } from '@codemirror/state'
 import { indentLess, indentMore } from '@codemirror/commands'
-import type { EditorView } from '@codemirror/view'
+import { syntaxTree } from '@codemirror/language'
+import type { Command, EditorView } from '@codemirror/view'
 import { blockIdOf, freeBlockId, blockIds } from '@nib/markdown/links'
-import { headingText } from '../headings'
+import { headingLevel, headingText } from '../headings'
+import { enclosing } from '../nodes'
 import { copyBlock, cutBlock, moveBlock } from './move'
 import { type BlockShape, shaped, wordsOf } from './shape'
-import { blockAt, type BlockKind, blocksIn, type BlockSpan } from './span'
+import { blockAt, type BlockKind, blocksIn, type BlockSpan, writtenLine } from './span'
 
 /** The blocks a press acted on: everything the selection covers when it covers
  *  more than the block that was pressed, and that one block otherwise. */
@@ -38,6 +40,17 @@ export function blocksFor(view: EditorView, pos: number): BlockSpan[] {
   )
 
   return covered.length ? covered : pressed ? [pressed] : []
+}
+
+/** The blocks a press acted on as one run of lines, from the first one's start to
+ *  wherever the last of them ends. The furthest end rather than the last block's,
+ *  because a heading early in the run holds its whole section, and a run that
+ *  stopped short of it would take the heading and leave its words. */
+function runOf(spans: BlockSpan[]): BlockSpan | null {
+  const first = spans[0]
+  if (!first) return null
+
+  return { from: first.from, to: Math.max(...spans.map((span) => span.to)), kind: first.kind }
 }
 
 /** Every one of them again, under itself. */
@@ -67,19 +80,33 @@ export function duplicateBlocks(view: EditorView, pos: number): boolean {
 
 /** Every one of them, gone. */
 export function deleteBlocks(view: EditorView, pos: number): boolean {
-  const spans = blocksFor(view, pos)
-  if (!spans.length) return false
+  const run = runOf(blocksFor(view, pos))
+  if (!run) return false
 
-  const changes = [...spans].reverse().flatMap((span) => cutBlock(view.state, span).changes)
+  const cut = cutBlock(view.state, run)
 
   view.dispatch({
-    changes,
-    selection: { anchor: Math.min(spans[0]?.from ?? 0, view.state.doc.length) },
+    changes: cut.changes,
+    selection: { anchor: cut.caret ?? run.from },
     scrollIntoView: true,
   })
   view.focus()
   return true
 }
+
+/** Three of them again, for a key rather than a menu row: the block the caret is in,
+ *  or every block the selection lies across, which is what `blocksFor` reads off a
+ *  press at the caret's end of it. None has a key out of the box - the grip's menu is
+ *  where they live - and the Notion keyboard puts them on Notion's own. A note nobody
+ *  may write in is left alone, and the press goes on to whatever else holds the key. */
+const atCaret =
+  (act: (view: EditorView, pos: number) => boolean): Command =>
+  (view) =>
+    !view.state.readOnly && act(view, view.state.selection.main.head)
+
+export const duplicateBlock = atCaret(duplicateBlocks)
+export const moveBlockUp = atCaret((view, pos) => moveBlocks(view, pos, -1))
+export const moveBlockDown = atCaret((view, pos) => moveBlocks(view, pos, 1))
 
 /** What a link into this note would point at: `#A heading` for a heading, since
  *  that is what a heading is already called, and `#^name` for anything else.
@@ -206,19 +233,11 @@ export function outdentBlocks(view: EditorView, pos: number): boolean {
 }
 
 /** The nearest line with something on it above or below a position, or null at the
- *  end of the note it is walking towards. Blank lines are stepped over: they are
- *  the separation between blocks rather than blocks of their own. */
+ *  end of the note it is walking towards. */
 function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | null {
   const doc = state.doc
-  let number = doc.lineAt(Math.max(0, Math.min(from, doc.length))).number + delta
-
-  while (number >= 1 && number <= doc.lines) {
-    const line = doc.line(number)
-    if (line.text.trim()) return line.from
-    number += delta
-  }
-
-  return null
+  const line = doc.lineAt(Math.max(0, Math.min(from, doc.length)))
+  return writtenLine(state, line.number + delta, delta)?.from ?? null
 }
 
 /** The block above a run of them, or the one below it. */
@@ -227,19 +246,65 @@ function beside(state: EditorState, run: BlockSpan, delta: -1 | 1): BlockSpan | 
   return at === null ? null : blockAt(state, at)
 }
 
+/** How deep a heading that begins at `pos` is, or null where none does. */
+function levelAt(state: EditorState, pos: number): number | null {
+  const node = syntaxTree(state).resolveInner(pos, 1)
+  for (const found of enclosing(node)) {
+    const level = headingLevel(found.name)
+    if (level !== null) return level
+  }
+
+  return null
+}
+
+/** The section a heading steps over going up: the nearest heading above it that is
+ *  as deep or shallower. The paragraph right above it belongs to that heading, and
+ *  stepping over only the paragraph would slip the heading's section in between
+ *  that heading and its own words. */
+function sectionAbove(state: EditorState, run: BlockSpan): BlockSpan | null {
+  const level = levelAt(state, run.from)
+  if (level === null) return null
+
+  const found: number[] = []
+  syntaxTree(state).iterate({
+    to: run.from,
+    enter: (node) => {
+      if (node.name === 'Document') return true
+      const other = headingLevel(node.name)
+      if (other !== null && other <= level && node.from < run.from) found.push(node.from)
+      return false
+    },
+  })
+
+  const nearest = found.at(-1)
+  return nearest === undefined ? null : blockAt(state, nearest)
+}
+
 /** Where a run of blocks lands when it steps over its neighbour.
  *
  *  Going up, that is the neighbour's own first character. Going down, it is where
  *  the block after the neighbour begins - or the end of the note, which is what
  *  `moveBlock` reads as "after everything". Null when there is no neighbour to step
  *  over, which is a press that does nothing rather than one that reshuffles the
- *  note. */
+ *  note.
+ *
+ *  A heading is its section, so it steps over sections. Anything else steps over a
+ *  heading's line going down, into the top of its section, the way it steps out of
+ *  the top of one going up. */
 function landingFor(state: EditorState, run: BlockSpan, delta: -1 | 1): number | null {
-  const neighbour = beside(state, run, delta)
-  if (!neighbour) return null
-  if (delta < 0) return neighbour.from
+  if (delta < 0) {
+    const heading = run.kind === 'heading' ? sectionAbove(state, run) : null
+    return (heading ?? beside(state, run, -1))?.from ?? null
+  }
 
-  const after = beside(state, neighbour, 1)
+  const neighbour = beside(state, run, 1)
+  if (!neighbour) return null
+
+  const over =
+    neighbour.kind === 'heading' && run.kind !== 'heading'
+      ? { ...neighbour, to: state.doc.lineAt(neighbour.from).to }
+      : neighbour
+  const after = beside(state, over, 1)
   return after ? after.from : state.doc.length
 }
 
@@ -251,12 +316,9 @@ function landingFor(state: EditorState, run: BlockSpan, delta: -1 | 1): number |
  *  mark in the margin goes through - so the blank lines around it are settled by
  *  the one piece of code that knows what a blank line means in markdown. */
 export function moveBlocks(view: EditorView, pos: number, delta: -1 | 1): boolean {
-  const spans = blocksFor(view, pos)
-  const first = spans[0]
-  const last = spans.at(-1)
-  if (!first || !last) return false
+  const run = runOf(blocksFor(view, pos))
+  if (!run) return false
 
-  const run: BlockSpan = { from: first.from, to: last.to, kind: first.kind }
   const at = landingFor(view.state, run, delta)
   if (at === null) return false
 

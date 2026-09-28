@@ -1,8 +1,12 @@
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { loadFor } from '@nib/markdown/engines'
 import { describe, expect, test } from 'vitest'
+import { parsed } from '../test/parsed'
 import { copiedFlavours } from './copy'
+import { nibMarkdownExtensions } from './markdown/extensions'
 import { delimitedToTable, pastedMarkdown } from './paste'
+import { linkedPaste } from './paste-link'
 
 /** The conversion itself is `@nib/markdown/from-html`, tested there. What is
  *  tested here is the choosing: a clipboard carries two flavours at once, and
@@ -107,5 +111,107 @@ describe('pasting spreadsheet cells', () => {
 
   test('a single column is not a table', () => {
     expect(delimitedToTable('a\nb\nc')).toBeNull()
+  })
+})
+
+/** An address pasted over selected words makes a link of them, and nothing else
+ *  does: a paste with no selection, a paste of more than an address, and a paste
+ *  into code or into a link that is already there all go in as they stand. */
+describe('an address pasted over a selection', () => {
+  /** What the note becomes, or null where the paste is left to go in as it stands.
+   *  `«` and `»` in `marked` are the ends of the selection, since a link is written
+   *  with the brackets. */
+  function pasted(marked: string, text: string): string | null {
+    const from = marked.indexOf('«')
+    const to = marked.indexOf('»') - 1
+    const state = parsed(
+      EditorState.create({
+        doc: marked.replace(/[«»]/g, ''),
+        selection: EditorSelection.range(from, to),
+        extensions: [markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions })],
+      }),
+    )
+
+    const spec = linkedPaste(state, text)
+    return spec ? state.update(spec).state.doc.toString() : null
+  }
+
+  const URL = 'https://example.com/a?b=c'
+
+  test('links the words', () => {
+    expect(pasted('Read «the docs» first.', URL)).toBe(`Read [the docs](${URL}) first.`)
+  })
+
+  test('reads the address past the whitespace a copy carries', () => {
+    expect(pasted('«here»', ` ${URL}\n`)).toBe(`[here](${URL})`)
+  })
+
+  test('takes a mail address', () => {
+    expect(pasted('«write»', 'mailto:a@b.ch')).toBe('[write](mailto:a@b.ch)')
+  })
+
+  test('keeps a balanced bracket in the address and fences an unbalanced one', () => {
+    const wiki = 'https://en.wikipedia.org/wiki/Nib_(pen)'
+    expect(pasted('«pen»', wiki)).toBe(`[pen](${wiki})`)
+    expect(pasted('«pen»', 'https://a.ch/x)')).toBe('[pen](<https://a.ch/x)>)')
+  })
+
+  test('leaves anything but one address alone', () => {
+    expect(pasted('«words»', 'not an address')).toBeNull()
+    expect(pasted('«words»', `${URL} and more`)).toBeNull()
+    expect(pasted('«words»', 'C:\\notes\\a.md')).toBeNull()
+  })
+
+  test('leaves a paste with nothing selected alone', () => {
+    const state = EditorState.create({ doc: 'words', selection: EditorSelection.cursor(2) })
+    expect(linkedPaste(state, URL)).toBeNull()
+  })
+
+  test('replaces a selected address rather than linking it', () => {
+    expect(pasted('«https://old.ch»', URL)).toBeNull()
+  })
+
+  test('stays plain in inline code and in a code block', () => {
+    expect(pasted('Run `«npm»` now.', URL)).toBeNull()
+    expect(pasted('```\n«let x»\n```\n', URL)).toBeNull()
+    expect(pasted('    «indented code»\n', URL)).toBeNull()
+  })
+
+  test('stays plain inside a link, a note link or a formula', () => {
+    expect(pasted('[«te»xt](https://a.ch)', URL)).toBeNull()
+    expect(pasted('[[«No»te]]', URL)).toBeNull()
+    expect(pasted('$«x^2»$', URL)).toBeNull()
+  })
+
+  test('gives a bare www. the scheme a browser would', () => {
+    expect(pasted('«site»', 'www.nib.ch')).toBe('[site](https://www.nib.ch)')
+  })
+
+  test('links words with markup in them, but not half of the markup', () => {
+    expect(pasted('«some **bold** words»', URL)).toBe(`[some **bold** words](${URL})`)
+    expect(pasted('«some **bo»ld** words', URL)).toBeNull()
+    expect(pasted('- «one\n- two»', URL)).toBeNull()
+  })
+
+  test('does not reach across paragraphs', () => {
+    expect(pasted('«one\n\ntwo»', URL)).toBeNull()
+  })
+
+  test('links every selection when there are several', () => {
+    const state = parsed(
+      EditorState.create({
+        doc: 'one two',
+        selection: EditorSelection.create([
+          EditorSelection.range(0, 3),
+          EditorSelection.range(4, 7),
+        ]),
+        extensions: [
+          markdown({ base: markdownLanguage }),
+          EditorState.allowMultipleSelections.of(true),
+        ],
+      }),
+    )
+    const spec = linkedPaste(state, URL)
+    expect(spec && state.update(spec).state.doc.toString()).toBe(`[one](${URL}) [two](${URL})`)
   })
 })

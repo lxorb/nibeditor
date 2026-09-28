@@ -45,6 +45,7 @@ export {
   openReplace,
   replaceEverywhere,
   replaceHere,
+  selectEveryMatch,
   setFind,
 } from './find'
 export {
@@ -58,6 +59,22 @@ export {
   unfoldEverything,
 } from './fold'
 export { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'
+export {
+  deleteLine,
+  duplicateBlock,
+  expandSelection,
+  insertLineAbove,
+  joinLines,
+  loadLineCommands,
+  lowerCase,
+  moveBlockDown,
+  moveBlockUp,
+  reverseLines,
+  shrinkSelection,
+  sortLines,
+  titleCase,
+  upperCase,
+} from './line-door'
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
@@ -104,6 +121,7 @@ export {
 export { trustedMarkupEffect } from './markup'
 export { type PreviewMount, type PreviewNote } from './wikilink/hover'
 export { renderNote } from './wikilink/preview'
+export { noteLinksCode } from './wikilink/drop'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, loadEmbed } from './web-frame'
 export { isSpellWord, LONGEST_WORD } from './spelling'

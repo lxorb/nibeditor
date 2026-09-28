@@ -159,6 +159,8 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'edit.select-word': ['edit', () => t('Select the word, then the next')],
   'edit.select-line': ['edit', () => t('Select the line')],
   'edit.select-all-occurrences': ['edit', () => t('Select every one like it')],
+  'edit.expand-selection': ['edit', () => t('Expand the selection')],
+  'edit.shrink-selection': ['edit', () => t('Shrink the selection')],
   'edit.cursor-above': ['edit', () => t('Add a cursor above')],
   'edit.cursor-below': ['edit', () => t('Add a cursor below')],
   'edit.copy-markdown': ['edit', () => t('Copy as markdown')],
@@ -178,6 +180,17 @@ const EDITOR_ENTRIES: Record<string, [Category, () => string]> = {
   'edit.move-line-down': ['edit', () => t('Move the line down')],
   'edit.copy-line-up': ['edit', () => t('Copy the line up')],
   'edit.copy-line-down': ['edit', () => t('Copy the line down')],
+  'edit.insert-line-above': ['edit', () => t('Insert a line above')],
+  'edit.delete-line': ['edit', () => t('Delete the line')],
+  'edit.join-lines': ['edit', () => t('Join the lines')],
+  'edit.sort-lines': ['edit', () => t('Sort the lines')],
+  'edit.reverse-lines': ['edit', () => t('Reverse the lines')],
+  'edit.upper-case': ['edit', () => t('Upper case')],
+  'edit.lower-case': ['edit', () => t('Lower case')],
+  'edit.title-case': ['edit', () => t('Title case')],
+  'edit.duplicate-block': ['edit', () => t('Duplicate the block')],
+  'edit.move-block-up': ['edit', () => t('Move the block up')],
+  'edit.move-block-down': ['edit', () => t('Move the block down')],
   'edit.follow-link': ['edit', () => t('Follow the link')],
 
   'table.below': ['table', () => t('Into the table below')],
@@ -601,6 +614,18 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-p',
     run: (context) => context.palette('commands'),
   },
+  // A second key for the same palette on commands, with none of its own: the Obsidian
+  // keyboard puts it on Ctrl+P, which is Obsidian's command palette, and leaves
+  // Ctrl+Shift+P where every other editor has it. See presets.ts.
+  {
+    id: 'app.commands.alt',
+    label: () => t('Commands'),
+    category: 'view',
+    scope: 'app',
+    key: null,
+    alias: true,
+    run: (context) => context.palette('commands'),
+  },
   {
     id: 'app.sidebar',
     label: () => t('Show sidebar'),
@@ -634,6 +659,23 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-e',
     run: () => revealPanel('tree'),
+  },
+  // No default chord, as in Obsidian and VS Code.
+  {
+    id: 'app.reveal',
+    label: () => t('Show in the file list'),
+    category: 'panel',
+    scope: 'app',
+    key: null,
+    run: () => workspace.revealNote(),
+  },
+  {
+    id: 'app.fold-list',
+    label: () => t('Collapse the file list'),
+    category: 'panel',
+    scope: 'app',
+    key: null,
+    run: () => workspace.foldList(),
   },
   {
     id: 'app.outline',
@@ -955,6 +997,45 @@ const PANEL_ENTRIES: Shortcut[] = [
     scope: 'panel',
     key: 'F2',
     mac: 'Mod-Enter',
+    contextual: true,
+  },
+  // The selection from the keyboard, the way Explorer and VS Code build one: Shift and
+  // an arrow take the next row too, Ctrl+Space puts the row in or takes it out. The
+  // clipboard, undo, redo and a new note are the app's own keys read in the list; see
+  // `fileKey` in Tree.svelte.
+  {
+    id: 'tree.extend-down',
+    label: () => t('Select down'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Shift-ArrowDown',
+    contextual: true,
+  },
+  {
+    id: 'tree.extend-up',
+    label: () => t('Select up'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Shift-ArrowUp',
+    contextual: true,
+  },
+  {
+    id: 'tree.toggle',
+    label: () => t('Select or deselect'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Ctrl-Space',
+    // No key on a Mac, whose Ctrl+Space switches the input source; a row is picked
+    // there with Cmd and a click, as in Finder.
+    mac: null,
+    contextual: true,
+  },
+  {
+    id: 'tree.duplicate',
+    label: () => t('Duplicate'),
+    category: 'panel',
+    scope: 'panel',
+    key: 'Mod-d',
     contextual: true,
   },
   // Moving a row within the order somebody arranged, which is the one of the

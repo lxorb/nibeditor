@@ -28,7 +28,9 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
 | Alt and up, down | in Manual, moves the row one step up or down the folder, over a folder as readily as over a note: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
-| its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
+| its menu | Open, Open in new tab, Open to the side, New note inside, Rename, Move, Choose an icon, Bookmark, Copy link, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts`. A new tab opens behind the one in front, as a browser's does; the side is a pane of its own, and is not offered on a phone or for a folder nobody has written a note in. Copy link writes what the `[[` popup would, in the spelling the Links setting asks for |
+| its menu, several selected | Open all, Move, Bookmark, Copy link, Delete: the lot, the first of them in front and the rest behind, one link a line |
+| a drag into a note | a link to it at the drop, the caret showing where; several rows are a link a line, a picture is embedded. The middle of the pane is the note's, and only a note that can be written in: the strip and the four edges still open and split, and a note that is read-only opens the row as it always did. See `linkedFiles` in `folder-notes.ts` and `wikilink/drop.ts` in the editor |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
 ask: New note, New canvas and New web note - and a recording or a meeting on a
@@ -38,6 +40,12 @@ Code all do. A website is named the same way, and what it is named is its title;
 the address is asked for in the tab's bar afterwards. See docs/web-tabs.md. A
 folder is not on that menu, because a note that holds notes is how a space is
 organised; see below.
+
+**Finding the note in front** is Show in the file list, in the palette and a tab's
+own menu: the rows above it unfold and its own is scrolled to,
+which is Obsidian's Reveal file in navigation. Its way back is Collapse the file list,
+which folds every row of the space; while any row is unfolded it is also a glyph
+beside the order of the files, and it is gone again once nothing is.
 
 Clicking opens and the twist discloses, for every row without exception. That is
 Notion's rule, and it is the one nib already had for a note that holds notes: the
@@ -156,6 +164,39 @@ folders, because there are none to offer: a note is offered as the folder it is
 about to become, and a folder out of a vault as the row it is. Every target wears
 a note's mark; a space wears the mark the switcher gives it, in the same box, so
 the names still read as one column. See `move-targets.ts`.
+
+**A delete or a move can be taken back at once.** For six seconds after one, a
+toast under the list says `Deleted` or `Moved` beside `Undo`, the way Gmail and
+Notion do, and stays while the pointer is on it. Deleting or moving a selection is
+one gesture, so Undo takes the whole selection back. It is the same undo as the
+row menu's last row, off the same stack, so an undo from either takes the toast
+away. A folder deleted with what it held is not offered: there is no snapshot of a
+folder to put back. See `undo-toast.svelte.ts`.
+
+## Copying something
+
+The file manager's gestures, the way Explorer and VS Code have them. Ctrl+C or
+Ctrl+X on the selection (or on the row the keyboard is on), then Ctrl+V: the rows
+land in the folder the focused row is, or sits in. A cut row is drawn faint until
+the paste moves it, and the paste is the ordinary move. A copy pastes as often as
+asked. Ctrl+D copies a row beside itself; a drag with Ctrl held (Alt on a Mac) copies
+instead of moving; files and folders dragged in from Explorer or Finder are copied
+into the row they land on, or into the space below the last row.
+
+Nothing is written over. A copy beside itself is `Plan copy.md`, the word Duplicate
+has always used, stepped by number past a copy already there; a file from outside
+that meets a name steps aside as `Plan 2.md`, since it is a copy of nothing here. A
+copy is bytes, made by the crate (`copy_path`), so a PDF keeps its highlights and a
+folder keeps the pictures and dotted files the list leaves out. A folder drawn as its
+note stays one: `Trip/` copies to `Trip copy/`, and the note inside is renamed
+`Trip copy.md` to match.
+
+Every copy goes through the one write (`workspace/write-file.ts`), so `[[links]]` to
+it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z with
+the list focused undoes the last file change, Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a
+Mac) does it again. A move, a rename, a deletion and a copy can be done again; a
+merge, a split and a replacement kept only the way back, so a redo stops there. See
+`workspace/copying.ts` and `workspace/redoing.ts`.
 
 ## The order it is read in
 

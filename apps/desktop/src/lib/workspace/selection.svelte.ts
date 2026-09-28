@@ -53,6 +53,16 @@ export class Selection {
     this.paths = order.slice(Math.min(from, to), Math.max(from, to) + 1)
   }
 
+  /** Shift and an arrow, from the row the keyboard is on to the next. The range is
+   *  anchored where the last one was, as long as the row the keyboard left is still
+   *  part of it; otherwise the arrows walked away from the selection first, and the
+   *  range starts again from where they stopped, which is how every file list reads
+   *  Shift after a walk. */
+  extend(from: string, to: string, order: string[]) {
+    if (this.anchor === null || !this.has(from)) this.anchor = from
+    this.range(to, order)
+  }
+
   all(order: string[]) {
     this.paths = order
     this.anchor = order[0] ?? null

@@ -1,6 +1,7 @@
 import { EditorSelection, type Extension } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { ourOwn } from './copy'
+import { loadLineCommands } from './line-door'
 
 /** The converter, fetched the first time a web page is pasted.
  *
@@ -87,6 +88,12 @@ function insert(view: EditorView, text: string) {
   })
 }
 
+/** One address and nothing else: what a browser's address bar puts on the clipboard.
+ *  The schemes somebody pastes over a word to link it, and a bare `www.`, and no
+ *  others - `C:\notes` is a path, and `nib:` a word followed by a colon as often as
+ *  an address. */
+export const ADDRESS = /^(?:https?:\/\/|mailto:|www\.)[^\s<>]+$/i
+
 /** What a clipboard's two flavours come to, as markdown. Null where there is
  *  nothing worth inserting, which leaves the paste to whoever asked.
  *
@@ -123,6 +130,21 @@ export function richPaste(): Extension {
 
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
+
+      // An address over selected words, which makes a link of them. Before anything
+      // reads the HTML: a browser puts a link's markup beside the address it copies.
+      // Answered now and written as the rule lands, which is the next few milliseconds
+      // at most; see paste-link.ts. Where the words turn out not to be linkable - in
+      // code, say - the address goes in as it stands.
+      if (ADDRESS.test(text.trim()) && view.state.selection.ranges.some((one) => !one.empty)) {
+        event.preventDefault()
+        void loadLineCommands().then(({ linkedPaste }) => {
+          const linked = linkedPaste(view.state, text)
+          if (linked) view.dispatch(linked)
+          else insert(view, text)
+        })
+        return true
+      }
 
       // A note this app copied: handed back to CodeMirror, which puts the plain
       // text in as it stands - and the plain text is the note's own markdown. See
@@ -179,6 +201,13 @@ export const pasteHere: Command = (view) => {
   void readClipboard()
     .then(async (clipboard) => {
       if (!clipboard) return
+      const { linkedPaste } = await loadLineCommands()
+      const linked = linkedPaste(view.state, clipboard.text)
+      if (linked) {
+        view.dispatch(linked)
+        return
+      }
+
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       const text = markdown ?? clipboard.text
       if (text) insert(view, text)

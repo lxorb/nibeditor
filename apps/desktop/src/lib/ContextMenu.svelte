@@ -232,7 +232,7 @@
     style:top={sheet ? undefined : `${position.y}px`}
     style:--keyboard={sheet ? `${viewport.keyboard}px` : undefined}
     transition:arrive
-    use:trap
+    use:trap={!menu.keepFocus}
     onkeydown={onKey}
     role="menu"
     tabindex="-1"
@@ -254,8 +254,11 @@
             class="nib-row"
             role="menuitem"
             class:danger={item.danger}
+            class:lit={index === menu.lit}
             disabled={item.disabled}
             onclick={(event) => choose(item, event)}
+            onmousedown={(event) => menu.keepFocus && event.preventDefault()}
+            onpointermove={() => menu.keepFocus && !item.disabled && (menu.lit = index)}
           >
             <span class="nib-row-label">{item.label}</span>
             <!-- A row that is a switch says which way it is set. After the label
@@ -315,6 +318,12 @@
 
   button:disabled {
     color: var(--muted);
+  }
+
+  /* Walked to from a text field, which keeps the keyboard; see field-menu.ts. */
+  button.lit {
+    background: var(--surface-hover);
+    color: var(--item-hover-text-color);
   }
 
   kbd {

@@ -164,7 +164,7 @@ pub fn hand_over(app: &AppHandle, files: Vec<String>) {
         Handover::Hold => pending.hold(files),
         Handover::HoldAndOpen => {
             pending.hold(files);
-            let _ = open_window(app, &reopened_label(app));
+            let _ = open_again(app);
         }
     }
 }
@@ -186,7 +186,7 @@ pub fn reopen(app: &AppHandle) {
             bring_forward(window);
         }
         None => {
-            let _ = open_window(app, &reopened_label(app));
+            let _ = open_again(app);
         }
     }
 }
@@ -203,6 +203,27 @@ pub fn new_window(app: AppHandle) -> Result<(), String> {
 /// platform's material shows behind the page in this window as it does in that
 /// one.
 fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
+    opened(window_builder(app, label))
+}
+
+/// A window because there was none - the Dock icon clicked, a file handed over with
+/// nothing open - which is the first window again where that label is free, and
+/// then opens where the first window was left, the way a launch opens it; see
+/// placement.rs. Apart from `open_window`, because that is also a new window's, and
+/// finding the place reads a file, which a command answering on the window's own
+/// thread may not.
+fn open_again(app: &AppHandle) -> Result<(), String> {
+    let label = reopened_label(app);
+    if label != MAIN {
+        return open_window(app, &label);
+    }
+    opened(crate::placement::reopened(app, window_builder(app, MAIN)))
+}
+
+fn window_builder<'a>(
+    app: &'a AppHandle,
+    label: &str,
+) -> WebviewWindowBuilder<'a, crate::Engine, AppHandle> {
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
         .title("Nib")
         .inner_size(1180.0, 760.0)
@@ -213,7 +234,7 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     // config is dropped there for the same reason, so the two stay alike.
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
-    // A Mac's is shown once it stands where it should; see `show_where_left`.
+    // A Mac's is shown once its traffic lights are in place; see lights.rs.
     #[cfg(target_os = "macos")]
     let builder = builder.visible(false);
 
@@ -222,6 +243,10 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
 
+    builder
+}
+
+fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result<(), String> {
     let window = crate::appearance::own_frame(builder)
         .build()
         .map_err(|error| format!("could not open another window: {error}"))?;
@@ -229,7 +254,9 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
         crate::lights::hold(&window);
-        crate::document_window::show_where_left(&window);
+        window
+            .show()
+            .map_err(|error| format!("could not show the window: {error}"))?;
     }
     #[cfg(not(target_os = "macos"))]
     let _ = window;

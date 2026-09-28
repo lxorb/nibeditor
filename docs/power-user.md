@@ -51,13 +51,13 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Files | Ctrl+C / Ctrl+X, then Ctrl+V into the focused folder, copies or moves the selected notes | Explorer, VS Code | missing | `onKey` (`lib/Tree.svelte:299-345`) handles only select all, delete, rename and move up/down | M | high |
-| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | missing | tree drops accept `text/nib-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
-| Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | partial | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
-| Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | missing | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
-| Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | missing | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
-| Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | partial | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
-| Files | Ctrl+D duplicates the selected note | Finder, Notion | missing | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
+| Files | Ctrl+C / Ctrl+X, then Ctrl+V into the focused folder, copies or moves the selected notes | Explorer, VS Code | done `3864ecf8` | `onKey` (`lib/Tree.svelte:299-345`) handles only select all, delete, rename and move up/down | M | high |
+| Files | Dropping files or folders from Explorer onto the list copies them into the space | Explorer, VS Code, Obsidian | done `3864ecf8` | tree drops accept `text/nib-path` only (`lib/drag-paths.ts:46`); `dragDropEnabled: false` (`src-tauri/tauri.conf.json:22`) | M | high |
+| Files | Ctrl+Z / Ctrl+Y with the list focused undoes or redoes the last file action | Explorer, VS Code | done `3864ecf8` | undo is only a menu row and a palette row (`lib/row-menu.ts:161`, `lib/commands.ts:899`) | S | high |
+| Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | done `3864ecf8` | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
+| Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | done `3864ecf8` | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
+| Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | done `3864ecf8` | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
+| Files | Ctrl+D duplicates the selected note | Finder, Notion | done `3864ecf8` | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
 
 ## Batch 4: everywhere
 
@@ -65,9 +65,9 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Window | Size, position and maximised state come back at launch | every desktop app | missing | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
-| Fields | Right-click in a text field (address, search, find, rename, settings) gives Cut, Copy, Paste and Select all | every OS, Chrome | missing | `App.svelte:683` blocks every native menu, and the fields have none of their own | S | high |
-| Undo | A deleted or moved file gets a short "Undo" toast | Notion, Gmail | missing | undo is reachable only through the menus (`lib/row-menu.ts:158-162`) | S | med |
+| Window | Size, position and maximised state come back at launch | every desktop app | done 5a67f3f7, d1372b4a | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
+| Fields | Right-click in a text field (address, search, find, rename, settings) gives Cut, Copy, Paste and Select all | every OS, Chrome | done fba14421 | `App.svelte:683` blocks every native menu, and the fields have none of their own | S | high |
+| Undo | A deleted or moved file gets a short "Undo" toast | Notion, Gmail | done 897ecee5 | undo is reachable only through the menus (`lib/row-menu.ts:158-162`) | S | med |
 
 ## Batch 5: the tab strip
 
@@ -104,15 +104,15 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Editor | Pasting a URL over a selection makes `[selection](url)` | Obsidian, Notion, GitHub | missing | `richPaste` (`ed/paste.ts:113-165`) never looks at the selection | S | high |
-| Editor | Delete line | VS Code Ctrl+Shift+K, Obsidian Ctrl+D | missing | Mod-Shift-k is Code block (`ed/keymap.ts:157`), and there is no command id | S | med |
-| Editor | Expand and shrink the selection (word → inline → block → section) | VS Code Shift+Alt+→ | missing | CodeMirror's `selectParentSyntax` (Mod-i) is shadowed by Italic (`ed/keymap.ts:115`), and there is no id | S | med |
-| Editor | Ctrl+Enter on a plain line or bullet makes it a task, and the next press ticks it | Obsidian | partial | `toggleTask` gives way on lines that are not tasks (`ed/commands.ts:185-202`) | S | med |
-| Editor | Sort lines and reverse lines (the selection) | VS Code, Sublime | missing | no command | S | low |
-| Editor | Upper, lower and title case for the selection | VS Code | missing | no command | S | low |
-| Editor | Join lines | VS Code Ctrl+J | missing | no command | S | low |
-| Editor | Insert a line above (Ctrl+Shift+Enter) | VS Code | missing | only below exists, as CodeMirror's `insertBlankLine` under Mod-Enter | S | low |
-| Editor | Alt+Enter in the find bar selects every match | VS Code | missing | `edit.select-all-occurrences` has no key, and the find bar has no such press | S | low |
+| Editor | Pasting a URL over a selection makes `[selection](url)` | Obsidian, Notion, GitHub | done dadd9b0b 4c47c32f | `richPaste` (`ed/paste.ts:113-165`) never looks at the selection; the markdown package's own `pasteURLAsLink` linked plain words only, kept the trailing line break, and is off now | S | high |
+| Editor | Delete line | VS Code Ctrl+Shift+K, Obsidian Ctrl+D | done 4760beaa, no key | Mod-Shift-k is Code block (`ed/keymap.ts:157`), and there is no command id; both chords stay taken, so batch 10's VS Code preset gives it one | S | med |
+| Editor | Expand and shrink the selection (word → inline → block → section) | VS Code Shift+Alt+→ | done 4760beaa | CodeMirror's `selectParentSyntax` (Mod-i) is shadowed by Italic (`ed/keymap.ts:115`), and there is no id | S | med |
+| Editor | Ctrl+Enter on a plain line or bullet makes it a task, and the next press ticks it | Obsidian | done 27c050d8 | `toggleTask` gives way on lines that are not tasks (`ed/commands.ts:185-202`) | S | med |
+| Editor | Sort lines and reverse lines (the selection) | VS Code, Sublime | done 4760beaa | no command | S | low |
+| Editor | Upper, lower and title case for the selection | VS Code | done 4760beaa | no command | S | low |
+| Editor | Join lines | VS Code Ctrl+J | done 4760beaa | no command | S | low |
+| Editor | Insert a line above (Ctrl+Shift+Enter) | VS Code | done 4760beaa | only below exists, as CodeMirror's `insertBlankLine` under Mod-Enter | S | low |
+| Editor | Alt+Enter in the find bar selects every match | VS Code | done f006e899 | `edit.select-all-occurrences` has no key, and the find bar has no such press | S | low |
 
 ## Batch 8: editor, context menu and link gestures
 
@@ -132,12 +132,12 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Files | Dragging a row into a note's text inserts a link to it | Obsidian | missing | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
-| Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | missing | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
-| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | missing | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
-| Files | With several rows selected: Move, Bookmark and Open all, besides Delete | Explorer, Obsidian | partial | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
-| Files | Collapse all folders | VS Code, Obsidian | missing | no command and no button | S | med |
-| Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | partial | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
+| Files | Dragging a row into a note's text inserts a link to it | Obsidian | done 3e836808 | `lib/Pane.svelte:351` treats a tree drag as "open here", and the editor has no drop for `text/nib-path` | M | high |
+| Files | Open in new tab and Open to the right in a row's menu | Obsidian, VS Code | done ef25c471 (Open to the side) | `rowMenu` (`lib/row-menu.ts:48`) has Open only | S | high |
+| Files | Copy link: `[[Note]]`, in the link format the reader chose | Obsidian, Notion | done ef25c471 | no row; the palette's "Copy link to this note" copies a `nib://` URI (`lib/commands.ts:924`) | S | med |
+| Files | With several rows selected: Move, Bookmark and Open all, besides Delete | Explorer, Obsidian | done ef25c471 | `selectionMenu` (`lib/row-menu.ts:95-107`) offers Delete and Undo only | S | med |
+| Files | Collapse all folders | VS Code, Obsidian | done 5930123a | no command and no button | S | med |
+| Files | Reveal the open note: unfold its folders and scroll to it (a command and a tab row) | Obsidian, VS Code | done 5930123a, 2ab8bf2c | `lib/Tree.svelte:877-891` scrolls only when the row is already unfolded; `revealFolder` (`lib/workspace.svelte.ts:2764`) serves bookmarks only | S | med |
 
 ## Batch 10: keyboard presets
 
@@ -145,10 +145,10 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Keys | A VS Code preset: Ctrl+G go to line, Ctrl+Shift+K delete line, Ctrl+Shift+L all occurrences, Ctrl+B sidebar, Ctrl+\ split, Shift+Alt+→/← expand/shrink, Ctrl+]/Ctrl+[ indent/outdent | VS Code | missing | `PRESETS` (`lib/shortcuts/presets.ts:107`) is Default, Notion, Obsidian and Vim | S | med |
-| Keys | The default indents on Ctrl+[ and outdents on Ctrl+], Typora's order and the reverse of VS Code, Obsidian and CodeMirror; the two presets swap them | VS Code, Obsidian | partial | `ed/keymap.ts:179-180` | S | med |
-| Keys | The Obsidian preset also gets Ctrl+O (quick switcher), Ctrl+Alt+←/→ (back and forward) and Ctrl+D (delete paragraph) | Obsidian | partial | `OBSIDIAN` (`lib/shortcuts/presets.ts:44-51`) | S | med |
-| Keys | The Notion preset gets Ctrl+D (duplicate block) and Ctrl+Shift+↑/↓ (move block) | Notion | missing | the grip has Duplicate and Move rows but no keys (`lib/editor-menu.ts:149-153`) | S | low |
+| Keys | A VS Code preset: Ctrl+G go to line, Ctrl+Shift+K delete line, Ctrl+Shift+L all occurrences, Ctrl+B sidebar, Ctrl+\ split, Shift+Alt+→/← expand/shrink, Ctrl+]/Ctrl+[ indent/outdent | VS Code | done f3ff7eb4; Ctrl+B stays Bold, so the sidebar has no key there | `PRESETS` (`lib/shortcuts/presets.ts:107`) is Default, Notion, Obsidian and Vim | S | med |
+| Keys | The default indents on Ctrl+[ and outdents on Ctrl+], Typora's order and the reverse of VS Code, Obsidian and CodeMirror; the two presets swap them | VS Code, Obsidian | done f3ff7eb4 | `ed/keymap.ts:179-180` | S | med |
+| Keys | The Obsidian preset also gets Ctrl+O (quick switcher), Ctrl+Alt+←/→ (back and forward) and Ctrl+D (delete paragraph) | Obsidian | done f3ff7eb4; Ctrl+P is the commands, Ctrl+O the notes | `OBSIDIAN` (`lib/shortcuts/presets.ts:44-51`) | S | med |
+| Keys | The Notion preset gets Ctrl+D (duplicate block) and Ctrl+Shift+↑/↓ (move block) | Notion | done f3ff7eb4 | the grip has Duplicate and Move rows but no keys (`lib/editor-menu.ts:149-153`) | S | low |
 
 ## Later: too large for a batch
 

@@ -119,7 +119,7 @@ describe('where a pasted picture goes', () => {
 
 describe('the keyboard an account is on', () => {
   test('is one of the ones the app has', async () => {
-    for (const preset of ['default', 'notion', 'obsidian', 'vim', 'custom']) {
+    for (const preset of ['default', 'notion', 'obsidian', 'vscode', 'vim', 'custom']) {
       const set = await patch({ preset })
       expect(set.status, preset).toBe(200)
       expect(set.json.settings.preset).toBe(preset)

@@ -164,6 +164,17 @@ describe('bookmarking', () => {
     expect(marks.has(note('a.md'))).toBe(false)
   })
 
+  test('takes a selection in with one press, and out again once all of it is in', () => {
+    const marks = store()
+    marks.toggle(note('a.md'))
+
+    marks.toggleAll([note('a.md'), folder('B')])
+    expect(marks.list).toEqual([note('a.md'), folder('B')])
+
+    marks.toggleAll([note('a.md'), folder('B')])
+    expect(marks.list).toEqual([])
+  })
+
   test('offers the space to the account on every change', async () => {
     const marks = store()
     marks.toggle(search('tea'))

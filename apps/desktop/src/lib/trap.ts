@@ -48,7 +48,10 @@ function lands(node: HTMLElement): HTMLElement | null {
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }
 
-export function trap(node: HTMLElement) {
+/** `holds` false leaves the keyboard where it is; see field-menu.ts. */
+export function trap(node: HTMLElement, holds = true) {
+  if (!holds) return { destroy: () => undefined }
+
   /** What had the keyboard before this opened. Read now, because by the time this
    *  closes the answer is whatever is inside it. */
   const from = document.activeElement

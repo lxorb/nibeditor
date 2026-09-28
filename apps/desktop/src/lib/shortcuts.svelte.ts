@@ -18,7 +18,8 @@ import {
   showCombination,
 } from './keys'
 import { modes } from './modes.svelte'
-import { knownPreset, type PresetId, presetById } from './shortcuts/presets'
+import { knownPreset, type PresetId } from './shortcuts/preset-ids'
+import type { Preset } from './shortcuts/presets'
 import { without } from './records'
 import {
   type AppContext,
@@ -72,12 +73,9 @@ class Shortcuts {
    *  a preset says, so the Vim one turns it on and the others turn it off; the
    *  switch in the Editor pane is what puts it back on top of another map.
    *
-   *  Takes a name rather than one of the four, because what arrives is what a
-   *  select handed over; a name this version does not have changes nothing. */
-  choose(id: string) {
-    const preset = presetById(id)
-    if (!preset) return
-
+   *  Takes the keyboard itself rather than its name, so the maps stay with the
+   *  Settings sheet that offers them and out of the first paint; see presets.ts. */
+  choose(preset: Pick<Preset, 'id' | 'keys' | 'vim'>) {
     this.preset = preset.id
     this.overrides = { ...preset.keys }
     this.settle()
@@ -187,9 +185,9 @@ class Shortcuts {
   }
 
   /** Every key back where it started, which is the Default preset by another
-   *  name. */
+   *  name: no differences, and no modes. */
   resetAll() {
-    this.choose('default')
+    this.choose({ id: 'default', keys: {}, vim: false })
   }
 
   /** Writes the choice down, tells the editor on screen, and tells the

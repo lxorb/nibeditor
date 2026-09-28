@@ -48,6 +48,21 @@ import {
 import { foldHeadings, foldLess, foldMore, toggleFold, unfoldEverything } from './fold'
 import { highlightSelection } from './highlight'
 import { copyMarkdown } from './copy'
+import {
+  deleteLine,
+  duplicateBlock,
+  expandSelection,
+  insertLineAbove,
+  joinLines,
+  lowerCase,
+  moveBlockDown,
+  moveBlockUp,
+  reverseLines,
+  shrinkSelection,
+  sortLines,
+  titleCase,
+  upperCase,
+} from './line-door'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
 import { redoEdit, undoEdit } from './shared'
@@ -230,10 +245,19 @@ export const nibBindings: BindingSpec[] = [
   // Runs the code fence the caret is in. Falls through to the default when the
   // caret is anywhere else, or the fence is not JavaScript.
   { id: 'edit.run-fence', key: 'Mod-Enter', run: runFenceAtCursor },
-  // Ticks the box on the line the caret is on, and shares the key above: a line
-  // is a task or it is code, and both of these give way when it is not theirs.
-  // Under the fence, so `- [ ] x` written inside one is still code.
+  // Ticks the box on the line the caret is on, or puts one there, and shares the
+  // key above: a line is a task or it is code, and both of these give way when it
+  // is not theirs. Under the fence, so `- [ ] x` written inside one is still code.
+  // Where neither takes it - a heading, a table - the library's line below does.
   { id: 'paragraph.task', key: 'Mod-Enter', run: toggleTask, contextual: true },
+  // And the line above, which the library has no command for: VS Code's key, one
+  // modifier out from the line below.
+  {
+    id: 'edit.insert-line-above',
+    key: 'Mod-Shift-Enter',
+    run: insertLineAbove,
+    preventDefault: true,
+  },
 
   // Find with the bar's replace row already open. Ctrl+H is what Typora and
   // Obsidian use; a Mac keeps Cmd+H for hiding the application, so there it is
@@ -257,6 +281,44 @@ export const nibBindings: BindingSpec[] = [
 
   { id: 'edit.select-word', key: 'Mod-d', run: selectWord, preventDefault: true },
   { id: 'edit.select-line', key: 'Mod-l', run: selectLine, preventDefault: true },
+  // The selection a step outwards and back, on VS Code's keys. A Mac reads Alt,
+  // Shift and an arrow as a word at a time and keeps it, so there it is VS Code's
+  // Mac chord instead. See grow.ts.
+  {
+    id: 'edit.expand-selection',
+    key: 'Shift-Alt-ArrowRight',
+    mac: 'Ctrl-Shift-Mod-ArrowRight',
+    run: expandSelection,
+    preventDefault: true,
+  },
+  {
+    id: 'edit.shrink-selection',
+    key: 'Shift-Alt-ArrowLeft',
+    mac: 'Ctrl-Shift-Mod-ArrowLeft',
+    run: shrinkSelection,
+    preventDefault: true,
+  },
+
+  // The lines. Delete line has no key: VS Code's Ctrl+Shift+K is Code block here,
+  // Typora's key for it, and Obsidian's Ctrl+D is Select word. It is listed so a
+  // reader - or a preset - can give it one. Sorting, reversing and the three cases
+  // are what VS Code leaves without a key too. See lines.ts and case.ts.
+  { id: 'edit.delete-line', key: null, run: deleteLine, preventDefault: true },
+  { id: 'edit.join-lines', key: 'Mod-j', run: joinLines, preventDefault: true },
+  { id: 'edit.sort-lines', key: null, run: sortLines, preventDefault: true },
+  { id: 'edit.reverse-lines', key: null, run: reverseLines, preventDefault: true },
+  { id: 'edit.upper-case', key: null, run: upperCase, preventDefault: true },
+  { id: 'edit.lower-case', key: null, run: lowerCase, preventDefault: true },
+  { id: 'edit.title-case', key: null, run: titleCase, preventDefault: true },
+
+  // The block the caret is in - or every block the selection lies across - again under
+  // itself, or a step up or down past its neighbour: the grip's Duplicate, Move up and
+  // Move down, from the keyboard. No key here, since the lines already move on
+  // Alt+Up and Alt+Down; the Notion keyboard puts them on Notion's Ctrl+D and
+  // Ctrl+Shift+Up and Down. See block/commands.ts.
+  { id: 'edit.duplicate-block', key: null, run: duplicateBlock, preventDefault: true },
+  { id: 'edit.move-block-up', key: null, run: moveBlockUp, preventDefault: true },
+  { id: 'edit.move-block-down', key: null, run: moveBlockDown, preventDefault: true },
 
   // Every one like what is selected, in one press. No key out of the box: the
   // chord every other editor uses for it, Ctrl+Shift+L, is the sidebar here.
@@ -303,7 +365,7 @@ export const nibBindings: BindingSpec[] = [
  *  taken out of it, so a rebound Undo does not leave the old key working.
  *
  *  What is deliberately not taken over: everything CodeMirror binds that nib
- *  already binds over the top of it (Mod-d, Mod-u, Mod-Shift-k), which would
+ *  already binds over the top of it (Mod-d, Mod-u), which would
  *  put a second entry on a key that is already spoken for, and the raw
  *  editing keys - the arrows, Home, Backspace, Enter - which are how a text
  *  editor works rather than shortcuts anyone chose. Those stay in the keymap
@@ -372,6 +434,15 @@ const linuxRedo = claim(
  *  command for it on a key that already means something else is exactly the
  *  invisible binding the specs exist to prevent. */
 claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment toggle')
+
+/** Two more of the library's keys that nib binds over the top of, taken off.
+ *
+ *  Its Delete line sat on Ctrl+Shift+K under Code block, and its "select the node
+ *  around" on Ctrl+I under Italic: neither could ever be reached, and neither was in
+ *  the list. Delete line is named above on no key, and grow.ts is the selection
+ *  a step outwards on keys of its own. */
+claim(defaultKeymap, (binding) => binding.key === 'Shift-Mod-k', 'the library delete line')
+claim(defaultKeymap, (binding) => binding.key === 'Mod-i', 'the library parent syntax')
 
 /** The library's own multiple-cursor keys, taken off theirs.
  *
