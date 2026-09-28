@@ -19,9 +19,8 @@
  *  the surface that asked draws the answer. */
 
 import { escapeAll } from '@nib/markdown/html'
-import { taskAt } from '@nib/markdown/tasks'
 import { shownName } from './note-name'
-import type { Hit } from './search/match'
+import { type Hit, taskOf } from './search/match'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 
@@ -79,23 +78,17 @@ function marked(text: string, ranges: readonly { from: number; to: number }[]): 
  *  press on the row. */
 function row(hit: Hit): string {
   const where = `data-path="${escapeAll(hit.path)}" data-line="${hit.line}"`
-  const task = taskAt(hit.text)
+  const task = taskOf(hit)
 
   if (!task) {
     return `<button type="button" class="nib-row is-short" ${where}>${marked(hit.text, hit.ranges)}</button>`
   }
 
-  const words = hit.text.slice(task.marker)
-  const moved = hit.ranges
-    .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
-    .filter((range) => range.to > 0)
-    .map((range) => ({ from: Math.max(range.from, 0), to: range.to }))
-
   const box =
     `<input type="checkbox" class="nib-checkbox" data-task ${where}` +
-    `${task.done ? ' checked' : ''} aria-label="${escapeAll(words)}">`
+    `${task.done ? ' checked' : ''} aria-label="${escapeAll(task.text)}">`
 
-  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(words, moved)}</button>`
+  return `<button type="button" class="nib-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
 }
 
 /** What one fence answers with, or null where there is nothing to answer from:

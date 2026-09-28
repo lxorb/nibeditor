@@ -17,8 +17,7 @@
   import { OPERATORS } from './search/query'
   import { warm } from './search/warm.svelte'
   import { chosen, completing, naming, nearest, offered } from './search/suggest'
-  import { taskAt } from '@nib/markdown/tasks'
-  import type { Hit, Range } from './search/match'
+  import { type Hit, type Range, taskOf } from './search/match'
   import { relativeTo } from './space-paths'
   import Suggest from './Suggest.svelte'
   import { nodesIn, tagTree } from './tag-tree'
@@ -202,22 +201,6 @@
     if (event.key === 'Escape' && search.replacing) {
       event.preventDefault()
       search.closeReplace()
-    }
-  }
-
-  /** The task a row's line is, or null for a line that is not one. The words are
-   *  what comes after the marker, and the emphasis moves along with them. */
-  function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
-    const task = taskAt(hit.text)
-    if (!task) return null
-
-    return {
-      done: task.done,
-      text: hit.text.slice(task.marker),
-      ranges: hit.ranges
-        .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
-        .filter((range) => range.to > 0)
-        .map((range) => ({ from: Math.max(range.from, 0), to: range.to })),
     }
   }
 
