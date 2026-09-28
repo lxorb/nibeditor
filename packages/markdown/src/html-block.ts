@@ -22,7 +22,7 @@
  *  script and all, and comes out as the characters it is made of. */
 
 import { escape } from './html'
-import { cardMarkup } from './web-embed'
+import { cardMarkup, iframeCard } from './web-embed'
 
 /** A whole `<script>…</script>` somewhere in the block.
  *
@@ -65,4 +65,37 @@ export function htmlBlockCard(html: string): string | null {
     name: 'HTML',
     href: null,
   })
+}
+
+/** What else in a trusted document's HTML would act on the app rather than show
+ *  something. The content policy stops handlers and a script put in by `innerHTML`;
+ *  it does not stop a frame (`javascript:` or `srcdoc`), a `<meta>` refresh, a
+ *  script in the frame an export is printed in, or a `javascript:` target. */
+const ACTS =
+  /<(?:script|iframe|frame|frameset|object|embed|applet|meta|base|link|portal)(?=[\s/>]|$)/i
+
+/** A `javascript:` or `vbscript:` target however it is spelled: with character
+ *  references, and with the blanks a browser skips inside an address. */
+function namesScript(html: string): boolean {
+  const decoded = html.replace(
+    /&#(x?)([0-9a-f]+);?|&(colon|tab|newline);?/gi,
+    (whole, x, n, name) => {
+      if (name) return { colon: ':', tab: '\t', newline: '\n' }[String(name).toLowerCase()] ?? whole
+      const code = Number.parseInt(String(n), x ? 16 : 10)
+      return code <= 0x10ffff ? String.fromCodePoint(code) : whole
+    },
+  )
+  return /(?:java|vb)script:/i.test(decoded.replace(/[\s\p{Cc}\p{Cf}]/gu, ''))
+}
+
+/** The rest of a trusted document's raw HTML: a frame becomes the card a frame on
+ *  its own is, and markup still holding anything that acts is shown as its source.
+ *  Whole rather than cut down, because patterns are no parser to decide what to
+ *  keep. */
+export function ownMarkup(html: string): string {
+  const carded = html
+    .replace(/<\/iframe\s*>/gi, '')
+    .replace(/<iframe\b[^>]*>/gi, (tag) => iframeCard(tag) ?? '')
+
+  return ACTS.test(carded) || namesScript(carded) ? escape(html) : carded
 }

@@ -231,8 +231,7 @@ class Session {
     return true
   }
 
-  /** Half a sign-in, from the emailed code or from an invitation that proved the
-   *  address: the sheet opens on the step that asks for the code out of the app. */
+  /** Half a sign-in: the sheet asks for the code out of the app. */
   askForSecond(holding: string) {
     this.holding = holding
     this.error = null

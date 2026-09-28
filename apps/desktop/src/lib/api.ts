@@ -137,9 +137,7 @@ export interface Joined {
   waiting?: boolean
   /** The owner said no. */
   declined?: boolean
-  /** An invitation to an account that asks for a second code: the address is
-   *  proved and the account is not signed in yet. `holding` is what the code out of
-   *  the app is sent back with, exactly as after the emailed code. */
+  /** An invitation to an account that asks for a second code: half a sign-in. */
   second?: boolean
   holding?: string
 }

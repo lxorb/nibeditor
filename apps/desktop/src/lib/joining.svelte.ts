@@ -170,9 +170,7 @@ class Joining {
    *  wait, a refusal, or - for a link followed by an account that was already
    *  signed in - the space on its own. */
   private async landed(joined: Joined) {
-    // An invitation to an account that asks for a second code signs nobody in:
-    // the sheet asks for that code, and once it is in, the sign-in walks through
-    // this same link again as the account. So the link is kept. See SignIn.svelte.
+    // Half a sign-in: once the second code is in, SignIn.svelte walks this link again.
     if (joined.second && joined.holding) {
       account.askForSecond(joined.holding)
       return

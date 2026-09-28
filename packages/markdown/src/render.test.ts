@@ -592,7 +592,7 @@ describe('an <iframe> a note wrote', () => {
  *  so nothing in it may make a frame, a navigation or a program there. Each of these
  *  ran in the app under its content policy, measured in headless Chromium: the
  *  policy stops a handler and a script that arrived through `innerHTML`, and none
- *  of these is either. See own-markup.ts. */
+ *  of these is either. See `ownMarkup` in html-block.ts. */
 describe('the markup of a document that is the reader’s own', () => {
   test('makes no frame inside a block, only the card a frame on its own is', () => {
     const html = renderMarkdown('<div>\n<iframe src="https://x.dev/a"></iframe>\n</div>\n')
