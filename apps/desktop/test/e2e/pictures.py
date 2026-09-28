@@ -473,7 +473,7 @@ def imported(page: Page, where: str, zip_path: Path) -> None:
 
     page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
     say(f"[{where}] the sheet read a {page.evaluate('() => window.nibApp.importing.format')}")
-    page.click("button.primary")
+    page.click("button.nib-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
     page.evaluate("() => window.nibApp.importing.close()")
     page.wait_for_timeout(400)

@@ -214,7 +214,7 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
         page.click("button.drop")
     chooser.value.set_files(str(path))
 
-    page.wait_for_selector("button.primary", timeout=20000)
+    page.wait_for_selector("button.nib-button", timeout=20000)
     page.wait_for_function("() => window.nibApp.importing.stage === 'ready'", timeout=30000)
     said = page.evaluate(
         """() => ({
@@ -226,7 +226,7 @@ def bring_in(page, shot, tag: str, path: Path) -> dict:
     )
     shot(f"{tag}-preview")
 
-    page.click("button.primary")
+    page.click("button.nib-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=60000)
     shot(f"{tag}-done")
 
@@ -342,7 +342,7 @@ def drive(browser, out: Path, fixtures: Path, name, width, height, agent, finger
     shot("table-rows")
     say(f"[{name}] one note per row: {page.evaluate('() => window.nibApp.importing.counts')}")
 
-    page.click("button.primary")
+    page.click("button.nib-button")
     page.wait_for_function("() => window.nibApp.importing.stage === 'done'", timeout=30000)
     page.evaluate("() => window.nibApp.importing.close()")
     page.wait_for_timeout(300)
