@@ -63,6 +63,13 @@ export function emptySheet(): Sheet {
   return { version: VERSION, highlights: [] }
 }
 
+/** A sheet that shows no marks and is never written back: what a sidecar that
+ *  is there and cannot be understood reads as, so the next highlight made on the
+ *  PDF does not take the place of every one in the file. */
+export function leftAlone(): Sheet {
+  return { version: VERSION + 1, highlights: [] }
+}
+
 /** Whether a sheet may be written back. A file from a later version holds fields
  *  this build knows nothing about, and writing what was understood would throw
  *  the rest away, so it is left exactly as it is. */
@@ -117,9 +124,8 @@ export function readSheet(text: string): Sheet {
   try {
     parsed = JSON.parse(text)
   } catch {
-    // Not JSON at all. Read as no marks, and left alone rather than written
-    // over: `frozen` cannot tell, but the file is somebody's and not ours.
-    return { version: VERSION + 1, highlights: [] }
+    // Not JSON at all: the file is somebody's and not ours.
+    return leftAlone()
   }
 
   if (!isRecord(parsed)) return emptySheet()

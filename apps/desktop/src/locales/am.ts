@@ -298,6 +298,7 @@ export const am: Dictionary = {
   // PDFs
   'Copy a link': 'አገናኝ አባዛ',
   'That PDF could not be opened': 'ያ PDF መከፈት አልቻለም',
+  'That file could not be read': 'ያ ፋይል መነበብ አልቻለም',
   // Modes and view
   Reading: 'ንባብ',
   'Leave reading': 'ከንባብ ውጣ',

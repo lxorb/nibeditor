@@ -301,6 +301,7 @@ export const ha: Dictionary = {
   // PDFs
   'Copy a link': 'Kwafa haɗi',
   'That PDF could not be opened': 'Ba a iya buɗe wannan PDF ba',
+  'That file could not be read': 'Ba a iya karanta wannan fayil ba',
   // Modes and view
   Reading: 'Karatu',
   'Leave reading': 'Fita daga karatu',

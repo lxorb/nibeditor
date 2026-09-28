@@ -306,6 +306,7 @@ export const ptBR: Dictionary = {
   // PDFs
   'Copy a link': 'Copiar um link',
   'That PDF could not be opened': 'Não foi possível abrir esse PDF',
+  'That file could not be read': 'Não foi possível ler esse arquivo',
   // Modes and view
   Reading: 'Leitura',
   'Leave reading': 'Sair da leitura',

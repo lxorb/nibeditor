@@ -301,6 +301,7 @@ export const fil: Dictionary = {
   // PDFs
   'Copy a link': 'Kopyahin ang link',
   'That PDF could not be opened': 'Hindi mabuksan ang PDF na iyon',
+  'That file could not be read': 'Hindi mabasa ang file na iyon',
   // Modes and view
   Reading: 'Pagbasa',
   'Leave reading': 'Lumabas sa pagbasa',

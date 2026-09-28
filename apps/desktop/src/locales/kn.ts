@@ -301,6 +301,7 @@ export const kn: Dictionary = {
   // PDFs
   'Copy a link': 'ಒಂದು ಲಿಂಕ್ ನಕಲಿಸಿ',
   'That PDF could not be opened': 'ಆ PDF ತೆರೆಯಲಾಗಲಿಲ್ಲ',
+  'That file could not be read': 'ಆ ಫೈಲ್ ಓದಲಾಗಲಿಲ್ಲ',
   // Modes and view
   Reading: 'ಓದುವಿಕೆ',
   'Leave reading': 'ಓದುವಿಕೆ ಬಿಡಿ',

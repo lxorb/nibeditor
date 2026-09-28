@@ -298,6 +298,7 @@ export const tr: Dictionary = {
   // PDFs
   'Copy a link': 'Bağlantı kopyala',
   'That PDF could not be opened': 'Bu PDF açılamadı',
+  'That file could not be read': 'Bu dosya okunamadı',
   // Modes and view
   Reading: 'Okuma',
   'Leave reading': 'Okumadan çık',

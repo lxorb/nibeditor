@@ -298,6 +298,7 @@ export const ta: Dictionary = {
   // PDFs
   'Copy a link': 'ஒரு இணைப்பை நகலெடு',
   'That PDF could not be opened': 'அந்த PDF ஐத் திறக்க முடியவில்லை',
+  'That file could not be read': 'அந்தக் கோப்பைப் படிக்க முடியவில்லை',
   // Modes and view
   Reading: 'வாசிப்பு',
   'Leave reading': 'வாசிப்பை விடு',

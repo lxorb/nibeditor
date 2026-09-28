@@ -298,6 +298,7 @@ export const fa: Dictionary = {
   // PDFs
   'Copy a link': 'رونوشت پیوند',
   'That PDF could not be opened': 'آن PDF گشوده نشد',
+  'That file could not be read': 'آن پرونده خوانده نشد',
   // Modes and view
   Reading: 'خواندن',
   'Leave reading': 'بیرون آمدن از خواندن',

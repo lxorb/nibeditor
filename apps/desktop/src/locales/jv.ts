@@ -298,6 +298,7 @@ export const jv: Dictionary = {
   // PDFs
   'Copy a link': 'Salin pranala',
   'That PDF could not be opened': 'PDF kuwi ora bisa dibukak',
+  'That file could not be read': 'File kuwi ora bisa diwaca',
   // Modes and view
   Reading: 'Maca',
   'Leave reading': 'Metu saka maca',

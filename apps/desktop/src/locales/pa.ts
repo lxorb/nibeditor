@@ -301,6 +301,7 @@ export const pa: Dictionary = {
   // PDFs
   'Copy a link': 'ਕੜੀ ਨਕਲ ਕਰੋ',
   'That PDF could not be opened': 'ਉਹ PDF ਨਹੀਂ ਖੁੱਲ੍ਹ ਸਕੀ',
+  'That file could not be read': 'ਉਹ ਫ਼ਾਈਲ ਪੜ੍ਹੀ ਨਹੀਂ ਜਾ ਸਕੀ',
   // Modes and view
   Reading: 'ਪੜ੍ਹਨਾ',
   'Leave reading': 'ਪੜ੍ਹਨ ਤੋਂ ਬਾਹਰ',

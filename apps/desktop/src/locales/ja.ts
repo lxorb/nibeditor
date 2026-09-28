@@ -298,6 +298,7 @@ export const ja: Dictionary = {
   // PDFs
   'Copy a link': 'リンクをコピー',
   'That PDF could not be opened': 'この PDF を開けませんでした',
+  'That file could not be read': 'このファイルを読み込めませんでした',
   // Modes and view
   Reading: '閲覧',
   'Leave reading': '閲覧を終了',

@@ -298,6 +298,7 @@ export const ur: Dictionary = {
   // PDFs
   'Copy a link': 'ایک لنک نقل کریں',
   'That PDF could not be opened': 'یہ PDF نہیں کھل سکی',
+  'That file could not be read': 'یہ فائل پڑھی نہیں جا سکی',
   // Modes and view
   Reading: 'پڑھائی',
   'Leave reading': 'پڑھائی سے نکلیں',

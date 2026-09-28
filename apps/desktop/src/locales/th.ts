@@ -298,6 +298,7 @@ export const th: Dictionary = {
   // PDFs
   'Copy a link': 'คัดลอกลิงก์',
   'That PDF could not be opened': 'เปิด PDF นั้นไม่ได้',
+  'That file could not be read': 'อ่านไฟล์นั้นไม่ได้',
   // Modes and view
   Reading: 'อ่าน',
   'Leave reading': 'ออกจากโหมดอ่าน',
