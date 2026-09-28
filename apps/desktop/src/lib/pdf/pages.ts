@@ -53,6 +53,30 @@ export function nextZoom(from: number, direction: number): number {
   return found ?? heldZoom(from)
 }
 
+/** The canvas one page is drawn on: crisp on the screen it is on, within `most`
+ *  pixels in all.
+ *
+ *  The canvas holds device pixels and CSS sizes it back down to the page's box, so a
+ *  page `at` CSS pixels is drawn at `ratio` device pixels to each of them - unless
+ *  that asks for more than `most`, and then a little softer rather than not at all,
+ *  though never below one to one. Answers the canvas's size and what pdf.js is asked
+ *  to draw through, which at one to one is nothing. The reader's pages and a page
+ *  embedded in a note both size theirs here, each against its own ceiling. */
+export function sheetFor(
+  at: Size,
+  most: number,
+  ratio: number,
+): { width: number; height: number; drawn: { transform?: number[] } } {
+  const room = Math.sqrt(most / (at.width * at.height))
+  const density = Math.min(ratio, Math.max(1, room))
+
+  return {
+    width: Math.floor(at.width * density),
+    height: Math.floor(at.height * density),
+    drawn: density === 1 ? {} : { transform: [density, 0, 0, density, 0, 0] },
+  }
+}
+
 /** Every page's place, top to bottom. */
 export function stack(
   sizes: readonly (Size | undefined)[],
