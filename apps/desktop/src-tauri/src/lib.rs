@@ -253,8 +253,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             // The window, not the webview window, which a window holding a page in
             // a tab is not; see web_tabs.rs.
             if let Some(window) = app.get_window("main") {
-                let _ = window.unminimize();
-                let _ = window.set_focus();
+                placement::raised(&window);
             }
 
             let files = launch::markdown_paths(argv);
@@ -463,16 +462,15 @@ fn ready(
         // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
         #[cfg(windows)]
         let building = building.additional_browser_args(engine::BROWSER_ARGS);
-        // A window whose config names its own place - a probe off the screen - is built
-        // hidden and put there before it is shown; see `placed` in placement.rs.
-        if let Some(colour) =
-            ground::remembered(handle).filter(|_| !placement::names_its_place(&config))
-        {
+        // A window sent somewhere of its own - a probe off the screen - is built hidden,
+        // put there, and shown without coming forward; see `built_away` in placement.rs.
+        // A place that was only remembered is in the config and needs none of that.
+        if let Some(at) = placement::away() {
+            placement::built_away(building, at)?;
+        } else if let Some(colour) = ground::remembered(handle) {
             building.visible(true).background_color(colour).build()?;
         } else {
-            let window = building.build()?;
-            placement::placed(&window, &config);
-            window.show()?;
+            building.build()?.show()?;
         }
     }
 

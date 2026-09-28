@@ -228,12 +228,7 @@ def main() -> int:
         # The launch sizes the window in the screen's pixels; a scaled screen then has a
         # window too narrow for the bar. The same 1180 by 820 the browser drives use.
         scale = float(app.ask("String(window.devicePixelRatio)") or 1)
-        import ctypes
-
-        # SWP_NOZORDER | SWP_NOMOVE: nothing about which window is in front changes.
-        ctypes.WinDLL("user32").SetWindowPos(
-            hwnd, None, 0, 0, round(1180 * scale), round(820 * scale), 0x0004 | 0x0002
-        )
+        probe_app.sized(hwnd, round(1180 * scale), round(820 * scale))
         time.sleep(1.5)
         app.open("Idea.md", switch.SPACE)
         time.sleep(3)

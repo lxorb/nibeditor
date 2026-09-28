@@ -39,7 +39,7 @@ import sys
 import time
 import urllib.request
 
-from probe_app import refuse_updating
+from probe_app import run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -175,15 +175,10 @@ def allow_eval(path: pathlib.Path) -> None:
 
 
 def started(app: pathlib.Path) -> subprocess.Popen[bytes]:
-    refuse_updating(app)
     spaces = WORK / "spaces"
     spaces.mkdir(parents=True, exist_ok=True)
 
-    return subprocess.Popen(
-        [str(app)],
-        env={**os.environ, "NIB_SPACES_DIR": str(spaces)},
-        cwd=str(app.parent),
-    )
+    return run_probe(app, env={**os.environ, "NIB_SPACES_DIR": str(spaces)})
 
 
 def waited_for(path: pathlib.Path, patience: float = 90) -> dict:

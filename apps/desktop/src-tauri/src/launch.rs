@@ -62,10 +62,12 @@ pub fn new_window(app: AppHandle) -> Result<(), String> {
     #[cfg(all(windows, not(feature = "cef")))]
     let building = building.additional_browser_args(crate::engine::BROWSER_ARGS);
 
-    building
-        .build()
-        .map(|_| ())
-        .map_err(|error| format!("could not open another window: {error}"))
+    // Where the first window was sent off the screen, every other goes after it.
+    match crate::placement::away() {
+        Some(at) => crate::placement::built_away(building, at).map(|_| ()),
+        None => building.build().map(|_| ()),
+    }
+    .map_err(|error| format!("could not open another window: {error}"))
 }
 
 /// A label no window has. The counter alone is enough within one run; the loop is

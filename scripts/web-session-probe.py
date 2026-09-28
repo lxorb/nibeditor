@@ -51,7 +51,7 @@ import time
 import urllib.error
 import urllib.request
 
-from probe_app import close_app, main_window, refuse_updating
+from probe_app import close_app, run_probe, main_window, sized
 
 # Where this drive may listen; see docs/conventions.md.
 PORT_FROM = 22300
@@ -333,8 +333,7 @@ def seen(app: App, tab: str, seconds: float = 20) -> dict[str, str]:
 def launch(
     exe: pathlib.Path, identifier: str, unlike: int = 0
 ) -> tuple[subprocess.Popen[bytes], App]:
-    refuse_updating(exe)
-    app = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    app = run_probe(exe, quiet=True)
     port, secret = endpoint(identifier, 90, unlike)
 
     hwnd = 0
@@ -345,8 +344,7 @@ def launch(
     if not hwnd:
         raise SystemExit("the app never showed a window")
 
-    assert user32 is not None
-    user32.SetWindowPos(hwnd, None, 0, 0, 1280, 860, 0x0004)
+    sized(hwnd, 1280, 860)
     time.sleep(1.5)
     return app, App(port, secret)
 

@@ -76,7 +76,7 @@ import urllib.error
 import urllib.request
 from ctypes import wintypes
 
-from probe_app import refuse_updating
+from probe_app import run_probe, sized
 
 # Where this probe may listen; see docs/conventions.md.
 PORT_FROM = 23860
@@ -291,8 +291,7 @@ ASK = r"""
 
 
 def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subprocess.Popen[bytes], App]:
-    refuse_updating(exe)
-    running = subprocess.Popen([str(exe)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    running = run_probe(exe, quiet=True)
     port, secret, listening = endpoint(identifier, 90, unlike)
     if listening and listening != running.pid:
         raise SystemExit(
@@ -309,9 +308,7 @@ def launch(exe: pathlib.Path, identifier: str, unlike: int = 0) -> tuple[subproc
     if not hwnd:
         raise SystemExit("the app never showed a window")
 
-    assert user32 is not None
-    # SWP_NOZORDER: nothing about which window is in front changes.
-    user32.SetWindowPos(hwnd, None, 0, 0, 1280, 860, 0x0004)
+    sized(hwnd, 1280, 860)
 
     app = App(port, secret)
     # The endpoint is listening before there is a window to ask, and a request sent in
