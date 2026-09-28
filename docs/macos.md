@@ -41,6 +41,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 4. Double-clicking the empty part of the bar zooms the window. Dragging it moves the window.
 5. In a right-to-left language (Persian, Pashto): check where the lights sit and where the room is left.
 
+> macOS 26.6 (25G72), Apple M5. All five pass after this round's fixes. 1: the lights sit on the bar's centre line, 19 of 38 points measured off the pixels, beside the sidebar button and the space's name on the same line, with the sidebar closed and docked open. A desktop window never becomes a drawer (`viewport.drawer` is a phone's and an upright tablet's), so the third case does not arise. Before, tao's `trafficLightPosition` left the lights three points above that line at launch and moved them to three points from the top on the first redraw; `lights.rs` places them now. 2: Nib's own Fullscreen puts the bar away altogether, and the green button's full screen gives the room back to the panel's head. 3: a white titlebar with the lights where AppKit keeps them, centred in its 32 points, and none in the bar. Switching used to leave the lights three points low and the page without the keyboard, so Escape and every shortcut went nowhere until a click. 4: a double click fills the screen and a second puts it back; a drag moves the window by exactly as far. 5, in Arabic: the lights stay at the left and so does the room for them, and the sidebar, docked at the right, has no gap at its far edge. The room used to follow the reading direction to the right.
+
 ### Menu bar
 
 1. The bar reads Nib / File / Edit / Paragraph / Format / View / Window / Help, and its key hints match Settings > Keyboard.
@@ -56,6 +58,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 7. Switching the language in Settings relabels the menu.
 8. With two windows, the menu bar follows the focused window.
 9. Open Recent lists recent notes, and so does the Dock icon's menu. Clear Menu empties both.
+
+> macOS 26.6 (25G72), Apple M5, ABC - QWERTZ layout. On this macOS a key that a row of the menu bar holds never reaches the page: the menu answers it first, where a key no row holds (Cmd+Down) reaches the page as a keydown. Two items failed on that and pass after this round's fixes: 5, since Edit > Undo and Cmd+Z send the note `historyUndo`, which the editor answered from the view's own history rather than the note's, so neither undid anything (`fromInput` in the editor's shared.ts); and 3, since Cmd+B typed into the search field arrived as the Bold row and bolded the note behind it (`keyRuns` in native-menu.ts). The rest pass. 1: the order is right; the hints are AppKit's, which localises a key equivalent for the layout in use, so on QWERTZ Source mode reads Cmd+ß, Zoom in Cmd+* and Code Ctrl+<, where Settings > Keyboard writes the registry's Cmd+/, Cmd+= and Ctrl+`. Both keys work. 2: Cmd+B, Cmd+W, Cmd+N and Cmd+Shift+T each ran once. 4: in a site, Cmd+W closes the tab and leaves the window, Cmd+T opens the dialog, Ctrl+Tab switches, and Cmd+A, C, V and Z act on the site's field. 6, 7 (German, and back), 8 (Cmd+N in the second window adds its tab there and nowhere else, and the Window menu lists both) and 9 pass. The Window menu used to gain a line every time the window came to the front, and View had AppKit's own Enter Full Screen beside Nib's.
 
 ### Lifecycle
 
