@@ -868,7 +868,6 @@ export const zhHans: Dictionary = {
   'Space: {name}': '空间：{name}',
   'Theme: {name}': '主题：{name}',
   'Code theme: {name}': '代码主题：{name}',
-  'Recent: {name}': '最近：{name}',
   'Delete a layout': '删除布局',
   // Keyboards and modal editing
   Default: '默认',

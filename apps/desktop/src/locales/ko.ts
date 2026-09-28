@@ -877,7 +877,6 @@ export const ko: Dictionary = {
   'Space: {name}': '공간: {name}',
   'Theme: {name}': '테마: {name}',
   'Code theme: {name}': '코드 테마: {name}',
-  'Recent: {name}': '최근: {name}',
   'Delete a layout': '레이아웃 삭제',
   // Keyboards and modal editing
   Default: '기본',

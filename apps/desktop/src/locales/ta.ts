@@ -896,7 +896,6 @@ export const ta: Dictionary = {
   'Space: {name}': 'இடம்: {name}',
   'Theme: {name}': 'தீம்: {name}',
   'Code theme: {name}': 'குறியீட்டுத் தீம்: {name}',
-  'Recent: {name}': 'சமீபத்தியது: {name}',
   'Delete a layout': 'தளவமைப்பை நீக்கு',
   // Keyboards and modal editing
   Default: 'இயல்புநிலை',

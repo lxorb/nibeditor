@@ -885,7 +885,6 @@ export const ms: Dictionary = {
   'Space: {name}': 'Ruang: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema kod: {name}',
-  'Recent: {name}': 'Terkini: {name}',
   'Delete a layout': 'Hapuskan susun atur',
   // Keyboards and modal editing
   Default: 'Lalai',

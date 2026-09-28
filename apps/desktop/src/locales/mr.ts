@@ -885,7 +885,6 @@ export const mr: Dictionary = {
   'Space: {name}': 'स्पेस: {name}',
   'Theme: {name}': 'थीम: {name}',
   'Code theme: {name}': 'कोड थीम: {name}',
-  'Recent: {name}': 'अलीकडचे: {name}',
   'Delete a layout': 'मांडणी हटवा',
   // Keyboards and modal editing
   Default: 'मूळ',

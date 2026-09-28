@@ -882,7 +882,6 @@ export const jv: Dictionary = {
   'Space: {name}': 'Papan: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema kode: {name}',
-  'Recent: {name}': 'Anyar: {name}',
   'Delete a layout': 'Busak tata letak',
   // Keyboards and modal editing
   Default: 'Gawan',

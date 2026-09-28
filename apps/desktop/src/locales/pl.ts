@@ -917,7 +917,6 @@ export const pl: Dictionary = {
   'Space: {name}': 'Przestrzeń: {name}',
   'Theme: {name}': 'Motyw: {name}',
   'Code theme: {name}': 'Motyw kodu: {name}',
-  'Recent: {name}': 'Ostatnie: {name}',
   'Delete a layout': 'Usuń układ',
   // Keyboards and modal editing
   Default: 'Domyślne',

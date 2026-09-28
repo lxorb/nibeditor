@@ -885,7 +885,6 @@ export const id: Dictionary = {
   'Space: {name}': 'Ruang: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema kode: {name}',
-  'Recent: {name}': 'Terbaru: {name}',
   'Delete a layout': 'Hapus tata letak',
   // Keyboards and modal editing
   Default: 'Bawaan',

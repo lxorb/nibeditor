@@ -872,7 +872,6 @@ export const th: Dictionary = {
   'Space: {name}': 'พื้นที่: {name}',
   'Theme: {name}': 'ธีม: {name}',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
-  'Recent: {name}': 'ล่าสุด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
   // Keyboards and modal editing
   Default: 'ค่าเริ่มต้น',

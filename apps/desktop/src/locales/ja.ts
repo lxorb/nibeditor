@@ -884,7 +884,6 @@ export const ja: Dictionary = {
   'Space: {name}': 'スペース: {name}',
   'Theme: {name}': 'テーマ: {name}',
   'Code theme: {name}': 'コードテーマ: {name}',
-  'Recent: {name}': '最近: {name}',
   'Delete a layout': 'レイアウトを削除',
   // Keyboards and modal editing
   Default: '既定',

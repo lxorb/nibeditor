@@ -886,7 +886,6 @@ export const gu: Dictionary = {
   'Space: {name}': 'જગ્યા: {name}',
   'Theme: {name}': 'થીમ: {name}',
   'Code theme: {name}': 'કોડ થીમ: {name}',
-  'Recent: {name}': 'હાલનું: {name}',
   'Delete a layout': 'માંડણી કાઢો',
   // Keyboards and modal editing
   Default: 'મૂળ',

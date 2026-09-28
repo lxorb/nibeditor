@@ -888,7 +888,6 @@ export const tr: Dictionary = {
   'Space: {name}': 'Alan: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Kod teması: {name}',
-  'Recent: {name}': 'Son: {name}',
   'Delete a layout': 'Bir düzeni sil',
   // Keyboards and modal editing
   Default: 'Öntanımlı',

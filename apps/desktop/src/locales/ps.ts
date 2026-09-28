@@ -885,7 +885,6 @@ export const ps: Dictionary = {
   'Space: {name}': 'ځای: {name}',
   'Theme: {name}': 'بڼه: {name}',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
-  'Recent: {name}': 'وروستی: {name}',
   'Delete a layout': 'اوډون ړنګول',
   // Keyboards and modal editing
   Default: 'اصلي',

@@ -207,7 +207,9 @@ in the palette, and it can be rebound. What was already there is marked.
 | | |
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
-| Ctrl+P | the palette. Type for a note, `>` for a command (already there) |
+| Ctrl+P | the palette. Type for a note, `>` for a command, the ones run lately first (already there). Empty, it lists the notes opened lately, the one before this first; a note is found by its folder too (`uni/lec`), and says its folder where another shares its name |
+| Enter, Shift+Enter in the palette | with nothing matching, Enter makes the note typed (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
+| `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
 | Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings |
@@ -218,7 +220,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | --- | --- |
 | Ctrl+Shift+E | Files |
 | Ctrl+Shift+O | Outline |
-| Ctrl+Shift+F | Search (already there) |
+| Ctrl+Shift+F | Search (already there). Over a few words selected on one line, it searches for them |
 | Ctrl+Shift+B | Links |
 | Ctrl+Shift+L | show or hide the sidebar (already there) |
 

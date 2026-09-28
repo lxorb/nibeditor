@@ -892,7 +892,6 @@ export const pa: Dictionary = {
   'Space: {name}': 'ਥਾਂ: {name}',
   'Theme: {name}': 'ਥੀਮ: {name}',
   'Code theme: {name}': 'ਕੋਡ ਥੀਮ: {name}',
-  'Recent: {name}': 'ਹਾਲੀਆ: {name}',
   'Delete a layout': 'ਖਾਕਾ ਮਿਟਾਓ',
   // Keyboards and modal editing
   Default: 'ਮੂਲ',

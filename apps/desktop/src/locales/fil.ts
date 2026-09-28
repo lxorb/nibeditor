@@ -897,7 +897,6 @@ export const fil: Dictionary = {
   'Space: {name}': 'Espasyo: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema ng code: {name}',
-  'Recent: {name}': 'Kani-kanina: {name}',
   'Delete a layout': 'Tanggalin ang layout',
   // Keyboards and modal editing
   Default: 'Orihinal',

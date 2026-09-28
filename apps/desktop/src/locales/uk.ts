@@ -918,7 +918,6 @@ export const uk: Dictionary = {
   'Space: {name}': 'Простір: {name}',
   'Theme: {name}': 'Тема: {name}',
   'Code theme: {name}': 'Тема коду: {name}',
-  'Recent: {name}': 'Недавнє: {name}',
   'Delete a layout': 'Видалити макет',
   // Keyboards and modal editing
   Default: 'За умовчанням',

@@ -889,7 +889,6 @@ export const gsw: Dictionary = {
   'Space: {name}': 'Ablag: {name}',
   'Theme: {name}': 'Design: {name}',
   'Code theme: {name}': 'Code-Design: {name}',
-  'Recent: {name}': 'Zletscht: {name}',
   'Delete a layout': 'Es Layout lösche',
   // Keyboards and modal editing
   Default: 'Standard',

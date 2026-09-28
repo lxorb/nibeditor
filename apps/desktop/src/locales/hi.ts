@@ -889,7 +889,6 @@ export const hi: Dictionary = {
   'Space: {name}': 'स्पेस: {name}',
   'Theme: {name}': 'थीम: {name}',
   'Code theme: {name}': 'कोड थीम: {name}',
-  'Recent: {name}': 'हाल का: {name}',
   'Delete a layout': 'लेआउट हटाएँ',
   // Keyboards and modal editing
   Default: 'डिफ़ॉल्ट',

@@ -888,7 +888,6 @@ export const te: Dictionary = {
   'Space: {name}': 'స్పేస్: {name}',
   'Theme: {name}': 'థీమ్: {name}',
   'Code theme: {name}': 'కోడ్ థీమ్: {name}',
-  'Recent: {name}': 'ఇటీవలిది: {name}',
   'Delete a layout': 'లేఅవుట్ తొలగించు',
   // Keyboards and modal editing
   Default: 'డిఫాల్ట్',

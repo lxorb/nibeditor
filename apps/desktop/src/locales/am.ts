@@ -877,7 +877,6 @@ export const am: Dictionary = {
   'Space: {name}': 'ቦታ: {name}',
   'Theme: {name}': 'ገጽታ: {name}',
   'Code theme: {name}': 'የኮድ ገጽታ: {name}',
-  'Recent: {name}': 'የቅርብ: {name}',
   'Delete a layout': 'አቀማመጥ አጥፋ',
   // Keyboards and modal editing
   Default: 'ነባር',

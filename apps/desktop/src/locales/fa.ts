@@ -889,7 +889,6 @@ export const fa: Dictionary = {
   'Space: {name}': 'فضا: {name}',
   'Theme: {name}': 'پوسته: {name}',
   'Code theme: {name}': 'پوسته کد: {name}',
-  'Recent: {name}': 'تازه: {name}',
   'Delete a layout': 'حذف چیدمان',
   // Keyboards and modal editing
   Default: 'پیش‌فرض',

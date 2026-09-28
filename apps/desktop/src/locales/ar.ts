@@ -924,7 +924,6 @@ export const ar: Dictionary = {
   'Space: {name}': 'المساحة: {name}',
   'Theme: {name}': 'السمة: {name}',
   'Code theme: {name}': 'سمة الكود: {name}',
-  'Recent: {name}': 'الأخيرة: {name}',
   'Delete a layout': 'حذف تخطيط',
   // Keyboards and modal editing
   Default: 'افتراضي',

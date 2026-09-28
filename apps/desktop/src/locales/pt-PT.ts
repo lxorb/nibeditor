@@ -899,7 +899,6 @@ export const ptPT: Dictionary = {
   'Space: {name}': 'Espaço: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema do código: {name}',
-  'Recent: {name}': 'Recente: {name}',
   'Delete a layout': 'Eliminar uma disposição',
   // Keyboards and modal editing
   Default: 'Predefinido',

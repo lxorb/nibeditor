@@ -894,7 +894,6 @@ export const sw: Dictionary = {
   'Space: {name}': 'Nafasi: {name}',
   'Theme: {name}': 'Mandhari: {name}',
   'Code theme: {name}': 'Mandhari ya kodi: {name}',
-  'Recent: {name}': 'Ya karibuni: {name}',
   'Delete a layout': 'Futa mpangilio',
   // Keyboards and modal editing
   Default: 'Chaguomsingi',

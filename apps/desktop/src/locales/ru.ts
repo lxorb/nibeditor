@@ -919,7 +919,6 @@ export const ru: Dictionary = {
   'Space: {name}': 'Пространство: {name}',
   'Theme: {name}': 'Тема: {name}',
   'Code theme: {name}': 'Тема кода: {name}',
-  'Recent: {name}': 'Недавнее: {name}',
   'Delete a layout': 'Удалить макет',
   // Keyboards and modal editing
   Default: 'По умолчанию',

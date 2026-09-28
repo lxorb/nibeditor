@@ -880,7 +880,6 @@ export const my: Dictionary = {
   'Space: {name}': 'နေရာ: {name}',
   'Theme: {name}': 'အပြင်အဆင်: {name}',
   'Code theme: {name}': 'ကုဒ်အပြင်အဆင်: {name}',
-  'Recent: {name}': 'မကြာမီ: {name}',
   'Delete a layout': 'အပြင်အဆင်ဖျက်ပါ',
   // Keyboards and modal editing
   Default: 'မူရင်း',

@@ -879,7 +879,6 @@ export const vi: Dictionary = {
   'Space: {name}': 'Không gian: {name}',
   'Theme: {name}': 'Chủ đề: {name}',
   'Code theme: {name}': 'Chủ đề mã: {name}',
-  'Recent: {name}': 'Gần đây: {name}',
   'Delete a layout': 'Xoá một bố cục',
   // Keyboards and modal editing
   Default: 'Mặc định',

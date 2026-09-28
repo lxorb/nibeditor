@@ -869,7 +869,6 @@ export const yue: Dictionary = {
   'Space: {name}': '空間：{name}',
   'Theme: {name}': '主題：{name}',
   'Code theme: {name}': '代碼主題：{name}',
-  'Recent: {name}': '最近：{name}',
   'Delete a layout': '刪除佈局',
   // Keyboards and modal editing
   Default: '預設',

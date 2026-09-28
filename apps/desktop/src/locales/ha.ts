@@ -896,7 +896,6 @@ export const ha: Dictionary = {
   'Space: {name}': 'Wuri: {name}',
   'Theme: {name}': 'Kamanni: {name}',
   'Code theme: {name}': 'Kamannin lamba: {name}',
-  'Recent: {name}': 'Na kwanan nan: {name}',
   'Delete a layout': 'Share tsari',
   // Keyboards and modal editing
   Default: 'Na asali',

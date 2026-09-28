@@ -897,7 +897,6 @@ export const ptBR: Dictionary = {
   'Space: {name}': 'Espaço: {name}',
   'Theme: {name}': 'Tema: {name}',
   'Code theme: {name}': 'Tema do código: {name}',
-  'Recent: {name}': 'Recente: {name}',
   'Delete a layout': 'Excluir um layout',
   // Keyboards and modal editing
   Default: 'Padrão',

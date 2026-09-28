@@ -886,7 +886,6 @@ export const bn: Dictionary = {
   'Space: {name}': 'স্পেস: {name}',
   'Theme: {name}': 'থিম: {name}',
   'Code theme: {name}': 'কোড থিম: {name}',
-  'Recent: {name}': 'সাম্প্রতিক: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   // Keyboards and modal editing
   Default: 'ডিফল্ট',

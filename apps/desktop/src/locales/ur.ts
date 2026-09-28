@@ -887,7 +887,6 @@ export const ur: Dictionary = {
   'Space: {name}': 'اسپیس: {name}',
   'Theme: {name}': 'تھیم: {name}',
   'Code theme: {name}': 'کوڈ تھیم: {name}',
-  'Recent: {name}': 'حالیہ: {name}',
   'Delete a layout': 'لے آؤٹ حذف کریں',
   // Keyboards and modal editing
   Default: 'طے شدہ',

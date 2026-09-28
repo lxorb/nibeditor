@@ -892,7 +892,6 @@ export const kn: Dictionary = {
   'Space: {name}': 'ಸ್ಪೇಸ್: {name}',
   'Theme: {name}': 'ಥೀಮ್: {name}',
   'Code theme: {name}': 'ಕೋಡ್ ಥೀಮ್: {name}',
-  'Recent: {name}': 'ಇತ್ತೀಚಿನದು: {name}',
   'Delete a layout': 'ಲೇಔಟ್ ಅಳಿಸಿ',
   // Keyboards and modal editing
   Default: 'ಡಿಫಾಲ್ಟ್',

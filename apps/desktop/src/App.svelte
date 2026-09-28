@@ -906,7 +906,7 @@
 <!-- What the text size has just become, after a pinch or a key. -->
 <SizeBadge />
 
-<Palette bind:this={paletteScreen} bind:open={palette} {view} />
+<Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
 <SignIn />
 <!-- The one word a link owes whoever followed it, when it owes one. -->
 <JoinSheet />
