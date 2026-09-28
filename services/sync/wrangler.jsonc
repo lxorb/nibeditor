@@ -52,8 +52,11 @@
     "run_worker_first": ["/*", "!/assets/*"],
   },
 
-  // Cloudflare Email Sending. `nibeditor.com` is enabled as a sending
-  // domain, so SPF, DKIM, DMARC and bounce handling are already in place.
+  // Cloudflare Email Sending, which is what signs everybody in. It needs
+  // `nibeditor.com` onboarded under Email Service > Email Sending (that adds
+  // the cf-bounce MX, SPF and DKIM records and `_dmarc`) on top of Workers
+  // Paid. Without it this binding is Email Routing's and reaches only the
+  // account's verified addresses; see `cloudflare` in src/email.ts.
   "send_email": [{ "name": "EMAIL" }],
 
   // Domains people bring are served through Cloudflare for SaaS: the owner
