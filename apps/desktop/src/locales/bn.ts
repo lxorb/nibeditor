@@ -1281,6 +1281,7 @@ export const bn: Dictionary = {
   'Add to {name}': '{name}-এ যোগ করুন',
   // Web tabs
   Reload: 'আবার লোড করুন',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'এই পাতা রাখুন',
   'Clip the link': 'লিঙ্ক রাখুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',

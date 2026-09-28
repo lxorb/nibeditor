@@ -1285,6 +1285,7 @@ export const ps: Dictionary = {
   'Add to {name}': '{name} ته ورزياتول',
   // Web tabs
   Reload: 'بېرته راوړل',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'دا مخ خوندول',
   'Clip the link': 'تړنه خوندول',
   'Open in the browser': 'په کوټګر کې پرانيستل',

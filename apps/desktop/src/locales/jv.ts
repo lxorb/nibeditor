@@ -1270,6 +1270,7 @@ export const jv: Dictionary = {
   'Add to {name}': 'Tambahake menyang {name}',
   // Web tabs
   Reload: 'Emot maneh',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Simpen kaca iki',
   'Clip the link': 'Simpen pranalane',
   'Open in the browser': 'Bukak ing panjelajah',

@@ -1281,6 +1281,7 @@ export const hi: Dictionary = {
   'Add to {name}': '{name} में जोड़ें',
   // Web tabs
   Reload: 'फिर लोड करें',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'यह पृष्ठ सहेजें',
   'Clip the link': 'लिंक सहेजें',
   'Open in the browser': 'ब्राउज़र में खोलें',

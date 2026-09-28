@@ -1282,6 +1282,7 @@ export const ur: Dictionary = {
   'Add to {name}': '{name} میں شامل کریں',
   // Web tabs
   Reload: 'دوبارہ لوڈ کریں',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'یہ صفحہ محفوظ کریں',
   'Clip the link': 'لنک محفوظ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',

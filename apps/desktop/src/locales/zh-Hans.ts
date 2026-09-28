@@ -1250,6 +1250,7 @@ export const zhHans: Dictionary = {
   'Add to {name}': '添加到 {name}',
   // Web tabs
   Reload: '重新加载',
+  'Hard reload': '硬性重新加载',
   'Clip this page': '保存此页',
   'Clip the link': '保存链接',
   'Open in the browser': '在浏览器中打开',

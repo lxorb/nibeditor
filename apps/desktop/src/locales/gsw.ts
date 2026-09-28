@@ -1289,6 +1289,7 @@ export const gsw: Dictionary = {
   'Add to {name}': 'Zu {name} dezuetue',
   // Web tabs
   Reload: 'Neu lade',
+  'Hard reload': 'Vollständig neu lade',
   'Clip this page': 'Die Siite spichere',
   'Clip the link': 'De Link spichere',
   'Open in the browser': 'Im Browser ufmache',

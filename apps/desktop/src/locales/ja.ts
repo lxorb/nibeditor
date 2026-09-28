@@ -1270,6 +1270,7 @@ export const ja: Dictionary = {
   'Add to {name}': '{name} に追加',
   // Web tabs
   Reload: '再読み込み',
+  'Hard reload': 'ハード再読み込み',
   'Clip this page': 'このページを保存',
   'Clip the link': 'リンクを保存',
   'Open in the browser': 'ブラウザーで開く',

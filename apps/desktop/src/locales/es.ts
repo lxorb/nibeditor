@@ -1318,6 +1318,7 @@ export const es: Dictionary = {
   'Add to {name}': 'Añadir a {name}',
   // Web tabs
   Reload: 'Recargar',
+  'Hard reload': 'Recarga forzada',
   'Clip this page': 'Guardar esta página',
   'Clip the link': 'Guardar el enlace',
   'Open in the browser': 'Abrir en el navegador',

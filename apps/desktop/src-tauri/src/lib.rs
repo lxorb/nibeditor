@@ -103,6 +103,8 @@ mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
 #[cfg(desktop)]
+mod web_reload;
+#[cfg(desktop)]
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;

@@ -309,14 +309,12 @@ impl Trail {
         }
     }
 
-    /// The address one step back or forward, for a tab whose engine cannot step
-    /// itself.
-    fn step_to(&self, forward: bool) -> Option<&String> {
-        if forward {
-            self.urls.get(self.at + 1)
-        } else {
-            self.at.checked_sub(1).and_then(|back| self.urls.get(back))
-        }
+    /// The address `by` steps along the trail - back where it is negative - for a tab
+    /// whose engine cannot step itself, and for the history under the arrows.
+    fn step_to(&self, by: isize) -> Option<&String> {
+        self.at
+            .checked_add_signed(by)
+            .and_then(|there| self.urls.get(there))
     }
     /// A page that has arrived. A step back or forward lands on the address next
     /// to where the trail is, and anything else is somewhere new, which forgets
@@ -425,14 +423,21 @@ impl WebTabs {
     /// Where a step goes: the address to send the tab to, or `None` for a tab whose
     /// own engine can take the step. Stepping by address is what a revived page does,
     /// and from the first one this tab does it for good; see `Trail::engine`.
-    fn stepping(&self, tab: &str, forward: bool) -> Option<String> {
+    ///
+    /// A step of more than one - a row of the history under the arrows - lands on an
+    /// address that is not next to where the trail was, which `Trail::visited` would
+    /// take for somewhere new and cut everything ahead of it off for. So the trail is
+    /// moved there first, and the page arriving finds it already in place.
+    fn stepping(&self, tab: &str, by: isize) -> Option<String> {
         let mut trails = self.trails.lock().ok()?;
         let trail = trails.get_mut(tab)?;
-        if trail.engine {
-            return None;
+        let url = trail.step_to(by)?.clone();
+
+        if by.unsigned_abs() > 1 {
+            trail.at = trail.at.checked_add_signed(by)?;
         }
 
-        trail.step_to(forward).cloned()
+        (!trail.engine).then_some(url)
     }
 }
 
@@ -552,6 +557,10 @@ pub enum Step {
     Back,
     Forward,
     Reload,
+    /// Chrome's Ctrl+Shift+R: the page again, past the cache.
+    Fresh,
+    /// The cross the reload glyph turns into while a page is coming.
+    Stop,
 }
 
 /// Whether an address is one a web tab may go to.
@@ -1353,35 +1362,39 @@ pub fn web_navigate(app: AppHandle, tab: String, url: String) -> Result<(), Stri
 /// reading. So the step is an address off the trail this crate keeps, and from the
 /// first of those this tab steps that way for good; see `Trail::engine`.
 ///
-/// Reload goes through the engine either way, which is the one of the three it offers.
+/// Reload goes through the engine either way, which is the one of the three it offers;
+/// loading past the cache and stopping are the engine's too, see `web_reload.rs`.
+///
+/// `by` is how many steps back or forward, for a row of the history under the arrows,
+/// and one when it is not said.
 #[tauri::command]
 pub fn web_step(
     app: AppHandle,
     tabs: tauri::State<'_, WebTabs>,
     tab: String,
     step: Step,
+    by: Option<u32>,
 ) -> Result<(), String> {
     let view = found(&app, &tab)?;
+    let steps = isize::try_from(by.unwrap_or(1).max(1)).unwrap_or(1);
 
-    let walked = match step {
-        Step::Reload => None,
-        Step::Back => tabs.stepping(&tab, false),
-        Step::Forward => tabs.stepping(&tab, true),
+    let by = match step {
+        Step::Reload => return view.reload().map_err(|error| error.to_string()),
+        Step::Fresh => return crate::web_reload::fresh(&view),
+        Step::Stop => return crate::web_reload::stop(&view),
+        Step::Back => -steps,
+        Step::Forward => steps,
     };
 
-    if let Some(url) = walked {
+    if let Some(url) = tabs.stepping(&tab, by) {
         let at = address(&url)?;
         return view
             .navigate(at)
             .map_err(|error| format!("that page could not be stepped: {error}"));
     }
 
-    match step {
-        Step::Reload => view.reload(),
-        Step::Back => view.eval("history.back()"),
-        Step::Forward => view.eval("history.forward()"),
-    }
-    .map_err(|error| format!("that page could not be stepped: {error}"))
+    view.eval(format!("history.go({by})"))
+        .map_err(|error| format!("that page could not be stepped: {error}"))
 }
 
 /// Where the tab is: the page, how far down it the reading has got, and the trail
@@ -2146,6 +2159,62 @@ mod tests {
         assert_eq!(trail.urls, ["https://a.example/", "https://c.example/"]);
         assert!(trail.back());
         assert!(!trail.forward());
+    }
+
+    #[test]
+    fn a_row_of_the_history_is_a_jump_that_keeps_the_trail() {
+        // A page built on one address, which the engine's own history holds from there.
+        let tabs = WebTabs::default();
+        tabs.restore("t", vec!["https://a.example/".into()], 0);
+        for url in ["https://b.example/", "https://c.example/"] {
+            tabs.walked("t", url);
+        }
+
+        // Two back, in the engine's own history: the engine takes the step, and the
+        // trail is already where the page will say it has arrived.
+        assert_eq!(tabs.stepping("t", -2), None);
+        tabs.walked("t", "https://a.example/");
+        assert_eq!(
+            tabs.walk("t"),
+            (
+                vec![
+                    "https://a.example/".to_string(),
+                    "https://b.example/".to_string(),
+                    "https://c.example/".to_string(),
+                ],
+                0,
+            )
+        );
+
+        // Nowhere past either end.
+        assert_eq!(tabs.stepping("t", -1), None);
+        assert_eq!(tabs.stepping("t", 3), None);
+        assert_eq!(tabs.walk("t").1, 0);
+    }
+
+    #[test]
+    fn a_revived_page_jumps_by_address() {
+        let tabs = WebTabs::default();
+        tabs.restore(
+            "t",
+            vec![
+                "https://a.example/".into(),
+                "https://b.example/".into(),
+                "https://c.example/".into(),
+            ],
+            2,
+        );
+
+        assert_eq!(
+            tabs.stepping("t", -2),
+            Some("https://a.example/".to_string())
+        );
+        tabs.walked("t", "https://a.example/");
+        assert_eq!(tabs.walk("t").0.len(), 3);
+        assert_eq!(
+            tabs.stepping("t", 1),
+            Some("https://b.example/".to_string())
+        );
     }
 
     /// The app is not in the page, and neither are the buses. What a browser asks about

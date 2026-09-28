@@ -1262,6 +1262,7 @@ export const ko: Dictionary = {
   'Add to {name}': '{name}에 추가',
   // Web tabs
   Reload: '다시 불러오기',
+  'Hard reload': 'Hard reload',
   'Clip this page': '이 페이지 저장',
   'Clip the link': '링크 저장',
   'Open in the browser': '브라우저에서 열기',

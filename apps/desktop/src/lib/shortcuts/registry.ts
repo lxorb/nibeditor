@@ -364,6 +364,69 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-l',
     contextual: true,
   },
+  // Chrome's other way to the same field on Windows and Linux. A Mac types a
+  // character with it.
+  {
+    id: 'web.address.alt',
+    label: () => t('Address'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Alt-d',
+    mac: null,
+    contextual: true,
+    alias: true,
+  },
+  // A browser's reload, on a browser's keys, and only while a page is in front: F5
+  // is Present over a note, and a pane showing a page has no note to present. Read
+  // where the bar is, like the address key. See WebBar.svelte.
+  {
+    id: 'web.reload',
+    label: () => t('Reload'),
+    category: 'view',
+    scope: 'panel',
+    key: 'F5',
+    mac: 'Mod-r',
+    contextual: true,
+  },
+  {
+    id: 'web.reload.alt',
+    label: () => t('Reload'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-r',
+    mac: null,
+    contextual: true,
+    alias: true,
+  },
+  // Past the cache, which is what somebody who just changed the site means.
+  {
+    id: 'web.fresh',
+    label: () => t('Hard reload'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-Shift-r',
+    contextual: true,
+  },
+  {
+    id: 'web.fresh.alt',
+    label: () => t('Hard reload'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Mod-F5',
+    mac: null,
+    contextual: true,
+    alias: true,
+  },
+  // Only while a page is coming, and only once whatever is open over it has had
+  // its Escape.
+  {
+    id: 'web.stop',
+    label: () => t('Stop'),
+    category: 'view',
+    scope: 'panel',
+    key: 'Escape',
+    contextual: true,
+  },
   {
     id: 'app.forward',
     label: () => t('Forward'),
@@ -865,12 +928,17 @@ const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   category: 'view' as const,
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
-  run: () => {
-    const tabs = workspace.tabsIn(workspace.panes.focusedId)
-    const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
-    if (tab) workspace.activate(tab.id)
-  },
+  run: () => showNumbered(index),
 }))
+
+/** The tab at a place along the focused pane's strip, counting from nought, and the
+ *  last one for the ninth. Also Chrome's own Ctrl and a digit while a page is in
+ *  front, where no heading is waiting for it; see WebBar.svelte. */
+export function showNumbered(index: number) {
+  const tabs = workspace.tabsIn(workspace.panes.focusedId)
+  const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
+  if (tab) workspace.activate(tab.id)
+}
 
 /** The file list's own keys. They are read where the list is - see
  *  Tree.svelte - and only fire while the focus is in it, which is why they

@@ -1316,6 +1316,7 @@ export const ptPT: Dictionary = {
   'Add to {name}': 'Adicionar a {name}',
   // Web tabs
   Reload: 'Recarregar',
+  'Hard reload': 'Recarregamento forçado',
   'Clip this page': 'Guardar esta página',
   'Clip the link': 'Guardar a ligação',
   'Open in the browser': 'Abrir no navegador',

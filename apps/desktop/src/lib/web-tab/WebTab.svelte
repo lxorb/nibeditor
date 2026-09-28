@@ -406,18 +406,24 @@
       {focused}
       {book}
       reads={isDesktop}
-      onstep={(step: Step, press: MouseEvent) => {
-        if (step === 'back') workspace.goBack(tab.id, tabAsk(press))
-        else if (step === 'forward') workspace.goForward(tab.id, tabAsk(press))
+      onstep={(step: Step, press?: MouseEvent) => {
+        const ask = press ? tabAsk(press) : 'plain'
+        if (step === 'back') workspace.goBack(tab.id, ask)
+        else if (step === 'forward') workspace.goForward(tab.id, ask)
         else void pages.step(tab.id, step)
       }}
-      onaddress={(typed: string) => {
+      onaddress={(typed: string, aside: boolean) => {
         const url = webAddress(typed)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
         visited.typed(book, url)
+        // Alt+Enter: a tab of its own, in front, and this one left where it was.
+        if (aside) {
+          workspace.openPage(url, 'front', tab.id)
+          return
+        }
         void pages.go(tab.id, url)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.

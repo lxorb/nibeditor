@@ -83,6 +83,7 @@ import { invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
+import { pages } from './web-tab/pages.svelte'
 import { openFile } from './open-file'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
@@ -378,6 +379,39 @@ function tabCommands(): Command[] {
       disabled: !tab || !workspace.canRenameFromTab(tab),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
+  ]
+}
+
+/** A browser's rows about the page in front: the same page again, the page past the
+ *  cache, and - only while one is coming - stopping it. Only while a page is what the
+ *  tab shows; the keys are read where the bar is, see web-tab/bar-keys.ts. */
+function webCommands(): Command[] {
+  const tab = workspace.active
+  if (!isDesktop || tab?.kind !== 'web') return []
+
+  return [
+    {
+      id: 'web-reload',
+      label: t('Reload'),
+      hint: shortcuts.hint('web.reload'),
+      run: () => void pages.step(tab.id, 'reload'),
+    },
+    {
+      id: 'web-fresh',
+      label: t('Hard reload'),
+      hint: shortcuts.hint('web.fresh'),
+      run: () => void pages.step(tab.id, 'fresh'),
+    },
+    ...(pages.of(tab.id).loading
+      ? [
+          {
+            id: 'web-stop',
+            label: t('Stop'),
+            hint: shortcuts.hint('web.stop'),
+            run: () => void pages.step(tab.id, 'stop'),
+          },
+        ]
+      : []),
   ]
 }
 
@@ -983,6 +1017,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.reopenClosed(),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
+    ...webCommands(),
     ...paneCommands(),
     ...layoutCommands(),
     {

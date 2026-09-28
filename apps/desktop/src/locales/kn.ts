@@ -1291,6 +1291,7 @@ export const kn: Dictionary = {
   'Add to {name}': '{name} ಗೆ ಸೇರಿಸು',
   // Web tabs
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
   'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',

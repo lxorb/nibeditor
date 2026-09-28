@@ -1345,6 +1345,7 @@ export const uk: Dictionary = {
   'Add to {name}': 'Додати до {name}',
   // Web tabs
   Reload: 'Оновити',
+  'Hard reload': 'Жорстке перезавантаження',
   'Clip this page': 'Зберегти цю сторінку',
   'Clip the link': 'Зберегти посилання',
   'Open in the browser': 'Відкрити в браузері',

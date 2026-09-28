@@ -1267,6 +1267,7 @@ export const my: Dictionary = {
   'Add to {name}': '{name} သို့ထည့်ပါ',
   // Web tabs
   Reload: 'ပြန်ဖွင့်ပါ',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
   'Clip the link': 'လင့်သိမ်းပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',

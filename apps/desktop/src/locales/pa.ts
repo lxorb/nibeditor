@@ -1288,6 +1288,7 @@ export const pa: Dictionary = {
   'Add to {name}': '{name} ਵਿੱਚ ਜੋੜੋ',
   // Web tabs
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
   'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',

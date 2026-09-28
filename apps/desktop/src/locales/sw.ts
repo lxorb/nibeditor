@@ -1299,6 +1299,7 @@ export const sw: Dictionary = {
   'Add to {name}': 'Ongeza kwenye {name}',
   // Web tabs
   Reload: 'Pakia tena',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Hifadhi ukurasa huu',
   'Clip the link': 'Hifadhi kiungo',
   'Open in the browser': 'Fungua kwenye kivinjari',

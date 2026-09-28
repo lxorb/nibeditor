@@ -1347,6 +1347,7 @@ export const pl: Dictionary = {
   'Add to {name}': 'Dodaj do {name}',
   // Web tabs
   Reload: 'Odśwież',
+  'Hard reload': 'Twarde przeładowanie',
   'Clip this page': 'Zapisz tę stronę',
   'Clip the link': 'Zapisz odnośnik',
   'Open in the browser': 'Otwórz w przeglądarce',

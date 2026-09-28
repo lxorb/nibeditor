@@ -1285,6 +1285,7 @@ export const te: Dictionary = {
   'Add to {name}': '{name} కు చేర్చు',
   // Web tabs
   Reload: 'మళ్ళీ లోడ్ చేయి',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
   'Clip the link': 'లింక్ ఒడిసిపట్టు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',

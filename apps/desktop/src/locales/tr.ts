@@ -1283,6 +1283,7 @@ export const tr: Dictionary = {
   'Add to {name}': '{name} içine ekle',
   // Web tabs
   Reload: 'Yeniden yükle',
+  'Hard reload': 'Sert yeniden yükleme',
   'Clip this page': 'Bu sayfayı sakla',
   'Clip the link': 'Bağlantıyı sakla',
   'Open in the browser': 'Tarayıcıda aç',

@@ -1327,6 +1327,7 @@ export const fr: Dictionary = {
   'Add to {name}': 'Ajouter à {name}',
   // Web tabs
   Reload: 'Recharger',
+  'Hard reload': 'Actualisation forcée',
   'Clip this page': 'Enregistrer cette page',
   'Clip the link': 'Enregistrer le lien',
   'Open in the browser': 'Ouvrir dans le navigateur',
