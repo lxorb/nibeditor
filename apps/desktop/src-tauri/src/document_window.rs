@@ -100,10 +100,27 @@ fn set_document_state(handle: *mut std::ffi::c_void, edited: bool, path: &str) {
 /// drawn, which is not something this crate can say of Windows from here.
 #[cfg(target_os = "macos")]
 pub fn remembered_frame() -> tauri::plugin::TauriPlugin<crate::Engine> {
-    use tauri_plugin_window_state::{Builder, StateFlags};
-
-    Builder::new()
-        .with_state_flags(StateFlags::SIZE | StateFlags::POSITION | StateFlags::MAXIMIZED)
+    tauri_plugin_window_state::Builder::new()
+        .with_state_flags(REMEMBERED)
         .with_filter(|label| label == "main")
         .build()
+}
+
+/// What is remembered of the main window: its size, its place and whether it was
+/// maximised.
+#[cfg(target_os = "macos")]
+const REMEMBERED: tauri_plugin_window_state::StateFlags =
+    tauri_plugin_window_state::StateFlags::SIZE
+        .union(tauri_plugin_window_state::StateFlags::POSITION)
+        .union(tauri_plugin_window_state::StateFlags::MAXIMIZED);
+
+/// Writes down where the main window is, now, while it still exists. A quit takes the
+/// windows down without the close request the plugin reads a window's frame on, so it
+/// kept whatever the last resize it heard had said: a step short of where a drag
+/// ended, which the next launch opened a few points larger, or the size the window
+/// was built at when nothing it heard was a drag.
+#[cfg(target_os = "macos")]
+pub fn remember_frame(app: &tauri::AppHandle) {
+    use tauri_plugin_window_state::AppHandleExt as _;
+    let _ = app.save_window_state(REMEMBERED);
 }

@@ -105,6 +105,10 @@ pub fn quit(app: &AppHandle) {
     let quitting = state(app);
     quitting.set(ASKING);
 
+    // Before any window is asked, and so before any has gone.
+    #[cfg(target_os = "macos")]
+    crate::document_window::remember_frame(app);
+
     let windows = launch::document_windows(app);
     if windows.is_empty() {
         leave(app);
