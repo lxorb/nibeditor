@@ -429,7 +429,7 @@ function holds(tail: string): boolean {
  *  `lib/commands.ts` for the rows of the `/` menu and nothing else, which held the
  *  whole list in front of the first paint, and the export offer, printing, a picture
  *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
- *  over at the launch's last turn now; see `warmDoors`. Measured MEASURED. Dictation
+ *  over at the launch's last turn now; see `warmDoors`. Measured 3,282,630. Dictation
  *  went from the list of doors below with it: it is behind the command list's. */
 const BUDGET = 3_300_000
 const MOST_FILES = 386
