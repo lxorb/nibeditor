@@ -27,8 +27,10 @@ const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
 /** The sentences one plist holds, by key. */
 function sentences(plist: string): Map<string, string> {
   const found = new Map<string, string>()
-  for (const one of plist.matchAll(/<key>(\w+)<\/key>\s*<string>([^<]*)<\/string>/g)) {
-    found.set(one[1] as string, one[2] as string)
+  for (const [, key = '', words = ''] of plist.matchAll(
+    /<key>(\w+)<\/key>\s*<string>([^<]*)<\/string>/g,
+  )) {
+    found.set(key, words)
   }
 
   return found
@@ -46,7 +48,7 @@ function sources(dir: string, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
     if (entry.isDirectory()) sources(path, found)
-    else if (/\.(ts|svelte)$/.test(entry.name) && !/\.test\.ts$/.test(entry.name)) {
+    else if (/\.(ts|svelte)$/.test(entry.name) && !entry.name.endsWith('.test.ts')) {
       found.push(path)
     }
   }
