@@ -19,6 +19,8 @@ interface Entry {
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
 const notes = new Map<string, string>()
+/** Notes that are there and will not read: another encoding, or a lock. */
+const unreadable = new Set<string>()
 let deviceTrash: Entry[] = []
 
 /** The one entry a test has just made. Reaching for it by index everywhere
@@ -40,6 +42,7 @@ vi.mock('./tauri', async (importOriginal) => ({
     const path = text(args?.path)
     switch (command) {
       case 'read_note':
+        if (unreadable.has(path)) throw new Error(`stream did not contain valid UTF-8: ${path}`)
         return notes.get(path) ?? ''
       case 'snapshot_note':
       case 'write_note':
@@ -157,6 +160,7 @@ const { trash } = await import('./trash.svelte')
 beforeEach(() => {
   notes.clear()
   notes.set('/space/Idea.md', '# Idea')
+  unreadable.clear()
   deviceTrash = []
   calls.length = 0
   apiCalls.length = 0
@@ -280,6 +284,21 @@ describe('signed in', () => {
 
     expect(calls).toContain('delete_note')
     expect(calls).not.toContain('trash_item')
+  })
+
+  /** Nothing could be read, so no snapshot was taken, and the account never had
+   *  the words either: deleting the file was the end of the only copy. */
+  test('a note that would not read goes to the device trash instead', async () => {
+    unreadable.add('/space/Idea.md')
+
+    await workspace.remove('/space/Idea.md', false)
+
+    expect(calls).not.toContain('delete_note')
+    expect(onlyTrashed()).toMatchObject({ kind: 'note', from: '/space/Idea.md' })
+
+    // And the undo puts it back from there.
+    await workspace.undoFileAction()
+    expect(deviceTrash).toEqual([])
   })
 
   test('the list is the account’s, with any device leftovers', async () => {

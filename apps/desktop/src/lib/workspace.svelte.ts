@@ -3331,16 +3331,24 @@ class Workspace {
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash, and it is recorded once the trash has it.
     const words = !isFolder && !isPdfTarget(path)
+    // Null where the note is there and would not read: another encoding, a lock.
+    let content: string | null = null
     if (words) {
-      const content = await invoke<string>('read_note', { path }).catch(() => '')
+      content = await invoke<string>('read_note', { path }).catch(() => null)
       if (content) await invoke('snapshot_note', { path, content }).catch(() => undefined)
-      this.undone.record({ kind: 'delete', path, content })
+      this.undone.record({ kind: 'delete', path, content: content ?? '' })
     }
+
+    // A note that would not read has no snapshot to come back from, and it never
+    // reached the account either, since a pass cannot send what it cannot read. So
+    // it goes to this device's trash whoever is signed in: deleting the file
+    // outright was the end of the only copy there was.
+    const unread = words && content === null
 
     try {
       // Signed in, the account keeps a copy for 14 days; signed out, this
       // device does, in its own trash folder (see trash.svelte.ts).
-      if (account.signedIn) {
+      if (account.signedIn && !unread) {
         await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
       } else {
         const entry = await invoke<{ id: string }>('trash_item', {
