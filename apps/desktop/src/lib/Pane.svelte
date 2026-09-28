@@ -19,7 +19,6 @@
     findPrevious as findPreviousMatch,
     NO_FIND,
     NO_TALLY,
-    type NoteJump,
     replaceEverywhere,
     replaceHere,
     setDeck,
@@ -59,7 +58,8 @@
   import { shortcuts } from './shortcuts.svelte'
   import { storeImage } from './assets'
   import Tabs from './Tabs.svelte'
-  import { followHref } from './open-link'
+  import { followHref, followNote } from './open-link'
+  import type { OpenHow } from './new-tab'
   import { usage } from './usage.svelte'
   import { viewport } from './viewport.svelte'
   import { views } from './views.svelte'
@@ -454,7 +454,7 @@
         graph={picture}
         whole
         current={workspace.relativeNote}
-        onopen={(path: string, keep: boolean) => workspace.openRelative(path, keep)}
+        onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
         onescape={() => void workspace.closeAsking(tab.id)}
       />
     {/await}
@@ -549,7 +549,7 @@
               resolveimage={resolveImage}
               openlink={followHref}
               notes={(which: Tab) => links.index(which.path)}
-              opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+              opennote={followNote}
               nameblock={(path: string, line: number) => nameBlock(path, line)}
               onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
               onselection={(current: EditorView) => {
@@ -582,7 +582,7 @@
         resolveimage={resolveImage}
         openlink={followHref}
         notes={(one: Tab) => links.index(one.path)}
-        opennote={(jump: NoteJump) => void workspace.followLink(jump)}
+        opennote={followNote}
         nameblock={(path: string, line: number) => nameBlock(path, line)}
         onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
         onselection={(current: EditorView) => {

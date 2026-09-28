@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { askOf, type LinkAsk, type LinkPlace, opensLink, placeFor, webHref } from './open-link'
+import { type Press, tabAsk } from './new-tab'
+import { type LinkPlace, opensLink, placeFor, webHref } from './open-link'
 
 /** Which press on a link goes where.
  *
@@ -13,10 +14,12 @@ import { askOf, type LinkAsk, type LinkPlace, opensLink, placeFor, webHref } fro
  *  about: a desktop that has somewhere to put a page, or a phone that does not. */
 
 /** Nothing held down, the main button: what a reader does without thinking. */
-const PLAIN: LinkAsk = { middle: false, modifier: false, shift: false }
+const PLAIN: Press = { button: 0, ctrlKey: false, metaKey: false, shiftKey: false }
 
-function place(href: string, ask: Partial<LinkAsk> = {}, holdsPages = true): LinkPlace {
-  return placeFor(href, { ...PLAIN, ...ask }, holdsPages)
+/** A press read the way `followHref` reads it - Shift on its own means something on
+ *  a link - and then placed. */
+function place(href: string, press: Partial<Press> = {}, holdsPages = true): LinkPlace {
+  return placeFor(href, tabAsk({ ...PLAIN, ...press }, true), holdsPages)
 }
 
 describe('where a pressed link goes', () => {
@@ -25,20 +28,20 @@ describe('where a pressed link goes', () => {
   })
 
   test('the modifier opens it behind, the way Ctrl+click does in every browser', () => {
-    expect(place('https://svelte.dev/docs', { modifier: true })).toBe('behind')
+    expect(place('https://svelte.dev/docs', { ctrlKey: true })).toBe('behind')
   })
 
   test('the modifier and Shift open it in front, the way Ctrl+Shift+click does', () => {
-    expect(place('https://svelte.dev/docs', { modifier: true, shift: true })).toBe('here')
+    expect(place('https://svelte.dev/docs', { ctrlKey: true, shiftKey: true })).toBe('here')
   })
 
-  test('the middle button opens it behind, whatever else is held', () => {
-    expect(place('https://svelte.dev/docs', { middle: true })).toBe('behind')
-    expect(place('https://svelte.dev/docs', { middle: true, shift: true })).toBe('behind')
+  test('the middle button opens it behind, and in front with Shift, as in Chrome', () => {
+    expect(place('https://svelte.dev/docs', { button: 1 })).toBe('behind')
+    expect(place('https://svelte.dev/docs', { button: 1, shiftKey: true })).toBe('here')
   })
 
-  test('Shift on its own leaves for the system browser, which is the way out', () => {
-    expect(place('https://svelte.dev/docs', { shift: true })).toBe('system')
+  test('Shift on its own opens it in front, since a nib window holds no one page', () => {
+    expect(place('https://svelte.dev/docs', { shiftKey: true })).toBe('here')
   })
 
   test('a bare host address is a page like any other', () => {
@@ -50,8 +53,8 @@ describe('where a pressed link goes', () => {
 describe('what never becomes a tab', () => {
   test('an email address is the system\u2019s, whatever is held down', () => {
     expect(place('mailto:emil@example.com')).toBe('system')
-    expect(place('mailto:emil@example.com', { modifier: true })).toBe('system')
-    expect(place('mailto:emil@example.com', { middle: true })).toBe('system')
+    expect(place('mailto:emil@example.com', { ctrlKey: true })).toBe('system')
+    expect(place('mailto:emil@example.com', { button: 1 })).toBe('system')
   })
 
   test('a telephone number is the system\u2019s too', () => {
@@ -74,7 +77,7 @@ describe('what never becomes a tab', () => {
 
   test('a build with nowhere to put a page hands every page to the system', () => {
     expect(place('https://svelte.dev/docs', {}, false)).toBe('system')
-    expect(place('https://svelte.dev/docs', { modifier: true }, false)).toBe('system')
+    expect(place('https://svelte.dev/docs', { ctrlKey: true }, false)).toBe('system')
     expect(place('file:///C:/notes/Idea.md', {}, false)).toBe('nowhere')
   })
 })
@@ -100,21 +103,5 @@ describe('reading the press', () => {
     expect(opensLink({ button: 0, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 1, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 2, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(false)
-  })
-
-  test('the middle button is read off the press and not off a key', () => {
-    expect(askOf({ button: 1, ctrlKey: false, metaKey: false, shiftKey: false }).middle).toBe(true)
-    expect(askOf({ button: 0, ctrlKey: false, metaKey: false, shiftKey: false }).middle).toBe(false)
-  })
-
-  test('Ctrl is the modifier off a Mac, and Cmd is not', () => {
-    expect(askOf({ button: 0, ctrlKey: true, metaKey: false, shiftKey: false }).modifier).toBe(true)
-    expect(askOf({ button: 0, ctrlKey: false, metaKey: true, shiftKey: false }).modifier).toBe(
-      false,
-    )
-  })
-
-  test('Shift is carried through as itself', () => {
-    expect(askOf({ button: 0, ctrlKey: false, metaKey: false, shiftKey: true }).shift).toBe(true)
   })
 })

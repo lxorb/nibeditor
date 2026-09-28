@@ -3829,3 +3829,146 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.canRenameFromTab(tab)).toBe(false)
   })
 })
+
+/** A tab asked for with Ctrl+click, the middle button or Ctrl+Enter: beside the tab
+ *  in front, never the preview, and in front of the reader only when Shift said so.
+ *  The press is read in new-tab.ts; this is what every open does with the answer. */
+describe('a tab asked for with a modifier', () => {
+  const strip = () => workspace.tabs.map((one) => one.path ?? one.address)
+  const jump = (path: string) => ({ path, target: path, heading: null, block: null, page: null })
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+  })
+
+  test('behind opens it beside the tab in front, and leaves that tab in front', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+    expect(workspace.previewTabId).toBeNull()
+  })
+
+  test('a run of them from one tab keeps the order they were asked for in', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+    await workspace.openEntry('/space/plan.canvas', { activate: false, beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/plan.canvas', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+  })
+
+  test('in front opens it beside the tab and goes there', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    await workspace.openEntry('/space/b.md', { beside: true })
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
+    expect(workspace.active?.path).toBe('/space/b.md')
+  })
+
+  test('a tab left behind closes no blank note, which may be the one being read', async () => {
+    workspace.openBlank()
+    await workspace.openEntry('/space/b.md', { activate: false, beside: true })
+
+    expect(workspace.tabs).toHaveLength(2)
+    expect(workspace.active?.path).toBeNull()
+  })
+
+  test('a link to a note followed with the modifier opens it behind', async () => {
+    await workspace.open('/space/a.md')
+    const reading = workspace.active
+
+    await workspace.followLink(jump('b.md'), 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/b.md'])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a paper followed the same way opens behind too', async () => {
+    await workspace.open('/space/a.md')
+    const reading = workspace.active
+
+    await workspace.followLink({ ...jump('paper.pdf'), page: 2 }, 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/paper.pdf'])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a page a link opened behind lands beside the tab it was pressed in', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    workspace.openPage('https://example.com/', 'behind')
+
+    expect(strip()).toEqual(['/space/a.md', 'https://example.com/', '/space/c.md'])
+    expect(workspace.activeTabId).toBe(reading.id)
+  })
+
+  test('a page a page asked for lands beside that page, even one not in front', async () => {
+    await workspace.open('/space/a.md')
+    const asking = workspace.openPage('https://example.com/')
+    await workspace.open('/space/c.md')
+    const reading = workspace.active
+
+    workspace.openPage('https://example.org/', 'behind', asking ?? undefined)
+
+    expect(strip()).toEqual([
+      '/space/a.md',
+      'https://example.com/',
+      'https://example.org/',
+      '/space/c.md',
+    ])
+    expect(workspace.active).toBe(reading)
+  })
+
+  test('a plain page still goes to the end and in front, as it did', async () => {
+    await workspace.open('/space/a.md')
+    await workspace.open('/space/c.md')
+    const reading = workspace.tabs.find((one) => one.path === '/space/a.md')
+    if (!reading) throw new Error('a.md did not open')
+    workspace.activate(reading.id)
+
+    workspace.openPage('https://example.com/')
+
+    expect(strip()).toEqual(['/space/a.md', '/space/c.md', 'https://example.com/'])
+    expect(workspace.active?.address).toBe('https://example.com/')
+  })
+
+  test('the back arrow with the middle button opens the step behind', async () => {
+    const looking = await preview('/space/a.md')
+    await preview('/space/b.md')
+    workspace.keep(looking.id)
+
+    workspace.goBack(looking.id, 'behind')
+    await vi.waitFor(() => expect(workspace.tabs).toHaveLength(2))
+
+    expect(strip()).toEqual(['/space/b.md', '/space/a.md'])
+    expect(workspace.active?.id).toBe(looking.id)
+    expect(looking.path).toBe('/space/b.md')
+  })
+})

@@ -28,8 +28,8 @@ import {
   linkWriter,
   type NoteIndex,
   noteIndexExtension,
-  type NoteJump,
   noteOpener,
+  type NoteOpener,
 } from './wikilink/notes'
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
@@ -88,7 +88,7 @@ export interface StateOptions {
    *  through `setNoteIndex`; this is only what the editor opens with. */
   notes?: NoteIndex
   /** Follows a link between notes: opens it, or makes it when there is none. */
-  openNote?: (jump: NoteJump) => void
+  openNote?: NoteOpener
   /** Names a block of another note, so a link can point at the block. */
   nameBlock?: (path: string, line: number) => Promise<string | null>
   /** Spells a link to another note, so what the `[[` popup writes is what the

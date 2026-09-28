@@ -12,6 +12,7 @@
   import { shownName } from './note-name'
   import { SEARCH_MARK } from './panel-marks'
   import { roving } from './roving'
+  import { howFor, middleOpens, tabAsk } from './new-tab'
   import { search } from './search.svelte'
   import { OPERATORS } from './search/query'
   import { warm } from './search/warm.svelte'
@@ -237,16 +238,22 @@
     })
   }
 
-  async function openHit(hit: Hit) {
+  /** A hit pressed: its note opens at the line - in a tab of its own, beside this
+   *  one, when the press asked for one (new-tab.ts). A note left behind is not
+   *  scrolled to. */
+  async function openHit(hit: Hit, press: MouseEvent) {
+    const ask = tabAsk(press)
+    const how = howFor(ask)
+
     // A row with a page is a paper: it opens where the words are rather than at a
     // line, which a paper has not got. See pdf/papers.ts.
     if (hit.page !== undefined) {
-      workspace.openPdf(hit.path, hit.page)
+      workspace.openPdf(hit.path, hit.page, how)
       return
     }
 
-    await workspace.open(hit.path)
-    ongoto?.(hit.line)
+    await workspace.open(hit.path, how)
+    if (ask !== 'behind') ongoto?.(hit.line)
   }
 </script>
 
@@ -395,7 +402,11 @@
               </button>
             {/if}
 
-            <button class="nib-row is-short hit" onclick={() => void openHit(hit)}>
+            <button
+              class="nib-row is-short hit"
+              onclick={(event) => void openHit(hit, event)}
+              use:middleOpens={(event) => void openHit(hit, event)}
+            >
               <!-- A line that is a task shows its box, and the box works: a list
                    of everything still to do is only a tool if it can be done
                    from. The words after the marker, because the marker is what

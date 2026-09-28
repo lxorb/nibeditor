@@ -20,6 +20,7 @@
   import { fullscreen } from '../fullscreen.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
+  import { tabAsk } from '../new-tab'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
@@ -405,7 +406,11 @@
       {focused}
       {book}
       reads={isDesktop}
-      onstep={(step: Step) => void pages.step(tab.id, step)}
+      onstep={(step: Step, press: MouseEvent) => {
+        if (step === 'back') workspace.goBack(tab.id, tabAsk(press))
+        else if (step === 'forward') workspace.goForward(tab.id, tabAsk(press))
+        else void pages.step(tab.id, step)
+      }}
       onaddress={(typed: string) => {
         const url = webAddress(typed)
         if (!url) return

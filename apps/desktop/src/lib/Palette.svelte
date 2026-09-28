@@ -10,6 +10,7 @@
   import { t } from './i18n.svelte'
   import Icon from './Icon.svelte'
   import { rank, recentFirst } from './fuzzy'
+  import { howFor, middleOpens, tabAsk } from './new-tab'
   import { shownName } from './note-name'
   import { scanHeadings } from './outline'
   import { overlays } from './overlays'
@@ -165,7 +166,10 @@
       row.command.run()
     } else if (row.kind === 'note') {
       const path = row.note.entry.path
-      void (press && asksAside(press) ? workspace.openAside(path) : workspace.openEntry(path))
+      // Ctrl+Enter, a Ctrl+click or the middle button: a tab of its own, behind the
+      // one in front or, with Shift, in front of it, the way a link opens; see new-tab.ts.
+      if (press && asksAside(press)) void workspace.openAside(path)
+      else void workspace.openEntry(path, press ? howFor(tabAsk(press)) : {})
     } else if (row.kind === 'make') make(row.make)
     else ongoto?.(row.line)
 
@@ -318,6 +322,7 @@
               style:--depth={row.kind === 'place' ? row.depth : 0}
               onmouseenter={() => (cursor = index)}
               onclick={(event) => choose(row, event)}
+              use:middleOpens={(event) => row.kind === 'note' && choose(row, event)}
             >
               <!-- The same tick the menu rows carry, in a slot every command row
                    keeps whether or not there is one in it, so the words line up.
