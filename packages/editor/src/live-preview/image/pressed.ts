@@ -36,7 +36,8 @@ export function pictureAt(state: EditorState, pos: number): Picture | null {
 
 /** The picture under an element of the editor, or null where the element is not one. */
 export function pressedPicture(view: EditorView, target: EventTarget | null): Picture | null {
-  const drawn = target instanceof Element ? target.closest('.nib-image-frame, .nib-embed-image') : null
+  const drawn =
+    target instanceof Element ? target.closest('.nib-image-frame, .nib-embed-image') : null
   if (!drawn || !view.contentDOM.contains(drawn)) return null
 
   return pictureAt(view.state, view.posAtDOM(drawn))

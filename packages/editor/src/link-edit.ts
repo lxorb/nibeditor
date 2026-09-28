@@ -58,8 +58,7 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
   // An address written out is its own pointer.
-  const pointer =
-    node.name === 'URL' ? node : (node.getChild('URL') ?? node.getChild('LinkLabel'))
+  const pointer = node.name === 'URL' ? node : (node.getChild('URL') ?? node.getChild('LinkLabel'))
   // `[words]()` points nowhere yet, and editing it is typing between the brackets.
   const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
   const target = pointer
@@ -108,11 +107,12 @@ export function editLink(pos: number): StateCommand {
 export function removeLink(pos: number): StateCommand {
   return ({ state, dispatch }) => {
     const parts = state.readOnly ? null : linkPartsAt(state, pos)
-    if (!parts || parts.words === null) return false
+    const words = parts?.words ?? null
+    if (!parts || words === null) return false
 
     dispatch(
       state.update({
-        changes: { from: parts.from, to: parts.to, insert: parts.words },
+        changes: { from: parts.from, to: parts.to, insert: words },
         userEvent: 'delete.link',
       }),
     )

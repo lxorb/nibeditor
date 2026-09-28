@@ -60,7 +60,10 @@ describe('deleting it', () => {
   })
 
   test('does nothing once the note has moved under it', () => {
-    expect(run('a ![](cat.png) b', false, 'xyz')).toEqual({ ran: false, doc: 'xyza ![](cat.png) b' })
+    expect(run('a ![](cat.png) b', false, 'xyz')).toEqual({
+      ran: false,
+      doc: 'xyza ![](cat.png) b',
+    })
   })
 
   test('nor in a note nobody can write in', () => {
