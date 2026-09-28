@@ -99,7 +99,7 @@ import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
 import { readWebFile, writeShortcut } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
-import { besideAt, howFor, type OpenHow, type TabAsk } from './new-tab'
+import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
 export interface Entry {
   name: string
@@ -3453,10 +3453,15 @@ class Workspace {
    *  and not which line they are on - and the note on disk is the authority.
    *
    *  `ask` is what the press held down: with a modifier the file opens in a tab
-   *  beside this one, behind it or in front; see new-tab.ts. */
-  async followLink(jump: NoteJump, ask: TabAsk = 'plain') {
+   *  beside this one, behind it or in front, and with Alt as well in a pane to the
+   *  right; see new-tab.ts. */
+  async followLink(jump: NoteJump, ask: LinkAsk = 'plain') {
     const root = this.activeSpace?.root
     if (!root) return
+    if (ask === 'aside') {
+      await this.followAside(jump, root)
+      return
+    }
     const how = howFor(ask)
 
     // A PDF, a canvas and a page note are files: a link to one the space does not
@@ -3492,6 +3497,27 @@ class Workspace {
     }
 
     await this.open(path, how)
+    this.landOn(path, jump)
+  }
+
+  /** A link followed into a pane to the right, as Ctrl+Alt+click does in Obsidian and
+   *  the link's own menu offers: the same note, made where the link would make it,
+   *  and the same heading, through `openAside`. A PDF opens there at its first page,
+   *  which is where a file carried into a pane opens. */
+  private async followAside(jump: NoteJump, root: string) {
+    const path = jump.path
+      ? insideSpace(root, jump.path)
+      : isTabFile(jump.target)
+        ? null
+        : await this.makeLinked(jump.target, root)
+    if (!path) return
+
+    await this.openAside(path)
+    this.landOn(path, jump)
+  }
+
+  /** The heading or the block a followed link named, gone to in the note it opened. */
+  private landOn(path: string, jump: NoteJump) {
     if (jump.heading === null && jump.block === null) return
 
     const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''

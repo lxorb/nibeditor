@@ -8,6 +8,7 @@ import {
   duplicateBlocks,
   type EditorView,
   indentBlocks,
+  type NoteJump,
   insertCodeFence,
   insertHorizontalRule,
   insertLink,
@@ -29,6 +30,7 @@ import {
 import {
   deletePicture,
   editLink,
+  jumpAt,
   linkPartsAt,
   pictureUrl,
   pressedPicture,
@@ -533,12 +535,12 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
   if (!link) return []
 
   const href = link.getAttribute('data-href')
-  const parts =
-    view && !view.state.readOnly && view.contentDOM.contains(link)
-      ? linkPartsAt(view.state, view.posAtDOM(link))
-      : null
+  const at = view?.contentDOM.contains(link) ? view.posAtDOM(link) : null
+  const parts = view && at !== null && !view.state.readOnly ? linkPartsAt(view.state, at) : null
+  const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
 
   return [
+    ...(jump ? noteEntries(jump) : []),
     ...(href && webHref(href) !== null
       ? [{ label: t('Open in the browser'), run: () => void openExternal(href) }]
       : []),
@@ -553,6 +555,35 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
       : []),
     DIVIDER,
   ]
+}
+
+/** Where else a link to a note can take it, as Obsidian's link menu offers: a tab of
+ *  its own behind this one, which is the middle button's answer, and a pane to the
+ *  right, which is Ctrl+Alt+click's. Not on a phone, which has no pane to put beside
+ *  another. And the link itself, written the way the space writes links and from
+ *  nowhere in particular, so it reads the same wherever it is pasted; see `linkTo`. */
+function noteEntries(jump: NoteJump): MenuEntry[] {
+  return [
+    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind') },
+    ...(viewport.touch
+      ? []
+      : [{ label: t('Open to the side'), run: () => void workspace.followLink(jump, 'aside') }]),
+    { label: t('Copy link'), run: () => void copyText(linkOf(jump)) },
+  ]
+}
+
+/** The link a followed jump would take, written afresh. A note the space has not got
+ *  is named as the link names it, since there is no path to spell. */
+function linkOf(jump: NoteJump): string {
+  const fragment =
+    jump.block !== null
+      ? `^${jump.block}`
+      : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
+
+  return linkTo(jump.path ? noteName(jump.path) : jump.target, null, {
+    path: jump.path,
+    fragment,
+  })
 }
 
 /** The rows a right click on a picture offers, which are the ones Chrome, Typora and
