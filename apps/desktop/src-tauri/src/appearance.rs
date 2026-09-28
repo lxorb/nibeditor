@@ -71,6 +71,20 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
         let changed = window.set_decorations(system);
 
         changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
+
+        #[cfg(target_os = "macos")]
+        {
+            crate::lights::refresh(&window);
+
+            // Switching the titlebar lays the window's content out again, and AppKit
+            // makes the window itself the first responder while it does: the page
+            // lost the keyboard, and Escape, a shortcut or a letter went nowhere
+            // until somebody clicked. The frame is switched from the page's own
+            // settings, so the page is what gets it back.
+            if let Some(page) = app.get_webview(window.label()) {
+                let _ = page.set_focus();
+            }
+        }
     }
 
     Ok(())
