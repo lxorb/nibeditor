@@ -521,6 +521,13 @@ export class Saving {
         return
       }
 
+      // Renamed while the snapshot was in the air: the file is under its new name
+      // now, and the words follow it there. Written to the name read at the start,
+      // they put the old file back beside the renamed one, and the document went
+      // back to the old name with them - the rename looked undone, and the new name
+      // held the words from before the last pause.
+      if (note.path !== null) path = note.path
+
       await invoke('write_note', { path, content })
     } catch (error) {
       this.clearSaveState(note.key)

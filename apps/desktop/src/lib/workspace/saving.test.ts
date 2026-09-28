@@ -14,6 +14,9 @@ const sent: { command: string; path: string; content: string }[] = []
 /** A write held open, so a test can move the document on mid-flight. */
 let holding: Promise<void> | null = null
 
+/** Which command `holding` holds open: the write itself, or the snapshot before it. */
+let held = 'write_note'
+
 /** Paths the disk refuses a write to, and how many more times it will. */
 const refusing = new Map<string, number>()
 
@@ -24,7 +27,7 @@ vi.mock('../tauri', () => ({
       path: typeof args?.path === 'string' ? args.path : '',
       content: typeof args?.content === 'string' ? args.content : '',
     })
-    if (command === 'write_note' && holding) await holding
+    if (command === held && holding) await holding
 
     const path = typeof args?.path === 'string' ? args.path : ''
     const left = refusing.get(path) ?? 0
@@ -156,6 +159,7 @@ const nameOfPath = (path: string) => path.slice(path.lastIndexOf('/') + 1)
 beforeEach(() => {
   sent.length = 0
   holding = null
+  held = 'write_note'
   refusing.clear()
   vi.useRealTimers()
 })
@@ -383,5 +387,34 @@ describe('a write the disk refuses', () => {
 
     expect(written(B)).toEqual([{ command: 'write_note', path: B, content: '# b typed' }])
     expect(other.dirty).toBe(false)
+  })
+})
+
+describe('a note renamed while its write was in the air', () => {
+  /** A write is two round trips, the snapshot and then the file, and a rename can
+   *  land between them. The words used to go to the name read at the start: the
+   *  old file came back beside the renamed one, and the document went back to the
+   *  old name with them. */
+  test('is written under its new name, and keeps it', async () => {
+    const { saving, note, tab } = open(`${SPACE}/a.md`)
+    held = 'snapshot_note'
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    const writing = saving.save(tab)
+    // What `rename` in workspace.svelte.ts does to an open note once the file moved.
+    note.path = `${SPACE}/b.md`
+    letGo()
+    await writing
+
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
+      `${SPACE}/b.md`,
+    ])
+    expect(note.path).toBe(`${SPACE}/b.md`)
   })
 })
