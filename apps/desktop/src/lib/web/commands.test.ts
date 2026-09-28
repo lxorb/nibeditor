@@ -181,6 +181,53 @@ describe('renaming', () => {
   })
 })
 
+describe('copying', () => {
+  test('takes everything under a folder, both stores, and leaves the original', async () => {
+    await write('/Notes/Trip/Trip.md', '# Trip')
+    disk.assets.set('/Notes/Trip/map.png', {
+      path: '/Notes/Trip/map.png',
+      type: 'image/png',
+      data: 'AQID',
+      modified: 1,
+    })
+
+    await webInvoke('copy_path', { from: '/Notes/Trip', to: '/Notes/Trip copy' })
+
+    expect(await read('/Notes/Trip copy/Trip.md')).toBe('# Trip')
+    expect(await read('/Notes/Trip/Trip.md')).toBe('# Trip')
+    expect(disk.assets.get('/Notes/Trip copy/map.png')?.data).toBe('AQID')
+  })
+
+  test("brings a PDF's highlights along", async () => {
+    disk.assets.set('/Notes/paper.pdf', {
+      path: '/Notes/paper.pdf',
+      type: '',
+      data: '',
+      modified: 1,
+    })
+    await webInvoke('write_highlights', { path: '/Notes/paper.pdf', content: '{"version":1}' })
+
+    await webInvoke('copy_path', { from: '/Notes/paper.pdf', to: '/Notes/paper copy.pdf' })
+
+    expect(disk.assets.has('/Notes/paper copy.pdf')).toBe(true)
+    expect(disk.files.get('/Notes/paper copy.pdf.highlights.json')?.content).toBe('{"version":1}')
+  })
+
+  test('never writes over anything, and never into itself', async () => {
+    await write('/Notes/a.md', 'a')
+    await write('/Notes/b.md', 'b')
+    await write('/Notes/Work/c.md', 'c')
+
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/a.md', to: '/Notes/b.md' }),
+    ).rejects.toThrow()
+    await expect(
+      webInvoke('copy_path', { from: '/Notes/Work', to: '/Notes/Work/Work' }),
+    ).rejects.toThrow()
+    expect(await read('/Notes/b.md')).toBe('b')
+  })
+})
+
 describe('spaces', () => {
   test('are the folders under the root, in order, dot folders left out', async () => {
     await write('/Work/a.md')

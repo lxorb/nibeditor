@@ -127,6 +127,7 @@ macro_rules! commands {
             notes::write_bytes,
             notes::delete_note,
             notes::rename_note,
+            notes::copy_path,
             notes::create_folder,
             notes::delete_folder,
             notes::remove_empty_folder,

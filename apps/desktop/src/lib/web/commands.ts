@@ -174,6 +174,36 @@ async function renameNote(from: string, to: string) {
   )
 }
 
+/** The desktop's `copy_path`: a note, a file or a folder and everything under it,
+ *  copied, from both stores - a PDF is a row in the asset store and its highlights a
+ *  row in the note store beside it. Never over anything, and never into itself,
+ *  which is what the desktop refuses too. */
+async function copyPath(from: string, to: string) {
+  const source = normalise(from)
+  const target = normalise(to)
+
+  if (target === source || target.startsWith(`${source}/`)) {
+    throw new Error(`${source} cannot be copied into itself`)
+  }
+  if ((await occupied(target)) || (await assets.get(target))) {
+    throw new Error('something already lives there')
+  }
+
+  const under = (one: string) => one === source || one.startsWith(`${source}/`)
+  const copied = (one: string) => target + one.slice(source.length)
+  const notes = (await files.all()).filter((row) => under(row.path))
+  const pictures = (await assets.all()).filter((row) => under(row.path))
+  if (!notes.length && !pictures.length) throw new Error('nothing to copy')
+
+  for (const row of notes) {
+    await files.put({ ...row, path: copied(row.path), created: now(), modified: now() })
+  }
+  for (const row of pictures) await assets.put({ ...row, path: copied(row.path), modified: now() })
+
+  const side = isPdf(source) ? await files.get(sidecarOf(source)) : undefined
+  if (side) await files.put({ ...side, path: sidecarOf(target), created: now(), modified: now() })
+}
+
 async function removeFolder(path: string) {
   const base = normalise(path)
   const under = (one: string) => one === base || one.startsWith(`${base}/`)
@@ -628,6 +658,10 @@ export async function webInvoke<T>(
 
     case 'rename_note':
       await renameNote(args.from as string, args.to as string)
+      return undefined as T
+
+    case 'copy_path':
+      await copyPath(args.from as string, args.to as string)
       return undefined as T
 
     case 'create_folder':
