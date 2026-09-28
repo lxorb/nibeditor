@@ -606,6 +606,7 @@ mod tests {
     /// Whether this disk looks a name up the way a Mac's does: `a` found as `A`.
     /// The three tests below ask the real disk, so on one that tells case apart they
     /// have nothing to show and say nothing.
+    #[cfg(unix)]
     fn ignores_case(dir: &tempfile::TempDir) -> bool {
         let probe = dir.path().join("case-probe");
         fs::write(&probe, "").expect("the probe");
@@ -615,6 +616,7 @@ mod tests {
     }
 
     /// What is in a folder, by name as the disk spells it.
+    #[cfg(unix)]
     fn names(dir: &Path) -> Vec<String> {
         let mut names: Vec<String> = fs::read_dir(dir)
             .expect("the folder")
