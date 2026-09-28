@@ -347,10 +347,35 @@ describe('ticking the task under the caret', () => {
     expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [x] two')
   })
 
-  /** Which is what lets it share Ctrl+Enter with running a code fence. */
-  test('gives way on a line that is not a task', () => {
-    expect(took(toggleTask, 'just words|')).toBe(false)
-    expect(took(toggleTask, '- a bullet|')).toBe(false)
+  /** Obsidian's Ctrl+Enter: the first press makes the task, the next ticks it. */
+  test('makes a task of words, a bullet, a number or an empty line', () => {
+    expect(run(toggleTask, 'just words|')).toBe('- [ ] just words')
+    expect(run(toggleTask, '  - a bullet|')).toBe('  - [ ] a bullet')
+    expect(run(toggleTask, '1. a number|')).toBe('- [ ] a number')
+    expect(run(toggleTask, '|')).toBe('- [ ] ')
+    expect(runSelection(toggleTask, '|')).toEqual([6, 6])
+  })
+
+  test('ticks the task it has just made on the next press', () => {
+    const first = apply(toggleTask, 'milk', 4)
+    expect(apply(toggleTask, first.doc, first.selection[0]).doc).toBe('- [x] milk')
+  })
+
+  test('makes tasks and ticks them line by line over a selection', () => {
+    const doc = '- [ ] one\ntwo'
+    expect(apply(toggleTask, doc, 0, doc.length).doc).toBe('- [x] one\n- [ ] two')
+  })
+
+  /** Which is what lets it share Ctrl+Enter with running a code fence, and leaves the
+   *  library's line below to the lines a box cannot go on. */
+  test('gives way in code, a heading, a quote and a table', () => {
+    expect(took(toggleTask, '```\n- [ ] still code|\n```')).toBe(false)
+    expect(took(toggleTask, '```py\nprint()|\n```')).toBe(false)
+    expect(took(toggleTask, '# A heading|')).toBe(false)
+    expect(took(toggleTask, '> quoted|')).toBe(false)
+    // Offsets rather than marks, because a table is written with the caret's mark.
+    const table = '| a | b |\n| - | - |\n| 1 | 2 |'
+    expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
   })
 })
 
