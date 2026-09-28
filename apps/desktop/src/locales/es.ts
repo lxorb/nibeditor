@@ -1328,7 +1328,7 @@ export const es: Dictionary = {
   'Mute site': 'Mute site',
   'Unmute site': 'Unmute site',
   'Playing audio': 'Playing audio',
-  'Muted': 'Muted',
+  Muted: 'Muted',
   'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Grabar',

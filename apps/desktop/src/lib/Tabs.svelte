@@ -870,7 +870,11 @@
                 transition:fade={{ duration: dur(140) }}
               >
                 <path d="M2.5 5.2h2L7.6 2.8v8.4L4.5 8.8h-2z" />
-                <path d={heard.muted ? 'M9.6 5.4l3 3m0-3-3 3' : 'M9.8 5a2.9 2.9 0 0 1 0 4M11.6 3.4a5.2 5.2 0 0 1 0 7.2'} />
+                <path
+                  d={heard.muted
+                    ? 'M9.6 5.4l3 3m0-3-3 3'
+                    : 'M9.8 5a2.9 2.9 0 0 1 0 4M11.6 3.4a5.2 5.2 0 0 1 0 7.2'}
+                />
               </svg>
             {/if}
           {/if}

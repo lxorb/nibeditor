@@ -1314,7 +1314,7 @@ export const de: Dictionary = {
   'Mute site': 'Website stummschalten',
   'Unmute site': 'Stummschaltung aufheben',
   'Playing audio': 'Spielt Ton ab',
-  'Muted': 'Stumm',
+  Muted: 'Stumm',
   'Developer tools': 'Entwicklertools',
   // Recording, meetings and what a model wrote
   Record: 'Aufnehmen',

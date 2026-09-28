@@ -1307,7 +1307,7 @@ export const ml: Dictionary = {
   'Mute site': 'Mute site',
   'Unmute site': 'Unmute site',
   'Playing audio': 'Playing audio',
-  'Muted': 'Muted',
+  Muted: 'Muted',
   'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'റെക്കോർഡ് ചെയ്യുക',

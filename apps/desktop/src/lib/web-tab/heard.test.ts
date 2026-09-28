@@ -53,7 +53,11 @@ test('reads the three things a page is said to be doing, and nothing else', () =
     playing: true,
     muted: false,
   })
-  expect(readSaid({ tab: 'a', said: 'fill', on: true })).toEqual({ tab: 'a', said: 'fill', on: true })
+  expect(readSaid({ tab: 'a', said: 'fill', on: true })).toEqual({
+    tab: 'a',
+    said: 'fill',
+    on: true,
+  })
   expect(readSaid({ tab: 'a', said: 'zoom', factor: 1.5 })).toEqual({
     tab: 'a',
     said: 'zoom',
