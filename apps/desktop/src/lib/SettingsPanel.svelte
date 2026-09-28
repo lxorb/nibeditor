@@ -767,7 +767,7 @@
       <p class="hint caption">{t('What the others in this space see.')}</p>
 
       <button
-        class="primary"
+        class="nib-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -778,7 +778,7 @@
     {:else}
       <p class="lead">{t('Not signed in')}</p>
       <button
-        class="primary"
+        class="nib-button"
         onclick={() => {
           settings.open = false
           account.open = true
@@ -1696,31 +1696,10 @@
     color: var(--danger);
   }
 
-  button.primary {
+  /* Signing in is `.nib-button` in the themes package, the same button the
+     sign-in panel it opens is pressed with; here it keeps to its own width. */
+  .nib-button {
     align-self: flex-start;
-    padding: 9px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out),
-      transform var(--dur-fast) var(--ease-spring);
-  }
-
-  button.primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  @media (hover: hover) {
-    button.primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
   }
 
   .row {
@@ -2179,12 +2158,8 @@
     font-size: var(--touch-text);
   }
 
-  .sheet.phone button.primary {
+  .sheet.phone .nib-button {
     align-self: stretch;
-    min-height: var(--touch-target);
-    padding: 12px 16px;
-    font-size: var(--touch-text);
-    text-align: center;
   }
 
   .sheet.phone .accents {

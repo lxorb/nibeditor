@@ -373,29 +373,9 @@
     background: var(--accent-soft);
   }
 
-  /* The one thing the sheet is for, once it can be done. Where it sits in the
-     row or the column holding it is that sheet's business. */
-  .sheet :global(.primary) {
-    flex: none;
-    padding: 8px 14px;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--accent);
-    color: #fff;
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition: background var(--dur-fast) var(--ease-out);
-  }
-
-  .sheet :global(.primary:hover:not(:disabled)) {
-    background: var(--accent-hover);
-  }
-
-  .sheet :global(.primary:active:not(:disabled)) {
-    background: var(--accent-press);
-  }
+  /* The one thing the sheet is for is `.nib-button` in the themes package, the
+     button every dialog in the app is pressed with. Where it sits in the row or
+     the column holding it is that sheet's business. */
 
   /* A phone's sheet is the bottom of the screen, and everything in it is the
      size a thumb needs. */
@@ -439,11 +419,6 @@
     min-height: var(--touch-target);
     padding: 0 var(--touch-gap);
     font-size: var(--text-base);
-  }
-
-  :global([data-touch]) .sheet :global(.primary) {
-    min-height: var(--touch-target);
-    font-size: var(--touch-text);
   }
 
   :global([data-touch]) .sheet :global(.hint),

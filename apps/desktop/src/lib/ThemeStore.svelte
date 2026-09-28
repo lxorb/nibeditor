@@ -342,18 +342,18 @@
       <div class="row">
         {#if store.installed(one.id) && !store.updatable(one)}
           <button
-            class="primary"
+            class="nib-button"
             disabled={store.using(one.id) || store.working !== null}
             onclick={() => store.use(one.id)}>{store.using(one.id) ? t('In use') : t('Use')}</button
           >
           <button
-            class="quiet"
+            class="nib-button is-quiet"
             disabled={store.working !== null}
             onclick={() => void store.remove(one.id)}>{t('Remove')}</button
           >
         {:else}
           <button
-            class="primary"
+            class="nib-button"
             disabled={store.working !== null}
             onclick={() => void store.install(one)}
             >{store.updatable(one) ? t('Update') : t('Install')}</button
@@ -665,45 +665,8 @@
     margin-top: var(--space-1);
   }
 
-  .row button {
-    padding: 8px 16px;
-    border: none;
-    border-radius: var(--radius-md);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .row .primary {
-    background: var(--accent);
-    color: #fff;
-  }
-
-  @media (hover: hover) {
-    .row .primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-    }
-  }
-
-  .row .primary:active:not(:disabled) {
-    background: var(--accent-press);
-  }
-
-  .row .quiet {
-    background: none;
-    color: var(--muted);
-  }
-
-  @media (hover: hover) {
-    .row .quiet:hover {
-      background: var(--surface-2);
-      color: var(--danger);
-    }
-  }
+  /* Using, installing and removing a theme are `.nib-button` in the themes
+     package, the same pair every sheet in the app offers. */
 
   .note {
     margin: 0;

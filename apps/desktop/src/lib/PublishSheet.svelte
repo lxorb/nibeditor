@@ -186,7 +186,7 @@
        neighbour the sheet read as finished with no way to publish in sight. -->
   {#snippet foot()}
     <button
-      class="primary go"
+      class="nib-button go"
       disabled={!publish.confirmed || !publish.ready}
       onclick={() => void publish.publish(siteIcon(markBox))}
     >

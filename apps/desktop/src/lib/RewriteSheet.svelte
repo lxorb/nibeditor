@@ -85,8 +85,8 @@
 
   {#if answer}
     <div class="answers">
-      <button class="pill quiet" onclick={() => rewriting.close()}>{t('Discard')}</button>
-      <button class="primary" disabled={rewriting.running} onclick={() => rewriting.accept()}>
+      <button class="nib-button is-quiet" onclick={() => rewriting.close()}>{t('Discard')}</button>
+      <button class="nib-button" disabled={rewriting.running} onclick={() => rewriting.accept()}>
         {t('Replace')}
       </button>
     </div>

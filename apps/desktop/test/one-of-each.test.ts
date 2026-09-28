@@ -438,6 +438,29 @@ describe('the switch', () => {
   })
 })
 
+/** The one thing a dialog or a sheet is there to do. Seven components had their own
+ *  and were brought onto `.nib-button`; five more - the version history, the theme
+ *  gallery, the settings, the connectors and every sheet built on Sheet.svelte -
+ *  still drew a `.primary` of their own, at three paddings and two type sizes, and
+ *  half of them lifted under the pointer. */
+describe('the button with words in it', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-button')
+
+    // A notice is a line of words, and its two buttons are read at that size.
+    expect(draw(/\.nib-button/)).toEqual(['lib/UpdateNotice.svelte'])
+  })
+
+  test('and no component draws a primary of its own', () => {
+    const own = components
+      .filter((one) => rules(one.style).some((rule) => /\.primary\b/.test(rule.selector)))
+      .map((one) => one.name)
+
+    expect(own).toEqual([])
+  })
+})
+
 /** How a control that cannot be pressed looks. The themes package says it once, at
  *  0.4, and then eighteen rules in fifteen components said it again at 0.3, 0.35,
  *  0.45, 0.5 and 0.55 - so a refused button in the settings was a different grey from

@@ -183,7 +183,7 @@
            to count, since what comes back is one note in a pane. -->
       {#if settings.pandoc}
         <p class="note">{t('Pandoc reads this one, from the file on your disk.')}</p>
-        <button class="primary" onclick={() => void importing.readWithPandoc()}>
+        <button class="nib-button" onclick={() => void importing.readWithPandoc()}>
           {t('Read it with pandoc')}
         </button>
       {:else}
@@ -262,9 +262,9 @@
             })}
           </p>
         {/if}
-        <button class="primary" onclick={() => importing.close()}>{t('Done')}</button>
+        <button class="nib-button" onclick={() => importing.close()}>{t('Done')}</button>
       {:else}
-        <button class="primary" disabled={!ready} onclick={() => void importing.run()}>
+        <button class="nib-button" disabled={!ready} onclick={() => void importing.run()}>
           {importing.stage === 'writing' ? t('Importing') : t('Import')}
         </button>
         {#if importing.stage === 'writing'}
