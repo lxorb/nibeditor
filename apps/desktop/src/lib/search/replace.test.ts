@@ -1,21 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { Matcher } from './match'
 import { parseQuery } from './query'
-import { type Edit, expand, replaceIn, reverse } from './replace'
-
-/** The same splice `replaceIn` makes, so a set of edits can be checked by
- *  running them. */
-function applied(body: string, edits: readonly Edit[]): string {
-  let text = ''
-  let at = 0
-
-  for (const edit of edits) {
-    text += body.slice(at, edit.from) + edit.insert
-    at = edit.to
-  }
-
-  return text + body.slice(at)
-}
+import { applied, expand, replaceIn, reverse } from './replace'
 
 /** What the panel does to one note: find, keep the lines that are ticked,
  *  and put the replacement in. */
@@ -30,7 +16,8 @@ function rewrite(body: string, query: string, replacement: string, lines?: numbe
   if (!spans) return null
 
   const kept = new Set(lines ?? body.split('\n').map((_line, index) => index))
-  return replaceIn(body, spans, kept, replacement)
+  const edits = replaceIn(body, spans, kept, replacement)
+  return edits && { text: applied(body, edits), edits }
 }
 
 describe('replacing', () => {

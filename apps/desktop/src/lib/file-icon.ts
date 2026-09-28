@@ -24,7 +24,7 @@ import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { isFolderNote } from './folder-notes'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint } from './icons'
 import { key, message } from './i18n.svelte'
-import { reverse } from './search/replace'
+import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
 import { folderOf } from './space-paths'
 import { workspace } from './workspace.svelte'
@@ -78,11 +78,8 @@ export async function setFileIcon(
         ])
   if (!edit) return
 
-  const after = before.slice(0, edit.from) + edit.insert + before.slice(edit.to)
-  const edits = [edit]
-
   try {
-    await workspace.replaceInNotes([{ path, before, after, edits, back: reverse(before, edits) }])
+    await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
     settings.error = message(error, key('That icon could not be written.'))
   }

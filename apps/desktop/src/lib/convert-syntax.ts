@@ -17,7 +17,7 @@ import { oneEdit } from '@nib/markdown/edits'
 import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'
 import type { Change } from './search/apply'
-import { reverse } from './search/replace'
+import { changeOf } from './search/replace'
 import { workspace } from './workspace.svelte'
 
 /** Every change the conversion would make. Pure, so the count the reader is shown
@@ -36,14 +36,7 @@ export function syntaxChanges(
     const edit = oneEdit(note.text, said.text)
     if (!edit) continue
 
-    const edits = [edit]
-    changes.push({
-      path: note.path,
-      before: note.text,
-      after: said.text,
-      edits,
-      back: reverse(note.text, edits),
-    })
+    changes.push(changeOf(note.path, note.text, [edit]))
     rewrites += said.changes
   }
 

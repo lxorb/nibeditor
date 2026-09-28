@@ -24,7 +24,7 @@ import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'
 import { key, message, t } from './i18n.svelte'
-import { reverse } from './search/replace'
+import { changeOf } from './search/replace'
 import { settings } from './settings.svelte'
 import { isMarkdownPath } from './space-paths'
 import { usage } from './usage.svelte'
@@ -55,11 +55,8 @@ export async function setCover(path: string, src: string | null): Promise<void> 
   ])
   if (!edit) return
 
-  const after = before.slice(0, edit.from) + edit.insert + before.slice(edit.to)
-  const edits = [edit]
-
   try {
-    await workspace.replaceInNotes([{ path, before, after, edits, back: reverse(before, edits) }])
+    await workspace.replaceInNotes([changeOf(path, before, [edit])])
   } catch (error) {
     settings.error = message(error, key('That cover could not be written.'))
   }

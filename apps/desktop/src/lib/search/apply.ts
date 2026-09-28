@@ -10,7 +10,7 @@
 import { relativeTo } from '../space-paths'
 import { type Hit, Matcher } from './match'
 import type { Query } from './query'
-import { type Edit, replaceIn, reverse } from './replace'
+import { changeOf, type Edit, replaceIn } from './replace'
 
 export interface Change {
   path: string
@@ -55,16 +55,8 @@ export async function changesFor(
     const spans = matcher.spans({ path, relative, name, body: before })
     if (!spans) continue
 
-    const made = replaceIn(before, spans, lines, replacement)
-    if (!made) continue
-
-    out.push({
-      path,
-      before,
-      after: made.text,
-      edits: made.edits,
-      back: reverse(before, made.edits),
-    })
+    const edits = replaceIn(before, spans, lines, replacement)
+    if (edits) out.push(changeOf(path, before, edits))
   }
 
   return out

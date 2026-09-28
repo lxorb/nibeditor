@@ -12,7 +12,7 @@
  *  left where it was. See tagSpans in search/tags.ts. */
 
 import type { Change } from './search/apply'
-import { type Edit, reverse } from './search/replace'
+import { changeOf, type Edit } from './search/replace'
 import { tagCuts, tagSpans } from './search/tags'
 
 /** What one note becomes, or null when the tag is not in it.
@@ -43,16 +43,8 @@ export function tagChange(
 
   if (!edits.length) return null
 
-  let after = ''
-  let at = 0
-  for (const edit of edits) {
-    after += before.slice(at, edit.from) + edit.insert
-    at = edit.to
-  }
-  after += before.slice(at)
-
-  if (after === before) return null
-  return { path, before, after, edits, back: reverse(before, edits) }
+  const change = changeOf(path, before, edits)
+  return change.after === before ? null : change
 }
 
 /** What every note in the space becomes. Notes that never mentioned the tag are

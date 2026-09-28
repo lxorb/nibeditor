@@ -19,6 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/match'
+import { changeOf } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
@@ -159,21 +160,7 @@ export async function writeNoteText(
   const edit = oneEdit(before, after)
   if (!edit) return
 
-  await replaceInNotes(ws, [
-    {
-      path,
-      before,
-      after,
-      edits: [edit],
-      back: [
-        {
-          from: edit.from,
-          to: edit.from + edit.insert.length,
-          insert: before.slice(edit.from, edit.to),
-        },
-      ],
-    },
-  ])
+  await replaceInNotes(ws, [changeOf(path, before, [edit])])
 }
 
 /** Writes a replacement across the space. Every note keeps a snapshot of
