@@ -1,3 +1,4 @@
+import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 // Both heavy libraries handed over outright. In the app a formula is set by a render
 // that has awaited them - `prepareFences` and `runExport` do - and these render
@@ -196,6 +197,44 @@ describe('a coloured highlight in an exported document', () => {
     expect(html).toContain('mark.tone-1')
     expect(html).toContain('--mark-1')
     expect(html).toContain('--canvas-1')
+  })
+})
+
+/** An exported document as a browser would hold it, less its paper. An `@page`
+ *  rule has no selector, which jsdom reads as one that matches every element and
+ *  then cannot rank; the size of the paper has no say in what is printed on it. */
+function opened(html: string): DOMWindow {
+  const { window } = new JSDOM(html)
+  for (const sheet of window.document.styleSheets) {
+    for (let at = sheet.cssRules.length - 1; at >= 0; at--) {
+      if (sheet.cssRules[at]?.cssText.startsWith('@page')) sheet.deleteRule(at)
+    }
+  }
+  return window
+}
+
+/** A column's side is the renderer's `align` attribute, and any `text-align` a
+ *  sheet declares outranks one of those, so the theme has to hand it back. jsdom
+ *  runs the cascade, specificity and all, over the sheets baked into the page:
+ *  the same sheets the reading view wears and a published page is served. */
+describe('an aligned table column in an exported document', () => {
+  const window = opened(
+    buildHtml(
+      '| Name | Value | Unit | Note |\n| :-- | --: | :-: | --- |\n| mass | 42 | kg | dry |\n',
+      'x.md',
+    ),
+  )
+  const sides = [...window.document.querySelectorAll('th, td')].map((cell) =>
+    window.getComputedStyle(cell).getPropertyValue('text-align'),
+  )
+
+  test('reads from the side the note gave it, in the header and the body alike', () => {
+    expect(sides.slice(0, 3)).toEqual(['left', 'right', 'center'])
+    expect(sides.slice(4, 7)).toEqual(['left', 'right', 'center'])
+  })
+
+  test('reads from where its words start when the note gave it none', () => {
+    expect([sides[3], sides[7]]).toEqual(['start', 'start'])
   })
 })
 
