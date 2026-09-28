@@ -452,6 +452,20 @@ describe('prose typed away from every construct', () => {
     expect(is.spans.map((span) => text.slice(span.from, span.to))).toEqual(['$$E = mc^2$$'])
   })
 
+  test('punctuation typed inside a line moves the constructs along', () => {
+    const { is, state: after } = afterTyping(doc, 4, '. Then: (a) - b!')
+    expect(drawn(is, after.doc.toString())).toEqual([TABLE])
+  })
+
+  test('but punctuation at the head of a line is looked at properly', () => {
+    // A third dash at the very top of a note opens its front matter, which the line
+    // under it closes: a block that was a heading a keystroke ago.
+    const top = '--\ntitle: x\n---\n\nbody\n'
+    const { was, is } = afterTyping(top, 0, '-')
+    expect(was.decorations.size).toBe(0)
+    expect(is.decorations.size).toBe(1)
+  })
+
   test('a toc completed by deleting the words after it is drawn', () => {
     // A construct is decided by what remains, not by what moved: deleting `draft`
     // is a prose deletion, and it makes the line a toc. Written the way the search
