@@ -185,6 +185,18 @@ async function openAll(paths: string[]) {
 /** Nothing with words in it is lost on the way out: closing asks first, and so
  *  does quitting. */
 async function guardClose() {
+  // A phone never closes the window. It puts the app away, and may end it while it
+  // is away without a word to it - so a sentence typed a moment before the home
+  // gesture was waiting on a pause that never came, and on an iPhone it went with
+  // the app. What is owed is written as the page goes out of sight instead, which
+  // is the same writes the close button runs and nothing at all when nothing is
+  // owed. A browser tab sent to the back, which a browser may also discard, gets
+  // the same.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') settle()
+  })
+  addEventListener('pagehide', () => settle())
+
   const window = await currentWindow()
   // The handler answers at once and the questions happen after: preventing the
   // close is the only part that has to be synchronous.
