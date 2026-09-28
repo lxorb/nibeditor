@@ -13,6 +13,20 @@ vi.mock('./tauri', async (importOriginal) => ({
   isDesktop: false,
 }))
 
+/** Whether this page is the plugin, as `even.ts` would have said before anything was
+ *  mounted. Held here so that each test can be either page without starting the app
+ *  again: the real flag is said once and never unsaid, which is right for a page and
+ *  is why every test used to throw the whole module graph away and build it again - a
+ *  second or more a test, and the timeouts this file was known for. */
+const page = vi.hoisted(() => ({ plugin: false }))
+
+vi.mock('./plugin', () => ({
+  isPlugin: () => page.plugin,
+  markPlugin: () => {
+    page.plugin = true
+  },
+}))
+
 function memoryStorage(): Storage {
   const held = new Map<string, string>()
 
@@ -50,24 +64,26 @@ vi.stubGlobal('document', {
  *  the rest of the suite does not fit in thirty seconds. Four minutes is not a
  *  claim about how long this takes - it is a wall a slow honest run must not hit,
  *  and nothing here asserts on time. */
+let modes: typeof import('./modes.svelte').modes
+let preferences: typeof import('./preferences').preferences
+let sectionGroups: typeof import('./settings/sections').sectionGroups
+
 beforeAll(async () => {
-  await import('./preferences')
-  await import('./settings/sections')
+  ;({ modes } = await import('./modes.svelte'))
+  ;({ preferences } = await import('./preferences'))
+  ;({ sectionGroups } = await import('./settings/sections'))
 }, 240_000)
 
 /** A page, with or without a pair of glasses behind it. */
-async function page(asPlugin: boolean) {
-  vi.resetModules()
-
-  if (asPlugin) (await import('./plugin')).markPlugin()
+function pageOf(asPlugin: boolean) {
+  page.plugin = asPlugin
   // As a start of the app would: the Glasses section also appears once the account
-  // says a pair has answered, and that lives in the store.
-  ;(await import('./modes.svelte')).modes.restore()
+  // says a pair has answered, and that lives in the store. A fresh store has seen
+  // none, and restoring only ever says so when the entry does.
+  modes.glassesSeen = false
+  modes.restore()
 
-  return {
-    panes: (await import('./preferences')).preferences(),
-    groups: (await import('./settings/sections')).sectionGroups(),
-  }
+  return { panes: preferences(), groups: sectionGroups() }
 }
 
 const ids = (groups: { id: string }[][]) => groups.flat().map((one) => one.id)
@@ -77,15 +93,15 @@ beforeEach(() => {
 })
 
 describe('the Glasses settings', () => {
-  test('are not there in the app', async () => {
-    const { panes, groups } = await page(false)
+  test('are not there in the app', () => {
+    const { panes, groups } = pageOf(false)
 
     expect(panes.map((one) => one.id)).not.toContain('glasses')
     expect(ids(groups)).not.toContain('glasses')
   })
 
-  test('are there in the plugin', async () => {
-    const { panes, groups } = await page(true)
+  test('are there in the plugin', () => {
+    const { panes, groups } = pageOf(true)
 
     expect(panes.map((one) => one.id)).toContain('glasses')
     expect(ids(groups)).toContain('glasses')
@@ -94,16 +110,16 @@ describe('the Glasses settings', () => {
   /** And on the desktop beside it, once there is a pair to be about. The plugin
    *  says so on its first contact with a bridge and the account carries it; before
    *  that, somebody who has never worn a pair is not offered a pane about them. */
-  test('are there on any device once a pair has answered', async () => {
+  test('are there on any device once a pair has answered', () => {
     localStorage.setItem('nib:modes', JSON.stringify({ glassesSeen: true }))
-    const { panes, groups } = await page(false)
+    const { panes, groups } = pageOf(false)
 
     expect(panes.map((one) => one.id)).toContain('glasses')
     expect(ids(groups)).toContain('glasses')
   })
 
-  test('carry where a page begins, and only in the plugin', async () => {
-    const inside = await page(true)
+  test('carry where a page begins, and only in the plugin', () => {
+    const inside = pageOf(true)
     const pane = inside.panes.find((one) => one.id === 'glasses')
     const field = pane?.groups.flatMap((group) => group.fields).find((one) => one.kind === 'select')
 
@@ -121,7 +137,7 @@ describe('the Glasses settings', () => {
 
     // And nowhere to be found outside it, which is what the settings search
     // reads: the same list of panes.
-    const outside = await page(false)
+    const outside = pageOf(false)
     const labels = outside.panes.flatMap((one) =>
       one.groups.flatMap((group) => group.fields.map((field) => field.label)),
     )
@@ -129,8 +145,8 @@ describe('the Glasses settings', () => {
     expect(labels).not.toContain('Voice commands')
   })
 
-  test('carry the line numbers as a switch, and no page number', async () => {
-    const inside = await page(true)
+  test('carry the line numbers as a switch, and no page number', () => {
+    const inside = pageOf(true)
     const pane = inside.panes.find((one) => one.id === 'glasses')
     const fields = pane?.groups.flatMap((group) => group.fields) ?? []
 
@@ -149,8 +165,8 @@ describe('the Glasses settings', () => {
 
   /** Every phrase a spoken command answers to is a field somebody can type in, and
    *  only on the phone: a pair of glasses has nothing to type with. */
-  test('carry a phrase for every spoken command, as text', async () => {
-    const inside = await page(true)
+  test('carry a phrase for every spoken command, as text', () => {
+    const inside = pageOf(true)
     const pane = inside.panes.find((one) => one.id === 'glasses')
     const group = pane?.groups.find((one) => one.title === 'Spoken commands')
     const fields = group?.fields ?? []
@@ -164,11 +180,11 @@ describe('the Glasses settings', () => {
     }
   })
 
-  test('leave no gap where the section was', async () => {
+  test('leave no gap where the section was', () => {
     // Spread into the group rather than hidden inside it, so the list closes
     // over the space instead of showing a divider with nothing under it.
-    const outside = await page(false)
-    const inside = await page(true)
+    const outside = pageOf(false)
+    const inside = pageOf(true)
 
     expect(outside.groups).toHaveLength(inside.groups.length)
     for (const group of outside.groups) expect(group.length).toBeGreaterThan(0)
