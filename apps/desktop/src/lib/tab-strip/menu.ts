@@ -136,7 +136,7 @@ function tabEntries(tab: Tab): MenuEntry[] {
 /** The file in the list, the rows above it unfolded and its own scrolled to. Only
  *  for a file that has a row there: the graph, a note from outside the space and one
  *  nobody has saved have none. */
-function revealEntry(tab: Tab): MenuEntry[] {
+function inListEntry(tab: Tab): MenuEntry[] {
   const root = workspace.activeSpace?.root
   const path = tab.path
   if (path === null || root === undefined || withinSpace(root, path) === null) return []
@@ -218,7 +218,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...readingEntry(tab),
     ...pageEntries(tab),
     ...tabEntries(tab),
-    ...revealEntry(tab),
+    ...inListEntry(tab),
     DIVIDER,
     ...closeEntries(tab),
     DIVIDER,

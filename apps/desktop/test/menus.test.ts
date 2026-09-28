@@ -234,8 +234,20 @@ describe('what a row of the file list offers', () => {
   test('through the menu a pointer opens and the one a finger opens', () => {
     const drawn = tree.slice(tree.indexOf('data-path={entry.path}'))
 
-    expect(drawn).toContain('oncontextmenu={(event) => menu.show(event, rowMenu(entry)')
-    expect(drawn).toContain('use:longPress={(event) => menu.show(event, rowMenu(entry)')
+    expect(drawn).toContain('oncontextmenu={(event) => showRowMenu(event, entry, name)}')
+    expect(drawn).toContain('use:longPress={(event) => showRowMenu(event, entry, name)}')
+  })
+
+  /** Behind a door, fetched by the press and warmed at the launch's last turn. */
+  test('and the menu is the row menu, fetched by the press', () => {
+    const door = tree.slice(
+      tree.indexOf('function showRowMenu('),
+      tree.indexOf('function openRowAt('),
+    )
+
+    expect(door).toContain("import('./row-menu')")
+    expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
+    expect(read('lib/surfaces.svelte.ts')).toContain("import('./row-menu')")
   })
 })
 
