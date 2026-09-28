@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { InkPoint, InkStroke } from './format'
 import { INK_TOOLS } from './format'
-import type { Point } from './geometry'
+import { bounds, type Point } from './geometry'
 import type { PenTraits } from './contacts'
 import {
   assisted,
@@ -18,7 +18,6 @@ import {
   simplified,
   smoothed,
   strokeBox,
-  strokesBox,
   strokesInLasso,
   tidied,
   tidyShape,
@@ -326,16 +325,14 @@ describe('the box a stroke covers', () => {
   })
 
   test('round several is the box round the lot', () => {
-    const both = strokesBox([
-      stroke([point(0, 0), point(10, 10)], { size: 0 }),
-      stroke([point(50, -20), point(60, 0)], { size: 0 }),
-    ])
+    const both = bounds(
+      [
+        stroke([point(0, 0), point(10, 10)], { size: 0 }),
+        stroke([point(50, -20), point(60, 0)], { size: 0 }),
+      ].map(strokeBox),
+    )
 
     expect(both).toEqual({ x: 0, y: -20, width: 60, height: 30 })
-  })
-
-  test('is nothing for nothing', () => {
-    expect(strokesBox([])).toBeNull()
   })
 })
 

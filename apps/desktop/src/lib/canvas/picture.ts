@@ -329,7 +329,7 @@ export function canvasSvg(
   root: string | null,
   plain = false,
 ): string {
-  const box = bounds(canvas.nodes, canvas.ink.map(strokeBox)) ?? {
+  const box = bounds([...canvas.nodes, ...canvas.ink.map(strokeBox)]) ?? {
     x: 0,
     y: 0,
     width: 400,

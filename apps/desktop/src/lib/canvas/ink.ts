@@ -673,26 +673,6 @@ function measured(stroke: InkStroke): Box {
   }
 }
 
-export function strokesBox(strokes: readonly InkStroke[]): Box | null {
-  const boxes = strokes.map(strokeBox)
-  const [first] = boxes
-  if (!first) return null
-
-  let least = first.x
-  let most = first.x + first.width
-  let lowest = first.y
-  let highest = first.y + first.height
-
-  for (const box of boxes) {
-    least = Math.min(least, box.x)
-    most = Math.max(most, box.x + box.width)
-    lowest = Math.min(lowest, box.y)
-    highest = Math.max(highest, box.y + box.height)
-  }
-
-  return { x: least, y: lowest, width: most - least, height: highest - lowest }
-}
-
 /** How far off the line a point may sit and still be dropped, as a share of the
  *  nib's width. A pen reports far more samples than a line needs. */
 const TOLERANCE = 0.12

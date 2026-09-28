@@ -21,6 +21,7 @@ import {
   type Side,
 } from './format'
 import {
+  bounds,
   boxOf,
   type Box,
   dragged,
@@ -72,27 +73,10 @@ export function pickedBox(canvas: Canvas, picked: readonly string[]): Box | null
   if (!picked.length) return null
 
   const wanted = new Set(picked)
-  const boxes = [
-    ...canvas.nodes.filter((node) => wanted.has(node.id)).map(boxOf),
+  return bounds([
+    ...canvas.nodes.filter((node) => wanted.has(node.id)),
     ...canvas.ink.filter((stroke) => wanted.has(stroke.id)).map(strokeBox),
-  ]
-
-  const [first] = boxes
-  if (!first) return null
-
-  let least = first.x
-  let most = first.x + first.width
-  let lowest = first.y
-  let highest = first.y + first.height
-
-  for (const box of boxes) {
-    least = Math.min(least, box.x)
-    most = Math.max(most, box.x + box.width)
-    lowest = Math.min(lowest, box.y)
-    highest = Math.max(highest, box.y + box.height)
-  }
-
-  return { x: least, y: lowest, width: most - least, height: highest - lowest }
+  ])
 }
 
 /** Everything picked moved by a whole number of pixels.

@@ -388,10 +388,10 @@ export function caught(nodes: readonly CanvasNode[], band: Box): string[] {
   return nodes.filter((node) => overlaps(boxOf(node), band)).map((node) => node.id)
 }
 
-/** The box around everything on the plane, or null for an empty one. What Ctrl+0
- *  frames, so a page of handwriting with no cards on it still frames itself. */
-export function bounds(nodes: readonly CanvasNode[], ink: readonly Box[] = []): Box | null {
-  const boxes = [...nodes.map(boxOf), ...ink]
+/** The box every one of these fits in, or null when there are none. What Ctrl+0
+ *  frames, what the handles are drawn on, what an arrangement lines up against
+ *  and what a paste is centred by. */
+export function bounds(boxes: readonly Box[]): Box | null {
   const [first] = boxes
   if (!first) return null
 

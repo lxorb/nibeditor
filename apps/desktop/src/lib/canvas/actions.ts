@@ -37,7 +37,7 @@ import {
   type Shape,
   type Side,
 } from './format'
-import { type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
+import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
 import { erased, INK_STYLES, nearStroke, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
@@ -230,7 +230,7 @@ export const run = {
     if (incoming.nodes.length || incoming.ink.length) {
       // Centred on the pointer, so a paste lands where the reader is looking
       // rather than where the cards happened to be in the canvas they came from.
-      const box = spanOf(incoming)
+      const box = bounds(incoming.nodes)
       const dx = box ? Math.round(at.x - box.x - box.width / 2) : 0
       const dy = box ? Math.round(at.y - box.y - box.height / 2) : 0
       const made = pasted(store.canvas, incoming, dx, dy)
@@ -471,25 +471,6 @@ export interface KeyView {
   name: string
   palette: Palette
   onfind: () => void
-}
-
-function spanOf(canvas: Canvas) {
-  const [first] = canvas.nodes
-  if (!first) return null
-
-  let least = first.x
-  let most = first.x + first.width
-  let lowest = first.y
-  let highest = first.y + first.height
-
-  for (const node of canvas.nodes) {
-    least = Math.min(least, node.x)
-    most = Math.max(most, node.x + node.width)
-    lowest = Math.min(lowest, node.y)
-    highest = Math.max(highest, node.y + node.height)
-  }
-
-  return { x: least, y: lowest, width: most - least, height: highest - lowest }
 }
 
 function putText(store: CanvasStore, text: string, box: Box, writing = false) {

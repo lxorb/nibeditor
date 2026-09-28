@@ -7,7 +7,7 @@
  *  forward is moving it down the array and nothing else. */
 
 import type { Canvas, CanvasNode } from './format'
-import { type Box, boxOf, dragged } from './geometry'
+import { bounds, type Box, boxOf, dragged } from './geometry'
 
 /** The six ways a row of things can be lined up. Two axes, three places on
  *  each, which is every alignment anybody has ever wanted. */
@@ -30,26 +30,6 @@ function placed(box: Box, how: Alignment, span: Box): { x: number; y: number } {
     case 'bottom':
       return { x: box.x, y: span.y + span.height - box.height }
   }
-}
-
-/** The box every one of these nodes fits in, or null when there are none. */
-function spanOf(nodes: readonly CanvasNode[]): Box | null {
-  const [first] = nodes
-  if (!first) return null
-
-  let least = first.x
-  let most = first.x + first.width
-  let lowest = first.y
-  let highest = first.y + first.height
-
-  for (const node of nodes) {
-    least = Math.min(least, node.x)
-    most = Math.max(most, node.x + node.width)
-    lowest = Math.min(lowest, node.y)
-    highest = Math.max(highest, node.y + node.height)
-  }
-
-  return { x: least, y: lowest, width: most - least, height: highest - lowest }
 }
 
 /** Which of the picked nodes an arrangement acts on: the ones named, and never
@@ -93,7 +73,7 @@ export function aligned(canvas: Canvas, picked: readonly string[], how: Alignmen
   const nodes = chosen(canvas, picked)
   if (nodes.length < 2) return canvas
 
-  const span = spanOf(nodes)
+  const span = bounds(nodes)
   if (!span) return canvas
 
   const moves = new Map<string, { dx: number; dy: number }>()
