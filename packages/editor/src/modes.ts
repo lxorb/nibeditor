@@ -90,6 +90,8 @@ const markdownFor = once((strict: boolean): Extension =>
     codeLanguages: fenceLanguage,
     extensions: strict ? [] : nibMarkdownExtensions,
     addKeymap: false,
+    // An address pasted over words is nib's own; see `linkedPaste` in paste.ts.
+    pasteURLAsLink: false,
   }),
 )
 
