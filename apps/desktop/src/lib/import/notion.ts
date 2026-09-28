@@ -22,7 +22,7 @@ import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { folderPlan, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'
-import { Names, safeName, withoutNotionId } from './names'
+import { Names, safeParts, withoutNotionId } from './names'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 import { readPlain } from './plain'
@@ -70,7 +70,7 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
         // The `_all` comes off before the id does, since the id is on the end of
         // the name Notion wrote and `_all` is after it.
         const wanted = source.path.replace(/_all\.csv$/i, '.csv')
-        const path = names.free(tidyPath(wanted).replace(CSV, '.md'))
+        const path = names.free(safeParts(wanted, withoutNotionId).replace(CSV, '.md'))
         return {
           to: path,
           read: (text) => {
@@ -81,10 +81,11 @@ export async function readNotion(sources: readonly Source[]): Promise<ImportPlan
         }
       }
 
-      if (!MARKDOWN.test(source.path)) return { to: names.free(tidyPath(source.path)) }
+      if (!MARKDOWN.test(source.path))
+        return { to: names.free(safeParts(source.path, withoutNotionId)) }
 
       return {
-        to: names.free(tidyPath(source.path)),
+        to: names.free(safeParts(source.path, withoutNotionId)),
         read: (text) => {
           const said = notionPage(text)
           return { text: said.body, title: null, meta: said.meta }
@@ -116,21 +117,6 @@ function usefulCsvs(sources: readonly Source[]): Set<string> {
   )
 
   return new Set(csvs.filter((one) => /_all\.csv$/i.test(one) || !alls.has(one.replace(CSV, ''))))
-}
-
-/** The path with every id taken off and every part made into a name a file may
- *  have. */
-function tidyPath(path: string): string {
-  const parts = path.split('/').filter(Boolean)
-  const last = parts.pop() ?? ''
-  const at = last.lastIndexOf('.')
-  const stem = at > 0 ? last.slice(0, at) : last
-  const extension = at > 0 ? last.slice(at) : ''
-
-  return [
-    ...parts.map((one) => safeName(withoutNotionId(one))),
-    `${safeName(withoutNotionId(stem))}${extension}`,
-  ].join('/')
 }
 
 /** A page's properties out of the lines under its title, and the words that are
