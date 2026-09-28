@@ -179,19 +179,6 @@
         run: () => workspace.toggleHidden(),
       },
       DIVIDER,
-      {
-        label: t('Show in the file list'),
-        hint: shortcuts.hint('app.reveal'),
-        disabled: !workspace.active?.path,
-        run: () => workspace.revealNote(),
-      },
-      {
-        label: t('Collapse the file list'),
-        hint: shortcuts.hint('app.fold-list'),
-        disabled: !workspace.unfolded,
-        run: () => workspace.foldList(),
-      },
-      DIVIDER,
       { label: t('New note'), run: () => void workspace.createNote() },
       { label: t('New canvas'), run: () => void workspace.createCanvas() },
       ...(viewport.device === 'phone'

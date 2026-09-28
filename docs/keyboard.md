@@ -248,9 +248,8 @@ in the palette, and it can be rebound. What was already there is marked.
 | no key | Show in the file list: the note in front, its rows unfolded and scrolled to. Collapse the file list: every row folded |
 
 The two without a key ship unbound in Obsidian and VS Code as well. Both are rows in
-the palette and in the menu of the Files tab, Show in the file list is a row in a
-tab's own menu too, and while a row is unfolded the collapse is a glyph beside the
-order of the files.
+the palette, Show in the file list is a row in a tab's own menu too, and while a row
+is unfolded the collapse is a glyph beside the order of the files.
 
 Footnotes is the fifth panel and has no key of its own. The four above are the four
 that had one, and a fifth combination nobody asked for is a key taken away from

@@ -41,8 +41,8 @@ the address is asked for in the tab's bar afterwards. See docs/web-tabs.md. A
 folder is not on that menu, because a note that holds notes is how a space is
 organised; see below.
 
-**Finding the note in front** is Show in the file list, in the palette, the Files
-tab's menu and a tab's own menu: the rows above it unfold and its own is scrolled to,
+**Finding the note in front** is Show in the file list, in the palette and a tab's
+own menu: the rows above it unfold and its own is scrolled to,
 which is Obsidian's Reveal file in navigation. Its way back is Collapse the file list,
 which folds every row of the space; while any row is unfolded it is also a glyph
 beside the order of the files, and it is gone again once nothing is.

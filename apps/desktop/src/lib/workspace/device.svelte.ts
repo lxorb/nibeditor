@@ -251,11 +251,6 @@ export class DeviceView {
     keep(EXPANDED_KEY, JSON.stringify(this.expanded))
   }
 
-  /** Whether any row under a space's folder is unfolded. */
-  unfoldedUnder(root: string): boolean {
-    return Object.keys(this.expanded).some((path) => withinSpace(root, path) !== null)
-  }
-
   iconOf(root: string): string | null {
     return this.icons[root] ?? null
   }

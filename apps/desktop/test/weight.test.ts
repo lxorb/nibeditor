@@ -396,7 +396,7 @@ function holds(tail: string): boolean {
  *  two doors up to fit: a row's menu is fetched by the press that opens it, warmed at
  *  the launch's last turn like a tab's, and the link a drop writes is fetched by the
  *  first drop. What stays is the drop's handlers, which have to answer a `dragover`
- *  in its own frame. Measured 3,338,242 and 385 modules, on top of the Ctrl+click raise below.
+ *  in its own frame. Measured 3,339,359 and 385 modules, on top of the raise below.
  *
  *  What stays is meant to. hidden-front-matter.ts is how the note on screen is drawn
  *  and how it takes its first key: hidden is where every note starts, and a guard that

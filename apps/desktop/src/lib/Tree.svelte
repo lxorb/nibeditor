@@ -727,8 +727,7 @@
    *  the name opens the thing, the twist discloses it. A folder that has no note
    *  of its own opens the empty page it is - see `openRow` in workspace.svelte.ts
    *  - and writes nothing by being looked at. */
-  /** A row's own menu, behind a door warmed at the launch's last turn. The press is
-   *  spent first: after the await it is too late to stop the browser's menu. */
+  /** A row's menu, behind a door. The press is spent before the await. */
   function showRowMenu(event: MouseEvent, entry: Entry, title: string) {
     event.preventDefault()
     event.stopPropagation()
@@ -963,8 +962,7 @@
     void reach(index)
   })
 
-  // A note asked to be shown; see `revealNote`. Its row arrives a pass after the rows
-  // above it unfold, so this waits for the row.
+  // A note asked to be shown; see `revealNote`. Waits for its row to be drawn.
   $effect(() => {
     const asked = workspace.revealing
     if (asked === null) return

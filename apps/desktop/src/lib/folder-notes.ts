@@ -163,10 +163,8 @@ export function renameSteps(note: string, typed: string): { path: string; name: 
   ]
 }
 
-/** The files links to these rows name, relative to the space: a row that is a folder
- *  is the note it is drawn as, written or not, since that is what opening it opens. A
- *  row outside the space has no link. What a row dropped on a note's words and a
- *  row's Copy link both write; see wikilink/drop.ts in @nib/editor and row-menu.ts. */
+/** The files links to these rows name, relative to the space: a folder's row is the
+ *  note it is drawn as, written or not. */
 export function linkedFiles(tree: Entry | null, root: string, rows: readonly string[]): string[] {
   return rows.flatMap((row) => {
     const entry = entryAt(tree, row)

@@ -88,8 +88,7 @@
   } = $props()
   /* eslint-enable prefer-const */
 
-  /** Which notes a drag over the words carries, so a row of the file list lands as
-   *  a link; see wikilink/drop.ts in the editor. */
+  /** The notes a drag over the words carries; see wikilink/drop.ts in the editor. */
   function carriedNotes(transfer: DataTransfer | null): readonly string[] {
     const root = workspace.activeSpace?.root
     return root ? linkedFiles(workspace.tree, root, carriedRows(transfer)) : []

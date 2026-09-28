@@ -126,9 +126,8 @@
 
   let view = $state<EditorView>()
 
-  /** Whether what is showing takes a note dropped in the middle: a canvas as a card,
-   *  and a note that can be written in as a link (wikilink/drop.ts in the editor). A
-   *  read-only note opens the one dropped on it, as it always did. */
+  /** Whether a note dropped in the middle is the surface's: a canvas makes a card, a
+   *  note that can be written in a link. */
   const keepsMiddle = $derived(
     ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
   )

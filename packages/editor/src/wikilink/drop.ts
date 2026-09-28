@@ -3,17 +3,13 @@ import { EditorView } from '@codemirror/view'
 import { linkWriter, noteIndex } from './notes'
 
 /** A row of the app's file list let go over the words: a link to it at the drop, as
- *  in Obsidian. Which notes a drag carries is the app's to say, as paths inside the
- *  space, and a drag carrying none goes the way it always went. */
-
-/** Read at `dragover`, where a browser hides the data, so the app answers from what
- *  it remembers of its own drag. */
+ *  in Obsidian. The app says which notes a drag carries, as paths in the space. */
 export const noteCarrier = Facet.define<
   (transfer: DataTransfer | null) => readonly string[],
   (transfer: DataTransfer | null) => readonly string[]
 >({ combine: (values) => values[0] ?? (() => []) })
 
-/** The writer, fetched by the first drop rather than carried to the first paint. */
+/** The writer, fetched by the first drop. */
 export const noteLinksCode = () => import('./note-links')
 
 export const noteDrops: Extension = EditorView.domEventHandlers({

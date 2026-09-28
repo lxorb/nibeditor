@@ -2891,9 +2891,8 @@ class Workspace {
   /** The note the file list is to scroll to; Tree.svelte clears it. */
   revealing = $state<string | null>(null)
 
-  /** The note in front, or the one named, in the file list: the rows above it
-   *  unfolded and its own scrolled to, as Obsidian's Reveal file in navigation. A
-   *  folder's own note is the folder's row. */
+  /** The note in front, or the one named, unfolded to and scrolled to in the file
+   *  list. A folder's own note is the folder's row. */
   revealNote(path = this.active?.path) {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
@@ -2913,8 +2912,8 @@ class Workspace {
 
   /** Whether folding the list would change anything. */
   get unfolded(): boolean {
-    const root = this.activeSpace?.root
-    return root !== undefined && this.device.unfoldedUnder(root)
+    const root = this.activeSpace?.root ?? ''
+    return Object.keys(this.device.expanded).some((path) => withinSpace(root, path) !== null)
   }
 
   /** Opens a note and lands on one of its headings, the way a link into a

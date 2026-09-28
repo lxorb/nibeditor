@@ -180,12 +180,10 @@ describe('folding the whole list', () => {
     view.expand('/Notes/A')
     view.expand('/Notes/A/B')
     view.expand('/Other/C')
-    expect(view.unfoldedUnder('/Notes')).toBe(true)
 
     view.foldUnder('/Notes')
 
     expect(view.expanded).toEqual({ '/Other/C': true })
-    expect(view.unfoldedUnder('/Notes')).toBe(false)
     expect(JSON.parse(store.getItem('nib:expanded') ?? '{}')).toEqual({ '/Other/C': true })
   })
 

@@ -631,8 +631,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-e',
     run: () => revealPanel('tree'),
   },
-  // The note in front found in the file list, and every row folded again. No
-  // default chord for either, as in Obsidian and VS Code.
+  // No default chord, as in Obsidian and VS Code.
   {
     id: 'app.reveal',
     label: () => t('Show in the file list'),
