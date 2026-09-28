@@ -851,7 +851,9 @@ const APP_ENTRIES: Shortcut[] = [
     // because the app's other view keys are already along that row. Obsidian's
     // own Slides plugin ships no key at all, so no preset takes this one back.
     // A browser keeps F5 for reloading, which the settings list warns about; the
-    // palette and the View menu are the way in there.
+    // palette and the View menu are the way in there. So does a web tab: over a page
+    // F5 is `web.reload`, read by the bar before this is, and a page is not a note
+    // anybody presents.
     id: 'app.present',
     label: () => t('Present'),
     category: 'view',

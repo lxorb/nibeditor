@@ -483,6 +483,21 @@ answer either way, because the engine will not give one and a back arrow that is
 always lit is an arrow that lies half the time. A redirect can leave an extra entry
 in the trail; that is the price of not having the engine's own answer.
 
+**A right click or a held finger on either arrow lists the pages that way**, Chrome's
+list: the nearest first, a dozen at most, each by what the page called itself (off the
+address field's history) or its address. A row goes straight there - `history.go(n)`
+in the page, or the address off the trail for a revived one - and the trail is moved
+to where it lands before the page arrives, so the jump reads as a step and not as
+somewhere new. The trail comes from `web_trail`, which asks nothing of the page.
+
+**The reload glyph is a cross while a page is coming**, and pressing it stops the page,
+which is what Chrome's does; Escape does the same once whatever is open over the page
+has had its Escape. The tab's mark turns meanwhile, so the bar only says what a press
+would do. Ctrl+Shift+R and Ctrl+F5 load the page past the cache. Stopping and loading
+fresh are `WebView2`'s own - `Stop`, and the DevTools Protocol's `Page.reload` with
+`ignoreCache` - and elsewhere the nearest a page can do, `window.stop()` and an
+ordinary reload; see `src-tauri/src/web_reload.rs`.
+
 #### The pointer is never hidden while somebody types
 
 Emil, 2026-09-28: _"manchmal habe ich einfach keinen mouse cursor waehrend ich im browser
@@ -633,6 +648,11 @@ address field or the first page a tab arrives at reads it.
 | key                     |                                                                                                                                                                                                   |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ctrl+L                  | the address field, in the pane that has the focus                                                                                                                                                 |
+| Alt+D, and F6 in a page | the address field too, Chrome's other two ways to it                                                                                                                                              |
+| F5, Ctrl+R              | reload; Ctrl+Shift+R and Ctrl+F5 past the cache                                                                                                                                                   |
+| Escape                  | stops a page on its way in                                                                                                                                                                        |
+| Ctrl+1 to 9             | the tab at that place along the strip, the ninth the last                                                                                                                                         |
+| Alt+Enter in the field  | the address in a tab of its own, in front                                                                                                                                                         |
 | Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
 | Alt+Left, Alt+Right     | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with                                                                                     |
 | Right, End in the field | takes the rest of the address the field wrote in                                                                                                                                                  |
@@ -649,13 +669,18 @@ showing a page has no editor to shadow. It is in the registry like every other k
   read the same way.
 
 **While the page itself has the keyboard, its keys are the page's - but for the
-browser's own.** After a click into a site, Ctrl+L is that site's shortcut and the app
-never sees the press: that is what a webview of its own means. The bar is one click
-away. The exception is Chrome's: the chords a browser never offers a page - a new tab,
-closing one, reopening the last, going round them and moving one along, a new window, Ctrl+1 to 9 - are
-taken before the page sees them and played on the app's own window, and the keyboard
-goes back to the app with them. On `WebView2` only; see `docs/keyboard.md` and
+browser's own.** After a click into a site the app never sees the press: that is what a
+webview of its own means. The exception is Chrome's: the chords a browser never offers
+a page - a new tab, closing one, reopening the last, going round them and moving one
+along, a new window, Ctrl+1 to 9, and Ctrl+L, Alt+D and F6 back to the address field -
+are taken before the page sees them and played on the app's own window, and the
+keyboard goes back to the app with them. F5 and Ctrl+R in a page are the engine's own
+reload, as in Chrome, and need nothing. On `WebView2` only; see `docs/keyboard.md` and
 `src-tauri/src/web_keys.rs`.
+
+The bar reads F5, the reload keys and Ctrl and a digit before the window's own handler
+does, and only in the focused pane, because they share their keys with Present and a
+heading level: a pane showing a page has neither. See `web-tab/bar-keys.ts`.
 
 The mark at the left of the field is the site: the page's own favicon, and a lock for
 a site that has none - or a warning for an `http:` page. Pressing it says what this
@@ -1149,7 +1174,8 @@ versions and goes to the trash like every other document.
 
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the twelve things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` only. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
@@ -1179,7 +1205,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
-| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, Escape. Pure, tested |
 | `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
 | `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |
 | `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
