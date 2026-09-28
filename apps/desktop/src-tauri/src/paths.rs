@@ -613,7 +613,7 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
     let parent = target
         .parent()
         .ok_or_else(|| format!("{} has no folder to write into", target.display()))?;
-    let name = target.file_name().and_then(OsStr::to_str).unwrap_or("file");
+    let name = temp_stem(target);
 
     // Hidden, so a half-written note never shows up in the tree beside the real
     // one, and named after this process so two windows cannot collide.
@@ -632,6 +632,25 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
         let _ = fs::remove_file(&temp);
         cannot("save", target, &error)
     })
+}
+
+/// How many bytes of the target's name its temp file carries.
+const TEMP_STEM: usize = 64;
+
+/// The front of the target's name, for its temp file to be recognisable by.
+///
+/// Only the front. A file system holds a name to 255 bytes or 255 UTF-16 units,
+/// and the temp file's name is the target's with a dot and a counter around it -
+/// so a note whose own name was near that limit, which is 85 characters of
+/// Chinese on a Mac or on Linux, had a temp file no disk would create, and could
+/// be opened but never saved. Counted in bytes, and cut between two characters.
+fn temp_stem(target: &Path) -> &str {
+    let name = target.file_name().and_then(OsStr::to_str).unwrap_or("file");
+    let mut end = name.len().min(TEMP_STEM);
+    while !name.is_char_boundary(end) {
+        end -= 1;
+    }
+    &name[..end]
 }
 
 /// The half of an atomic write that can fail with the temp file already there.
@@ -965,6 +984,30 @@ mod tests {
             .map(|entry| entry.file_name().to_string_lossy().to_string())
             .collect();
         assert_eq!(left, vec!["Note.md".to_string()]);
+    }
+
+    /// A name as long as a disk allows is a note that can be saved. Its temp file
+    /// is named after it, and used to be the whole name and a counter more, which
+    /// no disk would create.
+    #[test]
+    fn a_note_with_the_longest_name_a_disk_allows_can_be_saved() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let target = dir.path().join(format!("{}.md", "a".repeat(240)));
+
+        write_atomically(&target, b"words").expect("the write to land");
+        assert_eq!(std::fs::read(&target).expect("the note"), b"words");
+    }
+
+    /// The temp file carries the front of the name, cut between two characters
+    /// however many bytes each of them is.
+    #[test]
+    fn a_temp_file_is_named_after_the_front_of_the_note() {
+        assert_eq!(super::temp_stem(Path::new("dir/Idea.md")), "Idea.md");
+
+        let long = "\u{1F600}".repeat(40);
+        let stem = super::temp_stem(Path::new(&long));
+        assert!(stem.len() <= 64, "{} bytes", stem.len());
+        assert_eq!(stem, "\u{1F600}".repeat(16));
     }
 
     #[test]
