@@ -48,9 +48,18 @@ import {
 import { foldHeadings, foldLess, foldMore, toggleFold, unfoldEverything } from './fold'
 import { highlightSelection } from './highlight'
 import { copyMarkdown } from './copy'
-import { lowerCase, titleCase, upperCase } from './case'
-import { expandSelection, shrinkSelection } from './grow'
-import { deleteLine, insertLineAbove, joinLines, reverseLines, sortLines } from './lines'
+import {
+  deleteLine,
+  expandSelection,
+  insertLineAbove,
+  joinLines,
+  lowerCase,
+  reverseLines,
+  shrinkSelection,
+  sortLines,
+  titleCase,
+  upperCase,
+} from './line-door'
 import { pastePlain } from './paste'
 import { runFenceAtCursor } from './run/run'
 import { redoEdit, undoEdit } from './shared'

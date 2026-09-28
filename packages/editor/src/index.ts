@@ -59,9 +59,19 @@ export {
   unfoldEverything,
 } from './fold'
 export { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'
-export { deleteLine, insertLineAbove, joinLines, reverseLines, sortLines } from './lines'
-export { lowerCase, titleCase, upperCase } from './case'
-export { expandSelection, shrinkSelection } from './grow'
+export {
+  deleteLine,
+  expandSelection,
+  insertLineAbove,
+  joinLines,
+  loadLineCommands,
+  lowerCase,
+  reverseLines,
+  shrinkSelection,
+  sortLines,
+  titleCase,
+  upperCase,
+} from './line-door'
 export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'

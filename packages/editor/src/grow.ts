@@ -8,8 +8,8 @@
  *  words, of what is between the marks, or of sections, and its key is Italic here.
  *
  *  Shrinking goes back down the same steps rather than guessing new ones, so each
- *  press undoes one grow exactly. Anything else that moves the selection or
- *  changes the note forgets the steps, which is what VS Code does as well.
+ *  press undoes one grow exactly; the steps are kept in grow-steps.ts, which every
+ *  editor carries, and this arrives behind the door in line-door.ts.
  *
  *  Each press reads the nodes around the selection and the lines above it up to
  *  the heading it is under, never the whole note. */
@@ -20,10 +20,9 @@ import {
   type EditorState,
   type SelectionRange,
   type StateCommand,
-  StateEffect,
-  StateField,
 } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
+import { grew, growing, shrank } from './grow-steps'
 import { headingLevel } from './headings'
 import { hiddenFrontMatter } from './live-preview/hidden-front-matter'
 import { enclosing } from './nodes'
@@ -32,22 +31,6 @@ interface Span {
   from: number
   to: number
 }
-
-const grew = StateEffect.define<EditorSelection>()
-const shrank = StateEffect.define()
-
-/** The selections each grow started from, the last one on top: what the editor
- *  carries for Shrink to have something to go back to. */
-export const growing = StateField.define<readonly EditorSelection[]>({
-  create: () => [],
-  update(taken, transaction) {
-    for (const effect of transaction.effects) {
-      if (effect.is(grew)) return [...taken, effect.value]
-      if (effect.is(shrank)) return taken.slice(0, -1)
-    }
-    return transaction.docChanged || transaction.selection ? [] : taken
-  },
-})
 
 /** Inline markup whose words sit between two marks: the stars of emphasis, the
  *  backticks of code, a link's brackets. Its words are one step, and the words
