@@ -119,7 +119,8 @@ export function exportCommands(): Command[] {
 
   const note = () => workspace.active
   // Flushed first: the editor's last few keystrokes are still a rope until
-  // something asks for them as text, and an export is asking.
+  // something asks for them as text, and an export is asking. Only ever from a
+  // row's `run`, never while the rows are built; see `kind` below.
   const source = () => {
     workspace.flush()
     return note()?.doc ?? ''
@@ -129,9 +130,15 @@ export function exportCommands(): Command[] {
 
   /** What is open, which is what decides the rows. Read once: the list is built
    *  fresh every time the menu or the palette opens, and a document does not
-   *  become another kind while its own menu is on screen. */
+   *  become another kind while its own menu is on screen.
+   *
+   *  Read rather than flushed. The palette builds this list inside a derivation,
+   *  where a write throws and the palette never opens; the flush belongs to the
+   *  export, which `source` makes when a row is run. */
   const open = note()
-  const kind = exportKindOf(open ? { kind: open.kind, path: open.path, text: source() } : null)
+  const kind = exportKindOf(
+    open ? { kind: open.kind, path: open.path, text: open.note.latest } : null,
+  )
 
   /** Everything an export needs beyond the note: paper, colours, where the
    *  pictures it names actually are, and where its links point. Shared with

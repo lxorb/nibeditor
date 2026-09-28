@@ -170,10 +170,6 @@ def select(page: Page, doc: str, words: str, caret_only: bool = False) -> None:
 
 
 def palette(page: Page, label: str) -> None:
-    # Flushed first: the palette's export rows flush the editor's last keystrokes
-    # while its list is being derived, which Svelte refuses, and the palette does not
-    # open. Not this drive's to fix; it is reported beside it.
-    page.evaluate("() => window.nibApp.workspace.flush()")
     page.keyboard.press("Control+Shift+p")
     page.wait_for_timeout(250)
     page.keyboard.type(label)
