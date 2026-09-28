@@ -33,6 +33,7 @@ import {
 import {
   blockIdOf,
   blockIds,
+  foldName,
   type FoundLink,
   freeBlockId,
   isCanvasTarget,
@@ -107,10 +108,10 @@ export function readsWords(path: string): boolean {
   return isMarkdownPath(path) || isCanvasTarget(path) || isPagesTarget(path) || isWebTarget(path)
 }
 
-/** A path as something to compare: no extension of our own, folded case. The same
+/** A path as something to compare: no extension of our own, folded. The same
  *  reading `resolveNote` does, so a candidate here is a candidate there. */
 function comparable(path: string): string {
-  return path.replace(/\\/g, '/').replace(OWN, '').toLowerCase()
+  return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
 
 /** Every name a note answers to, folded: the last part of its path, and the
@@ -1066,7 +1067,7 @@ class Links {
     const linked = new Set(
       this.backlinks(path).map((reference) => `${reference.path}\0${reference.line}`),
     )
-    const needles = written.map((one) => one.toLowerCase())
+    const needles = written.map(foldName)
     // One line mentioning two of the names is one mention of the note. A list
     // rather than a set: a few hundred lines come back at most, and a set in a
     // reactive file would have to be a reactive one for no reason at all.
@@ -1084,7 +1085,7 @@ class Links {
         // A line that already links here is a backlink, not a mention of one.
         .filter((hit) => !linked.has(`${hit.path}\0${hit.line}`))
         // And the name has to stand as a word rather than inside a longer one.
-        .filter((hit) => needles.some((needle) => standsAlone(hit.text.toLowerCase(), needle)))
+        .filter((hit) => needles.some((needle) => standsAlone(foldName(hit.text), needle)))
         .filter((hit) => {
           const key = `${hit.path}\0${hit.line}`
           if (seen.includes(key)) return false

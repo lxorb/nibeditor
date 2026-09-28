@@ -311,6 +311,13 @@ describe('the lists that were already there', () => {
   })
 })
 
+/** A note a Mac tool named with a decomposed `Ü` is offered for the `Ü` a keyboard
+ *  types, and under the composed name, so the link it writes is the one typed. */
+test('a decomposed name is offered for what a keyboard types', async () => {
+  const found = await rowsFor('[[Über', space([note('U\u0308bersicht.md'), note('Plan.md')]))
+  expect(labels(found)).toEqual(['Übersicht'])
+})
+
 /** The Links setting is the app's, and the app answers it in one writer; the popup
  *  hands that writer what it knows and puts back whatever comes out. Every kind of
  *  row here, because the whole of the bug was that one of them wrote a wikilink

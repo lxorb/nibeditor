@@ -156,29 +156,46 @@ export function start(): () => void {
   }
 }
 
-/** Files named on the command line, and any handed over by a second launch.
- *  Answers how to stop listening for the second kind. */
+/** Files the app was launched with, and any handed over later by a second launch
+ *  or the Finder. Answers how to stop listening for the later kind.
+ *
+ *  On this window alone, since later files go to the window in front, and before
+ *  asking, since asking is what tells the crate this window hears them; see
+ *  `hand_over` in launch.rs. */
 async function openLaunchFiles(): Promise<(() => void) | null> {
   if (!isDesktop) return null
+
+  const { getCurrentWindow } = await import('@tauri-apps/api/window')
+  const stop = await getCurrentWindow().listen<string[]>(
+    'nib://open-files',
+    (event) => void openAll(event.payload),
+  )
 
   for (const path of await invoke<string[]>('take_startup_files').catch(() => [])) {
     await workspace.open(path)
   }
 
-  const { listen } = await import('@tauri-apps/api/event')
-  return listen<string[]>('nib://open-files', (event) => void openAll(event.payload))
+  return stop
 }
 
 async function openAll(paths: string[]) {
   for (const path of paths) await workspace.open(path)
 }
 
-/** Nothing with words in it is lost on the way out: closing asks first. */
+/** Nothing with words in it is lost on the way out: closing asks first, and so
+ *  does quitting. */
 async function guardClose() {
   const window = await currentWindow()
   // The handler answers at once and the questions happen after: preventing the
   // close is the only part that has to be synchronous.
   await window.onCloseRequested((event) => void onClose(event, window))
+
+  // Cmd+Q closes no window, so the crate holds the quit and asks each window to
+  // go as its close button would; see lifecycle.rs.
+  if (isDesktop) {
+    const { getCurrentWindow } = await import('@tauri-apps/api/window')
+    await getCurrentWindow().listen('nib://quit', () => void onQuit(window))
+  }
 }
 
 interface Closing {
@@ -189,16 +206,11 @@ interface Closable {
   destroy(): Promise<void>
 }
 
+/** Whether the question below is already up, so it is never put twice. */
+let asking = false
+
 async function onClose(event: Closing, window: Closable) {
-  // Whatever is waiting on a timer goes down now, before anything below can end the
-  // window: a filter typed into the graph's card in the last breath is written once
-  // the typing stops, and a plane's file once the drawing does. Both run off a timer
-  // that a window going away would never reach, and a plane has to go first - it
-  // writes into a document, and it is the unsaved documents that decide whether this
-  // asks below. Whoever owes a write has said so themselves rather than being reached
-  // for from here; see parting.ts.
-  settleUp()
-  workspace.graphSettings.flush()
+  settle()
 
   // A tab gets no chance to ask its own question - `beforeunload` runs to
   // completion before anything is painted. Preventing it is the whole
@@ -208,25 +220,45 @@ async function onClose(event: Closing, window: Closable) {
     return
   }
 
-  // Nothing to ask about, but there may still be an update to put in place.
-  if (!workspace.unsaved.length) {
-    if (!ready()) return
-
-    event.preventDefault()
-    await installStaged()
-    await window.destroy()
-    return
-  }
+  // Nothing to ask about and no update to put in place: the window just goes.
+  if (!workspace.unsaved.length && !ready() && !asking) return
 
   event.preventDefault()
+  if (asking) return
+  if (await mayGo()) await window.destroy()
+}
 
-  // The same question a tab asks, once for each note that holds something: it is
-  // the same decision, and a reader who has learned it on one note should not
-  // meet a different sheet on the way out. Cancel at any of them leaves the
-  // window where it is.
-  if (!(await workspace.mayCloseWindow())) return
+/** The app is quitting: go as the close button would, or say the window stays. */
+async function onQuit(window: Closable) {
+  if (asking) return
 
-  // Everything is either written or deliberately given up on.
-  await installStaged()
-  await window.destroy()
+  settle()
+  if (await mayGo()) await window.destroy()
+  else await invoke('keep_running').catch(() => undefined)
+}
+
+/** Whatever is waiting on a timer goes down now, before anything can end the
+ *  window: a filter typed into the graph's card in the last breath is written once
+ *  the typing stops, and a plane's file once the drawing does. Both run off a timer
+ *  that a window going away would never reach, and a plane has to go first - it
+ *  writes into a document, and it is the unsaved documents that decide whether the
+ *  window asks. Whoever owes a write has said so themselves rather than being
+ *  reached for from here; see parting.ts. */
+function settle() {
+  settleUp()
+  workspace.graphSettings.flush()
+}
+
+/** Whether the window may go, having asked about each unsaved note - the question
+ *  a tab asks, so the reader meets one sheet - and put a waiting update in place. */
+async function mayGo(): Promise<boolean> {
+  asking = true
+  try {
+    if (workspace.unsaved.length && !(await workspace.mayCloseWindow())) return false
+
+    await installStaged()
+    return true
+  } finally {
+    asking = false
+  }
 }

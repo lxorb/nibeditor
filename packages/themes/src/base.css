@@ -1078,6 +1078,14 @@ select option {
   color: var(--muted-strong);
 }
 
+/* A quiet answer that is one of several in a row, filled a step off the card so
+   each row reads as having one thing to press, as Obsidian's are: the space
+   chooser's. The hover and the press are the quiet one's. */
+.nib-button.is-quiet.is-soft {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
 @media (hover: hover) {
   .nib-button.is-quiet:hover:not(:disabled) {
     background: var(--surface-hover);

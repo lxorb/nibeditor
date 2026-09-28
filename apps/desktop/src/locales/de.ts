@@ -58,6 +58,10 @@ export const de: Dictionary = {
   'Use the plain mark instead': 'Stattdessen das einfache Zeichen verwenden',
   'Loading…': 'Wird geladen…',
   'Create a space': 'Bereich erstellen',
+  // The first launch's space chooser; see SpaceChooser.svelte.
+  'Import a folder': 'Ordner importieren',
+  'Sign in to sync': 'Anmelden zum Synchronisieren',
+  'Create account': 'Konto erstellen',
   'Delete space': 'Bereich löschen',
   'Delete {name}?': '{name} löschen?',
   'Every note in this space is deleted from your computer.':
@@ -1489,6 +1493,9 @@ export const de: Dictionary = {
   'Site information': 'Website-Informationen',
   Downloads: 'Downloads',
   'Show in folder': 'Im Ordner zeigen',
+  'Show in Finder': 'Im Finder anzeigen',
+  'Reveal in Finder': 'Im Finder anzeigen',
+  'In iCloud': 'In iCloud',
   Failed: 'Fehlgeschlagen',
   Camera: 'Kamera',
   Microphone: 'Mikrofon',
@@ -1513,6 +1520,16 @@ export const de: Dictionary = {
   'Web data': 'Webdaten',
   Global: 'Global',
   Site: 'Website',
+  // The Mac's menu bar
+  'About {name}': 'Über {name}',
+  Services: 'Dienste',
+  'Hide {name}': '{name} ausblenden',
+  'Hide others': 'Andere ausblenden',
+  'Show all': 'Alle einblenden',
+  'Quit {name}': '{name} beenden',
+  'Bring all to front': 'Alle nach vorne bringen',
+  'Open recent': 'Zuletzt geöffnet',
+  'Clear menu': 'Menü löschen',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',

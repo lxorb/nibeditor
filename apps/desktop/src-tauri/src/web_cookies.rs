@@ -26,10 +26,15 @@
 //! of a sign-in that goes through pages, and as the window closes, which catches a
 //! login a page made without loading another one.
 //!
-//! `WebView2` only, and only the system's: this module is not built anywhere else.
-//! `WKWebView` and `WebKitGTK` have cookie stores of their own that wry hands nothing
-//! of out; on those a lasting cookie survives a restart and a session one does not,
-//! which docs/web-tabs.md says out loud.
+//! `WebView2` and `WKWebView`, and only the system's engines: this module is not built
+//! anywhere else. The design is the same on both, because both hand out the profile's
+//! own cookie store - `ICoreWebView2CookieManager` on Windows, the data store's
+//! `WKHTTPCookieStore` on a Mac - and in both a cookie is a set of properties that can
+//! be read, given an expiry and written back. On a Mac a session cookie lives only in
+//! the network process's memory: a lasting one is written to the data store on disk
+//! and comes back on the next launch, a session one is simply gone. `WebKitGTK` has a
+//! store of its own that wry hands nothing of out; there a lasting cookie survives a
+//! restart and a session one does not, which docs/web-tabs.md says out loud.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -41,11 +46,19 @@ const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
 
 /// The expiry a session cookie is given at `now`, both in seconds since 1970, which
 /// is what the engine's own cookie object takes.
+#[cfg_attr(
+    target_os = "macos",
+    allow(dead_code, reason = "a Mac's own date counts from now")
+)]
 fn kept_until(now: f64) -> f64 {
     now + KEPT_FOR
 }
 
 /// Now, in the engine's own unit.
+#[cfg_attr(
+    target_os = "macos",
+    allow(dead_code, reason = "a Mac's own date counts from now")
+)]
 fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -60,6 +73,7 @@ fn now() -> f64 {
 /// several sites: the identity provider's session is set on a page that has already
 /// been left by the time the one after it loads. Called on the window's own thread,
 /// which is the only thread the engine's objects may be touched from.
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "the cookie store is reached through WebView2's COM interfaces, which have no safe wrapper"
@@ -130,6 +144,131 @@ pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'st
     }
 }
 
+/// Makes every session cookie in the data store this webview is on last, and says so
+/// through `done` - once, whether it could or not. The same promise as the Windows one
+/// above, kept with `WKHTTPCookieStore`: every cookie of the store is read, and each
+/// one that would end with the session is written back with an expiry.
+///
+/// A cookie is read as its properties and made again from them, which is the one way
+/// `NSHTTPCookie` has of changing anything about a cookie. `HttpOnly` is not one of the
+/// documented keys, so it is written back by name where the cookie had it: a cookie a
+/// page's script could not read before is not one it can read after.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "the cookie store is reached through WKWebView's Objective-C interface, from the pointer wry hands out"
+)]
+pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'static) {
+    use std::cell::Cell;
+    use std::ptr::NonNull;
+    use std::rc::Rc;
+
+    use block2::RcBlock;
+    use objc2::rc::Retained;
+    use objc2_foundation::{NSArray, NSHTTPCookie};
+    use objc2_web_kit::WKWebView;
+
+    type Said = Rc<Cell<Option<Box<dyn FnOnce()>>>>;
+    fn say(done: &Said) {
+        if let Some(said) = done.take() {
+            said();
+        }
+    }
+
+    let done: Said = Rc::new(Cell::new(Some(Box::new(done) as Box<dyn FnOnce()>)));
+
+    // SAFETY: the pointer is the WKWebView wry built for this page, alive for as long
+    // as the page is, and retaining it keeps it so while the store is asked; this runs
+    // on the main thread, where it belongs.
+    let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
+        say(&done);
+        return;
+    };
+
+    // SAFETY: reading the webview's own configuration on its own thread.
+    let store = unsafe { view.configuration().websiteDataStore().httpCookieStore() };
+    let writing = store.clone();
+    let answered = done.clone();
+
+    let handler = RcBlock::new(move |cookies: NonNull<NSArray<NSHTTPCookie>>| {
+        // SAFETY: the engine hands this block an array that is alive for its length.
+        let cookies = unsafe { cookies.as_ref() };
+        let kept: Vec<_> = cookies
+            .iter()
+            .filter(|cookie| cookie.isSessionOnly())
+            .filter_map(|cookie| lasting(&cookie))
+            .collect();
+
+        if kept.is_empty() {
+            say(&answered);
+            return;
+        }
+
+        // One count per cookie, down as each is stored; the last one says so.
+        let left = Rc::new(Cell::new(kept.len()));
+        for cookie in kept {
+            let (left, answered) = (left.clone(), answered.clone());
+            let stored = RcBlock::new(move || {
+                left.set(left.get().saturating_sub(1));
+                if left.get() == 0 {
+                    say(&answered);
+                }
+            });
+            // SAFETY: the store is the webview's own and is used on its own thread;
+            // the block is copied by the engine and outlives the call.
+            unsafe { writing.setCookie_completionHandler(&cookie, Some(&stored)) };
+        }
+    });
+
+    // SAFETY: as above; the engine copies the block and calls it once, on this thread.
+    unsafe { store.getAllCookies(&handler) };
+}
+
+/// The cookie again, lasting: its own properties, with a lifetime and without the
+/// discard that would end it with the session anyway.
+///
+/// The discard is taken out rather than said as no. The engine hands a session
+/// cookie over with `Discard` set, and on macOS 26 a cookie made from properties that
+/// hold the key at all is session-only, "FALSE" included - so every cookie this wrote
+/// back was the same session cookie again, and a login lasted only as long as a quit
+/// with the page still open happened to keep it. Without the key, an expiry makes the
+/// Netscape kind nearly every site sets last, and a maximum age the RFC 2965 kind,
+/// which is the one that would otherwise default to being discarded.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "a cookie's properties are a dictionary whose values the type system does not check"
+)]
+fn lasting(
+    cookie: &objc2_foundation::NSHTTPCookie,
+) -> Option<objc2::rc::Retained<objc2_foundation::NSHTTPCookie>> {
+    use objc2::runtime::AnyObject;
+    use objc2_foundation::{
+        NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieExpires, NSHTTPCookieMaximumAge,
+        NSMutableCopying as _, NSString,
+    };
+
+    let properties = cookie.properties()?.mutableCopy();
+    let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
+    // SAFETY: every key is `NSHTTPCookie`'s own and every value is the type the key
+    // takes: a date for the expiry, strings for the maximum age and `HttpOnly`.
+    unsafe {
+        properties.insert(NSHTTPCookieExpires, until.as_ref() as &AnyObject);
+        properties.insert(
+            NSHTTPCookieMaximumAge,
+            NSString::from_str(&format!("{KEPT_FOR:.0}")).as_ref() as &AnyObject,
+        );
+        properties.removeObjectForKey(NSHTTPCookieDiscard);
+        if cookie.isHTTPOnly() {
+            properties.insert(
+                &*NSString::from_str("HttpOnly"),
+                NSString::from_str("TRUE").as_ref() as &AnyObject,
+            );
+        }
+        NSHTTPCookie::cookieWithProperties(&properties)
+    }
+}
+
 /// How long the window waits for the engine before it closes anyway. A quit that
 /// hangs on a cookie store is worse than one sign-in more.
 const PATIENCE: std::time::Duration = std::time::Duration::from_secs(2);
@@ -145,19 +284,11 @@ static LEAVING: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec::new()
 /// window with no web tab in it closes at once, and nothing here runs at all; so does
 /// the second request, which is this closing it.
 pub fn leaving(window: &tauri::Window, event: &tauri::WindowEvent) {
-    use std::sync::atomic::{AtomicUsize, Ordering};
-    use std::sync::Arc;
-
     let tauri::WindowEvent::CloseRequested { api, .. } = event else {
         return;
     };
 
-    let pages: Vec<_> = window
-        .webviews()
-        .into_iter()
-        .filter(|one| crate::web_tabs::is_page(one.label()))
-        .collect();
-    if pages.is_empty() {
+    if pages(window).is_empty() {
         return;
     }
 
@@ -175,43 +306,70 @@ pub fn leaving(window: &tauri::Window, event: &tauri::WindowEvent) {
 
     api.prevent_close();
 
-    let close = {
-        let window = window.clone();
-        move || {
-            let _ = window.close();
+    let closing = window.clone();
+    kept(window, move || {
+        let _ = closing.close();
+    });
+}
+
+/// The window's web tabs, which are the pages whose logins are worth keeping.
+fn pages(window: &tauri::Window) -> Vec<tauri::Webview> {
+    window
+        .webviews()
+        .into_iter()
+        .filter(|one| crate::web_tabs::is_page(one.label()))
+        .collect()
+}
+
+/// Makes the logins of every web tab in a window last, then calls `then` - once,
+/// whether the engine answered or not. At once for a window with no web tab in it.
+///
+/// What closing a window does through `leaving`, and what quitting does for each
+/// window before asking it to go (see `quit` in lifecycle.rs): a quit ends a window
+/// without the close request `leaving` hears, so it has to ask for this itself.
+pub fn kept(window: &tauri::Window, then: impl FnOnce() + Send + 'static) {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::{Arc, Mutex};
+
+    type Then = Mutex<Option<Box<dyn FnOnce() + Send>>>;
+
+    let pages = pages(window);
+    if pages.is_empty() {
+        then();
+        return;
+    }
+
+    // Held in one place and taken by whichever comes first: the last page's answer,
+    // or the patience running out.
+    let then: Arc<Then> = Arc::new(Mutex::new(Some(Box::new(then))));
+    let go = move |then: &Then| {
+        let taken = then.lock().ok().and_then(|mut then| then.take());
+        if let Some(then) = taken {
+            then();
         }
     };
 
-    // One count per page, down as each is answered; the last answer closes the window.
+    // One count per page, down as each is answered; the last answer goes on.
     let left = Arc::new(AtomicUsize::new(pages.len()));
-    let answered = move |left: &AtomicUsize, close: &dyn Fn()| {
-        if left.fetch_sub(1, Ordering::SeqCst) == 1 {
-            close();
-        }
-    };
-
     for page in pages {
-        let (waiting, closing) = (left.clone(), close.clone());
+        let (waiting, going) = (left.clone(), then.clone());
         let asked = page.with_webview(move |platform| {
-            keep(&platform, move || answered(&waiting, &closing));
+            keep(&platform, move || {
+                if waiting.fetch_sub(1, Ordering::SeqCst) == 1 {
+                    go(&going);
+                }
+            });
         });
-        if asked.is_err() {
-            answered(&left, &close);
+        if asked.is_err() && left.fetch_sub(1, Ordering::SeqCst) == 1 {
+            go(&then);
         }
     }
 
-    // And closed regardless, a moment later, should the engine never answer. Only if
-    // it is still waiting: a window already closed is not closed twice.
-    let window = window.clone();
+    // And on regardless, a moment later, should the engine never answer. A quit that
+    // hangs on a cookie store is worse than one sign-in more.
     std::thread::spawn(move || {
         std::thread::sleep(PATIENCE);
-        let waiting = window.label().to_string();
-        let still = LEAVING
-            .lock()
-            .is_ok_and(|leaving| leaving.contains(&waiting));
-        if still {
-            let _ = window.close();
-        }
+        go(&then);
     });
 }
 
@@ -228,5 +386,59 @@ mod tests {
         let at = now();
         assert!(at > 1_700_000_000.0, "the clock reads a real day");
         assert!((kept_until(at) - at - KEPT_FOR).abs() < 1.0);
+    }
+
+    /// A session cookie the way the engine hands one over, with `Discard` set, of
+    /// either version: what comes back lasts, and for about four hundred days.
+    #[cfg(target_os = "macos")]
+    #[test]
+    #[allow(
+        unsafe_code,
+        reason = "a cookie's properties are a dictionary whose values the type system does not check"
+    )]
+    fn a_session_cookie_is_made_again_as_one_that_lasts() {
+        use objc2::runtime::AnyObject;
+        use objc2_foundation::{
+            NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieDomain, NSHTTPCookieName,
+            NSHTTPCookiePath, NSHTTPCookieValue, NSHTTPCookieVersion, NSMutableDictionary,
+            NSString,
+        };
+
+        for version in ["0", "1"] {
+            let properties = NSMutableDictionary::<NSString, AnyObject>::new();
+            // SAFETY: every key is `NSHTTPCookie`'s own, and every value a string.
+            let session = unsafe {
+                for (key, value) in [
+                    (NSHTTPCookieName, "sessionid"),
+                    (NSHTTPCookieValue, "1"),
+                    (NSHTTPCookieDomain, "example.org"),
+                    (NSHTTPCookiePath, "/"),
+                    (NSHTTPCookieVersion, version),
+                    (NSHTTPCookieDiscard, "TRUE"),
+                ] {
+                    properties.insert(key, NSString::from_str(value).as_ref() as &AnyObject);
+                }
+                NSHTTPCookie::cookieWithProperties(&properties).expect("a cookie")
+            };
+            assert!(
+                session.isSessionOnly(),
+                "version {version} starts as a session cookie"
+            );
+
+            let kept = super::lasting(&session).expect("made again");
+            assert!(
+                !kept.isSessionOnly(),
+                "version {version} still ends with the session"
+            );
+            let left = kept
+                .expiresDate()
+                .map(|until| until.timeIntervalSinceDate(&NSDate::now()))
+                .expect("an expiry");
+            assert!(
+                (left - KEPT_FOR).abs() < 60.0,
+                "version {version} lasts {left} seconds"
+            );
+            assert_eq!(kept.name().to_string(), "sessionid");
+        }
     }
 }

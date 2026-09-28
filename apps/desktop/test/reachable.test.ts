@@ -36,10 +36,11 @@ function branch(text: string, condition: string): string {
 
 describe('the window buttons', () => {
   const titlebar = read('lib/Titlebar.svelte')
-  const desktop = branch(titlebar, 'isDesktop')
+  // Not on a Mac either, which keeps its own traffic lights; see Titlebar.svelte.
+  const desktop = branch(titlebar, 'isDesktop && !mac')
 
   /** A browser tab has no window of its own to minimise, maximise or close, and
-   *  neither has the phone app. Left out rather than hidden: three buttons a
+   *  neither has the phone app. A Mac has them, drawn by the system. Left out rather than hidden: three buttons a
    *  stylesheet has shrunk to nothing are still three buttons a key reaches and
    *  a screen reader reads out. */
   test.each(['Minimize', 'Maximize', 'Restore', 'Close'])(

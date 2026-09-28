@@ -24,9 +24,10 @@
 //! gave it: a path the window names is never opened. See `lib/web-tab/downloads.svelte.ts`.
 //!
 //! One mechanism on every desktop. `WebviewBuilder::on_download` is the same hook on
-//! `WebView2`, `WKWebView` and `WebKitGTK`; the one thing only `WebView2` can say is how
-//! far along a file is, and `progress` adds that where it can. A phone has no web tabs
-//! - a site there opens in the system browser, whose downloads are its own.
+//! `WebView2`, `WKWebView` and `WebKitGTK`; the one thing it does not say is how far
+//! along a file is, and `progress` adds that - and Cancel - where the engine's own
+//! download can be reached, which is `WebView2` and `WKWebView`. A phone has no web
+//! tabs - a site there opens in the system browser, whose downloads are its own.
 
 use std::collections::HashSet;
 use std::ffi::OsStr;
@@ -167,8 +168,11 @@ impl Downloads {
 
     /// How far a download has got, by the path it is being written to.
     #[cfg_attr(
-        not(all(windows, not(feature = "cef"))),
-        allow(dead_code, reason = "only WebView2 says how far a download has got")
+        any(not(any(windows, target_os = "macos")), feature = "cef"),
+        allow(
+            dead_code,
+            reason = "only WebView2 and WKWebView say how far a download has got"
+        )
     )]
     fn moved(&self, path: &Path, received: u64, total: Option<u64>) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
@@ -179,6 +183,38 @@ impl Downloads {
         one.received = received;
         one.total = total.or(one.total);
         Some(one.clone())
+    }
+
+    /// The oldest download still on its way from `url` that is not one of `taken`, with
+    /// the path it is being written to. How a `WKDownload` - which knows its address
+    /// and not its file - is matched to the list: in the same order `finish` matches
+    /// one that names no path, so the two agree on which is which.
+    #[cfg_attr(
+        not(all(target_os = "macos", not(feature = "cef"))),
+        allow(
+            dead_code,
+            reason = "only WKWebView's downloads are matched by address"
+        )
+    )]
+    fn going_from(&self, url: &str, taken: &[u64]) -> Option<(u64, PathBuf)> {
+        self.held.lock().ok().and_then(|held| {
+            held.iter()
+                .find(|one| one.state == State::Going && one.url == url && !taken.contains(&one.id))
+                .map(|one| (one.id, one.path.clone()))
+        })
+    }
+
+    /// Where a download is being written, while it is still on its way.
+    #[cfg_attr(
+        not(all(target_os = "macos", not(feature = "cef"))),
+        allow(dead_code, reason = "only WKWebView's downloads are watched by id")
+    )]
+    fn going_to(&self, id: u64) -> Option<PathBuf> {
+        self.held.lock().ok().and_then(|held| {
+            held.iter()
+                .find(|one| one.id == id && one.state == State::Going)
+                .map(|one| one.path.clone())
+        })
     }
 
     /// The reader stopped one. Marked here first, so the engine's own word that it
@@ -451,8 +487,9 @@ fn settle(app: &AppHandle, tab: &str) -> bool {
     true
 }
 
-/// Starts listening to how far each download of this webview has got. `WebView2` only,
-/// through `progress`; elsewhere a download says when it starts and when it ends.
+/// Starts listening to how far each download of this webview has got. `WebView2` and
+/// `WKWebView`, through `progress`; on Linux a download says when it starts and when it
+/// ends.
 pub fn listen(platform: &tauri::webview::PlatformWebview, app: AppHandle, window: String) {
     progress::listen(platform, app, window);
 }
@@ -647,10 +684,345 @@ mod progress {
     }
 }
 
-// Every build but `WebView2`'s: the other two desktops, whose engines say nothing about
-// a download between its start and its end through what wry hands out, and nib's own
-// Chromium, whose erased webview has no controller to reach through.
-#[cfg(any(not(windows), feature = "cef"))]
+// `WKWebView`'s downloads, watched: how far each has got, and Cancel.
+//
+// wry hands `heard` the start and the end of a download and keeps the `WKDownload` in
+// between to itself - it becomes the object's delegate in the navigation delegate's
+// `didBecomeDownload`, and nothing is handed out. So the page's navigation delegate is
+// given one of this module's own in front of wry's, the way `ask` in web_tabs.rs puts a
+// UI delegate in front of wry's: the two `didBecomeDownload` calls are passed to wry's
+// delegate first, unchanged, and the download is then kept here; every other navigation
+// question goes to wry's delegate by forwarding.
+//
+// A `WKDownload` knows its address and not its file, so it is matched to the list by
+// address, the same way `finish` matches wry's word that one ended. How far it has got is
+// its `NSProgress`, read on the main thread a few times a second while anything is going;
+// Cancel is its own `cancel:`, and the engine's word that it ended then finds it already
+// stopped in the list and says nothing more.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+mod progress {
+    use std::cell::{Cell, RefCell};
+    use std::ffi::c_void;
+    use std::time::Duration;
+
+    use objc2::rc::Retained;
+    use objc2::runtime::{AnyObject, NSObject, ProtocolObject, Sel};
+    use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly, Message as _};
+    use objc2_foundation::{MainThreadMarker, NSObjectProtocol, NSProgressReporting as _};
+    use objc2_web_kit::{
+        WKDownload, WKNavigationAction, WKNavigationDelegate, WKNavigationResponse, WKWebView,
+    };
+    use tauri::webview::PlatformWebview;
+    use tauri::{AppHandle, Emitter};
+
+    use super::MOVED;
+
+    /// How often the window hears how far a file has got, as on Windows.
+    const EVERY: Duration = Duration::from_millis(120);
+
+    /// How many looks a download may go unmatched before it is let go of: one the list
+    /// never took - a download wry was told not to start - is not watched for ever.
+    const UNMATCHED: u32 = 50;
+
+    /// One download on its way, as the engine holds it.
+    struct Going {
+        download: Retained<WKDownload>,
+        url: String,
+        /// The id the list gave it, once it has been matched.
+        id: Option<u64>,
+        looks: u32,
+        app: AppHandle,
+        window: String,
+    }
+
+    thread_local! {
+        /// The downloads on their way, on the main thread and nowhere else.
+        static GOING: RefCell<Vec<Going>> = const { RefCell::new(Vec::new()) };
+        /// Whether something is already looking at them a few times a second.
+        static WATCHING: Cell<bool> = const { Cell::new(false) };
+    }
+
+    /// The key the watcher is kept under on its webview. Its address is the key.
+    static KEPT: u8 = 0;
+
+    /// What the watcher holds: wry's navigation delegate, and who to tell.
+    struct Held {
+        inner: Option<Retained<ProtocolObject<dyn WKNavigationDelegate>>>,
+        app: AppHandle,
+        window: String,
+    }
+
+    define_class!(
+        /// A web tab's navigation delegate: a download kept as it starts, and every
+        /// other question passed to wry's own delegate.
+        #[unsafe(super(NSObject))]
+        #[thread_kind = MainThreadOnly]
+        #[name = "NibWebDownloadWatcher"]
+        #[ivars = Held]
+        struct Watcher;
+
+        unsafe impl NSObjectProtocol for Watcher {}
+
+        unsafe impl WKNavigationDelegate for Watcher {
+            /// A link or a script's navigation turned out to be a download.
+            #[unsafe(method(webView:navigationAction:didBecomeDownload:))]
+            fn action_became_download(
+                &self,
+                webview: &WKWebView,
+                action: &WKNavigationAction,
+                download: &WKDownload,
+            ) {
+                became(self, webview, action.as_ref(), download, true);
+            }
+
+            /// A response turned out to be a download.
+            #[unsafe(method(webView:navigationResponse:didBecomeDownload:))]
+            fn response_became_download(
+                &self,
+                webview: &WKWebView,
+                response: &WKNavigationResponse,
+                download: &WKDownload,
+            ) {
+                became(self, webview, response.as_ref(), download, false);
+            }
+        }
+
+        impl Watcher {
+            /// Yes for what this delegate has and for what wry's has; `WebKit` reads
+            /// this once, as the delegate is set.
+            #[unsafe(method(respondsToSelector:))]
+            fn responds_to_selector(&self, selector: Sel) -> bool {
+                forwards(self, selector)
+            }
+
+            /// Everything this delegate does not answer itself goes to wry's.
+            #[unsafe(method(forwardingTargetForSelector:))]
+            fn forwarding_target_for_selector(&self, _selector: Sel) -> *mut AnyObject {
+                self.ivars()
+                    .inner
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |inner| {
+                        Retained::as_ptr(inner).cast::<AnyObject>().cast_mut()
+                    })
+            }
+        }
+    );
+
+    /// Whether the watcher answers a selector, itself or through wry's delegate.
+    #[allow(
+        unsafe_code,
+        reason = "the superclass's own answer is asked for through the Objective-C runtime"
+    )]
+    fn forwards(watcher: &Watcher, selector: Sel) -> bool {
+        // SAFETY: `respondsToSelector:` is `NSObject`'s, takes a selector and answers a
+        // boolean; this is the superclass being asked what it has.
+        let own: bool = unsafe { msg_send![super(watcher), respondsToSelector: selector] };
+        own || watcher
+            .ivars()
+            .inner
+            .as_ref()
+            .is_some_and(|inner| inner.respondsToSelector(selector))
+    }
+
+    /// A download has started: wry's delegate is told first, exactly as the engine told
+    /// this one, so it becomes the download's delegate as it always has; then the
+    /// download is kept here.
+    #[allow(
+        unsafe_code,
+        reason = "wry's delegate is called through the Objective-C runtime with the engine's own arguments"
+    )]
+    fn became(
+        watcher: &Watcher,
+        webview: &WKWebView,
+        navigation: &NSObject,
+        download: &WKDownload,
+        action: bool,
+    ) {
+        if let Some(inner) = &watcher.ivars().inner {
+            // SAFETY: the selectors are the two `WKNavigationDelegate` declares, sent to
+            // the delegate wry set with the objects the engine handed this call, and
+            // only where that delegate has them.
+            unsafe {
+                if action {
+                    if inner.respondsToSelector(
+                        objc2::sel!(webView:navigationAction:didBecomeDownload:),
+                    ) {
+                        let () = msg_send![
+                            &**inner,
+                            webView: webview,
+                            navigationAction: navigation,
+                            didBecomeDownload: download
+                        ];
+                    }
+                } else if inner
+                    .respondsToSelector(objc2::sel!(webView:navigationResponse:didBecomeDownload:))
+                {
+                    let () = msg_send![
+                        &**inner,
+                        webView: webview,
+                        navigationResponse: navigation,
+                        didBecomeDownload: download
+                    ];
+                }
+            }
+        }
+
+        // SAFETY: reading the address of the request the download was made from, on
+        // the main thread.
+        let url = unsafe {
+            download
+                .originalRequest()
+                .and_then(|request| request.URL())
+                .and_then(|url| url.absoluteString())
+                .map(|url| url.to_string())
+        };
+        let Some(url) = url else {
+            return;
+        };
+
+        GOING.with_borrow_mut(|going| {
+            going.push(Going {
+                download: download.retain(),
+                url,
+                id: None,
+                looks: 0,
+                app: watcher.ivars().app.clone(),
+                window: watcher.ivars().window.clone(),
+            });
+        });
+        watch(&watcher.ivars().app);
+    }
+
+    /// Starts looking at the downloads a few times a second, unless something already
+    /// is. On the main thread, like `look`, which is what makes the two agree.
+    fn watch(app: &AppHandle) {
+        if WATCHING.replace(true) {
+            return;
+        }
+
+        let app = app.clone();
+        std::thread::spawn(move || loop {
+            std::thread::sleep(EVERY);
+            let (said, heard) = std::sync::mpsc::channel();
+            if app
+                .run_on_main_thread(move || {
+                    let _ = said.send(look());
+                })
+                .is_err()
+            {
+                return;
+            }
+            // Nothing left to look at, or the main thread gone: either way, done. `look`
+            // has already said so on the main thread, where the next download reads it.
+            if !heard.recv().unwrap_or(false) {
+                return;
+            }
+        });
+    }
+
+    /// One look at every download on its way: matched to the list if it was not yet,
+    /// its progress said to the window, and let go of once it has ended. Answers
+    /// whether anything is left to look at.
+    fn look() -> bool {
+        let left = GOING.with_borrow_mut(|going| {
+            let mut taken: Vec<u64> = going.iter().filter_map(|one| one.id).collect();
+
+            going.retain_mut(|one| {
+                let downloads = super::held(&one.app);
+                one.looks += 1;
+
+                let progress = one.download.progress();
+                if one.id.is_none() {
+                    // One that ended before it was ever matched is not matched now: the
+                    // download going from its address is somebody else's.
+                    if progress.isFinished() || progress.isCancelled() {
+                        return false;
+                    }
+                    let Some((id, _)) = downloads.going_from(&one.url, &taken) else {
+                        return one.looks < UNMATCHED;
+                    };
+                    one.id = Some(id);
+                    taken.push(id);
+                }
+                let Some(path) = one.id.and_then(|id| downloads.going_to(id)) else {
+                    return false;
+                };
+
+                let received = u64::try_from(progress.completedUnitCount()).unwrap_or(0);
+                let total = u64::try_from(progress.totalUnitCount())
+                    .ok()
+                    .filter(|&all| all > 0);
+                if let Some(said) = downloads.moved(&path, received, total) {
+                    let _ = one.app.emit_to(one.window.as_str(), MOVED, said);
+                }
+                true
+            });
+
+            !going.is_empty()
+        });
+
+        WATCHING.set(left);
+        left
+    }
+
+    /// Puts the watcher in front of wry's navigation delegate on a tab's webview.
+    #[allow(
+        unsafe_code,
+        reason = "a WKWebView's navigation delegate is set, and kept alive, through the Objective-C runtime"
+    )]
+    pub fn listen(webview: &PlatformWebview, app: AppHandle, window: String) {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+
+        // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long
+        // as the tab's page is, and this runs on the main thread where it belongs.
+        let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
+            return;
+        };
+
+        // SAFETY: reading and setting a delegate on the main thread. The watcher is kept
+        // alive by the webview itself below, because `WebKit` holds its navigation
+        // delegate weakly; wry's own delegate is held both by wry and by the watcher.
+        unsafe {
+            let inner = view.navigationDelegate();
+            let watcher = Watcher::alloc(mtm).set_ivars(Held { inner, app, window });
+            let watcher: Retained<Watcher> = msg_send![super(watcher), init];
+
+            view.setNavigationDelegate(Some(ProtocolObject::from_ref(&*watcher)));
+            objc2::ffi::objc_setAssociatedObject(
+                Retained::as_ptr(&view).cast::<AnyObject>().cast_mut(),
+                (&raw const KEPT).cast::<c_void>(),
+                Retained::as_ptr(&watcher).cast::<AnyObject>().cast_mut(),
+                objc2::ffi::OBJC_ASSOCIATION_RETAIN_NONATOMIC,
+            );
+        }
+    }
+
+    /// Stops a download on its way. On the main thread, where it was kept. The engine
+    /// then tells wry's delegate it failed, which finds it already stopped in the list.
+    #[allow(
+        unsafe_code,
+        reason = "a WKDownload is cancelled through its own method"
+    )]
+    pub fn cancel(id: u64) {
+        let stopped = GOING.with_borrow_mut(|going| {
+            let at = going.iter().position(|one| one.id == Some(id))?;
+            Some(going.remove(at).download)
+        });
+
+        if let Some(download) = stopped {
+            // SAFETY: the download is the engine's own, used on the main thread; no
+            // resume data is wanted, so there is no block to hand it.
+            unsafe { download.cancel(None) };
+        }
+    }
+}
+
+// Every build but the two system engines that can be watched: Linux, whose engine says
+// nothing about a download between its start and its end through what wry hands out,
+// and nib's own Chromium, whose erased webview has no controller to reach through.
+#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod progress {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
@@ -849,5 +1221,41 @@ mod tests {
             .is_none());
         assert!(downloads.cancelled(made.id).is_none());
         assert!(downloads.id_of(&made.path).is_none());
+    }
+
+    /// A `WKDownload` knows its address and nothing else, so it is matched to the list
+    /// by that: the oldest one still going from it, and never one already matched.
+    #[test]
+    fn a_download_that_knows_only_its_address_is_matched_oldest_first() {
+        let downloads = Downloads::default();
+        let one = downloads
+            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
+            .expect("one");
+        let two = downloads
+            .start("a", "https://x.example/f", Path::new("f.pdf"), &tmp())
+            .expect("two");
+
+        assert_eq!(
+            downloads.going_from("https://x.example/f", &[]),
+            Some((one.id, one.path.clone()))
+        );
+        assert_eq!(
+            downloads.going_from("https://x.example/f", &[one.id]),
+            Some((two.id, two.path.clone()))
+        );
+        assert!(downloads
+            .going_from("https://x.example/f", &[one.id, two.id])
+            .is_none());
+        assert!(downloads.going_from("https://x.example/g", &[]).is_none());
+
+        assert_eq!(downloads.going_to(one.id), Some(one.path.clone()));
+        downloads.cancelled(one.id);
+        assert!(downloads.going_to(one.id).is_none());
+        assert_eq!(
+            downloads
+                .going_from("https://x.example/f", &[])
+                .map(|(id, _)| id),
+            Some(two.id)
+        );
     }
 }

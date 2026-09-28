@@ -13,7 +13,7 @@
  *  Pure, so the shape of a graph is a thing tests can state. Where the nodes end
  *  up is `graph-layout.ts`. */
 
-import { embedKind, type LinkKind } from '@nib/markdown/links'
+import { embedKind, foldName, type LinkKind } from '@nib/markdown/links'
 import type { ScannedNote } from './scan-note'
 
 export interface GraphNode {
@@ -163,7 +163,7 @@ function namesFile(link: { target: string; embed?: boolean }): boolean {
  *  named, and the same reading `missing` gives a name nothing answers. */
 function embedded(nodes: GraphNode[], at: Map<string, number>, target: string): number {
   const name = target.replace(/\\/g, '/').split('/').pop() ?? target
-  const id = EMBEDDED + name.toLowerCase()
+  const id = EMBEDDED + foldName(name)
 
   const held = at.get(id)
   if (held !== undefined) return held
@@ -178,7 +178,7 @@ function embedded(nodes: GraphNode[], at: Map<string, number>, target: string): 
  *  are the one note that is not there rather than two. */
 function missing(nodes: GraphNode[], at: Map<string, number>, target: string): number {
   const name = (target.replace(/\\/g, '/').split('/').pop() ?? target).replace(MARKDOWN, '')
-  const id = MISSING + name.toLowerCase()
+  const id = MISSING + foldName(name)
 
   const held = at.get(id)
   if (held !== undefined) return held

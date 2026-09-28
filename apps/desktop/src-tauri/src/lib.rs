@@ -52,6 +52,8 @@ mod apple_text;
 mod assets;
 mod clock;
 #[cfg(desktop)]
+mod document_window;
+#[cfg(desktop)]
 mod downloads;
 #[cfg(desktop)]
 mod endpoint;
@@ -66,9 +68,15 @@ mod history;
 mod lane;
 #[cfg(desktop)]
 mod launch;
+#[cfg(desktop)]
+mod lifecycle;
+#[cfg(target_os = "macos")]
+mod lights;
 mod links;
 mod logs;
 mod matcher;
+#[cfg(desktop)]
+mod menu_bar;
 mod notes;
 #[cfg(desktop)]
 mod pandoc;
@@ -97,8 +105,9 @@ mod tree;
 #[cfg(desktop)]
 mod updates;
 mod uris;
-// Only where there is a cookie store to reach: the system's own engine on Windows.
-#[cfg(all(windows, not(feature = "cef")))]
+// Only where there is a cookie store to reach: the system's own engine on Windows and
+// on a Mac.
+#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_find;
@@ -122,9 +131,9 @@ use paths::Opened;
 use paths::{note_from_outside, outside_spaces};
 #[cfg(desktop)]
 use std::path::Path;
-use tauri::Manager;
 #[cfg(desktop)]
-use tauri::{AppHandle, Emitter};
+use tauri::AppHandle;
+use tauri::Manager;
 
 /// The commands the window may call, as one list. A builder takes a single
 /// handler, so the desktop-only ones are passed in here rather than added
@@ -202,12 +211,17 @@ macro_rules! desktop_commands {
             apple_notes::open_full_disk_access,
             launch::take_startup_files,
             launch::new_window,
+            lifecycle::keep_running,
+            document_window::show_document,
+            menu_bar::hand_to_keyboard,
             pandoc::has_pandoc,
             pandoc::run_pandoc,
             pandoc::import_document,
             pdf::pdf_supported,
             pdf::print_pdf,
+            pdf::print_page,
             recent::remember_recent,
+            recent::forget_recent,
             secrets::secret_forget,
             secrets::secret_read,
             secrets::secret_write,
@@ -311,18 +325,12 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            // The window, not the webview window, which a window holding a page in
-            // a tab is not; see web_tabs.rs.
-            if let Some(window) = app.get_window("main") {
-                placement::raised(&window);
-            }
-
-            let files = launch::markdown_paths(argv);
-            remember(app, &files);
-            let _ = app.emit("nib://open-files", files);
-        }))
+        .plugin(tauri_plugin_single_instance::init(launch::second_launch))
         .manage(launch::Pending::default());
+    // Where the app is on its way out, and on a Mac where the window was; see
+    // lifecycle.rs.
+    #[cfg(desktop)]
+    let builder = lifecycle::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
@@ -396,10 +404,23 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
 
-    builder.run(context).unwrap_or_else(|error| {
-        eprintln!("Nib could not start: {error}");
-        std::process::exit(1);
-    });
+    builder
+        .build(context)
+        .unwrap_or_else(|error| {
+            eprintln!("Nib could not start: {error}");
+            std::process::exit(1);
+        })
+        .run(on_event);
+}
+
+/// What the system asks of the app as a whole, rather than of a window: a file
+/// from the Finder, the Dock icon clicked, a quit. See lifecycle.rs; a phone has
+/// none of the three.
+fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
+    #[cfg(desktop)]
+    lifecycle::on_event(app, event);
+    #[cfg(not(desktop))]
+    let _ = (app, event);
 }
 
 /// Everything that has to happen once, after the app is built and before the
@@ -415,6 +436,10 @@ fn ready(
     trace::mark("app built, window created");
 
     let handle = app.handle();
+
+    // Before the page can put its menu strip up; see menu_bar.rs.
+    #[cfg(target_os = "macos")]
+    menu_bar::leave_out_system_rows();
 
     // A picture in a note is loaded by the webview itself, over the asset
     // protocol, which has a scope of its own. The spaces folder is in it from the
@@ -442,15 +467,16 @@ fn ready(
 
     // A command line is a desktop's way of being handed a file. A phone app is
     // launched by tapping it, and there is nothing in `args` worth reading.
+    //
+    // Added to, not replaced: on a Mac a file the Finder opened the app with may
+    // already be waiting there; see lifecycle.rs.
     #[cfg(desktop)]
     {
         let files = launch::markdown_paths(std::env::args());
         if !files.is_empty() {
             remember(handle, &files);
             if let Some(pending) = handle.try_state::<launch::Pending>() {
-                if let Ok(mut waiting) = pending.0.lock() {
-                    *waiting = files;
-                }
+                pending.hold(files);
             }
         }
     }
@@ -493,12 +519,26 @@ fn ready(
         // A window sent somewhere of its own - a probe off the screen - is built hidden,
         // put there, and shown without coming forward; see `built_away` in placement.rs.
         // A place that was only remembered is in the config and needs none of that.
+        //
+        // Otherwise on screen at once, in the colour it was last seen in, except on a
+        // Mac, where it is built hidden so its traffic lights are placed before anything
+        // is drawn (see lights.rs). A Mac's webview starts in fourteen milliseconds, not
+        // in the third of a second Windows needs, which is what showing it at once is for.
         if let Some(at) = placement::away() {
             placement::built_away(building, at)?;
-        } else if let Some(colour) = ground::remembered(handle) {
-            building.visible(true).background_color(colour).build()?;
         } else {
-            building.build()?.show()?;
+            let colour = ground::remembered(handle);
+            let at_once = colour.is_some() && !cfg!(target_os = "macos");
+            let building = match colour {
+                Some(colour) => building.background_color(colour),
+                None => building,
+            };
+            let window = building.visible(at_once).build()?;
+            if !at_once {
+                #[cfg(target_os = "macos")]
+                lights::hold(&window);
+                window.show()?;
+            }
         }
     }
 
@@ -510,6 +550,12 @@ fn ready(
         if let Some(window) = app.get_window("main") {
             window.show()?;
         }
+    }
+
+    // From here a file that finds no window at all is one that has to open one.
+    #[cfg(desktop)]
+    if let Some(pending) = handle.try_state::<launch::Pending>() {
+        pending.launched();
     }
 
     trace::mark("window shown");
@@ -622,7 +668,8 @@ mod tests {
     }
 
     /// Every name a body calls. A name after a dot is a method on something else and
-    /// not one of ours.
+    /// not one of ours, and so is one after a type's path: `DispatchQueue::main()` is
+    /// the queue's, and not the `main` that runs the app.
     fn calls(body: &str) -> HashSet<String> {
         let mut found = HashSet::new();
         let letters: Vec<char> = body.chars().collect();
@@ -640,12 +687,26 @@ mod tests {
             }
 
             let after_a_dot = from > 0 && letters[from - 1] == '.';
-            if !after_a_dot && letters.get(at) == Some(&'(') {
+            if !after_a_dot && !after_a_type(&letters, from) && letters.get(at) == Some(&'(') {
                 found.insert(letters[from..at].iter().collect());
             }
         }
 
         found
+    }
+
+    /// Whether the name starting at `from` follows `Type::`, a path whose last part is
+    /// written with a capital, which is how a type is written and a module is not.
+    fn after_a_type(letters: &[char], from: usize) -> bool {
+        if from < 2 || letters[from - 1] != ':' || letters[from - 2] != ':' {
+            return false;
+        }
+
+        let mut start = from - 2;
+        while start > 0 && (letters[start - 1].is_alphanumeric() || letters[start - 1] == '_') {
+            start -= 1;
+        }
+        letters[start].is_uppercase()
     }
 
     /// Every function that waits, by name: the ones that say so themselves, and then
@@ -760,5 +821,8 @@ mod tests {
         // A name read off a method call is not one of ours.
         assert!(!calls("one.read(two)").contains("read"));
         assert!(calls("read(two)").contains("read"));
+        // Nor is one a type answers, though a module's is.
+        assert!(!calls("DispatchQueue::main()").contains("main"));
+        assert!(calls("crate::launch::main()").contains("main"));
     }
 }

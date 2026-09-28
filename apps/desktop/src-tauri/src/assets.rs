@@ -40,6 +40,9 @@ const FILE_LIMIT: u64 = 192 * 1024 * 1024;
 #[tauri::command(async)]
 pub fn read_file(app: AppHandle, path: String) -> Result<tauri::ipc::Response, String> {
     let target = beside_a_note(&app, &path)?;
+    // A PDF iCloud took off this Mac is brought back before it is read.
+    #[cfg(target_os = "macos")]
+    crate::notes::icloud::fetched(&app, &target)?;
     let Some(bytes) = under(&target, FILE_LIMIT)? else {
         return Err(format!("{path} is too large to open"));
     };

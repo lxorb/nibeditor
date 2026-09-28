@@ -14,7 +14,7 @@ import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { invoke, isDesktop, isNative, openExternal } from '../tauri'
-import { callbackKind, readUri, withOutcome } from './uri'
+import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
 /** What the browser's protocol handler hands the link back in; see
@@ -124,6 +124,10 @@ async function followAll(uris: readonly string[]) {
  *
  *  `depth` is how many links deep the chain already is; see `MOST_LINKS`. */
 async function follow(uri: string, depth = 0): Promise<void> {
+  // Not a link that failed but not a link at all: a document the Finder opened,
+  // which the crate hands over as a file. Nothing to say about it here.
+  if (isFileUri(uri)) return
+
   const link = readUri(uri)
   if (!link) {
     refuse(uri, 'not a nib link')

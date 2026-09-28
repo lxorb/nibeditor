@@ -6,7 +6,8 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
-import { type DocView, documentOf, letGo, SharedDoc, sharedOf, sharing } from './shared'
+import type { EditorView } from '@codemirror/view'
+import { type DocView, documentOf, fromInput, letGo, SharedDoc, sharedOf, sharing } from './shared'
 
 /** A view without a DOM: the state a pane holds, and the dispatch a document
  *  reaches it through. The extensions are the two the document needs from a
@@ -400,5 +401,30 @@ describe('a document changing hands', () => {
     note.handOver(was, now, () => undefined)
 
     expect(now.text).toBe('the note, changed')
+  })
+})
+
+/** A Mac's Cmd+Z never reaches the page as a key: the Edit menu in the menu bar
+ *  holds it, and sends the page a `beforeinput` of `historyUndo` instead, as a
+ *  browser's own Edit menu does. The library answers that from the pane's own
+ *  history, which holds nothing (see above), so the key undid nothing at all. */
+describe('an undo that arrives as input rather than as a key', () => {
+  test('undoes and redoes the document’s own history', () => {
+    const note = new SharedDoc('Hello')
+    const pane = new Pane(note)
+    pane.type(5, ' there')
+
+    // A pane here is the part of a view the commands read, which is all of a view
+    // `undoEdit` touches.
+    const view = pane as unknown as EditorView
+    expect(fromInput('historyUndo')?.(view)).toBe(true)
+    expect(pane.text).toBe('Hello')
+    expect(fromInput('historyRedo')?.(view)).toBe(true)
+    expect(pane.text).toBe('Hello there')
+  })
+
+  test('and nothing else typed is one', () => {
+    expect(fromInput('insertText')).toBeNull()
+    expect(fromInput('deleteContentBackward')).toBeNull()
   })
 })

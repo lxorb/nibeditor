@@ -97,6 +97,9 @@
     if (event.key === 'ArrowRight' && index < LENGTH - 1) boxes[index + 1]?.focus()
   }
 
+  /** Which door was taken; both lead to the same code. See `mode`. */
+  const heading = $derived(account.mode === 'create' ? t('Create account') : t('Sign in'))
+
   function close() {
     account.open = false
     account.step = 'email'
@@ -117,7 +120,7 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label={t('Sign in')}
+    aria-label={heading}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- Somebody sent a link here, so say what it was before asking for an
@@ -132,6 +135,7 @@
     {/if}
 
     {#if account.step === 'email'}
+      <h2 class="heading">{heading}</h2>
       <form
         in:fly={{ x: -14, duration: dur(200), easing: cubicOut }}
         onsubmit={(event) => {
@@ -252,6 +256,15 @@
     font-size: var(--text-sm);
     line-height: 1.5;
     color: var(--muted-strong);
+  }
+
+  .heading {
+    margin: 0 0 var(--space-4);
+    color: var(--text-strong);
+    font-family: var(--font-ui);
+    font-size: var(--text-base);
+    font-weight: var(--weight-strong);
+    text-align: center;
   }
 
   /* `.nib-screen` in the themes package; see Palette.svelte. */

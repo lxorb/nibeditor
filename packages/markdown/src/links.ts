@@ -91,6 +91,12 @@ function schemeOf(target: string): string {
   return /^([a-z][a-z\d+.-]*):/i.exec(target)?.[1]?.toLowerCase() ?? ''
 }
 
+/** A name to compare: composed, as APFS compares, so a typed `Ü` finds the `U` and
+ *  combining mark some Mac tools name a file with; then folded. */
+export function foldName(name: string): string {
+  return name.normalize('NFC').toLowerCase()
+}
+
 /** Whether a markdown link's target points inside the space rather than out at
  *  the web. A `#fragment` on its own points inside the note it is written in,
  *  which counts: the Links panel lists it, and no rename touches it. */

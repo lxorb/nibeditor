@@ -68,6 +68,8 @@ export interface Writes {
    *  folder already holds that name. The rule the file list follows for a duplicate, so
    *  a save can never write over anything. */
   freeName(folder: string, name: string): string
+  /** Makes a space and opens it; see `homeFor`. */
+  addSpace(name: string): Promise<Space | undefined>
 }
 
 /** The ending each kind of document is written under, and how a name that already
@@ -119,30 +121,30 @@ async function pickSavePath(ask: {
   /** The name that folder will take, which is the wanted one or the next free number
    *  after it; see `freeName` in workspace.svelte.ts. */
   freeName: (folder: string, name: string) => string
+  addSpace: (name: string) => Promise<Space | undefined>
 }): Promise<{ path: string; name: string } | null> {
   const here = ask.spaces.find((one) => one.id === ask.activeId) ?? ask.spaces[0]
-  if (!here) return null
 
   // Every folder a file could go in, which is the list a move already works out: the
   // space's own room, every note in it - a note that holds notes is a folder - and any
   // other space there is. Fetched rather than imported, because nothing here is wanted
-  // until somebody saves something that has never been saved.
+  // until somebody saves something that has never been saved. None with no space.
   const { moveTargets } = await import('../move-targets')
-  const folders = moveTargets({
-    moving: null,
-    tree: ask.tree,
-    spaces: ask.spaces,
-    here: here.root,
-  })
+  const folders = here
+    ? moveTargets({ moving: null, tree: ask.tree, spaces: ask.spaces, here: here.root })
+    : []
 
   const last = storedText(FOLDER_KEY)
-  const start = folders.some((one) => one.id === last) ? last : here.root
+  const start = folders.some((one) => one.id === last) ? last : (here?.root ?? null)
 
   /** The file that name would be, free of anything already there: the name itself, or
    *  the next number after it. The name as the field holds it - without the ending,
    *  which a reader never types and never reads; see note-name.ts. */
-  const freeIn = (folder: string | null, name: string): string =>
-    shownName(ask.freeName(folder ?? here.root, fileNamed(name.trim() || UNTITLED, ask.kind)))
+  const freeIn = (folder: string | null, name: string): string => {
+    const file = fileNamed(name.trim() || UNTITLED, ask.kind)
+    const root = folder ?? here?.root
+    return shownName(root ? ask.freeName(root, file) : file)
+  }
 
   // The name it has, else the words at the top of it - which only a note has; a plane
   // and a deck of pages hold JSON, and the first line of that is not a name. A website
@@ -172,16 +174,25 @@ async function pickSavePath(ask: {
 
   if (!answer?.name) return null
 
-  const folder = answer.folder ?? here.root
-  keep(FOLDER_KEY, folder)
-
   const clean = answer.name.replace(/[\\/]/g, ' ').trim()
   if (!clean) return null
+
+  const folder = answer.folder ?? here?.root ?? (await homeFor(ask.addSpace))
+  if (!folder) return null
+  keep(FOLDER_KEY, folder)
 
   // Free again, at the moment of writing: the sheet said what was taken, and this is
   // what makes it true whatever was typed over it.
   const named = ask.freeName(folder, fileNamed(clean, ask.kind))
   return { path: joinPath(folder, named), name: shownName(named) }
+}
+
+/** Where a save goes with no space at all: a first one, made once the name is
+ *  answered. Ctrl+S on a fresh install used to do nothing; Obsidian always writes a
+ *  note into a vault, so this makes one, named as the browser build names its own. */
+async function homeFor(addSpace: (name: string) => Promise<Space | undefined>) {
+  const space = await addSpace(t('Notes'))
+  return space?.root ?? null
 }
 
 export class Saving {
@@ -424,6 +435,7 @@ export class Saving {
         activeId: this.ws.activeSpaceId,
         tree: this.ws.tree,
         freeName: (folder, name) => this.ws.freeName(folder, name),
+        addSpace: (name) => this.ws.addSpace(name),
       })
       if (!picked) return
 
@@ -479,6 +491,7 @@ export class Saving {
         activeId: this.ws.activeSpaceId,
         tree: this.ws.tree,
         freeName: (folder, name) => this.ws.freeName(folder, name),
+        addSpace: (name) => this.ws.addSpace(name),
       })
       if (!picked) return
       path = picked.path

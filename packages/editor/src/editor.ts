@@ -35,6 +35,7 @@ import {
 import { codeThemeExtension } from './code-theme'
 import { type FindAsk, findExtensions } from './find'
 import { closeFence, leaveQuote } from './commands'
+import { refuseControlCharacters } from './control'
 import { nibBindings, standardBindings, unclaimedKeymap } from './keymap'
 import { richCopy } from './copy'
 import { richPaste } from './paste'
@@ -42,7 +43,7 @@ import { nibSelection } from './selection/layer'
 import { steppingKeymap } from './live-preview/stepping'
 import { openTail, openTailDown } from './tail'
 import { modeExtensions } from './modes'
-import { documentOf, type SharedDoc, sharing } from './shared'
+import { documentOf, fromInput, type SharedDoc, sharing } from './shared'
 import { boundKeymap, type KeyOverrides, shortcutExtensions } from './shortcuts'
 import { tableBindings } from './table/keymap'
 import { nibHighlightStyle, nibTheme } from './theme'
@@ -136,6 +137,19 @@ export function editorState(options: StateOptions): EditorState {
       : {}),
     extensions: [
       history(),
+      // Ahead of the library's own answer to the same input; see `fromInput`.
+      Prec.high(
+        EditorView.domEventHandlers({
+          beforeinput(event, view) {
+            const command = fromInput(event.inputType)
+            if (!command) return false
+            event.preventDefault()
+            return command(view)
+          },
+        }),
+      ),
+      // A Ctrl chord a Mac hands over as a character nobody can see; see control.ts.
+      refuseControlCharacters(),
       sharing(),
       // Before the modes, so the folds are a field the live preview's own
       // fields can already ask about while they build.

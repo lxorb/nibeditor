@@ -5,8 +5,10 @@
 //! Nothing here assumes pandoc is installed. `has_pandoc` is what the window asks
 //! before it offers any of it.
 
+#[cfg(target_os = "macos")]
+use std::fs;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
 #[cfg(windows)]
@@ -22,20 +24,101 @@ const READ_AS: &str =
 /// What a note is written out from, which is what the editor writes.
 const WRITE_FROM: &str = "markdown+tex_math_dollars+pipe_tables+task_lists+footnotes+strikeout";
 
-/// Keeps a console window from flashing up on Windows.
+#[cfg(any(target_os = "macos", all(test, unix)))]
+mod finding;
+
+/// pandoc, started the way every call here starts it: found where this machine
+/// keeps it, and without a console window flashing up on Windows.
 // `mut` is only used by the Windows branch below; elsewhere it is dead.
 #[cfg_attr(not(windows), allow(unused_mut))]
-fn command(program: &str) -> Command {
-    let mut command = Command::new(program);
+fn pandoc() -> Command {
+    let mut command = Command::new(program());
     #[cfg(windows)]
     command.creation_flags(0x0800_0000); // CREATE_NO_WINDOW
     command
 }
 
+/// On Windows and Linux a launched app has the `PATH` its user set, so the name
+/// is enough.
+#[cfg(not(target_os = "macos"))]
+fn program() -> PathBuf {
+    PathBuf::from("pandoc")
+}
+
+/// On a Mac an app opened from Finder does not; see finding.rs. Looked up on every
+/// call rather than once, so a pandoc installed while the app is open is found by
+/// the next export. That is a handful of `stat` calls; only the login shell, which
+/// is slow, is asked once per launch.
+#[cfg(target_os = "macos")]
+fn program() -> PathBuf {
+    let home = std::env::var_os("HOME").map(PathBuf::from);
+    let folders = finding::folders(std::env::var_os("PATH").as_deref(), home.as_deref());
+
+    finding::first_in(&folders, runs)
+        .or_else(from_login_shell)
+        .unwrap_or_else(|| PathBuf::from("pandoc"))
+}
+
+/// Whether a path is a file somebody may run.
+#[cfg(target_os = "macos")]
+fn runs(program: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    fs::metadata(program)
+        .is_ok_and(|found| found.is_file() && found.permissions().mode() & 0o111 != 0)
+}
+
+/// Where the reader's own login shell finds pandoc, asked once per launch.
+#[cfg(target_os = "macos")]
+fn from_login_shell() -> Option<PathBuf> {
+    static ASKED: std::sync::OnceLock<Option<PathBuf>> = std::sync::OnceLock::new();
+    ASKED.get_or_init(ask_login_shell).clone()
+}
+
+/// Asks `$SHELL -ilc 'command -v pandoc'`, the way VS Code reads the `PATH` of a
+/// shell nobody opened: interactive as well as a login, because a `PATH` line in
+/// `.zshrc` is only read by an interactive shell. With nothing to read from, so a
+/// shell file that asks a question gets no answer instead of waiting for one, and
+/// given three seconds, so a slow or broken shell file costs the export list that
+/// long once and never hangs it.
+#[cfg(target_os = "macos")]
+fn ask_login_shell() -> Option<PathBuf> {
+    use std::io::Read as _;
+    use std::time::{Duration, Instant};
+
+    let shell = std::env::var_os("SHELL").unwrap_or_else(|| "/bin/zsh".into());
+    let mut child = Command::new(shell)
+        .args(["-ilc", "command -v pandoc"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .ok()?;
+
+    let deadline = Instant::now() + Duration::from_secs(3);
+    loop {
+        match child.try_wait() {
+            Ok(Some(_)) => break,
+            Ok(None) if Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(25));
+            }
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return None;
+            }
+        }
+    }
+
+    let mut printed = String::new();
+    child.stdout.take()?.read_to_string(&mut printed).ok()?;
+    finding::shell_answer(&printed).filter(|program| runs(program))
+}
+
 /// Whether pandoc is on this machine, which is what decides the export list.
 #[tauri::command(async)]
 pub fn has_pandoc() -> bool {
-    command("pandoc")
+    pandoc()
         .arg("--version")
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -83,7 +166,7 @@ pub fn import_document(path: String) -> Result<String, String> {
         .ok_or_else(|| format!("{path} is not in a folder Nib can write to"))?;
     let source = source.to_string_lossy().to_string();
 
-    let result = command("pandoc")
+    let result = pandoc()
         .current_dir(&beside)
         .args(reading(&source))
         .output()
@@ -130,7 +213,7 @@ pub fn run_pandoc(source: String, output: String, format: String) -> Result<(), 
     }
     let target = chosen(&output)?;
 
-    let mut child = command("pandoc")
+    let mut child = pandoc()
         .args(["--from", WRITE_FROM, "--to", &format, "--standalone"])
         .arg("--output")
         .arg(&target)

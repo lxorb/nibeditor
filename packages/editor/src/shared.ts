@@ -490,3 +490,14 @@ export const redoEdit: Command = (view) => {
   const shared = documentOf(view)
   return shared ? shared.redo(view) : redo(view)
 }
+
+/** The command an undo or a redo asks for when it arrives as input rather than as a
+ *  key: a Mac's Cmd+Z never reaches the page, because the Edit menu in the menu bar
+ *  holds it and sends a `beforeinput` of `historyUndo` instead, and so does a
+ *  browser's Edit menu. The library answers that from the view's own history, which
+ *  holds nothing here, so these are the same two commands the keys run. */
+export function fromInput(inputType: string): Command | null {
+  if (inputType === 'historyUndo') return undoEdit
+  if (inputType === 'historyRedo') return redoEdit
+  return null
+}

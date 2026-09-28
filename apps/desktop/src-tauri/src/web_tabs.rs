@@ -49,7 +49,7 @@ const LABEL: &str = "web-";
 
 /// Whether a webview is one of the web's own - a tab's page, or the page that holds
 /// the session open - rather than the app's.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL)
 }
@@ -64,9 +64,9 @@ const MOVED: &str = "nib://web-tab";
 /// The event the window hears when a site asks for something it has to be given: the
 /// camera, the microphone, where you are, notifications, the clipboard to read.
 ///
-/// Only `WebView2` raises the request this carries, so off Windows nothing emits it;
-/// the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Only `WebView2` and `WKWebView` raise the request this carries, so on Linux nothing
+/// emits it; the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
 
 /// The event the window hears when a page asks for a window of its own, carrying
@@ -332,10 +332,10 @@ impl Trail {
 }
 
 /// The app's builder with what web tabs keep in it: the trail of every tab, and - on
-/// the system's engine on Windows - a window that waits, as it closes, for its tabs'
-/// logins to be made to last; see `web_cookies.rs`.
+/// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
+/// its tabs' logins to be made to last; see `web_cookies.rs`.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder.manage(WebTabs::default())
 }
@@ -498,9 +498,10 @@ struct Looked {
 /// while the reader decides, and the only thing either side needs to agree on is which
 /// request is being answered.
 ///
-/// Built only where a permission request is raised, which is Windows; off it the ask
-/// module is a stub and nothing constructs this, so it is allowed to be dead there.
-#[cfg_attr(not(windows), allow(dead_code))]
+/// Built only where a permission request is raised, which is Windows and macOS; on
+/// Linux the ask module is a stub and nothing constructs this, so it is allowed to be
+/// dead there.
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,
@@ -1109,7 +1110,7 @@ fn reporting(
 
         // Every step of a sign-in that goes through pages ends here, so this is where
         // a login it left in a session cookie is made to last; see web_cookies.rs.
-        #[cfg(all(windows, not(feature = "cef")))]
+        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
         let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
 
         // An engine that cannot say when the page's mark changes is asked for it once
@@ -1261,10 +1262,10 @@ fn origin_of(url: &str) -> String {
 /// development build. Nothing at all is nobody: a request with no origin to speak of is
 /// not the app's.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    any(not(any(windows, target_os = "macos")), feature = "cef"),
     allow(
         dead_code,
-        reason = "only the WebView2 handler asks this; see `own` in `ask`"
+        reason = "only the WebView2 and WKWebView handlers ask this; see `own` in `ask`"
     )
 )]
 fn is_ours(known: &[String], asked: &str) -> bool {
@@ -1274,6 +1275,31 @@ fn is_ours(known: &[String], asked: &str) -> bool {
     }
 
     OURS.contains(&origin.as_str()) || known.contains(&origin)
+}
+
+/// The kinds a `WKWebView` capture request is, in the window's words, in the order
+/// they are asked about. Both at once is two questions, one after the other, because
+/// the window's bubble - like Chrome's - remembers each for the site on its own.
+#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+fn capture_kinds(kind: isize) -> &'static [&'static str] {
+    match kind {
+        0 => &["camera"],
+        1 => &["microphone"],
+        2 => &["camera", "microphone"],
+        // A kind this app has never heard of is a kind nobody can be asked about.
+        _ => &[],
+    }
+}
+
+/// The origin a frame's request came from, the way `WebView2` writes it: the
+/// scheme, the host, and the port where it is not the scheme's own.
+#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+fn origin_written(protocol: &str, host: &str, port: isize) -> String {
+    if port > 0 {
+        format!("{protocol}://{host}:{port}")
+    } else {
+        format!("{protocol}://{host}")
+    }
 }
 
 /// A page on its way, said the moment it sets off.
@@ -1481,10 +1507,29 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 /// `window.print()` rather than anything of the app's: what a page prints as is the
 /// engine's business, the dialog is the one the reader knows from their browser, and
 /// nib's own printing is about a note.
+///
+/// Except on a Mac, where `window.print()` is not the engine's at all: Tauri replaces it
+/// in every webview with a call into the app, `plugin:webview|print`, and a site's
+/// origin is refused every call into the app - so the row did nothing. There the tab's
+/// own print operation is run instead, as the sheet Safari shows; see `pdf::print_sheet`.
+///
+/// Async, because the Mac's print operation reaches the filesystem on the way to its
+/// sheet, and a command that may wait is kept off the thread that draws the window.
 #[tauri::command]
-pub fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
-    found(&app, &tab)?
-        .eval("window.print()")
+pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
+    let view = found(&app, &tab)?;
+
+    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    return view
+        .with_webview(|platform| {
+            if let Err(error) = crate::pdf::print_sheet(&platform) {
+                eprintln!("web_print: {error}");
+            }
+        })
+        .map_err(|error| format!("that page could not be printed: {error}"));
+
+    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
+    view.eval("window.print()")
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
 
@@ -1600,12 +1645,12 @@ pub async fn web_close(
 /// asks for this first, paints it in the hole, and then hides the webview, so what is
 /// behind the menu is the page.
 ///
-/// `WebView2` has `CapturePreview`, which is the engine photographing itself and is
-/// the only way to get at those pixels: the app's own webview cannot draw the page and
-/// nothing outside the process may copy the screen. Elsewhere there is nothing to call
-/// - `WKWebView`'s `takeSnapshot` is not reachable through what wry hands out - and the
-/// answer is `None`, which the window reads as "keep your own ground". Said in
-/// docs/web-tabs.md rather than hidden here.
+/// `WebView2` has `CapturePreview` and `WKWebView` has `takeSnapshot`, which are the
+/// engine photographing itself and the only way to get at those pixels: the app's own
+/// webview cannot draw the page and nothing outside the process may copy the screen.
+/// On Linux there is nothing to call - `WebKitGTK`'s snapshot is not reachable through
+/// what wry hands out - and the answer is `None`, which the window reads as "keep your
+/// own ground". Said in docs/web-tabs.md rather than hidden here.
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     let view = found(&app, &tab)?;
@@ -1918,23 +1963,319 @@ mod ask {
     }
 }
 
-// Every build but `WebView2`'s: the other two desktops, and nib's own Chromium, where
-// the erased webview has no controller to reach through. See the Windows one above.
-#[cfg(any(not(windows), feature = "cef"))]
+// `WKWebView`'s own, on the system's engine on a Mac.
+//
+// wry answers a site's capture request itself, and its answer is yes: its UI delegate
+// calls the decision handler with `WKPermissionDecisionGrant` for every origin and
+// every frame, so a site in a web tab was handed the camera and the microphone without
+// a word, and so was a frame inside somebody's note in the window's own page. The only
+// prompt anybody saw was the system's, once, for nib itself. See `request_media_
+// capture_permission` in wry's `wry_web_view_ui_delegate.rs`.
+//
+// wry has no setting for it and no hook to answer it through, so the webview is given a
+// UI delegate of this module's own, which answers the one question and hands every
+// other one - the file picker, a window the page asked for - to wry's own delegate
+// unchanged. `WebKit` asks a delegate which methods it has once, as it is set, so the
+// forwarding says yes to exactly what wry's delegate says yes to, and the one method
+// this module has.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+mod ask {
+    use std::cell::RefCell;
+    use std::collections::HashMap;
+    use std::ffi::c_void;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    use block2::{DynBlock, RcBlock};
+    use objc2::rc::Retained;
+    use objc2::runtime::{AnyObject, NSObject, ProtocolObject, Sel};
+    use objc2::{define_class, msg_send, DefinedClass, MainThreadOnly};
+    use objc2_foundation::{MainThreadMarker, NSObjectProtocol};
+    use objc2_web_kit::{
+        WKFrameInfo, WKMediaCaptureType, WKPermissionDecision, WKSecurityOrigin, WKUIDelegate,
+        WKWebView,
+    };
+    use tauri::webview::PlatformWebview;
+    use tauri::{AppHandle, Emitter};
+
+    use super::{Asked, ASKED};
+
+    /// Who is answering in one webview: the reader, through the window, for a web tab;
+    /// or nobody, for the window's own page, where the app's own origin is allowed and
+    /// everything else is refused. The same split `WebView2`'s two listeners make.
+    enum Answering {
+        Tab {
+            app: AppHandle,
+            tab: String,
+            window: String,
+        },
+        Own {
+            ours: Vec<String>,
+        },
+    }
+
+    /// What the delegate holds: wry's delegate, to hand everything else to, and who
+    /// answers.
+    struct Held {
+        inner: Option<Retained<ProtocolObject<dyn WKUIDelegate>>>,
+        answering: Answering,
+    }
+
+    define_class!(
+        /// The web tab's UI delegate: the capture question answered here, and every
+        /// other question passed to wry's own delegate.
+        #[unsafe(super(NSObject))]
+        #[thread_kind = MainThreadOnly]
+        #[name = "NibWebCaptureDelegate"]
+        #[ivars = Held]
+        struct Gate;
+
+        unsafe impl NSObjectProtocol for Gate {}
+
+        unsafe impl WKUIDelegate for Gate {
+            /// A site has asked for the camera, the microphone, or both.
+            #[unsafe(method(webView:requestMediaCapturePermissionForOrigin:initiatedByFrame:type:decisionHandler:))]
+            fn request_media_capture_permission(
+                &self,
+                _webview: &WKWebView,
+                _origin: &WKSecurityOrigin,
+                frame: &WKFrameInfo,
+                kind: WKMediaCaptureType,
+                decide: &DynBlock<dyn Fn(WKPermissionDecision)>,
+            ) {
+                requested(&self.ivars().answering, frame, kind, decide);
+            }
+        }
+
+        impl Gate {
+            /// Yes for what this delegate has and for what wry's has, and no for the
+            /// rest, which is what `WebKit` reads once as the delegate is set.
+            #[unsafe(method(respondsToSelector:))]
+            fn responds_to_selector(&self, selector: Sel) -> bool {
+                forwards(self, selector)
+            }
+
+            /// Everything this delegate does not answer itself goes to wry's.
+            #[unsafe(method(forwardingTargetForSelector:))]
+            fn forwarding_target_for_selector(&self, _selector: Sel) -> *mut AnyObject {
+                self.ivars()
+                    .inner
+                    .as_ref()
+                    .map_or(std::ptr::null_mut(), |inner| {
+                        Retained::as_ptr(inner).cast::<AnyObject>().cast_mut()
+                    })
+            }
+        }
+    );
+
+    /// Whether the gate answers a selector, itself or through wry's delegate.
+    #[allow(
+        unsafe_code,
+        reason = "the superclass's own answer is asked for through the Objective-C runtime"
+    )]
+    fn forwards(gate: &Gate, selector: Sel) -> bool {
+        // SAFETY: `respondsToSelector:` is `NSObject`'s, takes a selector and answers a
+        // boolean; this is the superclass being asked what it has.
+        let own: bool = unsafe { msg_send![super(gate), respondsToSelector: selector] };
+        own || gate
+            .ivars()
+            .inner
+            .as_ref()
+            .is_some_and(|inner| inner.respondsToSelector(selector))
+    }
+
+    /// One request the reader has not answered yet: the engine's decision handler, held
+    /// exactly as long as the bubble is up, and what is still to be asked for it - the
+    /// microphone, when a site asked for both and the camera has just been allowed.
+    struct Waiting {
+        decide: RcBlock<dyn Fn(WKPermissionDecision)>,
+        then: Option<&'static str>,
+        origin: String,
+        app: AppHandle,
+        tab: String,
+        window: String,
+    }
+
+    thread_local! {
+        /// The requests waiting for an answer, on the main thread and nowhere else,
+        /// like the `WebView2` ones.
+        static WAITING: RefCell<HashMap<u64, Waiting>> = RefCell::new(HashMap::new());
+    }
+
+    /// What the next request is called.
+    static NEXT: AtomicU64 = AtomicU64::new(1);
+
+    /// The key the gate is kept under on its webview. Its address is the key; what is
+    /// in it does not matter.
+    static KEPT: u8 = 0;
+
+    /// The origin of the frame that asked. The frame's rather than the page's, as
+    /// `WebView2` reports it: a frame inside a site is somebody else, and a frame the
+    /// site did not give the camera to is refused by the engine before it gets here.
+    #[allow(
+        unsafe_code,
+        reason = "a frame's security origin is read through the Objective-C runtime"
+    )]
+    fn origin_of(frame: &WKFrameInfo) -> String {
+        // SAFETY: the frame is the one the engine handed this callback, alive for its
+        // length, on the main thread.
+        unsafe {
+            let origin = frame.securityOrigin();
+            super::origin_written(
+                &origin.protocol().to_string(),
+                &origin.host().to_string(),
+                origin.port(),
+            )
+        }
+    }
+
+    /// The request, answered at once or held open while the window asks.
+    fn requested(
+        answering: &Answering,
+        frame: &WKFrameInfo,
+        kind: WKMediaCaptureType,
+        decide: &DynBlock<dyn Fn(WKPermissionDecision)>,
+    ) {
+        let origin = origin_of(frame);
+        let asked = super::capture_kinds(kind.0);
+
+        match answering {
+            Answering::Own { ours } => {
+                let allow = !asked.is_empty() && super::is_ours(ours, &origin);
+                crate::trace::mark(&format!(
+                    "microphone: {origin} asked for {asked:?} and was {}",
+                    if allow { "allowed" } else { "refused" }
+                ));
+                decide.call((if allow {
+                    WKPermissionDecision::Grant
+                } else {
+                    WKPermissionDecision::Deny
+                },));
+            }
+            Answering::Tab { app, tab, window } => {
+                let Some((first, rest)) = asked.split_first() else {
+                    decide.call((WKPermissionDecision::Deny,));
+                    return;
+                };
+
+                hold(
+                    Waiting {
+                        decide: decide.copy(),
+                        then: rest.first().copied(),
+                        origin,
+                        app: app.clone(),
+                        tab: tab.clone(),
+                        window: window.clone(),
+                    },
+                    first,
+                );
+            }
+        }
+    }
+
+    /// Keeps a request open and tells the window what it is for. A window that cannot
+    /// be told is a site refused, not one left waiting for ever.
+    fn hold(waiting: Waiting, kind: &str) {
+        let id = NEXT.fetch_add(1, Ordering::Relaxed);
+        let said = Asked {
+            tab: waiting.tab.clone(),
+            id,
+            origin: waiting.origin.clone(),
+            kind: kind.to_string(),
+        };
+        let (app, window) = (waiting.app.clone(), waiting.window.clone());
+
+        WAITING.with_borrow_mut(|held| held.insert(id, waiting));
+        if app.emit_to(window.as_str(), ASKED, said).is_err() {
+            answer(id, false);
+        }
+    }
+
+    /// Gives a webview the gate, in front of whatever delegate wry gave it.
+    #[allow(
+        unsafe_code,
+        reason = "a WKWebView's UI delegate is set, and kept alive, through the Objective-C runtime"
+    )]
+    fn guard(webview: &PlatformWebview, answering: Answering) {
+        let Some(mtm) = MainThreadMarker::new() else {
+            return;
+        };
+
+        // SAFETY: the pointer is the WKWebView wry built for this webview, alive for as
+        // long as the webview is, and this runs on the main thread where it belongs.
+        let Some(view) = (unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }) else {
+            return;
+        };
+
+        // SAFETY: reading and setting a delegate on the main thread. The gate is kept
+        // alive by the webview itself below, because `WebKit` holds its UI delegate
+        // weakly; wry's own delegate is held both by wry and by the gate.
+        unsafe {
+            let inner = view.UIDelegate();
+            let gate = Gate::alloc(mtm).set_ivars(Held { inner, answering });
+            let gate: Retained<Gate> = msg_send![super(gate), init];
+
+            view.setUIDelegate(Some(ProtocolObject::from_ref(&*gate)));
+            objc2::ffi::objc_setAssociatedObject(
+                Retained::as_ptr(&view).cast::<AnyObject>().cast_mut(),
+                (&raw const KEPT).cast::<c_void>(),
+                Retained::as_ptr(&gate).cast::<AnyObject>().cast_mut(),
+                objc2::ffi::OBJC_ASSOCIATION_RETAIN_NONATOMIC,
+            );
+        }
+    }
+
+    /// Starts answering a web tab's capture requests through the window. Called on the
+    /// main thread, once, as the page is built.
+    pub fn listen(webview: &PlatformWebview, app: AppHandle, tab: String, window: String) {
+        guard(webview, Answering::Tab { app, tab, window });
+    }
+
+    /// Starts answering the window's own page: the app's own origin is allowed, as on
+    /// Windows, and a frame inside a note is refused - where wry would have handed it
+    /// the camera.
+    pub fn own(webview: &PlatformWebview, ours: Vec<String>) {
+        guard(webview, Answering::Own { ours });
+    }
+
+    /// The answer, given to the engine - or, for a site that asked for both and has
+    /// just been allowed the camera, the second question put to the window.
+    pub fn answer(id: u64, allow: bool) {
+        let Some(mut waiting) = WAITING.with_borrow_mut(|held| held.remove(&id)) else {
+            return;
+        };
+
+        if allow {
+            if let Some(next) = waiting.then.take() {
+                hold(waiting, next);
+                return;
+            }
+        }
+
+        waiting.decide.call((if allow {
+            WKPermissionDecision::Grant
+        } else {
+            WKPermissionDecision::Deny
+        },));
+    }
+}
+
+// Every build but the two system engines that can be asked: Linux, and nib's own
+// Chromium, where the erased webview has no controller to reach through. See the two
+// above.
+#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod ask {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
 
-    /// `WKWebView` and `WebKitGTK` both have the same event under another name - a
-    /// capture delegate and a `permission-request` signal - and neither is reachable
-    /// through what wry hands out. Until it is, a site on those platforms is answered
-    /// by the engine's own prompt; said out loud in docs/web-tabs.md.
+    /// `WebKitGTK` has the same event under another name - a `permission-request`
+    /// signal - and it is not reachable through what wry hands out. Until it is, a
+    /// site there is answered by the engine's own default; said out loud in
+    /// docs/web-tabs.md.
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _tab: String, _window: String) {}
 
-    /// And the window's own page is answered by whatever the platform does on its own,
-    /// which on both of these is a prompt the engine puts up itself. Nothing to attach,
-    /// and nothing that hangs for want of it: it is `WebView2` that waits for ever when
-    /// nothing is listening.
+    /// And the window's own page is answered by whatever the platform does on its own.
+    /// Nothing to attach, and nothing that hangs for want of it: it is `WebView2` that
+    /// waits for ever when nothing is listening.
     pub fn own(_webview: &PlatformWebview, _ours: Vec<String>) {}
 
     /// Nothing was ever asked here, so nothing is ever answered.
@@ -2035,20 +2376,86 @@ mod shot {
     }
 }
 
+// `WKWebView`'s own snapshot, on the system's engine on a Mac: the same still picture
+// `CapturePreview` takes on Windows, so an overlay over a page shows the page rather than
+// a blank pane.
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
+mod shot {
+    use block2::RcBlock;
+    use objc2::rc::Retained;
+    use objc2_app_kit::{NSBitmapImageFileType, NSBitmapImageRep, NSImage};
+    use objc2_foundation::{NSDictionary, NSError};
+    use objc2_web_kit::WKWebView;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+
+    /// The largest picture handed to the window, as on Windows.
+    const LARGEST: usize = 32 * 1024 * 1024;
+
+    /// Asks the engine to photograph the page as it is on screen. The answer arrives
+    /// later, on the channel, once `WebKit` has drawn it.
+    #[allow(
+        unsafe_code,
+        reason = "WKWebView's snapshot is reached through the Objective-C runtime, from the pointer wry hands out"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        // SAFETY: the pointer is the WKWebView wry built for this tab, alive for as long
+        // as the tab's page is, and this runs on the main thread where it belongs.
+        let view = unsafe { Retained::retain(webview.inner().cast::<WKWebView>()) }
+            .ok_or("there is no page to photograph")?;
+
+        let handler = RcBlock::new(move |image: *mut NSImage, _error: *mut NSError| {
+            // SAFETY: the engine hands this block either an image or nothing, alive for
+            // the block's length.
+            let bytes = unsafe { image.as_ref() }.and_then(png);
+            let _ = done.try_send(bytes);
+        });
+
+        // SAFETY: the webview is used on its own thread, no configuration means the
+        // whole of what is on screen, and the engine copies the block and calls it once.
+        unsafe { view.takeSnapshotWithConfiguration_completionHandler(None, &handler) };
+        Ok(())
+    }
+
+    /// The picture as a PNG, which is what the window puts in the pane.
+    #[allow(
+        unsafe_code,
+        reason = "a bitmap is encoded through AppKit's Objective-C interface"
+    )]
+    fn png(image: &NSImage) -> Option<Vec<u8>> {
+        let tiff = image.TIFFRepresentation()?;
+        let bitmap = NSBitmapImageRep::imageRepWithData(&tiff)?;
+        // SAFETY: an empty dictionary is a valid set of encoding properties.
+        let data = unsafe {
+            bitmap.representationUsingType_properties(
+                NSBitmapImageFileType::PNG,
+                &NSDictionary::new(),
+            )
+        }?;
+
+        let bytes = data.to_vec();
+        (!bytes.is_empty() && bytes.len() <= LARGEST).then_some(bytes)
+    }
+}
+
 /// A picture out of the stream the engine wrote it into, for the favicon a page is
 /// showing as much as for a photograph of it; see `web_icons.rs`.
 #[cfg(all(windows, not(feature = "cef")))]
 pub(crate) use shot::png as read_stream;
 
-// Every build but `WebView2`'s, nib's own Chromium among them. See the one above.
-#[cfg(any(not(windows), feature = "cef"))]
+// Every build but the two system engines that can photograph a page: Linux, and nib's
+// own Chromium. See the two above.
+#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WKWebView`'s own snapshot and `WebKitGTK`'s are not reachable
-    /// through what wry hands out, so the window keeps its own ground under an overlay
-    /// here; see the note on `web_shot`.
+    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
+    /// so the window keeps its own ground under an overlay here; see the note on
+    /// `web_shot`.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own
@@ -2069,7 +2476,8 @@ mod shot {
 #[cfg(test)]
 mod tests {
     use super::{
-        allowed, guard, handed_over, is_ours, opening, origin_of, reader, Place, Trail, WebTabs,
+        allowed, capture_kinds, guard, handed_over, is_ours, opening, origin_of, origin_written,
+        reader, Place, Trail, WebTabs,
     };
     use tauri::Url;
 
@@ -2106,6 +2514,33 @@ mod tests {
         // Nothing to speak of is not the app.
         assert!(!is_ours(&[], ""));
         assert!(!is_ours(&[], "about:blank"));
+    }
+
+    /// `WKWebView`'s three capture kinds, as the window's bubble names them. Both at
+    /// once is two questions, the camera first; anything else is refused unasked.
+    #[test]
+    fn a_capture_request_is_asked_about_kind_by_kind() {
+        assert_eq!(capture_kinds(0), ["camera"]);
+        assert_eq!(capture_kinds(1), ["microphone"]);
+        assert_eq!(capture_kinds(2), ["camera", "microphone"]);
+        assert!(capture_kinds(3).is_empty());
+        assert!(capture_kinds(-1).is_empty());
+    }
+
+    /// A security origin written the way the window and `is_ours` read one: a port only
+    /// where it is not the scheme's own, which `WebKit` says with a zero.
+    #[test]
+    fn a_security_origin_is_written_as_an_origin() {
+        assert_eq!(
+            origin_written("https", "example.com", 0),
+            "https://example.com"
+        );
+        assert_eq!(
+            origin_written("http", "localhost", 1420),
+            "http://localhost:1420"
+        );
+        assert!(is_ours(&[], &origin_written("tauri", "localhost", 0)));
+        assert!(!is_ours(&[], &origin_written("https", "evil.example", 0)));
     }
 
     #[test]

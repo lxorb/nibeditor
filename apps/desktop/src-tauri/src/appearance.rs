@@ -30,14 +30,61 @@ fn ours(app: &AppHandle) -> Vec<Window> {
         .collect()
 }
 
+/// A window built with nib's own frame, the way the first one is in tauri.conf.json.
+///
+/// Everywhere but a Mac that is no frame at all, and the bar draws the three buttons.
+/// A Mac keeps its own traffic lights over the bar instead, the way VS Code and
+/// Obsidian do there: the lights are the one part of a window a Mac user reaches for
+/// without looking. Where they sit in the bar is lights.rs, once the window is built.
+pub fn own_frame<R: tauri::Runtime, M: Manager<R>>(
+    builder: tauri::WebviewWindowBuilder<'_, R, M>,
+) -> tauri::WebviewWindowBuilder<'_, R, M> {
+    #[cfg(target_os = "macos")]
+    let builder = builder
+        .decorations(true)
+        .title_bar_style(tauri::TitleBarStyle::Overlay)
+        .hidden_title(true);
+
+    #[cfg(not(target_os = "macos"))]
+    let builder = builder.decorations(false);
+
+    builder
+}
+
 /// Who draws the frame. `system` asks for the platform's titlebar and border; false is
 /// nib's own, which is what every window starts as.
+///
+/// A Mac never loses its frame: nib's own is the system's titlebar made transparent
+/// under the bar, with the traffic lights left where they are, and the system's is that
+/// titlebar drawn above it.
 #[tauri::command]
 pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
     for window in ours(&app) {
-        window
-            .set_decorations(system)
-            .map_err(|error| format!("the frame could not be changed: {error}"))?;
+        #[cfg(target_os = "macos")]
+        let changed = window.set_title_bar_style(if system {
+            tauri::TitleBarStyle::Visible
+        } else {
+            tauri::TitleBarStyle::Overlay
+        });
+
+        #[cfg(not(target_os = "macos"))]
+        let changed = window.set_decorations(system);
+
+        changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
+
+        #[cfg(target_os = "macos")]
+        {
+            crate::lights::refresh(&window);
+
+            // Switching the titlebar lays the window's content out again, and AppKit
+            // makes the window itself the first responder while it does: the page
+            // lost the keyboard, and Escape, a shortcut or a letter went nowhere
+            // until somebody clicked. The frame is switched from the page's own
+            // settings, so the page is what gets it back.
+            if let Some(page) = app.get_webview(window.label()) {
+                let _ = page.set_focus();
+            }
+        }
     }
 
     Ok(())

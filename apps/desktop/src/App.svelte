@@ -52,6 +52,8 @@
     settingsSheet,
     shareSheet,
     slidesStage,
+    spaceChooserCard,
+    menuBarDoor,
     undoToastNotice,
   } from './lib/surfaces.svelte'
   import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
@@ -64,7 +66,7 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { currentWindow, isDesktop } from './lib/tauri'
+  import { invoke, isDesktop, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
@@ -79,6 +81,12 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  // Where a right click keeps the Mac's own menu; see system-menu.ts.
+  let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
+  if (platform() === 'macos') {
+    void import('./lib/system-menu').then((one) => (keepsSystemMenu = one.keepsSystemMenu))
+  }
   /** The tab whose note is on the stage, while one is. The deck goes over the
    *  whole window, and the note stays open behind it. */
   const presenting = $derived(workspace.tabs.find((tab) => tab.id === present.tabId) ?? null)
@@ -141,16 +149,20 @@
     },
   })
 
-  const title = $derived(
-    workspace.active ? `${workspace.active.shown}${workspace.active.unsaved ? ' ·' : ''}` : '',
-  )
+  const onMac = platform() === 'macos'
 
   // The header shows no title, so the note's name goes to the window itself -
-  // which is what the taskbar and the window switcher read.
+  // which is what the taskbar and the window switcher read. Fetched rather than
+  // carried, since nothing about it has to be there for the first paint; the
+  // facts are read here so the effect follows them. See window-document.ts.
   $effect(() => {
-    const next = title ? `${title} - Nib` : 'Nib'
-    document.title = next
-    if (isDesktop) void currentWindow().then((window) => window.setTitle(next))
+    const active = workspace.active
+    const facts = active && { shown: active.shown, unsaved: active.unsaved, path: active.path }
+    void import('./lib/window-document').then(({ windowDocument }) => {
+      const inWindow = windowDocument(facts, onMac)
+      document.title = inWindow.title
+      if (isDesktop) void invoke('show_document', { ...inWindow }).catch(() => undefined)
+    })
   })
 
   // The account's settings come along with the account: when the session is
@@ -689,6 +701,26 @@
       fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
     }
   }
+  // On a Mac the app's menu is the menu bar across the top of the screen, which is
+  // why Titlebar.svelte draws no button for it there. Fetched at the launch's last
+  // turn, with the in-window menu's rows it is built from, since no other platform
+  // has one and nothing about it is needed to show a note. See native-menu.ts. The
+  // plugin build is never a Mac, and says so first so the bundler leaves the menu
+  // bar and Tauri's menu API out of its package; see vite.even.config.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop && platform() === 'macos') {
+    void startup
+      .turn('doors')
+      .then(menuBarDoor)
+      .then(({ followMenuBar }) =>
+        followMenuBar(() => ({
+          view,
+          onpalette: () => (palette = true),
+          onhistory: () => (settings.historyOpen = true),
+          app: appContext(),
+        })),
+      )
+  }
+
   /** Half of what the app tells somebody it tells with a colour: the gear in the
    *  panel's foot is lit while a pass is running and red when the last one failed,
    *  and the dot on a tab is amber until the note is on the disk. Neither has any
@@ -713,8 +745,15 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
-  oncontextmenucapture={onFieldMenu}
-  oncontextmenu={(event: MouseEvent) => event.preventDefault()}
+  oncontextmenucapture={(event: MouseEvent) => {
+    // A Mac's text field keeps the system's own menu, which has Look Up and the
+    // spelling in it as well as the four; see system-menu.ts. Every other field gets
+    // nib's.
+    if (!keepsSystemMenu(event.target, platform())) onFieldMenu(event)
+  }}
+  oncontextmenu={(event: MouseEvent) => {
+    if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
+  }}
   onmousedown={onMouse}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
@@ -948,6 +987,14 @@
 {#if paletteDoor.asked}
   {#await paletteDoor.asked then Palette}
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
+  {/await}
+{/if}
+<!-- What a fresh install opens on, until there is a space. Fetched only then; the card
+     decides the rest itself, and the plugin never shows it, so its build does not
+     carry it. See SpaceChooser.svelte and space-choice.ts. -->
+{#if !__EVEN_PLUGIN__ && workspace.restored && !workspace.spaces.length}
+  {#await spaceChooserCard() then SpaceChooser}
+    <SpaceChooser />
   {/await}
 {/if}
 <SignIn />

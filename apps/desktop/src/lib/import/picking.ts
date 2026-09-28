@@ -22,6 +22,20 @@ export function pickFiles(): Promise<Picked[]> {
   return chooseFiles({ multiple: true })
 }
 
+/** A whole folder, every file in it with its path inside: Obsidian's "Open folder as
+ *  vault", which is how the space chooser brings one in. The webview's own folder
+ *  dialog, for the reason above - it hands back bytes, where a path would have to be
+ *  read back out through the crate, and paths.rs keeps the crate to the spaces.
+ *
+ *  On a Mac that dialog is wry's: its `WKUIDelegate` answers
+ *  `runOpenPanelWithParameters` with an `NSOpenPanel` that can choose folders
+ *  whenever the page asks for one, which `webkitdirectory` does. The delegate
+ *  web_tabs.rs puts in front of it hands that selector straight through, so the
+ *  app's own page keeps it. */
+export function pickFolder(): Promise<Picked[]> {
+  return chooseFiles({ multiple: true, folder: true })
+}
+
 /** Everything that was dropped, folders walked where the webview allows it. */
 export async function droppedFiles(transfer: DataTransfer | null): Promise<Picked[]> {
   return transfer ? filesUnder(caughtFiles(transfer)) : []

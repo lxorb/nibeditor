@@ -57,7 +57,14 @@ const PRESENTING: Record<string, string> = {
   'setFocus()': 'core:window:allow-set-focus',
 }
 
-/** The one webview command, which does not go through `WindowLike` either: a window
+/** The one webview command the Mac's menu bar calls, for the same reason as the
+ *  list above: it is the Tauri API directly, on this window's own page. See
+ *  native-menu-bar.svelte.ts. */
+const MENU_BAR: Record<string, string> = {
+  'getCurrentWebview()': 'core:webview:allow-set-webview-focus',
+}
+
+/** The same webview command, which does not go through `WindowLike` either: a window
  *  with a web tab in it holds several webviews, and this is the app's own taking the
  *  keyboard back from a page. Written as the calls are, in the file that makes them. */
 const FOCUSING = {
@@ -100,6 +107,17 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
+  test('every call the Mac menu bar makes is granted, and it makes each of them', () => {
+    const source = read('../src/lib/native-menu-bar.svelte.ts')
+
+    const missing = Object.entries(MENU_BAR).filter(
+      ([call, permission]) =>
+        !source.includes(call) || !capabilities.permissions.includes(permission),
+    )
+
+    expect(missing.map(([call]) => call)).toEqual([])
+  })
+
   test('a site’s question takes the keyboard back, and is granted that', () => {
     const source = read(FOCUSING.file)
 
@@ -111,6 +129,7 @@ describe('window permissions', () => {
     const used = new Set([
       ...Object.values(NEEDS),
       ...Object.values(PRESENTING),
+      ...Object.values(MENU_BAR),
       FOCUSING.permission,
     ])
     const stale = capabilities.permissions

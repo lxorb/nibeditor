@@ -471,12 +471,13 @@ export async function exportCanvasPdf(drawing: Drawing) {
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
 
+  const page = { width: width / 96, height: height / 96, margin: 0, landscape: false }
+
   if (target) {
     // The print dialog can still save the file, so nobody is left with nothing -
     // and the line says the road changed; see export/print.ts.
-    const page = { width: width / 96, height: height / 96, margin: 0, landscape: false }
     if (await writtenPdf(html, target, page)) return target
   }
 
-  await printInFrame(html)
+  await printInFrame(html, page)
 }

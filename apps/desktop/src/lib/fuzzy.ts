@@ -1,3 +1,5 @@
+import { foldName } from '@nib/markdown/links'
+
 /** Subsequence match with a score. Higher is better; null means no match.
  *  Consecutive hits and matches at word starts are rewarded, so "rdm" ranks
  *  "Read me" above a note that merely contains those letters scattered.
@@ -8,8 +10,8 @@
 export function fuzzy(query: string, text: string): number | null {
   if (!query) return 0
 
-  const needle = query.toLowerCase()
-  const haystack = text.toLowerCase()
+  const needle = foldName(query)
+  const haystack = foldName(text)
 
   let score = 0
   let cursor = 0

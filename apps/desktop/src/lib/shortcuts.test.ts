@@ -9,6 +9,7 @@ import {
   tableBindings,
 } from '@nib/editor'
 import { sameCombination } from './keys'
+import { SYSTEM_KEYS } from './shortcuts/registry'
 
 /** The store writes to the browser's storage and asks the browser what kind
  *  of machine this is, and there is neither under node. */
@@ -77,6 +78,7 @@ function press(
   held: {
     code?: string
     ctrl?: boolean
+    meta?: boolean
     alt?: boolean
     shift?: boolean
     /** Whether a surface has already taken it, which the window's handler reads. */
@@ -87,7 +89,7 @@ function press(
     key,
     code: held.code,
     ctrlKey: !!held.ctrl,
-    metaKey: false,
+    metaKey: !!held.meta,
     altKey: !!held.alt,
     shiftKey: !!held.shift,
     defaultPrevented: !!held.answered,
@@ -157,9 +159,15 @@ describe('every shortcut there is', () => {
     }
   })
 
-  test('holds a key for everything nibKeymap binds', () => {
-    const listed = registry.SHORTCUTS.map((one) => one.key)
-    for (const binding of nibKeymap) expect(listed, binding.key).toContain(binding.key)
+  /** Per platform, because a binding that is unbound on one of them carries its
+   *  key in the other platforms' fields rather than in `key`; see `bindings` in
+   *  the editor. */
+  test.each(PLATFORMS)('holds a key for everything nibKeymap binds (%s)', (platform) => {
+    const listed = registry.SHORTCUTS.map((one) => defaultKeyFor(one, platform))
+    for (const binding of nibKeymap) {
+      const key = binding[platform] ?? binding.key
+      if (key) expect(listed, key).toContain(key)
+    }
   })
 
   /** The second key for Redo, which is the one every other editor answers:
@@ -975,5 +983,124 @@ describe('on a Mac', () => {
     expect(shortcuts.keyFor('app.next-note')).toBe('Ctrl-Tab')
 
     vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+  })
+
+  /** Every key that is different on a Mac, beside the key it was and still is on
+   *  Windows and Linux. The right-hand column is pinned on purpose: the Mac's own
+   *  keys are overrides, and an override that leaked into the shared key would
+   *  move a Windows reader's hands as well. */
+  const MAC: [id: string, mac: string | null, elsewhere: string][] = [
+    ['app.fullscreen', 'Mod-Ctrl-f', 'F11'],
+    ['app.present', 'Mod-Alt-p', 'F5'],
+    ['app.focus', 'Mod-Ctrl-o', 'F8'],
+    ['app.typewriter', 'Mod-Ctrl-t', 'F9'],
+    ['app.read-only', 'Mod-Ctrl-r', 'F10'],
+    ['app.next-note.alt', 'Mod-Shift-]', 'Mod-PageDown'],
+    ['app.previous-note.alt', 'Mod-Shift-[', 'Mod-PageUp'],
+    ['app.note-1', 'Mod-1', 'Mod-Alt-1'],
+    ['app.note-9', 'Mod-9', 'Mod-Alt-9'],
+    ['paragraph.heading-1', 'Mod-Alt-1', 'Mod-1'],
+    ['paragraph.heading-6', 'Mod-Alt-6', 'Mod-6'],
+    ['paragraph.quote', 'Mod-Alt-q', 'Mod-Shift-q'],
+    ['paragraph.ordered-list', null, 'Mod-Shift-['],
+    ['paragraph.bullet-list', null, 'Mod-Shift-]'],
+    ['format.code', 'Ctrl-`', 'Mod-Shift-`'],
+    ['format.strikethrough', 'Ctrl-Shift-`', 'Alt-Shift-5'],
+    ['tree.delete', 'Mod-Backspace', 'Delete'],
+    ['tree.delete.alt', 'Mod-Delete', 'Backspace'],
+    ['tree.rename', 'Mod-Enter', 'F2'],
+    ['canvas.frame', 'Mod-Alt-1', 'Mod-1'],
+    ['canvas.front', 'Mod-Alt-]', 'Mod-Shift-]'],
+    ['canvas.back', 'Mod-Alt-[', 'Mod-Shift-['],
+  ]
+
+  test.each(MAC)('%s is %s on a Mac and %s elsewhere', (id, mac, elsewhere) => {
+    const entry = registry.SHORTCUTS.find((one) => one.id === id)!
+    expect(defaultKeyFor(entry, 'mac')).toBe(mac)
+    expect(defaultKeyFor(entry, 'win')).toBe(elsewhere)
+    expect(defaultKeyFor(entry, 'linux')).toBe(elsewhere)
+  })
+
+  /** The keys the Mac itself holds. A default on one of them is a key that does
+   *  nothing out of the box, and the settings would warn about the app's own
+   *  choice. The fixed ones are exempt: Quit is on the list because it is the
+   *  system's. */
+  test.each(PLATFORMS)('starts nothing on a key the system keeps (%s)', (platform) => {
+    const kept = registry.SHORTCUTS.filter((one) => one.scope !== 'fixed').flatMap((one) => {
+      const key = defaultKeyFor(one, platform)
+      if (!key) return []
+      return SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
+        ? [`${one.id} on ${key}`]
+        : []
+    })
+
+    expect(kept).toEqual([])
+  })
+
+  test('warns about the keys the Mac keeps for itself', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+    const { shortcuts } = await restarted()
+
+    for (const key of [
+      'F11',
+      'Mod-`',
+      'Mod-Shift-`',
+      'Ctrl-Space',
+      'Mod-Ctrl-q',
+      'Ctrl-ArrowLeft',
+    ]) {
+      expect(shortcuts.warning(key), key).not.toBeNull()
+    }
+    expect(shortcuts.warning('Mod-Ctrl-f')).toBeNull()
+
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+  })
+
+  /** A Mac deletes a file with Cmd+Backspace, and a bare Backspace in a list is a
+   *  key a Mac hand presses without a second thought. */
+  test('the file list deletes on Cmd+Backspace and never on a bare one', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+    const { shortcuts } = await restarted()
+    const deletes = (event: KeyboardEvent) =>
+      shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
+
+    const cmd = (key: string) => press(key, { meta: true })
+    expect(deletes(press('Backspace'))).toBe(false)
+    expect(deletes(press('Delete'))).toBe(false)
+    expect(deletes(cmd('Backspace'))).toBe(true)
+    expect(deletes(cmd('Delete'))).toBe(true)
+    expect(shortcuts.hint('tree.delete')).toBe('⌘⌫')
+
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+  })
+
+  test('the menus and the palette show the Mac keys, in signs', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' })
+    const { shortcuts } = await restarted()
+    const { appCommands } = await import('./commands')
+
+    expect(shortcuts.hint('app.fullscreen')).toBe('⌃⌘F')
+    expect(shortcuts.hint('app.present')).toBe('⌥⌘P')
+    expect(shortcuts.hint('app.note-1')).toBe('⌘1')
+    expect(shortcuts.hint('paragraph.heading-1')).toBe('⌥⌘1')
+    expect(shortcuts.hint('format.code')).toBe('⌃`')
+    expect(shortcuts.hint('app.next-note.alt')).toBe('⇧⌘]')
+    expect(shortcuts.hint('paragraph.bullet-list')).toBeUndefined()
+    expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('⌃⌘O')
+
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
+  })
+})
+
+describe('off a Mac', () => {
+  test('the same keys read as they always have', async () => {
+    const { shortcuts } = await restarted()
+    const { appCommands } = await import('./commands')
+
+    expect(shortcuts.hint('app.fullscreen')).toBe('F11')
+    expect(shortcuts.hint('app.note-1')).toBe('Ctrl+Alt+1')
+    expect(shortcuts.hint('tree.delete')).toBe('Del')
+    expect(shortcuts.pressed('tree.delete.alt', press('Backspace'))).toBe(true)
+    expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('F8')
   })
 })

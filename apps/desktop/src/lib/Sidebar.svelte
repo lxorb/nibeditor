@@ -974,6 +974,13 @@
     padding: 0 var(--space-1);
   }
 
+  /* A Mac's traffic lights, over the head of a panel docked at the window's left
+     edge; see Titlebar.svelte. Not while the words run right to left, where this
+     panel docks at the right and the lights are over the bar instead. */
+  :global([data-lights]:not([dir='rtl'])) .head {
+    padding-inline-start: var(--traffic-lights);
+  }
+
   .new {
     flex: none;
     width: var(--row-height);

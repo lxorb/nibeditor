@@ -610,6 +610,7 @@ const UNSUPPORTED: Record<string, unknown> = {
   mcp_config: null,
   new_menu_registered: false,
   remember_recent: null,
+  forget_recent: null,
   write_log: null,
   read_log: '',
   log_dir: '',

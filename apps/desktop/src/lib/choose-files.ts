@@ -24,6 +24,9 @@ interface Asking {
    *  offers the camera app, a phone browser does the same, and a desktop browser
    *  ignores it - which is why the row that asks for it is only offered on a phone. */
   camera?: boolean
+  /** A whole folder rather than files one by one: every file in it, each with its
+   *  path inside the folder as `webkitRelativePath`. */
+  folder?: boolean
 }
 
 /** The files somebody chose, or none at all if they thought better of it.
@@ -35,7 +38,7 @@ interface Asking {
 export function chooseFiles(asking: Asking = {}): Promise<File[]> {
   if (typeof document === 'undefined') return Promise.resolve([])
 
-  const { accept, multiple = false, camera = false } = asking
+  const { accept, multiple = false, camera = false, folder = false } = asking
 
   return new Promise((settle) => {
     const input = document.createElement('input')
@@ -43,6 +46,7 @@ export function chooseFiles(asking: Asking = {}): Promise<File[]> {
     if (accept !== undefined) input.accept = accept
     input.multiple = multiple
     if (camera) input.capture = 'environment'
+    input.webkitdirectory = folder
     input.style.position = 'fixed'
     input.style.left = '-1000px'
     input.style.opacity = '0'

@@ -12,7 +12,7 @@
 
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
-import type { PaperInches } from '../page-setup'
+import { DEFAULT_PAGE_SETUP, type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { invoke } from '../tauri'
 import { openTarget, renderOptions } from './context'
 
@@ -58,6 +58,9 @@ export async function printNote(): Promise<void> {
   const target = openTarget()
   const options = await renderOptions(target)
   const html = await renderNote(target.source, target.name, { ...options, scheme: 'light' })
+  // The paper the dialog opens on, where the dialog is the system's own and takes one;
+  // see `printInFrame`.
+  const page = paperInches(pageSetupFor(target.source, options.page ?? DEFAULT_PAGE_SETUP))
 
-  await printInFrame(html)
+  await printInFrame(html, page)
 }

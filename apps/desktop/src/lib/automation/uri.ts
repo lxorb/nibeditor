@@ -44,6 +44,14 @@ export function isNibUri(text: string): boolean {
   return SCHEMES.some((scheme) => folded.startsWith(scheme))
 }
 
+/** Whether an address is a file rather than a link: what a Mac hands the app for
+ *  a document opened from the Finder, which the same system call delivers beside
+ *  `nib://` links. A file is opened as a file, by the launch's own road; see
+ *  src-tauri/src/launch.rs. */
+export function isFileUri(text: string): boolean {
+  return text.trim().toLowerCase().startsWith('file:')
+}
+
 /** Reads a link, or answers null for one this app has no business following.
  *
  *  Null rather than a throw: a link arrives from outside, and outside is full of

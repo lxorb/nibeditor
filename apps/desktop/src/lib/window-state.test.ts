@@ -6,6 +6,7 @@ import { type Resizable, WindowState } from './window-state.svelte'
  *  behaves whether the change came from a button, a drag or a keyboard. */
 class FakeWindow implements Resizable {
   maximized = false
+  fullscreen = false
   /** How many listeners are on it, so a teardown can be checked. */
   listeners = 0
   /** How often it has been asked, so nothing is asking on every frame. */
@@ -18,6 +19,10 @@ class FakeWindow implements Resizable {
   isMaximized(): Promise<boolean> {
     this.asked++
     return Promise.resolve(this.maximized)
+  }
+
+  isFullscreen(): Promise<boolean> {
+    return Promise.resolve(this.fullscreen)
   }
 
   toggleMaximize(): Promise<void> {
@@ -36,8 +41,9 @@ class FakeWindow implements Resizable {
   }
 
   /** What dragging the window, snapping it, or double clicking its bar does. */
-  resize(maximized: boolean) {
+  resize(maximized: boolean, fullscreen = this.fullscreen) {
     this.maximized = maximized
+    this.fullscreen = fullscreen
     for (const handler of this.told) handler()
   }
 }
@@ -158,6 +164,28 @@ describe('whether the window is maximised', () => {
     await settled()
     expect(window.asked).toBe(before + 1)
 
+    stop()
+  })
+})
+
+/** A Mac hides its traffic lights in full screen, and the bar stops keeping room
+ *  for them; see Titlebar.svelte. */
+describe('whether the window is full screen', () => {
+  test('follows the window in and out of it', async () => {
+    const window = new FakeWindow()
+    const state = new WindowState()
+
+    const stop = state.follow(() => Promise.resolve(window))
+    await settled()
+    expect(state.fullscreen).toBe(false)
+
+    window.resize(false, true)
+    await settled()
+    expect(state.fullscreen).toBe(true)
+
+    window.resize(false, false)
+    await settled()
+    expect(state.fullscreen).toBe(false)
     stop()
   })
 })

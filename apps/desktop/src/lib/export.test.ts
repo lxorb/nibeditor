@@ -96,6 +96,20 @@ describe('a styled export', () => {
     expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0f9b8e')
   })
 
+  /** WebKit, which a Mac prints with, does not honour `break-after: avoid`, and a
+   *  heading ended a page with its section on the next. The room a heading keeps
+   *  under it is WebKit's alone, and never the last heading's, which has nothing to
+   *  keep with. */
+  test('keeps a heading with its section on paper in WebKit as well', () => {
+    const print = html.slice(html.indexOf('@media print'))
+    const webkit = print.slice(print.indexOf('@supports (hanging-punctuation: first)'))
+
+    expect(print).toContain('break-after: avoid')
+    expect(webkit).toContain('#write h2:not(:last-child)::after')
+    expect(webkit).toContain('height: calc(11pt * 1.55 * 3)')
+    expect(webkit).toContain('margin-bottom: calc(11pt * 1.55 * -3)')
+  })
+
   test('needs no network to render maths', () => {
     expect(html).toContain('class="katex')
     expect(html).toContain('src:url(data:font/woff2;base64,')

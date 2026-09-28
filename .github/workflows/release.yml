@@ -112,6 +112,29 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # A Developer ID and notarization, once the secrets exist. Without them the
+      # bundle keeps the ad-hoc signature tauri.conf.json asks for, which Apple
+      # silicon needs to run it at all. Exported only when set: the bundler reads
+      # an empty APPLE_SIGNING_IDENTITY as an identity named "".
+      - name: Apple signing
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          [ -n "$APPLE_CERTIFICATE" ] || exit 0
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            value="${!name}"
+            [ -n "$value" ] || continue
+            echo "::add-mask::$value"
+            { echo "$name<<__nib_eof__"; echo "$value"; echo "__nib_eof__"; } >> "$GITHUB_ENV"
+          done
+
       # Signed so the updater will accept them. Without the key the build still
       # succeeds; it just produces bundles that cannot be auto-installed.
       #

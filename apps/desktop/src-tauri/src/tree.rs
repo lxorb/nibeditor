@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
 use crate::clock;
@@ -37,6 +37,11 @@ pub struct Entry {
     modified: u64,
     created: u64,
     children: Vec<Entry>,
+    /// A note iCloud has taken off this Mac, listed under its own name and brought
+    /// back when it is opened; see notes/icloud.rs. Left out of what the window
+    /// receives everywhere else.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    evicted: bool,
 }
 
 /// How the window would like the tree read, which is whatever its own settings
@@ -127,10 +132,13 @@ fn walk(
     if depth < MAX_DEPTH && seen.first_time(path) {
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
-                let child = entry.path();
-                let name = entry.file_name().to_string_lossy().to_string();
+                let (child, name, evicted) = named(&entry);
 
                 if name.starts_with('.') && !options.show_hidden {
+                    continue;
+                }
+                // The note itself is back, and its placeholder is on its way out.
+                if evicted && child.exists() {
                     continue;
                 }
 
@@ -145,11 +153,12 @@ fn walk(
                 // folder in their space; see the tests below, which read one. That is
                 // one `stat` per link and no more.
                 let listing = entry.file_type().ok();
-                let directory = match listing {
-                    Some(kind) if kind.is_symlink() => child.is_dir(),
-                    Some(kind) => kind.is_dir(),
-                    None => child.is_dir(),
-                };
+                let directory = !evicted
+                    && match listing {
+                        Some(kind) if kind.is_symlink() => child.is_dir(),
+                        Some(kind) => kind.is_dir(),
+                        None => child.is_dir(),
+                    };
 
                 if directory {
                     room(left)?;
@@ -170,7 +179,16 @@ fn walk(
                     // standing on its own - a picture, a PDF's own highlights -
                     // and a file list nobody can act on is noise.
                     room(left)?;
-                    children.push(listed(&child, name, false, entry.metadata().ok()));
+                    let meta = entry.metadata().ok();
+                    // A note iCloud left on a Mac as a name without its words; see
+                    // notes/icloud.rs, which is a Mac's alone.
+                    #[cfg(target_os = "macos")]
+                    let dataless = meta.as_ref().is_some_and(crate::notes::icloud::is_dataless);
+                    #[cfg(not(target_os = "macos"))]
+                    let dataless = false;
+                    let mut one = listed(&child, name, false, meta);
+                    one.evicted = evicted || dataless;
+                    children.push(one);
                 }
             }
         }
@@ -189,6 +207,22 @@ fn walk(
     Ok(here)
 }
 
+/// Where one listed entry is and what it is called, and whether it is a note iCloud
+/// has taken off this Mac: then it is its placeholder, `.Plan.md.icloud`, and it is
+/// listed as the `Plan.md` it stands for. Only on a Mac, the one place iCloud
+/// leaves placeholders of that shape.
+fn named(entry: &fs::DirEntry) -> (PathBuf, String, bool) {
+    let child = entry.path();
+    let name = entry.file_name().to_string_lossy().to_string();
+
+    #[cfg(target_os = "macos")]
+    if let Some(real) = crate::notes::icloud::evicted_name(&name) {
+        return (child.with_file_name(real), real.to_string(), true);
+    }
+
+    (child, name, false)
+}
+
 /// One folder with no children yet, off one `stat` of the folder itself.
 fn folder(path: &Path, name: String) -> Entry {
     listed(path, name, true, fs::metadata(path).ok())
@@ -204,6 +238,7 @@ fn listed(path: &Path, name: String, is_dir: bool, meta: Option<fs::Metadata>) -
         modified: clock::of(meta.as_ref().and_then(|one| one.modified().ok())),
         created: clock::of(meta.as_ref().and_then(|one| one.created().ok())),
         children: Vec::new(),
+        evicted: false,
     }
 }
 
@@ -279,6 +314,7 @@ mod tests {
             modified,
             created: modified,
             children: Vec::new(),
+            evicted: false,
         }
     }
 

@@ -20,11 +20,14 @@
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
+  import { showLabel } from '../reveal'
   import { downloads, type Download } from './downloads.svelte'
 
   const { onclose }: { onclose: () => void } = $props()
 
   const rows = $derived([...downloads.list].reverse())
+  // "Show in Finder" on a Mac, as Safari's own downloads say it; see reveal.ts.
+  const showWords = $derived(t(showLabel()))
 
   /** How far one file has got, or null while the server has not said how large it is -
    *  which the hairline draws as a sweep rather than as a length. */
@@ -87,8 +90,8 @@
         {:else if one.state === 'done'}
           <button
             class="nib-glyph"
-            title={t('Show in folder')}
-            aria-label={t('Show in folder')}
+            title={showWords}
+            aria-label={showWords}
             onclick={() => {
               void downloads.show(one.id)
               onclose()

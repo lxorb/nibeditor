@@ -41,6 +41,10 @@ declare const __EVEN_PLUGIN__: boolean
  *  See vite.config.ts, and smoke.py, which drives both. */
 declare const __DRIVEABLE__: boolean
 
+/** The version the installer carries, out of `src-tauri/tauri.conf.json`. Shown under
+ *  the name on the space chooser; see vite.config.ts. */
+declare const __APP_VERSION__: string
+
 /** The build-time settings this app reads. Vite types every `VITE_` name as
  *  `any` by default, and an `any` spreading out of `import.meta.env` is how a
  *  missing variable becomes a URL of `undefined` at runtime. Named here, so the

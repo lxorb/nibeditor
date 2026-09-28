@@ -142,7 +142,7 @@ export function withShift(text: string): string {
  *  Ctrl+Shift+= arrives as `+`, Ctrl+Shift+3 as `#`, and on a Mac Alt+5
  *  arrives as `[`. What was pressed is the same key either way, and the
  *  written combination names it unshifted, so the code is what to compare. */
-const PHYSICAL: Record<string, string> = {
+export const PHYSICAL: Record<string, string> = {
   Minus: '-',
   Equal: '=',
   BracketLeft: '[',
@@ -292,7 +292,21 @@ const SHOWN: Record<string, string> = {
   ContextMenu: 'Menu',
 }
 
-/** The combination as a reader sees it: `⌘⇧K` on a Mac, `Ctrl+Shift+K`
+/** A Mac's menus print these as signs too: Finder's Move to Trash is `⌘⌫`.
+ *  Space stays a word there as well. */
+const SHOWN_MAC: Record<string, string> = {
+  Escape: '⎋',
+  Delete: '⌦',
+  Backspace: '⌫',
+  Enter: '↩',
+  Tab: '⇥',
+  PageUp: '⇞',
+  PageDown: '⇟',
+  Home: '↖',
+  End: '↘',
+}
+
+/** The combination as a reader sees it: `⇧⌘K` on a Mac, `Ctrl+Shift+K`
  *  everywhere else. An unreadable one comes back as it was written, which is
  *  better than an empty box. */
 export function showCombination(text: string, platform: Platform): string {
@@ -300,6 +314,7 @@ export function showCombination(text: string, platform: Platform): string {
   if (!combination) return text
 
   const key =
+    (platform === 'mac' ? SHOWN_MAC[combination.key] : undefined) ??
     SHOWN[combination.key] ??
     (combination.key.length === 1 ? combination.key.toUpperCase() : combination.key)
 

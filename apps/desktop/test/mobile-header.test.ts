@@ -59,6 +59,19 @@ describe('the button that opens the file list', () => {
     }
   })
 
+  /** A fresh install's space chooser covers everything under the bar with an opaque
+   *  scrim, and the panel is under that scrim: pressed there, the button opened a
+   *  list nobody could see, of a space that did not exist yet. So the bar does not
+   *  offer it while there is no space and no tab, which is the only time the chooser
+   *  can be up - Obsidian's chooser has no such button either. Asked of the
+   *  workspace, because the chooser's own store is fetched with its card and stays
+   *  out of the first paint (see weight.test.ts). The plus stays: a tab is how a
+   *  note is written with no space yet, and a tab is what sends the chooser away. */
+  test('is not in the bar while the space chooser covers the panel', () => {
+    expect(titlebar).toMatch(/\{#if !listless\}\s*<SidebarToggle \/>\s*\{\/if\}/)
+    expect(titlebar).toContain('!workspace.spaces.length && !workspace.tabs.length')
+  })
+
   /** One glyph and one movement, wherever it is drawn: the bar over the note and
    *  the drawer's own head show the same button in the same state. Nothing else
    *  in the app draws a sidebar button of its own. */
@@ -129,9 +142,10 @@ describe('the hamburger', () => {
 
     // The bars are the desktop's, at the left end of the bar where the column of
     // spaces used to keep them; a touch screen reaches the app through the dots
-    // at the other end of that same row instead.
+    // at the other end of that same row instead, and a Mac through the menu bar at
+    // the top of its screen, the way VS Code and Obsidian are reached there.
     expect(titlebar).toContain(
-      '{#if !viewport.touch}\n    <AppMenu {view} {onpalette} {onhistory} />',
+      '{#if !viewport.touch && !mac}\n    <AppMenu {view} {onpalette} {onhistory} />',
     )
   })
 })

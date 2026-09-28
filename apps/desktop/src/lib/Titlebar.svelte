@@ -1,13 +1,13 @@
 <script lang="ts">
   import type { EditorView } from '@nib/editor'
   import AppMenu from './AppMenu.svelte'
-  import { t } from './i18n.svelte'
+  import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceMark from './SpaceMark.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
-  import { currentWindow, isDesktop } from './tauri'
+  import { currentWindow, isDesktop, platform } from './tauri'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -23,6 +23,33 @@
    *  restores it too; see window-state.svelte.ts. */
   const shape = new WindowState()
   const maximized = $derived(shape.maximized)
+
+  /** A Mac keeps its own traffic lights at the top left of every window, and its
+   *  menu in the bar at the top of the screen, so the bar draws neither: VS Code's
+   *  and Obsidian's shape on a Mac. What it keeps is room for the lights, except in
+   *  full screen, where the system takes them away. See launch.rs. */
+  const mac = isDesktop && platform() === 'macos'
+  const lights = $derived(mac && modes.frame === 'nib' && !shape.fullscreen)
+
+  /** Said on the root, because the lights sit over whatever is in the window's top
+   *  left corner: this bar, or the sidebar's head while the panel is docked open
+   *  beside it, which is where Obsidian has them. See Sidebar.svelte. */
+  $effect(() => {
+    if (lights) document.documentElement.dataset.lights = ''
+    else delete document.documentElement.dataset.lights
+  })
+
+  /** Nothing yet for the file list to show: no space, and no tab either. */
+  const listless = $derived(
+    workspace.restored && !workspace.spaces.length && !workspace.tabs.length,
+  )
+
+  /** Whether the lights are over this bar rather than over the docked panel. They are
+   *  at the window's left however the words run, and with the words running right to
+   *  left the panel docks at the right, so the corner is this bar's either way. */
+  const cornered = $derived(
+    lights && (i18n.direction === 'rtl' || !(workspace.panel && !viewport.drawer)),
+  )
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
@@ -58,16 +85,23 @@
      its tab, so there is no separate title; a phone and a tablet hold one
      document, so the name is the middle of the row and the whole of the app is
      behind the dots at the end of it. -->
-<header>
+<header class:lights={cornered}>
   <!-- The application itself, at the top left corner of the screen, which is
        where it was when there was a column of spaces to put it above. A phone
        reaches it through the three dots at the other end of this same row
        instead: there the left corner is the file list. -->
-  {#if !viewport.touch}
+  {#if !viewport.touch && !mac}
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <SidebarToggle />
+  <!-- Not while there is no space and no tab: the list has nothing to list, and on a
+       fresh install the space chooser's scrim covers the panel, so the button opened
+       a list nobody could see. Asked of the workspace rather than of the chooser,
+       which is fetched with its card and stays out of the first paint. The plus
+       beside the tabs stays; a tab is what sends the chooser away. -->
+  {#if !listless}
+    <SidebarToggle />
+  {/if}
 
   <!-- With the list shut there is nothing on the screen saying which space
        these notes are in, and the panel's own header is what usually says it.
@@ -132,7 +166,7 @@
        sets of them is one set that lies about which window it belongs to. The bar
        itself stays - it holds the menu, the sidebar toggle and the tabs - and so
        does the stretch the window is dragged by. See modes.svelte.ts. -->
-  {#if isDesktop}
+  {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls">
         <button onclick={minimize} aria-label={t('Minimize')}>
@@ -171,6 +205,13 @@
        with what is below: Chrome's active tab. See Tabs.svelte. */
     background: var(--tab-frame);
     box-shadow: inset 0 -1px var(--line);
+  }
+
+  /* The three lights and the gap after them, the room a Mac's own apps leave. On the
+     left whichever way the words run: the lights are the system's, about the screen
+     rather than about reading, and AppKit keeps them at the window's left edge. */
+  header.lights {
+    padding-left: var(--traffic-lights);
   }
 
   .drag {

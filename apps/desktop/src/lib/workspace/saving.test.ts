@@ -108,6 +108,9 @@ function open(path: string | null, { kept = true, text = '# a' } = {}) {
     keepWeb: () => Promise.resolve(),
     // Nothing is in the way in these tests, so the wanted name is the free one.
     freeName: (_folder: string, name: string) => name,
+    // There is a space already, so a save never has to make one here; see
+    // first-save.test.ts for the save that does.
+    addSpace: () => Promise.resolve(undefined),
   }
 
   const saving = new Saving(ws)

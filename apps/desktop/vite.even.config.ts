@@ -55,6 +55,9 @@ const LEFT_OUT = new Set([
   // because the worker is asked for by URL.
   'pdfjs-dist',
   'pdfjs-dist/build/pdf.worker.min.mjs?url',
+  // And the legacy build an older WebKit reads PDFs through; see pdf/document.ts.
+  'pdfjs-dist/legacy/build/pdf.mjs',
+  'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url',
   // The icon sets that are data rather than drawing: the emoji index and the
   // coloured set. Half a megabyte of JSON between them, for a picker whose one job
   // on a phone is to put a mark on a folder, and the glasses draw a row as words
@@ -249,6 +252,9 @@ export default defineConfig({
     __EVEN_PLUGIN__: 'true',
     // A packed plugin is a release; nothing drives it.
     __DRIVEABLE__: 'false',
+    // Read by the space chooser, which the plugin never shows; defined so the page
+    // cannot trip over a name it was never given. See vite.config.ts.
+    __APP_VERSION__: JSON.stringify(manifest.version),
   },
   clearScreen: false,
   envPrefix: ['VITE_', 'TAURI_ENV_*'],

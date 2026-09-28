@@ -484,6 +484,33 @@ sets of keys and one of them getting Escape wrong. It is CodeMirror's own
 completion tooltip, which is why it behaves the same at the caret on a phone as
 it does on a desktop.
 
+### On a Mac
+
+`Mod` is Cmd, and the keys are written the way a Mac writes them: signs for the
+modifiers in the order ⌃⌥⇧⌘, and signs for the keys with no character, ⎋ ⌦ ⌫ ↩ ⇥ ⇞ ⇟
+↖ ↘. Where a key above means something else to a Mac, or is a media key on its
+laptops, the Mac has its own default. Windows and Linux are unchanged.
+
+| | On a Mac | Elsewhere | Why |
+| --- | --- | --- | --- |
+| Full screen | ⌃⌘F | F11 | F11 is Show Desktop; ⌃⌘F is every Mac app's Enter Full Screen |
+| Present | ⌥⌘P | F5 | Keynote's Play Slideshow |
+| Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Nib's own on the Ctrl+Cmd row beside ⌃⌘F |
+| Round the strip | ⌃⇥, ⌃⇧⇥, ⇧⌘], ⇧⌘[ | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | ⌘⇥ is the app switcher; the brackets are Safari's, Chrome's and VS Code's |
+| The note at a place | ⌘1 to ⌘9 | Ctrl+Alt+1 to 9 | Obsidian's and Safari's |
+| Heading 1 to 6 | ⌥⌘1 to ⌥⌘6 | Ctrl+1 to 6 | trades places with the notes, as Notion has them on a Mac |
+| Numbered, bulleted list | no key | Ctrl+Shift+[, Ctrl+Shift+] | the brackets walk the tabs; Obsidian ships none |
+| Quote | ⌥⌘Q | Ctrl+Shift+Q | ⇧⌘Q is Log Out; ⌥⌘Q is Typora's on a Mac |
+| Inline code, strikethrough | ⌃\`, ⌃⇧\` | Ctrl+Shift+\`, Alt+Shift+5 | ⇧⌘\` steps through windows, ⌥⇧5 types a character; Typora's Mac keys |
+| Back, forward | ⌃[, ⌃] | Alt+Left, Alt+Right | ⌥ and an arrow is a word at a time, ⌘ and a bracket indents, as in Obsidian |
+| Delete files in the list | ⌘⌫, ⌘⌦ | Del, Backspace | Finder's and Obsidian's; a bare ⌫ deletes nothing |
+| Rename in the list | ⌘↩ | F2 | Finder renames on ↩, which opens in every list here |
+| Canvas: zoom to what is picked, to front, to back | ⌥⌘1, ⌥⌘], ⌥⌘[ | Ctrl+1, Ctrl+Shift+], Ctrl+Shift+[ | ⌘1 and ⇧⌘] are the tabs'; Figma's order keys |
+
+F6 stays: VS Code walks its parts with it on a Mac too, and ⌃F6 is the system's. The
+settings warn about the keys a Mac keeps for itself - Spotlight, the switchers, the
+screenshots, Mission Control, ⌘\` and the rest - see `SYSTEM_KEYS` in the registry.
+
 ### The keyboards
 
 Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or

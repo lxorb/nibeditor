@@ -404,6 +404,20 @@ function holds(tail: string): boolean {
  *  front of the metadata's fence. The history the address field offers and the
  *  omnibox were never here; see `history` in web-tab/pages.svelte.ts.
  *
+ *  Raised 2026-09-28, to 3,335,000, for the Mac's own default keys: the `mac` field on
+ *  thirty entries of the registry and the editor's keymap, the keys the Mac keeps for
+ *  itself, and the signs a Mac prints for Escape, Backspace and the rest. 2,767 bytes,
+ *  all of it data the settings and the menus read at launch. Measured 3,331,295.
+ *
+ *  Raised 2026-09-28 again, for the first launch: the gate in App.svelte that fetches
+ *  the space chooser only while there is no space (the card, its rows and the decision
+ *  behind it are all behind that door), the sign-in sheet's heading for the Create
+ *  account door, `restored` on the workspace, a first save that makes the first space
+ *  rather than doing nothing, and the words an earlier welcome note held so an old
+ *  seed still never syncs. 2,988 bytes. And for the rest of the Mac round: the native
+ *  menu's door, the window's title and edited dot, Finder's words and the print path.
+ *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in.
+ *
  *  Raised 2026-09-28, to 3,340,000, for Ctrl+click and the middle button opening a tab
  *  of its own on every surface: new-tab.ts, the file list, the Links panel, the
  *  bookmarks, the arrows and the workspace's opens taking where a tab goes. 8,788
@@ -440,6 +454,14 @@ function holds(tail: string): boolean {
  *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
  *  this 3,296,054 and 380.
  *
+ *  Raised 2026-09-28 a third time, to 3,348,000, for what the Mac round found on a
+ *  real Mac: the traffic lights' room in the bar and the sidebar's head, the sidebar
+ *  button left out while the space chooser covers the panel, a note let go of on the way
+ *  out, and packages/editor/src/control.ts, which keeps a Ctrl chord a Mac hands over
+ *  as an invisible character out of the note. That last has to be there for the first
+ *  key typed. The menu bar's own share of the round is behind its door. Measured
+ *  3,345,483.
+ *
  *  The editor's right-click menu went behind a door as it learned a link's and a
  *  picture's rows (the power-user list's eighth batch), and so did what it asks of
  *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
@@ -455,8 +477,11 @@ function holds(tail: string): boolean {
  *  press. Measured 3,244,278 and 374, and 3,247,448 and 375 on the main it landed on; the
  *  production build preloads 1,301,758 bytes in 82 chunks, from 1,317,450 in 88. With
  *  the web tab's batches (find, keys, favicons, the page menu) merged over it, 3,235,605
- *  and 373. */
-const BUDGET = 3_250_000
+ *  and 373.
+ *
+ *  And met again when the Mac round came in on top of all of that, which each had
+ *  been measured without the other: 3,252,387 and 374 modules. */
+const BUDGET = 3_256_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
