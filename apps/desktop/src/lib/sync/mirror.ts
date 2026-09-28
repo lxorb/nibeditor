@@ -20,6 +20,8 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
+import { fileStamp } from '../file-stamp'
+import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
 import { relativeTo } from '../space-paths'
@@ -208,8 +210,8 @@ export async function writeDown(path: string, content: string, was?: string | nu
  *  that theirs is newer: the copy that travelled is the one more likely to have
  *  been written last, and the other is in this device's history either way. */
 async function theirsIsNewer(path: string, updatedAt: number): Promise<boolean> {
-  const stamp = await invoke<number | null>('file_stamp', { path }).catch(() => null)
-  return stamp === null || updatedAt > stamp
+  const stamp = await fileStamp(path)
+  return stamp === null || updatedAt > stamp.modified
 }
 
 function flatten(entry: Entry): Entry[] {
@@ -346,6 +348,19 @@ export async function pull(
       // one nobody has any more. The entry is left exactly as it is, so the push sees
       // the gap and deletes the note the way it always has.
       if (local === null && tracked !== undefined) continue
+
+      // A file that is there and would not read - words in some other encoding, a
+      // file another program has locked - is not a gap for the account's copy to
+      // fill. Writing into it put the account's words over the only copy of the
+      // file's own, with no version kept of them, since there were none to read.
+      // Left for the next pass, which is the one after whatever held it lets go.
+      if (local === null && (await fileStamp(target)) !== null) {
+        log(
+          'warn',
+          `sync: ${target} is there but could not be read, so nothing was written over it`,
+        )
+        continue
+      }
 
       // The file and the account already say the same thing, so there is nothing
       // to bring down and nothing to settle: the entry is recorded and the note is
@@ -649,7 +664,18 @@ export async function push(
     // on both sides: this is the one file the pass deliberately leaves alone.
     if (held.has(file.path)) continue
 
-    const content = await invoke<string>('read_note', { path: file.path })
+    // One file that will not read - another encoding, a lock, a delete between the
+    // listing and here - is that file left out of this pass. It used to throw, and a
+    // throw ends the pass: every note after it in this space and every space after
+    // this one stopped syncing for as long as the file stayed as it was.
+    const content = await invoke<string>('read_note', { path: file.path }).catch(
+      (error: unknown) => {
+        log('warn', `sync: ${file.path} could not be read, so it was not sent - ${String(error)}`)
+        return null
+      },
+    )
+    if (content === null) continue
+
     const hash = await sha256(content)
     const tracked = mirror.notes[path]
 
@@ -708,13 +734,35 @@ export async function push(
   for (const [path, tracked] of Object.entries(mirror.notes)) {
     if (seen.has(path)) continue
 
-    await api.deleteNote(token, tracked.id).catch(() => undefined)
+    if (!(await deletedOnAccount(token, tracked.id))) continue
+
     mirror.notes = without(mirror.notes, path)
     mirror.offered = without(mirror.offered, path)
     moved = true
   }
 
   return moved
+}
+
+/** Whether the account is done with a note deleted here: it took the delete, or
+ *  it answered that it never will - the note is not there, or not this device's to
+ *  take away.
+ *
+ *  Anything else is a delete still owed, and the entry stays so the next pass asks
+ *  again. Dropping it whatever the answer was is how a delete lost to a dropped
+ *  connection came back: the next pull found a note the account still held and
+ *  this machine had no entry for and no file for, which is a note arriving from
+ *  somewhere else, and wrote it down again. */
+async function deletedOnAccount(token: string, id: string): Promise<boolean> {
+  try {
+    await api.deleteNote(token, id)
+    return true
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return true
+
+    log('warn', `sync: the account could not be told note ${id} was deleted - ${String(error)}`)
+    return false
+  }
 }
 
 /** The PDFs of a space, offered to the account so that a published note linking

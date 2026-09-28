@@ -72,7 +72,11 @@ const fake = vi.hoisted(() => {
       return Promise.resolve(undefined as T)
     }
 
-    if (command === 'file_stamp') return Promise.resolve(0 as T)
+    // The shape the crate answers; see `file_stamp` in notes.rs.
+    if (command === 'file_stamp') {
+      const held = disk.get(path)
+      return Promise.resolve((held === undefined ? null : { modified: 0, len: held.length }) as T)
+    }
 
     if (command === 'read_tree') {
       const root = text(args.root)

@@ -28,6 +28,8 @@ const fake = vi.hoisted(() => {
     version: number
     seq: number
     deleted: boolean
+    /** When the account says it was last written, in milliseconds. */
+    updatedAt?: number
   }
 
   const disk = new Map<string, string>()
@@ -39,6 +41,13 @@ const fake = vi.hoisted(() => {
    *  oldest first, under the note they are versions of. What the sheet lists and
    *  what Restore puts back; see recovery.svelte.ts. */
   const history = new Map<string, string[]>()
+  /** When each file here was last written, as the crate stamps it; a file with
+   *  none was written at the dawn of time. */
+  const modified = new Map<string, number>()
+  /** Files that are there and will not read: another encoding, or a lock. */
+  const unreadable = new Set<string>()
+  /** What the account answers a delete with, where it does not simply take it. */
+  const refusing: { delete: Error | null } = { delete: null }
   let seq = 0
 
   const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -52,7 +61,17 @@ const fake = vi.hoisted(() => {
       // catches the promise, and a file that is not there is the ordinary case
       // of a note arriving from another machine.
       if (held === undefined) return Promise.reject(new Error(`no such file: ${path}`))
+      if (unreadable.has(path)) {
+        return Promise.reject(new Error(`stream did not contain valid UTF-8: ${path}`))
+      }
       return Promise.resolve(held as T)
+    }
+
+    // The shape the crate answers, not a bare time; see `file_stamp` in notes.rs.
+    if (command === 'file_stamp') {
+      const held = disk.get(path)
+      if (held === undefined) return Promise.resolve(null as T)
+      return Promise.resolve({ modified: modified.get(path) ?? 0, len: held.length } as T)
     }
 
     if (command === 'write_note') {
@@ -104,7 +123,7 @@ const fake = vi.hoisted(() => {
     throw new Error(`no such command: ${command}`)
   }
 
-  /** The account's own hash, worked out the way the service works it out, so a
+  /** The account’s own hash, worked out the way the service works it out, so a
    *  pass comparing hashes is comparing real ones. */
   async function hashOf(content: string): Promise<string> {
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(content))
@@ -117,7 +136,7 @@ const fake = vi.hoisted(() => {
       path: note.path,
       seq: note.seq,
       version: note.version,
-      updatedAt: 0,
+      updatedAt: note.updatedAt ?? 0,
       deleted: note.deleted,
       size: note.content.length,
       hash: await hashOf(note.content),
@@ -185,6 +204,7 @@ const fake = vi.hoisted(() => {
     },
     deleteNote: (_token: string, id: string) => {
       calls.push(`deleteNote ${id}`)
+      if (refusing.delete) return Promise.reject(refusing.delete)
       const note = remote.get(id)
       if (note) Object.assign(note, { deleted: true, seq: ++seq })
       return Promise.resolve({ ok: true as const })
@@ -199,21 +219,38 @@ const fake = vi.hoisted(() => {
     return note.id
   }
 
-  function editRemote(id: string, content: string) {
+  function editRemote(id: string, content: string, updatedAt = 0) {
     const note = remote.get(id)
-    if (note) Object.assign(note, { content, version: note.version + 1, seq: ++seq })
+    if (note) Object.assign(note, { content, version: note.version + 1, seq: ++seq, updatedAt })
   }
 
   function reset() {
     disk.clear()
     remote.clear()
     history.clear()
+    modified.clear()
+    unreadable.clear()
+    refusing.delete = null
     calls.length = 0
     fetched.length = 0
     seq = 0
   }
 
-  return { addRemote, api, calls, disk, editRemote, fetched, history, invoke, remote, reset }
+  return {
+    addRemote,
+    api,
+    calls,
+    disk,
+    editRemote,
+    fetched,
+    history,
+    invoke,
+    modified,
+    refusing,
+    remote,
+    reset,
+    unreadable,
+  }
 })
 
 vi.mock('../tauri', async (importOriginal) => ({
@@ -393,7 +430,7 @@ describe('a note renamed on this machine', () => {
     expect(alive).toEqual(['Two.md'])
   })
 
-  /** And with the pass in the order the loop runs it. The account's own listing still
+  /** And with the pass in the order the loop runs it. The account’s own listing still
    *  carries the old note - the cursor is behind it until a pass moves it on - so the
    *  pull sees a note whose file is not here, which is exactly what a rename looks
    *  like from that side. */
@@ -452,7 +489,7 @@ describe('a note both sides changed', () => {
 
     expect(await push(mirror, 'token', new Set([id]))).toBe(false)
     expect(fake.calls).toEqual([])
-    // And the account's copy is untouched: the room is what writes it.
+    // And the account’s copy is untouched: the room is what writes it.
     expect(fake.remote.get(id)?.content).toBe('base\n')
   })
 
@@ -662,7 +699,7 @@ describe('words arriving from the account', () => {
   test('keep a version of a note this machine had written in', async () => {
     const { mirror, id } = await paired('note.md', 'base\n')
 
-    // Both sides moved, so the account's copy lands beside ours - and ours is now
+    // Both sides moved, so the account’s copy lands beside ours - and ours is now
     // one edit further on than the version the pass kept before it.
     fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
     fake.editRemote(id, 'base\nwritten there\n')
@@ -725,7 +762,7 @@ describe('a note the mirror has no entry for', () => {
     await pull(mirror, 'token', NOBODY)
 
     // Nothing recorded is not the same as nothing written here. Before this, the
-    // account's copy simply landed on top and the writing was gone from the one
+    // account’s copy simply landed on top and the writing was gone from the one
     // machine that had it.
     expect(fake.disk.get(`${ROOT}/note.md`)).toBe('what I wrote here\n')
     expect(conflicts()).toHaveLength(1)
@@ -876,5 +913,96 @@ describe('a first pass, with somebody waiting on it', () => {
     await pull(mirror, 'token', NOBODY, { listed: (paths) => said.push(paths) })
 
     expect(said).toEqual([[]])
+  })
+})
+
+describe('the newest copy standing', () => {
+  /** The rule that lets the later of two copies stand. The file's stamp is an
+   *  object with a time in it, and it used to be compared with the account's time
+   *  as though it were a number - which it never is, so the copy here won every
+   *  conflict, however much later the other one had been written. */
+  const newest = { rule: 'newest' as const }
+
+  test('is the account’s copy when that was written after the file here', async () => {
+    const { mirror, id } = await paired('note.md', 'base\n')
+    fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here\n')
+    fake.modified.set(`${ROOT}/note.md`, 1_000)
+    fake.editRemote(id, 'base\nwritten there, later\n', 2_000)
+
+    await pull(mirror, 'token', NOBODY, newest)
+
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten there, later\n')
+    // And the words that lost are a version, as the rule promises.
+    expect(versions('note.md')).toEqual(['base\nwritten here\n'])
+    expect(conflicts()).toEqual([])
+  })
+
+  test('and the file here when that was written after the account’s', async () => {
+    const { mirror, id } = await paired('note.md', 'base\n')
+    fake.disk.set(`${ROOT}/note.md`, 'base\nwritten here, later\n')
+    fake.modified.set(`${ROOT}/note.md`, 2_000)
+    fake.editRemote(id, 'base\nwritten there\n', 1_000)
+
+    await pull(mirror, 'token', NOBODY, newest)
+
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('base\nwritten here, later\n')
+    expect(conflicts()).toEqual([])
+  })
+})
+
+describe('a file that is there but will not read', () => {
+  test('is not written over by the account’s copy of the same name', async () => {
+    fake.addRemote('note.md', 'what the account holds\n')
+    fake.disk.set(`${ROOT}/note.md`, 'written in some other encoding\n')
+    fake.unreadable.add(`${ROOT}/note.md`)
+
+    await pull(newMirror('s-one', ROOT), 'token', NOBODY)
+
+    // Nothing could be read, so no version could be kept: writing over it would
+    // have been the end of the only copy.
+    expect(fake.disk.get(`${ROOT}/note.md`)).toBe('written in some other encoding\n')
+    expect(fake.calls).toEqual([])
+  })
+
+  test('is left out of a push rather than ending it for every note after it', async () => {
+    const mirror = newMirror('s-one', ROOT)
+    fake.disk.set(`${ROOT}/a.md`, 'will not read\n')
+    fake.unreadable.add(`${ROOT}/a.md`)
+    fake.disk.set(`${ROOT}/b.md`, 'the note after it\n')
+
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual(['createNote b.md'])
+  })
+})
+
+describe('a delete the account did not take', () => {
+  test('is asked again next pass rather than coming back from the account', async () => {
+    const { mirror, id } = await paired('note.md', 'the words\n')
+    fake.disk.delete(`${ROOT}/note.md`)
+
+    fake.refusing.delete = new TypeError('Failed to fetch')
+    await push(mirror, 'token', NOBODY)
+
+    // The connection dropped, so the account still holds the note - and the pull
+    // that runs before the next push must not read that as a note to bring down.
+    fake.refusing.delete = null
+    await pull(mirror, 'token', NOBODY)
+    expect(fake.disk.has(`${ROOT}/note.md`)).toBe(false)
+
+    await push(mirror, 'token', NOBODY)
+    expect(fake.remote.get(id)?.deleted).toBe(true)
+  })
+
+  test('while one the account answered is done with', async () => {
+    const { mirror } = await paired('note.md', 'the words\n')
+    fake.disk.delete(`${ROOT}/note.md`)
+    fake.refusing.delete = new ApiError(404, 'no such note')
+
+    await push(mirror, 'token', NOBODY)
+    fake.calls.length = 0
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls).toEqual([])
   })
 })
