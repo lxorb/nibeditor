@@ -75,15 +75,15 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Tabs | Close tabs to the right | Chrome, VS Code, Obsidian | missing | `tabMenu` (`lib/Tabs.svelte:147-177`) has Close and Close others only | S | high |
-| Tabs | Close all tabs, as a menu row and a palette row | VS Code, Obsidian | missing | same; the palette has only `close` | S | med |
-| Tabs | Duplicate tab | Chrome, Obsidian | missing | no row and no command | S | med |
-| Tabs | Move the tab to the other pane, or split and move, by menu and by key | VS Code (move editor), Obsidian | missing | `split` copies the tab (`lib/workspace.svelte.ts:3552-3569`); a tab can only be moved by dragging | S | med |
-| Tabs | Rename the note from its tab (a menu row, F2 on a focused tab) | Obsidian, VS Code | missing | no Rename row in `tabMenu` | S | med |
-| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | missing | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
-| Tabs | Dropping a URL or a link from another app onto the strip opens a web tab | Chrome | missing | `over` (`lib/Tabs.svelte:681`) accepts tree drags only | S | low |
-| Tabs | The mouse wheel scrolls an overflowing strip | VS Code | missing | `.tabs` has `overflow-x: auto` and no wheel handler | S | low |
-| Tabs | Ctrl+Tab in most-recently-used order, as an option | VS Code | missing | `cycleTab` walks the strip in order (`lib/shortcuts/registry.ts:1037`) | M | low |
+| Tabs | Close tabs to the right | Chrome, VS Code, Obsidian | done 536bebb9 | `tabMenu` (`lib/Tabs.svelte:147-177`) has Close and Close others only | S | high |
+| Tabs | Close all tabs, as a menu row and a palette row | VS Code, Obsidian | done 536bebb9 | same; the palette has only `close` | S | med |
+| Tabs | Duplicate tab | Chrome, Obsidian | done 536bebb9 | no row and no command | S | med |
+| Tabs | Move the tab to the other pane, or split and move, by menu and by key | VS Code (move editor), Obsidian | done 536bebb9 (Ctrl+Alt+Shift+Right) | `split` copies the tab (`lib/workspace.svelte.ts:3552-3569`); a tab can only be moved by dragging | S | med |
+| Tabs | Rename the note from its tab (a menu row, F2 on a focused tab) | Obsidian, VS Code | done 536bebb9 | no Rename row in `tabMenu` | S | med |
+| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | partial 536bebb9: Reload and Copy link; Mute waits for batch 1 | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
+| Tabs | Dropping a URL or a link from another app onto the strip opens a web tab | Chrome | done 536bebb9 | `over` (`lib/Tabs.svelte:681`) accepts tree drags only | S | low |
+| Tabs | The mouse wheel scrolls an overflowing strip | VS Code | done 536bebb9 | `.tabs` has `overflow-x: auto` and no wheel handler | S | low |
+| Tabs | Ctrl+Tab in most-recently-used order, as an option | VS Code | done 536bebb9 (Settings, General) | `cycleTab` walks the strip in order (`lib/shortcuts/registry.ts:1037`) | M | low |
 
 ## Batch 6: web tab, bar and keys
 
