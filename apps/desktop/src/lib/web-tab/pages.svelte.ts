@@ -715,6 +715,18 @@ class Pages {
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
   }
 
+  /** Where this tab has been and where along it it is, for the history under a held
+   *  arrow; see `trailSteps` in menu.ts. Nothing for a page that is not running, whose
+   *  arrows are not lit either. */
+  async trail(tabId: string): Promise<{ urls: string[]; at: number }> {
+    const none = { urls: [], at: 0 }
+    if (!isDesktop || !this.held.get(tabId)?.live) return none
+
+    return invoke<[string[], number]>('web_trail', { tab: tabId })
+      .then(([urls, at]) => ({ urls, at }))
+      .catch(() => none)
+  }
+
   /** How large the page is drawn: a browser's own zoom, on the tab it was asked for.
    *  See `ZOOMS` in menu.ts for the ladder the rows step along. */
   async zoom(tabId: string, factor: number): Promise<void> {

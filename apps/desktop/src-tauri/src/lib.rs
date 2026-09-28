@@ -322,6 +322,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         web_tabs::web_place,
         web_tabs::web_navigate,
         web_tabs::web_step,
+        web_tabs::web_trail,
         web_tabs::web_clip,
         web_tabs::web_close,
         web_tabs::web_look,

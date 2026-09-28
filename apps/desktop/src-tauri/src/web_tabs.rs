@@ -1397,6 +1397,14 @@ pub fn web_step(
         .map_err(|error| format!("that page could not be stepped: {error}"))
 }
 
+/// Where a tab has been and where along it it is, for the history under a held Back
+/// or Forward. Nothing is asked of the page, so a page busy in a loop of its own still
+/// lists where it came from.
+#[tauri::command]
+pub fn web_trail(tabs: tauri::State<'_, WebTabs>, tab: String) -> (Vec<String>, usize) {
+    tabs.walk(&tab)
+}
+
 /// Where the tab is: the page, how far down it the reading has got, and the trail
 /// behind it.
 ///

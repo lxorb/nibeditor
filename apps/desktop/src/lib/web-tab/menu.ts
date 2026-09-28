@@ -48,6 +48,27 @@ export function zoomed(from: number, up: boolean): number {
   return steps.find((one) => (up ? one > from + 0.001 : one < from - 0.001)) ?? from
 }
 
+/** How far Chrome's list under a held arrow goes. A trail is as long as the reading
+ *  was, and a menu past a dozen rows is a list nobody reads to the end of. */
+const MOST_STEPS = 12
+
+/** Chrome's list under a held Back or Forward: the pages that way along the tab's
+ *  trail, the nearest first, each with how many steps away it is - which is what a
+ *  row asks the engine to go by. */
+export function trailSteps(
+  urls: readonly string[],
+  at: number,
+  forward: boolean,
+): { url: string; by: number }[] {
+  const steps: { url: string; by: number }[] = []
+  for (let by = 1; by <= MOST_STEPS; by++) {
+    const url = urls[forward ? at + by : at - by]
+    if (url === undefined) break
+    steps.push({ url, by })
+  }
+  return steps
+}
+
 /** Everything the dots can ask the tab for. One object rather than nine arguments,
  *  because the bar hands the whole of it over and a row that grows an argument should
  *  not be a change at every call site. */

@@ -31,6 +31,7 @@
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
   import X from 'lucide/dist/esm/icons/x.mjs'
   import { t } from '../i18n.svelte'
+  import { longPress } from '../longpress'
   import { dur } from '../motion'
   import { middleOpens } from '../new-tab'
   import { overlays } from '../overlays'
@@ -55,6 +56,7 @@
     /** Which history the address field offers from: its space's; see web-data.ts. */
     book,
     onstep,
+    onhistory,
     onaddress,
     onclip,
     onmenu,
@@ -70,6 +72,8 @@
      *  modifier opens its step in a tab of its own; see new-tab.ts. A key has no
      *  press. */
     onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
+    /** A right click or a held finger on an arrow: the pages that way, as a list. */
+    onhistory: (forward: boolean, event: MouseEvent) => void
     onaddress: (typed: string, aside: boolean) => void
     onclip: () => void
     onmenu: (event: MouseEvent) => void
@@ -179,6 +183,8 @@
 </script>
 
 <div class="webbar">
+  <!-- Back and forward. A right click or a held finger on either lists the pages that
+       way, the way Chrome's do. -->
   <button
     class="nib-glyph"
     title={t('Back')}
@@ -186,6 +192,8 @@
     disabled={!page.back}
     onclick={(event) => onstep('back', event)}
     use:middleOpens={(event) => onstep('back', event)}
+    oncontextmenu={(event) => onhistory(false, event)}
+    use:longPress={(event) => onhistory(false, event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
@@ -201,6 +209,8 @@
     disabled={!page.forward}
     onclick={(event) => onstep('forward', event)}
     use:middleOpens={(event) => onstep('forward', event)}
+    oncontextmenu={(event) => onhistory(true, event)}
+    use:longPress={(event) => onhistory(true, event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
