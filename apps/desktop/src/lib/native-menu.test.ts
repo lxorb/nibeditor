@@ -3,6 +3,7 @@ import { DIVIDER, type MenuGroup, type MenuItem } from './menu-item'
 import {
   changesBetween,
   describeMenuBar,
+  documentWindows,
   letPass,
   leftFullscreen,
   type MenuBarSources,
@@ -417,5 +418,20 @@ describe('full screen, left by the window', () => {
     expect(leftFullscreen(false, false, true)).toBe(false)
     expect(leftFullscreen(true, true, true)).toBe(false)
     expect(leftFullscreen(true, false, false)).toBe(false)
+  })
+})
+
+/** Each document window builds a strip of its own, and AppKit adds a line to a menu
+ *  every time it is told that menu is the Window menu. How many strips there are
+ *  decides whether a window coming back to the front needs a fresh one. */
+describe('the windows that have a strip of their own', () => {
+  test('are the first window and the ones opened after it', () => {
+    expect(documentWindows(['main'])).toBe(1)
+    expect(documentWindows(['main', 'nib-2', 'nib-17'])).toBe(3)
+  })
+
+  test('and not the presenter, a print, or anything else', () => {
+    expect(documentWindows(['main', 'nib-presenter', 'print-3', 'nib-', 'nib-2a'])).toBe(1)
+    expect(documentWindows([])).toBe(0)
   })
 })

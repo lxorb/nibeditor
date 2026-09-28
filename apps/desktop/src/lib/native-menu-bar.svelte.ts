@@ -39,6 +39,7 @@ import {
   type Change,
   changesBetween,
   describeMenuBar,
+  documentWindows,
   flatten,
   leftFullscreen,
   letPass,
@@ -81,6 +82,12 @@ interface Built {
   made: Native[]
   byId: Map<string, Native>
   windows: Submenu | null
+}
+
+/** Whether another document window is open, whose strip may be the one up. */
+async function othersOpen(): Promise<boolean> {
+  const { getAllWindows } = await import('@tauri-apps/api/window')
+  return documentWindows((await getAllWindows()).map((one) => one.label)) > 1
 }
 
 /** Lets the crate drop the objects of a strip nobody shows any more. */
@@ -155,6 +162,10 @@ class MenuBar {
   private menu: Menu | null = null
   /** This strip's Window menu, which AppKit is told about as the strip goes up. */
   private windows: Submenu | null = null
+  /** The Window menu this page last told AppKit about. AppKit adds a line of its own
+   *  to a menu each time it is told that menu is the Window menu, told before or not,
+   *  so a strip's is told once; see `raise`. */
+  private told: Submenu | null = null
   private made: Native[] = []
   private byId = new Map<string, Native>()
   private shown: NativeEntry[] = []
@@ -233,7 +244,11 @@ class MenuBar {
       flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])),
     )
 
-    const changes = this.menu ? changesBetween(this.shown, entries) : null
+    // Another window's strip may have been told it holds the Window menu since this
+    // one was, and telling this one again would add AppKit's line to it again. A
+    // strip built afresh has a Window menu nobody has told anything yet.
+    const fresh = raise && this.told !== null && (await othersOpen())
+    const changes = this.menu && !fresh ? changesBetween(this.shown, entries) : null
     if (changes) await this.patch(changes)
     else await this.build(entries)
 
@@ -246,7 +261,10 @@ class MenuBar {
    *  another window's may have been the last one said. */
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
-    await this.windows?.setAsWindowsMenuForNSApp()
+    if (this.windows && this.windows !== this.told) {
+      await this.windows.setAsWindowsMenuForNSApp()
+      this.told = this.windows
+    }
   }
 
   /** Ids of this window's own, so an action finds its way back to this page. */

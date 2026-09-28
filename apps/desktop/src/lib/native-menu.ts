@@ -267,6 +267,13 @@ export interface SeenKey {
   at: number
 }
 
+/** How many of these windows are document windows, each with a strip of its own: the
+ *  first, `main`, and the ones opened after it, `nib-2` and on. The presenter's and a
+ *  print's are not. The same two shapes as `is_document_window` in launch.rs. */
+export function documentWindows(labels: string[]): number {
+  return labels.filter((label) => label === 'main' || /^nib-\d+$/.test(label)).length
+}
+
 /** Whether the page saw this very key a moment ago and let it pass, which is the
  *  one case where a row's action must not run: the app had the key and declined
  *  it. A key the page never saw - one pressed in a web tab - and a click on the
