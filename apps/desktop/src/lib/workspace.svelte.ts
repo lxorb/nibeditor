@@ -11,7 +11,6 @@ import {
 } from '@nib/markdown/links'
 import { freePath } from '@nib/markdown/paths'
 import { openerFor } from './openers'
-import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
@@ -206,6 +205,14 @@ function readTreeOptions(): TreeOptions {
  *  renders from these, and a reactive map would only cost the app the wrappers. */
 function emptyMap<T>(): Map<string, T> {
   return new Map<string, T>()
+}
+
+/** What the space's papers are known to say, fetched rather than carried: the launch
+ *  reads them after the first paint (pdf/extract.ts), and a path that moves or goes
+ *  before then has nothing held under it yet - the words kept on disk are forgotten
+ *  all the same, a moment later. */
+function papers(): Promise<typeof import('./pdf/papers')> {
+  return import('./pdf/papers')
 }
 
 /** Whether a tab is worth remembering once it has been closed. A blank untitled
@@ -3294,7 +3301,7 @@ class Workspace {
    *  Not private because putting a rename back is a rename; see workspace/undoing.ts. */
   pathMoved(from: string, to: string) {
     links.notesMoved(from, to)
-    paperMoved(from, to)
+    void papers().then(({ paperMoved }) => paperMoved(from, to))
     this.folderIcons.moved(from, to)
     this.arranged.moved(from, to)
     this.excluded.moved(from, to)
@@ -3373,7 +3380,7 @@ class Workspace {
     this.arranged.gone(path)
     this.excluded.gone(path)
     // A paper that has gone has no words worth searching any more.
-    paperGone(path)
+    void papers().then(({ paperGone }) => paperGone(path))
     await this.loadTree()
     // The row deleted may have been the last thing keeping a nested note nested.
     await this.unnest(folderOf(path))
