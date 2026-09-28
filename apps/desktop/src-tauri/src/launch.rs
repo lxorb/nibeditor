@@ -51,11 +51,18 @@ pub fn take_startup_files(pending: tauri::State<'_, Pending>) -> Vec<String> {
 pub fn new_window(app: AppHandle) -> Result<(), String> {
     let label = free_label(&app);
 
-    WebviewWindowBuilder::new(&app, &label, WebviewUrl::default())
+    let building = WebviewWindowBuilder::new(&app, &label, WebviewUrl::default())
         .title("Nib")
         .inner_size(1180.0, 760.0)
         .min_inner_size(520.0, 400.0)
-        .decorations(false)
+        .decorations(false);
+
+    // The same switches as the first window, which is running on the same user data
+    // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
+    #[cfg(all(windows, not(feature = "cef")))]
+    let building = building.additional_browser_args(crate::engine::BROWSER_ARGS);
+
+    building
         .build()
         .map(|_| ())
         .map_err(|error| format!("could not open another window: {error}"))
