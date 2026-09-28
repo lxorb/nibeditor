@@ -74,15 +74,33 @@ const FIND_PREVIOUS: &str = "nib-find-previous";
 /// whose letters are not Latin still has them. Ctrl+Alt types a character on half the
 /// keyboards in Europe, and is left alone.
 ///
-/// On the window rather than the document, and bubbling, so it runs after every handler
-/// the page put on the way there and can see whether one of them took the key or the
-/// press. `window.open` is held from before the page's own first script, so a page that
+/// Both run last, after every handler the page has, so they see whether one of them took
+/// the key or the press. Being on the window is not enough for that: the page's own
+/// window handlers were put there after this script's, and a target's handlers run in
+/// the order they were added - the probe caught a page's Ctrl+F answered twice. So each
+/// press puts the answer back at the end of the window's list on its way down, in the
+/// capturing turn, which is before the page's bubbling handlers run and after they were
+/// added. A page that stops the press on its way up is left to the engine, whose own find
+/// then opens, as a browser's would.
+///
+/// `window.open` is held from before the page's own first script, so a page that
 /// replaces it has not replaced this.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
 
-  addEventListener('auxclick', function (event) {
+  function last(type, answer) {
+    function after(event) {
+      removeEventListener(type, after)
+      answer(event)
+    }
+    addEventListener(type, function () {
+      removeEventListener(type, after)
+      addEventListener(type, after)
+    }, true)
+  }
+
+  last('auxclick', function (event) {
     if (!event.isTrusted || event.button !== 1 || event.defaultPrevented) return
     var link = event.target instanceof Element ? event.target.closest('a[href], area[href]') : null
     if (!link || typeof link.href !== 'string' || !/^https?:/i.test(link.href)) return
@@ -90,7 +108,7 @@ pub const SCRIPT: &str = r"(function () {
     open(link.href, event.shiftKey ? 'nib-front' : 'nib-behind')
   })
 
-  addEventListener('keydown', function (event) {
+  last('keydown', function (event) {
     if (!event.isTrusted || event.defaultPrevented || event.altKey || event.metaKey) return
     var back = event.shiftKey
     var name = null

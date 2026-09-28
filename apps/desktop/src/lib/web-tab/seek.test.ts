@@ -43,14 +43,29 @@ interface Key {
   altKey?: boolean
   metaKey?: boolean
   isTrusted?: boolean
-  /** A handler of the page's own took the key before the script's turn. */
-  taken?: boolean
 }
 
-/** The script run in a page of its own, with what it opens written down. */
-function page() {
+interface Heard {
+  type: string
+  handler: (event: Pressed) => void
+  capture: boolean
+}
+
+type Pressed = Required<Key> & {
+  type: string
+  readonly defaultPrevented: boolean
+  preventDefault: () => void
+}
+
+/** The script run in a page of its own, with what it opens written down.
+ *
+ *  The page's window is the one target a key reaches last, and the DOM's order on it is
+ *  kept: the capturing handlers, then the bubbling ones, each turn running the handlers
+ *  there are when it starts, in the order they were added. `own` is a page with a find
+ *  of its own, whose handler is added after the script, as every page's is. */
+function page(own = false) {
   const opened: string[] = []
-  const heard: Record<string, ((event: unknown) => void)[]> = {}
+  const heard: Heard[] = []
   const window = {
     open(this: unknown, _url: string, name: string) {
       if (this !== window) throw new Error('open called off the window')
@@ -58,19 +73,41 @@ function page() {
       return null
     },
   }
-  const listen = (type: string, handler: (event: unknown) => void) => {
-    ;(heard[type] ??= []).push(handler)
+  const at = (type: string, handler: Heard['handler'], capture: boolean) =>
+    heard.findIndex(
+      (one) => one.type === type && one.handler === handler && one.capture === capture,
+    )
+  const addEventListener = (type: string, handler: Heard['handler'], capture = false) => {
+    if (at(type, handler, capture) < 0) heard.push({ type, handler, capture })
   }
-  runInNewContext(pageScript(), { window, addEventListener: listen, Element: Object })
+  const removeEventListener = (type: string, handler: Heard['handler'], capture = false) => {
+    const index = at(type, handler, capture)
+    if (index >= 0) heard.splice(index, 1)
+  }
+  runInNewContext(pageScript(), { window, addEventListener, removeEventListener, Element: Object })
 
   // The page puts its own `window.open` in after the script has run, as some do.
   window.open = () => {
     throw new Error("the page's own open")
   }
+  let ownFind = 0
+  if (own) {
+    addEventListener('keydown', (event) => {
+      if (event.ctrlKey && event.keyCode === 70) {
+        event.preventDefault()
+        ownFind++
+      }
+    })
+  }
 
+  const turn = (event: Pressed, capture: boolean) => {
+    const now = heard.filter((one) => one.type === event.type && one.capture === capture)
+    for (const one of now) if (heard.includes(one)) one.handler(event)
+  }
   const press = (key: Key) => {
-    let prevented = key.taken === true
-    const event = {
+    let prevented = false
+    const event: Pressed = {
+      type: 'keydown',
       ctrlKey: false,
       shiftKey: false,
       altKey: false,
@@ -84,10 +121,11 @@ function page() {
         prevented = true
       },
     }
-    for (const handler of heard.keydown ?? []) handler(event)
+    turn(event, true)
+    turn(event, false)
     return { opened: opened.splice(0), prevented }
   }
-  return { press }
+  return { press, own: () => ownFind }
 }
 
 describe('the script in every page', () => {
@@ -98,8 +136,13 @@ describe('the script in every page', () => {
     })
   })
 
-  test('leaves Ctrl+F to a page with a find of its own', () => {
-    expect(page().press({ keyCode: 70, ctrlKey: true, taken: true }).opened).toEqual([])
+  test('leaves Ctrl+F to a page with a find of its own, added after the script', () => {
+    const one = page(true)
+    expect(one.press({ keyCode: 70, ctrlKey: true })).toEqual({ opened: [], prevented: true })
+    expect(one.press({ keyCode: 70, ctrlKey: true }).opened).toEqual([])
+    expect(one.own()).toBe(2)
+    // Its other keys are still nib's.
+    expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['nib-find-next'])
   })
 
   test('steps on Ctrl+G and F3, back with Shift', () => {
