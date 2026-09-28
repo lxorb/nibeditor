@@ -24,17 +24,24 @@
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
+  import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
-  import { isDesktop, openExternal } from '../tauri'
+  import { findBar } from '../surfaces.svelte'
+  import { invoke, isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { plainOrigin, webAddress } from './address'
   import { clipPage } from './clip'
+  import { filling } from './filling.svelte'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
-  import { webRows, type WebActions } from './menu'
+  import { trailSteps, webRows, type WebActions } from './menu'
+  import { mute, muteSite } from './mute'
+  import { shownAddress } from './omnibox'
   import { pages, type Rect, type Step } from './pages.svelte'
+  import { seek, shut, sought } from './seek'
   import { grants, siteOf } from './permissions.svelte'
+  import { isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { spaceOf } from './web-data'
@@ -76,6 +83,9 @@
 
   /** Where the hole is, as the window measures it. Null before it is on the page. */
   function rect(): Rect | null {
+    // A page holding the whole screen is placed over all of it; see filling.svelte.ts.
+    if (page.filling) return { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight }
+
     const box = hole?.getBoundingClientRect()
     if (!box || box.width < 1 || box.height < 1) return null
 
@@ -110,6 +120,9 @@
    *  where it would land. The drag is asked rather than hit-tested because the page
    *  has to go before the zones are there to be hit. */
   function covered(): boolean {
+    if (page.filling) return false
+    // Another tab's page holds the screen, and this one would be drawn over it.
+    if (filling.by !== null) return true
     if (overlays.depth > 0 || workspace.panes.dragging !== null) return true
 
     const box = hole?.getBoundingClientRect()
@@ -284,7 +297,16 @@
       // the tab then took no address from the page it was showing, so the file never
       // learned where the reading had got to. Asked of the store by id rather than
       // through the pane's own `$derived`, because that graph is inert by here.
-      pages.of(tab.id).typing = false
+      const held = pages.of(tab.id)
+      held.typing = false
+
+      // A page holding the screen gives it back as its tab goes out of sight: a switch to
+      // another tab is a hand that wants the app again, as it is in Chrome.
+      if (held.filling) {
+        held.filling = false
+        void invoke('web_unfill', { tab: tab.id }).catch(() => undefined)
+        void filling.give(tab.id)
+      }
 
       // The tab is no longer the one showing. The page goes out of sight and goes on
       // running: a web note is a browser tab, so coming back to it is not a load. The
@@ -299,6 +321,30 @@
   // tab lifts ten pixels after its own press, whenever the hand gets there - nor
   // anything on the overlay stack, so the page is told here; see `covered`.
   $effect(() => follow(workspace.panes.dragging))
+
+  // A page took the whole screen or gave it back, here or in another pane: the window
+  // follows, and so does where this page is placed. See filling.svelte.ts.
+  $effect(() => {
+    const on = page.filling
+    untrack(() => void (on ? filling.take(tab.id) : filling.give(tab.id)))
+  })
+  $effect(() => follow([page.filling, filling.by]))
+
+  // The size this site was left at and whether it is muted, for every page the tab
+  // arrives on and every page built for it: Chrome keeps both by site, and a page built
+  // again starts at a hundred per cent and heard. Once the page has arrived, because a
+  // zoom set while the last page is still up is kept by the engine for the last site.
+  // See sites.ts.
+  $effect(() => {
+    const here = site
+    if (!page.live || page.loading || !here) return
+
+    untrack(() => {
+      page.zoom = zoomOf(here)
+      void pages.zoom(tab.id, page.zoom)
+      mute(tab.id, page, isMuted(here))
+    })
+  })
 
   // The address the tab remembers, so a restart comes back on the page it was on
   // rather than at the site's front door.
@@ -331,7 +377,7 @@
   // see keep.ts. The home the file keeps beside it is the address the note points at.
   $effect(() => {
     const url = page.url
-    const icon = page.icon
+    const icon = page.kept
     const path = tab.path
     if (url === null || path === null) return
 
@@ -355,10 +401,6 @@
     if (address) marked = true
   })
 
-  /** How large the page is drawn, as a browser's own zoom. The tab's, because a reader
-   *  who made one site larger did not ask for every site to be. */
-  let zoom = $state(1)
-
   /** Whether the popover behind the site's mark is open. */
   let showingSite = $state(false)
 
@@ -372,6 +414,55 @@
    *  tab nobody has answered. One at a time, the way a browser asks. */
   const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
 
+  // Open, and every page the tab arrives on while it is: the words are looked for again,
+  // because the matches were the last page's. See seek.ts.
+  $effect(() => {
+    if (!page.find.open || page.loading) return
+    untrack(() => seek(tab.id, page, page.find.query, 'fresh'))
+  })
+
+  /** The keys the app hears while it has the keyboard: Find and its steps, the developer
+   *  tools and a key for Mute site, if a reader gave it one.
+   *  Read off the window, because a pane with a page has no editor to read them, and
+   *  the same find keys the notes and a PDF answer. Inside the page, find is the page's
+   *  first and asks for this one when the page lets it go by; see seek.ts. */
+  function onKeydown(event: KeyboardEvent) {
+    if (!focused || !isDesktop || !page.live) return
+
+    const either = (id: string) =>
+      shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
+    const look = shortcuts.pressed('edit.find', event)
+      ? 'find'
+      : either('edit.find-next')
+        ? 'next'
+        : either('edit.find-previous')
+          ? 'previous'
+          : null
+
+    if (look) {
+      event.preventDefault()
+      sought(tab.id, page, look)
+    } else if (either('web.devtools')) {
+      event.preventDefault()
+      void invoke('web_devtools', { tab: tab.id }).catch(() => undefined)
+    } else if (shortcuts.pressed('web.mute', event)) {
+      event.preventDefault()
+      void muteSite(tab.id, !page.muted)
+    }
+  }
+
+  /** Chrome's list under a held arrow: the pages that way, by what each called itself,
+   *  and a row goes straight there rather than a step at a time. */
+  async function showTrail(forward: boolean, event: MouseEvent) {
+    event.preventDefault()
+    const { urls, at } = await pages.trail(tab.id)
+    const rows = trailSteps(urls, at, forward).map(({ url, by }) => ({
+      label: visited.titleOf(book, url) || shownAddress(url),
+      run: () => void pages.step(tab.id, forward ? 'forward' : 'back', by),
+    }))
+    menu.show(event, rows, { title: forward ? t('Forward') : t('Back') })
+  }
+
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
     newTab: () => workspace.openWebsite(),
@@ -379,7 +470,10 @@
     // file list, which is where the app already draws them; see Bookmarks.svelte.
     bookmarks: () => workspace.showPanel('tree'),
     zoom: (factor: number) => {
-      zoom = factor
+      page.zoom = factor
+      // The engine says nothing about a zoom it was told to make, only one made in the
+      // page, so this one is kept for the site here.
+      keepZoom(site, factor)
       void pages.zoom(tab.id, factor)
       // The menu is still open on the row that was pressed, so the size it says has to
       // be the size it now is.
@@ -387,6 +481,7 @@
     },
     fullScreen: () => void fullscreen.toggle(tab.id),
     print: () => void pages.print(tab.id),
+    find: isDesktop ? () => (page.find.open = true) : undefined,
     save: clip,
     share: () => {
       if (tab.path !== null) void shareThisFile(tab.path)
@@ -394,6 +489,8 @@
     settings: () => settings.show(),
   }
 </script>
+
+<svelte:window onkeydown={onKeydown} />
 
 <div class="web">
   <!-- The bar, and the two things a browser hangs under it. They are placed against
@@ -406,18 +503,28 @@
       {focused}
       {book}
       reads={isDesktop}
-      onstep={(step: Step, press: MouseEvent) => {
-        if (step === 'back') workspace.goBack(tab.id, tabAsk(press))
-        else if (step === 'forward') workspace.goForward(tab.id, tabAsk(press))
+      onstep={(step: Step, press?: MouseEvent) => {
+        const ask = press ? tabAsk(press) : 'plain'
+        if (step === 'back') workspace.goBack(tab.id, ask)
+        else if (step === 'forward') workspace.goForward(tab.id, ask)
+        // Reload with the middle button or Ctrl: this page again, in a tab of its own.
+        else if (step === 'reload' && ask !== 'plain' && page.url !== null)
+          workspace.openPage(page.url, ask, tab.id)
         else void pages.step(tab.id, step)
       }}
-      onaddress={(typed: string) => {
+      onhistory={showTrail}
+      onaddress={(typed: string, aside: boolean) => {
         const url = webAddress(typed)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
         visited.typed(book, url)
+        // Alt+Enter: a tab of its own, in front, and this one left where it was.
+        if (aside) {
+          workspace.openPage(url, 'front', tab.id)
+          return
+        }
         void pages.go(tab.id, url)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.
@@ -425,7 +532,7 @@
       }}
       onclip={clip}
       onmenu={(event: MouseEvent) =>
-        menu.show(event, webRows(page, zoom, actions), { title: t('Website') })}
+        menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
       onsite={() => {
         showingSite = !showingSite
         showingDownloads = false
@@ -455,6 +562,21 @@
       <WebDownloads onclose={() => (showingDownloads = false)} />
     {/if}
   </div>
+
+  <!-- Under the bar and above the page, where every surface puts its find bar: a bar
+       over the page would be drawn under it, since the page is a webview of its own. -->
+  {#if page.find.open}
+    {#await findBar() then FindBar}
+      <FindBar
+        query={page.find.query}
+        count={page.find.count}
+        current={page.find.at}
+        onstep={(by: number) => seek(tab.id, page, page.find.query, by > 0 ? 'next' : 'previous')}
+        onclose={() => shut(tab.id, page)}
+        onquery={(typed: string) => seek(tab.id, page, typed, 'fresh')}
+      />
+    {/await}
+  {/if}
 
   {#if isDesktop && page.openable}
     <!-- The hole. Nothing is drawn in it but the last picture of the page: the page

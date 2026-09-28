@@ -12,7 +12,7 @@
  *  signed in to; those still call `openExternal` where they stand. */
 
 import type { LinkPress, NoteJump } from '@nib/editor'
-import { type TabAsk, tabAsk } from './new-tab'
+import { linkAsk, type TabAsk, tabAsk } from './new-tab'
 import { isPlugin } from './plugin'
 import { isOpenable, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -91,10 +91,11 @@ export function followHref(href: string, press: LinkPress): void {
 }
 
 /** A link to a note the reader pressed, followed: the same rule as a link to a page,
- *  in the same place, so the two kinds of link in one note never disagree. Nothing
- *  pressed is a link followed from the keyboard. */
+ *  in the same place, so the two kinds of link in one note never disagree - and Alt
+ *  with the modifier for a pane to the right, which only a note has. Nothing pressed
+ *  is a link followed from the keyboard. */
 export function followNote(jump: NoteJump, press?: LinkPress): void {
-  void workspace.followLink(jump, press ? tabAsk(press) : 'plain')
+  void workspace.followLink(jump, press ? linkAsk(press) : 'plain')
 }
 
 /** Nothing held down, for the places a link is opened by something that is not a click

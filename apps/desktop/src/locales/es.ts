@@ -1319,6 +1319,7 @@ export const es: Dictionary = {
   'Add to {name}': 'Añadir a {name}',
   // Web tabs
   Reload: 'Recargar',
+  'Hard reload': 'Recarga forzada',
   'Clip this page': 'Guardar esta página',
   'Clip the link': 'Guardar el enlace',
   'Open in the browser': 'Abrir en el navegador',
@@ -1326,6 +1327,11 @@ export const es: Dictionary = {
   Website: 'Sitio web',
   'Open a website': 'Abrir un sitio web',
   'Convert website notes': 'Convertir notas de sitios web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Grabar',
   Recording: 'Grabación',
@@ -1535,4 +1541,15 @@ export const es: Dictionary = {
   'Duplicate the block': 'Duplicar el bloque',
   'Move the block up': 'Subir el bloque',
   'Move the block down': 'Bajar el bloque',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

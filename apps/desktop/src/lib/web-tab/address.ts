@@ -28,6 +28,9 @@ const HOST = /^(?:localhost|\[[0-9a-f:]+\]|[^\s/?#@]+\.[^\s/?#@.]{2,})(?::\d{1,5
 /** A scheme written at the front, whatever it is. */
 const SCHEME = /^([a-z][a-z\d+.-]*):/i
 
+/** Chrome's "View page source": a page's own address behind it. */
+const SOURCE = /^view-source:/i
+
 /** Whether an address is one a web tab may open: the web, and not the app.
  *
  *  The app's own origins are refused because a tab holding nib inside nib is a
@@ -36,6 +39,9 @@ const SCHEME = /^([a-z][a-z\d+.-]*):/i
  *  the same thing again on every navigation, which is what makes it true for the
  *  links inside the page as well as for this field. */
 export function isWebAddress(url: string): boolean {
+  const inner = url.replace(SOURCE, '')
+  if (inner !== url) return !SOURCE.test(inner) && isWebAddress(inner)
+
   let parsed: URL
   try {
     parsed = new URL(url)
@@ -95,6 +101,8 @@ export function dotCom(typed: string): string | null {
  *  every browser drops it. An `http:` page keeps its scheme in front, because that
  *  is the one thing about an address worth warning somebody about. */
 export function plainOrigin(url: string): string {
+  if (SOURCE.test(url)) return `view-source:${plainOrigin(url.replace(SOURCE, ''))}`
+
   let parsed: URL
   try {
     parsed = new URL(url)

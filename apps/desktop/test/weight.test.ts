@@ -440,6 +440,12 @@ function holds(tail: string): boolean {
  *  key went through the line commands' door. Main measured 3,298,976 and 380 modules,
  *  this 3,296,054 and 380.
  *
+ *  The editor's right-click menu went behind a door as it learned a link's and a
+ *  picture's rows (the power-user list's eighth batch), and so did what it asks of
+ *  the editor (`@nib/editor/menu`): fetched at the launch's last turn, like a tab's
+ *  menu. With its rows and a dropped PDF's keeping, measured 3,279,919 and 378 modules,
+ *  against 3,298,741 and 380 on the main it landed on.
+ *
  *  Lowered 2026-09-28, to 3,250,000 and 376 modules, from a main at 3,309,965 - 35
  *  bytes under the old ceiling. Three things nobody needs to open a note: the sheet a
  *  question is asked in (PromptSheet.svelte and the Select under it, 29,437 bytes),
@@ -703,6 +709,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/PromptSheet.svelte', 'the question sheet'],
     ['/lib/export/save.ts', 'the writer behind Save as'],
     ['/lib/pdf/papers.ts', "the papers' words"],
+    // The editor's right-click menu, with its rows for a link and a picture: nothing of
+    // it is on screen until a press asks, and it is fetched at the launch's last turn
+    // like a tab's menu. See Pane.svelte.
+    ['/lib/editor-menu.ts', "the editor's menu"],
+    ['/editor/src/menu.ts', 'what it asks of the editor'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

@@ -1263,6 +1263,7 @@ export const ko: Dictionary = {
   'Add to {name}': '{name}에 추가',
   // Web tabs
   Reload: '다시 불러오기',
+  'Hard reload': 'Hard reload',
   'Clip this page': '이 페이지 저장',
   'Clip the link': '링크 저장',
   'Open in the browser': '브라우저에서 열기',
@@ -1270,6 +1271,11 @@ export const ko: Dictionary = {
   Website: '웹사이트',
   'Open a website': '웹사이트 열기',
   'Convert website notes': '웹 노트 변환',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '녹음',
   Recording: '녹음',
@@ -1469,4 +1475,15 @@ export const ko: Dictionary = {
   'Duplicate the block': '블록 복제',
   'Move the block up': '블록을 위로 이동',
   'Move the block down': '블록을 아래로 이동',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

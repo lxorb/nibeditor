@@ -10,6 +10,7 @@
  *  | New tab | a web tab with nowhere to go yet, which is what the address field is for |
  *  | Bookmarks | the space's own web notes, which is what a bookmark is here |
  *  | Zoom | the engine's own zoom, on Chrome's own ladder of steps |
+ *  | Find | nib's find bar, over the engine's own find |
  *  | Save page | the clipper: the page, written into the space as a note |
  *  | Share | nib's share sheet |
  *  | Settings | the app's settings |
@@ -28,6 +29,7 @@
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
+import { shortcuts } from '../shortcuts.svelte'
 import { openExternal } from '../tauri'
 import type { Page } from './pages.svelte'
 
@@ -48,6 +50,27 @@ export function zoomed(from: number, up: boolean): number {
   return steps.find((one) => (up ? one > from + 0.001 : one < from - 0.001)) ?? from
 }
 
+/** How far Chrome's list under a held arrow goes. A trail is as long as the reading
+ *  was, and a menu past a dozen rows is a list nobody reads to the end of. */
+const MOST_STEPS = 12
+
+/** Chrome's list under a held Back or Forward: the pages that way along the tab's
+ *  trail, the nearest first, each with how many steps away it is - which is what a
+ *  row asks the engine to go by. */
+export function trailSteps(
+  urls: readonly string[],
+  at: number,
+  forward: boolean,
+): { url: string; by: number }[] {
+  const steps: { url: string; by: number }[] = []
+  for (let by = 1; by <= MOST_STEPS; by++) {
+    const url = urls[forward ? at + by : at - by]
+    if (url === undefined) break
+    steps.push({ url, by })
+  }
+  return steps
+}
+
 /** Everything the dots can ask the tab for. One object rather than nine arguments,
  *  because the bar hands the whole of it over and a row that grows an argument should
  *  not be a change at every call site. */
@@ -59,6 +82,8 @@ export interface WebActions {
   zoom: (factor: number) => void
   fullScreen: () => void
   print: () => void
+  /** The find bar, under the bar, where the page can be searched: not a frame's. */
+  find?: (() => void) | undefined
   /** The clipper: the page, written into the space as a note. */
   save: () => void
   share: () => void
@@ -101,6 +126,9 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     { label: t('Full screen'), run: actions.fullScreen },
     DIVIDER,
     { label: t('Print…'), disabled: !has, run: actions.print },
+    ...(actions.find
+      ? [{ label: t('Find'), hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
+      : []),
     DIVIDER,
     { label: t('Save page'), disabled: !has, run: actions.save },
     { label: t('Share…'), disabled: !has, run: actions.share },

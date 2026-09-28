@@ -22,14 +22,14 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | missing | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
-| Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | partial | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
-| Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | missing | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
-| Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | partial | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
-| Web | Audio indicator on the tab, and Mute site | Chrome | missing | nothing reads `IsDocumentPlayingAudio`/`IsMuted` in `rs/web_tabs.rs`; no Mute row | M | med |
-| Web | Page zoom stays in sync with Ctrl+wheel inside the page and is remembered per site | Chrome | partial | `lib/web-tab/WebTab.svelte:359` resets `zoom = 1` on every mount; `rs/web_tabs.rs:1348` only sets it, with no zoom-changed listener | M | med |
-| Web | F12, Ctrl+Shift+I and Inspect open DevTools | Chrome | missing | the `devtools` feature is not in `src-tauri/Cargo.toml:64`, so release builds have none, although `docs/keyboard.md:319` lists F12 | S | med |
-| Web | "View page source" in the engine's menu opens a tab | Chrome | partial | the `view-source:` window it asks for is dropped by `handed_over` (`rs/web_tabs.rs:557-583`) | S | low |
+| Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | done a2eb354f, the page's first 555612bf | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
+| Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | done d68541d7 (agent `ctrl-click`) | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
+| Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | done a2eb354f (not driven natively: it would take the screen) | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
+| Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | done c228c9eb (with batch 6), Ctrl+L and Alt+D the page's first a0f0070a | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
+| Web | Audio indicator on the tab, and Mute site | Chrome | done a2eb354f | nothing reads `IsDocumentPlayingAudio`/`IsMuted` in `rs/web_tabs.rs`; no Mute row | M | med |
+| Web | Page zoom stays in sync with Ctrl+wheel inside the page and is remembered per site | Chrome | done a2eb354f | `lib/web-tab/WebTab.svelte:359` resets `zoom = 1` on every mount; `rs/web_tabs.rs:1348` only sets it, with no zoom-changed listener | M | med |
+| Web | F12, Ctrl+Shift+I and Inspect open DevTools | Chrome | done a2eb354f (not driven natively: it opens a window) | the `devtools` feature is not in `src-tauri/Cargo.toml:64`, so release builds have none, although `docs/keyboard.md:319` lists F12 | S | med |
+| Web | "View page source" in the engine's menu opens a tab | Chrome | done a2eb354f | the `view-source:` window it asks for is dropped by `handed_over` (`rs/web_tabs.rs:557-583`) | S | low |
 
 ## Batch 2: the quick switcher and palette
 
@@ -80,7 +80,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Tabs | Duplicate tab | Chrome, Obsidian | done 536bebb9 | no row and no command | S | med |
 | Tabs | Move the tab to the other pane, or split and move, by menu and by key | VS Code (move editor), Obsidian | done 536bebb9 (Ctrl+Alt+Shift+Right) | `split` copies the tab (`lib/workspace.svelte.ts:3552-3569`); a tab can only be moved by dragging | S | med |
 | Tabs | Rename the note from its tab (a menu row, F2 on a focused tab) | Obsidian, VS Code | done 536bebb9 | no Rename row in `tabMenu` | S | med |
-| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | partial 536bebb9: Reload and Copy link; Mute waits for batch 1 | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
+| Tabs | A web tab's own menu: Reload, Copy link, Mute site | Chrome | done 536bebb9, Mute site a2eb354f | `tabMenu` has no `kind === 'web'` rows; Mute needs batch 1 | S | med |
 | Tabs | Dropping a URL or a link from another app onto the strip opens a web tab | Chrome | done 536bebb9 | `over` (`lib/Tabs.svelte:681`) accepts tree drags only | S | low |
 | Tabs | The mouse wheel scrolls an overflowing strip | VS Code | done 536bebb9 | `.tabs` has `overflow-x: auto` and no wheel handler | S | low |
 | Tabs | Ctrl+Tab in most-recently-used order, as an option | VS Code | done 536bebb9 (Settings, General) | `cycleTab` walks the strip in order (`lib/shortcuts/registry.ts:1037`) | M | low |
@@ -91,12 +91,12 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | F5 / Ctrl+R reload and Ctrl+Shift+R / Ctrl+F5 hard-reload while a web tab is in front | Chrome | missing | F5 is Present (`lib/shortcuts/registry.ts:718`) and nothing is bound to `Mod-r` | S | high |
-| Web | The reload glyph becomes a cross while loading, and Escape stops the load | Chrome | missing | one glyph that only turns (`lib/web-tab/WebBar.svelte:180-192`) | S | med |
-| Web | Right-click or long-press on Back or Forward lists the history | Chrome | missing | the arrows have `onclick` only (`lib/web-tab/WebBar.svelte:150-172`); note tabs already have `trailMenu` (`lib/Tabs.svelte:63`) | S | med |
-| Web | Ctrl+1…9 jump to a tab while a web tab is in front | Chrome | partial | `rs/web_keys.rs:99` forwards Ctrl+digit, but the jump is bound to Ctrl+Alt+digit (`lib/shortcuts/registry.ts:788-799`) | S | med |
-| Web | Alt+Enter in the address field opens the address in a new tab | Chrome | missing | `lib/web-tab/AddressField.svelte:218-224` reads Ctrl only | S | low |
-| Web | Middle-click on Back, Forward or Reload opens the result in a new tab | Chrome | missing | the bar buttons handle `onclick` only | S | low |
+| Web | F5 / Ctrl+R reload and Ctrl+Shift+R / Ctrl+F5 hard-reload while a web tab is in front | Chrome | done 2159e76e | F5 is Present (`lib/shortcuts/registry.ts:718`) and nothing is bound to `Mod-r` | S | high |
+| Web | The reload glyph becomes a cross while loading, and Escape stops the load | Chrome | done 2159e76e, 8fcb8025 | one glyph that only turns (`lib/web-tab/WebBar.svelte:180-192`) | S | med |
+| Web | Right-click or long-press on Back or Forward lists the history | Chrome | done ca16c877 | the arrows have `onclick` only (`lib/web-tab/WebBar.svelte:150-172`); note tabs already have `trailMenu` (`lib/Tabs.svelte:63`) | S | med |
+| Web | Ctrl+1…9 jump to a tab while a web tab is in front | Chrome | done 2159e76e | `rs/web_keys.rs:99` forwards Ctrl+digit, but the jump is bound to Ctrl+Alt+digit (`lib/shortcuts/registry.ts:788-799`) | S | med |
+| Web | Alt+Enter in the address field opens the address in a new tab | Chrome | done 2159e76e | `lib/web-tab/AddressField.svelte:218-224` reads Ctrl only | S | low |
+| Web | Middle-click on Back, Forward or Reload opens the result in a new tab | Chrome | done: Back and Forward d68541d7 (`ctrl-click`), Reload 8fcb8025 | the bar buttons handle `onclick` only | S | low |
 
 ## Batch 7: editor, line and text commands
 
@@ -120,11 +120,11 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Editor | On a link: Copy link address, Edit link, Remove link | Chrome, Obsidian, Notion, Typora | missing | `linkEntries` (`lib/editor-menu.ts:516-523`) offers only Open in the browser | S | high |
-| Editor | On a note link: Open in new tab, Open to the right, Copy link | Obsidian | missing | same; note links get no rows at all (the new-tab path comes from `ctrl-click`) | S | med |
-| Editor | Ctrl+Alt+click on a note link opens it to the right | Obsidian | missing | `noteClicks` (`ed/wikilink/follow.ts:63-78`) reads button 0 plus the modifier only | S | med |
-| Editor | On a picture: Copy picture, Open picture, Show in file list, Delete | Typora, Obsidian, Chrome | missing | `lib/editor-menu.ts` has no picture rows | M | med |
-| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | missing | `ed/images.ts:108-121` accepts pictures only | M | med |
+| Editor | On a link: Copy link address, Edit link, Remove link | Chrome, Obsidian, Notion, Typora | done 67fa46a5; on `[[wikilinks]]` too, and no Remove for an address written out, which would still be one | `linkEntries` (`lib/editor-menu.ts:516-523`) offers only Open in the browser | S | high |
+| Editor | On a note link: Open in new tab, Open to the right, Copy link | Obsidian | done a60e7d71; "Open to the side", the file list's word for it, and not on a phone | same; note links get no rows at all (the new-tab path comes from `ctrl-click`) | S | med |
+| Editor | Ctrl+Alt+click on a note link opens it to the right | Obsidian | done a60e7d71; `linkAsk` in `lib/new-tab.ts`, so `follow.ts` is unchanged | `noteClicks` (`ed/wikilink/follow.ts:63-78`) reads button 0 plus the modifier only | S | med |
+| Editor | On a picture: Copy picture, Open picture, Show in file list, Delete | Typora, Obsidian, Chrome | done 67fa46a5, but for Show in file list: skipped, the file list shows no pictures (`rs/tree.rs` lists notes, PDFs, canvases, page notes and shortcuts) | `lib/editor-menu.ts` has no picture rows | M | med |
+| Editor | Dropping any file (PDF, audio, zip) from Explorer into a note copies it beside the note and links it | Obsidian, Typora | done 61a8e008 for what a note can show (PDF, sound, film, canvas) as `![[name]]`; a zip or anything else is left alone, since nothing in nib opens it | `ed/images.ts:108-121` accepts pictures only | M | med |
 
 ## Batch 9: file list menu, reveal, drag into a note
 

@@ -1286,6 +1286,7 @@ export const te: Dictionary = {
   'Add to {name}': '{name} కు చేర్చు',
   // Web tabs
   Reload: 'మళ్ళీ లోడ్ చేయి',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
   'Clip the link': 'లింక్ ఒడిసిపట్టు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
@@ -1293,6 +1294,11 @@ export const te: Dictionary = {
   Website: 'వెబ్‌సైట్',
   'Open a website': 'వెబ్‌సైట్ తెరువు',
   'Convert website notes': 'వెబ్‌సైట్ నోట్లను మార్చు',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'రికార్డు చేయి',
   Recording: 'రికార్డింగ్',
@@ -1494,4 +1500,15 @@ export const te: Dictionary = {
   'Duplicate the block': 'బ్లాక్‌ను నకలు చేయి',
   'Move the block up': 'బ్లాక్‌ను పైకి తరలించు',
   'Move the block down': 'బ్లాక్‌ను కిందికి తరలించు',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

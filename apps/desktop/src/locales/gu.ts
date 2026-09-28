@@ -1277,6 +1277,7 @@ export const gu: Dictionary = {
   'Add to {name}': '{name} માં ઉમેરો',
   // Web tabs
   Reload: 'ફરી લાવો',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'આ પાનું સાચવો',
   'Clip the link': 'કડી સાચવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
@@ -1284,6 +1285,11 @@ export const gu: Dictionary = {
   Website: 'વેબસાઇટ',
   'Open a website': 'વેબસાઇટ ખોલો',
   'Convert website notes': 'વેબસાઇટ નોંધો રૂપાંતરિત કરો',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'રેકૉર્ડ કરો',
   Recording: 'રેકૉર્ડિંગ',
@@ -1483,4 +1489,15 @@ export const gu: Dictionary = {
   'Duplicate the block': 'બ્લૉકની નકલ કરો',
   'Move the block up': 'બ્લૉક ઉપર ખસેડો',
   'Move the block down': 'બ્લૉક નીચે ખસેડો',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

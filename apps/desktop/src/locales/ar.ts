@@ -1369,6 +1369,7 @@ export const ar: Dictionary = {
   'Add to {name}': 'إضافة إلى {name}',
   // Web tabs
   Reload: 'إعادة التحميل',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'حفظ هذه الصفحة',
   'Clip the link': 'حفظ الرابط',
   'Open in the browser': 'فتح في المتصفح',
@@ -1376,6 +1377,11 @@ export const ar: Dictionary = {
   Website: 'موقع ويب',
   'Open a website': 'فتح موقع ويب',
   'Convert website notes': 'تحويل ملاحظات المواقع',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'تسجيل',
   Recording: 'تسجيل',
@@ -1576,4 +1582,15 @@ export const ar: Dictionary = {
   'Duplicate the block': 'تكرار الكتلة',
   'Move the block up': 'نقل الكتلة لأعلى',
   'Move the block down': 'نقل الكتلة لأسفل',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

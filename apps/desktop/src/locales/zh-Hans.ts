@@ -1251,6 +1251,7 @@ export const zhHans: Dictionary = {
   'Add to {name}': '添加到 {name}',
   // Web tabs
   Reload: '重新加载',
+  'Hard reload': '硬性重新加载',
   'Clip this page': '保存此页',
   'Clip the link': '保存链接',
   'Open in the browser': '在浏览器中打开',
@@ -1258,6 +1259,11 @@ export const zhHans: Dictionary = {
   Website: '网站',
   'Open a website': '打开网站',
   'Convert website notes': '转换网站笔记',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '录音',
   Recording: '录音',
@@ -1455,4 +1461,15 @@ export const zhHans: Dictionary = {
   'Duplicate the block': '复制此块',
   'Move the block up': '上移此块',
   'Move the block down': '下移此块',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

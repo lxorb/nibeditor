@@ -1267,6 +1267,7 @@ export const am: Dictionary = {
   'Add to {name}': 'ወደ {name} ጨምር',
   // Web tabs
   Reload: 'እንደገና ጫን',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ይህን ገጽ አስቀምጥ',
   'Clip the link': 'አገናኙን አስቀምጥ',
   'Open in the browser': 'በአሳሽ ክፈት',
@@ -1274,6 +1275,11 @@ export const am: Dictionary = {
   Website: 'ድረ ገጽ',
   'Open a website': 'ድረ ገጽ ክፈት',
   'Convert website notes': 'የድረ ገጽ ማስታወሻዎችን ቀይር',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ቅረጽ',
   Recording: 'ቀረጻ',
@@ -1472,4 +1478,15 @@ export const am: Dictionary = {
   'Duplicate the block': 'ብሎኩን አባዛ',
   'Move the block up': 'ብሎኩን ወደ ላይ አንቀሳቅስ',
   'Move the block down': 'ብሎኩን ወደ ታች አንቀሳቅስ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

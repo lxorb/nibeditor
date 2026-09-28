@@ -896,6 +896,35 @@ describe('a page note’s zoom', () => {
     expect(registry.shortcuts.conflicts('pages.fit', 'Mod-Alt-0')).toEqual([])
   })
 
+  /** Chrome's keys over a page, read where the bar is: F5 reloads a page and still
+   *  presents a note, because only one of the two is ever in the focused pane. See
+   *  web-tab/bar-keys.ts. */
+  test("is a browser's over a page, and leaves Present its F5", () => {
+    const { shortcuts } = registry
+    const keys = {
+      'web.reload': 'F5',
+      'web.reload.alt': 'Mod-r',
+      'web.fresh': 'Mod-Shift-r',
+      'web.fresh.alt': 'Mod-F5',
+      'web.address': 'Mod-l',
+      'web.address.alt': 'Alt-d',
+      'web.stop': 'Escape',
+    }
+
+    for (const [id, key] of Object.entries(keys)) {
+      const entry = registry.SHORTCUTS.find((one) => one.id === id)
+      expect(entry?.scope, id).toBe('panel')
+      expect(entry?.contextual, id).toBe(true)
+      expect(shortcuts.keyFor(id), id).toBe(key)
+    }
+
+    expect(shortcuts.keyFor('app.present')).toBe('F5')
+    expect(shortcuts.conflicts('web.reload', 'F5')).toEqual([])
+    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
+    expect(defaultKeyFor(found('web.reload'), 'mac')).toBe('Mod-r')
+    expect(defaultKeyFor(found('web.address.alt'), 'mac')).toBeNull()
+  })
+
   test('answers the press the surface reads, and no other', () => {
     const { shortcuts } = registry
     const press = (spelling: Partial<KeyboardEvent>) => spelling as KeyboardEvent

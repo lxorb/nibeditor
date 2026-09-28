@@ -1271,6 +1271,7 @@ export const ja: Dictionary = {
   'Add to {name}': '{name} に追加',
   // Web tabs
   Reload: '再読み込み',
+  'Hard reload': 'ハード再読み込み',
   'Clip this page': 'このページを保存',
   'Clip the link': 'リンクを保存',
   'Open in the browser': 'ブラウザーで開く',
@@ -1278,6 +1279,11 @@ export const ja: Dictionary = {
   Website: 'ウェブサイト',
   'Open a website': 'ウェブサイトを開く',
   'Convert website notes': 'ウェブノートを変換',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: '録音',
   Recording: '録音',
@@ -1486,4 +1492,15 @@ export const ja: Dictionary = {
   'Duplicate the block': 'ブロックを複製',
   'Move the block up': 'ブロックを上へ移動',
   'Move the block down': 'ブロックを下へ移動',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

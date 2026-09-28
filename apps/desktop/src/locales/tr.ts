@@ -1284,6 +1284,7 @@ export const tr: Dictionary = {
   'Add to {name}': '{name} içine ekle',
   // Web tabs
   Reload: 'Yeniden yükle',
+  'Hard reload': 'Sert yeniden yükleme',
   'Clip this page': 'Bu sayfayı sakla',
   'Clip the link': 'Bağlantıyı sakla',
   'Open in the browser': 'Tarayıcıda aç',
@@ -1291,6 +1292,11 @@ export const tr: Dictionary = {
   Website: 'Web sitesi',
   'Open a website': 'Web sitesi aç',
   'Convert website notes': 'Web sitesi notlarını dönüştür',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Kaydet',
   Recording: 'Kayıt',
@@ -1494,4 +1500,15 @@ export const tr: Dictionary = {
   'Duplicate the block': 'Bloğu çoğalt',
   'Move the block up': 'Bloğu yukarı taşı',
   'Move the block down': 'Bloğu aşağı taşı',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

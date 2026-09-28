@@ -1306,6 +1306,7 @@ export const de: Dictionary = {
   'Add to {name}': 'Zu {name} hinzufügen',
   // Web tabs
   Reload: 'Neu laden',
+  'Hard reload': 'Vollständig neu laden',
   'Clip this page': 'Diese Seite speichern',
   'Clip the link': 'Den Link speichern',
   'Open in the browser': 'Im Browser öffnen',
@@ -1313,6 +1314,11 @@ export const de: Dictionary = {
   Website: 'Webseite',
   'Open a website': 'Webseite öffnen',
   'Convert website notes': 'Webnotizen umwandeln',
+  'Mute site': 'Website stummschalten',
+  'Unmute site': 'Stummschaltung aufheben',
+  'Playing audio': 'Spielt Ton ab',
+  Muted: 'Stumm',
+  'Developer tools': 'Entwicklertools',
   // Recording, meetings and what a model wrote
   Record: 'Aufnehmen',
   Recording: 'Aufnahme',
@@ -1532,4 +1538,16 @@ export const de: Dictionary = {
   'Duplicate the block': 'Block duplizieren',
   'Move the block up': 'Block nach oben schieben',
   'Move the block down': 'Block nach unten schieben',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Linkadresse kopieren',
+  'Edit link': 'Link bearbeiten',
+  'Remove link': 'Link entfernen',
+  'Copy picture': 'Bild kopieren',
+  'Open picture': 'Bild öffnen',
+  'Delete picture': 'Bild löschen',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gespeichert',
+  'That file is larger than a note can keep.':
+    'Diese Datei ist größer, als eine Notiz behalten kann.',
+  'That file could not be kept.': 'Diese Datei konnte nicht gespeichert werden.',
 }

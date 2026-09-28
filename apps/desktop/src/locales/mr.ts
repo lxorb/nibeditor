@@ -1282,6 +1282,7 @@ export const mr: Dictionary = {
   'Add to {name}': '{name} मध्ये जोडा',
   // Web tabs
   Reload: 'पुन्हा लोड करा',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'हे पान जतन करा',
   'Clip the link': 'दुवा जतन करा',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',
@@ -1289,6 +1290,11 @@ export const mr: Dictionary = {
   Website: 'संस्थळ',
   'Open a website': 'संस्थळ उघडा',
   'Convert website notes': 'संस्थळ नोंदी रूपांतरित करा',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'ध्वनिमुद्रण करा',
   Recording: 'ध्वनिमुद्रण',
@@ -1492,4 +1498,15 @@ export const mr: Dictionary = {
   'Duplicate the block': 'ब्लॉकची प्रत करा',
   'Move the block up': 'ब्लॉक वर हलवा',
   'Move the block down': 'ब्लॉक खाली हलवा',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

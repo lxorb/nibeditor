@@ -1276,6 +1276,7 @@ export const id: Dictionary = {
   'Add to {name}': 'Tambahkan ke {name}',
   // Web tabs
   Reload: 'Muat ulang',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Simpan halaman ini',
   'Clip the link': 'Simpan tautannya',
   'Open in the browser': 'Buka di peramban',
@@ -1283,6 +1284,11 @@ export const id: Dictionary = {
   Website: 'Situs web',
   'Open a website': 'Buka situs web',
   'Convert website notes': 'Ubah catatan situs web',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'Rekam',
   Recording: 'Rekaman',
@@ -1491,4 +1497,15 @@ export const id: Dictionary = {
   'Duplicate the block': 'Duplikat blok',
   'Move the block up': 'Pindahkan blok ke atas',
   'Move the block down': 'Pindahkan blok ke bawah',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

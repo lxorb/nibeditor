@@ -3955,6 +3955,33 @@ describe('a tab asked for with a modifier', () => {
     expect(workspace.active).toBe(reading)
   })
 
+  test('a link to a note followed with Alt as well opens it in a pane to the right', async () => {
+    await workspace.open('/space/a.md')
+    const [first] = workspace.panes.all
+
+    await workspace.followLink(jump('b.md'), 'aside')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.showing(first?.id ?? '')?.path).toBe('/space/a.md')
+    expect(workspace.active?.path).toBe('/space/b.md')
+    expect(workspace.active?.paneId).not.toBe(first?.id)
+  })
+
+  test('and makes the note there when the space has none by that name', async () => {
+    await workspace.open('/space/a.md')
+    // What the disk answers once the note is written; the mock writes nothing.
+    notes['/space/New.md'] = '# New\n\n'
+
+    try {
+      await workspace.followLink({ ...jump('New.md'), path: null, target: 'New' }, 'aside')
+
+      expect(workspace.panes.count).toBe(2)
+      expect(workspace.active?.path).toBe('/space/New.md')
+    } finally {
+      delete notes['/space/New.md']
+    }
+  })
+
   test('a paper followed the same way opens behind too', async () => {
     await workspace.open('/space/a.md')
     const reading = workspace.active

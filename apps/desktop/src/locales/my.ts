@@ -1268,6 +1268,7 @@ export const my: Dictionary = {
   'Add to {name}': '{name} သို့ထည့်ပါ',
   // Web tabs
   Reload: 'ပြန်ဖွင့်ပါ',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
   'Clip the link': 'လင့်သိမ်းပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
@@ -1275,6 +1276,11 @@ export const my: Dictionary = {
   Website: 'ဝဘ်ဆိုက်',
   'Open a website': 'ဝဘ်ဆိုက်ဖွင့်ပါ',
   'Convert website notes': 'ဝဘ်ဆိုက်မှတ်စုများ ပြောင်းပါ',
+  'Mute site': 'Mute site',
+  'Unmute site': 'Unmute site',
+  'Playing audio': 'Playing audio',
+  Muted: 'Muted',
+  'Developer tools': 'Developer tools',
   // Recording, meetings and what a model wrote
   Record: 'အသံသွင်းပါ',
   Recording: 'အသံဖိုင်',
@@ -1479,4 +1485,15 @@ export const my: Dictionary = {
   'Duplicate the block': 'ဘလောက်ကို မိတ္တူပွား',
   'Move the block up': 'ဘလောက်ကို အထက်ရွှေ့ပါ',
   'Move the block down': 'ဘလောက်ကို အောက်ရွှေ့ပါ',
+  // The editor's menu on a link and a picture
+  'Copy link address': 'Copy link address',
+  'Edit link': 'Edit link',
+  'Remove link': 'Remove link',
+  'Copy picture': 'Copy picture',
+  'Open picture': 'Open picture',
+  'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }
