@@ -1,4 +1,4 @@
-/** Cut and copy, as a menu row means them.
+/** Cut, copy and paste, as a menu row means them.
  *
  *  `document.execCommand` is deprecated and there is nothing that replaces it
  *  here. The Clipboard API can write text, but a menu row for Cut has to take
@@ -43,4 +43,31 @@ export async function copyText(text: string): Promise<void> {
   scratch.select()
   copySelection()
   scratch.remove()
+}
+
+/** Pastes the clipboard's text into a field, over its selection.
+ *
+ *  Read through the Clipboard API, because a page may not ask the old command to
+ *  paste; written with `insertText`, because that is the one way of changing a
+ *  field that its own Ctrl+Z takes back and that the field hears as typing - an
+ *  address field offering to finish what was pasted, a name field judging it. The
+ *  range is written by hand only where the old command is refused, and then the
+ *  field is told it changed. */
+export async function pasteInto(field: HTMLInputElement | HTMLTextAreaElement): Promise<void> {
+  const text = await navigator.clipboard.readText().catch(() => '')
+  if (!text) return
+
+  field.focus()
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- the only edit a field's own undo keeps
+  if (document.execCommand('insertText', false, text)) return
+
+  const end = field.value.length
+  try {
+    field.setRangeText(text, field.selectionStart ?? end, field.selectionEnd ?? end, 'end')
+  } catch {
+    // A field with no selection to write over - an email or a number field - takes it
+    // at the end, which is where a caret it cannot say would be.
+    field.value += text
+  }
+  field.dispatchEvent(new Event('input', { bubbles: true }))
 }

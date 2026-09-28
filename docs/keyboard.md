@@ -429,6 +429,15 @@ row it is pointing at, and the rows are out of the tab sequence, because forty
 notes would otherwise be forty presses of Tab between the palette and the note
 behind it.
 
+A text field's own menu is the other exception. A right click, Shift+F10 or the
+Menu key in any field - the address bar, the search box, the find bar, a name
+being renamed, a field in the settings - gives Cut, Copy, Paste and Select all,
+and the field keeps the keyboard while it is up, the way it does under the
+system's own menu: a name commits and an address goes back to the page's when
+its field loses it. So the menu is walked from the field. The arrows, Home and
+End light a row, Enter chooses it, Escape closes the menu and nothing else, and
+any other key closes it and goes on into the field. See `lib/field-menu.ts`.
+
 ### The ring
 
 One token, `--focus-ring`, in `packages/themes/src/tokens.css`, and one rule in

@@ -48,7 +48,11 @@ function lands(node: HTMLElement): HTMLElement | null {
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }
 
-export function trap(node: HTMLElement) {
+/** `holds` false is a layer that leaves the keyboard where it is: a text field's own
+ *  menu, whose field acts on losing it. Nothing is taken and nothing handed back. */
+export function trap(node: HTMLElement, holds = true) {
+  if (!holds) return { destroy: () => undefined }
+
   /** What had the keyboard before this opened. Read now, because by the time this
    *  closes the answer is whatever is inside it. */
   const from = document.activeElement

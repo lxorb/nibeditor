@@ -4,6 +4,7 @@
   import { t } from './i18n.svelte'
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
+  import { walkableRows } from './menu-item'
   import { overlays } from './overlays'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
@@ -132,7 +133,7 @@
     return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
   }
 
-  function choose(item: MenuItem, event: MouseEvent) {
+  function choose(item: MenuItem, event: Event) {
     // A row that says so stays: the zoom rows on a web tab are pressed two or three
     // times in a row, and a menu that closed under each of them would be a menu
     // somebody opens four times. See menu-item.ts. Its click goes no further than the
@@ -142,6 +143,51 @@
     else menu.hide()
     item.run()
   }
+
+  /** The row a key has lit, as a place in `entries`, in a menu that leaves the
+   *  keyboard in its text field; -1 for none, which is how a right click opens it.
+   *  Lit rather than focused, because focusing it is exactly what the field must not
+   *  lose. See field-menu.ts. */
+  let lit = $state(-1)
+
+  /** The same keys the rows answer when they have the keyboard, read off the window
+   *  before the field hears them: the arrows walk, Enter chooses, Escape closes. Anything
+   *  else is somebody typing, which is the field's, so the menu goes and the key goes on
+   *  to it - which is what the system's own menu over a field does. */
+  $effect(() => {
+    if (!menu.open || !menu.keepFocus) return
+    lit = -1
+
+    function onKey(event: KeyboardEvent) {
+      if (['Shift', 'Control', 'Alt', 'Meta'].includes(event.key)) return
+
+      const took = () => {
+        event.preventDefault()
+        event.stopImmediatePropagation()
+      }
+      const stops = walkableRows(entries)
+      const at = stops.indexOf(lit)
+      const moved = walked(event.key, at < 0 ? null : at, stops.length, true)
+
+      if (moved !== null) {
+        took()
+        lit = stops[moved] ?? -1
+        return
+      }
+
+      const row = entries[lit]
+      if (event.key === 'Escape' || (event.key === 'Enter' && !row)) {
+        took()
+        menu.hide()
+      } else if ((event.key === 'Enter' || event.key === ' ') && row) {
+        took()
+        choose(row, event)
+      } else menu.hide()
+    }
+
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  })
 
   /** What has been spelled, and when. A menu that opens is a fresh word: the letters
    *  belong to the list in front of somebody, not to the one before it. */
@@ -232,7 +278,7 @@
     style:top={sheet ? undefined : `${position.y}px`}
     style:--keyboard={sheet ? `${viewport.keyboard}px` : undefined}
     transition:arrive
-    use:trap
+    use:trap={!menu.keepFocus}
     onkeydown={onKey}
     role="menu"
     tabindex="-1"
@@ -254,8 +300,17 @@
             class="nib-row"
             role="menuitem"
             class:danger={item.danger}
+            class:lit={index === lit}
             disabled={item.disabled}
             onclick={(event) => choose(item, event)}
+            onmousedown={(event) => {
+              // The press stays off the row, so the field keeps the keyboard and its
+              // selection for the row to act on.
+              if (menu.keepFocus) event.preventDefault()
+            }}
+            onpointermove={() => {
+              if (menu.keepFocus && !item.disabled) lit = index
+            }}
           >
             <span class="nib-row-label">{item.label}</span>
             <!-- A row that is a switch says which way it is set. After the label
@@ -315,6 +370,13 @@
 
   button:disabled {
     color: var(--muted);
+  }
+
+  /* A row walked to from a text field, which keeps the keyboard: lit the way a row
+     under the pointer is. */
+  button.lit {
+    background: var(--surface-hover);
+    color: var(--item-hover-text-color);
   }
 
   kbd {

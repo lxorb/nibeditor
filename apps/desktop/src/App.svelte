@@ -11,6 +11,7 @@
   import FormatBar from './lib/FormatBar.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu } from './lib/menu.svelte'
+  import { fieldEntries, textFieldOf } from './lib/field-menu'
   import { overlays } from './lib/overlays'
   import PromptSheet from './lib/PromptSheet.svelte'
   import PaneTree from './lib/PaneTree.svelte'
@@ -500,6 +501,16 @@
   /** The two buttons on the side of a mouse. They are the browser's back and
    *  forward everywhere else, so they are the tab's here - and the browser's own
    *  is taken off them, or the web build would leave the app entirely. */
+  /** A right click in a text field gets the field's own menu, wherever the field is.
+   *  On the way down, so a row holding a field - a name being renamed in the file list -
+   *  does not offer its own menu instead. A phone has the system's bar for this. */
+  function onFieldMenu(event: MouseEvent) {
+    if (viewport.touch) return
+
+    const field = textFieldOf(event.target)
+    if (field) menu.show(event, fieldEntries(field), { keepFocus: true })
+  }
+
   function onMouse(event: MouseEvent) {
     if (event.button !== 3 && event.button !== 4) return
 
@@ -689,9 +700,10 @@
   })
 </script>
 
-<!-- Nothing in the app ever shows the browser's own menu. -->
+<!-- Nothing in the app ever shows the browser's own menu; a text field gets nib's. -->
 <svelte:window
   onkeydown={onKeydown}
+  oncontextmenucapture={onFieldMenu}
   oncontextmenu={(event: MouseEvent) => event.preventDefault()}
   onmousedown={onMouse}
   onpointermove={() => fullscreen.stir()}
