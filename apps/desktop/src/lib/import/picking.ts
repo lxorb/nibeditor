@@ -11,6 +11,7 @@
  *  its entries, which is every desktop and the web; a phone hands over files
  *  alone, and there a zip is what to drop. */
 
+import { chooseFiles } from '../choose-files'
 import { caughtFiles, type CaughtFiles } from '../drag-paths'
 import { tidyPath, type Picked } from './sources'
 
@@ -18,16 +19,7 @@ import { tidyPath, type Picked } from './sources'
  *  file somebody actually has: exporters write `.zip`, `.enex`, `.json`, `.csv`,
  *  `.md`, `.html`, `.note`, `.textbundle` and a handful of others. */
 export function pickFiles(): Promise<Picked[]> {
-  return new Promise((resolve) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-
-    input.addEventListener('change', () => resolve([...(input.files ?? [])]))
-    // A cancelled dialog resolves with nothing, so nothing is left waiting.
-    input.addEventListener('cancel', () => resolve([]))
-    input.click()
-  })
+  return chooseFiles({ multiple: true })
 }
 
 /** Everything that was dropped, folders walked where the webview allows it. */

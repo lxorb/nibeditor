@@ -18,15 +18,12 @@
 import type { EditorView } from '@nib/editor'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
+import { chooseFiles, PICTURES } from './choose-files'
 import { key, message, t } from './i18n.svelte'
 import { settings } from './settings.svelte'
 import { usage } from './usage.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
-
-/** What a file chooser will offer. Everything the renderer and the webview can
- *  both draw. */
-const PICTURES = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'avif', 'svg', 'bmp']
 
 /** Whether the row is worth offering: a note open, and open for writing. */
 export function canInsertPicture(view?: EditorView): boolean {
@@ -41,14 +38,14 @@ export function canTakePhoto(view?: EditorView): boolean {
 }
 
 export async function insertPicture(view: EditorView): Promise<void> {
-  const file = await pickPicture(false)
+  const [file] = await chooseFiles({ accept: PICTURES })
   if (file) await putPicture(view, file)
 }
 
 /** The camera, on a phone. Nothing else differs: what comes back is a `File` and
  *  it is stored and drawn exactly as a pasted one is. */
 export async function takePhoto(view: EditorView): Promise<void> {
-  const file = await pickPicture(true)
+  const [file] = await chooseFiles({ accept: 'image/*', camera: true })
   if (file) await putPicture(view, file)
 }
 
@@ -92,22 +89,4 @@ export function writeAtCaret(view: EditorView, text: string): void {
     userEvent: 'input',
   })
   view.focus()
-}
-
-/** The chooser. It only opens from inside a click, which a menu row is.
- *
- *  `capture` is what makes it a camera: an Android webview reads the attribute and
- *  offers the camera app, a phone browser does the same, and a desktop browser
- *  ignores it - which is why the row that sets it is only offered on a phone. */
-function pickPicture(capture: boolean): Promise<File | null> {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.accept = capture ? 'image/*' : [...PICTURES.map((one) => `.${one}`), 'image/*'].join(',')
-  if (capture) input.capture = 'environment'
-
-  return new Promise((resolve) => {
-    input.onchange = () => resolve(input.files?.[0] ?? null)
-    input.oncancel = () => resolve(null)
-    input.click()
-  })
 }

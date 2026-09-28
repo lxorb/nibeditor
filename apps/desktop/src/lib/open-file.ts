@@ -5,6 +5,7 @@
  *  is no path to write back to, so opening means uploading. The text comes in
  *  as an unsaved note, and saving it means choosing a space to keep it in. */
 
+import { chooseFiles } from './choose-files'
 import { isDesktop } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -22,24 +23,10 @@ export async function openFile() {
     return
   }
 
-  for (const file of await pickFiles()) {
+  const accept = [...EXTENSIONS.map((one) => `.${one}`), 'text/markdown', 'text/plain'].join(',')
+  for (const file of await chooseFiles({ accept, multiple: true })) {
     workspace.openBlank(stripExtension(file.name), await file.text())
   }
-}
-
-/** The browser's file chooser. It only opens from inside a click, which the
- *  menu entry is. */
-function pickFiles(): Promise<File[]> {
-  const input = document.createElement('input')
-  input.type = 'file'
-  input.multiple = true
-  input.accept = [...EXTENSIONS.map((one) => `.${one}`), 'text/markdown', 'text/plain'].join(',')
-
-  return new Promise((resolve) => {
-    input.onchange = () => resolve([...(input.files ?? [])])
-    input.oncancel = () => resolve([])
-    input.click()
-  })
 }
 
 function stripExtension(name: string): string {

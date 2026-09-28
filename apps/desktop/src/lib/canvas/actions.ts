@@ -43,9 +43,9 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
-import { pickPictures } from './upload'
 import { shortcuts } from '../shortcuts.svelte'
 import { storeImage } from '../assets'
+import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
@@ -608,9 +608,11 @@ async function putDown(
       return
     }
     case 'picture': {
-      // The system's own picker, which on Android is the gallery and the camera;
-      // see canvas/upload.ts.
-      const [file] = await pickPictures()
+      // The system's own picker, which on Android is the gallery and the camera
+      // together. Deliberately not the camera alone: somebody putting a photograph
+      // on a plane usually already has it, and the camera is one row down the sheet
+      // Android opens anyway.
+      const [file] = await chooseFiles({ accept: PICTURES })
       if (!file) return
 
       await run.dropImage(store, file, box, putting.path)
