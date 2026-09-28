@@ -1117,6 +1117,74 @@ select option {
   font-size: var(--touch-text);
 }
 
+/* ── A small action at the end of a row ────── */
+
+/* Where the control would be: Browse beside the theme, Turn on beside two-factor,
+   Accept beside a person, Mine and Theirs beside a clash. Five components drew
+   their own - the settings, the sync pane, security, the AI pane and every sheet -
+   and between them they had two paddings, two type sizes, three weights (one of
+   them a bare 550), two answers to hovering the quiet one, one that lit up under
+   the pointer while it could not be pressed, and two sizes under a thumb.
+
+   Outlined rather than filled, because the filled one is `.nib-button` and there
+   is one of those to a dialog; a row can hold as many of these as it has
+   answers. */
+.nib-chip {
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 99px;
+  background: none;
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-row);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .nib-chip:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+}
+
+.nib-chip:active:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+/* The answer that turns something down, beside the one that takes it. */
+.nib-chip.is-quiet {
+  border-color: transparent;
+  color: var(--muted);
+}
+
+@media (hover: hover) {
+  .nib-chip.is-quiet:hover:not(:disabled) {
+    border-color: transparent;
+    color: var(--text-strong);
+  }
+}
+
+/* The one of a row of them that was chosen. The words stay the ink rather than
+   going to the accent: the accent on its own wash is 4.07 to one on a dark
+   theme, and the ring says which one it is. */
+.nib-chip.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text-strong);
+}
+
+[data-touch] .nib-chip {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-4);
+  font-size: var(--touch-text);
+}
+
 /* ── Fields ────────────────────────────────── */
 
 /* One box for anything typed into or standing in for something typed into: the

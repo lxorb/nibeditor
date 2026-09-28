@@ -182,7 +182,8 @@
       {#if factor?.on}
         <span class="text">{t('On')}</span>
       {:else}
-        <button class="pill" disabled={busy} onclick={() => void begin()}>{t('Turn on')}</button>
+        <button class="nib-chip" disabled={busy} onclick={() => void begin()}>{t('Turn on')}</button
+        >
       {/if}
     </div>
   </div>
@@ -211,7 +212,9 @@
           autocomplete="one-time-code"
           spellcheck="false"
         />
-        <button class="pill" disabled={busy} onclick={() => void confirm()}>{t('Confirm')}</button>
+        <button class="nib-chip" disabled={busy} onclick={() => void confirm()}
+          >{t('Confirm')}</button
+        >
       </div>
     </div>
   {/if}
@@ -275,7 +278,7 @@
       </span>
       <span class="text">{when(session.lastUsedAt)}</span>
       {#if !session.current}
-        <button class="pill" onclick={() => void end(session)}>{t('End')}</button>
+        <button class="nib-chip" onclick={() => void end(session)}>{t('End')}</button>
       {/if}
     </div>
   {/each}
@@ -385,28 +388,6 @@
     width: 8rem;
   }
 
-  /* A small action at the end of a row, where the control would be. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
-  }
-
   /* An action in a card: full width, quiet until pointed at. */
   .action {
     display: flex;
@@ -428,11 +409,6 @@
   @media (hover: hover) {
     .inline:hover {
       border-color: var(--line);
-    }
-
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     .action:hover:not(:disabled) {
@@ -496,12 +472,6 @@
     gap: var(--touch-gap);
     min-height: var(--touch-row);
     padding: var(--space-2) var(--touch-pad);
-    font-size: var(--touch-text);
-  }
-
-  :global(.sheet.phone) .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
     font-size: var(--touch-text);
   }
 

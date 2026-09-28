@@ -147,7 +147,7 @@
                app's name is its name in every language. -->
           <span class="name">{FORMATS['apple-notes']}</span>
           <button
-            class="pill"
+            class="nib-chip"
             onclick={() => void importing.readMac()}
             disabled={importing.stage === 'reading'}
           >
@@ -156,7 +156,7 @@
         </div>
         {#if importing.noAccess}
           <p class="hint">{t('Turn nibeditor on under Full Disk Access, then ask again.')}</p>
-          <button class="pill" onclick={() => void importing.openAccess()}>
+          <button class="nib-chip" onclick={() => void importing.openAccess()}>
             {t('Open the setting')}
           </button>
         {/if}
@@ -220,7 +220,7 @@
       <div class="card">
         <div class="row">
           <span class="name">{t('Into')}</span>
-          <button class="pill" onclick={() => void importing.chooseTarget()}>{target}</button>
+          <button class="nib-chip" onclick={() => void importing.chooseTarget()}>{target}</button>
         </div>
         <div class="row">
           <!-- The name everything lands under. Not "folder": a row that holds

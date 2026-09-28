@@ -334,44 +334,7 @@
     }
   }
 
-  /* A small action at the end of a row, where the control would be. */
-  .sheet :global(.pill) {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .sheet :global(.pill.quiet) {
-    border-color: transparent;
-    color: var(--muted);
-  }
-
-  @media (hover: hover) {
-    .sheet :global(.pill:hover) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .sheet :global(.pill.quiet:hover) {
-      border-color: transparent;
-      color: var(--text-strong);
-    }
-  }
-
-  .sheet :global(.pill:active) {
-    background: var(--accent-soft);
-  }
+  /* A small action at the end of a row is `.nib-chip` in the themes package. */
 
   /* The one thing the sheet is for is `.nib-button` in the themes package, the
      button every dialog in the app is pressed with. Where it sits in the row or
@@ -413,12 +376,6 @@
     min-height: var(--touch-target);
     padding: 0 var(--touch-gap);
     font-size: var(--touch-text);
-  }
-
-  :global([data-touch]) .sheet :global(.pill) {
-    min-height: var(--touch-target);
-    padding: 0 var(--touch-gap);
-    font-size: var(--text-base);
   }
 
   :global([data-touch]) .sheet :global(.hint),

@@ -461,6 +461,17 @@ describe('the button with words in it', () => {
   })
 })
 
+/** The outlined action at the end of a row: Browse, Turn on, Accept, Keep mine.
+ *  Five components drew their own, with three weights and two sizes between them. */
+describe('the small action at the end of a row', () => {
+  test('is drawn in the themes package and nowhere else', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain('.nib-chip')
+    expect(shared).toContain('[data-touch] .nib-chip')
+    expect(draw(/\.nib-chip|\.pill\b/)).toEqual([])
+  })
+})
+
 /** How a control that cannot be pressed looks. The themes package says it once, at
  *  0.4, and then eighteen rules in fifteen components said it again at 0.3, 0.35,
  *  0.45, 0.5 and 0.55 - so a refused button in the settings was a different grey from

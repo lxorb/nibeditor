@@ -202,13 +202,13 @@
         <span class="name">{shortPath(clash.path)}</span>
         <span class="hint">{when(clash.at)}</span>
         <div class="answers">
-          <button class="pill" onclick={() => void settle(clash, 'mine')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'mine')}>
             {t('Keep mine')}
           </button>
-          <button class="pill" onclick={() => void settle(clash, 'theirs')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'theirs')}>
             {t('Take theirs')}
           </button>
-          <button class="pill" onclick={() => void settle(clash, 'both')}>
+          <button class="nib-chip" onclick={() => void settle(clash, 'both')}>
             {t('Keep both')}
           </button>
         </div>
@@ -426,12 +426,6 @@
     font-size: var(--touch-text);
   }
 
-  :global(.sheet.phone) .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--touch-text);
-  }
-
   :global(.sheet.phone) .action {
     position: relative;
     min-height: var(--touch-row);
@@ -464,40 +458,12 @@
     white-space: nowrap;
   }
 
+  /* The three answers, each `.nib-chip`, the small round action at the end of a
+     row: three of them read as a choice rather than as three rows. */
   .answers {
     display: flex;
     gap: var(--space-2);
     width: 100%;
-  }
-
-  /* The three answers, each the small round action the panel uses at the end of
-     a row: three of them read as a choice rather than as three rows. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
   }
 
   /* One pass: when, what moved, and which space. The middle column takes the

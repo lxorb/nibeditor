@@ -550,7 +550,7 @@
                 .map(([question, said]) => `${question}: ${said}`)
                 .join(' · ')}
             </span>
-            <button class="pill" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
+            <button class="nib-chip" onclick={() => void publish.forget(one)}>{t('Delete')}</button>
           </div>
         {/each}
       </div>

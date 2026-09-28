@@ -124,11 +124,11 @@
           {#if ai.defaultId === provider.id}
             <span class="hint">{t('Default')}</span>
           {:else}
-            <button class="pill" onclick={() => ai.setDefault(provider.id)}>
+            <button class="nib-chip" onclick={() => ai.setDefault(provider.id)}>
               {t('Make default')}
             </button>
           {/if}
-          <button class="pill quiet" onclick={() => forget(provider)}>{t('Remove')}</button>
+          <button class="nib-chip is-quiet" onclick={() => forget(provider)}>{t('Remove')}</button>
         </div>
       </div>
 
@@ -167,7 +167,9 @@
         {#if keyed[provider.id]}
           <div class="row">
             <span class="hint">{t('Set on this device')}</span>
-            <button class="pill quiet" onclick={() => void drop(provider)}>{t('Remove')}</button>
+            <button class="nib-chip is-quiet" onclick={() => void drop(provider)}
+              >{t('Remove')}</button
+            >
           </div>
         {:else}
           <input
@@ -202,7 +204,7 @@
           <div class="row">
             {#if provider.model}<span class="hint">{provider.model}</span>{/if}
             <button
-              class="pill"
+              class="nib-chip"
               disabled={asking === provider.id || !reachable(provider, keyed[provider.id] ?? false)}
               onclick={() => void refresh(provider)}
             >
@@ -334,41 +336,6 @@
   @media (hover: hover) {
     .action:hover:not(:disabled) {
       color: var(--text-strong);
-    }
-  }
-
-  /* A small action at the end of a row, the same pill the sync pane draws. */
-  .pill {
-    flex: none;
-    padding: 4px 10px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-xs);
-    font-weight: 550;
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  .pill.quiet {
-    border-color: transparent;
-    color: var(--muted);
-  }
-
-  @media (hover: hover) {
-    .pill:hover:not(:disabled) {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-
-    .pill.quiet:hover {
-      border-color: transparent;
-      color: var(--danger);
     }
   }
 

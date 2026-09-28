@@ -1125,7 +1125,7 @@
   <div class="card">
     <div class="nib-setting setting">
       <span class="name">{t('Themes')}</span>
-      <button class="pill" onclick={() => store.show()}>{t('Browse')}</button>
+      <button class="nib-chip" onclick={() => store.show()}>{t('Browse')}</button>
     </div>
   </div>
 
@@ -1421,36 +1421,6 @@
     .action.danger:hover:not(:disabled) {
       color: var(--danger);
     }
-  }
-
-  /* A small action at the end of a row, where the control would be. Quiet
-     until pointed at, like every other action in a pane. */
-  .pill {
-    flex: none;
-    padding: 5px 12px;
-    border: 1px solid var(--line-strong);
-    border-radius: 99px;
-    background: none;
-    color: var(--muted-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-row);
-    cursor: default;
-    transition:
-      background var(--dur-fast) var(--ease-out),
-      border-color var(--dur-fast) var(--ease-out),
-      color var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .pill:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-  }
-
-  .pill:active {
-    background: var(--accent-soft);
   }
 
   /* ── A button on the phone's bar ───────────────────────────────── */
@@ -2108,12 +2078,6 @@
     min-height: var(--touch-target);
     padding: 7px 10px;
     font-size: var(--text-sm);
-  }
-
-  .sheet.phone .pill {
-    min-height: var(--touch-target);
-    padding: 0 var(--space-4);
-    font-size: var(--touch-text);
   }
 
   /* The floor, not a size of its own: three of these in a row is what a button

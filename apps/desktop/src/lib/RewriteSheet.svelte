@@ -33,8 +33,8 @@
     <div class="verbs">
       {#each VERBS as verb (verb.id)}
         <button
-          class="pill"
-          class:on={rewriting.verb === verb.id}
+          class="nib-chip"
+          class:is-on={rewriting.verb === verb.id}
           onclick={() => rewriting.run(verb.id)}
         >
           {t(verb.label)}
@@ -103,13 +103,7 @@
     padding: var(--space-1) 0;
   }
 
-  /* The one that is running or ran. `.pill` is the sheet's, so only what says
-     "this one" is here. */
-  .verbs :global(.pill.on) {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
+  /* The one that is running or ran is `.nib-chip.is-on` in the themes package. */
 
   .pick {
     flex: none;

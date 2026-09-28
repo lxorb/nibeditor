@@ -234,11 +234,15 @@
               {name(person)}
               <small>{person.email ?? t('Guest')}</small>
             </span>
-            <button class="pill" disabled={share.busy} onclick={() => void share.accept(person)}>
+            <button
+              class="nib-chip"
+              disabled={share.busy}
+              onclick={() => void share.accept(person)}
+            >
               {t('Accept')}
             </button>
             <button
-              class="pill quiet"
+              class="nib-chip is-quiet"
               disabled={share.busy}
               onclick={() => void share.decline(person)}
             >
