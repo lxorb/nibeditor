@@ -483,13 +483,23 @@ fn ready(
     #[cfg(all(desktop, not(feature = "cef")))]
     if let Some(config) = ui {
         let building = tauri::WebviewWindowBuilder::from_config(app, config)?;
+        // Except on a Mac, where it is built hidden and shown below, once it has been
+        // put back where it was left (see `show_where_left` in document_window.rs), so
+        // the move is never seen. A Mac's webview starts in fourteen milliseconds, not in
+        // the third of a second Windows needs, which is what showing it at once is for.
         let window = match ground::remembered(handle) {
-            Some(colour) => building.visible(true).background_color(colour).build()?,
+            Some(colour) => building
+                .visible(!cfg!(target_os = "macos"))
+                .background_color(colour)
+                .build()?,
             None => building.build()?,
         };
         // Before anything is drawn, so the lights are never seen anywhere else.
         #[cfg(target_os = "macos")]
         lights::hold(&window);
+        #[cfg(target_os = "macos")]
+        document_window::show_where_left(&window);
+        #[cfg(not(target_os = "macos"))]
         window.show()?;
     }
 

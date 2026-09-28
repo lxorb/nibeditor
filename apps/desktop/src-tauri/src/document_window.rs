@@ -95,15 +95,37 @@ fn set_document_state(handle: *mut std::ffi::c_void, edited: bool, path: &str) {
 /// back - the plugin checks it lands on a screen there is - so the system chooses
 /// one instead.
 ///
-/// A Mac's alone for now. The plugin moves the window just after it is built, and
-/// the window is built already on screen; on a Mac that happens before anything is
-/// drawn, which is not something this crate can say of Windows from here.
+/// A Mac's alone for now, since the window has to be put back before it is shown:
+/// see `show_where_left`, which is why the plugin is told not to do that part itself.
+/// Elsewhere the window is built on screen at once, before a webview that takes a
+/// third of a second to start on Windows, and the move would be seen.
 #[cfg(target_os = "macos")]
 pub fn remembered_frame() -> tauri::plugin::TauriPlugin<crate::Engine> {
     tauri_plugin_window_state::Builder::new()
         .with_state_flags(REMEMBERED)
         .with_filter(|label| label == "main")
+        .skip_initial_state("main")
         .build()
+}
+
+/// Shows the main window where it was left, as the launch's last step.
+///
+/// The plugin would put it back by itself, but only when the event loop next comes
+/// round, and the launch showed the window before that: it stood at the default size
+/// and place for a moment and then jumped, which `jumpwatch` caught at fourteen
+/// milliseconds. Putting it back here first is not enough either, because tao moves
+/// and sizes a Mac window on the main queue rather than at once, and shows it at
+/// once. So the showing goes on that queue too, behind the move, and the window is
+/// first seen where it was left.
+#[cfg(target_os = "macos")]
+pub fn show_where_left(window: &tauri::WebviewWindow) {
+    use tauri_plugin_window_state::WindowExt as _;
+    let _ = window.restore_state(REMEMBERED);
+
+    let window = window.clone();
+    dispatch2::DispatchQueue::main().exec_async(move || {
+        let _ = window.show();
+    });
 }
 
 /// What is remembered of the main window: its size, its place and whether it was
