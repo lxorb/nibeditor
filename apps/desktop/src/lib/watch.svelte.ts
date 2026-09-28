@@ -23,10 +23,10 @@
  *  none: a space's notes are not watched, because nothing else writes them. */
 
 import { SvelteSet } from 'svelte/reactivity'
-import { fileStamp, type Stamp } from './file-stamp'
 import { t } from './i18n.svelte'
 import { isExternalFile } from './save-as'
 import { sync } from './sync.svelte'
+import { fileStamp, type Stamp } from './sync/mirror'
 import { invoke, isDesktop } from './tauri'
 import type { NoteDoc } from './workspace.svelte'
 import { workspace } from './workspace.svelte'

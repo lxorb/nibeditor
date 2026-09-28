@@ -20,7 +20,6 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
-import { fileStamp } from '../file-stamp'
 import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
@@ -214,6 +213,20 @@ async function theirsIsNewer(path: string, updatedAt: number): Promise<boolean> 
   return stamp === null || updatedAt > stamp.modified
 }
 
+export interface Stamp {
+  modified: number
+  len: number
+}
+
+/** A file's last write, in ms, and length; see `file_stamp` in the crate. Null for
+ *  no file, the browser, or no answer. The watcher reads it too. */
+export async function fileStamp(path: string): Promise<Stamp | null> {
+  const found: unknown = await invoke('file_stamp', { path }).catch(() => null)
+  return isRecord(found) && isNumber(found.modified) && isNumber(found.len)
+    ? { modified: found.modified, len: found.len }
+    : null
+}
+
 function flatten(entry: Entry): Entry[] {
   const out: Entry[] = []
   const walk = (node: Entry) => {
@@ -349,16 +362,9 @@ export async function pull(
       // the gap and deletes the note the way it always has.
       if (local === null && tracked !== undefined) continue
 
-      // A file that is there and would not read - words in some other encoding, a
-      // file another program has locked - is not a gap for the account's copy to
-      // fill. Writing into it put the account's words over the only copy of the
-      // file's own, with no version kept of them, since there were none to read.
-      // Left for the next pass, which is the one after whatever held it lets go.
+      // There but unreadable (an encoding, a lock) is not a gap to fill.
       if (local === null && (await fileStamp(target)) !== null) {
-        log(
-          'warn',
-          `sync: ${target} is there but could not be read, so nothing was written over it`,
-        )
+        log('warn', `sync: ${target} unreadable, not written over`)
         continue
       }
 
@@ -664,13 +670,10 @@ export async function push(
     // on both sides: this is the one file the pass deliberately leaves alone.
     if (held.has(file.path)) continue
 
-    // One file that will not read - another encoding, a lock, a delete between the
-    // listing and here - is that file left out of this pass. It used to throw, and a
-    // throw ends the pass: every note after it in this space and every space after
-    // this one stopped syncing for as long as the file stayed as it was.
+    // Left out when unreadable, rather than ending the pass for all after it.
     const content = await invoke<string>('read_note', { path: file.path }).catch(
       (error: unknown) => {
-        log('warn', `sync: ${file.path} could not be read, so it was not sent - ${String(error)}`)
+        log('warn', `sync: ${file.path} not sent - ${String(error)}`)
         return null
       },
     )
@@ -744,15 +747,8 @@ export async function push(
   return moved
 }
 
-/** Whether the account is done with a note deleted here: it took the delete, or
- *  it answered that it never will - the note is not there, or not this device's to
- *  take away.
- *
- *  Anything else is a delete still owed, and the entry stays so the next pass asks
- *  again. Dropping it whatever the answer was is how a delete lost to a dropped
- *  connection came back: the next pull found a note the account still held and
- *  this machine had no entry for and no file for, which is a note arriving from
- *  somewhere else, and wrote it down again. */
+/** Whether the account took a delete, or never will. If not, the entry stays for
+ *  the next pass: dropped, the next pull wrote the note back. */
 async function deletedOnAccount(token: string, id: string): Promise<boolean> {
   try {
     await api.deleteNote(token, id)
@@ -760,7 +756,7 @@ async function deletedOnAccount(token: string, id: string): Promise<boolean> {
   } catch (error) {
     if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return true
 
-    log('warn', `sync: the account could not be told note ${id} was deleted - ${String(error)}`)
+    log('warn', `sync: delete of ${id} not taken - ${String(error)}`)
     return false
   }
 }

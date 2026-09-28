@@ -192,8 +192,7 @@ export class Saving {
   /** The write that waits for a pause in the typing; see timing.ts. */
   private readonly soon = afterQuiet(() => void this.saveWaiting(), SAVE_DELAY)
 
-  /** How many times in a row a pause has ended with a note that would not go
-   *  down, and the second try that waits longer the more there have been. */
+  /** Pauses in a row that ended in a refused write. */
   private failures = 0
   private readonly retry = afterQuiet(
     () => void this.saveWaiting(),
@@ -288,36 +287,23 @@ export class Saving {
     this.soon()
   }
 
-  /** Writes every note waiting for the pause, each on its own.
-   *
-   *  A write that fails puts its note back in the queue and asks again later; see
-   *  `saveRetryDelay`. It used to throw out of here, which lost two things at once:
-   *  the notes after it in the queue, which had already been taken off it, and the
-   *  note itself, which nothing wrote until the next keystroke - and for somebody
-   *  who had stopped typing, there was none. The words were in the session all
-   *  along, so a relaunch still had them; the file did not. */
+  /** Each note on its own: a refused one is queued again, not lost with every
+   *  note behind it. */
   private async saveWaiting() {
     const notes = [...this.waiting]
     this.waiting.clear()
 
-    let failed = false
+    let refused = 0
     for (const note of notes) {
-      try {
-        await this.write(note)
-      } catch (error) {
-        failed = true
+      await this.write(note).catch((error: unknown) => {
+        refused += 1
         this.waiting.add(note)
-        log('error', `save: ${note.path ?? note.name} could not be written - ${String(error)}`)
-      }
+        log('error', `save: ${note.path ?? note.name} - ${String(error)}`)
+      })
     }
 
-    if (!failed) {
-      this.failures = 0
-      return
-    }
-
-    this.failures += 1
-    this.retry()
+    this.failures = refused ? this.failures + 1 : 0
+    if (refused) this.retry()
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
@@ -521,11 +507,7 @@ export class Saving {
         return
       }
 
-      // Renamed while the snapshot was in the air: the file is under its new name
-      // now, and the words follow it there. Written to the name read at the start,
-      // they put the old file back beside the renamed one, and the document went
-      // back to the old name with them - the rename looked undone, and the new name
-      // held the words from before the last pause.
+      // Renamed mid-write: the words follow the file, not the old name.
       if (note.path !== null) path = note.path
 
       await invoke('write_note', { path, content })
