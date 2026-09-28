@@ -26,8 +26,9 @@
 //!
 //! Four kinds of command deliberately do not. The ones that only read state this
 //! builder manages, which is a mutex and no wait at all. `write_log`, whose lines
-//! are appended in the order they were written and would not be if two could be in
-//! the air at once. The two that reach Windows through COM or the registry, since
+//! have to leave in the order they were written and would not if two could be in
+//! the air at once; it hands each to the log's own thread, which is the one that
+//! waits. The two that reach Windows through COM or the registry, since
 //! an apartment belongs to the thread that made it. And `new_window`, which builds
 //! a window.
 
@@ -62,6 +63,7 @@ mod fuzzy;
 mod ground;
 mod highlights;
 mod history;
+mod lane;
 #[cfg(desktop)]
 mod launch;
 mod links;
@@ -523,8 +525,10 @@ mod tests {
     /// file, a subprocess or the registry, and the reason each may. The note at the
     /// top of this file is where they are explained; this is that list, held to.
     ///
-    /// `write_log` appends its lines in the order they were written, which two of
-    /// them in the air at once would not be. The other two reach Windows through the
+    /// `write_log` hands its lines on in the order they were written, which two of
+    /// them in the air at once would not; the disk is its own thread's, and this
+    /// reader follows a call into a closure without knowing it runs on another
+    /// thread. The other two reach Windows through the
     /// registry, and a key is opened and closed inside one call.
     const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
 
