@@ -627,7 +627,8 @@ mod tests {
     }
 
     /// Every name a body calls. A name after a dot is a method on something else and
-    /// not one of ours.
+    /// not one of ours, and so is one after a type's path: `DispatchQueue::main()` is
+    /// the queue's, and not the `main` that runs the app.
     fn calls(body: &str) -> HashSet<String> {
         let mut found = HashSet::new();
         let letters: Vec<char> = body.chars().collect();
@@ -645,12 +646,26 @@ mod tests {
             }
 
             let after_a_dot = from > 0 && letters[from - 1] == '.';
-            if !after_a_dot && letters.get(at) == Some(&'(') {
+            if !after_a_dot && !after_a_type(&letters, from) && letters.get(at) == Some(&'(') {
                 found.insert(letters[from..at].iter().collect());
             }
         }
 
         found
+    }
+
+    /// Whether the name starting at `from` follows `Type::`, a path whose last part is
+    /// written with a capital, which is how a type is written and a module is not.
+    fn after_a_type(letters: &[char], from: usize) -> bool {
+        if from < 2 || letters[from - 1] != ':' || letters[from - 2] != ':' {
+            return false;
+        }
+
+        let mut start = from - 2;
+        while start > 0 && (letters[start - 1].is_alphanumeric() || letters[start - 1] == '_') {
+            start -= 1;
+        }
+        letters[start].is_uppercase()
     }
 
     /// Every function that waits, by name: the ones that say so themselves, and then
@@ -765,5 +780,8 @@ mod tests {
         // A name read off a method call is not one of ours.
         assert!(!calls("one.read(two)").contains("read"));
         assert!(calls("read(two)").contains("read"));
+        // Nor is one a type answers, though a module's is.
+        assert!(!calls("DispatchQueue::main()").contains("main"));
+        assert!(calls("crate::launch::main()").contains("main"));
     }
 }
