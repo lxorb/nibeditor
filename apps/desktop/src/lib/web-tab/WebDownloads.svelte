@@ -36,7 +36,7 @@
 </script>
 
 <div
-  class="downloads nib-bubble"
+  class="downloads nib-bubble is-pressable"
   role="dialog"
   aria-label={t('Downloads')}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
@@ -108,7 +108,7 @@
 
 <style>
   /* Under the glyph it belongs to, at the right of the bar, which is where a browser
-     draws it. Pressable, unlike the one-sentence bubble the shape comes from. */
+     draws it. */
   .downloads {
     position: absolute;
     top: 100%;
@@ -119,7 +119,6 @@
     max-height: 60vh;
     overflow-y: auto;
     padding: var(--space-1);
-    pointer-events: auto;
   }
 
   ul {

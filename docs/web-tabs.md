@@ -981,6 +981,22 @@ thing a paragraph is - and one English string cannot be two rows in a catalogue,
 German reader was being offered _Block_, the markdown block, as the way to refuse a site
 the camera.
 
+**The bubble answers the pointer and holds the keyboard.** Emil, 2026-09-28, of a mail
+site asking to show notifications: _"and this thing here is not clickable."_ For two
+weeks it was not. The card is `.nib-bubble`, the shape a one-sentence hint is drawn in,
+and a hint lets every press through to the row it sits over - so both answers were
+drawn over the page's hole and every press landed on the hole. The native side was
+never in the way: the page is hidden while the bubble is up, and Windows sends a click
+there to the app's own webview. Every probe had pressed the buttons with `click()`,
+which skips the hit test a hand goes through. A bubble with something to press in it is
+now `.nib-bubble.is-pressable` - the site's question, the site information and the
+downloads - and `bubble.test.ts` reads every component to keep it that way. The keyboard
+had the same shape of trouble: the page that asked held it, and a hidden webview keeps
+it, so Escape went to a page nobody could see. The bubble takes the keyboard back to the
+app's own webview as it appears, without bringing the window forward, and holds it
+itself rather than on either answer, so a key meant for the site allows nothing. Measured
+with `scripts/web-overlays-probe.py`, which now asks the window what a pointer lands on.
+
 Three things make that work, and each is load bearing: the deferral, because deciding
 inside the engine's own event handler would mean either refusing everything or running
 a nested message loop - which is the freeze this file spent a day on; **one thread**,

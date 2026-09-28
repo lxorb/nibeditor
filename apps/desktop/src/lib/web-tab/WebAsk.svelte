@@ -14,11 +14,13 @@
    *  the app opens over the note, and the pane hides the page for as long as it is
    *  there. See overlays.ts and WebTab.svelte. */
 
+  import { onMount } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
+  import { isDesktop } from '../tauri'
   import type { Asking } from './permissions.svelte'
   import { grants } from './permissions.svelte'
 
@@ -40,17 +42,43 @@
   }
 
   let marked = $state(true)
+  let card = $state<HTMLElement>()
 
   // Escape tells the site no and remembers nothing, which is what Chrome does with a
   // bubble somebody dismissed: they have not decided about the site, so the next time it
   // asks is a fair time to ask them again.
   $effect(() => overlays.show(() => grants.dismiss(asking)))
+
+  // The keys are the bubble's while it is up: Escape to dismiss it, Tab to reach the
+  // two answers and Enter to give one. The bubble holds them rather than either answer,
+  // for Chrome's reason - a key somebody meant for the site must not allow it the camera.
+  //
+  // The page asked, so the keyboard is almost always in the page, and a page is a
+  // webview of its own that keeps it while it is out of sight: every key went on into a
+  // page nobody could see, Escape included. So the app's own webview takes it back
+  // first - a window in the background is not brought forward by that, it only knows
+  // where the keys go once somebody comes back to it.
+  onMount(() => {
+    card?.focus({ preventScroll: true })
+    if (isDesktop && !document.hasFocus()) void keyboardHere()
+  })
+
+  async function keyboardHere(): Promise<void> {
+    const { getCurrentWebview } = await import('@tauri-apps/api/webview')
+    await getCurrentWebview()
+      .setFocus()
+      .catch(() => undefined)
+  }
 </script>
 
+<!-- A holder of the keyboard rather than a stop on the way to one, so it carries no
+     ring of its own; see `.nib-host` in the themes. -->
 <div
-  class="ask nib-bubble"
+  class="ask nib-bubble is-pressable nib-host"
   role="dialog"
   aria-label={asking.site}
+  tabindex="-1"
+  bind:this={card}
   transition:fly={{ y: -6, duration: dur(120), easing: cubicOut }}
 >
   <p class="what">

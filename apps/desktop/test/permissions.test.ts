@@ -57,6 +57,15 @@ const PRESENTING: Record<string, string> = {
   'setFocus()': 'core:window:allow-set-focus',
 }
 
+/** The one webview command, which does not go through `WindowLike` either: a window
+ *  with a web tab in it holds several webviews, and this is the app's own taking the
+ *  keyboard back from a page. Written as the calls are, in the file that makes them. */
+const FOCUSING = {
+  file: '../src/lib/web-tab/WebAsk.svelte',
+  calls: ['getCurrentWebview()', '.setFocus()'],
+  permission: 'core:webview:allow-set-webview-focus',
+}
+
 /** The method names declared on the `WindowLike` interface. */
 function windowMethods(): string[] {
   const source = read('../src/lib/tauri.ts')
@@ -91,8 +100,19 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
+  test('a site’s question takes the keyboard back, and is granted that', () => {
+    const source = read(FOCUSING.file)
+
+    expect(FOCUSING.calls.filter((call) => !source.includes(call))).toEqual([])
+    expect(capabilities.permissions).toContain(FOCUSING.permission)
+  })
+
   test('nothing is granted that the app never calls', () => {
-    const used = new Set([...Object.values(NEEDS), ...Object.values(PRESENTING)])
+    const used = new Set([
+      ...Object.values(NEEDS),
+      ...Object.values(PRESENTING),
+      FOCUSING.permission,
+    ])
     const stale = capabilities.permissions
       .filter((one) => one.startsWith('core:window:') || one.startsWith('core:webview:allow-'))
       // Dragging comes from `data-tauri-drag-region`, not a method call.
