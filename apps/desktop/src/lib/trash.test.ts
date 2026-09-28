@@ -278,6 +278,21 @@ describe('signed out', () => {
     expect(trash.items).toEqual([])
   })
 
+  test('a restore the disk refuses says so, and the list is read again', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+
+    // Swept by another window between the listing and the press.
+    deviceTrash = []
+    await trash.restore(only)
+
+    expect(trash.error).toBe('nothing to restore')
+    expect(trash.busy).toBe(false)
+    expect(trash.items).toEqual([])
+  })
+
   test('the sweep drops what is older than 14 days', async () => {
     await workspace.remove('/space/Idea.md', false)
     onlyTrashed().trashedAt = Date.now() - 15 * DAY
