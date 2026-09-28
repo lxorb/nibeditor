@@ -37,13 +37,13 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Palette | An empty field lists recently opened notes first | Obsidian, VS Code | missing | `lib/Palette.svelte:37` ranks `workspace.files` with score 0, which keeps file order; recents appear only as `>` rows (`lib/commands.ts:929`) | S | high |
-| Palette | With no match, Enter (Obsidian: Shift+Enter) creates the note | Obsidian, Notion | missing | `lib/Palette.svelte:227` shows "Nothing found" and nothing else | S | high |
-| Palette | Fuzzy matching on the folder path too, with the folder shown beside notes that share a name | VS Code, Obsidian | missing | `lib/Palette.svelte:37` matches `shownName(one.name)` only, and rows show no path | S | high |
-| Palette | Ctrl+Enter opens in a new tab, Ctrl+Alt+Enter to the side | Obsidian, VS Code | missing | `choose` (`lib/Palette.svelte:66`) only ever calls `openEntry` | S | med |
-| Palette | `#` jumps to a heading of the open note; `:42` goes to a line | VS Code (`@`, `:`), Obsidian | missing | the only prefix is `>` (`lib/Palette.svelte:25`) | M | med |
-| Palette | Recently used commands come first under `>` | VS Code | missing | an empty term leaves `appCommands` in list order | S | med |
-| Search | Ctrl+Shift+F with a selection starts the space search on it | VS Code, Obsidian | missing | `revealPanel` (`lib/focus.ts:133`) sets no query | S | low |
+| Palette | An empty field lists recently opened notes first | Obsidian, VS Code | done 84ad979a | `lib/Palette.svelte:37` ranks `workspace.files` with score 0, which keeps file order; recents appear only as `>` rows (`lib/commands.ts:929`) | S | high |
+| Palette | With no match, Enter (Obsidian: Shift+Enter) creates the note | Obsidian, Notion | done 84ad979a | `lib/Palette.svelte:227` shows "Nothing found" and nothing else | S | high |
+| Palette | Fuzzy matching on the folder path too, with the folder shown beside notes that share a name | VS Code, Obsidian | done 84ad979a | `lib/Palette.svelte:37` matches `shownName(one.name)` only, and rows show no path | S | high |
+| Palette | Ctrl+Enter opens in a new tab, Ctrl+Alt+Enter to the side | Obsidian, VS Code | Ctrl+Alt+Enter done 786b37f5; Ctrl+Enter is agent `ctrl-click`'s | `choose` (`lib/Palette.svelte:66`) only ever calls `openEntry` | S | med |
+| Palette | `#` jumps to a heading of the open note; `:42` goes to a line | VS Code (`@`, `:`), Obsidian | done 84ad979a | the only prefix is `>` (`lib/Palette.svelte:25`) | M | med |
+| Palette | Recently used commands come first under `>` | VS Code | done 84ad979a | an empty term leaves `appCommands` in list order | S | med |
+| Search | Ctrl+Shift+F with a selection starts the space search on it | VS Code, Obsidian | done 5ef06aa4 | `revealPanel` (`lib/focus.ts:133`) sets no query | S | low |
 
 ## Batch 3: file list, keys, clipboard and drops
 
