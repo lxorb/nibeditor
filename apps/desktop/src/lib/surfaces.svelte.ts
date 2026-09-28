@@ -152,7 +152,10 @@ export const recordingPill = latched(() => import('./RecordingPill.svelte'))
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
 /** The Undo after a delete or a move; see undo-toast.svelte.ts. */
-export const undoToastNotice = latched(() => import('./UndoToast.svelte'))
+export const undoToastNotice = latched(() => {
+  if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
+  return import('./UndoToast.svelte')
+})
 
 /** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,
  *  as cards, on the website. Latched like the sheets, and asked for at the launch's
@@ -227,9 +230,10 @@ export async function warmDoors(): Promise<void> {
     import('./new-kind-chord').then((one) => (heldChooser = one.newKindChord)),
     newKindDialog.ask(),
     paletteDoor.ask(),
-    undoToastNotice.ask(),
-    // So the first right click in a text field does not wait for its menu. Never on a
-    // phone, which is the whole of the glasses' plugin.
+    // The Undo toast, and the menu of a text field so the first right click in one
+    // does not wait for it. Neither in the glasses' plugin, which is a phone's and
+    // has no room left in its package; see even/bundle.test.ts.
+    __EVEN_PLUGIN__ ? undefined : undoToastNotice.ask(),
     __EVEN_PLUGIN__ ? undefined : import('./field-menu'),
     // The AI providers, which are not a door but the same bargain: two rows ask whether
     // anything of the reader's own can turn sound into words, and they are asked the

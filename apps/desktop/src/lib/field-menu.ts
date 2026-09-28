@@ -7,7 +7,7 @@
  *  one every row and the editor use.
  *
  *  One rule rather than a menu per field, because a field is a field wherever it is:
- *  the window asks `textFieldOf` (text-field.ts) on the way down, before any row a
+ *  the window asks `textFieldOf` (menu.svelte.ts) on the way down, before any row a
  *  field sits in can offer its own menu instead.
  *
  *  The field keeps the keyboard while the menu is up, the way it does under the
@@ -27,10 +27,9 @@ import { copySelection, cutSelection } from './clipboard'
 import { t } from './i18n.svelte'
 import { showCombination } from './keys'
 import { DIVIDER, type MenuEntry, walkableRows } from './menu-item'
-import { menu } from './menu.svelte'
+import { menu, type TextField } from './menu.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { walked } from './walk'
-import type { TextField } from './text-field'
 
 /** Opens the field's menu at the pointer, leaving the keyboard in the field. */
 export function showFieldMenu(event: MouseEvent, field: TextField): void {

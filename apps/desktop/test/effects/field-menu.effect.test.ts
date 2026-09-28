@@ -15,8 +15,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import ContextMenu from '../../src/lib/ContextMenu.svelte'
 import { fieldEntries, showFieldMenu } from '../../src/lib/field-menu'
-import { textFieldOf } from '../../src/lib/text-field'
-import { menu, type MenuItem } from '../../src/lib/menu.svelte'
+import { menu, type MenuItem, textFieldOf } from '../../src/lib/menu.svelte'
 
 /** jsdom has no animations, and the menu grows out of its corner. */
 Element.prototype.animate = () =>
