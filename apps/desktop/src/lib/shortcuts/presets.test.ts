@@ -143,12 +143,18 @@ describe.each(['default', 'notion', 'obsidian', 'vim'])('the %s keyboard', (id) 
    *  read where the surface is, off its own element, and the press goes on up to
    *  the window afterwards. So a key that is one of those and an app key as well
    *  fires both: the plane zooms to what is picked and the strip switches note,
-   *  from one press. */
+   *  from one press.
+   *
+   *  A web tab's bar is the exception, and on purpose: it reads its keys off the
+   *  window before the window's own handler and stops the press, which is how F5
+   *  reloads a page and presents a note. See web-tab/bar-keys.ts. */
   test.each(PLATFORMS)('leaves the plane and the file list their own keys (%s)', (platform) => {
     const keys = keysOf()
     const clashes: string[] = []
 
-    const surfaces = registry.SHORTCUTS.filter((one) => one.contextual && one.scope === 'panel')
+    const surfaces = registry.SHORTCUTS.filter(
+      (one) => one.contextual && one.scope === 'panel' && !one.id.startsWith('web.'),
+    )
     const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
 
     for (const entry of surfaces) {

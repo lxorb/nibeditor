@@ -364,69 +364,6 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-l',
     contextual: true,
   },
-  // Chrome's other way to the same field on Windows and Linux. A Mac types a
-  // character with it.
-  {
-    id: 'web.address.alt',
-    label: () => t('Address'),
-    category: 'view',
-    scope: 'panel',
-    key: 'Alt-d',
-    mac: null,
-    contextual: true,
-    alias: true,
-  },
-  // A browser's reload, on a browser's keys, and only while a page is in front: F5
-  // is Present over a note, and a pane showing a page has no note to present. Read
-  // where the bar is, like the address key. See WebBar.svelte.
-  {
-    id: 'web.reload',
-    label: () => t('Reload'),
-    category: 'view',
-    scope: 'panel',
-    key: 'F5',
-    mac: 'Mod-r',
-    contextual: true,
-  },
-  {
-    id: 'web.reload.alt',
-    label: () => t('Reload'),
-    category: 'view',
-    scope: 'panel',
-    key: 'Mod-r',
-    mac: null,
-    contextual: true,
-    alias: true,
-  },
-  // Past the cache, which is what somebody who just changed the site means.
-  {
-    id: 'web.fresh',
-    label: () => t('Hard reload'),
-    category: 'view',
-    scope: 'panel',
-    key: 'Mod-Shift-r',
-    contextual: true,
-  },
-  {
-    id: 'web.fresh.alt',
-    label: () => t('Hard reload'),
-    category: 'view',
-    scope: 'panel',
-    key: 'Mod-F5',
-    mac: null,
-    contextual: true,
-    alias: true,
-  },
-  // Only while a page is coming, and only once whatever is open over it has had
-  // its Escape.
-  {
-    id: 'web.stop',
-    label: () => t('Stop'),
-    category: 'view',
-    scope: 'panel',
-    key: 'Escape',
-    contextual: true,
-  },
   {
     id: 'app.forward',
     label: () => t('Forward'),
@@ -851,9 +788,7 @@ const APP_ENTRIES: Shortcut[] = [
     // because the app's other view keys are already along that row. Obsidian's
     // own Slides plugin ships no key at all, so no preset takes this one back.
     // A browser keeps F5 for reloading, which the settings list warns about; the
-    // palette and the View menu are the way in there. So does a web tab: over a page
-    // F5 is `web.reload`, read by the bar before this is, and a page is not a note
-    // anybody presents.
+    // palette and the View menu are the way in there. Over a page it is `web.reload`.
     id: 'app.present',
     label: () => t('Present'),
     category: 'view',
@@ -1202,6 +1137,29 @@ const PAGES_ENTRIES: Shortcut[] = (
   contextual: true,
 }))
 
+/** A web tab's other keys, Chrome's, read by the bar in the focused pane before the
+ *  window is: F5 is Present over a note, and a pane showing a page has no note. See
+ *  web-tab/bar-keys.ts. A Mac types a character with Alt+D. */
+const WEB_ENTRIES: Shortcut[] = (
+  [
+    ['web.address.alt', () => t('Address'), 'Alt-d', null],
+    ['web.reload', () => t('Reload'), 'F5', 'Mod-r'],
+    ['web.reload.alt', () => t('Reload'), 'Mod-r', null],
+    ['web.fresh', () => t('Hard reload'), 'Mod-Shift-r', undefined],
+    ['web.fresh.alt', () => t('Hard reload'), 'Mod-F5', null],
+    ['web.stop', () => t('Stop'), 'Escape', undefined],
+  ] as const
+).map(([id, label, key, mac]) => ({
+  id,
+  label,
+  category: 'view' as const,
+  scope: 'panel' as const,
+  key,
+  ...(mac === undefined ? {} : { mac }),
+  contextual: true,
+  ...(id.endsWith('.alt') ? { alias: true } : {}),
+}))
+
 CANVAS_ENTRIES.push({
   id: 'canvas.delete.alt',
   label: () => t('Delete what is picked'),
@@ -1352,6 +1310,7 @@ export const SHORTCUTS: Shortcut[] = [
   ...PANEL_ENTRIES,
   ...CANVAS_ENTRIES,
   ...PAGES_ENTRIES,
+  ...WEB_ENTRIES,
   ...FIXED_ENTRIES,
 ]
 
