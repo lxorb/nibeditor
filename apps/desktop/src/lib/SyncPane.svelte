@@ -382,10 +382,6 @@
     }
   }
 
-  .action:disabled {
-    opacity: 0.5;
-  }
-
   .note {
     margin: 0;
     font-size: var(--text-sm);

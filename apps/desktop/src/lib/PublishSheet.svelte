@@ -584,10 +584,6 @@
     transition: opacity var(--dur-base) var(--ease-out);
   }
 
-  fieldset:disabled {
-    opacity: 0.4;
-  }
-
   /* The warning reads as a warning, and gates the controls behind it. */
   .danger-check {
     display: flex;

@@ -1472,10 +1472,6 @@
     background: var(--surface-press);
   }
 
-  .step:disabled {
-    opacity: 0.35;
-  }
-
   .step svg {
     width: var(--icon-md);
     height: var(--icon-md);

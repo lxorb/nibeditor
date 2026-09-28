@@ -372,10 +372,6 @@
     }
   }
 
-  .pill:disabled {
-    opacity: 0.5;
-  }
-
   .hint {
     margin: 0;
     font-size: var(--text-sm);

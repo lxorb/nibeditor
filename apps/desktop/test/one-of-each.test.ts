@@ -439,6 +439,36 @@ describe('the switch', () => {
   })
 })
 
+/** How a control that cannot be pressed looks. The themes package says it once, at
+ *  0.4, and then eighteen rules in fifteen components said it again at 0.3, 0.35,
+ *  0.45, 0.5 and 0.55 - so a refused button in the settings was a different grey from
+ *  one in a sheet, and the Publish form, which fades as a whole, faded the controls
+ *  inside it a second time. */
+describe('the fade on something refused', () => {
+  test('is said in the themes package, for a fieldset too', () => {
+    const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
+    expect(shared).toContain(':where(fieldset):disabled')
+  })
+
+  test('and no component says it again', () => {
+    const own = components.flatMap((one) =>
+      rules(one.style)
+        .filter(
+          (rule) =>
+            /:disabled|aria-disabled/.test(rule.selector) &&
+            // `1` is a control that says it another way and takes the fade off.
+            valuesOf(rule.declarations, 'opacity').some((value) => value !== '1'),
+        )
+        .map((rule) => `${one.name}: ${rule.selector}`),
+    )
+
+    // The drop zone of an import is disabled while it reads the file, and while it
+    // is it says so in words - `Reading` - which is a sentence to read rather than
+    // a control to pass over.
+    expect(own).toEqual(['lib/ImportSheet.svelte: .drop:disabled'])
+  })
+})
+
 describe('the segmented control', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')

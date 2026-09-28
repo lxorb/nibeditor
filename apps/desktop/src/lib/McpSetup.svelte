@@ -537,10 +537,6 @@
     }
   }
 
-  button:disabled {
-    opacity: 0.5;
-  }
-
   /* The switch, drawn like the panel's so the two read as one control. */
   .switch {
     display: flex;

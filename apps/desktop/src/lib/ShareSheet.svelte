@@ -426,10 +426,6 @@
     background: var(--accent-hover);
   }
 
-  .send:disabled {
-    opacity: 0.5;
-  }
-
   /* ── The people ──────────────────────────────────────────────────
      A row with two lines of words in it, so it is as tall as they are rather
      than as tall as one of them. */

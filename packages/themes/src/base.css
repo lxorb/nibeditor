@@ -540,8 +540,16 @@ select option {
   select,
   textarea
 ):disabled,
-:where(button, [role='button'], [role='menuitem'], [role='tab'], a[href])[aria-disabled='true'] {
+:where(button, [role='button'], [role='menuitem'], [role='tab'], a[href])[aria-disabled='true'],
+:where(fieldset):disabled {
   opacity: 0.4;
+}
+
+/* A fieldset that is refused refuses everything in it, and every control inside
+   matches `:disabled` too - so without this the controls fade twice and come out
+   at a sixth of their ink while the words beside them are at two fifths. */
+:where(fieldset:disabled) :where(button, input, select, textarea):disabled {
+  opacity: 1;
 }
 
 /* ── Floating bars ─────────────────────────── */

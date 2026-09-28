@@ -407,10 +407,6 @@
     background: var(--accent-soft);
   }
 
-  .pill:disabled {
-    opacity: 0.5;
-  }
-
   /* An action in a card: full width, quiet until pointed at. */
   .action {
     display: flex;
@@ -446,10 +442,6 @@
     .action.danger:hover:not(:disabled) {
       color: var(--danger);
     }
-  }
-
-  .action:disabled {
-    opacity: 0.5;
   }
 
   .note {

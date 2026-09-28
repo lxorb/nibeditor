@@ -301,10 +301,6 @@
     box-shadow: 0 0 0 3px var(--accent-soft);
   }
 
-  .trigger:disabled {
-    opacity: 0.55;
-  }
-
   /* A choice may be a name rather than a word of the app's own - a folder, a
      font, a language written in its own script - so each one is placed as a
      whole. See .nib-row-label in base.css. */

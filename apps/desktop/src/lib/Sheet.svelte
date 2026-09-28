@@ -397,11 +397,6 @@
     background: var(--accent-press);
   }
 
-  .sheet :global(.primary:disabled),
-  .sheet :global(.action:disabled) {
-    opacity: 0.5;
-  }
-
   /* A phone's sheet is the bottom of the screen, and everything in it is the
      size a thumb needs. */
   :global([data-touch]) .sheet {

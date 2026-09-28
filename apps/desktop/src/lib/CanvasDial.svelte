@@ -116,10 +116,6 @@
     background: var(--press);
   }
 
-  button:disabled {
-    opacity: 0.3;
-  }
-
   :global([data-touch]) button {
     width: var(--touch-target);
     height: var(--touch-target);

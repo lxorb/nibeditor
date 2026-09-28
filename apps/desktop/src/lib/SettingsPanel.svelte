@@ -1455,10 +1455,6 @@
     }
   }
 
-  .action:disabled {
-    opacity: 0.5;
-  }
-
   /* A small action at the end of a row, where the control would be. Quiet
      until pointed at, like every other action in a pane. */
   .pill {
@@ -1757,10 +1753,6 @@
       background: var(--accent-hover);
       transform: translateY(-1px);
     }
-  }
-
-  button:disabled {
-    opacity: 0.5;
   }
 
   .row {
