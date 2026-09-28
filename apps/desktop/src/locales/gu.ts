@@ -1276,6 +1276,7 @@ export const gu: Dictionary = {
   'Add to {name}': '{name} માં ઉમેરો',
   // Web tabs
   Reload: 'ફરી લાવો',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'આ પાનું સાચવો',
   'Clip the link': 'કડી સાચવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',

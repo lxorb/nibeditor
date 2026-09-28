@@ -1275,6 +1275,7 @@ export const id: Dictionary = {
   'Add to {name}': 'Tambahkan ke {name}',
   // Web tabs
   Reload: 'Muat ulang',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Simpan halaman ini',
   'Clip the link': 'Simpan tautannya',
   'Open in the browser': 'Buka di peramban',

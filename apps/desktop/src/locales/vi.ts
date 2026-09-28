@@ -1267,6 +1267,7 @@ export const vi: Dictionary = {
   'Add to {name}': 'Thêm vào {name}',
   // Web tabs
   Reload: 'Tải lại',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Lưu trang này',
   'Clip the link': 'Lưu liên kết',
   'Open in the browser': 'Mở trong trình duyệt',

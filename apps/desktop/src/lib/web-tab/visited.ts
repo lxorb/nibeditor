@@ -87,6 +87,13 @@ class Visited {
     this.write(book, unvisited(this.rows(book), url))
   }
 
+  /** What a page called itself the last time a tab was on it, or the empty string:
+   *  the words a row of the history under a held arrow reads. */
+  titleOf(book: Book, url: string): string {
+    const key = visitKey(url)
+    return this.rows(book).find((one) => one.url === key)?.title ?? ''
+  }
+
   /** The rest of an address `typed` is the start of; see omnibox.ts. */
   complete(book: Book, typed: string): Completion | null {
     return completion(this.rows(book), typed, Date.now())

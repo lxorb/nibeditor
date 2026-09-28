@@ -1284,6 +1284,7 @@ export const fa: Dictionary = {
   'Add to {name}': 'افزودن به {name}',
   // Web tabs
   Reload: 'بارگذاری دوباره',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ذخیره این صفحه',
   'Clip the link': 'ذخیره پیوند',
   'Open in the browser': 'گشودن در مرورگر',

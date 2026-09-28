@@ -1304,6 +1304,7 @@ export const de: Dictionary = {
   'Add to {name}': 'Zu {name} hinzufügen',
   // Web tabs
   Reload: 'Neu laden',
+  'Hard reload': 'Vollständig neu laden',
   'Clip this page': 'Diese Seite speichern',
   'Clip the link': 'Den Link speichern',
   'Open in the browser': 'Im Browser öffnen',

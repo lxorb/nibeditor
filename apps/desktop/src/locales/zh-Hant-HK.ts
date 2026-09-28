@@ -1250,6 +1250,7 @@ export const zhHantHK: Dictionary = {
   'Add to {name}': '加入 {name}',
   // Web tabs
   Reload: '重新載入',
+  'Hard reload': 'Hard reload',
   'Clip this page': '儲存此頁',
   'Clip the link': '儲存連結',
   'Open in the browser': '在瀏覽器開啟',

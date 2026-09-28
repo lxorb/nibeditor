@@ -100,8 +100,10 @@ export interface Rect {
   height: number
 }
 
-/** Which way a step goes, as the crate names them. */
-export type Step = 'back' | 'forward' | 'reload'
+/** Which way a step goes, as the crate names them: `fresh` is Chrome's Ctrl+Shift+R,
+ *  the page again past the cache, and `stop` the cross the reload glyph turns into
+ *  while a page is coming. */
+export type Step = 'back' | 'forward' | 'reload' | 'fresh' | 'stop'
 
 /** Where a page should be and whether it should be seen at all: what the pane asked
  *  for while the page was still being built.
@@ -703,13 +705,26 @@ class Pages {
   }
 
   /** Back, forward, or the same page again. The same keys a note tab steps its own
-   *  trail with; see `workspace.goBack`. */
-  async step(tabId: string, step: Step): Promise<void> {
+   *  trail with; see `workspace.goBack`. `by` is how many steps back or forward, for a
+   *  row of the history under the arrows. */
+  async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
 
     // Nor is a refused step; see `place`.
-    await invoke('web_step', { tab: tabId, step }).catch(() => undefined)
+    await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
+  }
+
+  /** Where this tab has been and where along it it is, for the history under a held
+   *  arrow; see `trailSteps` in menu.ts. Nothing for a page that is not running, whose
+   *  arrows are not lit either. */
+  async trail(tabId: string): Promise<{ urls: string[]; at: number }> {
+    const none = { urls: [], at: 0 }
+    if (!isDesktop || !this.held.get(tabId)?.live) return none
+
+    return invoke<[string[], number]>('web_trail', { tab: tabId })
+      .then(([urls, at]) => ({ urls, at }))
+      .catch(() => none)
   }
 
   /** How large the page is drawn: a browser's own zoom, on the tab it was asked for.

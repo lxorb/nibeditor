@@ -1303,6 +1303,7 @@ export const ha: Dictionary = {
   'Add to {name}': 'Ƙara zuwa {name}',
   // Web tabs
   Reload: 'Sake ɗauko',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'Ajiye wannan shafi',
   'Clip the link': 'Ajiye haɗin',
   'Open in the browser': 'Buɗe a birawuza',

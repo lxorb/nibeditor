@@ -1297,6 +1297,7 @@ export const ml: Dictionary = {
   'Add to {name}': '{name}-ൽ ചേർക്കുക',
   // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ഈ താൾ എടുക്കുക',
   'Clip the link': 'കണ്ണി എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',

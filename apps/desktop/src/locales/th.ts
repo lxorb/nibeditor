@@ -1255,6 +1255,7 @@ export const th: Dictionary = {
   'Add to {name}': 'เพิ่มไปที่ {name}',
   // Web tabs
   Reload: 'โหลดใหม่',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'เก็บหน้านี้',
   'Clip the link': 'เก็บลิงก์',
   'Open in the browser': 'เปิดในเบราว์เซอร์',

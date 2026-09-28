@@ -29,11 +29,17 @@
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import RotateCw from 'lucide/dist/esm/icons/rotate-cw.mjs'
   import Scissors from 'lucide/dist/esm/icons/scissors.mjs'
+  import X from 'lucide/dist/esm/icons/x.mjs'
   import { t } from '../i18n.svelte'
+  import { longPress } from '../longpress'
   import { dur } from '../motion'
   import { middleOpens } from '../new-tab'
+  import { overlays } from '../overlays'
   import { shortcuts } from '../shortcuts.svelte'
+  import { showNumbered } from '../shortcuts/registry'
+  import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
+  import { barKey, stops } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { clipSource } from './note'
@@ -50,6 +56,7 @@
     /** Which history the address field offers from: its space's; see web-data.ts. */
     book,
     onstep,
+    onhistory,
     onaddress,
     onclip,
     onmenu,
@@ -61,10 +68,13 @@
     reads: boolean
     focused: boolean
     book: string
-    /** An arrow or reload pressed, and how: an arrow with the middle button or a
-     *  modifier opens its step in a tab of its own; see new-tab.ts. */
-    onstep: (step: 'back' | 'forward' | 'reload', press: MouseEvent) => void
-    onaddress: (typed: string) => void
+    /** An arrow or reload pressed, and how: with the middle button or a modifier an
+     *  arrow opens its step in a tab of its own, and reload opens this page again in
+     *  one; see new-tab.ts. A key has no press. */
+    onstep: (step: 'back' | 'forward' | 'reload' | 'fresh' | 'stop', press?: MouseEvent) => void
+    /** A right click or a held finger on an arrow: the pages that way, as a list. */
+    onhistory: (forward: boolean, event: MouseEvent) => void
+    onaddress: (typed: string, aside: boolean) => void
     onclip: () => void
     onmenu: (event: MouseEvent) => void
     onsite: () => void
@@ -121,13 +131,17 @@
    *  says out loud. */
   const started = untrack(() => page.url === null)
 
-  /** Ctrl+L, read here rather than off the window: an app-level key never reaches
-   *  the editor, and this one has to share the chord that selects a line. A pane
-   *  showing a page has no editor, so only the bar in the focused pane answers.
+  /** A browser's keys - the address field, reload, the tabs by number - read here
+   *  rather than off the window, and only by the bar in the focused pane: an app-level
+   *  key never reaches the editor, and these share chords with it and with Present. A
+   *  pane showing a page has neither; see bar-keys.ts.
    *
-   *  While the page itself has the keyboard - after a click into it - the key is the
-   *  page's and the app never sees it; that is what a webview of its own means. The
-   *  bar is one press away either way.
+   *  Read before the app's own handler, which is what lets F5 reload here and present
+   *  a note everywhere else, and not while anything is open over the page or a note is
+   *  being presented: those have the keyboard.
+   *
+   *  While the page itself has the keyboard, the crate hands the address keys over and
+   *  F5 is the engine's own reload; see web_keys.rs.
    *
    *  A tab with nowhere to go yet takes the keyboard as it arrives, because typing
    *  an address is the only thing to do with an empty tab. */
@@ -135,14 +149,32 @@
     if (started && focused) take()
 
     const key = (event: KeyboardEvent) => {
-      if (!focused || !shortcuts.pressed('web.address', event)) return
+      if (!focused || overlays.depth > 0 || present.on) return
+
+      const said = barKey(event, shortcuts)
+      if (!said) return
 
       event.preventDefault()
-      take()
+      if (said.to === 'address') take()
+      else if (said.to === 'step') onstep(said.step)
+      else showNumbered(said.index)
     }
 
-    window.addEventListener('keydown', key)
-    return () => window.removeEventListener('keydown', key)
+    // Escape last: whatever is open over the page, and the field being typed in, have
+    // their own first.
+    const escape = (event: KeyboardEvent) => {
+      if (!focused || !stops(event, page.loading, shortcuts)) return
+
+      event.preventDefault()
+      onstep('stop')
+    }
+
+    window.addEventListener('keydown', key, true)
+    window.addEventListener('keydown', escape)
+    return () => {
+      window.removeEventListener('keydown', key, true)
+      window.removeEventListener('keydown', escape)
+    }
   })
 
   function take() {
@@ -151,6 +183,8 @@
 </script>
 
 <div class="webbar">
+  <!-- Back and forward. A right click or a held finger on either lists the pages that
+       way, the way Chrome's do. -->
   <button
     class="nib-glyph"
     title={t('Back')}
@@ -158,6 +192,8 @@
     disabled={!page.back}
     onclick={(event) => onstep('back', event)}
     use:middleOpens={(event) => onstep('back', event)}
+    oncontextmenu={(event) => onhistory(false, event)}
+    use:longPress={(event) => onhistory(false, event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowLeft as [tag, attrs], index (index)}
@@ -173,6 +209,8 @@
     disabled={!page.forward}
     onclick={(event) => onstep('forward', event)}
     use:middleOpens={(event) => onstep('forward', event)}
+    oncontextmenu={(event) => onhistory(true, event)}
+    use:longPress={(event) => onhistory(true, event)}
   >
     <svg class="nib-mirror" viewBox="0 0 24 24" aria-hidden="true">
       {#each ArrowRight as [tag, attrs], index (index)}
@@ -181,20 +219,28 @@
     </svg>
   </button>
 
-  <!-- One glyph for both, the way a browser has one: it turns while the page is
-       coming, which is the whole of what a spinner would have said. -->
+  <!-- One glyph for both, the way a browser has one: a cross while the page is
+       coming, which stops it, and the arrow again once it is here. The tab's own mark
+       turns meanwhile, so this says only what a press would do. The middle button,
+       or Ctrl, opens the page again in a tab of its own. -->
   <button
     class="nib-glyph"
-    class:turning={page.loading}
-    title={t('Reload')}
-    aria-label={t('Reload')}
-    onclick={(event) => onstep('reload', event)}
+    title={page.loading ? t('Stop') : t('Reload')}
+    aria-label={page.loading ? t('Stop') : t('Reload')}
+    onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
+    use:middleOpens={(event) => onstep('reload', event)}
   >
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each RotateCw as [tag, attrs], index (index)}
-        <svelte:element this={tag} {...attrs} />
-      {/each}
-    </svg>
+    {#key page.loading}
+      <svg
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        in:scale={{ start: 0.6, duration: dur(120), easing: cubicOut }}
+      >
+        {#each page.loading ? X : RotateCw as [tag, attrs], index (index)}
+          <svelte:element this={tag} {...attrs} />
+        {/each}
+      </svg>
+    {/key}
   </button>
 
   <!-- The site, at the left of the field, which is where every browser puts it: the
@@ -347,21 +393,9 @@
     animation: turn 1s linear infinite;
   }
 
-  /* A page on its way says so where a browser says it: on the button that would
-     stop it. One turn a second, which is slow enough to read as waiting rather
-     than as an animation. */
-  .turning > svg {
-    animation: turn 1s linear infinite;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .nib-glyph > .ring.sweeping {
       animation: none;
-    }
-
-    .turning > svg {
-      animation: none;
-      opacity: 0.6;
     }
   }
 

@@ -86,6 +86,7 @@ import { invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
+import { pages, type Step } from './web-tab/pages.svelte'
 import { openFile } from './open-file'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
@@ -382,6 +383,28 @@ function tabCommands(): Command[] {
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
   ]
+}
+
+/** A browser's rows about the page in front, and Stop only while one is coming. None
+ *  in the plugin, whose phone has no web tab: left out of its package, which is at
+ *  its ceiling; see even/bundle.test.ts. */
+function webCommands(): Command[] {
+  if (__EVEN_PLUGIN__) return []
+
+  const tab = workspace.active
+  if (!isDesktop || tab?.kind !== 'web') return []
+
+  const rows: [Step, string, string][] = [
+    ['reload', t('Reload'), 'web.reload'],
+    ['fresh', t('Hard reload'), 'web.fresh'],
+  ]
+  if (pages.of(tab.id).loading) rows.push(['stop', t('Stop'), 'web.stop'])
+  return rows.map(([step, label, key]) => ({
+    id: `web-${step}`,
+    label,
+    hint: shortcuts.hint(key),
+    run: () => void pages.step(tab.id, step),
+  }))
 }
 
 /** Splitting, moving between panes, and closing one. Left out entirely on a
@@ -995,6 +1018,7 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => void workspace.reopenClosed(),
     },
     { id: 'space', label: t('New space'), run: () => void newSpace() },
+    ...webCommands(),
     ...paneCommands(),
     ...layoutCommands(),
     {

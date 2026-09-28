@@ -370,15 +370,20 @@ Ctrl+Shift+V is always plain. See `linkedPaste` in `packages/editor/src/paste.ts
 
 **A web tab**
 
-Four keys that only mean anything while the pane is showing a website, and they are
-the four a browser has taught everybody. They are in the registry like the rest, so
+The keys that only mean anything while the pane is showing a website, and they are
+the ones a browser has taught everybody. They are in the registry like the rest, so
 they show in Settings, show in the palette and can be rebound.
 
 | | |
 | --- | --- |
 | Ctrl+T | a new tab. In a web tab that is a new web tab, on the new tab page |
 | Ctrl+W | close, which is the same key every other tab closes with (already there) |
-| Ctrl+L | the address field, in the pane that has the focus |
+| Ctrl+L, Alt+D | the address field, in the pane that has the focus. F6 too, from inside the page |
+| F5, Ctrl+R | reload. F5 is Present over a note; over a page there is no note to present |
+| Ctrl+Shift+R, Ctrl+F5 | reload past the cache |
+| Escape | stop a page on its way in, once whatever is open over it has had its Escape |
+| Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there |
+| Alt+Enter in the address field | the address in a tab of its own |
 | Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
 | Ctrl+F | find in page - nib's find bar over the engine's own find (already there) |
@@ -387,18 +392,22 @@ they show in Settings, show in the palette and can be rebound.
 Ctrl+L is also the chord CodeMirror selects a line with, and both keep it, because
 the bar reads the press where the bar is rather than off the window: an app-level
 binding would never reach the editor, while a pane showing a page has no editor to
-shadow.
+shadow. F5, Ctrl+Shift+R and Ctrl and a digit share keys with Present, the editor
+and a heading level the same way, and the bar reads them before the window does; see
+`lib/web-tab/bar-keys.ts`. F6 in the app still walks its regions: only an F6 pressed
+inside the page is Chrome's way back to the address field.
 
 **The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
-Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too) and Ctrl+1 to 9 are never
-offered to the page. The engine tells the host
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, and the three
+ways to the address field - Ctrl+L, Alt+D and F6 - are never offered to the page. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
 Ctrl+T as anywhere else. A Ctrl let go of in the page is said too, which is the release
-a held Ctrl+T chooses on. Everything else, Ctrl+L and a site's own Ctrl+K among them, is
+a held Ctrl+T chooses on. F5 and Ctrl+R need nothing: pressed in a page they are the
+engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among them, is
 the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
 `WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
 keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.

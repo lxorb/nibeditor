@@ -32,7 +32,8 @@
   import { clipPage } from './clip'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
-  import { webRows, type WebActions } from './menu'
+  import { trailSteps, webRows, type WebActions } from './menu'
+  import { shownAddress } from './omnibox'
   import { pages, type Rect, type Step } from './pages.svelte'
   import { grants, siteOf } from './permissions.svelte'
   import { movedOn } from './used'
@@ -373,6 +374,18 @@
   const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
+  /** Chrome's list under a held arrow: the pages that way, by what each called itself,
+   *  and a row goes straight there rather than a step at a time. */
+  async function showTrail(forward: boolean, event: MouseEvent) {
+    event.preventDefault()
+    const { urls, at } = await pages.trail(tab.id)
+    const rows = trailSteps(urls, at, forward).map(({ url, by }) => ({
+      label: visited.titleOf(book, url) || shownAddress(url),
+      run: () => void pages.step(tab.id, forward ? 'forward' : 'back', by),
+    }))
+    menu.show(event, rows, { title: forward ? t('Forward') : t('Back') })
+  }
+
   const actions: WebActions = {
     newTab: () => workspace.openWebsite(),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
@@ -406,18 +419,28 @@
       {focused}
       {book}
       reads={isDesktop}
-      onstep={(step: Step, press: MouseEvent) => {
-        if (step === 'back') workspace.goBack(tab.id, tabAsk(press))
-        else if (step === 'forward') workspace.goForward(tab.id, tabAsk(press))
+      onstep={(step: Step, press?: MouseEvent) => {
+        const ask = press ? tabAsk(press) : 'plain'
+        if (step === 'back') workspace.goBack(tab.id, ask)
+        else if (step === 'forward') workspace.goForward(tab.id, ask)
+        // Reload with the middle button or Ctrl: this page again, in a tab of its own.
+        else if (step === 'reload' && ask !== 'plain' && page.url !== null)
+          workspace.openPage(page.url, ask, tab.id)
         else void pages.step(tab.id, step)
       }}
-      onaddress={(typed: string) => {
+      onhistory={showTrail}
+      onaddress={(typed: string, aside: boolean) => {
         const url = webAddress(typed)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
         visited.typed(book, url)
+        // Alt+Enter: a tab of its own, in front, and this one left where it was.
+        if (aside) {
+          workspace.openPage(url, 'front', tab.id)
+          return
+        }
         void pages.go(tab.id, url)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.

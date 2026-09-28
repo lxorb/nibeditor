@@ -1301,6 +1301,7 @@ export const ta: Dictionary = {
   'Add to {name}': '{name} இல் சேர்',
   // Web tabs
   Reload: 'மீண்டும் ஏற்று',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'இந்தப் பக்கத்தை எடு',
   'Clip the link': 'இணைப்பை எடு',
   'Open in the browser': 'உலாவியில் திற',

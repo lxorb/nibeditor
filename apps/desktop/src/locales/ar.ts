@@ -1368,6 +1368,7 @@ export const ar: Dictionary = {
   'Add to {name}': 'إضافة إلى {name}',
   // Web tabs
   Reload: 'إعادة التحميل',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'حفظ هذه الصفحة',
   'Clip the link': 'حفظ الرابط',
   'Open in the browser': 'فتح في المتصفح',

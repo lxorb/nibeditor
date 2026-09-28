@@ -8,8 +8,11 @@
 //!
 //! Chrome's rule is the one kept here. A handful of chords are the browser's and a page
 //! is never offered them: a new tab, closing one, going round them, moving one along,
-//! reopening the last, a new window. Everything else is the page's, which is what lets a site's own Ctrl+K
-//! or Ctrl+L work, so nothing else is touched. See docs/web-tabs.md.
+//! reopening the last, a new window - and the three ways to the address field, Ctrl+L,
+//! Alt+D and F6, which a hand in a browser presses to get out of the page. Everything
+//! else is the page's, which is what lets a site's own Ctrl+K work, so nothing else is
+//! touched. Reloading needs nothing here: F5 and Ctrl+R pressed in a page are the
+//! engine's own, as they are in Chrome. See docs/web-tabs.md.
 //!
 //! **How they get out.** `WebView2` tells the host about every key pressed with Ctrl or
 //! Alt held before the page sees it (`AcceleratorKeyPressed`), and a key the host marks
@@ -78,6 +81,15 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         };
     }
 
+    // The address field's other two keys, neither of them a character on any keyboard.
+    // Alt alone is not AltGr, which is Ctrl and Alt together.
+    let bare = !held.ctrl && !held.shift;
+    match vk {
+        0x75 if bare && !held.alt => return Some(pressed("F6", "F6")),
+        0x44 if bare && held.alt => return Some(pressed("d", "KeyD")),
+        _ => {}
+    }
+
     // Chrome's reserved chords are all Ctrl and never Alt: Ctrl+Alt is AltGr on half
     // the keyboards in Europe, and a character typed with it is the page's.
     if !held.ctrl || held.alt {
@@ -91,6 +103,7 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         (0x57, true) => Some(pressed("W", "KeyW")),
         (0x4E, false) => Some(pressed("n", "KeyN")),
         (0x4E, true) => Some(pressed("N", "KeyN")),
+        (0x4C, false) => Some(pressed("l", "KeyL")),
         (0x09, _) => Some(pressed("Tab", "Tab")),
         // Going round the strip and moving a tab along it, with Shift.
         (0x21, _) => Some(pressed("PageUp", "PageUp")),
@@ -240,11 +253,40 @@ mod tests {
     }
 
     #[test]
+    fn and_the_three_ways_to_the_address_field() {
+        assert_eq!(down(0x4C, false), Some(("l", "KeyL")));
+        let alone = |vk, held| meaning(vk, held, true, false).map(|one| one.key);
+        assert_eq!(alone(0x75, Held::default()), Some("F6"));
+        let alt = Held {
+            alt: true,
+            ..Held::default()
+        };
+        assert_eq!(alone(0x44, alt), Some("d"));
+
+        // Shift+F6 and Ctrl+F6 are the page's, and so is AltGr+D, which is a character.
+        assert_eq!(
+            alone(
+                0x75,
+                Held {
+                    shift: true,
+                    ..Held::default()
+                }
+            ),
+            None
+        );
+        assert_eq!(alone(0x75, CTRL), None);
+        assert_eq!(alone(0x44, Held { alt: true, ..CTRL }), None);
+        assert_eq!(alone(0x44, Held::default()), None);
+    }
+
+    #[test]
     fn everything_else_is_the_page_s() {
-        // Ctrl+L, Ctrl+K, Ctrl+F: a site's own shortcuts, and the reason there is a rule.
-        for vk in [0x4C, 0x4B, 0x46, 0x50] {
+        // Ctrl+K, Ctrl+F, Ctrl+P, Ctrl+R: a site's own shortcuts, and the reason there
+        // is a rule. F5 and Ctrl+R reach the engine's own reload.
+        for vk in [0x4B, 0x46, 0x50, 0x52] {
             assert_eq!(down(vk, false), None, "{vk:#x}");
         }
+        assert_eq!(meaning(0x74, Held::default(), true, false), None);
         // A letter with no Ctrl is typing.
         assert_eq!(meaning(0x54, Held::default(), true, false), None);
     }

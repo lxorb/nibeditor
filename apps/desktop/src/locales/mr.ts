@@ -1281,6 +1281,7 @@ export const mr: Dictionary = {
   'Add to {name}': '{name} मध्ये जोडा',
   // Web tabs
   Reload: 'पुन्हा लोड करा',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'हे पान जतन करा',
   'Clip the link': 'दुवा जतन करा',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',

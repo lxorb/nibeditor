@@ -1349,6 +1349,7 @@ export const ru: Dictionary = {
   'Add to {name}': 'Добавить в {name}',
   // Web tabs
   Reload: 'Обновить',
+  'Hard reload': 'Жёсткая перезагрузка',
   'Clip this page': 'Сохранить эту страницу',
   'Clip the link': 'Сохранить ссылку',
   'Open in the browser': 'Открыть в браузере',

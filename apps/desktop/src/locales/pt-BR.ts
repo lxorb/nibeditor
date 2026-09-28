@@ -1308,6 +1308,7 @@ export const ptBR: Dictionary = {
   'Add to {name}': 'Adicionar a {name}',
   // Web tabs
   Reload: 'Recarregar',
+  'Hard reload': 'Recarregamento forçado',
   'Clip this page': 'Salvar esta página',
   'Clip the link': 'Salvar o link',
   'Open in the browser': 'Abrir no navegador',

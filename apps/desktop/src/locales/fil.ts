@@ -1303,6 +1303,7 @@ export const fil: Dictionary = {
   'Add to {name}': 'Idagdag sa {name}',
   // Web tabs
   Reload: 'I-reload',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'I-clip ang pahinang ito',
   'Clip the link': 'I-clip ang link',
   'Open in the browser': 'Buksan sa browser',

@@ -25,7 +25,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Web | Ctrl+F finds in the page: nib's find bar over the engine's find, plus a Find row in the dots | Chrome | missing | `edit.find` is editor-scoped and a web tab has no editor; `docs/web-tabs.md:1123` "Find wants an in-page find bar" | M | high |
 | Web | Ctrl+click or middle-click on a link in a page opens a tab behind; Ctrl+Shift+click opens it in front | Chrome | partial | every window a page asks for opens in front: `lib/web-tab/pages.svelte.ts:810` passes `behind = false`, and `rs/web_tabs.rs:912` drops the features | M | high |
 | Web | Fullscreen video (YouTube `f`) fills the screen | Chrome | missing | no `ContainsFullScreenElementChanged` handling in `rs/web_tabs.rs`, so the element only fills the pane | M | high |
-| Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | partial | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
+| Web | Ctrl+L, Alt+D and F6 reach the address field while the page has the keyboard | Chrome | done c228c9eb (with batch 6) | `rs/web_keys.rs:86-99` reserves only T/W/N/Tab/PgUp/PgDn/digits; Ctrl+L stays the site's (`docs/web-tabs.md:604`) | S | high |
 | Web | Audio indicator on the tab, and Mute site | Chrome | missing | nothing reads `IsDocumentPlayingAudio`/`IsMuted` in `rs/web_tabs.rs`; no Mute row | M | med |
 | Web | Page zoom stays in sync with Ctrl+wheel inside the page and is remembered per site | Chrome | partial | `lib/web-tab/WebTab.svelte:359` resets `zoom = 1` on every mount; `rs/web_tabs.rs:1348` only sets it, with no zoom-changed listener | M | med |
 | Web | F12, Ctrl+Shift+I and Inspect open DevTools | Chrome | missing | the `devtools` feature is not in `src-tauri/Cargo.toml:64`, so release builds have none, although `docs/keyboard.md:319` lists F12 | S | med |
@@ -91,12 +91,12 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | F5 / Ctrl+R reload and Ctrl+Shift+R / Ctrl+F5 hard-reload while a web tab is in front | Chrome | missing | F5 is Present (`lib/shortcuts/registry.ts:718`) and nothing is bound to `Mod-r` | S | high |
-| Web | The reload glyph becomes a cross while loading, and Escape stops the load | Chrome | missing | one glyph that only turns (`lib/web-tab/WebBar.svelte:180-192`) | S | med |
-| Web | Right-click or long-press on Back or Forward lists the history | Chrome | missing | the arrows have `onclick` only (`lib/web-tab/WebBar.svelte:150-172`); note tabs already have `trailMenu` (`lib/Tabs.svelte:63`) | S | med |
-| Web | Ctrl+1…9 jump to a tab while a web tab is in front | Chrome | partial | `rs/web_keys.rs:99` forwards Ctrl+digit, but the jump is bound to Ctrl+Alt+digit (`lib/shortcuts/registry.ts:788-799`) | S | med |
-| Web | Alt+Enter in the address field opens the address in a new tab | Chrome | missing | `lib/web-tab/AddressField.svelte:218-224` reads Ctrl only | S | low |
-| Web | Middle-click on Back, Forward or Reload opens the result in a new tab | Chrome | missing | the bar buttons handle `onclick` only | S | low |
+| Web | F5 / Ctrl+R reload and Ctrl+Shift+R / Ctrl+F5 hard-reload while a web tab is in front | Chrome | done 2159e76e | F5 is Present (`lib/shortcuts/registry.ts:718`) and nothing is bound to `Mod-r` | S | high |
+| Web | The reload glyph becomes a cross while loading, and Escape stops the load | Chrome | done 2159e76e, 8fcb8025 | one glyph that only turns (`lib/web-tab/WebBar.svelte:180-192`) | S | med |
+| Web | Right-click or long-press on Back or Forward lists the history | Chrome | done ca16c877 | the arrows have `onclick` only (`lib/web-tab/WebBar.svelte:150-172`); note tabs already have `trailMenu` (`lib/Tabs.svelte:63`) | S | med |
+| Web | Ctrl+1…9 jump to a tab while a web tab is in front | Chrome | done 2159e76e | `rs/web_keys.rs:99` forwards Ctrl+digit, but the jump is bound to Ctrl+Alt+digit (`lib/shortcuts/registry.ts:788-799`) | S | med |
+| Web | Alt+Enter in the address field opens the address in a new tab | Chrome | done 2159e76e | `lib/web-tab/AddressField.svelte:218-224` reads Ctrl only | S | low |
+| Web | Middle-click on Back, Forward or Reload opens the result in a new tab | Chrome | done: Back and Forward d68541d7 (`ctrl-click`), Reload 8fcb8025 | the bar buttons handle `onclick` only | S | low |
 
 ## Batch 7: editor, line and text commands
 

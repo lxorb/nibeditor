@@ -1266,6 +1266,7 @@ export const am: Dictionary = {
   'Add to {name}': 'ወደ {name} ጨምር',
   // Web tabs
   Reload: 'እንደገና ጫን',
+  'Hard reload': 'Hard reload',
   'Clip this page': 'ይህን ገጽ አስቀምጥ',
   'Clip the link': 'አገናኙን አስቀምጥ',
   'Open in the browser': 'በአሳሽ ክፈት',
