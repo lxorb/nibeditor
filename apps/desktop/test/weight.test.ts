@@ -403,8 +403,16 @@ function holds(tail: string): boolean {
  *  rather than doing nothing, and the words an earlier welcome note held so an old
  *  seed still never syncs. 2,988 bytes. And for the rest of the Mac round: the native
  *  menu's door, the window's title and edited dot, Finder's words and the print path.
- *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in. */
-const BUDGET = 3_345_000
+ *  Measured 3,338,398, and 3,341,472 once main's notices beside a web page were in.
+ *
+ *  Raised 2026-09-28 a third time, to 3,348,000, for what the Mac round found on a
+ *  real Mac: the traffic lights' room in the bar and the sidebar's head, the sidebar
+ *  button left out while the space chooser covers the panel, a note let go of on the way
+ *  out, and packages/editor/src/control.ts, which keeps a Ctrl chord a Mac hands over
+ *  as an invisible character out of the note. That last has to be there for the first
+ *  key typed. The menu bar's own share of the round is behind its door. Measured
+ *  3,345,483. */
+const BUDGET = 3_348_000
 const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
