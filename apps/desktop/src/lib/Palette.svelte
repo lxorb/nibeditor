@@ -153,13 +153,20 @@
     list?.querySelector('.nib-row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
-  function choose(row: Row) {
+  /** Ctrl+Alt with Enter or with a click: in a pane to the right, which is
+   *  Obsidian's chord for it; see `openAside`. */
+  const asksAside = (press: KeyboardEvent | MouseEvent) =>
+    press.altKey && (press.ctrlKey || press.metaKey)
+
+  function choose(row: Row, press?: KeyboardEvent | MouseEvent) {
     if (row.kind === 'command') {
       if (row.command.disabled) return
       useCommand(row.command.id)
       row.command.run()
-    } else if (row.kind === 'note') void workspace.openEntry(row.note.entry.path)
-    else if (row.kind === 'make') make(row.make)
+    } else if (row.kind === 'note') {
+      const path = row.note.entry.path
+      void (press && asksAside(press) ? workspace.openAside(path) : workspace.openEntry(path))
+    } else if (row.kind === 'make') make(row.make)
     else ongoto?.(row.line)
 
     open = false
@@ -247,7 +254,7 @@
     const chosen = results[cursor]
     if (chosen) {
       spend(event)
-      choose(chosen)
+      choose(chosen, event)
     }
   }
 </script>
@@ -310,7 +317,7 @@
               class:dim={dimmed(row)}
               style:--depth={row.kind === 'place' ? row.depth : 0}
               onmouseenter={() => (cursor = index)}
-              onclick={() => choose(row)}
+              onclick={(event) => choose(row, event)}
             >
               <!-- The same tick the menu rows carry, in a slot every command row
                    keeps whether or not there is one in it, so the words line up.

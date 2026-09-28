@@ -3654,6 +3654,34 @@ class Workspace {
     if (made) for (const id of opened) this.moveTab(id, made.id)
   }
 
+  /** A file opened in a pane of its own to the right of the one in front: VS Code's
+   *  quick open does it for Ctrl+Enter and Obsidian's switcher for Ctrl+Alt+Enter.
+   *
+   *  A file that is not open yet is opened and carried over, the way a row dropped on
+   *  that side is. One that is open already becomes a second view of itself there,
+   *  as `split` makes one, rather than being taken away from the pane it is in. Where
+   *  no pane can be made - a phone, a pane split as far as it goes - it is the
+   *  ordinary open. */
+  async openAside(path: string) {
+    const from = this.panes.focusedId
+    if (viewport.touch || !this.panes.splittable('row', from)) {
+      await this.openEntry(path)
+      return
+    }
+
+    const open = this.tabs.find((one) => one.path === path)
+    if (!open) {
+      await this.dropNotes([path], { kind: 'pane', paneId: from, zone: 'right' })
+      return
+    }
+
+    const made = this.panes.split('row', from)
+    if (!made) return
+
+    this.add(new Tab(open.note, made.id))
+    this.persist()
+  }
+
   /** Whether a tab dropped against that side of a pane would do anything: the
    *  pane has to be able to split that way, and the tab must not be the only one
    *  in the pane being split, which would empty that pane and close it again the

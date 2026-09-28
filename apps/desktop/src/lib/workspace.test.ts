@@ -944,6 +944,30 @@ describe('a note in two panes', () => {
     onePane()
   })
 
+  test('opens to the side, leaving the pane in front on what it showed', async () => {
+    await workspace.open('/space/a.md')
+    const [first] = workspace.panes.all
+
+    await workspace.openAside('/space/b.md')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.showing(first?.id ?? '')?.path).toBe('/space/a.md')
+    expect(workspace.active?.path).toBe('/space/b.md')
+    expect(workspace.active?.paneId).not.toBe(first?.id)
+  })
+
+  test('opens a note already open to the side as a second view of it', async () => {
+    await workspace.open('/space/a.md')
+    const shown = workspace.active
+
+    await workspace.openAside('/space/a.md')
+
+    expect(workspace.panes.count).toBe(2)
+    expect(workspace.tabs).toHaveLength(2)
+    expect(workspace.active?.note).toBe(shown?.note)
+    expect(workspace.active?.id).not.toBe(shown?.id)
+  })
+
   test('is one document, in a pane of its own', async () => {
     await workspace.open('/space/a.md')
     const first = workspace.active
