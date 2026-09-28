@@ -29,7 +29,7 @@
  *    markup can read. `ask()` is called from a command, a gesture or an effect -
  *    never from the markup, which would be a write during a render. */
 
-import { loadFind, loadLineCommands } from '@nib/editor'
+import { loadFind, loadLineCommands, setBlocks } from '@nib/editor'
 import { startup } from './startup.svelte'
 
 /** One lazy component, held. The default export rather than the module, because that
@@ -228,6 +228,14 @@ export async function warmDoors(): Promise<void> {
     // Shift+Alt+Right is answered in the frame it is pressed; see line-door.ts in
     // @nib/editor.
     loadLineCommands(),
+    // The blocks the editor's `/` menu offers, which are the app's rows rather than a
+    // list the editor keeps: handed over as a function so the words follow the
+    // language without anything having to hand them over again. Here rather than in
+    // the launch, because they are rows of the command list, and the command list
+    // reaches half the app - exports, printing, the recorder, dictation - for a `/`
+    // nobody has typed yet. Until it lands a `/` offers nothing; see slash.ts in
+    // @nib/editor.
+    import('./commands').then(({ blockRows }) => setBlocks(blockRows)),
     // The held chooser and the dialog it holds up, which are here rather than behind
     // their own first press because the first press is the one they exist to answer;
     // see above.

@@ -420,9 +420,19 @@ function holds(tail: string): boolean {
  *  table of keys, a drop's files caught before the event ends, the redo half of the
  *  undo stack. What they do is not - the copy itself, the walk of a dropped folder and
  *  the redo are fetched by the first of each (workspace/copying.ts, import/picking.ts,
- *  workspace/redoing.ts). */
-const BUDGET = 3_356_000
-const MOST_FILES = 387
+ *  workspace/redoing.ts).
+ *
+ *  Lowered 2026-09-28, to 3,300,000, when the line commands (Ctrl+J, a line above,
+ *  Shift+Alt+Right) came in with their keys bound from the first frame and themselves
+ *  behind a door (packages/editor/src/line-door.ts). The door did not pay for the keys
+ *  on its own, and what did was the command list: `start.ts` imported
+ *  `lib/commands.ts` for the rows of the `/` menu and nothing else, which held the
+ *  whole list in front of the first paint, and the export offer, printing, a picture
+ *  inserted and dictation under it - 65,030 bytes and seven files. The rows are handed
+ *  over at the launch's last turn now; see `warmDoors`. Measured MEASURED. Dictation
+ *  went from the list of doors below with it: it is behind the command list's. */
+const BUDGET = 3_300_000
+const MOST_FILES = 386
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -655,6 +665,17 @@ describe('what the app evaluates before it draws anything', () => {
     // from before shortcuts has any, and the first one opened fetches it. See
     // workspace.openWeb.
     ['/lib/web-tab/convert.ts', 'the old websites, converted'],
+    // The command list, which the launch held for the rows of the `/` menu alone, and
+    // what hangs off it: the export offer, printing and dictation. Handed over at the
+    // launch's last turn; see `warmDoors` in surfaces.svelte.ts.
+    ['/lib/commands.ts', 'the command list'],
+    ['/lib/export/print.ts', 'printing'],
+    ['/lib/mobile/dictation.ts', 'dictation'],
+    // And the line commands, whose keys are bound from the first frame; see
+    // packages/editor/src/line-door.ts.
+    ['/editor/src/lines.ts', 'the line commands'],
+    ['/editor/src/grow.ts', 'the selection a step outwards'],
+    ['/editor/src/paste-link.ts', 'an address pasted over words'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -685,7 +706,6 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
-    ['/lib/mobile/dictation.ts', 'whether anything can hear'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })
