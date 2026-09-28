@@ -453,7 +453,9 @@ function holds(tail: string): boolean {
  *  known to say (pdf/papers.ts and its cache, 28,065), fetched with the launch's own
  *  read of them; and the writer behind Save as (export/save.ts, 11,060), fetched by the
  *  press. Measured 3,244,278 and 374, and 3,247,448 and 375 on the main it landed on; the
- *  production build preloads 1,301,758 bytes in 82 chunks, from 1,317,450 in 88. */
+ *  production build preloads 1,301,758 bytes in 82 chunks, from 1,317,450 in 88. With
+ *  the web tab's batches (find, keys, favicons, the page menu) merged over it, 3,235,605
+ *  and 373. */
 const BUDGET = 3_250_000
 const MOST_FILES = 376
 
