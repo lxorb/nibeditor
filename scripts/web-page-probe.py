@@ -7,10 +7,11 @@ docs/web-tabs.md.
 
 * **find** - Ctrl+F on the pane opens the find bar, a word typed into it comes back as
   the engine's tally (`1 of 3`), Enter and Shift+Enter walk it, and Escape closes it.
-* **page first** - Ctrl+F pressed inside a page is the page's first, as in Chrome: a
-  page with no find of its own gets nib's bar, and one that answers Ctrl+F itself keeps
-  it and no bar opens. The key is pressed in the page through the engine's own devtools
-  protocol, which is a trusted key in that page and nothing on the screen.
+* **page first** - Ctrl+F and Ctrl+L pressed inside a page are the page's first, as in
+  Chrome: a page with no answer of its own gets nib's find bar and its address field,
+  and one that answers them itself keeps them. The keys are pressed in the page through
+  the engine's own devtools protocol, which is a trusted key in that page and nothing on
+  the screen.
 * **sound** - a page playing a tone puts the speaker on its tab; Mute site in the tab's
   own menu strikes it through, keeps the site muted, and the engine says it is.
 * **zoom** - Zoom in, in the dots, is kept for the site: another site in the same tab
@@ -110,10 +111,15 @@ PAGES = {
 <body style="font:16px system-ui;padding:2rem"><p>A needle of its own.</p>
 <script>
 window.ownFind = 0
+window.ownAddress = 0
 addEventListener('keydown', function (event) {
   if (event.ctrlKey && event.key === 'f') {
     event.preventDefault()
     window.ownFind++
+  }
+  if (event.ctrlKey && event.key === 'l') {
+    event.preventDefault()
+    window.ownAddress++
   }
 })
 </script></body>""",
@@ -320,10 +326,15 @@ class Devtools:
             if said.get("id") == self.next:
                 return said
 
-    def ctrl_f(self) -> None:
-        """Ctrl+F, pressed in the page: a trusted key, the page's handlers first."""
+    def ctrl(self, letter: str) -> None:
+        """Ctrl and a letter, pressed in the page: a trusted key, the page's handlers first."""
 
-        key = {"modifiers": 2, "key": "f", "code": "KeyF", "windowsVirtualKeyCode": 70}
+        key = {
+            "modifiers": 2,
+            "key": letter,
+            "code": f"Key{letter.upper()}",
+            "windowsVirtualKeyCode": ord(letter.upper()),
+        }
         self.call("Input.dispatchKeyEvent", {"type": "rawKeyDown", **key})
         self.call("Input.dispatchKeyEvent", {"type": "keyUp", **key})
 
@@ -336,8 +347,9 @@ class Devtools:
         self.sock.close()
 
 
-def press_in_page(identifier: str, path: str) -> dict[str, object]:
-    """Ctrl+F in the page at `path`, and how many times the page's own find answered."""
+def press_in_page(identifier: str, path: str, letter: str = "f") -> dict[str, object]:
+    """Ctrl and `letter` in the page at `path`, and how many times the page's own find
+    and its own Ctrl+L answered."""
 
     url = None
     until = time.perf_counter() + 20
@@ -349,9 +361,10 @@ def press_in_page(identifier: str, path: str) -> dict[str, object]:
         return {"page": False, "ports": debug_ports(identifier)}
     tools = Devtools(url)
     try:
-        tools.ctrl_f()
+        tools.ctrl(letter)
         time.sleep(1)
-        return {"page": True, "own": tools.value("window.ownFind ?? null")}
+        own = "window.ownFind ?? null" if letter == "f" else "window.ownAddress ?? null"
+        return {"page": True, "own": tools.value(own)}
     finally:
         tools.close()
 
@@ -480,6 +493,19 @@ def main() -> int:
         )
         said["page first"] = {"shut before": shut, "plain": {**pressed, **opened}}
 
+        # Ctrl+L inside it: the address field, with the keyboard.
+        before = step(app, "return { address: document.activeElement === bar() }")
+        pressed = press_in_page(args.identifier, "/find", "l")
+        taken = step(
+            app,
+            """
+  const took = await wait(() => document.activeElement === bar(), 5000)
+  if (took) bar().blur()
+  return { address: !!took }
+""",
+        )
+        said["page first"]["plain address"] = {"before": before, **pressed, **taken}
+
         said["zoom"] = step(
             app,
             f"""
@@ -557,9 +583,19 @@ def main() -> int:
   return { bar: !!opened }
 """,
         )
+        before = step(app, "return { address: document.activeElement === bar() }")
+        pressed_l = press_in_page(args.identifier, "/own", "l")
+        left = step(
+            app,
+            """
+  await new Promise((go) => setTimeout(go, 1500))
+  return { address: document.activeElement === bar() }
+""",
+        )
         first = said["page first"]
         if isinstance(first, dict):
             first["own"] = {**own, **pressed, **kept}
+            first["own address"] = {"before": before, **pressed_l, **left}
 
         said["source"] = step(
             app,
@@ -591,6 +627,12 @@ def main() -> int:
         wrong.append(f"page first: Ctrl+F in a page with no find of its own opened no bar: {first}")
     elif not isinstance(own, dict) or own.get("own") != 1 or own.get("bar"):
         wrong.append(f"page first: a page with its own find did not keep Ctrl+F: {first}")
+    plain_l = first.get("plain address", {}) if isinstance(first, dict) else {}
+    own_l = first.get("own address", {}) if isinstance(first, dict) else {}
+    if not isinstance(plain_l, dict) or not plain_l.get("address"):
+        wrong.append(f"page first: Ctrl+L in a plain page did not reach the address field: {plain_l}")
+    elif not isinstance(own_l, dict) or own_l.get("own") != 1 or own_l.get("address"):
+        wrong.append(f"page first: a page with its own Ctrl+L did not keep it: {own_l}")
     zoom = said.get("zoom", {})
     if not isinstance(zoom, dict) or zoom.get("zoomed") != "110%" or site not in str(zoom.get("kept")):
         wrong.append(f"zoom: Zoom in was not kept for the site: {zoom}")
