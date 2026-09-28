@@ -31,6 +31,23 @@ export function toBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
+/** SHA-256 as hex, of bytes or of text as UTF-8. The one digest the app names
+ *  things by: a stored picture, a paper's cached text, a published theme, a note
+ *  the account holds and the room it is edited in all agree on it, so it is
+ *  worked out in one place. */
+export async function sha256(data: string | Uint8Array | ArrayBuffer): Promise<string> {
+  // A `Uint8Array` says which kind of buffer it sits on, and `digest` takes only
+  // one on a plain `ArrayBuffer`. What arrives here came off a disk, out of a row
+  // or out of an encoder, and none of those hands back shared memory.
+  const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    bytes as Uint8Array<ArrayBuffer> | ArrayBuffer,
+  )
+
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
 /** A `data:` URI pulled apart, or null when the text is not one. */
 export function parseDataUri(uri: string): { mime: string; bytes: Uint8Array } | null {
   const match = /^data:([^;,]*)(;base64)?,([\s\S]*)$/.exec(uri)

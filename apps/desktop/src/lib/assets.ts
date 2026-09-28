@@ -1,16 +1,10 @@
 import { api, BASE } from './api'
 import { account } from './account.svelte'
 import { attachmentFolder } from './attachments'
+import { sha256 } from './bytes'
 import { modes } from './modes.svelte'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
-
-/** SHA-256 of the bytes, as hex. The picture's name is its contents, so the
- *  same image pasted twice is stored once wherever it ends up. */
-async function hashBytes(bytes: ArrayBuffer): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
 
 /** The extension to give a stored image, from what the clipboard said it is. */
 function extensionFor(type: string, name: string): string {
@@ -33,7 +27,9 @@ function extensionFor(type: string, name: string): string {
  *  paste still costs nothing. */
 export async function storeImage(file: File, notePath: string | null): Promise<string | null> {
   const bytes = await file.arrayBuffer()
-  const hash = await hashBytes(bytes)
+  // The picture's name is its contents, so the same image pasted twice is stored
+  // once wherever it ends up.
+  const hash = await sha256(bytes)
   const extension = extensionFor(file.type, file.name)
 
   const token = account.accountToken

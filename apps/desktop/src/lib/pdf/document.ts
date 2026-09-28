@@ -13,8 +13,7 @@ import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist'
 // time and is the same one under Vite and inside the app bundle. Asking for the
 // URL rather than importing the module keeps the worker out of the page.
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-import { fileBytes } from '../bytes'
-import { hashOf } from './text-cache'
+import { fileBytes, sha256 } from '../bytes'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -50,7 +49,8 @@ export async function openDocument(path: string): Promise<OpenPdf> {
   const [library, data] = await Promise.all([pdfjs(), fileBytes(path)])
   // Before the bytes are handed over, and off the main thread: the digest of a
   // paper is a few milliseconds where the read that just finished was hundreds.
-  const hash = await hashOf(data)
+  // The same digest, over the same bytes, that the mirror addresses a paper by.
+  const hash = await sha256(data)
 
   // The bytes are handed to the worker, which takes ownership of them: after
   // this the copy on this side is empty, and one document costs one copy.

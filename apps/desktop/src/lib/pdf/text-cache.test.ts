@@ -35,16 +35,8 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-const {
-  forgetPaperText,
-  hashOf,
-  keepAtMost,
-  keepPaperText,
-  paperFiles,
-  paperText,
-  paperTextOf,
-  textWork,
-} = await import('./text-cache')
+const { forgetPaperText, keepAtMost, keepPaperText, paperFiles, paperText, paperTextOf, textWork } =
+  await import('./text-cache')
 
 /** Bounds small enough for a test to cross: a hundred characters of one paper, and
  *  four hundred bytes of records in all. A record is its words and a little JSON
@@ -150,16 +142,5 @@ describe('the bounds', () => {
       '/space/Small.pdf',
       '/space/Big.pdf',
     ])
-  })
-})
-
-describe('the hash', () => {
-  test('is the digest of the bytes, so the same file is the same hash', async () => {
-    const bytes = new Uint8Array([1, 2, 3, 4])
-    const same = await hashOf(bytes)
-
-    expect(same).toMatch(/^[0-9a-f]{64}$/)
-    expect(await hashOf(new Uint8Array([1, 2, 3, 4]))).toBe(same)
-    expect(await hashOf(new Uint8Array([1, 2, 3, 5]))).not.toBe(same)
   })
 })

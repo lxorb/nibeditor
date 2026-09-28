@@ -20,6 +20,7 @@
 import { isCanvasTarget, isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { conflictPath } from '@nib/markdown/paths'
 import { api, ApiError, type RemoteNote, type SpaceFile } from '../api'
+import { sha256 } from '../bytes'
 import { log } from '../log'
 import { without } from '../records'
 import { isNumber, isRecord, isString } from '../stored'
@@ -91,14 +92,6 @@ export interface Mirror {
  *  place, so a new field cannot be forgotten at one of the five call sites. */
 export function newMirror(spaceId: string, root: string, shared = false): Mirror {
   return { spaceId, root, cursor: 0, notes: {}, offered: {}, files: {}, dropped: false, shared }
-}
-
-function hex(digest: ArrayBuffer): string {
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
-}
-
-async function sha256(text: string): Promise<string> {
-  return hex(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)))
 }
 
 /** A file's path as the account names it - relative to the space's folder, with
@@ -842,7 +835,7 @@ function contentTypeOf(path: string): string {
  *  between the listing and here is nothing to report. */
 async function hashFile(path: string): Promise<string | null> {
   const bytes = await invoke<ArrayBuffer>('read_file', { path }).catch(() => null)
-  return bytes === null ? null : hex(await crypto.subtle.digest('SHA-256', bytes))
+  return bytes === null ? null : sha256(bytes)
 }
 
 /** Whether two lists of files say the same thing, so a space nobody has changed

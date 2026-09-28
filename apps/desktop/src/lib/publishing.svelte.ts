@@ -24,6 +24,7 @@ import {
 import { invoke } from './tauri'
 import { theme } from './theme.svelte'
 import { account } from './account.svelte'
+import { sha256 } from './bytes'
 import { isDomainStatus, keepAsking } from './domain-status'
 import { message } from './i18n.svelte'
 import { log } from './log'
@@ -200,9 +201,7 @@ class Publish {
     if (!css) return undefined
 
     const bytes = new TextEncoder().encode(css)
-    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
-      .map((byte) => byte.toString(16).padStart(2, '0'))
-      .join('')
+    const hash = await sha256(bytes)
 
     await api.putBlob(token, hash, 'text/css', bytes.buffer)
     return { name: this.themeName, hash }
