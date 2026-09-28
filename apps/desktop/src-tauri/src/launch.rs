@@ -213,13 +213,19 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     // config is dropped there for the same reason, so the two stay alike.
     #[cfg(not(target_os = "macos"))]
     let builder = builder.transparent(true);
+    // A Mac's is shown once it stands where it should; see `show_where_left`.
+    #[cfg(target_os = "macos")]
+    let builder = builder.visible(false);
 
     let window = crate::appearance::own_frame(builder)
         .build()
         .map_err(|error| format!("could not open another window: {error}"))?;
 
     #[cfg(target_os = "macos")]
-    crate::lights::hold(&window);
+    {
+        crate::lights::hold(&window);
+        crate::document_window::show_where_left(&window);
+    }
     #[cfg(not(target_os = "macos"))]
     let _ = window;
 

@@ -103,30 +103,37 @@ fn set_document_state(handle: *mut std::ffi::c_void, edited: bool, path: &str) {
 pub fn remembered_frame() -> tauri::plugin::TauriPlugin<crate::Engine> {
     tauri_plugin_window_state::Builder::new()
         .with_state_flags(REMEMBERED)
-        .with_filter(|label| label == "main")
-        .skip_initial_state("main")
+        .with_filter(|label| label == MAIN)
+        .skip_initial_state(MAIN)
         .build()
 }
 
-/// Shows the main window where it was left, as the launch's last step.
+/// Shows a window, and the main one where it was left: at launch, and when the Dock
+/// brings it back after the last window was closed (see `open_window` in launch.rs).
 ///
-/// The plugin would put it back by itself, but only when the event loop next comes
-/// round, and the launch showed the window before that: it stood at the default size
-/// and place for a moment and then jumped, which `jumpwatch` caught at fourteen
+/// The plugin would put the main window back by itself, but only when the event loop
+/// next comes round, and the window was shown before that: it stood at the default
+/// size and place for a moment and then jumped, which `jumpwatch` caught at fourteen
 /// milliseconds. Putting it back here first is not enough either, because tao moves
 /// and sizes a Mac window on the main queue rather than at once, and shows it at
 /// once. So the showing goes on that queue too, behind the move, and the window is
-/// first seen where it was left.
+/// first seen where it was left. The window is built hidden for it.
 #[cfg(target_os = "macos")]
 pub fn show_where_left(window: &tauri::WebviewWindow) {
     use tauri_plugin_window_state::WindowExt as _;
-    let _ = window.restore_state(REMEMBERED);
+    if window.label() == MAIN {
+        let _ = window.restore_state(REMEMBERED);
+    }
 
     let window = window.clone();
     dispatch2::DispatchQueue::main().exec_async(move || {
         let _ = window.show();
     });
 }
+
+/// The one window whose frame is remembered, the one a launch opens.
+#[cfg(target_os = "macos")]
+const MAIN: &str = "main";
 
 /// What is remembered of the main window: its size, its place and whether it was
 /// maximised.
