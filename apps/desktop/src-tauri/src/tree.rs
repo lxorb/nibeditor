@@ -179,8 +179,10 @@ fn walk(
                     // standing on its own - a picture, a PDF's own highlights -
                     // and a file list nobody can act on is noise.
                     room(left)?;
-                    let mut one = listed(&child, name, false, entry.metadata().ok());
-                    one.evicted = evicted;
+                    let meta = entry.metadata().ok();
+                    let dataless = meta.as_ref().is_some_and(crate::notes::icloud::is_dataless);
+                    let mut one = listed(&child, name, false, meta);
+                    one.evicted = evicted || dataless;
                     children.push(one);
                 }
             }
