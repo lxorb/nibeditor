@@ -65,9 +65,9 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Window | Size, position and maximised state come back at launch | every desktop app | done | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
-| Fields | Right-click in a text field (address, search, find, rename, settings) gives Cut, Copy, Paste and Select all | every OS, Chrome | done | `App.svelte:683` blocks every native menu, and the fields have none of their own | S | high |
-| Undo | A deleted or moved file gets a short "Undo" toast | Notion, Gmail | done | undo is reachable only through the menus (`lib/row-menu.ts:158-162`) | S | med |
+| Window | Size, position and maximised state come back at launch | every desktop app | done 5a67f3f7, d1372b4a | always 1180×760 (`src-tauri/tauri.conf.json:16`, `rs/launch.rs:56`); nothing saves the bounds | M | high |
+| Fields | Right-click in a text field (address, search, find, rename, settings) gives Cut, Copy, Paste and Select all | every OS, Chrome | done fba14421 | `App.svelte:683` blocks every native menu, and the fields have none of their own | S | high |
+| Undo | A deleted or moved file gets a short "Undo" toast | Notion, Gmail | done 897ecee5 | undo is reachable only through the menus (`lib/row-menu.ts:158-162`) | S | med |
 
 ## Batch 5: the tab strip
 
