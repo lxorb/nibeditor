@@ -493,7 +493,10 @@ somewhere new. The trail comes from `web_trail`, which asks nothing of the page.
 **The reload glyph is a cross while a page is coming**, and pressing it stops the page,
 which is what Chrome's does; Escape does the same once whatever is open over the page
 has had its Escape. The tab's mark turns meanwhile, so the bar only says what a press
-would do. Ctrl+Shift+R and Ctrl+F5 load the page past the cache. Stopping and loading
+would do. It turns the moment a navigation sets off rather than when the engine's own
+"started" arrives, which is only once the site has begun to answer: a cross that
+appears when there is nothing left to stop is no cross at all. The middle button or
+Ctrl on it opens the page again in a tab behind, as Chrome's does. Ctrl+Shift+R and Ctrl+F5 load the page past the cache. Stopping and loading
 fresh are `WebView2`'s own - `Stop`, and the DevTools Protocol's `Page.reload` with
 `ignoreCache` - and elsewhere the nearest a page can do, `window.stop()` and an
 ordinary reload; see `src-tauri/src/web_reload.rs`.
@@ -1221,6 +1224,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
