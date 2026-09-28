@@ -1980,6 +1980,23 @@ describe('closing something that holds unsaved work', () => {
     expect(sheet.asked).toEqual(['Save outside?', 'Save beside it?'])
   })
 
+  /** The window goes with its tabs, and the next window opens the session they were
+   *  written into - on a Mac the Dock brings one back at once. A note let go of on
+   *  the way out came back in it, words and all, and was asked about again on every
+   *  quit after, however often the answer was Don't save. */
+  test('a note let go of on the way out is not in the session the next window opens', async () => {
+    await dirty(OUTSIDE)
+    sheet.answer = 'discard'
+
+    expect(await workspace.mayCloseWindow()).toBe(true)
+
+    const written = JSON.parse(localStorage.getItem('nib:workspace') ?? '{}') as {
+      layout?: { frame: { pane?: { tabs?: { path: string | null; dirty?: boolean }[] } } }
+    }
+    const tabs = written.layout?.frame.pane?.tabs ?? []
+    expect(tabs.filter((one) => one.path === OUTSIDE)).toEqual([])
+  })
+
   test('asks nothing about a note in a space, whatever was typed in it', async () => {
     vi.useFakeTimers()
 
