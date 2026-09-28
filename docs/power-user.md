@@ -104,15 +104,15 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Editor | Pasting a URL over a selection makes `[selection](url)` | Obsidian, Notion, GitHub | missing | `richPaste` (`ed/paste.ts:113-165`) never looks at the selection | S | high |
-| Editor | Delete line | VS Code Ctrl+Shift+K, Obsidian Ctrl+D | missing | Mod-Shift-k is Code block (`ed/keymap.ts:157`), and there is no command id | S | med |
-| Editor | Expand and shrink the selection (word → inline → block → section) | VS Code Shift+Alt+→ | missing | CodeMirror's `selectParentSyntax` (Mod-i) is shadowed by Italic (`ed/keymap.ts:115`), and there is no id | S | med |
-| Editor | Ctrl+Enter on a plain line or bullet makes it a task, and the next press ticks it | Obsidian | partial | `toggleTask` gives way on lines that are not tasks (`ed/commands.ts:185-202`) | S | med |
-| Editor | Sort lines and reverse lines (the selection) | VS Code, Sublime | missing | no command | S | low |
-| Editor | Upper, lower and title case for the selection | VS Code | missing | no command | S | low |
-| Editor | Join lines | VS Code Ctrl+J | missing | no command | S | low |
-| Editor | Insert a line above (Ctrl+Shift+Enter) | VS Code | missing | only below exists, as CodeMirror's `insertBlankLine` under Mod-Enter | S | low |
-| Editor | Alt+Enter in the find bar selects every match | VS Code | missing | `edit.select-all-occurrences` has no key, and the find bar has no such press | S | low |
+| Editor | Pasting a URL over a selection makes `[selection](url)` | Obsidian, Notion, GitHub | done dadd9b0b 4c47c32f | `richPaste` (`ed/paste.ts:113-165`) never looks at the selection; the markdown package's own `pasteURLAsLink` linked plain words only, kept the trailing line break, and is off now | S | high |
+| Editor | Delete line | VS Code Ctrl+Shift+K, Obsidian Ctrl+D | done 4760beaa, no key | Mod-Shift-k is Code block (`ed/keymap.ts:157`), and there is no command id; both chords stay taken, so batch 10's VS Code preset gives it one | S | med |
+| Editor | Expand and shrink the selection (word → inline → block → section) | VS Code Shift+Alt+→ | done 4760beaa | CodeMirror's `selectParentSyntax` (Mod-i) is shadowed by Italic (`ed/keymap.ts:115`), and there is no id | S | med |
+| Editor | Ctrl+Enter on a plain line or bullet makes it a task, and the next press ticks it | Obsidian | done 27c050d8 | `toggleTask` gives way on lines that are not tasks (`ed/commands.ts:185-202`) | S | med |
+| Editor | Sort lines and reverse lines (the selection) | VS Code, Sublime | done 4760beaa | no command | S | low |
+| Editor | Upper, lower and title case for the selection | VS Code | done 4760beaa | no command | S | low |
+| Editor | Join lines | VS Code Ctrl+J | done 4760beaa | no command | S | low |
+| Editor | Insert a line above (Ctrl+Shift+Enter) | VS Code | done 4760beaa | only below exists, as CodeMirror's `insertBlankLine` under Mod-Enter | S | low |
+| Editor | Alt+Enter in the find bar selects every match | VS Code | done f006e899 | `edit.select-all-occurrences` has no key, and the find bar has no such press | S | low |
 
 ## Batch 8: editor, context menu and link gestures
 
