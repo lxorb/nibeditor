@@ -20,6 +20,7 @@ import { COMPACTIONS, DEFAULT_COMPACTION, type Marks } from '@nib/glasses/choice
 import { key, t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import type { Field, Group } from '../preferences'
+import { resetFields } from '../reset-fields'
 import { commandWords, DEFAULT_WORDS } from './commands'
 
 /** There is no scrolling setting either.
@@ -250,17 +251,10 @@ export function glassesStamp(): string {
 
 /** Every glasses setting back to what it started as, from either surface.
  *
- *  Only the ones that differ are touched, the same rule the phone's own pane
- *  reset follows: a switch's setter may be a toggle. The spoken phrases go with
- *  them: they are a glasses setting like any other. */
+ *  Through the same reset the phone's own panes use; see reset-fields.ts. The
+ *  spoken phrases go with them: they are a glasses setting like any other. */
 export function resetGlasses(): void {
-  for (const { field } of glassesSettings()) {
-    if (field.initial === undefined || field.get() === field.initial) continue
-
-    if (field.kind === 'switch') field.set(field.initial)
-    else if (field.kind === 'slider') field.set(field.initial)
-    else field.set(field.initial)
-  }
+  resetFields(glassesSettings().map(({ field }) => field))
 
   for (const id of Object.keys(DEFAULT_WORDS)) modes.setGlassesWord(id, '')
 }

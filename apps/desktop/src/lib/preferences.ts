@@ -11,6 +11,7 @@ import { DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, PAPER_SIZES } from './page-setup'
 import { DEFAULT_DAYS, DEFAULT_MINUTES, KEEP_DAYS, SNAPSHOT_MINUTES } from './recovery'
 import { recovery } from './recovery.svelte'
+import { resetFields } from './reset-fields'
 import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
 import { isDesktop } from './tauri'
@@ -781,17 +782,7 @@ export function resettable(pane: Pane): boolean {
   return pane.groups.every((group) => group.fields.every((field) => field.initial !== undefined))
 }
 
-/** Puts every field in the pane back to what it started as. Only the ones
- *  that differ are touched: a switch's setter may be a toggle, which would
- *  flip a value that was already right. */
+/** Puts every field in the pane back to what it started as; see reset-fields.ts. */
 export function resetPane(pane: Pane) {
-  for (const group of pane.groups) {
-    for (const field of group.fields) {
-      if (field.initial === undefined || field.get() === field.initial) continue
-
-      if (field.kind === 'switch') field.set(field.initial)
-      else if (field.kind === 'slider') field.set(field.initial)
-      else field.set(field.initial)
-    }
-  }
+  resetFields(pane.groups.flatMap((group) => group.fields))
 }
