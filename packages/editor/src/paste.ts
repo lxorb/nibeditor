@@ -1,6 +1,15 @@
-import { EditorSelection, type Extension } from '@codemirror/state'
+import { syntaxTree } from '@codemirror/language'
+import {
+  EditorSelection,
+  type EditorState,
+  type Extension,
+  type SelectionRange,
+  type TransactionSpec,
+} from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
+import { inCode } from './code'
 import { ourOwn } from './copy'
+import { enclosingNamed } from './nodes'
 
 /** The converter, fetched the first time a web page is pasted.
  *
@@ -87,6 +96,89 @@ function insert(view: EditorView, text: string) {
   })
 }
 
+/** One address and nothing else: what a browser's address bar puts on the clipboard.
+ *  The schemes somebody pastes over a word to link it, and no others - `C:\notes` is
+ *  a path, and `nib:` a word followed by a colon as often as an address. */
+const ADDRESS = /^(?:https?:\/\/|mailto:)[^\s<>]+$/i
+
+/** Where a selection is already something other than words to link: the inside of a
+ *  link, a picture, an address, a formula, markup, or the note's metadata. Code is
+ *  asked of `inCode`, which is the one list of what code is. */
+const NOT_WORDS = new Set([
+  'Link',
+  'Image',
+  'URL',
+  'Autolink',
+  'Wikilink',
+  'LinkReference',
+  'InlineMath',
+  'BlockMath',
+  'HTMLTag',
+  'HTMLBlock',
+  'CommentBlock',
+  'Comment',
+  'FrontMatter',
+])
+
+function linkable(state: EditorState, range: SelectionRange): boolean {
+  if (range.empty) return false
+
+  const words = state.sliceDoc(range.from, range.to)
+  // Words across a blank line are two paragraphs, which one link cannot hold; and an
+  // address selected is an address being replaced, the way GitHub reads it.
+  if (/\n[ \t]*\n/.test(words) || ADDRESS.test(words.trim())) return false
+
+  const tree = syntaxTree(state)
+  for (const [pos, side] of [
+    [range.from, 1],
+    [range.to, -1],
+  ] as const) {
+    if (inCode(state, pos, side)) return false
+    if (enclosingNamed(tree.resolveInner(pos, side), NOT_WORDS)) return false
+  }
+
+  return true
+}
+
+/** An address as a link's destination: as it is, or in angle brackets where a
+ *  bracket in it would otherwise end the link early. */
+function destination(address: string): string {
+  let depth = 0
+  for (const char of address) {
+    if (char === '(') depth += 1
+    if (char === ')' && --depth < 0) break
+  }
+  return depth === 0 ? address : `<${address}>`
+}
+
+/** An address pasted over selected words, as the link it makes of them:
+ *  `[words](address)`. Obsidian, Notion and GitHub all read the paste that way, and a
+ *  reader who selected words and pasted an address over them did not mean to lose
+ *  the words.
+ *
+ *  Null where the paste is anything else - more than an address, nothing selected,
+ *  or a selection in code, in a link already, or in anything else that is not prose
+ *  - which leaves the paste to go in as it stands. Ctrl+Shift+V never comes here, so
+ *  plain is always a key away. */
+export function linkedPaste(state: EditorState, text: string): TransactionSpec | null {
+  const address = text.trim()
+  if (!ADDRESS.test(address)) return null
+  if (!state.selection.ranges.every((range) => linkable(state, range))) return null
+
+  const target = destination(address)
+  return {
+    ...state.changeByRange((range) => {
+      const insert = `[${state.sliceDoc(range.from, range.to)}](${target})`
+      return {
+        changes: { from: range.from, to: range.to, insert },
+        range: EditorSelection.cursor(range.from + insert.length),
+      }
+    }),
+    scrollIntoView: true,
+    userEvent: 'input.paste',
+  }
+}
+
 /** What a clipboard's two flavours come to, as markdown. Null where there is
  *  nothing worth inserting, which leaves the paste to whoever asked.
  *
@@ -123,6 +215,15 @@ export function richPaste(): Extension {
 
       const html = data.getData('text/html')
       const text = data.getData('text/plain')
+
+      // An address over selected words, which makes a link of them. Before anything
+      // reads the HTML: a browser puts a link's markup beside the address it copies.
+      const linked = linkedPaste(view.state, text)
+      if (linked) {
+        event.preventDefault()
+        view.dispatch(linked)
+        return true
+      }
 
       // A note this app copied: handed back to CodeMirror, which puts the plain
       // text in as it stands - and the plain text is the note's own markdown. See
@@ -179,6 +280,12 @@ export const pasteHere: Command = (view) => {
   void readClipboard()
     .then(async (clipboard) => {
       if (!clipboard) return
+      const linked = linkedPaste(view.state, clipboard.text)
+      if (linked) {
+        view.dispatch(linked)
+        return
+      }
+
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       const text = markdown ?? clipboard.text
       if (text) insert(view, text)
