@@ -283,6 +283,47 @@ describe('writing through it', () => {
     expect(await tool(key, 'read_note', { space: 'Work', path: 'plan.md' })).toBe('replaced')
   })
 
+  test('goes to the account’s own space when somebody else’s has the same name', async () => {
+    // Being invited is enough to have a space in the list, so a stranger who knows
+    // the address can put a Work beside this account's Work - spelled to sort first,
+    // which is what the first of two equal names used to be.
+    const stranger = await signIn(env, 'x@y.dev')
+    const theirs = await call(env, '/v1/spaces', { token: stranger, body: { name: 'WORK' } })
+    await call(env, `/v1/spaces/${theirs.json.space.id}/share/invite`, {
+      token: stranger,
+      body: { email: 'a@b.dev', role: 'write' },
+    })
+
+    const key = await connector(false)
+    await tool(key, 'write_note', { space: 'Work', path: 'secret.md', content: 'mine' })
+
+    const own = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
+    expect(own.json.notes.map((note: { path: string }) => note.path)).toContain('secret.md')
+
+    const leaked = await call(env, `/v1/spaces/${theirs.json.space.id}/changes?since=0`, {
+      token: stranger,
+    })
+    expect(leaked.json.notes).toEqual([])
+  })
+
+  test('and asks which, where two spaces it does not own share a name', async () => {
+    for (const email of ['x@y.dev', 'z@y.dev']) {
+      const stranger = await signIn(env, email)
+      const theirs = await call(env, '/v1/spaces', { token: stranger, body: { name: 'Club' } })
+      await call(env, `/v1/spaces/${theirs.json.space.id}/share/invite`, {
+        token: stranger,
+        body: { email: 'a@b.dev', role: 'write' },
+      })
+    }
+
+    const text = await tool(await connector(false), 'write_note', {
+      space: 'Club',
+      path: 'note.md',
+      content: 'hello',
+    })
+    expect(text).toContain('Name one by its id')
+  })
+
   test('a written note reaches the syncing clients', async () => {
     const key = await connector(false)
     await tool(key, 'write_note', { space: 'Work', path: 'fresh.md', content: 'from the llm' })
