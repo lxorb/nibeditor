@@ -619,6 +619,11 @@ pub fn write_atomically(target: &Path, bytes: &[u8]) -> Result<(), String> {
 /// write and a permission set afterwards, which is what the first launch on a
 /// shared machine used to leave. On Windows there is no mode to set: the app's own
 /// folder is the user's already.
+///
+/// Only the automation endpoint writes one, and that is the desktop's alone; on a
+/// phone nothing calls this, so the phone's clippy would otherwise refuse it as dead
+/// code.
+#[cfg_attr(mobile, allow(dead_code))]
 pub fn write_privately(target: &Path, bytes: &[u8]) -> Result<(), String> {
     written(target, bytes, true)
 }
