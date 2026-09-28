@@ -43,6 +43,28 @@ jobs:
       - name: Types
         run: pnpm check
 
+      - name: Tests
+        run: pnpm test
+
+  # The static half of the gate, beside the tests rather than in front of them: the
+  # three read the source and nothing else, and one after the other they were a
+  # minute and a half of the test job's wall time.
+  lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
       - name: Lint
         run: pnpm lint
 
@@ -51,9 +73,6 @@ jobs:
 
       - name: Dead code and unused dependencies
         run: pnpm knip
-
-      - name: Tests
-        run: pnpm test
 
   # Whether a person could write in it at all.
   #
@@ -156,6 +175,11 @@ jobs:
       run:
         # One spelling of every step below, whichever runner reads it.
         shell: bash
+    env:
+      # File and line in a failing test's backtrace, and none of the rest of the
+      # debug information, which was most of what the target folder weighed and so
+      # most of what the cache carried and the linker wrote.
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -175,11 +199,15 @@ jobs:
           components: clippy, rustfmt
 
       # The cache key this action builds already carries the runner's own OS, so
-      # the two rows keep two caches without being told to.
+      # the three rows keep three caches without being told to. Saved from main
+      # only: the repository has ten gigabytes of cache, the release and phone
+      # builds fill most of it, and a pull request's copy is one no other run can
+      # read - so every one of them pushed a cache main still needed out of it.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: |
             apps/desktop/src-tauri
+          save-if: ${{ github.ref == 'refs/heads/main' }}
 
       # Tauri needs the system webview to compile against. Windows has WebView2 in
       # the image already and macOS has WebKit in the system; only Linux has to be
@@ -303,10 +331,16 @@ jobs:
           toolchain: stable
           targets: aarch64-linux-android,x86_64-linux-android
 
+      # publish-mobile's cache, read and never written: the same command on the same
+      # two targets, and that job runs on every push to main, so its copy is always
+      # warm. A cache of this job's own went cold between the pushes that touch the
+      # crate - it was the first thing the full cache pushed out - and every run
+      # here compiled the crate for both phones from nothing.
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           workspaces: apps/desktop/src-tauri
-          key: android
+          shared-key: android
+          save-if: false
 
       - run: pnpm install --frozen-lockfile
 
@@ -341,9 +375,9 @@ jobs:
   # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
   # so a red build never reaches anyone.
   deploy:
-    # Only the types and tests. Clippy guards the desktop app, which is not
-    # what this deploys, and coupling the two would let a lint stop a fix.
-    needs: test
+    # The types, the tests and the static checks. Clippy guards the desktop app,
+    # which is not what this deploys, and coupling the two would let a lint stop a fix.
+    needs: [test, lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
