@@ -154,7 +154,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 
 | area | behaviour | from | status | evidence | size | value |
 | --- | --- | --- | --- | --- | --- | --- |
-| Web | A private tab | Chrome | missing | no code; `docs/keyboard.md:316` describes it as if it were there (`docs/browser.md:1198` plans it for batch 6), and Ctrl+Shift+N is New window | L | med |
+| Web | A private tab | Chrome | missing | no code (`docs/browser.md:1198` plans it for batch 6), and Ctrl+Shift+N is New window | L | med |
 | Web | Dragging a link or a picture out of a page onto the strip or the file list | Chrome | missing | page drags stay inside the webview (`rs/web_tabs.rs:895`) | L | med |
 | Tooltips | Hover titles carry the key, e.g. `Back (Alt+←)`, the panel tabs, the sidebar toggle, the find steps | Chrome, VS Code, Obsidian | partial | keys appear only in menus and the palette: `lib/Sidebar.svelte:571` `title={item.label}`, `lib/web-tab/WebBar.svelte:151`. Touches every surface, so it goes last | M | med |
 | Files | Dragging a row out to Explorer or a mail | Explorer, VS Code | missing | a tree drag carries only `text/nib-*` types (`lib/drag-paths.ts:29-30`) | L | low |

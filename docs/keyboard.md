@@ -298,6 +298,7 @@ stops nothing, and the app still gets the key.
 | | |
 | --- | --- |
 | Ctrl+N | a new note |
+| Ctrl+Shift+N | a new window |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
@@ -384,7 +385,6 @@ they show in Settings, show in the palette and can be rebound.
 | Escape | stop a page on its way in, once whatever is open over it has had its Escape |
 | Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there |
 | Alt+Enter in the address field | the address in a tab of its own |
-| Ctrl+Shift+N | a private tab: an ephemeral profile, no extensions, nothing kept |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
 | Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
 | F12, Ctrl+Shift+I | the engine's developer tools for the page (Cmd+Alt+I on a Mac): `web.devtools` |

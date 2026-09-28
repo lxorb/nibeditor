@@ -415,6 +415,7 @@
         // The picker is opened from a row's menu, which a drive cannot reach; this
         // is how a screenshot run opens it on a note, a canvas or a folder.
         iconChoice,
+        overlays,
         // Whether a deck is up, and which tab is on the stage. The stage covers the
         // whole window with no chrome of its own, so a drive that pressed Present has
         // nothing in the page to read it off; see slides/present.svelte.ts.

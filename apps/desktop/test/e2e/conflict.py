@@ -566,7 +566,7 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         for which, page in pages.items():
             wait_for(
                 page,
-                f"() => window.nibApp.rooms.joined.has({json.dumps(held)})",
+                f"() => window.nibApp.rooms.carries({json.dumps(held)})",
                 f"[{label}/{which}] the note to join its room",
             )
 
@@ -604,13 +604,13 @@ def run_case(browser: Browser, token: str, space_id: str, rule: str, away: str, 
         gone.wait_for_timeout(1000)
         say(
             f"[{label}] the note is closed on machine {away}:"
-            f" rooms={gone.evaluate('() => window.nibApp.rooms.joined.size')}"
+            f" in its room={gone.evaluate(f'() => window.nibApp.rooms.carries({json.dumps(held)})')}"
             f" open={gone.evaluate('() => window.nibApp.workspace.openNotes.length')}"
         )
 
     for which, page in pages.items():
         say(
-            f"[{label}/{which}] while apart: rooms={page.evaluate('() => window.nibApp.rooms.joined.size')}"
+            f"[{label}/{which}] while apart: in its room={page.evaluate(f'() => window.nibApp.rooms.carries({json.dumps(held)})')}"
             f" words={json.dumps(read_words(page))[:150]}"
         )
 

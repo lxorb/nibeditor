@@ -351,7 +351,7 @@
 
     // A row a step up or down the order somebody arranged, with the same slide a drag
     // gets. Nothing at all in the other six orders, which are the notes' own rules
-    // rather than anybody's arrangement; see `moveInOrder` in workspace.svelte.ts.
+    // rather than anybody's arrangement; see `moveInOrder` in tree-lift.ts.
     const moving = shortcuts.pressed('tree.move-up', event)
       ? -1
       : shortcuts.pressed('tree.move-down', event)

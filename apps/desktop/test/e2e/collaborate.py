@@ -342,7 +342,7 @@ def opened(page: Page, label: str, note_id: str) -> None:
     wait_for(page, "() => !!document.querySelector('.cm-content')", f"[{label}] the editor")
     wait_for(
         page,
-        f"() => window.nibApp.rooms.joined.has({json.dumps(note_id)})",
+        f"() => window.nibApp.rooms.carries({json.dumps(note_id)})",
         f"[{label}] the note to join its room",
     )
 
@@ -559,7 +559,7 @@ def main() -> int:
                 joining.evaluate(f"() => window.nibApp.workspace.open('/{SPACE}/long.md')")
                 wait_for(
                     joining,
-                    f"() => window.nibApp.rooms.joined.has({json.dumps(long['id'])})",
+                    f"() => window.nibApp.rooms.carries({json.dumps(long['id'])})",
                     "[three] the long note to join its room",
                 )
                 took = (time.perf_counter() - started) * 1000
