@@ -4,7 +4,7 @@ What the Mac build does differently from Windows and Linux, and the checklist it
 
 ## What is Mac-only
 
-- **Frame.** The window keeps the system's traffic lights over Nib's own bar (`titleBarStyle: Overlay`, `tauri.macos.conf.json`, `appearance.rs` `own_frame`). The bar leaves `--traffic-lights` of room in whichever bar holds the top left corner: the tab bar, or the sidebar's head while it is docked open. Full screen gives the room back. No drawn window buttons and no hamburger on a Mac.
+- **Frame.** The window keeps the system's traffic lights over Nib's own bar (`titleBarStyle: Overlay`, `tauri.macos.conf.json`, `appearance.rs` `own_frame`). `lights.rs` centres them in the bar and puts them back whenever AppKit lays the titlebar out again, which it does on every resize, new title and edited dot. The bar leaves `--traffic-lights` of room in whichever bar holds the top left corner: the tab bar, or the sidebar's head while it is docked open. Full screen gives the room back. No drawn window buttons and no hamburger on a Mac.
 - **Menu bar.** Built from the same rows as the in-window menu (`native-menu.ts`, `native-menu-bar.svelte.ts`). The Edit menu uses the system's own Undo, Cut, Copy, Paste and Select All, so they work in every webview.
 - **Lifecycle.** Finder opens files through `RunEvent::Opened`. Closing the last window keeps Nib in the Dock, and clicking the Dock icon opens a window again. Cmd+Q asks every window about unsaved work (`lifecycle.rs`, `start.ts`). The window frame is restored at launch.
 - **Window.** Its title is the note's name, the edited dot means unsaved, and it knows which file it stands for (`document_window.rs`).
@@ -13,7 +13,7 @@ What the Mac build does differently from Windows and Linux, and the checklist it
   - pandoc is found in Homebrew's folders.
   - Renaming a file or folder to change only its capital letters works.
   - Names are compared NFC-normalised.
-  - iCloud-evicted notes are listed and downloaded when opened.
+  - iCloud-evicted notes are listed and downloaded when opened: the `.icloud` placeholder macOS 13 leaves, and the dataless file macOS 14 and later leave under the note's own name (`notes/icloud.rs`).
   - The file list has "Reveal in Finder".
 - **WebKit.**
   - PDF export and printing go through WKWebView's print operation (`pdf.rs`).
@@ -30,6 +30,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 1. Download the `.dmg` from the release, open it, and drag Nib to Applications. Gatekeeper warns, because the build is not notarized. Open Anyway in System Settings > Privacy & Security starts it. It must not say "damaged".
 2. The Dock and Finder icon is the same size as other apps' icons, with rounded corners.
+
+> macOS 26.6 (25G72), Apple M5. 1 passes: the dmg, quarantined as Safari quarantines a download, says Apple could not verify Nib, and Open Anyway starts it. That depends on the ad-hoc signature this branch adds. The 0.9.1 release carries only the linker's signature on its binaries (`codesign --verify` says "not signed at all"), which is what Apple silicon calls "damaged". 2 passes on macOS 26 only because the system masks a full-bleed icon itself; the icon is an opaque square, so macOS 13 to 15 show it square and larger than its neighbours until it is on Apple's grid.
 
 ### Frame
 
