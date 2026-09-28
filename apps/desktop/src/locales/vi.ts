@@ -537,6 +537,8 @@ export const vi: Dictionary = {
   View: 'Xem',
   Help: 'Trợ giúp',
   Undo: 'Hoàn tác',
+  Deleted: 'Đã xóa',
+  Moved: 'Đã di chuyển',
   Redo: 'Làm lại',
   'Select all': 'Chọn tất cả',
   Find: 'Tìm',

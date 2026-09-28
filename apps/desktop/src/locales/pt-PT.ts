@@ -550,6 +550,8 @@ export const ptPT: Dictionary = {
   View: 'Ver',
   Help: 'Ajuda',
   Undo: 'Anular',
+  Deleted: 'Eliminado',
+  Moved: 'Movido',
   Redo: 'Repetir',
   'Select all': 'Selecionar tudo',
   Find: 'Localizar',

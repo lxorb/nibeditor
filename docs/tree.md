@@ -157,6 +157,14 @@ about to become, and a folder out of a vault as the row it is. Every target wear
 a note's mark; a space wears the mark the switcher gives it, in the same box, so
 the names still read as one column. See `move-targets.ts`.
 
+**A delete or a move can be taken back at once.** For six seconds after one, a
+toast under the list says `Deleted` or `Moved` beside `Undo`, the way Gmail and
+Notion do, and stays while the pointer is on it. Deleting or moving a selection is
+one gesture, so Undo takes the whole selection back. It is the same undo as the
+row menu's last row, off the same stack, so an undo from either takes the toast
+away. A folder deleted with what it held is not offered: there is no snapshot of a
+folder to put back. See `undo-toast.svelte.ts`.
+
 ## The order it is read in
 
 Emil: *"there should be settings to decide the order of notes displayed in the

@@ -541,6 +541,8 @@ export const hi: Dictionary = {
   View: 'दृश्य',
   Help: 'सहायता',
   Undo: 'पूर्ववत',
+  Deleted: 'हटाया गया',
+  Moved: 'ले जाया गया',
   Redo: 'दोबारा',
   'Select all': 'सब चुनें',
   Find: 'ढूँढें',

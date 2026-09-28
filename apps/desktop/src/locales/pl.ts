@@ -568,6 +568,8 @@ export const pl: Dictionary = {
   View: 'Widok',
   Help: 'Pomoc',
   Undo: 'Cofnij',
+  Deleted: 'Usunięto',
+  Moved: 'Przeniesiono',
   Redo: 'Ponów',
   'Select all': 'Zaznacz wszystko',
   Find: 'Znajdź',

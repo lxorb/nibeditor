@@ -535,6 +535,8 @@ export const th: Dictionary = {
   View: 'มุมมอง',
   Help: 'ช่วยเหลือ',
   Undo: 'เลิกทำ',
+  Deleted: 'ลบแล้ว',
+  Moved: 'ย้ายแล้ว',
   Redo: 'ทำซ้ำ',
   'Select all': 'เลือกทั้งหมด',
   Find: 'ค้นหา',

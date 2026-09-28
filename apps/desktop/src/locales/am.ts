@@ -538,6 +538,8 @@ export const am: Dictionary = {
   View: 'እይታ',
   Help: 'እርዳታ',
   Undo: 'መልስ',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'እንደገና አድርግ',
   'Select all': 'ሁሉንም ምረጥ',
   Find: 'ፈልግ',

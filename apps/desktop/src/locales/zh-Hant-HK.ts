@@ -534,6 +534,8 @@ export const zhHantHK: Dictionary = {
   View: '檢視',
   Help: '幫助',
   Undo: '復原',
+  Deleted: '已刪除',
+  Moved: '已移動',
   Redo: '重做',
   'Select all': '全選',
   Find: '查找',

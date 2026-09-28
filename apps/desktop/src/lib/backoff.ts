@@ -23,6 +23,11 @@ export function nudgeDelay(left: number): number {
   return Math.min(NUDGE_DELAY, Math.max(0, left))
 }
 
+/** How long the Undo after a delete or a move stays, unless the pointer is on it.
+ *  Long enough to read one word and reach for it; Gmail's is about the same. See
+ *  undo-toast.svelte.ts. */
+export const UNDO_LINGER = 6_000
+
 /** Spaces are made and renamed rarely. Asking on every pass was most of the
  *  traffic and almost none of the answers. */
 export const RECONCILE_INTERVAL = 300_000

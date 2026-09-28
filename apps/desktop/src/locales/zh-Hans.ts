@@ -534,6 +534,8 @@ export const zhHans: Dictionary = {
   View: '视图',
   Help: '帮助',
   Undo: '撤销',
+  Deleted: '已删除',
+  Moved: '已移动',
   Redo: '重做',
   'Select all': '全选',
   Find: '查找',

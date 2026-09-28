@@ -544,6 +544,8 @@ export const pa: Dictionary = {
   View: 'ਵੇਖੋ',
   Help: 'ਮਦਦ',
   Undo: 'ਵਾਪਸ ਲਵੋ',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'ਮੁੜ ਕਰੋ',
   'Select all': 'ਸਭ ਚੁਣੋ',
   Find: 'ਲੱਭੋ',

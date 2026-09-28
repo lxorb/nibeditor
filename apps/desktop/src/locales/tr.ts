@@ -541,6 +541,8 @@ export const tr: Dictionary = {
   View: 'Görünüm',
   Help: 'Yardım',
   Undo: 'Geri al',
+  Deleted: 'Silindi',
+  Moved: 'Taşındı',
   Redo: 'Yinele',
   'Select all': 'Tümünü seç',
   Find: 'Bul',

@@ -541,6 +541,8 @@ export const mr: Dictionary = {
   View: 'दृश्य',
   Help: 'मदत',
   Undo: 'पूर्ववत',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'पुन्हा',
   'Select all': 'सर्व निवडा',
   Find: 'शोधा',

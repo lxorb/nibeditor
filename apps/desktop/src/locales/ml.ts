@@ -544,6 +544,8 @@ export const ml: Dictionary = {
   View: 'കാഴ്ച',
   Help: 'സഹായം',
   Undo: 'പഴയപടിയാക്കുക',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'വീണ്ടും ചെയ്യുക',
   'Select all': 'എല്ലാം തിരഞ്ഞെടുക്കുക',
   Find: 'കണ്ടെത്തുക',

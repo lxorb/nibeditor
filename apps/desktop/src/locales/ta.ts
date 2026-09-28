@@ -540,6 +540,8 @@ export const ta: Dictionary = {
   View: 'காட்சி',
   Help: 'உதவி',
   Undo: 'செயல்தவிர்',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'மீண்டும் செய்',
   'Select all': 'அனைத்தையும் தேர்ந்தெடு',
   Find: 'கண்டுபிடி',

@@ -538,6 +538,8 @@ export const ms: Dictionary = {
   View: 'Paparan',
   Help: 'Bantuan',
   Undo: 'Buat asal',
+  Deleted: 'Dipadam',
+  Moved: 'Dialihkan',
   Redo: 'Buat semula',
   'Select all': 'Pilih semua',
   Find: 'Cari',

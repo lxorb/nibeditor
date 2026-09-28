@@ -568,6 +568,8 @@ export const ru: Dictionary = {
   View: 'Вид',
   Help: 'Справка',
   Undo: 'Отменить',
+  Deleted: 'Удалено',
+  Moved: 'Перемещено',
   Redo: 'Вернуть',
   'Select all': 'Выделить всё',
   Find: 'Найти',

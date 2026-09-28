@@ -541,6 +541,8 @@ export const bn: Dictionary = {
   View: 'ভিউ',
   Help: 'সহায়তা',
   Undo: 'আনডু',
+  Deleted: 'মুছে ফেলা হয়েছে',
+  Moved: 'সরানো হয়েছে',
   Redo: 'রিডু',
   'Select all': 'সব নির্বাচন',
   Find: 'খুঁজুন',

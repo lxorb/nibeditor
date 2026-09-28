@@ -551,6 +551,8 @@ export const fr: Dictionary = {
   View: 'Affichage',
   Help: 'Aide',
   Undo: 'Annuler',
+  Deleted: 'Supprimé',
+  Moved: 'Déplacé',
   Redo: 'Rétablir',
   'Select all': 'Tout sélectionner',
   Find: 'Rechercher',

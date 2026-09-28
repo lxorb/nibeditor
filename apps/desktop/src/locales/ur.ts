@@ -541,6 +541,8 @@ export const ur: Dictionary = {
   View: 'منظر',
   Help: 'مدد',
   Undo: 'واپس لیں',
+  Deleted: 'حذف ہو گیا',
+  Moved: 'منتقل ہو گیا',
   Redo: 'دوبارہ کریں',
   'Select all': 'سب منتخب کریں',
   Find: 'تلاش',

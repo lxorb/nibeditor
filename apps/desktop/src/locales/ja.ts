@@ -538,6 +538,8 @@ export const ja: Dictionary = {
   View: '表示',
   Help: 'ヘルプ',
   Undo: '元に戻す',
+  Deleted: '削除しました',
+  Moved: '移動しました',
   Redo: 'やり直す',
   'Select all': 'すべて選択',
   Find: '検索',

@@ -537,6 +537,8 @@ export const ko: Dictionary = {
   View: '보기',
   Help: '도움말',
   Undo: '실행 취소',
+  Deleted: '삭제됨',
+  Moved: '이동됨',
   Redo: '다시 실행',
   'Select all': '모두 선택',
   Find: '찾기',

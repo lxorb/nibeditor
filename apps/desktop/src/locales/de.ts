@@ -545,6 +545,8 @@ export const de: Dictionary = {
   View: 'Ansicht',
   Help: 'Hilfe',
   Undo: 'Rückgängig',
+  Deleted: 'Gelöscht',
+  Moved: 'Verschoben',
   Redo: 'Wiederholen',
   'Select all': 'Alles auswählen',
   Find: 'Suchen',

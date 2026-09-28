@@ -541,6 +541,8 @@ export const ps: Dictionary = {
   View: 'کتل',
   Help: 'مرسته',
   Undo: 'بېرته کول',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'بيا کول',
   'Select all': 'ټول ټاکل',
   Find: 'موندل',

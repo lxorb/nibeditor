@@ -541,6 +541,8 @@ export const gu: Dictionary = {
   View: 'દેખાવ',
   Help: 'મદદ',
   Undo: 'પાછું લો',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'ફરી કરો',
   'Select all': 'બધું પસંદ કરો',
   Find: 'શોધો',

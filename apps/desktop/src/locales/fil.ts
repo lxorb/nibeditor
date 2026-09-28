@@ -544,6 +544,8 @@ export const fil: Dictionary = {
   View: 'Tingnan',
   Help: 'Tulong',
   Undo: 'Ibalik',
+  Deleted: 'Nabura',
+  Moved: 'Nailipat',
   Redo: 'Gawing muli',
   'Select all': 'Piliin lahat',
   Find: 'Hanapin',

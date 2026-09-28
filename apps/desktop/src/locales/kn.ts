@@ -543,6 +543,8 @@ export const kn: Dictionary = {
   View: 'ವೀಕ್ಷಣೆ',
   Help: 'ಸಹಾಯ',
   Undo: 'ರದ್ದುಗೊಳಿಸಿ',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'ಮತ್ತೆ ಮಾಡಿ',
   'Select all': 'ಎಲ್ಲವನ್ನೂ ಆಯ್ಕೆಮಾಡಿ',
   Find: 'ಕಂಡುಹಿಡಿಯಿರಿ',

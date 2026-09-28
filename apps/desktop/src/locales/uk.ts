@@ -567,6 +567,8 @@ export const uk: Dictionary = {
   View: 'Вигляд',
   Help: 'Довідка',
   Undo: 'Скасувати',
+  Deleted: 'Видалено',
+  Moved: 'Переміщено',
   Redo: 'Повторити',
   'Select all': 'Виділити все',
   Find: 'Знайти',

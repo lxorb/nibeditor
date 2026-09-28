@@ -541,6 +541,8 @@ export const gsw: Dictionary = {
   View: 'Aasicht',
   Help: 'Hilf',
   Undo: 'Zrugg',
+  Deleted: 'Glöscht',
+  Moved: 'Verschobe',
   Redo: 'Nomal',
   'Select all': 'Alles uswähle',
   Find: 'Sueche',

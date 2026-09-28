@@ -543,6 +543,8 @@ export const ha: Dictionary = {
   View: 'Duba',
   Help: 'Taimako',
   Undo: 'Mayar',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'Sake yi',
   'Select all': 'Zaɓi duka',
   Find: 'Nemi',

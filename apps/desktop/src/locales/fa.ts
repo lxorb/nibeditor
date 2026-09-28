@@ -541,6 +541,8 @@ export const fa: Dictionary = {
   View: 'نمایش',
   Help: 'راهنما',
   Undo: 'واگرد',
+  Deleted: 'حذف شد',
+  Moved: 'منتقل شد',
   Redo: 'ازنو',
   'Select all': 'گزینش همه',
   Find: 'یافتن',

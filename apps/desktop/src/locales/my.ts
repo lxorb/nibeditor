@@ -538,6 +538,8 @@ export const my: Dictionary = {
   View: 'မြင်ကွင်း',
   Help: 'အကူအညီ',
   Undo: 'ပြန်ဖျက်',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'ပြန်လုပ်',
   'Select all': 'အားလုံးရွေး',
   Find: 'ရှာ',

@@ -538,6 +538,8 @@ export const id: Dictionary = {
   View: 'Tampilan',
   Help: 'Bantuan',
   Undo: 'Batalkan',
+  Deleted: 'Dihapus',
+  Moved: 'Dipindahkan',
   Redo: 'Ulangi',
   'Select all': 'Pilih semua',
   Find: 'Temukan',

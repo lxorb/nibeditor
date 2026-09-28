@@ -21,6 +21,7 @@
   import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
+  import UndoToast from './lib/UndoToast.svelte'
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
@@ -861,6 +862,7 @@
            row has no height. See docs/web-tabs.md. -->
       <div class="notices">
         <StorageWarning />
+        <UndoToast />
         {#if recordingPill.asked}
           {#await recordingPill.asked then RecordingPill}
             <RecordingPill />

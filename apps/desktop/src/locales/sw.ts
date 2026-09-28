@@ -544,6 +544,8 @@ export const sw: Dictionary = {
   View: 'Onyesha',
   Help: 'Msaada',
   Undo: 'Tendua',
+  Deleted: 'Imefutwa',
+  Moved: 'Imehamishwa',
   Redo: 'Rudia',
   'Select all': 'Teua vyote',
   Find: 'Tafuta',

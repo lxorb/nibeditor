@@ -539,6 +539,8 @@ export const te: Dictionary = {
   View: 'వ్యూ',
   Help: 'సహాయం',
   Undo: 'చర్యరద్దు',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'మళ్లీ చేయి',
   'Select all': 'అన్నీ ఎంచుకో',
   Find: 'కనుగొను',

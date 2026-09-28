@@ -550,6 +550,8 @@ export const ptBR: Dictionary = {
   View: 'Exibir',
   Help: 'Ajuda',
   Undo: 'Desfazer',
+  Deleted: 'Excluído',
+  Moved: 'Movido',
   Redo: 'Refazer',
   'Select all': 'Selecionar tudo',
   Find: 'Buscar',

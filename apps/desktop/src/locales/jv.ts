@@ -538,6 +538,8 @@ export const jv: Dictionary = {
   View: 'Tampilan',
   Help: 'Pitulung',
   Undo: 'Balekake',
+  Deleted: 'Deleted',
+  Moved: 'Moved',
   Redo: 'Ulangi',
   'Select all': 'Pilih kabeh',
   Find: 'Golek',

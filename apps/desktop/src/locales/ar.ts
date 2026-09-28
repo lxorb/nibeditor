@@ -579,6 +579,8 @@ export const ar: Dictionary = {
   View: 'عرض',
   Help: 'مساعدة',
   Undo: 'تراجع',
+  Deleted: 'تم الحذف',
+  Moved: 'تم النقل',
   Redo: 'إعادة',
   'Select all': 'تحديد الكل',
   Find: 'بحث',
