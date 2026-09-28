@@ -235,6 +235,10 @@ class Viewport {
     const hidden = window.innerHeight - (seen.height + seen.offsetTop)
     this.keyboard = Math.max(0, Math.round(hidden))
     this.height = Math.round(seen.height)
+    // And on the document, for the sheets pinned to the bottom of the screen: on an
+    // iPhone the keys cover the page rather than shortening it, and a sheet left at
+    // `bottom: 0` is a field somebody types into without seeing it. See tokens.css.
+    document.documentElement.style.setProperty('--keyboard', `${this.keyboard}px`)
 
     const full = this.height + this.keyboard
     if (seen.width !== this.atWidth) {

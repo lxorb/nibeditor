@@ -230,7 +230,6 @@
     class:above
     style:left={sheet ? undefined : `${position.x}px`}
     style:top={sheet ? undefined : `${position.y}px`}
-    style:--keyboard={sheet ? `${viewport.keyboard}px` : undefined}
     transition:arrive
     use:trap={!menu.keepFocus}
     onkeydown={onKey}

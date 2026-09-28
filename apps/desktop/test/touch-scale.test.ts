@@ -145,8 +145,12 @@ describe('the touch scale', () => {
     }
 
     // The one that is a sum rather than a number: a sheet's last row clears the
-    // gesture bar by a fixed step above whatever the system says it needs.
-    expect(tokens).toContain('--touch-bottom: calc(var(--space-4) + var(--inset-bottom));')
+    // gesture bar by a fixed step above whatever the system says it needs, and by
+    // the step alone once it is standing on a keyboard that covers the bar.
+    expect(tokens).toContain(
+      '--touch-bottom: max(var(--space-4), calc(var(--space-4) + var(--inset-bottom) - var(--keyboard)));',
+    )
+    expect(tokens).toContain('--keyboard: 0px;')
   })
 
   test('no touch rule names a finger-sized number of its own', () => {

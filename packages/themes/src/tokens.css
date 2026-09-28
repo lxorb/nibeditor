@@ -192,9 +192,16 @@
   /* One level of a tree, deep enough to still read as a level under type this
      size. */
   --touch-indent: 18px;
+  /* How much of the window the on-screen keyboard covers, written on the
+     document by viewport.svelte.ts while one is up. Zero with none, and in the
+     Android app, which makes the window shorter instead; an iPhone's and a
+     phone browser's keyboard covers the page, and anything pinned to the bottom
+     of the screen has to stand on it rather than under it. */
+  --keyboard: 0px;
   /* What a sheet leaves under its last row, so the row clears the gesture bar
-     rather than sitting on it. */
-  --touch-bottom: calc(var(--space-4) + var(--inset-bottom));
+     rather than sitting on it - and only the gap, once the keyboard is over the
+     gesture bar and the sheet is standing on the keys. */
+  --touch-bottom: max(var(--space-4), calc(var(--space-4) + var(--inset-bottom) - var(--keyboard)));
 
   /* The window's edges the system draws its own things over: a status bar, a
      gesture bar, a notch, a home indicator. A browser answers `env()`; an

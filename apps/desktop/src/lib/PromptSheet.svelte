@@ -351,13 +351,16 @@
      its lift, and with a danger press mixed towards black - which on a dark
      theme is a press that reads as fading. */
 
+  /* Standing on the keyboard while it is up, since the field is what the sheet is
+     for; see `--keyboard` in the themes' tokens. */
   :global([data-touch]) .sheet {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
-    max-height: 88dvh;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
+    overflow-y: auto;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }

@@ -366,13 +366,20 @@
     text-align: center;
   }
 
+  /* On the keyboard while a field has it, and scrolled rather than cut off when
+     what is left above the keys is shorter than the panel. */
   :global([data-touch]) .panel {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
+    overflow-y: auto;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: calc(var(--space-5) + var(--inset-bottom));
+    padding-bottom: max(
+      var(--space-5),
+      calc(var(--space-5) + var(--inset-bottom) - var(--keyboard))
+    );
   }
 </style>
