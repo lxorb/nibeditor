@@ -11,12 +11,12 @@ const ROOT = fileURLToPath(new URL('../..', import.meta.url))
 
 /** Folders the walk never goes into.
  *
- *  Build output above all. `dist` and `dist-even` are written *while* this runs:
- *  the even bundle's own test rebuilds its staged folder, so a walk that went in
- *  could ask about a file that had been replaced between the listing and the
- *  question, and fall over on a name that was true a moment ago. None of it is
- *  source anyway. The rest is generated, vendored, or the dictionaries
- *  themselves, which are nothing but the words this looks for. */
+ *  Build output above all, which is not source, and which need not hold still
+ *  while this runs: a `pnpm build` in the same checkout rewrites `dist`, and
+ *  `pnpm build:even` rewrites `dist-even`, so a walk that went in could ask about
+ *  a file that had been replaced between the listing and the question, and fall
+ *  over on a name that was true a moment ago. The rest is generated, vendored, or
+ *  the dictionaries themselves, which are nothing but the words this looks for. */
 const SKIP = /^(?:node_modules|target|coverage|gen|locales)$|^\.|^dist/
 
 /** Whether the walk goes into a folder of this name. Its own function so the
@@ -149,7 +149,9 @@ describe('the walk', () => {
       expect(skipped(name), name).toBe(true)
     }
 
-    expect(files.some((path) => /[\\/]dist/.test(path))).toBe(false)
+    // Asked of the path inside the app, not the whole of it: a checkout that sits in
+    // a folder called `dist-something` of its own is not build output.
+    expect(files.some((path) => /(?:^|\/)dist/.test(relative(path)))).toBe(false)
   })
 
   test('goes into the folders the source is actually in', () => {
