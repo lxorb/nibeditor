@@ -6,7 +6,7 @@
  *  dragged while a page is on its way, a tab can be switched away from, and a tab can
  *  be closed altogether, all before the crate answers. Every one of those is here. */
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 interface Call {
   command: string
@@ -265,14 +265,126 @@ test('a page that lands is photographed once, not once per report', async () => 
   const moved = heard.get('nib://web-tab')
   expect(moved).toBeDefined()
 
-  const said = { tab: 'a', url: SITE, title: '', icon: '', back: false, forward: false }
+  const said = { tab: 'a', url: SITE, title: '', back: false, forward: false }
   moved?.({ payload: { ...said, loading: true } })
   moved?.({ payload: { ...said, loading: false, title: 'Example Domain' } })
-  moved?.({ payload: { ...said, loading: false, icon: `${SITE}favicon.ico` } })
   moved?.({ payload: { ...said, loading: false } })
   await settle()
 
   expect(commands().filter((one) => one === 'web_shot')).toHaveLength(1)
+})
+
+/** The site's mark, as the engine says it.
+ *
+ *  Emil, 2026-09-28: *"sometimes whatsapp just doesn't get its icon and keeps at the
+ *  default icon."* The engine now says a page's mark every time it changes, as the
+ *  picture itself, and the tab follows every one of them - WhatsApp redraws its mark
+ *  with an unread count. The file keeps only the one each load arrived with, so an
+ *  unread count never rewrites the note. See web_icons.rs. */
+describe("a page's mark", () => {
+  const PLAIN = 'data:image/png;base64,cGxhaW4='
+  const BADGED = 'data:image/png;base64,YmFkZ2Vk'
+  const NEW = 'data:image/png;base64,bmV3'
+
+  async function loaded() {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+
+    const moved = heard.get('nib://web-tab')
+    const iconed = heard.get('nib://web-icon')
+    expect(moved).toBeDefined()
+    expect(iconed).toBeDefined()
+
+    const load = (loading: boolean) =>
+      moved?.({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
+    const mark = (icon: string) => iconed?.({ payload: { tab: 'a', icon } })
+    return { load, mark, page: pages.of('a') }
+  }
+
+  /** The clock the window's own rule reads, moved by hand. */
+  let now = 0
+  beforeEach(() => {
+    now = 1_000_000
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test('the tab follows every change and the file keeps the one it arrived with', async () => {
+    const { load, mark, page } = await loaded()
+
+    load(true)
+    mark(PLAIN)
+    load(false)
+    now += 60_000
+    mark(BADGED)
+
+    expect(page.icon).toBe(BADGED)
+    expect(page.kept).toBe(PLAIN)
+  })
+
+  // web.whatsapp.com's own shape: the site's `/favicon.ico` while the page loads, and
+  // its real mark added by a script a moment after the load.
+  test('a mark set just after the load is still the one it arrived with', async () => {
+    const { load, mark, page } = await loaded()
+
+    load(true)
+    mark(PLAIN)
+    load(false)
+    now += 1_300
+    mark(NEW)
+
+    expect(page.kept).toBe(NEW)
+  })
+
+  test('the next load brings a new mark to the file', async () => {
+    const { load, mark, page } = await loaded()
+
+    load(true)
+    mark(PLAIN)
+    load(false)
+    now += 60_000
+    load(true)
+    mark(NEW)
+    load(false)
+
+    expect(page.icon).toBe(NEW)
+    expect(page.kept).toBe(NEW)
+  })
+
+  test('a page with no mark leaves the tab bare and the file its own', async () => {
+    const { load, mark, page } = await loaded()
+
+    load(true)
+    mark(PLAIN)
+    load(false)
+    now += 60_000
+    load(true)
+    mark('')
+
+    expect(page.icon).toBeNull()
+    expect(page.kept).toBe(PLAIN)
+
+    // A mark that arrives after the page said it had none is still one it arrived
+    // with: an empty answer is never kept.
+    mark(NEW)
+    expect(page.icon).toBe(NEW)
+    expect(page.kept).toBe(NEW)
+  })
+
+  test('what is not a mark is not heard', async () => {
+    const { mark, page } = await loaded()
+    heard.get('nib://web-icon')?.({ payload: { tab: 'a', icon: 7 } })
+    heard.get('nib://web-icon')?.({ payload: null })
+    expect(page.icon).toBeNull()
+
+    mark(PLAIN)
+    expect(page.icon).toBe(PLAIN)
+  })
 })
 
 /** A tab closed on the page somebody was reading.

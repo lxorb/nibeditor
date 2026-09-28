@@ -80,14 +80,17 @@ export interface Shortcut {
    *  address had quietly become the eighth page of somebody's browsing would be a note
    *  no link could point at. Home is what the note is; `URL` is where it is. */
   home: string | null
-  /** The site's own mark, as an address: what the page's `<link rel=icon>` said the
-   *  last time the page was open.
+  /** The site's own mark: the picture the page arrived with the last time it was
+   *  open, as a `data:` address.
    *
-   *  An address rather than the picture itself, because a picture inside a text file
-   *  is a text file nothing else will read, and because the one thing a favicon always
-   *  has is somewhere to be fetched from. It is here so that the tab strip and the file
-   *  list have the site's mark before the page has loaded and on a machine that has
-   *  never opened it. */
+   *  The picture rather than where it came from, because where it came from is often
+   *  a place only the site's own page may fetch from - WhatsApp serves its mark to its
+   *  own origin and nobody else's, and a site behind a login serves it to the login's
+   *  cookies - and because the file list draws it on every launch, which is then a
+   *  string and no request at all. Chrome keeps a bookmark's favicon the same way. A
+   *  file written before this holds an address, which is drawn as one until the page
+   *  is next open. It is here so that the tab strip and the file list have the site's
+   *  mark before the page has loaded and on a machine that has never opened it. */
   icon: string | null
 }
 

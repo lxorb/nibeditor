@@ -99,6 +99,8 @@ mod uris;
 #[cfg(all(windows, not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
+mod web_icons;
+#[cfg(desktop)]
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;

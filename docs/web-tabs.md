@@ -27,7 +27,7 @@ URL=https://svelte.dev/docs/svelte/what-are-runes
 Title=Svelte docs
 Nib-Added=2026-09-12T08:30:00.000Z
 Nib-Home=https://svelte.dev/docs
-Nib-Icon=https://svelte.dev/favicon.png
+Nib-Icon=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0...
 ```
 
 The format is nobody's invention. `.url` is the Windows Internet Shortcut, which is
@@ -61,12 +61,31 @@ become the eighth page of somebody's browsing is a note no link could point at, 
 because "take me back to the site" is worth being able to answer. Absent means it is
 the same as `URL`.
 
-**`Nib-Icon` is the site's own mark, as an address.** A picture inside a text file is
-a text file nothing else will read, and `IconFile` in this format names an `.ico` on
-this machine, which is not a thing that travels - but the one thing a favicon always
-has is somewhere to be fetched from. It is here so the tab strip and the file list
-have the site's mark before the page has loaded and on a machine that has never
-opened it; a machine with no network falls back to the generic web mark.
+**`Nib-Icon` is the site's own mark, as the picture itself**: a `data:` address
+holding the PNG the page arrived with the last time it was open. An address to fetch
+it from was what this used to hold, and it failed exactly where it mattered. WhatsApp
+adds its mark with a script a second after the page has loaded and serves it with
+`Cross-Origin-Resource-Policy: same-origin`, so only its own page may draw it; a site
+behind a login serves its mark to the login's cookies, which the app's own page does
+not have. Chrome keeps a bookmark's favicon as the picture for the same reason, and a
+picture is also a file list that draws every web note's mark on launch without one
+request. It is here so the tab strip and the file list have the site's mark before
+the page has loaded and on a machine that has never opened it. A file written before
+this holds an address, which is drawn as one until the page is next open.
+
+**Where the picture comes from is the engine.** `WebView2` chooses a page's icon the
+way Chrome does, fetches it inside the page's own profile, and says whenever the
+choice changes (`FaviconChanged`). The picture it chose is read again inside the page,
+at the size the site drew it, because the engine's own decoded copy (`GetFavicon`) is
+sixteen pixels and blurred on a double density screen; that copy is what stands in
+where the page will not hand the original over. So a
+mark set by a script, an SVG, a `data:` mark, a bare `/favicon.ico`, a mark behind a
+login and one served by a service worker all arrive the same way, and a mark a site
+redraws with an unread count is redrawn in the tab. The file keeps the first mark each
+load shows rather than every one, so an unread count never rewrites the note. Engines
+with no such event are asked for every `<link>` the page declares once it has loaded,
+and the best for a sixteen pixel box on a double density screen is chosen. See
+`src-tauri/src/web_icons.rs`.
 
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a

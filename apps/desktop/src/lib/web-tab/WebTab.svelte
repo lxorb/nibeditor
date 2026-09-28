@@ -332,7 +332,7 @@
   // see keep.ts. The home the file keeps beside it is the address the note points at.
   $effect(() => {
     const url = page.url
-    const icon = page.icon
+    const icon = page.kept
     const path = tab.path
     if (url === null || path === null) return
 
