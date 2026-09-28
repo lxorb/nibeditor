@@ -77,3 +77,24 @@ describe('the durations JavaScript hands out', () => {
     expect(missing).toEqual([])
   })
 })
+
+/** A loop is the one movement the tokens cannot stop. Every `--dur-*` goes to zero
+ *  for a reader who asked for less movement, but a spinner or a breathing dot is
+ *  written with its own period - 900ms, 1.8s - because a loop at 130ms is a
+ *  flicker, so the setting never reaches it. Each one says for itself what it is
+ *  when it stands still. */
+describe('the animations that never end', () => {
+  const looping = sources.filter((one) => /animation:[^;]*\binfinite\b/.test(one.text))
+
+  test('the scan finds them', () => {
+    expect(looping.length).toBeGreaterThan(4)
+  })
+
+  test('each stops for a reader who asked for less movement', () => {
+    const still = /@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*?animation:\s*none/
+
+    const moving = looping.filter((one) => !still.test(one.text)).map((one) => one.name)
+
+    expect(moving).toEqual([])
+  })
+})
