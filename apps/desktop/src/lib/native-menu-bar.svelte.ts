@@ -43,12 +43,14 @@ import {
   flatten,
   type KeyboardAt,
   keyRuns,
+  keystrokeOf,
   leftFullscreen,
   letPass,
   type MenuBarWords,
   type NativeEntry,
   type NativeItem,
   type SeenKey,
+  type StandIn,
 } from './native-menu'
 import { shownName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
@@ -56,7 +58,7 @@ import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
 import { present } from './slides/present.svelte'
 import { nameOf } from './space-paths'
 import { appMenuRows } from './surfaces.svelte'
-import { currentWindow } from './tauri'
+import { currentWindow, invoke } from './tauri'
 import { afterQuiet } from './timing'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -190,10 +192,14 @@ class MenuBar {
     this.front = await own.isFocused()
 
     // What the page did with each key it saw, read when a row's action arrives:
-    // by then every handler has run. Capture, so nothing can stop it being seen.
+    // by then every handler has run. Capture, so nothing can stop it being seen. Not
+    // a key a row handed the page itself (`standIn`), which nobody pressed: one the
+    // page let pass would swallow the same key pressed again a moment later.
     window.addEventListener(
       'keydown',
-      (event) => (this.seen = { event, at: performance.now() }),
+      (event) => {
+        if (event.isTrusted) this.seen = { event, at: performance.now() }
+      },
       true,
     )
 
@@ -378,11 +384,37 @@ class MenuBar {
     // brings the keyboard back with it, the way the same key does on Windows: see
     // web_keys.rs.
     const away = !document.hasFocus()
+    if (entry.standIn) {
+      this.standIn(entry.standIn, entry.key, away)
+      return
+    }
+
     const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
     if (entry.key && !keyRuns(entry.anywhere, at)) return
     if (away) void this.takeKeyboard()
 
     run()
+  }
+
+  /** A row in place of one of AppKit's: Undo, Redo, Select All. See the top of
+   *  native-menu.ts.
+   *
+   *  Its key goes to whatever in the page has the keyboard, as the key itself would
+   *  have anywhere but a Mac, so the note's history, a canvas's and a deck's each
+   *  answer it. What nothing takes goes on to AppKit's own action for whatever has
+   *  the keyboard: a field's own typing, or, with the keyboard in a web tab, the
+   *  site, which the page is not asked about at all. */
+  private standIn(action: StandIn, key: string | null, away: boolean): void {
+    const keystroke = key ? keystrokeOf(key) : null
+    if (!away && keystroke) {
+      const event = new KeyboardEvent('keydown', { ...keystroke, bubbles: true, cancelable: true })
+      ;(document.activeElement ?? document.body).dispatchEvent(event)
+      if (event.defaultPrevented) return
+    }
+
+    // Nothing to be done about one that fails: it is the key doing nothing, which is
+    // what it did before.
+    void invoke('hand_to_keyboard', { action }).catch(() => undefined)
   }
 
   private async takeKeyboard(): Promise<void> {

@@ -34,17 +34,26 @@
  *    page saw this very key a moment ago and let it pass (`letPass`), and does
  *    nothing if it did.
  *
- *  The system's own rows - Undo, Redo, Cut, Copy, Paste, Select All - are AppKit's
- *  rather than the app's, and go to whatever has the keyboard: the note, a field, a
- *  site in a web tab. That is the only way Cmd+C reaches a web tab at all, and inside
- *  a note the editor answers the keys itself before the menu sees them.
+ *  Cut, Copy and Paste are AppKit's own rows rather than the app's, and go to
+ *  whatever has the keyboard: the note, a field, a site in a web tab. That is the
+ *  only way Cmd+C reaches a web tab at all, and WebKit turns each into the page's
+ *  own clipboard event, which the note and a canvas answer themselves.
+ *
+ *  Undo, Redo and Select All are not, although they were. AppKit's Undo goes to
+ *  WebKit's own history, which holds only what was typed: a heading made from the
+ *  menu, a list, a paste were not in it, so Cmd+Z did nothing after the last typed
+ *  letter, and on a canvas or a deck, whose own undo listens for the key, it did
+ *  nothing at all. So each is a row of the app's that stands in for AppKit's (a
+ *  `standIn`): it hands its key to the page, where the note, a canvas, a deck and a
+ *  table answer it as they do on every other platform, and what nothing there takes
+ *  goes on to AppKit's own action after all, for a field's typing or a site.
  *
  *  A row that acts on the note - Bold, a heading, a fold - is guarded one step more:
  *  with a web tab holding the keyboard it does nothing, because the note is not what
  *  is being worked on. A row of the window's - New note, Close note, a panel - runs
  *  from anywhere, and hands the keyboard back to the app as it does. */
 
-import { matchesCombination, parseCombination } from './keys'
+import { matchesCombination, PHYSICAL, parseCombination } from './keys'
 import { DIVIDER, isSubmenu, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 
 /** The rows AppKit draws and answers itself. */
@@ -55,15 +64,16 @@ type SystemItem =
   | 'HideOthers'
   | 'ShowAll'
   | 'Quit'
-  | 'Undo'
-  | 'Redo'
   | 'Cut'
   | 'Copy'
   | 'Paste'
-  | 'SelectAll'
   | 'Minimize'
   | 'Maximize'
   | 'BringAllToFront'
+
+/** An action of AppKit's that a row of the app's stands in for; see the top of this
+ *  file. The names menu_bar.rs reads. */
+export type StandIn = 'undo' | 'redo' | 'selectAll'
 
 /** A row of the app's own. */
 export interface NativeItem {
@@ -83,6 +93,9 @@ export interface NativeItem {
   /** Whether it acts on the window rather than on the note, so it runs whichever
    *  webview has the keyboard. */
   anywhere: boolean
+  /** For a row in place of one of AppKit's, the action AppKit's would have sent,
+   *  which is where its key goes when nothing in the page takes it. */
+  standIn?: StandIn
 }
 
 export interface NativeSubmenu {
@@ -162,12 +175,16 @@ export interface MenuBar {
  *  rows so that they reach whatever has the keyboard, which the app's own versions
  *  cannot: those act on the note. */
 const SYSTEM_COMMANDS: Record<string, SystemItem> = {
-  'edit.undo': 'Undo',
-  'edit.redo': 'Redo',
   'fixed.cut': 'Cut',
   'fixed.copy': 'Copy',
   'fixed.paste': 'Paste',
-  'edit.select-all': 'SelectAll',
+}
+
+/** The rows that are the app's, standing in for AppKit's; see the top of this file. */
+const STAND_INS: Record<string, StandIn> = {
+  'edit.undo': 'undo',
+  'edit.redo': 'redo',
+  'edit.select-all': 'selectAll',
 }
 
 /** The row that moves to the app's own menu, which is where a Mac keeps it. */
@@ -176,18 +193,7 @@ const SETTINGS = 'app.settings'
 /** The key equivalents the system rows hold. Muda fixes them, so no row of the
  *  app's may be given one of them as well: two rows on one key is a key that does
  *  whichever AppKit finds first. */
-const SYSTEM_ACCELERATORS = [
-  'Cmd+Q',
-  'Cmd+H',
-  'Cmd+Alt+H',
-  'Cmd+M',
-  'Cmd+Z',
-  'Cmd+Shift+Z',
-  'Cmd+X',
-  'Cmd+C',
-  'Cmd+V',
-  'Cmd+A',
-]
+const SYSTEM_ACCELERATORS = ['Cmd+Q', 'Cmd+H', 'Cmd+Alt+H', 'Cmd+M', 'Cmd+X', 'Cmd+C', 'Cmd+V']
 
 /** Keys Tauri's accelerator reader knows by a name. */
 const NAMED_KEYS: Record<string, string> = {
@@ -288,6 +294,39 @@ export function keyRuns(anywhere: boolean, at: KeyboardAt): boolean {
   return anywhere || at === 'note'
 }
 
+/** A keydown, every field of it there. */
+export interface Keypress {
+  key: string
+  code: string
+  ctrlKey: boolean
+  metaKey: boolean
+  altKey: boolean
+  shiftKey: boolean
+}
+
+/** The keydown a written combination is, for a stand-in row to hand the page the key
+ *  the menu bar answered first; see `standIn` in native-menu-bar.svelte.ts. The key
+ *  is named as it is written and the code is the key that carries it unshifted,
+ *  which are the two names `matchesCombination` accepts. Null for a combination
+ *  that cannot be read. */
+export function keystrokeOf(text: string): Keypress | null {
+  const combination = parseCombination(text, 'mac')
+  if (!combination) return null
+
+  const { key } = combination
+  const code =
+    Object.keys(PHYSICAL).find((one) => PHYSICAL[one] === key) ?? (key === ' ' ? 'Space' : key)
+
+  return {
+    key,
+    code,
+    ctrlKey: combination.ctrl,
+    metaKey: combination.meta,
+    altKey: combination.alt,
+    shiftKey: combination.shift,
+  }
+}
+
 /** Whether the page saw this very key a moment ago and let it pass, which is the
  *  one case where a row's action must not run: the app had the key and declined
  *  it. A key the page never saw - one pressed in a web tab - and a click on the
@@ -342,17 +381,21 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const item = (row: MenuItem, id: string): NativeItem => {
     const key = row.command ? sources.keyFor(row.command) : null
     const accelerator = claim(key ? toAccelerator(key) : null)
+    const standIn = row.command ? STAND_INS[row.command] : undefined
     runs.set(id, row.run)
 
+    // A stand-in serves whatever has the keyboard, so it is never greyed for the
+    // note's sake and never held back while the note does not have it.
     return {
       kind: 'item',
       id,
       text: row.label,
       accelerator,
-      enabled: !row.disabled,
+      enabled: standIn !== undefined || !row.disabled,
       ...(row.checked === undefined ? {} : { checked: row.checked }),
       key: accelerator ? key : null,
-      anywhere: !row.command || sources.isWindowCommand(row.command),
+      anywhere: standIn !== undefined || !row.command || sources.isWindowCommand(row.command),
+      ...(standIn ? { standIn } : {}),
     }
   }
 

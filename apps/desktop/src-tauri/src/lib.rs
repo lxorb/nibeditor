@@ -73,7 +73,7 @@ mod lights;
 mod links;
 mod logs;
 mod matcher;
-#[cfg(target_os = "macos")]
+#[cfg(desktop)]
 mod menu_bar;
 mod notes;
 #[cfg(desktop)]
@@ -290,52 +290,7 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = web_tabs::managed(builder);
 
-    #[cfg(desktop)]
-    let builder = builder.invoke_handler(commands![
-        endpoint::automation_result,
-        appearance::set_frame,
-        appearance::set_translucency,
-        ground::remember_ground,
-        apple_notes::read_apple_notes,
-        apple_notes::open_full_disk_access,
-        launch::take_startup_files,
-        launch::new_window,
-        lifecycle::keep_running,
-        document_window::show_document,
-        pandoc::has_pandoc,
-        pandoc::run_pandoc,
-        pandoc::import_document,
-        pdf::pdf_supported,
-        pdf::print_pdf,
-        pdf::print_page,
-        recent::remember_recent,
-        recent::forget_recent,
-        secrets::secret_forget,
-        secrets::secret_read,
-        secrets::secret_write,
-        shell_menu::new_menu_registered,
-        shell_menu::set_new_menu,
-        updates::check_update,
-        web_tabs::web_open,
-        web_tabs::web_place,
-        web_tabs::web_navigate,
-        web_tabs::web_step,
-        web_tabs::web_clip,
-        web_tabs::web_close,
-        web_tabs::web_look,
-        web_tabs::web_scroll,
-        web_tabs::web_zoom,
-        web_tabs::web_print,
-        web_tabs::web_shot,
-        web_tabs::web_answer,
-        downloads::web_downloads,
-        downloads::web_download_open,
-        downloads::web_download_show,
-        downloads::web_download_cancel,
-    ]);
-
-    #[cfg(mobile)]
-    let builder = builder.invoke_handler(commands![]);
+    let builder = with_commands(builder);
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
@@ -389,6 +344,61 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
     lifecycle::on_event(app, event);
     #[cfg(not(desktop))]
     let _ = (app, event);
+}
+
+/// The commands the window may call on a desktop: every build's, and the ones a
+/// desktop has because it has windows, a filesystem and web tabs of its own.
+#[cfg(desktop)]
+fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder.invoke_handler(commands![
+        endpoint::automation_result,
+        appearance::set_frame,
+        appearance::set_translucency,
+        ground::remember_ground,
+        apple_notes::read_apple_notes,
+        apple_notes::open_full_disk_access,
+        launch::take_startup_files,
+        launch::new_window,
+        lifecycle::keep_running,
+        document_window::show_document,
+        menu_bar::hand_to_keyboard,
+        pandoc::has_pandoc,
+        pandoc::run_pandoc,
+        pandoc::import_document,
+        pdf::pdf_supported,
+        pdf::print_pdf,
+        pdf::print_page,
+        recent::remember_recent,
+        recent::forget_recent,
+        secrets::secret_forget,
+        secrets::secret_read,
+        secrets::secret_write,
+        shell_menu::new_menu_registered,
+        shell_menu::set_new_menu,
+        updates::check_update,
+        web_tabs::web_open,
+        web_tabs::web_place,
+        web_tabs::web_navigate,
+        web_tabs::web_step,
+        web_tabs::web_clip,
+        web_tabs::web_close,
+        web_tabs::web_look,
+        web_tabs::web_scroll,
+        web_tabs::web_zoom,
+        web_tabs::web_print,
+        web_tabs::web_shot,
+        web_tabs::web_answer,
+        downloads::web_downloads,
+        downloads::web_download_open,
+        downloads::web_download_show,
+        downloads::web_download_cancel,
+    ])
+}
+
+/// And a phone's, which are every build's alone.
+#[cfg(mobile)]
+fn with_commands(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder.invoke_handler(commands![])
 }
 
 /// Everything that has to happen once, after the app is built and before the

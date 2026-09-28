@@ -142,7 +142,8 @@ tauri-plugin-window-state = "~2.4"
 # they are built against so the pointers line up. What each is for: the dot in a
 # window's close button and the file it stands for (document_window.rs), the one
 # method AppKit asks before it quits (lifecycle.rs), the Dock's recent documents
-# (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), and
+# (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), the
+# menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs), and
 # WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
 # web_tabs.rs, web_cookies.rs).
 objc2 = "0.6"
