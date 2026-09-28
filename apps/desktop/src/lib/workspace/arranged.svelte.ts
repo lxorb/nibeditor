@@ -262,7 +262,7 @@ export class Arranged {
   }
 
   /** The order a folder keeps, set outright. For the keys, which move a row
-   *  without a drag; see `moveInOrder` in workspace.svelte.ts. */
+   *  without a drag; see `moveInOrder` in tree-lift.ts. */
   set(folder: string, names: readonly string[]) {
     const root = this.root()
     if (root === null) return

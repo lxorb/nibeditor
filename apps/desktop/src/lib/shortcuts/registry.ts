@@ -1019,7 +1019,7 @@ const PANEL_ENTRIES: Shortcut[] = [
   // because it is the key every list that can be rearranged uses. Contextual, like
   // the walk itself, so sharing it with the editor's own move-a-line-up is not
   // reported as a clash: it only means anything while the focus is in the list, and
-  // only in Manual. See `moveInOrder` in workspace.svelte.ts.
+  // only in Manual. See `moveInOrder` in tree-lift.ts.
   {
     id: 'tree.move-up',
     label: () => t('Move up'),
