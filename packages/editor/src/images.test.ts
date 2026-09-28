@@ -126,10 +126,39 @@ describe('a dropped picture', () => {
     expect(editor.doc).toBe('one\n')
   })
 
-  test('ignores files that are not pictures', async () => {
+  test('ignores files the note cannot show', async () => {
     const editor = surface('one\n', 0)
-    const notes = [new File([new Uint8Array([1])], 'a.txt', { type: 'text/plain' })]
-    await receiveImages(editor.view, notes, () => Promise.resolve('assets/a.png'), 2)
+    const other = [
+      new File([new Uint8Array([1])], 'a.txt', { type: 'text/plain' }),
+      new File([new Uint8Array([1])], 'a.zip', { type: 'application/zip' }),
+    ]
+    await receiveImages(editor.view, other, () => Promise.resolve('assets/a.png'), 2)
     expect(editor.doc).toBe('one\n')
+  })
+})
+
+describe('a dropped file that is not a picture', () => {
+  const file = (name: string, type: string) => new File([new Uint8Array([1])], name, { type })
+
+  test('is embedded by its name, the way Obsidian writes a dropped file', async () => {
+    const editor = surface('one two\n', 0)
+    const dropped = [
+      file('paper one.pdf', 'application/pdf'),
+      file('talk.mp3', 'audio/mpeg'),
+      file('demo.mp4', 'video/mp4'),
+    ]
+
+    await receiveImages(editor.view, dropped, (one) => Promise.resolve(`assets/${one.name}`), 4)
+
+    expect(editor.doc).toBe('one ![[paper one.pdf]]\n![[talk.mp3]]\n![[demo.mp4]]two\n')
+  })
+
+  test('sits beside the pictures dropped with it, in the order they came', async () => {
+    const editor = surface('', 0)
+    const dropped = [file('a.png', 'image/png'), file('b.pdf', '')]
+
+    await receiveImages(editor.view, dropped, (one) => Promise.resolve(`../assets/${one.name}`), 0)
+
+    expect(editor.doc).toBe('![](../assets/a.png)\n![[b.pdf]]')
   })
 })

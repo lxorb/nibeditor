@@ -1556,4 +1556,8 @@ export const uk: Dictionary = {
   'Copy picture': 'Copy picture',
   'Open picture': 'Open picture',
   'Delete picture': 'Delete picture',
+  // A file dropped into a note
+  'Storing the file': 'Storing the file',
+  'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
+  'That file could not be kept.': 'That file could not be kept.',
 }

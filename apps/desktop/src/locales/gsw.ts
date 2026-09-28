@@ -1505,4 +1505,8 @@ export const gsw: Dictionary = {
   'Copy picture': 'Bild kopiere',
   'Open picture': 'Bild öffne',
   'Delete picture': 'Bild lösche',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gspeicheret',
+  'That file is larger than a note can keep.': 'Die Datei isch grösser, als e Notiz cha bhalte.',
+  'That file could not be kept.': 'Die Datei het nöd chöne gspeicheret werde.',
 }

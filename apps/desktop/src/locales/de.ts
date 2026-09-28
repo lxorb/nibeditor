@@ -1534,4 +1534,8 @@ export const de: Dictionary = {
   'Copy picture': 'Bild kopieren',
   'Open picture': 'Bild öffnen',
   'Delete picture': 'Bild löschen',
+  // A file dropped into a note
+  'Storing the file': 'Datei wird gespeichert',
+  'That file is larger than a note can keep.': 'Diese Datei ist größer, als eine Notiz behalten kann.',
+  'That file could not be kept.': 'Diese Datei konnte nicht gespeichert werden.',
 }

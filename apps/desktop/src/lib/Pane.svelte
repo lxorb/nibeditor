@@ -56,7 +56,7 @@
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
-  import { storeImage } from './assets'
+  import { storeAttachment, storeImage } from './assets'
   import Tabs from './Tabs.svelte'
   import { followHref, followNote } from './open-link'
   import type { OpenHow } from './new-tab'
@@ -328,6 +328,8 @@
    *  Which note the picture belongs beside comes from the tab that was written
    *  in, not from the pane: the pane's editor outlives the note in it. */
   async function saveImage(file: File, into: Tab): Promise<string | null> {
+    if (!file.type.startsWith('image/')) return saveAttachment(file, into)
+
     try {
       const src = await busy.run(t('Storing the image'), () => storeImage(file, into.path))
       void usage.refresh()
@@ -337,6 +339,17 @@
       // will work either until something is deleted.
       void usage.refresh()
       settings.error = message(error, key('That image does not fit in your storage.'))
+      return null
+    }
+  }
+
+  /** Any other file the editor keeps - a PDF, sound, a film - which stays beside the
+   *  note whatever the account holds; see `storeAttachment`. */
+  async function saveAttachment(file: File, into: Tab): Promise<string | null> {
+    try {
+      return await busy.run(t('Storing the file'), () => storeAttachment(file, into.path))
+    } catch (error) {
+      settings.error = message(error, key('That file could not be kept.'))
       return null
     }
   }

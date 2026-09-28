@@ -1,8 +1,11 @@
 import { EditorSelection, type Extension, Facet, StateEffect, StateField } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
+import { embedKind, formatWikilink } from '@nib/markdown/links'
 
-/** Stores an image and returns the path to write into the document. Supplied by
- *  the host so the editor package stays free of platform concerns. */
+/** Stores a file a note was handed and returns the path to write into the document,
+ *  relative to the note. Supplied by the host so the editor package stays free of
+ *  platform concerns. Named for the picture it was first written for; see `isKept`
+ *  for the other files it is handed. */
 export type ImageSink = (file: File) => Promise<string | null>
 
 /** Turns a document-relative image path into something the view can load.
@@ -13,6 +16,25 @@ export const imageResolver = Facet.define<(src: string) => string, (src: string)
 
 function isImage(file: File): boolean {
   return file.type.startsWith('image/')
+}
+
+/** A file a note keeps when it is dropped or pasted in: a picture, and whatever else
+ *  the note can show - a PDF, sound, a film, a canvas - which is what a drop from the
+ *  file manager into Obsidian or Typora does. Anything else is left to the platform:
+ *  a zip in a note would be a link nothing in the app can open. */
+function isKept(file: File): boolean {
+  return isImage(file) || embedKind(file.name) !== null
+}
+
+/** What the note says for a file once it is stored. A picture is written as markdown
+ *  writes one, as it always was here; anything else as the embed Obsidian writes for a
+ *  dropped file, by its name alone, which the space resolves wherever the file sits -
+ *  the same embed a recording is written as. */
+function markdownFor(file: File, path: string): string {
+  if (isImage(file)) return `![](${encodeURI(path)})`
+
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  return formatWikilink({ target: name, heading: null, block: null, alias: null, embed: true })
 }
 
 const dropAt = StateEffect.define<number | null>()
@@ -39,7 +61,7 @@ const dropPoint = StateField.define<number | null>({
   },
 })
 
-/** Stores the pictures and writes them into the document as markdown.
+/** Stores the files and writes them into the document as markdown.
  *
  *  `at` is where a drop landed; null is a paste, which goes to the selection.
  *  Exported so that where the markdown ends up can be tested without a pointer
@@ -51,19 +73,19 @@ export async function receiveImages(
   sink: ImageSink,
   at: number | null,
 ) {
-  const images = files.filter(isImage)
-  if (!images.length) return
+  const kept = files.filter(isKept)
+  if (!kept.length) return
 
   // Handed over before anything is awaited, so that whatever is typed while the
-  // pictures are being written moves it along; see `dropPoint`.
+  // files are being written moves it along; see `dropPoint`.
   view.dispatch({ effects: dropAt.of(at) })
 
-  const paths: string[] = []
-  for (const file of images) {
+  const written: string[] = []
+  for (const file of kept) {
     const path = await sink(file)
-    if (path) paths.push(path)
+    if (path) written.push(markdownFor(file, path))
   }
-  if (!paths.length) return
+  if (!written.length) return
 
   // Asked again, not remembered: the mode can have come on while the picture was
   // being written, and read-only mode refuses every change anyway - it would drop
@@ -71,7 +93,7 @@ export async function receiveImages(
   // took it.
   if (view.state.readOnly) return
 
-  const markdown = paths.map((path) => `![](${encodeURI(path)})`).join('\n')
+  const markdown = written.join('\n')
   const range = view.state.selection.main
   const mapped = view.state.field(dropPoint, false) ?? null
   const from = mapped ?? range.from
@@ -86,19 +108,20 @@ export async function receiveImages(
   })
 }
 
-/** Paste or drop an image and it lands in the document as markdown. */
+/** Paste or drop a picture, or a file the note can show, and it lands in the
+ *  document as markdown. */
 export function imageHandling(sink: ImageSink): Extension {
   return [
     dropPoint,
     EditorView.domEventHandlers({
       paste(event, view) {
         // Nothing is stored while the document is read-only: the sink writes the
-        // picture into the note's folder before any markdown is inserted, and a
+        // file into the note's folder before any markdown is inserted, and a
         // file left behind by an insertion that was refused is litter.
         if (view.state.readOnly) return false
 
         const files = [...(event.clipboardData?.files ?? [])]
-        if (!files.some(isImage)) return false
+        if (!files.some(isKept)) return false
 
         event.preventDefault()
         void receiveImages(view, files, sink, null)
@@ -109,7 +132,7 @@ export function imageHandling(sink: ImageSink): Extension {
         if (view.state.readOnly) return false
 
         const files = [...(event.dataTransfer?.files ?? [])]
-        if (!files.some(isImage)) return false
+        if (!files.some(isKept)) return false
 
         event.preventDefault()
         void receiveImages(
