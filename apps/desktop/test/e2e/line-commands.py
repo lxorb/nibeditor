@@ -294,6 +294,23 @@ def every_match(page: Page) -> None:
     check(not bar, "and the bar goes", bar)
 
 
+def slash_menu(page: Page) -> None:
+    """The `/` menu's rows are the command list's, handed over at the launch's last
+    turn rather than carried into the first paint; a `/` typed after it still offers
+    them."""
+    doc = "# Slash drive\n\n"
+    open_note(page, doc)
+    page.evaluate(SELECT, [len(doc), len(doc)])
+    page.keyboard.type("/quo")
+    shown = wait_for(
+        page,
+        "() => [...document.querySelectorAll('.cm-tooltip-autocomplete li')].map((one) => one.textContent)",
+        "the / menu",
+    )
+    check(any("Quote" in one for one in shown), "the / menu still offers the blocks", shown)
+    page.keyboard.press("Escape")
+
+
 def hidden_front_matter(page: Page) -> None:
     doc = "---\nicon: list-checks\n---\n# Hidden drive\nwords\n"
     open_note(page, doc)
@@ -337,6 +354,7 @@ def main() -> int:
                 tasks_and_lines(page)
                 from_the_palette(page)
                 every_match(page)
+                slash_menu(page)
                 hidden_front_matter(page)
             finally:
                 browser.close()
