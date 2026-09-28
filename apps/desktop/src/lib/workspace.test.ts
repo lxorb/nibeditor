@@ -720,6 +720,55 @@ describe('nesting a note in a note', () => {
   })
 })
 
+describe('a note found in the file list', () => {
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.device.expanded = {}
+    workspace.panel = null
+    workspace.revealing = null
+  })
+
+  afterEach(() => {
+    workspace.activeSpaceId = null
+  })
+
+  test('unfolds the rows above it, shows the list and asks for its row', () => {
+    workspace.revealNote('/space/work/plans/q3.md')
+
+    expect(workspace.device.expanded).toEqual({ '/space/work': true, '/space/work/plans': true })
+    expect(workspace.panel).toBe('tree')
+    expect(workspace.revealing).toBe('/space/work/plans/q3.md')
+  })
+
+  /** Its folder's row is the note, so that row is found without unfolding it. */
+  test('a note its folder is drawn as unfolds only what holds that folder', () => {
+    workspace.revealNote('/space/work/plans/plans.md')
+    expect(workspace.device.expanded).toEqual({ '/space/work': true })
+
+    workspace.device.expanded = {}
+    workspace.revealNote('/space/work/work.md')
+    expect(workspace.device.expanded).toEqual({})
+  })
+
+  test('a note outside the space is nowhere in the list to be found', () => {
+    workspace.revealNote('/elsewhere/outside.md')
+
+    expect(workspace.revealing).toBeNull()
+    expect(workspace.panel).toBeNull()
+  })
+
+  test('and folding the list shuts the rows of this space only', () => {
+    workspace.device.expanded = { '/space/work': true, '/other/x': true }
+    expect(workspace.unfolded).toBe(true)
+
+    workspace.foldList()
+
+    expect(workspace.device.expanded).toEqual({ '/other/x': true })
+    expect(workspace.unfolded).toBe(false)
+  })
+})
+
 describe('where a note was last looked at', () => {
   beforeEach(() => {
     workspace.tabs = []

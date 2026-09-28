@@ -1211,6 +1211,20 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => revealPanel('tree'),
     },
     {
+      id: 'reveal',
+      label: t('Show in the file list'),
+      hint: shortcuts.hint('app.reveal'),
+      disabled: !workspace.active?.path,
+      run: () => workspace.revealNote(),
+    },
+    {
+      id: 'fold-list',
+      label: t('Collapse the file list'),
+      hint: shortcuts.hint('app.fold-list'),
+      disabled: !workspace.unfolded,
+      run: () => workspace.foldList(),
+    },
+    {
       id: 'outline-panel',
       label: t('Outline'),
       hint: shortcuts.hint('app.outline'),

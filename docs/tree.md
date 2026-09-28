@@ -28,7 +28,9 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
 | Alt and up, down | in Manual, moves the row one step up or down the folder, over a folder as readily as over a note: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
-| its menu | Open, New note inside, Rename, Move, Choose an icon, Bookmark, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts` |
+| its menu | Open, Open in new tab, Open to the side, New note inside, Rename, Move, Choose an icon, Bookmark, Copy link, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts`. A new tab opens behind the one in front, as a browser's does; the side is a pane of its own, and is not offered on a phone or for a folder nobody has written a note in. Copy link writes what the `[[` popup would, in the spelling the Links setting asks for |
+| its menu, several selected | Open all, Move, Bookmark, Copy link, Delete: the lot, the first of them in front and the rest behind, one link a line |
+| a drag into a note | a link to it at the drop, the caret showing where; several rows are a link a line, a picture is embedded. The middle of the pane is the note's, and only a note that can be written in: the strip and the four edges still open and split, and a note that is read-only opens the row as it always did. See `row-links.ts` and `wikilink/drop.ts` in the editor |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
 ask: New note, New canvas and New web note - and a recording or a meeting on a
@@ -38,6 +40,12 @@ Code all do. A website is named the same way, and what it is named is its title;
 the address is asked for in the tab's bar afterwards. See docs/web-tabs.md. A
 folder is not on that menu, because a note that holds notes is how a space is
 organised; see below.
+
+**Finding the note in front** is Show in the file list, in the palette, the Files
+tab's menu and a tab's own menu: the rows above it unfold and its own is scrolled to,
+which is Obsidian's Reveal file in navigation. Its way back is Collapse the file list,
+which folds every row of the space; while any row is unfolded it is also a glyph
+beside the order of the files, and it is gone again once nothing is.
 
 Clicking opens and the twist discloses, for every row without exception. That is
 Notion's rule, and it is the one nib already had for a note that holds notes: the

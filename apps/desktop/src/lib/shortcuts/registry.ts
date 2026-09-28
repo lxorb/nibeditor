@@ -631,6 +631,26 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-e',
     run: () => revealPanel('tree'),
   },
+  // The note in front, found in the file list: the rows above it unfolded and its
+  // own scrolled to. And the other way, every row folded again. No default chord
+  // for either, which is how Obsidian and VS Code both ship theirs; the palette,
+  // the Files tab's menu and a tab's own menu are the ways in.
+  {
+    id: 'app.reveal',
+    label: () => t('Show in the file list'),
+    category: 'panel',
+    scope: 'app',
+    key: null,
+    run: () => workspace.revealNote(),
+  },
+  {
+    id: 'app.fold-list',
+    label: () => t('Collapse the file list'),
+    category: 'panel',
+    scope: 'app',
+    key: null,
+    run: () => workspace.foldList(),
+  },
   {
     id: 'app.outline',
     label: () => t('Outline'),

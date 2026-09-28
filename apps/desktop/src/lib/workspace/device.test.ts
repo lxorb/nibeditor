@@ -173,3 +173,28 @@ describe('storage that arrives after the store was built', () => {
     expect(view.icons).toEqual({})
   })
 })
+
+describe('folding the whole list', () => {
+  test('shuts every row of the one space and leaves the others as they were', () => {
+    const view = new DeviceView()
+    view.expand('/Notes/A')
+    view.expand('/Notes/A/B')
+    view.expand('/Other/C')
+    expect(view.unfoldedUnder('/Notes')).toBe(true)
+
+    view.foldUnder('/Notes')
+
+    expect(view.expanded).toEqual({ '/Other/C': true })
+    expect(view.unfoldedUnder('/Notes')).toBe(false)
+    expect(JSON.parse(store.getItem('nib:expanded') ?? '{}')).toEqual({ '/Other/C': true })
+  })
+
+  test('does not take a space whose name only starts the same way', () => {
+    const view = new DeviceView()
+    view.expand('/Notebook/A')
+
+    view.foldUnder('/Note')
+
+    expect(view.isExpanded('/Notebook/A')).toBe(true)
+  })
+})

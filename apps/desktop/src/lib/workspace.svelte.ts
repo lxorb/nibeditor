@@ -15,7 +15,15 @@ import { paperGone, paperMoved } from './pdf/papers'
 import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
-import { folderOf, insideSpace, isMarkdownPath, nameOf, noteName, relativeTo } from './space-paths'
+import {
+  folderOf,
+  insideSpace,
+  isMarkdownPath,
+  nameOf,
+  noteName,
+  relativeTo,
+  withinSpace,
+} from './space-paths'
 import { key, t } from './i18n.svelte'
 import { nameFromContent, nameFromTitle, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
@@ -74,7 +82,14 @@ import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { outermost, Selection } from './workspace/selection.svelte'
 import { readTint } from './icons'
-import { folderFor, folderNote, folderNotePath, noteToNest, unnesting } from './folder-notes'
+import {
+  folderFor,
+  folderNote,
+  folderNotePath,
+  isFolderNote,
+  noteToNest,
+  unnesting,
+} from './folder-notes'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
@@ -2871,6 +2886,39 @@ class Workspace {
       here = joinPath(here, part)
       this.device.expand(here)
     }
+  }
+
+  /** The note the file list was last asked to show, until the list has scrolled to
+   *  it; see Tree.svelte, which clears it. */
+  revealing = $state<string | null>(null)
+
+  /** A note shown where it sits in the file list: the rows above it unfolded, the
+   *  list on screen, and its row scrolled to. Obsidian's "Reveal file in
+   *  navigation" and VS Code's "Reveal in Explorer View". A note its folder is
+   *  drawn as is that folder's row, which needs nothing unfolded but the rows
+   *  above it. The note in front, unless another is named. */
+  revealNote(path = this.active?.path) {
+    const root = this.activeSpace?.root
+    if (!path || root === undefined || withinSpace(root, path) === null) return
+
+    const holder = folderOf(isFolderNote(path) ? folderOf(path) : path)
+    if (holder !== root) this.revealFolder(holder)
+
+    this.showPanel('tree')
+    this.revealing = path
+  }
+
+  /** Every row of the open space folded, the way it was before anything was
+   *  unfolded. */
+  foldList() {
+    const root = this.activeSpace?.root
+    if (root !== undefined) this.device.foldUnder(root)
+  }
+
+  /** Whether folding the list would change anything. */
+  get unfolded(): boolean {
+    const root = this.activeSpace?.root
+    return root !== undefined && this.device.unfoldedUnder(root)
   }
 
   /** Opens a note and lands on one of its headings, the way a link into a

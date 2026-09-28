@@ -956,6 +956,20 @@
     void reach(index)
   })
 
+  // A note somebody asked to see in the list, whether or not it is the one open; see
+  // `revealNote`. The rows above it unfold in the same turn the ask is made and the
+  // row is there a pass later, so this waits for the row rather than giving up on it.
+  $effect(() => {
+    const asked = workspace.revealing
+    if (asked === null) return
+
+    const index = rowOfNote(asked)
+    if (index === null) return
+
+    workspace.revealing = null
+    void reach(index)
+  })
+
   /** The row whose name is being typed, in view and in the page: a new note
    *  appears at its sorted position already editing, which may be anywhere. */
   let naming: string | null = null

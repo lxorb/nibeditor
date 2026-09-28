@@ -10,6 +10,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import {
     FILES_MARK,
+    FOLD_MARK,
     FOOTNOTES_MARK,
     GRAPH_MARK,
     LINKS_MARK,
@@ -176,6 +177,19 @@
       {
         label: workspace.treeOptions.showHidden ? t('Hide hidden files') : t('Show hidden files'),
         run: () => workspace.toggleHidden(),
+      },
+      DIVIDER,
+      {
+        label: t('Show in the file list'),
+        hint: shortcuts.hint('app.reveal'),
+        disabled: !workspace.active?.path,
+        run: () => workspace.revealNote(),
+      },
+      {
+        label: t('Collapse the file list'),
+        hint: shortcuts.hint('app.fold-list'),
+        disabled: !workspace.unfolded,
+        run: () => workspace.foldList(),
       },
       DIVIDER,
       { label: t('New note'), run: () => void workspace.createNote() },
@@ -605,6 +619,20 @@
          tree-order.ts and docs/tree.md. -->
     {#if showing === 'tree' && listing}
       <div class="tools">
+        <!-- Every row folded shut, offered only while one is open: a button that
+             would do nothing is not drawn, the way the depth stepper beside the graph
+             is there only while the graph is. -->
+        {#if workspace.unfolded}
+          <button
+            class="nib-glyph tool"
+            title={t('Collapse the file list')}
+            aria-label={t('Collapse the file list')}
+            onclick={() => workspace.foldList()}
+            transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
+          >
+            <svg viewBox="0 0 13 13"><path d={FOLD_MARK} /></svg>
+          </button>
+        {/if}
         <button
           class="nib-glyph tool"
           title={t('Order of the files')}
