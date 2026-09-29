@@ -1970,8 +1970,8 @@
 
   <!-- One bar, on every device: the same buttons in the same order, drawn at the
        touch scale where a thumb has to land on them. Out of the way while a card is
-       written in on a touch screen, where the format bar stands on the keys in the
-       very place and covered half of it. -->
+       written in on a touch screen: it stood on the keys over the card being
+       written, and none of it writes. -->
   {#if !(viewport.touch && viewport.typing)}
     <CanvasBar
       canundo={store.canUndo}
