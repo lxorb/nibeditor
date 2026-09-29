@@ -856,6 +856,15 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
     }
   }
 
+  // A move from a pointer that is not the one driving the gesture moves nothing. An
+  // iPad reports an Apple Pencil hovering over the glass as moves of its own, with an
+  // id of its own, while a finger carries a card; the card followed whichever of the
+  // two had moved last. Pan, draw and erase answer to the id they began with below;
+  // a pinch is two pointers and answers to both.
+  if (machine.driver && input.id !== machine.driver.id && one.kind !== 'pinch') {
+    return { machine, effects: [] }
+  }
+
   switch (one.kind) {
     case 'pan': {
       if (input.id !== one.id) return { machine, effects: [] }
