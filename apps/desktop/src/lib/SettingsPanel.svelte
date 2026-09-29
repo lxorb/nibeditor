@@ -7,6 +7,7 @@
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
+  import CanvasIcon from './CanvasIcon.svelte'
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
@@ -20,7 +21,7 @@
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
   import { runnable } from './shortcuts/registry'
-  import { markFor, nameFor, toolbar } from './toolbar.svelte'
+  import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { NOTHING, pull } from './pull.svelte'
   import { PRESETS, presetById } from './shortcuts/presets'
   import { showCombination } from './keys'
@@ -929,6 +930,21 @@
   </div>
 {/snippet}
 
+<!-- What the button on the bar draws, glyph and all: a list that said L for the
+     link the bar draws as a chain was a list of some other bar. -->
+{#snippet mark(id: string)}
+  {@const glyph = glyphFor(id)}
+  <span class="mark">
+    {#if glyph}
+      <CanvasIcon node={glyph} />
+    {:else if lowMark(id)}
+      <span class="low">{markFor(id)}</span>
+    {:else}
+      {markFor(id)}
+    {/if}
+  </span>
+{/snippet}
+
 <!-- The bar over the keyboard on a phone: which commands it holds and in what
      order. The rows are the shortcuts pane's rows - a name, and the controls that
      act on it - because they are rows about the same commands.
@@ -957,7 +973,7 @@
         }}
         ondrop={(event) => dropBar(event, at)}
       >
-        <span class="mark">{markFor(id)}</span>
+        {@render mark(id)}
         <span class="name">{nameFor(id)}</span>
         <button
           class="revert"
@@ -1027,7 +1043,7 @@
     <div class="card">
       {#each group.rows as entry (entry.id)}
         <div class="nib-setting setting button">
-          <span class="mark">{markFor(entry.id)}</span>
+          {@render mark(entry.id)}
           <span class="name">{entry.label()}</span>
           <button
             class="revert"
@@ -1422,6 +1438,19 @@
     background: var(--surface-2);
     color: var(--text-strong);
     font-size: var(--text-sm);
+  }
+
+  /* The bar's own glyph and its dropped quotation mark, at the bar's own sizes;
+     see FormatBar.svelte. */
+  .setting .mark :global(svg) {
+    --mark: 1.2em;
+
+    display: block;
+  }
+
+  .setting .mark .low {
+    display: inline-block;
+    transform: translateY(0.2em);
   }
 
   /* Where a dragged row would land, drawn as the line the outline's sections
