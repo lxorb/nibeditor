@@ -251,6 +251,35 @@ describe('what a row of the file list offers', () => {
   })
 })
 
+/** Emil, 2026-09-30, over the empty stretch beside the plus: *"when you click on the
+ *  bar here there should be the option: reopen closed tab"*. */
+describe("what the strip's empty stretch offers", () => {
+  const tabs = read('lib/Tabs.svelte')
+  const door = () => body(tabs, 'function showStripMenu(')
+
+  /** Fetched by the press like a tab's own, and warmed at the launch's last turn. */
+  test('the menu is the strip menu, fetched by the press', () => {
+    expect(door()).toContain("import('./tab-strip/strip-menu')")
+    expect(door()).toContain('menu.show(event, stripMenu(paneId))')
+    expect(read('lib/surfaces.svelte.ts')).toContain("import('./tab-strip/strip-menu')")
+  })
+
+  /** A right click and a held finger, on the strip itself; a tab, the plus and a
+   *  cross answer their own. */
+  test('asked for on the strip, and only where nothing else is under the point', () => {
+    expect(tabs).toContain('oncontextmenu={showStripMenu}')
+    expect(tabs).toContain('use:longPress={showStripMenu}')
+    expect(door()).toContain('document.elementFromPoint(event.clientX, event.clientY) !== strip')
+  })
+
+  /** The empty stretch in the titlebar is still the window's caption for the left
+   *  button: Tauri's drag region hears only that one, so the menu takes nothing from
+   *  moving the window or maximising it. */
+  test('and the stretch stays the caption', () => {
+    expect(tabs).toContain("data-tauri-drag-region={caption ? '' : undefined}")
+  })
+})
+
 describe('what the plus in the tab strip offers', () => {
   const tabs = read('lib/Tabs.svelte')
 

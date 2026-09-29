@@ -103,6 +103,7 @@ so a width change lays out that one tab and nothing beside it.
 | Gesture | Chrome (Windows) |
 | --- | --- |
 | Double click on empty strip | maximise / restore the window (it is caption) |
+| Right click on empty strip | New tab, Reopen closed tab, and rows about the window |
 | Double click on a tab | nothing |
 | `+` | right after the last tab; at the strip's end once full |
 | Full strip | tabs shrink to their minimum and the rest is cut off; tab scrolling was removed in Chrome 144 |
@@ -134,6 +135,10 @@ so a width change lays out that one tab and nothing beside it.
 - **Ctrl+W on a pinned tab asks first**, which Chrome does not: a key closes
   whatever is in front, and the tab's own Close row and the middle button, which
   are aimed at it, still close it outright. See `workspace/closing-pinned.ts`.
+- **The empty strip's menu is New tab, Reopen closed tab and Close all tabs**, each
+  about that strip's pane. Chrome's other rows there - bookmark all tabs, name the
+  window, the task manager - have nothing behind them in nib. A held finger asks for
+  it too. See `tab-strip/strip-menu.ts`.
 - **Double click on a tab keeps a preview** (VS Code's rule; nib opens previews).
 - **Ctrl+1..9 are Ctrl+Alt+1..9**, because Ctrl and a digit is a heading level.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active

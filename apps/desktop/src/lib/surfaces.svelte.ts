@@ -278,6 +278,7 @@ export async function warmDoors(): Promise<void> {
     // A tab's own menu, a row's, the editor's, and Ctrl+Tab in order of use, asked for
     // at any moment.
     import('./tab-strip/menu'),
+    import('./tab-strip/strip-menu'),
     import('./row-menu'),
     import('./editor-menu'),
     import('./tab-cycle.svelte'),

@@ -268,9 +268,9 @@ function runPrint() {
  *  before the chord has landed. Fetched for the same reason as the export above; it
  *  has landed by the time anybody could ask, because the chord that is its first
  *  reader is fetched at the launch's last turn. See new-kind-sheet.svelte.ts. */
-function chooseNewKind() {
+export function chooseNewKind(paneId?: string) {
   void import('../new-kind-sheet.svelte').then(({ newKindSheet }) => {
-    newKindSheet.show()
+    newKindSheet.show(paneId)
   })
 }
 

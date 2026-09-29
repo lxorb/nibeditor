@@ -83,6 +83,14 @@
     )
   }
 
+  /** The empty stretch's own menu, by the point: a held finger's has no target. */
+  function showStripMenu(event: MouseEvent) {
+    if (document.elementFromPoint(event.clientX, event.clientY) !== strip) return
+    void import('./tab-strip/strip-menu').then(({ stripMenu }) =>
+      menu.show(event, stripMenu(paneId)),
+    )
+  }
+
   /** A held finger is the right click a touch screen has, and the menu key is the one
    *  a keyboard has: all three ask for the same list, at the plus. What the list holds
    *  is new-kinds.ts - one list for the plus, the Ctrl+T dialog and the buttons an
@@ -756,6 +764,8 @@
     }}
     ondrop={dropped}
     onkeydown={renameKey}
+    oncontextmenu={showStripMenu}
+    use:longPress={showStripMenu}
   >
     {#each tabs as tab, at (tab.id)}
       <!-- How many other devices are in this note, once and at most three: the
