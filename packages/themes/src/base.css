@@ -44,6 +44,15 @@ body {
   overscroll-behavior: none;
 }
 
+/* A button is pressed, not read. WebKit selects the words on one held down, and
+   on an iPhone a long press on a button's label came up selected, with Copy and
+   Look Up over it. */
+button {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* ── Where the keyboard is ───────────────────────────────────────
    One ring, on everything a key can land on, drawn from one token; see
    `--focus-ring` in tokens.css for what it is and why it is that.
