@@ -73,6 +73,7 @@ export const te: Dictionary = {
   'Don’t save': 'సేవ్ చేయవద్దు',
   Confirm: 'నిర్ధారించు',
   'Close note': 'నోట్ మూసివేయి',
+  'Close window': 'విండో మూసివేయి',
   'Reopen closed tab': 'మూసిన ట్యాబ్ తిరిగి తెరువు',
   Pin: 'పిన్ చేయి',
   Forward: 'ముందుకు',

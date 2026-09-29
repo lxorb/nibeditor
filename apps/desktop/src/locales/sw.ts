@@ -73,6 +73,7 @@ export const sw: Dictionary = {
   'Don’t save': 'Usihifadhi',
   Confirm: 'Thibitisha',
   'Close note': 'Funga dokezo',
+  'Close window': 'Funga dirisha',
   'Reopen closed tab': 'Fungua tena kichupo kilichofungwa',
   Pin: 'Bandika',
   Forward: 'Mbele',

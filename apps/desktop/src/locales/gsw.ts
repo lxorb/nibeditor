@@ -73,6 +73,7 @@ export const gsw: Dictionary = {
   'Don’t save': 'Nöd spichere',
   Confirm: 'Bestätige',
   'Close note': 'Notiz zuemache',
+  'Close window': 'Fänschter zuemache',
   'Reopen closed tab': 'Zuegmachte Tab wieder ufmache',
   Pin: 'Aaheft',
   Forward: 'Vorwärts',

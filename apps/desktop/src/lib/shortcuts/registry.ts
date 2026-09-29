@@ -28,7 +28,7 @@ import { settings } from '../settings.svelte'
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
-import { invoke, isDesktop } from '../tauri'
+import { closeWindow, invoke, isDesktop, platform } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
@@ -274,6 +274,9 @@ function chooseNewKind() {
   })
 }
 
+/** Asked at the press rather than as this module loads, so a test can be a Mac. */
+const onMac = () => isDesktop && platform() === 'macos'
+
 /** Runs an app-level command. The two that need the component say so through
  *  the context; everything else reaches the stores directly, the way the
  *  command palette does. */
@@ -340,7 +343,20 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-w',
-    run: () => void workspace.closeActive(),
+    // On a Mac the same key closes the window once nothing is left in it to close,
+    // as it does in Safari and VS Code there.
+    run: () => void (workspace.activeTabId || !onMac() ? workspace.closeActive() : closeWindow()),
+  },
+  {
+    // Every Mac app's File menu has it under the same key with Shift, and so does a
+    // browser's and VS Code's on Windows and Linux.
+    id: 'app.close-window',
+    label: () => t('Close window'),
+    category: 'file',
+    scope: 'app',
+    key: 'Mod-Shift-w',
+    run: () => void closeWindow(),
+    desktop: true,
   },
   {
     // The key every browser goes back with, and the one the editor's own syntax

@@ -73,6 +73,7 @@ export const jv: Dictionary = {
   'Don’t save': 'Aja disimpen',
   Confirm: 'Yakinake',
   'Close note': 'Tutup cathetan',
+  'Close window': 'Tutup jendhela',
   'Reopen closed tab': 'Bukak maneh tab sing ditutup',
   Pin: 'Pinen',
   Forward: 'Maju',

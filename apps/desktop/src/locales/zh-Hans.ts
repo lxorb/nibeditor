@@ -73,6 +73,7 @@ export const zhHans: Dictionary = {
   'Don’t save': '不保存',
   Confirm: '确认',
   'Close note': '关闭笔记',
+  'Close window': '关闭窗口',
   'Reopen closed tab': '重新打开已关闭的标签页',
   Pin: '固定',
   Forward: '前进',

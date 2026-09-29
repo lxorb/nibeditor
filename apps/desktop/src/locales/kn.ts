@@ -73,6 +73,7 @@ export const kn: Dictionary = {
   'Don’t save': 'ಉಳಿಸಬೇಡಿ',
   Confirm: 'ದೃಢೀಕರಿಸಿ',
   'Close note': 'ಟಿಪ್ಪಣಿ ಮುಚ್ಚಿ',
+  'Close window': 'ವಿಂಡೋ ಮುಚ್ಚಿ',
   'Reopen closed tab': 'ಮುಚ್ಚಿದ ಟ್ಯಾಬ್ ಮತ್ತೆ ತೆರೆಯಿರಿ',
   Pin: 'ಪಿನ್ ಮಾಡಿ',
   Forward: 'ಮುಂದೆ',

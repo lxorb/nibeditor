@@ -73,6 +73,7 @@ export const ms: Dictionary = {
   'Don’t save': 'Jangan simpan',
   Confirm: 'Sahkan',
   'Close note': 'Tutup nota',
+  'Close window': 'Tutup tetingkap',
   'Reopen closed tab': 'Buka semula tab yang ditutup',
   Pin: 'Pin',
   Forward: 'Ke hadapan',

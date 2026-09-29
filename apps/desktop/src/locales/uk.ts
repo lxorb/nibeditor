@@ -73,6 +73,7 @@ export const uk: Dictionary = {
   'Don’t save': 'Не зберігати',
   Confirm: 'Підтвердити',
   'Close note': 'Закрити нотатку',
+  'Close window': 'Закрити вікно',
   'Reopen closed tab': 'Повернути закриту вкладку',
   Pin: 'Закріпити',
   Forward: 'Уперед',

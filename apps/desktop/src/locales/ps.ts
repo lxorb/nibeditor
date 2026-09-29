@@ -73,6 +73,7 @@ export const ps: Dictionary = {
   'Don’t save': 'مه خوندوه',
   Confirm: 'تاييد',
   'Close note': 'يادښت بندول',
+  'Close window': 'کړکۍ بندول',
   'Reopen closed tab': 'بند شوې ټوټه بېرته پرانيستل',
   Pin: 'نښلول',
   Forward: 'پر مخ',

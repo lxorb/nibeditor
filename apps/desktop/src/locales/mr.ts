@@ -73,6 +73,7 @@ export const mr: Dictionary = {
   'Don’t save': 'जतन करू नका',
   Confirm: 'खात्री करा',
   'Close note': 'नोंद बंद करा',
+  'Close window': 'विंडो बंद करा',
   'Reopen closed tab': 'बंद टॅब पुन्हा उघडा',
   Pin: 'पिन करा',
   Forward: 'पुढे',

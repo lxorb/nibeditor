@@ -73,6 +73,7 @@ export const vi: Dictionary = {
   'Don’t save': 'Không lưu',
   Confirm: 'Xác nhận',
   'Close note': 'Đóng ghi chú',
+  'Close window': 'Đóng cửa sổ',
   'Reopen closed tab': 'Mở lại tab đã đóng',
   Pin: 'Ghim',
   Forward: 'Tiến',

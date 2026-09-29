@@ -73,6 +73,7 @@ export const ml: Dictionary = {
   'Don’t save': 'സേവ് ചെയ്യേണ്ട',
   Confirm: 'സ്ഥിരീകരിക്കുക',
   'Close note': 'കുറിപ്പ് അടയ്ക്കുക',
+  'Close window': 'വിൻഡോ അടയ്ക്കുക',
   'Reopen closed tab': 'അടച്ച ടാബ് വീണ്ടും തുറക്കുക',
   Pin: 'പിൻ ചെയ്യുക',
   Forward: 'മുന്നോട്ട്',

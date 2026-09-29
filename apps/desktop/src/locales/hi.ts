@@ -73,6 +73,7 @@ export const hi: Dictionary = {
   'Don’t save': 'न सहेजें',
   Confirm: 'पुष्टि करें',
   'Close note': 'नोट बंद करें',
+  'Close window': 'विंडो बंद करें',
   'Reopen closed tab': 'बंद टैब फिर खोलें',
   Pin: 'पिन करें',
   Forward: 'आगे',

@@ -73,6 +73,7 @@ export const ar: Dictionary = {
   'Don’t save': 'عدم الحفظ',
   Confirm: 'تأكيد',
   'Close note': 'إغلاق الملاحظة',
+  'Close window': 'إغلاق النافذة',
   'Reopen closed tab': 'إعادة فتح التبويب المغلق',
   Pin: 'تثبيت',
   Forward: 'تقدم',

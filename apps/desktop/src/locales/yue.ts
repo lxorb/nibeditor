@@ -73,6 +73,7 @@ export const yue: Dictionary = {
   'Don’t save': '唔儲存',
   Confirm: '確認',
   'Close note': '關閉筆記',
+  'Close window': '關閉視窗',
   'Reopen closed tab': '重新開啟已關閉嘅標籤頁',
   Pin: '固定',
   Forward: '前進',

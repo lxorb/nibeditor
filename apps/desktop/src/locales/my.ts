@@ -73,6 +73,7 @@ export const my: Dictionary = {
   'Don’t save': 'မသိမ်းပါ',
   Confirm: 'အတည်ပြု',
   'Close note': 'မှတ်စုပိတ်',
+  'Close window': 'ဝင်းဒိုးပိတ်',
   'Reopen closed tab': 'ပိတ်လိုက်သောတဘ်ပြန်ဖွင့်',
   Pin: 'ပင်ထိုး',
   Forward: 'ရှေ့သို့',

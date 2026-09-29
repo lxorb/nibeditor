@@ -73,6 +73,7 @@ export const ko: Dictionary = {
   'Don’t save': '저장 안 함',
   Confirm: '확인',
   'Close note': '노트 닫기',
+  'Close window': '창 닫기',
   'Reopen closed tab': '닫은 탭 다시 열기',
   Pin: '고정',
   Forward: '앞으로',

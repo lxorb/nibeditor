@@ -73,6 +73,7 @@ export const th: Dictionary = {
   'Don’t save': 'ไม่บันทึก',
   Confirm: 'ยืนยัน',
   'Close note': 'ปิดโน้ต',
+  'Close window': 'ปิดหน้าต่าง',
   'Reopen closed tab': 'เปิดแท็บที่ปิดไป',
   Pin: 'ปักหมุด',
   Forward: 'ไปข้างหน้า',

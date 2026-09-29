@@ -73,6 +73,7 @@ export const ur: Dictionary = {
   'Don’t save': 'محفوظ نہ کریں',
   Confirm: 'تصدیق کریں',
   'Close note': 'نوٹ بند کریں',
+  'Close window': 'ونڈو بند کریں',
   'Reopen closed tab': 'بند ٹیب دوبارہ کھولیں',
   Pin: 'پن کریں',
   Forward: 'آگے',

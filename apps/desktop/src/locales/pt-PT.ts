@@ -73,6 +73,7 @@ export const ptPT: Dictionary = {
   'Don’t save': 'Não guardar',
   Confirm: 'Confirmar',
   'Close note': 'Fechar a nota',
+  'Close window': 'Fechar janela',
   'Reopen closed tab': 'Reabrir o separador fechado',
   Pin: 'Afixar',
   Forward: 'Avançar',

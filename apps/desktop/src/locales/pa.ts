@@ -73,6 +73,7 @@ export const pa: Dictionary = {
   'Don’t save': 'ਨਾ ਸਾਂਭੋ',
   Confirm: 'ਪੱਕਾ ਕਰੋ',
   'Close note': 'ਨੋਟ ਬੰਦ ਕਰੋ',
+  'Close window': 'ਵਿੰਡੋ ਬੰਦ ਕਰੋ',
   'Reopen closed tab': 'ਬੰਦ ਕੀਤੀ ਟੈਬ ਮੁੜ ਖੋਲ੍ਹੋ',
   Pin: 'ਟੰਗੋ',
   Forward: 'ਅੱਗੇ',

@@ -73,6 +73,7 @@ export const es: Dictionary = {
   'Don’t save': 'No guardar',
   Confirm: 'Confirmar',
   'Close note': 'Cerrar la nota',
+  'Close window': 'Cerrar ventana',
   'Reopen closed tab': 'Reabrir la pestaña cerrada',
   Pin: 'Anclar',
   Forward: 'Adelante',

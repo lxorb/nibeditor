@@ -73,6 +73,7 @@ export const gu: Dictionary = {
   'Don’t save': 'સાચવો નહીં',
   Confirm: 'ખાતરી કરો',
   'Close note': 'નોંધ બંધ કરો',
+  'Close window': 'વિન્ડો બંધ કરો',
   'Reopen closed tab': 'બંધ કરેલી ટૅબ ફરી ખોલો',
   Pin: 'પિન કરો',
   Forward: 'આગળ',

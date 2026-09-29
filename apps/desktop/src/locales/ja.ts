@@ -73,6 +73,7 @@ export const ja: Dictionary = {
   'Don’t save': '保存しない',
   Confirm: '確定',
   'Close note': 'ノートを閉じる',
+  'Close window': 'ウィンドウを閉じる',
   'Reopen closed tab': '閉じたタブを再度開く',
   Pin: 'ピン留め',
   Forward: '進む',

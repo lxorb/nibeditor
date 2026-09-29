@@ -73,6 +73,7 @@ export const ru: Dictionary = {
   'Don’t save': 'Не сохранять',
   Confirm: 'Подтвердить',
   'Close note': 'Закрыть заметку',
+  'Close window': 'Закрыть окно',
   'Reopen closed tab': 'Вернуть закрытую вкладку',
   Pin: 'Закрепить',
   Forward: 'Вперёд',

@@ -73,6 +73,7 @@ export const ha: Dictionary = {
   'Don’t save': 'Kar a ajiye',
   Confirm: 'Tabbatar',
   'Close note': 'Rufe bayanin kula',
+  'Close window': 'Rufe taga',
   'Reopen closed tab': 'Sake buɗe shafin da aka rufe',
   Pin: 'Manne',
   Forward: 'Gaba',

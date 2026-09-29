@@ -73,6 +73,7 @@ export const bn: Dictionary = {
   'Don’t save': 'সেভ করবেন না',
   Confirm: 'নিশ্চিত',
   'Close note': 'নোট বন্ধ',
+  'Close window': 'উইন্ডো বন্ধ',
   'Reopen closed tab': 'বন্ধ ট্যাব ফেরান',
   Pin: 'পিন',
   Forward: 'সামনে',

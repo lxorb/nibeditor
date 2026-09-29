@@ -7,7 +7,7 @@
   import SpaceMark from './SpaceMark.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
-  import { currentWindow, isDesktop, platform } from './tauri'
+  import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -73,10 +73,6 @@
   async function toggleMaximize() {
     if (!isDesktop) return
     await shape.toggle(await currentWindow())
-  }
-
-  async function close() {
-    if (isDesktop) await (await currentWindow()).close()
   }
 </script>
 
@@ -179,7 +175,7 @@
             <svg viewBox="0 0 10 10"><path d="M0.5 0.5h9v9h-9z" /></svg>
           {/if}
         </button>
-        <button class="close" onclick={close} aria-label={t('Close')}>
+        <button class="close" onclick={closeWindow} aria-label={t('Close')}>
           <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
         </button>
       </div>

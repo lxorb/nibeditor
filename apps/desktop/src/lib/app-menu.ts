@@ -37,7 +37,7 @@ import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
 import { newSpace } from './space-actions'
-import { invoke, isDesktop, openExternal } from './tauri'
+import { closeWindow, invoke, isDesktop, openExternal } from './tauri'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -241,6 +241,15 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !workspace.closed.any,
           run: () => void workspace.reopenClosed(),
         },
+        ...(isDesktop
+          ? [
+              {
+                label: t('Close window'),
+                ...keyed('app.close-window'),
+                run: () => void closeWindow(),
+              },
+            ]
+          : []),
       ],
     },
 

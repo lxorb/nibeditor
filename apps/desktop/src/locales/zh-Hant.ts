@@ -73,6 +73,7 @@ export const zhHant: Dictionary = {
   'Don’t save': '不要儲存',
   Confirm: '確認',
   'Close note': '關閉筆記',
+  'Close window': '關閉視窗',
   'Reopen closed tab': '重新開啟已關閉的分頁',
   Pin: '釘選',
   Forward: '前進',

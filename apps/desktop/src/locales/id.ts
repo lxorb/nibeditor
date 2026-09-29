@@ -73,6 +73,7 @@ export const id: Dictionary = {
   'Don’t save': 'Jangan simpan',
   Confirm: 'Konfirmasi',
   'Close note': 'Tutup catatan',
+  'Close window': 'Tutup jendela',
   'Reopen closed tab': 'Buka lagi tab yang ditutup',
   Pin: 'Pasang',
   Forward: 'Maju',

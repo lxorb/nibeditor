@@ -73,6 +73,7 @@ export const fa: Dictionary = {
   'Don’t save': 'ذخیره نکن',
   Confirm: 'تأیید',
   'Close note': 'بستن یادداشت',
+  'Close window': 'بستن پنجره',
   'Reopen closed tab': 'گشودن دوباره زبانه بسته',
   Pin: 'سنجاق',
   Forward: 'جلو',

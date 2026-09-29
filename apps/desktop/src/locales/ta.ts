@@ -73,6 +73,7 @@ export const ta: Dictionary = {
   'Don’t save': 'சேமிக்க வேண்டாம்',
   Confirm: 'உறுதிசெய்',
   'Close note': 'குறிப்பை மூடு',
+  'Close window': 'சாளரத்தை மூடு',
   'Reopen closed tab': 'மூடிய தாவலை மீண்டும் திற',
   Pin: 'பின்செய்',
   Forward: 'முன்னோக்கி',

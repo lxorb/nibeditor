@@ -73,6 +73,7 @@ export const tr: Dictionary = {
   'Don’t save': 'Kaydetme',
   Confirm: 'Onayla',
   'Close note': 'Notu kapat',
+  'Close window': 'Pencereyi kapat',
   'Reopen closed tab': 'Kapatılan sekmeyi geri aç',
   Pin: 'Sabitle',
   Forward: 'İleri',

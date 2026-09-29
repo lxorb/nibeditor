@@ -73,6 +73,7 @@ export const fil: Dictionary = {
   'Don’t save': 'Huwag i-save',
   Confirm: 'Kumpirmahin',
   'Close note': 'Isara ang tala',
+  'Close window': 'Isara ang window',
   'Reopen closed tab': 'Buksang muli ang isinarang tab',
   Pin: 'I-pin',
   Forward: 'Pasulong',

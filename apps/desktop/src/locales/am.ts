@@ -73,6 +73,7 @@ export const am: Dictionary = {
   'Don’t save': 'አታስቀምጥ',
   Confirm: 'አረጋግጥ',
   'Close note': 'ማስታወሻ ዝጋ',
+  'Close window': 'መስኮት ዝጋ',
   'Reopen closed tab': 'የተዘጋውን ትር እንደገና ክፈት',
   Pin: 'ቸንክር',
   Forward: 'ወደፊት',
