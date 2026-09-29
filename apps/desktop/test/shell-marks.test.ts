@@ -97,6 +97,18 @@ describe('a mark that fills the box it was given', () => {
     expect(switcher.text.match(/\{@render badge\(/g)).toHaveLength(2)
     expect(switcher.text.match(/\{@render mark\(\)/g)).toHaveLength(2)
   })
+
+  /** The chevron beside the space's name. An `svg` nobody paints is filled in black
+   *  and stroked in nothing, whatever `color` it is given: it was a black wedge,
+   *  which on a dark panel was barely there. */
+  test('and the chevron beside it is stroked in its own ink, not filled in black', () => {
+    const style = declarations(named('lib/SpaceSwitcher.svelte').style)
+    const chevron = /\.chevron\s*\{([^}]*)\}/.exec(style)?.[1] ?? ''
+
+    expect(chevron).toMatch(/fill\s*:\s*none/)
+    expect(chevron).toMatch(/stroke\s*:\s*currentColor/)
+    expect(chevron).toMatch(/color\s*:\s*var\(--muted\)/)
+  })
 })
 
 describe('the mark that says shared', () => {

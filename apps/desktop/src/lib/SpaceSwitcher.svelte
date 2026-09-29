@@ -382,6 +382,12 @@
     width: var(--icon-md);
     height: var(--icon-md);
     color: var(--muted);
+    /* Painted, or an `svg` is filled black whatever `color` says. */
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     transition: transform var(--dur-fast) var(--ease-out);
   }
 
