@@ -186,5 +186,7 @@
   :global([data-touch]) footer.paper {
     display: flex;
     pointer-events: none;
+    /* Above the bar the system keeps at the foot of the screen, where it sat. */
+    bottom: var(--inset-bottom);
   }
 </style>
