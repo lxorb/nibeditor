@@ -497,8 +497,12 @@ function holds(tail: string): boolean {
  *  the note on a phone inert while it is slid off the list and its shadow fading as it
  *  goes (App.svelte), a field in the note brought up above the keys (viewport.svelte.ts),
  *  and a phone's page kept from zooming (main.ts). The table is drawn with the note it
- *  is in and the rest is needed by the first tap. Measured 3,267,021. */
-const BUDGET = 3_271_000
+ *  is in and the rest is needed by the first tap. Measured 3,267,021.
+ *
+ *  And to 3,274,000 before the morning, for the row the app's notices are in drawn
+ *  under a phone's drawer rather than in the note that slides off (App.svelte), so a
+ *  file deleted from the list has its Undo on the screen. Measured 3,271,530. */
+const BUDGET = 3_274_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

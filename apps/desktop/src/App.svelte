@@ -934,23 +934,11 @@
       <!-- What the app says about itself, in a row under the panes rather than over
            them: a web page is a native webview that draws above all of this, so a
            card over it blanked the page and a pill over it was hidden. Empty, the
-           row has no height. See docs/web-tabs.md. -->
-      <div class="notices">
-        <StorageWarning />
-        {#if undoToastNotice.asked}
-          {#await undoToastNotice.asked then UndoToast}
-            <UndoToast />
-          {/await}
-        {/if}
-        {#if recordingPill.asked}
-          {#await recordingPill.asked then RecordingPill}
-            <RecordingPill />
-          {/await}
-        {/if}
-        {#if updates.ready}
-          <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
-        {/if}
-      </div>
+           row has no height. See docs/web-tabs.md. Where the panels are a drawer
+           it is under both instead; see below. -->
+      {#if !viewport.drawer}
+        {@render notices()}
+      {/if}
 
       <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
            words for it to count, so it is left out rather than drawn empty and F6
@@ -993,7 +981,33 @@
       {/if}
     </div>
   </div>
+
+  <!-- Under the drawer as well as the note, and over it: in the note the row slid off
+       the screen with it whenever the list was out, and a file deleted from the list
+       was gone with its Undo somewhere nobody could see or press. -->
+  {#if viewport.drawer}
+    {@render notices()}
+  {/if}
 </main>
+
+{#snippet notices()}
+  <div class="notices" class:over={viewport.drawer}>
+    <StorageWarning />
+    {#if undoToastNotice.asked}
+      {#await undoToastNotice.asked then UndoToast}
+        <UndoToast />
+      {/await}
+    {/if}
+    {#if recordingPill.asked}
+      {#await recordingPill.asked then RecordingPill}
+        <RecordingPill />
+      {/await}
+    {/if}
+    {#if updates.ready}
+      <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
+    {/if}
+  </div>
+{/snippet}
 
 <!-- Over everything, with no chrome of its own: while a note is being presented
      the window is the deck. Fetched when a deck is first asked for, and the promise
@@ -1155,6 +1169,12 @@
   /* One column on a phone, where the cards stack. */
   :global([data-touch]) .notices {
     grid-template-columns: 1fr;
+  }
+
+  /* Above the drawer, which is fixed over the whole height of the window. */
+  .notices.over {
+    position: relative;
+    z-index: 31;
   }
 
   /* Room only around something. `:global`, or the compiler drops a rule about
