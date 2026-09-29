@@ -3,7 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
-  import { pageHeight, showField, viewport } from './lib/viewport.svelte'
+  import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
@@ -247,16 +247,19 @@
   // `panned` so it runs when WebKit slid the page to show the caret instead.
   $effect(() => {
     const [height, panned] = [viewport.height, viewport.panned]
-    if (!viewport.typing || !view || !height || panned < 0) return
+    if (!viewport.typing || !height || panned < 0) return
 
-    // A field inside the note - a table's cell - has the caret rather than the
-    // editor. It was left under the keys once the page was put back.
+    // A field that is not the note has the caret - a table's cell, a name being
+    // changed in the file list - and was left under the keys once the page was
+    // put back. It is brought up in whatever scrolls it: the note for a cell, the
+    // list for a name. A card's own editor is the plane's to show; see Canvas.svelte.
     const field = document.activeElement
-    if (field instanceof HTMLElement && field !== view.contentDOM) {
-      if (view.contentDOM.contains(field))
-        showField(field, view.scrollDOM, height - viewport.covered)
+    if (field instanceof HTMLElement && field !== view?.contentDOM) {
+      const scroller = view?.contentDOM.contains(field) ? view.scrollDOM : scrollerOf(field)
+      if (scroller) showField(field, scroller, height - viewport.covered)
       return
     }
+    if (!view) return
 
     view.dispatch({
       effects: EditorView.scrollIntoView(view.state.selection.main.head, {
@@ -1291,9 +1294,12 @@
 
   /* ── Where the sidebar is a drawer over the note ─────────────────── */
 
+  /* Down to the keys rather than the foot of the window: an iPhone's keyboard
+     covers the window instead of shortening it, and a name being changed low in
+     the list was left under the keys, in a list that could not scroll it up. */
   :global([data-drawer]) .panels {
     position: fixed;
-    inset-block: 0;
+    inset-block: 0 var(--keyboard, 0px);
     inset-inline: 0 auto;
     z-index: 30;
     transform: translateX(calc(var(--dir) * -100%));

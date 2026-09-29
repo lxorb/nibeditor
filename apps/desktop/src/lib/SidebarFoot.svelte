@@ -289,8 +289,9 @@
   }
 
   /* Above whatever the system keeps at the bottom of the screen, so the last
-     row of the panel is not under the gesture bar. */
+     row of the panel is not under the gesture bar - which the keys cover while
+     they are up, and then the room kept for it was an empty band above them. */
   :global([data-touch]) .foot {
-    padding-bottom: var(--inset-bottom);
+    padding-bottom: max(0px, calc(var(--inset-bottom) - var(--keyboard, 0px)));
   }
 </style>

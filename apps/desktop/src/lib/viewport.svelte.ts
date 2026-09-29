@@ -299,6 +299,22 @@ export function showField(field: HTMLElement, scroller: HTMLElement, bottom: num
   else if (box.top < top) scroller.scrollTop -= top - box.top
 }
 
+/** What scrolls a field: the nearest box around it that scrolls up and down, or
+ *  nothing when none does or the field is in an editor of its own - a card's, whose
+ *  plane brings it into sight itself. */
+export function scrollerOf(field: HTMLElement): HTMLElement | null {
+  if (field.closest('.cm-editor')) return null
+
+  for (let at = field.parentElement; at; at = at.parentElement) {
+    const { overflowY } = getComputedStyle(at)
+    if ((overflowY === 'auto' || overflowY === 'scroll') && at.scrollHeight > at.clientHeight) {
+      return at
+    }
+  }
+
+  return null
+}
+
 /** The room kept around a field brought into sight, as the editor keeps round
  *  its caret line; see App.svelte. */
 const FIELD_MARGIN = 24
