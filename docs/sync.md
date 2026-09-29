@@ -9,6 +9,10 @@ is about the rest of it: what the account keeps, what happens when two devices
 disagree, what a reader can see about any of it, and the two things that are about
 the account rather than the notes.
 
+`docs/sync-v2.md` is the design that replaces the pass, the conflict rules and the
+copies beside a note described below, and adds web logins that follow the person.
+Until it ships, this page is what runs.
+
 ## What a pass is
 
 One space, two halves. Take what the account has moved on to, then offer what this
