@@ -42,6 +42,7 @@
     nearby,
     nextZoom,
     pageAt,
+    PDF_TO_CSS,
     stack,
     topOfPage,
     type Size,
@@ -81,7 +82,18 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; the marks come off `sheet`
   const matrices = new Map<number, Transform>()
 
-  const zoom = $derived(tab.zoom ?? 1)
+  /** How wide the pane the pages are read in is. */
+  let viewWidth = $state(0)
+  /** On a touch screen, and until somebody zooms, the widest page fitted to the
+   *  width it is read in: a phone is narrower than a sheet of paper at its own size,
+   *  and a PDF opened on one ran off the right edge with the ends of its lines out of
+   *  sight. Never past the paper's own size, and a desktop keeps opening at that. */
+  const fitted = $derived.by(() => {
+    if (!viewport.touch || viewWidth <= 0) return 1
+    const widest = Math.max(fallback.width, ...sizes.map((size) => size?.width ?? 0))
+    return Math.min(1, (viewWidth - GAP * 2) / (widest * PDF_TO_CSS))
+  })
+  const zoom = $derived(tab.zoom ?? fitted)
   const boxes = $derived(stack(sizes, fallback, zoom))
   const height = $derived(heightOf(boxes))
 
@@ -245,8 +257,10 @@
 
       at = box.scrollTop
       // The page the reader is on, so the tab opens here next time and a link
-      // copied from the selection names the right one.
-      workspace.notePdf(tab.id, pageAt(boxes, at, viewHeight), zoom)
+      // copied from the selection names the right one. The zoom is only ever the
+      // reader's own: writing down the one worked out for them would pin a phone's
+      // fitted width at whatever it was before the pane had been measured.
+      workspace.notePdf(tab.id, pageAt(boxes, at, viewHeight), tab.zoom)
     })
   }
 
@@ -692,6 +706,7 @@
     use:scrollbar={tab.id}
     bind:this={scroller}
     bind:clientHeight={viewHeight}
+    bind:clientWidth={viewWidth}
     onscroll={moved}
     onwheel={wheeled}
     onmouseup={selected}
