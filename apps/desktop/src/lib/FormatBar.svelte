@@ -48,19 +48,24 @@
 
   $effect(() => {
     const note = view?.contentDOM
-    const follow = (to: EventTarget | null) => {
-      writing = !!note && (to === note || (to instanceof Node && !!bar?.contains(to)))
-    }
-    const onIn = (event: FocusEvent) => follow(event.target)
-    // Where the keyboard is going, which a focusout knows and the page does not yet.
-    const onOut = (event: FocusEvent) => follow(event.relatedTarget)
+    let live = true
+    // Read once the focus has landed, a microtask on: a focus lost because Svelte
+    // took the element away is announced in the middle of Svelte's own update,
+    // and a rune written from there is one Svelte refuses outright.
+    const follow = () =>
+      queueMicrotask(() => {
+        if (!live) return
+        const at = document.activeElement
+        writing = !!note && (at === note || (!!at && !!bar?.contains(at)))
+      })
 
-    follow(document.activeElement)
-    document.addEventListener('focusin', onIn)
-    document.addEventListener('focusout', onOut)
+    follow()
+    document.addEventListener('focusin', follow)
+    document.addEventListener('focusout', follow)
     return () => {
-      document.removeEventListener('focusin', onIn)
-      document.removeEventListener('focusout', onOut)
+      live = false
+      document.removeEventListener('focusin', follow)
+      document.removeEventListener('focusout', follow)
     }
   })
 
