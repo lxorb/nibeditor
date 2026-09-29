@@ -75,7 +75,7 @@
   </span>
 {:else if found && !broken}
   <span class="mark" aria-hidden="true">
-    <img src={found} alt="" onerror={() => (broken = true)} />
+    <img src={found} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
 {:else if mark}
   <!-- The file's own mark, drawn by the component the file list draws it with and

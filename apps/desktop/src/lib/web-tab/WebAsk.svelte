@@ -83,7 +83,7 @@
 >
   <p class="what">
     {#if icon && marked}
-      <img class="mark" src={icon} alt="" onerror={() => (marked = false)} />
+      <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {/if}
     <span><strong>{asking.site}</strong> {t('wants to')}</span>
   </p>

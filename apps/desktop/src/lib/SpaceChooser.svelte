@@ -45,7 +45,7 @@
     transition:scale|global={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <div class="head">
-      <img class="mark" src="/icon-256.png" alt="" />
+      <img class="mark" src="/icon-256.png" alt="" draggable="false" />
       <h1 class="title">Nib</h1>
       <p class="version">{version}</p>
     </div>

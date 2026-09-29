@@ -266,7 +266,7 @@
     onclick={onsite}
   >
     {#if page.icon && marked}
-      <img class="mark" src={page.icon} alt="" onerror={() => (marked = false)} />
+      <img class="mark" src={page.icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {:else}
       <svg viewBox="0 0 24 24" aria-hidden="true">
         {#each page.url?.startsWith('https:') ? Lock : Globe as [tag, attrs], index (index)}

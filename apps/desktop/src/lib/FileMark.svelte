@@ -65,7 +65,7 @@
 
 {#if favicon && !broken}
   <span class="mark picture" aria-hidden="true">
-    <img src={favicon} alt="" onerror={() => (broken = true)} />
+    <img src={favicon} alt="" draggable="false" onerror={() => (broken = true)} />
   </span>
 {:else}
   <span class="mark" class:quiet={chosen === null || chosen.kind === 'lucide'}>

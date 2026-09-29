@@ -616,6 +616,7 @@
             class="mark"
             src={new URL('/favicon.ico', address).href}
             alt=""
+            draggable="false"
             onerror={() => (marked = false)}
           />
         {/if}
