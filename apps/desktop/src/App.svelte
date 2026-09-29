@@ -840,8 +840,14 @@
          the layers swap: the list is the floor and the note is what moves,
          sliding off to the right to uncover it and back over it. The same
          drag drives both; only which layer it moves differs. -->
+    <!-- Off to the side, the note is out of reach the way a shut drawer is. The
+         page is not a scroller, but WebKit scrolls it all the same to show what
+         takes the focus: the note taking it as Nib started slid the whole page
+         across, and the list the phone had open was covered by the note while
+         the button still said it was out. -->
     <div
       class="document"
+      inert={viewport.narrow && viewport.drawer && !!workspace.panel}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
