@@ -505,8 +505,12 @@ function holds(tail: string): boolean {
  *
  *  And to 3,279,000 for a phone's sheets put away by pulling them down, as an iPhone's
  *  are (sheet-pull.ts): the two menus that wear the grip are drawn by the first long
- *  press, so the gesture is with them. Measured 3,275,651. */
-const BUDGET = 3_279_000
+ *  press, so the gesture is with them. Measured 3,275,651.
+ *
+ *  Raised 2026-09-30, to 3,282,000, for Alt and a digit, the tabs by number
+ *  (shortcuts/registry.ts), and a press AltGr or an input method is typing told from a
+ *  chord (keys.ts). Both are read by the first key. Measured 3,280,327. */
+const BUDGET = 3_282_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

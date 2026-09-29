@@ -191,15 +191,10 @@ function unshifted(event: Keystroke): string | undefined {
   return event.code === undefined ? undefined : PHYSICAL[event.code]
 }
 
-/** Whether a keystroke is AltGr typing a character, which Windows says as Ctrl and Alt
- *  held together. A Swiss `@` is AltGr+2, a German `{` AltGr+7, a Polish `ó` AltGr+O,
- *  and each arrives as Ctrl+Alt and the key. What it typed is the only name it has,
- *  then: the key underneath would make the `@` Ctrl+Alt+2, a tab rather than the
- *  character somebody was writing. CodeMirror reads its own keys the same way, for the
- *  same reason, so a chord in the editor and a chord on the window agree.
- *
- *  Not with Shift as well, which is still read by the key: Ctrl+Alt+Shift+1 is a chord
- *  a reader records on a US keyboard, and AZERTY's way to Ctrl+Alt and a digit. */
+/** Whether a keystroke is AltGr typing a character, which Windows says as Ctrl and Alt:
+ *  a Swiss `@` is AltGr+2. What it typed is its only name then, or the `@` would be
+ *  Ctrl+Alt+2 and a tab. CodeMirror reads its own keys the same way. Not with Shift,
+ *  which AZERTY needs for Ctrl+Alt and a digit. */
 function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
   const down = held(event)
   return (
@@ -208,7 +203,7 @@ function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
     down.alt &&
     !down.meta &&
     !down.shift &&
-    [...event.key].length === 1 &&
+    event.key.length === 1 &&
     event.key !== ' '
   )
 }
@@ -221,8 +216,7 @@ export function readCombination(event: Keystroke, platform: Platform): string | 
   const down = held(event)
   const physical = unshifted(event)
   // With Shift or Alt down the character on the key is not the key: the
-  // combination is named after the key itself. Unless AltGr typed it, and then the
-  // character is the one name the matcher will answer to.
+  // combination is named after the key itself, unless AltGr typed it.
   const key =
     (down.shift || down.alt) && physical !== undefined && !typedWithAltGr(event, platform)
       ? physical
@@ -280,10 +274,8 @@ function isDigit(key: string): boolean {
  *  there would make Ctrl+Shift+E fire Ctrl+E as well, and a chord that asks for Shift
  *  is still matched exactly, so nothing can be both.
  *
- *  And two presses that are never a chord. One an input method is in the middle of
- *  composing is a syllable on its way; `Process` is the name a browser gives the key
- *  that starts one. And one that is AltGr typing a character on Windows is that
- *  character, and answers only to it; see `typedWithAltGr`. */
+ *  A press an input method is composing is never a chord, and nor is the `Process`
+ *  that starts one. */
 export function matchesCombination(text: string, event: Keystroke, platform: Platform): boolean {
   if (event.isComposing === true || event.key === 'Process') return false
 

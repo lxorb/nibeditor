@@ -970,20 +970,11 @@ const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   run: () => showTab(index === LAST ? 'last' : index),
 }))
 
-/** The same tabs on Alt and a digit, with no heading level in the way and no Ctrl to
- *  reach past. Emil, 2026-09-30: *"Add shortcuts alt + 1, alt + 2, ... where alt + x
- *  opens the tab at position x and alt + 0 opens the last tab."* So every digit is its
- *  own place, the ninth included, and the nought is the last. Chrome and Firefox on
- *  Linux have Alt and a digit for their tabs too, but make the ninth the last.
- *
- *  A second key for the eight places and for the last, which keep Ctrl+Alt; the ninth
- *  place had no key before and is a command of its own.
- *
- *  None on a Mac, where Option and a digit types ¡ ™ £ ¢ ∞ § ¶ • ª º, and where Cmd
- *  and a digit are the tabs already. AltGr is not Alt: Windows says it as Ctrl and Alt
- *  together, and these want Ctrl up; see `matchesCombination` in keys.ts. */
+/** Emil, 2026-09-30: *"alt + x opens the tab at position x and alt + 0 opens the last
+ *  tab."* Second keys of the eight places and the last; the ninth place is its own. None
+ *  on a Mac, where Option and a digit types a character and Cmd has the tabs. */
 const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Shortcut => {
-  // In the order the keys lie along the top row: one to nine, then the nought.
+  // Along the top row: one to nine, then the nought.
   const digit = (index + 1) % 10
   const at = digit === 0 ? 'last' : index
   const ninth = at === LAST
