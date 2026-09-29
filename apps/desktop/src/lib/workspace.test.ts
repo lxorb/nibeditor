@@ -1414,6 +1414,17 @@ describe('a window with nothing open', () => {
     expect(workspace.tabs).toEqual([])
     expect(workspace.panes.count).toBe(1)
   })
+
+  /** The pane that stays names no tab. It went on naming the last one it had shown,
+   *  which nothing drew but Cmd+W read: on a Mac that key closes a window with
+   *  nothing left in it, and it went on closing a tab that was no longer there. */
+  test('and the pane that stays names no tab as the one it shows', async () => {
+    await workspace.open('/space/a.md')
+    const [only] = workspace.tabs
+    if (only) workspace.close(only.id)
+
+    expect(workspace.activeTabId).toBeNull()
+  })
 })
 
 describe('a tab dropped on another pane', () => {

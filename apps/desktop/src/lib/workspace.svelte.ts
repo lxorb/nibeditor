@@ -2527,7 +2527,8 @@ class Workspace {
     // new tab could be, which is what Emil asked for - "it should be possible to have
     // no note open (there should not always open a new one)". See NewHere.svelte.
     if (!left.length) {
-      this.panes.close(paneId)
+      // The last pane of all names no tab, rather than the one that has just gone.
+      if (!this.panes.close(paneId)) this.panes.activate(paneId, null)
       this.persist()
       return
     }
