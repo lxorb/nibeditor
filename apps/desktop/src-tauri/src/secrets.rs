@@ -9,10 +9,13 @@
 //! gnome-keyring or `KWallet` depending on the desktop. The `keyring` crate is the
 //! one interface to the three of them.
 //!
-//! Desktop only. A phone keeps them in `EncryptedSharedPreferences`, which is
-//! Android's own answer and is reached through the activity rather than through
-//! Rust; see `Secrets` in MainActivity.kt and `keys.ts` in the app. A browser has
-//! no keychain at all and says so; see web/commands.ts.
+//! The desktops and the iPhone, whose keychain is the Mac's own store under the same
+//! crate feature. Android keeps them in `EncryptedSharedPreferences`, which is its own
+//! answer and is reached through the activity rather than through Rust; see `Secrets`
+//! in MainActivity.kt and `keys.ts` in the app. A browser has no keychain at all and
+//! says so; see web/commands.ts. Until 2026-09-29 the iPhone had none of this: the
+//! commands were the desktop's alone, so a key typed into the AI pane on an iPhone
+//! went nowhere while the pane said it was kept safe.
 //!
 //! Three commands and nothing else: a key can be written, read back by the app
 //! that wrote it, and taken away. Reading it back is what lets a provider be used

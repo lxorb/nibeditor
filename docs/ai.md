@@ -89,6 +89,7 @@ lie:
 | Desktop app, macOS | Keychain | The same, plus whatever you set on the item |
 | Desktop app, Linux | Secret Service (gnome-keyring, KWallet) | The keyring, which may be locked |
 | Phone app, Android | `EncryptedSharedPreferences` | A key in the hardware Keystore, per app |
+| Phone app, iPhone and iPad | Keychain | The device's passcode, per app |
 | Browser | IndexedDB | Nothing but the origin |
 
 The desktop side is `apps/desktop/src-tauri/src/secrets.rs`, three commands over
@@ -274,7 +275,7 @@ only the provider knows.
 | `apps/desktop/src/lib/recorder/transcribe.ts` | Sound as words, by either road |
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |
-| `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain |
+| `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain, and the iPhone's |
 
 The drive is `apps/desktop/test/e2e/ai.py`. It serves a fake
 OpenAI-compatible provider that answers deterministically, so the block, the

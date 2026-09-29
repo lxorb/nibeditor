@@ -91,7 +91,7 @@ mod query;
 mod recent;
 mod regex;
 mod search;
-#[cfg(desktop)]
+#[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
 #[cfg(desktop)]
 mod shell_menu;
@@ -367,7 +367,15 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = builder.invoke_handler(desktop_commands!());
 
-    #[cfg(mobile)]
+    // An iPhone keeps a provider's key in its keychain the way a Mac does; Android keeps
+    // it through the activity, so its page never calls these. See secrets.rs.
+    #[cfg(target_os = "ios")]
+    let builder = builder.invoke_handler(commands![
+        secrets::secret_forget,
+        secrets::secret_read,
+        secrets::secret_write,
+    ]);
+    #[cfg(target_os = "android")]
     let builder = builder.invoke_handler(commands![]);
     trace::mark("commands registered");
 
