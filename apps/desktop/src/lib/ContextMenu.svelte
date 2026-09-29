@@ -293,6 +293,13 @@
     max-height: calc(100dvh - 16px);
     display: flex;
     flex-direction: column;
+    /* Rows to press, not words to take. A long press is what opens this on a
+       touch screen, and the sheet rose under the finger still holding it: the
+       press went on into the row now under it and WebKit selected its first
+       word, with its Copy and Look Up bar on top of the menu. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   .menu:not(.sheet) > .rows {

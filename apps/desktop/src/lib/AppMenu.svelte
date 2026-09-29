@@ -397,6 +397,10 @@
     top: calc(var(--titlebar-height) + var(--space-1));
     inset-inline-start: var(--space-2);
     z-index: 45;
+    /* Rows to press, as the right-click menu's are; see ContextMenu.svelte. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     display: flex;
     max-height: 78vh;
     overflow: hidden;
