@@ -452,7 +452,13 @@
     // gesture in hand keeps the paper.
     if (one) return
 
-    host?.setPointerCapture(event.pointerId)
+    // Guarded, as on the canvas: WebKit throws for a pointer it no longer counts as
+    // active, and a throw here would stop the stroke before it began.
+    try {
+      host?.setPointerCapture(event.pointerId)
+    } catch {
+      // The events keep coming; they are only not promised to this element.
+    }
     driver = { id: event.pointerId, touch: kind === 'touch', screen, since: event.timeStamp }
     store.halt()
 
@@ -1067,6 +1073,10 @@
 </div>
 
 <style>
+  /* The canvas's own four lines, for the same reasons (see the plane in
+     Canvas.svelte): on an iPad a finger or a Pencil held still selected the page and
+     brought up the magnifier, and the system then took the pointer back, which
+     dropped the stroke it had begun. */
   .pages {
     position: relative;
     flex: 1;
@@ -1074,6 +1084,10 @@
     overflow: hidden;
     background: var(--surface-2);
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     outline: none;
   }
 
