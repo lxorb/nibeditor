@@ -685,6 +685,9 @@ differently is taken where it costs one rule and no rework later:
   app's own menu - are put away by pulling them down from the grip, as an iPhone's
   are: a quarter of the sheet or a thumb's length, or a quick flick. A little pull
   springs back. One action for both, `sheet-pull.ts`.
+- **A search has a Cancel beside it.** The palette's field on a touch screen has
+  the word a phone's search has, outside the box: there is no Escape, and a list
+  long enough to reach the keys left no dim edge to tap.
 - **No round plus over a canvas or a page note.** Their own bar is along the foot
   with its own way to add, and a plus that made a new note read as one that added
   to the page. The note and a PDF keep it, as Todoist keeps its own.
