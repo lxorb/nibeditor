@@ -1536,4 +1536,17 @@ export const ps: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'نوی ټرمینل',
+  'Command Prompt': 'د کمانډ پرامپټ',
+  Terminal: 'ټرمینل',
+  Shell: 'شیل',
+  'Open another': 'بل یو پرانیزئ',
+  'Open in terminal': 'په ټرمینل کې پرانیزئ',
+  Clear: 'پاکول',
+  'Exited with code {code}': 'د {code} کوډ سره پای ته ورسید',
+  'Could not start {shell}': '{shell} پیل نشو',
+  'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
+  'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
+  'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
 }

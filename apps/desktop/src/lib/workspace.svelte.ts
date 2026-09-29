@@ -1036,10 +1036,17 @@ class Workspace {
   }
 
   /** One document with no file, in a tab of its own. The blank note goes if there is
-   *  one, which is what opening anything real does; see `dropScaffolding`. */
-  private openUnsaved(kind: 'canvas' | 'pages', text: string) {
-    const file = this.document({ kind, path: null, name: UNTITLED, text, dirty: false })
-    const tab = this.add(new Tab(file, this.panes.focusedId))
+   *  one, which is what opening anything real does; see `dropScaffolding`. A terminal
+   *  is one too, named for its shell and put `beside` the one it was opened from; see
+   *  terminal/open.ts. */
+  openUnsaved(
+    kind: 'canvas' | 'pages' | 'terminal',
+    text: string,
+    name = UNTITLED,
+    beside: string | null = null,
+  ) {
+    const file = this.document({ kind, path: null, name, text, dirty: false })
+    const tab = this.add(new Tab(file, this.panes.focusedId), true, beside)
     this.showNote()
     this.dropScaffolding(tab)
     this.persist()
@@ -2435,7 +2442,7 @@ class Workspace {
    *  them on every quit after. */
   async mayCloseWindow(): Promise<boolean> {
     const letGo: NoteDoc[] = []
-    if (!(await this.mayClose(this.tabs, letGo))) return false
+    if (!(await this.mayClose(this.tabs, letGo, false))) return false
 
     for (const tab of this.tabs.filter((one) => letGo.includes(one.note))) this.close(tab.id)
     this.persist()
@@ -2449,8 +2456,13 @@ class Workspace {
    *
    *  Asked of documents rather than of tabs throughout: a note is the thing with
    *  words in it, and a tab is only a way of looking at one. `letGo` is told which
-   *  notes were answered Don't save. */
-  private async mayClose(closing: readonly Tab[], letGo: NoteDoc[] = []): Promise<boolean> {
+   *  notes were answered Don't save. A terminal running something asks too, except as
+   *  the window goes (`shells` false); see terminal/closing.ts. */
+  private async mayClose(
+    closing: readonly Tab[],
+    letGo: NoteDoc[] = [],
+    shells = true,
+  ): Promise<boolean> {
     this.flush()
 
     const going = closing.map((tab) => tab.id)
@@ -2466,7 +2478,9 @@ class Workspace {
       if (!(await this.askToClose(tab.note, letGo))) return false
     }
 
-    return true
+    if (!shells || !closing.some((tab) => tab.kind === 'terminal')) return true
+    const { mayEnd } = await import('./terminal/closing')
+    return mayEnd(closing)
   }
 
   /** The one question the app asks before words are lost, in three answers

@@ -17,7 +17,7 @@
  *  is worth a byte before the launch has drawn a note. */
 
 import { firstChoice, letterAt, stepAt } from './new-kind-choice'
-import { newKinds, type NewKindRow } from './new-kinds'
+import { newKinds, type NewKindRow, readyKinds, showOthers } from './new-kinds'
 import { newKindDialog } from './surfaces.svelte'
 
 class NewKindSheet {
@@ -41,6 +41,7 @@ class NewKindSheet {
     this.at = firstChoice(this.kinds.map((one) => one.kind))
     this.paneId = paneId
     this.open = true
+    readyKinds(this.kinds)
   }
 
   /** One along, or back. */
@@ -64,16 +65,26 @@ class NewKindSheet {
     one?.make(this.paneId)
   }
 
-  /** Makes the kind a letter names. True when a kind answered it. */
-  pickLetter(key: string): boolean {
+  /** Makes the kind a letter names - or, with Shift, shows its other forms at `card`.
+   *  True when a kind answered it. */
+  pickLetter(key: string, shift = false, card?: (at: number) => Element | undefined): boolean {
     const at = letterAt(
       this.kinds.map((one) => one.letter),
       key,
     )
     if (at < 0) return false
 
-    this.pick(at)
+    if (!(shift && this.others(at, card?.(at)))) this.pick(at)
     return true
+  }
+
+  /** A kind's other forms - a terminal's other shells - as a menu at its card, the
+   *  dialog going as one is chosen. False for a kind that has none. */
+  others(at: number, card: Element | undefined): boolean {
+    const one = this.kinds[at]
+    if (!this.open || !one || !card) return false
+
+    return showOthers(one, card, this.paneId, () => this.dismiss())
   }
 
   /** Closed, and nothing made. */

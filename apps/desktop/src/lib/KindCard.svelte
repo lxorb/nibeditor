@@ -61,6 +61,15 @@
   {#if letter}
     <kbd aria-hidden="true">{letter.toUpperCase()}</kbd>
   {/if}
+  <!-- The way to the kind's other forms, where it has any: a terminal's other shells.
+       Part of the card rather than a button of its own, so the cards stay one stop each;
+       the place that draws the card tells a press on it apart. See `showOthers` in
+       new-kinds.ts. -->
+  {#if one.others}
+    <span class="more" data-more aria-hidden="true">
+      <svg viewBox="0 0 16 16"><path d="M4 6.5l4 4 4-4" /></svg>
+    </span>
+  {/if}
 </button>
 
 <style>
@@ -169,6 +178,38 @@
     color: var(--muted-strong);
   }
 
+  /* In the corner under the letter, inside the card's own padding so it never meets the
+     name however long a language writes it, and a target of its own for the pointer. */
+  .more {
+    position: absolute;
+    bottom: var(--space-1);
+    inset-inline-end: var(--space-1);
+    display: grid;
+    place-items: center;
+    width: calc(var(--icon-sm) + var(--space-2));
+    height: calc(var(--icon-sm) + var(--space-2));
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .more:hover {
+    background: var(--surface-press);
+    color: var(--text-strong);
+  }
+
+  .more svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
   /* Stacked under a thumb, as the rows every other list is made of there: the mark
      in front of the name at the size a thumb's row draws it, and the name from the
      start of the line. */
@@ -189,8 +230,15 @@
     font-size: var(--touch-icon);
   }
 
-  /* No keys under a thumb. */
+  /* No keys under a thumb, and the chevron at the end of the line. */
   :global([data-touch]) kbd {
     display: none;
+  }
+
+  :global([data-touch]) .more {
+    position: static;
+    margin-inline-start: auto;
+    width: var(--touch-target);
+    height: var(--touch-target);
   }
 </style>

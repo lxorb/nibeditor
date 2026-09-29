@@ -52,6 +52,7 @@
     pagesSurface,
     pdfSurface,
     readingSurface,
+    terminalSurface,
     webSurface,
   } from './surfaces.svelte'
   import { canWriteIn } from './sharing.svelte'
@@ -102,6 +103,7 @@
       tab.kind !== 'pages' &&
       tab.kind !== 'pdf' &&
       tab.kind !== 'web' &&
+      tab.kind !== 'terminal' &&
       !tab.reading,
   )
 
@@ -527,6 +529,14 @@
     {#key tab.id}
       {#await webSurface() then WebTab}
         <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {/await}
+    {/key}
+  {:else if tab?.kind === 'terminal'}
+    <!-- A shell, in the note's place. Keyed like the others; the shell itself outlives
+         this, so switching back finds it where it was. See terminal/sessions.svelte.ts. -->
+    {#key tab.id}
+      {#await terminalSurface() then TerminalTab}
+        <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
       {/await}
     {/key}
   {:else if tab?.coming}

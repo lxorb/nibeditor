@@ -1535,4 +1535,17 @@ export const fa: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'ترمینال جدید',
+  'Command Prompt': 'خط فرمان',
+  Terminal: 'ترمینال',
+  Shell: 'پوسته',
+  'Open another': 'باز کردن یکی دیگر',
+  'Open in terminal': 'باز کردن در ترمینال',
+  Clear: 'پاک کردن',
+  'Exited with code {code}': 'با کد {code} پایان یافت',
+  'Could not start {shell}': '{shell} اجرا نشد',
+  'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
+  'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
+  'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
 }

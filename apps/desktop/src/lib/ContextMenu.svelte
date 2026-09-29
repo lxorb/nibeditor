@@ -1,6 +1,7 @@
 <script lang="ts">
   import { fade, fly, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
+  import { steppedKey } from './direction'
   import { t } from './i18n.svelte'
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
@@ -133,7 +134,28 @@
     return scale(node, { duration: dur(120), start: 0.96, easing: cubicOut })
   }
 
+  /** A row's alternatives, in the menu's place, beside the row that asked; see `more`
+   *  in menu-item.ts. */
+  function showMore(item: MenuItem, row: Element) {
+    const more = item.more
+    if (!more) return
+
+    const box = row.getBoundingClientRect()
+    void more().then((rows) => {
+      const at = new MouseEvent('contextmenu', { clientX: box.right, clientY: box.top })
+      menu.show(at, rows, { title: item.label })
+    })
+  }
+
   function choose(item: MenuItem, event: MouseEvent) {
+    // The chevron at the row's end is the row's alternatives rather than the row, and
+    // its click goes no further: the window would take it for a click outside.
+    if (item.more && event.target instanceof Element && event.target.closest('[data-more]')) {
+      event.stopPropagation()
+      showMore(item, event.currentTarget as Element)
+      return
+    }
+
     // A row that says so stays: the zoom rows on a web tab are pressed two or three
     // times in a row, and a menu that closed under each of them would be a menu
     // somebody opens four times. See menu-item.ts. Its click goes no further than the
@@ -168,6 +190,16 @@
     if (!list.length) return
 
     const at = list.findIndex((row) => row === document.activeElement)
+
+    // Further along the line is into a row's alternatives, as it is in any menu.
+    const standing = list[at]
+    const item = entries[Number(standing?.dataset.at)]
+    if (standing && item?.more && steppedKey(event.key) === 'ArrowRight') {
+      event.preventDefault()
+      showMore(item, standing)
+      return
+    }
+
     const moved = walked(event.key, at < 0 ? null : at, list.length, true)
     const landed = moved === null ? undefined : list[moved]
 
@@ -257,6 +289,8 @@
             class:danger={item.danger}
             class:lit={index === menu.lit}
             disabled={item.disabled}
+            data-at={index}
+            aria-haspopup={item.more ? 'menu' : undefined}
             onclick={(event) => choose(item, event)}
             onmousedown={(event) => menu.keepFocus && event.preventDefault()}
             onpointermove={() => menu.keepFocus && !item.disabled && (menu.lit = index)}
@@ -270,6 +304,13 @@
             {#if item.checked}<span class="tick">✓</span>{/if}
             <!-- A shortcut means nothing to a thumb. -->
             {#if item.hint && !viewport.touch}<kbd>{item.hint}</kbd>{/if}
+            <!-- The way to the row's alternatives, where it has any: VS Code's `˅`
+                 beside its `+`, drawn as the chevron every submenu wears. -->
+            {#if item.more}
+              <span class="more" data-more aria-hidden="true">
+                <svg class="nib-mirror" viewBox="0 0 16 16"><path d="M6 3.5l4.5 4.5L6 12.5" /></svg>
+              </span>
+            {/if}
           </button>
         {/if}
       {/each}
@@ -340,6 +381,37 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+
+  /* The chevron to a row's alternatives: a target of its own at the row's end, quiet
+     until the pointer is on it. */
+  .more {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    margin-inline: var(--space-2) calc(-1 * var(--space-1));
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .more:hover {
+    background: var(--surface-press);
+    color: var(--text);
+  }
+
+  .more svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 
   /* A switch that is on. Quiet and in the accent, because it is the state of the

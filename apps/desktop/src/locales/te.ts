@@ -1536,4 +1536,20 @@ export const te: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'కొత్త టెర్మినల్',
+  'Command Prompt': 'కమాండ్ ప్రాంప్ట్',
+  Terminal: 'టెర్మినల్',
+  Shell: 'షెల్',
+  'Open another': 'మరొకటి తెరువు',
+  'Open in terminal': 'టెర్మినల్‌లో తెరువు',
+  Clear: 'క్లియర్ చేయి',
+  'Exited with code {code}': 'కోడ్ {code}తో ముగిసింది',
+  'Could not start {shell}': '{shell}ను ప్రారంభించలేకపోయాము',
+  'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
+  'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
+  'Paste {count} lines?': {
+    one: '{count} పంక్తిని అతికించాలా?',
+    other: '{count} పంక్తులను అతికించాలా?',
+  },
 }

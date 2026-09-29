@@ -1527,4 +1527,17 @@ export const jv: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Terminal anyar',
+  'Command Prompt': 'Command Prompt',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Bukak siji maneh',
+  'Open in terminal': 'Bukak ing terminal',
+  Clear: 'Resiki',
+  'Exited with code {code}': 'Rampung kanthi kode {code}',
+  'Could not start {shell}': 'Ora bisa miwiti {shell}',
+  'Stop what is running in {name}?': 'Mandhegake sing mlaku ing {name}?',
+  'Stop what is running in these terminals?': 'Mandhegake sing mlaku ing terminal iki?',
+  'Paste {count} lines?': 'Tempel {count} baris?',
 }

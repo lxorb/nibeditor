@@ -1532,4 +1532,17 @@ export const hi: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'नया टर्मिनल',
+  'Command Prompt': 'कमांड प्रॉम्प्ट',
+  Terminal: 'टर्मिनल',
+  Shell: 'शेल',
+  'Open another': 'एक और खोलें',
+  'Open in terminal': 'टर्मिनल में खोलें',
+  Clear: 'साफ़ करें',
+  'Exited with code {code}': 'कोड {code} के साथ बंद हुआ',
+  'Could not start {shell}': '{shell} शुरू नहीं हो सका',
+  'Stop what is running in {name}?': '{name} में जो चल रहा है उसे रोकें?',
+  'Stop what is running in these terminals?': 'इन टर्मिनलों में जो चल रहा है उसे रोकें?',
+  'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },
 }

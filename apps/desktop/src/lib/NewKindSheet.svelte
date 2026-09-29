@@ -13,8 +13,9 @@
    *  Sheet.svelte, motion.ts and trap.ts.
    *
    *  The keys: the arrows step, Home and End go to the ends, Enter and Space make the
-   *  one that stands, a card's letter makes that one outright. Held under Ctrl, T steps
-   *  and letting go chooses; that half is the window's and is new-kind-chord.ts. */
+   *  one that stands, a card's letter makes that one outright - and with Shift, either
+   *  shows a terminal's other shells instead. Held under Ctrl, T steps and letting go
+   *  chooses; that half is the window's and is new-kind-chord.ts. */
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { closeOnBack } from './backstack.svelte'
@@ -48,14 +49,31 @@
     ArrowUp: -1,
   }
 
+  /** The card at a place in the row. */
+  const card = (at: number) => box?.querySelectorAll<HTMLElement>('button')[at]
+
+  /** Shift with the choice, or a press on a card's chevron, is the kind's other forms
+   *  rather than the kind: a terminal's other shells. See `showOthers` in new-kinds.ts. */
+  function choose(event: MouseEvent, at: number) {
+    const chevron = event.target instanceof Element && event.target.closest('[data-more]')
+    if ((chevron || event.shiftKey) && sheet.others(at, card(at))) return
+    sheet.pick(at)
+  }
+
+  /** Enter makes the card that stands; with Shift, its other forms where it has any. */
+  function enter(shift: boolean) {
+    if (!(shift && sheet.others(sheet.at, card(sheet.at)))) sheet.pick()
+  }
+
   function onKeydown(event: KeyboardEvent) {
     const by = STEPS[steppedKey(event.key)]
 
     if (by !== undefined) sheet.step(by)
     else if (event.key === 'Home') sheet.standOn(0)
     else if (event.key === 'End') sheet.standOn(sheet.kinds.length - 1)
-    else if (event.key === 'Enter' || event.key === ' ') sheet.pick()
-    else if (event.altKey || event.metaKey || !sheet.pickLetter(event.key)) return
+    else if (event.key === 'Enter' || event.key === ' ') enter(event.shiftKey)
+    else if (event.altKey || event.metaKey || !sheet.pickLetter(event.key, event.shiftKey, card))
+      return
 
     // Spent here: the app reads its own keys off the window, and Ctrl+N or Ctrl+W
     // there would be a second thing done behind the dialog.
@@ -97,7 +115,7 @@
         on={index === sheet.at}
         letter={one.letter}
         data-lands={index === sheet.at ? '' : undefined}
-        onclick={() => sheet.pick(index)}
+        onclick={(event: MouseEvent) => choose(event, index)}
         onfocus={() => sheet.standOn(index)}
         onpointermove={(event: PointerEvent) => onMove(event, index)}
       />

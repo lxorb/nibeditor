@@ -11,6 +11,8 @@
  *  Which matters most where the crate is never asked anything: a page in a browser
  *  answers the same commands out of its own storage, and there this module and the
  *  ten kilobytes of IPC behind it are not fetched at all. See tauri.ts, which is the
- *  only caller, and web/commands.ts, which is the other half of the same `invoke`. */
+ *  only caller, and web/commands.ts, which is the other half of the same `invoke`. The
+ *  one other thing taken from here is the channel a terminal's output streams down,
+ *  and only by the terminal, which only a desktop has; see terminal/sessions.svelte.ts. */
 
-export { invoke } from '@tauri-apps/api/core'
+export { Channel, invoke } from '@tauri-apps/api/core'

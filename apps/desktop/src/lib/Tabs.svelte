@@ -6,7 +6,6 @@
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { menu, type MenuEntry } from './menu.svelte'
-  import { showNewKinds } from './new-kinds'
   import { middleOpens, tabAsk } from './new-tab'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
@@ -94,8 +93,13 @@
   /** A held finger is the right click a touch screen has, and the menu key is the one
    *  a keyboard has: all three ask for the same list, at the plus. What the list holds
    *  is new-kinds.ts - one list for the plus, the Ctrl+T dialog and the buttons an
-   *  empty pane shows. */
-  const showNewMenu = (event: MouseEvent) => showNewKinds(event, paneId)
+   *  empty pane shows - fetched like the tab's own menu above, and already here by the
+   *  first press: the dialog brings it as the launch ends. */
+  function showNewMenu(event: MouseEvent) {
+    event.preventDefault()
+    event.stopPropagation()
+    void import('./new-kinds').then(({ showNewKinds }) => showNewKinds(event, paneId))
+  }
 
   /** The dot says one of three things, and says it in words to a reader who
    *  cannot see it. A note in a space wears no dot at all: nothing about it is

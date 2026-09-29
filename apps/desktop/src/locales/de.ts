@@ -1576,4 +1576,17 @@ export const de: Dictionary = {
   'That file is larger than a note can keep.':
     'Diese Datei ist größer, als eine Notiz behalten kann.',
   'That file could not be kept.': 'Diese Datei konnte nicht gespeichert werden.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Neues Terminal',
+  'Command Prompt': 'Eingabeaufforderung',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Noch eins öffnen',
+  'Open in terminal': 'Im Terminal öffnen',
+  Clear: 'Leeren',
+  'Exited with code {code}': 'Beendet mit Code {code}',
+  'Could not start {shell}': '{shell} konnte nicht gestartet werden',
+  'Stop what is running in {name}?': 'Beenden, was in {name} läuft?',
+  'Stop what is running in these terminals?': 'Beenden, was in diesen Terminals läuft?',
+  'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
 }

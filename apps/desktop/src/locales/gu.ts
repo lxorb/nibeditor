@@ -1525,4 +1525,17 @@ export const gu: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'નવું ટર્મિનલ',
+  'Command Prompt': 'કમાન્ડ પ્રોમ્પ્ટ',
+  Terminal: 'ટર્મિનલ',
+  Shell: 'શેલ',
+  'Open another': 'બીજું ખોલો',
+  'Open in terminal': 'ટર્મિનલમાં ખોલો',
+  Clear: 'સાફ કરો',
+  'Exited with code {code}': 'કોડ {code} સાથે બંધ થયું',
+  'Could not start {shell}': '{shell} શરૂ કરી શકાયું નહીં',
+  'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
+  'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
+  'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
 }

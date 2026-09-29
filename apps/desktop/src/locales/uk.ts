@@ -1595,4 +1595,22 @@ export const uk: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Новий термінал',
+  'Command Prompt': 'Командний рядок',
+  Terminal: 'Термінал',
+  Shell: 'Оболонка',
+  'Open another': 'Відкрити ще один',
+  'Open in terminal': 'Відкрити в терміналі',
+  Clear: 'Очистити',
+  'Exited with code {code}': 'Завершено з кодом {code}',
+  'Could not start {shell}': 'Не вдалося запустити {shell}',
+  'Stop what is running in {name}?': 'Зупинити те, що виконується в {name}?',
+  'Stop what is running in these terminals?': 'Зупинити те, що виконується в цих терміналах?',
+  'Paste {count} lines?': {
+    one: 'Вставити {count} рядок?',
+    few: 'Вставити {count} рядки?',
+    many: 'Вставити {count} рядків?',
+    other: 'Вставити {count} рядка?',
+  },
 }

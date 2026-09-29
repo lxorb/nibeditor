@@ -1521,4 +1521,17 @@ export const my: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'တာမင်နယ် အသစ်',
+  'Command Prompt': 'Command Prompt',
+  Terminal: 'တာမင်နယ်',
+  Shell: 'Shell',
+  'Open another': 'နောက်တစ်ခု ဖွင့်ရန်',
+  'Open in terminal': 'တာမင်နယ်တွင် ဖွင့်ရန်',
+  Clear: 'ရှင်းလင်းရန်',
+  'Exited with code {code}': 'ကုဒ် {code} ဖြင့် ပြီးဆုံးသည်',
+  'Could not start {shell}': '{shell} ကို စတင်၍ မရပါ',
+  'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
+  'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
+  'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
 }

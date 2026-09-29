@@ -1532,4 +1532,17 @@ export const ms: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Terminal baharu',
+  'Command Prompt': 'Command Prompt',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Buka satu lagi',
+  'Open in terminal': 'Buka dalam terminal',
+  Clear: 'Kosongkan',
+  'Exited with code {code}': 'Tamat dengan kod {code}',
+  'Could not start {shell}': 'Tidak dapat memulakan {shell}',
+  'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
+  'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',
+  'Paste {count} lines?': 'Tampal {count} baris?',
 }

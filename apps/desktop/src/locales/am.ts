@@ -1514,4 +1514,17 @@ export const am: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'አዲስ ተርሚናል',
+  'Command Prompt': 'የትዕዛዝ መስመር',
+  Terminal: 'ተርሚናል',
+  Shell: 'ሼል',
+  'Open another': 'ሌላ ክፈት',
+  'Open in terminal': 'በተርሚናል ክፈት',
+  Clear: 'አጽዳ',
+  'Exited with code {code}': 'በኮድ {code} ተጠናቋል',
+  'Could not start {shell}': '{shell}ን ማስጀመር አልተቻለም',
+  'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
+  'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
+  'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
 }

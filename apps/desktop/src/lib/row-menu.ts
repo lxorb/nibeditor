@@ -97,6 +97,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
       run: () => void workspace.duplicate(entry.path),
     },
     ...revealEntry(entry),
+    ...terminalEntry(entry),
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
     ...undoEntry(),
@@ -263,6 +264,24 @@ function revealEntry(entry: Entry): MenuEntry[] {
   if (!isDesktop) return []
   const label = platform() === 'macos' ? t('Reveal in Finder') : t('Show in folder')
   return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
+}
+
+/** A terminal in the row's folder - or the folder a file is in - which is VS Code's
+ *  Open in Integrated Terminal and Explorer's Open in Terminal. A desktop's alone, like
+ *  every terminal; see docs/terminal.md. */
+function terminalEntry(entry: Entry): MenuEntry[] {
+  if (!isDesktop) return []
+
+  const folder = entry.is_dir ? entry.path : folderOf(entry.path)
+  return [
+    {
+      label: t('Open in terminal'),
+      run: () =>
+        void import('./terminal/open').then(({ openTerminal }) =>
+          openTerminal(undefined, { folder }),
+        ),
+    },
+  ]
 }
 
 /** Only offered once there is something to take back. */

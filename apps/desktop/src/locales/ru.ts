@@ -1600,4 +1600,22 @@ export const ru: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Новый терминал',
+  'Command Prompt': 'Командная строка',
+  Terminal: 'Терминал',
+  Shell: 'Оболочка',
+  'Open another': 'Открыть ещё один',
+  'Open in terminal': 'Открыть в терминале',
+  Clear: 'Очистить',
+  'Exited with code {code}': 'Завершено с кодом {code}',
+  'Could not start {shell}': 'Не удалось запустить {shell}',
+  'Stop what is running in {name}?': 'Остановить то, что выполняется в {name}?',
+  'Stop what is running in these terminals?': 'Остановить то, что выполняется в этих терминалах?',
+  'Paste {count} lines?': {
+    one: 'Вставить {count} строку?',
+    few: 'Вставить {count} строки?',
+    many: 'Вставить {count} строк?',
+    other: 'Вставить {count} строки?',
+  },
 }

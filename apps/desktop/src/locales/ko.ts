@@ -1511,4 +1511,17 @@ export const ko: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': '새 터미널',
+  'Command Prompt': '명령 프롬프트',
+  Terminal: '터미널',
+  Shell: '셸',
+  'Open another': '하나 더 열기',
+  'Open in terminal': '터미널에서 열기',
+  Clear: '지우기',
+  'Exited with code {code}': '코드 {code}(으)로 종료됨',
+  'Could not start {shell}': '{shell}을(를) 시작할 수 없음',
+  'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
+  'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
+  'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
 }

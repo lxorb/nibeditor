@@ -1553,4 +1553,17 @@ export const ml: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'പുതിയ ടെർമിനൽ',
+  'Command Prompt': 'കമാൻഡ് പ്രോംപ്റ്റ്',
+  Terminal: 'ടെർമിനൽ',
+  Shell: 'ഷെൽ',
+  'Open another': 'മറ്റൊന്ന് തുറക്കുക',
+  'Open in terminal': 'ടെർമിനലിൽ തുറക്കുക',
+  Clear: 'മായ്ക്കുക',
+  'Exited with code {code}': 'കോഡ് {code} ഉപയോഗിച്ച് അവസാനിച്ചു',
+  'Could not start {shell}': '{shell} ആരംഭിക്കാനായില്ല',
+  'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
+  'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
+  'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
 }

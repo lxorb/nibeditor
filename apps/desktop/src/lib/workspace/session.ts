@@ -140,7 +140,7 @@ function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'pages', 'web']
+const TAB_KINDS: readonly TabKind[] = ['note', 'graph', 'pdf', 'canvas', 'pages', 'web', 'terminal']
 
 /** Which kind of tab an entry is, which is its file's name first and what the entry
  *  claims second.

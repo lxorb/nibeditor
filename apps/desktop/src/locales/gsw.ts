@@ -1544,4 +1544,17 @@ export const gsw: Dictionary = {
   'Storing the file': 'Datei wird gspeicheret',
   'That file is larger than a note can keep.': 'Die Datei isch grösser, als e Notiz cha bhalte.',
   'That file could not be kept.': 'Die Datei het nöd chöne gspeicheret werde.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Neus Terminal',
+  'Command Prompt': 'Iigabeufforderig',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'No eis ufmache',
+  'Open in terminal': 'Im Terminal ufmache',
+  Clear: 'Leere',
+  'Exited with code {code}': 'Beändet mit Code {code}',
+  'Could not start {shell}': '{shell} het nöd chöne gstartet wärde',
+  'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
+  'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
+  'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
 }

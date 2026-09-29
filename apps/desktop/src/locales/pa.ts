@@ -1539,4 +1539,17 @@ export const pa: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'ਨਵਾਂ ਟਰਮੀਨਲ',
+  'Command Prompt': 'ਕਮਾਂਡ ਪ੍ਰੋਂਪਟ',
+  Terminal: 'ਟਰਮੀਨਲ',
+  Shell: 'ਸ਼ੈੱਲ',
+  'Open another': 'ਇੱਕ ਹੋਰ ਖੋਲ੍ਹੋ',
+  'Open in terminal': 'ਟਰਮੀਨਲ ਵਿੱਚ ਖੋਲ੍ਹੋ',
+  Clear: 'ਸਾਫ਼ ਕਰੋ',
+  'Exited with code {code}': 'ਕੋਡ {code} ਨਾਲ ਬੰਦ ਹੋਇਆ',
+  'Could not start {shell}': '{shell} ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ',
+  'Stop what is running in {name}?': '{name} ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
+  'Stop what is running in these terminals?': 'ਇਹਨਾਂ ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
+  'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
 }

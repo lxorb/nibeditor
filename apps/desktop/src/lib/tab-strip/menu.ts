@@ -7,6 +7,7 @@
  *  | group | rows |
  *  | --- | --- |
  *  | the page | Reload, Copy link and Mute site, on a web tab only |
+ *  | the shell | Open another, and any other shell a chevron away, on a terminal only |
  *  | the tab | Rename, Duplicate, Pin, Show in the file list |
  *  | closing | Close, Close others, Close tabs to the right, Close all, Reopen |
  *  | the panes | Share, Stack, Split right and down, Move to other pane |
@@ -21,6 +22,8 @@ import { t } from '../i18n.svelte'
 import { DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { withinSpace } from '../space-paths'
+import { openTerminal, shellRows } from '../terminal/open'
+import { readSpec } from '../terminal/spec'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
@@ -115,6 +118,24 @@ async function muting(tabId: string): Promise<void> {
   await muteSite(tabId, !pages.of(tabId).muted)
 }
 
+/** What a terminal's tab offers about its shell: another beside it, in the folder it is
+ *  in - the same shell by the row, any other by the chevron at its end, as VS Code's
+ *  `+ ˅` has it. Duplicate is this row's, for a terminal; see `tabEntries`. */
+function shellEntries(tab: Tab): MenuEntry[] {
+  if (tab.kind !== 'terminal') return []
+
+  const spec = readSpec(tab.doc)
+  const beside = { folder: spec?.folder ?? null, beside: tab.id }
+  return [
+    {
+      label: t('Open another'),
+      run: () => void openTerminal(spec?.shell, beside),
+      more: () => shellRows((shell) => void openTerminal(shell.id, beside)),
+    },
+    DIVIDER,
+  ]
+}
+
 /** Renaming on the file's own row, and a second tab on the same thing. Each only
  *  where it can happen: a file with no row has no name to change, and the graph is
  *  one to a pane. */
@@ -129,7 +150,7 @@ function tabEntries(tab: Tab): MenuEntry[] {
           },
         ]
       : []),
-    ...(workspace.canDuplicateTab(tab)
+    ...(workspace.canDuplicateTab(tab) && tab.kind !== 'terminal'
       ? [
           {
             label: t('Duplicate'),
@@ -214,7 +235,8 @@ function closeEntries(tab: Tab): MenuEntry[] {
  *  looking at an unsaved one is pointing; the key and the menu bar say the same thing.
  *  See `save` in workspace/saving.svelte.ts. */
 function saveEntry(tab: Tab): MenuEntry[] {
-  if (tab.path !== null) return []
+  // A terminal is a session: nothing in it is a file's words.
+  if (tab.path !== null || tab.kind === 'terminal') return []
 
   return [
     {
@@ -230,6 +252,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...saveEntry(tab),
     ...readingEntry(tab),
     ...pageEntries(tab),
+    ...shellEntries(tab),
     ...tabEntries(tab),
     ...inListEntry(tab),
     DIVIDER,

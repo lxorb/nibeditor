@@ -1497,4 +1497,17 @@ export const zhHantHK: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': '新增終端機',
+  'Command Prompt': '命令提示字元',
+  Terminal: '終端機',
+  Shell: 'Shell',
+  'Open another': '再開啟一個',
+  'Open in terminal': '在終端機中開啟',
+  Clear: '清除',
+  'Exited with code {code}': '已結束，代碼 {code}',
+  'Could not start {shell}': '無法啟動 {shell}',
+  'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
+  'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
+  'Paste {count} lines?': '要貼上 {count} 行嗎？',
 }

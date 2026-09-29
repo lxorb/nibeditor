@@ -292,10 +292,13 @@ describe('what the plus in the tab strip offers', () => {
   /** Which kinds are offered is new-kinds.ts now and has its own test beside it:
    * three ways in - the plus, the Ctrl+T dialog, and the buttons a pane with nothing
    * open shows - and a list written in any one of them is a list the other two can
-   * disagree with. What is left to read here is that the plus asks the shared one. */
+   * disagree with. What is left to read here is that the plus asks the shared one,
+   * fetched with the press as the tab's own menu is, so the list is not in front of
+   * the first paint. */
   test('the kinds out of the one list, and no list of its own', () => {
-    expect(tabs).toContain("import { showNewKinds } from './new-kinds'")
+    expect(tabs).toContain("import('./new-kinds').then(({ showNewKinds })")
     expect(tabs).toContain('showNewKinds(event, paneId)')
+    expect(tabs).not.toContain("from './new-kinds'")
     expect(tabs).not.toContain("t('New canvas')")
   })
 
