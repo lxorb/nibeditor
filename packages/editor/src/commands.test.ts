@@ -135,6 +135,28 @@ describe('inline wrapping', () => {
   test('handles asymmetric markers', () => {
     expect(run(toggleWrap('<u>', '</u>'), '[x]')).toBe('<u>x</u>')
   })
+
+  /** Select All takes the line break at the end of a note, and a triple click the
+   *  one after its line, and the markers went round that too: `**word` on one line
+   *  and `**` on the next, which Markdown reads as two runs of stars and nothing
+   *  bold. The space and the break at either edge stay outside, as Obsidian and
+   *  Typora leave them. */
+  test('leaves the space and the line break at either edge outside the markers', () => {
+    expect(run(strong, '[word\n]')).toBe('**word**\n')
+    expect(run(strong, 'a[ word ]b')).toBe('a **word** b')
+  })
+
+  test('and takes the markers off again over the same selection', () => {
+    expect(run(strong, '[**word**\n]')).toBe('word\n')
+  })
+
+  test('and keeps what was selected selected, inside the markers', () => {
+    expect(runSelection(strong, '[word\n]')).toEqual([2, 6])
+  })
+
+  test('but a selection of nothing but space is wrapped as it is', () => {
+    expect(run(strong, 'a[ ]b')).toBe('a** **b')
+  })
 })
 
 describe('headings', () => {
