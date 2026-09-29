@@ -1222,6 +1222,10 @@ export const ta: Dictionary = {
   'this one': 'இது',
   End: 'முடி',
   'End every other session': 'மற்ற எல்லா அமர்வுகளையும் முடி',
+  'Delete account': 'கணக்கை நீக்கு',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'இந்தச் சாதனத்திலுள்ள குறிப்புகள் இருக்கும்; கணக்கும் அதன் ஒத்திசைத்த நகல்களும் மட்டுமே போகும்.',
+  'Also gone for everyone in {spaces}.': '{spaces} இல் உள்ள அனைவருக்கும் இதுவும் போகும்.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'குறிப்பு',
   '{space} panel': '{space} பலகம்',

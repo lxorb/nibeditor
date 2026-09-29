@@ -1290,6 +1290,10 @@ export const ar: Dictionary = {
   'this one': 'هذا',
   End: 'إنهاء',
   'End every other session': 'إنهاء كل الجلسات الأخرى',
+  'Delete account': 'حذف الحساب',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'تبقى الملاحظات على هذا الجهاز؛ يُحذف الحساب ونسخه المتزامنة فقط.',
+  'Also gone for everyone in {spaces}.': 'ويختفي أيضًا لدى كل من في {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'الملاحظة',
   '{space} panel': 'لوحة {space}',

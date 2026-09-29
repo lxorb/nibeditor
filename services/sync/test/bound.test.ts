@@ -146,3 +146,42 @@ test('purging a space of many notes', async () => {
   await purgeExpired(env, Date.now())
   withinTheLimit()
 })
+
+test('deleting an account of many spaces, notes and pictures', async () => {
+  const spaces = fillRail(150)
+
+  for (let at = 0; at < 600; at++) {
+    const id = `note-${at}`
+    const space = spaces[at % spaces.length] ?? ''
+    env.db
+      .prepare(
+        `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
+         values (?, ?, ?, ?, 1, ?, 0, 1, 'h')`,
+      )
+      .run(id, space, `${at}.md`, at + 100, Date.now())
+    await env.NOTES.put(`spaces/${space}/${id}`, 'x')
+    env.db
+      .prepare(
+        `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 1, 'image/png', 1)`,
+      )
+      .run(at.toString(16).padStart(64, '0'), user)
+  }
+
+  const { mail } = await import('./harness')
+  const sent = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
+  const code = /(\d{3}) (\d{3})/.exec(sent)
+  const verified = await call<{ ticket: string }>(env, '/v1/account/delete/verify', {
+    token,
+    body: { code: `${code?.[1] ?? ''}${code?.[2] ?? ''}` },
+  })
+  const gone = await call(env, '/v1/account', {
+    method: 'DELETE',
+    token,
+    body: { ticket: verified.json.ticket },
+  })
+
+  expect(gone.status).toBe(200)
+  withinTheLimit()
+  // More than one sweep's worth, so what is left waits for the nightly job.
+  expect(env.db.prepare('select count(*) as many from leftovers').get()).not.toEqual({ many: 0 })
+})

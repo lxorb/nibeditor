@@ -1203,6 +1203,10 @@ export const bn: Dictionary = {
   'this one': 'এটি',
   End: 'শেষ করুন',
   'End every other session': 'বাকি সব সেশন শেষ করুন',
+  'Delete account': 'অ্যাকাউন্ট মুছুন',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'এই ডিভাইসের নোটগুলো থেকে যাবে; শুধু অ্যাকাউন্ট আর তার সিঙ্ক করা কপিগুলো যাবে।',
+  'Also gone for everyone in {spaces}.': '{spaces}-এর সবার জন্যও মুছে যাবে।',
   // Said and not shown: what a reader is told about a surface
   'The note': 'নোট',
   '{space} panel': '{space} প্যানেল',

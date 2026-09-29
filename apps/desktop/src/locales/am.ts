@@ -1188,6 +1188,10 @@ export const am: Dictionary = {
   'this one': 'ይህ',
   End: 'አብቃ',
   'End every other session': 'ሌሎቹን ክፍለ ጊዜዎች ሁሉ አብቃ',
+  'Delete account': 'መዝገብ አጥፋ',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'በዚህ መሣሪያ ላይ ያሉ ማስታወሻዎች ይቆያሉ፤ መዝገቡ እና የተመሳሰሉ ቅጂዎቹ ብቻ ይጠፋሉ።',
+  'Also gone for everyone in {spaces}.': 'በ{spaces} ውስጥ ላሉ ሁሉም ይጠፋል።',
   // Said and not shown: what a reader is told about a surface
   'The note': 'ማስታወሻው',
   '{space} panel': 'የ{space} ሰሌዳ',

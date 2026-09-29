@@ -1208,6 +1208,10 @@ export const pa: Dictionary = {
   'this one': 'ਇਹ',
   End: 'ਮੁਕਾਓ',
   'End every other session': 'ਬਾਕੀ ਸਾਰੇ ਸੈਸ਼ਨ ਮੁਕਾਓ',
+  'Delete account': 'ਖਾਤਾ ਮਿਟਾਓ',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'ਇਸ ਡਿਵਾਈਸ ਦੇ ਨੋਟ ਰਹਿਣਗੇ; ਸਿਰਫ਼ ਖਾਤਾ ਅਤੇ ਉਸ ਦੀਆਂ ਸਿੰਕ ਕੀਤੀਆਂ ਕਾਪੀਆਂ ਜਾਣਗੀਆਂ।',
+  'Also gone for everyone in {spaces}.': '{spaces} ਵਿੱਚ ਸਾਰਿਆਂ ਲਈ ਵੀ ਜਾਵੇਗਾ।',
   // Said and not shown: what a reader is told about a surface
   'The note': 'ਨੋਟ',
   '{space} panel': '{space} ਪੈਨਲ',

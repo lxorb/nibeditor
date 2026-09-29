@@ -1205,6 +1205,10 @@ export const ps: Dictionary = {
   'this one': 'همدا',
   End: 'پای',
   'End every other session': 'ټولې نورې ناستې پای ته رسول',
+  'Delete account': 'حساب ړنګول',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'په دې وسیله کې یادښتونه پاتې کېږي؛ یوازې حساب او د هغه همغږي شوې کاپي ګانې ځي.',
+  'Also gone for everyone in {spaces}.': 'په {spaces} کې د ټولو لپاره هم ځي.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'يادښت',
   '{space} panel': 'د {space} تخته',

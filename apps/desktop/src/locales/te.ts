@@ -1207,6 +1207,10 @@ export const te: Dictionary = {
   'this one': 'ఇది',
   End: 'ముగించు',
   'End every other session': 'ఇతర సెషన్‌లన్నీ ముగించు',
+  'Delete account': 'ఖాతాను తొలగించు',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'ఈ పరికరంలోని నోట్‌లు ఉంటాయి; ఖాతా, దాని సింక్ చేసిన కాపీలు మాత్రమే పోతాయి.',
+  'Also gone for everyone in {spaces}.': '{spaces}లోని అందరికీ కూడా పోతుంది.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'నోట్',
   '{space} panel': '{space} ప్యానెల్',

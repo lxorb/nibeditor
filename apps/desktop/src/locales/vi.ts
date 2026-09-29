@@ -1187,6 +1187,10 @@ export const vi: Dictionary = {
   'this one': 'máy này',
   End: 'Kết thúc',
   'End every other session': 'Kết thúc mọi phiên khác',
+  'Delete account': 'Xoá tài khoản',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Ghi chú trên thiết bị này vẫn còn; chỉ tài khoản và các bản sao đã đồng bộ mất đi.',
+  'Also gone for everyone in {spaces}.': 'Cũng mất đi với mọi người trong {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Ghi chú',
   '{space} panel': 'Bảng của {space}',

@@ -2127,3 +2127,84 @@ describe('ending a session', () => {
     expect(door.asked[0]?.get('x-nib-revoked')).toBe(who)
   })
 })
+
+/** An account deleted while its files, or somebody else's, are open. The rows that
+ *  let every one of those sockets in are gone, and a socket is not a request: the
+ *  rooms are told, and a room of the account's own keeps nothing of the file. */
+describe('an account deleted while files are open', () => {
+  let env: TestEnv
+  let live: ReturnType<typeof running>
+
+  beforeEach(() => {
+    env = testEnv()
+    live = running(env)
+    env.ROOMS = live.ROOMS
+  })
+
+  afterEach(() => env.close())
+
+  async function idOf(token: string): Promise<string> {
+    return (await call(env, '/v1/me', { token })).json.user.id
+  }
+
+  /** A space of this account's, with one note, and whose room it is. */
+  async function noteOf(token: string, name: string): Promise<{ spaceId: string; id: string }> {
+    const spaceId = (await call(env, '/v1/spaces', { token, body: { name } })).json.space.id
+    const id = (
+      await call(env, `/v1/spaces/${spaceId}/notes`, {
+        token,
+        body: { path: 'together.md', content: OPENING },
+      })
+    ).json.note.id
+    return { spaceId, id }
+  }
+
+  /** The three steps, the codes read out of the mail. */
+  async function deleteAccount(token: string): Promise<number> {
+    const { mail } = await import('./harness')
+    const sent = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
+    const code = /(\d{3}) (\d{3})/.exec(sent)
+    const verified = await call<{ ticket: string }>(env, '/v1/account/delete/verify', {
+      token,
+      body: { code: `${code?.[1] ?? ''}${code?.[2] ?? ''}` },
+    })
+    const gone = await call(env, '/v1/account', {
+      method: 'DELETE',
+      token,
+      body: { ticket: verified.json.ticket },
+    })
+    return gone.status
+  }
+
+  test('its own rooms close on everybody and forget the file', async () => {
+    const leaving = await signIn(env, 'leaving@example.com')
+    const note = await noteOf(leaving, 'Mine')
+
+    const { room: made, state } = live.of(note.id)
+    const socket = await join(made, { ...note, who: 'somebody-else' })
+    expect(state.kept.size).toBeGreaterThan(0)
+
+    expect(await deleteAccount(leaving)).toBe(200)
+
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(state.kept.size).toBe(0)
+    expect(state.takeAlarm()).toBeNull()
+  })
+
+  test('and its sockets in somebody else’s room close, and nobody else’s', async () => {
+    const staying = await signIn(env, 'staying@example.com')
+    const leaving = await signIn(env, 'leaving@example.com')
+    const note = await noteOf(staying, 'Theirs')
+
+    const { room: made, state } = live.of(note.id)
+    const theirs = await join(made, { ...note, who: await idOf(staying) })
+    const mine = await join(made, { ...note, who: await idOf(leaving) })
+
+    expect(await deleteAccount(leaving)).toBe(200)
+
+    expect(mine.closed).toBe(true)
+    expect(theirs.closed).toBe(false)
+    expect(state.kept.size).toBeGreaterThan(0)
+  })
+})

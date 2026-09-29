@@ -1194,6 +1194,10 @@ export const ms: Dictionary = {
   'this one': 'yang ini',
   End: 'Tamatkan',
   'End every other session': 'Tamatkan semua sesi lain',
+  'Delete account': 'Hapuskan akaun',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Nota pada peranti ini kekal; hanya akaun dan salinan yang disegerakkan akan hilang.',
+  'Also gone for everyone in {spaces}.': 'Juga hilang bagi semua orang dalam {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Nota',
   '{space} panel': 'Panel {space}',

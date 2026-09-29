@@ -1184,6 +1184,10 @@ export const ko: Dictionary = {
   'this one': '이 기기',
   End: '종료',
   'End every other session': '다른 모든 세션 종료',
+  'Delete account': '계정 삭제',
+  'Notes on this device stay; only the account and its synced copies go.':
+    '이 기기의 노트는 남고, 계정과 동기화된 사본만 사라집니다.',
+  'Also gone for everyone in {spaces}.': '{spaces}의 모든 사람에게서도 사라집니다.',
   // Said and not shown: what a reader is told about a surface
   'The note': '노트',
   '{space} panel': '{space} 패널',

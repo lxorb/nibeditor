@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { SIGN_IN } from './refused'
 import { cors } from 'hono/cors'
+import { account } from './account'
 import { ask } from './ask'
 import { accountById, auth, presentUser, requireWhoever, sessions } from './auth'
 import { readBody } from './body'
@@ -11,6 +12,7 @@ import { failed } from './failed'
 import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
 import { fillFronts } from './blog/fill'
+import { sweepLeftovers } from './leftovers'
 import { forgetHalfDone, second } from './second'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
@@ -213,6 +215,9 @@ app.route('/v1/mcp', mcpAdmin)
 // everything about the account is; see auth.ts and second.ts.
 app.route('/v1/sessions', sessions)
 app.route('/v1/second', second)
+// Deleting the account, which takes fresh codes and not only the session; see
+// account.ts.
+app.route('/v1/account', account)
 app.route('/v1', notes)
 
 app.get('/health', (context) => context.json({ ok: true }))
@@ -282,8 +287,8 @@ function unframed(response: Response): Response {
  *  What has waited its 14 days in Recently deleted goes, and so does everything
  *  else here that nothing else would ever take away - a guest nobody let in, a
  *  request nobody answered, a client that registered and never came back, an
- *  enrolment nobody finished - and the proof on every domain of somebody's own is
- *  read again. Each is its own statement in its own module and none of them can
+ *  enrolment nobody finished, the bytes a deleted account left behind - and the
+ *  proof on every domain of somebody's own is read again. Each is its own statement in its own module and none of them can
  *  fail another, which is why they are a call each rather than one. */
 function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
@@ -295,6 +300,9 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
   context.waitUntil(forgetHalfDone(env, at))
+  // And what a deleted account left in the bucket and the rooms that the request
+  // deleting it did not get to; see leftovers.ts.
+  context.waitUntil(sweepLeftovers(env))
   // And what the notes written before publishing could read them say about
   // themselves, two hundred at a time; see blog/fill.ts.
   context.waitUntil(fillFronts(env, null))

@@ -342,6 +342,55 @@ every room of that account rather than of that session, because a room writes it
 down by who and not by which session, so the account's other devices are closed with
 it and rejoin at once.
 
+## Deleting the account
+
+`Settings > Account > Delete account`. The notes on the device stay where they are:
+what goes is the account and its synced copies, and the app is signed out the way
+Sign out signs it out.
+
+**A session is not enough.** It is the credential most likely to be in the wrong
+hands, so pressing the row mails a fresh code to the account's own address, and an
+account with a second factor is asked for that code as well - the same code, the
+same ceilings and the same second step a sign-in has (`checkCode` in `auth.ts`,
+`accepted` in `second.ts`). The codes earn a ticket good for five minutes, and the
+last question is asked after them, so a mistyped code is said before anybody has
+confirmed anything. Ten asks an hour per account on top of the ceilings the codes
+already carry. Neither a guest nor a program token reaches any of it. See
+`services/sync/src/account.ts`.
+
+**What goes** is everything the account owns, in one D1 batch, so a failure
+leaves the account exactly as it was: its spaces and every row inside them (notes,
+versions, Recently deleted, shares, links, requests, guests let in, the published
+site and its old paths, form answers), its sessions and tokens, its second factor,
+its settings, and the codes, mail records and ceilings kept at its address. Its
+memberships in other people's spaces end and those spaces stay. `ERASED` in
+`services/sync/src/erase.ts` is the list, and `test/erase.test.ts` fails for any
+table in the schema that is neither on it nor named as holding nothing of an
+account.
+
+**What stays** is everybody else's. A picture or a version whose bytes another
+account or another note still names keeps them. A picture the account put into a
+space that stays - a writer pasting into somebody else's note - is handed to that
+space's owner, found by reading that space's files and notes for it; a picture put
+into a space the account had already been taken out of cannot be found that way,
+because nothing records who wrote what.
+
+**Outside the database** are the note bodies, the versions, the pictures and the
+rooms' own copies of their documents. The batch writes their names into
+`leftovers` in the same transaction, and they are emptied from that list: as much
+as one request goes right away, and the nightly job carries on from wherever it
+stopped. A domain of the account's own has its certificate released once its row
+is gone, and every open socket the rows let in is closed.
+
+The last question names the account's own spaces that other people are in, because
+they go for those people too. Afterwards a receipt goes to the address - the proof a
+person who asked keeps, and the alarm for one who did not - and the address is free:
+signing in with it is a new account. The account's other devices find their session
+gone the way a device whose session was ended from `Account` does, and are signed out
+at their next launch. There is no grace period, deliberately: the notes are files on
+every device that had them, which is the copy the Notion and Google windows exist to
+protect.
+
 ## Syncing without the app
 
 A repository of notes that publishes or mirrors from CI needs what the app needs

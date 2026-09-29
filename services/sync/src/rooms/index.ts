@@ -18,6 +18,7 @@
 import { Hono } from 'hono'
 import { NO_SUCH_NOTE, SIGN_IN } from '../refused'
 import { subprotocol, tokenOf } from '@nib/rooms'
+import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
 import type { Env } from '../types'
@@ -289,28 +290,78 @@ export async function roomsRevoked(
 
     if (!results.length) return
 
+    // A room that cannot be reached right now leaves a socket open on something
+    // that is no longer true, which the next handshake corrects. The membership is
+    // already gone either way, and an owner taking somebody out must not fail
+    // because an object is unwell.
     await Promise.all(
-      results.map(async ({ note_id: noteId }) => {
-        const room = namespace.get(namespace.idFromName(noteId))
-
-        try {
-          await room.fetch(
-            new Request(`https://rooms.invalid/${noteId}`, {
-              headers: { 'x-nib-revoked': who, 'x-nib-role': role },
-            }),
-          )
-        } catch {
-          // A room that cannot be reached right now leaves a socket open on
-          // something that is no longer true, which the next handshake corrects.
-          // The membership is already gone either way, and an owner taking
-          // somebody out must not fail because an object is unwell.
-        }
-      }),
+      results.map(({ note_id: noteId }) =>
+        tell(namespace, noteId, { 'x-nib-revoked': who, 'x-nib-role': role }),
+      ),
     )
 
     if (results.length < MOST_OPEN) return
     after = results[results.length - 1]?.note_id ?? ''
   }
+}
+
+/** One room told one thing, answering whether it heard. Never a throw: every
+ *  caller has already changed the rows the message is about, and an object being
+ *  unwell for a moment is not a reason for that change to fail. */
+async function tell(
+  namespace: DurableObjectNamespace,
+  noteId: string,
+  headers: Record<string, string>,
+): Promise<boolean> {
+  try {
+    const room = namespace.get(namespace.idFromName(noteId))
+    const answer = await room.fetch(new Request(`https://rooms.invalid/${noteId}`, { headers }))
+    return answer.ok
+  } catch {
+    return false
+  }
+}
+
+/** Sockets whose way in went with an account: its own on any file, and everybody's
+ *  on its files. Read before the rows went, because afterwards nothing says which
+ *  rooms they are in; see erase.ts. The account's own files are emptied as well,
+ *  which closes everything in them - this is the half that cannot wait for that. */
+export async function closeRooms(
+  env: Env,
+  open: readonly { note_id: string; who: string }[],
+): Promise<void> {
+  const namespace = env.ROOMS
+  if (!namespace) return
+
+  for (const round of chunks(open, MOST_OPEN)) {
+    await Promise.all(
+      round.map((one) =>
+        tell(namespace, one.note_id, { 'x-nib-revoked': one.who, 'x-nib-role': 'none' }),
+      ),
+    )
+  }
+}
+
+/** The rooms of files that have gone for good, emptied: every socket closed and
+ *  the document the object kept of its own taken away. A room keeps its document
+ *  for as long as the file does, and the file has stopped.
+ *
+ *  Answers the ids whose rooms are empty now, so the list they came from keeps the
+ *  rest for another go. Without the namespace there are no rooms, and every one of
+ *  them is as empty as it will ever be. */
+export async function eraseRooms(env: Env, noteIds: readonly string[]): Promise<string[]> {
+  const namespace = env.ROOMS
+  if (!namespace) return [...noteIds]
+
+  const emptied: string[] = []
+  for (const round of chunks(noteIds, MOST_OPEN)) {
+    const heard = await Promise.all(
+      round.map((noteId) => tell(namespace, noteId, { 'x-nib-erase': 'yes' })),
+    )
+    emptied.push(...round.filter((_, at) => heard[at]))
+  }
+
+  return emptied
 }
 
 /** How many of somebody's spaces one sign-out reaches. Well past how many spaces

@@ -193,11 +193,14 @@ export async function claimWhatWasGuested(
  *  written straight into the route.
  *
  *  `machine` is where the request came from, for the ceiling on how much mail
- *  one of them may cause; see limits.ts. */
+ *  one of them may cause; see limits.ts. `message` is what the mail says around
+ *  the code: the same code proves an address whatever it is for, and deleting
+ *  an account says so in its own words; see account.ts. */
 export async function sendCode(
   env: Env,
   address: string,
   machine: string | null = null,
+  message: (code: string) => { subject: string; text: string; html: string } = codeMessage,
 ): Promise<
   | { ok: true; resendIn: number }
   | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
@@ -243,9 +246,9 @@ export async function sendCode(
     .bind(address, await sha256(salt + code), salt, now() + CODE_TTL, now())
     .run()
 
-  const message = codeMessage(code)
+  const said = message(code)
 
-  if (!(await mailer(env).send(address, message.subject, message))) {
+  if (!(await mailer(env).send(address, said.subject, said))) {
     // The code itself stands. The message may well have gone out and only its
     // answer been lost, and somebody holding a code that no longer works is
     // worse off than somebody who had to ask twice.
@@ -274,6 +277,26 @@ export async function verifyCode(
   code: string,
   accepted: string | undefined,
 ): Promise<{ user: User } | { error: string; status: 400 | 429 }> {
+  const checked = await checkCode(env, address, code)
+  if ('error' in checked) return checked
+
+  await spendCode(env, address)
+
+  return { user: await accountFor(env, address, accepted) }
+}
+
+/** Whether a code is the one this address was last sent, without spending it.
+ *
+ *  Apart from the sign-in because deleting an account asks the same question and
+ *  then another: a code proved together with a second factor is spent only once
+ *  both have worked, the way a sign-in keeps its emailed half through a mistyped
+ *  second code. Every ceiling on guessing is here, so both callers are held to
+ *  the same ones. */
+export async function checkCode(
+  env: Env,
+  address: string,
+  code: string,
+): Promise<{ ok: true } | { error: string; status: 400 | 429 }> {
   const entered = code.replace(/\D/g, '')
 
   if (!isEmail(address) || entered.length !== 6) {
@@ -308,9 +331,15 @@ export async function verifyCode(
     return { error: WRONG_CODE, status: 400 }
   }
 
-  await env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
+  return { ok: true }
+}
 
-  return { user: await accountFor(env, address, accepted) }
+/** The code this address was sent, spent: one that has worked does not work
+ *  again. Answers whether this call was the one that spent it, so that two
+ *  requests holding the same code cannot both go on to act on it. */
+export async function spendCode(env: Env, address: string): Promise<boolean> {
+  const spent = await env.DB.prepare('delete from login_codes where email = ?').bind(address).run()
+  return !!spent.meta.changes
 }
 
 export const auth = new Hono<{ Bindings: Env; Variables: Variables }>()

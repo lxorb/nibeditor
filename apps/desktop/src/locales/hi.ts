@@ -1201,6 +1201,10 @@ export const hi: Dictionary = {
   'this one': 'यही',
   End: 'खत्म करें',
   'End every other session': 'बाकी सभी सत्र खत्म करें',
+  'Delete account': 'खाता हटाएँ',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'इस डिवाइस के नोट बने रहेंगे; सिर्फ़ खाता और उसकी सिंक की गई प्रतियाँ हटेंगी।',
+  'Also gone for everyone in {spaces}.': '{spaces} में सभी के लिए भी हट जाएगा।',
   // Said and not shown: what a reader is told about a surface
   'The note': 'नोट',
   '{space} panel': '{space} का पैनल',

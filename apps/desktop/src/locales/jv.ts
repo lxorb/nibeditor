@@ -1191,6 +1191,10 @@ export const jv: Dictionary = {
   'this one': 'sing iki',
   End: 'Pungkasi',
   'End every other session': 'Pungkasi kabeh sesi liya',
+  'Delete account': 'Busak akun',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Cathetan ing piranti iki tetep ana; mung akun lan salinan sing disinkronake sing ilang.',
+  'Also gone for everyone in {spaces}.': 'Uga ilang kanggo kabeh wong ing {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Cathetan',
   '{space} panel': 'Panel {space}',

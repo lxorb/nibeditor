@@ -1196,6 +1196,10 @@ export const id: Dictionary = {
   'this one': 'yang ini',
   End: 'Akhiri',
   'End every other session': 'Akhiri semua sesi lain',
+  'Delete account': 'Hapus akun',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Catatan di perangkat ini tetap ada; hanya akun dan salinan yang disinkronkan yang hilang.',
+  'Also gone for everyone in {spaces}.': 'Juga hilang untuk semua orang di {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Catatan',
   '{space} panel': 'Panel {space}',

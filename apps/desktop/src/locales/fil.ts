@@ -1224,6 +1224,10 @@ export const fil: Dictionary = {
   'this one': 'ito',
   End: 'Tapusin',
   'End every other session': 'Tapusin lahat ng ibang session',
+  'Delete account': 'Tanggalin ang account',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Mananatili ang mga tala sa device na ito; ang account at ang mga naka-sync na kopya lang nito ang mawawala.',
+  'Also gone for everyone in {spaces}.': 'Mawawala rin para sa lahat sa {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Ang tala',
   '{space} panel': 'Panel ng {space}',

@@ -1173,6 +1173,10 @@ export const yue: Dictionary = {
   'this one': '而家呢部',
   End: '結束',
   'End every other session': '結束所有其他會話',
+  'Delete account': '刪除帳戶',
+  'Notes on this device stay; only the account and its synced copies go.':
+    '呢部裝置上嘅筆記會保留；只有帳戶同佢已同步嘅副本會冇咗。',
+  'Also gone for everyone in {spaces}.': '{spaces} 入面每個人都會冇埋。',
   // Said and not shown: what a reader is told about a surface
   'The note': '筆記',
   '{space} panel': '{space}面板',

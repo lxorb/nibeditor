@@ -1203,6 +1203,10 @@ export const mr: Dictionary = {
   'this one': 'हेच',
   End: 'संपवा',
   'End every other session': 'इतर सर्व सत्रे संपवा',
+  'Delete account': 'खाते हटवा',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'या डिव्हाइसवरील नोट्स राहतील; फक्त खाते आणि त्याच्या सिंक केलेल्या प्रती जातील.',
+  'Also gone for everyone in {spaces}.': '{spaces} मधील सर्वांसाठीही जाईल.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'नोंद',
   '{space} panel': '{space} चा पॅनेल',

@@ -459,7 +459,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
+export async function request<T>(
   path: string,
   options: { method?: string; body?: unknown; token?: string; device?: boolean } = {},
 ): Promise<T> {

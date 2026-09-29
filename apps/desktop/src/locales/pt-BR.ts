@@ -1228,6 +1228,10 @@ export const ptBR: Dictionary = {
   'this one': 'este',
   End: 'Encerrar',
   'End every other session': 'Encerrar as outras sessões',
+  'Delete account': 'Excluir conta',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'As notas deste dispositivo ficam; só a conta e as cópias sincronizadas dela vão embora.',
+  'Also gone for everyone in {spaces}.': 'Também some para todos em {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'A nota',
   '{space} panel': 'Painel de {space}',

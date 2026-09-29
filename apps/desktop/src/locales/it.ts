@@ -1244,6 +1244,10 @@ export const it: Dictionary = {
   'this one': 'questo',
   End: 'Termina',
   'End every other session': 'Termina tutte le altre sessioni',
+  'Delete account': 'Elimina l’account',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Le note su questo dispositivo restano; se ne vanno solo l’account e le sue copie sincronizzate.',
+  'Also gone for everyone in {spaces}.': 'Sparisce anche per tutti in {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'La nota',
   '{space} panel': 'Pannello di {space}',

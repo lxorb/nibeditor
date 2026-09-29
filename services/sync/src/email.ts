@@ -155,16 +155,57 @@ export function mailer(env: Env): Mailer {
   return cloudflare(env.EMAIL, env.MAIL_FROM)
 }
 
-export function codeMessage(code: string) {
+/** A code in a message: what it is for, the six digits, and what to do about one
+ *  nobody asked for. */
+function codeMail(code: string, subject: string, what: string, unasked: string) {
   const spaced = `${code.slice(0, 3)} ${code.slice(3)}`
 
   return {
-    subject: `${code} is your Nib code`,
-    text: `Your sign-in code is ${spaced}. It expires in 10 minutes.\n\nIf you did not ask for it, ignore this message.`,
+    subject,
+    text: `${what} is ${spaced}. It expires in 10 minutes.\n\n${unasked}`,
     html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;color:#1a1d23">
-  <p>Your sign-in code:</p>
+  <p>${what}:</p>
   <p style="font-family:ui-monospace,monospace;font-size:30px;letter-spacing:.18em;font-weight:600">${spaced}</p>
-  <p style="color:#8a93a2">It expires in 10 minutes. If you did not ask for it, ignore this message.</p>
+  <p style="color:#8a93a2">It expires in 10 minutes. ${unasked}</p>
+</div>`,
+  }
+}
+
+export function codeMessage(code: string) {
+  return codeMail(
+    code,
+    `${code} is your Nib code`,
+    'Your sign-in code',
+    'If you did not ask for it, ignore this message.',
+  )
+}
+
+/** The code that deletes an account. Its own words, because it is the one code
+ *  somebody holding a session asks for about the account itself: one nobody at
+ *  this address asked for means a session is in somebody else's hands, and that is
+ *  worth more than "ignore this". */
+export function leavingMessage(code: string) {
+  return codeMail(
+    code,
+    `${code} deletes your Nib account`,
+    'Your code to delete your Nib account',
+    'If you did not ask for it, somebody is signed in as you: end every other session in Settings, Account.',
+  )
+}
+
+/** The receipt for a deleted account: that it happened, what it did not touch, and
+ *  what to do if it was not the person reading it. */
+export function goneMessage() {
+  const said = 'Your Nib account and everything it synced have been deleted.'
+  const stays = 'The notes on your devices are still there.'
+  const unasked = 'If you did not do this, somebody had your mailbox: secure it first.'
+
+  return {
+    subject: 'Your Nib account has been deleted',
+    text: `${said} ${stays}\n\n${unasked}`,
+    html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;color:#1a1d23">
+  <p>${said} ${stays}</p>
+  <p style="color:#8a93a2">${unasked}</p>
 </div>`,
   }
 }

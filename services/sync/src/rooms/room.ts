@@ -234,10 +234,13 @@ export class NoteRoom implements DurableObject {
     })
   }
 
-  /** Two things arrive here, and the headers say which. A device joining, which
-   *  the Worker has already decided about; or a route saying that somebody's
-   *  access to this file has ended or narrowed since it did. */
+  /** Three things arrive here, and the headers say which. A device joining, which
+   *  the Worker has already decided about; a route saying that somebody's access to
+   *  this file has ended or narrowed since it did; or the file having gone for good
+   *  with the account it belonged to. */
   async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('x-nib-erase')) return await this.erase()
+
     const revoked = request.headers.get('x-nib-revoked')
     if (revoked) return await this.revoke(revoked, request.headers.get('x-nib-role') === 'read')
 
@@ -427,6 +430,29 @@ export class NoteRoom implements DurableObject {
         .bind(this.held.noteId, who)
         .run()
     }
+
+    return new Response(null, { status: 204 })
+  }
+
+  /** The file is gone for good, and so is what this room kept of it.
+   *
+   *  A room keeps its document for as long as the file does, which until an account
+   *  could be deleted was for as long as the service ran. Everybody in it is closed
+   *  out the way a revocation closes one person, the settle that may be on the clock
+   *  is taken off it, and the storage goes. What is held in memory is let go of too:
+   *  without `held` a settle has nothing to write into, so nothing this object still
+   *  remembers can put a row or a byte back. An object that never existed answers the
+   *  same, with nothing to take away. */
+  private async erase(): Promise<Response> {
+    for (const socket of this.ctx.getWebSockets()) {
+      forget(this.awareness, announcedBy(socket), socket)
+      socket.close(1008, 'no longer in this space')
+    }
+
+    this.held = null
+    this.settleAt = null
+    await this.ctx.storage.deleteAlarm()
+    await this.ctx.storage.deleteAll()
 
     return new Response(null, { status: 204 })
   }

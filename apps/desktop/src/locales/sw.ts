@@ -1219,6 +1219,10 @@ export const sw: Dictionary = {
   'this one': 'hiki',
   End: 'Maliza',
   'End every other session': 'Maliza vipindi vingine vyote',
+  'Delete account': 'Futa akaunti',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Madokezo kwenye kifaa hiki yanabaki; akaunti na nakala zake zilizosawazishwa pekee ndizo zinaondoka.',
+  'Also gone for everyone in {spaces}.': 'Pia kinaondoka kwa kila mtu katika {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Dokezo',
   '{space} panel': 'Paneli ya {space}',

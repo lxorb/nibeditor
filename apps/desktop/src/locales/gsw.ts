@@ -1209,6 +1209,10 @@ export const gsw: Dictionary = {
   'this one': 'das da',
   End: 'Beände',
   'End every other session': 'Alli anderi Sitzige beände',
+  'Delete account': 'Konto lösche',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'D Notize uf däm Grät bliibed; nume s Konto und sini synchronisierte Kopie gönd.',
+  'Also gone for everyone in {spaces}.': 'Au weg für alli i {spaces}.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'D Notiz',
   '{space} panel': 'Bereich {space}',

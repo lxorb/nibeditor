@@ -1191,6 +1191,10 @@ export const ja: Dictionary = {
   'this one': 'この端末',
   End: '終了',
   'End every other session': '他のすべてのセッションを終了',
+  'Delete account': 'アカウントを削除',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'この端末のノートは残ります。消えるのはアカウントと同期されたコピーだけです。',
+  'Also gone for everyone in {spaces}.': '{spaces} のメンバー全員からも消えます。',
   // Said and not shown: what a reader is told about a surface
   'The note': 'ノート',
   '{space} panel': '{space} パネル',

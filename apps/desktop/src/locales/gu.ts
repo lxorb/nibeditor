@@ -1198,6 +1198,10 @@ export const gu: Dictionary = {
   'this one': 'આ',
   End: 'પૂરું કરો',
   'End every other session': 'બીજાં બધાં સત્ર પૂરાં કરો',
+  'Delete account': 'ખાતું કાઢી નાખો',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'આ ડિવાઇસ પરની નોંધો રહેશે; ફક્ત ખાતું અને તેની સિંક કરેલી નકલો જશે.',
+  'Also gone for everyone in {spaces}.': '{spaces}માં બધા માટે પણ જશે.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'નોંધ',
   '{space} panel': '{space} પૅનલ',

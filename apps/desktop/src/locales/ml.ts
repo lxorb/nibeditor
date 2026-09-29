@@ -1217,6 +1217,10 @@ export const ml: Dictionary = {
   'this one': 'ഇത്',
   End: 'അവസാനിപ്പിക്കുക',
   'End every other session': 'മറ്റെല്ലാ സെഷനും അവസാനിപ്പിക്കുക',
+  'Delete account': 'അക്കൗണ്ട് ഇല്ലാതാക്കുക',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'ഈ ഉപകരണത്തിലെ കുറിപ്പുകൾ നിലനിൽക്കും; അക്കൗണ്ടും അതിന്റെ സമന്വയിപ്പിച്ച പകർപ്പുകളും മാത്രം പോകും.',
+  'Also gone for everyone in {spaces}.': '{spaces} ലെ എല്ലാവർക്കും ഇത് ഇല്ലാതാകും.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'കുറിപ്പ്',
   '{space} panel': '{space} പാനൽ',

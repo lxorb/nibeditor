@@ -1204,6 +1204,10 @@ export const tr: Dictionary = {
   'this one': 'bu',
   End: 'Bitir',
   'End every other session': 'Diğer tüm oturumları bitir',
+  'Delete account': 'Hesabı sil',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Bu cihazdaki notlar kalır; yalnızca hesap ve eşitlenmiş kopyaları gider.',
+  'Also gone for everyone in {spaces}.': '{spaces} içindeki herkes için de gider.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Not',
   '{space} panel': '{space} paneli',

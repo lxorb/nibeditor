@@ -1172,6 +1172,10 @@ export const zhHans: Dictionary = {
   'this one': '当前设备',
   End: '结束',
   'End every other session': '结束所有其他会话',
+  'Delete account': '删除账户',
+  'Notes on this device stay; only the account and its synced copies go.':
+    '此设备上的笔记会保留；只有账户及其同步副本会被删除。',
+  'Also gone for everyone in {spaces}.': '{spaces} 中的所有人也将失去它。',
   // Said and not shown: what a reader is told about a surface
   'The note': '笔记',
   '{space} panel': '{space}面板',

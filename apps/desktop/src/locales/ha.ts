@@ -1223,6 +1223,10 @@ export const ha: Dictionary = {
   'this one': 'wannan',
   End: 'Ƙare',
   'End every other session': 'Ƙare duk sauran zaman',
+  'Delete account': 'Share asusu',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'Bayanan kula a wannan na’ura za su zauna; asusun da kwafinsa da aka daidaita ne kawai za su tafi.',
+  'Also gone for everyone in {spaces}.': 'Zai tafi ga kowa da ke cikin {spaces} ma.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'Bayanin kula',
   '{space} panel': 'Fanon {space}',

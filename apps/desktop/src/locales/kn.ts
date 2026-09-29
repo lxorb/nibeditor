@@ -1212,6 +1212,10 @@ export const kn: Dictionary = {
   'this one': 'ಇದು',
   End: 'ಕೊನೆಗೊಳಿಸಿ',
   'End every other session': 'ಉಳಿದ ಎಲ್ಲ ಸೆಷನ್ ಕೊನೆಗೊಳಿಸಿ',
+  'Delete account': 'ಖಾತೆ ಅಳಿಸಿ',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'ಈ ಸಾಧನದಲ್ಲಿನ ಟಿಪ್ಪಣಿಗಳು ಉಳಿಯುತ್ತವೆ; ಖಾತೆ ಮತ್ತು ಅದರ ಸಿಂಕ್ ಮಾಡಿದ ಪ್ರತಿಗಳು ಮಾತ್ರ ಹೋಗುತ್ತವೆ.',
+  'Also gone for everyone in {spaces}.': '{spaces} ನಲ್ಲಿರುವ ಎಲ್ಲರಿಗೂ ಹೋಗುತ್ತದೆ.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'ಟಿಪ್ಪಣಿ',
   '{space} panel': '{space} ಪ್ಯಾನೆಲ್',

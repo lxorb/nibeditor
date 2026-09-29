@@ -1204,6 +1204,10 @@ export const ur: Dictionary = {
   'this one': 'یہی',
   End: 'ختم کریں',
   'End every other session': 'باقی تمام سیشن ختم کریں',
+  'Delete account': 'اکاؤنٹ حذف کریں',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'اس ڈیوائس کے نوٹس رہیں گے؛ صرف اکاؤنٹ اور اس کی ہم آہنگ کاپیاں جائیں گی۔',
+  'Also gone for everyone in {spaces}.': '{spaces} میں سب کے لیے بھی چلا جائے گا۔',
   // Said and not shown: what a reader is told about a surface
   'The note': 'نوٹ',
   '{space} panel': '{space} کا پینل',

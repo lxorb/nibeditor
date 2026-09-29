@@ -1172,6 +1172,10 @@ export const zhHant: Dictionary = {
   'this one': '目前這台',
   End: '結束',
   'End every other session': '結束所有其他工作階段',
+  'Delete account': '刪除帳號',
+  'Notes on this device stay; only the account and its synced copies go.':
+    '此裝置上的筆記會保留；只有帳號及其同步副本會被刪除。',
+  'Also gone for everyone in {spaces}.': '{spaces} 中的所有人也會失去它。',
   // Said and not shown: what a reader is told about a surface
   'The note': '筆記',
   '{space} panel': '{space}面板',

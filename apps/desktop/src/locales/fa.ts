@@ -1205,6 +1205,10 @@ export const fa: Dictionary = {
   'this one': 'همین',
   End: 'پایان دادن',
   'End every other session': 'پایان دادن همه نشست‌های دیگر',
+  'Delete account': 'حذف حساب',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'یادداشت‌های این دستگاه می‌مانند؛ فقط حساب و نسخه‌های همگام‌شده‌اش حذف می‌شوند.',
+  'Also gone for everyone in {spaces}.': 'برای همه در {spaces} هم از بین می‌رود.',
   // Said and not shown: what a reader is told about a surface
   'The note': 'یادداشت',
   '{space} panel': 'تخته {space}',

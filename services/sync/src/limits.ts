@@ -205,6 +205,20 @@ export function mayTryCode(env: Env, address: string): Promise<boolean> {
   return within(env, 'code-tries', address, CODE_TRIES_AN_HOUR, AN_HOUR)
 }
 
+/** How many times one account may ask to be deleted in an hour, counting the code
+ *  it is mailed and every code it tries.
+ *
+ *  The two ceilings under it already bound the guessing - fifteen codes an hour at
+ *  an address, twenty second-factor codes at an account - and the mail ceilings
+ *  bound the sending. This one bounds a session that keeps knocking: whoever holds
+ *  a session they should not is the reason the door asks for a code at all, and
+ *  ten tries is two people mistyping twice and far below a script. */
+const LEAVING_AN_HOUR = 10
+
+export function mayLeave(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'leaving', userId, LEAVING_AN_HOUR, AN_HOUR)
+}
+
 /** How many answers one machine may send through the forms on published pages
  *  in an hour, and how many any one site may take.
  *

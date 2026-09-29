@@ -105,8 +105,9 @@ function bucket() {
         httpMetadata: { contentType: held.contentType },
       })
     },
-    delete(key: string) {
-      store.delete(key)
+    /** One name or a list of them, as R2 takes either. */
+    delete(keys: string | string[]) {
+      for (const key of typeof keys === 'string' ? [keys] : keys) store.delete(key)
       return Promise.resolve()
     },
   }

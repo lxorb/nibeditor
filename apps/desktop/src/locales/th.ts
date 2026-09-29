@@ -1177,6 +1177,10 @@ export const th: Dictionary = {
   'this one': 'เครื่องนี้',
   End: 'สิ้นสุด',
   'End every other session': 'สิ้นสุดเซสชันอื่นทั้งหมด',
+  'Delete account': 'ลบบัญชี',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'โน้ตในอุปกรณ์นี้ยังอยู่ จะหายไปเฉพาะบัญชีและสำเนาที่ซิงค์ไว้เท่านั้น',
+  'Also gone for everyone in {spaces}.': 'จะหายไปสำหรับทุกคนใน {spaces} ด้วย',
   // Said and not shown: what a reader is told about a surface
   'The note': 'โน้ต',
   '{space} panel': 'แผงของ {space}',

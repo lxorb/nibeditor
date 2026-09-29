@@ -54,6 +54,9 @@
    *  editing a key nothing can read, so replacing one is typing a whole new one. */
   let replacingKey = $state(false)
 
+  /** Whether the Delete account row has been pressed, which is what opens its flow. */
+  let leaving = $state(false)
+
   const GROUPS = $derived(sectionGroups())
 
   const SECTIONS = $derived(GROUPS.flat())
@@ -83,6 +86,9 @@
         text: [t('Ask for a code from an app'), t('Recovery codes left')],
       },
       { section: 'account', label: t('Signed in on'), text: [t('End every other session')] },
+      ...(account.user
+        ? [{ section: 'account' as const, label: t('Delete account'), text: [] }]
+        : []),
       {
         section: 'sync',
         label: t('When the same note was written twice'),
@@ -156,6 +162,12 @@
   // it would otherwise be waiting there the next time the settings opened.
   $effect(() => {
     if (!settings.open) store.close()
+  })
+
+  // And a half-done deletion goes with the pane it was started in: coming back to
+  // Account should find the row, not a flow that mails another code as it appears.
+  $effect(() => {
+    if (!settings.open || settings.section !== 'account') leaving = false
   })
 
   /** Opens a pane: from the list, from the search results, from anywhere. */
@@ -758,6 +770,17 @@
         <button class="nib-action is-danger" onclick={() => account.signOut()}
           >{t('Sign out')}</button
         >
+        <!-- Fetched by the press, like the sheets: nobody opening the settings needs
+             the flow that deletes the account. See DeleteAccount.svelte. -->
+        {#if leaving}
+          {#await import('./DeleteAccount.svelte') then flow}
+            <flow.default onend={() => (leaving = false)} />
+          {/await}
+        {:else}
+          <button class="nib-action is-danger" onclick={() => (leaving = true)}
+            >{t('Delete account')}</button
+          >
+        {/if}
       </div>
     {:else if account.guest}
       <!-- A guest a link let in. There is no account here to show, and the one

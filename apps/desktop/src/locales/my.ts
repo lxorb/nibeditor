@@ -1187,6 +1187,10 @@ export const my: Dictionary = {
   'this one': 'ဤစက်',
   End: 'အဆုံးသတ်ပါ',
   'End every other session': 'အခြားစက်ရှင်အားလုံး အဆုံးသတ်ပါ',
+  'Delete account': 'အကောင့်ဖျက်',
+  'Notes on this device stay; only the account and its synced copies go.':
+    'ဤစက်ပေါ်ရှိ မှတ်စုများ ကျန်နေမည်။ အကောင့်နှင့် ချိန်ကိုက်ထားသော မိတ္တူများသာ ပျောက်မည်။',
+  'Also gone for everyone in {spaces}.': '{spaces} ထဲရှိ လူတိုင်းအတွက်လည်း ပျောက်မည်။',
   // Said and not shown: what a reader is told about a surface
   'The note': 'မှတ်စု',
   '{space} panel': '{space} အကန့်',
