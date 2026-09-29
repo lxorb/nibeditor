@@ -38,6 +38,12 @@ to reach by handing the system an address. The row itself says so - `byHand` in
 commands.ts - and the command line, which is behind this installation's own secret,
 runs all of them. `nib commands list` prints the lot.
 
+One row neither may run: **New terminal**. A shell on this machine is not something
+another program opens in the app, because a terminal it could open is a terminal it
+could type into; the row says `ownWindow`, both roads refuse it, and the command line's
+list leaves it out. Only `eval`, which is the window itself once this installation's own
+file turns it on, reaches a terminal. See docs/terminal.md.
+
 Written by hand, a path with a space or an ampersand in it has to be
 percent-encoded, and `+` means a space. **Copy link to this note** in the palette
 writes a correct one for whatever is open, with the heading the caret is in on it.

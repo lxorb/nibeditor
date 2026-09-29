@@ -12,12 +12,13 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the six functions that
+# Unsafe is denied everywhere and excepted by name in the seven functions that
 # call Windows directly: the shell's recent documents list, the two registry
 # calls behind Explorer's New menu, WebView2's print engine, the launch
-# trace's question about when this process was created, and the list of
-# processes a terminal asks before it closes on a running one (see
-# terminal/process.rs). Two more on a Mac: the
+# trace's question about when this process was created, the list of
+# processes a terminal asks before it closes on a running one, and Ctrl+C let
+# through to a terminal's shells (see terminal/process.rs and
+# terminal/session.rs). Two more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), and the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
@@ -248,8 +249,10 @@ windows = { version = "0.58", features = [
   # engine's own event does not say. See web_keys.rs.
   "Win32_UI_Input_KeyboardAndMouse",
   # Which processes a terminal's shell has started, asked before its tab closes on
-  # one of them. See terminal/process.rs.
+  # one of them, and Ctrl+C let through to them. See terminal/process.rs and
+  # terminal/session.rs.
   "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_Console",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
