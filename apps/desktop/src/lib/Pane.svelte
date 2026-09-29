@@ -790,6 +790,7 @@
     font-family: var(--font-ui);
     font-size: var(--text-sm);
     user-select: none;
+    -webkit-user-select: none;
   }
 
   /* Over the note while a tab is being dragged, so the drop lands here rather

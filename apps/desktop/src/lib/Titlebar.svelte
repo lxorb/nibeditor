@@ -199,6 +199,7 @@
     flex: none;
     padding-inline-start: var(--space-1);
     user-select: none;
+    -webkit-user-select: none;
     /* The frame the tabs are cut out of, and the hairline between it and the page.
        The line is drawn inside the bar rather than under it, so the active tab -
        which runs down to the bottom of the bar - covers it and becomes one surface

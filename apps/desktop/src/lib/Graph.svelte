@@ -776,6 +776,7 @@
        text selection or the browser's own panning. */
     touch-action: none;
     user-select: none;
+    -webkit-user-select: none;
     cursor: default;
   }
 

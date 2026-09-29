@@ -566,6 +566,7 @@
     height: 100%;
     object-fit: cover;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   .link {

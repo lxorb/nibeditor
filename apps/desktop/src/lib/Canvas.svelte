@@ -2196,6 +2196,7 @@
     text-align: center;
     pointer-events: none;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   :global([data-touch]) .hint {

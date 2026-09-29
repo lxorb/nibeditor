@@ -223,6 +223,7 @@
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   .acts {

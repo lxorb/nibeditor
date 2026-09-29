@@ -327,6 +327,7 @@
   height: 1.62em;
   vertical-align: top;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 /* The top row of the block, from where its code begins to its right edge: what
@@ -370,6 +371,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .nib-fence-controls {
@@ -460,6 +462,7 @@
      document, so nothing selects it, copies it or takes a click meant for the
      line beside it. */
   user-select: none;
+  -webkit-user-select: none;
   pointer-events: none;
 }
 
@@ -584,6 +587,7 @@
   letter-spacing: 0.02em;
   color: var(--muted);
   user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Nothing came out, so the rule under the bar would be a line to nowhere. */
@@ -666,6 +670,7 @@
   color: var(--text);
   /* Output is there to be read and taken, and a logged line can be long. */
   user-select: text;
+  -webkit-user-select: text;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -696,6 +701,7 @@
   text-transform: uppercase;
   color: var(--muted);
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .nib-run-note {

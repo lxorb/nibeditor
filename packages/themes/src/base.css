@@ -880,6 +880,7 @@ select option {
   text-transform: uppercase;
   color: var(--muted);
   user-select: none;
+  -webkit-user-select: none;
 }
 
 .nib-section:first-child {
@@ -930,6 +931,7 @@ select option {
   font-weight: var(--weight-strong);
   letter-spacing: 0.01em;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 /* The space you are in, and the mark of anything else that is the thing: the
@@ -2171,6 +2173,7 @@ select:focus-visible,
   cursor: pointer;
   list-style: none;
   user-select: none;
+  -webkit-user-select: none;
 }
 
 #write summary.callout-title::-webkit-details-marker {
