@@ -175,6 +175,74 @@ describe('matching a keystroke against a binding', () => {
       false,
     )
   })
+
+  /** Alt and a digit is a tab, and AltGr is not Alt. Windows says AltGr as Ctrl and Alt
+   *  together, so AltGr+2 - the Swiss `@` - can never be Alt+2, and it is not Ctrl+Alt+2
+   *  either: what it typed is its only name. */
+  test('AltGr typing a character is that character, not a chord', () => {
+    const swissAt = press('@', { ctrlKey: true, altKey: true, code: 'Digit2' })
+    expect(matchesCombination('Alt-2', swissAt, 'win')).toBe(false)
+    expect(matchesCombination('Mod-Alt-2', swissAt, 'win')).toBe(false)
+    // A German `{` and a Polish `ó`, which Ctrl+Alt+7 and Ctrl+Alt+O used to take.
+    const germanBrace = press('{', { ctrlKey: true, altKey: true, code: 'Digit7' })
+    expect(matchesCombination('Mod-Alt-7', germanBrace, 'win')).toBe(false)
+    const polishO = press('ó', { ctrlKey: true, altKey: true, code: 'KeyO' })
+    expect(matchesCombination('Mod-Alt-o', polishO, 'win')).toBe(false)
+
+    // Ctrl+Alt on a keyboard with nothing on AltGr there types the key itself, and
+    // that is still the chord.
+    const usTwo = press('2', { ctrlKey: true, altKey: true, code: 'Digit2' })
+    expect(matchesCombination('Mod-Alt-2', usTwo, 'win')).toBe(true)
+    expect(
+      matchesCombination(
+        'Mod-Alt-ArrowRight',
+        press('ArrowRight', { ctrlKey: true, altKey: true, code: 'ArrowRight' }),
+        'win',
+      ),
+    ).toBe(true)
+    // And Shift is still read by the key, so AZERTY reaches Ctrl+Alt and a digit.
+    const azertyTwo = press('2', { ctrlKey: true, altKey: true, shiftKey: true, code: 'Digit2' })
+    expect(matchesCombination('Mod-Alt-2', azertyTwo, 'win')).toBe(true)
+    const usShifted = press('@', { ctrlKey: true, altKey: true, shiftKey: true, code: 'Digit2' })
+    expect(matchesCombination('Mod-Alt-Shift-2', usShifted, 'win')).toBe(true)
+  })
+
+  test('and the recorder writes down what the matcher will answer to', () => {
+    const swissAt = press('@', { ctrlKey: true, altKey: true, code: 'Digit2' })
+    expect(readCombination(swissAt, 'win')).toBe('Mod-Alt-@')
+    expect(matchesCombination('Mod-Alt-@', swissAt, 'win')).toBe(true)
+    // Where Ctrl+Alt is only Ctrl and Alt, the key is the key, as it was.
+    expect(
+      readCombination(press('2', { ctrlKey: true, altKey: true, code: 'Digit2' }), 'win'),
+    ).toBe('Mod-Alt-2')
+  })
+
+  test('Alt and a digit answers to the key, whatever the layout prints on it', () => {
+    expect(matchesCombination('Alt-3', press('3', { altKey: true, code: 'Digit3' }), 'win')).toBe(
+      true,
+    )
+    // AZERTY's third key is a `"` unshifted.
+    expect(matchesCombination('Alt-3', press('"', { altKey: true, code: 'Digit3' }), 'win')).toBe(
+      true,
+    )
+    expect(matchesCombination('Alt-0', press('0', { altKey: true, code: 'Digit0' }), 'linux')).toBe(
+      true,
+    )
+    // Alt alone is the menu's, and is no chord of anybody's here.
+    expect(
+      matchesCombination('Alt-3', press('Alt', { altKey: true, code: 'AltLeft' }), 'win'),
+    ).toBe(false)
+  })
+
+  /** A press an input method is composing is a syllable on its way. */
+  test('nothing is a chord while an input method is composing', () => {
+    const composing = { ...press('3', { altKey: true, code: 'Digit3' }), isComposing: true }
+    expect(matchesCombination('Alt-3', composing, 'win')).toBe(false)
+    // The press that starts a composition, which the browser names Process.
+    expect(
+      matchesCombination('Alt-3', press('Process', { altKey: true, code: 'Digit3' }), 'win'),
+    ).toBe(false)
+  })
 })
 
 describe('showing a combination', () => {

@@ -303,7 +303,8 @@ stops nothing, and the app still gets the key.
 | Ctrl+Shift+N | a new window |
 | Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
-| Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
+| Alt+1 to 9, Alt+0 | the tab at that place along the focused pane's strip, the last tab. Pinned tabs count, and a place past the end does nothing |
+| Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the same eight places and the last, as second keys |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there) |
@@ -319,6 +320,23 @@ chords, which the registry does not hold.
 
 Under the Obsidian preset the digits move to Ctrl+1 to Ctrl+9, which is
 Obsidian's own, and the heading levels give them up.
+
+**Alt and a digit is the tab at that place.** Emil, 2026-09-30: *"Add shortcuts alt + 1,
+alt + 2, ... where alt + x opens the tab at position x and alt + 0 opens the last tab."*
+No heading level is in its way, and no Ctrl to reach past. Every digit is its own place,
+the ninth included, and the nought is the last - Chrome and Firefox on Linux have Alt and
+a digit for their tabs too, but make the ninth the last. A place past the end does
+nothing, as Chrome's Ctrl+1 to 8 do. It works wherever the keyboard is: a note, a canvas,
+a page note, the file list, and inside a web page, which never gets the chord (see
+below). They are second keys of `app.note-1` to `app.note-8` and of Last
+note, `app.note-1.alt` to `app.note-9.alt`; the ninth place, `app.note-ninth`, had no key
+before. Nothing had Alt and a digit, in the defaults or any keyboard, so nothing moved;
+strikethrough's Alt+Shift+5 is Shift and the key, and the editor reads it first.
+
+Alt is Alt and nothing else. AltGr is Ctrl and Alt together on Windows, so a Swiss `@` or
+a German `{` is never a tab, and Alt pressed and let go of on its own is left alone. A
+press an input method is composing is its own too. None of this is on a Mac, where
+Option and a digit types ¡ ™ £ ¢ ∞ § ¶ • ª º: Cmd and a digit are the tabs there already.
 
 **Ctrl+T is a browser's key first.** Emil, 2026-09-27: *"Ctrl + T should always open
 a webpage by default. And that should always be the selected option in the modal when
@@ -385,7 +403,7 @@ they show in Settings, show in the palette and can be rebound.
 | F5, Ctrl+R | reload. F5 is Present over a note; over a page there is no note to present |
 | Ctrl+Shift+R, Ctrl+F5 | reload past the cache |
 | Escape | stop a page on its way in, once whatever is open over it has had its Escape |
-| Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there |
+| Ctrl+1 to 9 | the tab at that place along the strip, the ninth the last; over a note it is Ctrl+Alt, because Ctrl and a digit is a heading level there. Alt+1 to 9 and Alt+0 as everywhere |
 | Alt+Enter in the address field | the address in a tab of its own |
 | Alt+Left, Alt+Right | back and forward, which in a web tab is the page's own history (already there) |
 | Ctrl+F | find in page: nib's find bar over the engine's own find. Enter, Shift+Enter, Ctrl+G and F3 step, Escape closes |
@@ -404,11 +422,14 @@ inside the page is Chrome's way back to the address field.
 **The browser's own chords work while the page has the keyboard.** Emil, 2026-09-27:
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
-Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, and F6 to the
-address field are never offered to the page. The find keys - Ctrl+F, Ctrl+G,
-Ctrl+Shift+G, F3 and Shift+F3 - and the address field's other two, Ctrl+L and Alt+D, are
-the page's first, as they are in Chrome, so a site with its own find (Google Docs,
-Notion, VS Code on the web) or its own Ctrl+L keeps them; a line of script in the page
+Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, nib's own Alt+0
+to 9, and F6 to the address field are never offered to the page. Alt and a digit is no
+character on Windows, so what a page loses with it is only an `accesskey` on a digit, as
+it does in Chrome on Linux; AltGr and a digit, which is Ctrl and Alt, stays the page's.
+The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address
+field's other two, Ctrl+L and Alt+D, are the page's first, as they are in Chrome, so a
+site with its own find (Google Docs, Notion, VS Code on the web) or its own Ctrl+L keeps
+them; a line of script in the page
 asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`). The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
@@ -499,7 +520,7 @@ laptops, the Mac has its own default. Windows and Linux are unchanged.
 | Present | ⌥⌘P | F5 | Keynote's Play Slideshow |
 | Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Nib's own on the Ctrl+Cmd row beside ⌃⌘F |
 | Round the strip | ⌃⇥, ⌃⇧⇥, ⇧⌘], ⇧⌘[ | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | ⌘⇥ is the app switcher; the brackets are Safari's, Chrome's and VS Code's |
-| The note at a place | ⌘1 to ⌘9 | Ctrl+Alt+1 to 9 | Obsidian's and Safari's |
+| The note at a place | ⌘1 to ⌘9 | Alt+1 to 9 and Alt+0, Ctrl+Alt+1 to 9 | Obsidian's and Safari's; ⌥ and a digit types a character |
 | Heading 1 to 6 | ⌥⌘1 to ⌥⌘6 | Ctrl+1 to 6 | trades places with the notes, as Notion has them on a Mac |
 | Numbered, bulleted list | no key | Ctrl+Shift+[, Ctrl+Shift+] | the brackets walk the tabs; Obsidian ships none |
 | Quote | ⌥⌘Q | Ctrl+Shift+Q | ⇧⌘Q is Log Out; ⌥⌘Q is Typora's on a Mac |

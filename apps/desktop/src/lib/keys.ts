@@ -171,6 +171,7 @@ interface Keystroke {
   metaKey?: boolean | undefined
   altKey?: boolean | undefined
   shiftKey?: boolean | undefined
+  isComposing?: boolean | undefined
 }
 
 /** Which modifiers were down, as plain yes or no. A keystroke may arrive with
@@ -190,6 +191,28 @@ function unshifted(event: Keystroke): string | undefined {
   return event.code === undefined ? undefined : PHYSICAL[event.code]
 }
 
+/** Whether a keystroke is AltGr typing a character, which Windows says as Ctrl and Alt
+ *  held together. A Swiss `@` is AltGr+2, a German `{` AltGr+7, a Polish `ó` AltGr+O,
+ *  and each arrives as Ctrl+Alt and the key. What it typed is the only name it has,
+ *  then: the key underneath would make the `@` Ctrl+Alt+2, a tab rather than the
+ *  character somebody was writing. CodeMirror reads its own keys the same way, for the
+ *  same reason, so a chord in the editor and a chord on the window agree.
+ *
+ *  Not with Shift as well, which is still read by the key: Ctrl+Alt+Shift+1 is a chord
+ *  a reader records on a US keyboard, and AZERTY's way to Ctrl+Alt and a digit. */
+function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
+  const down = held(event)
+  return (
+    platform === 'win' &&
+    down.ctrl &&
+    down.alt &&
+    !down.meta &&
+    !down.shift &&
+    [...event.key].length === 1 &&
+    event.key !== ' '
+  )
+}
+
 /** What was pressed, written down. Null while only modifiers are held, which
  *  is what the recorder waits through. */
 export function readCombination(event: Keystroke, platform: Platform): string | null {
@@ -198,9 +221,12 @@ export function readCombination(event: Keystroke, platform: Platform): string | 
   const down = held(event)
   const physical = unshifted(event)
   // With Shift or Alt down the character on the key is not the key: the
-  // combination is named after the key itself.
+  // combination is named after the key itself. Unless AltGr typed it, and then the
+  // character is the one name the matcher will answer to.
   const key =
-    (down.shift || down.alt) && physical !== undefined ? physical : normalizeKey(event.key)
+    (down.shift || down.alt) && physical !== undefined && !typedWithAltGr(event, platform)
+      ? physical
+      : normalizeKey(event.key)
   if (!key) return null
 
   return writeCombination({ ...down, key }, platform)
@@ -252,8 +278,15 @@ function isDigit(key: string): boolean {
  *
  *  Digits only. A letter is two names for one key - `E` and `e` - so forgiving Shift
  *  there would make Ctrl+Shift+E fire Ctrl+E as well, and a chord that asks for Shift
- *  is still matched exactly, so nothing can be both. */
+ *  is still matched exactly, so nothing can be both.
+ *
+ *  And two presses that are never a chord. One an input method is in the middle of
+ *  composing is a syllable on its way; `Process` is the name a browser gives the key
+ *  that starts one. And one that is AltGr typing a character on Windows is that
+ *  character, and answers only to it; see `typedWithAltGr`. */
 export function matchesCombination(text: string, event: Keystroke, platform: Platform): boolean {
+  if (event.isComposing === true || event.key === 'Process') return false
+
   const wanted = parseCombination(text, platform)
   if (!wanted) return false
 
@@ -262,14 +295,17 @@ export function matchesCombination(text: string, event: Keystroke, platform: Pla
   if (wanted.meta !== down.meta) return false
   if (wanted.alt !== down.alt) return false
 
+  const typed = normalizeKey(event.key)
+  const underneath = typedWithAltGr(event, platform) ? typed : unshifted(event)
+
   if (wanted.shift !== down.shift) {
     // The one forgiveness, and the code has to name the very key: a digit typed on a
     // layout that needs Shift for it.
     if (wanted.shift || !isDigit(wanted.key)) return false
-    return wanted.key === unshifted(event)
+    return wanted.key === underneath
   }
 
-  return wanted.key === normalizeKey(event.key) || wanted.key === unshifted(event)
+  return wanted.key === typed || wanted.key === underneath
 }
 
 /** How a key reads on a Mac, where modifiers are signs rather than words. */

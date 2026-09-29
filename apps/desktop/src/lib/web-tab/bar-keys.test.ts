@@ -62,8 +62,8 @@ describe('a key in front of a page', () => {
 
   test('jumps along the strip on Ctrl and a digit, the ninth being the last', () => {
     const keys = bindings()
-    expect(barKey(press('1', CTRL), keys)).toEqual({ to: 'tab', index: 0 })
-    expect(barKey(press('9', CTRL), keys)).toEqual({ to: 'tab', index: 8 })
+    expect(barKey(press('1', CTRL), keys)).toEqual({ to: 'tab', at: 0 })
+    expect(barKey(press('9', CTRL), keys)).toEqual({ to: 'tab', at: 'last' })
     // Ctrl+Alt and a digit is the app's own jump, which the window answers.
     expect(barKey(press('1', { ctrlKey: true, altKey: true }), keys)).toBeNull()
     expect(barKey(press('0', CTRL), keys)).toBeNull()
