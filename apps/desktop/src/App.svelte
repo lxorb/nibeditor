@@ -850,6 +850,7 @@
         ? undefined
         : `translateX(calc(var(--dir) * ${drawer.at}px))`}
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
+      style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
       <!-- The three dots at the right end of it open the whole of the app on a
@@ -1390,20 +1391,24 @@
     transition: none;
   }
 
+  /* The note's edge casts its shadow on the list only on the way: it fades as the
+     note goes, following the finger in a drag, so once the note is off the screen
+     nothing of it lies over the list's right end. At rest it was a grey band over
+     the new-note button and the chosen row. */
   :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: 2;
     background: var(--bg);
-    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / calc(0.3 * var(--shade)));
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+    --shade: 1;
   }
 
   :global([data-drawer][data-narrow]) .document.open {
     transform: translateX(calc(var(--dir) * 100%));
-  }
-
-  :global([data-drawer][data-narrow]) .document.open,
-  :global([data-drawer][data-narrow]) .document.dragging {
-    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / 0.3);
+    --shade: 0;
   }
 
   :global([data-drawer][data-narrow]) .document.dragging {
@@ -1411,7 +1416,9 @@
   }
 
   :global([data-drawer][data-narrow]) .document.settling {
-    transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+    transition:
+      transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1),
+      box-shadow var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Nothing to dim: the note is either over the list or off the screen - unless
