@@ -26,6 +26,19 @@ serveAssets()
 // running. One line answers it, from a console, from a drive, from any build.
 Object.assign(window, { nibBuild: __EVEN_BUILD__ })
 
+// The app on a phone does not zoom as a page, the way no app on a phone does. On an
+// iPhone two fingers anywhere grew the whole of it, bars and all, and a field set
+// smaller than 16 px zoomed it a little as it took the caret and left it that way,
+// with the bar pushed off the top. What zooms on a phone zooms itself: a page note,
+// a canvas, a PDF.
+if (isMobile) {
+  const meta = document.querySelector('meta[name="viewport"]')
+  meta?.setAttribute(
+    'content',
+    `${meta.getAttribute('content')}, maximum-scale=1, user-scalable=no`,
+  )
+}
+
 // index.html carries it, so a missing one means the page itself is wrong -
 // worth saying outright rather than mounting into nothing.
 const target = document.getElementById('app')

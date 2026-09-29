@@ -309,6 +309,25 @@
     void zoomTo(zoom * Math.pow(0.999, event.deltaY), event.clientY)
   }
 
+  /** Two fingers on a phone or a tablet, which is what Ctrl and the wheel are on
+   *  a desktop: the zoom there was, and how far apart the fingers were. The app
+   *  does not zoom as a page on a phone (main.ts), so this is the only way the
+   *  small print of a PDF gets bigger there. */
+  let pinch: { apart: number; zoom: number } | null = null
+
+  function pinched(event: TouchEvent) {
+    const [a, b] = [event.touches[0], event.touches[1]]
+    if (event.touches.length !== 2 || !a || !b) {
+      pinch = null
+      return
+    }
+
+    const apart = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+    if (!pinch) pinch = { apart, zoom }
+    else if (pinch.apart)
+      void zoomTo(pinch.zoom * (apart / pinch.apart), (a.clientY + b.clientY) / 2)
+  }
+
   // ── Finding ────────────────────────────────────────────────────────
 
   interface Match {
@@ -710,7 +729,12 @@
     onscroll={moved}
     onwheel={wheeled}
     onmouseup={selected}
-    ontouchend={selected}
+    ontouchstart={pinched}
+    ontouchmove={pinched}
+    ontouchend={(event) => {
+      pinched(event)
+      selected()
+    }}
   >
     {#if broken}
       <p class="trouble">{t('That PDF could not be opened')}</p>
