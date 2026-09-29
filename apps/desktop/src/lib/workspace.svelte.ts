@@ -2485,7 +2485,7 @@ class Workspace {
       title: t('Save {name}?', { name: note.shown }),
       options: [
         { id: 'save', label: key('Save'), primary: true },
-        { id: 'discard', label: key('Don’t save'), danger: true },
+        { id: 'discard', label: key('Don’t save'), danger: true, discards: true },
         { id: 'cancel', label: key('Cancel') },
       ],
     })

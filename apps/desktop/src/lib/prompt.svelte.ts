@@ -21,6 +21,10 @@ interface Choice {
   label: string
   primary?: boolean
   danger?: boolean
+  /** The answer that lets unsaved work go. On a Mac it stands apart at the left of
+   *  the row, with the way back and the default to the right of it, and Cmd+D picks
+   *  it - which is where every Mac document app puts Don't Save. */
+  discards?: boolean
   /** The mark the row wears, where the answers are things a file list also
    *  shows. Absent for a question about anything else, and then the row is words
    *  alone. The `id` is the path, so a row that chose an icon of its own wears it
