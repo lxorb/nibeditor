@@ -488,10 +488,19 @@
       color var(--dur-instant) var(--ease-out);
   }
 
-  .cell:hover,
   .cell.at {
     background: var(--accent-soft);
     color: var(--text-strong);
+  }
+
+  /* Only under a pointer that hovers. WebKit leaves the last tap's hover on
+     whatever is under the finger when the picker rises, and in a grid of marks it
+     read as a second one chosen beside the one that is. */
+  @media (hover: hover) {
+    .cell:hover {
+      background: var(--accent-soft);
+      color: var(--text-strong);
+    }
   }
 
   .cell.active {
@@ -560,14 +569,21 @@
     color: var(--text-strong);
   }
 
+  /* On the keys rather than under them, as every other sheet is; see Sheet.svelte.
+     The marks give up what the keys take: at the foot of the screen they ran on
+     under the keyboard, and what a search found there could not be reached. */
   :global([data-touch]) .sheet {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
-    max-height: 88dvh;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
+  }
+
+  :global([data-touch]) .grid {
+    min-height: 0;
   }
 </style>
