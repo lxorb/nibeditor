@@ -853,11 +853,9 @@
          the layers swap: the list is the floor and the note is what moves,
          sliding off to the right to uncover it and back over it. The same
          drag drives both; only which layer it moves differs. -->
-    <!-- Off to the side, the note is out of reach the way a shut drawer is. The
-         page is not a scroller, but WebKit scrolls it all the same to show what
-         takes the focus: the note taking it as Nib started slid the whole page
-         across, and the list the phone had open was covered by the note while
-         the button still said it was out. -->
+    <!-- Off to the side, the note is out of reach as a shut drawer is. WebKit
+         scrolls even this page to show what takes the focus: the note taking it
+         as Nib started slid it across, over the list the phone had open. -->
     <div
       class="document"
       inert={viewport.narrow && viewport.drawer && !!workspace.panel}
@@ -1413,10 +1411,8 @@
     transition: none;
   }
 
-  /* The note's edge casts its shadow on the list only on the way: it fades as the
-     note goes, following the finger in a drag, so once the note is off the screen
-     nothing of it lies over the list's right end. At rest it was a grey band over
-     the new-note button and the chosen row. */
+  /* The note's shadow on the list fades as the note goes, following the finger
+     in a drag: at rest off the screen it was a grey band over the list's end. */
   :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: 2;

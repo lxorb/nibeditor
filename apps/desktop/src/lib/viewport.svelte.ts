@@ -237,27 +237,22 @@ class Viewport {
   }
 
   private measure(seen: VisualViewport) {
-    // The page is sized to what can be seen (`pageHeight`) and never scrolls itself,
-    // but WebKit still slides the whole of it up to show a line under the keyboard
-    // before the editor has had the chance to - taking the app's bar off the top of
-    // the screen. So a page moved that way is put back, and the editor brings the
-    // line into sight inside its own scroller. Never at any zoom but the page's own:
-    // a pinch in a phone's browser moves the same offset, and that is the reader's.
-    // First, so what is measured below is the page put back rather than the slide.
+    // The page is sized to what can be seen (`pageHeight`), but WebKit still slides
+    // all of it up to show a line under the keys, the app's bar off the top with it.
+    // So a slide is put back, first, and what has the caret is brought into sight
+    // in its own scroller; see App.svelte. Never at a zoom: a pinch in a phone's
+    // browser moves the same offset, and that is the reader's.
     const slid = this.touch && seen.offsetTop > 0 && Math.abs(seen.scale - 1) < 0.01
     if (slid) {
       window.scrollTo(0, 0)
       this.panned++
     }
 
-    // What the layout viewport has that the visual one does not. Scrolling the
-    // page moves `offsetTop`, so it has to come off as well or the bar jumps
-    // while the document scrolls under the keyboard - unless it was just put back,
-    // which WebKit has not told the viewport yet. The layout viewport is the
-    // document's own height rather than `innerHeight`, which an iPhone gives as
-    // no more than can be seen once the page has scrolled with the keys up: either
-    // way the keys measured nothing, and the format bar that stands on them stood
-    // at the foot of the window, behind them.
+    // What the layout viewport has that the visual one does not, less a scroll of
+    // the page (`offsetTop`) unless it was just put back. The layout viewport is the
+    // document's height: an iPhone gives `innerHeight` as no more than can be seen
+    // once the page scrolls with the keys up, and the format bar on the keys fell
+    // to the foot of the window, behind them.
     const layout = document.documentElement.clientHeight
     const hidden = layout - (seen.height + (slid ? 0 : seen.offsetTop))
     this.keyboard = Math.max(0, Math.round(hidden))
