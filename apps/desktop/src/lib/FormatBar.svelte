@@ -39,10 +39,35 @@
    *  them without a second rule. */
   const keys = { across: true, rows: 'button' } as const
 
+  /** Whether the keyboard is typing into the note the bar writes into, or into the
+   *  bar itself, which the arrows walk. The keys come up for any field - a name
+   *  being changed in the file list, a card on a plane, a table's cell - and the
+   *  bar only ever acts on the note: over the others it put its marks into the note
+   *  behind and took the keyboard off the field, or did nothing at all. */
+  let writing = $state(false)
+
+  $effect(() => {
+    const note = view?.contentDOM
+    const follow = (to: EventTarget | null) => {
+      writing = !!note && (to === note || (to instanceof Node && !!bar?.contains(to)))
+    }
+    const onIn = (event: FocusEvent) => follow(event.target)
+    // Where the keyboard is going, which a focusout knows and the page does not yet.
+    const onOut = (event: FocusEvent) => follow(event.relatedTarget)
+
+    follow(document.activeElement)
+    document.addEventListener('focusin', onIn)
+    document.addEventListener('focusout', onOut)
+    return () => {
+      document.removeEventListener('focusin', onIn)
+      document.removeEventListener('focusout', onOut)
+    }
+  })
+
   /** Docked above the keyboard on a phone: there is no hovering over a
    *  selection with a thumb, and the buttons are wanted before the selection
    *  exists rather than after it. */
-  const docked = $derived(viewport.touch && viewport.typing)
+  const docked = $derived(viewport.touch && viewport.typing && writing)
 
   // A bar that has gone covers nothing: the height bound below is left at whatever
   // it last was when the bar leaves, so it is taken back here.
