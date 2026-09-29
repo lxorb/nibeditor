@@ -45,12 +45,16 @@ const AGENTS = {
 } as const
 
 /** The document as the store writes to it: the attributes it publishes, and
- *  the inline properties the insets would go into. */
-function stubDocument() {
+ *  the inline properties the insets would go into. And how tall the page is laid
+ *  out, which is the window's layout height and not whatever `innerHeight` says. */
+function stubDocument(window: { layout: number }) {
   const attributes = new Set<string>()
 
   return {
     documentElement: {
+      get clientHeight() {
+        return window.layout
+      },
       dataset: {} as Record<string, string>,
       attributes,
       toggleAttribute: (name: string, on: boolean) =>
@@ -69,6 +73,7 @@ function stubWindow(width = 390, height = 844, finger = false) {
     width,
     height,
     offsetTop: 0,
+    scale: 1,
     addEventListener: (_kind: string, run: () => void) => void resized.push(run),
     removeEventListener: () => undefined,
   }
@@ -76,6 +81,9 @@ function stubWindow(width = 390, height = 844, finger = false) {
   return {
     innerWidth: width,
     innerHeight: height,
+    /** The height the page is laid out to, which is what the keys are measured
+     *  against. Moves with the window, and not with WebKit's `innerHeight`. */
+    layout: height,
     visualViewport: seen,
     // Two queries are asked of this: whether the glass is under a finger, and
     // whether the page is installed rather than a tab.
@@ -84,21 +92,41 @@ function stubWindow(width = 390, height = 844, finger = false) {
       addEventListener: () => undefined,
     }),
     addEventListener: (_kind: string, run: () => void) => void turned.push(run),
+    /** Where the page was last scrolled to by the store. */
+    scrolled: null as [number, number] | null,
+    scrollTo(x: number, y: number) {
+      this.scrolled = [x, y]
+    },
     /** What the browser does when the keys come up over the page. */
     keysOver(pixels: number) {
       seen.height = height - pixels
+      for (const run of resized) run()
+    },
+    /** What an iPhone does besides: the whole page slid up to show the caret's
+     *  line, which moves the visual viewport down the page by as much. */
+    keysOverSliding(pixels: number, slid: number) {
+      seen.height = height - pixels
+      seen.offsetTop = slid
+      for (const run of resized) run()
+    },
+    /** And what it says as the page scrolls with the keys up: a window no taller
+     *  than what can be seen, when nothing about the window has changed. */
+    innerShrinks() {
+      this.innerHeight = seen.height
       for (const run of resized) run()
     },
     /** What the app does instead: the page ends where the keys begin. */
     keysBelow(pixels: number) {
       seen.height = height - pixels
       this.innerHeight = height - pixels
+      this.layout = height - pixels
       for (const run of resized) run()
     },
     /** Turned on its side, which is a new window rather than a keyboard. */
     turned() {
       this.innerWidth = height
       this.innerHeight = width
+      this.layout = width
       seen.width = height
       seen.height = width
       for (const run of [...turned, ...resized]) run()
@@ -110,7 +138,7 @@ function stubWindow(width = 390, height = 844, finger = false) {
  *  the module is first read. */
 async function started(kind: Kind = {}, width = 390, height = 844) {
   const window = stubWindow(width, height, kind.finger ?? false)
-  const document = stubDocument()
+  const document = stubDocument(window)
   vi.resetModules()
   vi.doMock('./tauri', () => ({ isMobile: kind.app ?? false }))
   vi.stubGlobal('window', window)
@@ -179,6 +207,31 @@ describe('the keyboard', () => {
 
     window.keysBelow(0)
     expect(viewport.typing).toBe(false)
+  })
+
+  /** The page is put back where it was (see `measure`), and the keys are as tall as
+   *  they are, not less the slide: measured from where the page was slid to, a slide
+   *  of the whole keyboard's height left none at all, and the format bar that stands
+   *  on the keys stood at the foot of the window, behind them. */
+  test('an iPhone sliding the page up to the caret is put back, and the keys measured whole', async () => {
+    const { viewport, window } = await started({ app: true, finger: true })
+
+    window.keysOverSliding(KEYS, KEYS)
+    expect(window.scrolled).toEqual([0, 0])
+    expect(viewport.keyboard).toBe(KEYS)
+    expect(viewport.typing).toBe(true)
+  })
+
+  /** Measured against `innerHeight`, the next scroll with the keys up said there
+   *  were none, and the format bar that stands on them dropped to the foot of the
+   *  window, behind them. */
+  test('an iPhone saying its window shrank as the page scrolled still has its keys', async () => {
+    const { viewport, window } = await started({ app: true, finger: true })
+
+    window.keysOver(KEYS)
+    window.innerShrinks()
+    expect(viewport.keyboard).toBe(KEYS)
+    expect(viewport.typing).toBe(true)
   })
 
   test('a browser window made shorter by hand is not a keyboard', async () => {
