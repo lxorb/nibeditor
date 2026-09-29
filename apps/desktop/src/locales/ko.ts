@@ -80,6 +80,7 @@ export const ko: Dictionary = {
   Forward: '앞으로',
   Unpin: '고정 해제',
   Close: '닫기',
+  'Close pinned tab?': '고정된 탭을 닫을까요？',
   'Close others': '나머지 닫기',
   'Close tabs to the right': '오른쪽 탭 닫기',
   'Close tabs to the left': '왼쪽 탭 닫기',

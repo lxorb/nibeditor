@@ -80,6 +80,7 @@ export const am: Dictionary = {
   Forward: 'ወደፊት',
   Unpin: 'ቸንካር አንሳ',
   Close: 'ዝጋ',
+  'Close pinned tab?': 'የተቸነከረው ትር ይዘጋ?',
   'Close others': 'ሌሎቹን ዝጋ',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

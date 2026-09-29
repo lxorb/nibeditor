@@ -80,6 +80,7 @@ export const es: Dictionary = {
   Forward: 'Adelante',
   Unpin: 'Desanclar',
   Close: 'Cerrar',
+  'Close pinned tab?': '¿Cerrar la pestaña anclada?',
   'Close others': 'Cerrar las demás',
   'Close tabs to the right': 'Cerrar pestañas a la derecha',
   'Close tabs to the left': 'Cerrar pestañas a la izquierda',

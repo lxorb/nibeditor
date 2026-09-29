@@ -80,6 +80,7 @@ export const te: Dictionary = {
   Forward: 'ముందుకు',
   Unpin: 'పిన్ తీసివేయి',
   Close: 'మూసివేయి',
+  'Close pinned tab?': 'పిన్ చేసిన ట్యాబ్ మూసివేయాలా?',
   'Close others': 'ఇతరాలను మూసివేయి',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

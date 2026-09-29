@@ -80,6 +80,7 @@ export const ta: Dictionary = {
   Forward: 'முன்னோக்கி',
   Unpin: 'பின் அகற்று',
   Close: 'மூடு',
+  'Close pinned tab?': 'பின்செய்த தாவலை மூடவா?',
   'Close others': 'மற்றவற்றை மூடு',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

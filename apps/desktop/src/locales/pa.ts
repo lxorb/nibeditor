@@ -80,6 +80,7 @@ export const pa: Dictionary = {
   Forward: 'ਅੱਗੇ',
   Unpin: 'ਟੰਗਣਾ ਹਟਾਓ',
   Close: 'ਬੰਦ ਕਰੋ',
+  'Close pinned tab?': 'ਟੰਗੀ ਹੋਈ ਟੈਬ ਬੰਦ ਕਰਨੀ ਹੈ?',
   'Close others': 'ਬਾਕੀ ਬੰਦ ਕਰੋ',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

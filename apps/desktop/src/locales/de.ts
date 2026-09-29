@@ -81,6 +81,7 @@ export const de: Dictionary = {
   Forward: 'Vorwärts',
   Unpin: 'Lösen',
   Close: 'Schließen',
+  'Close pinned tab?': 'Angehefteten Tab schließen?',
   'Close others': 'Andere schließen',
   'Close tabs to the right': 'Tabs rechts schließen',
   'Close tabs to the left': 'Tabs links schließen',

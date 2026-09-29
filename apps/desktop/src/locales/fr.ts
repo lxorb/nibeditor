@@ -80,6 +80,7 @@ export const fr: Dictionary = {
   Forward: 'Suivant',
   Unpin: 'Détacher',
   Close: 'Fermer',
+  'Close pinned tab?': 'Fermer l’onglet épinglé ?',
   'Close others': 'Fermer les autres',
   'Close tabs to the right': 'Fermer les onglets à droite',
   'Close tabs to the left': 'Fermer les onglets à gauche',

@@ -80,6 +80,7 @@ export const ar: Dictionary = {
   Forward: 'تقدم',
   Unpin: 'إلغاء التثبيت',
   Close: 'إغلاق',
+  'Close pinned tab?': 'إغلاق التبويب المثبّت؟',
   'Close others': 'إغلاق الأخرى',
   'Close tabs to the right': 'إغلاق التبويبات على اليمين',
   'Close tabs to the left': 'إغلاق التبويبات على اليسار',

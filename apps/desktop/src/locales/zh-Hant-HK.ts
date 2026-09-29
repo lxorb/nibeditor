@@ -80,6 +80,7 @@ export const zhHantHK: Dictionary = {
   Forward: '前進',
   Unpin: '取消固定',
   Close: '關閉',
+  'Close pinned tab?': '關閉已固定的標籤頁？',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右側標籤頁',
   'Close tabs to the left': '關閉左側標籤頁',

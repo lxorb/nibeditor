@@ -80,6 +80,7 @@ export const jv: Dictionary = {
   Forward: 'Maju',
   Unpin: 'Uculi pin',
   Close: 'Tutup',
+  'Close pinned tab?': 'Tutup tab sing dipinen?',
   'Close others': 'Tutup liyane',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

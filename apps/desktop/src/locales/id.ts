@@ -80,6 +80,7 @@ export const id: Dictionary = {
   Forward: 'Maju',
   Unpin: 'Lepas',
   Close: 'Tutup',
+  'Close pinned tab?': 'Tutup tab yang dipasang?',
   'Close others': 'Tutup yang lain',
   'Close tabs to the right': 'Tutup tab di kanan',
   'Close tabs to the left': 'Tutup tab di kiri',

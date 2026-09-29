@@ -1278,10 +1278,10 @@ describe('a tab held at the head of its strip', () => {
     ])
   })
 
-  /** What Emil asked for: the cross is gone and the two deliberate ways are not.
-   *  This used to refuse, so a tab pinned in the morning could not be closed at all
-   *  until it was let go of. */
-  test('closes when Ctrl+W or the row in its own menu asks', async () => {
+  /** What Emil asked for: the cross is gone and the deliberate ways are not. This
+   *  used to refuse, so a tab pinned in the morning could not be closed at all until
+   *  it was let go of. Ctrl+W asks first; see pinned-close.effect.test.ts. */
+  test('closes when the row in its own menu asks', async () => {
     const id = await opened()
     const pinned = id('/space/c.md')
     workspace.togglePin(pinned)

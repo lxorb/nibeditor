@@ -80,6 +80,7 @@ export const ptBR: Dictionary = {
   Forward: 'Avançar',
   Unpin: 'Desafixar',
   Close: 'Fechar',
+  'Close pinned tab?': 'Fechar a aba fixada?',
   'Close others': 'Fechar as outras',
   'Close tabs to the right': 'Fechar abas à direita',
   'Close tabs to the left': 'Fechar abas à esquerda',

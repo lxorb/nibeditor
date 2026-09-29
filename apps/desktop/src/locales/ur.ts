@@ -80,6 +80,7 @@ export const ur: Dictionary = {
   Forward: 'آگے',
   Unpin: 'پن ہٹائیں',
   Close: 'بند کریں',
+  'Close pinned tab?': 'پن کیا ہوا ٹیب بند کریں؟',
   'Close others': 'باقی بند کریں',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

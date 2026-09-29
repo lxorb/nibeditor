@@ -14,6 +14,8 @@ interface Confirm {
   detail?: string
   confirmLabel?: string
   danger?: boolean
+  /** The keyboard starts on the answer rather than on Cancel, so Enter gives it. */
+  lands?: boolean
 }
 
 interface Choice {
@@ -99,6 +101,7 @@ class Prompt {
   placeholder = $state('')
   confirmLabel = $state('')
   danger = $state(false)
+  lands = $state(false)
   spaces = $state<SpaceOption[]>([])
   space = $state<string | null>(null)
   folders = $state<FolderOption[]>([])
@@ -158,6 +161,7 @@ class Prompt {
     this.value = ''
     this.confirmLabel = options.confirmLabel ?? 'Confirm'
     this.danger = options.danger ?? false
+    this.lands = options.lands ?? false
     this.naming = false
 
     return this.show().then((answer) => answer !== null)

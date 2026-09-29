@@ -80,6 +80,7 @@ export const th: Dictionary = {
   Forward: 'ไปข้างหน้า',
   Unpin: 'เลิกปักหมุด',
   Close: 'ปิด',
+  'Close pinned tab?': 'ปิดแท็บที่ปักหมุดไว้?',
   'Close others': 'ปิดอันอื่น',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

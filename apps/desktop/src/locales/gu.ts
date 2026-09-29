@@ -80,6 +80,7 @@ export const gu: Dictionary = {
   Forward: 'આગળ',
   Unpin: 'પિન કાઢો',
   Close: 'બંધ કરો',
+  'Close pinned tab?': 'પિન કરેલી ટૅબ બંધ કરવી?',
   'Close others': 'બીજી બંધ કરો',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

@@ -80,6 +80,7 @@ export const fil: Dictionary = {
   Forward: 'Pasulong',
   Unpin: 'I-unpin',
   Close: 'Isara',
+  'Close pinned tab?': 'Isara ang naka-pin na tab?',
   'Close others': 'Isara ang iba',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

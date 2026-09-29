@@ -178,6 +178,7 @@ const SESSION_DELAY = 400
 const TRAIL = 30
 
 const unread = (path: string) => import('./unread.svelte').then((one) => one.unread.there(path))
+const closesPinned = () => import('./workspace/closing-pinned').then((one) => one.closesPinned())
 
 /** Which line of a note a followed link lands on: the heading it names, or the
  *  line the block name sits on. Null when the note holds neither, which leaves
@@ -2393,12 +2394,8 @@ class Workspace {
    *  Nothing is asked when the note stays open in another pane: closing one of
    *  two views of a note loses nothing at all.
    *
-   *  A pinned tab closes like any other. What pinning takes away is the cross, not
-   *  the gesture: the tab is a chip with nothing on it to close by accident, and
-   *  the two deliberate ways - Ctrl+W and the row in the tab's own menu - still
-   *  mean what they say, which is what a browser does with a pinned tab and what
-   *  Emil asked for. This used to refuse, and a tab somebody had pinned in the
-   *  morning could not be closed at all without being let go of first. */
+   *  A pinned tab has no cross, but its menu row and the middle button close it
+   *  outright, as a browser's do. This used to refuse. */
   async closeAsking(id: string) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
@@ -2406,10 +2403,11 @@ class Workspace {
   }
 
   /** The tab being worked in, closed with the question. What Ctrl+W, the File
-   *  menu, the palette and `:q` all mean by closing. */
+   *  menu, the palette and `:q` all mean by closing, and a pinned tab is asked
+   *  about first; see workspace/closing-pinned.ts. */
   async closeActive() {
-    const id = this.activeTabId
-    if (id) await this.closeAsking(id)
+    const tab = this.active
+    if (tab && (!tab.pinned || (await closesPinned()))) await this.closeAsking(tab.id)
   }
 
   /** The tabs of a pane around one, asking once about anything unsaved; which tabs

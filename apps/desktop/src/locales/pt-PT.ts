@@ -80,6 +80,7 @@ export const ptPT: Dictionary = {
   Forward: 'Avançar',
   Unpin: 'Desafixar',
   Close: 'Fechar',
+  'Close pinned tab?': 'Fechar o separador afixado?',
   'Close others': 'Fechar os outros',
   'Close tabs to the right': 'Fechar separadores à direita',
   'Close tabs to the left': 'Fechar separadores à esquerda',

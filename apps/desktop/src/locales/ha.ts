@@ -80,6 +80,7 @@ export const ha: Dictionary = {
   Forward: 'Gaba',
   Unpin: 'Cire manne',
   Close: 'Rufe',
+  'Close pinned tab?': 'A rufe shafin da aka manne?',
   'Close others': 'Rufe sauran',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

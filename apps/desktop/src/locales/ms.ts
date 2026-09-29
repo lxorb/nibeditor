@@ -80,6 +80,7 @@ export const ms: Dictionary = {
   Forward: 'Ke hadapan',
   Unpin: 'Buang pin',
   Close: 'Tutup',
+  'Close pinned tab?': 'Tutup tab yang dipin?',
   'Close others': 'Tutup yang lain',
   'Close tabs to the right': 'Tutup tab di sebelah kanan',
   'Close tabs to the left': 'Tutup tab di sebelah kiri',

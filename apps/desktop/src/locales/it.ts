@@ -80,6 +80,7 @@ export const it: Dictionary = {
   Forward: 'Avanti',
   Unpin: 'Sblocca',
   Close: 'Chiudi',
+  'Close pinned tab?': 'Chiudere la scheda fissata?',
   'Close others': 'Chiudi le altre',
   'Close tabs to the right': 'Chiudi le schede a destra',
   'Close tabs to the left': 'Chiudi le schede a sinistra',

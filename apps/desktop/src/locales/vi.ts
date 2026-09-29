@@ -80,6 +80,7 @@ export const vi: Dictionary = {
   Forward: 'Tiến',
   Unpin: 'Bỏ ghim',
   Close: 'Đóng',
+  'Close pinned tab?': 'Đóng tab đã ghim?',
   'Close others': 'Đóng các tab khác',
   'Close tabs to the right': 'Đóng các tab bên phải',
   'Close tabs to the left': 'Đóng các tab bên trái',

@@ -80,6 +80,7 @@ export const hi: Dictionary = {
   Forward: 'आगे',
   Unpin: 'पिन निकालें',
   Close: 'बंद करें',
+  'Close pinned tab?': 'पिन किया गया टैब बंद करें?',
   'Close others': 'बाकी बंद करें',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

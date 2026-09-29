@@ -80,6 +80,7 @@ export const sw: Dictionary = {
   Forward: 'Mbele',
   Unpin: 'Ondoa bandiko',
   Close: 'Funga',
+  'Close pinned tab?': 'Funga kichupo kilichobandikwa?',
   'Close others': 'Funga nyingine',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

@@ -80,6 +80,7 @@ export const kn: Dictionary = {
   Forward: 'ಮುಂದೆ',
   Unpin: 'ಪಿನ್ ತೆಗೆಯಿರಿ',
   Close: 'ಮುಚ್ಚಿ',
+  'Close pinned tab?': 'ಪಿನ್ ಮಾಡಿದ ಟ್ಯಾಬ್ ಮುಚ್ಚಬೇಕೆ?',
   'Close others': 'ಉಳಿದವನ್ನು ಮುಚ್ಚಿ',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

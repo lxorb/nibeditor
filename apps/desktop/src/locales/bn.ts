@@ -80,6 +80,7 @@ export const bn: Dictionary = {
   Forward: 'সামনে',
   Unpin: 'পিন সরান',
   Close: 'বন্ধ',
+  'Close pinned tab?': 'পিন করা ট্যাব বন্ধ করবেন?',
   'Close others': 'বাকিগুলো বন্ধ',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

@@ -80,6 +80,7 @@ export const zhHans: Dictionary = {
   Forward: '前进',
   Unpin: '取消固定',
   Close: '关闭',
+  'Close pinned tab?': '关闭已固定的标签页？',
   'Close others': '关闭其他',
   'Close tabs to the right': '关闭右侧标签页',
   'Close tabs to the left': '关闭左侧标签页',

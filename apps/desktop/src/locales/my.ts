@@ -80,6 +80,7 @@ export const my: Dictionary = {
   Forward: 'ရှေ့သို့',
   Unpin: 'ပင်ဖြုတ်',
   Close: 'ပိတ်',
+  'Close pinned tab?': 'ပင်ထိုးထားသောတဘ်ကို ပိတ်မလား?',
   'Close others': 'အခြားတဘ်ပိတ်',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

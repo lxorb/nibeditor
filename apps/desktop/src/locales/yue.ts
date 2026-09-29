@@ -80,6 +80,7 @@ export const yue: Dictionary = {
   Forward: '前進',
   Unpin: '取消固定',
   Close: '關閉',
+  'Close pinned tab?': '關閉已固定嘅標籤頁？',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右邊嘅標籤頁',
   'Close tabs to the left': '關閉左邊嘅標籤頁',

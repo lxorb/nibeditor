@@ -80,6 +80,7 @@ export const gsw: Dictionary = {
   Forward: 'Vorwärts',
   Unpin: 'Löse',
   Close: 'Zuemache',
+  'Close pinned tab?': 'Aagheftete Tab zuemache?',
   'Close others': 'Anderi zuemache',
   'Close tabs to the right': 'Tabs rächts zuemache',
   'Close tabs to the left': 'Tabs links zuemache',

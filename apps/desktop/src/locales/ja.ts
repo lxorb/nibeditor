@@ -80,6 +80,7 @@ export const ja: Dictionary = {
   Forward: '進む',
   Unpin: 'ピン留めを外す',
   Close: '閉じる',
+  'Close pinned tab?': 'ピン留めしたタブを閉じますか？',
   'Close others': '他を閉じる',
   'Close tabs to the right': '右側のタブを閉じる',
   'Close tabs to the left': '左側のタブを閉じる',

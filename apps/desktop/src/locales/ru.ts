@@ -80,6 +80,7 @@ export const ru: Dictionary = {
   Forward: 'Вперёд',
   Unpin: 'Открепить',
   Close: 'Закрыть',
+  'Close pinned tab?': 'Закрыть закреплённую вкладку?',
   'Close others': 'Закрыть остальные',
   'Close tabs to the right': 'Закрыть вкладки справа',
   'Close tabs to the left': 'Закрыть вкладки слева',

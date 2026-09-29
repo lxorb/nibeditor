@@ -80,6 +80,7 @@ export const tr: Dictionary = {
   Forward: 'İleri',
   Unpin: 'Sabitlemeyi kaldır',
   Close: 'Kapat',
+  'Close pinned tab?': 'Sabitlenmiş sekme kapatılsın mı?',
   'Close others': 'Diğerlerini kapat',
   'Close tabs to the right': 'Sağdaki sekmeleri kapat',
   'Close tabs to the left': 'Soldaki sekmeleri kapat',

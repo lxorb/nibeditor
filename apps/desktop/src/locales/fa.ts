@@ -80,6 +80,7 @@ export const fa: Dictionary = {
   Forward: 'جلو',
   Unpin: 'برداشتن سنجاق',
   Close: 'بستن',
+  'Close pinned tab?': 'زبانه سنجاق‌شده بسته شود؟',
   'Close others': 'بستن بقیه',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

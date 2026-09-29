@@ -235,11 +235,16 @@
           <button type="button" class="nib-button is-quiet" onclick={() => prompt.dismiss()}
             >{t('Cancel')}</button
           >
+          <!-- Cancel takes the keyboard first, so Enter on a question about deleting
+               something keeps it; a question that says its answer is undone as
+               easily as it is given lands here instead. See `lands` in
+               prompt.svelte.ts. -->
           <button
             type="submit"
             class="nib-button"
             class:is-danger={prompt.danger}
             disabled={prompt.mode === 'text' && !prompt.value.trim()}
+            data-lands={prompt.mode === 'confirm' && prompt.lands ? '' : undefined}
           >
             {t(prompt.confirmLabel)}
           </button>

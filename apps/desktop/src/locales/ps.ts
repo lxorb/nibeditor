@@ -80,6 +80,7 @@ export const ps: Dictionary = {
   Forward: 'پر مخ',
   Unpin: 'نښلون ليرې کول',
   Close: 'بندول',
+  'Close pinned tab?': 'نښلول شوې ټوټه بنده شي؟',
   'Close others': 'نور بندول',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',

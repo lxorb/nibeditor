@@ -80,6 +80,7 @@ export const ml: Dictionary = {
   Forward: 'മുന്നോട്ട്',
   Unpin: 'പിൻ നീക്കുക',
   Close: 'അടയ്ക്കുക',
+  'Close pinned tab?': 'പിൻ ചെയ്ത ടാബ് അടയ്ക്കണോ?',
   'Close others': 'മറ്റുള്ളവ അടയ്ക്കുക',
   'Close tabs to the right': 'Close tabs to the right',
   'Close tabs to the left': 'Close tabs to the left',
