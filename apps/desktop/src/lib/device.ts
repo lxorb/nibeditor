@@ -11,7 +11,7 @@
  *  after an update does not become a second device in the list. */
 
 import { keep, storedText } from './stored'
-import { isMobile, isNative } from './tauri'
+import { isMobile, isNative, platform } from './tauri'
 
 const STORAGE_KEY = 'nib:device'
 
@@ -20,9 +20,21 @@ const LONGEST = 40
 
 let held: string | null = null
 
+/** An iPhone or an iPad, by the screen: an iPad's WebKit says it is a Mac, and the
+ *  native build knows only that it is iOS. The same line the layout draws between a
+ *  phone and a tablet (`PHONE_SIDE` in viewport.svelte.ts), on the screen's narrow
+ *  side, so turning it round changes nothing. */
+export function appleHandheld(): 'iPhone' | 'iPad' {
+  const narrow = typeof screen === 'undefined' ? 0 : Math.min(screen.width, screen.height)
+  return narrow > 500 ? 'iPad' : 'iPhone'
+}
+
 /** The words, from what the platform says and nothing else: no serial, no
  *  fingerprint, nothing that outlives this account's own storage. */
 function worked(): string {
+  // The native iOS build knows what it is, where its agent would call an iPad a Mac.
+  if (isNative && platform() === 'ios') return appleHandheld()
+
   const agent = typeof navigator === 'undefined' ? '' : navigator.userAgent
 
   const system = /Windows/i.test(agent)
