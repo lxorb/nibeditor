@@ -1546,4 +1546,20 @@ export const kn: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'ಹೊಸ ಟರ್ಮಿನಲ್',
+  'Command Prompt': 'ಕಮಾಂಡ್ ಪ್ರಾಂಪ್ಟ್',
+  Terminal: 'ಟರ್ಮಿನಲ್',
+  Shell: 'ಶೆಲ್',
+  'Open another': 'ಇನ್ನೊಂದನ್ನು ತೆರೆಯಿರಿ',
+  'Open in terminal': 'ಟರ್ಮಿನಲ್‌ನಲ್ಲಿ ತೆರೆಯಿರಿ',
+  Clear: 'ತೆರವುಗೊಳಿಸಿ',
+  'Exited with code {code}': 'ಕೋಡ್ {code} ನೊಂದಿಗೆ ಮುಗಿಯಿತು',
+  'Could not start {shell}': '{shell} ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ',
+  'Stop what is running in {name}?': '{name} ನಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
+  'Stop what is running in these terminals?': 'ಈ ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
+  'Paste {count} lines?': {
+    one: '{count} ಸಾಲನ್ನು ಅಂಟಿಸಬೇಕೆ?',
+    other: '{count} ಸಾಲುಗಳನ್ನು ಅಂಟಿಸಬೇಕೆ?',
+  },
 }

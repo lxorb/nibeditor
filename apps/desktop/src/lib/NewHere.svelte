@@ -17,7 +17,7 @@
    *  is what every other list in the app is; see roving.ts. The cards are the ones the
    *  Ctrl+T dialog draws; see KindCard.svelte. */
   import KindCard from './KindCard.svelte'
-  import { newKinds } from './new-kinds'
+  import { newKinds, type NewKindRow, showOthers } from './new-kinds'
   import { roving } from './roving'
   import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
@@ -25,6 +25,17 @@
   const { paneId }: { paneId: string } = $props()
 
   const kinds = $derived(newKinds())
+
+  /** A press on a card makes its kind, and one on its chevron - or with Shift - shows
+   *  the kind's other forms instead: a terminal's other shells. */
+  function choose(event: MouseEvent, one: NewKindRow) {
+    const chevron = event.target instanceof Element && event.target.closest('[data-more]')
+    const card = event.currentTarget
+    if ((chevron || event.shiftKey) && card instanceof Element && showOthers(one, card, paneId)) {
+      return
+    }
+    one.make(paneId)
+  }
 
   let element = $state<HTMLElement>()
 
@@ -52,7 +63,15 @@
   role="group"
 >
   {#each kinds as one, index (one.kind)}
-    <KindCard {one} rise={index} onclick={() => one.make(paneId)} />
+    <!-- The shells behind the terminal's chevron are found as a hand comes near it, not
+         as the pane empties: an empty pane is what a window can open on. -->
+    <KindCard
+      {one}
+      rise={index}
+      onclick={(event: MouseEvent) => choose(event, one)}
+      onpointerenter={() => one.ready?.()}
+      onfocus={() => one.ready?.()}
+    />
   {/each}
 </div>
 

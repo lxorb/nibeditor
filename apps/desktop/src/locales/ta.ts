@@ -1557,4 +1557,17 @@ export const ta: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'புதிய முனையம்',
+  'Command Prompt': 'கட்டளைத் தூண்டி',
+  Terminal: 'முனையம்',
+  Shell: 'ஷெல்',
+  'Open another': 'இன்னொன்றைத் திற',
+  'Open in terminal': 'முனையத்தில் திற',
+  Clear: 'அழி',
+  'Exited with code {code}': 'குறியீடு {code} உடன் முடிந்தது',
+  'Could not start {shell}': '{shell} ஐத் தொடங்க முடியவில்லை',
+  'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
+  'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
+  'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
 }

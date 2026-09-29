@@ -1536,4 +1536,20 @@ export const tr: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Yeni terminal',
+  'Command Prompt': 'Komut İstemi',
+  Terminal: 'Terminal',
+  Shell: 'Kabuk',
+  'Open another': 'Bir tane daha aç',
+  'Open in terminal': 'Terminalde aç',
+  Clear: 'Temizle',
+  'Exited with code {code}': '{code} koduyla sonlandı',
+  'Could not start {shell}': '{shell} başlatılamadı',
+  'Stop what is running in {name}?': '{name} içinde çalışan durdurulsun mu?',
+  'Stop what is running in these terminals?': 'Bu terminallerde çalışan durdurulsun mu?',
+  'Paste {count} lines?': {
+    one: '{count} satır yapıştırılsın mı?',
+    other: '{count} satır yapıştırılsın mı?',
+  },
 }

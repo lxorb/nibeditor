@@ -1559,4 +1559,17 @@ export const sw: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Terminali mpya',
+  'Command Prompt': 'Kidokezo cha Amri',
+  Terminal: 'Terminali',
+  Shell: 'Shell',
+  'Open another': 'Fungua nyingine',
+  'Open in terminal': 'Fungua kwenye terminali',
+  Clear: 'Futa',
+  'Exited with code {code}': 'Imemalizika kwa msimbo {code}',
+  'Could not start {shell}': 'Imeshindwa kuanzisha {shell}',
+  'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
+  'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
+  'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
 }

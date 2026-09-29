@@ -46,6 +46,11 @@ export interface MenuItem {
   /** Whether it asks for something before it acts: a name, a place to save to, a
    *  window of choices. A Mac writes an ellipsis after such a row; see native-menu.ts. */
   asks?: boolean
+  /** Rows that stand in for this one: its alternatives, such as a terminal's other
+   *  shells. Pressing the row still does its own thing; a chevron at its end, or the
+   *  arrow further along the line, shows these in the menu's place. Only a row's own
+   *  menu draws it; see ContextMenu.svelte. */
+  more?: () => Promise<MenuEntry[]>
   // A property rather than a method, so a caller may hand the function on - which
   // is how an export row reaches the app menu.
   run: () => void

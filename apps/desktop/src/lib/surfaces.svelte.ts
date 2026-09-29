@@ -71,6 +71,14 @@ export const pdfSurface = held(() => import('./Pdf.svelte'))
 /** A website in a tab. See docs/web-tabs.md. */
 export const webSurface = held(() => import('./web-tab/WebTab.svelte'))
 
+/** A shell in a tab, with xterm.js behind it. Never the glasses' plugin's, which has no
+ *  shell to run: the same reason as the space chooser's card below. See docs/terminal.md. */
+export const terminalSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no terminal in the Even Realities plugin'))
+    : import('./terminal/TerminalTab.svelte'),
+)
+
 /** A pane with nothing open, which is the kinds a new tab can be as buttons. Fetched
  *  like the surfaces above it and for the same reason: a window that opens on a note -
  *  which is nearly every window - should not carry the answer to a pane that has

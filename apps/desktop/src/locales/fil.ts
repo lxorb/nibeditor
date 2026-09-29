@@ -1566,4 +1566,20 @@ export const fil: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Bagong terminal',
+  'Command Prompt': 'Command Prompt',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Magbukas ng isa pa',
+  'Open in terminal': 'Buksan sa terminal',
+  Clear: 'I-clear',
+  'Exited with code {code}': 'Natapos na may code {code}',
+  'Could not start {shell}': 'Hindi masimulan ang {shell}',
+  'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
+  'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',
+  'Paste {count} lines?': {
+    one: 'I-paste ang {count} linya?',
+    other: 'I-paste ang {count} na linya?',
+  },
 }

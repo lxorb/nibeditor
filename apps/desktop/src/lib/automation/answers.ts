@@ -112,13 +112,16 @@ export async function countWords(args: Said): Promise<unknown> {
  *  makes `nib commands run` and pressing the row the same act. */
 export function listCommands(): unknown {
   return {
-    commands: appCommands(views.of(workspace.panes.focusedId)).map((one) => ({
-      id: one.id,
-      label: one.label,
-      hint: one.hint ?? null,
-      disabled: one.disabled === true,
-      checked: one.checked === true,
-    })),
+    // Not the rows the command line may not run, which it has no use for knowing.
+    commands: appCommands(views.of(workspace.panes.focusedId))
+      .filter((one) => one.ownWindow !== true)
+      .map((one) => ({
+        id: one.id,
+        label: one.label,
+        hint: one.hint ?? null,
+        disabled: one.disabled === true,
+        checked: one.checked === true,
+      })),
   }
 }
 

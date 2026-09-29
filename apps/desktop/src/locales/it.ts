@@ -1583,4 +1583,22 @@ export const it: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Nuovo terminale',
+  'Command Prompt': 'Prompt dei comandi',
+  Terminal: 'Terminale',
+  Shell: 'Shell',
+  'Open another': 'Aprine un altro',
+  'Open in terminal': 'Apri nel terminale',
+  Clear: 'Cancella',
+  'Exited with code {code}': 'Terminato con codice {code}',
+  'Could not start {shell}': 'Impossibile avviare {shell}',
+  'Stop what is running in {name}?': 'Interrompere ciò che è in esecuzione in {name}?',
+  'Stop what is running in these terminals?':
+    'Interrompere ciò che è in esecuzione in questi terminali?',
+  'Paste {count} lines?': {
+    one: 'Incollare {count} riga?',
+    many: 'Incollare {count} di righe?',
+    other: 'Incollare {count} righe?',
+  },
 }

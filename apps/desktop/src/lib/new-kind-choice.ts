@@ -14,13 +14,13 @@
  *  Pure and light, because the chord that reads it is fetched at the launch's last
  *  turn and the dialog that draws it after that; see new-kind-chord.ts. */
 
-import type { NewKind } from './workspace.svelte'
+import type { NewKindName } from './new-kinds'
 
 /** Where the dialog opens, as a place in the kinds it is showing: the website, and a
  *  note where there is no website to make. A phone leaves the website out - it is a
  *  bookmark there, opened in the phone's own browser - and a note is what a new tab
  *  was before there was any choice at all. */
-export function firstChoice(kinds: readonly NewKind[]): number {
+export function firstChoice(kinds: readonly NewKindName[]): number {
   const web = kinds.indexOf('web')
   if (web >= 0) return web
 

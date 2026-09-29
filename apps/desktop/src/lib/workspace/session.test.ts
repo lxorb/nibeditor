@@ -163,6 +163,17 @@ describe('reading one tab', () => {
       readDraft({ kind: 'pdf', path: '/Notes/paper.pdf', name: 'paper.pdf', doc: '' }),
     ).toMatchObject({ kind: 'pdf' })
   })
+
+  /** The restart rule for a terminal: it comes back in its place, with its shell and the
+   *  folder it was last in, and the shell starts again when the tab is looked at. All of
+   *  that is the tab's own words, which a tab with no file always keeps; see
+   *  terminal/spec.ts and docs/terminal.md. */
+  test('brings a terminal back as a terminal, with its shell and its folder', () => {
+    const doc = '{"shell":"pwsh","folder":"/home/me/code","key":"k1"}'
+    const back = readDraft({ kind: 'terminal', path: null, name: 'PowerShell', doc })
+
+    expect(back).toMatchObject({ kind: 'terminal', path: null, name: 'PowerShell', doc })
+  })
 })
 
 describe('reading a closed tab', () => {

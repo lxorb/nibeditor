@@ -113,6 +113,7 @@ const rows = [
   { id: 'files', label: 'File list', run: () => ran.push('files') },
   { id: 'record', label: 'Record', byHand: true, run: () => ran.push('record') },
   { id: 'shut', label: 'Shut', disabled: true, run: () => ran.push('shut') },
+  { id: 'new-terminal', label: 'New terminal', ownWindow: true, run: () => ran.push('shell') },
 ]
 const ran: string[] = []
 
@@ -224,6 +225,18 @@ describe('a row of the palette', () => {
     // The command line is this machine, behind a secret only this user can read.
     expect(runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
     expect(ran).toEqual(['record'])
+  })
+
+  /** A shell on this machine is not something another program may open, and a verb
+   *  that opened one would be a way to type into it; see docs/terminal.md. */
+  test('and never one that opens a shell, on either road', () => {
+    ran.length = 0
+
+    expect(() => runCommand({ id: 'new-terminal' }, 'here')).toThrow(
+      /not something the command line may run/,
+    )
+    expect(() => runCommand({ id: 'new-terminal' }, 'link')).toThrow(/not something/)
+    expect(ran).toEqual([])
   })
 
   test('and a row that cannot run just now says so rather than doing nothing', () => {

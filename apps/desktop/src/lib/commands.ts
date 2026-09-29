@@ -344,6 +344,11 @@ export interface Command extends MenuItem {
    *  handful of those rows turn on a microphone, open a camera or sign somebody
    *  out - none of which is a thing to hand a page on the web. */
   byHand?: boolean
+  /** Whether only the window's own hands may run it: the palette, a key, a menu row -
+   *  and never the command line or a link, whoever wrote either. A terminal is a shell
+   *  on this machine, and a verb that opened one would be a way for another program to
+   *  type into it; see docs/terminal.md and `runCommand` in automation/acts.ts. */
+  ownWindow?: boolean
 }
 
 /** Fetched as the launch ends; see `warmDoors`. */
@@ -961,6 +966,18 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => workspace.openWebsite(),
           },
         ]),
+    // A shell in a tab, in the one Settings chose; the plus and Ctrl+T offer the others.
+    // A desktop's alone. See docs/terminal.md.
+    ...(isDesktop
+      ? [
+          {
+            id: 'new-terminal',
+            label: t('New terminal'),
+            ownWindow: true,
+            run: () => void import('./terminal/open').then(({ openTerminal }) => openTerminal()),
+          },
+        ]
+      : []),
     // Only where there is something to convert, which is a space that was written in
     // an older nib: a row that did nothing would be a row that read as broken. See
     // workspace.convertWebsites.

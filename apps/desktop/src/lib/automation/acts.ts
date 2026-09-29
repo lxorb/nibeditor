@@ -260,7 +260,8 @@ export async function searchSpace(args: Said): Promise<unknown> {
  *  a link may ask for that is a whole list rather than one act, and a few of those
  *  rows turn on a microphone, open a camera or sign the machine out - which a page
  *  on the web is not going to do by handing the system an address. The row says so
- *  itself; see `byHand` in commands.ts. */
+ *  itself; see `byHand` in commands.ts. A row that opens a shell is refused on both
+ *  roads, the command line's as well as a link's; see `ownWindow` there. */
 export function runCommand(args: Said, road: Road = 'here'): unknown {
   const id = said(args, 'id')
   if (!id) throw new Error('say which command')
@@ -268,6 +269,7 @@ export function runCommand(args: Said, road: Road = 'here'): unknown {
   const found = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Error(`there is no command called ${id}`)
   if (found.disabled === true) throw new Error(`${id} cannot run just now`)
+  if (found.ownWindow === true) throw new Error(`${id} is not something the command line may run`)
   if (found.byHand === true && road === 'link') {
     throw new Error(`${id} is not something a link may run`)
   }

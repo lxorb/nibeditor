@@ -1531,4 +1531,20 @@ export const bn: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'নতুন টার্মিনাল',
+  'Command Prompt': 'কমান্ড প্রম্পট',
+  Terminal: 'টার্মিনাল',
+  Shell: 'শেল',
+  'Open another': 'আরেকটি খুলুন',
+  'Open in terminal': 'টার্মিনালে খুলুন',
+  Clear: 'মুছুন',
+  'Exited with code {code}': 'কোড {code} দিয়ে বন্ধ হয়েছে',
+  'Could not start {shell}': '{shell} চালু করা যায়নি',
+  'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
+  'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',
+  'Paste {count} lines?': {
+    one: '{count}টি লাইন পেস্ট করবেন?',
+    other: '{count}টি লাইন পেস্ট করবেন?',
+  },
 }

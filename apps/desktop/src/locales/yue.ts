@@ -1498,4 +1498,17 @@ export const yue: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': '新終端機',
+  'Command Prompt': '命令提示字元',
+  Terminal: '終端機',
+  Shell: 'Shell',
+  'Open another': '再開一個',
+  'Open in terminal': '喺終端機度開',
+  Clear: '清除',
+  'Exited with code {code}': '以代碼 {code} 結束咗',
+  'Could not start {shell}': '開唔到 {shell}',
+  'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
+  'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
+  'Paste {count} lines?': '要貼上 {count} 行嗎？',
 }

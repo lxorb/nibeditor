@@ -1503,4 +1503,17 @@ export const th: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'เทอร์มินัลใหม่',
+  'Command Prompt': 'พรอมต์คำสั่ง',
+  Terminal: 'เทอร์มินัล',
+  Shell: 'เชลล์',
+  'Open another': 'เปิดอีกอัน',
+  'Open in terminal': 'เปิดในเทอร์มินัล',
+  Clear: 'ล้าง',
+  'Exited with code {code}': 'จบด้วยรหัส {code}',
+  'Could not start {shell}': 'ไม่สามารถเริ่ม {shell}',
+  'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
+  'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
+  'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
 }

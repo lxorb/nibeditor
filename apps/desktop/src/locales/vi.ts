@@ -1521,4 +1521,17 @@ export const vi: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Terminal mới',
+  'Command Prompt': 'Dấu nhắc Lệnh',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Mở thêm một cái',
+  'Open in terminal': 'Mở trong terminal',
+  Clear: 'Xóa',
+  'Exited with code {code}': 'Đã thoát với mã {code}',
+  'Could not start {shell}': 'Không thể khởi động {shell}',
+  'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
+  'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
+  'Paste {count} lines?': 'Dán {count} dòng?',
 }

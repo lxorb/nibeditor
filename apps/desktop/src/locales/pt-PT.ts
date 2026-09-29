@@ -1572,4 +1572,21 @@ export const ptPT: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Novo terminal',
+  'Command Prompt': 'Linha de Comandos',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Abrir outro',
+  'Open in terminal': 'Abrir no terminal',
+  Clear: 'Limpar',
+  'Exited with code {code}': 'Terminado com o código {code}',
+  'Could not start {shell}': 'Não foi possível iniciar {shell}',
+  'Stop what is running in {name}?': 'Parar o que está a ser executado em {name}?',
+  'Stop what is running in these terminals?': 'Parar o que está a ser executado nestes terminais?',
+  'Paste {count} lines?': {
+    one: 'Colar {count} linha?',
+    many: 'Colar {count} de linhas?',
+    other: 'Colar {count} linhas?',
+  },
 }

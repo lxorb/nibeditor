@@ -17,6 +17,7 @@ import { settings } from './settings.svelte'
 import { tabCycle } from './tab-cycle.svelte'
 import { isDesktop } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
+import { shellName, shells, SIZES } from './terminal/shells.svelte'
 import { type SchemeChoice, theme } from './theme.svelte'
 import { asChannel } from './updater'
 import { updates } from './updates.svelte'
@@ -140,6 +141,36 @@ export interface Pane {
   groups: Group[]
 }
 
+/** The terminal's two settings. The shells are asked for as the pane is drawn, which is
+ *  the first time this list is needed; the row fills in when they arrive. */
+function terminalGroup(): Group {
+  void shells.ask()
+
+  return {
+    title: t('Terminal'),
+    fields: [
+      {
+        kind: 'select',
+        label: t('Shell'),
+        options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
+        get: () => shells.chosen?.id ?? '',
+        set: (id) => shells.choose(id),
+      },
+      {
+        kind: 'slider',
+        label: t('Text size'),
+        min: SIZES.least,
+        max: SIZES.most,
+        step: 1,
+        unit: 'px',
+        initial: SIZES.initial,
+        get: () => shells.size,
+        set: (size) => shells.setSize(size),
+      },
+    ],
+  }
+}
+
 /** Built against a live view so a change lands in the editor on screen. */
 export function preferences(view?: EditorView): Pane[] {
   // One moment for every example on the pane, so the options read as one set of
@@ -224,6 +255,11 @@ export function preferences(view?: EditorView): Pane[] {
             },
           ],
         },
+
+        // Which shell a new terminal opens and how large its type is: this machine's,
+        // like the release channel below, because a shell is a program on one computer.
+        // Only a desktop has a terminal; see docs/terminal.md.
+        ...(isDesktop ? [terminalGroup()] : []),
 
         // Only the desktop app installs anything: a page is the new version the
         // moment it is reloaded, and a phone app is the store's business. So the

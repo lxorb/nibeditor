@@ -1528,4 +1528,17 @@ export const ja: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': '新しいターミナル',
+  'Command Prompt': 'コマンド プロンプト',
+  Terminal: 'ターミナル',
+  Shell: 'シェル',
+  'Open another': 'もう一つ開く',
+  'Open in terminal': 'ターミナルで開く',
+  Clear: 'クリア',
+  'Exited with code {code}': 'コード {code} で終了しました',
+  'Could not start {shell}': '{shell} を起動できませんでした',
+  'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
+  'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
+  'Paste {count} lines?': '{count} 行を貼り付けますか？',
 }

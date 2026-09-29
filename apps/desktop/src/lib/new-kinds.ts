@@ -28,11 +28,18 @@
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
 import { menu, type MenuEntry } from './menu.svelte'
+import { isDesktop } from './tauri'
+import { openTerminal, shellRows } from './terminal/open'
+import { shells } from './terminal/shells.svelte'
 import { viewport } from './viewport.svelte'
 import { type NewKind, workspace } from './workspace.svelte'
 
+/** What a new tab can be: the kinds the file list also makes, and a terminal, which is
+ *  a tab and never a file. */
+export type NewKindName = NewKind | 'terminal'
+
 export interface NewKindRow {
-  kind: NewKind
+  kind: NewKindName
   label: () => string
   /** The shape the file list and the tab strip already draw for this kind, so the
    *  buttons in an empty pane wear what the rows wear; see file-mark.ts. */
@@ -44,6 +51,13 @@ export interface NewKindRow {
   /** Makes one. In the pane named, where a caller has one - the pane whose plus was
    *  pressed takes the keyboard first - and otherwise in whichever pane has it. */
   make: (paneId?: string) => void
+  /** The other ways to make one, for a kind that has more than one: a terminal's other
+   *  shells. Pressing the row still makes the usual one, as VS Code's `+` does beside
+   *  its `˅`; these are a chevron away. See `showOthers`. */
+  others?: (paneId?: string) => Promise<MenuEntry[]>
+  /** Gets those ready, for a chooser that has just opened: finding the shells is a
+   *  question to the machine, asked when a chooser first needs it and not at launch. */
+  ready?: () => void
 }
 
 /** Makes one in the pane that asked, so a plus in the other pane does not open its
@@ -93,12 +107,74 @@ export function newKinds(): NewKindRow[] {
       letter: 'p',
       make: (paneId) => inPane(paneId, () => workspace.newPages()),
     },
+    // A shell is a desktop's alone: a phone has no shell to give an app, and a page in a
+    // browser has no machine under it. R, because T is the chord's own step, and R is
+    // what Run has been on Windows for thirty years. See docs/terminal.md.
+    ...(isDesktop ? [terminalRow()] : []),
   ]
+}
+
+function terminalRow(): NewKindRow {
+  return {
+    kind: 'terminal',
+    label: () => t('New terminal'),
+    mark: 'terminal',
+    letter: 'r',
+    make: (paneId) => inPane(paneId, () => openTerminal()),
+    others: (paneId) =>
+      shellRows((shell) => {
+        inPane(paneId, () => openTerminal(shell.id))
+      }),
+    ready: () => void shells.ask(),
+  }
 }
 
 /** The same kinds as menu rows, in the same order and the same words. */
 export function newKindMenu(paneId?: string): MenuEntry[] {
-  return newKinds().map((one) => ({ label: one.label(), run: () => one.make(paneId) }))
+  return newKinds().map((one) => {
+    const others = one.others
+    return {
+      label: one.label(),
+      run: () => one.make(paneId),
+      ...(others ? { more: () => others(paneId) } : {}),
+    }
+  })
+}
+
+/** Everything a chooser offers, got ready as it opens; see `ready`. */
+export function readyKinds(kinds: readonly NewKindRow[]): void {
+  for (const one of kinds) one.ready?.()
+}
+
+/** A kind's other ways, as a menu at the card that was asked: the chevron on it, or Shift
+ *  held as it was chosen. `before` runs as one of them is chosen - the dialog closing
+ *  itself. False for a kind that has no others, which the caller then makes as usual. */
+export function showOthers(
+  one: NewKindRow,
+  card: Element,
+  paneId?: string,
+  before?: () => void,
+): boolean {
+  const others = one.others
+  if (!others) return false
+
+  const box = card.getBoundingClientRect()
+  void others(paneId).then((rows) => {
+    const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.bottom })
+    const choosing = rows.map((row) =>
+      row === null
+        ? row
+        : {
+            ...row,
+            run: () => {
+              before?.()
+              row.run()
+            },
+          },
+    )
+    menu.show(at, choosing, { title: one.label() })
+  })
+  return true
 }
 
 /** The chooser, at the pointer: the plus, a held finger on it, the menu key over it.
@@ -107,5 +183,6 @@ export function newKindMenu(paneId?: string): MenuEntry[] {
  *  of the window and back. On a phone the menu draws itself as a sheet from the
  *  bottom, which is what every other menu there does. */
 export function showNewKinds(event: MouseEvent, paneId?: string) {
+  readyKinds(newKinds())
   menu.show(event, newKindMenu(paneId), { title: t('New') })
 }

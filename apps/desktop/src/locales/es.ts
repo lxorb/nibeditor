@@ -1577,4 +1577,21 @@ export const es: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'Nuevo terminal',
+  'Command Prompt': 'Símbolo del sistema',
+  Terminal: 'Terminal',
+  Shell: 'Shell',
+  'Open another': 'Abrir otro',
+  'Open in terminal': 'Abrir en el terminal',
+  Clear: 'Borrar',
+  'Exited with code {code}': 'Terminó con el código {code}',
+  'Could not start {shell}': 'No se pudo iniciar {shell}',
+  'Stop what is running in {name}?': '¿Detener lo que se ejecuta en {name}?',
+  'Stop what is running in these terminals?': '¿Detener lo que se ejecuta en estos terminales?',
+  'Paste {count} lines?': {
+    one: '¿Pegar {count} línea?',
+    many: '¿Pegar {count} de líneas?',
+    other: '¿Pegar {count} líneas?',
+  },
 }

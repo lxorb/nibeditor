@@ -1531,4 +1531,17 @@ export const ur: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // A terminal tab, its shells and the questions it asks
+  'New terminal': 'نیا ٹرمینل',
+  'Command Prompt': 'کمانڈ پرامپٹ',
+  Terminal: 'ٹرمینل',
+  Shell: 'شیل',
+  'Open another': 'ایک اور کھولیں',
+  'Open in terminal': 'ٹرمینل میں کھولیں',
+  Clear: 'صاف کریں',
+  'Exited with code {code}': 'کوڈ {code} کے ساتھ ختم ہوا',
+  'Could not start {shell}': '{shell} شروع نہیں ہو سکا',
+  'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
+  'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
+  'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
 }
