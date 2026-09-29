@@ -480,8 +480,18 @@ function holds(tail: string): boolean {
  *  and 373.
  *
  *  And met again when the Mac round came in on top of all of that, which each had
- *  been measured without the other: 3,252,387 and 374 modules. */
-const BUDGET = 3_256_000
+ *  been measured without the other: 3,252,387 and 374 modules.
+ *
+ *  Raised 2026-09-29, to 3,263,000, for what an iPhone, an iPad and a Mac found in a
+ *  night on the simulator and the Mac: the frame sized to what the keyboard leaves and
+ *  the format bar's height kept clear of the caret (viewport.svelte.ts, FormatBar,
+ *  the editor's `coveredBelow`), the writes owed as a phone puts the app away
+ *  (start.ts), a Mac's window told the scheme (theme.svelte.ts), an iPad named an iPad
+ *  (device.ts), and the first tap's caret (dragging.ts). Each has to be there before
+ *  the first key; none is a subsystem arriving early. Measured 3,259,652 and 374
+ *  modules. The check that an iPhone update moved the spaces folder is a phone's alone
+ *  and fetched only there, so none of it is in this count. */
+const BUDGET = 3_263_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
