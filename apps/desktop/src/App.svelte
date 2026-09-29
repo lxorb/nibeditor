@@ -3,7 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
-  import { viewport } from './lib/viewport.svelte'
+  import { pageHeight, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
@@ -775,7 +775,16 @@
      the same line. -->
 <!-- Nothing in the app is reachable while the account's writing is still on
      its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
-<main class:focus={modes.focus} class:full={fullscreen.on} inert={workspace.nothingToShow}>
+<!-- As tall as what can be seen, on a touch screen: an iPhone's keyboard covers the
+     window rather than shortening it, so a frame the height of the window ended under
+     the keys, and WebKit scrolled the whole page up to show the line being typed -
+     the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
+<main
+  class:focus={modes.focus}
+  class:full={fullscreen.on}
+  inert={workspace.nothingToShow}
+  style:height={pageHeight()}
+>
   <div class="middle" bind:this={middle}>
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on

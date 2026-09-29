@@ -44,6 +44,12 @@
    *  exists rather than after it. */
   const docked = $derived(viewport.touch && viewport.typing)
 
+  // A bar that has gone covers nothing: the height bound below is left at whatever
+  // it last was when the bar leaves, so it is taken back here.
+  $effect(() => {
+    if (!docked) viewport.covered = 0
+  })
+
   /** The colours are a moment's choice rather than a mode, so the row goes back
    *  to the actions whenever the bar leaves. A phone's bar leaves every time the
    *  keyboard does, and one that came back showing colours would be answering a
@@ -265,6 +271,7 @@
     role="toolbar"
     aria-label={t('Format')}
     bind:this={bar}
+    bind:offsetHeight={viewport.covered}
     use:roving={keys}
     style:bottom="{viewport.keyboard}px"
   >

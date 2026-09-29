@@ -49,6 +49,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
   import { pastesMarkup } from './trust'
+  import { viewport } from './viewport.svelte'
   import { type Tab, workspace } from './workspace.svelte'
 
   /* eslint-disable prefer-const -- `view` is bindable, and a $props() pattern cannot be split */
@@ -135,6 +136,9 @@
       // What goes in the card over a `[[link]]`: an editor on the linked note, so a
       // word of it can be fixed from here. See preview-card.ts.
       editPreview: mountPreview,
+      // The format bar on a phone's keyboard, which the caret is kept above; see
+      // `covered` in viewport.svelte.ts.
+      coveredBelow: () => viewport.covered,
       // What was folded here last time, in the state for the same reason the
       // caret is: folded a frame later is a frame spent looking at the note
       // unfolded. See fold.ts in the editor package.

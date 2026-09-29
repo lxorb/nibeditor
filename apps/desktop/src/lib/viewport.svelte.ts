@@ -119,6 +119,10 @@ class Viewport {
   /** Whether the keyboard is up, however this platform makes room for it. What
    *  everything that gets out of the way while a note is being written reads. */
   typing = $state(false)
+  /** How tall the format bar standing on the keyboard is, while it stands there:
+   *  the bottom of the note it covers, which the editor keeps the caret above. Set
+   *  by FormatBar.svelte, and nought whenever there is no such bar. */
+  covered = $state(0)
   /** How tall the page is right now. Read by whatever has to be scrolled back
    *  into sight each time the keyboard takes some of it away. */
   height = $state(0)
@@ -255,6 +259,16 @@ class Viewport {
     // resized by the person using it, so nothing there is read as a keyboard.
     const shorter = isMobile ? this.tallest - full : 0
     this.typing = Math.max(this.keyboard, shorter) > KEYBOARD_THRESHOLD
+
+    // The page is sized to what can be seen (`pageHeight`) and never scrolls itself,
+    // but WebKit still slides the whole of it up to show a line under the keyboard
+    // before the editor has had the chance to - taking the app's bar off the top of
+    // the screen. So a page moved that way is put back, and the editor brings the
+    // line into sight inside its own scroller. Never at any zoom but the page's own:
+    // a pinch in a phone's browser moves the same offset, and that is the reader's.
+    if (this.touch && seen.offsetTop > 0 && Math.abs(seen.scale - 1) < 0.01) {
+      window.scrollTo(0, 0)
+    }
   }
 }
 
