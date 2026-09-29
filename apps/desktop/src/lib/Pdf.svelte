@@ -51,6 +51,7 @@
   import { paint, placesOf, rangeOf } from './reading/find'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
+  import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -548,6 +549,32 @@
       quads: runs.map((run) => quadOf(run, point)),
     }
   }
+
+  // A finger selects with the platform's own handles, and an iPad sends the page
+  // nothing a mouse would while it does: no mouseup after the long press that starts
+  // a selection, no touchend for a handle dragged along. So the bar came up late,
+  // or offered to mark the words of the first press after the handles had moved on.
+  // What a finger changes is heard as the selection changing, a moment after it
+  // settles, and only when it is this document's or nobody's.
+  $effect(() => {
+    if (!viewport.touch) return
+
+    let settling = 0
+    const heard = () => {
+      clearTimeout(settling)
+      settling = window.setTimeout(() => {
+        const selection = getSelection()
+        const at = selection?.anchorNode ?? null
+        if (!selection?.rangeCount || (at && scroller?.contains(at))) selected()
+      }, 150)
+    }
+
+    document.addEventListener('selectionchange', heard)
+    return () => {
+      clearTimeout(settling)
+      document.removeEventListener('selectionchange', heard)
+    }
+  })
 
   /** Marks what is selected. Drawn at once and written down after, so the click
    *  is answered in the frame it happened in. */
