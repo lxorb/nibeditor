@@ -768,14 +768,22 @@ export class TableView {
     return button(className, key, path, () => onPress(this.barColumn))
   }
 
+  /** Both bars come up under a mouse as it passes, and for a finger or a pen
+   *  only once a cell has the caret. A tap on an iPhone or an iPad is announced
+   *  as a mouse passing first, and when what that shows is new on the screen,
+   *  WebKit takes the tap to have been for looking: the cell never got the
+   *  caret, and it took a second tap to write in any cell of the table. */
   private watchColumnHover() {
-    this.dom.addEventListener('mouseover', (event) => {
+    this.dom.addEventListener('pointerover', (event) => {
+      if (event.pointerType !== 'mouse') return
       const target = event.target as Element
       const th = target.closest('th')
       if (th && this.table.contains(th)) this.showColumnBar(th)
       else if (!this.columnBar.contains(target)) this.hideColumnBar()
     })
-    this.dom.addEventListener('mouseleave', () => this.hideColumnBar())
+    this.dom.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') this.hideColumnBar()
+    })
 
     this.table.addEventListener('focusin', (event) => {
       const th = (event.target as Element).closest('th')
@@ -794,14 +802,19 @@ export class TableView {
     })
   }
 
+  /** Under a mouse as it passes, and otherwise with the caret; see
+   *  `watchColumnHover`. */
   private watchRowHover() {
-    this.dom.addEventListener('mouseover', (event) => {
+    this.dom.addEventListener('pointerover', (event) => {
+      if (event.pointerType !== 'mouse') return
       const target = event.target as Element
       const tr = target.closest('tr')
       if (tr && this.table.tBodies[0]?.contains(tr)) this.showRowBar(tr)
       else if (!this.rowBar.contains(target)) this.hideRowBar()
     })
-    this.dom.addEventListener('mouseleave', () => this.hideRowBar())
+    this.dom.addEventListener('pointerleave', (event) => {
+      if (event.pointerType === 'mouse') this.hideRowBar()
+    })
 
     this.table.addEventListener('focusin', (event) => {
       const tr = (event.target as Element).closest('td')?.closest('tr')

@@ -51,6 +51,13 @@ function leave(cell: HTMLElement | null) {
   cell?.dispatchEvent(new FocusEvent('focusout', { bubbles: true }))
 }
 
+/** Something passing over an element, as a browser says so: as a pointer and
+ *  then again as a mouse - which a finger's tap is announced as too. */
+function pass(over: Element | null | undefined, pointerType: string) {
+  over?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, pointerType }))
+  over?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+}
+
 test('a row has its controls while its first cell is written in', () => {
   const table = mounted()
   enter(firstCell(table, 0))
@@ -65,14 +72,14 @@ test('and keeps them once the caret has gone again', () => {
   enter(firstCell(table, 0))
   leave(firstCell(table, 0))
 
-  firstCell(table, 0)?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+  pass(firstCell(table, 0), 'mouse')
 
   expect(table.querySelector('.nib-table-rows')?.classList.contains('is-shown')).toBe(true)
 })
 
 test('what they do lands on the row they were brought up for', () => {
   const table = mounted()
-  firstCell(table, 1)?.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }))
+  pass(firstCell(table, 1), 'mouse')
 
   // On the press rather than the click, so the caret stays in its cell; see
   // `button` in packages/editor/src/table/cells.ts.
@@ -82,4 +89,17 @@ test('what they do lands on the row they were brought up for', () => {
   expect(editor?.state.doc.toString()).toBe(
     '| What  | Where |\n| ----- | ----- |\n| Ideas | there |\n| Notes | here  |\n',
   )
+})
+
+/** A tap on an iPhone or an iPad is announced as something passing over the cell
+ *  first, and WebKit takes a tap that brought something new onto the screen to
+ *  have been for looking: the cell under it never got the caret, and writing in
+ *  any cell of a table took two taps. The bars come up with the caret there. */
+test('a finger passing over a cell brings neither bar up', () => {
+  const table = mounted()
+  pass(firstCell(table, 0), 'touch')
+  pass(table.querySelector('th'), 'touch')
+
+  expect(table.querySelector('.nib-table-rows')?.classList.contains('is-shown')).toBe(false)
+  expect(table.querySelector('.nib-table-columns')?.classList.contains('is-shown')).toBe(false)
 })
