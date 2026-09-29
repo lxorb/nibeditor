@@ -127,6 +127,20 @@ describe('what an iPhone needs before it will show the app at all', () => {
   })
 })
 
+describe('the oldest Mac it installs on', () => {
+  test('can read the page', () => {
+    // The same page as a phone's, and the same WebKit floor: 16.4 came with macOS
+    // 13.3. The default Tauri writes is 10.13, where the app opened blank.
+    const config = JSON.parse(read(TAURI, 'tauri.macos.conf.json')) as {
+      bundle?: { macOS?: { minimumSystemVersion?: string } }
+    }
+    const [major = 0, minor = 0] = (config.bundle?.macOS?.minimumSystemVersion ?? '0')
+      .split('.')
+      .map(Number)
+    expect(major * 100 + minor).toBeGreaterThanOrEqual(1303)
+  })
+})
+
 describe('what the hardened runtime lets a Mac open', () => {
   const config = JSON.parse(read(TAURI, 'tauri.macos.conf.json')) as {
     bundle?: { macOS?: { entitlements?: string; hardenedRuntime?: boolean } }
