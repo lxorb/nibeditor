@@ -390,9 +390,12 @@ export const i18n = new I18n()
 
 /** Whatever was thrown, as a translated sentence. Server messages arrive in
  *  English, so they are looked up like any other string and fall back to
- *  themselves when a dictionary has nothing for them. */
+ *  themselves when a dictionary has nothing for them.
+ *
+ *  Never a TypeError: that is the engine's own English ("Load failed", "Failed to
+ *  fetch") for a request that reached nothing, and the fallback says it better. */
 export function message(error: unknown, fallback: string): string {
-  const text = error instanceof Error ? error.message : ''
+  const text = error instanceof Error && !(error instanceof TypeError) ? error.message : ''
   return t(text || fallback)
 }
 
