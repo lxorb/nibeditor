@@ -3,7 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
-  import { pageHeight, viewport } from './lib/viewport.svelte'
+  import { pageHeight, showField, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
@@ -243,10 +243,20 @@
 
   // The keyboard takes the bottom of the window with it, and the line being
   // written can be left behind it. The height is read so this runs again at each
-  // step of the keyboard's arrival rather than once, before there is room.
+  // step of the keyboard's arrival rather than once, before there is room, and
+  // `panned` so it runs when WebKit slid the page to show the caret instead.
   $effect(() => {
-    const height = viewport.height
-    if (!viewport.typing || !view || !height) return
+    const [height, panned] = [viewport.height, viewport.panned]
+    if (!viewport.typing || !view || !height || panned < 0) return
+
+    // A field inside the note - a table's cell - has the caret rather than the
+    // editor. It was left under the keys once the page was put back.
+    const field = document.activeElement
+    if (field instanceof HTMLElement && field !== view.contentDOM) {
+      if (view.contentDOM.contains(field))
+        showField(field, view.scrollDOM, height - viewport.covered)
+      return
+    }
 
     view.dispatch({
       effects: EditorView.scrollIntoView(view.state.selection.main.head, {

@@ -123,6 +123,10 @@ class Viewport {
    *  the bottom of the note it covers, which the editor keeps the caret above. Set
    *  by FormatBar.svelte, and nought whenever there is no such bar. */
   covered = $state(0)
+  /** How many times WebKit has slid the page to show what has the caret and been
+   *  put back; see `measure`. What brings it into sight in the note's own scroller
+   *  runs again on each, since nothing else changed that it would notice. */
+  panned = $state(0)
   /** How tall the page is right now. Read by whatever has to be scrolled back
    *  into sight each time the keyboard takes some of it away. */
   height = $state(0)
@@ -268,9 +272,28 @@ class Viewport {
     // a pinch in a phone's browser moves the same offset, and that is the reader's.
     if (this.touch && seen.offsetTop > 0 && Math.abs(seen.scale - 1) < 0.01) {
       window.scrollTo(0, 0)
+      this.panned++
     }
   }
 }
+
+/** Scrolls a field that has the caret - a table's cell, say - into sight above
+ *  `bottom`, the top of whatever is over the foot of the page. The editor does
+ *  this for its own caret; a field inside the note has one of its own, which the
+ *  editor knows nothing about. */
+export function showField(field: HTMLElement, scroller: HTMLElement, bottom: number) {
+  const box = field.getBoundingClientRect()
+  const seen = scroller.getBoundingClientRect()
+  const top = seen.top + FIELD_MARGIN
+  const end = Math.min(seen.bottom, bottom) - FIELD_MARGIN
+
+  if (box.bottom > end) scroller.scrollTop += Math.min(box.bottom - end, box.top - top)
+  else if (box.top < top) scroller.scrollTop -= top - box.top
+}
+
+/** The room kept around a field brought into sight, as the editor keeps round
+ *  its caret line; see App.svelte. */
+const FIELD_MARGIN = 24
 
 export const viewport = new Viewport()
 
