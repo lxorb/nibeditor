@@ -698,9 +698,9 @@ showing a page has no editor to shadow. It is in the registry like every other k
 browser's own.** After a click into a site the app never sees the press: that is what a
 webview of its own means. The exception is Chrome's: the chords a browser never offers
 a page - a new tab, closing one, reopening the last, going round them and moving one
-along, a new window, Ctrl+1 to 9, nib's own Alt+0 to 9, and F6 back to the address field - are taken before
-the page sees them and played on the app's own window, and the keyboard goes back to the
-app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
+along, a new window, Ctrl+1 to 9, nib's own Alt+0 to 9, and F6 back to the address
+field - are taken before the page sees them and played on the app's own window, and the
+keyboard goes back to the app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
