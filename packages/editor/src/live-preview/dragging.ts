@@ -30,6 +30,16 @@ export const dragging = StateField.define<boolean>({
   },
 })
 
+/** Whether a press is one that draws a selection by dragging: the main button of a
+ *  mouse. A finger or a pen draws one with the platform's own handles, and the
+ *  mousedown WebKit sends after a tap is no drag at all - answering it with a
+ *  transaction wrote the editor's old selection back over the caret the tap had
+ *  just put down, so the first tap into a note on an iPhone landed at the top of
+ *  it, and whatever was typed next went into the first line. */
+export function dragsSelection(button: number, pointer: string): boolean {
+  return button === 0 && pointer === 'mouse'
+}
+
 /** Watches the mouse. The release is listened for on the window, because a
  *  drag very often ends past the edge of the editor - and because CodeMirror
  *  listens on the document. On mouseup it reads the pointer position one last
@@ -40,6 +50,8 @@ export const dragging = StateField.define<boolean>({
 const watcher = ViewPlugin.fromClass(
   class {
     private readonly release: () => void
+    /** What the last press was made with, which the mousedown after it does not say. */
+    pointer = 'mouse'
 
     constructor(private readonly view: EditorView) {
       this.release = () => this.end()
@@ -66,9 +78,13 @@ const watcher = ViewPlugin.fromClass(
   },
   {
     eventHandlers: {
+      pointerdown(event: PointerEvent) {
+        this.pointer = event.pointerType || 'mouse'
+        return false
+      },
       mousedown(event: MouseEvent, view: EditorView) {
-        // Only the button that draws a selection.
-        if (event.button !== 0) return false
+        // Only the button that draws a selection, and only a mouse's; see above.
+        if (!dragsSelection(event.button, this.pointer)) return false
         view.dispatch({ effects: setDragging.of(true) })
         return false
       },
