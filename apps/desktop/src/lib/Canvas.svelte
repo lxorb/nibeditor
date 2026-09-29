@@ -586,6 +586,15 @@
     if (store.follow() && !store.framed && width && height) store.fit(width, height)
   })
 
+  // An ink tool taken up ends the writing in a card, as a press on the plane already
+  // does. An iPad's Scribble writes with the Pencil into any text still open under
+  // it, focused or not, so a stroke drawn across a card left open came out as typed
+  // words, or as nothing. Nothing on the plane is text to Scribble while drawing.
+  $effect(() => {
+    const ink = tools.which === 'draw' || tools.which === 'erase' || tools.which === 'lasso'
+    if (ink) untrack(() => (store.editing !== null ? (store.editing = null) : undefined))
+  })
+
   $effect(() => {
     const element = host
     if (!element) return
