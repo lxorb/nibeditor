@@ -759,23 +759,23 @@ describe('what a reader is shown', () => {
 
   test('reaches the menus and the palette', async () => {
     const { shortcuts } = registry
-    shortcuts.set('app.save', 'Mod-Alt-s')
+    shortcuts.set('app.focus', 'Mod-Alt-9')
 
     const { appCommands } = await import('./commands')
     const { appMenu } = await import('./app-menu')
     const { isSubmenu } = await import('./menu-item')
 
-    const command = appCommands().find((one) => one.id === 'save')
-    expect(command?.hint).toBe('Ctrl+Alt+S')
+    const command = appCommands().find((one) => one.id === 'focus')
+    expect(command?.hint).toBe('Ctrl+Alt+9')
 
-    const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
-      (group) => group.id === 'file',
+    const view = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
+      (group) => group.id === 'view',
     )
-    const row = file?.rows.find(
+    const row = view?.rows.find(
       (one) => one !== null && !isSubmenu(one) && one.label === command?.label,
     )
     expect(row !== null && row !== undefined && !isSubmenu(row) ? row.hint : null).toBe(
-      'Ctrl+Alt+S',
+      'Ctrl+Alt+9',
     )
   })
 })

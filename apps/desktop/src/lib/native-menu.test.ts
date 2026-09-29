@@ -22,6 +22,7 @@ const KEYS: Record<string, string> = {
   'app.new': 'Mod-n',
   'app.new-kind': 'Mod-t',
   'app.open': 'Mod-o',
+  'app.save': 'Mod-s',
   'app.settings': 'Mod-,',
   'app.close': 'Mod-w',
   'app.fullscreen': 'Mod-Ctrl-f',
@@ -50,14 +51,9 @@ const GROUPS: MenuGroup[] = [
     id: 'file',
     label: 'File',
     rows: [
-      row('New note', 'app.new'),
-      row('Open file', 'app.open'),
+      row('Print', 'app.print'),
       DIVIDER,
-      row('Save as', undefined, { disabled: true }),
-      DIVIDER,
-      row('Settings', 'app.settings'),
-      DIVIDER,
-      row('Close note', 'app.close'),
+      row('Version history', undefined, { disabled: true }),
     ],
   },
   {
@@ -110,7 +106,17 @@ const WORDS = {
 function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
   return {
     groups: GROUPS,
-    newTab: row('New tab', 'app.new-kind'),
+    file: {
+      opening: [
+        row('New note', 'app.new'),
+        row('New tab', 'app.new-kind'),
+        row('Open file', 'app.open'),
+        DIVIDER,
+        row('Save', 'app.save'),
+      ],
+      closing: [row('Close note', 'app.close')],
+    },
+    settings: row('Settings', 'app.settings'),
     recent: [row('One.md'), row('Two.md')],
     clearRecent: () => undefined,
     windowRows: [row('Next note', 'app.next-note')],
@@ -225,7 +231,10 @@ describe('the strip', () => {
     expect(read(menu(bar(), 'file'))).not.toContain('Settings')
   })
 
-  test('File has a new tab beside the new note and Open Recent under Open', () => {
+  /** The in-window File menu is Export, Print and Version history and nothing else
+   *  (Emil, 2026-09-30). A Mac's keeps what a Mac's File menu has, and with a web tab
+   *  in front a key is only a key there as a row. */
+  test('File has the making, opening and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
     expect(read(file)).toEqual([
       'New note',
@@ -233,12 +242,31 @@ describe('the strip', () => {
       'Open file',
       'Open recent',
       '---',
-      'Save as',
+      'Save',
+      '---',
+      'Print',
+      '---',
+      'Version history',
       '---',
       'Close note',
     ])
     expect(itemIn(file, 'New tab').accelerator).toBe('Cmd+T')
+    expect(itemIn(file, 'Save').accelerator).toBe('Cmd+S')
     expect(itemIn(file, 'Close note').accelerator).toBe('Cmd+W')
+  })
+
+  test('and no doubled rule where the in-window menu has nothing under File', () => {
+    const groups = GROUPS.map((one) => (one.id === 'file' ? { ...one, rows: [] } : one))
+    expect(read(menu(bar({ groups }), 'file'))).toEqual([
+      'New note',
+      'New tab',
+      'Open file',
+      'Open recent',
+      '---',
+      'Save',
+      '---',
+      'Close note',
+    ])
   })
 
   test('Open Recent lists the notes and a way to clear them', () => {
@@ -331,7 +359,7 @@ describe('the strip', () => {
       checked: false,
       accelerator: 'Cmd+Ctrl+F',
     })
-    expect(itemIn(menu(bar(), 'file'), 'Save as').enabled).toBe(false)
+    expect(itemIn(menu(bar(), 'file'), 'Version history').enabled).toBe(false)
   })
 
   test('gives no row a key a system row holds', () => {
@@ -353,7 +381,10 @@ describe('the strip', () => {
     expect(itemIn(menu(bar(), 'file'), 'Close note').anywhere).toBe(true)
     expect(itemIn(menu(bar(), 'format'), 'Bold').anywhere).toBe(false)
     // A row with no command at all is only ever clicked.
-    expect(itemIn(menu(bar(), 'file'), 'Save as')).toMatchObject({ anywhere: true, key: null })
+    expect(itemIn(menu(bar(), 'file'), 'Version history')).toMatchObject({
+      anywhere: true,
+      key: null,
+    })
   })
 
   test('runs each row’s own function, by the row’s id', () => {
@@ -382,7 +413,9 @@ describe('the strip, changed', () => {
     const file = {
       ...GROUPS[0]!,
       rows: GROUPS[0]!.rows.map((one) =>
-        one && 'label' in one && one.label === 'Save as' ? { ...one, disabled: false } : one,
+        one && 'label' in one && one.label === 'Version history'
+          ? { ...one, disabled: false }
+          : one,
       ),
     }
     const after = bar({
@@ -393,7 +426,7 @@ describe('the strip, changed', () => {
 
     expect(changesBetween(before, after)).toEqual([
       { id: 'nib.quit', text: 'Nib beenden' },
-      { id: 'file.5', enabled: true },
+      { id: 'file.9', enabled: true },
       { id: 'format.0', accelerator: 'Cmd+Shift+B' },
       { id: 'view.0', checked: true },
     ])
@@ -569,7 +602,7 @@ describe('the words a Mac writes its menus in', () => {
     )
     const file = menu(bar({ groups }), 'file')
 
-    expect(read(file)[0]).toBe('Save as…')
+    expect(read(file)).toContain('Save as…')
     expect(read(menu(bar(), 'nib'))).toContain('Settings…')
   })
 

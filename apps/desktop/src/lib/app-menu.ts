@@ -25,7 +25,7 @@ import { HIGHLIGHT_COLOURS } from '@nib/markdown/highlights'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { copySelection, cutSelection } from './clipboard'
-import { blockCommands, exportCommands, importCommand } from './commands'
+import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
@@ -33,17 +33,12 @@ import { canPrint, printNote } from './export/print'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
-import { newKinds } from './new-kinds'
-import { canSaveAs, saveAs } from './save-as'
-import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
-import { newSpace } from './space-actions'
-import { closeWindow, invoke, isDesktop, openExternal } from './tauri'
+import { isDesktop, openExternal } from './tauri'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
-import { openFile } from './open-file'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
@@ -164,62 +159,19 @@ export function appMenu(context: Context): MenuGroup[] {
       ]
     })
 
-  /** Importing: notes out of another app, and any document pandoc reads. One
-   *  row, which opens the sheet that works out what the file is. */
-  const imported = importCommand()
-
   return [
     {
       id: 'file',
       label: t('File'),
+      // What a document goes out as and what it was, and nothing more. Making,
+      // opening, saving and closing are on the keys every editor has them on, the
+      // strip's plus, a tab's own menu and the palette, and Settings is the gear in
+      // the panel's foot; a row for each here was a second list to read past. Emil,
+      // 2026-09-30: *"I would like to remove some options here: everything till
+      // (exclusive) export. and also close note, close window, reopen closed tab"*,
+      // *"and settings"*. A Mac's menu bar keeps its File rows, because there a key
+      // reaches a web tab only as a row; see `fileRows` in native-menu-bar.svelte.ts.
       rows: [
-        // The kinds a new document can be, out of the one list the plus, Ctrl+T and a
-        // pane with nothing open all read; see new-kinds.ts. This menu used to write
-        // its own four and offered a website on a phone, where a website opens in the
-        // phone's own browser and there is no tab to make.
-        ...newKinds().map((one) => ({
-          label: one.label(),
-          // One of the four carries a key of its own; the chord that asks which kind
-          // is on the menu bar's own row for it rather than on any one of these.
-          ...(one.kind === 'note' ? keyed('app.new') : {}),
-          run: () => one.make(),
-        })),
-        { label: t('Open file'), ...keyed('app.open'), asks: true, run: () => void openFile() },
-        ...(imported ? [{ label: imported.label, asks: true, run: imported.run }] : []),
-        { label: t('New space'), asks: true, run: () => void newSpace() },
-        ...(isDesktop
-          ? [
-              {
-                label: t('New window'),
-                ...keyed('app.new-window'),
-                run: () => void invoke('new_window'),
-              },
-            ]
-          : []),
-        DIVIDER,
-        {
-          label: t('Save'),
-          ...keyed('app.save'),
-          disabled: !hasNote,
-          run: () => void workspace.save(),
-        },
-        {
-          label: t('Save as'),
-          ...keyed('app.save-as'),
-          asks: true,
-          disabled: !canSaveAs(),
-          run: () => void saveAs(),
-        },
-        {
-          label: t('Rename'),
-          asks: true,
-          disabled: !workspace.active?.path,
-          run: () => {
-            const path = workspace.active?.path
-            if (path) workspace.startRenaming(path)
-          },
-        },
-        DIVIDER,
         // Export is one word here and a dozen rows behind it. It used to be a
         // menu of its own beside File, which put the formats a note goes out as
         // in the same strip as File, Edit and View - and a person looking for
@@ -245,29 +197,6 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !hasNote,
           run: () => context.onhistory(),
         },
-        { label: t('Settings'), ...keyed('app.settings'), run: () => settings.show() },
-        DIVIDER,
-        {
-          label: t('Close note'),
-          ...keyed('app.close'),
-          disabled: !hasNote,
-          run: () => void workspace.closeActive(),
-        },
-        {
-          label: t('Reopen closed tab'),
-          ...keyed('app.reopen'),
-          disabled: !workspace.closed.any,
-          run: () => void workspace.reopenClosed(),
-        },
-        ...(isDesktop
-          ? [
-              {
-                label: t('Close window'),
-                ...keyed('app.close-window'),
-                run: () => void closeWindow(),
-              },
-            ]
-          : []),
       ],
     },
 

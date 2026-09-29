@@ -349,7 +349,7 @@ test('a phone makes a note, and opens the dialog on one', async () => {
   letGo()
 })
 
-/** The palette and the File menu have no modifier to hold: the same dialog, on the
+/** The palette and a Mac's File menu have no modifier to hold: the same dialog, on the
  *  same card, chosen with a key or a click. */
 test('opened by a command it waits for a choice', () => {
   const made = makers()

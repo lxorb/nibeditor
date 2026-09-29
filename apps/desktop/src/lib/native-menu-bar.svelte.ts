@@ -33,7 +33,7 @@ import type {
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
 import { i18n, t } from './i18n.svelte'
-import type { MenuItem } from './menu-item'
+import { DIVIDER, type MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
   type Change,
@@ -46,6 +46,7 @@ import {
   keystrokeOf,
   leftFullscreen,
   letPass,
+  type MenuBarSources,
   type MenuBarWords,
   type NativeEntry,
   type NativeItem,
@@ -55,6 +56,7 @@ import {
 import { shownName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { type AppContext, BY_ID, runEntry } from './shortcuts/registry'
+import { canSaveAs } from './save-as'
 import { present } from './slides/present.svelte'
 import { nameOf } from './space-paths'
 import { appMenuRows } from './surfaces.svelte'
@@ -153,12 +155,38 @@ function signature(context: MenuBarContext): unknown[] {
   ]
 }
 
-/** A row that runs a registry entry, labelled the way the registry labels it. */
-function entryRow(id: string, context: MenuBarContext, label?: string): MenuItem {
+/** A row that runs a registry entry, labelled the way the registry labels it unless
+ *  `row` says otherwise. */
+function entryRow(id: string, context: MenuBarContext, row: Partial<MenuItem> = {}): MenuItem {
   return {
-    label: label ?? BY_ID.get(id)?.label() ?? id,
+    label: BY_ID.get(id)?.label() ?? id,
     command: id,
     run: () => void runEntry(id, context.app),
+    ...row,
+  }
+}
+
+/** File's rows that only the strip has: the in-window menu leaves them to their keys,
+ *  and here a key is only a key as a row; see `file` in native-menu.ts. Greyed on the
+ *  values `signature` watches. */
+function fileRows(context: MenuBarContext): MenuBarSources['file'] {
+  const open = !!workspace.active
+
+  return {
+    opening: [
+      entryRow('app.new', context),
+      entryRow('app.new-kind', context, { label: t('New tab') }),
+      entryRow('app.new-window', context),
+      entryRow('app.open', context, { asks: true }),
+      DIVIDER,
+      entryRow('app.save', context, { disabled: !open }),
+      entryRow('app.save-as', context, { asks: true, disabled: !canSaveAs() }),
+    ],
+    closing: [
+      entryRow('app.close', context, { disabled: !open }),
+      entryRow('app.reopen', context, { disabled: !workspace.closed.any }),
+      entryRow('app.close-window', context),
+    ],
   }
 }
 
@@ -238,7 +266,8 @@ class MenuBar {
     const appMenu = await appMenuRows()
     const described = describeMenuBar({
       groups: appMenu(context),
-      newTab: entryRow('app.new-kind', context, t('New tab')),
+      file: fileRows(context),
+      settings: entryRow('app.settings', context),
       recent: workspace.recent.map((path) => ({
         label: shownName(nameOf(path)),
         run: () => void workspace.openEntry(path),

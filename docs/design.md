@@ -736,7 +736,7 @@ a home:
 | --- | --- |
 | Which space you are in | The panel's header, and the title bar while the panel is shut |
 | Switching to another one | Rows in that header's switcher, each with the space's own mark and a dot where somebody else is in it |
-| Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette and the File menu, as before |
+| Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette, as before |
 | A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |
 | Reordering by dragging | `Move up` and `Move down` in that menu, on every device |
 | The account | The left of the panel's foot row, as a face and a name |

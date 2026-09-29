@@ -415,7 +415,7 @@ Still pandoc's, and offered only where pandoc is installed:
 
 ## 15. Import
 
-- [x] Import via pandoc (docx, odt, rst, textile, epub, …), from the File menu.
+- [x] Import via pandoc (docx, odt, rst, textile, epub, …), from the palette.
       Now one row of the sheet below rather than a row of its own: the sheet
       recognises a Word file and hands it to pandoc, and says so where pandoc is
       not installed instead of hiding the row

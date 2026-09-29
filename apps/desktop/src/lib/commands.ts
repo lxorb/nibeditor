@@ -291,7 +291,7 @@ export function exportCommands(): Command[] {
  *  the reader is holding, and the sheet answers it once the file is in; a row that
  *  appears only where pandoc happens to be installed answers it before they have
  *  even said what they have. */
-export function importCommand(): Command | null {
+function importCommand(): Command | null {
   // Not in the plugin, which has no file to be given and nowhere to pick one
   // from. Answered before anything else so the bundler takes the whole of the
   // import with it: the readers, the zip library and the HTML converter. See

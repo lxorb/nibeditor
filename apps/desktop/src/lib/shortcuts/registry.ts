@@ -291,7 +291,7 @@ const APP_ENTRIES: Shortcut[] = [
   },
   {
     // A Mac's File menu has it on Shift and the key Save is on, and so do the editors
-    // on Windows and Linux. Fetched by the press, like the File menu that has its row.
+    // on Windows and Linux. Fetched by the press, like the palette that has its row.
     id: 'app.save-as',
     label: () => t('Save as'),
     category: 'file',
@@ -344,8 +344,8 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-o',
-    // Fetched by the press, and already here by then: the app menu's rows hold it,
-    // and they are fetched as the launch ends; see `warmDoors`.
+    // Fetched by the press, and already here by then: the command list holds it, and
+    // the app menu's rows bring that as the launch ends; see `warmDoors`.
     run: () => void import('../open-file').then(({ openFile }) => openFile()),
   },
   {

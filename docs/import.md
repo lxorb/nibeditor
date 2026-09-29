@@ -5,7 +5,7 @@ whether they ever use nib: not the editor, not the sync, but whether the notes
 they already have arrive whole, once, without being asked forty questions on the
 way in.
 
-So: one row in File called Import, one sheet, and one rule behind all of it.
+So: one command called Import, in the palette, one sheet, and one rule behind all of it.
 
 ## One door
 

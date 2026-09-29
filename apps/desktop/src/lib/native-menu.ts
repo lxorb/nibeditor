@@ -147,9 +147,14 @@ export interface MenuBarWords {
 export interface MenuBarSources {
   /** The in-window menu's groups, as `appMenu` builds them. */
   groups: MenuGroup[]
-  /** File's row for a new tab of any kind, which the in-window menu has no row for:
-   *  Cmd+T there is a key, and here it has to be a row to be a key at all. */
-  newTab: MenuItem | null
+  /** File's rows the in-window menu leaves to their keys: making, opening and saving
+   *  ahead of its own rows, closing after them. With a web tab in front a key is a
+   *  key only as a row of the strip (see the top of this file), so Cmd+N, Cmd+W and
+   *  the rest have to be rows here; and a Mac's File menu has them. Open Recent goes
+   *  under the row that opens a file. */
+  file: { opening: MenuRow[]; closing: MenuRow[] }
+  /** The row the app's own menu holds, where a Mac keeps it. */
+  settings: MenuItem | null
   /** The notes opened lately, newest first. */
   recent: MenuItem[]
   clearRecent: () => void
@@ -189,9 +194,6 @@ const STAND_INS: Record<string, StandIn> = {
   'edit.redo': 'redo',
   'edit.select-all': 'selectAll',
 }
-
-/** The row that moves to the app's own menu, which is where a Mac keeps it. */
-const SETTINGS = 'app.settings'
 
 /** The key equivalents the system rows hold. Muda fixes them, so no row of the
  *  app's may be given one of them as well: two rows on one key is a key that does
@@ -457,12 +459,10 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       return item(row, id)
     })
 
-  const settings = groups
-    .flatMap((group) => group.rows)
-    .find((row): row is MenuItem => row !== DIVIDER && !isSubmenu(row) && row.command === SETTINGS)
+  const { settings } = sources
 
-  // The app's own menu. Settings is here and not under File, with the ellipsis a
-  // Mac writes on a row that opens a window; the rest is AppKit's.
+  // The app's own menu. Settings is here, with the ellipsis a Mac writes on a row
+  // that opens a window; the rest is AppKit's.
   const app: NativeSubmenu = {
     kind: 'submenu',
     id: 'nib',
@@ -489,20 +489,19 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     { label: words.clearMenu, disabled: !sources.recent.length, run: sources.clearRecent },
   ]
 
-  /** File, with a new tab beside the other new things and Open Recent under Open,
-   *  where every Mac app keeps it. Settings has gone to the app's own menu. */
-  const fileRows = (rows: MenuRow[]): MenuRow[] =>
-    rows.flatMap((row) => {
-      if (row === DIVIDER || isSubmenu(row)) return [row]
-      if (row.command === SETTINGS) return []
-      if (row.command !== 'app.open') return [row]
-
-      return [
-        ...(sources.newTab ? [sources.newTab] : []),
-        row,
-        { label: words.openRecent, rows: recent },
-      ]
-    })
+  /** File, with the rows a Mac's File menu has around the in-window menu's own, and
+   *  Open Recent under Open, where every Mac app keeps it. */
+  const fileRows = (rows: MenuRow[]): MenuRow[] => [
+    ...sources.file.opening.flatMap((row) =>
+      row !== DIVIDER && !isSubmenu(row) && row.command === 'app.open'
+        ? [row, { label: words.openRecent, rows: recent }]
+        : [row],
+    ),
+    DIVIDER,
+    ...rows,
+    DIVIDER,
+    ...sources.file.closing,
+  ]
 
   /** Edit, with its rows that find in a submenu of their own, where a Mac's Edit
    *  menu keeps them. */

@@ -155,10 +155,10 @@ it is given is the title, and the shortcut is written the moment there is one. T
 address is what the bar asks for next. The row is in the list from that first moment,
 which is the whole point of naming a thing before making it.
 
-**A new tab** - the strip's plus, Ctrl+T, the File menu, the buttons a pane with
+**A new tab** - the strip's plus, Ctrl+T, the palette, the buttons a pane with
 nothing open shows - is the other way round, and is a browser tab: a live page with an
 address field and **no file at all**. Nothing is written while somebody is only reading.
-Saving it is the moment they say to keep it - Ctrl+S, File ▸ Save, or Save on the tab's
+Saving it is the moment they say to keep it - Ctrl+S, the palette's Save, or Save on the tab's
 own menu - and it asks the two questions Chrome asks when a page is bookmarked: what to
 call it, and which folder. Then the shortcut goes down with the address the tab is on
 and the mark the page reported, and the tab becomes that file in place, still live.

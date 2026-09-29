@@ -8,10 +8,10 @@
  *
  *  A store rather than the component's own state, because three hands move it and only
  *  one of them is on the dialog: the chord steps it with T and chooses when the
- *  modifier is let go, from the window; the palette and the File menu open it; and the
- *  arrows, a letter, the pointer and a click reach it through the dialog itself. The
- *  selection is a number here, so the chord never has to find a row in the page. See
- *  new-kind-chord.ts and NewKindSheet.svelte.
+ *  modifier is let go, from the window; the palette and a Mac's File menu open it;
+ *  and the arrows, a letter, the pointer and a click reach it through the dialog
+ *  itself. The selection is a number here, so the chord never has to find a row in
+ *  the page. See new-kind-chord.ts and NewKindSheet.svelte.
  *
  *  Fetched rather than carried, with the chord that is its first reader: nothing of it
  *  is worth a byte before the launch has drawn a note. */

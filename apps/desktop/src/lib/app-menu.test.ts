@@ -90,18 +90,36 @@ describe('File', () => {
     expect(printing).toBe(typeof window !== 'undefined' && typeof window.print === 'function')
   })
 
-  test('offers Save as, greyed out with nothing of the reader’s own open', () => {
-    const row = actions('file').find((one) => one.label === 'Save as')
-    expect(row).toBeDefined()
-    expect(row?.disabled).toBe(true)
+  /** Emil, 2026-09-30: what a document goes out as and what it was, and nothing
+   *  more. The rest was a second list of what the keys, the strip's plus, a tab's
+   *  own menu, the gear and the palette already reach. */
+  test('is Export, Print and Version history, and nothing else', () => {
+    const read = group('file').rows.map((row) => (row === null ? '---' : row.label))
+    const printing = typeof window !== 'undefined' && typeof window.print === 'function'
+
+    expect(read).toEqual(['Export', ...(printing ? ['Print'] : []), '---', 'Version history'])
   })
 
-  /** It used to be offered only where pandoc was installed, which answered
-   *  "can this be read" before the reader had said what they had. The sheet asks
-   *  for the file first and answers it afterwards, so the row is always here. */
-  test('offers Import wherever it runs', () => {
-    expect(labels('file')).toContain('Import')
-    expect(labels('file')).not.toContain('Import a document')
+  /** Every row that left is still a command: in the palette, and on its key. */
+  test('and every row it gave up is still in the palette and on its key', () => {
+    const offered = new Set(appCommands().map((one) => one.id))
+    const commands = ['new', 'open', 'import', 'space', 'save', 'save-as', 'settings']
+    for (const id of [...commands, 'close', 'reopen', 'new-window', 'close-window']) {
+      expect(offered.has(id), id).toBe(true)
+    }
+
+    const keys = [
+      'app.new',
+      'app.open',
+      'app.save',
+      'app.save-as',
+      'app.close',
+      'app.reopen',
+      'app.new-window',
+      'app.close-window',
+      'app.settings',
+    ]
+    for (const id of keys) expect(BY_ID.get(id)?.key, id).toBeTruthy()
   })
 })
 

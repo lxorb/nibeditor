@@ -672,8 +672,8 @@ of Chrome's menu belongs in one of them:
 
 | Chrome's row | where it goes |
 | --- | --- |
-| New tab | Ctrl+T, and File. A new tab in nib's strip |
-| New window | File, which nib already has |
+| New tab | Ctrl+T, and the strip's plus. A new tab in nib's strip |
+| New window | Ctrl+Shift+N and the palette, which nib already has |
 | New Incognito window | a **private tab**, not a window: Ctrl+Shift+N |
 | the account row | Settings, the account pane nib already has |
 | Passwords and autofill | Settings ▸ Web, which opens `chrome://password-manager` |
