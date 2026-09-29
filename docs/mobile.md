@@ -676,6 +676,30 @@ the account's own route with the account's key. See `recorder/transcribe.ts`,
 `docs/even.md` for that route and `docs/typora-parity.md` for the whole of what the two
 commands write into a note.
 
+## What an iPhone expects, and what it is not given yet
+
+One app on every phone, not an Apple version beside it. What an iPhone does
+differently is taken where it costs one rule and no rework later:
+
+- **A sheet is pulled away.** The sheets a phone shows - the right-click menu and the
+  app's own menu - are put away by pulling them down from the grip, as an iPhone's
+  are: a quarter of the sheet or a thumb's length, or a quick flick. A little pull
+  springs back. One action for both, `sheet-pull.ts`.
+- **No round plus over a canvas or a page note.** Their own bar is along the foot
+  with its own way to add, and a plus that made a new note read as one that added
+  to the page. The note and a PDF keep it, as Todoist keeps its own.
+
+And what is left, on purpose:
+
+- **Liquid Glass is not imitated.** WebKit cannot bend light, so what is left of the
+  look is a blur; and a see-through bar breaks the rule in `docs/design.md` that a
+  surface keeps the colour its contrast was measured on. The glass comes from Apple
+  the day a part of the phone app is drawn natively.
+- **Geist stays the face.** The system's is worth taking when the text size follows
+  Dynamic Type, and the two belong together.
+- **The keys' own bar** - the arrows and the tick WebKit puts over the keyboard - stays:
+  it is how the keyboard is put away, and taking it off needs native code.
+
 ## What the phone build does not have
 
 Half the app is about a desktop, and none of it is compiled in: no updater, no
