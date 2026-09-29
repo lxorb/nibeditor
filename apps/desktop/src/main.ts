@@ -3,7 +3,7 @@ import { mount } from 'svelte'
 import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
-import { spacesMoved } from './lib/workspace/moved'
+import { isMobile } from './lib/tauri'
 
 // Everything above this line is the webview evaluating the app's modules, which on
 // a slow machine is a real part of a launch and is not otherwise visible from
@@ -34,8 +34,9 @@ if (!target) throw new Error('index.html has no #app to mount into')
 // A phone's spaces folder moves with every update of the app, and everything stored
 // about a note names the folder it was in. When it has moved, what was stored is said
 // again under the new one and the page starts over, before any store has read it; see
-// lib/workspace/moved.ts. Anywhere else this answers at once.
-if (await spacesMoved()) {
+// lib/workspace/moved.ts. A phone's alone, and fetched only there, so a desktop's
+// first paint carries none of it.
+if (isMobile && (await (await import('./lib/workspace/moved')).spacesMoved())) {
   location.reload()
   // Nothing below runs on a page that is about to be replaced.
   await new Promise<never>(() => undefined)

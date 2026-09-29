@@ -125,8 +125,8 @@ export function settleRoot(
 
 /** Before anything reads its storage: whether the spaces folder has moved since the
  *  session was written, having said every stored path again under the new one if it
- *  has. A phone's alone - a desktop's documents folder does not move under it - and
- *  answers false at once anywhere else. When it answers true the page is to start
+ *  has. A phone's alone - a desktop's documents folder does not move under it - so
+ *  main.ts only fetches this there, and it answers false at once anywhere else. When it answers true the page is to start
  *  again rather than go on with what the modules read before the paths were right;
  *  see main.ts. */
 export async function spacesMoved(): Promise<boolean> {
