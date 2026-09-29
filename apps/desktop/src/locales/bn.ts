@@ -875,7 +875,8 @@ export const bn: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'অ্যাপ দেখার আগেই আপনার ব্রাউজার এই কী নিয়ে নেয়।',
   'That is not a key combination.': 'এটি কী-এর সমন্বয় নয়।',
-  'Hold Ctrl, Alt or Cmd as well.': 'সঙ্গে Ctrl, Alt বা Cmd চেপে ধরুন।',
+  'Hold Ctrl or Alt as well.': 'সঙ্গে Ctrl বা Alt চেপে ধরুন।',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'সঙ্গে ⌃, ⌥ বা ⌘ চেপে ধরুন।',
   'File list': 'ফাইলের তালিকা',
   'Select every file': 'সব ফাইল নির্বাচন',
   'Clear the selection': 'নির্বাচন মুছুন',

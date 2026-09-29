@@ -906,7 +906,8 @@ export const pl: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Przeglądarka przejmuje ten klawisz, zanim zobaczy go aplikacja.',
   'That is not a key combination.': 'To nie jest kombinacja klawiszy.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Przytrzymaj też Ctrl, Alt lub Cmd.',
+  'Hold Ctrl or Alt as well.': 'Przytrzymaj też Ctrl lub Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Przytrzymaj też ⌃, ⌥ lub ⌘.',
   'File list': 'Lista plików',
   'Select every file': 'Zaznacz wszystkie pliki',
   'Clear the selection': 'Wyczyść zaznaczenie',

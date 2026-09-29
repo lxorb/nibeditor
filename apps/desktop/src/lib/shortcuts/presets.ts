@@ -88,10 +88,10 @@ OBSIDIAN['canvas.frame'] = null
  *  of the two this machine uses. Ctrl+Shift+7 and 9 are a toggle list and a
  *  sub-page, neither of which Nib has, and are left alone.
  *
- *  Two of Notion's keys land on something of Nib's own: Ctrl+E is inline code
- *  there and the reading view here, and Ctrl+backslash is the sidebar there and
- *  clear formatting here. Notion's action takes the key and Nib's is left without
- *  one.
+ *  Three of Notion's keys land on something of Nib's own: Ctrl+E is inline code
+ *  there and the reading view here, Ctrl+backslash is the sidebar there and clear
+ *  formatting here, and Ctrl+Shift+S is strikethrough there and Save as here.
+ *  Notion's action takes the key and Nib's is left without one.
  *
  *  Nib's own digits are all on Ctrl+Alt, and its panels are on letters, so
  *  Notion's block types have the whole Ctrl+Shift row to themselves. */
@@ -101,6 +101,7 @@ const NOTION: KeyOverrides = {
   'format.code': 'Mod-e',
   'app.reading': null,
   'format.strikethrough': 'Mod-Shift-s',
+  'app.save-as': null,
   // Notion's own is Ctrl+Shift+0, and that is the one key of theirs this cannot take:
   // on AZERTY the nought is the shifted character, so Ctrl+Shift+0 is Ctrl+0 there as
   // well, and Ctrl+0 is the text size. So Paragraph keeps Nib's own letter.

@@ -873,7 +873,8 @@ export const ja: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'このキーはアプリより先にブラウザーが受け取ります。',
   'That is not a key combination.': 'キーの組み合わせではありません。',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl、Alt、Cmd のいずれかも押してください。',
+  'Hold Ctrl or Alt as well.': 'Ctrl、Alt のいずれかも押してください。',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃、⌥、⌘ のいずれかも押してください。',
   'File list': 'ファイル一覧',
   'Select every file': 'すべてのファイルを選択',
   'Clear the selection': '選択を解除',

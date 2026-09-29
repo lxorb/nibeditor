@@ -886,7 +886,8 @@ export const ptBR: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'O navegador pega esta tecla antes do app.',
   'That is not a key combination.': 'Isso não é uma combinação de teclas.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Segurar também Ctrl, Alt ou Cmd.',
+  'Hold Ctrl or Alt as well.': 'Segurar também Ctrl ou Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Segurar também ⌃, ⌥ ou ⌘.',
   'File list': 'Lista de arquivos',
   'Select every file': 'Selecionar todos os arquivos',
   'Clear the selection': 'Limpar a seleção',

@@ -998,6 +998,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'save-as',
       label: t('Save as'),
+      hint: shortcuts.hint('app.save-as'),
       disabled: !canSaveAs(),
       run: () => void saveAs(),
     },

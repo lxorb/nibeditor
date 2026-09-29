@@ -869,7 +869,8 @@ export const my: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'အက်ပ် မမြင်မီ သင့်ဘရောက်ဇာသည် ဤခလုတ်ကို ယူသည်။',
   'That is not a key combination.': 'ထိုအရာ ခလုတ်တွဲမဟုတ်ပါ။',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl၊ Alt သို့ Cmd ကိုပါ ဖိထားပါ။',
+  'Hold Ctrl or Alt as well.': 'Ctrl သို့ Alt ကိုပါ ဖိထားပါ။',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃၊ ⌥ သို့ ⌘ ကိုပါ ဖိထားပါ။',
   'File list': 'ဖိုင်စာရင်း',
   'Select every file': 'ဖိုင်တိုင်းရွေးပါ',
   'Clear the selection': 'ရွေးချယ်မှုရှင်းပါ',

@@ -888,7 +888,8 @@ export const de: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Dein Browser fängt diese Taste ab, bevor die App sie sieht.',
   'That is not a key combination.': 'Das ist keine Tastenkombination.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Halte zusätzlich Strg, Alt oder Cmd.',
+  'Hold Ctrl or Alt as well.': 'Halte zusätzlich Strg oder Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Halte zusätzlich ⌃, ⌥ oder ⌘.',
   'File list': 'Dateiliste',
   'Select every file': 'Alle Dateien auswählen',
   'Clear the selection': 'Auswahl aufheben',

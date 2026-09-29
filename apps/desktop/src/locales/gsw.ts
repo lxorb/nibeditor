@@ -878,7 +878,8 @@ export const gsw: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Din Browser fangt die Taste ab, bevor s Programm sie gseht.',
   'That is not a key combination.': 'Das isch kei Tastekombination.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Halt zuesätzlich Strg, Alt oder Cmd.',
+  'Hold Ctrl or Alt as well.': 'Halt zuesätzlich Strg oder Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Halt zuesätzlich ⌃, ⌥ oder ⌘.',
   'File list': 'Dateilischte',
   'Select every file': 'Alli Dateie uswähle',
   'Clear the selection': 'D Uswahl ufhebe',

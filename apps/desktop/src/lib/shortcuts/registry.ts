@@ -290,6 +290,17 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => void workspace.save(),
   },
   {
+    // A Mac's File menu has it on Shift and the key Save is on, and so do the editors
+    // on Windows and Linux. Fetched by the press, like the File menu that has its row.
+    id: 'app.save-as',
+    label: () => t('Save as'),
+    category: 'file',
+    scope: 'app',
+    key: 'Mod-Shift-s',
+    run: () =>
+      void import('../save-as').then(({ canSaveAs, saveAs }) => canSaveAs() && void saveAs()),
+  },
+  {
     id: 'app.new',
     label: () => t('New note'),
     category: 'file',
@@ -499,11 +510,16 @@ const APP_ENTRIES: Shortcut[] = [
     // and has been since the first version, so this is the shifted one, which on
     // most keyboards is the question mark - which is what asking for help looks
     // like.
+    //
+    // Except on a Mac, where Shift+Cmd+? is the system's in every app: the search
+    // field AppKit puts at the top of the Help menu. There the list is the first row
+    // of Help instead, with no key out of the box.
     id: 'app.keys',
     label: () => t('Keyboard shortcuts'),
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-/',
+    mac: null,
     run: () => settings.show('shortcuts'),
   },
   {

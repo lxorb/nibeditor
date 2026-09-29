@@ -881,7 +881,8 @@ export const kn: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'ಅಪ್ಲಿಕೇಶನ್ ನೋಡುವ ಮೊದಲೇ ಈ ಕೀಯನ್ನು ನಿಮ್ಮ ಬ್ರೌಸರ್ ತೆಗೆದುಕೊಳ್ಳುತ್ತದೆ.',
   'That is not a key combination.': 'ಅದು ಕೀ ಸಂಯೋಜನೆ ಅಲ್ಲ.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt ಅಥವಾ Cmd ಅನ್ನೂ ಒತ್ತಿ ಹಿಡಿಯಿರಿ.',
+  'Hold Ctrl or Alt as well.': 'Ctrl ಅಥವಾ Alt ಅನ್ನೂ ಒತ್ತಿ ಹಿಡಿಯಿರಿ.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ ಅಥವಾ ⌘ ಅನ್ನೂ ಒತ್ತಿ ಹಿಡಿಯಿರಿ.',
   'File list': 'ಫೈಲ್ ಪಟ್ಟಿ',
   'Select every file': 'ಎಲ್ಲ ಫೈಲ್ ಆಯ್ಕೆಮಾಡಿ',
   'Clear the selection': 'ಆಯ್ಕೆ ತೆರವುಗೊಳಿಸಿ',

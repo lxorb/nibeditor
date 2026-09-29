@@ -871,7 +871,8 @@ export const jv: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Panjelajah sampeyan njupuk tombol iki sadurunge aplikasine weruh.',
   'That is not a key combination.': 'Kuwi dudu kombinasi tombol.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Pencet uga Ctrl, Alt utawa Cmd.',
+  'Hold Ctrl or Alt as well.': 'Pencet uga Ctrl utawa Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Pencet uga ⌃, ⌥ utawa ⌘.',
   'File list': 'Dhaptar berkas',
   'Select every file': 'Pilih kabeh berkas',
   'Clear the selection': 'Busak pilihan',

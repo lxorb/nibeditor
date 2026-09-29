@@ -874,7 +874,8 @@ export const ps: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'ستاسو کوټګر دا کيلي د کاريال له ليدو مخکې اخلي.',
   'That is not a key combination.': 'هغه د کيليانو ترکيب نه دی.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl، Alt يا Cmd هم ونيسئ.',
+  'Hold Ctrl or Alt as well.': 'Ctrl يا Alt هم ونيسئ.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃، ⌥ يا ⌘ هم ونيسئ.',
   'File list': 'د دوتنو لړ',
   'Select every file': 'هره دوتنه ټاکل',
   'Clear the selection': 'ټاکنه پاکول',

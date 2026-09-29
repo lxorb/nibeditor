@@ -859,7 +859,8 @@ export const yue: Dictionary = {
   'Your browser takes this key before the app sees it.':
     '瀏覽器會喺應用程式睇到之前先攔下呢個按鍵。',
   'That is not a key combination.': '呢個唔係組合鍵。',
-  'Hold Ctrl, Alt or Cmd as well.': '請同時按住Ctrl、Alt或Cmd。',
+  'Hold Ctrl or Alt as well.': '請同時按住Ctrl或Alt。',
+  'Hold ⌃, ⌥ or ⌘ as well.': '請同時按住⌃、⌥或⌘。',
   'File list': '檔案列表',
   'Select every file': '揀選所有檔案',
   'Clear the selection': '清除揀選',

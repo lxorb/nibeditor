@@ -913,7 +913,8 @@ export const ar: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'متصفحك يأخذ هذا المفتاح قبل أن يراه التطبيق.',
   'That is not a key combination.': 'هذا ليس اختصارًا بمفاتيح.',
-  'Hold Ctrl, Alt or Cmd as well.': 'اضغط Ctrl أو Alt أو Cmd معه.',
+  'Hold Ctrl or Alt as well.': 'اضغط Ctrl أو Alt معه.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'اضغط ⌃ أو ⌥ أو ⌘ معه.',
   'File list': 'قائمة الملفات',
   'Select every file': 'تحديد كل الملفات',
   'Clear the selection': 'إلغاء التحديد',

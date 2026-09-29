@@ -883,7 +883,8 @@ export const sw: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Kivinjari chako huchukua kitufe hiki kabla programu ikione.',
   'That is not a key combination.': 'Hiyo si mchanganyiko wa vitufe.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Shikilia Ctrl, Alt au Cmd pia.',
+  'Hold Ctrl or Alt as well.': 'Shikilia Ctrl au Alt pia.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Shikilia ⌃, ⌥ au ⌘ pia.',
   'File list': 'Orodha ya faili',
   'Select every file': 'Teua kila faili',
   'Clear the selection': 'Ondoa uteuzi',

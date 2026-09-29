@@ -878,7 +878,8 @@ export const fa: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'مرورگر شما این کلید را پیش از دیدن برنامه می‌گیرد.',
   'That is not a key combination.': 'آن ترکیب کلید نیست.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl، Alt یا Cmd را هم نگه دارید.',
+  'Hold Ctrl or Alt as well.': 'Ctrl یا Alt را هم نگه دارید.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃، ⌥ یا ⌘ را هم نگه دارید.',
   'File list': 'فهرست پرونده',
   'Select every file': 'گزینش هر پرونده',
   'Clear the selection': 'پاک کردن گزینش',

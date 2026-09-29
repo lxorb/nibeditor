@@ -874,7 +874,8 @@ export const ms: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Pelayar anda mengambil kekunci ini sebelum aplikasi melihatnya.',
   'That is not a key combination.': 'Itu bukan gabungan kekunci.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Tahan juga Ctrl, Alt atau Cmd.',
+  'Hold Ctrl or Alt as well.': 'Tahan juga Ctrl atau Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Tahan juga ⌃, ⌥ atau ⌘.',
   'File list': 'Senarai fail',
   'Select every file': 'Pilih semua fail',
   'Clear the selection': 'Kosongkan pilihan',

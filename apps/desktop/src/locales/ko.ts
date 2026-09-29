@@ -866,7 +866,8 @@ export const ko: Dictionary = {
   'Your browser takes this key before the app sees it.':
     '브라우저가 앱보다 먼저 이 키를 가져갑니다.',
   'That is not a key combination.': '키 조합이 아닙니다.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt 또는 Cmd도 함께 누르세요.',
+  'Hold Ctrl or Alt as well.': 'Ctrl 또는 Alt도 함께 누르세요.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ 또는 ⌘도 함께 누르세요.',
   'File list': '파일 목록',
   'Select every file': '모든 파일 선택',
   'Clear the selection': '선택 해제',

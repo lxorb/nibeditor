@@ -887,7 +887,8 @@ export const fil: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Kinukuha ng browser mo ang key na ito bago pa makita ng app.',
   'That is not a key combination.': 'Hindi iyon kombinasyon ng key.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Pindutin din ang Ctrl, Alt o Cmd.',
+  'Hold Ctrl or Alt as well.': 'Pindutin din ang Ctrl o Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Pindutin din ang ⌃, ⌥ o ⌘.',
   'File list': 'Listahan ng file',
   'Select every file': 'Piliin lahat ng file',
   'Clear the selection': 'Alisin ang pinili',

@@ -878,7 +878,8 @@ export const hi: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'ऐप से पहले आपका ब्राउज़र यह कुंजी ले लेता है।',
   'That is not a key combination.': 'यह कुंजी संयोजन नहीं है।',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt या Cmd भी दबाए रखें।',
+  'Hold Ctrl or Alt as well.': 'Ctrl या Alt भी दबाए रखें।',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ या ⌘ भी दबाए रखें।',
   'File list': 'फ़ाइल सूची',
   'Select every file': 'हर फ़ाइल चुनें',
   'Clear the selection': 'चयन हटाएँ',
