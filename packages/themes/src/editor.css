@@ -875,14 +875,12 @@
   animation: settle-in var(--dur-base) var(--ease-out);
 }
 
-/* Starts in the left gutter, which is where the row controls sit, and can
-   run into the right-hand gutter before its cells have to wrap: a table that
-   nearly fits the column should not fold for the sake of an inset. Wider
-   than that and it scrolls. */
+/* Can run into the gutter at the end of the line before its cells have to
+   wrap: a table that nearly fits the column should not fold for the sake of an
+   inset. Wider than that and it scrolls. The gutter at the start is the row
+   bar's, which is outside this box and so is never scrolled away. */
 .nib-table-scroll {
-  margin-inline-start: -40px;
   margin-inline-end: calc(-1 * var(--space-5));
-  padding-inline-start: 40px;
   overflow-x: auto;
 }
 
@@ -982,7 +980,7 @@
 
 /* Controls stay out of the way until the cell they belong to is engaged. */
 .nib-table-columns,
-.nib-table-grip {
+.nib-table-rows {
   gap: 1px;
   opacity: 0;
   pointer-events: none;
@@ -1013,23 +1011,34 @@
   transform: translateY(-100%);
 }
 
-/* Two by two, wholly to the left of the row: a strip of four would reach
-   into the first cell and sit on its text. */
-.nib-table-grip {
+/* One bar for the rows as well, put beside whichever row is hovered or holds
+   the caret: `top` is that row's middle, measured in view.ts. Two by two, wholly
+   to the side of the table: a strip of four would reach into the first cell and
+   sit on its text. The gap to the table is padding, so a pointer on its way from
+   the row to the bar is on the bar all the way. */
+.nib-table-rows {
   position: absolute;
   inset-inline-end: 100%;
-  top: 50%;
-  margin-inline-end: 4px;
+  top: 0;
+  padding-inline-end: 4px;
   display: grid;
   grid-template-columns: repeat(2, 17px);
   transform: translate(calc(var(--dir) * 4px), -50%);
 }
 
-.nib-table tr:hover .nib-table-grip,
-.nib-table tr:focus-within .nib-table-grip {
+.nib-table-rows.is-shown,
+.nib-table-rows:focus-within {
   opacity: 1;
   pointer-events: auto;
   transform: translate(0, -50%);
+}
+
+/* A phone's margin is 24 px and two by two is 39: the bar hung off the edge of
+   the glass. One above the other is 21, and fits. */
+@media (hover: none) {
+  .nib-table-rows {
+    grid-template-columns: 17px;
+  }
 }
 
 .nib-table-btn {
@@ -1151,7 +1160,7 @@
 }
 
 /* Rows, columns and column widths are all edits. */
-.nib-read-only .nib-table-grip,
+.nib-read-only .nib-table-rows,
 .nib-read-only .nib-table-columns,
 .nib-read-only .nib-table-resize {
   display: none;

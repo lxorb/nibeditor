@@ -107,6 +107,7 @@ export class TableView {
   private readonly scroller: HTMLElement
   private readonly table: HTMLTableElement
   private readonly columnBar: HTMLElement
+  private readonly rowBar: HTMLElement
   private readonly alignButtons: Record<'left' | 'center' | 'right', HTMLButtonElement>
 
   private model: TableModel
@@ -125,6 +126,9 @@ export class TableView {
 
   /** The column whose controls are up. */
   private barColumn = -1
+
+  /** The row whose controls are up. */
+  private barRow = -1
 
   /** Which column this table was last sorted by, and which way, so pressing the
    *  button again turns it round. The view's own and never the note's: the order
@@ -174,8 +178,10 @@ export class TableView {
       ),
     }
     this.columnBar = this.buildColumnBar()
-    this.dom.append(this.scroller, this.columnBar)
+    this.rowBar = this.buildRowBar()
+    this.dom.append(this.scroller, this.columnBar, this.rowBar)
     this.watchColumnHover()
+    this.watchRowHover()
 
     this.render()
   }
@@ -386,14 +392,21 @@ export class TableView {
         const at = { row: index, column }
         return this.cell(text, at, 'td', sameCell(at, focus?.at))
       })
-      // A positioned <td> still reserves a table column, so the row controls
-      // live in a div inside the first cell.
-      cells[0]?.append(this.rowGrip(index))
       tr.append(...cells)
       body.append(tr)
     })
 
     this.table.replaceChildren(head, body)
+
+    // The row the bar was put beside is gone. It stays where it was, for the row
+    // that has that place now, which is the one under a pointer that has not
+    // moved - as it was when every row had controls of its own - and the caret's
+    // row takes it back as soon as the caret is in again.
+    if (this.rowBar.classList.contains('is-shown')) {
+      const tr = this.bodyRow(this.barRow)
+      if (tr) this.showRowBar(tr)
+      else this.hideRowBar()
+    }
 
     // The editor is still mid-update while it adopts the DOM; the caret goes
     // in once that has settled - unless the editor itself has taken it by
@@ -690,18 +703,27 @@ export class TableView {
     this.commit(edit.next, edit.focus)
   }
 
-  private rowGrip(row: number): HTMLElement {
-    const grip = element('div', 'nib-table-grip')
-    grip.contentEditable = 'false'
-    grip.append(
-      button('nib-table-btn', 'moveRowUp', 'M1 6l4-4 4 4', () => this.moveRowBy(row, -1)),
-      button('nib-table-btn', 'moveRowDown', 'M1 4l4 4 4-4', () => this.moveRowBy(row, 1)),
-      button('nib-table-btn', 'insertRow', 'M5 1v8M1 5h8', () => this.insertRowAfter(row)),
+  /** One set of row controls for the whole table, beside whichever row is
+   *  hovered or holds the caret, the way the column bar is over a header cell.
+   *
+   *  It used to be one set per row, drawn inside the row's first cell because a
+   *  positioned <td> still reserves a table column. But a cell swaps what it holds
+   *  as it takes the caret and gives it back, and the controls went with it: the
+   *  row whose first cell was being written in was the one row without any, until
+   *  the table was drawn again. Out here nothing a cell does can reach them, and
+   *  they stay put when a wide table is scrolled sideways. */
+  private buildRowBar(): HTMLElement {
+    const bar = element('div', 'nib-table-rows')
+    bar.contentEditable = 'false'
+    bar.append(
+      button('nib-table-btn', 'moveRowUp', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
+      button('nib-table-btn', 'moveRowDown', 'M1 4l4 4 4-4', () => this.moveRowBy(this.barRow, 1)),
+      button('nib-table-btn', 'insertRow', 'M5 1v8M1 5h8', () => this.insertRowAfter(this.barRow)),
       button('nib-table-btn nib-table-btn-danger', 'deleteRow', 'M1 1l8 8M9 1l-8 8', () =>
-        this.deleteRow(row),
+        this.deleteRow(this.barRow),
       ),
     )
-    return grip
+    return bar
   }
 
   /** One set of column controls for the whole table, shown over whichever
@@ -770,6 +792,56 @@ export class TableView {
       const th = this.headerCell(this.barColumn)
       if (th && this.columnBar.classList.contains('is-shown')) this.showColumnBar(th)
     })
+  }
+
+  private watchRowHover() {
+    this.dom.addEventListener('mouseover', (event) => {
+      const target = event.target as Element
+      const tr = target.closest('tr')
+      if (tr && this.table.tBodies[0]?.contains(tr)) this.showRowBar(tr)
+      else if (!this.rowBar.contains(target)) this.hideRowBar()
+    })
+    this.dom.addEventListener('mouseleave', () => this.hideRowBar())
+
+    this.table.addEventListener('focusin', (event) => {
+      const tr = (event.target as Element).closest('td')?.closest('tr')
+      if (tr) this.showRowBar(tr)
+    })
+    this.table.addEventListener('focusout', (event) => {
+      const next = event.relatedTarget as Element | null
+      // Onto one of the bar's own buttons, which act on the row it is up for.
+      if (next && this.rowBar.contains(next)) return
+      const tr = next?.closest('td')?.closest('tr')
+      if (tr && this.table.contains(tr)) this.showRowBar(tr)
+      else this.hideRowBar()
+    })
+
+    // A row grows a line as its words wrap, and the bar is put by its middle.
+    this.table.addEventListener('input', (event) => {
+      const tr = (event.target as Element).closest('td')?.closest('tr')
+      if (tr) this.showRowBar(tr)
+    })
+  }
+
+  private bodyRow(row: number): HTMLTableRowElement | undefined {
+    return this.table.tBodies[0]?.rows[row]
+  }
+
+  private showRowBar(tr: HTMLTableRowElement) {
+    this.barRow = tr.sectionRowIndex
+
+    const bar = this.rowBar
+    bar.classList.add('is-shown')
+    const wrap = this.dom.getBoundingClientRect()
+    const row = tr.getBoundingClientRect()
+    bar.style.top = `${row.top - wrap.top + row.height / 2}px`
+  }
+
+  /** Unless a body cell holds the caret: its row's controls stay reachable. */
+  private hideRowBar() {
+    const focused = document.activeElement?.closest('td')?.closest('tr')
+    if (focused && this.table.contains(focused)) this.showRowBar(focused)
+    else this.rowBar.classList.remove('is-shown')
   }
 
   private showColumnBar(th: HTMLTableCellElement) {
