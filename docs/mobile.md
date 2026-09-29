@@ -750,10 +750,16 @@ and the iOS half needs a macOS runner.
 # Android, with ANDROID_HOME and NDK_HOME set and a device or emulator attached
 pnpm --filter @nib/desktop exec tauri android dev
 
-# iOS, on a Mac
+# iOS, on a Mac with xcodegen and CocoaPods from Homebrew. The icons go in after
+# init, which fills the asset catalog with Tauri's own mark
 pnpm --filter @nib/desktop exec tauri ios init
-pnpm --filter @nib/desktop exec tauri ios dev
+cp apps/desktop/src-tauri/icons/ios/*.png apps/desktop/src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
+pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim --debug
 ```
+
+`tauri ios dev` wants a signing identity even for the simulator, so without an Apple
+account a debug build is the way to run it: `xcrun simctl install booted` the app
+under `gen/apple/build/arm64-sim` and launch `ch.emilvinu.nib`.
 
 A release APK built by hand is unsigned, because there is no
 `gen/android/keystore.properties` on a development machine. `tauri android dev`
