@@ -18,7 +18,7 @@ import { recovery } from './recovery.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { currentWindow, invoke, isDesktop } from './tauri'
+import { currentWindow, invoke, isDesktop, isMobile } from './tauri'
 import { mark } from './trace'
 import { theme } from './theme.svelte'
 import { pull } from './pull.svelte'
@@ -194,6 +194,9 @@ async function guardClose() {
   // the same.
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') settle()
+    // And a phone's notes are in its Files app as well, where somebody can put a file
+    // into a space while the app is away; the list is read again as it comes back.
+    else if (isMobile) void workspace.loadTree()
   })
   addEventListener('pagehide', () => settle())
 
