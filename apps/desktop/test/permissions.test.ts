@@ -82,6 +82,15 @@ function windowMethods(): string[] {
   return [...block.matchAll(/^\s{2}(\w+)\(/gm)].map(([, name = '']) => name)
 }
 
+/** And the one the theme store makes, straight to the Tauri API for the same reason:
+ *  a Mac's window is told the scheme chosen in the app, since its sheets and menus
+ *  follow the window rather than the page. See `paintWindow` in theme.svelte.ts. */
+const APPEARANCE = {
+  file: '../src/lib/theme.svelte.ts',
+  calls: ['getCurrentWindow().setTheme('],
+  permission: 'core:window:allow-set-theme',
+}
+
 describe('window permissions', () => {
   test('the interface was actually found', () => {
     // Guards the test itself: a rename that empties this would pass silently.
@@ -118,6 +127,13 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
+  test('a Mac’s window is told the scheme, and is granted that', () => {
+    const source = read(APPEARANCE.file)
+
+    expect(APPEARANCE.calls.filter((call) => !source.includes(call))).toEqual([])
+    expect(capabilities.permissions).toContain(APPEARANCE.permission)
+  })
+
   test('a site’s question takes the keyboard back, and is granted that', () => {
     const source = read(FOCUSING.file)
 
@@ -131,6 +147,7 @@ describe('window permissions', () => {
       ...Object.values(PRESENTING),
       ...Object.values(MENU_BAR),
       FOCUSING.permission,
+      APPEARANCE.permission,
     ])
     const stale = capabilities.permissions
       .filter((one) => one.startsWith('core:window:') || one.startsWith('core:webview:allow-'))

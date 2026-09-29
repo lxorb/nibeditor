@@ -106,6 +106,7 @@ const folder = vi.hoisted(() => ({
 vi.mock('./tauri', () => ({
   isDesktop: true,
   isNative: true,
+  platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'list_themes') {
       if (!folder.listing) return Promise.reject(new Error('no such folder'))
