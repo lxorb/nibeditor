@@ -475,11 +475,16 @@
     letter-spacing: 0.02em;
   }
 
+  /* No taller than what the keys leave, the rows giving up the rest: the list ran on
+     under the keyboard, and the last commands in it could not be scrolled to. */
   :global([data-touch]) .palette {
     top: 0;
     left: 0;
     translate: none;
     width: 100%;
+    max-height: calc(100dvh - var(--keyboard));
+    display: flex;
+    flex-direction: column;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
     padding-top: var(--inset-top);
   }
@@ -495,6 +500,7 @@
   /* Room for more of them, now that each is taller, and the last one clears the
      gesture bar. */
   :global([data-touch]) ul {
+    min-height: 0;
     max-height: 60dvh;
     padding-bottom: var(--touch-bottom);
   }
