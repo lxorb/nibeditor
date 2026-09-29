@@ -5,6 +5,7 @@
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
+  import { pullsAway } from './sheet-pull'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
@@ -232,6 +233,7 @@
     style:top={sheet ? undefined : `${position.y}px`}
     transition:arrive
     use:trap={!menu.keepFocus}
+    use:pullsAway={sheet ? () => menu.hide() : null}
     onkeydown={onKey}
     role="menu"
     tabindex="-1"

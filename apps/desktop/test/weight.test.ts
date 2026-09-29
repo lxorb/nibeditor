@@ -501,8 +501,12 @@ function holds(tail: string): boolean {
  *
  *  And to 3,274,000 before the morning, for the row the app's notices are in drawn
  *  under a phone's drawer rather than in the note that slides off (App.svelte), so a
- *  file deleted from the list has its Undo on the screen. Measured 3,271,530. */
-const BUDGET = 3_274_000
+ *  file deleted from the list has its Undo on the screen. Measured 3,271,530.
+ *
+ *  And to 3,279,000 for a phone's sheets put away by pulling them down, as an iPhone's
+ *  are (sheet-pull.ts): the two menus that wear the grip are drawn by the first long
+ *  press, so the gesture is with them. Measured 3,275,651. */
+const BUDGET = 3_279_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

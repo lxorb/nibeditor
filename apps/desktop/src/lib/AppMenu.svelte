@@ -7,6 +7,7 @@
   import { closeOnBack } from './backstack.svelte'
   import { steppedKey } from './direction'
   import { overlays } from './overlays'
+  import { pullsAway } from './sheet-pull'
   import { trap } from './trap'
   import { t } from './i18n.svelte'
   import { viewport } from './viewport.svelte'
@@ -248,6 +249,7 @@
     class:phone={viewport.touch}
     transition:arrive
     use:trap
+    use:pullsAway={viewport.touch ? () => (open = false) : null}
     role="menu"
     tabindex="-1"
     aria-label={t('Menu')}
