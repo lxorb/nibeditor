@@ -96,13 +96,14 @@ export function restate(was: string, now: string, storage: Storage = localStorag
 
 /** Settles where the spaces folder is: notes it down, and when it has moved since
  *  storage was last written, says every stored path again under the new folder.
- *  Answers true when storage was rewritten, which the caller answers by starting the
- *  page again. */
+ *  Answers where it was when storage was rewritten, which the caller answers by
+ *  moving the notes' histories after it and starting the page again; null when
+ *  nothing moved. */
 export function settleRoot(
   now: string,
   roots: readonly string[],
   listed: readonly string[],
-): boolean {
+): string | null {
   const written = storedText(SPACES_ROOT)
   const was = formerRoot(written, roots)
 
@@ -113,14 +114,14 @@ export function settleRoot(
       // Storage that will not be written to is storage nothing was going to be read
       // back out of either; the spaces are listed afresh, as they were before.
       forget(SPACES_ROOT)
-      return false
+      return null
     }
     keep(SPACES_ROOT, now)
-    return true
+    return was
   }
 
   if (written !== now) keep(SPACES_ROOT, now)
-  return false
+  return null
 }
 
 /** Before anything reads its storage: whether the spaces folder has moved since the
@@ -138,11 +139,18 @@ export async function spacesMoved(): Promise<boolean> {
       invoke<string>('spaces_root'),
       invoke<{ name: string; path: string }[]>('list_spaces'),
     ])
-    return settleRoot(
+    const was = settleRoot(
       now,
       roots,
       listed.map((one) => one.path),
     )
+    if (was === null) return false
+
+    // The versions kept of each note are filed under its path too, in the app's own
+    // folder; see `rehome_snapshots` in history.rs. A history left behind is not a
+    // reason to keep the page from starting.
+    await invoke<number>('rehome_snapshots', { from: was, to: now }).catch(() => 0)
+    return true
   } catch {
     // Nothing to compare against: the spaces are listed afresh, as they always were.
     return false

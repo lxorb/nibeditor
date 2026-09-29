@@ -104,7 +104,7 @@ describe('settling where the folder is', () => {
   test('a move rewrites what was stored, notes the new folder and says so', () => {
     localStorage.setItem('nib:mirrors', JSON.stringify({ [`${OLD}/Notes`]: { spaceId: 's1' } }))
 
-    expect(settleRoot(NEW, [`${OLD}/Notes`], [`${NEW}/Notes`])).toBe(true)
+    expect(settleRoot(NEW, [`${OLD}/Notes`], [`${NEW}/Notes`])).toBe(OLD)
     expect(JSON.parse(localStorage.getItem('nib:mirrors')!)).toEqual({
       [`${NEW}/Notes`]: { spaceId: 's1' },
     })
@@ -114,13 +114,13 @@ describe('settling where the folder is', () => {
   test('no move notes the folder and rewrites nothing', () => {
     localStorage.setItem('nib:recent', JSON.stringify([`${NEW}/Notes/a.md`]))
 
-    expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBe(false)
+    expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBeNull()
     expect(localStorage.getItem(SPACES_ROOT)).toBe(NEW)
     expect(localStorage.getItem('nib:recent')).toBe(JSON.stringify([`${NEW}/Notes/a.md`]))
   })
 
   test('the second launch after a move has nothing left to do', () => {
     settleRoot(NEW, [`${OLD}/Notes`], [`${NEW}/Notes`])
-    expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBe(false)
+    expect(settleRoot(NEW, [`${NEW}/Notes`], [`${NEW}/Notes`])).toBeNull()
   })
 })
