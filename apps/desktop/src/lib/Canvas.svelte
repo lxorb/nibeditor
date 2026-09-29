@@ -74,6 +74,7 @@
   import { inkColour } from './canvas/paint'
   import { readPalette } from './canvas/palette'
   import {
+    drives,
     type Effect,
     type Hit,
     type Input,
@@ -1276,8 +1277,12 @@
     }
 
     contacts.went(event.pointerId)
-    predicted = []
-    carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
+    // Only the pointer drawing or carrying has anything in flight to drop; a palm the
+    // system took back leaves the stroke and the carried ink where they were.
+    if (drives(machine, event.pointerId)) {
+      predicted = []
+      carriedInk = { dx: 0, dy: 0, scale: 1, turn: 0, about: STILL }
+    }
     send({ kind: 'cancel', id: event.pointerId })
   }
 
