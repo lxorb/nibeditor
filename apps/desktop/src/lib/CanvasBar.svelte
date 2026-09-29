@@ -582,11 +582,6 @@
     }
   }
 
-  /* A phone keeps the app's own round button in the bottom right corner clear. */
-  :global([data-device='phone']) .cluster:not(.top) {
-    right: calc(var(--space-2) + 60px);
-  }
-
   /* A small bar over the plane, which is level 2 of the elevation model: the
      surface, the hairline and the shadow the format bar over a selection wears,
      and the corner that goes with them. It was drawn at `--radius-lg` - the

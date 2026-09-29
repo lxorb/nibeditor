@@ -506,6 +506,9 @@
     })
   }
 
+  /** A canvas and a page note, which have a bar of their own with a way to add. */
+  const ownBar = (kind: string | undefined) => kind === 'canvas' || kind === 'pages'
+
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
     const out: [string, string][] = []
@@ -954,8 +957,9 @@
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the
-           keyboard is up, because then you are already writing one. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !fullscreen.on}
+           keyboard is up, because then you are already writing one, and over a
+           canvas or a page note, where it read as adding to the page. -->
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
         <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
