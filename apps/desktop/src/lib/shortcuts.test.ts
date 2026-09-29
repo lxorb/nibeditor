@@ -133,6 +133,14 @@ describe('every shortcut there is', () => {
     expect(idle.map((one) => one.id)).toEqual([])
   })
 
+  /** Not a desktop here, and a window of its own is a desktop's alone: the phone's
+   *  bar offered New window, and it was a button that did nothing. */
+  test('offers nothing only a desktop has where there is no desktop', async () => {
+    const { runnable } = await import('./shortcuts/registry')
+    expect(runnable('app.new-window')).toBe(false)
+    expect(runnable('app.open')).toBe(true)
+  })
+
   /** Every entry sits in one of the groups the settings list draws, or it is in
    *  the list and in none of its sections, which is a row nobody can find. */
   test('puts every one of them in a group the settings show', () => {

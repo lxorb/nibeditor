@@ -28,7 +28,7 @@ import { settings } from '../settings.svelte'
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
 import { present } from '../slides/present.svelte'
-import { invoke } from '../tauri'
+import { invoke, isDesktop } from '../tauri'
 import type { Platform } from '../keys'
 import { workspace } from '../workspace.svelte'
 import { type Around, closeAfterLabel } from '../workspace/closing-around'
@@ -102,6 +102,9 @@ export interface Shortcut {
   /** Why it cannot be changed. Present only on the fixed ones. */
   why?: () => string
   run?: (context: AppContext) => void
+  /** What it acts on is a desktop's alone - a window of its own - so nothing else
+   *  offers it for a bar or a pull; see `runnable`. */
+  desktop?: boolean
 }
 
 /** The other half of every binding the editor package declares: what it is
@@ -317,6 +320,9 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Shift-n',
     run: () => void invoke('new_window').catch(() => undefined),
+    // A phone has the one window and no command for another: its bar offered a
+    // button that did nothing. The palette's row is greyed on the same condition.
+    desktop: true,
   },
   {
     id: 'app.open',
@@ -1431,13 +1437,13 @@ export function runEntry(id: string, context: AppContext): boolean {
   return true
 }
 
-/** Whether an id is one `runEntry` can press at all, which is what the settings
- *  offer and what a saved list is cleaned against. */
+/** Whether an id is one `runEntry` can press at all, here, which is what the
+ *  settings offer and what a saved list is cleaned against. */
 export function runnable(id: string): boolean {
   if (EDITOR_BY_ID.has(id)) return true
 
   const entry = BY_ID.get(id)
-  return !!entry && entry.scope === 'app' && !!entry.run
+  return !!entry && entry.scope === 'app' && !!entry.run && (isDesktop || !entry.desktop)
 }
 
 /** Combinations the machine underneath usually swallows. Not a refusal - the
