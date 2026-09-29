@@ -490,8 +490,15 @@ function holds(tail: string): boolean {
  *  (device.ts), and the first tap's caret (dragging.ts). Each has to be there before
  *  the first key; none is a subsystem arriving early. Measured 3,259,652 and 374
  *  modules. The check that an iPhone update moved the spaces folder is a phone's alone
- *  and fetched only there, so none of it is in this count. */
-const BUDGET = 3_263_000
+ *  and fetched only there, so none of it is in this count.
+ *
+ *  And again later that night, to 3,271,000, for the rest of it: a table's row controls
+ *  out of its first cell and into one bar of their own (packages/editor/src/table/view.ts),
+ *  the note on a phone inert while it is slid off the list and its shadow fading as it
+ *  goes (App.svelte), a field in the note brought up above the keys (viewport.svelte.ts),
+ *  and a phone's page kept from zooming (main.ts). The table is drawn with the note it
+ *  is in and the rest is needed by the first tap. Measured 3,267,021. */
+const BUDGET = 3_271_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
