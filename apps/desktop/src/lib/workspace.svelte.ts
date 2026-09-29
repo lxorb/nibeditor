@@ -966,7 +966,7 @@ class Workspace {
   /** Which page of a PDF is being read, and how far it is zoomed. What a note
    *  keeps in `noteView`, a PDF keeps here: it is where the tab reopens, and which
    *  page a link copied out of the document names. */
-  notePdf(id: string, page: number, zoom: number) {
+  notePdf(id: string, page: number, zoom: number | undefined) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab || (tab.page === page && tab.zoom === zoom)) return
 
@@ -2485,7 +2485,7 @@ class Workspace {
       title: t('Save {name}?', { name: note.shown }),
       options: [
         { id: 'save', label: key('Save'), primary: true },
-        { id: 'discard', label: key('Don’t save'), danger: true },
+        { id: 'discard', label: key('Don’t save'), danger: true, discards: true },
         { id: 'cancel', label: key('Cancel') },
       ],
     })
@@ -2527,7 +2527,8 @@ class Workspace {
     // new tab could be, which is what Emil asked for - "it should be possible to have
     // no note open (there should not always open a new one)". See NewHere.svelte.
     if (!left.length) {
-      this.panes.close(paneId)
+      // The last pane of all names no tab, rather than the one that has just gone.
+      if (!this.panes.close(paneId)) this.panes.activate(paneId, null)
       this.persist()
       return
     }

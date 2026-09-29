@@ -3,6 +3,8 @@ import {
   type EditorView,
   foldHeadings,
   foldLess,
+  findNext,
+  findPrevious,
   foldMore,
   highlightSelection,
   insertComment,
@@ -37,7 +39,7 @@ import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { present } from './slides/present.svelte'
 import { newSpace } from './space-actions'
-import { invoke, isDesktop, openExternal } from './tauri'
+import { closeWindow, invoke, isDesktop, openExternal } from './tauri'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -80,6 +82,7 @@ function exportRows(): MenuRow[] {
     rows.push({
       label: command.label,
       hint: command.hint,
+      asks: true,
       // The export's own id is `export-pdf`; the registry's for the same row is
       // `export.pdf`, which is the one a key is bound to.
       command: command.id.replace(/^export-/, 'export.'),
@@ -152,6 +155,8 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: found.label,
           ...(found.hint === undefined ? {} : { hint: found.hint }),
+          // The one block that asks for something first: which picture.
+          ...(found.id === 'picture' ? { asks: true } : {}),
           command: found.id,
           ...(found.disabled === undefined ? {} : { disabled: found.disabled }),
           run: found.run,
@@ -179,9 +184,9 @@ export function appMenu(context: Context): MenuGroup[] {
           ...(one.kind === 'note' ? keyed('app.new') : {}),
           run: () => one.make(),
         })),
-        { label: t('Open file'), ...keyed('app.open'), run: () => void openFile() },
-        ...(imported ? [{ label: imported.label, run: imported.run }] : []),
-        { label: t('New space'), run: () => void newSpace() },
+        { label: t('Open file'), ...keyed('app.open'), asks: true, run: () => void openFile() },
+        ...(imported ? [{ label: imported.label, asks: true, run: imported.run }] : []),
+        { label: t('New space'), asks: true, run: () => void newSpace() },
         ...(isDesktop
           ? [
               {
@@ -198,9 +203,16 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !hasNote,
           run: () => void workspace.save(),
         },
-        { label: t('Save as'), disabled: !canSaveAs(), run: () => void saveAs() },
+        {
+          label: t('Save as'),
+          ...keyed('app.save-as'),
+          asks: true,
+          disabled: !canSaveAs(),
+          run: () => void saveAs(),
+        },
         {
           label: t('Rename'),
+          asks: true,
           disabled: !workspace.active?.path,
           run: () => {
             const path = workspace.active?.path
@@ -220,13 +232,19 @@ export function appMenu(context: Context): MenuGroup[] {
               {
                 label: t('Print'),
                 ...keyed('app.print'),
+                asks: true,
                 disabled: workspace.active?.kind !== 'note',
                 run: () => busy.start(t('Printing'), () => printNote()),
               },
             ]
           : []),
         DIVIDER,
-        { label: t('Version history'), disabled: !hasNote, run: () => context.onhistory() },
+        {
+          label: t('Version history'),
+          asks: true,
+          disabled: !hasNote,
+          run: () => context.onhistory(),
+        },
         { label: t('Settings'), ...keyed('app.settings'), run: () => settings.show() },
         DIVIDER,
         {
@@ -241,6 +259,15 @@ export function appMenu(context: Context): MenuGroup[] {
           disabled: !workspace.closed.any,
           run: () => void workspace.reopenClosed(),
         },
+        ...(isDesktop
+          ? [
+              {
+                label: t('Close window'),
+                ...keyed('app.close-window'),
+                run: () => void closeWindow(),
+              },
+            ]
+          : []),
       ],
     },
 
@@ -299,15 +326,35 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Find'),
           ...keyed('edit.find'),
+          asks: true,
           disabled: !view,
           run: onView(openFind),
         },
         {
           label: t('Replace'),
           ...keyed('edit.replace'),
+          asks: true,
           disabled: !writable,
           run: onView(openReplace),
         },
+        // The keys every editor walks its matches with, as rows where there is a
+        // keyboard to learn them from. A Mac's menu bar puts the four in a submenu.
+        ...(viewport.touch
+          ? []
+          : [
+              {
+                label: t('Find next'),
+                ...keyed('edit.find-next'),
+                disabled: !view,
+                run: onView(findNext),
+              },
+              {
+                label: t('Find previous'),
+                ...keyed('edit.find-previous'),
+                disabled: !view,
+                run: onView(findPrevious),
+              },
+            ]),
         {
           label: t('Search'),
           ...keyed('app.search'),
@@ -435,6 +482,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Command palette'),
           ...keyed('app.palette'),
+          asks: true,
           run: () => context.onpalette(),
         },
         DIVIDER,
@@ -577,12 +625,15 @@ export function appMenu(context: Context): MenuGroup[] {
       rows: [
         {
           label: account.user ? t('Sign out') : t('Sign in'),
+          asks: !account.user,
           run: () => (account.user ? void account.signOut() : (account.open = true)),
         },
         DIVIDER,
         // Through the store, so what it finds is offered rather than downloaded
         // in silence; see updates.svelte.ts.
-        ...(isDesktop ? [{ label: t('Check for updates'), run: () => void updates.check() }] : []),
+        ...(isDesktop
+          ? [{ label: t('Check for updates'), asks: true, run: () => void updates.check() }]
+          : []),
         { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
         { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },

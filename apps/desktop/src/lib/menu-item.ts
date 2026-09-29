@@ -43,6 +43,9 @@ export interface MenuItem {
    *  `+`, and every browser keeps its menu up while they are used. Everything else
    *  closes, which is what a menu does. */
   keep?: boolean
+  /** Whether it asks for something before it acts: a name, a place to save to, a
+   *  window of choices. A Mac writes an ellipsis after such a row; see native-menu.ts. */
+  asks?: boolean
   // A property rather than a method, so a caller may hand the function on - which
   // is how an export row reaches the app menu.
   run: () => void

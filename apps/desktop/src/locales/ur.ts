@@ -73,6 +73,7 @@ export const ur: Dictionary = {
   'Don’t save': 'محفوظ نہ کریں',
   Confirm: 'تصدیق کریں',
   'Close note': 'نوٹ بند کریں',
+  'Close window': 'ونڈو بند کریں',
   'Reopen closed tab': 'بند ٹیب دوبارہ کھولیں',
   Pin: 'پن کریں',
   Forward: 'آگے',
@@ -875,7 +876,8 @@ export const ur: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'آپ کا براؤزر یہ کلید ایپ سے پہلے لے لیتا ہے۔',
   'That is not a key combination.': 'یہ کلیدوں کا مجموعہ نہیں ہے۔',
-  'Hold Ctrl, Alt or Cmd as well.': 'ساتھ Ctrl، Alt یا Cmd بھی دبائیں۔',
+  'Hold Ctrl or Alt as well.': 'ساتھ Ctrl یا Alt بھی دبائیں۔',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'ساتھ ⌃، ⌥ یا ⌘ بھی دبائیں۔',
   'File list': 'فائل فہرست',
   'Select every file': 'ہر فائل منتخب کریں',
   'Clear the selection': 'انتخاب صاف کریں',

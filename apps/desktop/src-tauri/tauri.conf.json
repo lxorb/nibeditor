@@ -83,6 +83,9 @@
       "nsis": {
         "installerHooks": "installer.nsh"
       }
+    },
+    "iOS": {
+      "minimumSystemVersion": "16.4"
     }
   }
 }

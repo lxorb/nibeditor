@@ -187,7 +187,7 @@ export interface PenTraits {
   /** What the reported pressure is raised to before the ink reads it; see GAINS. */
   gain: number
   /** Whether the browser hands over the samples between two frames, which is
-   *  `getCoalescedEvents`. Safari has never had it. */
+   *  `getCoalescedEvents`. Safari has had it since 18.2, and not before. */
   coalesced: boolean
   /** Whether it guesses ahead of the nib, which is `getPredictedEvents`. */
   predicted: boolean

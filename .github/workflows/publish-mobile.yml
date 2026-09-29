@@ -207,6 +207,14 @@ jobs:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}
         run: pnpm --filter @nib/desktop exec tauri ios init
 
+      # The CLI fills the asset catalog with Tauri's own mark, and the project is
+      # made afresh on every run, so the app's icons go in after it: the ones
+      # `tauri icon` wrote into icons/ios, under the names the catalog already uses.
+      - name: The app's own icons
+        run: |
+          cp apps/desktop/src-tauri/icons/ios/*.png \
+            apps/desktop/src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
+
       - name: Build for the simulator
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ secrets.APPLE_DEVELOPMENT_TEAM || 'AAAAAAAAAA' }}

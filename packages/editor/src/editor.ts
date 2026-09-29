@@ -116,6 +116,10 @@ export interface StateOptions {
    *  modes and the one path a note is saved by are both the app's; see
    *  wikilink/hover.ts. Without it the card is a reading of the note. */
   editPreview?: PreviewMount
+  /** How much of the bottom of the view something else is drawn over - a phone's
+   *  format bar standing on the keyboard - so the caret is scrolled to above it
+   *  rather than under it. Asked each time the editor scrolls; nothing without it. */
+  coveredBelow?: () => number
 }
 
 export interface EditorOptions extends StateOptions {
@@ -186,6 +190,7 @@ export function editorState(options: StateOptions): EditorState {
       // nib's surface. See find.ts.
       findExtensions(options.onFind),
       EditorView.lineWrapping,
+      ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),
       // The writing surface carries Typora's `#write` id, so Typora themes
       // that target `#write` style our editor directly.
       EditorView.contentAttributes.of({ id: 'write' }),
@@ -305,6 +310,12 @@ export function editorState(options: StateOptions): EditorState {
   // Always, not only when something was written down: a callout the note itself
   // says is shut opens shut whether or not this device has read it before.
   return withFolds(state, folds ?? [])
+}
+
+/** The bottom of the view kept clear by `coveredBelow`: CodeMirror keeps a scrolled-to
+ *  caret this far from the edge, on top of its own margin. */
+function coveredBelow(covered: () => number) {
+  return EditorView.scrollMargins.of(() => ({ bottom: covered() }))
 }
 
 export function createEditor(options: EditorOptions): EditorView {

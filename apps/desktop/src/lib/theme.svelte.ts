@@ -4,7 +4,7 @@ import { tintSystemBars } from './insets'
 import { log } from './log'
 import { rememberGround } from './ground'
 import { forget, keep, storedText } from './stored'
-import { invoke } from './tauri'
+import { invoke, isDesktop, platform } from './tauri'
 import { type Stamp, stampOf } from './themes/validate'
 
 export type Scheme = 'dark' | 'light'
@@ -496,6 +496,33 @@ class Themes {
     }
 
     tintSystemBars(this.current === 'dark')
+    this.paintWindow()
+  }
+
+  /** What the Mac's window was last told; see `paintWindow`. */
+  private toldWindow: Scheme | null | undefined = undefined
+
+  /** On a Mac the window has an appearance of its own, and the page does not paint
+   *  all of it: the translucent ground behind the page, a field's right-click menu,
+   *  the save and print sheets. It follows the system unless told otherwise, so a
+   *  scheme chosen in the app came out as a dark note in a light window with light
+   *  sheets over it. So the window is told, and handed back to the system when the
+   *  reader asks to match it - rather than told the system's own answer, because a
+   *  window told a scheme is also what the page reads as the system's, and the app
+   *  would stop hearing the system change. Nothing of this elsewhere: Windows and
+   *  Linux draw no part of the window the page does not. */
+  private paintWindow() {
+    if (!isDesktop || platform() !== 'macos') return
+
+    const told = this.scheme === 'system' ? null : this.current
+    if (told === this.toldWindow) return
+    this.toldWindow = told
+
+    void import('@tauri-apps/api/window')
+      .then(({ getCurrentWindow }) => getCurrentWindow().setTheme(told))
+      .catch((error: unknown) => {
+        log('warn', `window appearance: ${error instanceof Error ? error.message : String(error)}`)
+      })
   }
 
   /** Puts the active theme's stylesheet on the page. Null is an answer that

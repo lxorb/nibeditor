@@ -73,6 +73,7 @@ export const es: Dictionary = {
   'Don’t save': 'No guardar',
   Confirm: 'Confirmar',
   'Close note': 'Cerrar la nota',
+  'Close window': 'Cerrar ventana',
   'Reopen closed tab': 'Reabrir la pestaña cerrada',
   Pin: 'Anclar',
   Forward: 'Adelante',
@@ -889,7 +890,8 @@ export const es: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'El navegador toma esta tecla antes que la app.',
   'That is not a key combination.': 'Eso no es una combinación de teclas.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Mantener también Ctrl, Alt o Cmd.',
+  'Hold Ctrl or Alt as well.': 'Mantener también Ctrl o Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Mantener también ⌃, ⌥ o ⌘.',
   'File list': 'Lista de archivos',
   'Select every file': 'Seleccionar todos los archivos',
   'Clear the selection': 'Quitar la selección',

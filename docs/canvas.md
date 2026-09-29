@@ -382,7 +382,7 @@ hold is still a test.
 
 | platform | says | pressure | how it leans | barrel | eraser end | hovers | coalesced |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Apple Pencil, iPad Safari and the PWA | `pen` | reported, through WebKit's own curve | `altitudeAngle` and `azimuthAngle`, and `tiltX`/`tiltY` on some builds | none | none | yes, M2 iPads and later | no, and no prediction either |
+| Apple Pencil, iPad Safari, the PWA and the iPad app | `pen` | reported, through WebKit's own curve | `tiltX`/`tiltY`, and from Safari 18.2 `altitudeAngle` and `azimuthAngle` as well | none | none | yes, M2 iPads and later | from Safari 18.2, with prediction; before it neither |
 | Windows pens - Surface, Lenovo, HP, a Wacom on Windows - in WebView2, Chrome and Edge | `pen` | reported | `tiltX`/`tiltY`, and `twist` on a pen that turns | `button` 2, `buttons & 2` | `button` 5, `buttons & 32` | yes | yes |
 | Desktop graphics tablets - Wacom, Huion, XP-Pen - in Chromium anywhere | `pen` | reported, at a very high rate | `tiltX`/`tiltY` | `button` 2, or the middle button if the driver was told to | `buttons & 32` | yes, and from anywhere on the tablet | yes |
 | Samsung's S Pen, Chrome on Android and the installed app | `pen`, sometimes `touch` for the first event, sometimes `mouse` while the button is held | reported | `tiltX`/`tiltY` | `buttons & 2`, in all three shapes above | - | yes | yes |
@@ -403,8 +403,8 @@ so everything past the event reads one representation and the file format keeps 
 A pen lying flat on the glass is the spec's five special cases; holding the altitude
 a millionth off nought instead agrees with all five to the degree, in one line.
 
-**Safari has no `getCoalescedEvents` and no `getPredictedEvents`.** Both were already
-feature-detected, and now neither is needed: a stroke there is whatever fitted into a
+**Safari before 18.2 has no `getCoalescedEvents` and no `getPredictedEvents`.** Both
+were already feature-detected, 18.2 brought both, and neither is needed: a stroke there is whatever fitted into a
 frame, and the ink draws the curve through those samples rather than the straight
 lines between them. `smoothed` in `canvas/ink.ts` puts points on any step longer than
 the nib is wide, along a centripetal Catmull-Rom spline, and leaves a dense stroke

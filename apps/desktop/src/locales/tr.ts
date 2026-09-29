@@ -73,6 +73,7 @@ export const tr: Dictionary = {
   'Don’t save': 'Kaydetme',
   Confirm: 'Onayla',
   'Close note': 'Notu kapat',
+  'Close window': 'Pencereyi kapat',
   'Reopen closed tab': 'Kapatılan sekmeyi geri aç',
   Pin: 'Sabitle',
   Forward: 'İleri',
@@ -876,7 +877,8 @@ export const tr: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Tarayıcınız bu tuşu uygulama görmeden alır.',
   'That is not a key combination.': 'Bu bir tuş birleşimi değil.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ayrıca Ctrl, Alt veya Cmd tuşunu basılı tutun.',
+  'Hold Ctrl or Alt as well.': 'Ayrıca Ctrl veya Alt tuşunu basılı tutun.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Ayrıca ⌃, ⌥ veya ⌘ tuşunu basılı tutun.',
   'File list': 'Dosya listesi',
   'Select every file': 'Her dosyayı seç',
   'Clear the selection': 'Seçimi temizle',

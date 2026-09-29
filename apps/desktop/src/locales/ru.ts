@@ -73,6 +73,7 @@ export const ru: Dictionary = {
   'Don’t save': 'Не сохранять',
   Confirm: 'Подтвердить',
   'Close note': 'Закрыть заметку',
+  'Close window': 'Закрыть окно',
   'Reopen closed tab': 'Вернуть закрытую вкладку',
   Pin: 'Закрепить',
   Forward: 'Вперёд',
@@ -907,7 +908,8 @@ export const ru: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Браузер забирает эту клавишу раньше приложения.',
   'That is not a key combination.': 'Это не сочетание клавиш.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Удерживайте также Ctrl, Alt или Cmd.',
+  'Hold Ctrl or Alt as well.': 'Удерживайте также Ctrl или Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Удерживайте также ⌃, ⌥ или ⌘.',
   'File list': 'Список файлов',
   'Select every file': 'Выделить все файлы',
   'Clear the selection': 'Снять выделение',

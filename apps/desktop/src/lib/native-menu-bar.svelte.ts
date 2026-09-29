@@ -32,7 +32,7 @@ import type {
 } from '@tauri-apps/api/menu'
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
-import { t } from './i18n.svelte'
+import { i18n, t } from './i18n.svelte'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
@@ -86,6 +86,7 @@ interface Built {
   made: Native[]
   byId: Map<string, Native>
   windows: Submenu | null
+  help: Submenu | null
 }
 
 /** Whether another document window is open, whose strip may be the one up. */
@@ -114,6 +115,7 @@ function words(): MenuBarWords {
     bringAllToFront: t('Bring all to front'),
     openRecent: t('Open recent'),
     clearMenu: t('Clear menu'),
+    find: t('Find'),
   }
 }
 
@@ -170,6 +172,9 @@ class MenuBar {
    *  to a menu each time it is told that menu is the Window menu, told before or not,
    *  so a strip's is told once; see `raise`. */
   private told: Submenu | null = null
+  /** This strip's Help menu. Told again with every raise: AppKit adds nothing to it
+   *  for being told, and another window's may have been told since. */
+  private help: Submenu | null = null
   private made: Native[] = []
   private byId = new Map<string, Native>()
   private shown: NativeEntry[] = []
@@ -244,6 +249,7 @@ class MenuBar {
       keyFor: (command) => shortcuts.keyFor(command),
       isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app',
       words: words(),
+      english: i18n.language === 'en',
     })
     const entries = this.owned(described.entries)
 
@@ -269,6 +275,7 @@ class MenuBar {
    *  another window's may have been the last one said. */
   private async raise(): Promise<void> {
     await this.menu?.setAsAppMenu()
+    await this.help?.setAsHelpMenuForNSApp()
     if (this.windows && this.windows !== this.told) {
       await this.windows.setAsWindowsMenuForNSApp()
       this.told = this.windows
@@ -311,7 +318,7 @@ class MenuBar {
    *  new one is complete: a strip that failed halfway is thrown away, not shown. */
   private async build(entries: NativeEntry[]): Promise<void> {
     const { Menu } = await import('@tauri-apps/api/menu')
-    const built: Built = { made: [], byId: new Map(), windows: null }
+    const built: Built = { made: [], byId: new Map(), windows: null, help: null }
 
     try {
       const items = await Promise.all(entries.map((one) => this.make(one, built)))
@@ -322,6 +329,7 @@ class MenuBar {
       this.made = built.made
       this.byId = built.byId
       this.windows = built.windows
+      this.help = built.help
       await close(before)
     } catch (error) {
       await close(built.made)
@@ -349,6 +357,7 @@ class MenuBar {
         items,
       })
       if (entry.role === 'window') built.windows = submenu
+      if (entry.role === 'help') built.help = submenu
       made = submenu
     } else {
       const options = {

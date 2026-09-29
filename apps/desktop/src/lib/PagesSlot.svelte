@@ -123,6 +123,7 @@
     line-height: 1.2;
     text-align: center;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   .slot.ready .mark {

@@ -210,13 +210,28 @@ describe('what hides a web page', () => {
 
   test('it takes a row of its own under the panes instead', () => {
     const app = read('App.svelte')
-    const row = app.slice(app.indexOf('<div class="notices">'))
-    const end = row.indexOf('\n      </div>')
+    // Written once, as a snippet: the row is drawn in the note's column, or under the
+    // drawer as well where the panels are one.
+    const row = app.slice(app.indexOf('<div class="notices"'))
+    const end = row.indexOf('{/snippet}')
 
     expect(end).toBeGreaterThan(0)
     for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice']) {
       expect(row.slice(0, end), name).toContain(`<${name}`)
       expect(app.split(`<${name}`).length - 1, name).toBe(1)
     }
+  })
+
+  /** Where the panels are a drawer, the note slides off the screen to show the list,
+   *  and a row inside the note went with it: the Undo for a file deleted from the
+   *  list was off the side of a phone, where nobody could see it or press it. */
+  test('where the panels are a drawer it is under the list and the note, not in the note', () => {
+    const app = read('App.svelte')
+    const main = app.slice(app.indexOf('<div class="middle"'), app.indexOf('</main>'))
+    const after = main.slice(main.lastIndexOf('\n  </div>'))
+
+    expect(after).toContain('{#if viewport.drawer}')
+    expect(after).toContain('{@render notices()}')
+    expect(app).toContain('{#if !viewport.drawer}\n        {@render notices()}')
   })
 })

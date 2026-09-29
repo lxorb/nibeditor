@@ -14,6 +14,7 @@ import {
   type NativeItem,
   type NativeSubmenu,
   type SeenKey,
+  titled,
   toAccelerator,
 } from './native-menu'
 
@@ -103,6 +104,7 @@ const WORDS = {
   bringAllToFront: 'Bring all to front',
   openRecent: 'Open recent',
   clearMenu: 'Clear menu',
+  find: 'Find',
 }
 
 function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
@@ -116,6 +118,7 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
     keyFor: (command) => KEYS[command] ?? null,
     isWindowCommand: (command) => command.startsWith('app.'),
     words: WORDS,
+    english: false,
     ...over,
   }
 }
@@ -310,10 +313,12 @@ describe('the strip', () => {
     expect(itemIn(window, 'Next note').accelerator).toBe('Ctrl+Tab')
   })
 
-  test('Help opens with the list of keys, on the app’s own key', () => {
+  /** Shift+Cmd+? is the search field at the top of every Mac app's Help menu, and
+   *  AppKit puts it there only in a menu it is told is Help, or one titled in English. */
+  test('Help is the system’s, and opens with the list of keys', () => {
     const help = menu(bar(), 'help')
+    expect(help.role).toBe('help')
     expect(read(help)).toEqual(['Keyboard shortcuts', '---', 'Source code'])
-    expect(itemIn(help, 'Keyboard shortcuts').accelerator).toBe('Cmd+Shift+/')
   })
 
   test('keeps the ticks, the greys and the nesting', () => {
@@ -517,5 +522,76 @@ describe('a key a stand-in hands the page', () => {
   test('is nothing for a combination that cannot be read', () => {
     expect(keystrokeOf('')).toBeNull()
     expect(keystrokeOf('Hyper-k')).toBeNull()
+  })
+})
+
+/** A Mac writes a menu's rows in title case in English, puts an ellipsis on the ones
+ *  that ask for something before they act, and keeps finding in a submenu of Edit.
+ *  The strip wrote the app's own sentence-case labels as they were, with none of it. */
+describe('the words a Mac writes its menus in', () => {
+  test('title case leaves the small words small, and the first and last never', () => {
+    expect(titled('Bring all to front')).toBe('Bring All to Front')
+    expect(titled('Paste as plain text')).toBe('Paste as Plain Text')
+    expect(titled('Save as')).toBe('Save As')
+    expect(titled('Zoom in')).toBe('Zoom In')
+    expect(titled('Export as HTML without styles')).toBe('Export as HTML Without Styles')
+  })
+
+  test('and a word someone else spelled is left as it is', () => {
+    expect(titled('Export as ePub')).toBe('Export as ePub')
+    expect(titled('Present with reveal.js')).toBe('Present with reveal.js')
+    expect(titled('Read-only')).toBe('Read-Only')
+    expect(titled('Heading 1')).toBe('Heading 1')
+  })
+
+  test('in English the strip is in title case, and the notes keep their names', () => {
+    const recent = [row('shopping list.md')]
+    const file = menu(bar({ english: true, recent }), 'file')
+    const opened = file.items.find((one) => one.kind === 'submenu')
+
+    expect(read(file)).toContain('Close Note')
+    expect(opened?.text).toBe('Open Recent')
+    expect(opened?.kind === 'submenu' && read(opened)).toContain('shopping list.md')
+    expect(read(menu(bar({ english: true }), 'window'))).toContain(
+      '[BringAllToFront] Bring All to Front',
+    )
+  })
+
+  test('and in any other language as the language writes it', () => {
+    expect(read(menu(bar(), 'file'))).toContain('Close note')
+  })
+
+  test('a row that asks first ends in an ellipsis', () => {
+    const groups = GROUPS.map((group) =>
+      group.id === 'file'
+        ? { ...group, rows: [row('Save as', 'app.save-as', { asks: true }), ...group.rows] }
+        : group,
+    )
+    const file = menu(bar({ groups }), 'file')
+
+    expect(read(file)[0]).toBe('Save as…')
+    expect(read(menu(bar(), 'nib'))).toContain('Settings…')
+  })
+
+  test('finding is a submenu of Edit, where the rows were', () => {
+    const finding = [
+      row('Find', 'edit.find', { asks: true }),
+      row('Replace', 'edit.replace', { asks: true }),
+      row('Find next', 'edit.find-next'),
+      row('Find previous', 'edit.find-previous'),
+    ]
+    const groups = GROUPS.map((group) =>
+      group.id === 'edit' ? { ...group, rows: [...group.rows, DIVIDER, ...finding] } : group,
+    )
+    const edit = menu(bar({ groups }), 'edit')
+    const find = edit.items.at(-1)
+
+    expect(find?.kind === 'submenu' && find.text).toBe('Find')
+    expect(find?.kind === 'submenu' && read(find)).toEqual([
+      'Find…',
+      'Replace…',
+      'Find next',
+      'Find previous',
+    ])
   })
 })

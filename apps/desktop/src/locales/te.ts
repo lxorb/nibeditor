@@ -73,6 +73,7 @@ export const te: Dictionary = {
   'Don’t save': 'సేవ్ చేయవద్దు',
   Confirm: 'నిర్ధారించు',
   'Close note': 'నోట్ మూసివేయి',
+  'Close window': 'విండో మూసివేయి',
   'Reopen closed tab': 'మూసిన ట్యాబ్ తిరిగి తెరువు',
   Pin: 'పిన్ చేయి',
   Forward: 'ముందుకు',
@@ -876,7 +877,8 @@ export const te: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'యాప్ చూసేముందే ఈ కీని మీ బ్రౌజర్ తీసుకుంటుంది.',
   'That is not a key combination.': 'అది కీ కలయిక కాదు.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt లేదా Cmd కూడా నొక్కి ఉంచండి.',
+  'Hold Ctrl or Alt as well.': 'Ctrl లేదా Alt కూడా నొక్కి ఉంచండి.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ లేదా ⌘ కూడా నొక్కి ఉంచండి.',
   'File list': 'ఫైల్ జాబితా',
   'Select every file': 'అన్ని ఫైల్‌లు ఎంచుకో',
   'Clear the selection': 'ఎంపిక తొలగించు',

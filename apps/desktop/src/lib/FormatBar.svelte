@@ -39,10 +39,46 @@
    *  them without a second rule. */
   const keys = { across: true, rows: 'button' } as const
 
+  /** Whether the keyboard is typing into the note the bar writes into, or into the
+   *  bar itself, which the arrows walk. The keys come up for any field - a name
+   *  being changed in the file list, a card on a plane, a table's cell - and the
+   *  bar only ever acts on the note: over the others it put its marks into the note
+   *  behind and took the keyboard off the field, or did nothing at all. */
+  let writing = $state(false)
+
+  $effect(() => {
+    const note = view?.contentDOM
+    let live = true
+    // Read once the focus has landed, a microtask on: a focus lost because Svelte
+    // took the element away is announced in the middle of Svelte's own update,
+    // and a rune written from there is one Svelte refuses outright.
+    const follow = () =>
+      queueMicrotask(() => {
+        if (!live) return
+        const at = document.activeElement
+        writing = !!note && (at === note || (!!at && !!bar?.contains(at)))
+      })
+
+    follow()
+    document.addEventListener('focusin', follow)
+    document.addEventListener('focusout', follow)
+    return () => {
+      live = false
+      document.removeEventListener('focusin', follow)
+      document.removeEventListener('focusout', follow)
+    }
+  })
+
   /** Docked above the keyboard on a phone: there is no hovering over a
    *  selection with a thumb, and the buttons are wanted before the selection
    *  exists rather than after it. */
-  const docked = $derived(viewport.touch && viewport.typing)
+  const docked = $derived(viewport.touch && viewport.typing && writing)
+
+  // A bar that has gone covers nothing: the height bound below is left at whatever
+  // it last was when the bar leaves, so it is taken back here.
+  $effect(() => {
+    if (!docked) viewport.covered = 0
+  })
 
   /** The colours are a moment's choice rather than a mode, so the row goes back
    *  to the actions whenever the bar leaves. A phone's bar leaves every time the
@@ -265,6 +301,7 @@
     role="toolbar"
     aria-label={t('Format')}
     bind:this={bar}
+    bind:offsetHeight={viewport.covered}
     use:roving={keys}
     style:bottom="{viewport.keyboard}px"
   >

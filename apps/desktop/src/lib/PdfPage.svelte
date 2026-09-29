@@ -318,6 +318,7 @@
     cursor: text;
     transform-origin: 0 0;
     user-select: text;
+    -webkit-user-select: text;
   }
 
   .words > :global(:not(.markedContent)),

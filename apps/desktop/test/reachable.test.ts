@@ -74,8 +74,21 @@ describe('the window buttons', () => {
   })
 })
 
+/** The opening tag of the element carrying this class, attributes and all. Its
+ *  `>` is the one on a line of its own: an arrow in an attribute has one too. */
+function tag(text: string, className: string): string {
+  const at = text.indexOf(`class="${className}"`)
+  expect(at, `no class="${className}"`).toBeGreaterThanOrEqual(0)
+
+  const end = /\n\s*>\n/.exec(text.slice(at))
+  if (!end) throw new Error(`class="${className}" has no end to its tag`)
+
+  return text.slice(text.lastIndexOf('<', at), at + end.index + end[0].length)
+}
+
 describe('the layer the rail and the file list sit in', () => {
   const app = read('App.svelte')
+  const panels = tag(app, 'panels')
 
   /** Wherever the panels are a drawer, a shut drawer is off screen: behind the
    *  note at the narrow end, slid off to the side above that. The hamburger at
@@ -83,17 +96,35 @@ describe('the layer the rail and the file list sit in', () => {
    *  it is shut is the bar's own sidebar button - so the whole layer is inert
    *  rather than merely moved, on the same condition that moves it. */
   test('is inert wherever a shut drawer has taken it off screen', () => {
-    expect(app).toContain('inert={viewport.drawer && !workspace.panel}')
+    expect(panels).toContain('inert={viewport.drawer && !workspace.panel}')
   })
 
   /** The condition it used to carry. `narrow` is 460 px and under, which left a
    *  phone held sideways and a tablet held upright announcing a rail nothing
    *  could tap. */
   test('is not inert on the narrow width alone', () => {
-    expect(app).not.toContain('inert={viewport.narrow')
+    expect(panels).not.toContain('inert={viewport.narrow')
   })
 
   test('is what slides, so the condition and the movement agree', () => {
     expect(app).toContain(':global([data-drawer]) .panels')
+  })
+})
+
+describe('the note, where the list is the floor', () => {
+  const note = tag(read('App.svelte'), 'document')
+
+  /** At the narrow end the note is what slides, off the side to uncover the list,
+   *  and off the side it is as out of reach as a shut drawer. It was not inert,
+   *  and the note taking the focus as Nib started had WebKit scroll the page
+   *  across to show it: the list the phone was opened on was covered by the note,
+   *  with the sidebar button still saying the list was out. */
+  test('is inert while it is slid off to uncover the list', () => {
+    expect(note).toContain('inert={viewport.narrow && viewport.drawer && !!workspace.panel}')
+  })
+
+  test('on the condition that slides it', () => {
+    expect(note).toContain('class:open={!!workspace.panel}')
+    expect(read('App.svelte')).toContain(':global([data-drawer][data-narrow]) .document.open {')
   })
 })

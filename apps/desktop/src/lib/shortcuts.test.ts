@@ -133,6 +133,14 @@ describe('every shortcut there is', () => {
     expect(idle.map((one) => one.id)).toEqual([])
   })
 
+  /** Not a desktop here, and a window of its own is a desktop's alone: the phone's
+   *  bar offered New window, and it was a button that did nothing. */
+  test('offers nothing only a desktop has where there is no desktop', async () => {
+    const { runnable } = await import('./shortcuts/registry')
+    expect(runnable('app.new-window')).toBe(false)
+    expect(runnable('app.open')).toBe(true)
+  })
+
   /** Every entry sits in one of the groups the settings list draws, or it is in
    *  the list and in none of its sections, which is a row nobody can find. */
   test('puts every one of them in a group the settings show', () => {
@@ -257,6 +265,21 @@ describe('choosing a key', () => {
     // A key with no character of its own is fine on its own.
     expect(shortcuts.refuse('F7')).toBeNull()
     expect(shortcuts.refuse('Mod-k')).toBeNull()
+  })
+
+  /** It said Ctrl, Alt or Cmd everywhere: a Cmd key on Windows, and on a Mac names
+   *  for keys that every other place on a Mac shows as signs. */
+  test('and the refusal names the keys the way the platform does', () => {
+    const { shortcuts } = registry
+    const on = (platform: string) => {
+      const one = Object.create(shortcuts) as typeof shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      return one.refuse('k')
+    }
+
+    expect(on('mac')).toBe('Hold ⌃, ⌥ or ⌘ as well.')
+    expect(on('win')).toBe('Hold Ctrl or Alt as well.')
+    expect(on('linux')).toBe('Hold Ctrl or Alt as well.')
   })
 
   test('is warned about when the machine underneath usually keeps it', () => {
@@ -778,6 +801,22 @@ describe('the keys that move the keyboard about', () => {
 
   test('and the list of every key there is', () => {
     expect(registry.shortcuts.keyFor('app.keys')).toBeTruthy()
+  })
+
+  /** Every Mac app's File menu has Save As on Shift and the key Save is on, and it
+   *  was the one row of File here with no key at all. */
+  test('and Save as, on Shift and the key Save is on', () => {
+    expect(registry.shortcuts.keyFor('app.save-as')).toBe('Mod-Shift-s')
+  })
+
+  /** Shift+Cmd+? is the search field of every Mac app's Help menu, which is where
+   *  the list is on a Mac: taking the key there took the system's own away. */
+  test('but not on the key a Mac keeps for searching Help', () => {
+    const keys = registry.SHORTCUTS.find((one) => one.id === 'app.keys')
+    if (!keys) throw new Error('no list of keys')
+
+    expect(defaultKeyFor(keys, 'mac')).toBeNull()
+    expect(defaultKeyFor(keys, 'win')).toBe('Mod-Shift-/')
   })
 
   /** Emil, 2026-09-14: *"When you press Ctrl + T it shouldn't just be a new note, there

@@ -73,6 +73,7 @@ export const ta: Dictionary = {
   'Don’t save': 'சேமிக்க வேண்டாம்',
   Confirm: 'உறுதிசெய்',
   'Close note': 'குறிப்பை மூடு',
+  'Close window': 'சாளரத்தை மூடு',
   'Reopen closed tab': 'மூடிய தாவலை மீண்டும் திற',
   Pin: 'பின்செய்',
   Forward: 'முன்னோக்கி',
@@ -885,7 +886,8 @@ export const ta: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'செயலி பார்ப்பதற்கு முன்பே உங்கள் உலாவி இந்த விசையை எடுத்துக்கொள்கிறது.',
   'That is not a key combination.': 'அது விசைச் சேர்க்கை இல்லை.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt அல்லது Cmd ஐயும் அழுத்திப் பிடிக்கவும்.',
+  'Hold Ctrl or Alt as well.': 'Ctrl அல்லது Alt ஐயும் அழுத்திப் பிடிக்கவும்.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ அல்லது ⌘ ஐயும் அழுத்திப் பிடிக்கவும்.',
   'File list': 'கோப்புப் பட்டியல்',
   'Select every file': 'எல்லாக் கோப்புகளையும் தேர்ந்தெடு',
   'Clear the selection': 'தேர்வை நீக்கு',

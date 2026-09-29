@@ -165,7 +165,11 @@ class Shortcuts {
     if (!combination) return t('That is not a key combination.')
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
-    if (bare && combination.key.length === 1) return t('Hold Ctrl, Alt or Cmd as well.')
+    // Named the way the platform names them: a Mac prints its keys as signs, and
+    // Windows and Linux have no Cmd.
+    if (bare && combination.key.length === 1) {
+      return this.platform === 'mac' ? t('Hold ⌃, ⌥ or ⌘ as well.') : t('Hold Ctrl or Alt as well.')
+    }
 
     return null
   }

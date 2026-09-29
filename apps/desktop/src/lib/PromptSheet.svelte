@@ -12,6 +12,7 @@
   import SpaceMark from './SpaceMark.svelte'
   import { LAYER } from './motion'
   import { trap } from './trap'
+  import { isDesktop, platform } from './tauri'
 
   // Back answers the question with nothing, the same as tapping away.
   $effect(() => closeOnBack(prompt.open, () => prompt.dismiss()))
@@ -61,11 +62,37 @@
     }
   }
 
+  /** A Mac's order for a row of answers: the one that lets work go on its own at the
+   *  left, and the default last, at the right edge, where the eye and Return look
+   *  for it. Elsewhere the row is the order it was asked in. */
+  const mac = isDesktop && platform() === 'macos'
+  const answers = $derived(
+    mac
+      ? [
+          ...prompt.options.filter((one) => one.discards),
+          ...prompt.options.filter((one) => !one.discards && !one.primary),
+          ...prompt.options.filter((one) => !one.discards && one.primary),
+        ]
+      : prompt.options,
+  )
+
+  /** Cmd+D is Don't Save on a Mac, in every sheet that asks about unsaved work. */
+  function onChooseKey(event: KeyboardEvent) {
+    if (!mac || prompt.mode !== 'choose' || !event.metaKey || event.key.toLowerCase() !== 'd')
+      return
+    const letGo = prompt.options.find((one) => one.discards)
+    if (!letGo) return
+    event.preventDefault()
+    prompt.pick(letGo.id)
+  }
+
   function submitFind() {
     const chosen = matches[cursor]
     if (chosen) prompt.pick(chosen.id)
   }
 </script>
+
+<svelte:window onkeydown={onChooseKey} />
 
 {#if prompt.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -188,10 +215,11 @@
 
       <div class="row">
         {#if prompt.mode === 'choose'}
-          {#each prompt.options as option (option.id)}
+          {#each answers as option (option.id)}
             <button
               type="button"
               class="nib-button"
+              class:apart={mac && option.discards}
               class:is-danger={option.danger}
               class:is-quiet={!option.primary && !option.danger}
               onclick={() => prompt.pick(option.id)}
@@ -333,6 +361,11 @@
     gap: var(--space-2);
   }
 
+  /* Don't Save on a Mac, at the far left of the row rather than beside Save. */
+  .apart {
+    margin-inline-end: auto;
+  }
+
   .field {
     display: flex;
     flex-direction: column;
@@ -351,13 +384,16 @@
      its lift, and with a danger press mixed towards black - which on a dark
      theme is a press that reads as fading. */
 
+  /* Standing on the keyboard while it is up, since the field is what the sheet is
+     for; see `--keyboard` in the themes' tokens. */
   :global([data-touch]) .sheet {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
-    max-height: 88dvh;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
+    overflow-y: auto;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding-bottom: var(--touch-bottom);
   }

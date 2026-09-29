@@ -203,6 +203,46 @@ describe('dragging', () => {
     expect(moves).toEqual([{ do: 'move', ids: ['a'], dx: 80, dy: 20 }])
   })
 
+  /** An iPad reports the Pencil hovering over the glass as moves of its own, with
+   *  an id of its own, and they go on arriving while a finger carries a card. */
+  test('a pointer that is not carrying the card does not move it', () => {
+    const { effects } = play(
+      [
+        down({ id: 2, pointer: 'touch', hit: hit({ node: 'a' }) }),
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 300, y: 300 },
+          screen: { x: 300, y: 300 },
+          samples: [],
+          hit: NOTHING,
+        },
+        {
+          kind: 'move',
+          id: 2,
+          at: { x: 40, y: 20 },
+          screen: { x: 40, y: 20 },
+          samples: [],
+          hit: NOTHING,
+        },
+        {
+          kind: 'move',
+          id: 1,
+          at: { x: 310, y: 310 },
+          screen: { x: 310, y: 310 },
+          samples: [],
+          hit: NOTHING,
+        },
+        { kind: 'up', id: 2, at: { x: 40, y: 20 }, screen: { x: 40, y: 20 }, hit: NOTHING },
+      ],
+      where,
+    )
+
+    expect(effects.filter((one) => one.do === 'move')).toEqual([
+      { do: 'move', ids: ['a'], dx: 40, dy: 20 },
+    ])
+  })
+
   /** A hand that presses and lets go without meaning to move is a click, and a
    *  click has nothing to record. */
   test('a drag that was really a click records nothing', () => {
@@ -349,6 +389,44 @@ describe('two fingers', () => {
 
 /** A hand resting on a tablet is touch, and a pen that has arrived means the
  *  hand is not what anybody is drawing with. */
+describe('a pointer the system takes back', () => {
+  const where = context()
+  const move = (id: number, x: number): Input => ({
+    kind: 'move',
+    id,
+    at: { x, y: 0 },
+    screen: { x, y: 0 },
+    samples: [],
+    hit: NOTHING,
+  })
+
+  test('ends the gesture it was driving', () => {
+    const { machine } = play(
+      [down({ id: 2, pointer: 'touch', hit: hit({ node: 'a' }) }), { kind: 'cancel', id: 2 }],
+      where,
+    )
+
+    expect(machine.gesture).toBeNull()
+  })
+
+  test('leaves the gesture another pointer is driving, as iPadOS takes back a palm', () => {
+    const { machine, effects } = play(
+      [
+        down({ id: 2, pointer: 'touch', hit: hit({ node: 'a' }) }),
+        { kind: 'cancel', id: 7 },
+        move(2, 50),
+        { kind: 'up', id: 2, at: { x: 50, y: 0 }, screen: { x: 50, y: 0 }, hit: NOTHING },
+      ],
+      where,
+    )
+
+    expect(machine.gesture).toBeNull()
+    expect(effects.filter((one) => one.do === 'move')).toEqual([
+      { do: 'move', ids: ['a'], dx: 50, dy: 0 },
+    ])
+  })
+})
+
 describe('palm rejection', () => {
   test('a finger is ignored while a pen is on the glass', () => {
     const pen = play([down({ id: 1, pointer: 'pen' })], context({ tool: 'draw' }))

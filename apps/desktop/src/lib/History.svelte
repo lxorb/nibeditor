@@ -520,6 +520,7 @@
     text-align: end;
     color: var(--muted);
     user-select: none;
+    -webkit-user-select: none;
   }
 
   .text {

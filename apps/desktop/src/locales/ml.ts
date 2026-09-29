@@ -73,6 +73,7 @@ export const ml: Dictionary = {
   'Don’t save': 'സേവ് ചെയ്യേണ്ട',
   Confirm: 'സ്ഥിരീകരിക്കുക',
   'Close note': 'കുറിപ്പ് അടയ്ക്കുക',
+  'Close window': 'വിൻഡോ അടയ്ക്കുക',
   'Reopen closed tab': 'അടച്ച ടാബ് വീണ്ടും തുറക്കുക',
   Pin: 'പിൻ ചെയ്യുക',
   Forward: 'മുന്നോട്ട്',
@@ -885,7 +886,8 @@ export const ml: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'ആപ്പ് കാണുന്നതിന് മുൻപേ ഈ കീ നിങ്ങളുടെ ബ്രൗസർ എടുക്കുന്നു.',
   'That is not a key combination.': 'അത് ഒരു കീ കൂട്ടല്ല.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt അല്ലെങ്കിൽ Cmd കൂടി അമർത്തിപ്പിടിക്കുക.',
+  'Hold Ctrl or Alt as well.': 'Ctrl അല്ലെങ്കിൽ Alt കൂടി അമർത്തിപ്പിടിക്കുക.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ അല്ലെങ്കിൽ ⌘ കൂടി അമർത്തിപ്പിടിക്കുക.',
   'File list': 'ഫയൽ ലിസ്റ്റ്',
   'Select every file': 'എല്ലാ ഫയലും തിരഞ്ഞെടുക്കുക',
   'Clear the selection': 'തിരഞ്ഞെടുപ്പ് മായ്ക്കുക',

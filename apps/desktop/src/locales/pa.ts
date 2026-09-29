@@ -73,6 +73,7 @@ export const pa: Dictionary = {
   'Don’t save': 'ਨਾ ਸਾਂਭੋ',
   Confirm: 'ਪੱਕਾ ਕਰੋ',
   'Close note': 'ਨੋਟ ਬੰਦ ਕਰੋ',
+  'Close window': 'ਵਿੰਡੋ ਬੰਦ ਕਰੋ',
   'Reopen closed tab': 'ਬੰਦ ਕੀਤੀ ਟੈਬ ਮੁੜ ਖੋਲ੍ਹੋ',
   Pin: 'ਟੰਗੋ',
   Forward: 'ਅੱਗੇ',
@@ -880,7 +881,8 @@ export const pa: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'ਐਪ ਵੇਖਣ ਤੋਂ ਪਹਿਲਾਂ ਤੁਹਾਡਾ ਬ੍ਰਾਊਜ਼ਰ ਇਹ ਕੁੰਜੀ ਲੈ ਲੈਂਦਾ ਹੈ।',
   'That is not a key combination.': 'ਉਹ ਕੁੰਜੀਆਂ ਦਾ ਜੋੜ ਨਹੀਂ।',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt ਜਾਂ Cmd ਵੀ ਦਬਾ ਕੇ ਰੱਖੋ।',
+  'Hold Ctrl or Alt as well.': 'Ctrl ਜਾਂ Alt ਵੀ ਦਬਾ ਕੇ ਰੱਖੋ।',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ ਜਾਂ ⌘ ਵੀ ਦਬਾ ਕੇ ਰੱਖੋ।',
   'File list': 'ਫ਼ਾਈਲ ਸੂਚੀ',
   'Select every file': 'ਹਰ ਫ਼ਾਈਲ ਚੁਣੋ',
   'Clear the selection': 'ਚੋਣ ਹਟਾਓ',

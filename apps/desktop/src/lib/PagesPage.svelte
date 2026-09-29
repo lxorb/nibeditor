@@ -203,6 +203,7 @@
     font: calc(12px * var(--unit)) / 1.4 var(--font-ui, inherit);
     text-align: center;
     user-select: none;
+    -webkit-user-select: none;
   }
 
   /* The page's number, in the corner of the sheet, quiet enough to be ignored and
@@ -215,5 +216,6 @@
     font: calc(11px * var(--unit)) / 1 var(--font-ui, inherit);
     opacity: 0.55;
     user-select: none;
+    -webkit-user-select: none;
   }
 </style>

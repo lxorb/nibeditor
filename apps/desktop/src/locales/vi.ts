@@ -73,6 +73,7 @@ export const vi: Dictionary = {
   'Don’t save': 'Không lưu',
   Confirm: 'Xác nhận',
   'Close note': 'Đóng ghi chú',
+  'Close window': 'Đóng cửa sổ',
   'Reopen closed tab': 'Mở lại tab đã đóng',
   Pin: 'Ghim',
   Forward: 'Tiến',
@@ -867,7 +868,8 @@ export const vi: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Trình duyệt lấy phím này trước khi ứng dụng thấy.',
   'That is not a key combination.': 'Đó không phải tổ hợp phím.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Giữ thêm Ctrl, Alt hoặc Cmd.',
+  'Hold Ctrl or Alt as well.': 'Giữ thêm Ctrl hoặc Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Giữ thêm ⌃, ⌥ hoặc ⌘.',
   'File list': 'Danh sách tệp',
   'Select every file': 'Chọn mọi tệp',
   'Clear the selection': 'Bỏ chọn',

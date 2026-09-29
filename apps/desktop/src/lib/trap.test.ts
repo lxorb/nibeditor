@@ -22,6 +22,7 @@ interface Fake {
   focus(): void
   hasAttribute(name: string): boolean
   getAttribute(name: string): string | null
+  matches(selector: string): boolean
   getClientRects(): { length: number }[]
   contains(other: unknown): boolean
   querySelector(): Fake | null
@@ -45,6 +46,7 @@ function fake(tagName: string, children: Fake[] = []): Fake {
     },
     hasAttribute: () => false,
     getAttribute: () => null,
+    matches: () => false,
     getClientRects: () => [{ length: 1 }],
     contains: (other) => other === one || children.some((child) => child.contains(other)),
     querySelector: () => null,
@@ -113,6 +115,28 @@ describe('the keyboard while a layer is open', () => {
     node.tabIndex = 0
     open(node)
     expect(node.focused).toBe(1)
+  })
+
+  /** Opened by a finger, a menu showed its first row ringed, as the row already
+   *  chosen. The box of a menu is there to hold the keyboard for its rows, and
+   *  wears no ring. */
+  test('under a thumb a menu keeps it itself, and a sheet still hands it on', () => {
+    const body = fake('BODY')
+    const root = fake('HTML')
+    root.hasAttribute = (name) => name === 'data-touch'
+    pretendDocument(body, root)
+    pretendHTMLElement()
+
+    const row = fake('BUTTON')
+    const menu = layer([row])
+    menu.matches = (selector) => selector.startsWith('.nib-host')
+    open(menu)
+    expect(menu.focused).toBe(1)
+    expect(row.focused).toBe(0)
+
+    const answer = fake('BUTTON')
+    open(layer([answer]))
+    expect(answer.focused).toBe(1)
   })
 })
 

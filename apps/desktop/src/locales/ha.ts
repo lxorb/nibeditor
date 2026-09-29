@@ -73,6 +73,7 @@ export const ha: Dictionary = {
   'Don’t save': 'Kar a ajiye',
   Confirm: 'Tabbatar',
   'Close note': 'Rufe bayanin kula',
+  'Close window': 'Rufe taga',
   'Reopen closed tab': 'Sake buɗe shafin da aka rufe',
   Pin: 'Manne',
   Forward: 'Gaba',
@@ -884,7 +885,8 @@ export const ha: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Birawuzarka na karɓar wannan maɓallin kafin manhajar ta gan shi.',
   'That is not a key combination.': 'Wannan ba haɗin maɓalli ba.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Riƙe Ctrl, Alt ko Cmd ma.',
+  'Hold Ctrl or Alt as well.': 'Riƙe Ctrl ko Alt ma.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Riƙe ⌃, ⌥ ko ⌘ ma.',
   'File list': 'Jerin fayiloli',
   'Select every file': 'Zaɓi kowane fayil',
   'Clear the selection': 'Cire zaɓin',

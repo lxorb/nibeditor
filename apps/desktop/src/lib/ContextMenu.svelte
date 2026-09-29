@@ -5,6 +5,7 @@
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
+  import { pullsAway } from './sheet-pull'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
   import { walked } from './walk'
@@ -230,9 +231,9 @@
     class:above
     style:left={sheet ? undefined : `${position.x}px`}
     style:top={sheet ? undefined : `${position.y}px`}
-    style:--keyboard={sheet ? `${viewport.keyboard}px` : undefined}
     transition:arrive
     use:trap={!menu.keepFocus}
+    use:pullsAway={sheet ? () => menu.hide() : null}
     onkeydown={onKey}
     role="menu"
     tabindex="-1"
@@ -294,6 +295,13 @@
     max-height: calc(100dvh - 16px);
     display: flex;
     flex-direction: column;
+    /* Rows to press, not words to take. A long press is what opens this on a
+       touch screen, and the sheet rose under the finger still holding it: the
+       press went on into the row now under it and WebKit selected its first
+       word, with its Copy and Look Up bar on top of the menu. */
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 
   .menu:not(.sheet) > .rows {

@@ -47,6 +47,7 @@ const folder = vi.hoisted(() => ({ files: new Map<string, string>() }))
 vi.mock('../tauri', () => ({
   isDesktop: true,
   isNative: true,
+  platform: () => 'linux',
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     if (command === 'list_themes') {
       return Promise.resolve(

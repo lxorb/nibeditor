@@ -317,11 +317,11 @@
      size a thumb needs. */
   :global([data-touch]) .sheet {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
-    max-height: 88dvh;
+    max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 

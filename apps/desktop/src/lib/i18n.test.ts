@@ -16,6 +16,7 @@ import {
   type Forms,
   i18n,
   LANGUAGES,
+  message,
 } from './i18n.svelte'
 
 /** The substitution `t()` performs, on the real thing: a dictionary is not
@@ -664,5 +665,29 @@ describe('dates and numbers', () => {
     // The status bar formats a number on every caret move; the same call twice
     // must not build a second formatter.
     expect(i18n.amount(1000)).toBe(i18n.amount(1000))
+  })
+})
+
+/** What went wrong, as the reader is told it. */
+describe('a failure', () => {
+  test('says what the server said', () => {
+    expect(message(new Error('That address is taken'), 'could not save')).toBe(
+      'That address is taken',
+    )
+  })
+
+  /** A request that reached nothing throws the engine's own words, in English and
+   *  different in each: an iPhone showed "Load failed" where the theme store said
+   *  it could not be reached. A TypeError is never a sentence for the reader. */
+  test('says its own sentence for a request that reached nothing', () => {
+    for (const engine of [
+      'Load failed',
+      'Failed to fetch',
+      'NetworkError when attempting to fetch resource.',
+    ]) {
+      expect(message(new TypeError(engine), 'could not reach the theme store')).toBe(
+        'could not reach the theme store',
+      )
+    }
   })
 })

@@ -125,6 +125,7 @@
     color: var(--muted);
     transition: color var(--dur-base) var(--ease-out);
     user-select: none;
+    -webkit-user-select: none;
     pointer-events: none;
   }
 
@@ -150,6 +151,7 @@
     opacity: 0;
     transition: opacity var(--dur-slow) var(--ease-out);
     user-select: none;
+    -webkit-user-select: none;
     pointer-events: auto;
   }
 
@@ -184,5 +186,7 @@
   :global([data-touch]) footer.paper {
     display: flex;
     pointer-events: none;
+    /* Above the bar the system keeps at the foot of the screen, where it sat. */
+    bottom: var(--inset-bottom);
   }
 </style>

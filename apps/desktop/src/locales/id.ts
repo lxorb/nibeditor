@@ -73,6 +73,7 @@ export const id: Dictionary = {
   'Don’t save': 'Jangan simpan',
   Confirm: 'Konfirmasi',
   'Close note': 'Tutup catatan',
+  'Close window': 'Tutup jendela',
   'Reopen closed tab': 'Buka lagi tab yang ditutup',
   Pin: 'Pasang',
   Forward: 'Maju',
@@ -873,7 +874,8 @@ export const id: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Peramban Anda mengambil tombol ini sebelum aplikasi melihatnya.',
   'That is not a key combination.': 'Itu bukan kombinasi tombol.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Tahan juga Ctrl, Alt atau Cmd.',
+  'Hold Ctrl or Alt as well.': 'Tahan juga Ctrl atau Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Tahan juga ⌃, ⌥ atau ⌘.',
   'File list': 'Daftar berkas',
   'Select every file': 'Pilih semua berkas',
   'Clear the selection': 'Bersihkan pilihan',

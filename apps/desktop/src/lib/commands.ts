@@ -82,7 +82,7 @@ import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
-import { invoke, isDesktop, isNative } from './tauri'
+import { closeWindow, invoke, isDesktop, isNative } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
@@ -998,6 +998,7 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'save-as',
       label: t('Save as'),
+      hint: shortcuts.hint('app.save-as'),
       disabled: !canSaveAs(),
       run: () => void saveAs(),
     },
@@ -1048,6 +1049,13 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('New window'),
       disabled: !isDesktop,
       run: () => void invoke('new_window').catch(() => undefined),
+    },
+    {
+      id: 'close-window',
+      label: t('Close window'),
+      hint: shortcuts.hint('app.close-window'),
+      disabled: !isDesktop,
+      run: () => void closeWindow(),
     },
     {
       id: 'undo-file',

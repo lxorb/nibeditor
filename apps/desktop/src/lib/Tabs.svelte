@@ -1046,6 +1046,7 @@
     bottom: 0;
     inset-inline-start: var(--lead);
     user-select: none;
+    -webkit-user-select: none;
     /* The top corners round less on a narrow tab, so a third of its top is always
        flat and a sliver of a tab is not a pill: Chrome's rule. */
     --round: clamp(0px, (var(--w) - 6px - 2 * var(--tab-round)) / 3, var(--tab-round));

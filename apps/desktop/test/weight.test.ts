@@ -480,8 +480,33 @@ function holds(tail: string): boolean {
  *  and 373.
  *
  *  And met again when the Mac round came in on top of all of that, which each had
- *  been measured without the other: 3,252,387 and 374 modules. */
-const BUDGET = 3_256_000
+ *  been measured without the other: 3,252,387 and 374 modules.
+ *
+ *  Raised 2026-09-29, to 3,263,000, for what an iPhone, an iPad and a Mac found in a
+ *  night on the simulator and the Mac: the frame sized to what the keyboard leaves and
+ *  the format bar's height kept clear of the caret (viewport.svelte.ts, FormatBar,
+ *  the editor's `coveredBelow`), the writes owed as a phone puts the app away
+ *  (start.ts), a Mac's window told the scheme (theme.svelte.ts), an iPad named an iPad
+ *  (device.ts), and the first tap's caret (dragging.ts). Each has to be there before
+ *  the first key; none is a subsystem arriving early. Measured 3,259,652 and 374
+ *  modules. The check that an iPhone update moved the spaces folder is a phone's alone
+ *  and fetched only there, so none of it is in this count.
+ *
+ *  And again later that night, to 3,271,000, for the rest of it: a table's row controls
+ *  out of its first cell and into one bar of their own (packages/editor/src/table/view.ts),
+ *  the note on a phone inert while it is slid off the list and its shadow fading as it
+ *  goes (App.svelte), a field in the note brought up above the keys (viewport.svelte.ts),
+ *  and a phone's page kept from zooming (main.ts). The table is drawn with the note it
+ *  is in and the rest is needed by the first tap. Measured 3,267,021.
+ *
+ *  And to 3,274,000 before the morning, for the row the app's notices are in drawn
+ *  under a phone's drawer rather than in the note that slides off (App.svelte), so a
+ *  file deleted from the list has its Undo on the screen. Measured 3,271,530.
+ *
+ *  And to 3,279,000 for a phone's sheets put away by pulling them down, as an iPhone's
+ *  are (sheet-pull.ts): the two menus that wear the grip are drawn by the first long
+ *  press, so the gesture is with them. Measured 3,275,651. */
+const BUDGET = 3_279_000
 const MOST_FILES = 376
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

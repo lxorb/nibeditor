@@ -39,11 +39,16 @@ function within(node: HTMLElement): HTMLElement[] {
  *  thing in it: the address field of the Share sheet is what somebody opened the
  *  sheet to type in, and the cross in its head is not.
  *
- *  Never under a thumb. There is no Tab there to hold on to, and a field taking
- *  the keyboard the moment a sheet rises puts the system's own keyboard over half
- *  of what was opened. */
+ *  Never a field under a thumb. There is no Tab there to hold on to, and a field
+ *  taking the keyboard the moment a sheet rises puts the system's own keyboard
+ *  over half of what was opened. And a menu under a thumb keeps the keyboard
+ *  itself rather than handing it to its first row, as a menu's box is there to
+ *  (`.nib-host`, which wears no ring): WebKit ringed that row, and a menu a finger
+ *  had just opened showed its first row as the one already chosen. */
 function lands(node: HTMLElement): HTMLElement | null {
-  if (document.documentElement.hasAttribute('data-touch')) return null
+  if (document.documentElement.hasAttribute('data-touch')) {
+    return node.matches('.nib-host[tabindex]') ? node : null
+  }
 
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }

@@ -3,7 +3,7 @@
   import { t } from './lib/i18n.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
-  import { viewport } from './lib/viewport.svelte'
+  import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
@@ -243,10 +243,23 @@
 
   // The keyboard takes the bottom of the window with it, and the line being
   // written can be left behind it. The height is read so this runs again at each
-  // step of the keyboard's arrival rather than once, before there is room.
+  // step of the keyboard's arrival rather than once, before there is room, and
+  // `panned` so it runs when WebKit slid the page to show the caret instead.
   $effect(() => {
-    const height = viewport.height
-    if (!viewport.typing || !view || !height) return
+    const [height, panned] = [viewport.height, viewport.panned]
+    if (!viewport.typing || !height || panned < 0) return
+
+    // A field that is not the note has the caret - a table's cell, a name being
+    // changed in the file list - and was left under the keys once the page was
+    // put back. It is brought up in whatever scrolls it: the note for a cell, the
+    // list for a name. A card's own editor is the plane's to show; see Canvas.svelte.
+    const field = document.activeElement
+    if (field instanceof HTMLElement && field !== view?.contentDOM) {
+      const scroller = view?.contentDOM.contains(field) ? view.scrollDOM : scrollerOf(field)
+      if (scroller) showField(field, scroller, height - viewport.covered)
+      return
+    }
+    if (!view) return
 
     view.dispatch({
       effects: EditorView.scrollIntoView(view.state.selection.main.head, {
@@ -492,6 +505,9 @@
       })
     })
   }
+
+  /** A canvas and a page note, which have a bar of their own with a way to add. */
+  const ownBar = (kind: string | undefined) => kind === 'canvas' || kind === 'pages'
 
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
@@ -775,7 +791,16 @@
      the same line. -->
 <!-- Nothing in the app is reachable while the account's writing is still on
      its way: a note half arrived is not one to type into. See FirstSync.svelte. -->
-<main class:focus={modes.focus} class:full={fullscreen.on} inert={workspace.nothingToShow}>
+<!-- As tall as what can be seen, on a touch screen: an iPhone's keyboard covers the
+     window rather than shortening it, so a frame the height of the window ended under
+     the keys, and WebKit scrolled the whole page up to show the line being typed -
+     the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
+<main
+  class:focus={modes.focus}
+  class:full={fullscreen.on}
+  inert={workspace.nothingToShow}
+  style:height={pageHeight()}
+>
   <div class="middle" bind:this={middle}>
     <!-- Side by side on a desktop; a drawer over the document on a phone,
          where there is no room for three columns at once. While a finger is on
@@ -831,8 +856,12 @@
          the layers swap: the list is the floor and the note is what moves,
          sliding off to the right to uncover it and back over it. The same
          drag drives both; only which layer it moves differs. -->
+    <!-- Off to the side, the note is out of reach as a shut drawer is. WebKit
+         scrolls even this page to show what takes the focus: the note taking it
+         as Nib started slid it across, over the list the phone had open. -->
     <div
       class="document"
+      inert={viewport.narrow && viewport.drawer && !!workspace.panel}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
@@ -841,6 +870,7 @@
         ? undefined
         : `translateX(calc(var(--dir) * ${drawer.at}px))`}
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
+      style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
       <!-- The three dots at the right end of it open the whole of the app on a
@@ -907,23 +937,11 @@
       <!-- What the app says about itself, in a row under the panes rather than over
            them: a web page is a native webview that draws above all of this, so a
            card over it blanked the page and a pill over it was hidden. Empty, the
-           row has no height. See docs/web-tabs.md. -->
-      <div class="notices">
-        <StorageWarning />
-        {#if undoToastNotice.asked}
-          {#await undoToastNotice.asked then UndoToast}
-            <UndoToast />
-          {/await}
-        {/if}
-        {#if recordingPill.asked}
-          {#await recordingPill.asked then RecordingPill}
-            <RecordingPill />
-          {/await}
-        {/if}
-        {#if updates.ready}
-          <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
-        {/if}
-      </div>
+           row has no height. See docs/web-tabs.md. Where the panels are a drawer
+           it is under both instead; see below. -->
+      {#if !viewport.drawer}
+        {@render notices()}
+      {/if}
 
       <!-- Over a note and nowhere else: the graph, a canvas and a page note have no
            words for it to count, so it is left out rather than drawn empty and F6
@@ -939,8 +957,9 @@
 
       <!-- A thumb cannot reach the plus beside the tabs, and on a phone the
            thing you came to do is write a note. Out of the way while the
-           keyboard is up, because then you are already writing one. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !fullscreen.on}
+           keyboard is up, because then you are already writing one, and over a
+           canvas or a page note, where it read as adding to the page. -->
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
         <button class="fab" aria-label={t('New note')} onclick={() => workspace.createNote()}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
@@ -966,7 +985,33 @@
       {/if}
     </div>
   </div>
+
+  <!-- Under the drawer as well as the note, and over it: in the note the row slid off
+       the screen with it whenever the list was out, and a file deleted from the list
+       was gone with its Undo somewhere nobody could see or press. -->
+  {#if viewport.drawer}
+    {@render notices()}
+  {/if}
 </main>
+
+{#snippet notices()}
+  <div class="notices" class:over={viewport.drawer}>
+    <StorageWarning />
+    {#if undoToastNotice.asked}
+      {#await undoToastNotice.asked then UndoToast}
+        <UndoToast />
+      {/await}
+    {/if}
+    {#if recordingPill.asked}
+      {#await recordingPill.asked then RecordingPill}
+        <RecordingPill />
+      {/await}
+    {/if}
+    {#if updates.ready}
+      <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
+    {/if}
+  </div>
+{/snippet}
 
 <!-- Over everything, with no chrome of its own: while a note is being presented
      the window is the deck. Fetched when a deck is first asked for, and the promise
@@ -1130,6 +1175,12 @@
     grid-template-columns: 1fr;
   }
 
+  /* Above the drawer, which is fixed over the whole height of the window. */
+  .notices.over {
+    position: relative;
+    z-index: 31;
+  }
+
   /* Room only around something. `:global`, or the compiler drops a rule about
      another component's element. */
   .notices:has(> :global(*)) {
@@ -1265,9 +1316,12 @@
 
   /* ── Where the sidebar is a drawer over the note ─────────────────── */
 
+  /* Down to the keys rather than the foot of the window: an iPhone's keyboard
+     covers the window instead of shortening it, and a name being changed low in
+     the list was left under the keys, in a list that could not scroll it up. */
   :global([data-drawer]) .panels {
     position: fixed;
-    inset-block: 0;
+    inset-block: 0 var(--keyboard, 0px);
     inset-inline: 0 auto;
     z-index: 30;
     transform: translateX(calc(var(--dir) * -100%));
@@ -1381,20 +1435,22 @@
     transition: none;
   }
 
+  /* The note's shadow on the list fades as the note goes, following the finger
+     in a drag: at rest off the screen it was a grey band over the list's end. */
   :global([data-drawer][data-narrow]) .document {
     position: relative;
     z-index: 2;
     background: var(--bg);
-    transition: transform var(--dur-base) var(--ease-out);
+    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / calc(0.3 * var(--shade)));
+    transition:
+      transform var(--dur-base) var(--ease-out),
+      box-shadow var(--dur-base) var(--ease-out);
+    --shade: 1;
   }
 
   :global([data-drawer][data-narrow]) .document.open {
     transform: translateX(calc(var(--dir) * 100%));
-  }
-
-  :global([data-drawer][data-narrow]) .document.open,
-  :global([data-drawer][data-narrow]) .document.dragging {
-    box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / 0.3);
+    --shade: 0;
   }
 
   :global([data-drawer][data-narrow]) .document.dragging {
@@ -1402,7 +1458,9 @@
   }
 
   :global([data-drawer][data-narrow]) .document.settling {
-    transition: transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
+    transition:
+      transform var(--settle) cubic-bezier(0.32, 0.72, 0, 1),
+      box-shadow var(--settle) cubic-bezier(0.32, 0.72, 0, 1);
   }
 
   /* Nothing to dim: the note is either over the list or off the screen - unless

@@ -195,6 +195,8 @@
           bind:value={store.query}
           placeholder={t('Search themes')}
           spellcheck="false"
+          autocapitalize="off"
+          autocorrect="off"
           aria-label={t('Search themes')}
         />
         <div class="sort">
@@ -678,13 +680,15 @@
     color: var(--danger);
   }
 
+  /* On the keys while the search has them, as every sheet is; see Sheet.svelte.
+     At the foot of the screen what a search found ran on under the keyboard. */
   :global([data-touch]) .sheet {
     top: auto;
-    bottom: 0;
+    bottom: var(--keyboard);
     left: 0;
     translate: none;
     width: 100%;
-    height: 90dvh;
+    height: min(90dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 

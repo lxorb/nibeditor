@@ -555,12 +555,37 @@ export function step(machine: Machine, input: Input, context: Context): Step {
     case 'up':
       return onUp(machine, input, context)
     case 'cancel':
-      return {
-        machine: { ...machine, gesture: null, spare: [], penDown: false, driver: null },
-        effects: [],
-      }
+      return onCancel(machine, input.id)
     case 'held':
       return onHeld(machine, input.at, context)
+  }
+}
+
+/** A pointer the system took back. The one driving the gesture, or either finger of
+ *  a pinch, ends the gesture where it was. Any other is let go of alone: iPadOS
+ *  cancels a touch it decides was a palm, and an edge swipe claims the finger it
+ *  began with, and either used to end the drag or the pinch the other hand was in
+ *  the middle of. */
+export function drives(machine: Machine, id: number): boolean {
+  const one = machine.gesture
+  return (
+    machine.driver === null ||
+    machine.driver.id === id ||
+    (one?.kind === 'pinch' && one.ids.includes(id))
+  )
+}
+
+function onCancel(machine: Machine, id: number): Step {
+  if (!drives(machine, id)) {
+    return {
+      machine: { ...machine, spare: machine.spare.filter((held) => held.id !== id) },
+      effects: [],
+    }
+  }
+
+  return {
+    machine: { ...machine, gesture: null, spare: [], penDown: false, driver: null },
+    effects: [],
   }
 }
 
@@ -854,6 +879,15 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       machine: hovered === machine.hovered ? machine : { ...machine, hovered },
       effects: [],
     }
+  }
+
+  // A move from a pointer that is not the one driving the gesture moves nothing. An
+  // iPad reports an Apple Pencil hovering over the glass as moves of its own, with an
+  // id of its own, while a finger carries a card; the card followed whichever of the
+  // two had moved last. Pan, draw and erase answer to the id they began with below;
+  // a pinch is two pointers and answers to both.
+  if (machine.driver && input.id !== machine.driver.id && one.kind !== 'pinch') {
+    return { machine, effects: [] }
   }
 
   switch (one.kind) {

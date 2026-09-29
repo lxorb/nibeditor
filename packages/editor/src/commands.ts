@@ -15,11 +15,15 @@ import { showFrontMatter } from './live-preview/hidden-front-matter'
 import { enclosing } from './nodes'
 
 /** Wraps the selection, or unwraps it when the markers are already there -
- *  so the same shortcut turns emphasis on and off. */
+ *  so the same shortcut turns emphasis on and off.
+ *
+ *  The space and the line break at either edge of a selection stay outside the
+ *  markers, as they do in Obsidian and Typora: Select All takes the break at the
+ *  end of a note, and `**word` on one line with `**` on the next is nothing bold. */
 export function toggleWrap(before: string, after = before): StateCommand {
   return ({ state, dispatch }) => {
     const update = state.changeByRange((range) => {
-      const { from, to } = range
+      const { from, to } = inside(state, range.from, range.to)
       const doc = state.doc
 
       const leading = doc.sliceString(Math.max(0, from - before.length), from)
@@ -59,6 +63,17 @@ export function toggleWrap(before: string, after = before): StateCommand {
     dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
     return true
   }
+}
+
+/** A selection without the space at its edges, or as it is where that is all it
+ *  holds. */
+function inside(state: EditorState, from: number, to: number): { from: number; to: number } {
+  const text = state.doc.sliceString(from, to)
+  const kept = text.trim()
+  if (!kept) return { from, to }
+
+  const start = from + text.indexOf(kept)
+  return { from: start, to: start + kept.length }
 }
 
 function selectedLines(state: Parameters<StateCommand>[0]['state']) {

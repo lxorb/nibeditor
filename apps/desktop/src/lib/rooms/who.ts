@@ -15,6 +15,7 @@ import { ACCENTS } from '../accents'
 import { keep, storedText } from '../stored'
 import { isNative, platform } from '../tauri'
 import { browserName } from './browser'
+import { appleHandheld } from '../device'
 
 const KEY = 'nib:device-colour'
 
@@ -25,7 +26,6 @@ const NAMES: Record<string, string> = {
   macos: 'Mac',
   linux: 'Linux',
   android: 'Android',
-  ios: 'iPhone',
 }
 
 /** What to call this device. `browser` is the word to fall back on, which is
@@ -33,6 +33,7 @@ const NAMES: Record<string, string> = {
  *  it is says so instead, since half a shared space is in one. */
 export function deviceName(browser: string): string {
   if (!isNative) return browserName(navigator) ?? browser
+  if (platform() === 'ios') return appleHandheld()
 
   return NAMES[platform()] ?? browser
 }

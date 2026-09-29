@@ -267,6 +267,8 @@
           ? t('path: tag: file: -word "…" /re/')
           : t('Search this space')}
         spellcheck="false"
+        autocapitalize="off"
+        autocorrect="off"
         role="combobox"
         aria-label={t('Search this space')}
         aria-expanded={suggestions.length > 0}
@@ -335,6 +337,8 @@
         }}
         placeholder={t('Replace with')}
         spellcheck="false"
+        autocapitalize="off"
+        autocorrect="off"
       />
 
       <button class="apply" disabled={!search.chosen.length} onclick={() => void search.replace()}>

@@ -174,6 +174,54 @@ pub fn purge_snapshots(app: AppHandle, days: u64) -> Result<usize, String> {
     Ok(dropped)
 }
 
+/// Moves every note's history to where the note is now, after the spaces folder
+/// itself moved from `from` to `to`. Answers how many notes' histories moved.
+///
+/// A history's folder is named after its note's path, and an iPhone moves every path:
+/// the app's container is named afresh with each update, and the notes are inside it.
+/// So after an update every version the phone had kept was under a name no note had
+/// any more - there, and never listed. The page notices the move and asks for this;
+/// see moved.ts.
+#[tauri::command(async)]
+pub fn rehome_snapshots(app: AppHandle, from: String, to: String) -> Result<usize, String> {
+    Ok(rehome_in(&history_dir(&app)?, &from, &to))
+}
+
+/// `rehome_snapshots` over one history folder, apart from the app it is found through.
+fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
+    let Ok(entries) = fs::read_dir(root) else {
+        return 0;
+    };
+
+    let mut moved = 0;
+    for note in entries.flatten().map(|entry| entry.path()) {
+        let Ok(was) = fs::read_to_string(note.join(ORIGIN)) else {
+            continue;
+        };
+        // Under the old folder, and not merely beside it: `/a/Nib2` is not in `/a/Nib`.
+        let Some(rest) = was.strip_prefix(from) else {
+            continue;
+        };
+        if !rest.starts_with(['/', '\\']) {
+            continue;
+        }
+
+        let now = format!("{to}{rest}");
+        let there = root.join(folder_key(&now));
+        // A note already written to at its new path keeps the history it has there;
+        // the two are not merged, and the older one waits where it was.
+        if there.exists() {
+            continue;
+        }
+        if fs::rename(&note, &there).is_ok() {
+            let _ = fs::write(there.join(ORIGIN), &now);
+            moved += 1;
+        }
+    }
+
+    moved
+}
+
 /// The moment a snapshot was taken, which is its file name.
 fn moment(file: &Path) -> Option<u64> {
     file.file_stem()
@@ -224,7 +272,60 @@ fn snapshot_files(dir: &Path) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod tests {
-    use super::{snapshot_files, stale, DAY, HOUR};
+    use super::{rehome_in, snapshot_files, stale, DAY, HOUR};
+    use crate::paths::{folder_key, ORIGIN};
+    use std::fs;
+
+    /// Two installs of the same app on one iPhone.
+    const OLD: &str = "/var/mobile/Containers/Data/Application/03742EE0/Documents/Nib";
+    const NEW: &str = "/var/mobile/Containers/Data/Application/853E8E51/Documents/Nib";
+
+    fn kept_at(root: &std::path::Path, note: &str) -> std::path::PathBuf {
+        let dir = root.join(folder_key(note));
+        fs::create_dir_all(&dir).expect("a history folder");
+        fs::write(dir.join(ORIGIN), note).expect("its origin");
+        fs::write(dir.join("1773500400000.md"), "a version").expect("a version");
+        dir
+    }
+
+    #[test]
+    fn a_history_follows_its_note_when_the_spaces_folder_moves() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let before = kept_at(root.path(), &format!("{OLD}/Notes/Read me.md"));
+
+        assert_eq!(rehome_in(root.path(), OLD, NEW), 1);
+
+        let now = format!("{NEW}/Notes/Read me.md");
+        let after = root.path().join(folder_key(&now));
+        assert!(!before.exists());
+        assert_eq!(
+            fs::read_to_string(after.join(ORIGIN)).expect("the origin"),
+            now
+        );
+        assert!(after.join("1773500400000.md").exists());
+    }
+
+    #[test]
+    fn a_history_outside_the_old_folder_stays_where_it_is() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let beside = kept_at(root.path(), &format!("{OLD}2/Notes/a.md"));
+        let elsewhere = kept_at(root.path(), "/somewhere/else/a.md");
+
+        assert_eq!(rehome_in(root.path(), OLD, NEW), 0);
+        assert!(beside.exists());
+        assert!(elsewhere.exists());
+    }
+
+    #[test]
+    fn a_history_already_kept_at_the_new_path_is_not_written_over() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let before = kept_at(root.path(), &format!("{OLD}/Notes/a.md"));
+        let already = kept_at(root.path(), &format!("{NEW}/Notes/a.md"));
+
+        assert_eq!(rehome_in(root.path(), OLD, NEW), 0);
+        assert!(before.exists());
+        assert!(already.exists());
+    }
 
     /// A fixed moment, so what the policy answers never depends on the day the
     /// tests are run.

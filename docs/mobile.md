@@ -17,7 +17,7 @@ One identity across every build, from `src-tauri/tauri.conf.json`.
 | Publisher | Emil Vinu |
 | Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
 | Minimum Android | API 24, and API 36 is what it is compiled against |
-| Minimum iOS | 14, which is Tauri's default |
+| Minimum iOS | 16.4 (`bundle.iOS.minimumSystemVersion`): the page is built for `esnext` and not lowered, and its regular expressions look behind, which WebKit parses from 16.4 - an older phone would open a blank app |
 
 The launch screen on Android is the window's own background, set in
 `res/values/themes.xml` to the page's `--bg` in light and dark, so a cold start
@@ -123,6 +123,14 @@ along with the `tauri.*` gradle files the CLI rewrites on every build.
 machine, and nothing in it is edited, so there is nothing a commit would
 preserve that `tauri ios init` does not produce again. The iOS job runs that
 first.
+
+What the iPhone's `Info.plist` has to say beyond the CLI's own is in
+`src-tauri/Info.ios.plist`, which `tauri ios init` merges over the Mac's
+`src-tauri/Info.plist`: the sentences the phone asks for the microphone, the camera
+and the speech recogniser with, and a scene manifest. The manifest is not a
+preference. Built against the iOS 27 SDK, an app that does not live in a scene is
+stopped by UIKit before its first frame, and tao takes the scene road only when
+multiple scenes are on. `test/apple.test.ts` holds both.
 
 Run `tauri android init` again through the package manager, as
 `pnpm --filter @nib/desktop exec tauri android init`, never as `node` and a path
@@ -668,6 +676,33 @@ the account's own route with the account's key. See `recorder/transcribe.ts`,
 `docs/even.md` for that route and `docs/typora-parity.md` for the whole of what the two
 commands write into a note.
 
+## What an iPhone expects, and what it is not given yet
+
+One app on every phone, not an Apple version beside it. What an iPhone does
+differently is taken where it costs one rule and no rework later:
+
+- **A sheet is pulled away.** The sheets a phone shows - the right-click menu and the
+  app's own menu - are put away by pulling them down from the grip, as an iPhone's
+  are: a quarter of the sheet or a thumb's length, or a quick flick. A little pull
+  springs back. One action for both, `sheet-pull.ts`.
+- **A search has a Cancel beside it.** The palette's field on a touch screen has
+  the word a phone's search has, outside the box: there is no Escape, and a list
+  long enough to reach the keys left no dim edge to tap.
+- **No round plus over a canvas or a page note.** Their own bar is along the foot
+  with its own way to add, and a plus that made a new note read as one that added
+  to the page. The note and a PDF keep it, as Todoist keeps its own.
+
+And what is left, on purpose:
+
+- **Liquid Glass is not imitated.** WebKit cannot bend light, so what is left of the
+  look is a blur; and a see-through bar breaks the rule in `docs/design.md` that a
+  surface keeps the colour its contrast was measured on. The glass comes from Apple
+  the day a part of the phone app is drawn natively.
+- **Geist stays the face.** The system's is worth taking when the text size follows
+  Dynamic Type, and the two belong together.
+- **The keys' own bar** - the arrows and the tick WebKit puts over the keyboard - stays:
+  it is how the keyboard is put away, and taking it off needs native code.
+
 ## What the phone build does not have
 
 Half the app is about a desktop, and none of it is compiled in: no updater, no
@@ -742,10 +777,16 @@ and the iOS half needs a macOS runner.
 # Android, with ANDROID_HOME and NDK_HOME set and a device or emulator attached
 pnpm --filter @nib/desktop exec tauri android dev
 
-# iOS, on a Mac
+# iOS, on a Mac with xcodegen and CocoaPods from Homebrew. The icons go in after
+# init, which fills the asset catalog with Tauri's own mark
 pnpm --filter @nib/desktop exec tauri ios init
-pnpm --filter @nib/desktop exec tauri ios dev
+cp apps/desktop/src-tauri/icons/ios/*.png apps/desktop/src-tauri/gen/apple/Assets.xcassets/AppIcon.appiconset/
+pnpm --filter @nib/desktop exec tauri ios build --target aarch64-sim --debug
 ```
+
+`tauri ios dev` wants a signing identity even for the simulator, so without an Apple
+account a debug build is the way to run it: `xcrun simctl install booted` the app
+under `gen/apple/build/arm64-sim` and launch `ch.emilvinu.nib`.
 
 A release APK built by hand is unsigned, because there is no
 `gen/android/keystore.properties` on a development machine. `tauri android dev`

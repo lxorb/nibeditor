@@ -117,8 +117,20 @@ describe('Edit', () => {
       'Select all',
       'Find',
       'Replace',
+      'Find next',
+      'Find previous',
       'Search',
     ])
+  })
+
+  /** The keys every editor walks its matches with were nowhere to be read: Cmd+G
+   *  worked, and no row said so. */
+  test('and the rows that walk from one match to the next, on their keys', () => {
+    const edit = menu().find((group) => group.id === 'edit')?.rows ?? []
+    const commands = edit.flatMap((row) => (row && 'command' in row ? [row.command] : []))
+
+    expect(commands).toContain('edit.find-next')
+    expect(commands).toContain('edit.find-previous')
   })
 })
 

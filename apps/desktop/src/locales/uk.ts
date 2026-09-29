@@ -73,6 +73,7 @@ export const uk: Dictionary = {
   'Don’t save': 'Не зберігати',
   Confirm: 'Підтвердити',
   'Close note': 'Закрити нотатку',
+  'Close window': 'Закрити вікно',
   'Reopen closed tab': 'Повернути закриту вкладку',
   Pin: 'Закріпити',
   Forward: 'Уперед',
@@ -906,7 +907,8 @@ export const uk: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'Браузер забирає цю клавішу раніше за програму.',
   'That is not a key combination.': 'Це не сполучення клавіш.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Утримуйте також Ctrl, Alt або Cmd.',
+  'Hold Ctrl or Alt as well.': 'Утримуйте також Ctrl або Alt.',
+  'Hold ⌃, ⌥ or ⌘ as well.': 'Утримуйте також ⌃, ⌥ або ⌘.',
   'File list': 'Список файлів',
   'Select every file': 'Виділити всі файли',
   'Clear the selection': 'Зняти виділення',

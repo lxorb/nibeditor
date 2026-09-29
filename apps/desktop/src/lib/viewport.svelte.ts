@@ -119,6 +119,14 @@ class Viewport {
   /** Whether the keyboard is up, however this platform makes room for it. What
    *  everything that gets out of the way while a note is being written reads. */
   typing = $state(false)
+  /** How tall the format bar standing on the keyboard is, while it stands there:
+   *  the bottom of the note it covers, which the editor keeps the caret above. Set
+   *  by FormatBar.svelte, and nought whenever there is no such bar. */
+  covered = $state(0)
+  /** How many times WebKit has slid the page to show what has the caret and been
+   *  put back; see `measure`. What brings it into sight in the note's own scroller
+   *  runs again on each, since nothing else changed that it would notice. */
+  panned = $state(0)
   /** How tall the page is right now. Read by whatever has to be scrolled back
    *  into sight each time the keyboard takes some of it away. */
   height = $state(0)
@@ -229,12 +237,30 @@ class Viewport {
   }
 
   private measure(seen: VisualViewport) {
-    // What the layout viewport has that the visual one does not. Scrolling the
-    // page moves `offsetTop`, so it has to come off as well or the bar jumps
-    // while the document scrolls under the keyboard.
-    const hidden = window.innerHeight - (seen.height + seen.offsetTop)
+    // The page is sized to what can be seen (`pageHeight`), but WebKit still slides
+    // all of it up to show a line under the keys, the app's bar off the top with it.
+    // So a slide is put back, first, and what has the caret is brought into sight
+    // in its own scroller; see App.svelte. Never at a zoom: a pinch in a phone's
+    // browser moves the same offset, and that is the reader's.
+    const slid = this.touch && seen.offsetTop > 0 && Math.abs(seen.scale - 1) < 0.01
+    if (slid) {
+      window.scrollTo(0, 0)
+      this.panned++
+    }
+
+    // What the layout viewport has that the visual one does not, less a scroll of
+    // the page (`offsetTop`) unless it was just put back. The layout viewport is the
+    // document's height: an iPhone gives `innerHeight` as no more than can be seen
+    // once the page scrolls with the keys up, and the format bar on the keys fell
+    // to the foot of the window, behind them.
+    const layout = document.documentElement.clientHeight
+    const hidden = layout - (seen.height + (slid ? 0 : seen.offsetTop))
     this.keyboard = Math.max(0, Math.round(hidden))
     this.height = Math.round(seen.height)
+    // And on the document, for the sheets pinned to the bottom of the screen: on an
+    // iPhone the keys cover the page rather than shortening it, and a sheet left at
+    // `bottom: 0` is a field somebody types into without seeing it. See tokens.css.
+    document.documentElement.style.setProperty('--keyboard', `${this.keyboard}px`)
 
     const full = this.height + this.keyboard
     if (seen.width !== this.atWidth) {
@@ -253,6 +279,40 @@ class Viewport {
     this.typing = Math.max(this.keyboard, shorter) > KEYBOARD_THRESHOLD
   }
 }
+
+/** Scrolls a field that has the caret - a table's cell, say - into sight above
+ *  `bottom`, the top of whatever is over the foot of the page. The editor does
+ *  this for its own caret; a field inside the note has one of its own, which the
+ *  editor knows nothing about. */
+export function showField(field: HTMLElement, scroller: HTMLElement, bottom: number) {
+  const box = field.getBoundingClientRect()
+  const seen = scroller.getBoundingClientRect()
+  const top = seen.top + FIELD_MARGIN
+  const end = Math.min(seen.bottom, bottom) - FIELD_MARGIN
+
+  if (box.bottom > end) scroller.scrollTop += Math.min(box.bottom - end, box.top - top)
+  else if (box.top < top) scroller.scrollTop -= top - box.top
+}
+
+/** What scrolls a field: the nearest box around it that scrolls up and down, or
+ *  nothing when none does or the field is in an editor of its own - a card's, whose
+ *  plane brings it into sight itself. */
+export function scrollerOf(field: HTMLElement): HTMLElement | null {
+  if (field.closest('.cm-editor')) return null
+
+  for (let at = field.parentElement; at; at = at.parentElement) {
+    const { overflowY } = getComputedStyle(at)
+    if ((overflowY === 'auto' || overflowY === 'scroll') && at.scrollHeight > at.clientHeight) {
+      return at
+    }
+  }
+
+  return null
+}
+
+/** The room kept around a field brought into sight, as the editor keeps round
+ *  its caret line; see App.svelte. */
+const FIELD_MARGIN = 24
 
 export const viewport = new Viewport()
 

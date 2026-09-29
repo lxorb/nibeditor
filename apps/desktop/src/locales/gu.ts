@@ -73,6 +73,7 @@ export const gu: Dictionary = {
   'Don’t save': 'સાચવો નહીં',
   Confirm: 'ખાતરી કરો',
   'Close note': 'નોંધ બંધ કરો',
+  'Close window': 'વિન્ડો બંધ કરો',
   'Reopen closed tab': 'બંધ કરેલી ટૅબ ફરી ખોલો',
   Pin: 'પિન કરો',
   Forward: 'આગળ',
@@ -874,7 +875,8 @@ export const gu: Dictionary = {
   'Your browser takes this key before the app sees it.':
     'એપ જુએ તે પહેલાં તમારું બ્રાઉઝર આ કી લઈ લે છે.',
   'That is not a key combination.': 'એ કીનું જોડાણ નથી.',
-  'Hold Ctrl, Alt or Cmd as well.': 'Ctrl, Alt કે Cmd પણ દબાવી રાખો.',
+  'Hold Ctrl or Alt as well.': 'Ctrl કે Alt પણ દબાવી રાખો.',
+  'Hold ⌃, ⌥ or ⌘ as well.': '⌃, ⌥ કે ⌘ પણ દબાવી રાખો.',
   'File list': 'ફાઇલ યાદી',
   'Select every file': 'દરેક ફાઇલ પસંદ કરો',
   'Clear the selection': 'પસંદગી કાઢો',

@@ -2,6 +2,7 @@ import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 import { overlays } from '../../src/lib/overlays'
 import Palette from '../../src/lib/Palette.svelte'
+import { viewport } from '../../src/lib/viewport.svelte'
 
 /** The palette opened on the commands, which is what Ctrl+Shift+P does.
  *
@@ -129,4 +130,37 @@ test('starts empty after it has been closed', async () => {
   await made.showCommands()
   flushSync()
   expect(field()?.value).toBe('>')
+})
+
+/** A phone has no Escape, and a list long enough to reach the keys leaves no dim
+ *  edge above them to tap. So beside the box is the word a phone's search has, and
+ *  it answers as Escape does, forgetting what was typed. */
+test('on a touch screen, is put away by the word beside the box', async () => {
+  viewport.device = 'phone'
+  try {
+    const made = palette()
+    await made.showCommands()
+    flushSync()
+    type('>fold')
+
+    const give = target.querySelector<HTMLButtonElement>('button.give')
+    expect(give?.textContent).toBe('Cancel')
+    give?.click()
+    flushSync()
+
+    // Its way out never finishes here, so what says it went is what it forgot.
+    await made.showCommands()
+    flushSync()
+    expect(field()?.value).toBe('>')
+  } finally {
+    viewport.device = 'desktop'
+  }
+})
+
+test('and on a desktop there is no such word, Escape being there', async () => {
+  const made = palette()
+  await made.showCommands()
+  flushSync()
+
+  expect(target.querySelector('button.give')).toBeNull()
 })

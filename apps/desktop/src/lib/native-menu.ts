@@ -104,12 +104,10 @@ export interface NativeSubmenu {
   text: string
   enabled: boolean
   items: NativeEntry[]
-  /** The menu AppKit is told is Window, which it adds the list of open windows to.
-   *
-   *  Help is not told it is Help. AppKit would put its search field there, and that
-   *  field answers Shift+Cmd+/, which is this app's own key for the list of keys; the
-   *  row for that list opens Help instead. */
-  role?: 'window'
+  /** The menu AppKit is told is Window, which it adds the list of open windows to,
+   *  and the one it is told is Help, which it puts its search field at the top of on
+   *  Shift+Cmd+?. AppKit finds Help by its title too, but only in English. */
+  role?: 'window' | 'help'
 }
 
 interface NativeSystem {
@@ -142,6 +140,8 @@ export interface MenuBarWords {
   bringAllToFront: string
   openRecent: string
   clearMenu: string
+  /** Edit's submenu of the rows that find in the note. */
+  find: string
 }
 
 export interface MenuBarSources {
@@ -163,6 +163,9 @@ export interface MenuBarSources {
    *  whatever has the keyboard. */
   isWindowCommand(command: string): boolean
   words: MenuBarWords
+  /** Whether the strip is in English, where a Mac writes a menu's rows in title case;
+   *  every other language writes them the way it writes a sentence. */
+  english: boolean
 }
 
 /** The strip, and what each of its own rows runs, by id. */
@@ -349,6 +352,38 @@ export function leftFullscreen(was: boolean, now: boolean, appOn: boolean): bool
 }
 
 /** Drops the rules a removed row left behind: at either end, and two in a row. */
+/** The rows of Edit that find in the note, which a Mac keeps in a submenu. */
+const FINDING = ['edit.find', 'edit.replace', 'edit.find-next', 'edit.find-previous']
+
+/** The small words a title leaves in lower case in the middle, after Apple's own
+ *  style: articles, the joining words, and prepositions of four letters or fewer. */
+const SMALL = new Set(
+  'a an the and but for nor or so yet as at by from in into of off on onto out per to up via with'.split(
+    ' ',
+  ),
+)
+
+/** A menu row in title case, the way a Mac writes one in English: Bring All to
+ *  Front, Paste as Plain Text. A word already holding a capital, a digit or a dot
+ *  is left as it is - ePub, HTML, reveal.js - and so is each half of a hyphen's
+ *  pair that is small. */
+export function titled(text: string): string {
+  const words = text.split(' ')
+  return words
+    .map((word, index) => {
+      const edge = index === 0 || index === words.length - 1
+      return word
+        .split('-')
+        .map((part) => {
+          if (!/^[a-z]+$/.test(part)) return part
+          if (!edge && SMALL.has(part)) return part
+          return part.charAt(0).toUpperCase() + part.slice(1)
+        })
+        .join('-')
+    })
+    .join(' ')
+}
+
 function tidy(rows: MenuRow[]): MenuRow[] {
   const out: MenuRow[] = []
   for (const row of rows) {
@@ -377,6 +412,9 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const { groups, words } = sources
   const runs = new Map<string, () => void>()
   const claim = claimer()
+  const say = (text: string) => (sources.english ? titled(text) : text)
+  /** Rows named by the reader rather than by the app: the notes opened lately. */
+  const named = new Set<MenuRow>(sources.recent)
 
   const item = (row: MenuItem, id: string): NativeItem => {
     const key = row.command ? sources.keyFor(row.command) : null
@@ -389,7 +427,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     return {
       kind: 'item',
       id,
-      text: row.label,
+      text: (named.has(row) ? row.label : say(row.label)) + (row.asks ? '…' : ''),
       accelerator,
       enabled: standIn !== undefined || !row.disabled,
       ...(row.checked === undefined ? {} : { checked: row.checked }),
@@ -407,14 +445,14 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
         return {
           kind: 'submenu',
           id,
-          text: row.label,
+          text: say(row.label),
           enabled: !row.disabled,
           items: entries(row.rows, id),
         }
       }
 
       const system = row.command ? SYSTEM_COMMANDS[row.command] : undefined
-      if (system) return { kind: 'system', id, item: system, text: row.label }
+      if (system) return { kind: 'system', id, item: system, text: say(row.label) }
 
       return item(row, id)
     })
@@ -431,17 +469,17 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     text: words.app,
     enabled: true,
     items: [
-      { kind: 'system', id: 'nib.about', item: 'About', text: words.about },
+      { kind: 'system', id: 'nib.about', item: 'About', text: say(words.about) },
       { kind: 'rule', id: 'nib.rule-1' },
-      ...(settings ? [item({ ...settings, label: `${settings.label}…` }, 'nib.settings')] : []),
+      ...(settings ? [item({ ...settings, asks: true }, 'nib.settings')] : []),
       { kind: 'rule', id: 'nib.rule-2' },
-      { kind: 'system', id: 'nib.services', item: 'Services', text: words.services },
+      { kind: 'system', id: 'nib.services', item: 'Services', text: say(words.services) },
       { kind: 'rule', id: 'nib.rule-3' },
-      { kind: 'system', id: 'nib.hide', item: 'Hide', text: words.hide },
-      { kind: 'system', id: 'nib.hide-others', item: 'HideOthers', text: words.hideOthers },
-      { kind: 'system', id: 'nib.show-all', item: 'ShowAll', text: words.showAll },
+      { kind: 'system', id: 'nib.hide', item: 'Hide', text: say(words.hide) },
+      { kind: 'system', id: 'nib.hide-others', item: 'HideOthers', text: say(words.hideOthers) },
+      { kind: 'system', id: 'nib.show-all', item: 'ShowAll', text: say(words.showAll) },
       { kind: 'rule', id: 'nib.rule-4' },
-      { kind: 'system', id: 'nib.quit', item: 'Quit', text: words.quit },
+      { kind: 'system', id: 'nib.quit', item: 'Quit', text: say(words.quit) },
     ],
   }
 
@@ -466,8 +504,24 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
       ]
     })
 
+  /** Edit, with its rows that find in a submenu of their own, where a Mac's Edit
+   *  menu keeps them. */
+  const editRows = (rows: MenuRow[]): MenuRow[] => {
+    const finding = rows.filter(
+      (row): row is MenuItem =>
+        row !== DIVIDER && !isSubmenu(row) && FINDING.includes(row.command ?? ''),
+    )
+    const first = finding[0]
+    if (!first) return rows
+
+    const rest = rows.filter((row) => !finding.includes(row as MenuItem))
+    rest.splice(rows.indexOf(first), 0, { label: words.find, rows: finding })
+    return rest
+  }
+
   const rowsOf = (group: MenuGroup): MenuRow[] => {
     if (group.id === 'file') return fileRows(group.rows)
+    if (group.id === 'edit') return editRows(group.rows)
     if (group.id === 'help' && sources.helpRows.length) {
       return [...sources.helpRows, DIVIDER, ...group.rows]
     }
@@ -478,20 +532,21 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const own = groups.map((group): NativeSubmenu => ({
     kind: 'submenu',
     id: group.id,
-    text: group.label,
+    text: say(group.label),
     enabled: true,
     items: entries(rowsOf(group), group.id),
+    ...(group.id === 'help' ? { role: 'help' as const } : {}),
   }))
 
   const window: NativeSubmenu = {
     kind: 'submenu',
     id: 'window',
-    text: words.window,
+    text: say(words.window),
     enabled: true,
     role: 'window',
     items: [
-      { kind: 'system', id: 'window.minimize', item: 'Minimize', text: words.minimize },
-      { kind: 'system', id: 'window.zoom', item: 'Maximize', text: words.zoom },
+      { kind: 'system', id: 'window.minimize', item: 'Minimize', text: say(words.minimize) },
+      { kind: 'system', id: 'window.zoom', item: 'Maximize', text: say(words.zoom) },
       ...(sources.windowRows.length ? [{ kind: 'rule' as const, id: 'window.rule-1' }] : []),
       ...sources.windowRows.map((row, index) => item(row, `window.tab-${index}`)),
       { kind: 'rule', id: 'window.rule-2' },
@@ -499,7 +554,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
         kind: 'system',
         id: 'window.front',
         item: 'BringAllToFront',
-        text: words.bringAllToFront,
+        text: say(words.bringAllToFront),
       },
     ],
   }

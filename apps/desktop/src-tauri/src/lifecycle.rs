@@ -72,6 +72,22 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             ..
         } => launch::reopen(app),
 
+        // An iPad asked for a second window: New Window in the icon's menu, or a note
+        // dragged out to the side. tao takes scenes only with multiple scenes on (see
+        // Info.ios.plist), and the phone build is one window, so the scene is given
+        // back rather than shown blank.
+        #[cfg(target_os = "ios")]
+        RunEvent::SceneRequested { scene, .. } => {
+            if let Some(main) = objc2::MainThreadMarker::new() {
+                objc2_ui_kit::UIApplication::sharedApplication(main)
+                    .requestSceneSessionDestruction_options_errorHandler(
+                        &scene.session(),
+                        None,
+                        None,
+                    );
+            }
+        }
+
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
         RunEvent::WindowEvent {
@@ -150,6 +166,10 @@ pub fn keep_running(app: AppHandle) {
     if quitting.now() == ASKING {
         quitting.set(RUNNING);
     }
+    // And whatever asked for the quit is told it is off: a logout or a restart
+    // stops, where the system's own wording says Nib stopped it.
+    #[cfg(target_os = "macos")]
+    asked_to_quit::answer(&app, false);
 }
 
 /// A Mac's Quit, whichever way it is asked for.
@@ -159,17 +179,21 @@ pub fn keep_running(app: AppHandle) {
 /// may terminate, and ends the process at once if the delegate does not say. The
 /// delegate is tao's, and it does not say - so without this a Cmd+Q never becomes
 /// the `ExitRequested` the rest of this module answers, and no window is asked
-/// anything. So the one method is added to it: a quit is held, the windows are
-/// asked (`quit`), and the app ends once they have all gone. The exit that follows
-/// is let through, which is what keeps the question from coming back.
+/// anything. So the one method is added to it: the windows are asked (`quit`), and
+/// `AppKit` is told to wait for their answer, which it is given once they have all
+/// gone or one of them has said no.
 ///
-/// Holding a logout this way cancels it, as it does for any app with an unsaved
-/// document open; the reader logs out again once the notes are dealt with.
+/// Wait, not no. The answer goes back to whatever asked, and a logout, a restart
+/// or a shutdown hears "no" as the app stopping it: it was, every time, with
+/// nothing unsaved anywhere, and the reader had to start it again once Nib had quit
+/// by itself a moment later. Only a Cancel over an unsaved note calls one off now,
+/// which is what every Mac document app does.
 #[cfg(target_os = "macos")]
 mod asked_to_quit {
     use objc2::runtime::{AnyObject, Imp, Sel};
     use objc2::{ffi, sel, MainThreadMarker};
     use objc2_app_kit::NSApplication;
+    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::OnceLock;
     use tauri::AppHandle;
 
@@ -177,9 +201,13 @@ mod asked_to_quit {
     /// anything along, so it is kept here, once.
     static APP: OnceLock<AppHandle> = OnceLock::new();
 
-    /// `NSTerminateCancel` and `NSTerminateNow`.
-    const CANCEL: usize = 0;
+    /// `NSTerminateNow` and `NSTerminateLater`.
     const NOW: usize = 1;
+    const LATER: usize = 2;
+
+    /// `AppKit` is waiting on the windows: set when a quit is held, and cleared by
+    /// the one answer it is given.
+    static WAITING: AtomicBool = AtomicBool::new(false);
 
     /// The method's shape: `- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender`.
     type ShouldTerminate = extern "C-unwind" fn(&AnyObject, Sel, *mut AnyObject) -> usize;
@@ -220,7 +248,7 @@ mod asked_to_quit {
     }
 
     /// Now, when every window has already gone and this is the app ending;
-    /// otherwise not yet, and the windows are asked.
+    /// otherwise later, once the windows have been asked.
     extern "C-unwind" fn should_terminate(_: &AnyObject, _: Sel, _: *mut AnyObject) -> usize {
         let Some(app) = APP.get() else {
             return NOW;
@@ -230,13 +258,47 @@ mod asked_to_quit {
         }
 
         super::quit(app);
-        CANCEL
+        // With no window to ask, the quit is already over.
+        if super::state(app).now() == super::LEAVING {
+            return NOW;
+        }
+
+        WAITING.store(true, Ordering::SeqCst);
+        LATER
+    }
+
+    /// What the windows decided about a quit `AppKit` is waiting on: yes, and it
+    /// ends the app; no, and whatever asked is told the quit is off. False when
+    /// nothing was waiting - a quit from the app's own menu, or the last window
+    /// going - which the caller ends the ordinary way.
+    pub fn answer(app: &AppHandle, yes: bool) -> bool {
+        if !WAITING.swap(false, Ordering::SeqCst) {
+            return false;
+        }
+
+        let reply = move || {
+            if let Some(main) = MainThreadMarker::new() {
+                NSApplication::sharedApplication(main).replyToApplicationShouldTerminate(yes);
+            }
+        };
+        if MainThreadMarker::new().is_some() {
+            reply();
+        } else {
+            let _ = app.run_on_main_thread(reply);
+        }
+        true
     }
 }
 
 /// The one exit that is let through, once every window has gone.
 fn leave(app: &AppHandle) {
     state(app).set(LEAVING);
+    // A quit `AppKit` asked about is ended by `AppKit`, which is also what tells a
+    // logout that Nib is out of its way.
+    #[cfg(target_os = "macos")]
+    if asked_to_quit::answer(app, true) {
+        return;
+    }
     app.exit(0);
 }
 

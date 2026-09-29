@@ -42,6 +42,7 @@
     nearby,
     nextZoom,
     pageAt,
+    PDF_TO_CSS,
     stack,
     topOfPage,
     type Size,
@@ -51,6 +52,7 @@
   import { paint, placesOf, rangeOf } from './reading/find'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
+  import { viewport } from './viewport.svelte'
   import { workspace, type Tab } from './workspace.svelte'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -80,7 +82,18 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; the marks come off `sheet`
   const matrices = new Map<number, Transform>()
 
-  const zoom = $derived(tab.zoom ?? 1)
+  /** How wide the pane the pages are read in is. */
+  let viewWidth = $state(0)
+  /** On a touch screen, and until somebody zooms, the widest page fitted to the
+   *  width it is read in: a phone is narrower than a sheet of paper at its own size,
+   *  and a PDF opened on one ran off the right edge with the ends of its lines out of
+   *  sight. Never past the paper's own size, and a desktop keeps opening at that. */
+  const fitted = $derived.by(() => {
+    if (!viewport.touch || viewWidth <= 0) return 1
+    const widest = Math.max(fallback.width, ...sizes.map((size) => size?.width ?? 0))
+    return Math.min(1, (viewWidth - GAP * 2) / (widest * PDF_TO_CSS))
+  })
+  const zoom = $derived(tab.zoom ?? fitted)
   const boxes = $derived(stack(sizes, fallback, zoom))
   const height = $derived(heightOf(boxes))
 
@@ -244,8 +257,10 @@
 
       at = box.scrollTop
       // The page the reader is on, so the tab opens here next time and a link
-      // copied from the selection names the right one.
-      workspace.notePdf(tab.id, pageAt(boxes, at, viewHeight), zoom)
+      // copied from the selection names the right one. The zoom is only ever the
+      // reader's own: writing down the one worked out for them would pin a phone's
+      // fitted width at whatever it was before the pane had been measured.
+      workspace.notePdf(tab.id, pageAt(boxes, at, viewHeight), tab.zoom)
     })
   }
 
@@ -292,6 +307,25 @@
     // the wheel means the document rather than the app around it.
     event.preventDefault()
     void zoomTo(zoom * Math.pow(0.999, event.deltaY), event.clientY)
+  }
+
+  /** Two fingers on a phone or a tablet, which is what Ctrl and the wheel are on
+   *  a desktop: the zoom there was, and how far apart the fingers were. The app
+   *  does not zoom as a page on a phone (main.ts), so this is the only way the
+   *  small print of a PDF gets bigger there. */
+  let pinch: { apart: number; zoom: number } | null = null
+
+  function pinched(event: TouchEvent) {
+    const [a, b] = [event.touches[0], event.touches[1]]
+    if (event.touches.length !== 2 || !a || !b) {
+      pinch = null
+      return
+    }
+
+    const apart = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+    if (!pinch) pinch = { apart, zoom }
+    else if (pinch.apart)
+      void zoomTo(pinch.zoom * (apart / pinch.apart), (a.clientY + b.clientY) / 2)
   }
 
   // ── Finding ────────────────────────────────────────────────────────
@@ -549,6 +583,32 @@
     }
   }
 
+  // A finger selects with the platform's own handles, and an iPad sends the page
+  // nothing a mouse would while it does: no mouseup after the long press that starts
+  // a selection, no touchend for a handle dragged along. So the bar came up late,
+  // or offered to mark the words of the first press after the handles had moved on.
+  // What a finger changes is heard as the selection changing, a moment after it
+  // settles, and only when it is this document's or nobody's.
+  $effect(() => {
+    if (!viewport.touch) return
+
+    let settling = 0
+    const heard = () => {
+      clearTimeout(settling)
+      settling = window.setTimeout(() => {
+        const selection = getSelection()
+        const at = selection?.anchorNode ?? null
+        if (!selection?.rangeCount || (at && scroller?.contains(at))) selected()
+      }, 150)
+    }
+
+    document.addEventListener('selectionchange', heard)
+    return () => {
+      clearTimeout(settling)
+      document.removeEventListener('selectionchange', heard)
+    }
+  })
+
   /** Marks what is selected. Drawn at once and written down after, so the click
    *  is answered in the frame it happened in. */
   async function highlight() {
@@ -665,10 +725,16 @@
     use:scrollbar={tab.id}
     bind:this={scroller}
     bind:clientHeight={viewHeight}
+    bind:clientWidth={viewWidth}
     onscroll={moved}
     onwheel={wheeled}
     onmouseup={selected}
-    ontouchend={selected}
+    ontouchstart={pinched}
+    ontouchmove={pinched}
+    ontouchend={(event) => {
+      pinched(event)
+      selected()
+    }}
   >
     {#if broken}
       <p class="trouble">{t('That PDF could not be opened')}</p>
