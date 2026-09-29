@@ -98,6 +98,8 @@ mod shell_menu;
 mod spaces;
 mod tags;
 mod tasks;
+#[cfg(desktop)]
+mod terminal;
 mod themes;
 mod trace;
 mod trash;
@@ -228,6 +230,14 @@ macro_rules! desktop_commands {
             secrets::secret_write,
             shell_menu::new_menu_registered,
             shell_menu::set_new_menu,
+            terminal::terminal_shells,
+            terminal::pty_spawn,
+            terminal::pty_write,
+            terminal::pty_resize,
+            terminal::pty_seen,
+            terminal::pty_busy,
+            terminal::pty_folder,
+            terminal::pty_kill,
             updates::check_update,
             web_tabs::web_open,
             web_tabs::web_place,
@@ -363,6 +373,11 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // down as it closes so the next launch opens there; see placement.rs.
     #[cfg(desktop)]
     let builder = placement::managed(web_tabs::managed(builder));
+
+    // The shells terminal tabs run, and the page load that lets go of a page's own; see
+    // terminal.rs.
+    #[cfg(desktop)]
+    let builder = terminal::managed(builder);
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(desktop_commands!());

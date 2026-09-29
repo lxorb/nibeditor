@@ -12,10 +12,12 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the five functions that
+# Unsafe is denied everywhere and excepted by name in the six functions that
 # call Windows directly: the shell's recent documents list, the two registry
-# calls behind Explorer's New menu, WebView2's print engine, and the launch
-# trace's question about when this process was created. Two more on a Mac: the
+# calls behind Explorer's New menu, WebView2's print engine, the launch
+# trace's question about when this process was created, and the list of
+# processes a terminal asks before it closes on a running one (see
+# terminal/process.rs). Two more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), and the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
@@ -128,6 +130,11 @@ getrandom = "0.3"
 # question on Windows is Mica or Acrylic depending on which Windows this is. See
 # appearance.rs.
 window-vibrancy = "0.6"
+# A shell in a tab: one pseudo terminal per terminal tab, ConPTY on Windows - on ARM
+# as on Intel, since it is kernel32's own - and the system's pty on a Mac and Linux.
+# Wezterm's own crate: it hands over a reader, a writer, a resize and the child, and
+# nothing else. See src/terminal.rs.
+portable-pty = "0.9"
 
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
 # the only way into them: Notes has no export. Bundled so the read does not depend
@@ -240,6 +247,9 @@ windows = { version = "0.58", features = [
   # Whether Ctrl is down as a key is pressed inside a web tab's page, which the
   # engine's own event does not say. See web_keys.rs.
   "Win32_UI_Input_KeyboardAndMouse",
+  # Which processes a terminal's shell has started, asked before its tab closes on
+  # one of them. See terminal/process.rs.
+  "Win32_System_Diagnostics_ToolHelp",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built

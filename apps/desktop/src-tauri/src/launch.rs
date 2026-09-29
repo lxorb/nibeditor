@@ -296,7 +296,7 @@ pub fn document_windows(app: &AppHandle) -> Vec<tauri::Window> {
 
 /// Whether a label is one of the app's own windows, by the two shapes
 /// capabilities/default.json names.
-fn is_document_window(label: &str) -> bool {
+pub(crate) fn is_document_window(label: &str) -> bool {
     label == MAIN
         || label
             .strip_prefix("nib-")

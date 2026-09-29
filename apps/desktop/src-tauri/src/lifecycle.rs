@@ -90,6 +90,9 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
 
         RunEvent::ExitRequested { code, api, .. } => exit_requested(app, code, &api),
 
+        // And nothing a terminal started is left running once the app has gone.
+        RunEvent::Exit => crate::terminal::end_all(app),
+
         RunEvent::WindowEvent {
             label,
             event: WindowEvent::Destroyed,
@@ -98,6 +101,8 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             if let Some(pending) = app.try_state::<launch::Pending>() {
                 pending.forget(&label);
             }
+            // Its terminals go with it; see terminal.rs.
+            crate::terminal::window_gone(app, &label);
             // The last window has answered yes. With the presenter's window still
             // open the loop would not end by itself, so it is ended here.
             if state(app).now() == ASKING && launch::document_windows(app).is_empty() {
