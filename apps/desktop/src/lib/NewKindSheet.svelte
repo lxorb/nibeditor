@@ -81,6 +81,7 @@
 
   <div
     class="nib-screen sheet"
+    style:--kinds={sheet.kinds.length}
     bind:this={box}
     use:trap
     role="dialog"
@@ -108,19 +109,32 @@
   /* `.nib-screen` in the themes package draws the surface, the corner, the hairline
      and the shadow. What is its own: the middle of the window rather than a third of
      the way down, because nothing is typed here and the cards are the whole of it, and
-     as wide as the cards in it. */
+     as wide as the cards in it, with the room between two cards all the way round
+     them, so the edge is one more gap rather than a frame of its own.
+
+     A grid of one row, one column a kind, rather than a row that wraps: a wrapped row
+     is as wide as it would have been unwrapped, which left the edge wider at the sides
+     than at the top, and the cards give way together before any of them moves. */
   .sheet {
     top: 50%;
     translate: -50% -50%;
     z-index: 51;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(var(--kinds), minmax(0, auto));
     gap: var(--space-3);
     width: max-content;
     max-width: calc(100vw - var(--space-7));
-    padding: var(--space-4);
+    padding: var(--space-3);
     outline: none;
+  }
+
+  /* Two rows where one no longer fits, as even as the count allows: five as three and
+     two rather than four and one on its own, and six as three and three. An engine
+     that cannot round here keeps the one row, with the cards narrower. */
+  @media (max-width: 800px) {
+    .sheet {
+      grid-template-columns: repeat(round(up, calc(var(--kinds) / 2), 1), minmax(0, auto));
+    }
   }
 
   /* From the bottom under a thumb, the way every sheet there rises, with the cards
@@ -130,8 +144,7 @@
     bottom: 0;
     left: 0;
     translate: none;
-    flex-direction: column;
-    flex-wrap: nowrap;
+    grid-template-columns: 100%;
     width: 100%;
     max-width: none;
     padding-bottom: var(--touch-bottom);

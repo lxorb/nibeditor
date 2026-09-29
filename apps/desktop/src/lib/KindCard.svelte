@@ -65,8 +65,10 @@
 
 <style>
   /* A card rather than a row: the kind is chosen with nothing else to look at, so it
-     is drawn at the size that says so. The hairline and the corner are the app's own,
-     which is what every surface here wears. */
+     is drawn at the size that says so. As tall as what is in it and no taller, with the
+     same room above the mark as under the name, so a row of them reads as a row of keys
+     however many kinds there are. The hairline is the app's own, and the corner is the
+     one a card wears in the theme store. */
   .kind {
     position: relative;
     display: flex;
@@ -75,38 +77,48 @@
     justify-content: center;
     gap: var(--space-2);
     width: 9rem;
-    height: 7rem;
-    padding: var(--space-3);
+    max-width: 100%;
+    padding: var(--space-5) var(--space-3);
     border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     background: var(--surface);
     color: var(--text);
     font-family: var(--font-ui);
     font-size: var(--text-row);
-    cursor: pointer;
+    font-weight: var(--weight-row);
+    line-height: var(--leading-row);
+    cursor: default;
     transition:
       background var(--dur-fast) var(--ease-out),
       border-color var(--dur-fast) var(--ease-out),
-      translate var(--dur-fast) var(--ease-out);
+      color var(--dur-fast) var(--ease-out);
   }
 
-  /* Lit under the pointer and under the keyboard both, so the ring is not the only
-     thing that says which one is about to be pressed - or, where the list keeps one
-     selection, lit by that and nothing else. */
-  .kind:not(.is-choice):hover,
-  .kind.is-on {
-    background: var(--surface-hover);
-    border-color: var(--line-strong);
+  /* The row's label for its one line and the ellipsis a long language needs, but not
+     for its reach: in a row it takes the room the mark leaves, and in a column that
+     room is the card's height, which stood the name at the top of an empty box. */
+  .kind .nib-row-label {
+    flex: initial;
+    max-width: 100%;
   }
 
-  .kind:not(.is-choice):hover,
-  .kind:not(.is-choice):focus-visible,
-  .kind.is-on {
-    translate: 0 -2px;
+  /* Lit under the pointer - or, where the list keeps one selection, by that and
+     nothing else, so two cards are never lit at once. In colour only: the border stays
+     one hairline and nothing moves, so the card that lights is the same card in the
+     same place. The ring a key leaves is the app's own, drawn inside over the hairline,
+     which is why the chosen card's hairline is the accent: the two are one frame. */
+  @media (hover: hover) {
+    .kind:not(.is-choice):hover {
+      background: var(--surface-hover);
+      border-color: var(--line-strong);
+      color: var(--text-strong);
+    }
   }
 
   .kind.is-on {
+    background: var(--surface-selected);
     border-color: var(--accent);
+    color: var(--text-strong);
   }
 
   .kind:active {
@@ -118,29 +130,38 @@
      the box, because an emoji is type; see Icon.svelte. */
   .mark {
     display: block;
-    width: 1.75rem;
-    height: 1.75rem;
-    font-size: 1.75rem;
+    flex: none;
+    width: calc(2 * var(--icon-md));
+    height: calc(2 * var(--icon-md));
+    font-size: calc(2 * var(--icon-md));
     color: var(--muted);
     stroke: currentColor;
     stroke-width: 1.6;
     transition: color var(--dur-fast) var(--ease-out);
   }
 
-  .kind:not(.is-choice):hover .mark,
+  @media (hover: hover) {
+    .kind:not(.is-choice):hover .mark {
+      color: var(--accent);
+    }
+  }
+
   .kind:not(.is-choice):focus-visible .mark,
   .kind.is-on .mark {
     color: var(--accent);
   }
 
-  /* In the corner, where a key beside a command sits in the palette: there for the
-     hand that wants it and quiet for everybody else. */
+  /* In the corner, in the type a key beside a command wears in the palette: there for
+     the hand that wants it and quiet for everybody else. As far in from the top as from
+     the side, which is the card's own padding at the side, so the letter sits on the
+     same line the name gives way at. */
   kbd {
     position: absolute;
-    top: var(--space-2);
-    inset-inline-end: var(--space-2);
-    font-family: var(--font-ui);
+    top: var(--space-3);
+    inset-inline-end: var(--space-3);
+    font-family: var(--font-mono);
     font-size: var(--text-xs);
+    line-height: 1;
     color: var(--muted);
   }
 
@@ -148,16 +169,24 @@
     color: var(--muted-strong);
   }
 
-  /* Stacked under a thumb, at the row height every other list has there. */
+  /* Stacked under a thumb, as the rows every other list is made of there: the mark
+     in front of the name at the size a thumb's row draws it, and the name from the
+     start of the line. */
   :global([data-touch]) .kind {
     flex-direction: row;
     justify-content: flex-start;
     width: min(20rem, 100%);
-    height: auto;
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
-    gap: var(--touch-pad);
+    gap: var(--touch-gap);
     font-size: var(--touch-text);
+    text-align: start;
+  }
+
+  :global([data-touch]) .mark {
+    width: var(--touch-icon);
+    height: var(--touch-icon);
+    font-size: var(--touch-icon);
   }
 
   /* No keys under a thumb. */
