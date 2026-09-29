@@ -20,6 +20,7 @@
   import { useCommand, usedCommands } from './palette/used'
   import { joinPath } from './tauri'
   import { trap } from './trap'
+  import { viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
   import { LAYER } from './motion'
 
@@ -281,20 +282,28 @@
          is what a combobox is, and why the rows are out of the tab sequence - forty
          notes would otherwise be forty presses of Tab between here and the note
          behind. See docs/keyboard.md. -->
-    <input
-      bind:this={input}
-      bind:value={query}
-      onkeydown={onKeydown}
-      placeholder={t('Go to note, or > for commands')}
-      spellcheck="false"
-      autocapitalize="off"
-      autocorrect="off"
-      role="combobox"
-      aria-expanded={results.length > 0}
-      aria-controls="nib-palette-list"
-      aria-activedescendant={results.length ? `nib-palette-${cursor}` : undefined}
-      aria-label={t('Search notes and commands')}
-    />
+    <!-- On a touch screen with a word beside the box that puts it away, as a
+         phone's search has: there is no Escape there, and a list long enough to
+         reach the keys leaves no dim edge to tap. -->
+    <div class="field nib-field">
+      <input
+        bind:this={input}
+        bind:value={query}
+        onkeydown={onKeydown}
+        placeholder={t('Go to note, or > for commands')}
+        spellcheck="false"
+        autocapitalize="off"
+        autocorrect="off"
+        role="combobox"
+        aria-expanded={results.length > 0}
+        aria-controls="nib-palette-list"
+        aria-activedescendant={results.length ? `nib-palette-${cursor}` : undefined}
+        aria-label={t('Search notes and commands')}
+      />
+      {#if viewport.touch}
+        <button type="button" class="give" onclick={dismiss}>{t('Cancel')}</button>
+      {/if}
+    </div>
 
     {#if results.length}
       <ul
@@ -385,17 +394,35 @@
   /* The hairline under the box is the box's border, so the one answer a box with
      a caret in it gives - the border turns to the accent - is already the right
      one here and is drawn in the themes package. It used to take the ring off and
-     put nothing in its place. */
-  input {
-    width: 100%;
-    padding: var(--space-4);
+     put nothing in its place. The box is the row around the words, which wears
+     `.nib-field` for the word a touch screen puts beside them, and keeps the one
+     line it always had rather than that class's frame. */
+  .field {
+    min-height: 0;
+    padding: 0;
     border: none;
     border-bottom: 1px solid var(--line);
+    border-radius: 0;
     background: none;
+    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .field input {
+    padding: var(--space-4);
     color: var(--text-strong);
     font-family: var(--font-ui);
     font-size: var(--text-base);
-    transition: border-color var(--dur-fast) var(--ease-out);
+  }
+
+  .give {
+    flex: none;
+    min-height: var(--touch-row);
+    padding: 0 var(--touch-pad);
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-ui);
+    font-size: var(--touch-text);
   }
 
   input::placeholder {
@@ -491,7 +518,7 @@
 
   /* The rows are a list like any other and take the row scale with every other
      list; the field over them is the one thing here that does not. */
-  :global([data-touch]) input {
+  :global([data-touch]) .field input {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
     font-size: var(--touch-text);
