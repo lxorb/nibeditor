@@ -105,6 +105,18 @@ describe('what an iPhone needs before it will show the app at all', () => {
     )
   })
 
+  test('its notes and its exports are somewhere the Files app shows', () => {
+    // An export on a phone is written into the app's documents folder (saveOnPhone in
+    // export/save.ts), which is the reader's to see only with these two on.
+    for (const key of ['UIFileSharingEnabled', 'LSSupportsOpeningDocumentsInPlace']) {
+      expect(plist).toMatch(new RegExp(`<key>${key}</key>\\s*<true/>`))
+    }
+  })
+
+  test('a picture offered to Photos has a sentence to ask with', () => {
+    expect(sentences(plist).get('NSPhotoLibraryAddUsageDescription')).toBeTruthy()
+  })
+
   test('the oldest iOS it installs on can read the page', () => {
     // The page is built for `esnext` and not lowered, and its regular expressions look
     // behind, which WebKit parses from 16.4: an older phone opens a blank app.
