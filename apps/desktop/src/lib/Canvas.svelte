@@ -136,6 +136,10 @@
    *  hangs off an edge of the pane. */
   const ROOM = 72
 
+  /** How much of the pane is kept round a card being written in on a touch screen,
+   *  in pixels, as a note keeps round its caret line; see App.svelte. */
+  const CARD_MARGIN = 24
+
   let host = $state<HTMLElement>()
   let width = $state(0)
   let height = $state(0)
@@ -586,6 +590,27 @@
     if (store.follow() && !store.framed && width && height) store.fit(width, height)
   })
 
+  // The card being written in, clear of the keys and the format bar standing on them:
+  // the plane moves the least that shows it, as a note scrolls to its caret. Run as
+  // the keys arrive, and again as each step of them takes more of the pane.
+  $effect(() => {
+    const id = store.editing
+    const room = height - viewport.covered
+    if (id === null || !viewport.touch || !viewport.typing || room <= 0) return
+
+    untrack(() => {
+      const node = store.canvas.nodes.find((one) => one.id === id)
+      if (!node) return
+
+      const top = originY + node.y * camera.scale
+      const bottom = top + node.height * camera.scale
+      const low = bottom - (room - CARD_MARGIN)
+      const high = CARD_MARGIN - top
+      const by = low > 0 ? Math.min(low, -high) : high > 0 ? -high : 0
+      if (by) store.camera = { ...camera, y: camera.y + by / camera.scale }
+    })
+  })
+
   // An ink tool taken up ends the writing in a card, as a press on the plane already
   // does. An iPad's Scribble writes with the Pencil into any text still open under
   // it, focused or not, so a stroke drawn across a card left open came out as typed
@@ -670,8 +695,18 @@
     const rect = element.getBoundingClientRect()
     if (!rect.width || !rect.height) return
 
+    const was = height
     width = Math.round(rect.width)
     height = Math.round(rect.height)
+
+    // A phone's keys take the bottom of the pane away and give it back, and the
+    // plane is drawn about the middle of the pane: all of it rose by half the
+    // keyboard as a card was written in, the card with it, under the bar. On a
+    // touch screen a change of height keeps the top of the plane where it was, as
+    // a page's is.
+    if (placed && viewport.touch && was && height !== was) {
+      store.camera = { ...camera, y: camera.y + (height - was) / 2 / camera.scale }
+    }
 
     // A canvas opens with everything on it in view, and only then: the view is
     // the reader's from the first frame on, and a window being resized is no
@@ -1934,17 +1969,21 @@
   {/if}
 
   <!-- One bar, on every device: the same buttons in the same order, drawn at the
-       touch scale where a thumb has to land on them. -->
-  <CanvasBar
-    canundo={store.canUndo}
-    canredo={store.canRedo}
-    zoom={camera.scale}
-    onundo={() => store.undo()}
-    onredo={() => store.redo()}
-    onerase={() => run.eraseAll(store)}
-    onzoom={zoomBy}
-    onfit={() => store.fit(width, height)}
-  />
+       touch scale where a thumb has to land on them. Out of the way while a card is
+       written in on a touch screen, where the format bar stands on the keys in the
+       very place and covered half of it. -->
+  {#if !(viewport.touch && viewport.typing)}
+    <CanvasBar
+      canundo={store.canUndo}
+      canredo={store.canRedo}
+      zoom={camera.scale}
+      onundo={() => store.undo()}
+      onredo={() => store.redo()}
+      onerase={() => run.eraseAll(store)}
+      onzoom={zoomBy}
+      onfit={() => store.fit(width, height)}
+    />
+  {/if}
 
   <!-- And a small one over what is picked, where the hand already is. -->
   {#if overPicked}
