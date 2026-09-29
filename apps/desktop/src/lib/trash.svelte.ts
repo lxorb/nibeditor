@@ -138,7 +138,17 @@ class Trash {
   }
 
   /** Takes one thing away for good, ahead of its day. */
+  /** One thing, gone for good, after one question - as a Mac's Finder and an
+   *  iPhone's Files both ask it. The button sat a thumb's slip from Restore, and a
+   *  note it took could not be had back from anywhere. */
   async purge(item: TrashItem) {
+    const sure = await prompt.confirm({
+      title: t('Delete {name}?', { name: item.name }),
+      confirmLabel: t('Delete now'),
+      danger: true,
+    })
+    if (!sure) return
+
     await this.act(async () => {
       if (item.source === 'device') {
         await invoke('purge_trash', { id: item.ref })

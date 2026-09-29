@@ -270,12 +270,32 @@ describe('signed out', () => {
 
     const [only] = trash.items
     if (!only) throw new Error('the deleted note is not in the list')
+    const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(only)
 
+    expect(asked).toHaveBeenCalledOnce()
     expect(calls).toContain('purge_trash')
     expect(calls).not.toContain('restore_trash')
     expect(notes.has('/space/Idea.md')).toBe(false)
     expect(trash.items).toEqual([])
+    asked.mockRestore()
+  })
+
+  /** Delete now is a slip of the thumb from Restore on a phone, and what it takes
+   *  is not in the trash any more to be had back. So it asks, and a no is a no. */
+  test('purging asks first, and touches nothing when the answer is no', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    calls.length = 0
+
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(false)
+    await trash.purge(only)
+
+    expect(calls).not.toContain('purge_trash')
+    expect(trash.items).toHaveLength(1)
+    asked.mockRestore()
   })
 
   test('a restore the disk refuses says so, and the list is read again', async () => {
@@ -394,10 +414,12 @@ describe('signed in', () => {
     ]
     await trash.load()
 
+    const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
     await trash.purge(trash.items.find((item) => item.id === 'note:n1')!)
 
     expect(apiCalls).toEqual(['purgeNote n1'])
     expect(trash.items).toEqual([])
+    asked.mockRestore()
   })
 
   describe('emptying', () => {
