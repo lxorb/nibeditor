@@ -301,7 +301,7 @@ stops nothing, and the app still gets the key.
 | --- | --- |
 | Ctrl+N | a new note |
 | Ctrl+Shift+N | a new window |
-| Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note - standing on the website |
+| Ctrl+T | **a new web page**, the way every browser answers it; held, **what kind**: a dialog in the middle of the window - a note, a canvas, a website, a page note, a terminal - standing on the website |
 | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | round the strip. Settings, General, can put Ctrl+Tab in order of use instead: the tab used last, and one further back for each press while Ctrl is held (VS Code's). Ctrl+PgDn and Ctrl+PgUp walk the strip either way |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the note at that place, the last note |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
@@ -326,8 +326,10 @@ holding the Ctrl."* Tapped, it makes a web page and draws nothing. Held, it is A
 shape: after a beat a dialog comes up in the middle of the window with the kinds as
 cards and the website standing, each further T steps one along (Shift+T back), the
 arrows walk them too, and letting Ctrl go makes the one that stands. Each card's letter
-- N, C, W, P - makes it outright, Enter and a click make the one pressed, Escape makes
-nothing. A phone has no web tab, so there the note stands. The palette's New opens the
+- N, C, W, P, and R for a terminal, since T is the chord's own step - makes it outright,
+Enter and a click make the one pressed, Escape makes nothing. The terminal's card has a
+chevron in its corner: pressed, or Shift held with R, Enter or a click, it lists the
+other shells instead of starting the default one (see docs/terminal.md). A phone has no web tab, so there the note stands. The palette's New opens the
 same dialog on the same card. See `new-kind-chord.ts`, `NewKindSheet.svelte` and
 `new-kind-choice.ts`.
 
@@ -419,6 +421,29 @@ engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among th
 the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
 `WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
 keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.
+
+**A terminal**
+
+A shell reads nearly every chord there is, so a terminal gives the app only the keys
+VS Code gives its workbench, checked against its own list, and everything else goes to
+the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
+
+| | |
+| --- | --- |
+| Ctrl+T, Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs | the app's, as everywhere |
+| Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it |
+| Ctrl+W, Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+R and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
+| Ctrl+C | always the interrupt |
+| Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
+| Ctrl+F | find, in nib's find bar |
+| Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
+| Cmd+A, Cmd+K | select all, clear, on a Mac (Terminal's own) |
+| every app command on Cmd | the app's, on a Mac: no shell ever sees Cmd |
+
+AltGr is never a chord: Windows says it as Ctrl and Alt, and a key that came out as
+anything but its own letter or digit is somebody typing `@` or `{`.
 
 **The spaces**
 
@@ -681,6 +706,7 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
+| `apps/desktop/src/lib/terminal/keys.ts` | which of them a terminal lets the app have. Pure, tested |
 | `apps/desktop/src/lib/text-size.ts` | Ctrl and the wheel over the note, and what it does not touch |
 | `apps/desktop/src/lib/camera.ts` | one notch of a zoom, for every surface that has one |
 | `apps/desktop/src/lib/Pages.svelte` | the paper's own keys and the four other ways it is zoomed |

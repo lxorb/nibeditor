@@ -439,7 +439,12 @@ class Session {
       shortcuts.pressed('edit.find', event),
     )
 
-    if (route === 'shell') return true
+    // The shell's, and nobody else's: a key xterm.js has no sequence for is still not
+    // the window's to act on, or a Ctrl+W it let by would close the tab.
+    if (route === 'shell') {
+      event.stopPropagation()
+      return true
+    }
     // Left alone, so the window's own handler has it, and the browser pastes into the
     // handler above.
     if (route === 'app' || route === 'paste') return false

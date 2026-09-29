@@ -107,6 +107,9 @@ impl Session {
     /// A shell, started in a terminal of this size. Nothing is read or written until
     /// [`Started::run`].
     pub fn open(launch: &Launch, cols: u16, rows: u16) -> Result<(Self, Started), String> {
+        #[cfg(windows)]
+        interrupts_reach_shells();
+
         let pair = native_pty_system()
             .openpty(size(cols, rows))
             .map_err(|error| format!("could not open a terminal: {error}"))?;
@@ -236,6 +239,32 @@ impl Started {
             linger(&stream);
         });
     }
+}
+
+/// Ctrl+C, reaching the programs a shell runs.
+///
+/// Windows keeps a flag on every process that says whether Ctrl+C is ignored, and a
+/// process starts with its parent's. Whatever started nib may have set it - a launcher
+/// that starts its children in a group of their own, which is how an MSYS shell starts
+/// a Windows program - and every shell and every program in every terminal would then
+/// have ignored the interrupt: `ping` ran on through Ctrl+C. So nib says, once, that it
+/// processes Ctrl+C as a process normally does, which costs a window with no console
+/// nothing and is what its shells inherit.
+#[cfg(windows)]
+#[allow(
+    unsafe_code,
+    reason = "SetConsoleCtrlHandler is Win32's own call and has no safe wrapper"
+)]
+fn interrupts_reach_shells() {
+    use std::sync::Once;
+    use windows::Win32::System::Console::SetConsoleCtrlHandler;
+
+    static ONCE: Once = Once::new();
+    ONCE.call_once(|| {
+        // SAFETY: no handler is passed, so nothing of ours is ever called back; the call
+        // only clears this process's own flag.
+        let _ = unsafe { SetConsoleCtrlHandler(None, false) };
+    });
 }
 
 fn size(cols: u16, rows: u16) -> PtySize {
@@ -521,6 +550,39 @@ mod tests {
             thread::sleep(Duration::from_millis(50));
         }
         assert!(!alive(pid), "the shell {pid} outlived its tab");
+    }
+
+    /// Ctrl+C is the interrupt, and a program running in the shell stops for it.
+    #[test]
+    fn ctrl_c_interrupts_what_is_running() {
+        let (held, heard) = started(80, 24);
+        line(&held, SAYS_OK);
+        let _ = printed_until(&held, &heard, "nib-ok");
+
+        let long = if cfg!(windows) {
+            "ping -n 30 127.0.0.1"
+        } else {
+            "sleep 30"
+        };
+        line(&held, long);
+        thread::sleep(Duration::from_millis(1500));
+        let busy = |held: &Held| {
+            held.lock()
+                .expect("the session")
+                .as_ref()
+                .is_some_and(Session::busy)
+        };
+        assert!(busy(&held), "{long} was not running");
+
+        typed(&held, "\u{3}");
+        let until = Instant::now() + Duration::from_secs(10);
+        while busy(&held) && Instant::now() < until {
+            let _ = heard.recv_timeout(Duration::from_millis(100));
+        }
+        assert!(!busy(&held), "Ctrl+C did not stop {long}");
+
+        let session = held.lock().expect("the session").take().expect("running");
+        session.end();
     }
 
     #[test]
