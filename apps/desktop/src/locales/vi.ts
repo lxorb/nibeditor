@@ -42,6 +42,7 @@ export const vi: Dictionary = {
   'New window': 'Cửa sổ mới',
   New: 'Mới',
   'New space': 'Không gian mới',
+  '{name}: switch space': '{name}: đổi không gian',
   Untitled: 'Không tên',
   Space: 'Không gian',
   Where: 'Ở đâu',

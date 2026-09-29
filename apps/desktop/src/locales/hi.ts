@@ -42,6 +42,7 @@ export const hi: Dictionary = {
   'New window': 'नई विंडो',
   New: 'नया',
   'New space': 'नया स्पेस',
+  '{name}: switch space': '{name}: स्पेस बदलें',
   Untitled: 'बिना नाम',
   Space: 'स्पेस',
   Where: 'कहाँ',

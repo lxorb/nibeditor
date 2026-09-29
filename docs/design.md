@@ -568,7 +568,10 @@ header over the file list, and the title bar while the list is shut. One pairing
 so a space is one object whether the panel is out or away. The header and the rows
 are one badge written once - the `badge` snippet in `SpaceSwitcher.svelte`, which
 both render - so the space you are in cannot come to wear on the header something
-its own row does not. Changing space crosses the header's mark into the next one
+its own row does not. The title bar is that same switcher, bare: the badge and no
+name, because the badge already says which space it is and the tabs want the room,
+and a press on it drops the same list from the bar's bottom edge at the panel's
+width. The name is in its tooltip and in what a screen reader hears. Changing space crosses the header's mark into the next one
 rather than swapping the drawing between two frames: `arrive` and `leave` with
 nothing to slip, in the box the two share so the name beside them does not move.
 
@@ -734,7 +737,7 @@ a home:
 
 | What the rail did | Where it is now |
 | --- | --- |
-| Which space you are in | The panel's header, and the title bar while the panel is shut |
+| Which space you are in | The panel's header, and the space's badge in the title bar while the panel is shut, which opens the same switcher |
 | Switching to another one | Rows in that header's switcher, each with the space's own mark and a dot where somebody else is in it |
 | Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette, as before |
 | A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |

@@ -42,6 +42,7 @@ export const id: Dictionary = {
   'New window': 'Jendela baru',
   New: 'Baru',
   'New space': 'Ruang baru',
+  '{name}: switch space': '{name}: ganti ruang',
   Untitled: 'Tanpa judul',
   Space: 'Ruang',
   Where: 'Di mana',

@@ -42,6 +42,7 @@ export const pa: Dictionary = {
   'New window': 'ਨਵੀਂ ਵਿੰਡੋ',
   New: 'ਨਵਾਂ',
   'New space': 'ਨਵੀਂ ਥਾਂ',
+  '{name}: switch space': '{name}: ਥਾਂ ਬਦਲੋ',
   Untitled: 'ਬਿਨਾਂ ਸਿਰਲੇਖ',
   Space: 'ਥਾਂ',
   Where: 'ਕਿੱਥੇ',

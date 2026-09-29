@@ -42,6 +42,7 @@ export const ps: Dictionary = {
   'New window': 'نوې کړکۍ',
   New: 'نوی',
   'New space': 'نوې ځای',
+  '{name}: switch space': '{name}: ځای بدلول',
   Untitled: 'بې سرليک',
   Space: 'ځای',
   Where: 'چېرته',

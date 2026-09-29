@@ -42,6 +42,7 @@ export const mr: Dictionary = {
   'New window': 'नवीन विंडो',
   New: 'नवीन',
   'New space': 'नवीन स्पेस',
+  '{name}: switch space': '{name}: स्पेस बदला',
   Untitled: 'नाव नाही',
   Space: 'स्पेस',
   Where: 'कुठे',

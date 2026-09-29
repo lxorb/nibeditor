@@ -42,6 +42,7 @@ export const ta: Dictionary = {
   'New window': 'புதிய சாளரம்',
   New: 'புதியது',
   'New space': 'புதிய இடம்',
+  '{name}: switch space': '{name}: இடம் மாற்று',
   Untitled: 'பெயரிலி',
   Space: 'இடம்',
   Where: 'எங்கே',

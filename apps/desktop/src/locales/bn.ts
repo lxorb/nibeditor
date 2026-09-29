@@ -42,6 +42,7 @@ export const bn: Dictionary = {
   'New window': 'নতুন উইন্ডো',
   New: 'নতুন',
   'New space': 'নতুন স্পেস',
+  '{name}: switch space': '{name}: স্পেস বদলান',
   Untitled: 'শিরোনামহীন',
   Space: 'স্পেস',
   Where: 'কোথায়',

@@ -42,6 +42,7 @@ export const fil: Dictionary = {
   'New window': 'Bagong window',
   New: 'Bago',
   'New space': 'Bagong espasyo',
+  '{name}: switch space': '{name}: palitan ang espasyo',
   Untitled: 'Walang pamagat',
   Space: 'Espasyo',
   Where: 'Saan',

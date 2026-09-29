@@ -42,6 +42,7 @@ export const zhHans: Dictionary = {
   'New window': '新建窗口',
   New: '新建',
   'New space': '新建空间',
+  '{name}: switch space': '{name}：切换空间',
   Untitled: '未命名',
   Space: '空间',
   Where: '位置',

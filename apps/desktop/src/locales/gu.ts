@@ -42,6 +42,7 @@ export const gu: Dictionary = {
   'New window': 'નવી વિન્ડો',
   New: 'નવું',
   'New space': 'નવી જગ્યા',
+  '{name}: switch space': '{name}: જગ્યા બદલો',
   Untitled: 'શીર્ષક વિના',
   Space: 'જગ્યા',
   Where: 'ક્યાં',

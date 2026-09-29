@@ -42,6 +42,7 @@ export const ms: Dictionary = {
   'New window': 'Tetingkap baharu',
   New: 'Baharu',
   'New space': 'Ruang baharu',
+  '{name}: switch space': '{name}: tukar ruang',
   Untitled: 'Tanpa tajuk',
   Space: 'Ruang',
   Where: 'Di mana',

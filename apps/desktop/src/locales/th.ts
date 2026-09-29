@@ -42,6 +42,7 @@ export const th: Dictionary = {
   'New window': 'หน้าต่างใหม่',
   New: 'ใหม่',
   'New space': 'พื้นที่ใหม่',
+  '{name}: switch space': '{name}: สลับพื้นที่',
   Untitled: 'ไม่มีชื่อ',
   Space: 'พื้นที่',
   Where: 'ที่ไหน',

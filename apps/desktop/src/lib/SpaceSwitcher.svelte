@@ -11,7 +11,10 @@
    *  always the top of the list, so the list of spaces is the width of the list
    *  of notes and needs no measuring, no flipping at an edge and no second sheet
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
-   *  pointer gets. */
+   *  pointer gets.
+   *
+   *  With the panel shut it sits in the title bar, `bare`: the mark and no name,
+   *  opening the same list; see Titlebar.svelte. */
   import type { SharedItem } from './api'
   import { fileMark } from './file-mark'
   import FileMark from './FileMark.svelte'
@@ -29,10 +32,15 @@
   import { isShared, sharedWithYou } from './sharing.svelte'
   import { type Space, workspace } from './workspace.svelte'
 
+  const { bare = false }: { bare?: boolean } = $props()
+
   let open = $state(false)
 
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? t('Spaces'))
+
+  /** The bare mark's words, for its tooltip and a screen reader. */
+  const called = $derived(here ? t('{name}: switch space', { name: here.name }) : t('Spaces'))
 
   /** The names the switcher already holds, so the field can say a name is taken;
    *  a space keeping its own name is not taking it from itself. */
@@ -114,7 +122,7 @@
   {/if}
 {/snippet}
 
-{#if here && workspace.naming?.path === here.root}
+{#if !bare && here && workspace.naming?.path === here.root}
   <!-- Renaming a space happens where its name is written, in the same field a row
        in the list uses: the header keeps its height, its weight and its chevron,
        and only the name becomes editable. See NameField.svelte. -->
@@ -130,22 +138,26 @@
     <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
   </div>
 {:else}
+  <!-- Bare, it is the bar's own square button, `.nib-glyph`, with the badge in it. -->
   <button
-    class="name"
+    class={bare ? 'nib-glyph bare' : 'name'}
     class:open
-    title={name}
+    title={bare ? called : name}
+    aria-label={bare ? called : undefined}
     aria-haspopup="menu"
     aria-expanded={open}
     onclick={() => (open = !open)}
   >
     {@render mark()}
-    <span class="nib-row-label">{name}</span>
-    <!-- Said on the header as well as on the row, so a space being shared is a
-         fact you can see without opening the list of spaces to look for it. -->
-    {#if here && isShared(here.root)}
-      <SharedMark />
+    {#if !bare}
+      <span class="nib-row-label">{name}</span>
+      <!-- Said on the header as well as on the row, so a space being shared is a
+           fact you can see without opening the list of spaces to look for it. -->
+      {#if here && isShared(here.root)}
+        <SharedMark />
+      {/if}
+      <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
     {/if}
-    <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
   </button>
 {/if}
 
@@ -163,6 +175,7 @@
        Tab; see roving.ts and trap.ts. -->
   <div
     class="nib-layer spaces"
+    class:bare
     role="menu"
     aria-label={t('Spaces')}
     use:trap
@@ -348,6 +361,19 @@
     background: var(--surface-press);
   }
 
+  /* `.nib-glyph` draws it; it stays pressed while its list is open, as the header does. */
+  button.bare {
+    align-self: center;
+  }
+
+  button.bare.open {
+    background: var(--surface-press);
+  }
+
+  button.bare .mark {
+    margin: 0;
+  }
+
   /* The box the space's mark sits in, in front of its name. A box of its own
      because the two marks cross inside it: both are in the page for the length of
      the crossing, one over the other in the single cell of a grid, so the name
@@ -408,6 +434,14 @@
     max-height: 60vh;
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  /* From the title bar: under the mark, as wide as the panel would have been. */
+  .spaces.bare {
+    left: auto;
+    right: auto;
+    inset-inline-start: 0;
+    width: calc(var(--sidebar-width) - 2 * var(--space-1));
   }
 
   .catch {

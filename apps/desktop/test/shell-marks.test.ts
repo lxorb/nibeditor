@@ -73,12 +73,15 @@ describe('a mark that fills the box it was given', () => {
     expect(glyph).toMatch(/height\s*:\s*100%/)
   })
 
-  test('and the space named in the title bar wears one', () => {
+  /** The mark and not the name: Emil, 2026-09-30, "it shouldn't display the entire
+   *  name of the current space there", and it should open the list of spaces. So
+   *  the bar draws no badge of its own and no word: it puts the switcher there, bare,
+   *  which is the header's own badge and the header's own list. */
+  test('and the space in the title bar is the switcher, wearing its one badge', () => {
     const bar = named('lib/Titlebar.svelte')
-    expect(bar.text).toContain("import SpaceMark from './SpaceMark.svelte'")
-    // In the badge every other surface puts it in, rather than loose beside the
-    // word: a letter with no badge around it reads as part of the name.
-    expect(bar.text).toMatch(/class="nib-badge"[\s\S]{0,200}<SpaceMark/)
+    expect(bar.text).toContain('<SpaceSwitcher bare />')
+    expect(bar.text).not.toContain('<SpaceMark')
+    expect(bar.text).not.toContain('{space.name}')
   })
 
   /** And the header over the file list, which is the list of spaces shut. Both

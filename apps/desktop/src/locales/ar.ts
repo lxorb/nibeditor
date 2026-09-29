@@ -42,6 +42,7 @@ export const ar: Dictionary = {
   'New window': 'نافذة جديدة',
   New: 'جديد',
   'New space': 'مساحة جديدة',
+  '{name}: switch space': '{name}: تبديل المساحة',
   Untitled: 'بلا عنوان',
   Space: 'مساحة',
   Where: 'أين',

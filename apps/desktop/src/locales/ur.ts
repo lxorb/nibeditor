@@ -42,6 +42,7 @@ export const ur: Dictionary = {
   'New window': 'نئی ونڈو',
   New: 'نیا',
   'New space': 'نیا اسپیس',
+  '{name}: switch space': '{name}: اسپیس بدلیں',
   Untitled: 'بلا عنوان',
   Space: 'اسپیس',
   Where: 'کہاں',

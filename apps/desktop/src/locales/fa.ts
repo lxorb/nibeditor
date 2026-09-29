@@ -42,6 +42,7 @@ export const fa: Dictionary = {
   'New window': 'پنجره تازه',
   New: 'تازه',
   'New space': 'فضای تازه',
+  '{name}: switch space': '{name}: تغییر فضا',
   Untitled: 'بی‌عنوان',
   Space: 'فضا',
   Where: 'کجا',

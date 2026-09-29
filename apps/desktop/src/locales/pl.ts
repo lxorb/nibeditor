@@ -42,6 +42,7 @@ export const pl: Dictionary = {
   'New window': 'Nowe okno',
   New: 'Nowy',
   'New space': 'Nowa przestrzeń',
+  '{name}: switch space': '{name}: zmień przestrzeń',
   Untitled: 'Bez tytułu',
   Space: 'Przestrzeń',
   Where: 'Gdzie',

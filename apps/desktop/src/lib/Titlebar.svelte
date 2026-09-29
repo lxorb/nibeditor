@@ -4,7 +4,7 @@
   import { i18n, t } from './i18n.svelte'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
-  import SpaceMark from './SpaceMark.svelte'
+  import SpaceSwitcher from './SpaceSwitcher.svelte'
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
@@ -101,22 +101,13 @@
 
   <!-- With the list shut there is nothing on the screen saying which space
        these notes are in, and the panel's own header is what usually says it.
-       So the name stands here while the panel is away, and goes again the moment
-       it is back - a word, not a control: what opens the list is the button
-       beside it. -->
+       So its mark stands here while the panel is away: the switcher, bare. No name,
+       since the badge says which space it is and the tabs want the room. Outside
+       the drag region, so a press on it is never a drag. -->
   {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
-    {@const space = workspace.activeSpace}
-    <span class="space">
-      <!-- The mark the space wears everywhere else it is named: the same badge and
-           the same drawing the switcher's rows put in front of it, so the space is
-           one object whether the list is out or away. Plain rather than `is-on`:
-           this is the space you are in said quietly, not a row to pick out of a
-           list of them. -->
-      <span class="nib-badge" aria-hidden="true">
-        <SpaceMark id={space.id} name={space.name} />
-      </span>
-      <span class="name">{space.name}</span>
-    </span>
+    <div class="space">
+      <SpaceSwitcher bare />
+    </div>
   {/if}
 
   {#if viewport.touch}
@@ -301,34 +292,14 @@
     text-overflow: ellipsis;
   }
 
-  /* Which space these notes are in, while the panel that usually says so is
-     shut: its mark and its name, the pair the switcher shows on every row.
-     Quiet: it is a fact about what is open, not something to press. */
+  /* The bar's height and positioned: the list of spaces drops from its bottom edge. */
   .space {
+    position: relative;
     flex: none;
-    min-width: 0;
-    max-width: 14rem;
-    align-self: center;
     display: flex;
     align-items: center;
-    gap: var(--row-gap);
-    /* Room enough on the right that it does not read as the first tab in the
-       strip: it belongs to the button beside it, which is what brings the panel
-       carrying this name back. */
-    padding: 0 var(--space-4) 0 var(--space-1);
-    font-family: var(--font-ui);
-    font-size: var(--text-row);
-    font-weight: var(--weight-strong);
-    color: var(--muted-strong);
-  }
-
-  /* The name is what gives way, not the mark: a long space name is cut and the
-     badge in front of it is not. The same division every row in the app makes. */
-  .space .name {
-    min-width: 0;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    /* So it does not read as the first tab. */
+    margin-inline-end: var(--space-2);
   }
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows

@@ -42,6 +42,7 @@ export const kn: Dictionary = {
   'New window': 'ಹೊಸ ವಿಂಡೋ',
   New: 'ಹೊಸತು',
   'New space': 'ಹೊಸ ಸ್ಪೇಸ್',
+  '{name}: switch space': '{name}: ಸ್ಪೇಸ್ ಬದಲಿಸಿ',
   Untitled: 'ಹೆಸರಿಲ್ಲದ್ದು',
   Space: 'ಸ್ಪೇಸ್',
   Where: 'ಎಲ್ಲಿ',

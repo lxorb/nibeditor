@@ -42,6 +42,7 @@ export const uk: Dictionary = {
   'New window': 'Нове вікно',
   New: 'Створити',
   'New space': 'Новий простір',
+  '{name}: switch space': '{name}: змінити простір',
   Untitled: 'Без назви',
   Space: 'Простір',
   Where: 'Куди',

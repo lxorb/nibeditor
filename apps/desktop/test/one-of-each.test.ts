@@ -380,10 +380,9 @@ describe('the badge in front of a name', () => {
       'lib/ShareSheet.svelte',
       'lib/Sheet.svelte',
       'lib/SidebarFoot.svelte',
+      // Also the space in the bar while the list is shut, which is the switcher
+      // itself, bare: the same badge on the same space. See Titlebar.svelte.
       'lib/SpaceSwitcher.svelte',
-      // The space named in the bar while the list is shut, which is the same
-      // space wearing the same badge it wears on its row in the switcher.
-      'lib/Titlebar.svelte',
     ])
   })
 
@@ -403,7 +402,6 @@ describe('the badge in front of a name', () => {
       'lib/PublishSheet.svelte',
       'lib/ShareSheet.svelte',
       'lib/SpaceSwitcher.svelte',
-      'lib/Titlebar.svelte',
     ])
   })
 })
