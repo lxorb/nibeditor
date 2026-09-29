@@ -509,7 +509,8 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-09-30, to 3,282,000, for Alt and a digit, the tabs by number
  *  (shortcuts/registry.ts), and a press AltGr or an input method is typing told from a
- *  chord (keys.ts). Both are read by the first key. Measured 3,280,327. */
+ *  chord (keys.ts). Both are read by the first key. Measured 3,280,872, with the empty
+ *  strip's menu already in. */
 const BUDGET = 3_282_000
 const MOST_FILES = 376
 
