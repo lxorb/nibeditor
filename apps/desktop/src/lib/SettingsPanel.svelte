@@ -393,7 +393,13 @@
 
         <label class="nib-field search">
           <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-          <input bind:value={query} placeholder={t('Search settings')} spellcheck="false" />
+          <input
+            bind:value={query}
+            placeholder={t('Search settings')}
+            spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
+          />
         </label>
 
         {#if viewport.touch && query}
@@ -858,7 +864,13 @@
 
   <label class="nib-field search">
     <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-    <input bind:value={keyFilter} placeholder={t('Search shortcuts')} spellcheck="false" />
+    <input
+      bind:value={keyFilter}
+      placeholder={t('Search shortcuts')}
+      spellcheck="false"
+      autocapitalize="off"
+      autocorrect="off"
+    />
   </label>
 
   {#each keyGroups as group (group.id)}
@@ -1035,7 +1047,13 @@
   <h3>{t('Everything else')}</h3>
   <label class="nib-field search">
     <svg class="nib-field-mark" viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
-    <input bind:value={barFilter} placeholder={t('Search commands')} spellcheck="false" />
+    <input
+      bind:value={barFilter}
+      placeholder={t('Search commands')}
+      spellcheck="false"
+      autocapitalize="off"
+      autocorrect="off"
+    />
   </label>
 
   {#each barOffers as group (group.id)}

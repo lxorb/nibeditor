@@ -151,6 +151,8 @@
             value={provider.baseUrl ?? ''}
             placeholder={EXAMPLE_URL}
             spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
             autocomplete="off"
             onchange={(event) => {
               ai.update(provider.id, { baseUrl: event.currentTarget.value })

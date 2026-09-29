@@ -135,6 +135,8 @@
         placeholder={t('Name, path or tag')}
         aria-label={t('Filter')}
         spellcheck="false"
+        autocapitalize="off"
+        autocorrect="off"
         oninput={(event) => workspace.graphSettings.set({ filter: event.currentTarget.value })}
       />
 
@@ -204,6 +206,8 @@
             placeholder={t('Name, path or tag')}
             aria-label={t('Colour a group')}
             spellcheck="false"
+            autocapitalize="off"
+            autocorrect="off"
             oninput={(event) => setGroup(index, { query: event.currentTarget.value })}
           />
 

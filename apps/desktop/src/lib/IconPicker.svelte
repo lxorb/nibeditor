@@ -294,6 +294,8 @@
       onkeydown={onKey}
       placeholder={t('Search icons - work, journal, money…')}
       spellcheck="false"
+      autocapitalize="off"
+      autocorrect="off"
     />
 
     <!-- Which set, as one control rather than three sheets. Somebody else drew two of

@@ -287,6 +287,8 @@
       onkeydown={onKeydown}
       placeholder={t('Go to note, or > for commands')}
       spellcheck="false"
+      autocapitalize="off"
+      autocorrect="off"
       role="combobox"
       aria-expanded={results.length > 0}
       aria-controls="nib-palette-list"

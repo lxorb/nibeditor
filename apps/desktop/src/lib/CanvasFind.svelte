@@ -78,6 +78,8 @@
     placeholder={t('Find on the canvas')}
     aria-label={t('Find on the canvas')}
     spellcheck="false"
+    autocapitalize="off"
+    autocorrect="off"
   />
 
   <span class="count">{found.length ? `${at + 1}/${found.length}` : ''}</span>

@@ -195,6 +195,8 @@
               placeholder={t('Recovery code')}
               aria-label={t('Recovery code')}
               spellcheck="false"
+              autocapitalize="off"
+              autocorrect="off"
             />
             <button class="nib-button" type="submit" disabled={account.busy}>{t('Continue')}</button
             >

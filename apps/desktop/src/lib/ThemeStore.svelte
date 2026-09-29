@@ -195,6 +195,8 @@
           bind:value={store.query}
           placeholder={t('Search themes')}
           spellcheck="false"
+          autocapitalize="off"
+          autocorrect="off"
           aria-label={t('Search themes')}
         />
         <div class="sort">
