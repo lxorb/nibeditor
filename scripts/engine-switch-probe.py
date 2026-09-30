@@ -22,7 +22,12 @@ Two builds under one probe identifier and version, as a release pairs them:
 
 `--chromium` is the Chromium build's folder: its executable and the engine's files
 beside it, which the drive links into the app's engines folder the way a fetch would
-(see engine_switch/fetch.rs), under this version.
+(see engine_switch/fetch.rs), under this version. Or `--release`, a folder holding what
+a release carries - `chromium.json` and the archives `cef/pack.py` made, signed with the
+key the probe build was given - which the drive serves on a port of its own and the app
+then fetches the way it would from GitHub, through the Browser row's own command:
+
+    python scripts/engine-switch-probe.py --exe .../nib.exe --release .../chromium-out
 
 **Every process is watched, not only the first.** A relaunch starts the app again from
 inside the app, so the processes after it are nobody's children here; the drive finds
@@ -45,10 +50,15 @@ import threading
 import time
 from ctypes import wintypes
 
+import devtools
 import probe_app
 from probe_app import close_app, in_view, run_probe
 
 switch = importlib.import_module("web-switch-probe")
+
+#: The port nib's own Chromium opens for the drive to read its pages through; see
+#: `debugging` in src-tauri/cef/src/main.rs. The system's engine ignores it.
+DEBUG_PORT = 22357
 
 #: The files of a Chromium build that are the engine's rather than the app's, by suffix,
 #: and the one folder of them.
@@ -153,6 +163,20 @@ def install(chromium: pathlib.Path, identifier: str, version: str) -> pathlib.Pa
     return folder
 
 
+def serve_release(folder: pathlib.Path) -> str:
+    """Serves a release's Chromium files on a port of this drive's own, as GitHub serves
+    them; the address the app is told to fetch from."""
+
+    import functools
+    import http.server
+
+    port = switch.free_port()
+    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(folder))
+    server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    return f"http://127.0.0.1:{port}/"
+
+
 def invoke(app: switch.App, command: str, args: dict | None = None, seconds: float = 60) -> object:
     """One of the window's own commands, run in the window, and its answer."""
 
@@ -196,6 +220,47 @@ def web_tab(app: switch.App, name: str) -> object:
     return {"live after ms": switch.until_live(app, tab, 60)}
 
 
+def isolated(page_url: str, app: switch.App, tab: str, other: str) -> dict[str, object]:
+    """What a Chromium web tab's page is given, read through the engine's own debugging
+    port: none of the app's globals in the page's world, nib's binding in nib's world and
+    only there, a link pressed for a tab behind arriving as one, and find running in nib's
+    world without leaving anything in the page's."""
+
+    found: dict[str, object] = {}
+    targets = devtools.targets(DEBUG_PORT)
+    page = next((one for one in targets if one.get("url", "").startswith(page_url)), None)
+    if page is None:
+        return {"error": f"no page at {page_url} among {[one.get('url') for one in targets]}"}
+    session = devtools.Session(page)
+    try:
+        found["the page's own world has"] = session.value(
+            "Object.getOwnPropertyNames(window).filter((name) => /tauri|ipc|nib/i.test(name))"
+        )
+        world = session.world("nib")
+        found["nib's world has its binding"] = session.value("typeof nibAsked", context=world)
+        found["the page's world has none"] = session.value("typeof nibAsked")
+
+        before = app.ask(switch.TABS)
+        session.value(
+            f"nibAsked(JSON.stringify([{json.dumps(other)}, 'nib-behind']))", context=world
+        )
+        time.sleep(2)
+        after = app.ask(switch.TABS)
+        if isinstance(before, list) and isinstance(after, list):
+            found["a link pressed for a tab behind opens one"] = len(after) == len(before) + 1
+            found["and the page stays in front"] = any(
+                one.get("id") == tab and one.get("showing") for one in after if isinstance(one, dict)
+            )
+
+        invoke(app, "web_find", {"tab": tab, "term": "tab", "look": "fresh"})
+        time.sleep(1)
+        found["find leaves nothing in the page's world"] = session.value("typeof window.__nibFound")
+        found["find ran in nib's world"] = session.value("typeof window.__nibFound", context=world)
+    finally:
+        session.close()
+    return found
+
+
 def main() -> int:
     if sys.platform != "win32":
         print("this probe drives a Windows build")
@@ -203,15 +268,23 @@ def main() -> int:
 
     parsed = argparse.ArgumentParser()
     parsed.add_argument("--exe", required=True, type=pathlib.Path)
-    parsed.add_argument("--chromium", required=True, type=pathlib.Path)
+    parsed.add_argument("--chromium", type=pathlib.Path)
+    parsed.add_argument("--release", type=pathlib.Path)
     parsed.add_argument("--identifier", default="ch.emilvinu.nib.probe.engine")
     parsed.add_argument("--version", default=probe_app.PROBE_VERSION)
     args = parsed.parse_args()
 
     system_exe = args.exe.resolve()
     probe_app.refuse_updating(system_exe)
+    os.environ["NIB_CEF_DEBUG_PORT"] = str(DEBUG_PORT)
     switch.wipe(args.identifier)
-    engine = install(args.chromium, args.identifier, args.version)
+    local = pathlib.Path(os.environ["LOCALAPPDATA"]) / args.identifier
+    if args.release:
+        engine = local / "engines" / "chromium" / args.version
+        served = serve_release(args.release)
+        os.environ["NIB_ENGINE_SOURCE"] = served
+    else:
+        engine = install(args.chromium, args.identifier, args.version)
     chromium_exe = (engine / "nib-chromium.exe").resolve()
     watch = Watch([system_exe, chromium_exe])
 
@@ -245,6 +318,14 @@ def main() -> int:
 
         # Chromium chosen, and the app started again.
         said["choose chromium"] = invoke(app, "engine_choose", {"engine": "chromium"})
+        if args.release:
+            began = time.perf_counter()
+            said["fetch"] = invoke(app, "engine_fetch", seconds=900)
+            said["fetch ms"] = round((time.perf_counter() - began) * 1000)
+            said["fetched"] = {
+                "engine files": len(list(engine.iterdir())) if engine.exists() else 0,
+                "folders": sorted(one.name for one in engine.parent.iterdir()),
+            }
         began = time.perf_counter()
         invoke(app, "engine_relaunch", seconds=5)
         until = time.perf_counter() + 90
@@ -262,6 +343,12 @@ def main() -> int:
         time.sleep(4)
         said["chromium: state"] = invoke(app, "engine_state")
         said["chromium: web tab"] = web_tab(app, switch.OTHER)
+        other_tab = switch.tab_of(app, switch.OTHER)
+        said["chromium: the page's worlds"] = (
+            isolated(f"http://127.0.0.1:{port}/other", app, other_tab, f"http://127.0.0.1:{port}/page?behind")
+            if other_tab
+            else {"error": "no tab"}
+        )
 
         # A second launch reaches the running app and ends.
         second = run_probe(system_exe, quiet=True, args=[f"http://127.0.0.1:{port}/page?second"])

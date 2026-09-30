@@ -4,9 +4,9 @@
  *  against Tauri 3 and nib's own Chromium, so it needs every dependency the app has -
  *  and a list kept by hand beside the real one is a list that is one crate short the
  *  day somebody adds a crate. So the half of that manifest below its marker is this
- *  function's output: the app's dependency tables line for line, with the Tauri family
- *  moved to the engine's pins, which are the one thing the half above the marker says
- *  (`[package.metadata.engine]`). `apps/desktop/test/cef.test.ts` fails when the file
+ *  function's output: the app's dependency tables line for line - its tests' too, as the
+ *  engine build runs them - with the Tauri family moved to the engine's pins, which are
+ *  the one thing the half above the marker says (`[package.metadata.engine]`). `apps/desktop/test/cef.test.ts` fails when the file
  *  is not what this would write.
  *
  *      node scripts/engine-manifest.ts     # rewrite it
@@ -84,9 +84,8 @@ export function engineManifest(app: string, engine: string): string {
 
   const lines = app.replace(/\r\n/g, '\n').split('\n')
   const from = lines.indexOf('[dependencies]')
-  const to = lines.indexOf('[dev-dependencies]')
   const profile = lines.indexOf('[profile.release]')
-  if (from < 0 || to < from || profile < to) {
+  if (from < 0 || profile < from) {
     throw new Error('the app manifest is not in the order this reads it in')
   }
 
@@ -96,7 +95,7 @@ export function engineManifest(app: string, engine: string): string {
   const written = [
     '[build-dependencies]',
     `tauri-build = "=${pinned.build}"`,
-    ...kept(lines.slice(from, to)).flatMap((line) =>
+    ...kept(lines.slice(from, profile)).flatMap((line) =>
       line.startsWith('[') ? ['', line] : moved(line, pinned),
     ),
     '',

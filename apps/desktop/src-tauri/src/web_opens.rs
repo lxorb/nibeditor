@@ -80,8 +80,9 @@
 //! `nib-actual-size`, and the crate draws the page at a hundred per cent without taking
 //! the keyboard out of it. All a page gets by asking is its own zoom reset.
 //!
-//! `WebView2`'s alone, like `web_keys.rs`: elsewhere nothing is known, and every tab a
-//! page asks for opens in front, as before.
+//! `WebView2`'s, and nib's own Chromium's, which hands the host no window name: there the
+//! script asks through a function only nib's world has (`BINDING`). Elsewhere nothing is
+//! known, and every tab a page asks for opens in front, as before.
 
 use serde::Serialize;
 
@@ -634,12 +635,17 @@ pub const BINDING: &str = "nibAsked";
 
 /// `SCRIPT` as nib's own Chromium runs it: the engine hands the host no window name, so
 /// the script asks through `BINDING` instead, with the address and the name it would
-/// have opened a window under.
+/// have opened a window under - and through a window after all where the binding is not
+/// there, which opens the link as a tab in front rather than not at all.
 #[cfg(feature = "cef")]
 pub fn script() -> String {
     SCRIPT.replacen(
         "var open = window.open.bind(window)",
-        "var open = function (url, name) { nibAsked(JSON.stringify([url, name])) }",
+        concat!(
+            "var open = typeof nibAsked === 'function'",
+            " ? function (url, name) { nibAsked(JSON.stringify([url, name])) }",
+            " : window.open.bind(window)",
+        ),
         1,
     )
 }
@@ -659,6 +665,10 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
     }
     if let Some(key) = chord(&name) {
         played(app, window, key);
+        return;
+    }
+    if actual(&name) {
+        crate::web_page::actual_size(app, window, tab);
         return;
     }
     if let Some(asked) = placed(&name, true, Held::default(), false) {
@@ -703,6 +713,27 @@ mod tests {
         shift: true,
         alt: false,
     };
+
+    /// The one line nib's own Chromium swaps for its binding is there to swap: a script
+    /// that no longer opened its windows through it would ask through nothing there.
+    #[test]
+    fn the_script_opens_its_windows_through_the_line_chromium_swaps() {
+        assert_eq!(
+            SCRIPT
+                .matches("var open = window.open.bind(window)")
+                .count(),
+            1
+        );
+    }
+
+    #[cfg(feature = "cef")]
+    #[test]
+    fn on_chromium_the_script_asks_through_the_binding_where_there_is_one() {
+        let script = super::script();
+        assert!(script.contains("typeof nibAsked === 'function'"));
+        assert!(script.contains(super::BINDING));
+        assert!(!script.contains("var open = window.open.bind(window)"));
+    }
 
     #[test]
     fn the_script_names_the_window_for_a_press_on_a_link() {

@@ -600,9 +600,11 @@ mod engine {
                 .count()
         });
 
+        // The binding first, so nib's world has it from its first document on; a binding
+        // the engine refused leaves the scripts in place all the same, asking nothing.
+        let _ = called(view, "Runtime.addBinding", &binding().to_string());
         let ours = scripts.is_empty()
             || (enabled
-                && called(view, "Runtime.addBinding", &binding().to_string()).is_some()
                 && called(
                     view,
                     "Page.addScriptToEvaluateOnNewDocument",
