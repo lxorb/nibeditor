@@ -21,7 +21,7 @@ import { saidIn, type Standing, standingOf } from './standing'
 const EVERY = 3000
 const FOR = 5 * 60_000
 
-export interface Plan extends Standing {
+interface Plan extends Standing {
   /** Where the plan stood when its program last said, in this run. */
   limit: Limit | null
 }
