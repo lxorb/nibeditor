@@ -11,7 +11,7 @@
 //! answers one itself. It reads the request, decides whether the caller is
 //! allowed to ask at all, hands it to the window and waits. A second road to any
 //! of those things would be a second answer to the same question; see
-//! apps/desktop/src/lib/automation.
+//! apps/desktop/src/lib/automation. (The agents are the one exception; see below.)
 //!
 //! Who is allowed to ask. Anybody who can read a file that only this user can
 //! read, which is the same bar as "can open the notes". Four things are checked
@@ -20,6 +20,14 @@
 //! the two headers this requires to another origin without a preflight nothing
 //! here answers, and cannot put this endpoint's own address in the host header
 //! while pointing a name of its own at 127.0.0.1.
+//!
+//! **Agents** (docs/agent-native.md) come in the same way with a token of their own
+//! instead of the secret; see agents/grants.rs. Two things change for them and nothing
+//! for the secret. The browser's verbs, and the agents' own, are answered in the crate,
+//! because only the engine can answer them and an agent's browsing should never wait on
+//! the window's thread. And an agent reaches only the window verbs made for agents,
+//! with its grant handed to the window beside the verb; never `eval`, never the command
+//! line's own verbs, which predate agents and check nothing about them.
 //!
 //! Desktop only. A browser tab has no socket to listen on and a phone has no
 //! command line, so neither build compiles this and the CLI says so rather than
@@ -269,13 +277,24 @@ fn answer(
             &refused("that is not this endpoint's address"),
         );
     }
-    if !same_secret(request.header("authorization"), secret) {
-        return say(
-            &mut stream,
-            401,
-            &refused("that is not this installation's secret"),
-        );
-    }
+    // The installation's secret is the reader's own command line, as it always was.
+    // Anything else is an agent's token or nobody's; see agents/grants.rs.
+    let caller = if same_secret(request.header("authorization"), secret) {
+        crate::agents::Caller::Reader
+    } else {
+        match bearer(request.header("authorization"))
+            .and_then(|token| crate::agents::caller_for(app, token))
+        {
+            Some(agent) => agent,
+            None => {
+                return say(
+                    &mut stream,
+                    401,
+                    &refused("that is not this installation's secret or an agent's token"),
+                )
+            }
+        }
+    };
 
     let Ok(mut asked) = serde_json::from_str::<serde_json::Value>(&request.body) else {
         return say(&mut stream, 400, &refused("that body is not JSON"));
@@ -290,6 +309,21 @@ fn answer(
         return say(&mut stream, 400, &refused("say which verb"));
     };
 
+    // The browser's verbs, and the agents' own, are answered here without the window:
+    // what only the engine can answer is answered where the engine is, and an agent's
+    // browsing never waits on the window's thread (docs/agent-native.md 4).
+    let args = asked.get("args").cloned().unwrap_or_default();
+    if let Some(read) = crate::agents::verbs::Verb::read(&verb, args) {
+        let answered = match read {
+            Ok(one) => crate::agents::answer(app, &caller, one),
+            Err(why) => {
+                crate::agents::verbs::Answer::error(crate::agents::verbs::Code::BadArguments, why)
+            }
+        };
+        let text = serde_json::to_string(&answered).unwrap_or_else(|_| refused("no answer"));
+        return say(&mut stream, 200, &text);
+    }
+
     if verb == "eval" && !eval {
         return say(
             &mut stream,
@@ -298,14 +332,60 @@ fn answer(
         );
     }
 
+    // An agent reaches only the window's agent verbs, and the window is told who is
+    // asking so its dispatcher can check the grant; an agent never reaches `eval`.
+    if let Err(why) = crate::agents::may_ask_the_window(&caller, &verb) {
+        return say(&mut stream, 403, &refused(&why));
+    }
+    if let (Some(told), Some(body)) = (caller.told(), asked.as_object_mut()) {
+        body.insert("agent".to_owned(), told);
+    }
+
     match ask_the_window(app, &mut asked) {
         Ok(answered) => say(&mut stream, 200, &answered),
         Err(reason) => say(&mut stream, 503, &refused(&reason)),
     }
 }
 
+/// The crate asking the window one of its verbs on an agent's behalf, through the same
+/// road the command line takes, and waiting at most `patience` for the answer: the
+/// window's own `{ok, value}` or `{ok, error}`, read. See agents/verbs.rs `window`.
+#[allow(
+    dead_code,
+    reason = "the agents' first questions of the window land with their verbs"
+)]
+pub(crate) fn ask(
+    app: &AppHandle,
+    verb: &str,
+    args: serde_json::Value,
+    patience: Duration,
+) -> Result<serde_json::Value, String> {
+    let mut asked = serde_json::json!({ "verb": verb, "args": args, "rest": [] });
+    let answered = ask_the_window_within(app, &mut asked, patience)?;
+    let said: serde_json::Value =
+        serde_json::from_str(&answered).map_err(|error| error.to_string())?;
+    if said.get("ok").and_then(serde_json::Value::as_bool) == Some(true) {
+        Ok(said.get("value").cloned().unwrap_or_default())
+    } else {
+        Err(said
+            .get("error")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("the window said no")
+            .to_owned())
+    }
+}
+
 /// Hands the request to the window and waits for its answer.
 fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<String, String> {
+    ask_the_window_within(app, asked, PATIENCE)
+}
+
+/// Hands the request to the window and waits at most `patience` for its answer.
+fn ask_the_window_within(
+    app: &AppHandle,
+    asked: &mut serde_json::Value,
+    patience: Duration,
+) -> Result<String, String> {
     // The window, not the webview window: a window with a page in a tab is not one
     // of those, and every request would be refused for as long as a website was
     // open. See web_tabs.rs.
@@ -335,7 +415,7 @@ fn ask_the_window(app: &AppHandle, asked: &mut serde_json::Value) -> Result<Stri
         .map_err(|error| format!("the window could not be asked: {error}"))
         .and_then(|()| {
             answered
-                .recv_timeout(PATIENCE)
+                .recv_timeout(patience)
                 .map_err(|_| "the window did not answer".to_owned())
         });
 
@@ -514,15 +594,19 @@ fn is_local(said: Option<&str>, port: u16) -> bool {
         .any(|name| host == format!("{name}:{port}"))
 }
 
+/// The token an `authorization` header carries as its bearer.
+fn bearer(said: Option<&str>) -> Option<&str> {
+    let header = said?;
+    header
+        .strip_prefix("Bearer ")
+        .or_else(|| header.strip_prefix("bearer "))
+}
+
 /// Whether the bearer token is this installation's secret, compared in a way that
 /// takes the same time however wrong it is. The length is public - it is always
 /// the same - so comparing that first gives nothing away.
 fn same_secret(said: Option<&str>, secret: &str) -> bool {
-    let Some(header) = said else { return false };
-    let Some(token) = header
-        .strip_prefix("Bearer ")
-        .or_else(|| header.strip_prefix("bearer "))
-    else {
+    let Some(token) = bearer(said) else {
         return false;
     };
 

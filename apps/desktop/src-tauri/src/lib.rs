@@ -33,6 +33,8 @@
 //! a window.
 
 #[cfg(desktop)]
+mod agents;
+#[cfg(desktop)]
 mod appearance;
 #[cfg(desktop)]
 mod apple_notes;
@@ -211,6 +213,9 @@ macro_rules! desktop_commands {
     () => {
         commands![
             endpoint::automation_result,
+            agents::grants::agents_read,
+            agents::grants::agents_write,
+            agents::grants::agents_mint,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_ground,
