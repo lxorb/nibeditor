@@ -89,9 +89,13 @@
 
   /** Where the page on the glasses is, in the window's own pixels.
    *
-   *  `coordsAtPos` answers null for a position the editor has not drawn - most of a
-   *  long note, most of the time - so both ends are asked for and either one is
-   *  enough to place the frame. Clamped to the editor, and null when the region has
+   *  Read off the editor's map of line heights rather than off the lines it has drawn.
+   *  `coordsAtPos` answers null for a position the editor has not drawn, and in the
+   *  middle of a scroll that was the words at the top of the screen: the editor draws
+   *  a frame behind the scroll, so a note scrolled back up had no drawn line to measure
+   *  and the card went away for the whole drag (scripts/even-e2e.py, "the card follows
+   *  the note on every frame of a scroll": 1 frame in 31, 2026-10-01). The map covers
+   *  the whole note, drawn or not. Clamped to the editor, and null when the region has
    *  scrolled out of it altogether: a frame pinned to an edge with no words in it is
    *  worse than no frame. */
   function measure(where: Region | null): Box | null {
@@ -100,21 +104,18 @@
 
     const rect = view.scrollDOM.getBoundingClientRect()
     const length = view.state.doc.length
-    const from = view.coordsAtPos(Math.min(where.from, length))
-    const to = view.coordsAtPos(Math.max(0, Math.min(where.to, length) - 1))
-    if (!from && !to) return null
-
-    const first = from?.top ?? to?.top ?? 0
-    const last = to?.bottom ?? from?.bottom ?? 0
+    const top = view.documentTop
+    const first = top + view.lineBlockAt(Math.min(where.from, length)).top
+    const last = top + view.lineBlockAt(Math.max(0, Math.min(where.to, length) - 1)).bottom
     if (last <= rect.top || first >= rect.bottom) return null
 
-    const top = Math.max(first, rect.top)
+    const shown = Math.max(first, rect.top)
     const bottom = Math.min(last, rect.bottom)
     return {
-      top,
+      top: shown,
       left: rect.left,
       width: rect.width,
-      height: Math.max(LEAST, bottom - top),
+      height: Math.max(LEAST, bottom - shown),
       cut: first < rect.top || last > rect.bottom,
     }
   }
