@@ -1,4 +1,5 @@
-/** The providers a person added, and which one answers by default.
+/** The providers a person added, which one answers by default, and which one each
+ *  feature asks where the reader chose.
  *
  *  Everything here is a choice and none of it is a secret: the kind, the address of
  *  a local server, the model, the name in the list. The keys are not in it and never
@@ -10,6 +11,8 @@
  *  OpenAI-compatible providers, and the only thing that tells them apart is the name
  *  and the address. So the list is a list and the ids are handed out here. */
 
+import { key } from '../i18n.svelte'
+import { withOrWithout } from '../records'
 import { isRecord, isString, keep, stored } from '../stored'
 import { transcribersAre } from './hears'
 import { type Provider, type ProviderKind, transcribes, usable } from './providers'
@@ -22,10 +25,39 @@ const STORAGE_KEY = 'nib:ai'
 const FIXED: Record<Exclude<ProviderKind, 'compatible'>, string> = {
   anthropic: 'anthropic',
   openai: 'openai',
+  chatgpt: 'chatgpt',
+  'claude-code': 'claude-code',
+  codex: 'codex',
 }
 
 function isKind(value: unknown): value is ProviderKind {
-  return value === 'anthropic' || value === 'openai' || value === 'compatible'
+  return value === 'compatible' || (isString(value) && value in FIXED)
+}
+
+/** What a reader asks a model for, each of which may ask a provider of its own: a plan
+ *  for questions about the notes and a fast model on this machine for rewrites, say. */
+export type Feature = 'ask' | 'block' | 'rewrite' | 'summary'
+
+/** The features, in the order Settings lists them, with the words it lists them by. */
+export const FEATURES: readonly { id: Feature; label: string }[] = [
+  { id: 'ask', label: key('Ask') },
+  { id: 'block', label: key('AI block') },
+  { id: 'rewrite', label: key('Rewrite') },
+  { id: 'summary', label: key('Meeting notes') },
+]
+
+function isFeature(value: string): value is Feature {
+  return FEATURES.some((one) => one.id === value)
+}
+
+/** The per-feature choices out of storage: a feature's name to a provider's id. */
+function usesIn(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      (entry): entry is [Feature, string] => isFeature(entry[0]) && isString(entry[1]),
+    ),
+  )
 }
 
 /** One provider out of storage, or null for a row that is not one. */
@@ -60,6 +92,19 @@ class Ai {
    *  the block's failure sentence read. */
   readonly ready = $derived(this.chosen !== null)
 
+  /** Which provider each feature asks, where the reader chose one other than the
+   *  default. A feature with none here asks `chosen`. */
+  uses = $state<Record<string, string>>({})
+
+  /** The provider a feature asks: the one chosen for it while it can answer, and the
+   *  default otherwise - so removing a provider, or its model, leaves every feature
+   *  still answered rather than silent. The one place any AI surface learns who to ask;
+   *  complete.ts is the other half. */
+  providerFor(feature: Feature): Provider | null {
+    const picked = this.uses[feature]
+    return this.providers.find((one) => one.id === picked && usable(one)) ?? this.chosen
+  }
+
   /** The provider that turns sound into words, or null where none can.
    *
    *  The same reading as `chosen` - the default one if it can, else the first that
@@ -80,12 +125,22 @@ class Ai {
     const list = Array.isArray(saved.providers) ? saved.providers : []
     this.providers = list.map(providerIn).filter((one): one is Provider => one !== null)
     this.defaultId = isString(saved.defaultId) ? saved.defaultId : ''
+    this.uses = usesIn(saved.uses)
   }
 
   private save() {
     // A browser told to keep no site data forgets them. The providers are still in
     // this session, and a session is all such a browser can offer anybody.
-    keep(STORAGE_KEY, JSON.stringify({ providers: this.providers, defaultId: this.defaultId }))
+    keep(
+      STORAGE_KEY,
+      JSON.stringify({ providers: this.providers, defaultId: this.defaultId, uses: this.uses }),
+    )
+  }
+
+  /** Has a feature ask `id`, or the default again for the empty string. */
+  use(feature: Feature, id: string) {
+    this.uses = withOrWithout(this.uses, feature, id || null)
+    this.save()
   }
 
   /** Adds one of a kind, and makes it the default when there was none. Answers the
@@ -131,6 +186,7 @@ class Ai {
   remove(id: string) {
     this.providers = this.providers.filter((one) => one.id !== id)
     if (this.defaultId === id) this.defaultId = this.providers[0]?.id ?? ''
+    this.uses = Object.fromEntries(Object.entries(this.uses).filter(([, one]) => one !== id))
     this.save()
   }
 

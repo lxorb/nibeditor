@@ -71,7 +71,7 @@ class Rewriting {
   /** Runs one verb. Pressing another while one is running replaces it, so nobody
    *  has to stop one before changing their mind. */
   run(verb: Verb) {
-    const provider = ai.chosen
+    const provider = ai.providerFor('rewrite')
     this.verb = verb
     this.after = ''
     this.trouble = null

@@ -62,6 +62,7 @@ export default tseslint.config(
         __EVEN_PLUGIN__: 'readonly',
         __DRIVEABLE__: 'readonly',
         __APP_VERSION__: 'readonly',
+        __CLAUDE_CODE__: 'readonly',
       },
       parserOptions: {
         projectService: true,

@@ -132,7 +132,7 @@ class Asking {
   /** Whether anything can be asked at all: a provider set up, the same question the
    *  fence asks of the same store. */
   get ready(): boolean {
-    return ai.ready
+    return ai.providerFor('ask') !== null
   }
 
   /** What is written down, read; whatever was held is replaced, so this says the same
@@ -201,7 +201,7 @@ class Asking {
    *  with a sentence under it rather than an empty answer. */
   async ask(asked?: string) {
     const question = (asked ?? this.question).trim()
-    const provider = ai.chosen
+    const provider = ai.providerFor('ask')
     if (!question || this.running || !provider) return
 
     const here = this.space

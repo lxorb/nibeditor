@@ -29,12 +29,10 @@ vi.mock('./complete', () => ({
   wasStopped: (error: unknown) => error instanceof DOMException && error.name === 'AbortError',
 }))
 
-vi.mock('./store.svelte', () => ({
-  ai: {
-    ready: true,
-    chosen: { id: 'fake', kind: 'compatible', name: 'Fake', baseUrl: 'x', model: 'm' },
-  },
-}))
+vi.mock('./store.svelte', () => {
+  const chosen = { id: 'fake', kind: 'compatible', name: 'Fake', baseUrl: 'x', model: 'm' }
+  return { ai: { ready: true, chosen, providerFor: () => chosen } }
+})
 
 vi.mock('../search/space', () => ({
   searchSpace: (

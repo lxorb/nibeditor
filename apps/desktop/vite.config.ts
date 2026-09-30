@@ -77,6 +77,11 @@ export default defineConfig(({ command, mode }) => ({
     // The version the installer carries, for the one place the app says it: under
     // the name on the space chooser, where Obsidian's vault chooser says its own.
     __APP_VERSION__: JSON.stringify(tauri.version),
+    // Whether Settings > AI offers Claude Code. On unless the build is made with
+    // `NIB_CLAUDE_CODE=off`, which the crate reads too; see env.d.ts and docs/ai.md.
+    __CLAUDE_CODE__: JSON.stringify(
+      !['off', '0', 'false'].includes(process.env.NIB_CLAUDE_CODE ?? ''),
+    ),
     __DRIVEABLE__: JSON.stringify(
       command === 'serve' || mode === 'drive' || mode === 'development',
     ),

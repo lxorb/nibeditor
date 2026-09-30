@@ -1275,6 +1275,31 @@ export const it: Dictionary = {
   'Add an AI provider in Settings first.':
     'Aggiungere prima un fornitore di IA nelle impostazioni.',
   'The model did not answer.': 'Il modello non ha risposto.',
+  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
+  'Your {plan} plan is at its limit until {time}.':
+    'Il tuo piano {plan} ha raggiunto il limite fino alle {time}.',
+  'Your {plan} plan is at its limit for now.':
+    'Il tuo piano {plan} ha raggiunto il limite per ora.',
+  'Your {plan} plan is near its limit.': 'Il tuo piano {plan} è vicino al limite.',
+  'Sign in to {name} first.': 'Accedi prima a {name}.',
+  '{name} took too long to answer.': '{name} ha impiegato troppo a rispondere.',
+  '{name} is out of date. Update it and try again.':
+    '{name} non è aggiornato. Aggiornalo e riprova.',
+  'Only in the desktop app.': 'Solo nell’app desktop.',
+  '{name} is not installed.': '{name} non è installato.',
+  'This ChatGPT plan cannot be used here.': 'Questo piano ChatGPT non può essere usato qui.',
+  'ChatGPT is not answering right now. Try again in a moment.':
+    'ChatGPT non risponde al momento. Riprova tra poco.',
+  'Not installed': 'Non installato',
+  'Check again': 'Controlla di nuovo',
+  '{plan} plan': 'Piano {plan}',
+  'Signed in': 'Accesso eseguito',
+  'Continue with ChatGPT': 'Continua con ChatGPT',
+  'Manage usage': 'Gestisci l’utilizzo',
+  'Used for': 'Usato per',
+  'Using ChatGPT plan': 'Piano ChatGPT in uso',
+  'Could not sign in.': 'Accesso non riuscito.',
+  'Could not sign out.': 'Disconnessione non riuscita.',
   'Rewrite…': 'Riscrivi…',
   Shorter: 'Più corto',
   Longer: 'Più lungo',

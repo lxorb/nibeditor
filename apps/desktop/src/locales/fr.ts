@@ -1276,6 +1276,31 @@ export const fr: Dictionary = {
   'The provider answered {status}.': 'Le fournisseur a répondu {status}.',
   'Add an AI provider in Settings first.': 'Ajoutez d’abord un fournisseur d’IA dans les réglages.',
   'The model did not answer.': 'Le modèle n’a pas répondu.',
+  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
+  'Your {plan} plan is at its limit until {time}.':
+    'Votre forfait {plan} a atteint sa limite jusqu’à {time}.',
+  'Your {plan} plan is at its limit for now.':
+    'Votre forfait {plan} a atteint sa limite pour le moment.',
+  'Your {plan} plan is near its limit.': 'Votre forfait {plan} approche de sa limite.',
+  'Sign in to {name} first.': 'Connectez-vous d’abord à {name}.',
+  '{name} took too long to answer.': '{name} a mis trop de temps à répondre.',
+  '{name} is out of date. Update it and try again.':
+    '{name} n’est plus à jour. Mettez-le à jour et réessayez.',
+  'Only in the desktop app.': 'Uniquement dans l’application de bureau.',
+  '{name} is not installed.': '{name} n’est pas installé.',
+  'This ChatGPT plan cannot be used here.': 'Ce forfait ChatGPT ne peut pas être utilisé ici.',
+  'ChatGPT is not answering right now. Try again in a moment.':
+    'ChatGPT ne répond pas pour le moment. Réessayez dans un instant.',
+  'Not installed': 'Non installé',
+  'Check again': 'Vérifier à nouveau',
+  '{plan} plan': 'Forfait {plan}',
+  'Signed in': 'Connecté',
+  'Continue with ChatGPT': 'Continuer avec ChatGPT',
+  'Manage usage': 'Gérer l’utilisation',
+  'Used for': 'Utilisé pour',
+  'Using ChatGPT plan': 'Forfait ChatGPT utilisé',
+  'Could not sign in.': 'Connexion impossible.',
+  'Could not sign out.': 'Déconnexion impossible.',
   'Rewrite…': 'Réécrire…',
   Shorter: 'Plus court',
   Longer: 'Plus long',

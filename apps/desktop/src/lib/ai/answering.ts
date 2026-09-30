@@ -43,7 +43,7 @@ function noteContext(note: string): string {
  *  runner, because it is the runner; see ask.ts, which registers the stub that fetches
  *  this. */
 export async function answer(ask: AiAsk, signal: AbortSignal) {
-  const provider = ai.chosen
+  const provider = ai.providerFor('block')
   if (!provider) {
     busy.failed(t('Add an AI provider in Settings first.'))
     throw new Error('no provider')
@@ -56,11 +56,11 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
   // A holder rather than a variable, because it is written inside the callback
   // below and read outside it: the compiler can see a field change and cannot see
   // a local one, and read it back as false for ever.
-  const began = { yet: false }
+  const began = { yet: false, model: provider.model }
   const wrote = (piece: string) => {
     if (!began.yet) {
       began.yet = true
-      ask.started(provider.model)
+      ask.started(began.model)
     }
     ask.wrote(piece)
   }
@@ -75,6 +75,10 @@ export async function answer(ask: AiAsk, signal: AbortSignal) {
         { role: 'user', content: ask.prompt },
       ],
       stream: wrote,
+      // Claude Code and Codex name their model only as they answer; see complete.ts.
+      named: (model) => {
+        began.model = model
+      },
       signal,
     })
 

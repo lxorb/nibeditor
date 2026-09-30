@@ -5,11 +5,14 @@ import {
   bodyFor,
   deltaIn,
   headersFor,
+  isLocal,
   type Message,
   modelsIn,
   modelsUrl,
+  offeredKinds,
   type Provider,
   reachable,
+  transcribes,
   troubleIn,
   usable,
 } from './providers'
@@ -224,5 +227,49 @@ describe('the models a provider listed', () => {
     for (const body of [null, {}, { data: 'nope' }, { data: [{}, { id: 5 }, { id: '' }] }]) {
       expect(modelsIn(body), JSON.stringify(body)).toEqual([])
     }
+  })
+})
+
+describe('the plans', () => {
+  const plan: Provider = { id: 'chatgpt', kind: 'chatgpt', name: '', model: 'gpt-plan' }
+  const program: Provider = { id: 'codex', kind: 'codex', name: '', model: '' }
+
+  test('are offered on a desktop only, first, and Claude Code only where the build has it', () => {
+    expect(offeredKinds(false, true)).toEqual(['anthropic', 'openai', 'compatible'])
+    expect(offeredKinds(true, true).slice(0, 3)).toEqual(['claude-code', 'chatgpt', 'codex'])
+    expect(offeredKinds(true, false)).not.toContain('claude-code')
+  })
+
+  test('a ChatGPT plan is spent through the Responses API alone', () => {
+    expect(askUrl(plan)).toBe('https://api.openai.com/v1/responses')
+    expect(deltaIn('chatgpt', { type: 'response.output_text.delta', delta: 'hi' })).toBe('hi')
+    expect(deltaIn('chatgpt', { type: 'response.completed' })).toBe('')
+    expect(troubleIn({ type: 'response.failed', response: { error: { message: 'no' } } })).toBe(
+      'no',
+    )
+    expect(troubleIn({ type: 'error', message: 'rate limited' })).toBe('rate limited')
+  })
+
+  test('a plan’s catalogue offers the models meant to be listed, by their slugs', () => {
+    expect(
+      modelsIn({
+        models: [
+          { slug: 'gpt-b', display_name: 'B', visibility: 'list' },
+          { slug: 'gpt-hidden', visibility: 'hide' },
+          { slug: 'gpt-a', display_name: 'A', visibility: 'list' },
+        ],
+      }),
+    ).toEqual(['gpt-a', 'gpt-b'])
+  })
+
+  test('a program on this machine has no address and hears nothing; no plan transcribes', () => {
+    expect(isLocal('codex')).toBe(true)
+    expect(isLocal('chatgpt')).toBe(false)
+    expect(apiRoot(program)).toBe('')
+    expect(usable(program)).toBe(true)
+    expect(reachable(program, false)).toBe(true)
+    expect(transcribes(program)).toBe(false)
+    expect(transcribes(plan)).toBe(false)
+    expect(transcribes(openai)).toBe(true)
   })
 })
