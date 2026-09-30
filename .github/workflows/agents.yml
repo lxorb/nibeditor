@@ -92,7 +92,7 @@ jobs:
         run: |
           printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
             "$IDENTIFIER" > probe.json
-          pnpm --dir apps/desktop tauri build --no-bundle --config ../../probe.json
+          pnpm --filter @nib/desktop exec tauri build --no-bundle --config ../../probe.json
 
       - name: Through the endpoint
         run: |
