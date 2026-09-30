@@ -80,6 +80,16 @@
     if (!docked) viewport.covered = 0
   })
 
+  /** An editor taken down takes its callout with it. A tab turned into its reading
+   *  view is one: the editor goes, reports no last selection on the way, and the
+   *  pane forgets it - so the bar, which only hears from editors, stayed over the
+   *  rendered page. With no editor there is nothing to format. */
+  $effect(() => {
+    if (view) return
+    at = null
+    colouring = false
+  })
+
   /** The colours are a moment's choice rather than a mode, so the row goes back
    *  to the actions whenever the bar leaves. A phone's bar leaves every time the
    *  keyboard does, and one that came back showing colours would be answering a
