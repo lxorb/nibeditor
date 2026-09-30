@@ -1,7 +1,13 @@
-import { EditorSelection, type Extension } from '@codemirror/state'
+import {
+  EditorSelection,
+  type EditorState,
+  type Extension,
+  type TransactionSpec,
+} from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
 import { ourOwn } from './copy'
 import { loadLineCommands } from './line-door'
+import { documentOf } from './shared'
 
 /** The converter, fetched the first time a web page is pasted.
  *
@@ -78,14 +84,51 @@ function copiedHere(html: string, text: string): string | null {
   return text && ourOwn(html) ? text : null
 }
 
-function insert(view: EditorView, text: string) {
-  const range = view.state.selection.main
-  view.dispatch({
+/** Words put in over the selection, with the caret after them. */
+function inserted(state: EditorState, text: string): TransactionSpec {
+  const range = state.selection.main
+  return {
     changes: { from: range.from, to: range.to, insert: text },
     selection: EditorSelection.cursor(range.from + text.length),
     scrollIntoView: true,
     userEvent: 'input.paste',
-  })
+  }
+}
+
+function insert(view: EditorView, text: string) {
+  view.dispatch(inserted(view.state, text))
+}
+
+/** Where a paste goes that is written a moment after it was made, because what writes
+ *  it - the link rule, the page converter - is fetched with the first one: the note it
+ *  was made in, whatever the view shows by then. drive-harness found a pane switched in
+ *  that moment given the words at the first note's offsets, and the first note never
+ *  given them; see test/effects/paste-race.effect.test.ts in the app.
+ *
+ *  `write` answers the change for a state, or null for none. Answers whether the paste
+ *  was dealt with, which a note that has changed under it since also counts as: there
+ *  is no telling any more where in it the words were meant to go. */
+function later(
+  view: EditorView,
+): (write: (state: EditorState) => TransactionSpec | null) => boolean {
+  const asked = view.state
+  const note = documentOf(view)
+
+  return (write) => {
+    if (documentOf(view) === note) {
+      const spec = write(view.state)
+      if (spec) view.dispatch(spec)
+      return spec !== null
+    }
+
+    if (!note?.text.eq(asked.doc)) return true
+    const spec = write(asked)
+    if (!spec) return false
+
+    const made = asked.update(spec)
+    note.local(made.changes, made.newSelection, view)
+    return true
+  }
 }
 
 /** One address and nothing else: what a browser's address bar puts on the clipboard.
@@ -138,11 +181,10 @@ export function richPaste(): Extension {
       // code, say - the address goes in as it stands.
       if (ADDRESS.test(text.trim()) && view.state.selection.ranges.some((one) => !one.empty)) {
         event.preventDefault()
-        void loadLineCommands().then(({ linkedPaste }) => {
-          const linked = linkedPaste(view.state, text)
-          if (linked) view.dispatch(linked)
-          else insert(view, text)
-        })
+        const land = later(view)
+        void loadLineCommands().then(({ linkedPaste }) =>
+          land((state) => linkedPaste(state, text) ?? inserted(state, text)),
+        )
         return true
       }
 
@@ -168,16 +210,17 @@ export function richPaste(): Extension {
       // its way, so the words are inserted when it lands. That is one beat, on the
       // first page pasted in a run of the app and on no other.
       event.preventDefault()
+      const land = later(view)
       void converter()
         .then((htmlToMarkdown) => {
           // A page that comes to nothing - all chrome and no prose - is pasted as the
           // plain text beside it, which is what handing the paste back would have
           // done with it.
           const words = htmlToMarkdown(html) || text
-          if (words) insert(view, words)
+          if (words) land((state) => inserted(state, words))
         })
         .catch(() => {
-          if (text) insert(view, text)
+          if (text) land((state) => inserted(state, text))
         })
 
       return true
@@ -198,19 +241,16 @@ export function richPaste(): Extension {
 export const pasteHere: Command = (view) => {
   if (view.state.readOnly) return false
 
+  const land = later(view)
   void readClipboard()
     .then(async (clipboard) => {
       if (!clipboard) return
       const { linkedPaste } = await loadLineCommands()
-      const linked = linkedPaste(view.state, clipboard.text)
-      if (linked) {
-        view.dispatch(linked)
-        return
-      }
+      if (land((state) => linkedPaste(state, clipboard.text))) return
 
       const markdown = await pastedMarkdown(clipboard.html, clipboard.text)
       const text = markdown ?? clipboard.text
-      if (text) insert(view, text)
+      if (text) land((state) => inserted(state, text))
     })
     .catch(() => undefined)
 
