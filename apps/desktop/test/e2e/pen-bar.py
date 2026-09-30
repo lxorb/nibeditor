@@ -237,9 +237,10 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
 
 
 def ink_of(page: Page) -> list[dict]:
-    """What the plane holds, read off the open canvas rather than guessed at."""
+    """What the plane holds, read off the open canvas rather than guessed at: the
+    words as they stand, not as far as the last flush, which trails a stroke."""
     return page.evaluate(
-        "() => JSON.parse(window.nibApp.workspace.active.doc).nib?.ink ?? []",
+        "() => JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []",
     )
 
 
@@ -331,12 +332,11 @@ def photograph(browser, theme: str, device: str, failures: list[str]) -> None:
         if '"opacity":0.2' not in (set_to or ""):
             failures.append(f"{label}: the pen did not remember its alpha ({set_to})")
 
-        # Out of the popover and draw with it.
+        # Out of the popover and draw with it. The pen is still the one in hand: a
+        # press on it would open the popover again, and a press on the plane would
+        # leave a dot that passes for the stroke.
         page.keyboard.press("Escape")
-        page.locator(".canvas").first.click(position={"x": 40, "y": 40})
-        page.wait_for_timeout(150)
-        pen_at(page, 0).click()
-        page.wait_for_timeout(250)
+        opacity.wait_for(state="detached", timeout=5000)
 
         middle = (size["width"] / 2, size["height"] / 2 - 60)
         stroke(

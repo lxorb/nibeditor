@@ -1042,8 +1042,8 @@ class Worker:
 
         until = time.monotonic() + WORKER_PATIENCE
         while time.monotonic() < until:
-            if self.process.poll() is not None:
-                raise SystemExit(f"the Worker stopped before it answered:\n{self.said()}")
+            if (code := self.process.poll()) is not None:
+                raise SystemExit(f"the Worker stopped ({code}) before it answered:\n{self.said()}")
             if self.answering():
                 say("the Worker is answering")
                 return
