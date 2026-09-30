@@ -31,9 +31,9 @@
 //!    which answered a site's `confirm()` yes before anybody was asked and swallowed its
 //!    Ctrl+click; see `web_dialogs.rs` and `web_opens.rs`.
 //! 2. The engine's message channel goes too, so the page has nothing to post to the app.
-//! 3. nib's own page scripts - the middle button and the keys a page lets go by
-//!    (`web_opens.rs`), and the place a revived page was left at - run in a world of
-//!    nib's own, `WORLD`. The page's `window`, `window.open`, `addEventListener` and
+//! 3. nib's own page scripts - a link pressed for a tab of its own and the keys a page
+//!    lets go by (`web_opens.rs`), and the place a revived page was left at - run in a
+//!    world of nib's own, `WORLD`. The page's `window`, `window.open`, `addEventListener` and
 //!    prototypes are the page's own.
 //! 4. What the crate reads out of a page on its own account - the site's mark - is read
 //!    in that same world on `WebView2`; see `evaluate`.

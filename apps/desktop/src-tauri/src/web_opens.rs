@@ -7,21 +7,35 @@
 //! button and the menu's "open link in new tab" leave the tab behind; Ctrl+Shift+click
 //! and Shift+click go to it; a plain `target="_blank"` goes to it too.
 //!
+//! Emil again, 2026-09-30: *"Ctrl + click to open a new web page doesn't work."* A
+//! Ctrl+click, a Shift+click and a `target="_blank"` link had never reached any of this.
+//! The opener plugin puts a script in every webview that takes those three presses
+//! away from the page, before the engine sees them, to hand the link to the system
+//! browser - which a site is never granted, so nothing opened at all. That script is
+//! off now (see `lib.rs`), and scripts/web-click-probe.py presses every kind of link
+//! every way and fails on any press that opens the wrong thing.
+//!
 //! **The engine does not say which.** Chromium knows - it opens a link with a
 //! disposition - but `WebView2` hands the host the address, whether a person asked,
 //! the size a script wanted and the window name, and nothing else. So the answer is put
 //! together here from what is to be had, in this order, on the window's own thread at
 //! the moment the engine raises the request:
 //!
-//! 1. **The window name.** The middle button leaves no key held, so a small script in
-//!    every page (`SCRIPT`) answers that press itself and opens the link under a name
-//!    that says so. It runs in nib's own world in the page, which shares the page's
-//!    document and events and none of its globals, so the page can neither see it nor
-//!    replace the `window.open` it calls; see `web_worlds.rs`. A site that opens a
-//!    window under the same name gets a tab behind it, which is less than it could
-//!    already do by asking for one in front.
+//! 1. **The window name.** A press on a link says how it was made in the press itself -
+//!    the button, and the keys held with it - so a small script in every page
+//!    (`SCRIPT`) answers the middle button, a Ctrl+click and a Shift+click itself, and
+//!    opens the link under a name that says where its tab goes. The press's own keys
+//!    rather than the keyboard's, because they are the ones the page acted on: a press
+//!    made by a tool that holds no key on the machine, and a key let go of before the
+//!    engine asks, are both still the press they were. A site that opens a window under
+//!    the same name gets a tab behind it, which is less than it could already do by
+//!    asking for one in front. The script runs in nib's own world in the page, which
+//!    shares the page's document and events and none of its globals, so the page can
+//!    neither see it nor replace the `window.open` it calls; see `web_worlds.rs`.
 //! 2. **The keys held.** Ctrl, and Shift, as the input this thread shares with the
-//!    page's window has them, the same reading `web_keys.rs` makes.
+//!    page's window has them, the same reading `web_keys.rs` makes - for a window the
+//!    page's own script asks for in answer to a press, which is not a link the script
+//!    above could see.
 //! 3. **The page's own menu.** Its link row opens the link it was raised on, so a
 //!    request for that address right after the menu is the menu's, and goes behind.
 //!
@@ -119,10 +133,12 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// `addEventListener` or `Element.prototype.closest` wraps its own and not these. See
 /// `web_worlds.rs`.
 ///
-/// The middle button on a link opens it as a window under a name that says how it was
-/// pressed, and keeps the engine from opening it a second time. Only a press a person
-/// made, on a web address, that the page itself has not already answered; with Shift it
-/// is a tab in front, as in Chrome.
+/// A link pressed for a tab of its own - the middle button, or the main one with Ctrl or
+/// Shift held - opens as a window under a name that says where its tab goes, and the
+/// engine is kept from opening it a second time: in front with Shift and behind without,
+/// as in Chrome, read off the press. Only a press a person made, on a web address, that
+/// the page itself has not already answered. Alt with the main button is the engine's
+/// own download, and the Windows key is not a browser's, so both are left to the engine.
 ///
 /// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L and Alt+D that nothing in
 /// the page took ask for nib's answer by name, and are taken so the engine does not
@@ -130,13 +146,13 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// chord by, so a layout whose letters are not Latin still has them. Ctrl+Alt types a
 /// character on half the keyboards in Europe, and is left alone.
 ///
-/// Both run last, after every handler the page has, so they see whether one of them took
-/// the key or the press. Being on the window is not enough for that: the page's own
-/// window handlers were put there after this script's, and a target's handlers run in
-/// the order they were added - the probe caught a page's Ctrl+F answered twice. So each
-/// press puts the answer back at the end of the window's list on its way down, in the
-/// capturing turn, which is before the page's bubbling handlers run and after they were
-/// added. The list is the document's and not a world's, so this holds from nib's own
+/// All of them run last, after every handler the page has, so they see whether one of
+/// them took the key or the press. Being on the window is not enough for that: the
+/// page's own window handlers were put there after this script's, and a target's
+/// handlers run in the order they were added - the probe caught a page's Ctrl+F
+/// answered twice. So each press puts the answer back at the end of the window's list on
+/// its way down, in the capturing turn, which is before the page's bubbling handlers run
+/// and after they were added. The list is the document's and not a world's, so this holds from nib's own
 /// world as it did from the page's. A page that stops the press on its way up is left
 /// to the engine, whose own find then opens, as a browser's would.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
@@ -154,12 +170,21 @@ pub const SCRIPT: &str = r"(function () {
     }, true)
   }
 
-  last('auxclick', function (event) {
-    if (!event.isTrusted || event.button !== 1 || event.defaultPrevented) return
+  function asked(event) {
+    if (!event.isTrusted || event.defaultPrevented) return
     var link = event.target instanceof Element ? event.target.closest('a[href], area[href]') : null
     if (!link || typeof link.href !== 'string' || !/^https?:/i.test(link.href)) return
     event.preventDefault()
     open(link.href, event.shiftKey ? 'nib-front' : 'nib-behind')
+  }
+
+  last('auxclick', function (event) {
+    if (event.button === 1) asked(event)
+  })
+
+  last('click', function (event) {
+    var held = event.ctrlKey || event.shiftKey
+    if (event.button === 0 && held && !event.altKey && !event.metaKey) asked(event)
   })
 
   last('keydown', function (event) {
@@ -428,9 +453,38 @@ mod tests {
     };
 
     #[test]
-    fn the_middle_buttons_script_names_the_window() {
+    fn the_script_names_the_window_for_a_press_on_a_link() {
         assert_eq!(placed("nib-behind", true, NONE, false), Some(Asked::Behind));
         assert_eq!(placed("nib-front", true, SHIFT, false), Some(Asked::Front));
+    }
+
+    #[test]
+    fn the_press_s_own_keys_outrank_the_keyboard_s() {
+        // A Ctrl+click the script named is behind even when the keyboard says Shift is
+        // down by now, and a Shift+click in front with nothing held on the machine at
+        // all - a press made by a tool, or a key let go of before the engine asked.
+        assert_eq!(placed("nib-behind", true, BOTH, false), Some(Asked::Behind));
+        assert_eq!(placed("nib-behind", true, SHIFT, true), Some(Asked::Behind));
+        assert_eq!(placed("nib-front", true, NONE, false), Some(Asked::Front));
+        assert_eq!(placed("nib-front", true, CTRL, true), Some(Asked::Front));
+    }
+
+    #[test]
+    fn the_script_answers_the_middle_button_and_ctrl_or_shift_on_a_link() {
+        // Three presses, one answer: the middle button on its `auxclick`, and the main
+        // button with Ctrl or Shift on its `click` - without Alt, the engine's download,
+        // or the Windows key.
+        assert!(SCRIPT.contains("last('auxclick'"));
+        assert!(SCRIPT.contains("last('click'"));
+        assert!(SCRIPT.contains("event.ctrlKey || event.shiftKey"));
+        assert!(SCRIPT.contains("!event.altKey && !event.metaKey"));
+        for name in ["'nib-behind'", "'nib-front'"] {
+            assert!(SCRIPT.contains(name), "{name}");
+            assert!(
+                placed(name.trim_matches('\''), true, NONE, false).is_some(),
+                "{name}"
+            );
+        }
     }
 
     #[test]

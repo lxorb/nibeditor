@@ -644,9 +644,9 @@ fn reader(selection: bool) -> String {
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
-/// nib's own scripts for a page: on `WebView2` the middle button and the keys a page
-/// lets go by (see `web_opens.rs`), and - for a tab being revived - the place the reading
-/// was left at. Empty for a page that needs none of them.
+/// nib's own scripts for a page: on `WebView2` a link pressed for a tab of its own and
+/// the keys a page lets go by (see `web_opens.rs`), and - for a tab being revived - the
+/// place the reading was left at. Empty for a page that needs none of them.
 ///
 /// They run in nib's own world, where the page can neither see them nor trip over them;
 /// see `web_worlds.rs`. Under nib's own Chromium they run in the page's own world, as the
