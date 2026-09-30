@@ -25,7 +25,8 @@ missing_docs = "warn"
 # unsaved notes first, added to an application delegate that is tao's (see
 # lifecycle.rs). And the agents' own reach into WebView2 in src/agents: the
 # DevTools Protocol's calls and events, an agent tab's settings and the events it
-# answers out of sight, the reader's tab's focus, and the engine's memory. None of
+# answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
+# keeping its client's pipes out of the app it starts (src/mcp/app.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -58,6 +59,10 @@ cef = []
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+# The identifier and the version, read the way tauri-build reads them, for `nib mcp`;
+# see build.rs. Both are what tauri-build is itself built with, so they add nothing.
+tauri-utils = "2"
+serde_json = "1"
 
 [dependencies]
 # `protocol-asset` is what lets the webview load a picture from disk. Without it
