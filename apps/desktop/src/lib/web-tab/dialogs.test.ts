@@ -49,7 +49,14 @@ test('reads a dialog and names its site the way the bar does', () => {
       text: '',
       origin: 'https://www.a.example/page',
     }),
-  ).toEqual({ id: 3, tab: 'a', kind: 'confirm', message: 'Delete this?', text: '', site: 'a.example' })
+  ).toEqual({
+    id: 3,
+    tab: 'a',
+    kind: 'confirm',
+    message: 'Delete this?',
+    text: '',
+    site: 'a.example',
+  })
 })
 
 test('throws out anything that is not one', () => {

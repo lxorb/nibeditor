@@ -62,9 +62,11 @@
 >
   <p class="who">
     {#if icon && marked}
-      <img class="mark" src={icon} alt="" onerror={() => (marked = false)} />
+      <img class="mark" src={icon} alt="" draggable="false" onerror={() => (marked = false)} />
     {/if}
-    <strong>{dialog.kind === 'leave' ? t('Leave {name}?', { name: dialog.site }) : dialog.site}</strong>
+    <strong
+      >{dialog.kind === 'leave' ? t('Leave {name}?', { name: dialog.site }) : dialog.site}</strong
+    >
   </p>
   {#if dialog.kind !== 'leave' && dialog.message}
     <p class="said">{dialog.message}</p>
