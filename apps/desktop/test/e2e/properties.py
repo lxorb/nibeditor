@@ -68,7 +68,10 @@ async (note) => {
 }
 """
 
-SAID = "() => window.nibApp.workspace.active?.doc ?? ''"
+# The words as the editor holds them this moment. `doc` is the words as far as the last
+# flush, which trails an edit by a pause, so on a slower machine it still said what the
+# row said before.
+SAID = "() => window.nibApp.workspace.active?.note?.latest ?? ''"
 
 # What controls the rows are drawn with, by key.
 CONTROLS = """
