@@ -32,7 +32,6 @@
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import { grants, readAsked } from './permissions.svelte'
-import { dialogs, readDialog } from './dialogs.svelte'
 import { placeOf, placeKept } from './place'
 
 /** This device's history, asked for by the first page that says where it is rather
@@ -48,6 +47,13 @@ function history(): Promise<typeof import('./visited').visited> {
  *  same reason: the first page is the first thing that needs it. See web-data.ts. */
 function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
+}
+
+/** A page's `alert`, `confirm` and `prompt`, asked for the same way: no page can open
+ *  one before a page is open, so the store is not carried in front of the first paint.
+ *  See dialogs.svelte.ts and test/weight.test.ts. */
+function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
+  return import('./dialogs.svelte')
 }
 
 /** How long a parked page's webview goes on running after the tab showing it went
@@ -854,7 +860,7 @@ class Pages {
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
       grants.dropped(tabId)
-      dialogs.dropped(tabId)
+      void pageDialogs().then(({ dialogs }) => dialogs.dropped(tabId))
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
@@ -877,7 +883,7 @@ class Pages {
 
     this.held.delete(tabId)
     grants.dropped(tabId)
-    dialogs.dropped(tabId)
+    void pageDialogs().then(({ dialogs }) => dialogs.dropped(tabId))
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
@@ -953,6 +959,7 @@ class Pages {
     // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its
     // script waits for the answer, which the card over the pane gives; see
     // dialogs.svelte.ts and web_dialogs.rs.
+    const { dialogs, readDialog } = await pageDialogs()
     await listen('nib://web-dialog', (event) => {
       const said = readDialog(event.payload)
       if (said && this.held.has(said.tab)) dialogs.heard(said)
