@@ -159,7 +159,24 @@ class Session {
     // Copy on select, which is what a terminal does: iTerm2 out of the box, and every
     // X terminal since before there was a clipboard to copy to.
     this.host.addEventListener('mouseup', () => this.copyChosen())
-    this.host.addEventListener('contextmenu', (event) => this.showMenu(event))
+    // The terminal's own menu, and not the one xterm.js sets up for the browser's: it
+    // moves its hidden field under the pointer on a right press, which would make the
+    // press a text field's and bring up the field's menu instead.
+    this.host.addEventListener(
+      'mousedown',
+      (event) => {
+        if (event.button === 2) event.stopPropagation()
+      },
+      true,
+    )
+    this.host.addEventListener(
+      'contextmenu',
+      (event) => {
+        event.stopPropagation()
+        this.showMenu(event)
+      },
+      true,
+    )
     this.watching.observe(this.host)
   }
 
