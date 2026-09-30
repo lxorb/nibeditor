@@ -4,6 +4,7 @@ import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
+import { BYTES } from './sync2/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -222,6 +223,11 @@ publicBlobs.get('/:name', async (context) => {
   // A document, and nothing that reads one of those from here has a session to
   // show; see the header. Answered as missing rather than as refused, because to
   // anybody who has not been given the file that is what it is.
+  //
+  // And a file of a space's tree that is not a picture or a PDF, which was kept as
+  // bytes and nothing more: it is reached through its space (`GET /v2/files`), never
+  // by hash, and is not something a published page points at.
+  if (type === BYTES) return context.notFound()
   if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash))) {
     return context.notFound()
   }

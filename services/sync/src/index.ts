@@ -28,6 +28,7 @@ import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
+import { v2Blobs, v2Files } from './sync2/files'
 import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
@@ -263,6 +264,8 @@ app.route('/v2/spaces', webStore)
 // and a space's files. See sync2/index.ts and docs/sync-v2.md section 7.
 app.route('/v2/spaces', v2Spaces)
 app.route('/v2/docs', v2Docs)
+app.route('/v2/files', v2Files)
+app.route('/v2/blobs', v2Blobs)
 
 app.get('/health', (context) => context.json({ ok: true }))
 

@@ -98,6 +98,11 @@ function bucket() {
       customMetadata: Record<string, string> | undefined
     }
   >()
+  const uploads = new Map<
+    string,
+    { key: string; parts: Map<number, Uint8Array>; options: unknown }
+  >()
+  let uploadsMade = 0
 
   return {
     /** Everything in it, so a test can say that nothing is stored under a name no
@@ -125,6 +130,7 @@ function bucket() {
       if (!held) return Promise.resolve(null)
 
       return Promise.resolve({
+        size: bytesOf(held.value).length,
         text: () =>
           Promise.resolve(
             typeof held.value === 'string'
@@ -136,6 +142,45 @@ function bucket() {
         httpMetadata: { contentType: held.contentType },
         customMetadata: held.customMetadata,
       })
+    },
+    /** R2's multipart upload, parts kept in memory and put together on completion. */
+    createMultipartUpload(key: string, options?: { httpMetadata?: { contentType?: string } }) {
+      const uploadId = `upload-${String(++uploadsMade)}`
+      uploads.set(uploadId, { key, parts: new Map(), options })
+      return Promise.resolve(this.resumeMultipartUpload(key, uploadId))
+    },
+    resumeMultipartUpload(key: string, uploadId: string) {
+      const put = (value: Uint8Array, options: unknown) =>
+        this.put(key, value, options as { httpMetadata?: { contentType?: string } })
+      return {
+        key,
+        uploadId,
+        uploadPart(partNumber: number, value: ArrayBuffer | Uint8Array) {
+          const upload = uploads.get(uploadId)
+          if (!upload) return Promise.reject(new Error('no such upload'))
+          upload.parts.set(partNumber, bytesOf(value))
+          return Promise.resolve({ partNumber, etag: `etag-${String(partNumber)}` })
+        },
+        complete(parts: { partNumber: number }[]) {
+          const upload = uploads.get(uploadId)
+          if (!upload) return Promise.reject(new Error('no such upload'))
+          const pieces = [...parts]
+            .sort((a, b) => a.partNumber - b.partNumber)
+            .map((part) => upload.parts.get(part.partNumber) ?? new Uint8Array())
+          const whole = new Uint8Array(pieces.reduce((sum, piece) => sum + piece.length, 0))
+          let at = 0
+          for (const piece of pieces) {
+            whole.set(piece, at)
+            at += piece.length
+          }
+          uploads.delete(uploadId)
+          return put(whole, upload.options).then(() => ({ key, size: whole.length }))
+        },
+        abort() {
+          uploads.delete(uploadId)
+          return Promise.resolve()
+        },
+      }
     },
     /** One name or a list of them, as R2 takes either. */
     delete(keys: string | string[]) {
