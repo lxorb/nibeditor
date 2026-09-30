@@ -39,7 +39,7 @@ import time
 import urllib.error
 import urllib.request
 
-from probe_app import run_probe, sized
+from probe_app import identifier_of, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -147,16 +147,6 @@ def endpoint_of(identifier: str) -> pathlib.Path:
     return pathlib.Path(os.environ["APPDATA"]) / identifier / "automation.json"
 
 
-def identifier_of(app: pathlib.Path) -> str:
-    """Which identifier a probe was built with, out of the build's own config.
-
-    Read rather than guessed: the endpoint file is under the identifier's own folder,
-    and a drive that guessed it would be testing its own guess.
-    """
-    found = json.loads((app.parent / "nib-probe-identifier.json").read_text(encoding="utf-8"))
-    return str(found["identifier"])
-
-
 def start(app: pathlib.Path, label: str) -> subprocess.Popen[bytes]:
     """One app, running, with its notes somewhere nobody keeps notes."""
     spaces = WORK / label / "spaces"
@@ -240,13 +230,13 @@ def ink_of(png: pathlib.Path) -> int:
     return hash(png.read_bytes())
 
 
-def drive(apps: list[pathlib.Path]) -> None:
+def drive(apps: list[pathlib.Path], given: list[str]) -> None:
     running: list[tuple[str, subprocess.Popen[bytes], dict]] = []
 
     try:
         for at, app in enumerate(apps):
             label = "ab"[at]
-            identifier = identifier_of(app)
+            identifier = identifier_of(app, given[at] if at < len(given) else None)
             endpoint = endpoint_of(identifier)
             endpoint.unlink(missing_ok=True)
 
@@ -331,13 +321,14 @@ def main() -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", action="append", required=True, type=pathlib.Path)
+    parser.add_argument("--identifier", action="append", default=[])
     asked_for = parser.parse_args()
 
     if len(asked_for.app) != 2:
         raise SystemExit("two apps, each built with an identifier of its own")
 
     shutil.rmtree(SHOTS, ignore_errors=True)
-    drive([one.resolve() for one in asked_for.app])
+    drive([one.resolve() for one in asked_for.app], asked_for.identifier)
 
     if failures:
         print("\n%d thing(s) wrong:" % len(failures))

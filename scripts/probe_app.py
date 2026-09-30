@@ -43,6 +43,7 @@ and never by putting a real window on a screen to see whether it is caught.
 from __future__ import annotations
 
 import ctypes
+import json
 import os
 import pathlib
 import subprocess
@@ -176,6 +177,20 @@ def refuse_updating(exe: pathlib.Path) -> None:
             f"{exe} is version {found or 'unknown'}, not {PROBE_VERSION}: it would fetch the "
             "real update and install it on close. Build it as scripts/probe_app.py says."
         )
+
+
+def identifier_of(exe: pathlib.Path, given: str | None = None) -> str:
+    """The identifier a probe build was made under, which names its endpoint file and its
+    webview's store: the one the drive was told with `--identifier`, as every probe is,
+    or a `nib-probe-identifier.json` beside the exe for a build that wrote one. Nothing in
+    the repository writes that file, so a drive that only read it could not be run."""
+
+    if given:
+        return given
+    beside = exe.parent / "nib-probe-identifier.json"
+    if not beside.exists():
+        raise SystemExit(f"which identifier was {exe} built under? pass --identifier")
+    return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
 
 
 def main_window(pid: int) -> int:

@@ -41,7 +41,7 @@ import sys
 import time
 import urllib.request
 
-from probe_app import run_probe
+from probe_app import identifier_of, run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -59,11 +59,6 @@ def say(what: str) -> None:
 def wrong(what: str) -> None:
     failures.append(what)
     print(f"  FAIL {what}", flush=True)
-
-
-def identifier_of(app: pathlib.Path) -> str:
-    found = json.loads((app.parent / "nib-probe-identifier.json").read_text(encoding="utf-8"))
-    return str(found["identifier"])
 
 
 def endpoint_of(identifier: str) -> pathlib.Path:
@@ -208,8 +203,8 @@ OPENS = """
 """
 
 
-def drive(app: pathlib.Path) -> None:
-    identifier = identifier_of(app)
+def drive(app: pathlib.Path, given: str | None) -> None:
+    identifier = identifier_of(app, given)
     endpoint = endpoint_of(identifier)
     shutil.rmtree(profile_of(identifier), ignore_errors=True)
     allow_eval(endpoint)
@@ -332,10 +327,11 @@ def main() -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", required=True, type=pathlib.Path)
+    parser.add_argument("--identifier")
     said = parser.parse_args()
 
     shutil.rmtree(WORK, ignore_errors=True)
-    drive(said.app.resolve())
+    drive(said.app.resolve(), said.identifier)
 
     if failures:
         print("\n%d thing(s) wrong:" % len(failures))

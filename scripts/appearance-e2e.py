@@ -39,7 +39,7 @@ import sys
 import time
 import urllib.request
 
-from probe_app import run_probe
+from probe_app import identifier_of, main_window, run_probe
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent
@@ -77,36 +77,20 @@ class Rect(ctypes.Structure):
     ]
 
 
-def window_of(pid: int) -> int:
-    """The app's own window: visible, sizeable, and the widest of them.
-
-    A Tauri process owns more than one top-level window - the single instance plugin
-    keeps a small listener with a title of its own - so size is what decides, exactly as
-    it does in capture-window.ps1.
+def window_of(pid: int, patience: float = 60) -> int:
+    """The app's own window, once it has shown one: `main_window` in probe_app, which
+    knows it by its class rather than by its size. Waited for rather than slept for,
+    because a busy machine shows it seconds after the endpoint is up, and three seconds
+    of sleep was a run that stopped with "has no window" on a window about to appear.
     """
-    assert user32
-    found: list[tuple[int, int]] = []
+    until = time.monotonic() + patience
+    while time.monotonic() < until:
+        found = main_window(pid)
+        if found:
+            return found
+        time.sleep(0.2)
 
-    @ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-    def each(hwnd, _param):  # noqa: ANN001, ANN202
-        owner = ctypes.c_ulong()
-        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-        if owner.value != pid or not user32.IsWindowVisible(hwnd):
-            return True
-
-        box = Rect()
-        user32.GetWindowRect(hwnd, ctypes.byref(box))
-        wide = box.right - box.left
-        if wide > 200 and box.bottom - box.top > 200:
-            found.append((wide, int(hwnd)))
-
-        return True
-
-    user32.EnumWindows(each, None)
-    if not found:
-        raise SystemExit(f"process {pid} has no window")
-
-    return sorted(found, reverse=True)[0][1]
+    raise SystemExit(f"process {pid} has no window")
 
 
 def frame_of(hwnd: int) -> int:
@@ -142,11 +126,6 @@ def backdrop_of(hwnd: int) -> int:
 
 
 # ── the app ─────────────────────────────────────────────────────────────────
-
-
-def identifier_of(app: pathlib.Path) -> str:
-    found = json.loads((app.parent / "nib-probe-identifier.json").read_text(encoding="utf-8"))
-    return str(found["identifier"])
 
 
 def endpoint_of(identifier: str) -> pathlib.Path:
@@ -283,8 +262,8 @@ def shot(pid: int, name: str) -> None:
     say(f"photographed {name}.png")
 
 
-def drive(app: pathlib.Path) -> None:
-    identifier = identifier_of(app)
+def drive(app: pathlib.Path, given: str | None) -> None:
+    identifier = identifier_of(app, given)
     endpoint = endpoint_of(identifier)
 
     # Both of the settings under test are remembered, which is half of what this checks -
@@ -451,10 +430,11 @@ def main() -> int:
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--app", required=True, type=pathlib.Path)
+    parser.add_argument("--identifier")
     said = parser.parse_args()
 
     shutil.rmtree(SHOTS, ignore_errors=True)
-    drive(said.app.resolve())
+    drive(said.app.resolve(), said.identifier)
 
     if failures:
         print("\n%d thing(s) wrong:" % len(failures))
