@@ -152,9 +152,26 @@ pub fn take_startup_pages(
     pending.take(Handed::Pages, window.label())
 }
 
+/// A second launch of the app, as the single instance plugin hears it: inside the window
+/// procedure its message arrived in. On nib's own Chromium a question to a window from in
+/// there - is it focused? - is answered by running the event loop's handler again inside
+/// the one already running, which never returns (measured: the running app stopped
+/// answering, and the second launch never ended, since it waits for the message to be
+/// handled). So the launch is handed to the event loop, to be answered in a turn of its
+/// own, on either engine; see `second_launch`.
+pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
+    // Asked for from a thread of its own, because from inside the window procedure the
+    // runtime runs a task at once, in the middle of the message it is handling.
+    let later = app.clone();
+    std::thread::spawn(move || {
+        let answering = later.clone();
+        let _ = later.run_on_main_thread(move || second_launch(&answering, &argv, &cwd));
+    });
+}
+
 /// A second launch of the app, which belongs to the one already open: its window
 /// comes forward and takes whatever the launch was asked to open.
-pub fn second_launch(app: &AppHandle, argv: Vec<String>, _cwd: String) {
+fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
     // The window, not the webview window, which a window holding a page in a tab
     // is not; see web_tabs.rs.
     if let Some(window) = app.get_window(MAIN) {
