@@ -54,12 +54,25 @@ const ALLOW = new Set([
   'web-share',
 ])
 
-/** Only over https, and only what a browser will frame. A card written by hand
- *  with a `javascript:` frame in it is a card that gets no frame. */
-export function framedPage(address: string): string | null {
+/** Only over https, only what a browser will frame, and never the app itself.
+ *
+ *  A card written by hand with a `javascript:` frame in it is a card that gets no
+ *  frame. So is one whose address, once resolved, is on the page's own origin -
+ *  which the web app's is, being https: a frame that is same-origin with the page
+ *  and holds `allow-scripts allow-same-origin` is not sandboxed at all, and could
+ *  reach the app's storage and its session. Every provider is somebody else's
+ *  origin, so refusing this one costs YouTube and Vimeo nothing, and they keep the
+ *  `allow-same-origin` they break without; see test/e2e/embed-sandbox.py.
+ *
+ *  `own` is the page's origin, asked of the page unless a caller says. */
+export function framedPage(
+  address: string,
+  own: string | undefined = typeof location === 'undefined' ? undefined : location.origin,
+): string | null {
   try {
     const url = new URL(address)
-    return url.protocol === 'https:' ? url.toString() : null
+    if (url.protocol !== 'https:' || url.origin === own) return null
+    return url.toString()
   } catch {
     return null
   }
