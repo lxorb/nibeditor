@@ -116,8 +116,7 @@ class Shortcuts {
     return key ? showCombination(key, this.platform) : undefined
   }
 
-  /** A button's tooltip: its name and the key held for it now, VS Code's `Back (Alt+←)`,
-   *  which is how a hand learns the keyboard. The name alone on a touch screen. */
+  /** A button's tooltip: its name and its key now, VS Code's `Back (Alt+←)`. */
   tooltip(label: string, id: string | null = null): string {
     const key = id !== null && !viewport.touch ? this.hint(id) : undefined
     return key ? t('{label} ({key})', { label, key }) : label

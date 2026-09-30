@@ -68,10 +68,9 @@ describe('the stack of closed tabs', () => {
   test('gives back the tabs one gesture closed as one, each to its own place', () => {
     const stack = new ClosedTabs()
     stack.record(closed('before.md'))
-    stack.together(() => {
-      stack.record(closed('a.md', 'p1', 1))
-      stack.record(closed('b.md', 'p1', 1))
-    })
+    // One gesture, one stamp; see `closeMany` in the workspace.
+    stack.record({ ...closed('a.md', 'p1', 1), batch: 7 })
+    stack.record({ ...closed('b.md', 'p1', 1), batch: 7 })
 
     expect(stack.take().map((one) => [one.draft.name, one.at])).toEqual([
       ['b.md', 1],
@@ -82,8 +81,8 @@ describe('the stack of closed tabs', () => {
 
   test('and two gestures in a row as two', () => {
     const stack = new ClosedTabs()
-    stack.together(() => stack.record(closed('a.md')))
-    stack.record(closed('b.md'))
+    stack.record({ ...closed('a.md'), batch: 7 })
+    stack.record({ ...closed('b.md'), batch: 8 })
 
     expect(stack.take()).toHaveLength(1)
     expect(stack.take()).toHaveLength(1)

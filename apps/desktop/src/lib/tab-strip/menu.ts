@@ -26,7 +26,8 @@ import { plural, t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
 import { bookmarkAll } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
-import { withinSpace } from '../space-paths'
+import { shownName } from '../note-name'
+import { nameOf, withinSpace } from '../space-paths'
 import { openTerminal, shellRows } from '../terminal/open'
 import { readSpec } from '../terminal/spec'
 import { pages } from '../web-tab/pages.svelte'
@@ -351,6 +352,17 @@ function pickOf(tab: Tab, paneId: string): Tab[] {
 export function tabMenuTitle(tab: Tab, paneId: string): string {
   const many = pickOf(tab, paneId).length
   return many ? plural(many, { one: '{count} tab', other: '{count} tabs' }) : tab.shown
+}
+
+/** Where a tab has been, newest first, as rows to go straight back to: the back
+ *  arrow's own menu. What is ahead of it is left out: forward is one arrow away and a
+ *  list of both directions is a list nobody can read at a glance. */
+export function trailMenu(tab: Tab): MenuEntry[] {
+  return tab.trail
+    .slice(0, tab.at)
+    .map((path, at) => ({ label: shownName(nameOf(path)), at }))
+    .reverse()
+    .map((row) => ({ label: row.label, run: () => void workspace.walk(row.at, tab.id) }))
 }
 
 export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {

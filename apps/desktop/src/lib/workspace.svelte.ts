@@ -2622,14 +2622,14 @@ class Workspace {
     await this.closeMany(going.map((one) => one.id))
   }
 
-  /** Several tabs closed by one gesture, which one Reopen closed tab brings back. */
+  /** Several tabs closed by one gesture, which one Reopen closed tab brings back, as in
+   *  Firefox. */
   async closeMany(ids: readonly string[]) {
     const going = this.tabs.filter((one) => ids.includes(one.id))
     if (!(await this.mayClose(going))) return
 
-    this.closed.together(() => {
-      for (const one of going) this.close(one.id)
-    })
+    const batch = Date.now()
+    for (const one of going) this.close(one.id, true, batch)
   }
 
   closesAround(id: string, which: Around): number {
@@ -2675,7 +2675,7 @@ class Workspace {
    *
    *  `reopenable` false is for a tab nobody closed - a preview the next look took
    *  the place of - which the closed stack has no business bringing back. */
-  close(id: string, reopenable = true) {
+  close(id: string, reopenable = true, batch?: number) {
     const tab = this.tabs.find((one) => one.id === id)
     if (!tab) return
 
@@ -2686,7 +2686,12 @@ class Workspace {
     // has to bring that back with it.
     this.flush()
     if (reopenable && worthReopening(tab)) {
-      this.closed.record({ draft: this.draftOf(tab), paneId, at: Math.max(at, 0) })
+      this.closed.record({
+        draft: this.draftOf(tab),
+        paneId,
+        at: Math.max(at, 0),
+        ...(batch ? { batch } : {}),
+      })
     }
 
     // The page is a webview of its own, and a tab that has gone is not holding a

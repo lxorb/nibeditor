@@ -1,25 +1,31 @@
 <script lang="ts">
-  import { onDestroy, untrack } from 'svelte'
+  import { onDestroy, onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
   import { dragged, isTreeDrag, mayCarryAddress } from './drag-paths'
   import { i18n, t } from './i18n.svelte'
   import { longPress } from './longpress'
-  import { menu, type MenuEntry } from './menu.svelte'
+  import { menu } from './menu.svelte'
   import { middleOpens, tabAsk } from './new-tab'
   import { rooms } from './rooms.svelte'
   import { roving } from './roving'
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
-  import { shownName } from './note-name'
-  import { nameOf } from './space-paths'
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
-  import { ClosingWidths } from './tab-strip/closing.svelte'
+  import type { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
-  import { arrival, handOver, picks, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
+  import {
+    arrival,
+    handOver,
+    keyOf,
+    picks,
+    register,
+    stripOf,
+    TabDrag,
+  } from './tab-strip/drag.svelte'
   import type { Block } from './tab-strip/picking.svelte'
   import {
     type Bounds,
@@ -39,7 +45,7 @@
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { pinnedRun } from './workspace/pinning'
-  import { inside, zoneAt } from './workspace/zones'
+  import { inside } from './workspace/zones'
   import { dur } from './motion'
   import Cross from './Cross.svelte'
 
@@ -64,15 +70,13 @@
   const walking = $derived(workspace.showing(paneId))
   const walked = $derived(tabs.some((one) => one.trail.length > 1))
 
-  /** Where this tab has been, newest first, as rows to go straight back to.
-   *  What is ahead of it is left out: forward is one arrow away and a list of
-   *  both directions is a list nobody can read at a glance. */
-  function trailMenu(tab: Tab): MenuEntry[] {
-    return tab.trail
-      .slice(0, tab.at)
-      .map((path, at) => ({ label: shownName(nameOf(path)), at }))
-      .reverse()
-      .map((row) => ({ label: row.label, run: () => void workspace.walk(row.at, tab.id) }))
+  /** Where this tab has been, as rows to go back to; see `trailMenu` in tab-strip/menu.ts. */
+  function showTrail(event: MouseEvent, tab: Tab) {
+    if (!tab.canGoBack) return
+    event.preventDefault()
+    void import('./tab-strip/menu').then(({ trailMenu }) =>
+      menu.show(event, trailMenu(tab), { title: t('Back') }),
+    )
   }
 
   /** Everything a tab offers; see tab-strip/menu.ts. Fetched as the launch ends
@@ -147,7 +151,12 @@
   )
 
   const drag = new TabDrag()
-  const closing = new ClosingWidths()
+  /** Chrome's held widths while tabs are closed with the pointer, fetched once the strip
+   *  is up; see tab-strip/closing.svelte.ts. */
+  let closing = $state<ClosingWidths | null>(null)
+  onMount(() => {
+    void import('./tab-strip/closing.svelte').then((one) => (closing = new one.ClosingWidths()))
+  })
   /** The tab under a mouse, which hides the hairlines either side of it. */
   let hovered = $state<string | null>(null)
   /** The tab just let go of, which stays over its neighbours while it settles. */
@@ -165,12 +174,11 @@
   /** Every tab's width in the strip's own order: held still while tabs are being
    *  closed with the pointer, else shared out by Chrome's rule. */
   const widths = $derived(
-    (closing.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room),
+    (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room),
   )
   const base = $derived(placed(widths))
 
-  /** The tabs picked with Ctrl or Shift, and what a press on one carries; see
-   *  tab-strip/picking.svelte.ts. */
+  /** The pick, and what a press on it carries; see tab-strip/picking.svelte.ts. */
   const picking = $derived(picks.loaded)
   const picked = $derived(new Set(picking?.chosen.of(paneId).map((one) => one.id)))
   let plainOnPick = false
@@ -269,7 +277,7 @@
 
   // Held widths go as soon as the strip is not the one they were taken of.
   $effect(() => {
-    closing.still(sized.map((one) => one.id))
+    closing?.still(sized.map((one) => one.id))
   })
 
   // The first measurement is not a change, and a resize is not a movement.
@@ -303,7 +311,7 @@
    *  with a key there is no pointer to wait for. See tab-strip/closing.svelte.ts. */
   function closeTab(tab: Tab, by: 'mouse' | 'touch' | null) {
     if (by && worthKeeping(sized, room)) {
-      closing.hold(
+      closing?.hold(
         new Map(sized.map((one, at) => [one.id, widths[at] ?? 0])),
         sized.map((one) => one.id),
         by,
@@ -324,54 +332,6 @@
   /* ── Dragging ─────────────────────────────────────────────────────
      Chrome's gesture; tab-strip/drag.svelte.ts holds the numbers. What is here is
      the window's half: pointer events in, and where the tab lands out. */
-
-  /** A landing as one string, so a frame that would set the same one again sets
-   *  nothing: the landing is read by every pane on the screen. */
-  const keyOf = (where: Landing | null): string =>
-    !where
-      ? ''
-      : where.kind === 'strip'
-        ? `strip:${where.paneId}:${where.at}`
-        : `pane:${where.paneId}:${where.zone}`
-
-  /** Where a tab carried out of this strip would land: at a place in another
-   *  pane's strip, or in or against a side of a pane. Nothing in the middle of its
-   *  own pane, which it is already in - let go there, it goes back. */
-  function landingAt(x: number, y: number, tabId: string): Landing | null {
-    const under = document.elementFromPoint(x, y)
-    const other = under?.closest<HTMLElement>('[data-strip]')
-
-    if (other) {
-      const id = other.dataset.strip ?? ''
-      const at = id === paneId ? undefined : stripOf(id)?.slotAt(x)
-      return at === undefined ? null : { kind: 'strip', paneId: id, at }
-    }
-
-    const box = under?.closest<HTMLElement>('[data-pane]')
-    const id = box?.dataset.pane
-    if (!box || !id) return null
-
-    const zone = zoneAt(box.getBoundingClientRect(), x, y, (side) =>
-      workspace.canLand(side, id, tabId),
-    )
-    return zone === 'middle' && id === paneId ? null : { kind: 'pane', paneId: id, zone }
-  }
-
-  /** The drop zones and the landing, kept in step with where the carried tab is.
-   *  The panes only offer their zones once the tab is out of the strip: a tab
-   *  going along its own strip has nothing to aim at. */
-  function follow() {
-    const tabId = drag.tabId
-    if (!tabId) return
-
-    const where = drag.out ? landingAt(drag.pointer.x, drag.pointer.y, tabId) : null
-    if (keyOf(workspace.panes.landing) !== keyOf(where)) workspace.panes.landing = where
-
-    const carried = drag.out ? tabId : null
-    if ((workspace.panes.dragging?.tabId ?? null) !== carried) {
-      workspace.panes.dragging = carried ? { tabId: carried } : null
-    }
-  }
 
   function unfollow() {
     workspace.panes.landing = null
@@ -395,6 +355,10 @@
   })
 
   const carriedTab = $derived(tabs.find((one) => one.id === drag.tabId) ?? null)
+  /** The tab carried over the panes, and where it lands, fetched with the first press
+   *  on a tab; see tab-strip/carrying.ts. */
+  let Chip = $state<typeof import('./tab-strip/TabChip.svelte').default | null>(null)
+  let carry: typeof import('./tab-strip/carrying') | null = null
 
   /** The pointer, held by the tab for the rest of the drag. Refused where there is
    *  nothing to take - a finger is held by what it went down on already - which is
@@ -415,6 +379,8 @@
       return
     }
     if (event.button !== 0 || drag.pressing) return
+    if (!Chip) void import('./tab-strip/TabChip.svelte').then((one) => (Chip = one.default))
+    if (!carry) void import('./tab-strip/carrying').then((one) => (carry = one))
 
     const finger = event.pointerType === 'touch'
     if (!finger && picksWith(event)) {
@@ -431,8 +397,8 @@
       return
     }
     // Chrome activates a tab on the press, before anything has moved, so the tab
-    // under a mouse answers at once and the one being dragged is the one open, and a
-    // pick stays while this may drag it. A finger's press may be a scroll, so it waits.
+    // under a mouse answers at once and the one being dragged is the one open. A
+    // finger's press may be the start of a scroll, so it waits for the tap.
     plainOnPick = picked.has(tab.id)
     if (!finger && !plainOnPick) picking?.chosen.clear()
     if (!finger) workspace.activate(tab.id)
@@ -478,12 +444,12 @@
 
     event.preventDefault()
     if (lifting) {
-      closing.letGo()
+      closing?.letGo()
       // The held finger that opens the menu is this same finger on this same tab:
       // once it is carrying the tab, it is not asking about it. See longpress.ts.
       ;(event.currentTarget as HTMLElement).dispatchEvent(new CustomEvent('nib-took-over'))
     }
-    follow()
+    carry?.follow(drag, paneId)
   }
 
   /** The tab just let go of stays over its neighbours for as long as it takes to
@@ -494,32 +460,6 @@
       if (settling === tabId) settling = null
     }, dur(210))
   }
-
-  /** A tab that was out over the panes and comes back to its strip slides home from
-   *  where it was let go, rather than appearing in its slot. */
-  function flyHome(tabId: string, from: { left: number; top: number }) {
-    requestAnimationFrame(() => {
-      const node = strip?.querySelector<HTMLElement>(`[data-box="${CSS.escape(tabId)}"]`)
-      const box = layout.boxes[tabId]
-      if (!node || !box) return
-
-      const rect = node.getBoundingClientRect()
-      const x = box.x * i18n.factor
-      node.animate(
-        [
-          {
-            transform: `translate(${x + from.left - rect.left}px, ${from.top - TOP - rect.top}px)`,
-          },
-          { transform: `translate(${x}px, 0)` },
-        ],
-        { duration: dur(210), easing: easeOut() },
-      )
-    })
-  }
-
-  /** The app's one easing, read from the stylesheet that owns it. */
-  const easeOut = () =>
-    getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() || 'ease-out'
 
   function released(event: PointerEvent) {
     if (!drag.pressing) return
@@ -555,6 +495,19 @@
     }
   }
 
+  /** A tab back from over the panes slides home from where it was let go; see
+   *  tab-strip/carrying.ts. */
+  function flyHome(tabId: string, from: { left: number; top: number }) {
+    carry?.flyHome(
+      () => [
+        strip?.querySelector<HTMLElement>(`[data-box="${CSS.escape(tabId)}"]`),
+        layout.boxes[tabId],
+      ],
+      from,
+      TOP,
+    )
+  }
+
   /** The drag given up - Escape, or a window that took the pointer away. Every tab
    *  goes back to where it was and nothing is written down. */
   function giveUp() {
@@ -582,7 +535,7 @@
 
   onDestroy(() => {
     if (drag.on) unfollow()
-    closing.letGo()
+    closing?.letGo()
   })
 
   /* ── Arriving and leaving ─────────────────────────────────────────
@@ -726,13 +679,6 @@
     void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
       node ? hovering.restOn(tab, node, Math.max(0, ...widths), focused) : hovering.leave(tab.id),
     )
-
-  /** Puts an element at the end of the page, where no strip can clip it and no
-   *  pane can draw over it: the tab carried over the panes. */
-  function portal(node: HTMLElement) {
-    document.body.appendChild(node)
-    return { destroy: () => node.remove() }
-  }
 </script>
 
 <!-- Escape gives up a drag. On the window because a tab carried under a pointer has
@@ -754,10 +700,8 @@
         disabled={!walking.canGoBack}
         onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
         use:middleOpens={(event) => workspace.goBack(walking.id, tabAsk(event))}
-        oncontextmenu={(event) =>
-          walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
-        use:longPress={(event) =>
-          walking.canGoBack && menu.show(event, trailMenu(walking), { title: t('Back') })}
+        oncontextmenu={(event) => showTrail(event, walking)}
+        use:longPress={(event) => showTrail(event, walking)}
       >
         <svg class="nib-mirror" viewBox="0 0 12 12"><path d="M7.5 2.5 4 6l3.5 3.5" /></svg>
       </button>
@@ -1045,21 +989,8 @@
   {/if}
 </div>
 
-<!-- The tab carried out over the panes: the tab itself, lifted off the strip, held
-     where it was grabbed. At the end of the page, so nothing clips it and nothing
-     is drawn over it; see `portal`. -->
-{#if chip && carriedTab}
-  <div
-    class="chip"
-    class:onbar={carriedTab.kind === 'web'}
-    use:portal
-    style:width="{chip.width}px"
-    style:transform="translate({chip.left}px, {chip.top}px)"
-    aria-hidden="true"
-  >
-    <TabMark tab={carriedTab} />
-    {#if !carriedTab.pinned}<span class="label">{carriedTab.shown}</span>{/if}
-  </div>
+{#if chip && carriedTab && Chip}
+  <Chip tab={carriedTab} {...chip} />
 {/if}
 
 <style>
@@ -1462,41 +1393,6 @@
     stroke: currentColor;
     stroke-width: 1.4;
     stroke-linecap: round;
-  }
-
-  /* The tab carried out over the panes: its body, lifted - rounded all round,
-     since it is off the bar it would have flared into, with the small shadow of a
-     thing held just above the page. */
-  .chip {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: var(--z-carried);
-    height: calc(var(--titlebar-height) - var(--tab-top, 5px));
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 8px;
-    overflow: hidden;
-    white-space: nowrap;
-    border-radius: var(--radius-md);
-    background: var(--bg);
-    color: var(--text-strong);
-    font-family: var(--font-ui);
-    font-size: var(--text-row);
-    box-shadow:
-      0 0 0 1px var(--line-strong),
-      var(--shadow-md);
-    pointer-events: none;
-    will-change: transform;
-  }
-
-  .chip.onbar {
-    background: var(--surface);
-  }
-
-  .chip .label {
-    margin: 0;
   }
 
   /* Where the pane has been, at the head of the strip. Quiet until there is
