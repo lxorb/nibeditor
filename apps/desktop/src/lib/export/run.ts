@@ -20,14 +20,8 @@ import {
   renderNote,
 } from '../export'
 import { t } from '../i18n.svelte'
-import {
-  DEFAULT_PAGE_SETUP,
-  pageSetupFor,
-  paperInches,
-  type PaperTwips,
-  paperTwips,
-  runningDate,
-} from '../page-setup'
+import { pageSetupFor, paperInches, type PaperTwips, paperTwips, runningDate } from '../page-setup'
+import { DEFAULT_PAGE_SETUP } from '../paper'
 import { invoke, isDesktop, isNative } from '../tauri'
 import { documentOf, picturesIn } from './document'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from './formats'

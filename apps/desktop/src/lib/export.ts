@@ -11,15 +11,8 @@ import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 import { paletteCss } from './highlight'
 import { mathCss } from './math-fonts'
-import {
-  DEFAULT_PAGE_SETUP,
-  type PageSetup,
-  type PaperInches,
-  pageCss,
-  pageSetupFor,
-  runningDate,
-  withRunningText,
-} from './page-setup'
+import { type PaperInches, pageCss, pageSetupFor, runningDate, withRunningText } from './page-setup'
+import { DEFAULT_PAGE_SETUP, type PageSetup } from './paper'
 import { assetPath, invoke, isDesktop, platform } from './tauri'
 import type { Scheme } from './theme.svelte'
 

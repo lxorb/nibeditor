@@ -1,13 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import {
-  DEFAULT_PAGE_SETUP,
-  fill,
-  length,
-  pageCss,
-  pageSetupFor,
-  paperInches,
-  withRunningText,
-} from './page-setup'
+import { fill, length, pageCss, pageSetupFor, paperInches, withRunningText } from './page-setup'
+import { DEFAULT_PAGE_SETUP } from './paper'
 
 const withMatter = (body: string) => `---\n${body}\n---\n\n# Note\n`
 

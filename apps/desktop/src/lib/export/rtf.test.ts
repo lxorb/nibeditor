@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { DEFAULT_PAGE_SETUP, paperTwips } from '../page-setup'
+import { paperTwips } from '../page-setup'
+import { DEFAULT_PAGE_SETUP } from '../paper'
 import { documentOf, type Doc } from './document'
 import type { Picture } from './pictures'
 import { toRtf } from './rtf'

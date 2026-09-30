@@ -1,13 +1,6 @@
 import { escapeAll } from '@nib/markdown/html'
 import { frontMatter, frontMatterValue } from '@nib/markdown'
-
-/** Paper the print dialog understands, in `@page size` spelling. */
-export const PAPER_SIZES = ['A3', 'A4', 'A5', 'Letter', 'Legal'] as const
-
-export const ORIENTATIONS = ['portrait', 'landscape'] as const
-
-type Paper = (typeof PAPER_SIZES)[number]
-type Orientation = (typeof ORIENTATIONS)[number]
+import { DEFAULT_PAGE_SETUP, type PageSetup, type Paper, PAPER_SIZES } from './paper'
 
 /** The units a stylesheet and a printer both understand, and how many of each
  *  make an inch. One list, so a unit cannot be accepted when a length is read
@@ -24,6 +17,7 @@ interface Length {
   unit: Unit
 }
 
+/** `DEFAULT_PAGE_SETUP`'s margin, pulled apart. */
 const DEFAULT_MARGIN: Length = { amount: '20', unit: 'mm' }
 
 function isUnit(value: string): value is Unit {
@@ -37,23 +31,6 @@ function parseLength(value: string): Length | null {
   if (amount === undefined) return null
 
   return { amount, unit: unit !== undefined && isUnit(unit) ? unit : DEFAULT_MARGIN.unit }
-}
-
-export interface PageSetup {
-  paper: Paper
-  orientation: Orientation
-  /** A CSS length, or a plain number read as millimetres. */
-  margin: string
-  header: string
-  footer: string
-}
-
-export const DEFAULT_PAGE_SETUP: PageSetup = {
-  paper: 'A4',
-  orientation: 'portrait',
-  margin: `${DEFAULT_MARGIN.amount}${DEFAULT_MARGIN.unit}`,
-  header: '',
-  footer: '',
 }
 
 /** A note can overrule the app's own settings through its front matter:

@@ -1,6 +1,7 @@
 import JSZip from 'jszip'
 import { beforeAll, describe, expect, test } from 'vitest'
-import { DEFAULT_PAGE_SETUP, paperTwips } from '../page-setup'
+import { paperTwips } from '../page-setup'
+import { DEFAULT_PAGE_SETUP } from '../paper'
 import { CORPUS, CORPUS_NAME } from './corpus'
 import { documentOf } from './document'
 import { toDocx } from './docx'

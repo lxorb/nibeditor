@@ -12,7 +12,8 @@
 
 import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
-import { DEFAULT_PAGE_SETUP, type PaperInches, pageSetupFor, paperInches } from '../page-setup'
+import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
+import { DEFAULT_PAGE_SETUP } from '../paper'
 import { invoke } from '../tauri'
 import { openTarget, renderOptions } from './context'
 

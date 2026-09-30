@@ -2,7 +2,7 @@ import { setSnippets } from '@nib/editor'
 import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
-import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './page-setup'
+import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
 import { isRecord, isString, keep, stored, storedText } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
 
