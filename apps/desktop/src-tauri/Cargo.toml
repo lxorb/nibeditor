@@ -125,6 +125,10 @@ keyring = { version = "3", default-features = false, features = [
 # Already in the lock file as something tauri builds with, so this adds nothing to
 # the build. Desktop only, because only a desktop has the endpoint.
 getrandom = "0.3"
+# What an agent's token is kept as: its SHA-256, so the file of grants is a list of
+# what each agent may do and not a way to be one. Already in the lock file as
+# something tauri builds with; see src/agents/grants.rs.
+sha2 = "0.10"
 # What a platform composites behind a window: Mica, Acrylic, vibrancy. Also already
 # in the lock file as something tauri builds with, and asked for here by name rather
 # than through tauri's own `set_effects` for one reason: that wrapper applies the
