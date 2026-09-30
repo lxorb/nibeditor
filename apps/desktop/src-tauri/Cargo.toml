@@ -180,6 +180,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
   "NSData",
   "NSDate",
   "NSDictionary",
+  "NSEnumerator",
   "NSError",
   "NSFileManager",
   "NSGeometry",
@@ -196,6 +197,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
 ] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
+  "block2",
   "objc2-core-foundation",
   "NSApplication",
   "NSBitmapImageRep",
