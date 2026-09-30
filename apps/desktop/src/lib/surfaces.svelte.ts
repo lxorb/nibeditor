@@ -223,6 +223,25 @@ export const promptSheet = latched(() => import('./PromptSheet.svelte'))
  *  front of that fetches it and opens it as it lands; see App.svelte. */
 export const paletteDoor = latched(() => import('./Palette.svelte'))
 
+/** The menu a right click or a long press opens, over whatever it was pressed on.
+ *  Nothing of it is on screen when the window opens, and the rows it shows are each
+ *  surface's own and already behind their own doors; see menu.svelte.ts. Latched and
+ *  asked for at the launch's last turn with the rows, so the first right click finds
+ *  it mounted and plays its way in; a press in front of that opens it as it lands. */
+export const contextMenu = latched(() => import('./ContextMenu.svelte'))
+
+/** The bar over a selection, and on a phone the strip over the keys. Nothing selects
+ *  anything before the first paint, so it is asked for at the launch's last turn, by
+ *  the first selection, or by a phone's keyboard coming up, whichever is first; see
+ *  App.svelte. */
+export const formatBar = latched(() => import('./FormatBar.svelte'))
+
+/** The sign-in sheet, which a window opens on only when somebody presses for it. */
+export const signInSheet = latched(() => import('./SignIn.svelte'))
+
+/** The one word a link owes whoever followed it, when it owes one; see joining.svelte.ts. */
+export const joinSheet = latched(() => import('./JoinSheet.svelte'))
+
 /** The held form of the new-tab chord: the state a hand is in between pressing Ctrl+T
  *  and letting go of Ctrl, which is Alt+Tab's shape applied to the dialog above. See
  *  new-kind-chord.ts.
@@ -312,6 +331,14 @@ export async function warmDoors(): Promise<void> {
     newKindDialog.ask(),
     paletteDoor.ask(),
     promptSheet.ask(),
+    // The menu a right click opens and the bar a selection brings up, which are the
+    // two things a pointer can ask for at any moment; and the sign-in and join
+    // sheets, which a single press or a followed link can. Mounted here so that each
+    // plays its way in the first time rather than arriving already open.
+    contextMenu.ask(),
+    formatBar.ask(),
+    signInSheet.ask(),
+    joinSheet.ask(),
     // The Undo toast, and the menu of a text field so the first right click in one
     // does not wait for it. Neither in the glasses' plugin, which is a phone's and
     // has no room left in its package; see even/bundle.test.ts.

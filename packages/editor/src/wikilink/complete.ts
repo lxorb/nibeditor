@@ -1,8 +1,8 @@
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
-import { Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@nib/markdown/links'
 import { label } from '../labels'
+import { blockNamer } from './block-namer'
 import {
   fuzzy,
   type LinkWrite,
@@ -48,14 +48,6 @@ import {
  *  through - and it arrives as `linkWriter`; see notes.ts and composer.ts in the
  *  app. On its own the editor writes the wikilink, which is that setting's own
  *  default. */
-
-/** Gives a block of another note a name and returns it, so a link can point at
- *  the block rather than at the note. Supplied by the app, which owns the file;
- *  on its own the editor offers only the blocks that are already named. */
-export const blockNamer = Facet.define<
-  (path: string, line: number) => Promise<string | null>,
-  (path: string, line: number) => Promise<string | null>
->({ combine: (values) => values[0] ?? (() => Promise.resolve(null)) })
 
 /** Where a row that was picked starts: at the `[[` that opened the link, so the
  *  whole link is rewritten rather than only the part after the brackets.

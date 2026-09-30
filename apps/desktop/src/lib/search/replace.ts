@@ -7,7 +7,8 @@
  *  edits, for the file. */
 
 import type { Change } from './apply'
-import { lineAt, lineStarts, type Span } from './match'
+import { lineAt, lineStarts } from './lines'
+import type { Span } from './match'
 
 export interface Edit {
   from: number

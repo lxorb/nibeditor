@@ -64,7 +64,7 @@ import {
   upperCase,
 } from './line-door'
 import { pastePlain } from './paste'
-import { runFenceAtCursor } from './run/run'
+import { runFenceAtCursor } from './run/door'
 import { redoEdit, undoEdit } from './shared'
 import { bindings, type BindingSpec } from './shortcuts'
 import { insertTableToEdit } from './table/keymap'

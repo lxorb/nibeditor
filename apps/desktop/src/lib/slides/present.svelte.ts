@@ -8,7 +8,7 @@
  *  Presenting is not a mode a note is left in: it belongs to the ten minutes
  *  somebody is talking, so nothing here is written down or shared. */
 
-import { isDeck } from '@nib/markdown/slides'
+import { isDeck } from '@nib/markdown/slide-breaks'
 import { currentWindow } from '../tauri'
 import { workspace } from '../workspace.svelte'
 

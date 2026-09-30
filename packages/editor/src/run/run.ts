@@ -1,8 +1,6 @@
-import { syntaxTree } from '@codemirror/language'
-import type { EditorState, StateEffect } from '@codemirror/state'
-import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
-import { fenceCode, fenceLanguage } from '../fence'
-import { enclosingNamed } from '../nodes'
+import type { StateEffect } from '@codemirror/state'
+import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import type { RunnableFence } from './door'
 import { addRunLines, closeRun, dropRun, openRun, runPanels } from './panel'
 import { parseRunMessage, runnerDocument } from './protocol'
 
@@ -21,37 +19,6 @@ const RUN_TIME_LIMIT = 10_000
  *  that is already fully loaded can take tens of seconds over it. Giving up
  *  earlier would report a timeout against code that never got to run. */
 const RUN_START_LIMIT = 45_000
-
-/** Fence languages the Run button appears on. Four spellings of the same
- *  language. `ts` is left out because nothing here compiles, and `node` because
- *  a note that says node means `require` and `fs`, which a browser sandbox
- *  cannot honestly offer. */
-const RUNNABLE = new Set(['js', 'javascript', 'mjs', 'cjs'])
-
-export function isRunnableLanguage(language: string): boolean {
-  return RUNNABLE.has(language.trim().toLowerCase())
-}
-
-export interface RunnableFence {
-  /** Start of the opening fence's line. */
-  from: number
-  /** End of the closing fence's line. */
-  to: number
-  code: string
-}
-
-/** The runnable fence the caret is in, if it is in one. Used by Ctrl+Enter;
- *  the Run button already knows which block it belongs to. */
-export function runnableFenceAt(state: EditorState, pos: number): RunnableFence | null {
-  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, -1), 'FencedCode')
-  if (!node || !isRunnableLanguage(fenceLanguage(state, node))) return null
-
-  return {
-    from: state.doc.lineAt(node.from).from,
-    to: state.doc.lineAt(Math.min(node.to, state.doc.length)).to,
-    code: fenceCode(state, node),
-  }
-}
 
 /** A sandbox on screen: the frame the code runs in, and what has to be undone
  *  when it goes. */
@@ -183,14 +150,6 @@ function teardown(run: number) {
   sandbox.frame.remove()
 }
 
-/** Ctrl+Enter, or Cmd+Enter: run the fence the caret is in. Gives the key back
- *  when the caret is somewhere else, so the default binding still works. */
-export function runFenceAtCursor(view: EditorView): boolean {
-  const fence = runnableFenceAt(view.state, view.state.selection.main.head)
-  if (!fence) return false
-  return runFence(view, fence)
-}
-
 /** Watches for a run losing its panel, and takes the sandbox down with it. A run
  *  that finished on its own keeps its sandbox until the time limit, so a promise
  *  it left pending still reaches the panel.
@@ -233,5 +192,6 @@ const runSandboxes = ViewPlugin.define((view) => ({
   },
 }))
 
-/** The panels and the sandboxes behind them. */
+/** The panels and the sandboxes behind them, which door.ts puts into every editor
+ *  that draws a Run button once the first one is pressed. */
 export const runExtension = [runPanels, runSandboxes]

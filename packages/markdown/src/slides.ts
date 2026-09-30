@@ -29,7 +29,7 @@
 
 import { Marked, type Token, type Tokens } from 'marked'
 import { blockMath, definitionList } from './blocks'
-import { closesFence, fenceMark } from './fences'
+import { BLANK, bodyStart, fenceChange, HORIZONTAL, lines, VERTICAL } from './slide-breaks'
 
 /** How a slide is laid out, read off what it holds rather than off an
  *  annotation nobody could open in another editor. */
@@ -52,11 +52,6 @@ export interface Slide {
   shape: SlideShape
 }
 
-/** A line of three or more hyphens, and nothing else on it. */
-const HORIZONTAL = /^-{3,}[ \t]*$/
-/** The same in asterisks, which is the break that goes downwards. */
-const VERTICAL = /^\*{3,}[ \t]*$/
-const BLANK = /^[ \t]*$/
 /** The line that hands the rest of the slide to the presenter. Both spellings,
  *  because reveal.js reads either. */
 const NOTES = /^notes?:[ \t]*/i
@@ -64,46 +59,6 @@ const HEADING = /^#{1,6}[ \t]/
 /** A slide that is one picture and nothing else: a markdown image, or the
  *  wikilink embed of one. */
 const PICTURE = /^!\[[^\]]*\]\([^)]*\)$|^!\[\[[^\]]+\]\]$/
-
-/** Front matter is metadata rather than a slide, and its two rules are not
- *  breaks. Answers where the note's body starts. */
-function bodyStart(source: string): number {
-  if (!source.startsWith('---')) return 0
-
-  const matter = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/.exec(source)
-  return matter ? matter[0].length : 0
-}
-
-interface Line {
-  from: number
-  to: number
-  text: string
-}
-
-/** Every line of `source` from `at`, with where each one sits. Walked with
- *  indexOf rather than split, so a long note is not copied into an array of
- *  strings only for the breaks to be counted. */
-function* lines(source: string, at: number): Generator<Line> {
-  for (let from = at; from <= source.length;) {
-    const end = source.indexOf('\n', from)
-    const to = end === -1 ? source.length : end
-    // The carriage return of a CRLF file belongs to the break, not to the line.
-    const text = source.slice(from, to).replace(/\r$/, '')
-
-    yield { from, to, text }
-    if (end === -1) return
-    from = end + 1
-  }
-}
-
-/** What a line does to the fence a scan is inside: the mark of the one it opens,
- *  null for the line that closes the one `open` holds, and undefined for every
- *  other line - a fence line inside a block that it does not close included, so
- *  everything between the two delimiters is left alone. See fences.ts. */
-function fenceChange(text: string, open: string | null): string | null | undefined {
-  if (open === null) return fenceMark(text) ?? undefined
-  return closesFence(text, open) ? null : undefined
-}
 
 /** Where the note breaks into slides: the offset each break's line starts at,
  *  and whether it goes along or down. */
@@ -272,54 +227,6 @@ export function deckOf(source: string): Slide[] {
   take(source.length, false)
 
   return slides
-}
-
-/** Whether the note is a deck: words, a break, and words after it.
- *
- *  The same answer as `deckOf(source).length > 1`, reached without rendering
- *  anything and without reading past the first slide, because it is asked of
- *  every note the editor shows. A rule with nothing above it opens the first
- *  slide and one with nothing below it ends the last, so neither on its own
- *  makes a note into a deck. */
-export function isDeck(source: string): boolean {
-  const start = bodyStart(source)
-  let fence: string | null = null
-  let blank = true
-  /** Whether anything has been written, and whether a break has been passed
-   *  with something written before it. */
-  let written = false
-  let broken = false
-
-  for (const line of lines(source, start)) {
-    const change = fenceChange(line.text, fence)
-    if (change !== undefined) {
-      fence = change
-      if (written && broken) return true
-      written = true
-      blank = false
-      continue
-    }
-
-    if (fence) {
-      blank = false
-      continue
-    }
-
-    if (blank && (HORIZONTAL.test(line.text) || VERTICAL.test(line.text))) {
-      if (written) broken = true
-      blank = false
-      continue
-    }
-
-    if (!BLANK.test(line.text)) {
-      if (broken) return true
-      written = true
-    }
-
-    blank = BLANK.test(line.text)
-  }
-
-  return false
 }
 
 /** Which slide the offset `at` falls in, so presenting can begin where the

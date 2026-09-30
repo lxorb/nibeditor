@@ -4,7 +4,8 @@ import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/
 import type { EditorView } from '@codemirror/view'
 import { describe, expect, test } from 'vitest'
 import { nibMarkdownExtensions } from '../markdown/extensions'
-import { blockNamer, wikilinkCompletions } from './complete'
+import { blockNamer } from './block-namer'
+import { wikilinkCompletions } from './complete'
 import {
   type LinkWrite,
   linkWriter,

@@ -105,7 +105,9 @@ export default new Proxy({}, { get: gone, apply: gone })
  *  built and tested on its own, and a build-time constant it cannot see would be a
  *  reference error in its own tests. */
 const NO_RUNNING = `
-export const runExtension = []
+export function runExtension() {
+  return []
+}
 export function runFenceAtCursor() {
   return false
 }
@@ -120,9 +122,11 @@ export function runFence() {
 }
 `
 
-/** The module the run extension lives in, by where it sits rather than by what
- *  asks for it: two files import it under two different relative names. */
-const RUNNER = 'packages/editor/src/run/run'
+/** The door the runner comes through, by where it sits rather than by what asks for
+ *  it: three files import it under two different relative names. The door and not the
+ *  runner, so the plugin's editor draws no Run button and never has a runner to fetch;
+ *  see run/door.ts in @nib/editor. */
+const RUNNER = 'packages/editor/src/run/door'
 
 /** The emoji table `node-emoji` reads, by the file it is in: emojilib's own entry.
  *
@@ -199,8 +203,8 @@ function withoutWhatTheGlassesCannotUse() {
     async resolveId(source: string, importer: string | undefined, options: object) {
       if (LEFT_OUT.has(source)) return absent
 
-      // Resolved first, because the runner is asked for as `./run/run` from one
-      // file and `../run/run` from another, and neither name says where it is.
+      // Resolved first, because the runner's door is asked for as `./run/door` from
+      // one file and `../run/door` from another, and neither name says where it is.
       const found = await (this as unknown as Resolver).resolve(source, importer, {
         ...options,
         skipSelf: true,

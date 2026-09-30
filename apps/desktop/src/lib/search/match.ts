@@ -16,6 +16,7 @@
 
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
+import { lineAt, lineStarts } from './lines'
 import { isEmpty, type Query, type Unit } from './query'
 import { tagsIn } from './tags'
 
@@ -82,23 +83,6 @@ export interface Hit {
   score?: number
 }
 
-/** The task a hit's line is, or null for a line that is not one: whether it is
- *  done, and the words after the marker with what matched moved along with them.
- *  What the Search panel and a query fence both draw a live box in front of. */
-export function taskOf(hit: Hit): { done: boolean; text: string; ranges: Range[] } | null {
-  const task = taskAt(hit.text)
-  if (!task) return null
-
-  return {
-    done: task.done,
-    text: hit.text.slice(task.marker),
-    ranges: hit.ranges
-      .map((range) => ({ from: range.from - task.marker, to: range.to - task.marker }))
-      .filter((range) => range.to > 0)
-      .map((range) => ({ from: Math.max(range.from, 0), to: range.to })),
-  }
-}
-
 /** How much of a matching line is worth showing. The Rust side cuts here too. */
 const LINE = 200
 
@@ -160,31 +144,6 @@ export function fold(text: string): string {
   }
 
   return out
-}
-
-/** Where every line of a note starts. Built once per note that has a hit. */
-export function lineStarts(body: string): number[] {
-  const starts = [0]
-  for (let at = body.indexOf('\n'); at !== -1; at = body.indexOf('\n', at + 1)) {
-    starts.push(at + 1)
-  }
-
-  return starts
-}
-
-/** Which line an offset is on. A search rather than a walk, because a replace
- *  asks it once per match and a note can be long. */
-export function lineAt(starts: readonly number[], offset: number): number {
-  let low = 0
-  let high = starts.length - 1
-
-  while (low < high) {
-    const middle = Math.ceil((low + high) / 2)
-    if ((starts[middle] ?? 0) <= offset) low = middle
-    else high = middle - 1
-  }
-
-  return low
 }
 
 /** Which tasks a unit asks for, and nothing for a unit that is not a task at all.

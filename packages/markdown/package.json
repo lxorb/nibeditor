@@ -32,6 +32,7 @@
     "./properties": "./src/properties.ts",
     "./property-edits": "./src/property-edits.ts",
     "./providers": "./src/providers.ts",
+    "./slide-breaks": "./src/slide-breaks.ts",
     "./slides": "./src/slides.ts",
     "./sources": "./src/sources.ts",
     "./tasks": "./src/tasks.ts",

@@ -53,11 +53,27 @@ const names = (files: readonly string[]) =>
   files.map((one) => one.split(/[\\/]/).pop() ?? one).sort()
 
 describe('what showing a note loads', () => {
-  test('the deck reader is four modules and the markdown lexer', () => {
+  test('the deck reader is five modules and the markdown lexer', () => {
     const { files, packages } = graphOf(resolve(MARKDOWN, 'slides.ts'))
 
     expect([...packages].sort()).toEqual(['marked'])
-    expect(names(files)).toEqual(['blocks.ts', 'fences.ts', 'slides.ts', 'starts.ts'])
+    expect(names(files)).toEqual([
+      'blocks.ts',
+      'fences.ts',
+      'slide-breaks.ts',
+      'slides.ts',
+      'starts.ts',
+    ])
+  })
+
+  /** And the question every note is asked needs none of it: whether a note is a deck
+   *  is a scan of its lines, and the lexer is for rendering the slides, which only a
+   *  deck being presented or exported does. */
+  test('while whether a note is a deck is a line scan and no lexer', () => {
+    const { files, packages } = graphOf(resolve(MARKDOWN, 'slide-breaks.ts'))
+
+    expect([...packages]).toEqual([])
+    expect(names(files)).toEqual(['fences.ts', 'slide-breaks.ts'])
   })
 
   test('and no formula engine, no chemistry pack and no emoji table', () => {

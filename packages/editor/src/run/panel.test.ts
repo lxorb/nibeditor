@@ -12,7 +12,7 @@ import {
   type RunPanel,
   runPanels,
 } from './panel'
-import { isRunnableLanguage, runnableFenceAt } from './run'
+import { isRunnableLanguage, runnableFenceAt } from './door'
 import { parsed } from '../../test/parsed'
 
 function state(doc: string) {

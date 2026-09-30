@@ -1,13 +1,8 @@
 import {
   type BlockKind,
   type BlockShape,
-  blocksFor,
-  blockTargets,
   clearFormatting,
-  deleteBlocks,
-  duplicateBlocks,
   type EditorView,
-  indentBlocks,
   type NoteJump,
   insertCodeFence,
   insertHorizontalRule,
@@ -16,8 +11,6 @@ import {
   calloutSign,
   insertTableToEdit,
   isSpellWord,
-  moveBlocks,
-  outdentBlocks,
   type StateCommand,
   toggleBulletList,
   toggleOrderedList,
@@ -25,17 +18,24 @@ import {
   toggleQuote,
   toggleWrap,
   type Transaction,
-  turnBlocksInto,
 } from '@nib/editor'
 import {
+  blocksFor,
+  blockTargets,
+  deleteBlocks,
   deletePicture,
+  duplicateBlocks,
   editLink,
+  indentBlocks,
   jumpAt,
   linkPartsAt,
+  moveBlocks,
+  outdentBlocks,
   pictureUrl,
   pressedPicture,
   removeLink,
   showPicture,
+  turnBlocksInto,
 } from '@nib/editor/menu'
 import { canTranscribe } from './ai/hears'
 import { copySelection, copyText, cutSelection } from './clipboard'
@@ -165,7 +165,7 @@ function blockEntries(
     { label: t('Duplicate'), run: () => duplicateBlocks(view, at) },
     {
       // A link to a block needs the block to have a name, and giving it one is a
-      // change to the note; see blockTarget in @nib/editor. A note nobody has
+      // change to the note; see blockTarget in @nib/editor/menu. A note nobody has
       // saved yet has no path and so nothing to point at: the row is there and
       // says it cannot happen, which is shorter than explaining why.
       //
@@ -285,7 +285,7 @@ function firstWords(text: string): string {
 /** Keeping this block in the bookmarks above the file list.
  *
  *  The same naming a link to it uses - a heading by its words, anything else by a
- *  name written into the note; see blockTarget in @nib/editor - so the row and
+ *  name written into the note; see blockTarget in @nib/editor/menu - so the row and
  *  the link point at the same thing and neither has a way of its own. */
 function blockBookmark(view: EditorView, at: number, path: string | null | undefined): MenuEntry[] {
   const root = workspace.activeSpace?.root

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import type { Token, Tokens } from 'marked'
 import { lexMarkdown } from './index'
-import { deckOf, isDeck, slideAt } from './slides'
+import { isDeck } from './slide-breaks'
+import { deckOf, slideAt } from './slides'
 
 /** The shown markdown of every slide, which is most of what a test asserts. */
 const shown = (source: string) => deckOf(source).map((slide) => slide.markdown)

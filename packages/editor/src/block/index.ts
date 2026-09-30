@@ -1,17 +1,7 @@
-/** What the app needs to know about blocks: which one a press landed in, and
- *  everything a menu row does to it - to one of them or to every one a selection
- *  lies across, which is the same list either way. */
+/** What the app needs to know about blocks before anything is pressed: which one a
+ *  position is in. Everything a menu row does to one - or to every one a selection
+ *  lies across, which is the same list either way - is in ./commands, and reaches the
+ *  app through `@nib/editor/menu` with the menu that offers it; see menu.ts. */
 
-export {
-  blocksFor,
-  blockTarget,
-  blockTargets,
-  deleteBlocks,
-  duplicateBlocks,
-  indentBlocks,
-  moveBlocks,
-  outdentBlocks,
-  turnBlocksInto,
-} from './commands'
 export type { BlockShape } from './shape'
 export { blockAt, type BlockKind, type BlockSpan } from './span'

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { lineAt, lineStarts, Matcher, type SearchNote } from './match'
+import { lineAt, lineStarts } from './lines'
+import { Matcher, type SearchNote } from './match'
 import { parseQuery } from './query'
 
 /** The twin of this file is the tests in query.rs: the same notes, the same

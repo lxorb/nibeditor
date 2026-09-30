@@ -24,7 +24,8 @@
  *  a note answers. The crate keeps the same space warm on a desktop, keyed by each
  *  file's stamp rather than by a message; see `warm` in search.rs. */
 
-import { fold, lineStarts, type SearchNote } from '../search/match'
+import { lineStarts } from '../search/lines'
+import { fold, type SearchNote } from '../search/match'
 import type { Warmth } from '../search/warmth'
 import { breathe } from '../breathe'
 import { isMarkdown, normalise, within } from './paths'

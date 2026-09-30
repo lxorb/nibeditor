@@ -20,7 +20,8 @@
 
 import { escapeAll } from '@nib/markdown/html'
 import { shownName } from './note-name'
-import { type Hit, taskOf } from './search/match'
+import type { Hit } from './search/match'
+import { taskOf } from './search/task'
 import { parseQuery } from './search/query'
 import { searchSpace } from './search/space'
 

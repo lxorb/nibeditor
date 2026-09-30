@@ -21,7 +21,7 @@ import { propertyChoices } from './live-preview/properties'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
-import { blockNamer } from './wikilink/complete'
+import { blockNamer } from './wikilink/block-namer'
 import { noteCarrier, noteDrops } from './wikilink/drop'
 import { type PreviewMount, previewEditor } from './wikilink/hover'
 import {

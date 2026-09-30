@@ -98,7 +98,8 @@ async function opened(device: 'phone' | 'tablet' = 'phone', right: string[] = []
   vi.doMock('./workspace.svelte', () => ({ workspace }))
   vi.doMock('./viewport.svelte', () => ({ viewport: { device } }))
 
-  const { drawer, followDrawers, rightDrawer } = await import('./drawer.svelte')
+  const { drawer, rightDrawer } = await import('./drawer.svelte')
+  const { followDrawers } = await import('./drawer-follow')
   const host = stage()
   const stop = followDrawers(host.element)
 

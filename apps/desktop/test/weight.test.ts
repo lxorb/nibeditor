@@ -115,9 +115,19 @@ function relativeFile(from: string, specifier: string): string | null {
 
 /** A static `import` or `export … from`, and a bare `import 'x'` for its side effects.
  *  A dynamic `import(…)` is a boundary by definition and is not matched: the whole
- *  question here is what runs before anything is drawn. */
+ *  question here is what runs before anything is drawn.
+ *
+ *  What stands between the keyword and the `from` may hold newlines, and for a long
+ *  time it could not: the class was `[^'"\n]*?`, so a statement prettier had wrapped
+ *  over several lines - which is every import of four names or more in this
+ *  repository - was not an import as far as this file was concerned, and neither was
+ *  anything it reached. On 2026-09-30 that was fifteen modules and 111,552 bytes in
+ *  front of the first paint that no budget below had ever seen, block/commands.ts
+ *  among them - a module the list further down says is behind a door. A quote is
+ *  still the barrier, so nothing runs on past the end of a statement: a specifier's
+ *  own quotes stop the class before it can reach the next statement's `from`. */
 const STATIC =
-  /(?:^|[\n;}])[^\S\n]*(?:import|export)\b[^'"\n]*?\bfrom\s*['"]([^'"]+)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"]([^'"]+)['"]/g
+  /(?:^|[\n;}])[^\S\n]*(?:import|export)\b[^'"]*?\bfrom\s*['"]([^'"]+)['"]|(?:^|[\n;}])[^\S\n]*import\s*['"]([^'"]+)['"]/g
 
 /** A comment, so a specifier written in prose is not read as an import. Every file in
  *  this repository is heavily commented and several of the comments name modules. */
@@ -515,9 +525,25 @@ function holds(tail: string): boolean {
  *  (schemes.ts). The production build preloads 1,338,577 bytes in 153 chunks against
  *  1,337,206 in 151: the door itself, and the bundler cutting the sheet's pull and the
  *  theme store out of the chunk they shared with the bin, since the picker asks for
- *  those two and not for it. */
-const BUDGET = 3_279_000
-const MOST_FILES = 376
+ *  those two and not for it.
+ *
+ *  Re-based 2026-09-30, and lowered while it was: the walk above had not been seeing
+ *  an import prettier wraps over several lines, so every figure in this comment was
+ *  short by whatever such imports reached. Counted whole, main measured 3,380,464
+ *  bytes over 388 files against a ceiling of 3,279,000 that it believed it was under
+ *  by ten kilobytes. Nine doors took it to 3,209,704 over 378, each for something no
+ *  window shows as it opens: the right-click menu, the bar over a selection, the
+ *  sign-in and join sheets (all mounted at the launch's last turn, see `warmDoors`), a
+ *  phone's drawer drag (drawer-follow.ts), a block's menu commands
+ *  (`@nib/editor/menu`), the Run button's sandbox (run/door.ts), the `[[` popup's rows
+ *  (behind the completion library's door already, once the facet every editor carries
+ *  was apart from them), the matcher behind a query fence's two helpers
+ *  (search/lines.ts, search/task.ts), and a deck's renderer behind the one question
+ *  every note is asked (slide-breaks.ts). The production build preloads 1,320,873
+ *  bytes in 162 chunks against 1,360,741 in 158. The ceiling is that plus one per
+ *  cent, as the note above says it should be. */
+const BUDGET = 3_242_000
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -800,6 +826,26 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-picker/ThemePicker.svelte', 'its sheet'],
     ['/lib/theme-picker/looks.ts', "its cards' colours"],
     ['/lib/schemes.ts', 'the names of the three schemes, which only the pickers say'],
+    // The 2026-09-30 round's, each of which the old walk could not see was here: the
+    // menus and sheets nothing opens before a press, mounted at the launch's last
+    // turn, and a phone's drag, which only a window whose panels are drawers ever
+    // makes. See surfaces.svelte.ts.
+    ['/lib/ContextMenu.svelte', 'the right-click menu'],
+    ['/lib/FormatBar.svelte', 'the bar over a selection'],
+    ['/lib/SignIn.svelte', 'the sign-in sheet'],
+    ['/lib/JoinSheet.svelte', 'the join sheet'],
+    ['/lib/drawer-follow.ts', "a drawer's drag"],
+    ['/lib/swipe.ts', "the drag's arithmetic"],
+    // The editor's: what a block's menu does to it, the Run button's sandbox and the
+    // `[[` popup's rows. See menu.ts, run/door.ts and wikilink/block-namer.ts.
+    ['/editor/src/block/commands.ts', "what a block's menu does"],
+    ['/editor/src/run/run.ts', "the Run button's sandbox"],
+    ['/editor/src/run/panel.ts', 'what it prints into'],
+    ['/editor/src/wikilink/complete.ts', 'the rows `[[` offers'],
+    // And the matcher behind a query fence, and a deck's renderer behind the question
+    // every note is asked. See search/task.ts and slide-breaks.ts.
+    ['/lib/search/match.ts', 'the matcher'],
+    ['/markdown/src/slides.ts', "a deck's renderer"],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -831,6 +877,11 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/ai/ask.ts', 'the stub behind an ai fence’s glyph'],
     ['/lib/mobile/bridge.ts', 'whether there is an activity at all'],
     ['/lib/shortcuts/preset-ids.ts', 'the names of the keyboards'],
+    ['/lib/drawer.svelte.ts', 'the drawers as the markup reads them'],
+    ['/editor/src/run/door.ts', 'the door the Run button knocks on'],
+    ['/editor/src/wikilink/block-namer.ts', 'the facet every editor is built with'],
+    ['/lib/search/task.ts', 'the task a query fence row is'],
+    ['/markdown/src/slide-breaks.ts', 'whether a note is a deck'],
   ])('while %s (%s) is', (tail) => {
     expect(holds(tail), tail).toBe(true)
   })

@@ -6,7 +6,7 @@ import { iconElement } from '../icon'
 import { fenceCodeAt } from '../fence'
 import { label as uiLabel } from '../labels'
 import { pressedByKey } from '../press'
-import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/run'
+import { isRunnableLanguage, runFence, runnableFenceAt } from '../run/door'
 import { isAiLanguage } from '../ai/block'
 import { aiFenceAt, askAiFence, stopAskAt } from '../ai/run'
 

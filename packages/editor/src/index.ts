@@ -89,21 +89,7 @@ export { pasteHere, pastePlain } from './paste'
 export { reformat, reformatDocument } from './reformat'
 export { CODE_PALETTES, type CodePalette, setCodeTheme } from './code-theme'
 export { DIAGRAM_LANGUAGES, diagramSvg, RENDERED_LANGUAGES } from './live-preview/render'
-export {
-  blockAt,
-  type BlockKind,
-  type BlockShape,
-  type BlockSpan,
-  blocksFor,
-  blockTarget,
-  blockTargets,
-  deleteBlocks,
-  duplicateBlocks,
-  indentBlocks,
-  moveBlocks,
-  outdentBlocks,
-  turnBlocksInto,
-} from './block'
+export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './block'
 export { landed } from './landing'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'

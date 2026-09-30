@@ -27,7 +27,7 @@
     setReadOnlyMode,
   } from '@nib/editor'
   import { untrack } from 'svelte'
-  import { isDeck } from '@nib/markdown/slides'
+  import { isDeck } from '@nib/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'

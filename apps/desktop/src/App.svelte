@@ -7,26 +7,23 @@
   import { closeOnBack } from './lib/backstack.svelte'
   import { takesCaret } from './lib/caret'
   import { EditorView, landed, setVimCommands, showLine, topLine } from '@nib/editor'
-  import ContextMenu from './lib/ContextMenu.svelte'
-  import FormatBar from './lib/FormatBar.svelte'
   import { iconChoice } from './lib/icon-choice.svelte'
   import { menu, textFieldOf } from './lib/menu.svelte'
   import { overlays } from './lib/overlays'
   import PaneTree from './lib/PaneTree.svelte'
   import Sidebar from './lib/Sidebar.svelte'
-  import JoinSheet from './lib/JoinSheet.svelte'
-  import SignIn from './lib/SignIn.svelte'
   import { present } from './lib/slides/present.svelte'
   import SizeBadge from './lib/SizeBadge.svelte'
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
   import { account } from './lib/account.svelte'
+  import { joining } from './lib/joining.svelte'
   import { arriving } from './lib/arriving.svelte'
   import { busy } from './lib/busy.svelte'
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
-  import { drawer, followDrawers, rightDrawer } from './lib/drawer.svelte'
+  import { drawer, rightDrawer } from './lib/drawer.svelte'
   import { fullscreen } from './lib/fullscreen.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -39,8 +36,11 @@
   import { prompt } from './lib/prompt.svelte'
   import { settings } from './lib/settings.svelte'
   import {
+    contextMenu,
+    formatBar as formatBarDoor,
     historySheet,
     iconPicker,
+    joinSheet,
     importSheet,
     newKindChord,
     newKindDialog,
@@ -51,6 +51,7 @@
     rewriteSheet,
     settingsSheet,
     shareSheet,
+    signInSheet,
     slidesStage,
     spaceChooserCard,
     menuBarDoor,
@@ -132,6 +133,12 @@
     if (settings.historyOpen) void historySheet.ask()
     if (share.open) void shareSheet.ask()
     if (iconChoice.target) void iconPicker.ask()
+    if (menu.open) void contextMenu.ask()
+    if (account.open) void signInSheet.ask()
+    if (joining.step) void joinSheet.ask()
+    // A phone's strip over the keys is up whenever the note is being written in,
+    // selection or none; see FormatBar.svelte.
+    if (viewport.touch && viewport.typing) void formatBarDoor.ask()
   })
 
   // Everything that has to happen as the app comes up; see start.ts.
@@ -186,11 +193,20 @@
   // Each pane applies the modes and the keys to its own editor as it builds it;
   // see Pane.svelte. What is left here is the formatting bar, which follows the
   // selection of whichever pane is being written in.
-  $effect(() => {
-    const bar = formatBar
-    if (!bar) return
+  //
+  // The bar is fetched rather than carried (see surfaces.svelte.ts), so a selection
+  // made before it has landed asks for it and is followed as it arrives.
+  async function followWhenLanded(current: EditorView) {
+    await formatBarDoor.ask()
+    await tick()
+    formatBar?.follow(current)
+  }
 
-    views.onSelection = (current: EditorView) => bar.follow(current)
+  $effect(() => {
+    views.onSelection = (current: EditorView) => {
+      if (formatBar) formatBar.follow(current)
+      else if (!current.state.selection.main.empty) void followWhenLanded(current)
+    }
     return () => {
       views.onSelection = null
     }
@@ -356,14 +372,25 @@
   $effect(() => fullscreen.watch(workspace.tabs.map((tab) => tab.id)))
 
   // Both drawers follow the finger, the way a phone app's do; see
-  // drawer.svelte.ts, which is one engine for the two edges. Only where the
+  // drawer-follow.ts, which is one engine for the two edges. Only where the
   // panels are a drawer: a tablet on its side keeps the sidebar open beside the
-  // note, and a column in the layout is not dragged.
+  // note, and a column in the layout is not dragged. Fetched rather than carried,
+  // for the same reason: a desktop never has a drawer to drag, and a phone's
+  // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
     if (!host || !viewport.drawer) return
 
-    return followDrawers(host)
+    let stop: (() => void) | null = null
+    let live = true
+    void import('./lib/drawer-follow').then((one) => {
+      if (live) stop = one.followDrawers(host)
+    })
+
+    return () => {
+      live = false
+      stop?.()
+    }
   })
 
   // Syncing only runs while there is an account behind it - and not before a
@@ -1040,9 +1067,17 @@
     <SpaceChooser />
   {/await}
 {/if}
-<SignIn />
+{#if signInSheet.asked}
+  {#await signInSheet.asked then SignIn}
+    <SignIn />
+  {/await}
+{/if}
 <!-- The one word a link owes whoever followed it, when it owes one. -->
-<JoinSheet />
+{#if joinSheet.asked}
+  {#await joinSheet.asked then JoinSheet}
+    <JoinSheet />
+  {/await}
+{/if}
 <!-- The sheets, each fetched the first time something opens it and kept mounted
      afterwards; the effect above says why, and surfaces.svelte.ts holds the doors.
      The largest of them is the settings sheet - the pane per section, the theme
@@ -1053,7 +1088,11 @@
     <SettingsPanel {view} />
   {/await}
 {/if}
-<FormatBar bind:this={formatBar} {view} context={appContext} />
+{#if formatBarDoor.asked}
+  {#await formatBarDoor.asked then FormatBar}
+    <FormatBar bind:this={formatBar} {view} context={appContext} />
+  {/await}
+{/if}
 {#if historySheet.asked}
   {#await historySheet.asked then History}
     <History bind:open={settings.historyOpen} />
@@ -1091,7 +1130,11 @@
     <NewKindSheet />
   {/await}
 {/if}
-<ContextMenu />
+{#if contextMenu.asked}
+  {#await contextMenu.asked then ContextMenu}
+    <ContextMenu />
+  {/await}
+{/if}
 <!-- Over everything, because everything that wears an icon asks the same sheet
      for one: a space in the switcher, a note in the file list. -->
 {#if iconPicker.asked}
