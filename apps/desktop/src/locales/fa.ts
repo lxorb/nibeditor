@@ -4,7 +4,6 @@ export const fa: Dictionary = {
   // Files and notes
   Save: 'ذخیره',
   'New note': 'یادداشت تازه',
-  'Open file': 'گشودن پرونده',
   'New note inside': 'یادداشت تازه در آن',
   'New canvas': 'بوم تازه',
   'New page note': 'یادداشت صفحه‌ای تازه',
@@ -820,8 +819,6 @@ export const fa: Dictionary = {
   'Always on top': 'همیشه رو',
   'What is new': 'تازه‌ها',
   'Report an issue': 'گزارش مشکل',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} روی دیسک تغییر کرد. آنچه در ویرایشگر است از شماست.',
   'Move the line up': 'جابه‌جایی خط به بالا',
   'Move the line down': 'جابه‌جایی خط به پایین',
   'Copy the line up': 'رونوشت خط به بالا',
@@ -1488,8 +1485,6 @@ export const fa: Dictionary = {
   'Show all': 'نمایش همه',
   'Quit {name}': 'خروج از {name}',
   'Bring all to front': 'آوردن همه به جلو',
-  'Open recent': 'باز کردن اخیر',
-  'Clear menu': 'پاک کردن منو',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

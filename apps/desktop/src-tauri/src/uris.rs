@@ -8,7 +8,7 @@
 //! window as an event. What a link *means* is the window's, which holds the
 //! spaces and the command registry; see apps/desktop/src/lib/automation.
 //!
-//! The same shape `launch` uses for the files a command line names, and for the
+//! The same shape `launch` uses for the pages a command line names, and for the
 //! same reason: a launch argument reaches the app before anything is listening,
 //! so it waits here until the window asks.
 
@@ -93,10 +93,9 @@ const SCHEME: &str = "nib:";
 /// The links as the window reads them: strings, and only `nib:` ones.
 ///
 /// Only those, because on a Mac the plugin hears everything the system asks the
-/// app to open, and a markdown file double-clicked in the Finder arrives as a
-/// `file://` address among them. That is a document, not a link: it takes the
-/// road every other file takes (see `hand_over` in launch.rs), and here it would
-/// only reach the window as a link that could not be followed.
+/// app to open: a web page once nib is the browser, which is the pages' road (see
+/// `hand_over` in launch.rs), and a `file://` address somebody forced on it, which
+/// nib opens nothing of. Neither is a link into the app.
 ///
 /// Written against anything that can say itself rather than against the URL type
 /// the plugin hands over, so this module has no opinion about which crate parsed
@@ -142,7 +141,7 @@ mod tests {
     }
 
     #[test]
-    fn leaves_a_file_the_finder_opened_to_the_files_road() {
+    fn a_file_the_finder_opened_is_no_link() {
         let urls = vec![
             "file:///Users/me/Notes/Idea.md".to_string(),
             "nib://open?path=Idea.md".to_string(),

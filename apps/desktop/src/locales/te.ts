@@ -4,7 +4,6 @@ export const te: Dictionary = {
   // Files and notes
   Save: 'సేవ్ చేయి',
   'New note': 'కొత్త నోట్',
-  'Open file': 'ఫైల్ తెరువు',
   'New note inside': 'ఇందులో కొత్త నోట్',
   'New canvas': 'కొత్త క్యాన్వాస్',
   'New page note': 'కొత్త పేజీ నోట్',
@@ -819,8 +818,6 @@ export const te: Dictionary = {
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
   'Report an issue': 'సమస్య తెలియజేయి',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} డిస్క్‌లో మారింది. ఎడిటర్‌లో ఉన్నది మీది.',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',
   'Copy the line up': 'పంక్తిని పైకి కాపీ చేయి',
@@ -1489,8 +1486,6 @@ export const te: Dictionary = {
   'Show all': 'అన్నీ చూపు',
   'Quit {name}': '{name} నుండి నిష్క్రమించు',
   'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
-  'Open recent': 'ఇటీవలివి తెరువు',
-  'Clear menu': 'మెనూను క్లియర్ చేయి',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

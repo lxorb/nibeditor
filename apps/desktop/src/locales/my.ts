@@ -4,7 +4,6 @@ export const my: Dictionary = {
   // Files and notes
   Save: 'သိမ်းဆည်း',
   'New note': 'မှတ်စုအသစ်',
-  'Open file': 'ဖိုင်ဖွင့်',
   'New note inside': 'အထဲတွင်မှတ်စုအသစ်',
   'New canvas': 'ကန်ဗတ်အသစ်',
   'New page note': 'စာမျက်နှာမှတ်စုအသစ်',
@@ -811,8 +810,6 @@ export const my: Dictionary = {
   'Always on top': 'အမြဲအပေါ်တွင်',
   'What is new': 'အသစ်ဘာရှိလဲ',
   'Report an issue': 'ပြဿနာတိုင်ပါ',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ဒစ်ခ်ပေါ်တွင် ပြောင်းသွားပြီ။ တည်းဖြတ်စက်ထဲရှိသည် သင့်ပိုင်ဖြစ်သည်။',
   'Move the line up': 'လိုင်းကို အထက်ရွှေ့ပါ',
   'Move the line down': 'လိုင်းကို အောက်ရွှေ့ပါ',
   'Copy the line up': 'လိုင်းကို အထက်ကူးပါ',
@@ -1474,8 +1471,6 @@ export const my: Dictionary = {
   'Show all': 'အားလုံးပြရန်',
   'Quit {name}': '{name} မှ ထွက်ရန်',
   'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
-  'Open recent': 'မကြာသေးမီကဟာကို ဖွင့်ရန်',
-  'Clear menu': 'မီနူးကို ရှင်းရန်',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

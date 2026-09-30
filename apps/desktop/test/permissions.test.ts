@@ -175,10 +175,9 @@ function desktopOnlyPlugins(): string[] {
 /** Exporting is the one feature that writes a file the reader named, and every
  *  byte of it goes through the app's own commands rather than through a plugin.
  *
- *  Not because the path is judged first: `paths::chosen` deliberately is not a
- *  bound - it checks that the string names a file at all and says so in its own
- *  doc, because a file worth editing is wherever it already is and the dialog is
- *  what chose it. What `notes::write_bytes` is for is the writing. It goes through
+ *  The path is judged first - `paths::chosen` lets a write past the spaces only
+ *  where the reader picked a file in the save dialog - but that is not the whole
+ *  of it. What `notes::write_bytes` is for is the writing. It goes through
  *  `write_file`, which makes the folders the path needs and then hands the bytes to
  *  `paths::write_atomically`: a hidden temp file beside the target, flushed, then
  *  renamed over it, so a crash halfway through can never truncate the file that was

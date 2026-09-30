@@ -41,21 +41,6 @@ vi.mock('../link-index.svelte', () => ({
   links: { noteSaved: () => undefined },
 }))
 
-/** What the watch on outside files was told: a write about to land, and one that did. */
-const watched: string[] = []
-vi.mock('../watch.svelte', () => ({
-  watch: {
-    beforeWrite: (path: string) => {
-      watched.push(`before ${path}`)
-      return Promise.resolve()
-    },
-    wrote: (path: string) => {
-      watched.push(`wrote ${path}`)
-      return Promise.resolve()
-    },
-  },
-}))
-
 const light = { status: 'off', lastError: null as string | null }
 vi.mock('../sync.svelte', () => ({ sync: Object.assign(light, { nudge: () => undefined }) }))
 
@@ -157,7 +142,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
       discarded.push(path)
       return Promise.resolve()
     },
-    outside: (at: string) => !at.startsWith(`${SPACE}/`),
   }
 
   const saving = new Saving(ws)
@@ -215,7 +199,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
 
 beforeEach(() => {
   sent.length = 0
-  watched.length = 0
   holding = null
   refusing.clear()
   light.status = 'off'
@@ -257,21 +240,6 @@ describe('what the pause after the typing writes', () => {
     }
 
     expect(written().length).toBeGreaterThanOrEqual(1)
-  })
-
-  /** Every document writes itself, wherever its file is: there is no Save for a
-   *  file from the computer to wait for either. */
-  test('and a file opened from the computer writes itself as well', async () => {
-    const { note, saving } = open('/elsewhere/a.md')
-
-    note.replace('# typed')
-    expect(saving.writing).toBe(true)
-    await saving.settled()
-
-    expect(written('/elsewhere/a.md')).toHaveLength(1)
-    // And the file is asked about on either side of the write, so what another
-    // program wrote meanwhile is kept as a version first; see watch.svelte.ts.
-    expect(watched).toEqual(['before /elsewhere/a.md', 'wrote /elsewhere/a.md'])
   })
 
   test('and keeps no version of its own: only the words as the sitting began', async () => {

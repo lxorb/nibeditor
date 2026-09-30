@@ -4,7 +4,6 @@ export const ps: Dictionary = {
   // Files and notes
   Save: 'خوندول',
   'New note': 'نوې يادښت',
-  'Open file': 'دوتنه پرانيستل',
   'New note inside': 'په دې کې نوې يادښت',
   'New canvas': 'نوی تخته',
   'New page note': 'نوې د مخونو يادښت',
@@ -817,8 +816,6 @@ export const ps: Dictionary = {
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
   'Report an issue': 'ستونزه راپور کول',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} پر ديسک بدله شوه. هغه چې په سمونګر کې دی ستاسو دی.',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',
   'Copy the line up': 'کرښه پورته لمېسل',
@@ -1489,8 +1486,6 @@ export const ps: Dictionary = {
   'Show all': 'ټول وښایه',
   'Quit {name}': 'له {name} څخه وځه',
   'Bring all to front': 'ټول مخې ته راوړه',
-  'Open recent': 'وروستي پرانیزه',
-  'Clear menu': 'مینو پاک کړه',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

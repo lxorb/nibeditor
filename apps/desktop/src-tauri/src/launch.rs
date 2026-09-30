@@ -1,31 +1,26 @@
 //! Starting up and opening windows: what the app is handed, and the extra windows
 //! someone asks for while it is running.
 //!
-//! Two kinds of thing are handed to the app, and both end here.
+//! What is handed to the app is web pages, because nib can be the browser: a link
+//! clicked in another program arrives on a command line, which is how Windows and Linux
+//! hand one over; as a second launch, which is the same thing reaching an app that is
+//! already open; and on a Mac as the system's own "open these"; see lifecycle.rs. Which
+//! of what arrived is a page is `web_handed.rs`.
 //!
-//! Notes. A file reaches the app three ways: a command line, which is how Windows and
-//! Linux open a note from the file manager; a second launch, which is the same thing
-//! reaching an app that is already open; and on a Mac, where the Finder never puts a
-//! document on a command line, the system's own "open these" - a double click, Open
-//! With, a note dropped on the Dock icon; see lifecycle.rs.
+//! Never a file. nib opens nothing from outside its spaces, so it claims no file type
+//! anywhere, and a path that reaches it all the same - an "Open with" the system still
+//! remembers, a note dropped on the Dock icon, a path typed after `nib` in a terminal -
+//! is nothing to open. A note is reached through the app itself, or through a `nib://`
+//! link, which names it inside a space; see uris.rs.
 //!
-//! And web pages, because nib can be the browser: a link clicked in another program
-//! arrives by the same three ways. Which of what arrived is a page is `web_handed.rs`;
-//! which window shows it is the same question as for a note, answered here the same
-//! way.
-//!
-//! Whichever kind, what arrives before a window can take it waits here until one
-//! asks, and what arrives after goes to the window in front, the way a second
-//! document double-clicked in the Finder lands in the window being worked in rather
-//! than in every window at once.
+//! What arrives before a window can take it waits here until one asks, and what arrives
+//! after goes to the window in front, the way a link clicked elsewhere lands in the
+//! browser window being worked in rather than in every window at once.
 
 use std::collections::HashSet;
-use std::path::Path;
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder};
-
-use crate::paths::is_markdown;
 
 /// Windows are labelled in the order they were opened, and a label is never
 /// reused: counting the open ones would hand out a label that a window closed
@@ -36,11 +31,10 @@ static WINDOWS: AtomicU32 = AtomicU32::new(0);
 /// The label of the window the app starts with.
 const MAIN: &str = "main";
 
-/// The two kinds of thing the system hands the app.
+/// The kinds of thing the system hands the app, which is one: a file is never among
+/// them (see the top of this file).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
-    /// Notes to open.
-    Files,
     /// Web pages to show in tabs of their own; see `web_handed.rs`.
     Pages,
 }
@@ -49,7 +43,6 @@ impl Handed {
     /// What a window is told when some arrive for it while it is running.
     fn event(self) -> &'static str {
         match self {
-            Self::Files => "nib://open-files",
             Self::Pages => "nib://open-pages",
         }
     }
@@ -63,7 +56,6 @@ pub struct Pending(Mutex<Waiting>);
 /// What `Pending` holds, behind one lock so it is always read together.
 #[derive(Default)]
 struct Waiting {
-    files: Road,
     pages: Road,
     /// Whether the launch has built its own window. Until it has, whatever finds no
     /// window waits for that one rather than opening another.
@@ -76,8 +68,7 @@ struct Road {
     /// For the next window that asks.
     waiting: Vec<String>,
     /// The windows whose page has asked, and so has its listener up: a window still
-    /// loading would drop an event on the floor. A set per kind, because a page
-    /// listens for pages later than for files - that listener is fetched after the
+    /// loading would drop an event on the floor. The listener is fetched after the
     /// first paint; see lib/web-tab/handed.ts.
     listening: HashSet<String>,
 }
@@ -85,7 +76,6 @@ struct Road {
 impl Waiting {
     fn road(&mut self, handed: Handed) -> &mut Road {
         match handed {
-            Handed::Files => &mut self.files,
             Handed::Pages => &mut self.pages,
         }
     }
@@ -112,15 +102,14 @@ impl Pending {
     /// until it says so.
     pub fn forget(&self, label: &str) {
         if let Ok(mut waiting) = self.0.lock() {
-            waiting.files.listening.remove(label);
             waiting.pages.listening.remove(label);
         }
     }
 
-    /// Whether a window's page is up: its files are the first thing it asks for, as
-    /// its launch begins; see start.ts.
+    /// Whether a window's page is up: its pages are the first thing it asks for once
+    /// its space has restored; see automation/start.ts.
     pub fn is_listening(&self, label: &str) -> bool {
-        self.hears(Handed::Files, label)
+        self.hears(Handed::Pages, label)
     }
 
     /// Whether a window is listening for this kind.
@@ -143,56 +132,18 @@ impl Pending {
     }
 }
 
-/// Picks the markdown paths out of a command line, ignoring flags and anything
-/// that is not a file the app can open.
-pub fn markdown_paths<I: IntoIterator<Item = String>>(args: I) -> Vec<String> {
-    markdown_files(
-        args.into_iter()
-            .skip(1)
-            .filter(|argument| !argument.starts_with('-')),
-    )
+/// What a command line hands the app: the pages it asks for, and nothing else. A path
+/// on it is no note to open; see the top of this file. And a launch Windows made for a
+/// link is about that one address, which `pages_in` reads whole; see `for_a_link` in
+/// `web_handed.rs`.
+pub fn handed_by(args: &[String]) -> Vec<String> {
+    crate::web_handed::pages_in(args)
 }
 
-/// The paths among these that are markdown files really there: not a folder
-/// named like a note, not a file of another kind, not a path to nothing.
-pub fn markdown_files<I: IntoIterator<Item = String>>(paths: I) -> Vec<String> {
-    paths
-        .into_iter()
-        .filter(|one| {
-            let path = Path::new(one);
-            path.is_file() && is_markdown(path)
-        })
-        .collect()
-}
-
-/// What a command line hands the app: the notes it names, and the pages it asks
-/// for. A launch Windows made for a link is about that link alone, so nothing else
-/// on it is read as a note; see `for_a_link` in `web_handed.rs`.
-pub fn handed_by(args: Vec<String>) -> (Vec<String>, Vec<String>) {
-    let pages = crate::web_handed::pages_in(&args);
-    let files = if crate::web_handed::for_a_link(&args) {
-        Vec::new()
-    } else {
-        markdown_paths(args)
-    };
-
-    (files, pages)
-}
-
-/// Handed to the window once it is ready; clearing them stops a reload from
-/// reopening the same files a second time. Asking is also how a window says it is
-/// listening for the files that arrive later, which is why the page listens first
-/// and asks second.
-#[tauri::command]
-pub fn take_startup_files(
-    window: tauri::Window,
-    pending: tauri::State<'_, Pending>,
-) -> Vec<String> {
-    pending.take(Handed::Files, window.label())
-}
-
-/// The same for web pages: the links the app was started for, and from now on the
-/// ones that arrive while it runs.
+/// Handed to the window once it is ready: the links the app was started for, and from
+/// now on the ones that arrive while it runs. Clearing them stops a reload from opening
+/// the same pages a second time. Asking is also how a window says it is listening, and
+/// that its page is up, which is why the page listens first and asks second.
 #[tauri::command]
 pub fn take_startup_pages(
     window: tauri::Window,
@@ -210,26 +161,20 @@ pub fn second_launch(app: &AppHandle, argv: Vec<String>, _cwd: String) {
         bring_forward(&window);
     }
 
-    let (files, pages) = handed_by(argv);
-    hand_over(app, Handed::Files, files);
-    hand_over(app, Handed::Pages, pages);
+    hand_over(app, Handed::Pages, handed_by(&argv));
 }
 
 /// What arrived for the app, from whichever way it came, opened in the window in
 /// front.
 ///
-/// What a Mac does with a document double-clicked in the Finder while its app is
-/// open (`TextEdit`, Typora, Obsidian), and what a browser does with a link clicked
-/// elsewhere (Chrome, Edge): one window takes it, and that window comes forward. When
+/// What a browser does with a link clicked elsewhere (Chrome, Edge): one window takes
+/// it, and that window comes forward. When
 /// no window is listening yet it waits for the first that asks, and when there is no
 /// window at all - a Mac app lives on in the Dock with every window closed - one is
 /// opened for it.
 pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
     if arrived.is_empty() {
         return;
-    }
-    if handed == Handed::Files {
-        crate::remember(app, &arrived);
     }
 
     let Some(pending) = app.try_state::<Pending>() else {
@@ -290,7 +235,7 @@ fn open_window(app: &AppHandle, label: &str) -> Result<(), String> {
     opened(window_builder(app, label))
 }
 
-/// A window because there was none - the Dock icon clicked, a file handed over with
+/// A window because there was none - the Dock icon clicked, a link handed over with
 /// nothing open - which is the first window again where that label is free, and
 /// then opens where the first window was left, the way a launch opens it; see
 /// placement.rs. Apart from `open_window`, because that is also a new window's, and
@@ -457,9 +402,7 @@ fn free_label(app: &AppHandle) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        handed_by, is_document_window, markdown_paths, receiver, Handed, Handover, Pending, Seen,
-    };
+    use super::{handed_by, is_document_window, receiver, Handed, Handover, Pending, Seen};
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
         Seen {
@@ -470,7 +413,7 @@ mod tests {
     }
 
     #[test]
-    fn files_go_to_the_window_in_front() {
+    fn pages_go_to_the_window_in_front() {
         let windows = [window("main", false, true), window("nib-2", true, true)];
         assert_eq!(receiver(&windows, true), Handover::To("nib-2".into()));
     }
@@ -486,8 +429,8 @@ mod tests {
 
     #[test]
     fn a_window_still_loading_is_not_handed_anything() {
-        // In front, but its page has not asked for its files yet: it would drop an
-        // event, so the files wait for it to ask instead.
+        // In front, but its page has not asked for its pages yet: it would drop an
+        // event, so the pages wait for it to ask instead.
         let windows = [window("main", true, false)];
         assert_eq!(receiver(&windows, true), Handover::Hold);
 
@@ -497,8 +440,8 @@ mod tests {
 
     #[test]
     fn with_no_window_at_all_one_is_opened_once_the_launch_is_through() {
-        // Before the launch has built its own, the files wait for that one: this is
-        // a Finder double click starting the app.
+        // Before the launch has built its own, the pages wait for that one: this is
+        // a link clicked elsewhere starting the app.
         assert_eq!(receiver(&[], false), Handover::Hold);
         // After, it is an app living on in the Dock with every window closed.
         assert_eq!(receiver(&[], true), Handover::HoldAndOpen);
@@ -515,67 +458,19 @@ mod tests {
     }
 
     #[test]
-    fn skips_the_executable_and_flags() {
-        let args = vec!["nib.exe".to_string(), "--debug".to_string()];
-        assert!(markdown_paths(args).is_empty());
-    }
-
-    #[test]
-    fn ignores_paths_that_are_not_files() {
-        let args = vec!["nib.exe".to_string(), "not-a-real-file.md".to_string()];
-        assert!(markdown_paths(args).is_empty());
-    }
-
-    #[test]
-    fn takes_the_markdown_files_that_are_really_there() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let note = dir.path().join("Idea.md");
-        let other = dir.path().join("notes.txt");
-        let folder = dir.path().join("Work.md");
-        std::fs::write(&note, "# Idea").expect("a note");
-        std::fs::write(&other, "plain").expect("a text file");
-        // A folder that happens to be named like a note is not a note.
-        std::fs::create_dir_all(&folder).expect("a folder");
-
-        let args = vec![
-            "nib.exe".to_string(),
-            note.to_string_lossy().to_string(),
-            other.to_string_lossy().to_string(),
-            folder.to_string_lossy().to_string(),
-        ];
-
-        assert_eq!(
-            markdown_paths(args),
-            vec![note.to_string_lossy().to_string()]
-        );
-    }
-
-    #[test]
-    fn the_extension_may_be_written_in_any_case() {
-        let dir = tempfile::tempdir().expect("a temp folder");
-        let note = dir.path().join("Idea.MARKDOWN");
-        std::fs::write(&note, "# Idea").expect("a note");
-
-        let args = vec!["nib.exe".to_string(), note.to_string_lossy().to_string()];
-        assert_eq!(markdown_paths(args).len(), 1);
-    }
-
-    #[test]
-    fn a_window_listens_for_pages_apart_from_files() {
+    fn a_window_is_up_once_it_has_asked_for_its_pages() {
         let pending = Pending::default();
         pending.hold(Handed::Pages, vec!["https://example.com/".into()]);
 
-        // The page asks for its files first, as its launch begins, and for its pages
-        // once that listener has been fetched: until then a page is held, not sent.
-        assert!(pending.take(Handed::Files, "main").is_empty());
-        assert!(pending.is_listening("main"));
-        assert!(!pending.hears(Handed::Pages, "main"));
+        // Until it asks, a page is held rather than sent, and the window is still
+        // coming up: a quit destroys it rather than asking it anything.
+        assert!(!pending.is_listening("main"));
 
         assert_eq!(
             pending.take(Handed::Pages, "main"),
             vec!["https://example.com/".to_owned()]
         );
-        assert!(pending.hears(Handed::Pages, "main"));
+        assert!(pending.is_listening("main"));
         // A reload asks again and follows nothing a second time.
         assert!(pending.take(Handed::Pages, "main").is_empty());
     }
@@ -583,38 +478,35 @@ mod tests {
     #[test]
     fn a_window_that_went_listens_for_nothing() {
         let pending = Pending::default();
-        pending.take(Handed::Files, "nib-2");
         pending.take(Handed::Pages, "nib-2");
 
         pending.forget("nib-2");
-        assert!(!pending.hears(Handed::Files, "nib-2"));
-        assert!(!pending.hears(Handed::Pages, "nib-2"));
+        assert!(!pending.is_listening("nib-2"));
     }
 
+    /// nib opens nothing from outside its spaces, so a path on a command line is no
+    /// note: not on its own, not beside a page, and not smuggled into a link's.
     #[test]
-    fn a_link_launch_hands_over_its_page_and_no_note() {
+    fn a_command_line_hands_over_pages_and_never_a_file() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let note = dir.path().join("Idea.md");
         std::fs::write(&note, "# Idea").expect("a note");
         let note = note.to_string_lossy().to_string();
 
-        // A note on an ordinary command line is a note, and a page beside it a page.
-        let (files, pages) = handed_by(vec![
-            "nib.exe".into(),
-            note.clone(),
-            "https://example.com".into(),
-        ]);
-        assert_eq!(files, vec![note.clone()]);
-        assert_eq!(pages, vec!["https://example.com/".to_owned()]);
+        assert!(handed_by(&["nib.exe".into(), note.clone()]).is_empty());
+        assert_eq!(
+            handed_by(&["nib.exe".into(), note.clone(), "https://example.com".into()]),
+            vec!["https://example.com/".to_owned()]
+        );
 
         // The same path smuggled into a link's command line is part of the address.
-        let (files, pages) = handed_by(vec![
+        let pages = handed_by(&[
             "nib.exe".into(),
             "--url".into(),
             "https://example.com/".into(),
             note,
         ]);
-        assert!(files.is_empty());
         assert_eq!(pages.len(), 1);
+        assert!(pages[0].starts_with("https://example.com/"));
     }
 }

@@ -206,10 +206,13 @@ Anything, and it becomes a note.
 The intent filters sit on `MainActivity` rather than on an activity of their own,
 which is what puts the app's own icon and name in the share sheet's row, and what
 makes the second share of the day arrive in the app that is already open -
-`singleTask`, and `onNewIntent`. Three filters: `SEND`, `SEND_MULTIPLE`, and
-`VIEW` for a `.md` or a `.txt` opened from a file manager, a download or a mail
-attachment, which used to be the one thing on this list that could not be done at
-all.
+`singleTask`, and `onNewIntent`. Two filters: `SEND` and `SEND_MULTIPLE`.
+
+Not `VIEW` for a file. A share is a copy into a space, the way Import is: bytes and a
+name arrive and a note is written. A `VIEW` filter for a `.md` is nib offering itself
+in a file manager's "Open with", and nib opens nothing from outside its spaces - so
+there is none, and the one `VIEW` left is the `nib://` link. A markdown file shared
+to nib still becomes a note under its own name.
 
 `*/*` on the share filters is deliberate. A note is where anything goes that
 somebody wants to keep a word about, Android only ever offers the row to somebody

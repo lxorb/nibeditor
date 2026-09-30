@@ -1,20 +1,16 @@
 import { expect, test, vi } from 'vitest'
 
-/** The recent list is two lists: the app's own, which the palette and File > Open
- *  Recent read, and the system's, which the Dock icon's menu reads. Opening a note
- *  puts it in both, so clearing has to take it out of both - otherwise Clear Menu
- *  empties the menu and the Dock goes on naming the notes. See recent.rs. */
-
-const asked: string[] = []
+/** The recent list is the app's own, which the palette reads. Nothing goes to the
+ *  system's any more - the taskbar's Jump List, the Dock icon's menu, Recent Items -
+ *  because a recent document there is a file handed back to nib from outside, and
+ *  nib opens nothing from outside its spaces. And a note an older nib opened from
+ *  elsewhere is not offered again. */
 
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   isDesktop: true,
   isNative: true,
-  invoke: async (command: string) => {
-    asked.push(command)
-    return undefined
-  },
+  invoke: async () => undefined,
 }))
 
 function memoryStorage(): Storage {
@@ -34,12 +30,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 
-test('clearing the recent list clears the system one too', () => {
+test('the recent list is the notes in a space', () => {
+  workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
+  workspace.device.remember('/downloads/Outside.md')
   workspace.device.remember('/space/One.md')
+
   expect(workspace.recent).toEqual(['/space/One.md'])
-
-  workspace.forgetRecent()
-
-  expect(workspace.recent).toEqual([])
-  expect(asked).toContain('forget_recent')
 })

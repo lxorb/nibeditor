@@ -29,8 +29,8 @@ function slashed(path: string): string {
 /** The folder a picture from `notePath` goes in, relative to the note's own
  *  folder. The empty string means the note's folder itself.
  *
- *  A note outside every space - a file opened from anywhere on the disk - has no
- *  space to keep an assets folder in, so it falls back to one of its own. */
+ *  A note no space holds has no space to keep an assets folder in, so it falls back
+ *  to one of its own. */
 export function attachmentFolder(
   choice: AttachmentFolder,
   notePath: string,

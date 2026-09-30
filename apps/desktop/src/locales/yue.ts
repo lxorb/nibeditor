@@ -4,7 +4,6 @@ export const yue: Dictionary = {
   // Files and notes
   Save: '儲存',
   'New note': '新增筆記',
-  'Open file': '開啟檔案',
   'New note inside': '喺入面新增筆記',
   'New canvas': '新增畫布',
   'New page note': '新增分頁筆記',
@@ -804,8 +803,6 @@ export const yue: Dictionary = {
   'Always on top': '永遠喺最上層',
   'What is new': '更新內容',
   'Report an issue': '報告問題',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name}喺硬盤上已更改。編輯器中嘅內容仲係你嘅。',
   'Move the line up': '呢行上移',
   'Move the line down': '呢行下移',
   'Copy the line up': '向上複製呢行',
@@ -1451,8 +1448,6 @@ export const yue: Dictionary = {
   'Show all': '全部顯示',
   'Quit {name}': '結束{name}',
   'Bring all to front': '全部擺到最前',
-  'Open recent': '打開最近用過嘅',
-  'Clear menu': '清除選單',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
   'Redo the last file change': '重做上一次檔案變更',

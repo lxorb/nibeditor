@@ -4,7 +4,6 @@ export const sw: Dictionary = {
   // Files and notes
   Save: 'Hifadhi',
   'New note': 'Dokezo jipya',
-  'Open file': 'Fungua faili',
   'New note inside': 'Dokezo jipya ndani',
   'New canvas': 'Turubai jipya',
   'New page note': 'Dokezo jipya la kurasa',
@@ -825,8 +824,6 @@ export const sw: Dictionary = {
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
   'Report an issue': 'Ripoti tatizo',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} imebadilika kwenye diski. Kilicho kwenye kihariri ni chako.',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',
   'Copy the line up': 'Nakili mstari juu',
@@ -1512,8 +1509,6 @@ export const sw: Dictionary = {
   'Show all': 'Onyesha zote',
   'Quit {name}': 'Ondoka {name}',
   'Bring all to front': 'Leta zote mbele',
-  'Open recent': 'Fungua za hivi karibuni',
-  'Clear menu': 'Futa menyu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

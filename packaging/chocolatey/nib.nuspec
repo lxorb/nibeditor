@@ -32,7 +32,6 @@ at [nibeditor.com](https://nibeditor.com).
 
 * Inline preview - the document is the preview, not a second pane
 * Plain Markdown files, no proprietary store
-* Markdown file associations (`.md`, `.markdown`, `.mdown`, `.mkd`)
 * CSS themes, dropped straight into the config folder
 * Automatic snapshots of every note before it is overwritten
 * Runs on Windows, macOS, Linux, and in the browser

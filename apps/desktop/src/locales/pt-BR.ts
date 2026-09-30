@@ -4,7 +4,6 @@ export const ptBR: Dictionary = {
   // Files and notes
   Save: 'Salvar',
   'New note': 'Nova nota',
-  'Open file': 'Abrir arquivo',
   'New note inside': 'Nova nota dentro',
   'New canvas': 'Novo quadro',
   'New page note': 'Nova nota de páginas',
@@ -830,8 +829,6 @@ export const ptBR: Dictionary = {
   'Always on top': 'Sempre na frente',
   'What is new': 'Novidades',
   'Report an issue': 'Relatar um problema',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} mudou no disco. O que está no editor é o que vale.',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
   'Copy the line up': 'Copiar a linha acima',
@@ -1516,8 +1513,6 @@ export const ptBR: Dictionary = {
   'Show all': 'Mostrar tudo',
   'Quit {name}': 'Encerrar {name}',
   'Bring all to front': 'Trazer tudo para a frente',
-  'Open recent': 'Abrir recente',
-  'Clear menu': 'Limpar menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
   'Redo the last file change': 'Refazer a última alteração de arquivo',

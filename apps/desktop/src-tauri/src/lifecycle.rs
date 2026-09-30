@@ -1,5 +1,5 @@
 //! What the app does when the system, rather than a window, asks something of it:
-//! a document to open, the Dock icon clicked, the app asked to quit.
+//! a link to open, the Dock icon clicked, the app asked to quit.
 //!
 //! A Mac is a document app's platform in a way the other two are not, and every
 //! answer here follows the Mac apps a reader already knows. The app stays in the
@@ -48,24 +48,17 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
 /// `App::run` in lib.rs.
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
-        // The Finder handing over documents: a double click, Open With, a file
-        // dropped on the Dock icon. A Mac never puts them on the command line.
-        // `nib://` links arrive here too, and are the deep-link plugin's; see uris.rs.
+        // A link clicked in another program, once nib is the browser: a Mac never
+        // puts one on the command line. `nib://` links arrive here too, and are the
+        // deep-link plugin's; see uris.rs. A document the Finder hands over is among
+        // them only if somebody forced it on nib - no file type is declared - and it
+        // is nothing to open; see launch.rs.
         #[cfg(target_os = "macos")]
-        RunEvent::Opened { urls } => {
-            let paths = urls
-                .iter()
-                .filter(|url| url.scheme() == "file")
-                .filter_map(|url| url.to_file_path().ok())
-                .map(|path| path.to_string_lossy().into_owned());
-            launch::hand_over(app, launch::Handed::Files, launch::markdown_files(paths));
-            // And a link clicked in another program, once nib is the browser.
-            launch::hand_over(
-                app,
-                launch::Handed::Pages,
-                crate::web_handed::pages_among(&urls),
-            );
-        }
+        RunEvent::Opened { urls } => launch::hand_over(
+            app,
+            launch::Handed::Pages,
+            crate::web_handed::pages_among(&urls),
+        ),
 
         // Once there is an application delegate to teach: tao sets it as the loop
         // is built, and this is the loop's first event.

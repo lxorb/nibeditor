@@ -101,8 +101,8 @@ export function drawFile(card: HTMLElement, file: Drawn): () => void {
  *
  *  The reading view's own way in. It has no widgets to hang anything off, only the
  *  HTML the renderer just handed it, so the cards are found on the page and read
- *  for what they say. A page with no space behind it - a note opened from outside
- *  one - draws nothing, because there is nowhere to read a file from. */
+ *  for what they say. A page with no space behind it draws nothing, because there
+ *  is nowhere to read a file from. */
 export function inlineFiles(surface: HTMLElement, root: string | null): () => void {
   if (root === null) return () => undefined
 

@@ -4,7 +4,6 @@ export const th: Dictionary = {
   // Files and notes
   Save: 'บันทึก',
   'New note': 'โน้ตใหม่',
-  'Open file': 'เปิดไฟล์',
   'New note inside': 'สร้างโน้ตข้างใน',
   'New canvas': 'แคนวาสใหม่',
   'New page note': 'โน้ตแบบหน้าใหม่',
@@ -807,8 +806,6 @@ export const th: Dictionary = {
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
   'Report an issue': 'แจ้งปัญหา',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} เปลี่ยนบนดิสก์ สิ่งที่อยู่ในตัวแก้ไขเป็นของคุณ',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',
   'Copy the line up': 'คัดลอกบรรทัดขึ้น',
@@ -1456,8 +1453,6 @@ export const th: Dictionary = {
   'Show all': 'แสดงทั้งหมด',
   'Quit {name}': 'ออกจาก {name}',
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
-  'Open recent': 'เปิดรายการล่าสุด',
-  'Clear menu': 'ล้างเมนู',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

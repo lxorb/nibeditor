@@ -252,9 +252,8 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Auto-save, where it is not an option but the way every document works: a
       note, a canvas and a page note are written a moment after they change, a new
       tab becomes a file on its first word, and there is no Save to press
-- [x] A file opened from outside every space is watched: it reloads quietly when
-      another program writes it, and when its words are about to go over a change
-      another program made, that change is kept as a version first
+- [ ] ~~A file opened from outside every space is watched~~ - nib opens nothing
+      from outside its spaces (Emil, 2026-09-30), so there is nothing to watch
 - [x] The line endings a file already had are the ones it is written back with
 - [x] Version history and recovery
 
@@ -436,9 +435,13 @@ Still pandoc's, and offered only where pandoc is installed:
 ## 16. System integration
 
 - [x] Multiple windows, and a window that stays over every other application
-- [x] Open from shell / CLI with arguments
-- [x] File association for `.md`
-- [x] Taskbar Jump List - opened notes go to the shell's own recent documents
+- [x] Open from the shell: `nib://` links and the `nib` command, which name a note
+      inside a space. A path on the command line is not read (Emil, 2026-09-30:
+      nib opens nothing from outside its spaces)
+- [ ] ~~File association for `.md`~~ - taken away on purpose, and an install over an
+      older nib removes the one it wrote
+- [ ] ~~Taskbar Jump List~~ - a recent document there is a file handed back from
+      outside; the palette keeps the notes opened lately
 - [x] Application logs
 - [x] UI translations (English, German, Swiss German, French, Japanese; falls
       back to English)
@@ -455,8 +458,8 @@ Still pandoc's, and offered only where pandoc is installed:
       already takes, so a name steps aside rather than overwriting and the lot is
       one undo. Where a note is open and the share is words and pictures, the
       same small sheet the app asks every question with asks whether it goes
-      there instead, and the words land at the caret. A `.md` opened from a file
-      manager or a mail attachment comes in the same way
+      there instead, and the words land at the caret. A shared `.md` comes in the
+      same way; nib is in no file manager's "Open with"
 - [x] Quick settings tiles on Android - New note, Search, and Record for the
       recorder, each carrying the id of a row in the app's own command registry
       and nothing else, so a tile cannot drift from the row it is named after.

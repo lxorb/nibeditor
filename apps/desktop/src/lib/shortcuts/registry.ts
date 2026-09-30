@@ -320,16 +320,6 @@ const APP_ENTRIES: Shortcut[] = [
     desktop: true,
   },
   {
-    id: 'app.open',
-    label: () => t('Open file'),
-    category: 'file',
-    scope: 'app',
-    key: 'Mod-o',
-    // Fetched by the press, and already here by then: the command list holds it, and
-    // the app menu's rows bring that as the launch ends; see `warmDoors`.
-    run: () => void import('../open-file').then(({ openFile }) => openFile()),
-  },
-  {
     id: 'app.close',
     label: () => t('Close note'),
     category: 'file',
@@ -642,6 +632,19 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'view',
     scope: 'app',
     key: 'Mod-p',
+    run: (context) => context.palette(),
+  },
+  // Ctrl+O as well, which is what a hand reaches for to open something, and what is
+  // there to open is a note: nib opens nothing from outside its spaces. Obsidian's
+  // Ctrl+O is its quick switcher, which is this palette on the notes, so the key
+  // lands where a vault app's hand expects it. It was Open file, which is gone.
+  {
+    id: 'app.palette.alt',
+    label: () => t('Command palette'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-o',
+    alias: true,
     run: (context) => context.palette(),
   },
   // The same palette, opened on the commands: the field arrives holding `>` with the

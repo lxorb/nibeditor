@@ -78,9 +78,6 @@ export interface Writes {
   /** A note born this sitting that ended up with nothing in it, gone again as its
    *  last tab closes; see `closed`. */
   discard(path: string): Promise<void>
-  /** Whether a file is outside every space: the reader's own file, which something
-   *  else may be writing too. See watch.svelte.ts. */
-  outside(path: string): boolean
 }
 
 export class Saving {
@@ -478,13 +475,6 @@ export class Saving {
       await invoke('snapshot_note', { path, content: before }).catch(() => undefined)
     }
 
-    // The reader's own file, which something else may have written since: what it
-    // says now is kept as a version before these words replace it.
-    if (this.ws.outside(path)) {
-      const { watch } = await import('../watch.svelte')
-      await watch.beforeWrite(path, content)
-    }
-
     // The document moved on to another note while this write was being got ready.
     // Refused rather than written: these words are that other note's, and this path
     // is not theirs to go to.
@@ -509,11 +499,6 @@ export class Saving {
       const { settings } = await import('../settings.svelte')
       const { theme } = await import('../theme.svelte')
       await Promise.all([settings.loadSnippets(), theme.reload()])
-    }
-
-    if (this.ws.outside(path)) {
-      const { watch } = await import('../watch.svelte')
-      await watch.wrote(path)
     }
 
     // A file that is new is a row the list has not read yet; one written over is

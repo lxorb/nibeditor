@@ -122,7 +122,7 @@ pub async fn print_pdf(
     }
     // Wherever the reader chose to save it, judged the way every writer of such a
     // choice judges it; see `chosen`.
-    let output = chosen(&output)?.to_string_lossy().into_owned();
+    let output = chosen(&app, &output)?.to_string_lossy().into_owned();
 
     in_hidden_window(&app, html, PATIENCE, move |webview, done| {
         printer::print(webview, &output, &page, done)

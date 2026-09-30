@@ -4,7 +4,6 @@ export const ta: Dictionary = {
   // Files and notes
   Save: 'சேமி',
   'New note': 'புதிய குறிப்பு',
-  'Open file': 'கோப்பைத் திற',
   'New note inside': 'இதனுள் புதிய குறிப்பு',
   'New canvas': 'புதிய கேன்வாஸ்',
   'New page note': 'புதிய பக்கக் குறிப்பு',
@@ -828,8 +827,6 @@ export const ta: Dictionary = {
   'Always on top': 'எப்போதும் மேலே',
   'What is new': 'புதியது என்ன',
   'Report an issue': 'சிக்கலைத் தெரிவி',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} வட்டில் மாறியது. எடிட்டரில் உள்ளது உங்களுடையது.',
   'Move the line up': 'வரியை மேலே நகர்த்து',
   'Move the line down': 'வரியை கீழே நகர்த்து',
   'Copy the line up': 'வரியை மேலே நகலெடு',
@@ -1510,8 +1507,6 @@ export const ta: Dictionary = {
   'Show all': 'அனைத்தையும் காட்டு',
   'Quit {name}': '{name} இலிருந்து வெளியேறு',
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
-  'Open recent': 'சமீபத்தியதைத் திற',
-  'Clear menu': 'மெனுவை அழி',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

@@ -262,7 +262,7 @@ describe('the Obsidian keyboard', () => {
 
     expect(keys['app.palette']).toBe('Mod-o')
     expect(keys['app.commands.alt']).toBe('Mod-p')
-    expect(keys['app.open']).toBeNull()
+    expect(keys['app.palette.alt']).toBeNull()
     expect(registry.BY_ID.get('app.commands.alt')?.alias).toBe(true)
   })
 

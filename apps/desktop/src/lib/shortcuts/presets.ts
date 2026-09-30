@@ -39,12 +39,12 @@ export interface Preset {
  *  Nib's palette is both of Obsidian's, and here it answers on both of their keys:
  *  Ctrl+O opens it on the notes, which is the quick switcher, and Ctrl+P on the
  *  commands, which is the command palette. Ctrl+Shift+P stays the commands as well,
- *  where every editor has them. Open file is left with no key, since Obsidian opens
- *  nothing from outside its vault. */
+ *  where every editor has them. Ctrl+O is the palette's own key here rather than its
+ *  second one, so the menus name it. */
 const OBSIDIAN: KeyOverrides = {
   'app.palette': 'Mod-o',
+  'app.palette.alt': null,
   'app.commands.alt': 'Mod-p',
-  'app.open': null,
   'pane.split-right': 'Mod-\\',
   'pane.split-down': 'Mod-Shift-\\',
   // Ctrl+\ is the split, and Obsidian has nothing that clears formatting.
