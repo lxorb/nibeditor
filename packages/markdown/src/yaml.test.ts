@@ -19,6 +19,21 @@ describe('a quoted value', () => {
     expect(unquoted('  plain  ')).toBe('plain')
     expect(unquoted('""')).toBe('')
   })
+
+  test('reads its escapes the way YAML does', () => {
+    // Doubled inside single quotes, backslashed inside double ones, and nothing at
+    // all in a plain value.
+    expect(unquoted("'It''s'")).toBe("It's")
+    expect(unquoted('"say \\"hi\\""')).toBe('say "hi"')
+    expect(unquoted('"a\\\\b"')).toBe('a\\b')
+    expect(unquoted("It''s")).toBe("It''s")
+  })
+
+  test('and keeps a backslash no escape reads, rather than failing', () => {
+    // Written by hand, a Windows path in double quotes: YAML itself refuses `\U`,
+    // and the characters are a better answer than nothing.
+    expect(unquoted('"C:\\Users\\me"')).toBe('C:\\Users\\me')
+  })
 })
 
 describe('a flow sequence', () => {
@@ -37,6 +52,45 @@ describe('a flow sequence', () => {
     expect(flowItems('one, two')).toBeNull()
     expect(flowItems('[one')).toBeNull()
     expect(flowItems('')).toBeNull()
+  })
+
+  test('a comma inside quotes is part of the item, in either quotes', () => {
+    // What `flowItem` writes for a value holding a comma, and what Obsidian and
+    // every YAML reader read as one item: this came back as three.
+    expect(flowItems(`["a, b", c]`)).toEqual(['a, b', 'c'])
+    expect(flowItems(`['a, b', c]`)).toEqual(['a, b', 'c'])
+    expect(flowItems(`[c, 'one, two, three']`)).toEqual(['c', 'one, two, three'])
+  })
+
+  test('and so is a bracket, and a quote of the other kind', () => {
+    expect(flowItems(`['[x]', "it's, here"]`)).toEqual(['[x]', "it's, here"])
+    expect(flowItems(`["say \\"hi, there\\"", b]`)).toEqual(['say "hi, there"', 'b'])
+    expect(flowItems(`['It''s, here', b]`)).toEqual(["It's, here", 'b'])
+  })
+
+  test('a quote in the middle of a plain item is only a character', () => {
+    expect(flowItems(`[a "b, c]`)).toEqual(['a "b', 'c'])
+    expect(flowItems(`[it's, fine]`)).toEqual(["it's", 'fine'])
+  })
+
+  test('a quote that never closes holds to the end rather than losing the rest', () => {
+    expect(flowItems(`["a, b]`)).toEqual(['"a, b'])
+  })
+
+  test('comes back as what the writer put in, whatever the value holds', () => {
+    const values = [
+      'a, b',
+      "It's, here",
+      'say "hi", then',
+      `both ' and ", and a comma`,
+      '[x], {y}',
+      'plain',
+      'yes',
+      '# hash, too',
+    ]
+    const written = `[${values.map(flowItem).join(', ')}]`
+
+    expect(flowItems(written)).toEqual(values)
   })
 })
 

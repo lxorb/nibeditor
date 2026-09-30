@@ -114,6 +114,25 @@ describe('a list', () => {
     expect(withoutItem(tags!, 'three')).toBeNull()
   })
 
+  test('a chip holding a comma stays one chip through every edit after it', () => {
+    // The rows read `["a, b", c]` as three chips once, and the next chip taken off
+    // wrote the three back: the note lost the value it had been given.
+    const quoted = '---\ntags: ["a, b", c]\n---\n\nWords.\n'
+    const tags = readProperties(quoted)?.find((one) => one.key === 'tags')
+    expect(tags?.items).toEqual(['a, b', 'c'])
+
+    // Asserted on the line above.
+    const written = applied(quoted, writeList(quoted, 'tags', withoutItem(tags!, 'c') ?? []))
+    expect(written).toBe("---\ntags: ['a, b']\n---\n\nWords.\n")
+    expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['a, b'])
+
+    const again = applied(written, writeList(written, 'tags', ['a, b', "It's, here"]))
+    expect(readProperties(again)?.find((one) => one.key === 'tags')?.items).toEqual([
+      'a, b',
+      "It's, here",
+    ])
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 

@@ -9,9 +9,9 @@
  *
  *  The writing is here for the same reason, and it is aimed at the reading above
  *  it: an import and a clipped page both write a block, and each had quoted values
- *  its own way. One wrote `'It''s'`, which is YAML and which `unquoted` hands back
+ *  its own way. One wrote `'It''s'`, which is YAML and which `unquoted` handed back
  *  with the doubling still in it; the other wrote `"say \"hi\""`, which is YAML and
- *  which comes back with the backslashes. So the quotes here are chosen by what is
+ *  which came back with the backslashes. So the quotes here are chosen by what is
  *  in the value: none where none are needed, single where the value has no
  *  apostrophe of its own, and double - escaped the way JSON escapes - only where it
  *  has. What is written then reads back as what was written, both here and in
@@ -23,11 +23,23 @@
 /** Quotes around a whole value, which YAML reads as one string. */
 const QUOTED = /^(["'])([\s\S]*)\1$/
 
-/** A value with the quotes YAML would take off taken off, and the blanks around
- *  it gone. */
+/** A value with the quotes YAML would take off taken off, its escapes read - a
+ *  doubled apostrophe, JSON's backslashes - and the blanks around it gone. A
+ *  backslash JSON cannot read keeps its characters rather than losing the value. */
 export function unquoted(value: string): string {
   const trimmed = value.trim()
-  return QUOTED.exec(trimmed)?.[2] ?? trimmed
+  const found = QUOTED.exec(trimmed)
+  if (!found) return trimmed
+
+  const [, quote, inside = ''] = found
+  if (quote === "'") return inside.replaceAll("''", "'")
+
+  try {
+    const read: unknown = JSON.parse(trimmed)
+    return typeof read === 'string' ? read : inside
+  } catch {
+    return inside
+  }
 }
 
 /** A flow sequence: `[a, b, c]`, and `[]` for a list of nothing. */
@@ -39,7 +51,42 @@ export function flowItems(value: string): string[] | null {
   if (!found) return null
 
   const inside = (found[1] ?? '').trim()
-  return inside === '' ? [] : inside.split(',').map(unquoted)
+  return inside === '' ? [] : members(inside).map(unquoted)
+}
+
+/** A flow sequence's inside, cut at the commas outside quotes: `flowItem` quotes a
+ *  value because it holds a comma, and `["a, b", c]` is two. A quote opens only
+ *  where a member starts, as in YAML, and one that never closes runs to the end. */
+function members(inside: string): string[] {
+  const out: string[] = []
+  let start = 0
+  let quote: string | null = null
+
+  for (let at = 0; at < inside.length; at++) {
+    const char = inside.charAt(at)
+
+    if (quote === '"') {
+      if (char === '\\') at++
+      else if (char === '"') quote = null
+      continue
+    }
+
+    if (quote === "'") {
+      if (char === "'" && inside.charAt(at + 1) === "'") at++
+      else if (char === "'") quote = null
+      continue
+    }
+
+    if (char === ',') {
+      out.push(inside.slice(start, at))
+      start = at + 1
+    } else if ((char === '"' || char === "'") && inside.slice(start, at).trim() === '') {
+      quote = char
+    }
+  }
+
+  out.push(inside.slice(start))
+  return out
 }
 
 /** A `- item` line, however far it is indented: YAML lets the list under a key
