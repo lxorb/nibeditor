@@ -47,20 +47,41 @@ describe('the referrer a frame sends', () => {
 })
 
 describe('the document a block of the note’s own HTML runs in', () => {
-  test('carries the block, and the one script that says how tall it turned out', () => {
-    const made = htmlFrameDocument('<div id="dial"></div>\n<script>run()</script>')
-    expect(made).toContain('<div id="dial"></div>')
-    expect(made).toContain('<script>run()</script>')
-    // The reporter last, so a block whose own script throws still says how much
-    // room it needs, and a block ending in a script has already run.
-    expect(made.indexOf('nib-html-frame')).toBeGreaterThan(made.indexOf('<div id="dial">'))
+  const SCRIPT = 'window.ranTheFrameScript = true'
+
+  test('carries the block as data, and runs nothing inline', () => {
+    const made = htmlFrameDocument('<div id="dial"></div>\n<script>run()</script>', SCRIPT)
+    const block = /<script type="application\/json" id="nib-block">([\s\S]*?)<\/script>/.exec(
+      made,
+    )?.[1]
+    expect(JSON.parse(block ?? '""')).toBe('<div id="dial"></div>\n<script>run()</script>')
+    // The block's own script is a string in there, not an element: the policy the
+    // frame inherits would refuse it, out loud. The frame script is what runs it.
+    const scripts = [...made.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
+    expect(scripts).toEqual([
+      'type="application/json" id="nib-block"',
+      'type="text/plain" id="nib-frame"',
+      '',
+    ])
+  })
+
+  test('and the one program that says how tall it turned out', () => {
+    const made = htmlFrameDocument('<p>words</p>', SCRIPT)
+    expect(made).toContain('nib-html-frame')
     expect(made).toContain('postMessage')
+  })
+
+  test('which no block can end early, whatever it writes', () => {
+    const made = htmlFrameDocument('</script><script>alert(1)</script><!--', SCRIPT)
+    expect(made.match(/<\/script>/g)).toHaveLength(3)
+    expect(made).not.toContain('alert(1)</script>')
+    expect(made).not.toContain('<!--')
   })
 
   test('and says nothing else about the block', () => {
     // No base, no stylesheet of the app's, nothing that could reach out: what
     // keeps the block harmless is the sandbox around it, not a rewrite of it.
-    const made = htmlFrameDocument('<p>words</p>')
+    const made = htmlFrameDocument('<p>words</p>', SCRIPT)
     expect(made).not.toContain('<base')
     expect(made).not.toContain('http')
   })

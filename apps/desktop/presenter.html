@@ -2,6 +2,14 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
+
+    <!-- The same policy as the editor's page, for the same reasons; one string,
+         written in `src/csp.ts` and held to it by `test/csp.test.ts`. First in
+         the head, since a policy only governs what is parsed after it. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-eval' 'sha256-iR2Aqj1jRJSx35wTBtrVLSatm9gSp55tpjHpCB3GAHs=' 'sha256-v841QeTG55+uEpzDrS3ofxcdk/VIgYtt2NynJyqxXik='; script-src-attr 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: asset: http://asset.localhost; media-src 'self' data: blob: https: asset: http://asset.localhost; font-src 'self' data:; connect-src 'self' https: wss: ws://localhost:* ws://127.0.0.1:* http://localhost:* http://127.0.0.1:* ipc: http://ipc.localhost asset: http://asset.localhost blob: data:; frame-src 'self' https:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
     <!-- A second window beside the deck, not an app: no manifest, no install

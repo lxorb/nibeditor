@@ -2,6 +2,7 @@ import type { StateEffect } from '@codemirror/state'
 import { type EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import type { RunnableFence } from './door'
 import { addRunLines, closeRun, dropRun, openRun, runPanels } from './panel'
+import { frameScript } from '../web-frame'
 import { parseRunMessage, runnerDocument } from './protocol'
 
 /** How long the code may run before it is stopped and reported as timed out. A
@@ -48,7 +49,10 @@ let counter = 0
  *  show them in, which is what source mode looks like from here. */
 export function runFence(view: EditorView, fence: RunnableFence): boolean {
   const panels = view.state.field(runPanels, false)
-  if (!panels) return false
+  // And a build with no frame script is a build with nothing to run code in; see
+  // web-frame.ts.
+  const script = frameScript()
+  if (!panels || script === null) return false
 
   // One run per block. The old sandbox goes now rather than when its timer is
   // up, so a note being iterated on does not stack up frames.
@@ -130,7 +134,7 @@ export function runFence(view: EditorView, fence: RunnableFence): boolean {
 
   // The document is set before the frame joins the page, so the frame has it to
   // load rather than an empty one to be navigated away from a moment later.
-  frame.srcdoc = runnerDocument(fence.code, run)
+  frame.srcdoc = runnerDocument(fence.code, run, script)
   // Appended to the page rather than into the panel: the panel is a widget, and
   // redrawing it on every line of output would restart the code each time.
   document.body.append(frame)

@@ -16,12 +16,19 @@ testing a policy the app does not ship.
 3. Nothing the app already did stops working under the policy. A ` ```js ` fence
    still runs, which is the sharpest test of it there is - the runner is a
    sandboxed `srcdoc` document, and such a document inherits the policy of the
-   page that made it. Every violation the browser reports is collected and any one
+   page that made it, which runs no script written inline. So does the block, read
+   from inside its frame: its script ran, knew which script it was, its module ran
+   after it, and a template that is data stayed data. And so does the same block
+   pressed on a slide. Every violation the browser reports is collected and any one
    of them fails the run.
+
+All of it twice: in the machine's own Chrome, which is what WebView2 is, and in
+Playwright's WebKit, which is what a Mac, an iPhone and Linux run the app in.
 
 Run it from the repository root:
 
     python apps/desktop/test/e2e/frames.py
+    python apps/desktop/test/e2e/frames.py --engine webkit   # one of the two
 
 Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run. Screenshots
 go beside this file under `shots/frames/`.
@@ -38,11 +45,12 @@ import shutil
 import socket
 import socketserver
 import subprocess
+import sys
 import threading
 import time
 from pathlib import Path
 
-from playwright.sync_api import Browser, ConsoleMessage, Page, sync_playwright
+from playwright.sync_api import Browser, ConsoleMessage, Error, Frame, Page, sync_playwright
 
 HERE = Path(__file__).resolve().parent
 APP = HERE.parent.parent
@@ -66,9 +74,14 @@ A page somewhere else, framed by hand:
 A block that does something:
 
 <div id="dial">nothing yet</div>
+<script type="text/template" id="kept">a template, never run</script>
 <script>
 document.getElementById('dial').textContent = 'it ran'
+document.getElementById('dial').dataset.script = document.currentScript.tagName
 document.body.style.height = '300px'
+</script>
+<script type="module">
+document.getElementById('dial').dataset.module = 'ran'
 </script>
 
 A provider the table knows:
@@ -83,14 +96,44 @@ console.log('the fence ran')
 ```
 """
 
+# The same block on a slide, which is the fourth surface a card is pressed on and
+# the one a presenter's window draws: a deck is a note with a rule in it.
+DECK = """# Deck
+
+<div id="dial">nothing yet</div>
+<script>
+document.getElementById('dial').textContent = 'it ran'
+document.body.style.height = '300px'
+</script>
+
+---
+
+# The end
+"""
+
 SEED = """
-async (note) => {
+async ([note, name]) => {
   const ws = window.nibApp.workspace
   await ws.noteFrom(note, ws.activeSpace.root)
   await ws.loadTree()
-  const found = ws.notes.find((one) => one.name.startsWith('Frames'))
+  const found = ws.notes.find((one) => one.name.startsWith(name))
   await ws.openEntry(found.path, { activate: true })
   return found.name
+}
+"""
+
+# What the block's own frame holds once it has run, read inside the frame: the
+# script wrote the words, knew which script it was, the module ran after it, and
+# the template that is data stayed data.
+INSIDE = """
+() => {
+  const dial = document.getElementById('dial')
+  return {
+    said: dial?.textContent ?? null,
+    script: dial?.dataset.script ?? null,
+    module: dial?.dataset.module ?? null,
+    kept: document.getElementById('kept')?.textContent ?? null,
+  }
 }
 """
 
@@ -128,6 +171,12 @@ FRAME = """
 failures: list[str] = []
 violations: list[str] = []
 
+# The engines the drive walks, in turn: the machine's own Chrome, which is what
+# WebView2 is, and Playwright's WebKit, which is what a Mac, an iPhone and Linux
+# run the app in. `--engine chrome` or `--engine webkit` runs one.
+ENGINES = ("chrome", "webkit")
+engine = ENGINES[0]
+
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
@@ -135,7 +184,7 @@ def say(words: str) -> None:
 
 def wrong(what: str) -> None:
     say(f"FAILED: {what}")
-    failures.append(what)
+    failures.append(f"[{engine}] {what}")
 
 
 def build() -> None:
@@ -193,8 +242,14 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 
-class Strict(socketserver.TCPServer):
+class Strict(socketserver.ThreadingTCPServer):
+    """A server that refuses a port somebody else holds, and answers a page's burst
+    of chunk requests at once: one at a time behind a queue of five, a loaded
+    machine refused some of them and the page failed on a chunk it never got."""
+
     allow_reuse_address = False
+    daemon_threads = True
+    request_queue_size = 128
 
 
 def serve(said: str) -> Strict:
@@ -230,9 +285,12 @@ def wait_for(page: Page, expression: str, what: str, patience: float = 30) -> No
 
 
 def shot(page: Page, name: str) -> None:
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    page.screenshot(path=str(SHOTS / f"{name}.png"))
-    say(f"shot {name}.png")
+    (SHOTS / engine).mkdir(parents=True, exist_ok=True)
+    # The caret as it is: hiding it is a stylesheet Playwright puts into every frame,
+    # and in WebKit the runner's own policy - `default-src 'none'` - refuses it out
+    # loud, which would be the drive complaining about itself.
+    page.screenshot(path=str(SHOTS / engine / f"{name}.png"), caret="initial")
+    say(f"shot {engine}/{name}.png")
 
 
 def scroll_to(page: Page, selector: str) -> None:
@@ -256,7 +314,7 @@ def noticed(message: ConsoleMessage) -> None:
     complaint to hide."""
     text = message.text
     if "Content Security Policy" in text or "Content-Security-Policy" in text:
-        violations.append(text)
+        violations.append(f"[{engine}] {text}")
         say(f"violation: {text[:170]}")
 
 
@@ -279,7 +337,7 @@ def fresh(browser: Browser) -> Page:
 
     wait_for(page, "window.nibApp", "the app")
     wait_for(page, "window.nibApp.workspace.activeSpace", "a space")
-    say(f"the space holds {page.evaluate(SEED, NOTE)}")
+    say(f"the space holds {page.evaluate(SEED, [NOTE, 'Frames'])}")
     wait_for(page, "window.nib && document.querySelector('.cm-content')", "the editor")
     page.wait_for_timeout(900)
     return page
@@ -289,6 +347,11 @@ def drive(browser: Browser) -> None:
     page = fresh(browser)
 
     # ── The editor ───────────────────────────────────────────────────
+    # Waited for rather than slept on: a loaded machine draws the cards later.
+    try:
+        wait_for(page, "document.querySelectorAll('.embed-web').length >= 3", "the cards", 15)
+    except SystemExit:
+        pass
     counts = page.evaluate(COUNTS)
     say(f"[editor] {json.dumps(counts)}")
     shot(page, "01-editor")
@@ -313,8 +376,10 @@ def drive(browser: Browser) -> None:
 
     # ── The fence, which is the policy's hardest case ────────────────
     # The runner is a sandboxed srcdoc document, and such a document inherits the
-    # policy of the page that made it: if this is quiet, `script-src-elem` is
-    # wrong and a feature that used to work has been switched off.
+    # policy of the page that made it, which runs no inline script but the frame
+    # script, by its hash: if this is quiet, the hash and the script have come
+    # apart, and a feature that used to work has been switched off. See
+    # packages/editor/src/frame-script.js.
     page.evaluate(
         """() => {
           const at = window.nib.state.doc.toString().indexOf("console.log('the fence ran')")
@@ -338,6 +403,14 @@ def drive(browser: Browser) -> None:
         page.wait_for_timeout(200)
 
     say(f"[fence] {json.dumps(lines)}")
+    # The shot after the runner has been taken down, which it is a few seconds after
+    # it finishes. A screenshot in WebKit puts a stylesheet into every frame, and the
+    # runner's own policy - `default-src 'none'`, no styles - refuses it out loud:
+    # that would be the drive complaining about itself.
+    try:
+        wait_for(page, "!document.querySelector('iframe[title=\"nib runner\"]')", "the runner", 20)
+    except SystemExit:
+        wrong("the runner was never taken down")
     shot(page, "02-fence")
     if not any("the fence ran" in (line or "") for line in lines):
         wrong("the js fence printed nothing: the runner cannot run under this policy")
@@ -346,7 +419,10 @@ def drive(browser: Browser) -> None:
 
     # ── The reading view ────────────────────────────────────────────
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
-    page.wait_for_timeout(1200)
+    try:
+        wait_for(page, "document.querySelectorAll('.embed-web').length >= 3", "the cards", 15)
+    except SystemExit:
+        pass
     read = page.evaluate(COUNTS)
     say(f"[reading] {json.dumps(read)}")
     shot(page, "03-reading")
@@ -381,7 +457,7 @@ def drive(browser: Browser) -> None:
     # ── A press on the block's card ─────────────────────────────────
     scroll_to(page, ".embed-html")
     page.click(".embed-html")
-    page.wait_for_timeout(1800)
+    ran_by_then(page, ".embed-html")
     ran = page.evaluate(FRAME, ".embed-html")
     say(f"[block] {json.dumps(ran)}")
     shot(page, "05-block-running")
@@ -399,10 +475,78 @@ def drive(browser: Browser) -> None:
         if ran["sandbox"] != "allow-scripts":
             wrong(f"the block's frame got the sandbox {ran['sandbox']!r}")
 
+    # Inside the frame, which is another origin and which a drive can still read:
+    # what the block's scripts did, and what they left alone.
+    inside = block_frame(page)
+    said = inside.evaluate(INSIDE) if inside else None
+    say(f"[inside] {json.dumps(said)}")
+    expected = {"said": "it ran", "script": "SCRIPT", "module": "ran", "kept": "a template, never run"}
+    if said != expected:
+        wrong(f"the block's scripts did not run the way a page runs them: {said}")
+
+    slides(page)
     page.context.close()
 
 
+def ran_by_then(page: Page, card: str) -> None:
+    """Waits for a pressed block to say how tall it is, which only a block whose
+    script ran can do: a sandbox is a process coming up, and on a loaded machine that
+    is seconds. Not a failure here - the check after it says what was found."""
+    until = time.monotonic() + 20
+    while time.monotonic() < until:
+        asked = page.evaluate(
+            "(card) => document.querySelector(card)?.style.getPropertyValue('--embed-height') ?? ''",
+            card,
+        )
+        if asked.strip() in {"300px", "301px"}:
+            break
+        page.wait_for_timeout(200)
+    page.wait_for_timeout(300)
+
+
+def block_frame(page: Page) -> Frame | None:
+    """The frame a block of the note's own HTML runs in: the one with the dial."""
+    for frame in page.frames:
+        if frame is page.main_frame:
+            continue
+        try:
+            if frame.evaluate("() => !!document.getElementById('dial')"):
+                return frame
+        except Error:
+            continue
+
+    return None
+
+
+def slides(page: Page) -> None:
+    """The same block on a slide, pressed on the stage."""
+    say(f"the space holds {page.evaluate(SEED, [DECK, 'Deck'])}")
+    page.wait_for_timeout(600)
+    page.evaluate("() => window.nibApp.present.start()")
+    wait_for(page, "document.querySelector('.deck .stage .embed-html')", "the deck's block")
+    page.wait_for_timeout(400)
+    page.click(".deck .stage .embed-html")
+    ran_by_then(page, ".deck .stage .embed-html")
+
+    ran = page.evaluate(FRAME, ".deck .stage .embed-html")
+    say(f"[slide] {json.dumps(ran)}")
+    shot(page, "06-slide-running")
+    if not ran:
+        wrong("a press on the slide's block ran nothing")
+    elif ran["asked"].strip() not in {"300px", "301px"}:
+        wrong(f"the slide's block asked for {ran['asked']!r}, so its script did not run")
+
+    page.evaluate("() => window.nibApp.present.stop()")
+
+
 def main() -> int:
+    global engine
+
+    asked = sys.argv[sys.argv.index("--engine") + 1] if "--engine" in sys.argv else None
+    engines = [one for one in ENGINES if asked in (None, one)]
+    if not engines:
+        raise SystemExit(f"no engine called {asked}; the drive knows {', '.join(ENGINES)}")
+
     build()
     shutil.rmtree(SHOTS, ignore_errors=True)
     said = policy()
@@ -411,11 +555,17 @@ def main() -> int:
 
     try:
         with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                drive(browser)
-            finally:
-                browser.close()
+            for engine in engines:
+                say(f"-- {engine} --")
+                browser = (
+                    play.chromium.launch(channel="chrome")
+                    if engine == "chrome"
+                    else play.webkit.launch()
+                )
+                try:
+                    drive(browser)
+                finally:
+                    browser.close()
     finally:
         server.shutdown()
         server.server_close()
@@ -432,8 +582,8 @@ def main() -> int:
         return 1
 
     print(
-        "\na tag is a card, a block runs in a sandbox, a fence still runs,"
-        " and the policy complained about nothing",
+        "\na tag is a card, a block runs in a sandbox and on a slide, a fence still"
+        f" runs, and the policy complained about nothing in {' or '.join(engines)}",
         flush=True,
     )
     return 0

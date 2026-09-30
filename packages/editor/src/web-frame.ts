@@ -17,6 +17,8 @@
  *  A published page has none of this and does not want it: there the card is a
  *  link, and a click goes to the page itself. */
 
+import frameScriptText from './frame-script.js?raw'
+
 /** The sandbox tokens a card is allowed to ask for. A card comes from the
  *  renderer, but a note can be pasted, synced or shared, and one that arrived
  *  with `allow-top-navigation` written into it would be a note that can move the
@@ -158,6 +160,60 @@ addEventListener('load',post)
 post()
 })()`
 
+/** The frame script, as the characters every frame's document carries it in: the
+ *  one script any frame of the app's runs, and the only way one runs anything; see
+ *  frame-script.js for why that is and what keeps it harmless.
+ *
+ *  Inline, and allowed by the app's policy by the hash of exactly these characters
+ *  (`FRAME_SCRIPT` in apps/desktop/src/csp.ts, held to this file by its test). Not
+ *  a file the frame fetches: on Windows the app is served to its own window by
+ *  intercepting requests to `http://tauri.localhost`, and a request from a frame
+ *  with an opaque origin is not intercepted - it goes to the network, which
+ *  refuses it. Measured in the packaged app: `net::ERR_CONNECTION_REFUSED`.
+ *
+ *  Null in a build that has none. The Even Realities plugin runs no JavaScript out
+ *  of a note, so its build leaves the file out (apps/desktop/vite.even.config.ts),
+ *  and there a block of a note's own HTML stays the card it is. */
+export function frameScript(): string | null {
+  return frameScriptText ? frameScriptText : null
+}
+
+/** Text as a JavaScript string literal the HTML parser cannot end early. JSON
+ *  covers quotes, backslashes and newlines; `<` is what JSON leaves alone and what
+ *  would close the element it sits in, so it goes out as an escape that means the
+ *  same thing inside a string. */
+export function literal(text: string): string {
+  return JSON.stringify(text).replace(/</g, '\\u003c')
+}
+
+/** A frame's whole document: its head, what it carries, and the frame script.
+ *
+ *  The one element in it a browser executes is the frame script, whose hash is the
+ *  only inline script the app's policy - which the frame inherits - allows. The
+ *  block is a JSON string and the program is `text/plain`, and the frame script,
+ *  written last so the two are there when it reads them, is what runs them. A
+ *  program is code this package wrote, with anything a note said in it passed
+ *  through `literal`. */
+export function frameDocument(parts: {
+  head: string
+  block?: string
+  program: string
+  script: string
+}): string {
+  const block =
+    parts.block === undefined
+      ? ''
+      : `<script type="application/json" id="nib-block">${literal(parts.block)}</script>\n`
+
+  return `<!doctype html>
+<meta charset="utf-8">
+${parts.head}
+<body>
+${block}<script type="text/plain" id="nib-frame">${parts.program}</script>
+<script>${parts.script}</script>
+`
+}
+
 /** The document a block of the note's own HTML runs in.
  *
  *  The block goes in as it was written - it is the note's own markup, and the
@@ -168,32 +224,37 @@ post()
  *  app's own content policy is inherited on top of that, which is what stops the
  *  block fetching a library from a CDN; see docs/conventions.md.
  *
- *  The reporter goes last so that a block whose own script throws still says how
- *  tall it is, and so that a block ending in a script has run before it says. */
-export function htmlFrameDocument(html: string): string {
-  return `<!doctype html>
-<meta charset="utf-8">
-<title>html</title>
-<style>html,body{margin:0;padding:0;background:transparent;color-scheme:light dark}</style>
-${html}
-<script>${REPORT}</script>
-`
+ *  The frame script puts the block in and runs its scripts, and then the reporter,
+ *  so that a block whose own script throws still says how tall it is and a block
+ *  ending in a script has run before it says. */
+export function htmlFrameDocument(html: string, script: string): string {
+  return frameDocument({
+    head: `<title>html</title>
+<style>html,body{margin:0;padding:0;background:transparent;color-scheme:light dark}</style>`,
+    block: html,
+    program: REPORT,
+    script,
+  })
 }
 
-/** The frame a block of the note's own HTML runs in.
+/** The frame a block of the note's own HTML runs in, or null in a build with no
+ *  frame script to run it.
  *
  *  The sandbox is this file's own and not the card's. Every other card names the
  *  sandbox its provider needs, because the table promised what that frame needs;
  *  a document built out of the note itself has promised nothing, and one line of
  *  `allow-same-origin` written into a card would be the note running in the app. */
-function ownFrame(html: string, title: string): HTMLIFrameElement {
+function ownFrame(html: string, title: string): HTMLIFrameElement | null {
+  const script = frameScript()
+  if (script === null) return null
+
   const frame = document.createElement('iframe')
   frame.className = 'embed-frame'
   frame.setAttribute('sandbox', 'allow-scripts')
   frame.title = title
   // Set before the frame joins the page, so it has this document to load rather
   // than an empty one to be navigated away from a moment later.
-  frame.srcdoc = htmlFrameDocument(html)
+  frame.srcdoc = htmlFrameDocument(html, script)
 
   return frame
 }

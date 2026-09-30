@@ -1,3 +1,4 @@
+import { frameDocument, literal } from '../web-frame'
 import { formatRunValues } from './format'
 
 /** What kind of line the panel is showing. The five console levels, the value
@@ -64,14 +65,6 @@ export function parseRunMessage(data: unknown, run: number): RunMessage | null {
   return { run, lines, ready: message.ready === true, done: message.done === true }
 }
 
-/** The code, as a JavaScript string literal the HTML parser cannot escape from.
- *  JSON covers quotes, backslashes and newlines; `<` is what JSON leaves alone
- *  and what would end the script element early, so it goes out as an escape
- *  that means the same thing inside a string literal. */
-function literal(code: string): string {
-  return JSON.stringify(code).replace(/</g, '\\u003c')
-}
-
 /** The document the sandbox runs.
  *
  *  Two things keep it harmless, and they are independent of each other. The
@@ -91,15 +84,32 @@ function literal(code: string): string {
  *  `'unsafe-eval'` is the other concession, and it is what makes the feature
  *  possible at all: the value of the last expression only exists if the code is
  *  evaluated rather than parsed as part of this document. It hands the code
- *  nothing extra, since the code is already inline and there is nothing left
- *  for it to load. */
-export function runnerDocument(code: string, run: number): string {
-  return `<!doctype html>
-<meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; form-action 'none'">
-<title>nib runner</title>
-<script>
-(function () {
+ *  nothing extra: the one script the document runs is the frame script, which is
+ *  what evaluates the runner below, and the runner is text in the document rather
+ *  than a script of it - the app's policy, which a `srcdoc` frame inherits, runs
+ *  no inline script but that one. See frame-script.js. */
+export function runnerDocument(code: string, run: number, script: string): string {
+  return frameDocument({
+    head: `<meta http-equiv="Content-Security-Policy" content="${RUNNER_POLICY}">
+<title>nib runner</title>`,
+    program: runnerProgram(code, run),
+    script,
+  })
+}
+
+/** The runner's own policy, on top of the app's, which the document inherits.
+ *
+ *  This one is about the network: `default-src 'none'` takes it all away. Which
+ *  inline script may run is the app's policy's to say - the frame script, by its
+ *  hash, and nothing else - and a script has to pass both, so the
+ *  `'unsafe-inline'` here widens nothing; it only keeps this line from having to
+ *  know the hash as well. */
+const RUNNER_POLICY =
+  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; form-action 'none'"
+
+/** What the sandbox runs, as the text the frame script evaluates. */
+function runnerProgram(code: string, run: number): string {
+  return `(function () {
   var RUN = ${run}
   var CODE = ${literal(code)}
   var format = ${String(formatRunValues)}
@@ -253,7 +263,5 @@ export function runnerDocument(code: string, run: number): string {
   gate.port1.onmessage = start
   post([], true, false)
   gate.port2.postMessage(0)
-})()
-</script>
-`
+})()`
 }

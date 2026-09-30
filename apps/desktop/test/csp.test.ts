@@ -1,11 +1,13 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 import { CSP, META_CSP } from '../src/csp'
 
-/** One policy, in three files that cannot import from each other: `src/csp.ts` is
- *  the one the dev server reads, `src-tauri/tauri.conf.json` is what the installed
- *  app is served with, and `index.html` is what a browser and the PWA get. A copy
+/** One policy, in files that cannot import from each other: `src/csp.ts` is the
+ *  one the dev server reads, `src-tauri/tauri.conf.json` is what the installed app
+ *  is served with, and the three pages - `index.html`, the presenter's window and
+ *  the Even plugin's page - are what a browser and the PWA get. A copy
  *  that drifts is an app that is one thing while it is being written and another
  *  once it is installed, which is the failure this file exists to catch.
  *
@@ -17,6 +19,9 @@ import { CSP, META_CSP } from '../src/csp'
  *  a header is sent before the document. See src/csp.ts. */
 
 const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8')
+
+/** What each page declares. */
+const pagePolicies = () => Object.values(PAGES).map(metaPolicy)
 
 const TAURI = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
   app: {
@@ -30,10 +35,24 @@ const TAURI = JSON.parse(read('../src-tauri/tauri.conf.json')) as {
 
 const INDEX = read('../index.html')
 
+/** Every page the app is, by name. A page without the policy is a page where the
+ *  whole of it is off: the presenter's window draws a deck, embeds and all, and
+ *  the Even plugin's page is the editor. */
+const PAGES: Record<string, string> = {
+  'index.html': INDEX,
+  'presenter.html': read('../presenter.html'),
+  'even.html': read('../even.html'),
+}
+
 /** The dev and preview servers, which are the carriers that send a header. Read as
  *  text: the config runs git and builds a stamp, and which constant it hands the
  *  servers is the whole of what matters here. */
 const VITE = read('../vite.config.ts')
+
+/** One directive of a policy, whole, or nothing when the policy does not say it. */
+function line(policy: string, directive: string): string {
+  return policy.split('; ').find((one) => one.startsWith(`${directive} `)) ?? ''
+}
 
 /** The policy `index.html` declares, as the browser reads it: the attribute's
  *  value, with the newlines and indentation prettier put in taken back out. */
@@ -43,9 +62,9 @@ function metaPolicy(html: string): string {
 }
 
 describe('the content policy', () => {
-  test('is the same string in all three places, each in the form it can carry', () => {
+  test('is the same string in every place, each in the form it can carry', () => {
     expect(TAURI.app.security.csp).toBe(META_CSP)
-    expect(metaPolicy(INDEX)).toBe(META_CSP)
+    for (const [name, page] of Object.entries(PAGES)) expect(metaPolicy(page), name).toBe(META_CSP)
     // And the header form is the meta form plus what only a header may say, so the
     // two can never be two policies.
     expect(CSP.startsWith(`${META_CSP}; `)).toBe(true)
@@ -57,7 +76,9 @@ describe('the content policy', () => {
   test('never names frame-ancestors where a browser cannot honour it', () => {
     expect(META_CSP).not.toContain('frame-ancestors')
     expect(TAURI.app.security.csp).not.toContain('frame-ancestors')
-    expect(metaPolicy(INDEX)).not.toContain('frame-ancestors')
+    for (const [name, page] of Object.entries(PAGES)) {
+      expect(metaPolicy(page), name).not.toContain('frame-ancestors')
+    }
   })
 
   test('and says it where a browser can, which is a header', () => {
@@ -66,9 +87,64 @@ describe('the content policy', () => {
     expect(VITE).not.toContain('META_CSP')
   })
 
-  test('is before anything the page loads, so it governs all of it', () => {
-    expect(INDEX.indexOf('Content-Security-Policy')).toBeLessThan(INDEX.indexOf('<script'))
-    expect(INDEX.indexOf('Content-Security-Policy')).toBeLessThan(INDEX.indexOf('<link'))
+  test('is before anything a page loads, so it governs all of it', () => {
+    for (const [name, page] of Object.entries(PAGES)) {
+      const at = page.indexOf('Content-Security-Policy')
+      expect(at, name).toBeGreaterThan(0)
+      for (const tag of ['<script', '<link', '<style']) {
+        if (page.includes(tag)) expect(at, `${name} ${tag}`).toBeLessThan(page.indexOf(tag))
+      }
+    }
+  })
+
+  /** The line that took the longest to earn. `'unsafe-inline'` for scripts meant
+   *  markup that reached the page could run a script written into it on any engine
+   *  that reads only `script-src` - an `<iframe srcdoc>` put in by `innerHTML` is a
+   *  document of the app's own origin. It was there for the sandboxed frames, which
+   *  inherit the policy; they run through the frame script now, allowed by its
+   *  hash - see packages/editor/src/frame-script.js - and `test/e2e/frames.py`
+   *  proves Run and a block of HTML still work under this policy in Chrome and
+   *  WebKit. */
+  test('runs no script written inline, on any engine', () => {
+    for (const policy of [CSP, META_CSP, TAURI.app.security.csp ?? '']) {
+      for (const directive of ['script-src', 'script-src-attr', 'default-src']) {
+        expect(line(policy, directive), directive).not.toContain("'unsafe-inline'")
+      }
+      // And no `script-src-elem` to say otherwise for elements: Tauri adds its nonce
+      // to `script-src`, and an element falls back to that. See src/csp.ts.
+      expect(line(policy, 'script-src-elem')).toBe('')
+    }
+  })
+
+  /** The inline scripts there are: the theme before the first paint in
+   *  `index.html`, and the frame script every sandboxed frame carries. Each is
+   *  allowed by the hash of its characters - so a change to those characters is a
+   *  change to the policy, and this says which. The hash is taken of the text as a
+   *  browser reads it, line endings folded to a newline the way the HTML parser
+   *  folds them. And the policy names no hash that is not one of them, so one taken
+   *  out does not leave its door behind. */
+  test('names every inline script by its hash, and nothing else', () => {
+    const hashOf = (text: string) =>
+      `'sha256-${createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('base64')}'`
+    const frames = hashOf(read('../../../packages/editor/src/frame-script.js'))
+    const pages = Object.values(PAGES).flatMap((page) =>
+      [...page.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((found) =>
+        hashOf(found[1] ?? ''),
+      ),
+    )
+    expect(pages.length).toBeGreaterThan(0)
+
+    const named = line(META_CSP, 'script-src')
+      .split(' ')
+      .filter((one) => one.startsWith("'sha256-"))
+    expect(named.sort()).toEqual([...new Set([...pages, frames])].sort())
+  })
+
+  /** The frame script is written into a `<script>` element as it is, so nothing in
+   *  it may end that element or open the comment that changes how it is read. */
+  test('carries a frame script that stays one element', () => {
+    const script = read('../../../packages/editor/src/frame-script.js')
+    expect(script).not.toMatch(/<\/script|<!--/i)
   })
 
   /** The lines that are the whole point. A policy is easy to widen by accident -
@@ -81,7 +157,7 @@ describe('the content policy', () => {
   })
 
   test('and loads no code from anywhere but this app', () => {
-    for (const directive of ['script-src', 'script-src-elem', 'worker-src']) {
+    for (const directive of ['script-src', 'worker-src']) {
       const line = CSP.split('; ').find((one) => one.startsWith(`${directive} `)) ?? ''
       expect(line, directive).toContain("'self'")
       expect(line, directive).not.toContain('http:')
@@ -149,7 +225,7 @@ describe('the content policy', () => {
    *  meta and header split above was made to remove. A server bound to `::1` alone
    *  is still reached as `http://localhost:port`. */
   test('and says nothing a browser will reject out loud', () => {
-    for (const policy of [CSP, META_CSP, metaPolicy(INDEX), TAURI.app.security.csp ?? '']) {
+    for (const policy of [CSP, META_CSP, TAURI.app.security.csp ?? '', ...pagePolicies()]) {
       expect(policy).not.toContain('[::1]')
       expect(policy).not.toMatch(/\[[0-9a-f:]*]/i)
     }

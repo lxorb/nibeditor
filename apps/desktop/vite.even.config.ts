@@ -128,6 +128,13 @@ export function runFence() {
  *  see run/door.ts in @nib/editor. */
 const RUNNER = 'packages/editor/src/run/door'
 
+/** The frame script, by the name it is asked for: the characters every sandboxed
+ *  frame carries in order to run anything at all, a ` ```js ` fence or a block of a
+ *  note's own HTML. The plugin runs neither, and the script is an `eval` by design,
+ *  so it is not in the package; `frameScript()` answers null without it, and a block
+ *  of HTML stays the card it is. See packages/editor/src/frame-script.js. */
+const FRAME_SCRIPT = /frame-script\.js\?raw$/
+
 /** The emoji table `node-emoji` reads, by the file it is in: emojilib's own entry.
  *
  *  The glasses ask one question of it in each direction - the character a
@@ -194,6 +201,7 @@ function withoutWhatTheGlassesCannotUse() {
   const runner = '\0nib-no-running'
   const catalogue = '\0nib-no-catalogue:'
   const emoji = '\0nib-slim-emoji:'
+  const noFrames = '\0nib-no-frame-script'
 
   return {
     name: 'nib-even-without',
@@ -202,6 +210,7 @@ function withoutWhatTheGlassesCannotUse() {
     enforce: 'pre' as const,
     async resolveId(source: string, importer: string | undefined, options: object) {
       if (LEFT_OUT.has(source)) return absent
+      if (FRAME_SCRIPT.test(source)) return noFrames
 
       // Resolved first, because the runner's door is asked for as `./run/door` from
       // one file and `../run/door` from another, and neither name says where it is.
@@ -222,6 +231,7 @@ function withoutWhatTheGlassesCannotUse() {
     load(asked: string) {
       if (asked === absent) return ABSENT
       if (asked === runner) return NO_RUNNING
+      if (asked === noFrames) return "export default ''\n"
       if (asked.startsWith(emoji)) return SLIM_EMOJI(asked.slice(emoji.length))
 
       // An empty catalogue rather than a module that throws: every string in this app

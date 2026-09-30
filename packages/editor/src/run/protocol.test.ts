@@ -47,40 +47,59 @@ describe('reading a message from the sandbox', () => {
   })
 })
 
+/** A frame script standing in for the real one, which is the frame's business. */
+const SCRIPT = 'window.ranTheFrameScript = true'
+
+/** A document for this code, and the program in it the frame script evaluates. */
+const made = (code: string, run = 1) => runnerDocument(code, run, SCRIPT)
+const programOf = (html: string) =>
+  /<script type="text\/plain" id="nib-frame">([\s\S]*?)<\/script>/.exec(html)?.[1]
+
 describe('the document the sandbox runs', () => {
   test('leaves the code nothing to reach', () => {
-    const html = runnerDocument('1 + 1', 1)
+    const html = made('1 + 1')
     expect(html).toContain("default-src 'none'")
-    expect(html).toContain("script-src 'unsafe-inline' 'unsafe-eval'")
+    expect(html).toContain("form-action 'none'")
+  })
+
+  test('runs nothing inline but the frame script: the program is text it evaluates', () => {
+    const html = made('1 + 1')
+    // Every script element is either the program, which no browser executes, or
+    // the frame script, which the app's policy - inherited by the frame - allows
+    // by its hash and which is the only inline script it allows.
+    const scripts = [...html.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
+    expect(scripts).toEqual(['type="text/plain" id="nib-frame"', ''])
+    expect(html).toContain(`<script>${SCRIPT}</script>`)
+    expect(html.indexOf('nib-frame')).toBeLessThan(html.indexOf(`<script>${SCRIPT}`))
   })
 
   test('carries the run number, so its output can be told apart', () => {
-    expect(runnerDocument('1', 42)).toContain('var RUN = 42')
+    expect(made('1', 42)).toContain('var RUN = 42')
   })
 
   test('is JavaScript that compiles, embedded formatter and all', () => {
-    // The script is written as text, so nothing type checks it. Compiling it
+    // The program is written as text, so nothing type checks it. Compiling it
     // here catches a stray backtick or a broken embedding before it ships.
-    const body = /<script>([\s\S]*)<\/script>/.exec(runnerDocument("console.log('hi')", 1))?.[1]
+    const body = programOf(made("console.log('hi')"))
     expect(body).toBeDefined()
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- compiling the script is how a stray backtick is caught
     expect(() => new Function(body ?? '')).not.toThrow()
   })
 
   test('cannot be escaped from by code that closes the script element', () => {
-    const html = runnerDocument('const tag = "</script><script>alert(1)</script>"', 1)
-    // One script element: the one this file wrote.
-    expect(html.match(/<\/script>/g)).toHaveLength(1)
+    const html = made('const tag = "</script><script>alert(1)</script>"')
+    // Two script elements: the program and the frame script, both this file's.
+    expect(html.match(/<\/script>/g)).toHaveLength(2)
     expect(html).not.toContain('alert(1)</script>')
   })
 
   test('cannot be escaped from by code that opens an HTML comment', () => {
-    expect(runnerDocument('// <!--', 1)).not.toContain('<!--')
+    expect(made('// <!--')).not.toContain('<!--')
   })
 
   test('hands the code through as itself, quotes and newlines and all', () => {
     const code = 'console.log(\'a\\nb\')\n`back` + "tick"'
-    const html = runnerDocument(code, 1)
+    const html = made(code)
     const literal = /var CODE = (".*")\n/.exec(html)?.[1]
     expect(literal).toBeDefined()
     expect(JSON.parse((literal ?? '""').replace(/\\u003c/g, '<'))).toBe(code)

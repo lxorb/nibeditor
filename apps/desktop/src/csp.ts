@@ -28,25 +28,55 @@
  *  exists: without a policy, one `<img onerror=…>` in a file somebody was handed
  *  is that person's disk.
  *
- *  Read `script-src` from the bottom up. `script-src-attr 'none'` is the line that
- *  matters: no element on any page may carry an `onerror`, an `onclick` or any
- *  other handler, whoever wrote it. `script-src-elem` then allows a `<script>`
- *  element that is written out inline - which the app's own page never has, and
- *  which markup inserted through `innerHTML` never runs either, because the HTML
- *  parser refuses to execute a script that arrived that way. What it is for is the
- *  frames: a sandboxed `srcdoc` document inherits the policy of the page that made
- *  it, so without this line the ` ```js ` fence's runner, a block of a note's own
- *  HTML, the print frame and the frame an export is measured in would all be
- *  documents that cannot run their own first line. The plain `script-src` beneath
- *  them is the fallback an engine without the two finer directives reads, and
- *  `'unsafe-eval'` is there because running a fence means evaluating it - the value
- *  of its last expression does not exist otherwise; see packages/editor/src/run. */
+ *  `script-src` says three things, and what it leaves out is the point. The app's
+ *  own files, by `'self'`. The two scripts it writes inline - the lines in
+ *  `index.html` that put the remembered theme on before the first paint, and the
+ *  frame script below - by the hash of their characters, which is how GitHub names
+ *  the one it has. And
+ *  `'unsafe-eval'`, because running a fence means evaluating it: the value of its
+ *  last expression does not exist otherwise; see packages/editor/src/run.
+ *
+ *  What it never says is `'unsafe-inline'`, on any engine. So markup that reaches
+ *  the page cannot run a script written into it however it arrived - not an
+ *  `onerror`, and not an `<iframe srcdoc>` put in by `innerHTML`, which would be a
+ *  document of the app's own origin with the app's reach. The price is paid by the
+ *  frames the app makes on purpose - the ` ```js ` runner and a block of a note's
+ *  own HTML - because a sandboxed `srcdoc` document inherits this policy and
+ *  cannot run its own first line either. They run through the frame script
+ *  instead: the same characters in every frame, allowed by their hash, which do
+ *  nothing outside an opaque origin; see packages/editor/src/frame-script.js.
+ *  Inline rather than a file the frame fetches, because on Windows the app is
+ *  served by intercepting `http://tauri.localhost`, and a request from an opaque
+ *  origin is not intercepted - measured in the packaged app, it goes to the
+ *  network and is refused. Measured in Chromium and WebKit both: an inherited
+ *  hash still allows its script inside such a frame, and any other inline script
+ *  is refused.
+ *
+ *  `script-src-attr 'none'` says the attribute half out loud: no element on any
+ *  page may carry an `onerror`, an `onclick` or any other handler, whoever wrote
+ *  it. An engine without the finer directive reads `script-src`, which says the
+ *  same by leaving `'unsafe-inline'` out - a hash does not stand for a handler.
+ *  There is no `script-src-elem`, deliberately: an element falls back to
+ *  `script-src`, which is the directive Tauri adds its nonce and its hashes to
+ *  when it serves the page, so one list says it for both and nothing has to be
+ *  said twice. */
+
+/** The theme script in `index.html`, by the SHA-256 of its characters. Changing
+ *  one character of it without changing this is a page that paints white first
+ *  and says why on the console; `test/csp.test.ts` hashes the script and holds
+ *  this to it, so the test says so first. */
+const THEME_SCRIPT = "'sha256-iR2Aqj1jRJSx35wTBtrVLSatm9gSp55tpjHpCB3GAHs='"
+
+/** The frame script, packages/editor/src/frame-script.js, by the SHA-256 of the
+ *  file: every sandboxed frame the app makes carries it inline, and it is the only
+ *  way one runs anything. The same test hashes the file and holds this to it. */
+const FRAME_SCRIPT = "'sha256-v841QeTG55+uEpzDrS3ofxcdk/VIgYtt2NynJyqxXik='"
+
 const POLICY: readonly string[] = [
   "default-src 'self'",
 
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+  `script-src 'self' 'unsafe-eval' ${THEME_SCRIPT} ${FRAME_SCRIPT}`,
   "script-src-attr 'none'",
-  "script-src-elem 'self' 'unsafe-inline'",
 
   // CodeMirror places a cursor, Svelte writes a transition and KaTeX lays out an
   // equation, all in `style` attributes on elements they build as they go. There
@@ -95,8 +125,9 @@ const POLICY: readonly string[] = [
 
   // A card standing in for a page somewhere else frames that page once the reader
   // asks - any of them, because a note may write the `<iframe>` itself and not only
-  // name one of the providers. Sandboxed without `allow-same-origin` whichever it
-  // is; see packages/editor/src/web-frame.ts. A `srcdoc` frame needs nothing here.
+  // name one of the providers, and never the app's own origin, which `https:` would
+  // otherwise include on the web; see `framedPage` in packages/editor/src/web-frame.ts.
+  // A `srcdoc` frame needs nothing here.
   "frame-src 'self' https:",
 
   // The search index and pdf.js, both built from the app's own files.

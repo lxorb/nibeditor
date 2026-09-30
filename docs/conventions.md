@@ -146,10 +146,15 @@ quietly: a change that touches one says so where it is made.
   sandboxed without `allow-same-origin`, so its document has an opaque origin
   and the app's DOM, storage and notes are cross-origin to it. That is the
   ` ```js ` fence (`packages/editor/src/run`) and a block of a note's own HTML
-  (`packages/markdown/src/html-block.ts`), and both wait for a press.
+  (`packages/markdown/src/html-block.ts`), and both wait for a press. Both run
+  through one script, `packages/editor/src/frame-script.js`, which runs nothing
+  outside an opaque origin.
 - **Nothing loads from a third party until the reader asks.** An address a
   note points at is a card the size the frame will be, and the frame arrives on
-  a press; see `packages/markdown/src/web-embed.ts`.
+  a press; see `packages/markdown/src/web-embed.ts`. Never one on the app's own
+  origin: `framedPage` in `packages/editor/src/web-frame.ts` refuses it, because
+  on the web that frame would hold `allow-scripts allow-same-origin` beside the
+  app.
 - **A path somebody else wrote is judged before anything on disk is touched.**
   `apps/desktop/src-tauri/src/paths.rs` holds the four judges, strictest first.
   `a_space`: a folder directly inside the spaces folder, for the commands that
@@ -218,17 +223,22 @@ window's side, or by `in_spaces` in the crate, before it reaches any of those
 five. A caller that skips both is the bug, not the command.
 
 The policy that backs the first three is `apps/desktop/src/csp.ts`, which is
-the one copy of the app's `Content-Security-Policy`: the Tauri config,
-`index.html` and the dev server all carry it and
-`apps/desktop/test/csp.test.ts` holds them to each other. Two lines in it are
-load-bearing. `script-src-attr 'none'` is why
-an `onerror` in a file somebody was handed is inert even where that file's
-markup is rendered. And `script-src-elem 'unsafe-inline'` is why the sandboxed
-frames above still work at all: a `srcdoc` document inherits the policy of the
-page that made it, so a policy with no room for an inline script is a policy
-that switches those two features off. Prove a change to it with
-`python apps/desktop/test/e2e/frames.py`, which serves the built app under the
-policy as a header and fails on any violation the browser reports.
+the one copy of the app's `Content-Security-Policy`: the Tauri config, the three
+pages (`index.html`, `presenter.html`, `even.html`) and the dev server all carry
+it and `apps/desktop/test/csp.test.ts` holds them to each other. Its script
+lines are the load-bearing ones. There is no `'unsafe-inline'` for scripts on any
+engine: the two inline scripts there are, the theme before the first paint and
+the frame script, are named by their hashes, and the test hashes both again so an
+edit to either cannot forget the policy. `script-src-attr 'none'` is why an
+`onerror` in a file somebody was handed is inert even where that file's markup is
+rendered. The sandboxed frames above inherit all of that - a `srcdoc` document
+takes the policy of the page that made it - so a frame carries its program as
+text and the frame script inline to run it. Inline and not fetched: on Windows a
+request from an opaque origin never reaches the app's own `http://tauri.localhost`
+and is refused. Prove a change with `python apps/desktop/test/e2e/frames.py`,
+which serves the built app under the policy as a header, runs a fence, a block
+and a slide in Chrome and in WebKit, and fails on any violation either browser
+reports; and in the packaged app, where the policy is Tauri's header as well.
 
 ## Checks
 
