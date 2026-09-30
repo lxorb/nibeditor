@@ -49,7 +49,7 @@ export const PATH_LIMIT = 400
  *  which only goes up so that a published page can serve a PDF. A canvas is small
  *  text that is edited on more than one device, so it wants the first: the
  *  version, the hash and the conflict rule are exactly what a file two people
- *  draw on needs. See apps/desktop/src/lib/sync/mirror.ts, which sends every file
+ *  draw on needs. See apps/desktop/src/lib/sync/pass.ts, which sends every file
  *  that is not a PDF through here.
  *
  *  A page note - `.pages` - is that same file under another name: JSON Canvas

@@ -190,7 +190,7 @@ where that stops being true:
   `apps/desktop/src/lib/workspace.svelte.ts` judges the target with that
   same `insideOnly` before making the note a link names.
 - **A sync pull**, whose names were written by whoever shares the space:
-  `placeable` in `apps/desktop/src/lib/sync/mirror.ts`. A clash the reader
+  `placeable` in `apps/desktop/src/lib/sync/pass.ts`. A clash the reader
   answers a launch later is judged a second time, because its path was
   written down and read back: `settle` in
   `apps/desktop/src/lib/sync/record.svelte.ts` asks which space holds it and

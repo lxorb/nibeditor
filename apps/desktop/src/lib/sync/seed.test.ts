@@ -167,7 +167,8 @@ vi.mock('../api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { newMirror, push } = await import('./mirror')
+const { newMirror } = await import('./mirror')
+const { push } = await import('./pass')
 
 const ROOT = '/Notes'
 const NOBODY: ReadonlySet<string> = new Set()

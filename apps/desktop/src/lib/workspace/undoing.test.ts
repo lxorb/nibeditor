@@ -165,7 +165,7 @@ describe('an import taken back', () => {
  *  that followed the note, the index, the papers, and the account, which keeps a
  *  note under an id rather than under a name. Without that last one the note that
  *  came back from a mistaken rename is a third note up there, with the history of
- *  neither; see `movedHere` in sync/mirror.ts. */
+ *  neither; see `movedHere` in sync/pass.ts. */
 describe('a copy taken back', () => {
   test('takes away what it made, a folder as a folder, and tells the index', async () => {
     const ws = store({

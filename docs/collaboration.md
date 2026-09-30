@@ -214,7 +214,7 @@ dependency, a second store per note that can go stale, and no help at all for th
 other case it is really there for: a note edited by some other program, which is
 the ordinary state of a folder of markdown files.
 
-**The file sync.** A note in a room is the room's; `mirror.ts` neither sends it up
+**The file sync.** A note in a room is the room's; `pass.ts` neither sends it up
 - the room already carried every keystroke - nor treats a version it has not seen
 as a disagreement, so conflict copies for notes are gone. What comes down is
 written and that is all. A note that is *not* in a room behaves exactly as it did

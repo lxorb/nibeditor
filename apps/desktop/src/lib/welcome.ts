@@ -19,7 +19,7 @@
  *  2. a device is seeded once, remembered where the answer outlives a launch, so
  *     an empty folder is not read as a first visit (seeded.ts);
  *  3. an untouched seed is never created in an account, and a path the account
- *     already holds is paired with rather than pushed over (sync/mirror.ts).
+ *     already holds is paired with rather than pushed over (sync/pass.ts).
  *
  *  Any one of them fixes Emil's complaint. All three are here because each is a
  *  different way of being wrong about the same thing. */

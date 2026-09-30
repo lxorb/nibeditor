@@ -3271,7 +3271,7 @@ describe('following a link to a note the space has not got', () => {
  *  Signing in on a machine that already holds notes asks whether they join the
  *  account or go, because nothing is erased without an answer; see settling.ts.
  *  The welcome note a browser seeds on a first visit is not such a note. It is the
- *  app's own words, syncing already refuses to carry it up (see sync/mirror.ts),
+ *  app's own words, syncing already refuses to carry it up (see sync/pass.ts),
  *  and a first sign-in would otherwise be met by a question about the only thing
  *  on screen - "this cannot be undone" under it - whose two answers both come to
  *  nothing.

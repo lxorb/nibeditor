@@ -95,7 +95,7 @@ class Rooms {
 
   /** Whether a room now holds the truth of this file, by its id on the account. What
    *  the file sync asks before it writes anything about a note, so it can leave the
-   *  ones a room is carrying to the room; see sync/mirror.ts.
+   *  ones a room is carrying to the room; see sync/pass.ts.
    *
    *  One note at a time rather than the whole list at once, because the answer keeps
    *  changing while a pass runs: a room settles the moment somebody stops typing, and

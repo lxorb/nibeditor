@@ -681,7 +681,7 @@ describe('the undo a row offers', () => {
  *  Said by the two operations that move a file rather than by whoever asked for one,
  *  because the askers are what keep being added: the field in this list, a drag, the
  *  palette, an automation, an undo, a folder that stopped holding anything. See
- *  `movedOnAccount` in workspace.svelte.ts and `movedHere` in sync/mirror.ts. */
+ *  `movedOnAccount` in workspace.svelte.ts and `movedHere` in sync/pass.ts. */
 describe('what the account is told about a file that moved', () => {
   afterEach(() => vi.restoreAllMocks())
 

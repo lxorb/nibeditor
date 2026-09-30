@@ -158,7 +158,7 @@ const RECOVERY_DAYS = [1, 7, 30]
 /** What a device does when the same note was written in two places. Named after
  *  what happens rather than after a policy: `both` keeps the other copy beside
  *  the note, `newest` lets the later of the two stand, and `ask` leaves the note
- *  alone until somebody says. See apps/desktop/src/lib/sync/mirror.ts. */
+ *  alone until somebody says. See apps/desktop/src/lib/sync/pass.ts. */
 const CONFLICT_RULES = ['both', 'newest', 'ask']
 
 /** How a link to another note is written: a wikilink, or a markdown link with one

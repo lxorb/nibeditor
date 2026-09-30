@@ -1,7 +1,7 @@
 /** The syncing loop: when to look, what to do about spaces that are on one
  *  side and not the other, and what the light in the corner says.
  *
- *  Moving the notes of one space is next door, in sync/mirror.ts. */
+ *  Moving the notes of one space is next door, in sync/pass.ts. */
 
 import { api } from './api'
 import { arriving } from './arriving.svelte'
@@ -15,17 +15,8 @@ import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke } from './tauri'
-import {
-  type Joined,
-  type Mirror,
-  movedHere,
-  newMirror,
-  pull,
-  push,
-  readMirror,
-  type Waiting,
-  within,
-} from './sync/mirror'
+import { type Mirror, newMirror, readMirror, within } from './sync/mirror'
+import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -159,7 +150,7 @@ class Sync {
 
   /** A note or a folder that moved here, said to the account so that the note keeps
    *  the id it has always had. Beside `renamed` above, which is the same sentence
-   *  about a space; `movedHere` in sync/mirror.ts is the whole of the reasoning.
+   *  about a space; `movedHere` in sync/pass.ts is the whole of the reasoning.
    *
    *  Signed out there is nobody to tell, and the next pass reads the move off the
    *  folder the way it always has. */
@@ -167,6 +158,7 @@ class Sync {
     const token = account.token
     if (!token) return
 
+    const { movedHere } = await import('./sync/pass')
     for (const mirror of Object.values(this.mirrors)) {
       if (await movedHere(mirror, token, from, to)) this.save()
     }
@@ -495,7 +487,7 @@ class Sync {
    *
    *  The reading is the workspace's and the counting is `arriving`'s; this is the
    *  wiring between them and the pass, which knows about neither. See
-   *  sync/mirror.ts. */
+   *  sync/pass.ts. */
   private waiting(mirror: Mirror, joined: Joined): Waiting {
     const open = new Set(
       workspace.openNotes
@@ -583,7 +575,7 @@ class Sync {
     // pass reaches each note rather than read once here, because a room settles
     // whenever somebody stops typing and a pass is seconds long - and the note whose
     // room settled halfway through one was the second copy Emil kept finding. See
-    // `Joined` in sync/mirror.ts.
+    // `Joined` in sync/pass.ts.
     const joined: Joined = { has: (id) => rooms.carries(id) }
     this.running = true
     this.status = 'syncing'
@@ -593,6 +585,10 @@ class Sync {
     let shown = false
 
     try {
+      // Fetched with the first pass rather than carried by the launch: nothing in
+      // it is needed to draw a note.
+      const { pull, push } = await import('./sync/pass')
+
       for (const mirror of Object.values(this.mirrors)) {
         // A folder the workspace no longer lists is left alone until the next
         // reconcile decides what becomes of its mirror. Syncing it would read

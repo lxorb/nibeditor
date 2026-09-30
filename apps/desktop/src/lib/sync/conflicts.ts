@@ -8,7 +8,7 @@
  *  Two places ask the question and both answer it with these three. A pass over a
  *  space finds two copies of a note that has no room, or none it could reach; and a
  *  device joining a room finds that both it and the room wrote since the words they
- *  last shared, which one replacement cannot express. See sync/mirror.ts and
+ *  last shared, which one replacement cannot express. See sync/pass.ts and
  *  rooms/apart.ts, and `conflictPath` in @nib/markdown/paths for the name the copy
  *  takes wherever it is written.
  *

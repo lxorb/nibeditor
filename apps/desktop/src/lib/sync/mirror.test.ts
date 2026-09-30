@@ -263,7 +263,8 @@ vi.mock('../api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { movedHere, newMirror, pull, push, within } = await import('./mirror')
+const { newMirror, within } = await import('./mirror')
+const { movedHere, pull, push } = await import('./pass')
 type Clash = import('./conflicts').Clash
 
 const ROOT = '/Notes'

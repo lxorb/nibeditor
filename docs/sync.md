@@ -17,7 +17,7 @@ Until it ships, this page is what runs.
 
 One space, two halves. Take what the account has moved on to, then offer what this
 machine has. Neither half knows anything about the loop that calls them; see
-`apps/desktop/src/lib/sync/mirror.ts` and `sync.svelte.ts`.
+`apps/desktop/src/lib/sync/pass.ts` and `sync.svelte.ts`.
 
 The thing that makes it cheap is a hash per note, kept from the last pass. A local
 hash that no longer matches means the file changed here. A version that has moved

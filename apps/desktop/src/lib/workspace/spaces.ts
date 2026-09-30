@@ -234,7 +234,7 @@ export async function hasLocalContent(ws: HoldsSpaces): Promise<boolean> {
 
     // The welcome note exactly as the app wrote it is not writing, and the
     // question this answers is about writing: syncing already refuses to carry
-    // an untouched seed up (sync/mirror.ts), so keeping it joins nothing to the
+    // an untouched seed up (sync/pass.ts), so keeping it joins nothing to the
     // account and erasing it throws away nothing anybody wrote. Asked, it would
     // be the first thing a new reader ever sees - a warning that cannot be
     // undone, about the only note on screen. See welcome.ts and settling.ts.

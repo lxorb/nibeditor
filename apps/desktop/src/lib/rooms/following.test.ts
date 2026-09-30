@@ -286,7 +286,7 @@ describe('a space renamed while one of its notes is open in a room', () => {
     expect(sockets.opened.length).toBe(before)
     expect(socket.open).toBe(true)
     // And the room still says it holds this file, which is what tells the file
-    // sync to leave it alone; see sync/mirror.ts.
+    // sync to leave it alone; see sync/pass.ts.
     expect(rooms.carries('note-1')).toBe(true)
   })
 })

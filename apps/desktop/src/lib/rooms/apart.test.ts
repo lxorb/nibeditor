@@ -77,7 +77,7 @@ describe('a device and the room that each wrote while apart', () => {
     await apart('ask', NOTE, THEIRS)
 
     // Which is what stops the one write that would put this device's words over the
-    // copy nobody has read yet; see `held` in sync/mirror.ts.
+    // copy nobody has read yet; see `held` in sync/pass.ts.
     expect(record.held.has(NOTE.path)).toBe(true)
   })
 

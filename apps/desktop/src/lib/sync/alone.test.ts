@@ -250,9 +250,10 @@ vi.mock('../api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { newMirror, pull, push, readMirror } = await import('./mirror')
+const { newMirror, readMirror } = await import('./mirror')
+const { pull, push } = await import('./pass')
 type Mirror = import('./mirror').Mirror
-type Joined = import('./mirror').Joined
+type Joined = import('./pass').Joined
 
 const ROOT = '/Notes'
 const NOBODY: ReadonlySet<string> = new Set()
@@ -444,7 +445,7 @@ describe('one device typing in one note', () => {
   /** The note is open in a tab, so it is in a room, and the room carries what is
    *  typed into it up to the account itself - keystroke by keystroke, without
    *  waiting for a pass. A pass leaves such a note alone for exactly that reason;
-   *  see `Joined` in mirror.ts.
+   *  see `Joined` in pass.ts.
    *
    *  Both channels are this one machine. The room is this device's writing going up
    *  a letter at a time and the push is the same words going up as a file, so the

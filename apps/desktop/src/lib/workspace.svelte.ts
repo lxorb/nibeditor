@@ -3343,7 +3343,7 @@ class Workspace {
    *  a drag, a drop onto a note, the palette, an automation, an undo, a folder that
    *  stopped holding anything. Every one of them is a `rename` or a `move`, and this
    *  is the sentence both of them owe. See `moved` in sync.svelte.ts, and
-   *  `movedHere` in sync/mirror.ts for what the account is told and why the mirror
+   *  `movedHere` in sync/pass.ts for what the account is told and why the mirror
    *  is re-keyed only afterwards.
    *
    *  Fetched rather than imported, like every other word this store has for the
@@ -3431,7 +3431,7 @@ class Workspace {
    *  A tab that was holding its place takes the words and becomes an ordinary
    *  note. Only that case: a note already open with words of its own is the
    *  syncing loop's business and is settled by the mirror rather than here. See
-   *  `pull` in sync/mirror.ts, which says when each body lands. */
+   *  `pull` in sync/pass.ts, which says when each body lands. */
   async arrived(path: string) {
     const waiting = this.tabs.filter((tab) => tab.coming && tab.path === path)
     if (!waiting.length) return
