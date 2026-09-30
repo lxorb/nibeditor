@@ -1,0 +1,93 @@
+name: drives
+
+# Every drive in apps/desktop/test/e2e, on one build, every night and whenever
+# somebody asks for it.
+#
+# Until this existed nothing ran them: check.yml runs smoke.py, the floor a pull
+# request can afford, and parses the rest, and every other drive only ever said
+# anything when somebody ran it by hand - which for most of them was months. A
+# drive nobody runs is a drive that lies. So the whole set runs here, the way
+# run-all.py runs it on a desk: one build, each drive on an origin of its own and
+# with a Worker of its own where it wants one, a second chance for a failure that is
+# then called flaky rather than passed, and a table at the end.
+#
+# Never on a push or a pull request. The set takes the better part of an hour, and
+# a merge waiting on it would be a merge that waits on it; what it finds is read the
+# next morning. See docs/conventions.md, "Drives".
+on:
+  schedule:
+    # Off the hour, when the runners are busiest.
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Only the drives whose name holds one of these words, comma separated'
+        required: false
+        default: ''
+
+# One run at a time, and a second one waits rather than cancelling the first: a
+# night's table half written is worth less than a morning's whole one.
+concurrency:
+  group: drives
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  drives:
+    runs-on: ubuntu-latest
+    # Only reads: nothing here writes a release, a comment or a package.
+    permissions:
+      contents: read
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The runner's own Python, the way check.yml's smoke job takes it: one package
+      # and the browsers it drives. Chromium for every drive, and WebKit for the one
+      # that holds the app's policy up in both engines the app runs in (frames.py).
+      # `--with-deps` because a bare browser on a runner is missing half the shared
+      # libraries it needs to start.
+      - name: The browsers the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps chromium webkit
+
+      # Two at a time on the runner's four cores. The drives against the Worker need
+      # no Cloudflare token: each Worker runs with `--local`, which switches off the
+      # one binding - Workers AI - that has no local emulation. A drive that needs what
+      # a runner cannot have, a native Windows build, is listed as skipped with the
+      # reason.
+      - name: Drives
+        env:
+          ONLY: ${{ inputs.only }}
+        run: |
+          python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 ${ONLY:+--only "$ONLY"}
+
+      # The table, on the run's own page.
+      - name: The table
+        if: always()
+        run: |
+          table=apps/desktop/test/e2e/shots/results.md
+          if [ -f "$table" ]; then cat "$table" >>"$GITHUB_STEP_SUMMARY"; fi
+
+      # What every drive saw and said, pass or fail: a failure is read from its own
+      # log and pictures, and a pass is the picture to hold the next failure against.
+      - name: The shots and the logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: drives
+          path: apps/desktop/test/e2e/shots
+          retention-days: 14
+          if-no-files-found: ignore
