@@ -15,6 +15,7 @@
   import { account } from './account.svelte'
   import { arriving } from './arriving.svelte'
   import { initial } from './icons'
+  import { longPress } from './longpress'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
   import { sync } from './sync.svelte'
@@ -32,6 +33,11 @@
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
     return t('Settings')
   }
+
+  /** Every theme, each shown on the whole app while it is pointed at: a right click
+   *  on the switch, or a finger held on it. Fetched then; see theme-picker/. */
+  const pick = (event: MouseEvent) =>
+    void import('./theme-picker/picking.svelte').then((one) => one.pickTheme(event))
 </script>
 
 <!-- A region of the window, so F6 reaches the account, the theme and the settings
@@ -79,13 +85,16 @@
   <div class="acts">
     <!-- Off while the theme in force has only the one scheme: there is no other
          side of it to show, and swapping it for a built-in is not the switch
-         anybody pressed. See theme.svelte.ts. -->
+         anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which
+         would swallow the right click that offers another theme. -->
     <button
       class="nib-glyph act"
       title={theme.current === 'dark' ? t('Light') : t('Dark')}
       aria-label={theme.current === 'dark' ? t('Light') : t('Dark')}
-      disabled={!theme.switchable}
+      aria-disabled={!theme.switchable}
       onclick={() => theme.toggle()}
+      oncontextmenu={pick}
+      use:longPress={pick}
     >
       {#if theme.current === 'dark'}
         <svg viewBox="0 0 14 14"
@@ -136,14 +145,10 @@
     border-top: 1px solid var(--line);
   }
 
-  /* The account row, and only it. This used to be written as `button`, which a
-     scoped rule turns into `button.svelte-xxx` - a class and an element, which
-     out-specifies the shared `.nib-glyph` by exactly one element. So `display:
-     flex` landed on the two switches as well, the grid that centres a glyph in its
-     square lost, and both marks sat hard against the left of a 28px button: the
-     two switches looked out of line with each other and with the row, which is
-     what was reported. A component's own rule says which of its controls it is
-     about. */
+  /* The account row, and only it: a bare `button` here, scoped, out-specifies the
+     shared `.nib-glyph` by one element, and put `display: flex` on the two switches
+     too, which sat both marks against the left of their squares. A component's own
+     rule says which of its controls it is about. */
   .who {
     display: flex;
     align-items: center;
@@ -232,15 +237,9 @@
     gap: 2px;
   }
 
-  /* The two switches are `.nib-glyph` in the themes package. They used to be a
-     square of the row scale with a mark of `--icon-lg` in it and nothing said
-     about padding, which meant the browser's own `1px 6px`: the mark was handed
-     a content box 16 wide, gave way in the flex row, and both glyphs at the
-     bottom of the panel came out 16 across and 18 down. The shared class says
-     `padding: 0` and `flex: none` on the mark for exactly that reason.
-
-     What is left here is the dot in the corner, which needs something to be in
-     the corner of. */
+  /* The two switches are `.nib-glyph` in the themes package, which says why its
+     padding is none. What is left here is the dot in the corner, which needs
+     something to be in the corner of. */
   .act {
     position: relative;
   }

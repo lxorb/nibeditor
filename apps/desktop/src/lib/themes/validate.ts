@@ -237,7 +237,7 @@ function selectorOf(text: string): string {
 /** The declarations of one block, as they were written. A value may hold a
  *  semicolon inside a string or a function, so the split walks rather than
  *  using `split`. */
-function declarationsOf(body: string): [string, string][] {
+export function declarationsOf(body: string): [string, string][] {
   const found: [string, string][] = []
   let depth = 0
   let quote = ''

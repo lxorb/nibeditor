@@ -458,6 +458,55 @@ describe('a folder that will not answer', () => {
   })
 })
 
+/** The theme picker tries a look on the whole app while it is pointed at, and a
+ *  try is a frame's work: the sheet a file theme is painted with is the one the
+ *  folder was read for, not a second read, and nothing is written down. */
+describe('a look shown and not kept', () => {
+  test('paints a file theme in the frame it is asked for, with no read in between', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+
+    // A read now would come back empty; a sheet already held does not need one.
+    folder.reading = false
+    theme.select('file:rose')
+
+    expect(injected()).toContain('--bg: #000')
+  })
+
+  test('is on the page and in the store, and nowhere in the storage', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.select('default')
+    theme.setScheme('dark')
+    theme.setAccent('violet')
+
+    theme.preview('file:rose', 'light', 'teal')
+
+    expect(theme.id).toBe('file:rose')
+    expect(dataset.theme).toBe('light')
+    expect(injected()).toContain('--bg: #fff')
+    expect(kept.getItem('nib:theme')).toBe('default')
+    expect(kept.getItem('nib:theme-scheme')).toBe('dark')
+    expect(kept.getItem('nib:accent')).toBe('violet')
+  })
+
+  test('and showing the kept one again is the kept one exactly', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+    theme.select('default')
+    theme.setScheme('system')
+
+    theme.preview('file:rose', 'dark', 'teal')
+    theme.preview('default', 'system', 'violet')
+
+    expect(theme.id).toBe('default')
+    expect(theme.scheme).toBe('system')
+    expect(theme.accent).toBe('violet')
+    // Following the system again, which is asking for the dark.
+    expect(dataset.theme).toBe('dark')
+  })
+})
+
 describe('an installed theme across a restart', () => {
   test('is in the dropdown, under its own name, still chosen', async () => {
     installed('rose', 'Rose', PAIR, '2.0.0')

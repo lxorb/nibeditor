@@ -4,6 +4,7 @@
   import { fade, fly, scale, slide } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import type { EditorView } from '@nib/editor'
+  import AccentSwatches from './AccentSwatches.svelte'
   import { account } from './account.svelte'
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
@@ -1199,19 +1200,7 @@
   {#if !theme.accentIsTheme}
     <h3>{t('Accent')}</h3>
     <div class="card">
-      <div class="accents">
-        {#each theme.accents as swatch (swatch.id)}
-          <button
-            class="swatch"
-            class:active={theme.accent === swatch.id}
-            title={t(swatch.name)}
-            aria-label={t(swatch.name)}
-            aria-pressed={theme.accent === swatch.id}
-            style:--swatch={swatch[theme.current]}
-            onclick={() => theme.setAccent(swatch.id)}
-          ></button>
-        {/each}
-      </div>
+      <AccentSwatches chosen={theme.accent} onchoose={(id: string) => theme.setAccent(id)} />
     </div>
   {/if}
 
@@ -1818,39 +1807,6 @@
     background: var(--bg);
   }
 
-  .accents {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-  }
-
-  .swatch {
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    border: none;
-    border-radius: 50%;
-    background: var(--swatch);
-    cursor: default;
-    /* Only the swatch under the pointer moves, and it moves plainly. The ring
-       marking the chosen one is a state rather than a movement, so it is left
-       out of the transition: it should appear, not grow. */
-    transition: transform var(--dur-fast) var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .swatch:hover {
-      transform: scale(1.12);
-    }
-  }
-
-  /* A ring rather than a tick: the colour is the whole point of the control. */
-  .swatch.active {
-    box-shadow:
-      0 0 0 2px var(--surface),
-      0 0 0 4px var(--swatch);
-  }
-
   .meter {
     height: 8px;
     border-radius: 99px;
@@ -2047,7 +2003,7 @@
     padding: var(--touch-pad);
   }
 
-  .sheet.phone .card > .accents {
+  .sheet.phone .card > :global(.accents) {
     padding: var(--touch-pad);
   }
 
@@ -2176,14 +2132,5 @@
 
   .sheet.phone .nib-button {
     align-self: stretch;
-  }
-
-  .sheet.phone .accents {
-    gap: 12px;
-  }
-
-  .sheet.phone .swatch {
-    width: var(--touch-target);
-    height: var(--touch-target);
   }
 </style>

@@ -34,8 +34,9 @@ export const FULL_HEIGHT = 428
  *
  *  Only the top level: a rule inside a media query belongs to a screen width,
  *  and the miniature's width is not the screen's. Nested blocks are stepped over
- *  whole, which is also what keeps this from having to understand at-rules. */
-function* rules(source: string): Generator<{ prelude: string; body: string }> {
+ *  whole, which is also what keeps this from having to understand at-rules. The
+ *  picker's cards read a sheet the same way; see theme-picker/looks.ts. */
+export function* rules(source: string): Generator<{ prelude: string; body: string }> {
   // Taken out first: what stands between one rule and the next is that rule's
   // selector, and the sheets these come from are commented throughout. A
   // comment left in is a comment read as part of the name of the thing after it.

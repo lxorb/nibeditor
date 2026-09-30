@@ -83,7 +83,8 @@ import { PROPERTIES_WORDS } from './properties-words'
 import { settings } from './settings.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { closeWindow, invoke, isDesktop, isNative } from './tauri'
-import { SCHEME_CHOICES, SCHEME_NAMES, theme } from './theme.svelte'
+import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
+import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 import { pages, type Step } from './web-tab/pages.svelte'
@@ -1238,6 +1239,14 @@ export function appCommands(view?: EditorView): Command[] {
         ]
       : []),
 
+    // Every theme at once, each tried on the whole app while it is pointed at: the
+    // picker a right click on the light and dark switch opens. The rows under it
+    // choose one by name. See theme-picker/picking.svelte.ts.
+    {
+      id: 'themes',
+      label: t('Switch theme'),
+      run: () => void import('./theme-picker/picking.svelte').then((one) => one.pickTheme()),
+    },
     // A theme, an accent and a code theme carry a name rather than a word, so
     // the row reads "Design: Sepia" in German and not "Theme: Sepia". The one in
     // force is ticked, which is the mark the menu rows already use: a word in the

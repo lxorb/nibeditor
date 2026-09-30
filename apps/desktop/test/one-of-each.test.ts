@@ -309,6 +309,9 @@ describe('the ring a keyboard leaves', () => {
       'lib/Pdf.svelte',
       'lib/Reading.svelte',
       'lib/Slides.svelte',
+      // The theme picker on a phone, which holds the keys itself rather than putting
+      // the keyboard up over the cards for a search nobody asked for.
+      'lib/theme-picker/ThemePicker.svelte',
       // A site's question, which holds the keys so neither answer is a stray Enter.
       'lib/web-tab/WebAsk.svelte',
     ])

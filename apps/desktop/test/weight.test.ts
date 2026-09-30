@@ -505,7 +505,17 @@ function holds(tail: string): boolean {
  *
  *  And to 3,279,000 for a phone's sheets put away by pulling them down, as an iPhone's
  *  are (sheet-pull.ts): the two menus that wear the grip are drawn by the first long
- *  press, so the gesture is with them. Measured 3,275,651. */
+ *  press, so the gesture is with them. Measured 3,275,651.
+ *
+ *  Not raised 2026-09-30 for the theme picker, which came in under a main at 3,240,038
+ *  and left it at 3,239,841, 375 modules both: the picker is behind the right click
+ *  that opens it, and what the shell had to learn - the switch's right click, a look
+ *  shown and not kept, a theme's sheet held from the folder's read - was paid for by
+ *  the scheme names the shell never said moving out beside the pickers that do
+ *  (schemes.ts). The production build preloads 1,338,577 bytes in 153 chunks against
+ *  1,337,206 in 151: the door itself, and the bundler cutting the sheet's pull and the
+ *  theme store out of the chunk they shared with the bin, since the picker asks for
+ *  those two and not for it. */
 const BUDGET = 3_279_000
 const MOST_FILES = 376
 
@@ -766,6 +776,14 @@ describe('what the app evaluates before it draws anything', () => {
     // like a tab's menu. See Pane.svelte.
     ['/lib/editor-menu.ts', "the editor's menu"],
     ['/editor/src/menu.ts', 'what it asks of the editor'],
+    // The theme picker, its cards and what works their colours out of the sheets'
+    // text: fetched by the right click on the light and dark switch, or the palette's
+    // row. What is left in the shell is the switch's two attributes and the store's
+    // one call for a look shown and not kept. See theme-picker/picking.svelte.ts.
+    ['/lib/theme-picker/picking.svelte.ts', 'the theme picker'],
+    ['/lib/theme-picker/ThemePicker.svelte', 'its sheet'],
+    ['/lib/theme-picker/looks.ts', "its cards' colours"],
+    ['/lib/schemes.ts', 'the names of the three schemes, which only the pickers say'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

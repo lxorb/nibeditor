@@ -13,18 +13,6 @@ export type Scheme = 'dark' | 'light'
  *  system is asking for at the time. */
 export type SchemeChoice = Scheme | 'system'
 
-/** The three the control offers, in the order it draws them. Following the
- *  system first, because it is where everybody starts. */
-export const SCHEME_CHOICES: SchemeChoice[] = ['system', 'dark', 'light']
-
-/** What each is called. Named here rather than at the control, so the pane, the
- *  palette and anything else that offers the choice say the same word. */
-export const SCHEME_NAMES: Record<SchemeChoice, string> = {
-  system: 'System',
-  dark: 'Dark',
-  light: 'Light',
-}
-
 interface ThemeInfo {
   id: string
   name: string
@@ -32,9 +20,9 @@ interface ThemeInfo {
    *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
-  /** The stylesheet itself, for a theme the app ships with rather than reads: the
-   *  high contrast one. Applied by the same road a theme file is - see `apply` - so a
-   *  built-in palette and an installed one cannot be dressed two different ways. */
+  /** The stylesheet itself: the high contrast one, which the app ships with, or a
+   *  file's as `reload` last read it. Held, so choosing a theme - or pointing at one in
+   *  the picker - paints in the frame it is asked for rather than after a read. */
   css?: string
   /** Whether the theme states an accent of its own. One that does keeps it: the
    *  card in the store showed that colour, and what the app looks like has to be
@@ -329,6 +317,7 @@ class Themes {
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
         ownAccent: /--accent\s*:/.test(css),
+        ...(whole ? { css } : {}),
       }
     })
 
@@ -370,6 +359,15 @@ class Themes {
     this.id = id
     this.apply()
     keep(STORAGE_KEY, id)
+  }
+
+  /** Shows a look and keeps nothing: what the picker points at. Leaving it is this
+   *  again, with what was kept; see theme-picker/picking.svelte.ts. */
+  preview(id: string, scheme: SchemeChoice, accent: string) {
+    this.id = id
+    this.scheme = scheme
+    this.accent = accent
+    this.apply(false)
   }
 
   /** Whether the light and dark switch has anywhere to go, which is what makes
@@ -447,7 +445,7 @@ class Themes {
    *  wearing one theme's stylesheet under another theme's tokens. */
   private applied = 0
 
-  private apply() {
+  private apply(kept = true) {
     const theme = this.active
     const applying = ++this.applied
 
@@ -455,30 +453,25 @@ class Themes {
     // built-in states both, and a theme file only overrides what it cares about.
     document.documentElement.dataset.theme = this.current
     this.paintAccent()
+
+    // A stylesheet already held needs no round trip: the high contrast one is applied
+    // on the frame it is chosen on, and on a first launch with no network at all, and a
+    // file read by `reload` the same way. Only one not read yet waits for the disk, and
+    // one that has gone away leaves the built-in tokens the attribute set up. Before the
+    // bars, which read the ground back: one restyle rather than two, and the right `--bg`.
+    if (theme.css !== undefined) this.inject(theme.css)
+    else if (!theme.path) this.inject('')
+    else {
+      void invoke<string>('read_theme', { path: theme.path })
+        .then((css) => this.inject(applying === this.applied ? css : null))
+        .catch(() => this.inject(applying === this.applied ? '' : null))
+    }
+
     this.paintSystemBars()
     // And what the next launch should paint before it has read any of this; see
     // ground.ts. Off the window rather than off the theme, so a theme file's own
     // colour and a translucent window are both what they really are.
-    rememberGround()
-
-    // A theme the app ships with carries its own stylesheet and needs no round trip:
-    // the high contrast one is applied on the frame it is chosen on, and on a first
-    // launch with no network at all.
-    if (theme.css !== undefined) {
-      this.inject(theme.css)
-      return
-    }
-
-    if (!theme.path) {
-      this.inject('')
-      return
-    }
-
-    // A theme file that has gone away leaves the built-in tokens showing,
-    // which is what the data attribute above has already set up.
-    void invoke<string>('read_theme', { path: theme.path })
-      .then((css) => this.inject(applying === this.applied ? css : null))
-      .catch(() => this.inject(applying === this.applied ? '' : null))
+    if (kept) rememberGround()
   }
 
   /** The bars the system draws over the page: its clock and battery at the top,

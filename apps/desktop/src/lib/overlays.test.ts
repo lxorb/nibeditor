@@ -172,6 +172,7 @@ describe('what hides a web page', () => {
     'lib/Slides.svelte': 'a deck over the whole window',
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/ThemeStore.svelte': 'sheet',
+    'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/WebDownloads.svelte': 'bubble',

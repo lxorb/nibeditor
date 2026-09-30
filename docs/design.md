@@ -771,6 +771,23 @@ where a switch goes. The theme is off while the theme in force has only the one
 scheme. The settings button carries the sync light, as it did in the rail. The
 GitHub mark does not come back: it is a row in Help.
 
+### The theme picker
+
+A right click on the light and dark switch, a finger held on it, or Switch theme in
+the palette: every theme as a card of nib in its own colours, a theme with both
+schemes cut on the diagonal the way a Mac draws Auto, the three schemes as marks at
+the top and the accents as dots at the foot. Pointing - the pointer or the arrows -
+puts that theme, scheme or accent on the whole app at once and writes nothing down;
+moving off, Escape, a press outside and Back all put the kept look back exactly, and
+a click keeps it the way Settings does. VS Code's colour theme list is the model,
+with the cards it lacks and the pointer trying as well as the keys.
+
+Over the app without dimming it, since the app is what is being judged, and never in
+the launch: the switch fetches the picker as it is pressed. A card is painted inline
+from colours worked out of the sheets' text rather than by the page, which answers
+for the window's own theme on everything that carries the scheme attribute. See
+`apps/desktop/src/lib/theme-picker/`.
+
 ### One plus
 
 The plus always makes a note, and there is never more than one on screen. On a
