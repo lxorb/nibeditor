@@ -259,7 +259,7 @@ export function preferences(view?: EditorView): Pane[] {
         // Which shell a new terminal opens and how large its type is: this machine's,
         // like the release channel below, because a shell is a program on one computer.
         // Only a desktop has a terminal; see docs/terminal.md.
-        ...(isDesktop ? [terminalGroup()] : []),
+        ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
 
         // Only the desktop app installs anything: a page is the new version the
         // moment it is reloaded, and a phone app is the store's business. So the

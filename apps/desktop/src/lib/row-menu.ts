@@ -270,7 +270,7 @@ function revealEntry(entry: Entry): MenuEntry[] {
  *  Open in Integrated Terminal and Explorer's Open in Terminal. A desktop's alone, like
  *  every terminal; see docs/terminal.md. */
 function terminalEntry(entry: Entry): MenuEntry[] {
-  if (!isDesktop) return []
+  if (__EVEN_PLUGIN__ || !isDesktop) return []
 
   const folder = entry.is_dir ? entry.path : folderOf(entry.path)
   return [

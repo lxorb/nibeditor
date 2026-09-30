@@ -122,7 +122,7 @@ async function muting(tabId: string): Promise<void> {
  *  in - the same shell by the row, any other by the chevron at its end, as VS Code's
  *  `+ ˅` has it. Duplicate is this row's, for a terminal; see `tabEntries`. */
 function shellEntries(tab: Tab): MenuEntry[] {
-  if (tab.kind !== 'terminal') return []
+  if (__EVEN_PLUGIN__ || tab.kind !== 'terminal') return []
 
   const spec = readSpec(tab.doc)
   const beside = { folder: spec?.folder ?? null, beside: tab.id }

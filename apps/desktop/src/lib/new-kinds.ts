@@ -111,10 +111,11 @@ export function newKinds(): NewKindRow[] {
       letter: 'p',
       make: (paneId) => inPane(paneId, () => workspace.newPages()),
     },
-    // A shell is a desktop's alone: a phone has no shell to give an app, and a page in a
-    // browser has no machine under it. R, because T is the chord's own step, and R is
-    // what Run has been on Windows for thirty years. See docs/terminal.md.
-    ...(isDesktop ? [terminalRow()] : []),
+    // A shell is a desktop's alone: a phone has no shell to give an app, a page in a
+    // browser has no machine under it, and the glasses' plugin carries none of it. R,
+    // because T is the chord's own step, and R is what Run has been on Windows for thirty
+    // years. See docs/terminal.md.
+    ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalRow()] : []),
   ]
 }
 
