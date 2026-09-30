@@ -146,7 +146,14 @@ export function start(): () => void {
   // it is the last turn of the launch order. See `warmDoors` in surfaces.svelte.ts.
   void warmDoors()
 
+  // The pointer hides while somebody types; see typing-pointer.ts.
+  let stopPointer: (() => void) | null = null
+  if (!__EVEN_PLUGIN__) {
+    void import('./typing-pointer').then((one) => (stopPointer = one.hidePointerWhileTyping()))
+  }
+
   return () => {
+    stopPointer?.()
     clearInterval(sweeper)
     stopRecovery()
     stopWatching()
