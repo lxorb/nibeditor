@@ -15,6 +15,7 @@ name: drives
 # a merge waiting on it would be a merge that waits on it; what it finds is read the
 # next morning. See docs/conventions.md, "Drives".
 on:
+  pull_request:
   schedule:
     # Off the hour, when the runners are busiest.
     - cron: '17 2 * * *'
