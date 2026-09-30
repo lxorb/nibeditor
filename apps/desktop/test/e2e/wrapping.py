@@ -71,9 +71,16 @@ def drive(browser: Browser) -> None:
 
     # The palette, which is how an export is reached without a menu bar.
     page.keyboard.press("Control+p")
-    page.wait_for_timeout(400)
+    # Its field holding the keyboard, not a length of time: the palette is fetched
+    # the first time it is asked for, and keys typed before it is there go into the
+    # note instead.
+    wait_for(page, "document.activeElement?.matches('.palette input')", "the palette's field")
     page.keyboard.type("> Plain text")
-    page.wait_for_timeout(700)
+    wait_for(
+        page,
+        "[...document.querySelectorAll('.palette [role=option]')].some((one) => one.textContent.includes('Plain text'))",
+        "the palette to offer Plain text",
+    )
     shot(page, "02-palette")
 
     with page.expect_download(timeout=20000) as caught:
