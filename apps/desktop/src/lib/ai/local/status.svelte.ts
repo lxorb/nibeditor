@@ -22,8 +22,6 @@ const EVERY = 3000
 const FOR = 5 * 60_000
 
 export interface Plan extends Standing {
-  /** Whether it is being asked right now. */
-  asking: boolean
   /** Where the plan stood when its program last said, in this run. */
   limit: Limit | null
 }
@@ -33,7 +31,6 @@ const unasked = (): Plan => ({
   program: null,
   plan: null,
   account: null,
-  asking: false,
   limit: null,
 })
 
@@ -48,12 +45,10 @@ class Plans {
 
   /** Asks a program whether it is installed and signed in. */
   async check(kind: LocalKind): Promise<Plan> {
-    this.local[kind].asking = true
     const said = await invoke<unknown>('ai_cli_status', { tool: kind }).catch(() => undefined)
     const standing = said === undefined ? null : standingOf(kind, saidIn(said))
     const now: Plan = {
       ...(standing ?? { state: 'unknown', program: null, plan: null, account: null }),
-      asking: false,
       limit: this.local[kind].limit,
     }
     this.local[kind] = now

@@ -257,9 +257,11 @@
         </button>
       {:else if plan.state === 'in'}
         <span class="hint" title={plan.account ?? ''}>
-          {plan.plan
-            ? t('{plan} plan', { plan: plan.plan === 'API key' ? t('API key') : plan.plan })
-            : t('Signed in')}
+          {plan.plan === 'API key'
+            ? t('API key')
+            : plan.plan
+              ? t('{plan} plan', { plan: plan.plan })
+              : t('Signed in')}
         </span>
       {:else}
         <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
