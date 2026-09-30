@@ -282,8 +282,7 @@ export class Bookmarks {
   /** Takes one out. A group takes nothing with it: what was in it comes up to
    *  where the group was, which is what somebody who empties a folder of
    *  bookmarks means - the bookmarks were the point, the group was the shelf. */
-  remove(mark: Bookmark) {
-    const root = this.root()
+  remove(mark: Bookmark, root = this.root()) {
     if (root === null) return
 
     const held = this.of(root)
@@ -336,8 +335,7 @@ export class Bookmarks {
    *
    *  A bookmark that lands on one already held is the same bookmark twice, so only
    *  the first of the two stays. */
-  moved(from: string, to: string) {
-    const root = this.root()
+  moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
@@ -478,7 +476,7 @@ export class Bookmarks {
     this.write()
   }
 
-  private put(root: string, list: Bookmark[]) {
+  put(root: string, list: Bookmark[]) {
     this.spaces = { ...this.spaces, [root]: { list, account: this.spaces[root]?.account ?? null } }
     this.write()
 

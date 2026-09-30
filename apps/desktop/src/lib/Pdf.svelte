@@ -48,6 +48,7 @@
     type Size,
   } from './pdf/pages'
   import { loadHighlights, saveHighlights } from './pdf/sidecar'
+  import { marksFromOutside } from './pdf/sheets.svelte'
   import PdfPage from './PdfPage.svelte'
   import { paint, placesOf, rangeOf } from './reading/find'
   import { scrollbar } from './scrollbar'
@@ -189,10 +190,12 @@
     }
   })
 
-  // What the reader has marked, read once per PDF.
+  // What the reader has marked, read once per PDF, and again when an agent has marked
+  // it too; see pdf/sheets.svelte.ts.
   $effect(() => {
     const path = tab.path
     if (path === null) return
+    marksFromOutside(path)
 
     let mine = true
     void loadHighlights(path).then((found) => {

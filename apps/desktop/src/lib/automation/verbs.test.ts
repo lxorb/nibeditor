@@ -131,7 +131,11 @@ describe('the command line', () => {
       'utf8',
     )
 
-    const missing = (await verbs()).filter((verb) => !usage.includes(`  ${verb.replace('.', ' ')}`))
+    // Not an agent's verbs, nor the crate's questions for them, which are spelt the
+    // Model Context Protocol's way and listed by `nib mcp` rather than by this help.
+    const missing = (await verbs())
+      .filter((verb) => !verb.includes('_') && !verb.startsWith('agent.'))
+      .filter((verb) => !usage.includes(`  ${verb.replace('.', ' ')}`))
     expect(missing).toEqual([])
   })
 })

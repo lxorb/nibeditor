@@ -277,8 +277,7 @@ export class Arranged {
    *  knows it by name, and a folder that moved is the key of its own list and of
    *  every list under it. Called from the same three places `folderIcons.moved` is
    *  - a rename, a move, and the undo of either. */
-  moved(from: string, to: string) {
-    const root = this.root()
+  moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
@@ -315,8 +314,7 @@ export class Arranged {
   }
 
   /** A note or folder that has gone, with everything under it. */
-  gone(path: string) {
-    const root = this.root()
+  gone(path: string, root = this.root()) {
     if (root === null) return
 
     const at = relativeTo(root, path)

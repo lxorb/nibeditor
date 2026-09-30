@@ -148,7 +148,7 @@ listen on. Run against the web app it says so rather than failing to connect.
 Every verb takes `--space` to work somewhere other than the space that is open;
 naming one switches to it, because the result has to be visible. A verb that reads
 a note reads the one that is open when no path is given, unsaved keystrokes and
-all.
+all. An agent's verbs never switch; see Agents below.
 
 `--json` prints the whole answer as JSON; without it the answer is printed as
 lines, with tab-separated columns for a list, which `cut` reads.
@@ -197,6 +197,32 @@ and each picture comes back the size of its own window - which no picture of the
 could be. The same rectangle copied off the screen is a different picture, which is the
 difference between photographing a window and photographing whatever is in front of it.
 And the window in front is the same one before and after.
+
+## Agents
+
+An agent (docs/agent-native.md) reaches the window through the same dispatcher, with
+its grant put beside the verb by the endpoint. Only the rows of `verbs.ts` that name a
+scope - the `agent` column - reach an agent at all, and that scope is checked before
+anything of the verb is even fetched; the command line's own verbs, `eval` among
+them, never do. What a row cannot say - which space, which op, what asks the reader
+first, `confirm` mode - is `lib/agents/workspace`, fetched with the first agent
+request and not before. The installation's own secret holds every scope, and may ask
+the agent verbs too.
+
+An agent's verb never switches spaces. The reader may be writing in one space while
+an agent works in another, and the screen must not move under them, so a space an
+agent names is read and written where it is: the tree off the disk (`read_tree`), the
+links off an index of that space built for the agent and let go a minute after
+(`lib/agents/workspace/links.ts`), the search asked of that space's root without the
+panel, the bookmarks and every per-space store by that space's root, and a move made
+with the crate's rename and that index's rewrite rather than through the tree the
+window shows. A space the grant does not reach does not exist: it is in no list, and
+naming it is "there is no space called" like a name nobody has.
+
+An agent is answered in the contract's three shapes (`src-tauri/src/agents/verbs.rs`),
+with `ok` beside them for the endpoint's log: done, with `untrusted` naming where the
+words came from when that is outside the reader's own notes; `needs_approval`, for what
+asked the reader first (`agents_ask`); or an error with a code to act on.
 
 ## Security
 

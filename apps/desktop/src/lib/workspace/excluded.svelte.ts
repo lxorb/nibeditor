@@ -152,8 +152,7 @@ export class Excluded {
   /** A note or a folder that has been renamed or moved, with everything under it.
    *  The one thing a marker inside the file would have got for free, and the reason
    *  every path that changes has to say so. */
-  moved(from: string, to: string) {
-    const root = this.root()
+  moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
@@ -165,8 +164,7 @@ export class Excluded {
   }
 
   /** A note or a folder that has gone, with everything under it. */
-  gone(path: string) {
-    const root = this.root()
+  gone(path: string, root = this.root()) {
     if (root === null) return
 
     const at = relativeTo(root, path)

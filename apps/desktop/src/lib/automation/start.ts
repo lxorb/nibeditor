@@ -16,6 +16,7 @@ import { busy } from '../busy.svelte'
 import { t } from '../i18n.svelte'
 import { log } from '../log'
 import { invoke, isDesktop, isNative, openExternal } from '../tauri'
+import { callerOf } from './caller'
 import { callbackKind, isFileUri, readUri, withOutcome } from './uri'
 import { dispatch, isVerb, linkHearsFrom, verbForAction } from './verbs'
 
@@ -95,6 +96,9 @@ interface Request {
   verb?: unknown
   args?: unknown
   rest?: unknown
+  /** An agent's grant, which the endpoint puts beside the verb for a request that
+   *  carried an agent's token; absent for this installation's own secret. */
+  agent?: unknown
 }
 
 /** One request, answered. */
@@ -103,7 +107,7 @@ async function answer(id: number, asked: Request) {
   const args = isRecord(asked.args) ? asked.args : {}
   const rest = Array.isArray(asked.rest) ? asked.rest.filter(isText) : []
 
-  const result = await dispatch(verb, args, rest)
+  const result = await dispatch(verb, args, rest, 'here', callerOf(asked.agent))
   await invoke('automation_result', { id, result }).catch(() => undefined)
 }
 

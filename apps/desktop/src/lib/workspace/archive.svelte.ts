@@ -117,8 +117,7 @@ export class Archive {
   }
 
   /** A row renamed or moved: archived at the new path, taken back at the old. */
-  moved(from: string, to: string) {
-    const root = this.root()
+  moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)

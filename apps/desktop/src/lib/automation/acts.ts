@@ -315,36 +315,50 @@ export async function moveFile(args: Said): Promise<unknown> {
   const from = relativeIn(args, 'path')
   const to = relativeIn(args, 'to')
 
-  const source = insideSpace(space.root, from)
-  if ((await workspace.noteText(source)) === null) {
+  if ((await workspace.noteText(insideSpace(space.root, from))) === null) {
     throw new Error(`there is no note at ${from}`)
   }
 
+  return { from, to: await movedIn(space.root, from, movedPath(from, to)) }
+}
+
+/** Moves or renames a file or a folder of the space at `root` to `to`, both relative
+ *  to it, through the tree's own rename and move, so every link to it is rewritten and
+ *  the move is one thing to undo. Answers `to`. An agent's move in the space that is
+ *  open comes through here too; see lib/agents/workspace/tree.ts. */
+export async function movedIn(root: string, from: string, to: string): Promise<string> {
   const folder = folderOf(to)
-  const name = movedName(nameOf(from), nameOf(to))
-  const moved = folder ? `${folder}/${name}` : name
+  const name = nameOf(to)
+  const source = insideSpace(root, from)
   if (folder === folderOf(from)) {
     await workspace.rename(source, name)
-    return { from, to: moved }
+    return to
   }
 
-  await workspace.moveMany([source], folder ? insideSpace(space.root, folder) : space.root)
+  await workspace.moveMany([source], folder ? insideSpace(root, folder) : root)
   if (name !== nameOf(from)) {
     await workspace.rename(
-      insideSpace(space.root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),
+      insideSpace(root, folder ? `${folder}/${nameOf(from)}` : nameOf(from)),
       name,
     )
   }
 
-  return { from, to: moved }
+  return to
 }
 
-/** What a moved file is called: the name asked for with the file's own ending on it,
- *  so a move never changes what kind of file something is. A note may be asked for
- *  under any of markdown's endings; anything else keeps its own, so `Blog.url` moved
- *  to `Reading/Blog` is still a website rather than a note holding a shortcut. */
-function movedName(from: string, to: string): string {
-  return MARKDOWN.test(from) ? withExtension(to) : nameToWrite(to, extensionOf(from, false))
+/** Where a moved file lands: the name asked for with the file's own ending on it, so a
+ *  move never changes what kind of file something is. A note may be asked for under
+ *  any of markdown's endings; anything else keeps its own, so `Blog.url` moved to
+ *  `Reading/Blog` is still a website rather than a note holding a shortcut. A folder's
+ *  name is not a file name, and is taken as asked. */
+export function movedPath(from: string, to: string, folder = false): string {
+  const name = folder
+    ? nameOf(to)
+    : MARKDOWN.test(from)
+      ? withExtension(nameOf(to))
+      : nameToWrite(nameOf(to), extensionOf(nameOf(from), false))
+  const into = folderOf(to)
+  return into ? `${into}/${name}` : name
 }
 
 /** Takes a file away. It goes to Recently deleted, which is where every other

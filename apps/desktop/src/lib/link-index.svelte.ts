@@ -1318,3 +1318,6 @@ function standsAlone(line: string, name: string): boolean {
 }
 
 export const links = new Links()
+
+/** An index of another space, for an agent's verbs (lib/agents/workspace/links.ts). */
+export const spaceLinks = (): Links => new Links()

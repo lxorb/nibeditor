@@ -145,10 +145,18 @@ A shell can do anything the person at the keyboard can, so:
   it, read it or end it.
 - **A shell is an id** the crate itself found. The window cannot name a program, an
   argument or a variable of its own.
-- **No verb and no `nib://` link** reaches a terminal. *New terminal* is a row the
-  command line may not run (`ownWindow` in `apps/desktop/src/lib/commands.ts`, refused by
-  `runCommand` in `apps/desktop/src/lib/automation/acts.ts` on both roads), and it is left
-  out of the list the command line is given.
+- **No verb of the command line and no `nib://` link** reaches a terminal. *New
+  terminal* is a row the command line may not run (`ownWindow` in
+  `apps/desktop/src/lib/commands.ts`, refused by `runCommand` in
+  `apps/desktop/src/lib/automation/acts.ts` on both roads), and it is left out of the list
+  the command line is given.
+- **An agent's `run_terminal`** is the one verb that does (docs/agent-native.md 8.9): a
+  scope of its own that no agent holds unless the reader grants it, a question to the
+  reader for any line whose program is not on the agent's own list or that starts more
+  than one (`;`, `&`, `|`, `>`, a backtick, `$(`), a shell the crate found started in a
+  folder of a space the agent reaches, and no tab: the line and `exit` are typed into a
+  session nobody is shown, and what it printed comes back. See
+  `apps/desktop/src/lib/agents/workspace/terminal.ts`.
 - `eval`, which is off until the installation's own `automation.json` turns it on, is the
   window itself, and so reaches what the window reaches - a terminal included, as it
   reaches every note. That is what turning it on means; see docs/automation.md. The probe

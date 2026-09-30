@@ -22,6 +22,11 @@
  *  - `confirms` is whether the caller has to say `yes` first. In the table rather
  *    than in the command line, so the app refuses whoever asks rather than
  *    trusting a flag somebody else's script did or did not pass.
+ *  - `agent` is the scope an agent needs to call it (docs/agent-native.md 9.1), or
+ *    null for one any agent may call. Only these rows reach an agent at all: the
+ *    command line's own verbs predate agents and check nothing about them, and the
+ *    crate refuses them too. The reader's own secret holds every scope. What an
+ *    agent's row does is lib/agents/workspace, fetched with the first of them.
  *
  *  The names are the command line's spelling, dots and all, because that is the
  *  surface somebody reads in a terminal. The four link actions map onto them; see
@@ -56,7 +61,9 @@ import {
   syncStatus,
   windowRect,
 } from './answers'
+import type { Scope } from '../agents/verbs'
 import { said as wordsOf, type Road, type Said, yes } from './args'
+import { type AgentAnswer, type Caller, holds, READER, refusal } from './caller'
 
 /** One verb, whole. */
 interface Verb {
@@ -84,8 +91,18 @@ interface Verb {
    *
    *  The road is handed to every verb and read by one: a command's row may say it
    *  is only for somebody at the keyboard. It is a parameter rather than an
-   *  argument because an argument is something a link can write. */
-  run: (args: Said, road: Road) => unknown
+   *  argument because an argument is something a link can write.
+   *
+   *  Absent for a verb that is an agent's alone: what it does is lib/agents/workspace,
+   *  which answers the reader's command line too. */
+  run?: (args: Said, road: Road) => unknown
+  /** The scope an agent needs to call it; see the columns above. */
+  agent?: Scope | null
+}
+
+/** An agent's verb, and only an agent's: the scope it needs. */
+function needs(scope: Scope | null): Verb {
+  return { agent: scope }
 }
 
 const VERBS: Record<string, Verb> = {
@@ -115,7 +132,8 @@ const VERBS: Record<string, Verb> = {
   tags: { run: listTags },
   'properties.read': { takes: ['path'], run: readNoteProperties },
   outline: { takes: ['path'], run: readOutline },
-  bookmarks: { run: listBookmarks },
+  // The command line's list, and an agent's list, add and remove; see `agent` above.
+  bookmarks: { run: listBookmarks, agent: 'workspace' },
   words: { takes: ['path'], run: countWords },
   'sync.status': { run: syncStatus },
   'publish.status': { run: publishStatus },
@@ -141,6 +159,46 @@ const VERBS: Record<string, Verb> = {
   // it reaches here unless this installation's own file says otherwise, and a link
   // can never ask for it at all; see src-tauri/src/endpoint.rs and eval.ts.
   eval: { takes: ['code'], confirms: true, run: runEval },
+
+  // An agent's verbs (docs/agent-native.md 5.1, 5.3, 5.4), each with the scope it needs
+  // at the least; lib/agents/verbs.ts holds the same list to the crate's, and a test
+  // holds this one to that. What a row does beyond its scope - another space, which op,
+  // what asks the reader first - the verb itself decides with the grant in hand.
+  get_context: needs('context'),
+  list_spaces: needs(null),
+  list_notes: needs('notes.read'),
+  search_notes: needs('notes.read'),
+  list_backlinks: needs('notes.read'),
+  read_note: needs('notes.read'),
+  list_versions: needs('notes.read'),
+  read_canvas: needs('notes.read'),
+  read_pdf: needs('notes.read'),
+  pdf_highlights: needs('notes.read'),
+  edit_note: needs('notes.write'),
+  write_note: needs('notes.write'),
+  append_note: needs('notes.write'),
+  set_property: needs('notes.write'),
+  set_task: needs('notes.write'),
+  create_note: needs('notes.write'),
+  restore_version: needs('notes.write'),
+  edit_canvas: needs('notes.write'),
+  capture_to_note: needs('notes.write'),
+  attach_agent_log: needs('notes.write'),
+  move_file: needs('tree'),
+  trash_file: needs('tree'),
+  create_folder: needs('tree'),
+  workspace_tabs: needs('workspace'),
+  run_command: needs('workspace'),
+  read_setting: needs(null),
+  write_setting: needs('settings'),
+  run_terminal: needs('terminal'),
+
+  // What the crate asks the window on an agent's behalf, each optional: the crate has
+  // an answer of its own when the window gives none (docs/agent-native.md 13.1). The
+  // crate asks as the installation and never as an agent, so no agent reaches these.
+  'agent.reader_tabs': { run: (args) => fromTheCrate('agent.reader_tabs', args) },
+  'agent.store_for': { run: (args) => fromTheCrate('agent.store_for', args) },
+  'agent.markdown': { run: (args) => fromTheCrate('agent.markdown', args) },
 }
 
 /** What each `nib://` action is called in the table. Only where the two differ:
@@ -179,21 +237,55 @@ function verbNames(): string[] {
   return Object.keys(VERBS).sort()
 }
 
+/** What a verb answers the command line and a link. */
+export type Plain = { ok: true; value: unknown } | { ok: false; error: string }
+
+/** What a verb answers: the command line's two shapes, or the contract's for an
+ *  agent; see `AgentAnswer`. */
+export type Answered = Plain | AgentAnswer
+
 /** Runs one verb.
  *
  *  Answers rather than throws: both callers have to say something either way, and
  *  a shape they both read is what lets the endpoint hand the answer straight on
- *  without an opinion of its own. */
+ *  without an opinion of its own.
+ *
+ *  `caller` is who asked, which is never an argument for the same reason the road is
+ *  not: the endpoint says it beside the verb, from the token the request carried. */
+export async function dispatch(
+  verb: string,
+  args: Said,
+  rest?: readonly string[],
+  road?: Road,
+): Promise<Plain>
+export async function dispatch(
+  verb: string,
+  args: Said,
+  rest: readonly string[],
+  road: Road,
+  caller: Caller,
+): Promise<Answered>
 export async function dispatch(
   verb: string,
   args: Said,
   rest: readonly string[] = [],
   road: Road = 'here',
-): Promise<{ ok: true; value: unknown } | { ok: false; error: string }> {
+  caller: Caller = READER,
+): Promise<Answered> {
   const [name, words] = twoWords(verb, rest)
 
   const found = VERBS[name]
   if (!found) return { ok: false, error: `there is no verb called ${name}` }
+
+  // An agent's row answers every agent, and the reader too where it is the agent's
+  // alone; a row with a command line answer of its own keeps that for the reader.
+  const run = found.run
+  if (found.agent !== undefined && (caller.agent !== null || run === undefined)) {
+    return agentVerb(name, found.agent, args, caller)
+  }
+  if (caller.agent !== null || run === undefined) {
+    return refusal('not_granted', `${name} is not a verb an agent may call`)
+  }
 
   const said = { ...withPositions(found, words), ...args }
 
@@ -202,10 +294,37 @@ export async function dispatch(
   }
 
   try {
-    return { ok: true, value: await found.run(said, road) }
+    return { ok: true, value: await run(said, road) }
   } catch (error) {
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }
+}
+
+/** One of an agent's verbs, checked against the scope its row names before anything
+ *  of it runs, then answered by lib/agents/workspace. The reader's command line may
+ *  ask them too, and is answered in its own two shapes. */
+async function agentVerb(
+  name: string,
+  scope: Scope | null,
+  args: Said,
+  caller: Caller,
+): Promise<Answered> {
+  if (scope !== null && !holds(caller, scope)) {
+    return refusal('not_granted', `${name} needs ${scope}, which this agent was not granted`)
+  }
+
+  const { runAgentVerb } = await import('../agents/workspace')
+  const answer = await runAgentVerb(name, args, caller)
+  if (caller.agent !== null) return answer
+
+  if (answer.status === 'ok') return { ok: true, value: answer.result }
+  return { ok: false, error: answer.status === 'error' ? answer.message : answer.summary }
+}
+
+/** One of the questions the crate asks the window for an agent. */
+async function fromTheCrate(name: string, args: Said): Promise<unknown> {
+  const { answerTheCrate } = await import('../agents/workspace')
+  return answerTheCrate(name, args)
 }
 
 /** Half the verbs are written as two words - `files read`, `sync now` - and a

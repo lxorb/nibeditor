@@ -201,8 +201,7 @@ export class FolderIcons {
    *  reason every path that changes has to say so: a key nobody rewrote is an
    *  icon that quietly stops being drawn. Called from the same three places
    *  `positions.move` is - a rename, a move, and the undo of either. */
-  moved(from: string, to: string) {
-    const root = this.root()
+  moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
@@ -226,8 +225,7 @@ export class FolderIcons {
   }
 
   /** A folder that has gone, with everything under it. */
-  gone(path: string) {
-    const root = this.root()
+  gone(path: string, root = this.root()) {
     if (root === null) return
 
     const at = relativeTo(root, path)

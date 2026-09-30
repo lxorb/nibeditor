@@ -704,6 +704,13 @@ the text of a closed note, the tree, search and the link index answer for a spac
 not open, and a note open in another window of that space is edited there. `space` on a
 tool never moves the reader.
 
+As built (`lib/agents/workspace`, docs/automation.md "Agents"): the space in the window is
+answered from what the window holds, and any other from the disk and the crate - its tree
+by `read_tree`, its links by an index of its own built for the agent and let go a minute
+after it was last asked, its search by the panel's engine asked of its root, its bookmarks
+and per-space stores by its root, and a move by the crate's rename with that index's
+rewrite. Only `workspace_tabs` with `workspace.focus` ever brings another space in front.
+
 ### 8.7 Canvases, page notes, PDFs
 
 A canvas and a page note are already a Yjs map of objects by id (`packages/rooms/src/

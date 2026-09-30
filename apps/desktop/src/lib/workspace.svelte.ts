@@ -3425,15 +3425,24 @@ class Workspace {
    *  After the links are rewritten, never before: finding the links that pointed at
    *  the old name means resolving them against the space as it was.
    *
+   *  Each store hears of the path's own space, which an agent's may not be (8.6 in
+   *  docs/agent-native.md).
+   *
    *  Not private because putting a rename back is a rename; see workspace/undoing.ts. */
   pathMoved(from: string, to: string) {
+    const root = this.rootHolding(from)
     links.notesMoved(from, to)
     void papers().then(({ paperMoved }) => paperMoved(from, to))
-    this.folderIcons.moved(from, to)
-    this.arranged.moved(from, to)
-    this.excluded.moved(from, to)
-    this.archive.moved(from, to)
-    this.bookmarks.moved(from, to)
+    this.folderIcons.moved(from, to, root)
+    this.arranged.moved(from, to, root)
+    this.excluded.moved(from, to, root)
+    this.archive.moved(from, to, root)
+    this.bookmarks.moved(from, to, root)
+  }
+
+  private rootHolding(path: string): string | null {
+    const holding = this.spaces.find((one) => withinSpace(one.root, path) !== null)
+    return holding?.root ?? this.activeSpace?.root ?? null
   }
 
   /** And the account, which keeps a note under an id rather than under its name.
@@ -3456,7 +3465,8 @@ class Workspace {
     await sync.moved(from, to)
   }
 
-  async remove(path: string, isFolder: boolean) {
+  /** `source`: an agent the last version is kept for (docs/agent-native.md 8.5). */
+  async remove(path: string, isFolder: boolean, source?: string) {
     // Nothing archived is deleted; the menus and keys never ask, and this is for a
     // caller that did not look.
     if (this.keepsArchived(path)) return
@@ -3473,7 +3483,7 @@ class Workspace {
     let content: string | null = null
     if (words) {
       content = await invoke<string>('read_note', { path }).catch(() => null)
-      if (content) await invoke('snapshot_note', { path, content }).catch(() => undefined)
+      if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
       this.undone.record({ kind: 'delete', path, content: content ?? '' })
     }
 
@@ -3507,10 +3517,11 @@ class Workspace {
       this.close(tab.id)
     }
 
+    const root = this.rootHolding(path)
     links.noteGone(path)
-    this.folderIcons.gone(path)
-    this.arranged.gone(path)
-    this.excluded.gone(path)
+    this.folderIcons.gone(path, root)
+    this.arranged.gone(path, root)
+    this.excluded.gone(path, root)
     // A paper that has gone has no words worth searching any more.
     void papers().then(({ paperGone }) => paperGone(path))
     await this.loadTree()

@@ -144,6 +144,20 @@ export class CanvasStore implements PlaneSurface {
     drawn.add(new WeakRef(this))
   }
 
+  /** The plane drawn for a document in one of these tabs, while there is one: what an
+   *  agent's edit of a canvas goes through, so that it is one more edit on the surface
+   *  somebody may be drawing on, merged object by object, one step to undo, and into
+   *  the room when the plane is in one (docs/agent-native.md 8.7). A store whose tab
+   *  has closed is not one, however long it takes to be collected. */
+  static drawing(note: NoteDoc, tabs: readonly Tab[]): CanvasStore | null {
+    for (const held of drawn) {
+      const store = held.deref()
+      if (store?.note === note && tabs.includes(store.tab)) return store
+    }
+
+    return null
+  }
+
   /** The file's words as a plane, and a plane as the file's words.
    *
    *  Overridable, and the only pair of methods that is. A page note is the same
