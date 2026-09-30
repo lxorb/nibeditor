@@ -49,7 +49,7 @@ mod capture;
 #[cfg(all(windows, not(feature = "cef")))]
 mod cdp;
 #[cfg(not(feature = "cef"))]
-mod cookies;
+pub(crate) mod cookies;
 #[cfg(not(feature = "cef"))]
 mod isolated;
 #[cfg(not(feature = "cef"))]

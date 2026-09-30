@@ -1062,6 +1062,20 @@ next start:
 | the same, killed 45 s after signing in | 0 of 1 | 2 of 2 | - |
 | a cookie a page set without loading another, just before the quit | - | - | **2 of 2** |
 
+**A partitioned cookie stays in its partition.** A cookie set with `Partitioned` (CHIPS)
+belongs to its site only under the one top-level site it was set under: a chat widget's
+session inside a shop's page is not the widget's session anywhere else. The first version
+of the expiry went through `WebView2`'s COM cookie manager, which knows nothing of
+partitions, and wrote each partitioned session cookie back as a copy without one - lasting
+four hundred days, and sent to its site under every top-level site. The expiry is written
+through the `DevTools` Protocol now, `Network.getAllCookies` and then `Network.setCookie`
+for each session cookie, which hands a cookie over with its partition and takes it back
+with it: a partitioned login lasts across a restart too, in its partition. The copies the
+COM manager left are taken away whenever the store is kept again - a lasting cookie with
+no partition, the name, domain and path of a partitioned one in the same store, and an
+expiry four hundred days after a day that manager was in use, and nothing else. See
+`apps/desktop/src-tauri/src/web_cookies/twins.rs`.
+
 **What it costs, said plainly: once nib has opened one website, it keeps one `WebView2`
 browser process until you quit, the way a browser does.** That is the price of a web note
 being a browser tab you can close and open again without signing in each time, and it is
@@ -1369,7 +1383,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_handed.rs` | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested |
 | `apps/desktop/src-tauri/src/default_browser.rs` | nib among the browsers: the Windows registration and its repair, whether nib is the default and the press that asks each system. Unit tested |
-| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
+| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested |
+| `apps/desktop/src-tauri/src/web_cookies/twins.rs` | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
@@ -1415,7 +1430,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
 | `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
-| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
+| `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |

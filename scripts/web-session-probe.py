@@ -8,10 +8,11 @@ reloggin."*
 
 A web note is a browser tab, and a browser that continues where it left off keeps you
 logged in across both. This drive proves that nib does. It signs in to a page served
-on the loopback (a session cookie, a persistent cookie, and a localStorage token - the
-three shapes a login takes), closes the note so the webview is torn down, opens it
-again, and asks the page what it still has. Then it quits the app the way a person
-does - the window closed - starts it over and asks once more.
+on the loopback (a session cookie, a persistent cookie, a localStorage token, and a
+widget framed from another site that signs in with a partitioned cookie - the shapes a
+login takes), closes the note so the webview is torn down, opens it again, and asks the
+page what it still has. Then it quits the app the way a person does - the window
+closed - starts it over and asks once more.
 
     session cookie   - no expiry of its own. Survives close + reopen because the one
                        shared WebView2 environment is held open; survives a restart
@@ -19,11 +20,22 @@ does - the window closed - starts it over and asks once more.
                        (src-tauri/src/web_cookies.rs)
     persistent cookie- written to the `web` folder on disk; survives everything
     localStorage     - written to disk; survives everything
+    partitioned      - a session cookie the widget's server sets with `Partitioned`
+    cookie             (CHIPS), inside the app page's partition. Kept across a restart
+                       like the other session cookie, and still in that partition: the
+                       widget's own site, opened on its own, never sees it. The COM
+                       cookie manager nib first kept logins through wrote a copy of it
+                       without the partition, which the widget's site could read under
+                       every site; the drive plants such a copy and proves the next
+                       page load takes it away (src-tauri/src/web_cookies/twins.rs)
+
+The widget is `localhost` framed in `127.0.0.1`: the same server, two sites.
 
 See `session` in apps/desktop/src-tauri/src/web_tabs.rs and docs/web-tabs.md.
 
     pnpm --dir apps/desktop tauri build --no-bundle \
-      --config '{"identifier":"ch.emilvinu.nib.probe"}'
+      --config '{"identifier":"ch.emilvinu.nib.probe","version":"99.0.0",
+                 "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
     python scripts/web-session-probe.py --exe path/to/nib.exe
 
 The exe is a release build under an identifier of its own, so a run never touches your
@@ -67,12 +79,22 @@ SPACE = "Web session probe"
 NOTE = "Idea"
 SITE = "A site I log in to"
 BESIDE = "The same site in another tab"
+OWN = "The widget's own site"
 
 # What a login leaves behind, in the three shapes it takes. The values are markers the
 # probe reads straight back out of the page.
 SID = "NIBSESSION"
 PID = "NIBPERSIST"
 TOKEN = "NIBTOKEN"
+PART = "NIBPART"
+
+# The widget's partitioned session cookie, as its server sets it inside the app page.
+PARTITIONED = f"part={PART}; Path=/; Secure; SameSite=None; Partitioned"
+
+# The copy the COM cookie manager made of it: the same cookie with no partition, lasting
+# four hundred days from a day that manager was in use (2026-09-29). Planted by the
+# widget's own site, which is where such a copy is a leak.
+TWIN = f"part={PART}; Path=/; Secure; SameSite=None; Expires=Wed, 03 Nov 2027 00:00:00 GMT"
 
 user32 = ctypes.WinDLL("user32", use_last_error=True) if sys.platform == "win32" else None
 
@@ -88,17 +110,23 @@ def free_port() -> int:
     raise SystemExit(f"no port free in {PORT_FROM}-{PORT_TO}")
 
 
+# What the reader needs besides the markers: a couple of hundred characters of article,
+# or it keeps the body rather than the article.
+FILLER = """<p>This paragraph is here only so the reader keeps the article rather than the body,
+which needs a couple of hundred characters of it before it will. It says nothing that
+the line above did not, and the probe reads the markers on that line regardless.</p>"""
+
 # The page a login lands on. It writes nothing; it reads what it was given and shows it
 # in an <article>, which is what the clipper's reader hands back. So the probe learns
-# what the page still has by reading the page, the way a person would.
+# what the page still has by reading the page, the way a person would. The widget's
+# cookie is the widget's to read, so the page frames it and shows what it says - and
+# shows no markers until it has, so they are never read half written.
 APP = """<!doctype html>
 <title>App</title>
 <body style="margin:0;font:16px system-ui">
 <article style="padding:2rem">
-RESULT|sid:|pid:|token:|END
-<p>This paragraph is here only so the reader keeps the article rather than the body,
-which needs a couple of hundred characters of it before it will. It says nothing that
-the line above did not, and the probe reads the markers on that line regardless.</p>
+WAITING
+__FILLER__
 </article>
 </body>
 <script>
@@ -110,14 +138,21 @@ the line above did not, and the probe reads the markers on that line regardless.
   var pid = value('pid')
   var token = ''
   try { token = localStorage.getItem('token') || '' } catch (error) { token = '' }
-  document.querySelector('article').firstChild.textContent =
-    '\\nRESULT|sid:' + sid + '|pid:' + pid + '|token:' + token + '|END\\n'
+  window.addEventListener('message', function (event) {
+    if (event.origin !== '__WIDGET__') return
+    document.querySelector('article').firstChild.textContent =
+      '\\nRESULT|sid:' + sid + '|pid:' + pid + '|token:' + token + '|part:' + event.data +
+      '|END\\n'
+  })
+  var frame = document.createElement('iframe')
+  frame.src = '__WIDGET__/frame'
+  document.body.appendChild(frame)
 </script>
 """
 
-# The sign-in. It sets the three, then leaves for the app page without adding a step to
-# history, so the note settles on the app page and reopening it reads rather than signs
-# in again.
+# The sign-in. It sets the three, has the widget sign in from inside it, then leaves for
+# the app page without adding a step to history, so the note settles on the app page and
+# reopening it reads rather than signs in again.
 LOGIN = """<!doctype html>
 <title>Signing in</title>
 <body style="margin:0;font:16px system-ui"><p>Signing in...</p></body>
@@ -125,7 +160,38 @@ LOGIN = """<!doctype html>
   document.cookie = 'sid=__SID__; path=/'
   document.cookie = 'pid=__PID__; path=/; max-age=99999'
   try { localStorage.setItem('token', '__TOKEN__') } catch (error) {}
-  location.replace('/app')
+  window.addEventListener('message', function (event) {
+    if (event.origin === '__WIDGET__') location.replace('/app')
+  })
+  var frame = document.createElement('iframe')
+  frame.src = '__WIDGET__/frame-login'
+  document.body.appendChild(frame)
+</script>
+"""
+
+# The widget, framed: it says which cookie it has. Signing in is the same page, answered
+# with the partitioned cookie.
+FRAME = """<!doctype html>
+<script>
+  var found = document.cookie.match(/(?:^|; )part=([^;]*)/)
+  parent.postMessage(found ? found[1] : '', '*')
+</script>
+"""
+
+# The widget's site on its own, top level: what it can read of the widget's cookie here
+# is a copy without the partition, which is the leak.
+OWN_PAGE = """<!doctype html>
+<title>Widget</title>
+<body style="margin:0;font:16px system-ui">
+<article style="padding:2rem">
+WAITING
+__FILLER__
+</article>
+</body>
+<script>
+  var found = document.cookie.match(/(?:^|; )part=([^;]*)/)
+  document.querySelector('article').firstChild.textContent =
+    '\\nRESULT|own:' + (found ? found[1] : '') + '|END\\n'
 </script>
 """
 
@@ -134,19 +200,44 @@ class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
 
 
+def widget(port: int) -> str:
+    """The widget's origin: the same server, a site other than the app's."""
+
+    return f"http://localhost:{port}"
+
+
 def serve(port: int) -> Server:
-    # Replaced rather than formatted: both pages are JavaScript, and every brace in it
+    # Replaced rather than formatted: the pages are JavaScript, and every brace in it
     # would be a field name to `str.format`.
-    login = (
-        LOGIN.replace("__SID__", SID).replace("__PID__", PID).replace("__TOKEN__", TOKEN).encode()
-    )
-    app = APP.encode()
+    def page(text: str) -> bytes:
+        return (
+            text.replace("__SID__", SID)
+            .replace("__PID__", PID)
+            .replace("__TOKEN__", TOKEN)
+            .replace("__WIDGET__", widget(port))
+            .replace("__FILLER__", FILLER)
+            .encode()
+        )
+
+    pages = {
+        "/login": page(LOGIN),
+        "/app": page(APP),
+        "/frame": page(FRAME),
+        "/frame-login": page(FRAME),
+        "/own": page(OWN_PAGE),
+        "/plant": page(OWN_PAGE),
+    }
+    # What a response sets besides: the widget's sign-in, and the planted copy.
+    cookies = {"/frame-login": PARTITIONED, "/plant": TWIN}
 
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - the base class names it
-            body = {"/login": login, "/app": app}.get(self.path.split("?")[0])
+            path = self.path.split("?")[0]
+            body = pages.get(path)
             self.send_response(200 if body else 404)
             self.send_header("content-type", "text/html; charset=utf-8")
+            if path in cookies:
+                self.send_header("set-cookie", cookies[path])
             # No store, so the page is read afresh each time and never a cache of when
             # it was signed in.
             self.send_header("cache-control", "no-store")
@@ -206,6 +297,8 @@ def space(port: int) -> pathlib.Path:
     (made / f"{BESIDE}.url").write_text(
         shortcut(f"http://127.0.0.1:{port}/app", BESIDE), encoding="utf-8"
     )
+    # The widget's own site, top level, to ask whether its cookie left its partition.
+    (made / f"{OWN}.url").write_text(shortcut(f"{widget(port)}/own", OWN), encoding="utf-8")
     return made
 
 
@@ -312,7 +405,7 @@ def wait_for_tab(app: App, name: str, seconds: float = 25) -> str:
 
 # What the page still has, read back out of it through the clipper's own reader - the
 # one way in that does not hand the site anything to call. The markers are on one line
-# of the article, whichever part the reader chose.
+# of the article, whichever part the reader chose: `RESULT|name:value|...|END`.
 def seen(app: App, tab: str, seconds: float = 20) -> dict[str, str]:
     until = time.perf_counter() + seconds
     while time.perf_counter() < until:
@@ -323,11 +416,14 @@ def seen(app: App, tab: str, seconds: float = 20) -> dict[str, str]:
         )
         html = said.get("html") if isinstance(said, dict) else None
         if isinstance(html, str):
-            found = re.search(r"sid:([^|]*)\|pid:([^|]*)\|token:([^|]*)\|END", html)
+            found = re.search(r"RESULT\|(.*?)\|END", html)
             if found:
-                return {"sid": found[1], "pid": found[2], "token": found[3]}
+                return {
+                    name: value
+                    for name, _, value in (pair.partition(":") for pair in found[1].split("|"))
+                }
         time.sleep(0.4)
-    return {"sid": "?", "pid": "?", "token": "?"}
+    return {}
 
 
 def launch(
@@ -362,7 +458,19 @@ def quit(app: subprocess.Popen[bytes]) -> None:
 
 
 def logged_in(state: dict[str, str]) -> bool:
-    return state["sid"] == SID and state["pid"] == PID and state["token"] == TOKEN
+    return (
+        state.get("sid") == SID
+        and state.get("pid") == PID
+        and state.get("token") == TOKEN
+        and state.get("part") == PART
+    )
+
+
+def apart(state: dict[str, str]) -> bool:
+    """Whether the widget's own site, opened on its own, has none of the widget's cookie:
+    the partitioned one stayed in its partition, and there is no copy without one."""
+
+    return state.get("own") == ""
 
 
 def main() -> int:
@@ -396,14 +504,15 @@ def main() -> int:
         app.open(f"{NOTE}.md", SPACE)
         time.sleep(3)
 
-        # Open the site, then sign in: the login page sets the three and leaves for the
-        # app page. Then send the tab to the app page for good, so the note settles
-        # there - reopening it reads what it has rather than signing in a second time.
-        def navigate(where: str) -> object:
+        # Open the site, then sign in: the login page sets the three, has the widget
+        # sign in, and leaves for the app page. Then send the tab to the app page for
+        # good, so the note settles there - reopening it reads what it has rather than
+        # signing in a second time.
+        def navigate(on: str, url: str) -> object:
             return app.ask(
                 "window.__TAURI_INTERNALS__.invoke('web_navigate', { tab: '"
-                + tab
-                + f"', url: 'http://127.0.0.1:{port}{where}' }})"
+                + on
+                + f"', url: '{url}' }})"
             )
 
         app.open(f"{SITE}.url")
@@ -411,13 +520,42 @@ def main() -> int:
         time.sleep(3)
         said["signed out to begin with"] = seen(app, tab)
 
-        navigate("/login")
+        navigate(tab, f"http://127.0.0.1:{port}/login")
         time.sleep(4)
 
         # Only the app page draws the markers, so reading them back is also what says
         # the login page has handed over to it.
         said["signed in"] = seen(app, tab)
         ok = ok and logged_in(said["signed in"])
+
+        # The widget's own site, on its own. Every page load has kept the logins by now
+        # (web_cookies.rs); a keep that wrote the partitioned cookie back without its
+        # partition would show it here.
+        app.open(f"{OWN}.url")
+        own = wait_for_tab(app, OWN)
+        time.sleep(3)
+        said["the widget's own site after signing in"] = seen(app, own)
+        ok = ok and apart(said["the widget's own site after signing in"])
+
+        # A copy without the partition, planted the way the COM cookie manager left one.
+        # The page that plants it sees it - which is what says this page would see one -
+        # and the keep after that page's load takes it away, so the page loaded again
+        # has none. The partitioned cookie is still there, in its partition.
+        navigate(own, f"{widget(port)}/plant")
+        time.sleep(3)
+        planted = seen(app, own)
+        said["a copy without the partition, planted"] = planted
+        ok = ok and planted.get("own") == PART
+        navigate(own, f"{widget(port)}/own")
+        time.sleep(3)
+        said["the copy after the next page load"] = seen(app, own)
+        ok = ok and apart(said["the copy after the next page load"])
+        navigate(tab, f"http://127.0.0.1:{port}/app")
+        time.sleep(3)
+        said["the partitioned cookie after the copy went"] = seen(app, tab)
+        ok = ok and logged_in(said["the partitioned cookie after the copy went"])
+        app.ask(f"nib.workspace.close('{own}')")
+        time.sleep(1)
 
         # The note is pinned to the app page, which only ever reads. What the keeper
         # writes into the file is the address feature and is proved elsewhere
@@ -438,7 +576,7 @@ def main() -> int:
         time.sleep(3)
         alongside = seen(app, beside)
         said["a second tab open at once"] = alongside
-        said["two tabs share one session"] = alongside["sid"] == SID
+        said["two tabs share one session"] = alongside.get("sid") == SID
         app.ask(f"nib.workspace.close('{beside}')")
         time.sleep(1)
 
@@ -454,7 +592,7 @@ def main() -> int:
         after = seen(app, tab)
         said["after close and reopen"] = after
         # The decisive line: the session cookie is still there, so the login is.
-        said["session kept on reopen"] = after["sid"] == SID
+        said["session kept on reopen"] = after.get("sid") == SID
         said["still logged in on reopen"] = logged_in(after)
         ok = ok and logged_in(after)
 
@@ -474,6 +612,13 @@ def main() -> int:
         said["after relaunch"] = relaunched
         said["still logged in on relaunch"] = logged_in(relaunched)
         ok = ok and logged_in(relaunched)
+
+        # And the widget's cookie came back in its partition and nowhere else.
+        app.open(f"{OWN}.url")
+        own = wait_for_tab(app, OWN)
+        time.sleep(3)
+        said["the widget's own site after relaunch"] = seen(app, own)
+        ok = ok and apart(said["the widget's own site after relaunch"])
     finally:
         if running is not None:
             running.terminate()

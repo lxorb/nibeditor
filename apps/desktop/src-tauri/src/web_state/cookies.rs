@@ -17,15 +17,23 @@
 //! manager overwrites a site's cookies rather than piling on top. A session cookie is
 //! written back with the four hundred days `web_cookies.rs` gives every session cookie, so
 //! the login it carries survives the next restart here as it did there.
+//!
+//! `web_cookies.rs` keeps a store's logins on Windows through the same protocol, so the
+//! cookie as the protocol says it - read out of an answer, written for `setCookie`, named
+//! for `deleteCookies` - is shared with it, along with the four hundred days.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::Webview;
 
-use super::bundle::{cookie_of_site, Cookie};
+use super::bundle::cookie_of_site;
+pub(crate) use super::bundle::Cookie;
 
-/// Four hundred days, which is what `web_cookies.rs` makes a session cookie last.
-const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
+/// How long a session cookie is kept once it has been made to last, in seconds: four
+/// hundred days, which is the longest Chrome lets any cookie live. Long enough that
+/// nobody is signed out by it, and a cookie the site sets again starts a new four
+/// hundred days rather than being stretched for ever. Here and in `web_cookies.rs`.
+pub(crate) const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
 
 /// When a cookie written now should end: its own expiry, or four hundred days out for a
 /// session cookie.
@@ -33,8 +41,8 @@ fn until(cookie: &Cookie, now: f64) -> f64 {
     cookie.expires.unwrap_or(now + KEPT_FOR)
 }
 
-/// Now, in seconds since 1970.
-fn now() -> f64 {
+/// Now, in seconds since 1970: the engines' own unit for an expiry.
+pub(crate) fn now() -> f64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0.0, |since| since.as_secs_f64())
@@ -65,7 +73,7 @@ pub(crate) async fn write(view: &Webview, site: &str, cookies: &[Cookie]) -> Res
 }
 
 #[cfg(windows)]
-mod engine {
+pub(crate) mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
 
@@ -75,21 +83,11 @@ mod engine {
 
     pub(super) async fn all(view: &Webview) -> Result<Vec<Cookie>, String> {
         let answered = cdp::call(view, "Network.getAllCookies", &json!({})).await?;
-        Ok(answered["cookies"]
-            .as_array()
-            .map(|list| list.iter().filter_map(from_devtools).collect())
-            .unwrap_or_default())
+        Ok(cookies_in(&answered))
     }
 
     pub(super) async fn delete(view: &Webview, cookie: &Cookie) -> Result<(), String> {
-        let mut asked = Map::new();
-        asked.insert("name".into(), json!(cookie.name));
-        asked.insert("domain".into(), json!(cookie.domain));
-        asked.insert("path".into(), json!(cookie.path));
-        if let Some(partition) = &cookie.partition {
-            asked.insert("partitionKey".into(), partition_key(partition));
-        }
-        cdp::call(view, "Network.deleteCookies", &Value::Object(asked))
+        cdp::call(view, "Network.deleteCookies", &deleting(cookie))
             .await
             .map(|_| ())
     }
@@ -104,6 +102,28 @@ mod engine {
             .map(|_| ())
     }
 
+    /// The cookies in `Network.getAllCookies`' answer.
+    pub(crate) fn cookies_in(answered: &Value) -> Vec<Cookie> {
+        answered["cookies"]
+            .as_array()
+            .map(|list| list.iter().filter_map(from_devtools).collect())
+            .unwrap_or_default()
+    }
+
+    /// What `Network.deleteCookies` is asked to take exactly this cookie away: its name,
+    /// domain and path, and its partition where it has one. Without a partition the engine
+    /// takes only the unpartitioned cookie of that name, never one in a partition.
+    pub(crate) fn deleting(cookie: &Cookie) -> Value {
+        let mut asked = Map::new();
+        asked.insert("name".into(), json!(cookie.name));
+        asked.insert("domain".into(), json!(cookie.domain));
+        asked.insert("path".into(), json!(cookie.path));
+        if let Some(partition) = &cookie.partition {
+            asked.insert("partitionKey".into(), partition_key(partition));
+        }
+        Value::Object(asked)
+    }
+
     /// A partition as the protocol takes it now: an object. (Chromium before 119 said a
     /// string, which `from_devtools` still reads.)
     fn partition_key(partition: &Partition) -> Value {
@@ -114,7 +134,7 @@ mod engine {
     }
 
     /// One cookie out of the protocol's own shape.
-    pub(super) fn from_devtools(said: &Value) -> Option<Cookie> {
+    pub(crate) fn from_devtools(said: &Value) -> Option<Cookie> {
         let text = |key: &str| said[key].as_str().map(str::to_owned);
         let partition = match &said["partitionKey"] {
             Value::String(site) => Some(Partition {
@@ -164,7 +184,7 @@ mod engine {
     /// One cookie in the protocol's shape for `setCookies`. A cookie only its own host
     /// is sent (no leading dot) is set by address, which is the one way the protocol has
     /// of making a host-only cookie; a domain cookie is set by its domain.
-    pub(super) fn to_devtools(cookie: &Cookie, now: f64) -> Value {
+    pub(crate) fn to_devtools(cookie: &Cookie, now: f64) -> Value {
         let mut out = Map::new();
         out.insert("name".into(), json!(cookie.name));
         out.insert("value".into(), json!(cookie.value));

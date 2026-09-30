@@ -27,43 +27,29 @@
 //! login a page made without loading another one.
 //!
 //! `WebView2` and `WKWebView`, and only the system's engines: this module is not built
-//! anywhere else. The design is the same on both, because both hand out the profile's
-//! own cookie store - `ICoreWebView2CookieManager` on Windows, the data store's
-//! `WKHTTPCookieStore` on a Mac - and in both a cookie is a set of properties that can
-//! be read, given an expiry and written back. On a Mac a session cookie lives only in
-//! the network process's memory: a lasting one is written to the data store on disk
-//! and comes back on the next launch, a session one is simply gone. `WebKitGTK` has a
-//! store of its own that wry hands nothing of out; there a lasting cookie survives a
-//! restart and a session one does not, which docs/web-tabs.md says out loud.
+//! anywhere else. On a Mac the store is the data store's own `WKHTTPCookieStore`, where
+//! a cookie is a set of properties that can be read, given an expiry and written back.
+//! There a session cookie lives only in the network process's memory: a lasting one
+//! is written to the data store on disk and comes back on the next launch, a session
+//! one is simply gone. `WebKitGTK` has a store of its own that wry hands nothing of
+//! out; there a lasting cookie survives a restart and a session one does not, which
+//! docs/web-tabs.md says out loud.
+//!
+//! On Windows the store is reached through the `DevTools` Protocol - every cookie out of
+//! `Network.getAllCookies`, each session one back through `Network.setCookie` - and not
+//! through `ICoreWebView2CookieManager`, the COM manager nib used first. That one knows
+//! nothing of partitions (CHIPS): a partitioned cookie, which its site may read only
+//! under the one top-level site it was set under, came back from it as an unpartitioned
+//! copy that the site could read under every other. The protocol hands a cookie over
+//! with its partition and takes it back with it, so a partitioned login lasts too, and
+//! stays in its partition. `twins.rs` finds the copies the COM manager left, and each
+//! keep takes away any there are.
 
-use std::time::{SystemTime, UNIX_EPOCH};
+#[cfg(windows)]
+use crate::web_state::cookies::Cookie;
 
-/// How long a session cookie is kept once it has been made to last, in seconds: four
-/// hundred days, which is the longest Chrome lets any cookie live. Long enough that
-/// nobody is signed out by it, and a cookie the site sets again starts a new four
-/// hundred days rather than being stretched for ever.
-const KEPT_FOR: f64 = 400.0 * 24.0 * 60.0 * 60.0;
-
-/// The expiry a session cookie is given at `now`, both in seconds since 1970, which
-/// is what the engine's own cookie object takes.
-#[cfg_attr(
-    target_os = "macos",
-    allow(dead_code, reason = "a Mac's own date counts from now")
-)]
-fn kept_until(now: f64) -> f64 {
-    now + KEPT_FOR
-}
-
-/// Now, in the engine's own unit.
-#[cfg_attr(
-    target_os = "macos",
-    allow(dead_code, reason = "a Mac's own date counts from now")
-)]
-fn now() -> f64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map_or(0.0, |since| since.as_secs_f64())
-}
+#[cfg(windows)]
+mod twins;
 
 /// Makes every session cookie in the profile this webview is on last, and says so
 /// through `done` - once, whether it could or not. Returns at once; the engine
@@ -72,76 +58,69 @@ fn now() -> f64 {
 /// Every cookie of the profile rather than the page's own, because a sign-in is
 /// several sites: the identity provider's session is set on a page that has already
 /// been left by the time the one after it loads. Called on the window's own thread,
-/// which is the only thread the engine's objects may be touched from.
+/// which is the only thread the engine's objects may be touched from, so every call
+/// is one the engine answers later rather than one this waits on.
 #[cfg(windows)]
-#[allow(
-    unsafe_code,
-    reason = "the cookie store is reached through WebView2's COM interfaces, which have no safe wrapper"
-)]
 pub fn keep(webview: &tauri::webview::PlatformWebview, done: impl FnOnce() + 'static) {
-    use webview2_com::GetCookiesCompletedHandler;
-    use webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_2;
-    use windows_core::{Interface as _, BOOL};
+    use std::cell::Cell;
+    use std::rc::Rc;
 
-    // Held in one place and taken by whichever of the two ends first: the engine's
-    // answer, or the call itself failing, in which case there is no answer coming.
-    let done = std::rc::Rc::new(std::cell::Cell::new(Some(
-        Box::new(done) as Box<dyn FnOnce()>
-    )));
-    let answered = done.clone();
+    use serde_json::json;
 
-    // Safe: the controller comes from a webview this window owns, the manager is held
-    // by the closure until the engine has answered, and every call is on this thread.
-    let asked = unsafe {
-        (|| -> windows_core::Result<()> {
-            let manager = webview
-                .controller()
-                .CoreWebView2()?
-                .cast::<ICoreWebView2_2>()?
-                .CookieManager()?;
-            let store = manager.clone();
+    use crate::agents::cdp;
+    use crate::web_state::cookies::{engine::cookies_in, now};
 
-            let handler = GetCookiesCompletedHandler::create(Box::new(move |result, list| {
-                let said = answered.take();
-                let kept = (|| {
-                    result?;
-                    let Some(list) = list else {
-                        return Ok(());
-                    };
-
-                    let until = kept_until(now());
-                    let mut count = 0u32;
-                    list.Count(&raw mut count)?;
-                    for index in 0..count {
-                        let cookie = list.GetValueAtIndex(index)?;
-                        let mut session = BOOL::default();
-                        cookie.IsSession(&raw mut session)?;
-                        if session.as_bool() {
-                            cookie.SetExpires(until)?;
-                            store.AddOrUpdateCookie(&cookie)?;
-                        }
-                    }
-                    Ok(())
-                })();
-                if let Some(said) = said {
-                    said();
-                }
-                kept
-            }));
-
-            // An empty address is the engine's own way of asking for every cookie of
-            // the profile.
-            manager.GetCookies(windows_core::w!(""), &handler)
-        })()
+    let Some(core) = cdp::core_of(webview) else {
+        done();
+        return;
     };
-
-    // Nothing to tell anybody: a profile whose cookies could not be read this time is
-    // read again after the next page, and signing in once more is the worst of it.
-    if asked.is_err() {
-        if let Some(said) = done.take() {
-            said();
+    let asking = core.clone();
+    cdp::ask(&core, "Network.getAllCookies", &json!({}), move |answer| {
+        // Nothing to tell anybody where the store could not be read: it is read again
+        // after the next page, and signing in once more is the worst of it.
+        let calls = answer
+            .map(|said| asks(&cookies_in(&said), now()))
+            .unwrap_or_default();
+        if calls.is_empty() {
+            done();
+            return;
         }
-    }
+
+        // One count per call, down as each is answered, whatever the answer; the last
+        // one says so.
+        let left = Rc::new(Cell::new(calls.len()));
+        let done = Rc::new(Cell::new(Some(Box::new(done) as Box<dyn FnOnce()>)));
+        for (method, params) in calls {
+            let (left, done) = (left.clone(), done.clone());
+            cdp::ask(&asking, method, &params, move |_| {
+                left.set(left.get().saturating_sub(1));
+                if left.get() == 0 {
+                    if let Some(said) = done.take() {
+                        said();
+                    }
+                }
+            });
+        }
+    });
+}
+
+/// What keeping a store's logins asks the engine for, given every cookie in it: each
+/// twin an earlier nib made taken away, then each session cookie written back as it is -
+/// its partition first of all - with an expiry four hundred days out.
+///
+/// One `setCookie` a cookie rather than one `setCookies` for them all, because the
+/// engine refuses a whole list over one cookie in it that it will not take, and one it
+/// will not take is no reason for every other login to end with the session.
+#[cfg(windows)]
+fn asks(all: &[Cookie], now: f64) -> Vec<(&'static str, serde_json::Value)> {
+    use crate::web_state::cookies::engine::{deleting, to_devtools};
+
+    let taken = twins::of(all).map(|twin| ("Network.deleteCookies", deleting(twin)));
+    let kept = all
+        .iter()
+        .filter(|one| one.expires.is_none())
+        .map(|one| ("Network.setCookie", to_devtools(one, now)));
+    taken.chain(kept).collect()
 }
 
 /// Makes every session cookie in the data store this webview is on last, and says so
@@ -247,6 +226,8 @@ fn lasting(
         NSDate, NSHTTPCookie, NSHTTPCookieDiscard, NSHTTPCookieExpires, NSHTTPCookieMaximumAge,
         NSMutableCopying as _, NSString,
     };
+
+    use crate::web_state::cookies::KEPT_FOR;
 
     let properties = cookie.properties()?.mutableCopy();
     let until = NSDate::dateWithTimeIntervalSinceNow(KEPT_FOR);
@@ -375,17 +356,73 @@ pub fn kept(window: &tauri::Window, then: impl FnOnce() + Send + 'static) {
 
 #[cfg(test)]
 mod tests {
-    use super::{kept_until, now, KEPT_FOR};
+    use crate::web_state::cookies::{now, KEPT_FOR};
 
     /// Four hundred days, and from now rather than from some fixed day: a cookie made
     /// to last today is not one that has already run out.
     #[test]
     fn a_session_cookie_is_kept_for_four_hundred_days_from_now() {
         assert!((KEPT_FOR - 34_560_000.0).abs() < f64::EPSILON);
+        assert!(now() > 1_700_000_000.0, "the clock reads a real day");
+    }
 
-        let at = now();
-        assert!(at > 1_700_000_000.0, "the clock reads a real day");
-        assert!((kept_until(at) - at - KEPT_FOR).abs() < 1.0);
+    /// A widget's partitioned session cookie is written back in its partition, and no
+    /// call keeping a store's logins ever writes it without one: the COM manager's
+    /// copy, readable under every site, is what this replaced. A first-party session
+    /// cookie lasts as before, and a lasting cookie is left alone.
+    #[cfg(windows)]
+    #[test]
+    fn a_partitioned_session_cookie_is_kept_in_its_partition() {
+        use super::twins::tests::cookie;
+
+        let all = [
+            cookie("part", Some("https://news.example"), None),
+            cookie("sid", None, None),
+            cookie("pid", None, Some(1_900_000_000.0)),
+        ];
+        let calls = super::asks(&all, 1000.0);
+
+        assert_eq!(calls.len(), 2, "{calls:?}");
+        assert!(calls
+            .iter()
+            .all(|(method, _)| *method == "Network.setCookie"));
+        let (_, part) = &calls[0];
+        assert_eq!(part["name"], "part");
+        assert_eq!(part["partitionKey"]["topLevelSite"], "https://news.example");
+        assert_eq!(part["partitionKey"]["hasCrossSiteAncestor"], true);
+        assert_eq!(part["expires"], 1000.0 + KEPT_FOR);
+        assert_eq!(part["secure"], true);
+        let (_, sid) = &calls[1];
+        assert_eq!(sid["name"], "sid");
+        assert!(sid.get("partitionKey").is_none());
+        assert_eq!(sid["expires"], 1000.0 + KEPT_FOR);
+    }
+
+    /// A store the COM manager kept: the partitioned session cookie, and its copy with no
+    /// partition. The copy is taken away - asked for without a partition, which is the
+    /// engine's way of naming only the unpartitioned one - and the partitioned one is
+    /// written back in its partition, never deleted.
+    #[cfg(windows)]
+    #[test]
+    fn a_twin_is_taken_away_and_the_partitioned_cookie_kept() {
+        use super::twins::tests::cookie;
+
+        let all = [
+            cookie("part", Some("https://news.example"), None),
+            cookie("part", None, Some(1_790_700_000.0 + KEPT_FOR)),
+        ];
+        let calls = super::asks(&all, 1000.0);
+
+        assert_eq!(calls.len(), 2, "{calls:?}");
+        let (method, taken) = &calls[0];
+        assert_eq!(*method, "Network.deleteCookies");
+        assert_eq!(taken["name"], "part");
+        assert_eq!(taken["domain"], "widget.example");
+        assert_eq!(taken["path"], "/");
+        assert!(taken.get("partitionKey").is_none());
+        let (method, kept) = &calls[1];
+        assert_eq!(*method, "Network.setCookie");
+        assert_eq!(kept["partitionKey"]["topLevelSite"], "https://news.example");
     }
 
     /// A session cookie the way the engine hands one over, with `Discard` set, of
