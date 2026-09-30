@@ -6,7 +6,7 @@
 //! in every world of every frame, read-only and undeletable - which is how the app's own
 //! interface reaches its commands, and which a website in a web tab has no business
 //! holding. It is also the exact global that broke Google Sheets on the system's engine
-//! (web_worlds.rs): a classic script may not declare `let ipc` beside a global the page
+//! (`web_worlds.rs`): a classic script may not declare `let ipc` beside a global the page
 //! cannot remove, so the spreadsheet's bundle died on its first line. Measured on this
 //! build before this file existed: a web tab's page carried `ipc`, `isTauri` and
 //! `__TAURI_INTERNALS__`, and so did nib's own world in it.
@@ -16,7 +16,7 @@
 //! inside a website, and a frame inside nib's own interface (a sandboxed code block, an
 //! embed) get nothing, which is what a browser gives a page. The other half - the scripts
 //! the runtime registers for every document - is taken back per web tab; see
-//! src/web_worlds.rs.
+//! `src/web_worlds.rs`.
 //!
 //! What crosses to the browser process is unchanged: the message name and its two
 //! arguments are the runtime's own (`cef_impl/ipc.rs` in `tauri-runtime-cef`), and the
@@ -24,8 +24,15 @@
 //! by the app starting at all - an interface whose commands never arrive is a window that
 //! never leaves its first frame.
 
-// Whole, because the crate's wrapping macros name its traits unqualified in what they
-// write, and only a glob puts all of them in scope.
+// The crate's wrapping macros write what they wrap in terms of its own traits, named bare,
+// and cast between a wrapper and CEF's own struct by transmuting one reference into the
+// other: the glob is the only way to put every trait in scope, and the casts are the
+// crate's, written inside the macros rather than here.
+#![allow(
+    clippy::transmute_ptr_to_ptr,
+    reason = "the cef crate's wrap_* macros transmute between a wrapper and the struct it wraps"
+)]
+
 #[allow(
     clippy::wildcard_imports,
     reason = "the cef crate's wrap_* macros expand to calls on its traits by their bare names"
@@ -151,7 +158,7 @@ wrap_v8_handler! {
             let body = CefString::from(&message.string_value()).to_string();
             let url = CefString::from(&frame.url()).to_string();
             let mut sent = process_message_create(Some(&CefString::from(MESSAGE)));
-            if let Some(list) = sent.as_ref().and_then(|one| one.argument_list()) {
+            if let Some(list) = sent.as_ref().and_then(ImplProcessMessage::argument_list) {
                 list.set_string(0, Some(&CefString::from(url.as_str())));
                 list.set_string(1, Some(&CefString::from(body.as_str())));
                 frame.send_process_message(ProcessId::BROWSER, sent.as_mut());

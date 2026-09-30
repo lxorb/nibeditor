@@ -276,6 +276,23 @@ def main() -> int:
             "chromium": len(pids_running([chromium_exe])) > 0,
         }
 
+        # A launch with Chromium chosen, the way a shortcut starts it: the system's build
+        # is what the system starts, and it hands the launch over.
+        for pid in pids_running([chromium_exe]):
+            window = probe_app.main_window(pid)
+            if window:
+                probe_app.user32.PostMessageW(window, probe_app.WM_CLOSE, 0, 0)
+        if not watch.gone(60):
+            raise SystemExit("Chromium never ended")
+        began = time.perf_counter()
+        run_probe(system_exe, quiet=True)
+        window_after(watch, chromium_exe, 90)
+        said["launch on chromium: window ms"] = round((time.perf_counter() - began) * 1000)
+        port_chromium, secret, _ = endpoint_after(args.identifier, port_chromium, 90)
+        said["launch on chromium: endpoint ms"] = round((time.perf_counter() - began) * 1000)
+        app = switch.App(port_chromium, secret)
+        time.sleep(4)
+
         # And back to the system's engine.
         said["choose system"] = invoke(app, "engine_choose", {"engine": "system"})
         began = time.perf_counter()
@@ -291,6 +308,18 @@ def main() -> int:
         app = switch.App(port_back, secret)
         time.sleep(1)
         said["back: state"] = invoke(app, "engine_state")
+
+        # And a launch on the system's engine again, cold of nothing but the process.
+        for pid in pids_running([system_exe]):
+            window = probe_app.main_window(pid)
+            if window:
+                probe_app.user32.PostMessageW(window, probe_app.WM_CLOSE, 0, 0)
+        if not watch.gone(60):
+            raise SystemExit("the system's build never ended")
+        began = time.perf_counter()
+        run_probe(system_exe, quiet=True)
+        window_after(watch, system_exe, 90)
+        said["launch on system: window ms"] = round((time.perf_counter() - began) * 1000)
     finally:
         print(json.dumps(said, indent=2))
         for pid in pids_running([system_exe, chromium_exe]):

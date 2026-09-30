@@ -16,7 +16,9 @@
 //! and nothing else, for the tab it came from and no other.
 
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Webview};
+#[cfg(not(feature = "cef"))]
+use tauri::Webview;
+use tauri::{AppHandle, Emitter};
 
 /// The event the window hears the tally on.
 const FOUND: &str = "nib://web-found";
@@ -104,9 +106,25 @@ pub fn web_find(app: AppHandle, tab: String, term: String, look: Look) -> Result
         .map_err(|error| format!("that page could not be reached: {error}"))
     }
 
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(all(not(windows), not(feature = "cef")))]
     {
         script(&view, tab, &term, look);
+        Ok(())
+    }
+
+    // nib's own Chromium has no find to lend either, and runs the page's in nib's own
+    // world, where the page cannot see what it leaves behind; see web_worlds.rs.
+    #[cfg(feature = "cef")]
+    {
+        let script = looked(&term, look);
+        std::thread::spawn(move || {
+            let found = crate::web_worlds::value(&view, &script)
+                .and_then(|said| serde_json::from_value::<Found>(said).ok());
+            if let Some(mut found) = found {
+                found.tab = tab;
+                let _ = view.emit_to(view.window().label(), FOUND, found);
+            }
+        });
         Ok(())
     }
 }
@@ -127,12 +145,20 @@ pub fn web_find_stop(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
     }
 
-    #[cfg(not(all(windows, not(feature = "cef"))))]
-    view.eval(LEFT)
-        .map_err(|error| format!("that page could not be reached: {error}"))
+    #[cfg(all(not(windows), not(feature = "cef")))]
+    return view
+        .eval(LEFT)
+        .map_err(|error| format!("that page could not be reached: {error}"));
+
+    #[cfg(feature = "cef")]
+    {
+        std::thread::spawn(move || crate::web_worlds::value(&view, LEFT));
+        Ok(())
+    }
 }
 
 /// The page's own find, and its answer said to the window the way the engine's is.
+#[cfg(not(feature = "cef"))]
 fn script(view: &Webview, tab: String, term: &str, look: Look) {
     let telling = view.clone();
     let _ = view.eval_with_callback(looked(term, look), move |answer| {

@@ -426,7 +426,9 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_single_instance::init(launch::second_launch_heard))
+        .plugin(tauri_plugin_single_instance::init(
+            launch::second_launch_heard,
+        ))
         .manage(launch::Pending::default());
     // Where the app is on its way out, and on a Mac where the window was; see
     // lifecycle.rs.
@@ -621,6 +623,10 @@ fn ready(
     // asked before anything was listening waits for ever; see `hearing` in web_tabs.rs.
     #[cfg(desktop)]
     web_tabs::hearing(handle);
+    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
+    // page and the app alike; see web_keys.rs.
+    #[cfg(all(windows, feature = "cef"))]
+    web_keys::chromium::start(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to

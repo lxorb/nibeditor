@@ -162,7 +162,7 @@ struct Ask {
 ///
 /// `tab` is the tab whose page this was heard on, which the caller knows from where it
 /// was listening; nothing the page says names it.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     let ask = Ask {
         tab: tab.to_string(),
@@ -173,13 +173,13 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 
 /// Says a chord the page let go by to its window, as the key it was; see the top of this
 /// file.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
     told(app, window, PRESSED, key);
 }
 
 /// The keyboard back to the app's own page, and the word said to it.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str, said: S) {
     use tauri::{Emitter, Manager};
 
@@ -224,7 +224,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// can stop one on its way, so a letter the page swallowed still ends a tap; and the
 /// ask waits for the last release to have gone past the page, so a Shift the page took
 /// for itself does not open anything.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)
 
@@ -332,14 +332,14 @@ pub const SCRIPT: &str = r"(function () {
 
 /// The key a window asked for under `name` hands back, or `None`. Pure, and the only
 /// reading of that name.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn chord(name: &str) -> Option<Pressed> {
     (name == CTRL_D).then(|| Pressed::with_ctrl("d", "KeyD"))
 }
 
 /// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
 /// the only reading of those names.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn sought(name: &str) -> Option<Passed> {
     match name {
         FIND => Some(Passed::Find),
@@ -381,7 +381,7 @@ pub fn taken_as_a_person_s(key: Passed, user: bool, since: u32, focused: bool) -
 /// `name` is the window name the page asked for; `user` whether the engine says a
 /// person asked; `held` the keys held; `menu` whether the page's own menu was just
 /// raised on this address. Pure, so the order above has tests.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
     match name {
         BEHIND => return Some(Asked::Behind),
@@ -621,6 +621,48 @@ mod heard {
             let mut token = 0i64;
             let _ = core.add_ContextMenuRequested(&menu, &raw mut token);
         }
+    }
+}
+
+/// The name of the one function nib's world in a page has on nib's own Chromium: what
+/// `SCRIPT` asks through there, in place of a window name. The engine's `DevTools`
+/// protocol puts it in nib's world alone (`Runtime.addBinding` by the world's name), so
+/// the page's own world never has it, and says each call to this app as
+/// `Runtime.bindingCalled`, which nothing in a page can raise.
+#[cfg(feature = "cef")]
+pub const BINDING: &str = "nibAsked";
+
+/// `SCRIPT` as nib's own Chromium runs it: the engine hands the host no window name, so
+/// the script asks through `BINDING` instead, with the address and the name it would
+/// have opened a window under.
+#[cfg(feature = "cef")]
+pub fn script() -> String {
+    SCRIPT.replacen(
+        "var open = window.open.bind(window)",
+        "var open = function (url, name) { nibAsked(JSON.stringify([url, name])) }",
+        1,
+    )
+}
+
+/// What one call through `BINDING` asked, read as the window name `SCRIPT` names it
+/// with: a tab of its own for a link, the find or the address field, a chord, or a tap.
+/// Only ever raised for a press a person made (`isTrusted`), which is what a window
+/// name's user flag says on `WebView2`.
+#[cfg(feature = "cef")]
+pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payload: &str) {
+    let Ok((url, name)) = serde_json::from_str::<(String, String)>(payload) else {
+        return;
+    };
+    if let Some(key) = sought(&name) {
+        passed(app, window, tab, key);
+        return;
+    }
+    if let Some(key) = chord(&name) {
+        played(app, window, key);
+        return;
+    }
+    if let Some(asked) = placed(&name, true, Held::default(), false) {
+        crate::web_tabs::opened_beside(app, window, tab, &url, asked == Asked::Behind);
     }
 }
 

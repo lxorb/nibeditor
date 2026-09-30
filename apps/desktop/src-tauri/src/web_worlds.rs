@@ -517,7 +517,7 @@ mod engine {
 }
 
 #[cfg(feature = "cef")]
-pub use engine::{evaluate, sent};
+pub use engine::{asking, sent, value};
 
 /// nib's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
 /// runtime's own door to the page's agent (see engine/devtools.rs). What the runtime puts
@@ -540,6 +540,27 @@ mod engine {
 
     /// How long one step of the clearing waits for the page's agent.
     const PATIENCE: Duration = Duration::from_secs(10);
+
+    /// The one function nib's world has, and no other world: see `web_opens::BINDING`.
+    fn binding() -> Value {
+        json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
+    }
+
+    /// Hears what nib's world in the page asks through its binding, for as long as the
+    /// page is open, and hands each call to `web_opens`.
+    pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
+        let (app, tab, window) = (app.clone(), tab.to_string(), window.to_string());
+        let _ = devtools::hear(view, move |method, _session, params| {
+            if method != "Runtime.bindingCalled"
+                || params.get("name").and_then(Value::as_str) != Some(crate::web_opens::BINDING)
+            {
+                return;
+            }
+            if let Some(payload) = params.get("payload").and_then(Value::as_str) {
+                crate::web_opens::heard_on_chromium(&app, &window, &tab, payload);
+            }
+        });
+    }
 
     /// One call, its answer or `None`; the parameters as the helpers above write them.
     fn called(view: &Webview, method: &str, params: &str) -> Option<Value> {
@@ -581,6 +602,7 @@ mod engine {
 
         let ours = scripts.is_empty()
             || (enabled
+                && called(view, "Runtime.addBinding", &binding().to_string()).is_some()
                 && called(
                     view,
                     "Page.addScriptToEvaluateOnNewDocument",
@@ -611,24 +633,32 @@ mod engine {
             let Some(session) = attached_frame(&params.to_string()) else {
                 return;
             };
-            let said = in_frame(&scripts)
-                .into_iter()
-                .filter_map(|(method, params)| Some((method, serde_json::from_str(&params).ok()?)))
+            let said = std::iter::once(("Runtime.addBinding", binding()))
+                .chain(
+                    in_frame(&scripts)
+                        .into_iter()
+                        .filter_map(|(method, params)| {
+                            Some((method, serde_json::from_str(&params).ok()?))
+                        }),
+                )
                 .collect();
             devtools::tell(&telling, Some(&session), said);
         });
         heard.is_ok() && called(view, "Target.setAutoAttach", &attaching()).is_some()
     }
 
-    /// Runs `expression` in nib's world in the page as it is now and answers the
-    /// protocol's answer, `{"result": {"value": ...}}`, or `None`. On a thread of its own,
-    /// like `sent`.
-    pub fn evaluate(view: &Webview, expression: &str) -> Option<Value> {
+    /// Runs `expression` in nib's world in the page as it is now and answers what it came
+    /// to, or `None`. On a thread of its own, like `sent`: the page's own `fetch`, DOM
+    /// methods and globals are not the ones this uses, so a page neither sees the call nor
+    /// changes its answer, and nothing it leaves behind is the page's to see.
+    pub fn value(view: &Webview, expression: &str) -> Option<Value> {
         let tree = called(view, "Page.getFrameTree", "{}")?;
         let frame = frame_of(&tree.to_string())?;
         let world = called(view, "Page.createIsolatedWorld", &world_in(&frame))?;
         let context = context_of(&world.to_string())?;
-        called(view, "Runtime.evaluate", &evaluating(expression, context))
+        called(view, "Runtime.evaluate", &evaluating(expression, context))?
+            .pointer("/result/value")
+            .cloned()
     }
 }
 

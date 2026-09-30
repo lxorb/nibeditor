@@ -66,7 +66,7 @@ pub fn leaves(vk: u32, down: bool) -> bool {
 
 /// What a page is told when its sound is turned off or on, on an engine that cannot
 /// mute a page itself: every media element in it, as it is now.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
 const QUIET: &str =
     "document.querySelectorAll('audio, video').forEach(function (one) { one.muted = __MUTED__ })";
 
@@ -276,7 +276,7 @@ mod heard {
 }
 
 /// Tells a page's media elements to be quiet, or not.
-#[cfg_attr(all(windows, not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
 fn quieted(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     view.eval(QUIET.replace("__MUTED__", if muted { "true" } else { "false" }))
         .map_err(|error| format!("that page could not be reached: {error}"))
@@ -293,9 +293,23 @@ pub fn listen(
 }
 
 /// Every other engine mutes what the page is playing now.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(all(not(windows), not(feature = "cef")))]
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     quieted(view, muted)
+}
+
+/// nib's own Chromium mutes the page the way Chrome's tab strip does: the browser's own
+/// sound off, whatever the page plays next, and nothing said to the page.
+#[cfg(feature = "cef")]
+pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
+    use cef::{ImplBrowser as _, ImplBrowserHost as _};
+    use tauri_runtime_cef::WebviewCefExt as _;
+    view.with_cef_webview(move |page| {
+        if let Some(host) = page.browser().host() {
+            host.set_audio_muted(i32::from(muted));
+        }
+    })
+    .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
 #[cfg(test)]

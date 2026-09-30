@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url'
 
 /** The line the written half starts after. */
 export const MARKER =
-  '# ---- below: the app\'s own dependencies, as scripts/engine-manifest.ts writes them ----'
+  "# ---- below: the app's own dependencies, as scripts/engine-manifest.ts writes them ----"
 
 /** What the half above the marker pins the Tauri family to. */
 interface Pins {
