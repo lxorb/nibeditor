@@ -1,7 +1,6 @@
 {
   "proves": "a snapshot is the page's accessibility tree with refs, marked as the page's words, and a ref still reaches its element after another snapshot",
   "doc": "5.2, 9.6",
-  "via": ["endpoint", "mcp", "spike"],
   "steps": [
     {
       "call": "browser_open",

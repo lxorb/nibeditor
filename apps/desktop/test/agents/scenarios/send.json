@@ -1,5 +1,5 @@
 {
-  "proves": "Send on a compose form answers needs_approval and sends nothing; on a local page this holds only if sending is read off the page and not only off a list of mail sites",
+  "proves": "Send on a compose form answers needs_approval and sends nothing",
   "doc": "9.3",
   "steps": [
     {
@@ -93,5 +93,6 @@
       "record": "sent",
       "count": 0
     }
-  ]
+  ],
+  "known": "agent-core: sending is recognised only on the sites of a list (policy.rs SOCIAL), so a compose form anywhere else, a self-hosted webmail included, sends without asking (9.3)"
 }

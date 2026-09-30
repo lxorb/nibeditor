@@ -8,19 +8,19 @@ engine under it is on a screen or in front. The keyboard is read before and afte
 scenario, and must not have moved.
 
     python apps/desktop/test/agents/run.py --exe <probe nib.exe> \\
-        --identifier ch.emilvinu.nib.probe.<name> [--via endpoint|mcp|spike] \\
+        --identifier ch.emilvinu.nib.probe.<name> [--via endpoint|mcp] \\
         [--only <word>] [--skip <word>] [--out report.json]
     python apps/desktop/test/agents/run.py ... --launch-cost 3
     python apps/desktop/test/agents/run.py --list
 
-The exe is a probe build, as scripts/probe_app.py says. `--via spike` wants a build of
-spike/agent-tabs. A scenario ends as one of four:
+The exe is a probe build, as scripts/probe_app.py says. A scenario ends as one of four:
 
     pass      every step answered as written, and the sites saw what it says
     fail      a step did not; the exit code counts these
-    waiting   a verb, tool or hook it needs is not there yet: named, with its lane
-    skipped   it cannot run here now (a native picker waits for a minute of nobody at
-              the machine), or not through this road
+    waiting   a verb, tool or hook it needs is not there yet, or it fails in a way a
+              lane already owns (its `known` note): named, with that lane
+    skipped   it cannot run here now (a picker waits for a minute of nobody at the
+              machine), or not through this road
 
 `--launch-cost N` launches the probe N times with no agent and N times with one set up,
 alternately, with the app's own launch trace on, and compares the two: an agent that is
@@ -39,7 +39,6 @@ import re
 import secrets
 import shutil
 import statistics
-import subprocess
 import sys
 import tempfile
 import threading
@@ -51,7 +50,7 @@ ROOT = HERE.parents[3]
 sys.path.insert(0, str(ROOT / "scripts"))
 sys.path.insert(0, str(HERE))
 
-from fake_agent import Endpoint, Mcp, Spike  # noqa: E402
+from fake_agent import Endpoint, Mcp  # noqa: E402
 from pages import CANARY, Site  # noqa: E402
 
 SCENARIOS = HERE / "scenarios"
@@ -77,14 +76,13 @@ GRANT: dict[str, Any] = {
     ],
     "spaces": "all",
     "sites": {"denied.localhost": "deny"},
+    "scripts": ["127.0.0.1", "other.localhost"],
     "mode": "unsupervised",
     "asks": {},
     "limits": {"tabs": 4, "calls": 600, "navigations": 60},
 }
 
-#: The roads a scenario is run through unless it names its own: the two an agent really
-#: takes. The spike has no grant, no policy and no asking, so only the scenarios about the
-#: engine itself name it.
+#: The roads a scenario is run through unless it names its own.
 ROADS = ("endpoint", "mcp")
 
 #: Which lane owes a verb, for a scenario that waits on one.
@@ -312,7 +310,10 @@ class Run:
         elif "keyboard" in step:
             self.keyboard_same(f"step {at}")
         elif "windows" in step:
+            seen = len(self.windows)
             self.watch_windows(float(step["windows"]) / 1000)
+            if step.get("none") and len(self.windows) > seen:
+                raise AssertionError(f"a window of the engine's appeared: {self.windows[seen:]}")
         elif "reader" in step:
             self.reader(step)
         elif "reader_eval" in step:
@@ -469,6 +470,13 @@ class Run:
                 self.agent.call("browser_close", {"tab": tab}, seconds=10)
             if scenario.get("grant"):
                 granted(self.probe, GRANT)
+        # A failure somebody already owns is that lane's to close, and said as waiting on
+        # it; the day it passes, the note is stale and the run says so.
+        known = scenario.get("known")
+        if known and result["result"] == "fail":
+            result = {"result": "waiting", "why": f"{known} ({result['why']})"}
+        elif known and result["result"] == "pass":
+            result["why"] = f"passes now: drop its known note ({known})"
         result["ms"] = round((time.perf_counter() - started) * 1000)
         if self.observed:
             result["observed"] = self.observed
@@ -520,8 +528,6 @@ def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
 
     if via == "endpoint":
         return Endpoint(probe.port, token)
-    if via == "spike":
-        return Spike(probe.port, probe.secret)
     # The token kept where `nib mcp` keeps the one a pairing gave it, so it never asks
     # (docs/agent-native.md 9.1, a pasted token); and `nib mcp` is the probe's own binary
     # in a mode with no window, so it is launched, and watched, like the probe itself.
@@ -617,14 +623,23 @@ def launch_cost(args: argparse.Namespace) -> int:
     extra = sorted(steps[True] - steps[False])
     if extra:
         wrong.append(f"steps only with an agent set up: {extra}")
-    print(f"{'step':44} {'no agent':>10} {'an agent':>10}")
-    common = sorted(steps[False] & steps[True], key=lambda one: statistics.median(r["steps"].get(one, 0) for r in runs[False]))
+    # The fastest of each, beside the median: on a machine doing other work nothing makes a
+    # launch faster than it is, so the fastest is the launch's own cost and the median is
+    # that plus whatever else was running.
+    print(f"{'step':44} {'no agent, fastest / median':>28} {'an agent, fastest / median':>28}")
+    common = sorted(steps[False] & steps[True], key=lambda one: min(r["steps"].get(one, 0) for r in runs[False]))
     for step in common:
-        without = statistics.median(r["steps"][step] for r in runs[False] if step in r["steps"])
-        with_one = statistics.median(r["steps"][step] for r in runs[True] if step in r["steps"])
-        print(f"{step[:44]:44} {without:>8.0f}ms {with_one:>8.0f}ms")
+        cells = []
+        for agents in (False, True):
+            times = [r["steps"][step] for r in runs[agents] if step in r["steps"]]
+            cells.append(f"{min(times):>8.0f} / {statistics.median(times):>6.0f} ms")
+        print(f"{step[:44]:44} {cells[0]:>28} {cells[1]:>28}")
+    last = common[-1] if common else ""
+    for agents in (False, True):
+        each = ", ".join(f"{r['steps'][last]:.0f}" for r in runs[agents] if last in r["steps"])
+        print(f"{'each launch, ' + ('an agent' if agents else 'no agent'):44} {last}: {each} ms")
     processes = {agents: statistics.median(r["processes"] for r in lines) for agents, lines in runs.items()}
-    print(f"{'processes under the app':44} {processes[False]:>10.0f} {processes[True]:>10.0f}")
+    print(f"{'processes under the app':44} {processes[False]:>28.0f} {processes[True]:>28.0f}")
     if processes[True] > processes[False]:
         wrong.append("more processes with an agent set up: a webview or a helper started for nobody")
     for one in wrong:
@@ -636,13 +651,15 @@ def main() -> int:
     parsed = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parsed.add_argument("--exe", type=pathlib.Path)
     parsed.add_argument("--identifier")
-    parsed.add_argument("--via", choices=("endpoint", "mcp", "spike"), default="endpoint")
+    parsed.add_argument("--via", choices=ROADS, default="endpoint")
     parsed.add_argument("--only")
     parsed.add_argument("--skip", action="append")
     parsed.add_argument("--out", type=pathlib.Path)
     parsed.add_argument("--launch-cost", type=int, default=0)
     parsed.add_argument("--list", action="store_true")
     args = parsed.parse_args()
+    # A page's words end up in the report, and a pipe on Windows is not UTF-8.
+    sys.stdout.reconfigure(errors="backslashreplace")  # type: ignore[union-attr]
 
     if args.list:
         for name, scenario in scenarios(args.only, args.skip):

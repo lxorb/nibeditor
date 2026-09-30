@@ -15,8 +15,8 @@ HERE = pathlib.Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[3] / "scripts"))
 
-from fake_agent import from_contract, key_events, marked_source  # noqa: E402
-from run import SCENARIOS, dotted, filled, judged, needed  # noqa: E402
+from fake_agent import from_contract, marked_source  # noqa: E402
+from run import ROADS, SCENARIOS, dotted, filled, judged, needed  # noqa: E402
 
 #: Every kind of step run.py knows; a scenario with any other is a typo.
 STEPS = {"call", "join", "record", "keyboard", "windows", "reader", "reader_eval", "hook", "pause", "observe"}
@@ -86,14 +86,6 @@ class ReadingWhatNibSays(unittest.TestCase):
         self.assertEqual(marked_source('<untrusted source="https://a.example/x">hi</untrusted>'), "https://a.example/x")
         self.assertIsNone(marked_source("nothing marked"))
 
-    def test_keys_are_a_down_and_an_up_each(self) -> None:
-        typed = key_events("hi")
-        self.assertEqual([one["type"] for one in typed], ["keyDown", "keyUp", "keyDown", "keyUp"])
-        self.assertEqual(typed[0]["text"], "h")
-        enter = key_events("Enter")
-        self.assertEqual((enter[0]["key"], enter[0]["windowsVirtualKeyCode"], enter[0]["text"]), ("Enter", 13, "\r"))
-        self.assertNotIn("text", key_events("Escape")[0])
-
 
 class EveryScenario(unittest.TestCase):
     """Each file read the way run.py reads it, so a typo is found here rather than on a
@@ -111,7 +103,7 @@ class EveryScenario(unittest.TestCase):
                     self.assertEqual(len(STEPS & step.keys()), 1, step)
                 self.assertLessEqual(set(needed(scenario)), VERBS)
                 for road in scenario.get("via", []):
-                    self.assertIn(road, {"endpoint", "mcp", "spike"})
+                    self.assertIn(road, ROADS)
 
 
 if __name__ == "__main__":

@@ -259,13 +259,18 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
   harness's nightly drive.
 - **The engine's own popups.** A `<select>` list, a date picker and autofill were not
   opened, on purpose (6.5). The harness opens them with the engine-process watch running.
-  Measured 2026-09-30 (`picker-select`, `picker-date`, `picker-colour` in
-  apps/desktop/test/agents): each opened natively in an agent's page is a window of the
-  engine's browser process at -32768, -32768, clamped there by Windows and on no screen,
-  and nothing came forward. That is with the probe's own window off the screen too; with
-  the reader's window on a screen the page is 10,000 pixels from it, and whether the
-  engine then pulls a popup onto that screen is not measured, since finding out would
-  put one there. Autofill is off in agent tabs and was not opened.
+  Measured 2026-09-30 on a build of the spike, pressing each field through the protocol:
+  a `<select>`'s list, a date picker and a colour picker are each a window of the engine's
+  browser process at -32768, -32768, clamped there by Windows and on no screen, and
+  nothing came forward. That is with the probe's own window off the screen too; with the
+  reader's window on a screen the page is 10,000 pixels from it, and whether the engine
+  then pulls a popup onto that screen is not measured, since finding out would put one
+  there. So the rule stands, and two scenarios of the harness hold the verbs to it
+  (apps/desktop/test/agents): `pickers-refused`, where a press on any of the three and the
+  keys that open one are refused and the values are set through the page, and
+  `picker-by-page`, where the page itself calls `showPicker()` on an agent's ordinary
+  press: no window of the engine's appeared at all. Autofill is off in agent tabs and was
+  not opened.
 - **Keys.** None were pressed, which is this repository's rule while a key pressed in a
   page through the protocol can bring a probe forward. There the key went through a
   reader's tab's page-first script to the app, which then took the keyboard back to its own
@@ -275,8 +280,9 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
   and the app thread's focus read before and after each: every key arrived trusted, Enter
   submitted the form, and neither the window in front nor the focus moved, in every run.
   A reader's tab still gets no engine key (7.2). The harness's `keys` scenario presses
-  eleven more the same way with the focus compared by handle rather than by class, both
-  with the app's keyboard nowhere yet and with a reader's page holding it: the same.
+  five more through `browser_press`, with the focus compared by handle rather than by
+  class, both with the app's keyboard nowhere yet and with a reader's page holding it:
+  the same.
 - **Other screens, other scales.** One screen at 200 %. A screen to the left of the
   primary one sits at negative coordinates; 10,000 pixels is past any real arrangement,
   and the harness checks the page's screen rectangle against every monitor at 100 % and

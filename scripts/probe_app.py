@@ -565,7 +565,7 @@ def keyboard(pid: int) -> dict[str, object]:
         focus = described(info.hwndFocus)
     return {
         "front": described(front),
-        "front is the probe's": owner.value in family(pid),
+        "front is ours": owner.value in family(pid),
         "app thread focus": focus,
     }
 

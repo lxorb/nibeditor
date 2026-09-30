@@ -156,9 +156,16 @@ PICKERS = page(
     "Pickers",
     """<label>Fruit <select id="fruit"><option>Apple</option><option>Pear</option><option>Plum</option></select></label>
 <label>Day <input id="day" type="date"></label>
-<label>Colour <input id="colour" type="color"></label>""",
+<label>Colour <input id="colour" type="color"></label>
+<button id="pick">Pick a day</button>""",
     """for (const id of ['fruit', 'day', 'colour'])
-  document.getElementById(id).addEventListener('change', (event) => record({kind: 'picked', id, value: event.target.value}))""",
+  document.getElementById(id).addEventListener('change', (event) => record({kind: 'picked', id, value: event.target.value}))
+// A page may open a picker of its own on any press it is given, which no rule about
+// which fields an agent may press can see.
+document.getElementById('pick').onclick = () => {
+  try { document.getElementById('day').showPicker(); record({kind: 'pick', opened: true}) }
+  catch (error) { record({kind: 'pick', opened: false, why: error.name}) }
+}""",
 )
 
 KEYS = page(

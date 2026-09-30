@@ -1,5 +1,5 @@
 {
-  "proves": "an agent over its tabs parks the one used longest ago, and over its navigations a minute is held back",
+  "proves": "an agent over its tabs parks the one used longest ago, and over its navigations a minute is held back until the minute has room, or the stop",
   "doc": "6.4, 9.5",
   "grant": {
     "limits": {
@@ -72,17 +72,6 @@
       "args": {
         "tab": "{third}",
         "url": "{site}/keys"
-      },
-      "expect": {
-        "one_of": [
-          {
-            "status": "ok"
-          },
-          {
-            "status": "error",
-            "code": "limit"
-          }
-        ]
       }
     },
     {
@@ -90,19 +79,39 @@
       "args": {
         "tab": "{third}",
         "url": "{site}/shop"
-      },
-      "expect": {
-        "one_of": [
-          {
-            "status": "error",
-            "code": "limit"
-          },
-          {
-            "status": "ok",
-            "slower_than_ms": 1000
-          }
-        ]
       }
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{third}",
+        "url": "{site}/mail"
+      }
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{third}",
+        "url": "{site}/keys"
+      },
+      "as": "held"
+    },
+    {
+      "pause": 1500
+    },
+    {
+      "reader": "agents_stop"
+    },
+    {
+      "join": "held",
+      "expect": {
+        "status": "error",
+        "code": "stopped",
+        "slower_than_ms": 1400
+      }
+    },
+    {
+      "reader": "agents_resume"
     }
   ]
 }

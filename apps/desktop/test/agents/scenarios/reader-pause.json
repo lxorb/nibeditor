@@ -3,23 +3,28 @@
   "doc": "7.3",
   "steps": [
     {
-      "reader_eval": "nib.workspace.openPage('{site}/keys'); await new Promise((go) => setTimeout(go, 1500)); return nib.workspace.activeTabId"
+      "reader_eval": "nib.workspace.openPage('{site}/keys'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "save": {
+        "reader": "result"
+      }
+    },
+    {
+      "keyboard": "now"
     },
     {
       "call": "browser_tabs",
       "args": {},
       "expect": {
         "status": "ok",
-        "has": ["result.reader.0.id"]
-      },
-      "save": {
-        "tab": "result.reader.0.id"
+        "contains": {
+          "result.reader": "{reader}"
+        }
       }
     },
     {
       "call": "browser_find",
       "args": {
-        "tab": "{tab}",
+        "tab": "{reader}",
         "role": "textbox",
         "name": "Words"
       },
@@ -34,7 +39,7 @@
     {
       "call": "browser_click",
       "args": {
-        "tab": "{tab}",
+        "tab": "{reader}",
         "ref": "{words}"
       }
     },
@@ -44,13 +49,13 @@
     {
       "hook": "reader_focus",
       "args": {
-        "tab": "{tab}"
+        "tab": "{reader}"
       }
     },
     {
       "call": "browser_snapshot",
       "args": {
-        "tab": "{tab}"
+        "tab": "{reader}"
       },
       "expect": {
         "status": "error",
@@ -60,8 +65,11 @@
     {
       "reader": "agents_resume",
       "args": {
-        "tab": "{tab}"
+        "tab": "{reader}"
       }
+    },
+    {
+      "reader_eval": "nib.workspace.close('{reader}'); return true"
     }
   ]
 }

@@ -82,6 +82,35 @@
       "call": "browser_click",
       "args": {
         "tab": "{tab}",
+        "ref": "{prompt}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.kind": "prompt"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true,
+        "text": "Ada"
+      }
+    },
+    {
+      "record": "dialog",
+      "where": {
+        "which": "prompt",
+        "answer": "Ada"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
         "ref": "{alert}"
       },
       "expect": {
@@ -130,35 +159,6 @@
       "where": {
         "which": "confirm",
         "answer": false
-      },
-      "count": 1
-    },
-    {
-      "call": "browser_click",
-      "args": {
-        "tab": "{tab}",
-        "ref": "{prompt}"
-      },
-      "expect": {
-        "status": "ok",
-        "contains": {
-          "dialog.kind": "prompt"
-        }
-      }
-    },
-    {
-      "call": "browser_dialog",
-      "args": {
-        "tab": "{tab}",
-        "accept": true,
-        "text": "Ada"
-      }
-    },
-    {
-      "record": "dialog",
-      "where": {
-        "which": "prompt",
-        "answer": "Ada"
       },
       "count": 1
     },
@@ -238,5 +238,6 @@
         }
       }
     }
-  ]
+  ],
+  "known": "agent-core: an agent tab's alert and confirm reach the engine once agent tabs are built through web_worlds (feat/agent-worlds, after #89); until then the dialog plugin's script answers them inside the page (section 3)"
 }

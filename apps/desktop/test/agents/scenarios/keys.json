@@ -1,7 +1,6 @@
 {
   "proves": "keys pressed into an agent's page through the engine arrive trusted, and neither the window in front nor the app's focus moves, whether the app's keyboard is nowhere yet or in a page of the reader's",
   "doc": "3, 7.2",
-  "via": ["endpoint", "mcp", "spike"],
   "steps": [
     {
       "call": "browser_open",
@@ -48,7 +47,14 @@
       "call": "browser_press",
       "args": {
         "tab": "{tab}",
-        "keys": "hello"
+        "keys": "h"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "i"
       }
     },
     {
@@ -66,7 +72,7 @@
       "where": {
         "trusted": true
       },
-      "at_least": 6
+      "at_least": 3
     },
     {
       "call": "browser_evaluate",
@@ -77,12 +83,15 @@
       "expect": {
         "status": "ok",
         "contains": {
-          "result.value": "hello"
+          "result.value": "hi"
         }
       }
     },
     {
-      "reader_eval": "nib.workspace.openPage('{site}/shop'); await new Promise((go) => setTimeout(go, 2000)); return true"
+      "reader_eval": "nib.workspace.openPage('{site}/shop'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "save": {
+        "reader": "result"
+      }
     },
     {
       "keyboard": "now"
@@ -98,7 +107,14 @@
       "call": "browser_press",
       "args": {
         "tab": "{tab}",
-        "keys": "again"
+        "keys": "a"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "b"
       }
     },
     {
@@ -109,7 +125,10 @@
       "where": {
         "trusted": true
       },
-      "at_least": 11
+      "at_least": 5
+    },
+    {
+      "reader_eval": "nib.workspace.close('{reader}'); return true"
     }
   ]
 }
