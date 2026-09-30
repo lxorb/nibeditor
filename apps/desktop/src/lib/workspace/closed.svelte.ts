@@ -24,24 +24,8 @@ export class ClosedTabs {
    *  menu offers the row at all. */
   readonly any = $derived(this.stack.length > 0)
 
-  /** The stamp of the gesture closing tabs now, and the last one given. */
-  private joining: number | null = null
-  private stamped = 0
-
   record(closed: ClosedTab) {
-    const entry = this.joining === null ? closed : { ...closed, batch: this.joining }
-    this.stack = [...this.stack, entry].slice(-MOST_CLOSED)
-  }
-
-  /** Everything `close` closes comes back with one Reopen closed tab, as in Firefox. */
-  together(close: () => void) {
-    this.stamped = Math.max(Date.now(), this.stamped + 1)
-    this.joining = this.stamped
-    try {
-      close()
-    } finally {
-      this.joining = null
-    }
+    this.stack = [...this.stack, closed].slice(-MOST_CLOSED)
   }
 
   /** The newest, off the stack, with the tabs closed along with it, newest first so

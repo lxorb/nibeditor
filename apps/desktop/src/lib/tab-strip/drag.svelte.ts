@@ -18,6 +18,7 @@
  *  carried out of one finds its place in another. */
 
 import { without } from '../records'
+import type { Landing } from '../workspace/panes.svelte'
 import { clampedStart, nearestSlot, reorderSlack } from './layout'
 
 /** How far a pointer travels before a press on a tab becomes a drag: Chrome's
@@ -187,6 +188,15 @@ export function register(paneId: string, strip: Strip): () => void {
   }
 }
 
+/** A landing as one string, so a frame that would set the same one again sets nothing:
+ *  the landing is read by every pane on the screen. */
+export const keyOf = (where: Landing | null): string =>
+  !where
+    ? ''
+    : where.kind === 'strip'
+      ? `strip:${where.paneId}:${where.at}`
+      : `pane:${where.paneId}:${where.zone}`
+
 export function stripOf(paneId: string): Strip | undefined {
   return strips[paneId]
 }
@@ -208,7 +218,7 @@ export function arrival(tabId: string): { left: number; top: number } | null {
   return where
 }
 
-/** Several tabs at once (picking.svelte.ts), once a click with Ctrl or Shift fetched it. */
+/** The pick of tabs, once a click with Ctrl or Shift fetched it; see picking.svelte.ts. */
 export const picks: { loaded: typeof import('./picking.svelte') | null } = $state({
   loaded: null,
 })

@@ -152,14 +152,10 @@
   {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls">
-        <button onclick={minimize} title={t('Minimize')} aria-label={t('Minimize')}>
+        <button onclick={minimize} aria-label={t('Minimize')}>
           <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
         </button>
-        <button
-          onclick={toggleMaximize}
-          title={maximized ? t('Restore') : t('Maximize')}
-          aria-label={maximized ? t('Restore') : t('Maximize')}
-        >
+        <button onclick={toggleMaximize} aria-label={maximized ? t('Restore') : t('Maximize')}>
           {#if maximized}
             <svg viewBox="0 0 10 10"><path d="M2.5 0.5h7v7M0.5 2.5h7v7h-7z" /></svg>
           {:else}

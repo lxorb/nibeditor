@@ -108,9 +108,7 @@ export interface ClosedTab {
   paneId: string
   /** Its place in that pane's strip, counting from zero. */
   at: number
-  /** When it was closed along with others by one gesture - a pick of tabs, the tabs
-   *  around one - which all carry the same stamp and come back together. Absent for a
-   *  tab closed on its own. */
+  /** The stamp of the one gesture that closed it with others, which come back with it. */
   batch?: number
 }
 

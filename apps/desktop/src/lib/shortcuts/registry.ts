@@ -334,8 +334,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-w',
     // On a Mac the same key closes the window once nothing is left in it to close,
     // as it does in Safari and VS Code there. A pane put down with Ctrl+D still has
-    // its tabs, so there it closes nothing. Several tabs picked go together, as
-    // Chrome's do; see tab-strip/picking.svelte.ts.
+    // its tabs, so there it closes nothing. A pick of tabs goes whole, as in Chrome.
     run: () => {
       const pick = picks.loaded
       const many = pick?.chosen.of(workspace.panes.focusedId) ?? []
