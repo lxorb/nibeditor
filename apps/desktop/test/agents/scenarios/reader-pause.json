@@ -1,0 +1,75 @@
+{
+  "proves": "an agent acting in the reader's own tab is paused the moment the reader's press gives that page the keyboard, and stays paused",
+  "doc": "7.3",
+  "steps": [
+    {
+      "reader_eval": "nib.workspace.openPage('{site}/keys'); await new Promise((go) => setTimeout(go, 2000)); return nib.workspace.activeTabId",
+      "save": {
+        "reader": "result"
+      }
+    },
+    {
+      "keyboard": "now"
+    },
+    {
+      "call": "browser_tabs",
+      "args": {},
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.reader": "{reader}"
+        }
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{reader}",
+        "role": "textbox",
+        "name": "Words"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "words": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{reader}",
+        "ref": "{words}"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "hook": "reader_focus",
+      "args": {
+        "tab": "{reader}"
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{reader}"
+      },
+      "expect": {
+        "status": "error",
+        "code": "paused_by_reader"
+      }
+    },
+    {
+      "reader": "agents_resume",
+      "args": {
+        "tab": "{reader}"
+      }
+    },
+    {
+      "reader_eval": "nib.workspace.close('{reader}'); return true"
+    }
+  ]
+}

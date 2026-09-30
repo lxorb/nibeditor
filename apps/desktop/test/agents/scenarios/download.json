@@ -1,0 +1,64 @@
+{
+  "proves": "a download from an agent's tab lands in the agent's own folder and is listed",
+  "doc": "6.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/download"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "link",
+        "name": "The report"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "file": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{file}"
+      }
+    },
+    {
+      "record": "downloaded",
+      "count": 1,
+      "within_ms": 5000
+    },
+    {
+      "pause": 1000
+    },
+    {
+      "call": "browser_downloads",
+      "args": {
+        "tab": "{tab}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.downloads": "nib agents"
+        }
+      }
+    }
+  ]
+}

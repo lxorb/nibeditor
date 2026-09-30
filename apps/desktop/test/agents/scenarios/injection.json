@@ -1,0 +1,65 @@
+{
+  "proves": "every word a page hands the agent comes back marked as the page's, whichever vector carried the instruction, and which of five vectors reach the agent is reported",
+  "doc": "9.6",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/inject"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      },
+      "expect": {
+        "status": "ok",
+        "untrusted": true
+      },
+      "save": {
+        "snapshot": "result.text"
+      }
+    },
+    {
+      "observe": {
+        "saved": "snapshot",
+        "counts": {
+          "vectors that reach a snapshot (of five)": "ignore the task"
+        }
+      }
+    },
+    {
+      "call": "browser_read",
+      "args": {
+        "tab": "{tab}",
+        "as": "markdown"
+      },
+      "expect": {
+        "status": "ok",
+        "untrusted": true
+      },
+      "save": {
+        "read": "result.text"
+      }
+    },
+    {
+      "observe": {
+        "saved": "read",
+        "counts": {
+          "vectors that reach a read (of five)": "ignore the task"
+        }
+      }
+    }
+  ]
+}

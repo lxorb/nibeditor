@@ -1,0 +1,98 @@
+{
+  "proves": "Send on a compose form answers needs_approval and sends nothing",
+  "doc": "9.3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/mail"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "textbox",
+        "name": "To"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "to": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "textbox",
+        "name": "Message"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "body": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Send"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "send": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{to}",
+        "text": "ada@example.com"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{body}",
+        "text": "See you Friday"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{send}"
+      },
+      "expect": {
+        "status": "needs_approval"
+      }
+    },
+    {
+      "record": "sent",
+      "count": 0
+    }
+  ],
+  "known": "agent-core: sending is recognised only on the sites of a list (policy.rs SOCIAL), so a compose form anywhere else, a self-hosted webmail included, sends without asking (9.3)"
+}

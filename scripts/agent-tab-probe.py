@@ -10,7 +10,7 @@ What it asks, and how:
   is magenta, and the window is photographed by pid (`capture-window.ps1`): not one
   magenta pixel may be in it. Every top-level window of the app *and of every engine
   process under it* is watched from launch to the end, and one that is ever on a screen or
-  in front ends the run (`watch_family`, on top of `run_probe`'s own watch), because a
+  in front ends the run (`run_probe`'s own watch, in scripts/probe_app.py), because a
   dialog, a picker or a popup a page raises belongs to an engine process.
 * **No keyboard.** The window in front, and the app thread's focus window, are read before
   and after every step; neither may change. Keys are pressed into an agent's page through
@@ -53,9 +53,8 @@ import threading
 import time
 import urllib.error
 import urllib.request
-from ctypes import wintypes
 
-from probe_app import close_app, main_window, run_probe
+from probe_app import close_app, family, keyboard, main_window, run_probe
 
 PORT_FROM = 23860
 PORT_TO = 23899
@@ -316,114 +315,12 @@ class Endpoint:
         return value
 
 
-# ---- what the operating system says: windows in front, the keyboard, the engines ----
+# ---- what the operating system says: the engines, and the window itself ----
+#
+# The window in front, the app thread's focus and the watch over every engine process are
+# scripts/probe_app.py's, which every probe shares.
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
-user32.GetForegroundWindow.restype = wintypes.HWND
-user32.MonitorFromRect.restype = wintypes.HANDLE
-user32.MonitorFromRect.argtypes = [ctypes.POINTER(wintypes.RECT), wintypes.DWORD]
-
-
-class GUITHREADINFO(ctypes.Structure):
-    _fields_ = [
-        ("cbSize", wintypes.DWORD),
-        ("flags", wintypes.DWORD),
-        ("hwndActive", wintypes.HWND),
-        ("hwndFocus", wintypes.HWND),
-        ("hwndCapture", wintypes.HWND),
-        ("hwndMenuOwner", wintypes.HWND),
-        ("hwndMoveSize", wintypes.HWND),
-        ("hwndCaret", wintypes.HWND),
-        ("rcCaret", wintypes.RECT),
-    ]
-
-
-def described(hwnd: int | None) -> str:
-    if not hwnd:
-        return "none"
-    name = ctypes.create_unicode_buffer(256)
-    user32.GetClassNameW(hwnd, name, 256)
-    owner = wintypes.DWORD()
-    user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-    return f"{name.value}@{owner.value}"
-
-
-def family(pid: int) -> set[int]:
-    import psutil
-
-    try:
-        return {pid, *(one.pid for one in psutil.Process(pid).children(recursive=True))}
-    except psutil.Error:
-        return {pid}
-
-
-def keyboard(pid: int) -> dict[str, object]:
-    """The window in front, and where the app's own thread would send a key."""
-
-    front = user32.GetForegroundWindow()
-    owner = wintypes.DWORD()
-    user32.GetWindowThreadProcessId(front, ctypes.byref(owner))
-    hwnd = main_window(pid)
-    thread = user32.GetWindowThreadProcessId(hwnd, None) if hwnd else 0
-    info = GUITHREADINFO()
-    info.cbSize = ctypes.sizeof(GUITHREADINFO)
-    focus = "?"
-    if thread and user32.GetGUIThreadInfo(thread, ctypes.byref(info)):
-        focus = described(info.hwndFocus)
-    return {"front is ours": owner.value in family(pid), "front": described(front), "app thread focus": focus}
-
-
-def in_view(pids: set[int]) -> str:
-    found: list[str] = []
-    front = user32.GetForegroundWindow()
-
-    def each(hwnd: int, _lparam: int) -> bool:
-        owner = wintypes.DWORD()
-        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
-        if owner.value not in pids:
-            return True
-        box = wintypes.RECT()
-        user32.GetWindowRect(hwnd, ctypes.byref(box))
-        name = ctypes.create_unicode_buffer(256)
-        user32.GetClassNameW(hwnd, name, 256)
-        if hwnd == front:
-            found.append(f"{name.value} 0x{hwnd:X} of pid {owner.value} is in front")
-        elif name.value == "Tao Thread Event Target" or name.value.endswith("-sic"):
-            pass
-        elif (
-            user32.IsWindowVisible(hwnd)
-            and box.right > box.left
-            and box.bottom > box.top
-            and user32.MonitorFromRect(ctypes.byref(box), 0)
-        ):
-            found.append(
-                f"{name.value} 0x{hwnd:X} of pid {owner.value} on a screen at {box.left},{box.top} "
-                f"{box.right - box.left}x{box.bottom - box.top}"
-            )
-        return True
-
-    kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
-    user32.EnumWindows(kind(each), 0)
-    return "; ".join(found)
-
-
-def watch_family(app: subprocess.Popen[bytes]) -> None:
-    """`run_probe` watches the app's own windows; this watches the engine's as well, since a
-    dialog, a popup or a picker an agent's page raises belongs to an engine process."""
-
-    pids = {app.pid}
-    refreshed = 0.0
-    while app.poll() is None:
-        if time.perf_counter() - refreshed > 0.25:
-            pids = family(app.pid)
-            refreshed = time.perf_counter()
-        seen = in_view(pids)
-        if seen:
-            subprocess.run(["taskkill", "/T", "/F", "/PID", str(app.pid)], capture_output=True)
-            print(f"ENGINE WINDOW IN VIEW: {seen}. Killed the app.", file=sys.stderr)
-            sys.stderr.flush()
-            os._exit(3)
-        time.sleep(0.004)
 
 
 def engine_memory(pid: int) -> dict[str, float]:
@@ -534,7 +431,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
     running = None
     try:
         running = run_probe(args.exe, quiet=True)
-        threading.Thread(target=watch_family, args=(running,), daemon=True).start()
         first_port, _, _ = endpoint(args.identifier)
         until = time.perf_counter() + 90
         while time.perf_counter() < until and not main_window(running.pid):
@@ -545,7 +441,6 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         time.sleep(1)
 
         running = run_probe(args.exe, quiet=True)
-        threading.Thread(target=watch_family, args=(running,), daemon=True).start()
         port_now, secret, pid = endpoint(args.identifier, unlike=first_port)
         if pid and pid != running.pid:
             raise SystemExit(f"another nib (pid {pid}) is listening under {args.identifier}")

@@ -1,0 +1,121 @@
+name: agents
+
+# The agent harness (apps/desktop/test/agents): the family watch every probe runs under,
+# on every change to it, and every night the whole scenario set against a probe build -
+# each promise of docs/agent-native.md as the calls an agent makes and what the sites saw.
+# By hand on this machine, the same thing is:
+#
+#   python apps/desktop/test/agents/run.py --exe <probe nib.exe> \
+#     --identifier ch.emilvinu.nib.probe.<name> --via endpoint
+#
+# with the probe built as scripts/probe_app.py says.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/probe_app.py
+      - apps/desktop/test/agents/**
+      - .github/workflows/agents.yml
+  pull_request:
+    paths:
+      - scripts/probe_app.py
+      - apps/desktop/test/agents/**
+      - .github/workflows/agents.yml
+  schedule:
+    # 02:40 in Zurich in the summer, while nobody pushes.
+    - cron: '40 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: agents-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # What the watch decides, over windows and screens that are only numbers. Pure Python,
+  # so the runner's own interpreter, and any system.
+  watch:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - name: The drives parse
+        run: python3 -m compileall -q scripts/probe_app.py apps/desktop/test/agents
+
+      - name: The watch
+        run: python3 -m unittest discover -s apps/desktop/test/agents -p "*_test.py" -v
+
+  # Every scenario, through both roads an agent takes, and the launch with an agent set
+  # up against one without. Windows, because WebView2 is the engine the verbs are proven
+  # on first; nobody is at a runner, so the native pickers run too.
+  scenarios:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      IDENTIFIER: ch.emilvinu.nib.probe.nightly
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: |
+            apps/desktop/src-tauri
+          save-if: false
+
+      - run: pnpm install --frozen-lockfile
+
+      # A probe build: a version no release passes and an updater pointed at nothing, so
+      # it can never install anything over anything; see scripts/probe_app.py.
+      - name: The probe
+        run: |
+          printf '{"identifier":"%s","version":"99.0.0","plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}' \
+            "$IDENTIFIER" > probe.json
+          pnpm --filter @nib/desktop exec tauri build --no-bundle --config ../../probe.json
+
+      - name: Through the endpoint
+        run: |
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+            --identifier "$IDENTIFIER" --via endpoint --out endpoint.json
+
+      - name: Through nib mcp
+        if: always()
+        run: |
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+            --identifier "$IDENTIFIER" --via mcp --out mcp.json
+
+      - name: What an agent set up costs the launch
+        if: always()
+        run: |
+          python apps/desktop/test/agents/run.py --exe apps/desktop/src-tauri/target/release/nib.exe \
+            --identifier "$IDENTIFIER" --launch-cost 3
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: agent-scenarios
+          path: |
+            endpoint.json
+            mcp.json
+          if-no-files-found: ignore

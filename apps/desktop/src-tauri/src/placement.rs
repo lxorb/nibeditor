@@ -384,6 +384,24 @@ mod created_away {
     }
 }
 
+/// Builds any window after the first where the first went: off the screen with it
+/// where a drive sent it there, and as the builder says otherwise.
+///
+/// The one road every later window takes - a second window, a page's sign-in popup -
+/// because each of them used to decide for itself, and the popup forgot: built as its
+/// page asked, it was handed to the system at a place on no screen, which cascaded it
+/// onto the primary one in front of whoever was working (2026-09-30, a probe's popup
+/// at 0,0). A window that does not come through here is a window that can do that
+/// again; the test below holds the crate to it.
+pub fn built<R: Runtime, M: Manager<R>>(
+    building: WebviewWindowBuilder<'_, R, M>,
+) -> tauri::Result<WebviewWindow<R>> {
+    match away() {
+        Some(at) => built_away(building, at),
+        None => building.build(),
+    }
+}
+
 /// Brings a window forward because somebody asked for the app - a second launch, a
 /// link - unless this run's windows were sent off the screen, where coming forward
 /// would take the keyboard from whoever is working and show them nothing.
@@ -808,5 +826,49 @@ mod tests {
         assert!(!sane(&placed(0.0, f64::INFINITY, 800.0, 600.0)));
         assert!(sane(&placed(-100.0, -20.0, 800.0, 600.0)));
         assert!(serde_json::from_str::<Placement>("{\"x\":1}").is_err());
+    }
+
+    /// Every window the crate builds is built where this run's windows go, or says
+    /// why it need not be. Read off the source, because a window that forgets is only
+    /// ever found by somebody it landed in front of: a page's popup did, until `built`.
+    #[test]
+    fn every_window_is_built_where_the_run_sends_them() {
+        // Built hidden and never shown: a page printed and gone.
+        // The CEF build's own two, which only its gate runs, placing each window on the
+        // screen it photographs.
+        let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
+
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut sources = vec![root.clone()];
+        let mut unplaced = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let name = path
+                    .strip_prefix(&root)
+                    .expect("under the source")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let builds = text.contains("WebviewWindowBuilder::new(")
+                    || text.contains("WebviewWindowBuilder::from_config(");
+                let placed =
+                    text.contains("placement::built(") || text.contains("placement::built_away(");
+                if builds && !placed && name != "placement.rs" && !excused.contains(&&*name) {
+                    unplaced.push(name);
+                }
+            }
+        }
+        assert!(
+            unplaced.is_empty(),
+            "built past `placement::built`: {unplaced:?}"
+        );
     }
 }

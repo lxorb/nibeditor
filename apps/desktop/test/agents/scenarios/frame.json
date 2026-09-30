@@ -1,0 +1,57 @@
+{
+  "proves": "an element inside a frame from another site, which runs in a process of its own, is in the snapshot with a frame ref and is pressed as trusted input",
+  "doc": "5.2, 3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/frame"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "pause": 800
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Inner button"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.matches.0.ref": "f"
+        }
+      },
+      "save": {
+        "inner": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{inner}"
+      }
+    },
+    {
+      "record": "inner",
+      "where": {
+        "trusted": true,
+        "host": "other.localhost"
+      },
+      "count": 1
+    }
+  ]
+}

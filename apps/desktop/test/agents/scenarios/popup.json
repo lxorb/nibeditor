@@ -1,0 +1,56 @@
+{
+  "proves": "a sign-in popup becomes another tab of the agent's, off every screen, and still reaches its opener",
+  "doc": "6.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/opener"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Sign in with a popup"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "popup": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{popup}"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.opened.0"]
+      }
+    },
+    {
+      "record": "popup-heard",
+      "count": 1,
+      "within_ms": 5000
+    },
+    {
+      "keyboard": "unchanged"
+    }
+  ]
+}

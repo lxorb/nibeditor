@@ -200,7 +200,7 @@ the window; the ranges are across runs.
 | `Page.captureScreenshot`, 2560 by 1600 | 109 to 115 ms, the page's own pixels | never answered in 30 s |
 | agent pixels in a `PrintWindow` picture of the whole window (3.66 million pixels, 3.19 million of them the reader's page) | **0** | 0 |
 | the window in front | never the probe or any engine process under it, in five runs | the same |
-| the app thread's focus window | the same before and after every step | the same |
+| the app thread's focus window | the same before and after every step (the same handle, compared by the harness since) | the same |
 | the reader's tab: rAF, interval, state | 60, 100, visible, before and during | the same |
 | the tab strip, the tab in front, the app's focused element | unchanged | unchanged |
 | engine processes and working set | two more processes and 83 to 100 MB for both pages together; all of it back when they closed | |
@@ -241,6 +241,14 @@ should ask a page's `confirm` outright. An agent's tab is built through the same
 `web_worlds` path, so that its dialogs reach `ScriptDialogOpening` the way `prompt` already
 does.
 
+**The harness found one more.** The page that holds the web session open (`session::anchor`
+in `web_tabs.rs`, one pixel, hidden) was built the way wry builds every webview, with the
+keyboard: so the first page of a run took the app's focus to a page nobody can see. For a
+reader's tab the tab took it straight back; for an agent's, opened while somebody types in
+a note, the typing went nowhere. The spike's own check compared windows by class and
+process, and every page of the engine is the same class in the same process, so it read as
+unchanged. Built without the keyboard now, and the harness compares the handle.
+
 **What it does not prove**, and where each goes:
 
 - **Real sites.** A local page of 22 nodes. `agent-core`'s probe adds a shop with a card
@@ -251,6 +259,18 @@ does.
   harness's nightly drive.
 - **The engine's own popups.** A `<select>` list, a date picker and autofill were not
   opened, on purpose (6.5). The harness opens them with the engine-process watch running.
+  Measured 2026-09-30 on a build of the spike, pressing each field through the protocol:
+  a `<select>`'s list, a date picker and a colour picker are each a window of the engine's
+  browser process at -32768, -32768, clamped there by Windows and on no screen, and
+  nothing came forward. That is with the probe's own window off the screen too; with the
+  reader's window on a screen the page is 10,000 pixels from it, and whether the engine
+  then pulls a popup onto that screen is not measured, since finding out would put one
+  there. So the rule stands, and two scenarios of the harness hold the verbs to it
+  (apps/desktop/test/agents): `pickers-refused`, where a press on any of the three and the
+  keys that open one are refused and the values are set through the page, and
+  `picker-by-page`, where the page itself calls `showPicker()` on an agent's ordinary
+  press: no window of the engine's appeared at all. Autofill is off in agent tabs and was
+  not opened.
 - **Keys.** None were pressed, which is this repository's rule while a key pressed in a
   page through the protocol can bring a probe forward. There the key went through a
   reader's tab's page-first script to the app, which then took the keyboard back to its own
@@ -259,11 +279,17 @@ does.
   `Input.dispatchKeyEvent`, with the engine-process watch running and the window in front
   and the app thread's focus read before and after each: every key arrived trusted, Enter
   submitted the form, and neither the window in front nor the focus moved, in every run.
-  A reader's tab still gets no engine key (7.2).
+  A reader's tab still gets no engine key (7.2). The harness's `keys` scenario presses
+  five more through `browser_press`, with the focus compared by handle rather than by
+  class, both with the app's keyboard nowhere yet and with a reader's page holding it:
+  the same.
 - **Other screens, other scales.** One screen at 200 %. A screen to the left of the
   primary one sits at negative coordinates; 10,000 pixels is past any real arrangement,
   and the harness checks the page's screen rectangle against every monitor at 100 % and
-  150 % too.
+  150 % too. It does so over numbers (`watch_test.py`): the page at 100, 150 and 200 %,
+  beside desks with screens to the left, above, and three 4K screens wide, reaches none,
+  because it is up as well as left. A real screen at another scale is not simulated: it
+  would change the screen of whoever is at the machine.
 - **The control after five minutes.** The hidden page's interval came back to 63.8 a
   second after 330 s, with `requestAnimationFrame` still at 0 and the page still hidden.
   Nothing in the design depends on it and it is not explained here.
@@ -1006,9 +1032,8 @@ rather than a weaker one pretending.
 
 Eight lanes on disjoint files, in three waves. Briefs are in the manager's scratchpad under
 `agent-browser/lanes/`. Every lane reads this document first, follows `nib-agent-rules.md`,
-and keeps the reader's window out of every probe (the family watch in
-`agent-tab-probe.py` goes into `scripts/probe_app.py` in the first lane that
-touches it).
+and keeps the reader's window out of every probe (the family watch, every process under
+the app, is in `scripts/probe_app.py`'s `run_probe`).
 
 | lane | owns | depends on | wave |
 | --- | --- | --- | --- |

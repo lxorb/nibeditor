@@ -1,0 +1,85 @@
+{
+  "proves": "a file chooser is answered by browser_upload with a file inside a space and never shown, and a file outside every space asks first",
+  "doc": "5.2, 6.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/upload"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "A file"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "input": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_upload",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{input}",
+        "files": ["{space}/Idea.md"]
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Upload"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "send": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{send}"
+      }
+    },
+    {
+      "record": "uploaded",
+      "where": {
+        "name": "Idea.md"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_upload",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{input}",
+        "files": ["C:/Windows/win.ini"]
+      },
+      "expect": {
+        "status": "needs_approval"
+      }
+    }
+  ]
+}

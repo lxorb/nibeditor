@@ -768,15 +768,12 @@ fn popup(
             let _ = window.set_title(&title);
         });
 
-    // Where this run's windows were sent off the screen - a drive's, see placement.rs -
-    // the popup goes where they went and does not take the keyboard. A sign-in page is
-    // exactly what a drive of the web opens, and a window of its own in front of whoever
-    // is working is the one thing a drive must never do.
-    let window = match crate::placement::away() {
-        Some(at) => crate::placement::built_away(building, at),
-        None => building.build(),
-    }
-    .ok()?;
+    // Where the page asked for it, unless this run's windows were sent off the screen - a
+    // drive's, see placement.rs: then after them, whatever `left` and `top` the page
+    // named, and without the keyboard. A sign-in page is exactly what a drive of the web
+    // opens, and a window of its own in front of whoever is working is the one thing a
+    // drive must never do. See `built`.
+    let window = crate::placement::built(building).ok()?;
 
     // Cleared before it is handed back, which is before the engine sends it anywhere:
     // this runs on the window's own thread, where `with_webview` answers inline, and the
@@ -987,7 +984,12 @@ mod session {
             return;
         };
 
+        // Never the keyboard: wry hands every new webview the focus unless told otherwise,
+        // and this one is built by the first page of the run, which may be an agent's,
+        // opened while somebody types in a note. The keys went to a page of one pixel
+        // that nobody can see; the agent harness's keyboard check caught it.
         let builder = tauri::WebviewBuilder::new(ANCHOR, tauri::WebviewUrl::External(blank))
+            .focused(false)
             .disable_drag_drop_handler();
 
         // The same store every tab's page is given, through the same seam: which folder

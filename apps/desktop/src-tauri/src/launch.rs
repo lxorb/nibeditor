@@ -278,11 +278,8 @@ fn window_builder<'a>(
 fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result<(), String> {
     let building = crate::appearance::own_frame(builder);
     // Where the first window was sent off the screen, every other goes after it.
-    let window = match crate::placement::away() {
-        Some(at) => crate::placement::built_away(building, at),
-        None => building.build(),
-    }
-    .map_err(|error| format!("could not open another window: {error}"))?;
+    let window = crate::placement::built(building)
+        .map_err(|error| format!("could not open another window: {error}"))?;
 
     // Shown here only where it was not sent away: `built_away` has shown it already,
     // without bringing it forward, which showing it again would.

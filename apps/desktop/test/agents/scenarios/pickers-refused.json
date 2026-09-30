@@ -1,0 +1,185 @@
+{
+  "proves": "the verbs never open a picker of the engine's own: a press on a list, a date or a colour field and the keys that open one are refused, the values are set through the page, and no window of the engine's appears",
+  "doc": "6.2, 6.5",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/pickers"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "combobox",
+        "name": "Fruit"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "fruit": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "Date",
+        "name": "Day"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "day": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "ColorWell",
+        "name": "Colour"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "colour": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{fruit}"
+      },
+      "expect": {
+        "status": "error",
+        "code": "bad_arguments"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{day}"
+      },
+      "expect": {
+        "status": "error",
+        "code": "bad_arguments"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{colour}"
+      },
+      "expect": {
+        "status": "error",
+        "code": "bad_arguments"
+      }
+    },
+    {
+      "call": "browser_select",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{fruit}",
+        "values": ["Pear"]
+      }
+    },
+    {
+      "record": "picked",
+      "where": {
+        "id": "fruit",
+        "value": "Pear"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{day}",
+        "text": "2026-10-01"
+      }
+    },
+    {
+      "record": "picked",
+      "where": {
+        "id": "day",
+        "value": "2026-10-01"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{colour}",
+        "text": "#ff8800"
+      }
+    },
+    {
+      "record": "picked",
+      "where": {
+        "id": "colour",
+        "value": "#ff8800"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{tab}",
+        "expression": "document.getElementById('fruit').focus()",
+        "world": "page"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "Alt+ArrowDown"
+      },
+      "expect": {
+        "status": "error",
+        "code": "bad_arguments"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "F4"
+      },
+      "expect": {
+        "status": "error",
+        "code": "bad_arguments"
+      }
+    },
+    {
+      "windows": 800,
+      "none": true
+    },
+    {
+      "keyboard": "unchanged"
+    }
+  ]
+}
