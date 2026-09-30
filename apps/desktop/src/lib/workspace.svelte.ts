@@ -1212,10 +1212,19 @@ class Workspace {
    *  the row is exactly where it was, and never a listing of the whole space per
    *  write. */
   touched(path: string) {
-    if (!this.sortMode.startsWith('modified')) return
-
     const entry = this.entryAt(path)
-    if (entry) this.showEntry({ ...entry, modified: Date.now() })
+
+    // Written for the first time without being born: the note a folder is drawn as,
+    // opened as the empty page it would be and then written in. The list has never
+    // read it, and nothing else will list the space again, so it is the row a draft
+    // gets. A file of another space, or of no space, is not a row of this list.
+    if (!entry) {
+      const root = this.activeSpace?.root
+      if (root !== undefined && within(root, path) !== null) this.born(path)
+      return
+    }
+
+    if (this.sortMode.startsWith('modified')) this.showEntry({ ...entry, modified: Date.now() })
   }
 
   /** A note born this sitting that ended up with nothing in it, gone again as its

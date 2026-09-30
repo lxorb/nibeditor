@@ -334,6 +334,20 @@ describe('opening a row that is a folder', () => {
     expect(sent.filter((one) => one.startsWith('write_note'))).toEqual([])
   })
 
+  // The first words written into that empty page make its file, and the list has to
+  // hear of it: nothing else lists the space again. Without it the row went on being
+  // drawn as a folder nobody had written in, and the note was missing from every
+  // list read off the tree - the switcher, the search, the links - until something
+  // else happened to list the space.
+  test('and the words written into that empty page are a note the list holds', async () => {
+    await workspace.openRow('/space/Work')
+    workspace.active?.note.live.replace('# Work\n\nwhat the folder is for')
+    await workspace.writesSettled()
+
+    expect(files.get('/space/Work/Work.md')).toBe('# Work\n\nwhat the folder is for')
+    expect(workspace.notes.map((one) => one.path)).toContain('/space/Work/Work.md')
+  })
+
   test('and a row that is a note opens that note', async () => {
     await workspace.openRow('/space/Beta.md')
     expect(workspace.active?.path).toBe('/space/Beta.md')
