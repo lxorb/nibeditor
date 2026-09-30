@@ -342,7 +342,12 @@ What that one import gives it, so that no drive writes any of it again:
   every Worker on any port, several drives run their Workers side by side, and
   `dist` is never rebuilt under a drive that is still fetching from it.
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
-  `run_probe`, off every screen, with `NIB_SPACES_DIR` in a temp folder.
+  `run_probe`, off every screen, with `NIB_SPACES_DIR` in a temp folder. Never the
+  reader's own nib: the installed exe, a build under the release identifier
+  `ch.emilvinu.nib` (whose launch the running nib would take) or one whose identifier
+  nobody said is refused before it starts, and run-all.py skips a native drive
+  pointed at one (`NIB_PROBE_EXE`, `NIB_PROBE_IDENTIFIER`). Nothing is ended by its
+  name, only by the number of a process the harness started.
 
 A drive that needs what a machine may not have says so at its top -
 `NEEDS = ("native",)` - and is listed as skipped, with the reason, everywhere it is

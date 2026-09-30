@@ -64,7 +64,9 @@ What that one import does, in the order a run meets it:
     starts without a Cloudflare token: nothing a drive does reaches Workers AI.
   - **A native probe when the drive wants one**, `Native(DRIVE, exe)`: through
     scripts/probe_app.py's `run_probe`, off the screen, with `NIB_SPACES_DIR` in a
-    temp folder, never the reader's own notes.
+    temp folder, never the reader's own notes. Never the reader's own nib either:
+    a build under the release identifier, or the installed one, is refused before
+    it is launched, and nothing is ever ended by its name (see `refused`).
 
 A drive says what it needs that a machine may not have with `NEEDS` at the top of
 its file - `NEEDS = ("native",)` - and run-all.py lists it as skipped, with the
@@ -140,8 +142,13 @@ TEARDOWN = 90
 #: The drive's needs this harness knows how to answer, and what each wants. Read by
 #: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
-    "native": "a native probe build (Windows, NIB_PROBE_EXE)",
+    "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
 }
+
+#: The identifier every release is built under, which is the nib the reader is using
+#: (Emil, 2026-09-30). A build under it shares that nib's single-instance lock, so
+#: launching one hands the launch to the running nib, and its folders are his.
+RELEASE_IDENTIFIER = "ch.emilvinu.nib"
 
 #: The last mark the launch order makes, on the page's own timeline; see mark() in
 #: lib/trace.ts and run() in lib/startup.svelte.ts. Every stage behind the first
@@ -1196,15 +1203,53 @@ class Worker:
 # ---------------------------------------------------------------- a native probe
 
 
+def identifier_of(exe: Path, given: str | None = None) -> str | None:
+    """The identifier a probe build was made under: the one the drive was given, then
+    `NIB_PROBE_IDENTIFIER`, then a `nib-probe-identifier.json` beside the exe (see
+    `identifier_of` in scripts/probe_app.py); None when nothing says."""
+    said = given or os.environ.get("NIB_PROBE_IDENTIFIER")
+    if said:
+        return said
+    beside = exe.parent / "nib-probe-identifier.json"
+    with contextlib.suppress(OSError, ValueError, KeyError, TypeError):
+        return str(json.loads(beside.read_text(encoding="utf-8"))["identifier"])
+    return None
+
+
+def refused(exe: Path, identifier: str | None) -> str:
+    """Why a drive may not launch this build, or nothing when it may.
+
+    The reader's own nib is never a drive's: not the installed exe, and not any build
+    under the release identifier, whose launch the running nib would take. A build
+    whose identifier nobody said is refused too, since it may be either."""
+    local = os.environ.get("LOCALAPPDATA")
+    if local and exe.resolve().is_relative_to((Path(local) / "Nib").resolve()):
+        return f"{exe} is the installed nib"
+    if not identifier:
+        return f"{exe} names no identifier (NIB_PROBE_IDENTIFIER, or --identifier to the drive)"
+    if identifier == RELEASE_IDENTIFIER or not identifier.startswith(RELEASE_IDENTIFIER + "."):
+        return f"{exe} is built under {identifier}, not one of its own like {RELEASE_IDENTIFIER}.probe.<name>"
+    return ""
+
+
 class Native:
     """A probe build of the desktop app, started the one way every probe is.
 
     Through scripts/probe_app.py's `run_probe`, which refuses a build that would
     update itself, opens every window off the screen without the keyboard, and ends
     the drive the moment one is ever in front of anybody. The spaces folder is a temp
-    folder of this run's own, never the reader's Documents/Nib, and goes with it."""
+    folder of this run's own, never the reader's Documents/Nib, and goes with it.
 
-    def __init__(self, drive: Drive, exe: Path, env: Mapping[str, str] | None = None) -> None:
+    The reader's own nib is refused before anything is started (`refused`), and the
+    probe is ended by its own process number, never by a name that is also his."""
+
+    def __init__(
+        self, drive: Drive, exe: Path, env: Mapping[str, str] | None = None, identifier: str | None = None
+    ) -> None:
+        self.identifier = identifier_of(exe, identifier)
+        if why := refused(exe, self.identifier):
+            raise SystemExit(f"not launched: {why}")
+
         sys.path.insert(0, str(ROOT / "scripts"))
         import probe_app
 
@@ -1223,7 +1268,7 @@ class Native:
     def stop(self) -> None:
         if self.app is not None and self.app.poll() is None:
             if not self.probe.close_app(self.app):
-                self.app.kill()
+                end(self.app)
         self.app = None
         shutil.rmtree(self.spaces, ignore_errors=True)
 
@@ -1246,6 +1291,10 @@ def missing(needs: Sequence[str]) -> str:
     for one in needs:
         if one == "native" and not (sys.platform == "win32" and os.environ.get("NIB_PROBE_EXE")):
             return f"needs {NEEDS['native']}"
+        if one == "native":
+            exe = Path(os.environ["NIB_PROBE_EXE"])
+            if why := refused(exe, identifier_of(exe)):
+                return f"refused: {why}"
         if one not in NEEDS:
             return f"needs {one}, which the harness does not know"
     return ""
