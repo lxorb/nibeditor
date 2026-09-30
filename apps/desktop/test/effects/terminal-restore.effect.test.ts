@@ -52,7 +52,15 @@ vi.mock('@xterm/xterm', () => ({
     rows = 24
     options: Record<string, unknown> = {}
     unicode = { activeVersion: '' }
-    modes = { bracketedPasteMode: false }
+    modes = {
+      mouseTrackingMode: 'none',
+      sendFocusMode: false,
+      applicationCursorKeysMode: false,
+      applicationKeypadMode: false,
+      bracketedPasteMode: false,
+      synchronizedOutputMode: false,
+    }
+    buffer = { active: { type: 'normal' } }
     parser = { registerOscHandler: () => ({ dispose: () => undefined }) }
     private sized: ((size: { cols: number; rows: number }) => void) | null = null
     loadAddon(addon: { activate?: (term: unknown) => void }) {
@@ -150,6 +158,9 @@ const HISTORY = {
   text: 'PS C:\\work> npm run build\r\nfailed: 3 errors\r\nPS C:\\work> ',
 }
 
+const { i18n } = await import('../../src/lib/i18n.svelte')
+const when = i18n.when(HISTORY.at, { dateStyle: 'medium', timeStyle: 'short' })
+
 /** A terminal tab as a session brings one back: no file, its words, and its key. */
 function restored(key: string): InstanceType<typeof Tab> {
   const words = JSON.stringify({ shell: 'pwsh', folder: 'C:\\work', key })
@@ -191,11 +202,10 @@ test('a restored terminal draws its history, at its own size, before its shell s
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
 
   const writes = done.filter((one) => one.startsWith('write '))
-  expect(writes).toHaveLength(1)
-  expect(writes[0]).toContain('failed: 3 errors')
+  expect(writes).toHaveLength(2)
+  expect(writes[0]).toBe(`write ${HISTORY.text}`)
   // The line saying when, dim, under the history and above the new prompt.
-  expect(writes[0]).toContain(`${ESC}[2mRestored `)
-  expect(writes[0]?.endsWith(`${ESC}[22m\r\n`)).toBe(true)
+  expect(writes[1]).toBe(`write ${ESC}[0m\r\n${ESC}[2mRestored ${when}${ESC}[22m\r\n`)
 
   expect(done).toEqual([
     'terminal_history_read',
@@ -203,10 +213,11 @@ test('a restored terminal draws its history, at its own size, before its shell s
     // Written back at the width it was written at...
     'resize 100x20',
     writes[0],
-    // ...and reflowed into the pane once it has been drawn, and only then the shell,
-    // at the pane's size.
+    // ...and reflowed into the pane once it has been drawn, and only then the line and
+    // the shell, at the pane's size.
     'fit',
     'resize 132x40',
+    writes[1],
     'pty_spawn 132x40',
   ])
 })

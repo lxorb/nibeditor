@@ -28,6 +28,11 @@ use serde::Serialize;
 /// was after a restart. Each is taught the one sequence a terminal already understands -
 /// OSC 9;9 for the two Windows shells, the one Windows Terminal documents, and OSC 7 for
 /// bash - and only where the reader has not set up the same thing themselves.
+///
+/// And where each prompt begins, as the prompt mark terminals read, OSC 133;A: where the
+/// window switches off what a program left on - the mouse reported as typing, above all -
+/// once the shell is in front again. See `lib/terminal/modes.ts`. Command Prompt carries
+/// the mark in front of a prompt the reader set up too, since it draws nothing.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Kind {
     /// `cmd.exe`, told through `PROMPT`.
@@ -171,8 +176,12 @@ impl Shell {
         }
 
         match self.kind {
-            Kind::Cmd if machine.var("PROMPT").is_none() => {
-                env.push(("PROMPT".to_owned(), CMD_PROMPT.to_owned()));
+            Kind::Cmd => {
+                let prompt = match machine.var("PROMPT") {
+                    Some(own) => format!("{CMD_MARK}{own}"),
+                    None => CMD_PROMPT.to_owned(),
+                };
+                env.push(("PROMPT".to_owned(), prompt));
             }
             Kind::PowerShell => args.extend(powershell_args(None)),
             Kind::Bash if machine.var("PROMPT_COMMAND").is_none() => {
@@ -211,13 +220,16 @@ impl Shell {
     }
 }
 
-/// Command Prompt's prompt, with the folder said first as OSC 9;9 and then drawn as it
-/// always is: Windows Terminal's own recipe, word for word.
-const CMD_PROMPT: &str = "$E]9;9;$P$E\\$P$G";
+/// The prompt mark in Command Prompt's own `PROMPT` codes.
+const CMD_MARK: &str = "$E]133;A$E\\";
 
-/// bash's, as OSC 7. The path is written as it is rather than encoded, which the window
-/// reads either way; see terminal/spec.ts.
-const BASH_PROMPT: &str = r#"printf '\e]7;file://%s\e\\' "$PWD""#;
+/// Command Prompt's prompt: the mark, the folder said as OSC 9;9, and the prompt drawn as
+/// it always is - Windows Terminal's own recipe, word for word, after the mark.
+const CMD_PROMPT: &str = "$E]133;A$E\\$E]9;9;$P$E\\$P$G";
+
+/// bash's: the mark, and the folder as OSC 7. The path is written as it is rather than
+/// encoded, which the window reads either way; see terminal/spec.ts.
+const BASH_PROMPT: &str = r#"printf '\e]133;A\e\\\e]7;file://%s\e\\' "$PWD""#;
 
 /// PowerShell's, around whatever prompt the profile has already set up - oh-my-posh,
 /// starship, the stock one - and written before it rather than into it, so `PSReadLine`
@@ -225,6 +237,7 @@ const BASH_PROMPT: &str = r#"printf '\e]7;file://%s\e\\' "$PWD""#;
 /// or a certificate store is not somewhere a restart can put a shell back.
 const POWERSHELL_PROMPT: &str = "$global:__nibPrompt = $function:prompt; \
 function global:prompt { \
+[Console]::Write([char]27 + ']133;A' + [char]27 + '\\'); \
 $here = $executionContext.SessionState.Path.CurrentLocation; \
 if ($here.Provider.Name -eq 'FileSystem') { [Console]::Write([char]27 + ']9;9;' + $here.ProviderPath + [char]27 + '\\') }; \
 & $global:__nibPrompt }";
@@ -880,9 +893,22 @@ mod tests {
         assert!(plain
             .env
             .contains(&("PROMPT".to_owned(), CMD_PROMPT.to_owned())));
+        assert!(CMD_PROMPT.starts_with(CMD_MARK));
 
+        // The reader's own prompt stays theirs, with the mark in front of it, which draws
+        // nothing.
         let own = cmd.launch(None, &Fake::default().set("PROMPT", "$G"));
-        assert!(own.env.iter().all(|(name, _)| name != "PROMPT"));
+        assert!(own
+            .env
+            .contains(&("PROMPT".to_owned(), "$E]133;A$E\\$G".to_owned())));
+    }
+
+    /// Every prompt a shell is taught begins with the mark, before anything is drawn.
+    #[test]
+    fn every_prompt_nib_teaches_is_marked() {
+        assert!(BASH_PROMPT.starts_with(r"printf '\e]133;A\e\\"));
+        assert!(POWERSHELL_PROMPT
+            .contains("function global:prompt { [Console]::Write([char]27 + ']133;A'"));
     }
 
     #[test]
