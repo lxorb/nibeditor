@@ -6,7 +6,8 @@
  *  one, going round them, moving one along, reopening the last, a new window, F6 to the
  *  address field - before the page sees them, hands the keyboard back to the app, and
  *  says which key it was; see web_keys.rs. It also says when a modifier is let go of inside the page, because
- *  Ctrl+T held chooses on that release.
+ *  Ctrl+T held chooses on that release, and Ctrl+D once the page has let it go by, which
+ *  Chrome gives the page first; see web_opens.rs.
  *
  *  What arrives is played on the window as the key it was, so every chord answers the
  *  way it does anywhere else in the app - through App.svelte's own handler, the

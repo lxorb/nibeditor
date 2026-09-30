@@ -5,6 +5,7 @@
 
 import { keep, storedText } from './stored'
 import { workspace } from './workspace.svelte'
+import type { Tab } from './workspace/documents.svelte'
 import { Walk } from './workspace/recency'
 
 const KEY = 'nib:tab-order'
@@ -44,8 +45,13 @@ if (typeof window !== 'undefined') {
 export function cycleTab(direction: number, mayUseOrder = false) {
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
   const current = workspace.activeTabId
+  if (!current) {
+    backToTabs(tabs, direction)
+    return
+  }
+
   const index = tabs.findIndex((tab) => tab.id === current)
-  if (index < 0 || !current) return
+  if (index < 0) return
 
   if (!mayUseOrder || !tabCycle.byUse) {
     const next = tabs[(index + direction + tabs.length) % tabs.length]
@@ -69,6 +75,15 @@ export function cycleTab(direction: number, mayUseOrder = false) {
   if (next) workspace.activate(next)
   // Already let go of: one step, and that is the tab being used.
   if (!holding) finish()
+}
+
+/** A pane put down with Ctrl+D, which shows nothing: the first step either way is the
+ *  tab it showed last, which is the one put down, and the next steps walk from there.
+ *  A pane that never showed one of its tabs starts at the end the step points to. */
+function backToTabs(tabs: readonly Tab[], direction: number) {
+  const last = workspace.panes.lastOf(tabs.map((tab) => tab.id))
+  const back = last ?? (direction > 0 ? tabs[0] : tabs.at(-1))?.id
+  if (back) workspace.activate(back)
 }
 
 function finish() {

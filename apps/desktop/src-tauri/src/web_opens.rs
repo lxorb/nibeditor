@@ -65,12 +65,20 @@
 //! keyboard (`typing_here`), which is what keeps a page from opening the palette over
 //! somebody typing anywhere else.
 //!
+//! **Ctrl+D, the same way, as a key.** Chrome bookmarks on it only when the page let it
+//! go by - Google Sheets fills down with it, Figma and Excalidraw duplicate, VS Code on
+//! the web selects the next one - and nib puts the tab down (Deselect tab). What it
+//! means is the reader's own binding rather than an ask of the tab's, so it comes back
+//! under an eighth name, `nib-ctrl-d`, and is said to the window as the key it was on
+//! `web_keys.rs`'s own event: played there, it does whatever Ctrl+D does in the app,
+//! which under the VS Code keyboard is nothing at all.
+//!
 //! `WebView2`'s alone, like `web_keys.rs`: elsewhere nothing is known, and every tab a
 //! page asks for opens in front, as before.
 
 use serde::Serialize;
 
-use crate::web_keys::Held;
+use crate::web_keys::{Held, Pressed, PRESSED};
 
 /// Where the tab a page asked for goes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -90,6 +98,8 @@ const FIND: &str = "nib-find";
 const FIND_NEXT: &str = "nib-find-next";
 const FIND_PREVIOUS: &str = "nib-find-previous";
 const ADDRESS: &str = "nib-address";
+/// And the chord it hands back as the key it was.
+const CTRL_D: &str = "nib-ctrl-d";
 
 /// And a modifier tapped twice on its own.
 const TWICE_SHIFT: &str = "nib-twice-shift";
@@ -144,16 +154,29 @@ struct Ask {
 /// was listening; nothing the page says names it.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
+    let ask = Ask {
+        tab: tab.to_string(),
+        key,
+    };
+    told(app, window, PASSED, ask);
+}
+
+/// Says a chord the page let go by to its window, as the key it was; see the top of this
+/// file.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+fn played(app: &tauri::AppHandle, window: &str, key: Pressed) {
+    told(app, window, PRESSED, key);
+}
+
+/// The keyboard back to the app's own page, and the word said to it.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str, said: S) {
     use tauri::{Emitter, Manager};
 
     if let Some(ours) = app.get_webview(window) {
         let _ = ours.set_focus();
     }
-    let ask = Ask {
-        tab: tab.to_string(),
-        key,
-    };
-    let _ = app.emit_to(window, PASSED, ask);
+    let _ = app.emit_to(window, event, said);
 }
 
 /// The script in every page and every frame.
@@ -165,8 +188,8 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// the page itself has not already answered. Alt with the main button is the engine's
 /// own download, and the Windows key is not a browser's, so both are left to the engine.
 ///
-/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L and Alt+D that nothing in
-/// the page took ask for nib's answer by name, and are taken so the engine does not
+/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L, Alt+D and Ctrl+D that nothing
+/// in the page took ask for nib's answer by name, and are taken so the engine does not
 /// answer them too. By Windows' key code, which is what the engine and Chrome read a
 /// chord by, so a layout whose letters are not Latin still has them. Ctrl+Alt types a
 /// character on half the keyboards in Europe, and is left alone.
@@ -232,6 +255,7 @@ pub const SCRIPT: &str = r"(function () {
     else if (alt) name = code === 68 && !back ? 'nib-address' : null
     else if (ctrl && code === 70 && !back) name = 'nib-find'
     else if (ctrl && code === 76 && !back) name = 'nib-address'
+    else if (ctrl && code === 68 && !back) name = 'nib-ctrl-d'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
     if (!name) return
@@ -292,6 +316,13 @@ pub const SCRIPT: &str = r"(function () {
     if (key && !event.defaultPrevented) open('about:blank', twice[key])
   })
 })()";
+
+/// The key a window asked for under `name` hands back, or `None`. Pure, and the only
+/// reading of that name.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn chord(name: &str) -> Option<Pressed> {
+    (name == CTRL_D).then(|| Pressed::with_ctrl("d", "KeyD"))
+}
 
 /// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
 /// the only reading of those names.
@@ -382,7 +413,7 @@ mod heard {
     use windows::Win32::UI::WindowsAndMessaging::IsChild;
     use windows_core::Interface;
 
-    use super::{passed, placed, sought, taken_as_a_person_s, Asked, Held};
+    use super::{chord, passed, placed, played, sought, taken_as_a_person_s, Asked, Held};
 
     thread_local! {
         /// What each tab's last request said, until `on_new_window` takes it. The
@@ -509,6 +540,13 @@ mod heard {
                     }
                     return Ok(());
                 }
+                // And the chord that goes back as the key it was, on the same terms.
+                if let Some(key) = chord(&name) {
+                    if user.as_bool() {
+                        played(&app, &window, key);
+                    }
+                    return Ok(());
+                }
 
                 let menu = MENU
                     .with_borrow_mut(|menu| menu.remove(&asking).is_some_and(|link| link == uri));
@@ -577,7 +615,7 @@ pub fn taken(_tab: &str) -> Option<Asked> {
 
 #[cfg(test)]
 mod tests {
-    use super::{placed, sought, taken_as_a_person_s, Ask, Asked, Held, Passed, SCRIPT};
+    use super::{chord, placed, sought, taken_as_a_person_s, Ask, Asked, Held, Passed, SCRIPT};
 
     const NONE: Held = Held {
         ctrl: false,
@@ -689,6 +727,30 @@ mod tests {
     }
 
     #[test]
+    fn ctrl_d_let_go_by_goes_back_as_the_key_it_was() {
+        let key = chord("nib-ctrl-d").map(|one| serde_json::to_value(one).expect("a key"));
+        let key = key.expect("Ctrl+D");
+        assert_eq!(key["key"], "d");
+        assert_eq!(key["code"], "KeyD");
+        assert_eq!(key["ctrl"], true);
+        assert_eq!(key["down"], true);
+
+        // One name exactly, and none of the others is a key.
+        for name in [
+            "",
+            "nib-find",
+            "nib-address",
+            "NIB-CTRL-D",
+            "nib-ctrl-d ",
+            "nib-ctrl-f",
+        ] {
+            assert!(chord(name).is_none(), "{name:?}");
+        }
+        // Nor is it an ask of the tab's or a window.
+        assert_eq!(sought("nib-ctrl-d"), None);
+    }
+
+    #[test]
     fn the_script_asks_by_the_names_read_here() {
         for name in [
             "'nib-find'",
@@ -698,6 +760,7 @@ mod tests {
             "'nib-twice-shift'",
             "'nib-twice-ctrl'",
             "'nib-twice-alt'",
+            "'nib-ctrl-d'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }

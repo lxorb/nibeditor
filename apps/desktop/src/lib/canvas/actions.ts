@@ -188,12 +188,15 @@ export const run = {
     store.clearPicked()
   },
 
-  duplicate(store: CanvasStore) {
-    if (!store.picked.length) return
+  /** False with nothing picked, so the key is let go: Ctrl+D is the app's Deselect tab
+   *  as well, and a plane with nothing to copy has no claim on it. */
+  duplicate(store: CanvasStore): boolean {
+    if (!store.picked.length) return false
 
     const made = copied(store.canvas, store.picked)
     store.edit(made.canvas)
     store.pickAll(made.ids)
+    return true
   },
 
   nudge(store: CanvasStore, dx: number, dy: number) {

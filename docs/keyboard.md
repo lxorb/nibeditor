@@ -195,12 +195,14 @@ entries, so a rebind of one is a rebind of both.
 | F2 | rename |
 | Delete, Backspace | delete the selection |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
-| Ctrl+D | a copy of each selected row, beside it |
 | Ctrl+N | a new note in the folder the row is, or sits in, waiting for its name |
 | Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
 | Alt+Up, Alt+Down | move the row in the order somebody arranged |
 
-See `docs/tree.md` for what a copy is called and where it lands.
+See `docs/tree.md` for what a copy is called and where it lands. Duplicate is a row of
+the row's own menu and has no key: Ctrl+D puts the tab down here as everywhere else,
+which loses nothing, where a copy made by a key meant for the tab is a file nobody asked
+for (and Explorer's own Ctrl+D deletes). It can be given Finder's Cmd+D in the list.
 
 The file list is a list of buttons and not an ARIA `tree`. The roles were left
 off on purpose: nib's markup puts what a row holds beside the row rather than
@@ -307,6 +309,7 @@ stops nothing, and the app still gets the key.
 | Alt+1 to 9, Alt+0 | the tab at that place along the focused pane's strip, the last tab. Pinned tabs count, and a place past the end does nothing |
 | Ctrl+Alt+1 to 8, Ctrl+Alt+9 | the same eight places and the last, as second keys |
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
+| Ctrl+D | **put the tab down**: nothing in front of the pane, every tab still open |
 | Ctrl+W | close (already there) |
 | Ctrl+Shift+T | reopen the last closed one (already there) |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
@@ -363,6 +366,19 @@ makes nothing until one is pressed. The keyboard lands on the first button and t
 arrows walk them. They are the dialog's cards, drawn in the pane; see `NewHere.svelte`
 and `KindCard.svelte`.
 
+**Ctrl+D is that state with the tabs still open.** Emil, 2026-09-30: *"add Ctrl + D as
+a shortcut. Effectively it just deselects the currently selected tab. This leads to no
+tab being actively selected."* No tab in the strip is drawn in front, the pane shows
+the same cards, a web tab's page goes out of sight as it does on any switch, and nothing
+closes. In the pane being worked in only. A tab pressed, the digits, or Ctrl+Tab bring
+one back; Ctrl+Tab and Ctrl+Shift+Tab (and the PgUp and PgDn pair) first bring back the
+tab that was put down, then walk as usual. The session writes the pane down as showing
+that tab too: showing nothing is a moment's view, like a menu being open, and a launch
+brings the work back. Chrome, Arc and VS Code have no such key - Chrome always has a tab
+in front, Arc's Cmd+D pins, VS Code's empty group is the nearest thing - so the key is
+Emil's, and the look is the empty pane nib already has. On a Mac, Cmd+W then closes
+nothing, since the window is not empty. See `deselect` in `workspace/panes.svelte.ts`.
+
 **Lines and the selection**
 
 What VS Code, Sublime and Obsidian taught every hand that writes, in the editor. Each is
@@ -376,10 +392,10 @@ either, or want a key nib already spends.
 | Ctrl+Shift+Enter | a new line above, indented like this one |
 | Ctrl+J | the next line joined onto this one, its indent and marker gone, or every selected line onto the first |
 | Alt+Enter, in the find bar | a cursor on every match, and the bar goes |
-| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case. Duplicate the block and Move the block up or down, the grip's own rows, for the block the caret is in or every block the selection lies across |
+| no key | Delete the line, Sort the lines, Reverse the lines, Upper case, Lower case, Title case. Duplicate the block and Move the block up or down, the grip's own rows, for the block the caret is in or every block the selection lies across. Select the word, then the next - Typora's Ctrl+D, which puts the tab down now; the VS Code keyboard gives it back |
 
 Delete the line has no key because both of the ones people know are taken: VS Code's
-Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Select word. The
+Ctrl+Shift+K is Code block, Typora's key for it, and Obsidian's Ctrl+D is Deselect tab. The
 VS Code and Obsidian keyboards give it theirs, and the Notion one puts the block rows on
 Notion's keys; see the keyboards below. Sort reads past list markers and boxes, ignores
 case and counts `2` before `10`; with nothing selected it sorts the list or paragraph the
@@ -433,7 +449,13 @@ The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address
 field's other two, Ctrl+L and Alt+D, are the page's first, as they are in Chrome, so a
 site with its own find (Google Docs, Notion, VS Code on the web) or its own Ctrl+L keeps
 them; a line of script in the page
-asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`). The engine tells the host
+asks for nib's answer when nothing in it took the key (`src-tauri/src/web_opens.rs`).
+**Ctrl+D is the page's first too**, as it is in Chrome, which reserves the tab and
+window chords and not its bookmark: Google Sheets fills down with it, Figma and
+Excalidraw duplicate, VS Code on the web selects the next one. When nothing in the page
+took it, the same script asks, and the crate plays it on the window as the key it was,
+so it does whatever Ctrl+D does in the app - Deselect tab, or nothing under the VS Code
+keyboard. The engine tells the host
 about a chord before the page sees it (`AcceleratorKeyPressed`), the crate keeps these,
 hands the keyboard back to the app and says which key it was, and the window plays it
 on itself - so it goes through the same handler, the same bindings and the same held
@@ -636,7 +658,8 @@ Obsidian and CodeMirror have it the other way round, and so do those two keyboar
 | Ctrl+\ | split right |
 | Ctrl+], Ctrl+[ | indent, outdent |
 | Shift+Alt+Right, Shift+Alt+Left | the selection outwards and back, which Default has already |
-| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar |
+| Ctrl+D | the word, then the next one like it |
+| no key | find next (F3 stays), Code block, Clear formatting, show or hide the sidebar, Deselect tab |
 
 Ctrl+B stays Bold. It is the sidebar in VS Code, but in a note it is bold, which is what
 VS Code's own markdown extensions do with it too. So the sidebar has no key, and
@@ -655,7 +678,7 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 | Ctrl+G | the graph |
 | Alt+Enter | follow the link |
 | Ctrl+], Ctrl+[ | indent, outdent |
-| no key | Open file, the heading levels, find next (F3 stays), Select word, Clear formatting, the canvas's zoom to what is picked |
+| no key | Open file, the heading levels, find next (F3 stays), Deselect tab, Clear formatting, the canvas's zoom to what is picked |
 
 **Notion**
 
@@ -669,7 +692,7 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 | Ctrl+\ | show or hide the sidebar |
 | Ctrl+D | duplicate the block |
 | Ctrl+Shift+Up, Ctrl+Shift+Down | move the block |
-| no key | the reading view, Clear formatting, Select word |
+| no key | the reading view, Clear formatting, Deselect tab |
 
 On a Mac, Notion's Cmd+Shift+Up and Down move the block here too, which takes selecting to
 either end of the note away from those keys, as Notion does.

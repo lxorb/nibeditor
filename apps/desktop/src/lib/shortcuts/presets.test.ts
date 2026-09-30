@@ -172,7 +172,13 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
    *
    *  A web tab's bar is the exception, and on purpose: it reads its keys off the
    *  window before the window's own handler and stops the press, which is how F5
-   *  reloads a page and presents a note. See web-tab/bar-keys.ts. */
+   *  reloads a page and presents a note. See web-tab/bar-keys.ts.
+   *
+   *  So is the plane's Duplicate beside Deselect tab, both on Ctrl+D. The plane takes
+   *  the press only with something picked and stops it then; with nothing picked it
+   *  lets it go whole, and the window's handler stands down on a press that was
+   *  stopped. One press, one of the two, never both; see `duplicate` in
+   *  canvas/actions.ts and `handle` in shortcuts.svelte.ts. */
   test.each(PLATFORMS)('leaves the plane and the file list their own keys (%s)', (platform) => {
     const keys = keysOf()
     const clashes: string[] = []
@@ -181,6 +187,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
       (one) => one.contextual && one.scope === 'panel' && !one.id.startsWith('web.'),
     )
     const app = registry.SHORTCUTS.filter((one) => !one.contextual && one.scope === 'app')
+    const shared = new Set(['canvas.duplicate app.deselect-tab'])
 
     for (const entry of surfaces) {
       const key = keyUnder(keys, entry.id, platform)
@@ -188,6 +195,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode', 'vim'])('the %s keyboa
 
       for (const other of app) {
         const held = keyUnder(keys, other.id, platform)
+        if (shared.has(`${entry.id} ${other.id}`)) continue
         if (held && sameCombination(held, key, platform)) {
           clashes.push(`${entry.id} and ${other.id} are both on ${key}`)
         }
@@ -276,7 +284,50 @@ describe('the Obsidian keyboard', () => {
       expect(keyUnder(keys, 'app.forward', platform), platform).toBe('Mod-Alt-ArrowRight')
       expect(keyUnder(keys, 'edit.delete-line', platform), platform).toBe('Mod-d')
       expect(keyUnder(keys, 'edit.select-word', platform), platform).toBeNull()
+      expect(keyUnder(keys, 'app.deselect-tab', platform), platform).toBeNull()
     }
+  })
+})
+
+/** Emil, 2026-09-30: *"add Ctrl + D as a shortcut. Effectively it just deselects the
+ *  currently selected tab."* Default's own key, and so Vim's, which is Default's keys
+ *  with modes on top. A keyboard kept for another app's hands keeps that app's Ctrl+D,
+ *  and Deselect tab has no key there. */
+describe('Ctrl+D', () => {
+  test.each(['default', 'vim'])('deselects the tab under %s, and nothing else holds it', (id) => {
+    const keys = presets.presetById(id)?.keys ?? {}
+
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, 'app.deselect-tab', platform), platform).toBe('Mod-d')
+      // Typora's Select word, which held it, and the file list's Duplicate: both keep
+      // their rows and have no key.
+      expect(keyUnder(keys, 'edit.select-word', platform), platform).toBeNull()
+      expect(keyUnder(keys, 'tree.duplicate', platform), platform).toBeNull()
+      // The plane's Duplicate shares it, taking it only with something picked.
+      expect(keyUnder(keys, 'canvas.duplicate', platform), platform).toBe('Mod-d')
+    }
+  })
+
+  test.each([
+    ['vscode', 'edit.select-word'],
+    ['obsidian', 'edit.delete-line'],
+    ['notion', 'edit.duplicate-block'],
+  ])('is the other app’s own under %s', (id, theirs) => {
+    const keys = presets.presetById(id)?.keys ?? {}
+
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, theirs, platform), platform).toBe('Mod-d')
+      expect(keyUnder(keys, 'app.deselect-tab', platform), platform).toBeNull()
+    }
+  })
+
+  /** A command that is only a key would be a command nobody without that key can find. */
+  test('is a command of the app’s, which the palette and the list can press', () => {
+    const entry = registry.BY_ID.get('app.deselect-tab')
+
+    expect(entry?.scope).toBe('app')
+    expect(entry?.category).toBe('view')
+    expect(registry.runnable('app.deselect-tab')).toBe(true)
   })
 })
 
@@ -367,7 +418,7 @@ describe('the Notion keyboard', () => {
     expect(keys['edit.duplicate-block']).toBe('Mod-d')
     expect(keys['edit.move-block-up']).toBe('Mod-Shift-ArrowUp')
     expect(keys['edit.move-block-down']).toBe('Mod-Shift-ArrowDown')
-    expect(keys['edit.select-word']).toBeNull()
+    expect(keys['app.deselect-tab']).toBeNull()
   })
 })
 

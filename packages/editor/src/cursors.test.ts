@@ -94,9 +94,11 @@ describe('the keys these are on', () => {
   test('are the ones the settings list holds', () => {
     const keys = nibKeymap.map((binding) => binding.key)
 
-    expect(keys).toContain('Mod-d')
     expect(keys).toContain('Mod-Alt-Shift-ArrowUp')
     expect(keys).toContain('Mod-Alt-Shift-ArrowDown')
+    // Selecting the word ships with none: Ctrl+D is the app's Deselect tab, and the VS
+    // Code keyboard gives it back.
+    expect(keys).not.toContain('Mod-d')
   })
 
   test('leave the library nothing of its own to fire underneath them', () => {

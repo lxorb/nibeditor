@@ -85,6 +85,7 @@ export const ru: Dictionary = {
   'Close all': 'Закрыть все',
   'Close all tabs': 'Закрыть все вкладки',
   'Duplicate tab': 'Дублировать вкладку',
+  'Deselect tab': 'Снять выбор с вкладки',
   'Move to other pane': 'Переместить в другую область',
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab в порядке использования',
