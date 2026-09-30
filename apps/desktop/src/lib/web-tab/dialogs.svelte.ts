@@ -16,9 +16,9 @@ import { plainOrigin } from './address'
 
 /** Which dialog, as the crate names them. `leave` is the one a page's `beforeunload`
  *  asks for as the tab moves on. */
-export const KINDS = ['alert', 'confirm', 'prompt', 'leave'] as const
+const KINDS = ['alert', 'confirm', 'prompt', 'leave'] as const
 
-export type Kind = (typeof KINDS)[number]
+type Kind = (typeof KINDS)[number]
 
 function isKind(value: string): value is Kind {
   return KINDS.some((one) => one === value)
