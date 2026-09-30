@@ -1427,11 +1427,13 @@
     color: var(--muted);
   }
 
-  /* Wide enough for three words and no wider: the control sits at the right of
-     its row like every other value on the pane. */
+  /* At the right of its row like every other value on the pane, and never narrower
+     than the column short choices line up in - but as wide as its words need where
+     they need more: a half cannot shrink below its word, so a groove held to one
+     width let the chosen half stand out past its end. */
   .setting .nib-segmented {
     flex: none;
-    width: 14rem;
+    min-width: 14rem;
   }
 
   .setting .text {
