@@ -27,6 +27,9 @@ DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 
+#: Ctrl+D as the VS Code keyboard has it; see `VSCODE` in src/lib/shortcuts/presets.ts.
+CTRL_D = {"edit.select-word": "Mod-d", "app.deselect-tab": None}
+
 NOTE = (
     "# Cursors\n\n"
     "alpha one alpha\n"
@@ -59,6 +62,9 @@ STATE = """
 
 def fresh(browser: Browser) -> Page:
     context = browser.new_context(viewport={"width": 1180, "height": 820}, color_scheme="light")
+    # Ctrl+D is Deselect tab in nib's own keyboard; the word and the next one like it
+    # is the VS Code keyboard's, and those two of its keys are what this drive needs.
+    context.add_init_script(f"localStorage.setItem('nib:shortcuts', {json.dumps(json.dumps(CTRL_D))})")
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.on(

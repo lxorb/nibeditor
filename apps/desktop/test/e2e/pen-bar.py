@@ -236,12 +236,19 @@ def stroke(page, cdp, points: list[tuple[float, float]]) -> None:
     page.wait_for_timeout(250)
 
 
+INK = "() => JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []"
+
+
 def ink_of(page: Page) -> list[dict]:
     """What the plane holds, read off the open canvas rather than guessed at: the
-    words as they stand, not as far as the last flush, which trails a stroke."""
-    return page.evaluate(
-        "() => JSON.parse(window.nibApp.workspace.active.note.latest).nib?.ink ?? []",
-    )
+    words as they stand, not as far as the last flush. A stroke reaches them a
+    moment after the pen lifts, later on a slower machine, so some is waited for a
+    while before the answer is that there is none."""
+    try:
+        wait_for(page, f"({INK})().length > 0", "the stroke to reach the note", 10)
+    except SystemExit:
+        pass
+    return page.evaluate(INK)
 
 
 def photograph(browser, theme: str, device: str, failures: list[str]) -> None:

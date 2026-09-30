@@ -291,6 +291,12 @@ def drive(browser: Browser, label: str, scheme: str) -> None:
         say(f"[{label}] before Ctrl+F: {page.evaluate(CARET)}")
         page.keyboard.press("Control+f")
         page.wait_for_selector(".findbar", state="visible", timeout=8000)
+        # The search runs a moment after the bar is up, later on a slower machine;
+        # the checks below say what was lit if it never is.
+        try:
+            wait_for(page, "document.querySelectorAll('.cm-searchMatch').length > 0", "the matches", 10)
+        except SystemExit:
+            pass
 
         bar = page.evaluate(BAR)
         say(f"[{label}] the bar: {bar}")
