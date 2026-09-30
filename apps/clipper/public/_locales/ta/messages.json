@@ -1,7 +1,7 @@
 {
-  "name": { "message": "Nib" },
+  "name": { "message": "nibeditor" },
   "description": {
-    "message": "ஒரு பக்கம், தேர்வு அல்லது இணைப்பை உங்கள் Nib குறிப்புகளில் எடுங்கள்."
+    "message": "ஒரு பக்கம், தேர்வு அல்லது இணைப்பை உங்கள் nibeditor குறிப்புகளில் எடுங்கள்."
   },
   "clipPage": { "message": "பக்கத்தை எடு" },
   "clipSelection": { "message": "தேர்வை எடு" },

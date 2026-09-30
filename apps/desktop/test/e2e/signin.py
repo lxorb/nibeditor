@@ -518,7 +518,7 @@ def sign_in(page: Page, worker: Worker, label: str, address: str) -> None:
     page.get_by_role("button", name="Continue").click()
 
     code = worker.waits_for_mail(
-        address, r"(\d{6}) is your Nib code", f"[{label}] the sign-in code", already
+        address, r"(\d{6}) is your nibeditor code", f"[{label}] the sign-in code", already
     ).group(1)
     say(f"[{label}] the code in the mail is {code}")
 

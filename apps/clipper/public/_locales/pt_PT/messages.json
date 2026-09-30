@@ -1,7 +1,7 @@
 {
-  "name": { "message": "Nib" },
+  "name": { "message": "nibeditor" },
   "description": {
-    "message": "Recorte uma página, uma seleção ou uma ligação para as suas notas do Nib."
+    "message": "Recorte uma página, uma seleção ou uma ligação para as suas notas do nibeditor."
   },
   "clipPage": { "message": "Recortar a página" },
   "clipSelection": { "message": "Recortar a seleção" },

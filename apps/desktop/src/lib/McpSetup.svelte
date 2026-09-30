@@ -113,7 +113,7 @@
     <h3>{connected ? t('Connect another') : t('Connect')}</h3>
     <p class="note">
       {t(
-        'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.',
+        'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.',
       )}
     </p>
 
@@ -145,11 +145,11 @@
             </li>
             <li>
               <p>{t('Fill in the two fields and click Add.')}</p>
-              <Copyable label={t('Name')} value="Nib" />
+              <Copyable label={t('Name')} value="nibeditor" />
               <Copyable label="URL" value={MCP_URL} />
             </li>
             <li>
-              <p>{t('Click Connect and sign in with your Nib email.')}</p>
+              <p>{t('Click Connect and sign in with your nibeditor email.')}</p>
             </li>
           </ol>
 
@@ -182,7 +182,7 @@
             </li>
             <li>
               <p>{t('Fill in the form and click Create.')}</p>
-              <Copyable label={t('Name')} value="Nib" />
+              <Copyable label={t('Name')} value="nibeditor" />
               <Copyable label={t('Server URL')} value={MCP_URL} />
               <Copyable label={t('Authentication')} value="OAuth" plain />
               <p class="hint">
@@ -192,15 +192,15 @@
               </p>
             </li>
             <li>
-              <p>{t('Sign in with your Nib email when ChatGPT asks.')}</p>
-              <p class="hint">{t('To use it in a chat, type @ and pick Nib.')}</p>
+              <p>{t('Sign in with your nibeditor email when ChatGPT asks.')}</p>
+              <p class="hint">{t('To use it in a chat, type @ and pick nibeditor.')}</p>
             </li>
           </ol>
         {:else}
           <div class="steps-wrap">
             <p class="note">
               {t(
-                'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.',
+                'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.',
               )}
             </p>
             <Copyable label={t('Server URL')} value={MCP_URL} />

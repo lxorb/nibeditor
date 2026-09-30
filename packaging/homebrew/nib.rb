@@ -4,7 +4,7 @@ cask "nib" do
 
   url "https://github.com/lxorb/nibeditor/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
       verified: "github.com/lxorb/nibeditor/"
-  name "Nib"
+  name "nibeditor"
   desc "Markdown editor that styles formatting in place instead of showing syntax"
   homepage "https://nibeditor.com/"
 

@@ -58,7 +58,7 @@ describe('a new account', () => {
     const { note, content } = await firstNote(token)
     expect(note.path).toBe('Read me.md')
     expect(note.version).toBe(1)
-    expect(content).toContain('# Welcome to Nib')
+    expect(content).toContain('# Welcome to nibeditor')
   })
 
   /** The clipper and the connector both used to have to say "make a space
@@ -167,9 +167,9 @@ describe('the note a new account is given', () => {
     const french = await firstNote(await signInFrom('fr@b.dev', 'fr-CH,fr;q=0.9'))
     const japanese = await firstNote(await signInFrom('ja@b.dev', 'ja,en;q=0.5'))
 
-    expect(german.content).toContain('# Willkommen bei Nib')
-    expect(swiss.content).toContain('# Willkomme bi Nib')
-    expect(french.content).toContain('# Bienvenue dans Nib')
+    expect(german.content).toContain('# Willkommen bei nibeditor')
+    expect(swiss.content).toContain('# Willkomme bi nibeditor')
+    expect(french.content).toContain('# Bienvenue dans nibeditor')
     expect(japanese.content).toContain('へようこそ')
 
     const said = [english, german, swiss, french, japanese].map((one) => one.content)
@@ -190,7 +190,7 @@ describe('the note a new account is given', () => {
     const unknown = await firstNote(await signInFrom('is@b.dev', 'is-IS,is;q=0.9'))
     const none = await firstNote(await signInFrom('bare@b.dev', ''))
 
-    expect(unknown.content).toContain('# Welcome to Nib')
+    expect(unknown.content).toContain('# Welcome to nibeditor')
     expect(unknown.content).toBe(none.content)
   })
 

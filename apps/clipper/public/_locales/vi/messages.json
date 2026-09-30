@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "Cắt một trang, vùng chọn hay liên kết vào ghi chú Nib của bạn." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "Cắt một trang, vùng chọn hay liên kết vào ghi chú nibeditor của bạn."
+  },
   "clipPage": { "message": "Cắt trang" },
   "clipSelection": { "message": "Cắt vùng chọn" },
   "clipLink": { "message": "Cắt liên kết" }

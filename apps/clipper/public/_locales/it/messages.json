@@ -1,7 +1,7 @@
 {
-  "name": { "message": "Nib" },
+  "name": { "message": "nibeditor" },
   "description": {
-    "message": "Ritaglia una pagina, una selezione o un link nelle tue note di Nib."
+    "message": "Ritaglia una pagina, una selezione o un link nelle tue note di nibeditor."
   },
   "clipPage": { "message": "Ritaglia la pagina" },
   "clipSelection": { "message": "Ritaglia la selezione" },

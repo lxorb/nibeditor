@@ -422,8 +422,8 @@ export const ha: Dictionary = {
   'Sign in to ask a question.': 'Shiga don yin tambaya.',
   'Asking OpenAI which models this key can use': 'Ana tambayar OpenAI samfuran wannan maɓalli',
   'Could not reach OpenAI': 'Ba a iya kai wa OpenAI ba',
-  'That key cannot use any of the models Nib asks for.':
-    'Wannan maɓalli ba zai iya amfani da ko ɗaya daga samfuran da Nib ke nema ba.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Wannan maɓalli ba zai iya amfani da ko ɗaya daga samfuran da nibeditor ke nema ba.',
   'No reasoning': 'Babu tunani',
   Minimal: 'Mafi ƙaranci',
   Low: 'Ƙasa',
@@ -445,7 +445,7 @@ export const ha: Dictionary = {
   Mode: 'Yanayi',
   // The window's own edges; see appearance.rs
   Window: 'Taga',
-  'Nib’s own': 'Na Nib',
+  'nibeditor’s own': 'Na nibeditor',
   'The system’s': 'Na tsarin',
   'Window frame': 'Firam ɗin taga',
   System: 'Tsarin',
@@ -567,7 +567,7 @@ export const ha: Dictionary = {
   '{used} of {limit} used.': 'An yi amfani da {used} daga {limit}.',
   'That image does not fit in your storage.': "Wannan hoton bai dace a ma'ajinka ba.",
   'out of space': "ma'aji ya ƙare",
-  'Nib {version} is ready to install.': 'Nib {version} na shirye don girkawa.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} na shirye don girkawa.',
   'Restart now': 'Sake kunnawa yanzu',
   Later: 'Daga baya',
   More: 'Ƙari',
@@ -647,14 +647,14 @@ export const ha: Dictionary = {
   'Reads your notes.': 'Yana karanta bayanan kulanka.',
   'Reads and writes your notes.': 'Yana karanta da rubuta bayanan kulanka.',
   Other: 'Wani',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Mataimakin AI zai iya karanta bayanan kulanka - kuma ya sauya su, idan ka bari. Yana shiga da imel na Nib naka; babu abin da za a manna.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Mataimakin AI zai iya karanta bayanan kulanka - kuma ya sauya su, idan ka bari. Yana shiga da imel na nibeditor naka; babu abin da za a manna.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'A Claude, buɗe Settings → Connectors sannan danna Add custom connector.',
   'Open Claude’s connectors': 'Buɗe masu haɗin Claude',
   'Fill in the two fields and click Add.': 'Cika filayen biyu sannan danna Add.',
-  'Click Connect and sign in with your Nib email.':
-    'Danna Connect sannan ka shiga da imel na Nib naka.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Danna Connect sannan ka shiga da imel na nibeditor naka.',
   'Using Claude Code instead?': 'Kana amfani da Claude Code?',
   Command: 'Umarni',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -665,16 +665,16 @@ export const ha: Dictionary = {
   'Open ChatGPT’s plugins': 'Buɗe ƙarin ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Babu sashen Plugins ko maɓallin ƙari? Kunna Developer mode da farko, a Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Shiga da imel na Nib naka lokacin da ChatGPT ya tambaya.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Don amfani da shi a taɗi, rubuta @ sannan zaɓi Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Shiga da imel na nibeditor naka lokacin da ChatGPT ya tambaya.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Don amfani da shi a taɗi, rubuta @ sannan zaɓi nibeditor.',
   'Server URL': 'URL na uwar garke',
   Authentication: 'Tabbatar da ainihi',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Bar saitunan OAuth na gaba kamar yadda suke sannan sa alama a “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Kowane abokin ciniki na MCP da ke amfani da Streamable HTTP da OAuth. Ba shi URL: zai yi rijista da kansa kuma ya buɗe shafin shiga na Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Kowane abokin ciniki na MCP da ke amfani da Streamable HTTP da OAuth. Ba shi URL: zai yi rijista da kansa kuma ya buɗe shafin shiga na nibeditor.',
   'Show config': 'Nuna saiti',
   'For a client that takes a JSON block instead of a URL.':
     'Ga abokin ciniki da ke karɓar sashen JSON maimakon URL.',
@@ -1411,7 +1411,8 @@ export const ha: Dictionary = {
   'that is not a theme': 'wannan ba kamanni ba',
   'no such theme': 'babu irin wannan kamanni',
   'choose a model first': 'zaɓi samfuri da farko',
-  'set an OpenAI key in Nib’s settings first': 'saita maɓallin OpenAI a saitunan Nib da farko',
+  'set an OpenAI key in nibeditor’s settings first':
+    'saita maɓallin OpenAI a saitunan nibeditor da farko',
   'that is a lot of questions - try again later':
     'waɗannan tambayoyi sun yi yawa - sake gwadawa daga baya',
   'that is too much audio': 'wannan sauti ya yi yawa',
@@ -1614,6 +1615,6 @@ export const ha: Dictionary = {
   'Take over': 'Karɓi iko',
   'Agents stopped': 'An dakatar da wakilai',
   'Agent tabs closed': 'An rufe shafukan wakilai',
-  'Nib is still running for your agents': 'Nib yana ci gaba da aiki don wakilanka',
+  'nibeditor is still running for your agents': 'nibeditor yana ci gaba da aiki don wakilanka',
   '{client} wants to connect': '{client} yana son haɗawa',
 }

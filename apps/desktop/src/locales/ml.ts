@@ -423,8 +423,8 @@ export const ml: Dictionary = {
   'Asking OpenAI which models this key can use':
     'ഈ കീ ഏത് മോഡലുകൾ ഉപയോഗിക്കാമെന്ന് OpenAIയോട് ചോദിക്കുന്നു',
   'Could not reach OpenAI': 'OpenAIയിൽ എത്താനായില്ല',
-  'That key cannot use any of the models Nib asks for.':
-    'Nib ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'nibeditor ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
   'No reasoning': 'യുക്തിചിന്ത ഇല്ല',
   Minimal: 'വളരെ കുറവ്',
   Low: 'കുറവ്',
@@ -446,7 +446,7 @@ export const ml: Dictionary = {
   Mode: 'മോഡ്',
   // The window's own edges; see appearance.rs
   Window: 'വിൻഡോ',
-  'Nib’s own': 'Nib-ന്റെ സ്വന്തം',
+  'nibeditor’s own': 'nibeditor-ന്റെ സ്വന്തം',
   'The system’s': 'സിസ്റ്റത്തിന്റെ',
   'Window frame': 'വിൻഡോയുടെ ചട്ടക്കൂട്',
   System: 'സിസ്റ്റം',
@@ -568,7 +568,7 @@ export const ml: Dictionary = {
   '{used} of {limit} used.': '{limit}ൽ {used} ഉപയോഗിച്ചു.',
   'That image does not fit in your storage.': 'നിങ്ങളുടെ സ്റ്റോറേജിൽ ആ ചിത്രം ഒതുങ്ങില്ല.',
   'out of space': 'സ്റ്റോറേജ് ഇല്ല',
-  'Nib {version} is ready to install.': 'Nib {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
   'Restart now': 'ഇപ്പോൾ റീസ്റ്റാർട്ട്',
   Later: 'പിന്നീട്',
   More: 'കൂടുതൽ',
@@ -649,14 +649,14 @@ export const ml: Dictionary = {
   'Reads your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുന്നു.',
   'Reads and writes your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുകയും എഴുതുകയും ചെയ്യുന്നു.',
   Other: 'മറ്റുള്ളവ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeൽ Settings → Connectors തുറന്ന് Add custom connector ക്ലിക്ക് ചെയ്യുക.',
   'Open Claude’s connectors': 'Claude കണക്ടറുകൾ തുറക്കുക',
   'Fill in the two fields and click Add.': 'രണ്ട് ഫീൽഡുകൾ പൂരിപ്പിച്ച് Add ക്ലിക്ക് ചെയ്യുക.',
-  'Click Connect and sign in with your Nib email.':
-    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
   'Using Claude Code instead?': 'Claude Code ഉപയോഗിക്കുന്നുണ്ടോ?',
   Command: 'കമാൻഡ്',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -667,16 +667,16 @@ export const ml: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT പ്ലഗിനുകൾ തുറക്കുക',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins വിഭാഗമോ പ്ലസ് ബട്ടണോ ഇല്ലേ? ആദ്യം Settings → Security and loginൽ Developer mode ഓൺ ചെയ്യുക.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ Nib ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
-  'To use it in a chat, type @ and pick Nib.':
-    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് Nib തിരഞ്ഞെടുക്കുക.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് nibeditor തിരഞ്ഞെടുക്കുക.',
   'Server URL': 'സെർവർ URL',
   Authentication: 'പ്രാമാണീകരണം',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'വിപുല OAuth സെറ്റിംഗ്സ് അതേപടി വിട്ട് “I understand and want to continue” ടിക്ക് ചെയ്യുക.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് Nibന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് nibeditorന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
   'Show config': 'കോൺഫിഗ് കാണിക്കുക',
   'For a client that takes a JSON block instead of a URL.':
     'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
@@ -1405,7 +1405,8 @@ export const ml: Dictionary = {
   'that is not a theme': 'അത് ഒരു തീം അല്ല',
   'no such theme': 'അങ്ങനെയൊരു തീം ഇല്ല',
   'choose a model first': 'ആദ്യം ഒരു മോഡൽ തിരഞ്ഞെടുക്കുക',
-  'set an OpenAI key in Nib’s settings first': 'ആദ്യം Nib സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
+  'set an OpenAI key in nibeditor’s settings first':
+    'ആദ്യം nibeditor സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
   'that is a lot of questions - try again later': 'അത് വളരെയധികം ചോദ്യങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
   'that is too much audio': 'അത് വളരെയധികം ഓഡിയോ',
   'that is more than a spoken command': 'അത് ഒരു സംസാര കമാൻഡിനെക്കാൾ കൂടുതൽ',
@@ -1608,6 +1609,7 @@ export const ml: Dictionary = {
   'Take over': 'നിയന്ത്രണം ഏറ്റെടുക്കുക',
   'Agents stopped': 'ഏജന്റുകളെ നിർത്തി',
   'Agent tabs closed': 'ഏജന്റ് ടാബുകൾ അടച്ചു',
-  'Nib is still running for your agents': 'നിങ്ങളുടെ ഏജന്റുകൾക്കായി Nib ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
+  'nibeditor is still running for your agents':
+    'നിങ്ങളുടെ ഏജന്റുകൾക്കായി nibeditor ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
   '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
 }

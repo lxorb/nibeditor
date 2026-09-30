@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Nib",
+        "title": "nibeditor",
         "width": 1180,
         "height": 760,
         "minWidth": 520,
@@ -53,7 +53,7 @@
     "publisher": "Emil Vinu",
     "homepage": "https://nibeditor.com",
     "shortDescription": "Markdown editor with live preview",
-    "longDescription": "Nib is a small markdown editor that formats what you write as you write it. There is no split screen and no preview pane: headings, emphasis, lists, tables, code and math take their final shape in the same window you type in, and the markdown underneath stays plain text you can open anywhere.",
+    "longDescription": "nibeditor is a small markdown editor that formats what you write as you write it. There is no split screen and no preview pane: headings, emphasis, lists, tables, code and math take their final shape in the same window you type in, and the markdown underneath stays plain text you can open anywhere.",
     "fileAssociations": [
       {
         "ext": ["md"],

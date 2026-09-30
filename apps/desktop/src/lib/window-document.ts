@@ -17,7 +17,7 @@ export interface WindowDocument {
   path: string | null
 }
 
-const APP = 'Nib'
+const APP = 'nibeditor'
 
 /** The window's side of the tab in front. */
 export function windowDocument(active: Showing | null, mac: boolean): WindowDocument {

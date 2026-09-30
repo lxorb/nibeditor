@@ -55,7 +55,7 @@ pub struct TrashEntry {
 #[tauri::command(async)]
 pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
-        return Err(format!("{kind} is not something Nib can delete"));
+        return Err(format!("{kind} is not something nibeditor can delete"));
     }
 
     let base = spaces_dir(&app)?;
@@ -298,7 +298,7 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// a name rather than a path.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     if !is_name(&entry.name) {
-        return Err("that is not a name Nib stored".into());
+        return Err("that is not a name nibeditor stored".into());
     }
 
     let wanted = folded(&base.join(entry.from.replace('/', MAIN_SEPARATOR_STR)));

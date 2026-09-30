@@ -420,8 +420,8 @@ export const my: Dictionary = {
   'Asking OpenAI which models this key can use':
     'ဤကီးသုံးနိုင်သောမော်ဒယ်များကို OpenAI တွင်စုံစမ်းနေသည်',
   'Could not reach OpenAI': 'OpenAI နှင့်မဆက်သွယ်နိုင်',
-  'That key cannot use any of the models Nib asks for.':
-    'ဤကီးက Nib လိုအပ်သောမော်ဒယ်တစ်ခုမှမသုံးနိုင်ပါ။',
+  'That key cannot use any of the models nibeditor asks for.':
+    'ဤကီးက nibeditor လိုအပ်သောမော်ဒယ်တစ်ခုမှမသုံးနိုင်ပါ။',
   'No reasoning': 'ဆင်ခြင်မှုမလုပ်',
   Minimal: 'အနည်းငယ်',
   Low: 'နိမ့်',
@@ -443,7 +443,7 @@ export const my: Dictionary = {
   Mode: 'မုဒ်',
   // The window's own edges; see appearance.rs
   Window: 'ဝင်းဒိုး',
-  'Nib’s own': 'Nib ၏ကိုယ်ပိုင်',
+  'nibeditor’s own': 'nibeditor ၏ကိုယ်ပိုင်',
   'The system’s': 'စနစ်၏',
   'Window frame': 'ဝင်းဒိုးအဘောင်',
   System: 'စနစ်',
@@ -562,7 +562,7 @@ export const my: Dictionary = {
   '{used} of {limit} used.': '{limit} အထဲ {used} သုံးပြီး။',
   'That image does not fit in your storage.': 'သင့်သိုလှောင်မှုတွင်ထိုပုံမဆံ့ပါ။',
   'out of space': 'သိုလှောင်မှုပြည့်',
-  'Nib {version} is ready to install.': 'Nib {version} တပ်ဆင်ရန်အသင့်ရှိ။',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} တပ်ဆင်ရန်အသင့်ရှိ။',
   'Restart now': 'ယခုပြန်စ',
   Later: 'နောက်မှ',
   More: 'ပို',
@@ -637,13 +637,14 @@ export const my: Dictionary = {
   'Reads your notes.': 'သင့်မှတ်စုများကို ဖတ်သည်။',
   'Reads and writes your notes.': 'သင့်မှတ်စုများကို ဖတ်၍ ရေးသည်။',
   Other: 'အခြား',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI လက်ထောက်သည် သင့်မှတ်စုများကို ဖတ်နိုင်သည် - ခွင့်ပြုပါက ပြောင်းလဲနိုင်သည်။ သင့် Nib အီးမေးလ်ဖြင့် ဝင်သည်၊ ကပ်စရာမရှိပါ။',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI လက်ထောက်သည် သင့်မှတ်စုများကို ဖတ်နိုင်သည် - ခွင့်ပြုပါက ပြောင်းလဲနိုင်သည်။ သင့် nibeditor အီးမေးလ်ဖြင့် ဝင်သည်၊ ကပ်စရာမရှိပါ။',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude တွင် Settings → Connectors ဖွင့်၍ Add custom connector ကို နှိပ်ပါ။',
   'Open Claude’s connectors': 'Claude ၏ connectors ဖွင့်ပါ',
   'Fill in the two fields and click Add.': 'ကွက်လပ်နှစ်ခုကို ဖြည့်၍ Add နှိပ်ပါ။',
-  'Click Connect and sign in with your Nib email.': 'Connect နှိပ်၍ သင့် Nib အီးမေးလ်ဖြင့် ဝင်ပါ။',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect နှိပ်၍ သင့် nibeditor အီးမေးလ်ဖြင့် ဝင်ပါ။',
   'Using Claude Code instead?': 'Claude Code ကို အသုံးပြုသလား',
   Command: 'အမိန့်',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -654,15 +655,16 @@ export const my: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT ၏ plugins ဖွင့်ပါ',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins အပိုင်း သို့ အပေါင်းခလုတ် မရှိဘူးလား။ ဦးစွာ Settings → Security and login တွင် Developer mode ဖွင့်ပါ။',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'ChatGPT မေးသောအခါ သင့် Nib အီးမေးလ်ဖြင့် ဝင်ပါ။',
-  'To use it in a chat, type @ and pick Nib.': 'စကားပြောတွင် အသုံးပြုရန် @ ရိုက်၍ Nib ရွေးပါ။',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT မေးသောအခါ သင့် nibeditor အီးမေးလ်ဖြင့် ဝင်ပါ။',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'စကားပြောတွင် အသုံးပြုရန် @ ရိုက်၍ nibeditor ရွေးပါ။',
   'Server URL': 'ဆာဗာ URL',
   Authentication: 'အတည်ပြုမှု',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'အဆင့်မြင့် OAuth ဆက်တင်များကို ရှိသလိုထား၍ “I understand and want to continue” ကို အမှတ်ခြစ်ပါ။',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'OAuth ဖြင့် Streamable HTTP ကို အသုံးပြုသော မည်သည့် MCP ကလိုင်းရင့်မဆို။ URL ကို ပေးပါ၊ မိမိကိုယ်တိုင် စာရင်းသွင်း၍ Nib ၏ ဝင်ရန်စာမျက်နှာ ဖွင့်သည်။',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'OAuth ဖြင့် Streamable HTTP ကို အသုံးပြုသော မည်သည့် MCP ကလိုင်းရင့်မဆို။ URL ကို ပေးပါ၊ မိမိကိုယ်တိုင် စာရင်းသွင်း၍ nibeditor ၏ ဝင်ရန်စာမျက်နှာ ဖွင့်သည်။',
   'Show config': 'စီစဉ်ချက်ပြပါ',
   'For a client that takes a JSON block instead of a URL.':
     'URL အစား JSON ဘလောက် လက်ခံသော ကလိုင်းရင့်အတွက်။',
@@ -1374,7 +1376,8 @@ export const my: Dictionary = {
   'that is not a theme': 'ထိုအရာ အပြင်အဆင် မဟုတ်ပါ',
   'no such theme': 'ထိုအပြင်အဆင် မရှိပါ',
   'choose a model first': 'ဦးစွာ မော်ဒယ်ရွေးပါ',
-  'set an OpenAI key in Nib’s settings first': 'ဦးစွာ Nib ဆက်တင်တွင် OpenAI သော့ သတ်မှတ်ပါ',
+  'set an OpenAI key in nibeditor’s settings first':
+    'ဦးစွာ nibeditor ဆက်တင်တွင် OpenAI သော့ သတ်မှတ်ပါ',
   'that is a lot of questions - try again later': 'ထိုအရာ အမေးများလွန်းသည် - နောက်မှ စမ်းပါ',
   'that is too much audio': 'ထိုအရာ အသံများလွန်းသည်',
   'that is more than a spoken command': 'ထိုအရာ အသံအမိန့်တစ်ခုထက် ပိုသည်',
@@ -1573,6 +1576,6 @@ export const my: Dictionary = {
   'Take over': 'ထိန်းချုပ်မှု ယူရန်',
   'Agents stopped': 'အေးဂျင့်များ ရပ်လိုက်ပြီ',
   'Agent tabs closed': 'အေးဂျင့် တက်ဘ်များ ပိတ်လိုက်ပြီ',
-  'Nib is still running for your agents': 'သင့်အေးဂျင့်များအတွက် Nib ဆက်လည်ပတ်နေသည်',
+  'nibeditor is still running for your agents': 'သင့်အေးဂျင့်များအတွက် nibeditor ဆက်လည်ပတ်နေသည်',
   '{client} wants to connect': '{client} ချိတ်ဆက်လိုသည်',
 }

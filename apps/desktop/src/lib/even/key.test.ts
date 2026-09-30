@@ -198,7 +198,7 @@ describe('the line under the field', () => {
     const offered = new Offered()
     await offered.take('sk-proj-example-4f2a')
 
-    expect(offered.said).toBe('That key cannot use any of the models Nib asks for.')
+    expect(offered.said).toBe('That key cannot use any of the models nibeditor asks for.')
   })
 
   test('sends nothing at all for an empty field', async () => {

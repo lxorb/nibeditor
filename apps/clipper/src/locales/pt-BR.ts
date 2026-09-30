@@ -63,13 +63,13 @@ export const ptBR: Dictionary = {
   'Resend in {seconds}s': 'Reenviar em {seconds} s',
   'Digit {number}': 'Dígito {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Entre no Nib primeiro.',
-  'Make a space in Nib first.': 'Crie um espaço no Nib primeiro.',
+  'Sign in to nibeditor first.': 'Entre no nibeditor primeiro.',
+  'Make a space in nibeditor first.': 'Crie um espaço no nibeditor primeiro.',
   'This page cannot be clipped.': 'Esta página não pode ser recortada.',
   'There is nothing to clip here.': 'Não há nada para recortar aqui.',
   'This clip is larger than a note can be.': 'Este recorte é maior do que uma nota pode ser.',
   'Your account is out of space.': 'Sua conta ficou sem espaço.',
-  'Could not reach Nib.': 'Não foi possível falar com o Nib.',
+  'Could not reach nibeditor.': 'Não foi possível falar com o nibeditor.',
   'Could not reach the provider.': 'Não foi possível falar com o provedor.',
   'The provider answered with something else.': 'O provedor respondeu outra coisa.',
   // And what the sync service itself answers with, looked up like any other string

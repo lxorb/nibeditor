@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "Klip sebuah halaman, pilihan, atau tautan ke catatan Nib Anda." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "Klip sebuah halaman, pilihan, atau tautan ke catatan nibeditor Anda."
+  },
   "clipPage": { "message": "Klip halaman" },
   "clipSelection": { "message": "Klip pilihan" },
   "clipLink": { "message": "Klip tautan" }

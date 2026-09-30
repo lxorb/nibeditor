@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=Nib
+Name=nibeditor
 GenericName=Markdown Editor
 Comment=Write markdown and see it as you type
 Exec=nib %F

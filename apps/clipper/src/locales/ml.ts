@@ -59,13 +59,13 @@ export const ml: Dictionary = {
   'Resend in {seconds}s': '{seconds} സെക്കൻഡിൽ വീണ്ടും അയയ്ക്കുക',
   'Digit {number}': 'അങ്കം {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'ആദ്യം Nib-ൽ സൈൻ ഇൻ ചെയ്യുക.',
-  'Make a space in Nib first.': 'ആദ്യം Nib-ൽ ഒരു സ്പേസ് ഉണ്ടാക്കുക.',
+  'Sign in to nibeditor first.': 'ആദ്യം nibeditor-ൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'Make a space in nibeditor first.': 'ആദ്യം nibeditor-ൽ ഒരു സ്പേസ് ഉണ്ടാക്കുക.',
   'This page cannot be clipped.': 'ഈ പേജ് ക്ലിപ്പ് ചെയ്യാനാവില്ല.',
   'There is nothing to clip here.': 'ഇവിടെ ക്ലിപ്പ് ചെയ്യാൻ ഒന്നുമില്ല.',
   'This clip is larger than a note can be.': 'ഈ ക്ലിപ്പ് ഒരു കുറിപ്പിന് ആകാവുന്നതിലും വലുതാണ്.',
   'Your account is out of space.': 'നിങ്ങളുടെ അക്കൗണ്ടിൽ സ്റ്റോറേജ് ഇല്ല.',
-  'Could not reach Nib.': 'Nib-ൽ എത്താനായില്ല.',
+  'Could not reach nibeditor.': 'nibeditor-ൽ എത്താനായില്ല.',
   'Could not reach the provider.': 'പ്രൊവൈഡറിൽ എത്താനായില്ല.',
   'The provider answered with something else.': 'പ്രൊവൈഡർ മറ്റെന്തോ മറുപടി നൽകി.',
   // And what the sync service itself answers with, looked up like any other string

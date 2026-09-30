@@ -114,8 +114,8 @@ describe('what the page is asked', () => {
 
 describe('what comes back', () => {
   test('a sentence saying why not', () => {
-    expect(readAnswer({ problem: 'Sign in to Nib first.' })).toEqual({
-      problem: 'Sign in to Nib first.',
+    expect(readAnswer({ problem: 'Sign in to nibeditor first.' })).toEqual({
+      problem: 'Sign in to nibeditor first.',
     })
   })
 

@@ -110,7 +110,7 @@ ask.post('/', async (context) => {
   }
 
   const key = await keyFor(context.env, user.id)
-  if (!key) return context.json({ error: 'set an OpenAI key in Nib’s settings first' }, 400)
+  if (!key) return context.json({ error: 'set an OpenAI key in nibeditor’s settings first' }, 400)
 
   if (!(await mayAsk(context.env, user.id))) {
     return context.json({ error: 'that is a lot of questions - try again later' }, 429)
@@ -205,7 +205,7 @@ ask.post('/summary', async (context) => {
   }
 
   const key = await keyFor(context.env, user.id)
-  if (!key) return context.json({ error: 'set an OpenAI key in Nib’s settings first' }, 400)
+  if (!key) return context.json({ error: 'set an OpenAI key in nibeditor’s settings first' }, 400)
 
   // The same hourly allowance a question counts against. A summary is one request to
   // the same endpoint on the same credit, and a second ceiling would be a second

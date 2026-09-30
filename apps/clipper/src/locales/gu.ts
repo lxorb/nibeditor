@@ -57,13 +57,13 @@ export const gu: Dictionary = {
   'Resend in {seconds}s': '{seconds} સેકન્ડમાં ફરી મોકલો',
   'Digit {number}': 'અંક {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'પહેલાં Nib માં સાઇન ઇન કરો.',
-  'Make a space in Nib first.': 'પહેલાં Nib માં જગ્યા બનાવો.',
+  'Sign in to nibeditor first.': 'પહેલાં nibeditor માં સાઇન ઇન કરો.',
+  'Make a space in nibeditor first.': 'પહેલાં nibeditor માં જગ્યા બનાવો.',
   'This page cannot be clipped.': 'આ પાનું ક્લિપ થઈ શકતું નથી.',
   'There is nothing to clip here.': 'અહીં ક્લિપ કરવા જેવું કંઈ નથી.',
   'This clip is larger than a note can be.': 'આ ક્લિપ નોંધ હોઈ શકે તેથી મોટી છે.',
   'Your account is out of space.': 'તમારા ખાતામાં જગ્યા નથી.',
-  'Could not reach Nib.': 'Nib સુધી પહોંચી શકાયું નહીં.',
+  'Could not reach nibeditor.': 'nibeditor સુધી પહોંચી શકાયું નહીં.',
   'Could not reach the provider.': 'પ્રદાતા સુધી પહોંચી શકાયું નહીં.',
   'The provider answered with something else.': 'પ્રદાતાએ બીજું કંઈક જવાબ આપ્યો.',
   // And what the sync service itself answers with, looked up like any other string

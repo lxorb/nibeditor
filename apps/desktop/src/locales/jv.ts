@@ -420,8 +420,8 @@ export const jv: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Takon OpenAI model apa sing bisa dipakai kunci iki',
   'Could not reach OpenAI': 'Ora bisa nggayuh OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Kunci kuwi ora bisa nganggo model apa wae sing dijaluk Nib.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Kunci kuwi ora bisa nganggo model apa wae sing dijaluk nibeditor.',
   'No reasoning': 'Tanpa panalaran',
   Minimal: 'Sethithik',
   Low: 'Cendhek',
@@ -443,7 +443,7 @@ export const jv: Dictionary = {
   Mode: 'Mode',
   // The window's own edges; see appearance.rs
   Window: 'Jendhela',
-  'Nib’s own': 'Duwèké Nib',
+  'nibeditor’s own': 'Duwèké nibeditor',
   'The system’s': 'Duwèké sistem',
   'Window frame': 'Kerangka jendhela',
   System: 'Sistem',
@@ -562,7 +562,7 @@ export const jv: Dictionary = {
   '{used} of {limit} used.': '{used} saka {limit} kepakai.',
   'That image does not fit in your storage.': 'Gambar kuwi ora cukup ing panyimpenan sampeyan.',
   'out of space': 'panyimpenan entek',
-  'Nib {version} is ready to install.': 'Nib {version} wis siyap dipasang.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} wis siyap dipasang.',
   'Restart now': 'Wiwiti maneh saiki',
   Later: 'Mengko',
   More: 'Liyane',
@@ -638,14 +638,14 @@ export const jv: Dictionary = {
   'Reads your notes.': 'Maca cathetan sampeyan.',
   'Reads and writes your notes.': 'Maca lan nulis cathetan sampeyan.',
   Other: 'Liyane',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Asisten AI bisa maca cathetan sampeyan - lan ngowahi, yen diulehake. Mlebune nganggo email Nib sampeyan; ora ana sing kudu ditempel.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Asisten AI bisa maca cathetan sampeyan - lan ngowahi, yen diulehake. Mlebune nganggo email nibeditor sampeyan; ora ana sing kudu ditempel.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Ing Claude, bukak Settings → Connectors banjur klik Add custom connector.',
   'Open Claude’s connectors': 'Bukak connectors Claude',
   'Fill in the two fields and click Add.': 'Isi loro kolome banjur klik Add.',
-  'Click Connect and sign in with your Nib email.':
-    'Klik Connect banjur mlebu nganggo email Nib sampeyan.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Klik Connect banjur mlebu nganggo email nibeditor sampeyan.',
   'Using Claude Code instead?': 'Nganggo Claude Code?',
   Command: 'Printah',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -656,16 +656,16 @@ export const jv: Dictionary = {
   'Open ChatGPT’s plugins': 'Bukak plugins ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Ora ana bagean Plugins utawa tombol plus? Uripake Developer mode dhisik, ing Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Mlebu nganggo email Nib sampeyan nalika ChatGPT takon.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Kanggo nganggo ing obrolan, tulis @ banjur pilih Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Mlebu nganggo email nibeditor sampeyan nalika ChatGPT takon.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Kanggo nganggo ing obrolan, tulis @ banjur pilih nibeditor.',
   'Server URL': 'URL server',
   Authentication: 'Autentikasi',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Setelan OAuth lanjut ditinggal kaya mestine banjur centhang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Klien MCP apa wae sing nganggo Streamable HTTP lan OAuth. Wenehi URL: dheweke ndhaftar dhewe lan mbukak kaca mlebu Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Klien MCP apa wae sing nganggo Streamable HTTP lan OAuth. Wenehi URL: dheweke ndhaftar dhewe lan mbukak kaca mlebu nibeditor.',
   'Show config': 'Tuduhake konfigurasi',
   'For a client that takes a JSON block instead of a URL.':
     'Kanggo klien sing nampa blok JSON tinimbang URL.',
@@ -1379,7 +1379,8 @@ export const jv: Dictionary = {
   'that is not a theme': 'kuwi dudu tema',
   'no such theme': 'ora ana tema kuwi',
   'choose a model first': 'pilih model dhisik',
-  'set an OpenAI key in Nib’s settings first': 'setel kunci OpenAI ing setelan Nib dhisik',
+  'set an OpenAI key in nibeditor’s settings first':
+    'setel kunci OpenAI ing setelan nibeditor dhisik',
   'that is a lot of questions - try again later': 'kuwi akeh pitakonan - coba maneh mengko',
   'that is too much audio': 'kuwi kakehan audio',
   'that is more than a spoken command': 'kuwi luwih saka sak printah swara',
@@ -1578,6 +1579,6 @@ export const jv: Dictionary = {
   'Take over': 'Njupuk kendhali',
   'Agents stopped': 'Agen dimandhegake',
   'Agent tabs closed': 'Tab agen ditutup',
-  'Nib is still running for your agents': 'Nib isih mlaku kanggo agen sampeyan',
+  'nibeditor is still running for your agents': 'nibeditor isih mlaku kanggo agen sampeyan',
   '{client} wants to connect': '{client} kepengin nyambung',
 }

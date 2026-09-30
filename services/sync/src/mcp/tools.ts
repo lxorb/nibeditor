@@ -364,7 +364,8 @@ export async function callTool(
     }
 
     case 'write_note': {
-      if (token.read_only) return 'This token may only read. Allow writing in Nib’s settings first.'
+      if (token.read_only)
+        return 'This token may only read. Allow writing in nibeditor’s settings first.'
 
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space

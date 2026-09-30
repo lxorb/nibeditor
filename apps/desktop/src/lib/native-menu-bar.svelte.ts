@@ -72,8 +72,10 @@ export interface MenuBarContext {
   app: AppContext
 }
 
-/** The app's name, which the Mac writes into its own rows: About Nib, Quit Nib. */
-const NAME = 'Nib'
+/** The app's name, which the Mac writes into its own rows: About nibeditor, Quit
+ *  nibeditor. The bold title of the menu itself is the bundle's name, which is
+ *  `productName` and stays Nib: the installed app's folder is named by it. */
+const NAME = 'nibeditor'
 
 /** How long a burst of changes is let settle before the strip catches up with it.
  *  Switching tabs changes four of the values watched at once, and that is one pass

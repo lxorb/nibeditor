@@ -64,14 +64,14 @@ export const es: Dictionary = {
   'Resend in {seconds}s': 'Reenviar en {seconds} s',
   'Digit {number}': 'Dígito {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Inicia sesión en Nib primero.',
-  'Make a space in Nib first.': 'Crea un espacio en Nib primero.',
+  'Sign in to nibeditor first.': 'Inicia sesión en nibeditor primero.',
+  'Make a space in nibeditor first.': 'Crea un espacio en nibeditor primero.',
   'This page cannot be clipped.': 'Esta página no se puede recortar.',
   'There is nothing to clip here.': 'Aquí no hay nada que recortar.',
   'This clip is larger than a note can be.':
     'Este recorte es más grande de lo que puede ser una nota.',
   'Your account is out of space.': 'Tu cuenta se ha quedado sin espacio.',
-  'Could not reach Nib.': 'No se pudo conectar con Nib.',
+  'Could not reach nibeditor.': 'No se pudo conectar con nibeditor.',
   'Could not reach the provider.': 'No se pudo conectar con el proveedor.',
   'The provider answered with something else.': 'El proveedor respondió otra cosa.',
   // And what the sync service itself answers with, looked up like any other string

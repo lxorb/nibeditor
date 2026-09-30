@@ -1,7 +1,7 @@
 {
   "package_id": "com.nibeditor.nib",
   "edition": "202601",
-  "name": "Nib",
+  "name": "nibeditor",
   "version": "0.8.3",
   "min_app_version": "2.2.10",
   "min_sdk_version": "0.0.15",
@@ -9,12 +9,12 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Sign in, keep your notes in step, and ask questions through your Nib account.",
+      "desc": "Sign in, keep your notes in step, and ask questions through your nibeditor account.",
       "whitelist": ["https://nibeditor.com"]
     },
     {
       "name": "g2-microphone",
-      "desc": "Say next, close or a question, and Nib answers on the glasses."
+      "desc": "Say next, close or a question, and nibeditor answers on the glasses."
     },
     {
       "name": "phone-microphone",

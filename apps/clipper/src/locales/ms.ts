@@ -59,13 +59,13 @@ export const ms: Dictionary = {
   'Resend in {seconds}s': 'Hantar semula dalam {seconds}s',
   'Digit {number}': 'Digit {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Masuk ke Nib dahulu.',
-  'Make a space in Nib first.': 'Buat satu ruang dalam Nib dahulu.',
+  'Sign in to nibeditor first.': 'Masuk ke nibeditor dahulu.',
+  'Make a space in nibeditor first.': 'Buat satu ruang dalam nibeditor dahulu.',
   'This page cannot be clipped.': 'Halaman ini tidak boleh diklip.',
   'There is nothing to clip here.': 'Tiada apa-apa untuk diklip di sini.',
   'This clip is larger than a note can be.': 'Klip ini lebih besar daripada sebuah nota.',
   'Your account is out of space.': 'Akaun anda tiada ruang simpanan.',
-  'Could not reach Nib.': 'Tidak dapat menghubungi Nib.',
+  'Could not reach nibeditor.': 'Tidak dapat menghubungi nibeditor.',
   'Could not reach the provider.': 'Tidak dapat menghubungi pembekal.',
   'The provider answered with something else.': 'Pembekal menjawab sesuatu yang lain.',
   // And what the sync service itself answers with, looked up like any other string

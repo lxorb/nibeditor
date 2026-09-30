@@ -420,8 +420,8 @@ export const ps: Dictionary = {
   'Asking OpenAI which models this key can use':
     'له OpenAI پوښتنه چې دا کيلي کوم ماډلونه کارولی شي',
   'Could not reach OpenAI': 'OpenAI ته ونه رسېدل',
-  'That key cannot use any of the models Nib asks for.':
-    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې Nib غواړي.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې nibeditor غواړي.',
   'No reasoning': 'استدلال نشته',
   Minimal: 'ډېر لږ',
   Low: 'ټيټ',
@@ -443,7 +443,7 @@ export const ps: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'کړکۍ',
-  'Nib’s own': 'د Nib خپل',
+  'nibeditor’s own': 'د nibeditor خپل',
   'The system’s': 'د سيستم',
   'Window frame': 'د کړکۍ چوکاټ',
   System: 'غونډال',
@@ -565,7 +565,7 @@ export const ps: Dictionary = {
   '{used} of {limit} used.': 'له {limit} څخه {used} کارول شوی.',
   'That image does not fit in your storage.': 'هغه انځور ستاسو په زېرمه کې نه ځايېږي.',
   'out of space': 'زېرمه ډکه',
-  'Nib {version} is ready to install.': 'Nib {version} د لګولو لپاره تيار دی.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} د لګولو لپاره تيار دی.',
   'Restart now': 'اوس بيا پيلول',
   Later: 'وروسته',
   More: 'نور',
@@ -643,14 +643,14 @@ export const ps: Dictionary = {
   'Reads your notes.': 'ستاسو يادښتونه لولي.',
   'Reads and writes your notes.': 'ستاسو يادښتونه لولي او ليکي.',
   Other: 'بل',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د Nib برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د nibeditor برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'په Claude کې Settings → Connectors پرانيځئ او Add custom connector کليک کړئ.',
   'Open Claude’s connectors': 'د Claude نښلونکي پرانيستل',
   'Fill in the two fields and click Add.': 'دواړه ځايونه ډک کړئ او Add کليک کړئ.',
-  'Click Connect and sign in with your Nib email.':
-    'Connect کليک کړئ او د Nib برېښناليک سره ننوځئ.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect کليک کړئ او د nibeditor برېښناليک سره ننوځئ.',
   'Using Claude Code instead?': 'Claude Code کاروئ؟',
   Command: 'کړنه',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -661,15 +661,16 @@ export const ps: Dictionary = {
   'Open ChatGPT’s plugins': 'د ChatGPT پلګينونه پرانيستل',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'د Plugins برخه يا د زياتون تڼۍ نشته؟ لومړی Developer mode په Settings → Security and login کې ولاړ کړئ.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'کله چې ChatGPT پوښتنه وکړي، د Nib برېښناليک سره ننوځئ.',
-  'To use it in a chat, type @ and pick Nib.': 'په خبرو کې د کارولو لپاره @ وليکئ او Nib وټاکئ.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'کله چې ChatGPT پوښتنه وکړي، د nibeditor برېښناليک سره ننوځئ.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'په خبرو کې د کارولو لپاره @ وليکئ او nibeditor وټاکئ.',
   'Server URL': 'د سرور پته',
   Authentication: 'اعتبار پېژندنه',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'پرمختللې د OAuth امستنې همداسې پرېږدئ او “I understand and want to continue” ونښئ.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د Nib د ننوتلو مخ پرانيځي.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د nibeditor د ننوتلو مخ پرانيځي.',
   'Show config': 'سازونه ښودل',
   'For a client that takes a JSON block instead of a URL.':
     'د هغه پيرودونکي لپاره چې د پتې پر ځای د JSON بلاک اخلي.',
@@ -1389,7 +1390,8 @@ export const ps: Dictionary = {
   'that is not a theme': 'هغه بڼه نه ده',
   'no such theme': 'داسې بڼه نشته',
   'choose a model first': 'لومړی ماډل وټاکئ',
-  'set an OpenAI key in Nib’s settings first': 'لومړی د Nib په امستنو کې د OpenAI کيلي کېږدئ',
+  'set an OpenAI key in nibeditor’s settings first':
+    'لومړی د nibeditor په امستنو کې د OpenAI کيلي کېږدئ',
   'that is a lot of questions - try again later': 'هغه ډېرې پوښتنې دي - وروسته بيا هڅه وکړئ',
   'that is too much audio': 'هغه ډېر غږ دی',
   'that is more than a spoken command': 'هغه له يوې غږيزې کړنې ډېر دی',
@@ -1590,6 +1592,6 @@ export const ps: Dictionary = {
   'Take over': 'کنټرول اخيستل',
   'Agents stopped': 'اېجنټان ودرول شول',
   'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
-  'Nib is still running for your agents': 'Nib لا هم ستاسو د اېجنټانو لپاره چلېږي',
+  'nibeditor is still running for your agents': 'nibeditor لا هم ستاسو د اېجنټانو لپاره چلېږي',
   '{client} wants to connect': '{client} غواړي وصل شي',
 }

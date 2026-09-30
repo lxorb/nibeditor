@@ -20,7 +20,7 @@
 <!-- The download has already happened quietly. This says so and offers the one
      thing left to do, rather than interrupting to ask permission first. -->
 <div class="notice" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
-  <p>{t('Nib {version} is ready to install.', { version })}</p>
+  <p>{t('nibeditor {version} is ready to install.', { version })}</p>
 
   <div class="actions">
     <button class="nib-button is-quiet" onclick={ondismiss}>{t('Later')}</button>

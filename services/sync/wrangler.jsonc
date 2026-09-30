@@ -102,7 +102,7 @@
     "BLOG_CNAME_TARGET": "cname.nibeditor.com",
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
     "APP_ORIGIN": "https://nibeditor.com",
-    "MAIL_FROM": "Nib <nib@nibeditor.com>",
+    "MAIL_FROM": "nibeditor <nib@nibeditor.com>",
   },
 
   // The catch-all is what lets a custom hostname reach the Worker: a request

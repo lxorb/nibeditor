@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "कोई पेज, चयन या लिंक अपने Nib नोट में क्लिप करें।" },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "कोई पेज, चयन या लिंक अपने nibeditor नोट में क्लिप करें।" },
   "clipPage": { "message": "पेज क्लिप करें" },
   "clipSelection": { "message": "चयन क्लिप करें" },
   "clipLink": { "message": "लिंक क्लिप करें" }

@@ -57,13 +57,13 @@ export const ur: Dictionary = {
   'Resend in {seconds}s': '{seconds} سیکنڈ بعد دوبارہ',
   'Digit {number}': 'ہندسہ {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'پہلے Nib میں سائن ان کریں۔',
-  'Make a space in Nib first.': 'پہلے Nib میں ایک اسپیس بنائیں۔',
+  'Sign in to nibeditor first.': 'پہلے nibeditor میں سائن ان کریں۔',
+  'Make a space in nibeditor first.': 'پہلے nibeditor میں ایک اسپیس بنائیں۔',
   'This page cannot be clipped.': 'یہ صفحہ تراشا نہیں جا سکتا۔',
   'There is nothing to clip here.': 'یہاں تراشنے کے لیے کچھ نہیں ہے۔',
   'This clip is larger than a note can be.': 'یہ تراشہ ایک نوٹ سے بڑا ہے۔',
   'Your account is out of space.': 'آپ کے اکاؤنٹ میں ذخیرہ نہیں بچا۔',
-  'Could not reach Nib.': 'Nib تک نہیں پہنچ سکے۔',
+  'Could not reach nibeditor.': 'nibeditor تک نہیں پہنچ سکے۔',
   'Could not reach the provider.': 'فراہم کنندہ تک نہیں پہنچ سکے۔',
   'The provider answered with something else.': 'فراہم کنندہ نے کچھ اور جواب دیا۔',
   // And what the sync service itself answers with, looked up like any other string

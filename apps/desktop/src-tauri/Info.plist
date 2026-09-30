@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Nib uses the microphone while you record or dictate, and for a site in a web tab when you allow it.</string>
+	<string>nibeditor uses the microphone while you record or dictate, and for a site in a web tab when you allow it.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Nib uses the camera only for a site in a web tab, and only when you allow it.</string>
+	<string>nibeditor uses the camera only for a site in a web tab, and only when you allow it.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Nib turns what you say into words in your note while you dictate.</string>
+	<string>nibeditor turns what you say into words in your note while you dictate.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Nib looks for printers on your network when you print.</string>
+	<string>nibeditor looks for printers on your network when you print.</string>
 </dict>
 </plist>

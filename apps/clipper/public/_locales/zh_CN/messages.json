@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "把页面、选中内容或链接剪藏到你的 Nib 笔记。" },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "把页面、选中内容或链接剪藏到你的 nibeditor 笔记。" },
   "clipPage": { "message": "剪藏页面" },
   "clipSelection": { "message": "剪藏选中内容" },
   "clipLink": { "message": "剪藏链接" }

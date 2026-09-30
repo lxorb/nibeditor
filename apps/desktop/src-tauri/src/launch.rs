@@ -309,7 +309,7 @@ fn window_builder<'a>(
     label: &str,
 ) -> WebviewWindowBuilder<'a, crate::Engine, AppHandle> {
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
-        .title("Nib")
+        .title("nibeditor")
         .inner_size(1180.0, 760.0)
         .min_inner_size(520.0, 400.0);
 

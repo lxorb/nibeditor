@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "ಪುಟ, ಆಯ್ಕೆ ಅಥವಾ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ Nib ಟಿಪ್ಪಣಿಗಳಿಗೆ ಕ್ಲಿಪ್ ಮಾಡಿ." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "ಪುಟ, ಆಯ್ಕೆ ಅಥವಾ ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ nibeditor ಟಿಪ್ಪಣಿಗಳಿಗೆ ಕ್ಲಿಪ್ ಮಾಡಿ."
+  },
   "clipPage": { "message": "ಪುಟ ಕ್ಲಿಪ್ ಮಾಡಿ" },
   "clipSelection": { "message": "ಆಯ್ಕೆ ಕ್ಲಿಪ್ ಮಾಡಿ" },
   "clipLink": { "message": "ಲಿಂಕ್ ಕ್ಲಿಪ್ ಮಾಡಿ" }

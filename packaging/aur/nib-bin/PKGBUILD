@@ -27,7 +27,7 @@ source=('nib.desktop')
 source_x86_64=("nib.deb::${_url}/Nib-${pkgver}-linux-x64.deb")
 source_aarch64=("nib.deb::${_url}/Nib-${pkgver}-linux-arm64.deb")
 noextract=('nib.deb')
-sha256sums=('8c6919dae22daa47d0da8f1089bc19a1f4304fa95363d50eff156c4751326915')
+sha256sums=('9b13cb05a4fed539796154aa6002ba49f2aacfcc4b5ffee1fd536acfe25ab30e')
 sha256sums_x86_64=('4284fede6d9e6aad8d5a6c398c360517f18a9fa78a9a66fa0ebe0b6e0884c8da')
 sha256sums_aarch64=('828e659ca983c8ba91c339f1afddf646c76e9a62d0a92db95c0ebd674eccf8b3')
 

@@ -419,7 +419,8 @@ export const th: Dictionary = {
   'Sign in to ask a question.': 'เข้าสู่ระบบเพื่อถามคำถาม',
   'Asking OpenAI which models this key can use': 'กำลังถาม OpenAI ว่าคีย์นี้ใช้โมเดลอะไรได้',
   'Could not reach OpenAI': 'ติดต่อ OpenAI ไม่ได้',
-  'That key cannot use any of the models Nib asks for.': 'คีย์นี้ใช้โมเดลที่ Nib ต้องการไม่ได้เลย',
+  'That key cannot use any of the models nibeditor asks for.':
+    'คีย์นี้ใช้โมเดลที่ nibeditor ต้องการไม่ได้เลย',
   'No reasoning': 'ไม่ให้เหตุผล',
   Minimal: 'น้อยสุด',
   Low: 'ต่ำ',
@@ -441,7 +442,7 @@ export const th: Dictionary = {
   Mode: 'โหมด',
   // The window's own edges; see appearance.rs
   Window: 'หน้าต่าง',
-  'Nib’s own': 'ของ Nib',
+  'nibeditor’s own': 'ของ nibeditor',
   'The system’s': 'ของระบบ',
   'Window frame': 'กรอบหน้าต่าง',
   System: 'ระบบ',
@@ -559,7 +560,7 @@ export const th: Dictionary = {
   '{used} of {limit} used.': 'ใช้ {used} จาก {limit}',
   'That image does not fit in your storage.': 'ที่เก็บข้อมูลของคุณไม่พอสำหรับรูปนั้น',
   'out of space': 'ที่เก็บข้อมูลเต็ม',
-  'Nib {version} is ready to install.': 'Nib {version} พร้อมติดตั้ง',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} พร้อมติดตั้ง',
   'Restart now': 'เริ่มใหม่เดี๋ยวนี้',
   Later: 'ภายหลัง',
   More: 'เพิ่มเติม',
@@ -634,14 +635,14 @@ export const th: Dictionary = {
   'Reads your notes.': 'อ่านโน้ตของคุณ',
   'Reads and writes your notes.': 'อ่านและเขียนโน้ตของคุณ',
   Other: 'อื่นๆ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล Nib ของคุณ ไม่ต้องวางอะไร',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ ไม่ต้องวางอะไร',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'ใน Claude เปิด Settings → Connectors แล้วคลิก Add custom connector',
   'Open Claude’s connectors': 'เปิด Connectors ของ Claude',
   'Fill in the two fields and click Add.': 'กรอกสองช่องแล้วคลิก Add',
-  'Click Connect and sign in with your Nib email.':
-    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล Nib ของคุณ',
+  'Click Connect and sign in with your nibeditor email.':
+    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ',
   'Using Claude Code instead?': 'ใช้ Claude Code อยู่?',
   Command: 'คำสั่ง',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -652,14 +653,15 @@ export const th: Dictionary = {
   'Open ChatGPT’s plugins': 'เปิด Plugins ของ ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'ไม่เห็นส่วน Plugins หรือปุ่มบวก? เปิด Developer mode ก่อนที่ Settings → Security and login',
-  'Sign in with your Nib email when ChatGPT asks.': 'เข้าสู่ระบบด้วยอีเมล Nib เมื่อ ChatGPT ถาม',
-  'To use it in a chat, type @ and pick Nib.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก Nib',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'เข้าสู่ระบบด้วยอีเมล nibeditor เมื่อ ChatGPT ถาม',
+  'To use it in a chat, type @ and pick nibeditor.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก nibeditor',
   'Server URL': 'URL เซิร์ฟเวอร์',
   Authentication: 'การยืนยันตัวตน',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'ปล่อยการตั้งค่า OAuth ขั้นสูงไว้ตามเดิม แล้วติ๊ก “I understand and want to continue”',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ Nib',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ nibeditor',
   'Show config': 'แสดงคอนฟิก',
   'For a client that takes a JSON block instead of a URL.':
     'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
@@ -1357,7 +1359,8 @@ export const th: Dictionary = {
   'that is not a theme': 'นั่นไม่ใช่ธีม',
   'no such theme': 'ไม่มีธีมนั้น',
   'choose a model first': 'เลือกโมเดลก่อน',
-  'set an OpenAI key in Nib’s settings first': 'ตั้งคีย์ OpenAI ในการตั้งค่าของ Nib ก่อน',
+  'set an OpenAI key in nibeditor’s settings first':
+    'ตั้งคีย์ OpenAI ในการตั้งค่าของ nibeditor ก่อน',
   'that is a lot of questions - try again later': 'คำถามมากเกินไป - ลองใหม่ภายหลัง',
   'that is too much audio': 'เสียงยาวเกินไป',
   'that is more than a spoken command': 'นั่นเกินกว่าคำสั่งเสียงหนึ่งคำสั่ง',
@@ -1554,6 +1557,6 @@ export const th: Dictionary = {
   'Take over': 'รับช่วงควบคุม',
   'Agents stopped': 'หยุดเอเจนต์แล้ว',
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
-  'Nib is still running for your agents': 'Nib ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
+  'nibeditor is still running for your agents': 'nibeditor ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
   '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
 }

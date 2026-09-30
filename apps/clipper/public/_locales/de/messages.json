@@ -1,7 +1,7 @@
 {
-  "name": { "message": "Nib" },
+  "name": { "message": "nibeditor" },
   "description": {
-    "message": "Sichere eine Seite, eine Auswahl oder einen Link in deinen Nib-Notizen."
+    "message": "Sichere eine Seite, eine Auswahl oder einen Link in deinen nibeditor-Notizen."
   },
   "clipPage": { "message": "Seite sichern" },
   "clipSelection": { "message": "Auswahl sichern" },

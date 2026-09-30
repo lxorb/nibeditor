@@ -419,8 +419,8 @@ export const vi: Dictionary = {
   'Sign in to ask a question.': 'Đăng nhập để đặt câu hỏi.',
   'Asking OpenAI which models this key can use': 'Đang hỏi OpenAI khoá này dùng được mô hình nào',
   'Could not reach OpenAI': 'Không kết nối được OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Khoá này không dùng được mô hình nào Nib cần.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Khoá này không dùng được mô hình nào nibeditor cần.',
   'No reasoning': 'Không suy luận',
   Minimal: 'Tối thiểu',
   Low: 'Thấp',
@@ -442,7 +442,7 @@ export const vi: Dictionary = {
   Mode: 'Chế độ',
   // The window's own edges; see appearance.rs
   Window: 'Cửa sổ',
-  'Nib’s own': 'Của Nib',
+  'nibeditor’s own': 'Của nibeditor',
   'The system’s': 'Của hệ thống',
   'Window frame': 'Khung cửa sổ',
   System: 'Hệ thống',
@@ -561,7 +561,7 @@ export const vi: Dictionary = {
   '{used} of {limit} used.': 'Đã dùng {used} trên {limit}.',
   'That image does not fit in your storage.': 'Ảnh đó không vừa dung lượng của bạn.',
   'out of space': 'hết dung lượng',
-  'Nib {version} is ready to install.': 'Nib {version} đã sẵn sàng để cài.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} đã sẵn sàng để cài.',
   'Restart now': 'Khởi động lại ngay',
   Later: 'Để sau',
   More: 'Thêm',
@@ -637,14 +637,14 @@ export const vi: Dictionary = {
   'Reads your notes.': 'Đọc ghi chú của bạn.',
   'Reads and writes your notes.': 'Đọc và ghi ghi chú của bạn.',
   Other: 'Khác',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email Nib của bạn; không cần dán gì.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email nibeditor của bạn; không cần dán gì.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Trong Claude, mở Settings → Connectors rồi bấm Add custom connector.',
   'Open Claude’s connectors': 'Mở Connectors của Claude',
   'Fill in the two fields and click Add.': 'Điền hai ô rồi bấm Add.',
-  'Click Connect and sign in with your Nib email.':
-    'Bấm Connect rồi đăng nhập bằng email Nib của bạn.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Bấm Connect rồi đăng nhập bằng email nibeditor của bạn.',
   'Using Claude Code instead?': 'Dùng Claude Code thay vì thế?',
   Command: 'Lệnh',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -655,14 +655,16 @@ export const vi: Dictionary = {
   'Open ChatGPT’s plugins': 'Mở Plugins của ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Không thấy mục Plugins hay nút dấu cộng? Bật Developer mode trước, ở Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.': 'Đăng nhập bằng email Nib khi ChatGPT hỏi.',
-  'To use it in a chat, type @ and pick Nib.': 'Để dùng trong một đoạn chat, gõ @ rồi chọn Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Đăng nhập bằng email nibeditor khi ChatGPT hỏi.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Để dùng trong một đoạn chat, gõ @ rồi chọn nibeditor.',
   'Server URL': 'URL máy chủ',
   Authentication: 'Xác thực',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Để nguyên các cài đặt OAuth nâng cao và tích “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của nibeditor.',
   'Show config': 'Hiện cấu hình',
   'For a client that takes a JSON block instead of a URL.':
     'Cho ứng dụng nhận một khối JSON thay vì URL.',
@@ -1374,7 +1376,8 @@ export const vi: Dictionary = {
   'that is not a theme': 'cái đó không phải chủ đề',
   'no such theme': 'không có chủ đề đó',
   'choose a model first': 'chọn mô hình trước',
-  'set an OpenAI key in Nib’s settings first': 'đặt khoá OpenAI trong cài đặt của Nib trước',
+  'set an OpenAI key in nibeditor’s settings first':
+    'đặt khoá OpenAI trong cài đặt của nibeditor trước',
   'that is a lot of questions - try again later': 'nhiều câu hỏi quá - thử lại sau',
   'that is too much audio': 'âm thanh quá dài',
   'that is more than a spoken command': 'cái đó dài hơn một lệnh nói',
@@ -1572,6 +1575,6 @@ export const vi: Dictionary = {
   'Take over': 'Tiếp quản',
   'Agents stopped': 'Đã dừng tác tử',
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
-  'Nib is still running for your agents': 'Nib vẫn chạy cho các tác tử của bạn',
+  'nibeditor is still running for your agents': 'nibeditor vẫn chạy cho các tác tử của bạn',
   '{client} wants to connect': '{client} muốn kết nối',
 }

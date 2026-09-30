@@ -58,13 +58,13 @@ export const ja: Dictionary = {
   'Resend in {seconds}s': '{seconds} 秒後に再送',
   'Digit {number}': '{number} 桁目',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'まず Nib にサインインしてください。',
-  'Make a space in Nib first.': 'まず Nib でスペースを作ってください。',
+  'Sign in to nibeditor first.': 'まず nibeditor にサインインしてください。',
+  'Make a space in nibeditor first.': 'まず nibeditor でスペースを作ってください。',
   'This page cannot be clipped.': 'このページは取り込めません。',
   'There is nothing to clip here.': 'ここには取り込むものがありません。',
   'This clip is larger than a note can be.': 'この取り込みはノートの上限を超えています。',
   'Your account is out of space.': 'アカウントの空き容量がありません。',
-  'Could not reach Nib.': 'Nib に接続できませんでした。',
+  'Could not reach nibeditor.': 'nibeditor に接続できませんでした。',
   'Could not reach the provider.': '提供元に接続できませんでした。',
   'The provider answered with something else.': '提供元が別のものを返しました。',
   // And what the sync service itself answers with, looked up like any other string

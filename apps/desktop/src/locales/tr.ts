@@ -420,8 +420,8 @@ export const tr: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Bu anahtarın hangi modelleri kullanabileceği OpenAI’ye soruluyor',
   'Could not reach OpenAI': 'OpenAI’ye ulaşılamadı',
-  'That key cannot use any of the models Nib asks for.':
-    'Bu anahtar Nib’in istediği modellerin hiçbirini kullanamıyor.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Bu anahtar nibeditor’un istediği modellerin hiçbirini kullanamıyor.',
   'No reasoning': 'Akıl yürütme yok',
   Minimal: 'En az',
   Low: 'Düşük',
@@ -443,7 +443,7 @@ export const tr: Dictionary = {
   Mode: 'Kip',
   // The window's own edges; see appearance.rs
   Window: 'Pencere',
-  'Nib’s own': 'Nib’in kendi',
+  'nibeditor’s own': 'nibeditor’un kendi',
   'The system’s': 'Sistemin',
   'Window frame': 'Pencere çerçevesi',
   System: 'Sistem',
@@ -565,7 +565,7 @@ export const tr: Dictionary = {
   '{used} of {limit} used.': '{limit} içinde {used} kullanıldı.',
   'That image does not fit in your storage.': 'Bu resim depolamanıza sığmıyor.',
   'out of space': 'yer kalmadı',
-  'Nib {version} is ready to install.': 'Nib {version} kurulmaya hazır.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} kurulmaya hazır.',
   'Restart now': 'Şimdi yeniden başlat',
   Later: 'Sonra',
   More: 'Daha',
@@ -644,14 +644,14 @@ export const tr: Dictionary = {
   'Reads your notes.': 'Notlarınızı okur.',
   'Reads and writes your notes.': 'Notlarınızı okur ve yazar.',
   Other: 'Diğer',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. Nib e-postanızla oturum açar; yapıştırılacak bir şey yok.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. nibeditor e-postanızla oturum açar; yapıştırılacak bir şey yok.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude’da Settings → Connectors açın ve Add custom connector’a tıklayın.',
   'Open Claude’s connectors': 'Claude’un bağlayıcılarını aç',
   'Fill in the two fields and click Add.': 'İki alanı doldurup Add’e tıklayın.',
-  'Click Connect and sign in with your Nib email.':
-    'Connect’e tıklayıp Nib e-postanızla oturum açın.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect’e tıklayıp nibeditor e-postanızla oturum açın.',
   'Using Claude Code instead?': 'Bunun yerine Claude Code mu kullanıyorsunuz?',
   Command: 'Komut',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -662,15 +662,16 @@ export const tr: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT’nin eklentilerini aç',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins bölümü veya artı düğmesi yok mu? Önce Settings → Security and login altında Developer mode’u açın.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'ChatGPT sorduğunda Nib e-postanızla oturum açın.',
-  'To use it in a chat, type @ and pick Nib.': 'Bir sohbette kullanmak için @ yazıp Nib’i seçin.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT sorduğunda nibeditor e-postanızla oturum açın.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Bir sohbette kullanmak için @ yazıp nibeditor’u seçin.',
   'Server URL': 'Sunucu URL’si',
   Authentication: 'Kimlik doğrulama',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Gelişmiş OAuth ayarlarını olduğu gibi bırakıp “I understand and want to continue”ı işaretleyin.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve Nib’in oturum açma sayfasını açar.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve nibeditor’un oturum açma sayfasını açar.',
   'Show config': 'Yapılandırmayı göster',
   'For a client that takes a JSON block instead of a URL.':
     'URL yerine bir JSON bloğu alan istemciler için.',
@@ -1390,7 +1391,8 @@ export const tr: Dictionary = {
   'that is not a theme': 'bu bir tema değil',
   'no such theme': 'böyle bir tema yok',
   'choose a model first': 'önce bir model seçin',
-  'set an OpenAI key in Nib’s settings first': 'önce Nib ayarlarında bir OpenAI anahtarı ayarlayın',
+  'set an OpenAI key in nibeditor’s settings first':
+    'önce nibeditor ayarlarında bir OpenAI anahtarı ayarlayın',
   'that is a lot of questions - try again later': 'bu çok soru - sonra yine deneyin',
   'that is too much audio': 'bu çok fazla ses',
   'that is more than a spoken command': 'bu bir sesli komuttan fazlası',
@@ -1593,6 +1595,6 @@ export const tr: Dictionary = {
   'Take over': 'Kontrolü al',
   'Agents stopped': 'Ajanlar durduruldu',
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
-  'Nib is still running for your agents': 'Nib ajanlarınız için çalışmaya devam ediyor',
+  'nibeditor is still running for your agents': 'nibeditor ajanlarınız için çalışmaya devam ediyor',
   '{client} wants to connect': '{client} bağlanmak istiyor',
 }

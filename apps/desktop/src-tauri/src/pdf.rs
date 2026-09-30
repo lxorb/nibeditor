@@ -234,7 +234,7 @@ where
     let building = building.additional_browser_args(crate::engine::BROWSER_ARGS);
 
     let window = building
-        .title("Nib")
+        .title("nibeditor")
         .visible(false)
         .inner_size(900.0, 1200.0)
         .on_page_load(move |window, payload| {

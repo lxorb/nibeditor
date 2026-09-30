@@ -31,7 +31,7 @@ export const WELCOME_PATH = '/Notes/Read me.md'
 export const WELCOME_NAME = 'Read me.md'
 
 /** Written by every build - see first-space.svelte.ts - so it names none. */
-export const WELCOME = `# Welcome to Nib
+export const WELCOME = `# Welcome to nibeditor
 
 Your notes live on this device until you sign in
 and turn on syncing, and then they follow you everywhere.
@@ -50,9 +50,15 @@ const hello = 'world'
 | Synced notes | your account |
 `
 
-/** What earlier versions wrote. Still untouched on the devices they seeded. */
+/** The seed as it was written while the app was still called Nib. */
+const AS_NIB = WELCOME.replace('# Welcome to nibeditor', '# Welcome to Nib')
+
+/** What earlier versions wrote. Still untouched on the devices they seeded: every
+ *  one of them before the name, and the browser's before its words stopped saying
+ *  which build they were in. */
 const EARLIER = [
-  WELCOME.replace(
+  AS_NIB,
+  AS_NIB.replace(
     'Your notes live on this device',
     'This is the browser version. Your notes live in this browser',
   ).replace('| this device |', '| this browser |'),

@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "یک صفحه، یک گزینش یا یک پیوند را در یادداشت‌های Nib خود ببرید." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "یک صفحه، یک گزینش یا یک پیوند را در یادداشت‌های nibeditor خود ببرید."
+  },
   "clipPage": { "message": "بریدن صفحه" },
   "clipSelection": { "message": "بریدن گزینش" },
   "clipLink": { "message": "بریدن پیوند" }

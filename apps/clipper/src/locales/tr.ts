@@ -62,13 +62,13 @@ export const tr: Dictionary = {
   'Resend in {seconds}s': '{seconds} sn sonra yeniden gönder',
   'Digit {number}': '{number}. hane',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Önce Nib’de oturum aç.',
-  'Make a space in Nib first.': 'Önce Nib’de bir alan oluştur.',
+  'Sign in to nibeditor first.': 'Önce nibeditor’da oturum aç.',
+  'Make a space in nibeditor first.': 'Önce nibeditor’da bir alan oluştur.',
   'This page cannot be clipped.': 'Bu sayfa kırpılamaz.',
   'There is nothing to clip here.': 'Burada kırpılacak bir şey yok.',
   'This clip is larger than a note can be.': 'Bu kupür bir notun olabileceğinden büyük.',
   'Your account is out of space.': 'Hesabının yeri kalmadı.',
-  'Could not reach Nib.': 'Nib’e ulaşılamadı.',
+  'Could not reach nibeditor.': 'nibeditor’a ulaşılamadı.',
   'Could not reach the provider.': 'Sağlayıcıya ulaşılamadı.',
   'The provider answered with something else.': 'Sağlayıcı başka bir şey yanıtladı.',
   // And what the sync service itself answers with, looked up like any other string

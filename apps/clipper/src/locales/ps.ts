@@ -58,13 +58,13 @@ export const ps: Dictionary = {
   'Resend in {seconds}s': 'په {seconds} ثانيو کې بيا لېږل',
   'Digit {number}': 'ګڼه {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'لومړی Nib ته ننوځه.',
-  'Make a space in Nib first.': 'لومړی په Nib کې ځای جوړ کړه.',
+  'Sign in to nibeditor first.': 'لومړی nibeditor ته ننوځه.',
+  'Make a space in nibeditor first.': 'لومړی په nibeditor کې ځای جوړ کړه.',
   'This page cannot be clipped.': 'دا مخ نه شي کليپ کېدای.',
   'There is nothing to clip here.': 'دلته د کليپ کولو لپاره څه نشته.',
   'This clip is larger than a note can be.': 'دا کليپ له هغه لوی دی چې يادښت کېدای شي.',
   'Your account is out of space.': 'ستا حساب زېرمه نه لري.',
-  'Could not reach Nib.': 'Nib ته ونه رسېدل.',
+  'Could not reach nibeditor.': 'nibeditor ته ونه رسېدل.',
   'Could not reach the provider.': 'برابرونکي ته ونه رسېدل.',
   'The provider answered with something else.': 'برابرونکي بل څه ځواب ورکړ.',
   // And what the sync service itself answers with, looked up like any other string

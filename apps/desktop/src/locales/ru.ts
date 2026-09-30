@@ -440,8 +440,8 @@ export const ru: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Запрос к OpenAI: какие модели доступны этому ключу',
   'Could not reach OpenAI': 'Не удалось связаться с OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Этому ключу недоступна ни одна из моделей, которые запрашивает Nib.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Этому ключу недоступна ни одна из моделей, которые запрашивает nibeditor.',
   'No reasoning': 'Без рассуждений',
   Minimal: 'Минимальное',
   Low: 'Низкое',
@@ -463,7 +463,7 @@ export const ru: Dictionary = {
   Mode: 'Режим',
   // The window's own edges; see appearance.rs
   Window: 'Окно',
-  'Nib’s own': 'Nib',
+  'nibeditor’s own': 'nibeditor',
   'The system’s': 'Системная',
   'Window frame': 'Рамка окна',
   System: 'Системная',
@@ -592,7 +592,7 @@ export const ru: Dictionary = {
   '{used} of {limit} used.': 'Занято {used} из {limit}.',
   'That image does not fit in your storage.': 'Это изображение не помещается в хранилище.',
   'out of space': 'нет места',
-  'Nib {version} is ready to install.': 'Nib {version} готов к установке.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} готов к установке.',
   'Restart now': 'Перезапустить',
   Later: 'Позже',
   More: 'Ещё',
@@ -673,14 +673,14 @@ export const ru: Dictionary = {
   'Reads your notes.': 'Читает заметки.',
   'Reads and writes your notes.': 'Читает и изменяет заметки.',
   Other: 'Другое',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'ИИ-ассистент может читать заметки - и менять их, если разрешить. Он входит по адресу почты Nib, вставлять ничего не нужно.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'ИИ-ассистент может читать заметки - и менять их, если разрешить. Он входит по адресу почты nibeditor, вставлять ничего не нужно.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'В Claude откройте Settings → Connectors и нажмите Add custom connector.',
   'Open Claude’s connectors': 'Открыть коннекторы Claude',
   'Fill in the two fields and click Add.': 'Заполните два поля и нажмите Add.',
-  'Click Connect and sign in with your Nib email.':
-    'Нажмите Connect и войдите по адресу почты Nib.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Нажмите Connect и войдите по адресу почты nibeditor.',
   'Using Claude Code instead?': 'Используете Claude Code?',
   Command: 'Команда',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -691,16 +691,16 @@ export const ru: Dictionary = {
   'Open ChatGPT’s plugins': 'Открыть плагины ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Нет раздела Plugins или кнопки с плюсом? Сначала включите Developer mode в Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Когда ChatGPT спросит, войдите по адресу почты Nib.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Чтобы использовать это в чате, введите @ и выберите Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Когда ChatGPT спросит, войдите по адресу почты nibeditor.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Чтобы использовать это в чате, введите @ и выберите nibeditor.',
   'Server URL': 'Адрес сервера',
   Authentication: 'Аутентификация',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Оставьте расширенные настройки OAuth как есть и отметьте “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Любой клиент MCP, который умеет Streamable HTTP с OAuth. Дайте ему адрес: он зарегистрируется сам и откроет страницу входа Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Любой клиент MCP, который умеет Streamable HTTP с OAuth. Дайте ему адрес: он зарегистрируется сам и откроет страницу входа nibeditor.',
   'Show config': 'Показать конфиг',
   'For a client that takes a JSON block instead of a URL.':
     'Для клиента, которому нужен блок JSON вместо адреса.',
@@ -1453,7 +1453,8 @@ export const ru: Dictionary = {
   'that is not a theme': 'это не тема',
   'no such theme': 'такой темы нет',
   'choose a model first': 'сначала выберите модель',
-  'set an OpenAI key in Nib’s settings first': 'сначала задайте ключ OpenAI в настройках Nib',
+  'set an OpenAI key in nibeditor’s settings first':
+    'сначала задайте ключ OpenAI в настройках nibeditor',
   'that is a lot of questions - try again later': 'слишком много вопросов - попробуйте позже',
   'that is too much audio': 'слишком много звука',
   'that is more than a spoken command': 'это больше, чем голосовая команда',
@@ -1661,6 +1662,6 @@ export const ru: Dictionary = {
   'Take over': 'Взять управление',
   'Agents stopped': 'Агенты остановлены',
   'Agent tabs closed': 'Вкладки агентов закрыты',
-  'Nib is still running for your agents': 'Nib продолжает работать для ваших агентов',
+  'nibeditor is still running for your agents': 'nibeditor продолжает работать для ваших агентов',
   '{client} wants to connect': '{client} хочет подключиться',
 }

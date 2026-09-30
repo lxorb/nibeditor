@@ -250,7 +250,7 @@ async function grant(
   if (!(await roomToConnect(context.env, userId, client.id))) {
     return page(
       context.env,
-      refusal('That is as many apps as one account connects. Disconnect one in Nib first.'),
+      refusal('That is as many apps as one account connects. Disconnect one in nibeditor first.'),
       409,
     )
   }

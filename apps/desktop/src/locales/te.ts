@@ -419,7 +419,8 @@ export const te: Dictionary = {
   'Sign in to ask a question.': 'ప్రశ్న అడగడానికి సైన్ ఇన్ చేయండి.',
   'Asking OpenAI which models this key can use': 'ఈ కీ ఏ మోడల్‌లను వాడగలదో OpenAIని అడుగుతోంది',
   'Could not reach OpenAI': 'OpenAIని చేరుకోలేకపోయింది',
-  'That key cannot use any of the models Nib asks for.': 'Nib అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'nibeditor అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
   'No reasoning': 'తార్కికత లేదు',
   Minimal: 'అతి తక్కువ',
   Low: 'తక్కువ',
@@ -441,7 +442,7 @@ export const te: Dictionary = {
   Mode: 'మోడ్',
   // The window's own edges; see appearance.rs
   Window: 'విండో',
-  'Nib’s own': 'Nib సొంతం',
+  'nibeditor’s own': 'nibeditor సొంతం',
   'The system’s': 'సిస్టమ్‌ది',
   'Window frame': 'విండో ఫ్రేమ్',
   System: 'సిస్టమ్',
@@ -563,7 +564,7 @@ export const te: Dictionary = {
   '{used} of {limit} used.': '{limit}లో {used} వాడబడింది.',
   'That image does not fit in your storage.': 'మీ స్టోరేజ్‌లో ఆ చిత్రం సరిపోదు.',
   'out of space': 'స్టోరేజ్ లేదు',
-  'Nib {version} is ready to install.': 'Nib {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
   'Restart now': 'ఇప్పుడే రీస్టార్ట్',
   Later: 'తర్వాత',
   More: 'మరిన్ని',
@@ -642,14 +643,14 @@ export const te: Dictionary = {
   'Reads your notes.': 'మీ నోట్‌లను చదువుతుంది.',
   'Reads and writes your notes.': 'మీ నోట్‌లను చదువుతుంది, రాస్తుంది.',
   Other: 'ఇతరం',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeలో Settings → Connectors తెరిచి Add custom connector క్లిక్ చేయండి.',
   'Open Claude’s connectors': 'Claude కనెక్టర్‌లు తెరువు',
   'Fill in the two fields and click Add.': 'రెండు ఫీల్డ్‌లు నింపి Add క్లిక్ చేయండి.',
-  'Click Connect and sign in with your Nib email.':
-    'Connect క్లిక్ చేసి మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect క్లిక్ చేసి మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
   'Using Claude Code instead?': 'Claude Code వాడుతున్నారా?',
   Command: 'కమాండ్',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -660,15 +661,16 @@ export const te: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT ప్లగిన్‌లు తెరువు',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins విభాగం లేదా ప్లస్ బటన్ లేదా? ముందు Settings → Security and loginలో Developer mode ఆన్ చేయండి.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'ChatGPT అడిగినప్పుడు మీ Nib ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
-  'To use it in a chat, type @ and pick Nib.': 'చాట్‌లో వాడేందుకు @ టైప్ చేసి Nib ఎంచుకోండి.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT అడిగినప్పుడు మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'చాట్‌లో వాడేందుకు @ టైప్ చేసి nibeditor ఎంచుకోండి.',
   'Server URL': 'సర్వర్ URL',
   Authentication: 'ప్రామాణీకరణ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'అధునాతన OAuth సెట్టింగ్‌లను అలాగే ఉంచి “I understand and want to continue” టిక్ చేయండి.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని Nib సైన్ ఇన్ పేజీ తెరుస్తుంది.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని nibeditor సైన్ ఇన్ పేజీ తెరుస్తుంది.',
   'Show config': 'కాన్ఫిగ్ చూపు',
   'For a client that takes a JSON block instead of a URL.':
     'URLకి బదులు JSON బ్లాక్ తీసుకునే క్లయింట్ కోసం.',
@@ -1389,7 +1391,8 @@ export const te: Dictionary = {
   'that is not a theme': 'అది థీమ్ కాదు',
   'no such theme': 'అలాంటి థీమ్ లేదు',
   'choose a model first': 'ముందు ఒక మోడల్ ఎంచుకోండి',
-  'set an OpenAI key in Nib’s settings first': 'ముందు Nib సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
+  'set an OpenAI key in nibeditor’s settings first':
+    'ముందు nibeditor సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
   'that is a lot of questions - try again later': 'అవి చాలా ప్రశ్నలు - తర్వాత ప్రయత్నించండి',
   'that is too much audio': 'అది చాలా ఎక్కువ ఆడియో',
   'that is more than a spoken command': 'అది మాట్లాడే కమాండ్ కంటే ఎక్కువ',
@@ -1593,6 +1596,6 @@ export const te: Dictionary = {
   'Take over': 'నియంత్రణ తీసుకో',
   'Agents stopped': 'ఏజెంట్లు ఆపబడ్డాయి',
   'Agent tabs closed': 'ఏజెంట్ ట్యాబ్‌లు మూసివేయబడ్డాయి',
-  'Nib is still running for your agents': 'మీ ఏజెంట్ల కోసం Nib ఇంకా నడుస్తోంది',
+  'nibeditor is still running for your agents': 'మీ ఏజెంట్ల కోసం nibeditor ఇంకా నడుస్తోంది',
   '{client} wants to connect': '{client} కనెక్ట్ కావాలనుకుంటోంది',
 }

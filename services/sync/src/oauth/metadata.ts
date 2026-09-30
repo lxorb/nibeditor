@@ -40,7 +40,7 @@ function protectedResource(env: Env) {
     authorization_servers: [issuer(env)],
     scopes_supported: SCOPES,
     bearer_methods_supported: ['header'],
-    resource_name: 'Nib',
+    resource_name: 'nibeditor',
   }
 }
 

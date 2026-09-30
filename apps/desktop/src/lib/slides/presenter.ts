@@ -164,7 +164,7 @@ export async function openPresenter(): Promise<boolean> {
 
     const window = new WebviewWindow(LABEL, {
       url: 'presenter.html',
-      title: 'Nib',
+      title: 'nibeditor',
       width: WIDTH,
       height: HEIGHT,
       ...(other ? { x: other.position.x + 40, y: other.position.y + 40 } : {}),

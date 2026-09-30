@@ -419,8 +419,8 @@ export const ko: Dictionary = {
   'Sign in to ask a question.': '질문하려면 로그인하세요.',
   'Asking OpenAI which models this key can use': '이 키로 쓸 수 있는 모델을 OpenAI에 확인 중',
   'Could not reach OpenAI': 'OpenAI에 연결할 수 없습니다',
-  'That key cannot use any of the models Nib asks for.':
-    '그 키로는 Nib이 요청하는 모델을 하나도 쓸 수 없습니다.',
+  'That key cannot use any of the models nibeditor asks for.':
+    '그 키로는 nibeditor가 요청하는 모델을 하나도 쓸 수 없습니다.',
   'No reasoning': '추론 없음',
   Minimal: '최소',
   Low: '낮음',
@@ -442,7 +442,7 @@ export const ko: Dictionary = {
   Mode: '모드',
   // The window's own edges; see appearance.rs
   Window: '창',
-  'Nib’s own': 'Nib의 것',
+  'nibeditor’s own': 'nibeditor의 것',
   'The system’s': '시스템의 것',
   'Window frame': '창 테두리',
   System: '시스템',
@@ -561,7 +561,7 @@ export const ko: Dictionary = {
   '{used} of {limit} used.': '{limit} 중 {used} 사용.',
   'That image does not fit in your storage.': '그 이미지는 저장 공간에 들어가지 않습니다.',
   'out of space': '저장 공간 부족',
-  'Nib {version} is ready to install.': 'Nib {version}을 설치할 수 있습니다.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version}을 설치할 수 있습니다.',
   'Restart now': '지금 다시 시작',
   Later: '나중에',
   More: '더 보기',
@@ -636,13 +636,14 @@ export const ko: Dictionary = {
   'Reads your notes.': '노트를 읽습니다.',
   'Reads and writes your notes.': '노트를 읽고 씁니다.',
   Other: '기타',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. Nib 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. nibeditor 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude에서 Settings → Connectors를 열고 Add custom connector를 누르세요.',
   'Open Claude’s connectors': 'Claude의 커넥터 열기',
   'Fill in the two fields and click Add.': '두 칸을 채우고 Add를 누르세요.',
-  'Click Connect and sign in with your Nib email.': 'Connect를 누르고 Nib 이메일로 로그인하세요.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect를 누르고 nibeditor 이메일로 로그인하세요.',
   'Using Claude Code instead?': 'Claude Code를 쓰시나요？',
   Command: '명령',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -653,14 +654,16 @@ export const ko: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT의 플러그인 열기',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins 항목이나 더하기 버튼이 없나요. Settings → Security and login에서 Developer mode를 먼저 켜세요.',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT가 물으면 Nib 이메일로 로그인하세요.',
-  'To use it in a chat, type @ and pick Nib.': '대화에서 쓰려면 @를 입력하고 Nib을 고르세요.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT가 물으면 nibeditor 이메일로 로그인하세요.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    '대화에서 쓰려면 @를 입력하고 nibeditor를 고르세요.',
   'Server URL': '서버 URL',
   Authentication: '인증',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '고급 OAuth 설정은 그대로 두고 “I understand and want to continue”에 표시하세요.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 Nib 로그인 페이지를 엽니다.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 nibeditor 로그인 페이지를 엽니다.',
   'Show config': '설정 보기',
   'For a client that takes a JSON block instead of a URL.':
     'URL 대신 JSON 블록을 받는 클라이언트용.',
@@ -1365,7 +1368,8 @@ export const ko: Dictionary = {
   'that is not a theme': '테마가 아닙니다',
   'no such theme': '그런 테마가 없습니다',
   'choose a model first': '먼저 모델을 고르세요',
-  'set an OpenAI key in Nib’s settings first': '먼저 Nib 설정에서 OpenAI 키를 지정하세요',
+  'set an OpenAI key in nibeditor’s settings first':
+    '먼저 nibeditor 설정에서 OpenAI 키를 지정하세요',
   'that is a lot of questions - try again later': '질문이 너무 많습니다 - 나중에 다시 하세요',
   'that is too much audio': '음성이 너무 깁니다',
   'that is more than a spoken command': '음성 명령으로는 너무 깁니다',
@@ -1563,6 +1567,6 @@ export const ko: Dictionary = {
   'Take over': '직접 제어',
   'Agents stopped': '에이전트가 중지됨',
   'Agent tabs closed': '에이전트 탭이 닫힘',
-  'Nib is still running for your agents': '에이전트를 위해 Nib이 계속 실행 중입니다',
+  'nibeditor is still running for your agents': '에이전트를 위해 nibeditor가 계속 실행 중입니다',
   '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
 }

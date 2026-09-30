@@ -350,7 +350,7 @@ def drive_headings(page: Page, names: list[str]) -> None:
     # than counted, because a count cannot tell a missing note from an extra one -
     # the list used to lose a whole note's headings on about one launch in twenty
     # and still have four rows in it, which is how long that went unseen. A fifth
-    # row for "Welcome to Nib" belongs here: the browser seeds every new space with
+    # row for "Welcome to nibeditor" belongs here: the browser seeds every new space with
     # a note of that name, and it is in this space like any other.
     for note, heading in headings_of(names):
         if not any(one.startswith(heading) and one.endswith(note) for one in every):

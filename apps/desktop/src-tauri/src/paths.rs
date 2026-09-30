@@ -476,7 +476,7 @@ pub fn beside_a_note(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
         }
     }
 
-    Err(format!("{path} is not in a folder Nib has open"))
+    Err(format!("{path} is not in a folder nibeditor has open"))
 }
 
 /// The folders a walk has already been inside, judged by where they really are

@@ -30,14 +30,14 @@ const EVERYWHERE: Menus = ['page', 'selection', 'link', 'image']
 
 const PARENT = 'nib'
 
-/** One entry called Nib with the three actions under it: the same three words
+/** One entry called nibeditor with the three actions under it: the same three words
  *  the popup shows, in the same order. */
 async function buildMenus() {
   const { language } = await settings()
   const said = await words(language)
   await chrome.contextMenus.removeAll()
 
-  chrome.contextMenus.create({ id: PARENT, title: 'Nib', contexts: EVERYWHERE })
+  chrome.contextMenus.create({ id: PARENT, title: 'nibeditor', contexts: EVERYWHERE })
 
   for (const kind of KINDS) {
     chrome.contextMenus.create({

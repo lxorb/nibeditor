@@ -57,13 +57,13 @@ export const vi: Dictionary = {
   'Resend in {seconds}s': 'Gửi lại sau {seconds}s',
   'Digit {number}': 'Chữ số {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Hãy đăng nhập Nib trước.',
-  'Make a space in Nib first.': 'Hãy tạo một không gian trong Nib trước.',
+  'Sign in to nibeditor first.': 'Hãy đăng nhập nibeditor trước.',
+  'Make a space in nibeditor first.': 'Hãy tạo một không gian trong nibeditor trước.',
   'This page cannot be clipped.': 'Không cắt được trang này.',
   'There is nothing to clip here.': 'Ở đây không có gì để cắt.',
   'This clip is larger than a note can be.': 'Bản cắt này lớn hơn mức một ghi chú có thể chứa.',
   'Your account is out of space.': 'Tài khoản của bạn hết dung lượng.',
-  'Could not reach Nib.': 'Không kết nối được Nib.',
+  'Could not reach nibeditor.': 'Không kết nối được nibeditor.',
   'Could not reach the provider.': 'Không kết nối được nhà cung cấp.',
   'The provider answered with something else.': 'Nhà cung cấp trả về thứ khác.',
   // And what the sync service itself answers with, looked up like any other string

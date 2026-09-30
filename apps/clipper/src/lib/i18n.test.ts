@@ -606,7 +606,7 @@ describe('the words Chrome draws', () => {
   /** The extension's name is never translated, and neither is the product's; see
    *  docs/conventions.md. */
   test('leave the name alone', () => {
-    for (const tag of TAGS) expect(messages(tag).name?.message, tag).toBe('Nib')
+    for (const tag of TAGS) expect(messages(tag).name?.message, tag).toBe('nibeditor')
   })
 
   test('are translated everywhere but English', () => {

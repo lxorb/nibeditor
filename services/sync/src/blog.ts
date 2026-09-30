@@ -508,7 +508,7 @@ ${shell.bar ?? ''}
 <div class="frame">
 ${shell.left ?? ''}
 <div class="middle"><main id="write">${body}
-<footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">Nib</a></footer>
+<footer>${author ? `${escape(author)} · ` : ''}Published with <a href="${env.APP_ORIGIN}">nibeditor</a></footer>
 </main>${shell.under ? `<div class="under">${shell.under}</div>` : ''}</div>
 ${shell.right ?? ''}
 </div></body></html>`

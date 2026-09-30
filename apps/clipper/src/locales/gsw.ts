@@ -58,13 +58,13 @@ export const gsw: Dictionary = {
   'Resend in {seconds}s': 'Nomal i {seconds}s',
   'Digit {number}': 'Ziffer {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Mäld di zerscht bi Nib aa.',
-  'Make a space in Nib first.': 'Mach zerscht en Ablag i Nib.',
+  'Sign in to nibeditor first.': 'Mäld di zerscht bi nibeditor aa.',
+  'Make a space in nibeditor first.': 'Mach zerscht en Ablag i nibeditor.',
   'This page cannot be clipped.': 'Die Siite laat sich nöd sichere.',
   'There is nothing to clip here.': 'Da gits nüt z sichere.',
   'This clip is larger than a note can be.': 'De Uusschnitt isch z gross für e Notiz.',
   'Your account is out of space.': 'Dis Konto hät kein Platz meh.',
-  'Could not reach Nib.': 'Nib isch nöd z erreiche gsi.',
+  'Could not reach nibeditor.': 'nibeditor isch nöd z erreiche gsi.',
   'Could not reach the provider.': 'De Aabieter isch nöd z erreiche gsi.',
   'The provider answered with something else.': 'De Aabieter hät öppis anders gantwortet.',
   // And what the sync service itself answers with, looked up like any other string

@@ -448,8 +448,8 @@ export const ar: Dictionary = {
   'Asking OpenAI which models this key can use':
     'سؤال OpenAI عن النماذج التي يستطيع هذا المفتاح استخدامها',
   'Could not reach OpenAI': 'تعذّر الوصول إلى OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'هذا المفتاح لا يستطيع استخدام أي من النماذج التي يطلبها Nib.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'هذا المفتاح لا يستطيع استخدام أي من النماذج التي يطلبها nibeditor.',
   'No reasoning': 'بلا استدلال',
   Minimal: 'أدنى',
   Low: 'منخفض',
@@ -471,7 +471,7 @@ export const ar: Dictionary = {
   Mode: 'الوضع',
   // The window's own edges; see appearance.rs
   Window: 'النافذة',
-  'Nib’s own': 'الخاص بـ Nib',
+  'nibeditor’s own': 'الخاص بـ nibeditor',
   'The system’s': 'الخاص بالنظام',
   'Window frame': 'إطار النافذة',
   System: 'النظام',
@@ -603,7 +603,7 @@ export const ar: Dictionary = {
   '{used} of {limit} used.': 'استُخدم {used} من {limit}.',
   'That image does not fit in your storage.': 'لا تتسع هذه الصورة في تخزينك.',
   'out of space': 'نفدت مساحة التخزين',
-  'Nib {version} is ready to install.': 'Nib {version} جاهز للتثبيت.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} جاهز للتثبيت.',
   'Restart now': 'إعادة التشغيل الآن',
   Later: 'لاحقًا',
   More: 'المزيد',
@@ -685,13 +685,13 @@ export const ar: Dictionary = {
   'Reads your notes.': 'يقرأ ملاحظاتك.',
   'Reads and writes your notes.': 'يقرأ ملاحظاتك ويكتب فيها.',
   Other: 'أخرى',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'يستطيع مساعد ذكي قراءة ملاحظاتك - وتغييرها، إن سمحت له. يسجّل الدخول ببريد Nib الخاص بك؛ ولا شيء يُلصق.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'يستطيع مساعد ذكي قراءة ملاحظاتك - وتغييرها، إن سمحت له. يسجّل الدخول ببريد nibeditor الخاص بك؛ ولا شيء يُلصق.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'في Claude، افتح الإعدادات → الروابط واضغط إضافة رابط مخصص.',
   'Open Claude’s connectors': 'فتح روابط Claude',
   'Fill in the two fields and click Add.': 'املأ الحقلين واضغط إضافة.',
-  'Click Connect and sign in with your Nib email.': 'اضغط ربط وسجّل الدخول ببريد Nib.',
+  'Click Connect and sign in with your nibeditor email.': 'اضغط ربط وسجّل الدخول ببريد nibeditor.',
   'Using Claude Code instead?': 'تستخدم Claude Code بدلًا من ذلك؟',
   Command: 'أمر',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -702,14 +702,15 @@ export const ar: Dictionary = {
   'Open ChatGPT’s plugins': 'فتح إضافات ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'لا قسم للإضافات أو لا زر جمع؟ شغّل وضع المطوّر أولًا، من الإعدادات → الأمان وتسجيل الدخول.',
-  'Sign in with your Nib email when ChatGPT asks.': 'سجّل الدخول ببريد Nib عندما يطلب ChatGPT ذلك.',
-  'To use it in a chat, type @ and pick Nib.': 'لاستخدامه في محادثة، اكتب @ واختر Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'سجّل الدخول ببريد nibeditor عندما يطلب ChatGPT ذلك.',
+  'To use it in a chat, type @ and pick nibeditor.': 'لاستخدامه في محادثة، اكتب @ واختر nibeditor.',
   'Server URL': 'عنوان الخادم',
   Authentication: 'المصادقة',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'اترك إعدادات OAuth المتقدمة كما هي وحدّد “أفهم وأريد المتابعة”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'أي عميل MCP يتحدث Streamable HTTP مع OAuth. أعطه العنوان: يسجّل نفسه ويفتح صفحة تسجيل الدخول في Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'أي عميل MCP يتحدث Streamable HTTP مع OAuth. أعطه العنوان: يسجّل نفسه ويفتح صفحة تسجيل الدخول في nibeditor.',
   'Show config': 'إظهار الإعداد',
   'For a client that takes a JSON block instead of a URL.': 'لعميل يأخذ كتلة JSON بدلًا من عنوان.',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -1471,7 +1472,7 @@ export const ar: Dictionary = {
   'that is not a theme': 'هذه ليست سمة',
   'no such theme': 'لا سمة كهذه',
   'choose a model first': 'اختر نموذجًا أولًا',
-  'set an OpenAI key in Nib’s settings first': 'عيّن مفتاح OpenAI في إعدادات Nib أولًا',
+  'set an OpenAI key in nibeditor’s settings first': 'عيّن مفتاح OpenAI في إعدادات nibeditor أولًا',
   'that is a lot of questions - try again later': 'أسئلة كثيرة - حاول لاحقًا',
   'that is too much audio': 'هذا صوت أكثر من اللازم',
   'that is more than a spoken command': 'هذا أكثر من أمر منطوق',
@@ -1683,6 +1684,6 @@ export const ar: Dictionary = {
   'Take over': 'تولي التحكم',
   'Agents stopped': 'تم إيقاف الوكلاء',
   'Agent tabs closed': 'أُغلقت علامات تبويب الوكلاء',
-  'Nib is still running for your agents': 'لا يزال Nib يعمل لوكلائك',
+  'nibeditor is still running for your agents': 'لا يزال nibeditor يعمل لوكلائك',
   '{client} wants to connect': '{client} يريد الاتصال',
 }

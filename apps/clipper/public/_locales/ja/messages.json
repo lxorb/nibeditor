@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "ページ、選択範囲、リンクを Nib のノートに取り込みます。" },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "ページ、選択範囲、リンクを nibeditor のノートに取り込みます。" },
   "clipPage": { "message": "ページを取り込む" },
   "clipSelection": { "message": "選択範囲を取り込む" },
   "clipLink": { "message": "リンクを取り込む" }

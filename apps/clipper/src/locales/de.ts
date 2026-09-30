@@ -78,14 +78,14 @@ export const de: Dictionary = {
   'Digit {number}': 'Ziffer {number}',
 
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Melde dich zuerst bei Nib an.',
-  'Make a space in Nib first.': 'Lege zuerst einen Bereich in Nib an.',
+  'Sign in to nibeditor first.': 'Melde dich zuerst bei nibeditor an.',
+  'Make a space in nibeditor first.': 'Lege zuerst einen Bereich in nibeditor an.',
   'This page cannot be clipped.': 'Diese Seite lässt sich nicht sichern.',
   'There is nothing to clip here.': 'Hier gibt es nichts zu sichern.',
   'This clip is larger than a note can be.':
     'Dieser Ausschnitt ist grösser, als eine Notiz sein darf.',
   'Your account is out of space.': 'Dein Konto hat keinen Speicher mehr frei.',
-  'Could not reach Nib.': 'Nib war nicht zu erreichen.',
+  'Could not reach nibeditor.': 'nibeditor war nicht zu erreichen.',
   'Could not reach the provider.': 'Der Anbieter war nicht zu erreichen.',
   'The provider answered with something else.': 'Der Anbieter hat etwas anderes geantwortet.',
 

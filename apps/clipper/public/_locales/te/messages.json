@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "పేజీ, ఎంపిక లేదా లింక్‌ను మీ Nib నోట్లలోకి క్లిప్ చేయండి." },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "పేజీ, ఎంపిక లేదా లింక్‌ను మీ nibeditor నోట్లలోకి క్లిప్ చేయండి." },
   "clipPage": { "message": "పేజీని క్లిప్ చేయి" },
   "clipSelection": { "message": "ఎంపికను క్లిప్ చేయి" },
   "clipLink": { "message": "లింక్‌ను క్లిప్ చేయి" }

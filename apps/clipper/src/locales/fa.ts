@@ -57,13 +57,13 @@ export const fa: Dictionary = {
   'Resend in {seconds}s': 'فرستادن دوباره در {seconds} ثانیه',
   'Digit {number}': 'رقم {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'نخست به Nib وارد شوید.',
-  'Make a space in Nib first.': 'نخست در Nib فضایی بسازید.',
+  'Sign in to nibeditor first.': 'نخست به nibeditor وارد شوید.',
+  'Make a space in nibeditor first.': 'نخست در nibeditor فضایی بسازید.',
   'This page cannot be clipped.': 'این صفحه بریده نمی‌شود.',
   'There is nothing to clip here.': 'اینجا چیزی برای بریدن نیست.',
   'This clip is larger than a note can be.': 'این بریده بزرگ‌تر از آن است که یادداشت بگیرد.',
   'Your account is out of space.': 'حساب شما انبار خالی ندارد.',
-  'Could not reach Nib.': 'Nib در دسترس نبود.',
+  'Could not reach nibeditor.': 'nibeditor در دسترس نبود.',
   'Could not reach the provider.': 'فراهم‌کننده در دسترس نبود.',
   'The provider answered with something else.': 'فراهم‌کننده چیز دیگری پاسخ داد.',
   // And what the sync service itself answers with, looked up like any other string

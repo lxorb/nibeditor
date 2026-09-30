@@ -46,7 +46,7 @@ const EXEMPT = [
   /^example\.com$/,
   /^\.?nibeditor\.com$/,
   /^(B|I|S|M|H|<>|#|"|×)$/, // the format bar's single-glyph labels
-  /^(A3|A4|A5|Letter|Legal|PDF|HTML|MCP|LLM|CSS|Nib|DNS|JSON)$/,
+  /^(A3|A4|A5|Letter|Legal|PDF|HTML|MCP|LLM|CSS|DNS|JSON)$/,
   // Product and file-format names, which read the same in every language.
   /^(Word|OpenOffice|RTF|ePub|LaTeX|MediaWiki|reStructuredText|Textile|OPML)$/,
   /^(Markdown|TextBundle|JPG|PNG|SVG)$/,

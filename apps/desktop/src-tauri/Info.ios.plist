@@ -3,15 +3,15 @@
 <plist version="1.0">
 <dict>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Nib uses the microphone while you record or dictate.</string>
+	<string>nibeditor uses the microphone while you record or dictate.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Nib uses the camera when you take a photo into a note.</string>
+	<string>nibeditor uses the camera when you take a photo into a note.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>Nib turns what you say into words in your note while you dictate.</string>
+	<string>nibeditor turns what you say into words in your note while you dictate.</string>
 	<!-- A picture held down in a note offers to go into Photos, and asking without
 	     a sentence for it ends the app. -->
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Nib saves a picture from a note to your photos when you ask it to.</string>
+	<string>nibeditor saves a picture from a note to your photos when you ask it to.</string>
 	<!-- The notes, and whatever was exported, in the Files app under On My iPhone:
 	     plain files somebody can open anywhere, as they are on a desktop in
 	     Documents/Nib. Without these the documents folder is the app's alone, and an

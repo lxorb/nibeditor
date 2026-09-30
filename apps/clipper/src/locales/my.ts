@@ -59,13 +59,13 @@ export const my: Dictionary = {
   'Resend in {seconds}s': '{seconds} စက္ကန့်အတွင်းပြန်ပို့',
   'Digit {number}': 'ဂဏန်း {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'ဦးစွာ Nib တွင် အကောင့်ဝင်ပါ။',
-  'Make a space in Nib first.': 'ဦးစွာ Nib တွင် အလုပ်ခွင်တစ်ခု ဖန်တီးပါ။',
+  'Sign in to nibeditor first.': 'ဦးစွာ nibeditor တွင် အကောင့်ဝင်ပါ။',
+  'Make a space in nibeditor first.': 'ဦးစွာ nibeditor တွင် အလုပ်ခွင်တစ်ခု ဖန်တီးပါ။',
   'This page cannot be clipped.': 'ဤစာမျက်နှာကို ကလစ်မလုပ်နိုင်ပါ။',
   'There is nothing to clip here.': 'ဒီမှာ ကလစ်လုပ်ဖွယ် မရှိပါ။',
   'This clip is larger than a note can be.': 'ဤကလစ်သည် မှတ်စုတစ်ခုဖြစ်နိုင်သည့်အရွယ်ထက် ကြီးသည်။',
   'Your account is out of space.': 'သင့်အကောင့်တွင် သိုလှောင်မှုမရှိပါ။',
-  'Could not reach Nib.': 'Nib နှင့် မဆက်သွယ်နိုင်ပါ။',
+  'Could not reach nibeditor.': 'nibeditor နှင့် မဆက်သွယ်နိုင်ပါ။',
   'Could not reach the provider.': 'ပေးသူနှင့် မဆက်သွယ်နိုင်ပါ။',
   'The provider answered with something else.': 'ပေးသူသည် အခြားအရာဖြေသည်။',
   // And what the sync service itself answers with, looked up like any other string

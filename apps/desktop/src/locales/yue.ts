@@ -418,7 +418,8 @@ export const yue: Dictionary = {
   'Sign in to ask a question.': '請登入後提問。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查詢呢個密鑰可用嘅模型',
   'Could not reach OpenAI': '冇辦法連上OpenAI',
-  'That key cannot use any of the models Nib asks for.': '呢個密鑰用唔到Nib所需嘅任何模型。',
+  'That key cannot use any of the models nibeditor asks for.':
+    '呢個密鑰用唔到nibeditor所需嘅任何模型。',
   'No reasoning': '唔推理',
   Minimal: '最低',
   Low: '低',
@@ -440,7 +441,7 @@ export const yue: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '視窗',
-  'Nib’s own': 'Nib 自己嘅',
+  'nibeditor’s own': 'nibeditor 自己嘅',
   'The system’s': '系統嘅',
   'Window frame': '視窗邊框',
   System: '系統',
@@ -558,7 +559,7 @@ export const yue: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '儲存空間唔夠，放唔落呢張圖片。',
   'out of space': '儲存空間已滿',
-  'Nib {version} is ready to install.': 'Nib{version}已可安裝。',
+  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安裝。',
   'Restart now': '即刻重新啟動',
   Later: '遲啲',
   More: '更多',
@@ -633,13 +634,13 @@ export const yue: Dictionary = {
   'Reads your notes.': '讀取你嘅筆記。',
   'Reads and writes your notes.': '讀取並寫入你嘅筆記。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅Nib電郵登入，唔需要貼上任何嘢。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅nibeditor電郵登入，唔需要貼上任何嘢。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '喺Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
   'Open Claude’s connectors': '開啟Claude嘅連接器',
   'Fill in the two fields and click Add.': '填好呢兩個欄位，然後點擊「新增」。',
-  'Click Connect and sign in with your Nib email.': '點擊「連接」，用你嘅Nib電郵登入。',
+  'Click Connect and sign in with your nibeditor email.': '點擊「連接」，用你嘅nibeditor電郵登入。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -650,14 +651,15 @@ export const yue: Dictionary = {
   'Open ChatGPT’s plugins': '開啟ChatGPT嘅插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '冇「插件」一節或加號按鈕？請先喺「設定→安全同登入」中開啟開發者模式。',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT詢問時，用你嘅Nib電郵登入。',
-  'To use it in a chat, type @ and pick Nib.': '喺對話中輸入@並揀Nib就可以用。',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT詢問時，用你嘅nibeditor電郵登入。',
+  'To use it in a chat, type @ and pick nibeditor.': '喺對話中輸入@並揀nibeditor就可以用。',
   'Server URL': '伺服器網址',
   Authentication: '驗證方式',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟Nib嘅登入頁面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟nibeditor嘅登入頁面。',
   'Show config': '顯示設定檔',
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址嘅客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -1352,7 +1354,7 @@ export const yue: Dictionary = {
   'that is not a theme': '呢個唔係主題',
   'no such theme': '冇嗰個主題',
   'choose a model first': '請先揀模型',
-  'set an OpenAI key in Nib’s settings first': '請先喺Nib嘅設定中填入OpenAI密鑰',
+  'set an OpenAI key in nibeditor’s settings first': '請先喺nibeditor嘅設定中填入OpenAI密鑰',
   'that is a lot of questions - try again later': '問得太頻密喇，請等一陣再試',
   'that is too much audio': '音頻太長',
   'that is more than a spoken command': '呢個超過一句語音命令嘅長度',
@@ -1549,6 +1551,6 @@ export const yue: Dictionary = {
   'Take over': '由我嚟控制',
   'Agents stopped': '啲代理停咗',
   'Agent tabs closed': '代理嘅分頁閂咗',
-  'Nib is still running for your agents': 'Nib 仲喺度幫你啲代理做嘢',
+  'nibeditor is still running for your agents': 'nibeditor 仲喺度幫你啲代理做嘢',
   '{client} wants to connect': '{client} 想連接',
 }

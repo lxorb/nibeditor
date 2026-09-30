@@ -428,8 +428,8 @@ export const ptPT: Dictionary = {
   'Asking OpenAI which models this key can use':
     'A perguntar à OpenAI que modelos esta chave pode usar',
   'Could not reach OpenAI': 'Não foi possível contactar a OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Essa chave não pode usar nenhum dos modelos que o Nib pede.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Essa chave não pode usar nenhum dos modelos que o nibeditor pede.',
   'No reasoning': 'Sem raciocínio',
   Minimal: 'Mínimo',
   Low: 'Baixo',
@@ -451,7 +451,7 @@ export const ptPT: Dictionary = {
   Mode: 'Modo',
   // The window's own edges; see appearance.rs
   Window: 'Janela',
-  'Nib’s own': 'Do Nib',
+  'nibeditor’s own': 'Do nibeditor',
   'The system’s': 'Do sistema',
   'Window frame': 'Moldura da janela',
   System: 'Sistema',
@@ -574,7 +574,7 @@ export const ptPT: Dictionary = {
   '{used} of {limit} used.': '{used} de {limit} em uso.',
   'That image does not fit in your storage.': 'Essa imagem não cabe no armazenamento.',
   'out of space': 'sem espaço',
-  'Nib {version} is ready to install.': 'O Nib {version} está pronto a instalar.',
+  'nibeditor {version} is ready to install.': 'O nibeditor {version} está pronto a instalar.',
   'Restart now': 'Reiniciar agora',
   Later: 'Mais tarde',
   More: 'Mais',
@@ -654,14 +654,14 @@ export const ptPT: Dictionary = {
   'Reads your notes.': 'Lê as notas.',
   'Reads and writes your notes.': 'Lê e escreve as notas.',
   Other: 'Outro',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Um assistente de IA pode ler as notas - e alterá-las, se isso for permitido. Inicia sessão com o e-mail do Nib; não há nada para colar.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Um assistente de IA pode ler as notas - e alterá-las, se isso for permitido. Inicia sessão com o e-mail do nibeditor; não há nada para colar.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'No Claude, abrir Definições → Conectores e clicar em Adicionar conector personalizado.',
   'Open Claude’s connectors': 'Abrir os conectores do Claude',
   'Fill in the two fields and click Add.': 'Preencher os dois campos e clicar em Adicionar.',
-  'Click Connect and sign in with your Nib email.':
-    'Clicar em Conectar e iniciar sessão com o e-mail do Nib.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Clicar em Conectar e iniciar sessão com o e-mail do nibeditor.',
   'Using Claude Code instead?': 'Usar o Claude Code em vez disso?',
   Command: 'Comando',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -672,16 +672,16 @@ export const ptPT: Dictionary = {
   'Open ChatGPT’s plugins': 'Abrir os plugins do ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Sem a secção Plugins ou sem o botão de mais? Ligar primeiro o modo de programador em Definições → Segurança e início de sessão.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Iniciar sessão com o e-mail do Nib quando o ChatGPT pedir.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Para o usar numa conversa, escrever @ e escolher Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Iniciar sessão com o e-mail do nibeditor quando o ChatGPT pedir.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Para o usar numa conversa, escrever @ e escolher nibeditor.',
   'Server URL': 'URL do servidor',
   Authentication: 'Autenticação',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Deixar as definições avançadas de OAuth como estão e marcar “Compreendo e quero continuar”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Qualquer cliente MCP que fale Streamable HTTP com OAuth. Basta o URL: regista-se a si mesmo e abre a página de início de sessão do Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Qualquer cliente MCP que fale Streamable HTTP com OAuth. Basta o URL: regista-se a si mesmo e abre a página de início de sessão do nibeditor.',
   'Show config': 'Ver a configuração',
   'For a client that takes a JSON block instead of a URL.':
     'Para um cliente que aceita um bloco JSON em vez de um URL.',
@@ -1424,8 +1424,8 @@ export const ptPT: Dictionary = {
   'that is not a theme': 'isso não é um tema',
   'no such theme': 'não há esse tema',
   'choose a model first': 'escolher primeiro um modelo',
-  'set an OpenAI key in Nib’s settings first':
-    'definir primeiro uma chave da OpenAI nas definições do Nib',
+  'set an OpenAI key in nibeditor’s settings first':
+    'definir primeiro uma chave da OpenAI nas definições do nibeditor',
   'that is a lot of questions - try again later': 'são muitas perguntas - tentar mais tarde',
   'that is too much audio': 'é demasiado áudio',
   'that is more than a spoken command': 'isso é mais do que um comando falado',
@@ -1631,6 +1631,7 @@ export const ptPT: Dictionary = {
   'Take over': 'Assumir o controlo',
   'Agents stopped': 'Agentes parados',
   'Agent tabs closed': 'Separadores dos agentes fechados',
-  'Nib is still running for your agents': 'O Nib continua a funcionar para os seus agentes',
+  'nibeditor is still running for your agents':
+    'O nibeditor continua a funcionar para os seus agentes',
   '{client} wants to connect': '{client} quer ligar-se',
 }

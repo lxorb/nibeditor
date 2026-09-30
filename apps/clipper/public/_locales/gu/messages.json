@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "પાનું, પસંદગી કે કડી તમારી Nib નોંધમાં ક્લિપ કરો." },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "પાનું, પસંદગી કે કડી તમારી nibeditor નોંધમાં ક્લિપ કરો." },
   "clipPage": { "message": "પાનું ક્લિપ કરો" },
   "clipSelection": { "message": "પસંદગી ક્લિપ કરો" },
   "clipLink": { "message": "કડી ક્લિપ કરો" }

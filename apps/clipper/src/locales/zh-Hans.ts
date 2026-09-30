@@ -56,13 +56,13 @@ export const zhHans: Dictionary = {
   'Resend in {seconds}s': '{seconds}秒后可重发',
   'Digit {number}': '第{number}位',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': '请先登录 Nib。',
-  'Make a space in Nib first.': '请先在 Nib 中建一个空间。',
+  'Sign in to nibeditor first.': '请先登录 nibeditor。',
+  'Make a space in nibeditor first.': '请先在 nibeditor 中建一个空间。',
   'This page cannot be clipped.': '此页面无法剪藏。',
   'There is nothing to clip here.': '这里没有可剪藏的内容。',
   'This clip is larger than a note can be.': '这条剪藏超过一条笔记能有的大小。',
   'Your account is out of space.': '你的账户没有存储空间了。',
-  'Could not reach Nib.': '无法连接 Nib。',
+  'Could not reach nibeditor.': '无法连接 nibeditor。',
   'Could not reach the provider.': '无法连接服务商。',
   'The provider answered with something else.': '服务商返回了别的东西。',
   // And what the sync service itself answers with, looked up like any other string

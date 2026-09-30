@@ -93,7 +93,7 @@ pub fn list_themes(app: AppHandle) -> Result<Vec<ThemeFile>, String> {
 pub fn read_theme(app: AppHandle, path: String) -> Result<String, String> {
     let target = folded(Path::new(&path));
     if !is_a_theme(&themes_root(&app)?, &target) {
-        return Err(format!("{path} is not one of Nib's own stylesheets"));
+        return Err(format!("{path} is not one of nibeditor's own stylesheets"));
     }
 
     fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))

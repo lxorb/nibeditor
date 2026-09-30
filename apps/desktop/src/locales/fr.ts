@@ -426,10 +426,10 @@ export const fr: Dictionary = {
   'that key could not be saved': 'Cette clé n’a pas pu être enregistrée',
   'Sign in to ask a question.': 'Connectez-vous pour poser une question.',
   'Asking OpenAI which models this key can use':
-    'Nib demande à OpenAI quels modèles cette clé peut utiliser',
+    'nibeditor demande à OpenAI quels modèles cette clé peut utiliser',
   'Could not reach OpenAI': 'OpenAI injoignable',
-  'That key cannot use any of the models Nib asks for.':
-    'Cette clé ne peut utiliser aucun des modèles que Nib demande.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Cette clé ne peut utiliser aucun des modèles que nibeditor demande.',
   'No reasoning': 'Sans réflexion',
   Minimal: 'Minimale',
   Low: 'Faible',
@@ -451,7 +451,7 @@ export const fr: Dictionary = {
   Mode: 'Mode',
   // The window's own edges; see appearance.rs
   Window: 'Fenêtre',
-  'Nib’s own': 'Celui de Nib',
+  'nibeditor’s own': 'Celui de nibeditor',
   'The system’s': 'Celui du système',
   'Window frame': 'Cadre de la fenêtre',
   System: 'Système',
@@ -575,7 +575,7 @@ export const fr: Dictionary = {
   '{used} of {limit} used.': '{used} sur {limit} utilisés.',
   'That image does not fit in your storage.': 'Cette image ne tient pas dans votre stockage.',
   'out of space': 'plus d’espace disponible',
-  'Nib {version} is ready to install.': 'Nib {version} est prêt à être installé.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} est prêt à être installé.',
   'Restart now': 'Redémarrer maintenant',
   Later: 'Plus tard',
   More: 'Plus',
@@ -656,14 +656,14 @@ export const fr: Dictionary = {
   'Reads your notes.': 'Lit vos notes.',
   'Reads and writes your notes.': 'Lit et modifie vos notes.',
   Other: 'Autre',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Un assistant IA peut lire vos notes - et les modifier, si vous l’autorisez. Il se connecte avec votre e-mail Nib ; rien à coller.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Un assistant IA peut lire vos notes - et les modifier, si vous l’autorisez. Il se connecte avec votre e-mail nibeditor ; rien à coller.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Dans Claude, ouvrez Paramètres → Connecteurs et cliquez sur Ajouter un connecteur personnalisé.',
   'Open Claude’s connectors': 'Ouvrir les connecteurs de Claude',
   'Fill in the two fields and click Add.': 'Remplissez les deux champs et cliquez sur Ajouter.',
-  'Click Connect and sign in with your Nib email.':
-    'Cliquez sur Connecter et connectez-vous avec votre e-mail Nib.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Cliquez sur Connecter et connectez-vous avec votre e-mail nibeditor.',
   'Using Claude Code instead?': 'Plutôt Claude Code ?',
   Command: 'Commande',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -674,16 +674,16 @@ export const fr: Dictionary = {
   'Open ChatGPT’s plugins': 'Ouvrir les plugins de ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Pas de section Plugins ou pas de bouton plus ? Activez d’abord le mode développeur, sous Paramètres → Sécurité et connexion.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Connectez-vous avec votre e-mail Nib quand ChatGPT le demande.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Pour l’utiliser dans une discussion, tapez @ et choisissez Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Connectez-vous avec votre e-mail nibeditor quand ChatGPT le demande.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Pour l’utiliser dans une discussion, tapez @ et choisissez nibeditor.',
   'Server URL': 'URL du serveur',
   Authentication: 'Authentification',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Laissez les paramètres OAuth avancés tels quels et cochez « Je comprends et je souhaite continuer ».',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Tout client MCP qui parle Streamable HTTP avec OAuth. Donnez-lui l’URL : il s’enregistre lui-même et ouvre la page de connexion de Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Tout client MCP qui parle Streamable HTTP avec OAuth. Donnez-lui l’URL : il s’enregistre lui-même et ouvre la page de connexion de nibeditor.',
   'Show config': 'Afficher la configuration',
   'For a client that takes a JSON block instead of a URL.':
     'Pour un client qui prend un bloc JSON plutôt qu’une URL.',
@@ -1437,8 +1437,8 @@ export const fr: Dictionary = {
   'that is not a theme': 'ce n’est pas un thème',
   'no such theme': 'ce thème n’existe pas',
   'choose a model first': 'choisissez d’abord un modèle',
-  'set an OpenAI key in Nib’s settings first':
-    'renseignez d’abord une clé OpenAI dans les réglages de Nib',
+  'set an OpenAI key in nibeditor’s settings first':
+    'renseignez d’abord une clé OpenAI dans les réglages de nibeditor',
   'that is a lot of questions - try again later':
     'cela fait beaucoup de questions - réessayez plus tard',
   'that is too much audio': 'cela fait trop d’audio',
@@ -1647,6 +1647,6 @@ export const fr: Dictionary = {
   'Take over': 'Prendre la main',
   'Agents stopped': 'Agents arrêtés',
   'Agent tabs closed': 'Onglets des agents fermés',
-  'Nib is still running for your agents': 'Nib continue de tourner pour vos agents',
+  'nibeditor is still running for your agents': 'nibeditor continue de tourner pour vos agents',
   '{client} wants to connect': '{client} veut se connecter',
 }

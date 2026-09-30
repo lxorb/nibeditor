@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "I-clip ang isang pahina, pinili o link sa mga tala mo sa Nib." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "I-clip ang isang pahina, pinili o link sa mga tala mo sa nibeditor."
+  },
   "clipPage": { "message": "I-clip ang pahina" },
   "clipSelection": { "message": "I-clip ang pinili" },
   "clipLink": { "message": "I-clip ang link" }

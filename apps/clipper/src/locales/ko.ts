@@ -57,13 +57,13 @@ export const ko: Dictionary = {
   'Resend in {seconds}s': '{seconds}초 후 다시 보내기',
   'Digit {number}': '{number}번째 자리',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': '먼저 Nib에 로그인하세요.',
-  'Make a space in Nib first.': '먼저 Nib에서 공간을 만드세요.',
+  'Sign in to nibeditor first.': '먼저 nibeditor에 로그인하세요.',
+  'Make a space in nibeditor first.': '먼저 nibeditor에서 공간을 만드세요.',
   'This page cannot be clipped.': '이 페이지는 클립할 수 없습니다.',
   'There is nothing to clip here.': '여기에는 클립할 것이 없습니다.',
   'This clip is larger than a note can be.': '이 클립은 노트가 담을 수 있는 크기를 넘습니다.',
   'Your account is out of space.': '계정의 저장 공간이 없습니다.',
-  'Could not reach Nib.': 'Nib에 연결할 수 없습니다.',
+  'Could not reach nibeditor.': 'nibeditor에 연결할 수 없습니다.',
   'Could not reach the provider.': '공급자에 연결할 수 없습니다.',
   'The provider answered with something else.': '공급자가 다른 것을 답했습니다.',
   // And what the sync service itself answers with, looked up like any other string

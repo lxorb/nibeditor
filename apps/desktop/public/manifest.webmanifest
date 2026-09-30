@@ -1,6 +1,6 @@
 {
-  "name": "Nib",
-  "short_name": "Nib",
+  "name": "nibeditor",
+  "short_name": "nibeditor",
   "description": "A markdown editor. Nothing but markdown.",
   "id": "/",
   "start_url": "/",

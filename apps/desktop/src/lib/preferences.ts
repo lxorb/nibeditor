@@ -766,7 +766,7 @@ export function preferences(view?: EditorView): Pane[] {
                     kind: 'segmented',
                     label: t('Frame'),
                     options: [
-                      { value: 'nib', label: t('Nib’s own') },
+                      { value: 'nib', label: t('nibeditor’s own') },
                       { value: 'system', label: t('The system’s') },
                     ],
                     initial: 'nib',

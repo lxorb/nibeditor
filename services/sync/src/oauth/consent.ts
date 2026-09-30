@@ -56,10 +56,10 @@ export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Res
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>Nib</title>
+<title>nibeditor</title>
 <style>${STYLE}</style>
 <main>
-<div class="brand"><a href="${escape(env.APP_ORIGIN)}" style="color:inherit;text-decoration:none">Nib</a></div>
+<div class="brand"><a href="${escape(env.APP_ORIGIN)}" style="color:inherit;text-decoration:none">nibeditor</a></div>
 ${body}
 </main>
 </html>`

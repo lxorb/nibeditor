@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "اقتطف صفحة أو تحديدًا أو رابطًا إلى ملاحظات Nib." },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "اقتطف صفحة أو تحديدًا أو رابطًا إلى ملاحظات nibeditor." },
   "clipPage": { "message": "اقتطاف الصفحة" },
   "clipSelection": { "message": "اقتطاف التحديد" },
   "clipLink": { "message": "اقتطاف الرابط" }

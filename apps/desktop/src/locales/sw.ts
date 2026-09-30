@@ -423,8 +423,8 @@ export const sw: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Inauliza OpenAI modeli zipi kitufe hiki kinaweza kutumia',
   'Could not reach OpenAI': 'OpenAI haikufikiwa',
-  'That key cannot use any of the models Nib asks for.':
-    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo Nib inaomba.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo nibeditor inaomba.',
   'No reasoning': 'Hakuna ufikirio',
   Minimal: 'Kidogo sana',
   Low: 'Chini',
@@ -446,7 +446,7 @@ export const sw: Dictionary = {
   Mode: 'Hali',
   // The window's own edges; see appearance.rs
   Window: 'Dirisha',
-  'Nib’s own': 'Ya Nib',
+  'nibeditor’s own': 'Ya nibeditor',
   'The system’s': 'Ya mfumo',
   'Window frame': 'Fremu ya dirisha',
   System: 'Mfumo',
@@ -568,7 +568,7 @@ export const sw: Dictionary = {
   '{used} of {limit} used.': '{used} kati ya {limit} zimetumika.',
   'That image does not fit in your storage.': 'Picha hiyo haitoshi kwenye hifadhi yako.',
   'out of space': 'hifadhi imeisha',
-  'Nib {version} is ready to install.': 'Nib {version} iko tayari kusakinishwa.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} iko tayari kusakinishwa.',
   'Restart now': 'Anzisha tena sasa',
   Later: 'Baadaye',
   More: 'Zaidi',
@@ -647,14 +647,14 @@ export const sw: Dictionary = {
   'Reads your notes.': 'Husoma madokezo yako.',
   'Reads and writes your notes.': 'Husoma na kuandika madokezo yako.',
   Other: 'Nyingine',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya Nib; hakuna kitu cha kubandika.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya nibeditor; hakuna kitu cha kubandika.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Katika Claude, fungua Settings → Connectors na bofya Add custom connector.',
   'Open Claude’s connectors': 'Fungua viunganishi vya Claude',
   'Fill in the two fields and click Add.': 'Jaza sehemu mbili na bofya Add.',
-  'Click Connect and sign in with your Nib email.':
-    'Bofya Connect na uingie kwa barua pepe yako ya Nib.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Bofya Connect na uingie kwa barua pepe yako ya nibeditor.',
   'Using Claude Code instead?': 'Unatumia Claude Code?',
   Command: 'Amri',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -665,15 +665,16 @@ export const sw: Dictionary = {
   'Open ChatGPT’s plugins': 'Fungua programu-jalizi za ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Hakuna sehemu ya Plugins au kitufe cha kuongeza? Washa Developer mode kwanza, chini ya Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Ingia kwa barua pepe yako ya Nib ChatGPT ikiuliza.',
-  'To use it in a chat, type @ and pick Nib.': 'Kuitumia kwenye gumzo, andika @ na chagua Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Ingia kwa barua pepe yako ya nibeditor ChatGPT ikiuliza.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Kuitumia kwenye gumzo, andika @ na chagua nibeditor.',
   'Server URL': 'URL ya seva',
   Authentication: 'Uthibitishaji',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Acha mipangilio ya juu ya OAuth kama ilivyo na tia alama “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa nibeditor.',
   'Show config': 'Onyesha usanidi',
   'For a client that takes a JSON block instead of a URL.':
     'Kwa mteja anayechukua kizuizi cha JSON badala ya URL.',
@@ -1411,8 +1412,8 @@ export const sw: Dictionary = {
   'that is not a theme': 'hiyo si mandhari',
   'no such theme': 'hakuna mandhari hiyo',
   'choose a model first': 'chagua modeli kwanza',
-  'set an OpenAI key in Nib’s settings first':
-    'weka kitufe cha OpenAI kwenye mipangilio ya Nib kwanza',
+  'set an OpenAI key in nibeditor’s settings first':
+    'weka kitufe cha OpenAI kwenye mipangilio ya nibeditor kwanza',
   'that is a lot of questions - try again later': 'hayo ni maswali mengi - jaribu tena baadaye',
   'that is too much audio': 'hiyo ni sauti nyingi mno',
   'that is more than a spoken command': 'hiyo ni zaidi ya amri inayosemwa',
@@ -1614,6 +1615,7 @@ export const sw: Dictionary = {
   'Take over': 'Chukua udhibiti',
   'Agents stopped': 'Mawakala wamesimamishwa',
   'Agent tabs closed': 'Vichupo vya mawakala vimefungwa',
-  'Nib is still running for your agents': 'Nib bado inaendelea kwa ajili ya mawakala wako',
+  'nibeditor is still running for your agents':
+    'nibeditor bado inaendelea kwa ajili ya mawakala wako',
   '{client} wants to connect': '{client} anataka kuunganishwa',
 }

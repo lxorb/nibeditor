@@ -145,7 +145,7 @@ export function buildHtml(source: string, name: string, options: HtmlOptions = {
 <head>
 ${meta}
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="generator" content="Nib">
+<meta name="generator" content="nibeditor">
 <style>
 ${styles}
 </style>

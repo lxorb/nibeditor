@@ -56,13 +56,13 @@ export const am: Dictionary = {
   'Resend in {seconds}s': 'በ{seconds} ሰከንድ እንደገና ላክ',
   'Digit {number}': 'አሃዝ {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'በቅድሚያ ወደ Nib ግባ።',
-  'Make a space in Nib first.': 'በቅድሚያ በ Nib ውስጥ ቦታ ፍጠር።',
+  'Sign in to nibeditor first.': 'በቅድሚያ ወደ nibeditor ግባ።',
+  'Make a space in nibeditor first.': 'በቅድሚያ በ nibeditor ውስጥ ቦታ ፍጠር።',
   'This page cannot be clipped.': 'ይህ ገጽ ሊቀነጠብ አይችልም።',
   'There is nothing to clip here.': 'እዚህ የሚቀነጠብ ምንም የለም።',
   'This clip is larger than a note can be.': 'ይህ ቅንጥብ ማስታወሻ ከሚችለው በላይ ትልቅ ነው።',
   'Your account is out of space.': 'መዝገብህ ማከማቻ ሞልቷል።',
-  'Could not reach Nib.': 'Nib ላይ መድረስ አልተቻለም።',
+  'Could not reach nibeditor.': 'nibeditor ላይ መድረስ አልተቻለም።',
   'Could not reach the provider.': 'አቅራቢው ላይ መድረስ አልተቻለም።',
   'The provider answered with something else.': 'አቅራቢው ሌላ ነገር መለሰ።',
   // And what the sync service itself answers with, looked up like any other string

@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "페이지, 선택 영역, 링크를 Nib 노트로 클립합니다." },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "페이지, 선택 영역, 링크를 nibeditor 노트로 클립합니다." },
   "clipPage": { "message": "페이지 클립" },
   "clipSelection": { "message": "선택 영역 클립" },
   "clipLink": { "message": "링크 클립" }

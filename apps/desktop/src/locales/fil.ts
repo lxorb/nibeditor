@@ -423,8 +423,8 @@ export const fil: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Tinatanong sa OpenAI ang mga modelo ng key na ito',
   'Could not reach OpenAI': 'Hindi maabot ang OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Wala sa mga modelong hinahanap ng Nib ang magagamit ng key na iyon.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Wala sa mga modelong hinahanap ng nibeditor ang magagamit ng key na iyon.',
   'No reasoning': 'Walang pangangatwiran',
   Minimal: 'Kaunti',
   Low: 'Mababa',
@@ -446,7 +446,7 @@ export const fil: Dictionary = {
   Mode: 'Mode',
   // The window's own edges; see appearance.rs
   Window: 'Bintana',
-  'Nib’s own': 'Sa Nib',
+  'nibeditor’s own': 'Sa nibeditor',
   'The system’s': 'Sa sistema',
   'Window frame': 'Kuwadro ng bintana',
   System: 'Sistema',
@@ -568,7 +568,7 @@ export const fil: Dictionary = {
   '{used} of {limit} used.': '{used} sa {limit} ang gamit.',
   'That image does not fit in your storage.': 'Hindi kasya ang imaheng iyon sa imbakan mo.',
   'out of space': 'walang espasyo',
-  'Nib {version} is ready to install.': 'Puwede nang i-install ang Nib {version}.',
+  'nibeditor {version} is ready to install.': 'Puwede nang i-install ang nibeditor {version}.',
   'Restart now': 'I-restart ngayon',
   Later: 'Mamaya',
   More: 'Iba pa',
@@ -648,14 +648,14 @@ export const fil: Dictionary = {
   'Reads your notes.': 'Binabasa ang mga tala mo.',
   'Reads and writes your notes.': 'Binabasa at sinusulatan ang mga tala mo.',
   Other: 'Iba',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa Nib email mo; wala kang ipapaste.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Mababasa ng AI assistant ang mga tala mo - at mababago, kung papayagan mo. Nag-sign in ito sa nibeditor email mo; wala kang ipapaste.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Sa Claude, buksan ang Settings → Connectors at i-click ang Add custom connector.',
   'Open Claude’s connectors': 'Buksan ang connectors ng Claude',
   'Fill in the two fields and click Add.': 'Punan ang dalawang kahon at i-click ang Add.',
-  'Click Connect and sign in with your Nib email.':
-    'I-click ang Connect at mag-sign in sa Nib email mo.',
+  'Click Connect and sign in with your nibeditor email.':
+    'I-click ang Connect at mag-sign in sa nibeditor email mo.',
   'Using Claude Code instead?': 'Claude Code ang gamit mo?',
   Command: 'Utos',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -666,16 +666,16 @@ export const fil: Dictionary = {
   'Open ChatGPT’s plugins': 'Buksan ang plugins ng ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Walang Plugins o walang plus? Buksan muna ang Developer mode sa Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Mag-sign in sa Nib email mo kapag nagtanong ang ChatGPT.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Para gamitin sa chat, i-type ang @ at piliin ang Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Mag-sign in sa nibeditor email mo kapag nagtanong ang ChatGPT.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Para gamitin sa chat, i-type ang @ at piliin ang nibeditor.',
   'Server URL': 'URL ng server',
   Authentication: 'Pagpapatunay',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Huwag galawin ang advanced OAuth settings at tsekan ang “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Anumang MCP client na gumagamit ng Streamable HTTP at OAuth. Ibigay ang URL: magpaparehistro ito mismo at bubuksan ang sign-in page ng nibeditor.',
   'Show config': 'Ipakita ang config',
   'For a client that takes a JSON block instead of a URL.':
     'Para sa client na tumatanggap ng JSON block kaysa URL.',
@@ -1419,7 +1419,8 @@ export const fil: Dictionary = {
   'that is not a theme': 'hindi iyon tema',
   'no such theme': 'walang ganoong tema',
   'choose a model first': 'pumili muna ng modelo',
-  'set an OpenAI key in Nib’s settings first': 'magtakda muna ng OpenAI key sa setting ng Nib',
+  'set an OpenAI key in nibeditor’s settings first':
+    'magtakda muna ng OpenAI key sa setting ng nibeditor',
   'that is a lot of questions - try again later': 'napakadaming tanong - subukan mamaya',
   'that is too much audio': 'masyadong mahaba ang audio',
   'that is more than a spoken command': 'mas mahaba iyon sa isang utos sa tinig',
@@ -1624,6 +1625,7 @@ export const fil: Dictionary = {
   'Take over': 'Kunin ang kontrol',
   'Agents stopped': 'Itinigil ang mga agent',
   'Agent tabs closed': 'Isinara ang mga tab ng agent',
-  'Nib is still running for your agents': 'Tumatakbo pa rin ang Nib para sa iyong mga agent',
+  'nibeditor is still running for your agents':
+    'Tumatakbo pa rin ang nibeditor para sa iyong mga agent',
   '{client} wants to connect': 'Gustong kumonekta ng {client}',
 }

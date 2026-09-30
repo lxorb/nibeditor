@@ -41,12 +41,12 @@
     use:trap
     role="dialog"
     aria-modal="true"
-    aria-label="Nib"
+    aria-label="nibeditor"
     transition:scale|global={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <div class="head">
       <img class="mark" src="/icon-256.png" alt="" draggable="false" />
-      <h1 class="title">Nib</h1>
+      <h1 class="title">nibeditor</h1>
       <p class="version">{version}</p>
     </div>
 

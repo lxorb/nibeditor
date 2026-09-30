@@ -418,7 +418,8 @@ export const zhHans: Dictionary = {
   'Sign in to ask a question.': '请登录后提问。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查询此密钥可用的模型',
   'Could not reach OpenAI': '无法连接OpenAI',
-  'That key cannot use any of the models Nib asks for.': '此密钥无法使用Nib所需的任何模型。',
+  'That key cannot use any of the models nibeditor asks for.':
+    '此密钥无法使用nibeditor所需的任何模型。',
   'No reasoning': '不推理',
   Minimal: '最低',
   Low: '低',
@@ -440,7 +441,7 @@ export const zhHans: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '窗口',
-  'Nib’s own': 'Nib 自己的',
+  'nibeditor’s own': 'nibeditor 自己的',
   'The system’s': '系统的',
   'Window frame': '窗口边框',
   System: '系统',
@@ -558,7 +559,7 @@ export const zhHans: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '存储空间不足，放不下这张图片。',
   'out of space': '存储空间已满',
-  'Nib {version} is ready to install.': 'Nib{version}已可安装。',
+  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安装。',
   'Restart now': '立即重启',
   Later: '稍后',
   More: '更多',
@@ -633,13 +634,13 @@ export const zhHans: Dictionary = {
   'Reads your notes.': '读取你的笔记。',
   'Reads and writes your notes.': '读取并写入你的笔记。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的Nib邮箱登录，无需粘贴任何内容。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的nibeditor邮箱登录，无需粘贴任何内容。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '在Claude中打开“设置→连接器”，点击“添加自定义连接器”。',
   'Open Claude’s connectors': '打开Claude的连接器',
   'Fill in the two fields and click Add.': '填写这两个字段，然后点击“添加”。',
-  'Click Connect and sign in with your Nib email.': '点击“连接”，用你的Nib邮箱登录。',
+  'Click Connect and sign in with your nibeditor email.': '点击“连接”，用你的nibeditor邮箱登录。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -650,14 +651,15 @@ export const zhHans: Dictionary = {
   'Open ChatGPT’s plugins': '打开ChatGPT的插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '没有“插件”一节或加号按钮？请先在“设置→安全与登录”中开启开发者模式。',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT询问时，用你的Nib邮箱登录。',
-  'To use it in a chat, type @ and pick Nib.': '在对话中输入@并选择Nib即可使用。',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'ChatGPT询问时，用你的nibeditor邮箱登录。',
+  'To use it in a chat, type @ and pick nibeditor.': '在对话中输入@并选择nibeditor即可使用。',
   'Server URL': '服务器URL',
   Authentication: '身份验证',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '高级OAuth设置保持不变，并勾选“我了解并希望继续”。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开Nib的登录页面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开nibeditor的登录页面。',
   'Show config': '显示配置',
   'For a client that takes a JSON block instead of a URL.': '适用于接受JSON配置而非URL的客户端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -1351,7 +1353,7 @@ export const zhHans: Dictionary = {
   'that is not a theme': '这不是一个主题',
   'no such theme': '没有该主题',
   'choose a model first': '请先选择模型',
-  'set an OpenAI key in Nib’s settings first': '请先在Nib设置中填入OpenAI密钥',
+  'set an OpenAI key in nibeditor’s settings first': '请先在nibeditor设置中填入OpenAI密钥',
   'that is a lot of questions - try again later': '提问过于频繁，请稍后重试',
   'that is too much audio': '音频过长',
   'that is more than a spoken command': '这超出了一条语音命令的长度',
@@ -1548,6 +1550,6 @@ export const zhHans: Dictionary = {
   'Take over': '接管',
   'Agents stopped': '已停止智能体',
   'Agent tabs closed': '已关闭智能体标签页',
-  'Nib is still running for your agents': 'Nib 仍在为你的智能体运行',
+  'nibeditor is still running for your agents': 'nibeditor 仍在为你的智能体运行',
   '{client} wants to connect': '{client} 想要连接',
 }

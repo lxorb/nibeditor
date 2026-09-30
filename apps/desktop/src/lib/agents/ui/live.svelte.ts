@@ -87,7 +87,7 @@ export function started(source: Source = crate): Activity {
         quit: t('Quit'),
         stopped: t('Agents stopped'),
         closed: t('Agent tabs closed'),
-        hidden: t('Nib is still running for your agents'),
+        hidden: t('nibeditor is still running for your agents'),
         pairing: t('{client} wants to connect'),
       }
       untrack(() => void source.shell(system, words).catch(() => undefined))

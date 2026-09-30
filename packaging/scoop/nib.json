@@ -34,7 +34,7 @@
     "shortcuts": [
         [
             "nib.exe",
-            "Nib"
+            "nibeditor"
         ]
     ],
     "uninstaller": {

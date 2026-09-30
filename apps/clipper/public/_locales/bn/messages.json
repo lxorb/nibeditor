@@ -1,6 +1,6 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "একটি পৃষ্ঠা, নির্বাচন বা লিংক আপনার Nib নোটে ক্লিপ করুন।" },
+  "name": { "message": "nibeditor" },
+  "description": { "message": "একটি পৃষ্ঠা, নির্বাচন বা লিংক আপনার nibeditor নোটে ক্লিপ করুন।" },
   "clipPage": { "message": "পৃষ্ঠা ক্লিপ করুন" },
   "clipSelection": { "message": "নির্বাচন ক্লিপ করুন" },
   "clipLink": { "message": "লিংক ক্লিপ করুন" }

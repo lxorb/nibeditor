@@ -420,8 +420,8 @@ export const ms: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Bertanya kepada OpenAI model mana yang boleh digunakan kunci ini',
   'Could not reach OpenAI': 'Tidak dapat menghubungi OpenAI',
-  'That key cannot use any of the models Nib asks for.':
-    'Kunci itu tidak boleh menggunakan mana-mana model yang Nib minta.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'Kunci itu tidak boleh menggunakan mana-mana model yang nibeditor minta.',
   'No reasoning': 'Tiada penaakulan',
   Minimal: 'Minimum',
   Low: 'Rendah',
@@ -443,7 +443,7 @@ export const ms: Dictionary = {
   Mode: 'Mod',
   // The window's own edges; see appearance.rs
   Window: 'Tetingkap',
-  'Nib’s own': 'Milik Nib',
+  'nibeditor’s own': 'Milik nibeditor',
   'The system’s': 'Milik sistem',
   'Window frame': 'Bingkai tetingkap',
   System: 'Sistem',
@@ -562,7 +562,7 @@ export const ms: Dictionary = {
   '{used} of {limit} used.': '{used} daripada {limit} digunakan.',
   'That image does not fit in your storage.': 'Imej itu tidak muat dalam simpanan anda.',
   'out of space': 'simpanan penuh',
-  'Nib {version} is ready to install.': 'Nib {version} sedia untuk dipasang.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} sedia untuk dipasang.',
   'Restart now': 'Mula semula sekarang',
   Later: 'Kemudian',
   More: 'Lagi',
@@ -638,13 +638,14 @@ export const ms: Dictionary = {
   'Reads your notes.': 'Membaca nota anda.',
   'Reads and writes your notes.': 'Membaca dan menulis nota anda.',
   Other: 'Lain-lain',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'Pembantu AI boleh membaca nota anda - dan mengubahnya, jika anda benarkan. Ia masuk dengan e-mel Nib anda; tiada apa-apa untuk ditampal.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'Pembantu AI boleh membaca nota anda - dan mengubahnya, jika anda benarkan. Ia masuk dengan e-mel nibeditor anda; tiada apa-apa untuk ditampal.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Dalam Claude, buka Settings → Connectors dan klik Add custom connector.',
   'Open Claude’s connectors': 'Buka connectors Claude',
   'Fill in the two fields and click Add.': 'Isi kedua-dua medan dan klik Add.',
-  'Click Connect and sign in with your Nib email.': 'Klik Connect dan masuk dengan e-mel Nib anda.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Klik Connect dan masuk dengan e-mel nibeditor anda.',
   'Using Claude Code instead?': 'Menggunakan Claude Code?',
   Command: 'Perintah',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -655,16 +656,16 @@ export const ms: Dictionary = {
   'Open ChatGPT’s plugins': 'Buka plugins ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Tiada bahagian Plugins atau butang tambah? Hidupkan Developer mode dahulu, di Settings → Security and login.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'Masuk dengan e-mel Nib anda apabila ChatGPT bertanya.',
-  'To use it in a chat, type @ and pick Nib.':
-    'Untuk menggunakannya dalam sembang, taip @ dan pilih Nib.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'Masuk dengan e-mel nibeditor anda apabila ChatGPT bertanya.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'Untuk menggunakannya dalam sembang, taip @ dan pilih nibeditor.',
   'Server URL': 'URL pelayan',
   Authentication: 'Pengesahan',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Biarkan tetapan OAuth lanjutan seperti adanya dan tandakan “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'Mana-mana klien MCP yang bertutur Streamable HTTP dengan OAuth. Beri URL kepadanya: ia mendaftar sendiri dan membuka halaman masuk Nib.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'Mana-mana klien MCP yang bertutur Streamable HTTP dengan OAuth. Beri URL kepadanya: ia mendaftar sendiri dan membuka halaman masuk nibeditor.',
   'Show config': 'Tunjukkan konfigurasi',
   'For a client that takes a JSON block instead of a URL.':
     'Untuk klien yang menerima blok JSON dan bukan URL.',
@@ -1385,7 +1386,8 @@ export const ms: Dictionary = {
   'that is not a theme': 'itu bukan tema',
   'no such theme': 'tiada tema sedemikian',
   'choose a model first': 'pilih satu model dahulu',
-  'set an OpenAI key in Nib’s settings first': 'tetapkan kunci OpenAI dalam tetapan Nib dahulu',
+  'set an OpenAI key in nibeditor’s settings first':
+    'tetapkan kunci OpenAI dalam tetapan nibeditor dahulu',
   'that is a lot of questions - try again later': 'itu banyak soalan - cuba lagi nanti',
   'that is too much audio': 'itu terlalu banyak audio',
   'that is more than a spoken command': 'itu lebih daripada satu perintah lisan',
@@ -1584,6 +1586,6 @@ export const ms: Dictionary = {
   'Take over': 'Ambil alih',
   'Agents stopped': 'Ejen dihentikan',
   'Agent tabs closed': 'Tab ejen ditutup',
-  'Nib is still running for your agents': 'Nib masih berjalan untuk ejen anda',
+  'nibeditor is still running for your agents': 'nibeditor masih berjalan untuk ejen anda',
   '{client} wants to connect': '{client} ingin bersambung',
 }

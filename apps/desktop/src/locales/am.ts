@@ -418,8 +418,8 @@ export const am: Dictionary = {
   'Sign in to ask a question.': 'ጥያቄ ለመጠየቅ ግባ።',
   'Asking OpenAI which models this key can use': 'ይህ ቁልፍ የትኞቹን ሞዴሎች መጠቀም እንደሚችል OpenAIን በመጠየቅ ላይ',
   'Could not reach OpenAI': 'OpenAI ላይ መድረስ አልተቻለም',
-  'That key cannot use any of the models Nib asks for.':
-    'ያ ቁልፍ Nib የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
+  'That key cannot use any of the models nibeditor asks for.':
+    'ያ ቁልፍ nibeditor የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
   'No reasoning': 'አመክንዮ የለም',
   Minimal: 'አነስተኛ',
   Low: 'ዝቅተኛ',
@@ -441,7 +441,7 @@ export const am: Dictionary = {
   Mode: 'ዘዴ',
   // The window's own edges; see appearance.rs
   Window: 'መስኮት',
-  'Nib’s own': 'የNib ራሱ',
+  'nibeditor’s own': 'የnibeditor ራሱ',
   'The system’s': 'የሥርዓቱ',
   'Window frame': 'የመስኮት ክፈፍ',
   System: 'ሥርዓት',
@@ -562,7 +562,7 @@ export const am: Dictionary = {
   '{used} of {limit} used.': 'ከ{limit} {used} ተጠቅሟል።',
   'That image does not fit in your storage.': 'ያ ምስል በማከማቻህ ውስጥ አይገባም።',
   'out of space': 'ማከማቻ ሞልቷል',
-  'Nib {version} is ready to install.': 'Nib {version} ለመጫን ተዘጋጅቷል።',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} ለመጫን ተዘጋጅቷል።',
   'Restart now': 'አሁን እንደገና አስነሳ',
   Later: 'ቆይቶ',
   More: 'ተጨማሪ',
@@ -640,13 +640,13 @@ export const am: Dictionary = {
   'Reads your notes.': 'ማስታወሻዎችህን ያነባል።',
   'Reads and writes your notes.': 'ማስታወሻዎችህን ያነባል እና ይጽፋል።',
   Other: 'ሌላ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በNib ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በnibeditor ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'በClaude ውስጥ Settings → Connectors ክፈት እና Add custom connector ጫን።',
   'Open Claude’s connectors': 'የClaude አገናኞች ክፈት',
   'Fill in the two fields and click Add.': 'ሁለቱን ሳጥኖች ሙላ እና Add ጫን።',
-  'Click Connect and sign in with your Nib email.': 'Connect ጫን እና በNib ኢሜይልህ ግባ።',
+  'Click Connect and sign in with your nibeditor email.': 'Connect ጫን እና በnibeditor ኢሜይልህ ግባ።',
   'Using Claude Code instead?': 'Claude Code ትጠቀማለህ?',
   Command: 'ትዕዛዝ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -657,14 +657,14 @@ export const am: Dictionary = {
   'Open ChatGPT’s plugins': 'የChatGPT ተሰኪዎች ክፈት',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'የPlugins ክፍል ወይም የመደመር ቁልፍ የለም? መጀመሪያ በSettings → Security and login ውስጥ Developer mode አብራ።',
-  'Sign in with your Nib email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በNib ኢሜይልህ ግባ።',
-  'To use it in a chat, type @ and pick Nib.': 'በውይይት ለመጠቀም @ ጻፍ እና Nib ምረጥ።',
+  'Sign in with your nibeditor email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በnibeditor ኢሜይልህ ግባ።',
+  'To use it in a chat, type @ and pick nibeditor.': 'በውይይት ለመጠቀም @ ጻፍ እና nibeditor ምረጥ።',
   'Server URL': 'የአገልጋይ አድራሻ',
   Authentication: 'ማረጋገጫ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'የላቁ የOAuth ማስተካከያዎች እንዳሉ ተው እና “I understand and want to continue” ላይ ምልክት አድርግ።',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የNib መግቢያ ገጽ ይከፍታል።',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የnibeditor መግቢያ ገጽ ይከፍታል።',
   'Show config': 'ውቅር አሳይ',
   'For a client that takes a JSON block instead of a URL.': 'በአድራሻ ምትክ የJSON ብሎክ ለሚቀበል ደንበኛ።',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -1368,7 +1368,7 @@ export const am: Dictionary = {
   'that is not a theme': 'ያ ገጽታ አይደለም',
   'no such theme': 'እንዲህ ያለ ገጽታ የለም',
   'choose a model first': 'መጀመሪያ ሞዴል ምረጥ',
-  'set an OpenAI key in Nib’s settings first': 'መጀመሪያ በNib ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
+  'set an OpenAI key in nibeditor’s settings first': 'መጀመሪያ በnibeditor ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
   'that is a lot of questions - try again later': 'ያ ብዙ ጥያቄ ነው - ቆይተህ ሞክር',
   'that is too much audio': 'ያ በጣም ብዙ ድምፅ ነው',
   'that is more than a spoken command': 'ያ ከአንድ የድምፅ ትዕዛዝ በለጠ',
@@ -1568,6 +1568,6 @@ export const am: Dictionary = {
   'Take over': 'ተረከብ',
   'Agents stopped': 'ወኪሎች ቆመዋል',
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
-  'Nib is still running for your agents': 'Nib ለወኪሎችዎ አሁንም እየሰራ ነው',
+  'nibeditor is still running for your agents': 'nibeditor ለወኪሎችዎ አሁንም እየሰራ ነው',
   '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
 }

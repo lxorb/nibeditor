@@ -64,13 +64,13 @@ export const ar: Dictionary = {
   'Resend in {seconds}s': 'إعادة الإرسال بعد {seconds} ث',
   'Digit {number}': 'الرقم {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'سجّل الدخول إلى Nib أولًا.',
-  'Make a space in Nib first.': 'أنشئ مساحة في Nib أولًا.',
+  'Sign in to nibeditor first.': 'سجّل الدخول إلى nibeditor أولًا.',
+  'Make a space in nibeditor first.': 'أنشئ مساحة في nibeditor أولًا.',
   'This page cannot be clipped.': 'لا يمكن اقتطاف هذه الصفحة.',
   'There is nothing to clip here.': 'لا شيء هنا لاقتطافه.',
   'This clip is larger than a note can be.': 'هذا المقتطف أكبر مما تتحمله ملاحظة.',
   'Your account is out of space.': 'نفدت مساحة حسابك.',
-  'Could not reach Nib.': 'تعذّر الوصول إلى Nib.',
+  'Could not reach nibeditor.': 'تعذّر الوصول إلى nibeditor.',
   'Could not reach the provider.': 'تعذّر الوصول إلى المزوّد.',
   'The provider answered with something else.': 'أجاب المزوّد بشيء آخر.',
   // And what the sync service itself answers with, looked up like any other string

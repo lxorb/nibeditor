@@ -62,13 +62,13 @@ export const uk: Dictionary = {
   'Resend in {seconds}s': 'Повтор через {seconds} с',
   'Digit {number}': 'Цифра {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'Спершу увійдіть у Nib.',
-  'Make a space in Nib first.': 'Спершу створіть простір у Nib.',
+  'Sign in to nibeditor first.': 'Спершу увійдіть у nibeditor.',
+  'Make a space in nibeditor first.': 'Спершу створіть простір у nibeditor.',
   'This page cannot be clipped.': 'Цю сторінку не вирізати.',
   'There is nothing to clip here.': 'Тут нічого вирізати.',
   'This clip is larger than a note can be.': 'Ця вирізка більша, ніж може бути нотатка.',
   'Your account is out of space.': 'У вашому акаунті немає місця.',
-  'Could not reach Nib.': 'Не вдалося зв’язатися з Nib.',
+  'Could not reach nibeditor.': 'Не вдалося зв’язатися з nibeditor.',
   'Could not reach the provider.': 'Не вдалося зв’язатися з постачальником.',
   'The provider answered with something else.': 'Постачальник відповів чимось іншим.',
   // And what the sync service itself answers with, looked up like any other string

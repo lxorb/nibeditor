@@ -420,8 +420,8 @@ export const fa: Dictionary = {
   'Asking OpenAI which models this key can use':
     'پرسیدن از OpenAI که این کلید چه مدل‌هایی را می‌تواند به کار برد',
   'Could not reach OpenAI': 'OpenAI در دسترس نبود',
-  'That key cannot use any of the models Nib asks for.':
-    'آن کلید هیچ‌یک از مدل‌هایی که Nib می‌خواهد را نمی‌تواند به کار برد.',
+  'That key cannot use any of the models nibeditor asks for.':
+    'آن کلید هیچ‌یک از مدل‌هایی که nibeditor می‌خواهد را نمی‌تواند به کار برد.',
   'No reasoning': 'بی‌استدلال',
   Minimal: 'کمینه',
   Low: 'کم',
@@ -443,7 +443,7 @@ export const fa: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'پنجره',
-  'Nib’s own': 'خودِ Nib',
+  'nibeditor’s own': 'خودِ nibeditor',
   'The system’s': 'سیستم',
   'Window frame': 'قاب پنجره',
   System: 'سامانه',
@@ -565,7 +565,7 @@ export const fa: Dictionary = {
   '{used} of {limit} used.': '{used} از {limit} به کار رفته.',
   'That image does not fit in your storage.': 'آن تصویر در انبار شما جا نمی‌شود.',
   'out of space': 'انبار پر است',
-  'Nib {version} is ready to install.': 'Nib {version} آماده نصب است.',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} آماده نصب است.',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
   Later: 'بعداً',
   More: 'بیشتر',
@@ -644,14 +644,14 @@ export const fa: Dictionary = {
   'Reads your notes.': 'یادداشت‌های شما را می‌خواند.',
   'Reads and writes your notes.': 'یادداشت‌های شما را می‌خواند و می‌نویسد.',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه Nib شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه nibeditor شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'در Claude، Settings → Connectors را بگشایید و Add custom connector را بزنید.',
   'Open Claude’s connectors': 'گشودن رابط‌های Claude',
   'Fill in the two fields and click Add.': 'دو خانه را پر کنید و Add را بزنید.',
-  'Click Connect and sign in with your Nib email.':
-    'Connect را بزنید و با رایانامه Nib خود وارد شوید.',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect را بزنید و با رایانامه nibeditor خود وارد شوید.',
   'Using Claude Code instead?': 'از Claude Code استفاده می‌کنید؟',
   Command: 'فرمان',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -662,16 +662,16 @@ export const fa: Dictionary = {
   'Open ChatGPT’s plugins': 'گشودن افزونه‌های ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'بخش Plugins یا دکمه افزودن نیست؟ نخست Developer mode را در Settings → Security and login روشن کنید.',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'هنگامی که ChatGPT پرسید، با رایانامه Nib خود وارد شوید.',
-  'To use it in a chat, type @ and pick Nib.':
-    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و Nib را برگزینید.',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'هنگامی که ChatGPT پرسید، با رایانامه nibeditor خود وارد شوید.',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و nibeditor را برگزینید.',
   'Server URL': 'نشانی کارساز',
   Authentication: 'اصالت‌سنجی',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'تنظیم‌های پیشرفته OAuth را همان‌گونه بگذارید و “I understand and want to continue” را بزنید.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود Nib را می‌گشاید.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود nibeditor را می‌گشاید.',
   'Show config': 'نمایش پیکربندی',
   'For a client that takes a JSON block instead of a URL.':
     'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
@@ -1389,7 +1389,7 @@ export const fa: Dictionary = {
   'that is not a theme': 'آن پوسته نیست',
   'no such theme': 'چنین پوسته‌ای نیست',
   'choose a model first': 'نخست مدلی برگزینید',
-  'set an OpenAI key in Nib’s settings first': 'نخست در تنظیم Nib کلید OpenAI بگذارید',
+  'set an OpenAI key in nibeditor’s settings first': 'نخست در تنظیم nibeditor کلید OpenAI بگذارید',
   'that is a lot of questions - try again later': 'آن پرسش بسیار است - بعداً بیازمایید',
   'that is too much audio': 'آن صدای بسیار است',
   'that is more than a spoken command': 'آن بیش از یک فرمان گفتاری است',
@@ -1589,6 +1589,6 @@ export const fa: Dictionary = {
   'Take over': 'در دست گرفتن',
   'Agents stopped': 'عامل‌ها ایستانده شدند',
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
-  'Nib is still running for your agents': 'Nib هنوز برای عامل‌های شما کار می‌کند',
+  'nibeditor is still running for your agents': 'nibeditor هنوز برای عامل‌های شما کار می‌کند',
   '{client} wants to connect': '{client} می‌خواهد وصل شود',
 }

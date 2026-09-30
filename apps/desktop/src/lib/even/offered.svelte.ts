@@ -91,7 +91,7 @@ export class Offered {
 
     this.models = found
     if (!found.length) {
-      this.said = t('That key cannot use any of the models Nib asks for.')
+      this.said = t('That key cannot use any of the models nibeditor asks for.')
       return
     }
 

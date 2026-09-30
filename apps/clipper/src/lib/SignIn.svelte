@@ -137,7 +137,7 @@
 <!-- The app's own mark, from the icon the extension already ships, rather than a
      second drawing of it that could drift from the first. -->
 <div class="mark">
-  <img src="/icons/128.png" width="38" height="38" alt="Nib" />
+  <img src="/icons/128.png" width="38" height="38" alt="nibeditor" />
 </div>
 
 {#if step === 'email'}

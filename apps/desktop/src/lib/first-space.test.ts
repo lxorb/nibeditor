@@ -162,8 +162,40 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/Notes/${WELCOME_NAME}`, earlier)).toBe(true)
   })
 
+  /** Every device seeded before the app was called nibeditor holds these words,
+   *  and they are still the app's, not the reader's. */
+  test('nor the one written under the old name', () => {
+    const earlier = [
+      '# Welcome to Nib',
+      '',
+      'Your notes live on this device until you sign in',
+      'and turn on syncing, and then they follow you everywhere.',
+      '',
+      '- Everything is markdown, and nothing else',
+      '- **Bold**, *italic*, ==highlight==, `code`',
+      '- $E = mc^2$ renders as you type',
+      '',
+      '```js',
+      "const hello = 'world'",
+      '```',
+      '',
+      '| What | Where |',
+      '| ---- | ----- |',
+      '| Notes | this device |',
+      '| Synced notes | your account |',
+      '',
+    ].join('\n')
+
+    expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, earlier)).toBe(true)
+    expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
+  })
+
   test('says nothing about which build it is in', () => {
     expect(WELCOME).not.toMatch(/browser/i)
+  })
+
+  test('says the name the app goes by', () => {
+    expect(WELCOME.split('\n')[0]).toBe('# Welcome to nibeditor')
   })
 })
 

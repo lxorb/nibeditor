@@ -59,13 +59,13 @@ export const hi: Dictionary = {
   'Resend in {seconds}s': '{seconds} सेकंड में फिर भेजें',
   'Digit {number}': 'अंक {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'पहले Nib में साइन इन करें।',
-  'Make a space in Nib first.': 'पहले Nib में एक स्पेस बनाएँ।',
+  'Sign in to nibeditor first.': 'पहले nibeditor में साइन इन करें।',
+  'Make a space in nibeditor first.': 'पहले nibeditor में एक स्पेस बनाएँ।',
   'This page cannot be clipped.': 'यह पेज क्लिप नहीं हो सकता।',
   'There is nothing to clip here.': 'यहाँ क्लिप करने के लिए कुछ नहीं है।',
   'This clip is larger than a note can be.': 'यह क्लिप एक नोट से बड़ी है।',
   'Your account is out of space.': 'आपके खाते में जगह नहीं बची।',
-  'Could not reach Nib.': 'Nib तक नहीं पहुँच सके।',
+  'Could not reach nibeditor.': 'nibeditor तक नहीं पहुँच सके।',
   'Could not reach the provider.': 'प्रदाता तक नहीं पहुँच सके।',
   'The provider answered with something else.': 'प्रदाता ने कुछ और उत्तर दिया।',
   // And what the sync service itself answers with, looked up like any other string

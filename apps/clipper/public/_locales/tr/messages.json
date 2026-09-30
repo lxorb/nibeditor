@@ -1,6 +1,8 @@
 {
-  "name": { "message": "Nib" },
-  "description": { "message": "Bir sayfayı, bir seçimi ya da bir bağlantıyı Nib notlarına kırp." },
+  "name": { "message": "nibeditor" },
+  "description": {
+    "message": "Bir sayfayı, bir seçimi ya da bir bağlantıyı nibeditor notlarına kırp."
+  },
   "clipPage": { "message": "Sayfayı kırp" },
   "clipSelection": { "message": "Seçimi kırp" },
   "clipLink": { "message": "Bağlantıyı kırp" }

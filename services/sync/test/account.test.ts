@@ -120,7 +120,7 @@ describe('the door', () => {
     expect(answer.json.second).toBe(false)
     expect(code).toMatch(/^\d{6}$/)
     expect(mailed).toContain(ME)
-    expect(mailed).toContain('delete your Nib account')
+    expect(mailed).toContain('delete your nibeditor account')
   })
 
   test('refuses a wrong code, and the account stays', async () => {
@@ -162,7 +162,7 @@ describe('the door', () => {
     const receipt = await mail(() => confirm(json.ticket))
 
     expect(receipt).toContain(ME)
-    expect(receipt).toContain('Your Nib account has been deleted')
+    expect(receipt).toContain('Your nibeditor account has been deleted')
     // A receipt counts against nothing, so it writes nothing at the address.
     expect(env.db.prepare('select count(*) as many from limits where key = ?').get(ME)).toEqual({
       many: 0,

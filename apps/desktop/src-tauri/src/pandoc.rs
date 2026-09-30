@@ -163,7 +163,7 @@ pub fn import_document(path: String) -> Result<String, String> {
         .parent()
         .filter(|parent| parent.is_dir())
         .map(Path::to_path_buf)
-        .ok_or_else(|| format!("{path} is not in a folder Nib can write to"))?;
+        .ok_or_else(|| format!("{path} is not in a folder nibeditor can write to"))?;
     let source = source.to_string_lossy().to_string();
 
     let result = pandoc()

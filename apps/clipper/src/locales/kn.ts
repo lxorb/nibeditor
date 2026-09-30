@@ -61,13 +61,13 @@ export const kn: Dictionary = {
   'Resend in {seconds}s': '{seconds} ಸೆಕೆಂಡಿನಲ್ಲಿ ಮತ್ತೆ ಕಳುಹಿಸಿ',
   'Digit {number}': 'ಅಂಕಿ {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'ಮೊದಲು Nib ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
-  'Make a space in Nib first.': 'ಮೊದಲು Nib ನಲ್ಲಿ ಸ್ಪೇಸ್ ಮಾಡಿ.',
+  'Sign in to nibeditor first.': 'ಮೊದಲು nibeditor ಗೆ ಸೈನ್ ಇನ್ ಮಾಡಿ.',
+  'Make a space in nibeditor first.': 'ಮೊದಲು nibeditor ನಲ್ಲಿ ಸ್ಪೇಸ್ ಮಾಡಿ.',
   'This page cannot be clipped.': 'ಈ ಪುಟವನ್ನು ಕ್ಲಿಪ್ ಮಾಡಲಾಗದು.',
   'There is nothing to clip here.': 'ಇಲ್ಲಿ ಕ್ಲಿಪ್ ಮಾಡಲು ಏನೂ ಇಲ್ಲ.',
   'This clip is larger than a note can be.': 'ಈ ಕ್ಲಿಪ್ ಟಿಪ್ಪಣಿಗಿಂತ ದೊಡ್ಡದು.',
   'Your account is out of space.': 'ನಿಮ್ಮ ಖಾತೆಯಲ್ಲಿ ಸಂಗ್ರಹಣೆ ಇಲ್ಲ.',
-  'Could not reach Nib.': 'Nib ತಲುಪಲಾಗಲಿಲ್ಲ.',
+  'Could not reach nibeditor.': 'nibeditor ತಲುಪಲಾಗಲಿಲ್ಲ.',
   'Could not reach the provider.': 'ಪೂರೈಕೆದಾರ ತಲುಪಲಾಗಲಿಲ್ಲ.',
   'The provider answered with something else.': 'ಪೂರೈಕೆದಾರ ಬೇರೆ ಏನನ್ನೋ ಉತ್ತರಿಸಿದೆ.',
   // And what the sync service itself answers with, looked up like any other string

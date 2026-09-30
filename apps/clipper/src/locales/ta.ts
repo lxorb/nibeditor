@@ -63,14 +63,14 @@ export const ta: Dictionary = {
   'Resend in {seconds}s': '{seconds} வினாடியில் மீண்டும் அனுப்பு',
   'Digit {number}': 'இலக்கம் {number}',
   // What can go wrong, as one sentence each; see ../lib/problems.ts
-  'Sign in to Nib first.': 'முதலில் Nib இல் உள்நுழையுங்கள்.',
-  'Make a space in Nib first.': 'முதலில் Nib இல் ஒரு இடத்தை உருவாக்குங்கள்.',
+  'Sign in to nibeditor first.': 'முதலில் nibeditor இல் உள்நுழையுங்கள்.',
+  'Make a space in nibeditor first.': 'முதலில் nibeditor இல் ஒரு இடத்தை உருவாக்குங்கள்.',
   'This page cannot be clipped.': 'இந்தப் பக்கத்தைத் துணுக்காக எடுக்க முடியாது.',
   'There is nothing to clip here.': 'இங்கே எடுக்க ஒன்றும் இல்லை.',
   'This clip is larger than a note can be.':
     'இந்தத் துணுக்கு ஒரு குறிப்பு இருக்கக்கூடியதைவிடப் பெரியது.',
   'Your account is out of space.': 'உங்கள் கணக்கில் சேமிப்பிடம் இல்லை.',
-  'Could not reach Nib.': 'Nib ஐ அணுக முடியவில்லை.',
+  'Could not reach nibeditor.': 'nibeditor ஐ அணுக முடியவில்லை.',
   'Could not reach the provider.': 'வழங்குநரை அணுக முடியவில்லை.',
   'The provider answered with something else.': 'வழங்குநர் வேறு எதையோ பதிலளித்தது.',
   // And what the sync service itself answers with, looked up like any other string

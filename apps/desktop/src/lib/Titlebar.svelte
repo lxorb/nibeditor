@@ -60,7 +60,7 @@
   /** A phone and a tablet show one document, so the bar says which one. The mark in
    *  front of the name is the same one the desktop's tab wears, because this bar is
    *  that strip on a screen that holds one document; see TabMark.svelte. */
-  const title = $derived(workspace.active?.shown ?? 'Nib')
+  const title = $derived(workspace.active?.shown ?? 'nibeditor')
   const showing = $derived(workspace.active)
 
   async function minimize() {

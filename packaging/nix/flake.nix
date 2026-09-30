@@ -8,7 +8,7 @@
   #
   #   nix profile install github:lxorb/nibeditor?dir=packaging/nix
   #   nix run github:lxorb/nibeditor?dir=packaging/nix
-  description = "Nib, a markdown editor with realtime inline preview";
+  description = "nibeditor, a markdown editor with realtime inline preview";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 

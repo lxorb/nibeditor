@@ -420,8 +420,8 @@ export const ur: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAI سے پوچھ رہے ہیں کہ یہ کلید کون سے ماڈل استعمال کر سکتی ہے',
   'Could not reach OpenAI': 'OpenAI تک نہیں پہنچ سکے',
-  'That key cannot use any of the models Nib asks for.':
-    'یہ کلید Nib کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
+  'That key cannot use any of the models nibeditor asks for.':
+    'یہ کلید nibeditor کے مطلوبہ ماڈلز میں سے کوئی بھی استعمال نہیں کر سکتی۔',
   'No reasoning': 'استدلال نہیں',
   Minimal: 'معمولی',
   Low: 'کم',
@@ -443,7 +443,7 @@ export const ur: Dictionary = {
   Mode: 'موڈ',
   // The window's own edges; see appearance.rs
   Window: 'ونڈو',
-  'Nib’s own': 'Nib کا اپنا',
+  'nibeditor’s own': 'nibeditor کا اپنا',
   'The system’s': 'سسٹم کا',
   'Window frame': 'ونڈو کا فریم',
   System: 'سسٹم',
@@ -565,7 +565,7 @@ export const ur: Dictionary = {
   '{used} of {limit} used.': '{limit} میں سے {used} استعمال ہوا۔',
   'That image does not fit in your storage.': 'یہ تصویر آپ کے ذخیرے میں نہیں سماتی۔',
   'out of space': 'ذخیرہ ختم',
-  'Nib {version} is ready to install.': 'Nib {version} انسٹال کے لیے تیار ہے۔',
+  'nibeditor {version} is ready to install.': 'nibeditor {version} انسٹال کے لیے تیار ہے۔',
   'Restart now': 'ابھی دوبارہ شروع کریں',
   Later: 'بعد میں',
   More: 'مزید',
@@ -643,14 +643,14 @@ export const ur: Dictionary = {
   'Reads your notes.': 'آپ کے نوٹس پڑھتا ہے۔',
   'Reads and writes your notes.': 'آپ کے نوٹس پڑھتا اور لکھتا ہے۔',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Nib email; there is nothing to paste.':
-    'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے Nib ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
+    'AI مددگار آپ کے نوٹس پڑھ سکتا ہے - اور اجازت دیں تو بدل بھی سکتا ہے۔ وہ آپ کے nibeditor ای میل سے سائن ان کرتا ہے؛ کچھ چسپاں نہیں کرنا۔',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude میں ترتیبات → Connectors کھولیں اور Add custom connector پر کلک کریں۔',
   'Open Claude’s connectors': 'Claude کے کنیکٹر کھولیں',
   'Fill in the two fields and click Add.': 'دونوں خانے بھریں اور Add پر کلک کریں۔',
-  'Click Connect and sign in with your Nib email.':
-    'Connect پر کلک کریں اور Nib ای میل سے سائن ان کریں۔',
+  'Click Connect and sign in with your nibeditor email.':
+    'Connect پر کلک کریں اور nibeditor ای میل سے سائن ان کریں۔',
   'Using Claude Code instead?': 'اس کی جگہ Claude Code استعمال کر رہے ہیں؟',
   Command: 'کمانڈ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -661,15 +661,16 @@ export const ur: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT کے پلگ اِن کھولیں',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins کا حصہ یا جمع کا بٹن نہیں؟ پہلے ترتیبات → Security and login میں Developer mode آن کریں۔',
-  'Sign in with your Nib email when ChatGPT asks.':
-    'جب ChatGPT پوچھے تو Nib ای میل سے سائن ان کریں۔',
-  'To use it in a chat, type @ and pick Nib.': 'چیٹ میں استعمال کے لیے @ لکھیں اور Nib چنیں۔',
+  'Sign in with your nibeditor email when ChatGPT asks.':
+    'جب ChatGPT پوچھے تو nibeditor ای میل سے سائن ان کریں۔',
+  'To use it in a chat, type @ and pick nibeditor.':
+    'چیٹ میں استعمال کے لیے @ لکھیں اور nibeditor چنیں۔',
   'Server URL': 'سرور URL',
   Authentication: 'تصدیقِ شناخت',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'اعلیٰ OAuth ترتیبات ویسی ہی رہنے دیں اور “I understand and want to continue” پر نشان لگائیں۔',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Nib’s sign-in page.':
-    'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر Nib کا سائن ان صفحہ کھولتا ہے۔',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
+    'کوئی بھی MCP کلائنٹ جو OAuth کے ساتھ Streamable HTTP بولتا ہے۔ اسے URL دیں: وہ خود رجسٹر ہو کر nibeditor کا سائن ان صفحہ کھولتا ہے۔',
   'Show config': 'کنفیگ دکھائیں',
   'For a client that takes a JSON block instead of a URL.':
     'اس کلائنٹ کے لیے جو URL کی جگہ JSON بلاک لیتا ہے۔',
@@ -1385,7 +1386,8 @@ export const ur: Dictionary = {
   'that is not a theme': 'یہ تھیم نہیں ہے',
   'no such theme': 'ایسی تھیم نہیں',
   'choose a model first': 'پہلے ماڈل منتخب کریں',
-  'set an OpenAI key in Nib’s settings first': 'پہلے Nib کی ترتیبات میں OpenAI کلید مقرر کریں',
+  'set an OpenAI key in nibeditor’s settings first':
+    'پہلے nibeditor کی ترتیبات میں OpenAI کلید مقرر کریں',
   'that is a lot of questions - try again later': 'بہت زیادہ سوال - بعد میں کوشش کریں',
   'that is too much audio': 'یہ بہت زیادہ آڈیو ہے',
   'that is more than a spoken command': 'یہ بولی گئی کمانڈ سے زیادہ ہے',
@@ -1585,6 +1587,6 @@ export const ur: Dictionary = {
   'Take over': 'کنٹرول لیں',
   'Agents stopped': 'ایجنٹ روک دیے گئے',
   'Agent tabs closed': 'ایجنٹ ٹیب بند ہو گئے',
-  'Nib is still running for your agents': 'آپ کے ایجنٹوں کے لیے Nib اب بھی چل رہا ہے',
+  'nibeditor is still running for your agents': 'آپ کے ایجنٹوں کے لیے nibeditor اب بھی چل رہا ہے',
   '{client} wants to connect': '{client} جڑنا چاہتا ہے',
 }

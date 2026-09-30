@@ -17,7 +17,7 @@ base: core24
 version: '0.8.0'
 summary: Markdown editor with live preview
 description: |
-  Nib is a small markdown editor that formats what you write as you write it.
+  nibeditor is a small markdown editor that formats what you write as you write it.
 
   There is no split screen and no preview pane: headings, emphasis, lists,
   tables, code and math take their final shape in the same window you type in,
@@ -30,7 +30,7 @@ description: |
   * Publish a file as a page on the web, with a custom domain if you have one
   * Export to PDF and HTML
 
-  Nib is free software under the GNU Affero General Public License. The same
+  nibeditor is free software under the GNU Affero General Public License. The same
   editor also runs in a browser at nibeditor.com.
 license: AGPL-3.0-only
 website: https://nibeditor.com
@@ -98,7 +98,7 @@ parts:
       cat > "${CRAFT_PART_INSTALL}/usr/share/applications/nib.desktop" <<'DESKTOP'
       [Desktop Entry]
       Type=Application
-      Name=Nib
+      Name=nibeditor
       GenericName=Markdown Editor
       Comment=Write markdown and see it as you type
       Exec=nib %F
