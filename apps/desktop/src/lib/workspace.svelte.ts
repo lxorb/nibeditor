@@ -82,7 +82,6 @@ import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
-import { undoLastFileAction } from './workspace/undoing'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
@@ -3591,8 +3590,11 @@ class Workspace {
   }
 
   /** Puts the last file operation back; what each kind means going back is
-   *  workspace/undoing.ts, and what is on the stack is workspace/undo.svelte.ts. */
+   *  workspace/undoing.ts, and what is on the stack is workspace/undo.svelte.ts.
+   *  Fetched with the first undo, like the redo beside it: a window opens on a note
+   *  and not on a file operation to take back. See test/weight.test.ts. */
   async undoFileAction() {
+    const { undoLastFileAction } = await import('./workspace/undoing')
     await undoLastFileAction(this)
   }
 
