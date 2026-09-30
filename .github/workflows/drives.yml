@@ -26,7 +26,8 @@ on:
         default: ''
 
 # One run at a time, and a second one waits rather than cancelling the first: a
-# night's table half written is worth less than a morning's whole one.
+# night's table half written is worth less than a morning's whole one. GitHub keeps
+# one waiting and no more, so a third asked for meanwhile takes the second's place.
 concurrency:
   group: drives
   cancel-in-progress: false
