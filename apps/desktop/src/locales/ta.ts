@@ -197,7 +197,6 @@ export const ta: Dictionary = {
   'That tag could not be deleted.': 'அந்தக் குறிச்சொல்லை நீக்க முடியவில்லை.',
   'Show sidebar': 'பக்கப்பட்டியைக் காட்டு',
   'Hide sidebar': 'பக்கப்பட்டியை மறை',
-  'Go to note, or > for commands': 'குறிப்புக்குச் செல், கட்டளைகளுக்கு >',
   'Search notes and commands': 'குறிப்புகளையும் கட்டளைகளையும் தேடு',
   'Sort by relevance': 'பொருத்தப்படி வரிசைப்படுத்து',
   'Page {page}': 'பக்கம் {page}',

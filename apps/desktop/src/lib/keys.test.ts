@@ -416,3 +416,17 @@ describe('a chord that is held', () => {
     expect(withShift('Mod-Shift-t')).toBe('Mod-Shift-t')
   })
 })
+
+describe('a modifier tapped twice', () => {
+  test('reads the way it is pressed: the sign twice on a Mac, the name twice elsewhere', () => {
+    expect(showCombination('Shift Shift', 'win')).toBe('Shift Shift')
+    expect(showCombination('Mod Mod', 'win')).toBe('Ctrl Ctrl')
+    expect(showCombination('Meta Meta', 'linux')).toBe('Super Super')
+    expect(showCombination('Shift Shift', 'mac')).toBe('⇧⇧')
+    expect(showCombination('Mod Mod', 'mac')).toBe('⌘⌘')
+  })
+
+  test('is no keystroke', () => {
+    expect(matchesCombination('Shift Shift', press('Shift', { shiftKey: true }), 'win')).toBe(false)
+  })
+})

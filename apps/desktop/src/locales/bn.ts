@@ -197,7 +197,6 @@ export const bn: Dictionary = {
   'That tag could not be deleted.': 'ট্যাগ মোছা গেল না।',
   'Show sidebar': 'সাইডবার দেখান',
   'Hide sidebar': 'সাইডবার লুকান',
-  'Go to note, or > for commands': 'নোটে যান, বা কমান্ডের জন্য >',
   'Search notes and commands': 'নোট ও কমান্ড খোঁজ',
   'Sort by relevance': 'মিল অনুযায়ী',
   'Page {page}': 'পৃষ্ঠা {page}',

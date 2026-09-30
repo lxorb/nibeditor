@@ -197,7 +197,6 @@ export const ptPT: Dictionary = {
   'That tag could not be deleted.': 'Não foi possível eliminar essa etiqueta.',
   'Show sidebar': 'Mostrar a barra lateral',
   'Hide sidebar': 'Ocultar a barra lateral',
-  'Go to note, or > for commands': 'Ir para uma nota, ou > para comandos',
   'Search notes and commands': 'Procurar notas e comandos',
   'Sort by relevance': 'Ordenar por relevância',
   'Page {page}': 'Página {page}',

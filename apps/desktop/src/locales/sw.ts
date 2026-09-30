@@ -197,7 +197,6 @@ export const sw: Dictionary = {
   'That tag could not be deleted.': 'Lebo hiyo haikuweza kufutwa.',
   'Show sidebar': 'Onyesha utepe',
   'Hide sidebar': 'Ficha utepe',
-  'Go to note, or > for commands': 'Nenda kwenye dokezo, au > kwa amri',
   'Search notes and commands': 'Tafuta madokezo na amri',
   'Sort by relevance': 'Panga kwa umuhimu',
   'Page {page}': 'Ukurasa {page}',

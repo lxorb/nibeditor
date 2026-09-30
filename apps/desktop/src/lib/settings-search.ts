@@ -55,5 +55,12 @@ function words(field: Field, group: Group, pane: Pane): string[] {
 
   // The sentence behind a setting's `i` is words about it, and somebody looking
   // for "footnotes" is looking for the switch that turns them off.
-  return [field.label, group.title, pane.label, ...(field.hint ? [field.hint] : []), ...own]
+  return [
+    field.label,
+    group.title,
+    pane.label,
+    ...(field.hint ? [field.hint] : []),
+    ...own,
+    ...(field.words ?? []),
+  ]
 }

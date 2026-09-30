@@ -198,7 +198,6 @@ export const de: Dictionary = {
   'That tag could not be deleted.': 'Dieses Schlagwort liess sich nicht löschen.',
   'Show sidebar': 'Seitenleiste zeigen',
   'Hide sidebar': 'Seitenleiste ausblenden',
-  'Go to note, or > for commands': 'Zur Notiz, oder > für Befehle',
   'Search notes and commands': 'Notizen und Befehle durchsuchen',
   'Sort by relevance': 'Nach Relevanz sortieren',
   'Page {page}': 'Seite {page}',

@@ -99,6 +99,12 @@ class Visited {
     return completion(this.rows(book), typed, Date.now())
   }
 
+  /** Every page it holds, for the palette, which weighs them with everything else it
+   *  finds rather than taking the field's few. */
+  all(book: Book): readonly Visit[] {
+    return this.rows(book)
+  }
+
   /** The pages worth offering under the field for `typed`. */
   suggest(book: Book, typed: string): Visit[] {
     return suggested(this.rows(book), typed, Date.now())

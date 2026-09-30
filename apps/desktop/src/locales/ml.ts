@@ -197,7 +197,6 @@ export const ml: Dictionary = {
   'That tag could not be deleted.': 'ആ ടാഗ് ഇല്ലാതാക്കാനായില്ല.',
   'Show sidebar': 'സൈഡ്‌ബാർ കാണിക്കുക',
   'Hide sidebar': 'സൈഡ്‌ബാർ മറയ്ക്കുക',
-  'Go to note, or > for commands': 'കുറിപ്പിലേക്ക് പോകുക, കമാൻഡുകൾക്ക് >',
   'Search notes and commands': 'കുറിപ്പുകളും കമാൻഡുകളും തിരയുക',
   'Sort by relevance': 'പ്രസക്തി അനുസരിച്ച് ക്രമം',
   'Page {page}': 'പേജ് {page}',

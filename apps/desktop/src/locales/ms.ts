@@ -197,7 +197,6 @@ export const ms: Dictionary = {
   'That tag could not be deleted.': 'Tag itu tidak dapat dihapuskan.',
   'Show sidebar': 'Tunjukkan bar sisi',
   'Hide sidebar': 'Sembunyikan bar sisi',
-  'Go to note, or > for commands': 'Ke nota, atau > untuk perintah',
   'Search notes and commands': 'Cari nota dan perintah',
   'Sort by relevance': 'Susun mengikut kaitan',
   'Page {page}': 'Halaman {page}',

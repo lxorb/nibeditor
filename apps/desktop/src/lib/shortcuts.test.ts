@@ -640,7 +640,8 @@ describe('the keyboard', () => {
     let opened = 0
     const context = { palette: () => opened++, fullscreen: () => undefined }
 
-    shortcuts.set('app.palette', 'Mod-Alt-9')
+    // Ctrl+P is the palette's second key; its first is Shift twice, below.
+    shortcuts.set('app.palette.alt', 'Mod-Alt-9')
 
     expect(shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), context)).toBe(false)
     expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
@@ -693,7 +694,7 @@ describe('the keyboard', () => {
 
   test('leaves a key nothing is bound to alone', () => {
     const { shortcuts } = registry
-    shortcuts.set('app.palette', null)
+    shortcuts.set('app.palette.alt', null)
 
     const ran = shortcuts.handle(press('p', { ctrl: true, code: 'KeyP' }), {
       palette: () => undefined,

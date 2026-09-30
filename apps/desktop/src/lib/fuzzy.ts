@@ -10,11 +10,15 @@ import { foldName } from '@nib/markdown/links'
 export function fuzzy(query: string, text: string): number | null {
   if (!query) return 0
 
-  const needle = foldName(query)
-  const haystack = foldName(text)
+  const score = walked(foldName(query), foldName(text), 0)
+  // Shorter targets win ties: an exact-length match is the best kind.
+  return score === null ? null : score - Math.floor(text.length / 12)
+}
 
+/** `fuzzy` over folded strings, from `first`; `at` takes where each letter landed. */
+export function walked(needle: string, haystack: string, first: number, at?: number[]) {
   let score = 0
-  let cursor = 0
+  let cursor = first
   let previous = -2
 
   for (const character of needle) {
@@ -22,17 +26,16 @@ export function fuzzy(query: string, text: string): number | null {
     if (found < 0) return null
 
     if (found === previous + 1) score += 8
-    // `charAt` rather than an index: at the start of the string there is no
-    // character before it, and it answers an empty one instead of undefined.
+    // `charAt`, which answers '' before the first letter rather than undefined.
     if (found === 0 || /[\s/\\_.-]/.test(haystack.charAt(found - 1))) score += 6
     score -= Math.min(found - cursor, 12)
 
+    at?.push(found)
     previous = found
     cursor = found + 1
   }
 
-  // Shorter targets win ties: an exact-length match is the best kind.
-  return score - Math.floor(text.length / 12)
+  return score
 }
 
 /** The best any of several readings of one thing scores: a note is found by its

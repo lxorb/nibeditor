@@ -197,7 +197,6 @@ export const am: Dictionary = {
   'That tag could not be deleted.': 'ያ መለያ ማጥፋት አልተቻለም።',
   'Show sidebar': 'የጎን ሰሌዳ አሳይ',
   'Hide sidebar': 'የጎን ሰሌዳ ደብቅ',
-  'Go to note, or > for commands': 'ወደ ማስታወሻ ሂድ፣ ወይም ለትዕዛዞች >',
   'Search notes and commands': 'ማስታወሻዎችና ትዕዛዞች ፈልግ',
   'Sort by relevance': 'በተዛማጅነት አስተካክል',
   'Page {page}': 'ገጽ {page}',
