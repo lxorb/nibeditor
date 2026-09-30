@@ -4,7 +4,9 @@
  *  crate hands over the one the app was launched by, it emits every later one, and
  *  a browser that registered `web+nib://` reloads the page with it in `?nib=`. A
  *  request from the `nib` command arrives as an event from the endpoint. Both go
- *  through `dispatch`; see verbs.ts.
+ *  through `dispatch`; see verbs.ts. A web page another program handed over is
+ *  started here too, but it asks nothing of a space and is only shown: see
+ *  web-tab/handed.ts.
  *
  *  What is here rather than in verbs.ts: everything about arriving and answering -
  *  the listeners, the callbacks, and the one sentence the reader is shown when a
@@ -64,7 +66,13 @@ export async function startAutomation(): Promise<() => void> {
   // browser tab has no socket. The answer goes back through a command rather than
   // an event because it belongs to one request - the crate is holding a socket open
   // for it, and nothing else should hear it. See src-tauri/src/endpoint.rs.
+  //
+  // And a link clicked in another program, which a desktop hands over once nib is its
+  // browser; see web-tab/handed.ts.
   if (isDesktop) {
+    const { hearPages } = await import('../web-tab/handed')
+    stopping.push(await hearPages())
+
     stopping.push(
       await listen<Request>('nib://automation', (event) => {
         const asked = event.payload

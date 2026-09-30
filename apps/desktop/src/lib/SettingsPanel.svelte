@@ -9,6 +9,7 @@
   import { exportCommands } from './commands'
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
+  import DefaultBrowser from './settings/DefaultBrowser.svelte'
   import Hint from './Hint.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
@@ -136,6 +137,7 @@
         label: t('Reload themes and custom CSS'),
         text: [t('Custom')],
       })
+      all.push({ section: 'general', label: t('Default browser'), text: [t('Make default')] })
     }
 
     if (account.user) {
@@ -614,6 +616,20 @@
   {/if}
 {/snippet}
 
+<!-- Nib as the browser links from other programs open in: a desktop's alone, since a
+     phone's links are its own browser's and a page in a browser is inside one already.
+     The control is its own component because it asks the system and listens for the
+     window coming back; see settings/DefaultBrowser.svelte. -->
+{#snippet browserRow()}
+  <h3>{t('Browser')}</h3>
+  <div class="card">
+    <div class="nib-setting setting">
+      <span class="name">{t('Default browser')}</span>
+      <DefaultBrowser />
+    </div>
+  </div>
+{/snippet}
+
 <!-- The words the reader has said are words. Written out here rather than as
      another kind of generated field, because there is one list like this in the
      whole app and a new kind would be a new shape every other reader of a field
@@ -681,6 +697,10 @@
         {/if}
       {/if}
     {/each}
+
+    {#if settings.section === 'general' && isDesktop}
+      {@render browserRow()}
+    {/if}
 
     {#if settings.section === 'export'}
       {@render exportExtras()}

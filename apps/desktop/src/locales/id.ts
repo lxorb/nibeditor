@@ -1546,4 +1546,6 @@ export const id: Dictionary = {
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',
   'Paste {count} lines?': 'Tempel {count} baris?',
+  // Nib as the default browser
+  'Default browser': 'Peramban bawaan',
 }

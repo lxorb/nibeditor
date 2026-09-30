@@ -1510,4 +1510,6 @@ export const zhHans: Dictionary = {
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
   'Paste {count} lines?': '粘贴 {count} 行？',
+  // Nib as the default browser
+  'Default browser': '默认浏览器',
 }

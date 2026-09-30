@@ -640,6 +640,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/PagesNavigator.svelte', "the pages surface's thumbnails"],
     ['/lib/web-tab/WebTab.svelte', 'the web tab'],
     ['/lib/SettingsPanel.svelte', 'the settings sheet'],
+    // Nib as the browser: the row that makes it one, behind the settings sheet, and
+    // the listener for links from other programs, with the roads in after the space.
+    ['/lib/settings/DefaultBrowser.svelte', 'the default browser row'],
+    ['/lib/web-tab/handed.ts', 'the pages other programs hand over'],
     ['/lib/export.ts', 'the exporters'],
     ['/editor/src/vim-mode.ts', "the vim mode's own module"],
     ['/markdown/src/maths.ts', 'the formula engine, dressed'],

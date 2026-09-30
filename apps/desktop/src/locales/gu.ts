@@ -1538,4 +1538,6 @@ export const gu: Dictionary = {
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
+  // Nib as the default browser
+  'Default browser': 'મૂળ બ્રાઉઝર',
 }

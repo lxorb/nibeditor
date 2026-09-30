@@ -58,7 +58,13 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
                 .filter(|url| url.scheme() == "file")
                 .filter_map(|url| url.to_file_path().ok())
                 .map(|path| path.to_string_lossy().into_owned());
-            launch::hand_over(app, launch::markdown_files(paths));
+            launch::hand_over(app, launch::Handed::Files, launch::markdown_files(paths));
+            // And a link clicked in another program, once nib is the browser.
+            launch::hand_over(
+                app,
+                launch::Handed::Pages,
+                crate::web_handed::pages_among(&urls),
+            );
         }
 
         // Once there is an application delegate to teach: tao sets it as the loop

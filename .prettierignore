@@ -15,3 +15,6 @@ apps/desktop/src-tauri/icons
 # Written by scripts/blog-css.ts from the themes and katex packages, not by hand
 services/sync/src/blog/style.ts
 services/sync/src/blog/math.ts
+
+# Tauri reads it as WiX source; prettier would take a .wxs for a WeChat script
+apps/desktop/src-tauri/wix

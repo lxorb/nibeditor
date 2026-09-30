@@ -1510,4 +1510,6 @@ export const zhHantHK: Dictionary = {
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
+  // Nib as the default browser
+  'Default browser': '預設瀏覽器',
 }

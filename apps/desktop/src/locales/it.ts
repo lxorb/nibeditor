@@ -1601,4 +1601,6 @@ export const it: Dictionary = {
     many: 'Incollare {count} di righe?',
     other: 'Incollare {count} righe?',
   },
+  // Nib as the default browser
+  'Default browser': 'Browser predefinito',
 }

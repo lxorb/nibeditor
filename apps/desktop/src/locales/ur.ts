@@ -1544,4 +1544,6 @@ export const ur: Dictionary = {
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },
+  // Nib as the default browser
+  'Default browser': 'طے شدہ براؤزر',
 }

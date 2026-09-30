@@ -1570,4 +1570,6 @@ export const ta: Dictionary = {
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
+  // Nib as the default browser
+  'Default browser': 'இயல்புநிலை உலாவி',
 }

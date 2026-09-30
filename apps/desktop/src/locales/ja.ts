@@ -1541,4 +1541,6 @@ export const ja: Dictionary = {
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
+  // Nib as the default browser
+  'Default browser': '既定のブラウザ',
 }

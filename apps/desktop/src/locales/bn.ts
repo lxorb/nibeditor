@@ -1547,4 +1547,6 @@ export const bn: Dictionary = {
     one: '{count}টি লাইন পেস্ট করবেন?',
     other: '{count}টি লাইন পেস্ট করবেন?',
   },
+  // Nib as the default browser
+  'Default browser': 'ডিফল্ট ব্রাউজার',
 }

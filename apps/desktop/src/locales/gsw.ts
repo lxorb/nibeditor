@@ -1557,4 +1557,6 @@ export const gsw: Dictionary = {
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
+  // Nib as the default browser
+  'Default browser': 'Standardbrowser',
 }

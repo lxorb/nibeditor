@@ -1548,4 +1548,6 @@ export const fa: Dictionary = {
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
+  // Nib as the default browser
+  'Default browser': 'مرورگر پیش‌فرض',
 }

@@ -758,6 +758,32 @@ its own - a sign-in, a share dialog - gets a framed window on the opener's own s
 because that page reports back through `window.opener` and closes itself; on the
 other engines it is a tab, as before.
 
+## A link from another program
+
+nib can be the machine's browser, so a link clicked in a mail, a chat, a PDF or a
+terminal opens as a web tab. Settings > General > Browser has one row: a Make default
+button while nib is not the browser, the tick once it is, asked again whenever the
+window gets the keyboard back. No system lets a program make itself the default, so the
+press does what Chrome's does: Windows opens nib's own page under Settings > Default
+apps, a Mac asks its own question, and Linux sets the handler for the two schemes.
+
+nib claims `http` and `https` and nothing else - not `.htm`, `.html` or `text/html`,
+because a saved page is a local file and nib opens none. On Windows the registration
+(`StartMenuInternet`, the `NibURL` ProgID, `RegisteredApplications`) is written by the
+NSIS installer and the MSI, taken away by their uninstallers, and put back at launch
+when a portable or Scoop copy moved; `src-tauri/src/default_browser.rs` holds all three
+to the same values.
+
+A link arrives as a command line on Windows and Linux (`nib.exe --url "%1"`, or a
+second launch handed to the running app) and as the system's "open these" on a Mac.
+The crate takes only a page on the web and never anything else on a link's command
+line (`web_handed.rs`), and gives it to the window in front, else the first, holding it
+until that window listens (`launch.rs`, the same road a file takes). The window opens
+each page as a tab in front, beside the tab being read, in the open space and so in its
+store of site data, and comes forward (`lib/web-tab/handed.ts`). A launch for a link
+draws its window first; the listener is fetched with the rest of the roads in, after
+the space has restored.
+
 ## The page itself
 
 What a browser does with the page in front of it without being asked, each on
@@ -1297,6 +1323,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
+| `apps/desktop/src-tauri/src/web_handed.rs` | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested |
+| `apps/desktop/src-tauri/src/default_browser.rs` | nib among the browsers: the Windows registration and its repair, whether nib is the default and the press that asks each system. Unit tested |
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
@@ -1355,6 +1383,16 @@ versions and goes to the trash like every other document.
 
 ## What is left
 
+- **Windows 11's one-press Set default button may not be offered for nib.** Microsoft
+  gives it to programs that claim `http`, `https`, `.htm` and `.html`, and nib claims
+  only the first two, so its page under Default apps may ask for HTTP and HTTPS one at
+  a time. Claiming the file types would hand nib every saved page on the disk.
+- **A Mac may not list nib in its own default browser menu.** Launch Services files a
+  program as a browser only when it also claims HTML documents; the press asks for the
+  two schemes directly and does not need the menu. Not yet seen on a real Mac.
+- **Linux packages list nib as a browser only once it has been made one.** The press
+  writes its own handler; the desktop entries under `packaging/` still say `%F` and
+  markdown, and change with the file types.
 - **The history has no Delete browsing data yet**, because nothing in nib clears a
   browser's data today; Shift+Delete on a row is the one way out of it. Whatever
   clears the rest when it exists clears `nib:web-visits` too, and a private tab, when

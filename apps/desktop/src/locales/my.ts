@@ -1534,4 +1534,6 @@ export const my: Dictionary = {
   'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
+  // Nib as the default browser
+  'Default browser': 'မူရင်း ဘရောက်ဇာ',
 }

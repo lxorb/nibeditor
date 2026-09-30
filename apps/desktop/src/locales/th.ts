@@ -1516,4 +1516,6 @@ export const th: Dictionary = {
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
+  // Nib as the default browser
+  'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
 }

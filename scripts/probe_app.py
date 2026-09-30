@@ -42,6 +42,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Sequence
 from ctypes import wintypes
 
 #: The version a probe is built as; see the module's own docs.
@@ -186,13 +187,17 @@ def run_probe(
     exe: pathlib.Path,
     env: dict[str, str] | None = None,
     quiet: bool = False,
+    args: Sequence[str] = (),
 ) -> subprocess.Popen[bytes]:
     """Starts a probe build off the screen and without the keyboard, and watches that it
     stays there for as long as it runs.
 
     `env` is the whole environment, `os.environ` where it is not given, and it must name
     `NIB_SPACES_DIR`: a probe that opened the reader's own notes is as bad as one that
-    opened in front of them. `quiet` sends the app's own output nowhere."""
+    opened in front of them. `quiet` sends the app's own output nowhere. `args` is the
+    command line after the program, the way the system writes one for a link or a file:
+    a second launch hands it to the probe already running and exits, watched all the
+    same."""
 
     refuse_updating(exe)
     environment = {**(os.environ if env is None else env), OFF_SCREEN: "1"}
@@ -204,7 +209,7 @@ def run_probe(
     shown.wShowWindow = SW_SHOWNOACTIVATE
     output = subprocess.DEVNULL if quiet else None
     app = subprocess.Popen(
-        [str(exe)],
+        [str(exe), *args],
         env=environment,
         cwd=str(exe.parent),
         startupinfo=shown,

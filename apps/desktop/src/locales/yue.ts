@@ -1511,4 +1511,6 @@ export const yue: Dictionary = {
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
+  // Nib as the default browser
+  'Default browser': '預設瀏覽器',
 }

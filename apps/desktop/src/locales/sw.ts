@@ -1572,4 +1572,6 @@ export const sw: Dictionary = {
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
+  // Nib as the default browser
+  'Default browser': 'Kivinjari chaguomsingi',
 }

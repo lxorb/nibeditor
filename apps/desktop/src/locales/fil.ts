@@ -1582,4 +1582,6 @@ export const fil: Dictionary = {
     one: 'I-paste ang {count} linya?',
     other: 'I-paste ang {count} na linya?',
   },
+  // Nib as the default browser
+  'Default browser': 'Default na browser',
 }

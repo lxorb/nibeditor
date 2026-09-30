@@ -1638,4 +1638,6 @@ export const ar: Dictionary = {
     many: 'لصق {count} سطرًا؟',
     other: 'لصق {count} سطر؟',
   },
+  // Nib as the default browser
+  'Default browser': 'المتصفح الافتراضي',
 }

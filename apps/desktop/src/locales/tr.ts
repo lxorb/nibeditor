@@ -1552,4 +1552,6 @@ export const tr: Dictionary = {
     one: '{count} satır yapıştırılsın mı?',
     other: '{count} satır yapıştırılsın mı?',
   },
+  // Nib as the default browser
+  'Default browser': 'Öntanımlı tarayıcı',
 }

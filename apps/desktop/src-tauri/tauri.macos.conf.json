@@ -17,6 +17,14 @@
       }
     ]
   },
+  "plugins": {
+    "deep-link": {
+      "desktop": [
+        { "schemes": ["nib"] },
+        { "name": "Web site URL", "schemes": ["http", "https"], "role": "Viewer" }
+      ]
+    }
+  },
   "bundle": {
     "macOS": {
       "entitlements": "Entitlements.plist",

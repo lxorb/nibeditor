@@ -1527,4 +1527,6 @@ export const am: Dictionary = {
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
+  // Nib as the default browser
+  'Default browser': 'ነባር አሳሽ',
 }

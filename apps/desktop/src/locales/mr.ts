@@ -1547,4 +1547,6 @@ export const mr: Dictionary = {
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },
+  // Nib as the default browser
+  'Default browser': 'मूळ ब्राउझर',
 }

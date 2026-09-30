@@ -1605,4 +1605,6 @@ export const fr: Dictionary = {
     many: 'Coller {count} de lignes ?',
     other: 'Coller {count} lignes ?',
   },
+  // Nib as the default browser
+  'Default browser': 'Navigateur par défaut',
 }

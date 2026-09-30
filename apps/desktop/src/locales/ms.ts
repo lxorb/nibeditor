@@ -1545,4 +1545,6 @@ export const ms: Dictionary = {
   'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',
   'Paste {count} lines?': 'Tampal {count} baris?',
+  // Nib as the default browser
+  'Default browser': 'Pelayar lalai',
 }

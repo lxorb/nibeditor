@@ -1618,4 +1618,6 @@ export const ru: Dictionary = {
     many: 'Вставить {count} строк?',
     other: 'Вставить {count} строки?',
   },
+  // Nib as the default browser
+  'Default browser': 'Браузер по умолчанию',
 }

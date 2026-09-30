@@ -1619,4 +1619,6 @@ export const pl: Dictionary = {
     many: 'Wkleić {count} wierszy?',
     other: 'Wkleić {count} wiersza?',
   },
+  // Nib as the default browser
+  'Default browser': 'Domyślna przeglądarka',
 }

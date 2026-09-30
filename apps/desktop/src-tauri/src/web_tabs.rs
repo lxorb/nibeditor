@@ -550,8 +550,9 @@ pub enum Step {
 /// origins would put nib inside the tab with the site's script beside it. What
 /// somebody typed is turned into an address by the window (see
 /// `lib/web-tab/address.ts`); this is the rule that cannot be talked round,
-/// because it is also what every link inside the page is judged by.
-fn allowed(url: &Url) -> bool {
+/// because it is also what every link inside the page is judged by, and every
+/// link another program hands nib as the browser (`web_handed.rs`).
+pub(crate) fn allowed(url: &Url) -> bool {
     // Chrome's "View page source" is a page's own address behind `view-source:`, and it
     // is judged as that address: the source of anything a tab may open, and nothing
     // else. The engine's menu asks for it as a window, which is a tab here.

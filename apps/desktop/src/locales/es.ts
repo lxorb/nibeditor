@@ -1594,4 +1594,6 @@ export const es: Dictionary = {
     many: '¿Pegar {count} de líneas?',
     other: '¿Pegar {count} líneas?',
   },
+  // Nib as the default browser
+  'Default browser': 'Navegador por defecto',
 }

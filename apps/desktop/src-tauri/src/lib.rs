@@ -52,6 +52,8 @@ mod apple_text;
 mod assets;
 mod clock;
 #[cfg(desktop)]
+mod default_browser;
+#[cfg(desktop)]
 mod document_window;
 #[cfg(desktop)]
 mod downloads;
@@ -113,6 +115,8 @@ mod uris;
 mod web_cookies;
 #[cfg(desktop)]
 mod web_find;
+#[cfg(desktop)]
+mod web_handed;
 #[cfg(desktop)]
 mod web_icons;
 #[cfg(desktop)]
@@ -213,7 +217,10 @@ macro_rules! desktop_commands {
             apple_notes::read_apple_notes,
             apple_notes::open_full_disk_access,
             launch::take_startup_files,
+            launch::take_startup_pages,
             launch::new_window,
+            default_browser::default_browser,
+            default_browser::make_default_browser,
             lifecycle::keep_running,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
@@ -489,19 +496,21 @@ fn ready(
     #[cfg(desktop)]
     trace::mark("automation endpoint");
 
-    // A command line is a desktop's way of being handed a file. A phone app is
-    // launched by tapping it, and there is nothing in `args` worth reading.
+    // A command line is a desktop's way of being handed a file, and a link when nib
+    // is the browser. A phone app is launched by tapping it, and there is nothing in
+    // `args` worth reading.
     //
     // Added to, not replaced: on a Mac a file the Finder opened the app with may
     // already be waiting there; see lifecycle.rs.
     #[cfg(desktop)]
     {
-        let files = launch::markdown_paths(std::env::args());
+        let (files, pages) = launch::handed_by(std::env::args().collect());
         if !files.is_empty() {
             remember(handle, &files);
-            if let Some(pending) = handle.try_state::<launch::Pending>() {
-                pending.hold(files);
-            }
+        }
+        if let Some(pending) = handle.try_state::<launch::Pending>() {
+            pending.hold(launch::Handed::Files, files);
+            pending.hold(launch::Handed::Pages, pages);
         }
     }
 
@@ -586,6 +595,11 @@ fn ready(
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
+
+    // Nib listed among the browsers, put back if a portable copy moved or an install
+    // never wrote it: after the window, on a thread of its own; see default_browser.rs.
+    #[cfg(desktop)]
+    default_browser::keep_registered(handle);
 
     // And, on a build that is being measured rather than used, the gate: it opens a
     // web tab and the engine's own pages, says what each cost and quits. Off unless

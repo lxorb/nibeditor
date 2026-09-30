@@ -1562,4 +1562,6 @@ export const kn: Dictionary = {
     one: '{count} ಸಾಲನ್ನು ಅಂಟಿಸಬೇಕೆ?',
     other: '{count} ಸಾಲುಗಳನ್ನು ಅಂಟಿಸಬೇಕೆ?',
   },
+  // Nib as the default browser
+  'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
 }

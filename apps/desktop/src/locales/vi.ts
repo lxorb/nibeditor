@@ -1534,4 +1534,6 @@ export const vi: Dictionary = {
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
   'Paste {count} lines?': 'Dán {count} dòng?',
+  // Nib as the default browser
+  'Default browser': 'Trình duyệt mặc định',
 }

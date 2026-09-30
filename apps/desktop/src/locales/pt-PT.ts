@@ -1589,4 +1589,6 @@ export const ptPT: Dictionary = {
     many: 'Colar {count} de linhas?',
     other: 'Colar {count} linhas?',
   },
+  // Nib as the default browser
+  'Default browser': 'Navegador predefinido',
 }

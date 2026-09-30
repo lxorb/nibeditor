@@ -1589,4 +1589,6 @@ export const de: Dictionary = {
   'Stop what is running in {name}?': 'Beenden, was in {name} läuft?',
   'Stop what is running in these terminals?': 'Beenden, was in diesen Terminals läuft?',
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
+  // Nib as the default browser
+  'Default browser': 'Standardbrowser',
 }

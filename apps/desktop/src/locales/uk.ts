@@ -1613,4 +1613,6 @@ export const uk: Dictionary = {
     many: 'Вставити {count} рядків?',
     other: 'Вставити {count} рядка?',
   },
+  // Nib as the default browser
+  'Default browser': 'Браузер за умовчанням',
 }

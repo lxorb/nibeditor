@@ -1524,4 +1524,6 @@ export const ko: Dictionary = {
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
+  // Nib as the default browser
+  'Default browser': '기본 브라우저',
 }

@@ -1549,4 +1549,6 @@ export const ps: Dictionary = {
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
+  // Nib as the default browser
+  'Default browser': 'اصلي کوټګر',
 }

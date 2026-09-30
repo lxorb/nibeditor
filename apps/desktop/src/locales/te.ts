@@ -1552,4 +1552,6 @@ export const te: Dictionary = {
     one: '{count} పంక్తిని అతికించాలా?',
     other: '{count} పంక్తులను అతికించాలా?',
   },
+  // Nib as the default browser
+  'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
 }

@@ -1573,4 +1573,6 @@ export const ha: Dictionary = {
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },
+  // Nib as the default browser
+  'Default browser': 'Birawuza na asali',
 }
