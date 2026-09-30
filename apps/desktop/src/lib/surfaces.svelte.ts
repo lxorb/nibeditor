@@ -68,8 +68,13 @@ export const pagesSurface = held(() => import('./Pages.svelte'))
 /** A paper being read, beside the notes about it. Brings pdf.js with it. */
 export const pdfSurface = held(() => import('./Pdf.svelte'))
 
-/** A website in a tab. See docs/web-tabs.md. */
-export const webSurface = held(() => import('./web-tab/WebTab.svelte'))
+/** A website in a tab. See docs/web-tabs.md. Never the glasses' plugin's, which opens no
+ *  website (see `openWeb`): the same reason as the terminal's below. */
+export const webSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no web tab in the Even Realities plugin'))
+    : import('./web-tab/WebTab.svelte'),
+)
 
 /** A shell in a tab, with xterm.js behind it. Never the glasses' plugin's, which has no
  *  shell to run: the same reason as the space chooser's card below. See docs/terminal.md. */
