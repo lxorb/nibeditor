@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import type { EditorView } from '@nib/editor'
 import Editor from '../../src/lib/Editor.svelte'
 import { type Tab, workspace } from '../../src/lib/workspace.svelte'
@@ -59,7 +59,7 @@ function twoNotes(): [Tab, Tab] {
   return [one, two]
 }
 
-test('the pane says so when another note is swapped into its editor', () => {
+test('the pane says so when another note is swapped into its editor', async () => {
   const [one, two] = twoNotes()
   const heard: string[] = []
   const props = reactive({
@@ -72,6 +72,9 @@ test('the pane says so when another note is swapped into its editor', () => {
   const shown = mount(Editor, { target, props })
   close = () => void unmount(shown, { outro: false })
   flushSync()
+  // Building an editor fetches its completion menus; see completion.ts in the editor.
+  // Waited for here, or the fetch lands after the file's environment has gone.
+  await vi.dynamicImportSettled()
 
   heard.length = 0
   props.tab = two
