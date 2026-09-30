@@ -25,6 +25,7 @@ import { type ITheme, Terminal } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
+import { dragged, isTreeDrag } from '../drag-paths'
 import { key, plural, t } from '../i18n.svelte'
 import { showCombination } from '../keys'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
@@ -37,7 +38,7 @@ import { type Tab, workspace } from '../workspace.svelte'
 import { type Route, routeKey } from './keys'
 import { keepLines, LINES, linesOf } from './lines'
 import { findColours, monospace, terminalTheme } from './look'
-import { asksFirst, linesIn, pasted } from './paste'
+import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
 import { readSpec, reportedFolder, type Spec, writeSpec } from './spec'
@@ -162,6 +163,15 @@ class Session {
     // Copy on select, which is what a terminal does: iTerm2 out of the box, and every
     // X terminal since before there was a clipboard to copy to.
     this.host.addEventListener('mouseup', () => this.copyChosen())
+    // A row of the file list dropped here is its path, typed at the prompt. The pane
+    // leaves the middle of itself to the terminal for that; see `keepsMiddle` in
+    // Pane.svelte.
+    this.host.addEventListener('dragover', (event) => {
+      if (!isTreeDrag(event.dataTransfer)) return
+      event.preventDefault()
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
+    })
+    this.host.addEventListener('drop', (event) => this.dropped(event))
     // The terminal's own menu, and not the one xterm.js sets up for the browser's: it
     // moves its hidden field under the pointer on a right press, which would make the
     // press a text field's and bring up the field's menu instead.
@@ -537,6 +547,17 @@ class Session {
     }
 
     this.term.paste(pasted(text))
+  }
+
+  /** Rows of the file list, as their paths at the prompt, one space apart. */
+  private dropped(event: DragEvent) {
+    const paths = isTreeDrag(event.dataTransfer) ? dragged(event.dataTransfer) : []
+    if (!paths.length || this.pty === null) return
+
+    event.preventDefault()
+    const shell = this.spec().shell
+    this.term.paste(paths.map((path) => spokenPath(path, shell)).join(' '))
+    this.focus()
   }
 
   /** The terminal's own menu, at the pointer. */

@@ -91,8 +91,9 @@
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along. */
   const stripped = $derived(workspace.panes.count > 1)
-  /** Whether what is showing takes a dropped note itself; see `answers`. */
-  const ownSurface = $derived(tab?.kind === 'canvas')
+  /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
+   *  types its path. */
+  const ownSurface = $derived(tab?.kind === 'canvas' || tab?.kind === 'terminal')
   /** Whether the surface in this pane is the editor, which is the one that has
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
