@@ -21,7 +21,9 @@
 //! console's domain (`Runtime`) is enabled only once an agent asks for the console,
 //! because a page can tell that one is on.
 
+use std::cell::Cell;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::rc::Rc;
 use std::sync::mpsc::sync_channel;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
@@ -79,10 +81,7 @@ pub fn call_in(
     let text = answer
         .recv_timeout(patience)
         .map_err(|_| format!("{method}: the page did not answer"))??;
-    if text.is_empty() {
-        return Ok(Value::Null);
-    }
-    serde_json::from_str(&text).map_err(|error| format!("{method}: {error}"))
+    parsed(method, &text)
 }
 
 /// One call that stops waiting as soon as `give_up` says so: `None` then, the call still
@@ -110,15 +109,7 @@ pub fn call_until(
     let started = Instant::now();
     loop {
         match answer.recv_timeout(Duration::from_millis(25)) {
-            Ok(text) => {
-                let text = text?;
-                if text.is_empty() {
-                    return Ok(Some(Value::Null));
-                }
-                return serde_json::from_str(&text)
-                    .map(Some)
-                    .map_err(|error| format!("{method}: {error}"));
-            }
+            Ok(text) => return parsed(method, &text?).map(Some),
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
                 return Err(format!("{method}: the page did not answer"));
             }
@@ -182,20 +173,61 @@ fn send(
 /// One call nobody waits for, on the window's thread: its answer, whatever it is, is
 /// dropped. For what a page is set up with before it loads, where waiting would be
 /// waiting inside the event loop's own turn.
+pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
+    ask(core, method, params, |_| ());
+}
+
+/// One call made on the window's thread, whose answer is handed to `answered` there too
+/// whenever the engine gives it - or at once, with the reason, where the call could not
+/// be made at all. For work that already runs on the window's thread: `call` would wait
+/// there for an answer that only that same thread can deliver.
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
 )]
-pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
-    let ignored = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(|_, _| Ok(())));
+pub fn ask(
+    core: &ICoreWebView2,
+    method: &str,
+    params: &Value,
+    answered: impl FnOnce(Result<Value, String>) + 'static,
+) {
+    type Answered = Box<dyn FnOnce(Result<Value, String>)>;
+
+    // Held in one place and taken by whichever comes first: the engine's answer, or the
+    // call failing, after which no answer is coming.
+    let answered = Rc::new(Cell::new(Some(Box::new(answered) as Answered)));
+    let late = answered.clone();
+    let named = method.to_string();
+    let done = CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, json| {
+        if let Some(said) = late.take() {
+            said(match result {
+                Ok(()) => parsed(&named, &json),
+                Err(error) => Err(refusal(&json).unwrap_or_else(|| error.message())),
+            });
+        }
+        Ok(())
+    }));
     // Safe: on the window's thread; the engine holds the handler until it answers.
-    let _ = unsafe {
+    let sent = unsafe {
         core.CallDevToolsProtocolMethod(
             &HSTRING::from(method),
             &HSTRING::from(params.to_string()),
-            &ignored,
+            &done,
         )
     };
+    if let Err(error) = sent {
+        if let Some(said) = answered.take() {
+            said(Err(error.message()));
+        }
+    }
+}
+
+/// An answer's text as the value it spells: no text at all is `null`.
+fn parsed(method: &str, text: &str) -> Result<Value, String> {
+    if text.is_empty() {
+        return Ok(Value::Null);
+    }
+    serde_json::from_str(text).map_err(|error| format!("{method}: {error}"))
 }
 
 /// The sentence in the protocol's own refusal, `{"code": -32000, "message": "..."}`.
