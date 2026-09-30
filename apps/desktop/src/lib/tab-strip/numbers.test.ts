@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { AltHold, numerals, type Stroke } from './numbers'
+import { AltHold, HOLD_MS, numerals, type Stroke } from './numbers'
 
 /** The keys as they ship on Windows: Alt and a digit for the first nine places, and
  *  Alt+0 for the last. */
@@ -71,6 +71,26 @@ describe('Alt held on its own', () => {
     hold.down(stroke('Alt'))
     hold.down(stroke('Alt', { repeat: true }))
     expect(hold.holding).toBe(true)
+  })
+
+  /** Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I
+   *  press alt."* A held key repeats, and a repeat an engine does not flag as one is the
+   *  same hold: it must not start the clock again, or the numbers wait for the hand to
+   *  stop repeating, which it does not do while Alt is down. */
+  test('a repeat not flagged as one is the same hold, not a new one', () => {
+    const hold = new AltHold()
+    expect(hold.down(stroke('Alt'))).toBe(true)
+    expect(hold.down(stroke('Alt'))).toBe(false)
+    expect(hold.down(stroke('Alt', { repeat: true }))).toBe(false)
+    expect(hold.holding).toBe(true)
+  })
+
+  /** Office's KeyTips come on the press of Alt itself, and a wait a hand notices is
+   *  one past a tenth of a second or two. A seventh of a second is under that and still
+   *  over the gap a practiced Alt+3 leaves between its two keys, which the effect test
+   *  in test/effects/tab-numbers.effect.test.ts puts at 120 ms. */
+  test('shows the numbers a seventh of a second after Alt goes down', () => {
+    expect(HOLD_MS).toBe(150)
   })
 
   test('a quick Alt+3 is over at the digit, before any number could show', () => {

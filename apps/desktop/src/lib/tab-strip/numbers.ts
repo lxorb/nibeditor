@@ -6,16 +6,17 @@
  *  shortcuts/registry.ts), read off the registry as they are bound now, so a number is
  *  never one the key does not keep. Pure; numbers.svelte.ts is what shows them. */
 
-import { WITHIN } from '../double-tap'
 import { parseCombination, type Platform } from '../keys'
 
-/** How long Alt has to be held on its own before the numbers come: the app's own line
- *  between a tap and a hold (double-tap.ts), so Alt tapped twice is never a hold. It is
- *  longer than the gap between Alt and the digit of a quick Alt+3, which a hand that
- *  knows the key presses inside it, so the numbers never flash at it; and short enough
- *  that a hand pausing to look for a tab has them before it has wondered where they are.
- *  Office's KeyTips come on Alt's release, Linear's hints after a moment of Cmd held. */
-export const HOLD_MS = WITHIN
+/** How long Alt has to be held on its own before the numbers come.
+ *
+ *  Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I press
+ *  alt."* It was the app's line between a tap and a hold, 350 ms, and a fade after it:
+ *  half a second from the key to the numbers. Office's KeyTips come on the press itself,
+ *  and a wait a hand notices is one past a tenth of a second or two. A seventh of a second
+ *  is under that, and still longer than the gap between Alt and the digit of a practiced
+ *  Alt+3, so the numbers never flash at it. */
+export const HOLD_MS = 150
 
 /** The keys, and the place along the strip each goes to. Eight places, the ninth, and
  *  the last, which Alt+0 goes to. */
@@ -72,13 +73,16 @@ export interface Stroke {
  *  is the system's switch between keyboards. Any other key ends it, which is what makes
  *  a quick Alt+3 never show a number and Alt+Tab never leave any behind; so does a press
  *  of the pointer, the wheel, a key let go of and the window losing the keyboard, which
- *  the caller says with `broken`. A held Alt repeats, and a repeat is the same hold. */
+ *  the caller says with `broken`. A held Alt repeats, and a repeat is the same hold -
+ *  flagged as one or not, since an engine that did not flag it would otherwise start the
+ *  clock again on every repeat, and the numbers would wait for a hand that is not going
+ *  to stop repeating. */
 export class AltHold {
   holding = false
 
-  /** A key went down. */
-  down(stroke: Stroke): void {
-    if (stroke.key === 'Alt' && stroke.repeat) return
+  /** A key went down. Answers whether it began a hold, which is when the clock starts. */
+  down(stroke: Stroke): boolean {
+    if (stroke.key === 'Alt' && (stroke.repeat || this.holding)) return false
 
     this.holding =
       stroke.key === 'Alt' &&
@@ -86,6 +90,7 @@ export class AltHold {
       !stroke.shiftKey &&
       !stroke.metaKey &&
       !stroke.altGraph
+    return this.holding
   }
 
   broken(): void {

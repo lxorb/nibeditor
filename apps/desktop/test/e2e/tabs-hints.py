@@ -93,6 +93,21 @@ STRIP = """
 failures: list[str] = []
 
 
+
+#: When the first number was drawn, polled every frame from the moment it is armed; the
+#: time it was armed is what it answers, so the drive can say how long the wait was.
+SHOWN = """
+() => {
+  window.__numeralAt = null
+  const look = (now) => {
+    if (document.querySelector('.numeral')) window.__numeralAt = now
+    else requestAnimationFrame(look)
+  }
+  requestAnimationFrame(look)
+  return performance.now()
+}
+"""
+
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
@@ -436,12 +451,18 @@ def alt_numbers(page: Page, scheme: str) -> None:
     page.keyboard.up("Alt")
     page.wait_for_timeout(200)
 
-    # Held a moment: one on each tab of the strip, the last wearing 0.
+    # Held a moment: one on each tab of the strip, the last wearing 0, about a seventh of
+    # a second after Alt went down (Emil, 2026-10-01: "it currently takes an eternity").
+    began = page.evaluate(SHOWN)
     page.keyboard.down("Alt")
-    page.wait_for_timeout(200)
+    page.wait_for_timeout(90)
     if page.locator(".numeral").count():
         wrong(f"[{scheme}] the numbers came before the hold was a hold")
-    page.wait_for_timeout(400)
+    page.wait_for_timeout(510)
+    took = page.evaluate("(began) => window.__numeralAt && window.__numeralAt - began", began)
+    say(f"[{scheme}] the numbers came {round(took or -1)} ms after Alt went down")
+    if not took or took > 300:
+        wrong(f"[{scheme}] the numbers took {took} ms after Alt went down")
     worn = page.locator(".numeral").all_inner_texts()
     say(f"[{scheme}] worn {worn} on {count} tabs")
     wanted = [str(at + 1) for at in range(min(count - 1, 9))] + ["0"]

@@ -19,7 +19,7 @@
     class="numeral"
     style:translate="{one.x}px {one.y}px"
     aria-hidden="true"
-    in:fade={{ duration: dur(130) }}
+    in:fade={{ duration: dur(70) }}
     out:fade={{ duration: dur(70) }}>{one.label}</span
   >
 {/each}

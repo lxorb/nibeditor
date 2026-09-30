@@ -92,6 +92,30 @@ test('come after Alt has been held a moment, one on each tab, the last wearing 0
   ])
 })
 
+/** Emil, 2026-10-01: *"it currently takes an eternity till I see the numbers when I
+ *  press alt."* Measured from the keydown, with the keyboard repeating the held Alt the
+ *  way Windows does - here every 33 ms from the start and unflagged, the worst an engine
+ *  can hand over - so a repeat that started the clock again would never let them show. */
+test('are on screen a seventh of a second after Alt goes down, however it repeats', () => {
+  const began = Date.now()
+  let shown: number | null = null
+  press('Alt', { altKey: true })
+
+  for (let at = 0; at < 30; at++) {
+    wait(33 / 3)
+    if (shown === null && worn().length) shown = Date.now() - began
+    wait(33 / 3)
+    if (shown === null && worn().length) shown = Date.now() - began
+    press('Alt', { altKey: true })
+    wait(33 / 3)
+    if (shown === null && worn().length) shown = Date.now() - began
+  }
+
+  expect(shown).not.toBeNull()
+  expect(shown).toBeLessThanOrEqual(160)
+  expect(document.querySelectorAll('.numeral')).toHaveLength(3)
+})
+
 test('and go the moment Alt is let go of', () => {
   press('Alt', { altKey: true })
   wait(HOLD_MS + 10)

@@ -69,11 +69,7 @@ class Numbers {
   }
 
   private down(event: KeyboardEvent) {
-    // A held Alt repeats, and is the same hold with its clock still running.
-    if (event.key === 'Alt' && event.repeat) return
-
-    clearTimeout(this.timer)
-    this.hold.down({
+    const began = this.hold.down({
       key: event.key,
       ctrlKey: event.ctrlKey,
       shiftKey: event.shiftKey,
@@ -82,7 +78,11 @@ class Numbers {
       altGraph: event.getModifierState('AltGraph'),
     })
 
-    if (this.hold.holding) this.timer = setTimeout(() => this.show(), HOLD_MS)
+    // A held Alt repeats, and is the same hold with its clock still running.
+    if (this.hold.holding && !began) return
+
+    clearTimeout(this.timer)
+    if (began) this.timer = setTimeout(() => this.show(), HOLD_MS)
     else if (this.worn.length) this.worn = []
   }
 

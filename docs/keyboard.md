@@ -349,9 +349,11 @@ Option and a digit types ¡ ™ £ ¢ ∞ § ¶ • ª º: Cmd and a digit are t
 
 **Held, Alt shows the numbers.** Emil, 2026-09-30: *"while holding alt it should (in a
 'dezent' way) also show the numbers for the different tabs, but not too much overlaying
-with what the tabs are."* Alt held on its own for 350 ms - the app's line between a tap
-and a hold, longer than the gap inside a quick Alt+3, so a hand that knows the key never
-sees them - puts a small muted number at the corner of each tab's mark in the focused
+with what the tabs are."* Alt held on its own for 150 ms - Office's KeyTips come on the
+press itself, and 350 ms and a fade after it was, in Emil's words, *"an eternity"*
+(2026-10-01); 150 ms is still longer than the gap inside a quick Alt+3, so a hand that
+knows the key never sees them, and a repeat of the held key never starts the wait again
+- puts a small muted number at the corner of each tab's mark in the focused
 pane's strip, the strip the digits count along: the first eight their places, the ninth
 9, and the last tab 0, the key that always means the last, even where its place has a
 number too. A tab past the ninth that is not the last wears nothing. The numbers are the
