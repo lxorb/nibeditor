@@ -48,7 +48,10 @@ let sent = false
 /** One step of the launch, now. */
 export function mark(step: string): void {
   if (STEPS.length >= MOST) return
-  STEPS.push({ step, at: performance.now() })
+  // On the page's own timeline as well, where DevTools draws it and where a drive
+  // reads it without the crate: a launch slowed from the inside, or a browser build
+  // with no crate at all. A few microseconds, once a step.
+  STEPS.push({ step, at: performance.mark(`nib: ${step}`).startTime })
 }
 
 /** One step of the launch, on the frame after now.

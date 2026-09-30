@@ -44,7 +44,6 @@ import {
   withoutBlockIds,
 } from '@nib/markdown/links'
 import { buildGraph, type NoteGraph } from './graph'
-import { drawFile } from './reading/drawn'
 import { rewriteLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
 import { shownName } from './note-name'
@@ -803,7 +802,21 @@ class Links {
    *  there is no space to read it against. */
   private drawnFile(card: HTMLElement, file: FileDrawing): () => void {
     const root = this.root
-    return root === null ? () => undefined : drawFile(card, { ...file, root })
+    if (root === null) return () => undefined
+
+    // Fetched with the first card rather than carried: a paper or a plane is drawn as
+    // it scrolls into view in any case, so the fetch is inside a wait the card already
+    // has, and a window whose note embeds neither never reads the drawing at all.
+    let stop: (() => void) | null = null
+    let stopped = false
+    void import('./reading/drawn').then(({ drawFile }) => {
+      if (!stopped) stop = drawFile(card, { ...file, root })
+    })
+
+    return () => {
+      stopped = true
+      stop?.()
+    }
   }
 
   /** One note as the HTML that shows it, for the editor: the note inside an

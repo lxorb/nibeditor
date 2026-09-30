@@ -192,6 +192,12 @@ export const recordingPill = latched(() => import('./RecordingPill.svelte'))
  *  presses the bars; see AppMenu.svelte. */
 export const appMenuRows = held(async () => ({ default: (await import('./app-menu')).appMenu }))
 
+/** And the menu those rows are shown in: the popover, its groups and submenus and the
+ *  keys that walk them. The three bars are on screen from the first frame; what they
+ *  open is not. Latched like the sheets and asked for at the same last turn, so the
+ *  first press finds it mounted and plays its way in; see AppMenu.svelte. */
+export const appMenuPanel = latched(() => import('./AppMenuPanel.svelte'))
+
 /** The Undo after a delete or a move; see undo-toast.svelte.ts. */
 export const undoToastNotice = latched(() => {
   if (__EVEN_PLUGIN__) throw new Error('no undo toast in the Even Realities plugin')
@@ -310,6 +316,7 @@ export async function warmDoors(): Promise<void> {
     searchPanel(),
     linksPanel(),
     appMenuRows(),
+    appMenuPanel.ask(),
     readingSurface(),
     loadFind(),
     // The line, case and grow-the-selection commands, so that the first Ctrl+J or
@@ -356,5 +363,8 @@ export async function warmDoors(): Promise<void> {
     import('./row-menu'),
     import('./editor-menu'),
     import('./tab-cycle.svelte'),
+    // The editor in the card a pointer resting on a link opens, which a hand can ask
+    // for at any moment; see `previewCard` in Editor.svelte.
+    import('./preview-card'),
   ])
 }

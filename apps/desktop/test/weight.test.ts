@@ -541,9 +541,20 @@ function holds(tail: string): boolean {
  *  (search/lines.ts, search/task.ts), and a deck's renderer behind the one question
  *  every note is asked (slide-breaks.ts). The production build preloads 1,320,873
  *  bytes in 162 chunks against 1,360,741 in 158. The ceiling is that plus one per
- *  cent, as the note above says it should be. */
-const BUDGET = 3_242_000
-const MOST_FILES = 382
+ *  cent, as the note above says it should be.
+ *
+ *  Lowered the same day, to 3,215,000 and 381 modules, from a main at 3,220,478 and
+ *  380: three more things no window shows as it opens. The app menu, which is its
+ *  three bars until they are pressed (AppMenuPanel.svelte, mounted at the launch's last
+ *  turn with the rows it shows); the editor in the card over a link, fetched with the
+ *  first card and warmed at the same turn (see Editor.svelte); and the drawing of a
+ *  paper or a plane in a note, fetched with the first card that shows one (see
+ *  link-index.svelte.ts). The launch's own marks went onto the page's timeline and a
+ *  deleted account signs out at its first refused pass in the same round. Measured
+ *  3,182,482 and 377; the production build preloads 1,317,861 bytes in 163 chunks
+ *  against 1,326,639 in 164. */
+const BUDGET = 3_215_000
+const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -846,6 +857,13 @@ describe('what the app evaluates before it draws anything', () => {
     // every note is asked. See search/task.ts and slide-breaks.ts.
     ['/lib/search/match.ts', 'the matcher'],
     ['/markdown/src/slides.ts', "a deck's renderer"],
+    // The editor in the card over a link, fetched with the first card and warmed at
+    // the last turn (see Editor.svelte), and the drawing of a paper or a plane in a
+    // note, fetched with the first card that shows one (see link-index.svelte.ts).
+    ['/lib/preview-card.ts', 'the editor in a link card'],
+    ['/lib/reading/drawn.ts', 'a paper or a plane drawn in a note'],
+    // And the app menu itself, behind its three bars; see AppMenu.svelte.
+    ['/lib/AppMenuPanel.svelte', 'the app menu'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })

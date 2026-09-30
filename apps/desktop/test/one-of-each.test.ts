@@ -147,7 +147,7 @@ describe('the row a list is made of', () => {
 
   test('and the lists wear the class rather than a row of their own', () => {
     const lists = [
-      'lib/AppMenu.svelte',
+      'lib/AppMenuPanel.svelte',
       'lib/Bookmarks.svelte',
       'lib/ContextMenu.svelte',
       'lib/Links.svelte',
@@ -302,7 +302,7 @@ describe('the ring a keyboard leaves', () => {
 
     expect(wearing).toEqual([
       // The plane, which has its own keyboard and is the whole of what is on screen.
-      'lib/AppMenu.svelte',
+      'lib/AppMenuPanel.svelte',
       'lib/Canvas.svelte',
       'lib/ContextMenu.svelte',
       // The column of pages, and the pane a note is read in.

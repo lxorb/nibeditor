@@ -32,13 +32,13 @@
     type NoteIndex,
     type NoteOpener,
     noteIndexEffect,
+    type PreviewNote,
     type StateEffect,
     type StateOptions,
     shortcutEffect,
     trustedMarkupEffect,
   } from '@nib/editor'
   import { pickedLink } from './composer'
-  import { mountPreview } from './preview-card'
   import { EditorStates } from './editor-states'
   import { t } from './i18n.svelte'
   import { modes } from './modes.svelte'
@@ -95,6 +95,26 @@
     return root ? linkedFiles(workspace.tree, root, carriedRows(transfer)) : []
   }
 
+  /** The editor in the card over a `[[link]]`, fetched with the first card rather than
+   *  carried: nothing of it is on screen until a pointer rests on a link, and it is
+   *  warmed at the launch's last turn with the other doors, so only a card opened in
+   *  front of that waits the moment its fetch takes. Null where preview-card.ts would
+   *  answer null, which is a note outside any open space; see there. */
+  function previewCard(host: HTMLElement, note: PreviewNote): (() => void) | null {
+    if (workspace.activeSpace?.root === undefined) return null
+
+    let release: (() => void) | null = null
+    let gone = false
+    void import('./preview-card').then(({ mountPreview }) => {
+      if (!gone) release = mountPreview(host, note)
+    })
+
+    return () => {
+      gone = true
+      release?.()
+    }
+  }
+
   let host: HTMLDivElement
   const rise = firstOfTheSession()
   const states = new EditorStates()
@@ -137,7 +157,7 @@
       trustedMarkup: trustsHtmlIn(one.note),
       // What goes in the card over a `[[link]]`: an editor on the linked note, so a
       // word of it can be fixed from here. See preview-card.ts.
-      editPreview: mountPreview,
+      editPreview: previewCard,
       // The format bar on a phone's keyboard, which the caret is kept above; see
       // `covered` in viewport.svelte.ts.
       coveredBelow: () => viewport.covered,

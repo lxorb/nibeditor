@@ -156,7 +156,7 @@ describe('what hides a web page', () => {
    *  over the note, opened by a press or by a site's question, and closed again. */
   const LAYERS: Record<string, string> = {
     'App.svelte': 'a panel slid over the note as a drawer',
-    'lib/AppMenu.svelte': 'menu',
+    'lib/AppMenuPanel.svelte': 'menu',
     'lib/CanvasBar.svelte': 'dropdown',
     'lib/ContextMenu.svelte': 'menu',
     'lib/GraphControls.svelte': 'dropdown',

@@ -38,6 +38,7 @@ function componentsWith(glyph: string): string[] {
 const titlebar = read('lib/Titlebar.svelte')
 const sidebar = read('lib/Sidebar.svelte')
 const appMenu = read('lib/AppMenu.svelte')
+const appMenuPanel = read('lib/AppMenuPanel.svelte')
 const toggle = read('lib/SidebarToggle.svelte')
 
 /** The three bars, as the one component that still draws them writes them. */
@@ -130,8 +131,11 @@ describe('the three dots at the other end', () => {
   test('are the same component as the desktop menu, drawn differently', () => {
     expect(appMenu).toContain('dots = false')
     expect(appMenu).toContain('class:dots')
-    // One menu surface, so the groups and their submenus cannot drift apart.
-    expect(appMenu.match(/role="menu"/g) ?? []).toHaveLength(1)
+    // One menu surface, so the groups and their submenus cannot drift apart: the one
+    // the button mounts once it is asked for. See AppMenuPanel.svelte.
+    expect(appMenu.match(/role="menu"/g) ?? []).toHaveLength(0)
+    expect(appMenu).toContain('<AppMenuPanel bind:open {groups} />')
+    expect(appMenuPanel.match(/role="menu"/g) ?? []).toHaveLength(1)
   })
 })
 
