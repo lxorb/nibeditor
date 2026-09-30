@@ -214,6 +214,10 @@ def until(ask, seconds: float = 20.0, every: float = 0.25):
 def main() -> int:
     if sys.platform != "win32":
         raise SystemExit("this probe is Windows only")
+    # The menus say what is chosen with a tick, which a Windows console's own code page
+    # has no character for.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(errors="replace")
 
     parsed = argparse.ArgumentParser(description=__doc__)
     parsed.add_argument("--exe", required=True)
@@ -298,11 +302,40 @@ def main() -> int:
             lambda: window.run("!!document.querySelector('[role=dialog][aria-label=\"New\"]')") is True, 5
         )
         check(bool(dialog), "Ctrl+T in a terminal opens the new-tab dialog")
+        cards = window.run(
+            "JSON.stringify([...document.querySelectorAll('[role=dialog] .kind')].map((one) => one.textContent.trim()))"
+        )
+        check(isinstance(cards, str) and "New terminal" in cards, f"the terminal is one of its cards ({cards})")
+        time.sleep(0.4)
+        tabs.shoot(app.pid, shots / "terminal-new-kinds.png")
         window.run(
             "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); "
             "window.dispatchEvent(new KeyboardEvent('keyup', { key: 'Control', bubbles: true })); return true })()"
         )
         time.sleep(0.5)
+
+        # The plus: the terminal's row, with the chevron to the other shells, which shows
+        # them in the menu's place.
+        window.run("(() => { document.querySelector('button.new').click(); return true })()")
+        until(lambda: window.run("!!document.querySelector('.menu [data-more]')") is True, 5)
+        time.sleep(0.3)
+        tabs.shoot(app.pid, shots / "terminal-plus.png")
+        window.run("(() => { document.querySelector('.menu [data-more]').click(); return true })()")
+        rows = until(
+            lambda: (lambda said: said if isinstance(said, str) and "Command Prompt" in said else None)(
+                window.run(
+                    "JSON.stringify([...document.querySelectorAll('.menu [role=menuitem]')].map((one) => one.textContent.trim()))"
+                )
+            ),
+            10,
+        )
+        check(bool(rows), f"the chevron lists the shells ({rows})")
+        time.sleep(0.3)
+        tabs.shoot(app.pid, shots / "terminal-shells.png")
+        window.run(
+            "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true })()"
+        )
+        time.sleep(0.4)
 
         # -- PowerShell -----------------------------------------------------------
         shells = window.invoke("terminal_shells", {})

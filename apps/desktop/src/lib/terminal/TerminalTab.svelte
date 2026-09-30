@@ -99,10 +99,4 @@
   .place :global(.xterm) {
     height: 100%;
   }
-
-  /* The ring every focused thing wears would sit round the whole screen: the cursor
-     already says where the keyboard is. */
-  .place :global(.xterm-helper-textarea:focus-visible) {
-    outline: none;
-  }
 </style>
