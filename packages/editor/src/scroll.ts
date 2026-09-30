@@ -1,3 +1,4 @@
+import type { StateEffect } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 
 /** The document position at the top of what is on screen. A steadier thing
@@ -17,9 +18,22 @@ export function caretLine(view: EditorView): number {
   return view.state.doc.lineAt(view.state.selection.main.head).number - 1
 }
 
-/** Scrolls so that the line holding `pos` starts at the top. Applied by the
- *  view after it has measured itself, so it needs no frame of its own. */
+/** How a view is put back to read from the line starting at `pos`: that line
+ *  against the top, or nothing for the first line, whose place is the top of the
+ *  note. `y: 'start'` lays a line against the edge, and the first line against the
+ *  edge is a note scrolled past the room over its title - which is how every pane
+ *  built again on a note left at its top used to show it. */
+export function placeAt(pos: number): StateEffect<unknown> | null {
+  return pos > 0 ? EditorView.scrollIntoView(pos, { y: 'start' }) : null
+}
+
+/** Scrolls so that the line holding `pos` starts at the top, or to the top of the
+ *  note for its first line; see `placeAt`. Applied by the view after it has
+ *  measured itself, so it needs no frame of its own. */
 export function showLine(view: EditorView, pos: number) {
-  const at = Math.min(Math.max(0, pos), view.state.doc.length)
-  view.dispatch({ effects: EditorView.scrollIntoView(at, { y: 'start' }) })
+  const place = placeAt(
+    view.state.doc.lineAt(Math.min(Math.max(0, pos), view.state.doc.length)).from,
+  )
+  if (place) view.dispatch({ effects: place })
+  else view.scrollDOM.scrollTop = 0
 }
