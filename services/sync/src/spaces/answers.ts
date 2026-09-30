@@ -40,7 +40,7 @@ const MOST_ANSWER_BYTES = 10 * 1024 * 1024
 /** How long an answer is kept. Long enough that a form somebody looks at twice a
  *  year has not lost anything, short enough that what a stranger typed is not held
  *  for ever: it is a message, and the CSV is where somebody keeps one. */
-export const KEPT_DAYS = 180
+const KEPT_DAYS = 180
 
 const A_DAY = 24 * 60 * 60 * 1000
 
