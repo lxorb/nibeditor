@@ -233,6 +233,15 @@ jobs:
       - name: The engine
         run: bash apps/desktop/src-tauri/cef/engine.sh "${{ matrix.target }}"
 
+      # The engine's C++ wrapper is compiled by MSVC, which cannot write an object whose
+      # path is over 260 characters ("C1083: Cannot open compiler generated file: ''").
+      # Under the checkout, a build for a named target is that long: cef.yml builds for
+      # the host and fits, this names the triple and did not. So Windows builds in a
+      # short folder of the runner's own.
+      - name: A short build folder on Windows
+        if: runner.os == 'Windows'
+        run: echo "CARGO_TARGET_DIR=${{ runner.temp }}/t" >>"$GITHUB_ENV"
+
       - name: Build the app on it
         working-directory: apps/desktop/src-tauri/cef
         env:
@@ -244,7 +253,7 @@ jobs:
           suffix=''
           [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
           python apps/desktop/src-tauri/cef/pack.py \
-            --binary "apps/desktop/src-tauri/cef/target/${{ matrix.target }}/release/nib-chromium$suffix" \
+            --binary "${CARGO_TARGET_DIR:-apps/desktop/src-tauri/cef/target}/${{ matrix.target }}/release/nib-chromium$suffix" \
             --engine "$CEF_PATH" \
             --version "${{ needs.version.outputs.version }}" \
             --platform "${{ matrix.platform }}" \
