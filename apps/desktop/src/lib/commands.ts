@@ -967,8 +967,8 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]),
     // A shell in a tab, in the one Settings chose; the plus and Ctrl+T offer the others.
-    // A desktop's alone. See docs/terminal.md.
-    ...(isDesktop
+    // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md.
+    ...(!__EVEN_PLUGIN__ && isDesktop
       ? [
           {
             id: 'new-terminal',

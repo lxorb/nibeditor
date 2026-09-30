@@ -2478,7 +2478,7 @@ class Workspace {
       if (!(await this.askToClose(tab.note, letGo))) return false
     }
 
-    if (!shells || !closing.some((tab) => tab.kind === 'terminal')) return true
+    if (__EVEN_PLUGIN__ || !shells || !closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
     return mayEnd(closing)
   }
