@@ -24,8 +24,9 @@ use crate::paths::{
 /// and when something does - a space pointed at a build directory, a link the
 /// walk is right to have followed into something enormous - the read stops and
 /// says why. A tree quietly missing half of itself is the answer to avoid: the
-/// sidebar would look finished and be wrong.
-const MAX_ENTRIES: usize = 100_000;
+/// sidebar would look finished and be wrong. Sync's own walk of a space is held to the
+/// same number for the same reason; see `space_watch/walk.rs`.
+pub const MAX_ENTRIES: usize = 100_000;
 
 /// A note or a folder, and everything under it if it is a folder.
 #[derive(Serialize)]

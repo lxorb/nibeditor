@@ -99,7 +99,9 @@ mod search;
 mod secrets;
 #[cfg(desktop)]
 mod shell_menu;
+mod space_watch;
 mod spaces;
+mod sync_store;
 mod tags;
 mod tasks;
 #[cfg(desktop)]
@@ -203,6 +205,16 @@ macro_rules! commands {
             trash::purge_trash_older_than,
             uris::take_startup_uris,
             trace::trace_startup,
+            sync_store::sync_store_open,
+            sync_store::sync_store_close,
+            sync_store::sync_store_read,
+            sync_store::sync_store_write,
+            sync_store::sync_store_clean_exit,
+            sync_store::sync_store_forget,
+            space_watch::space_watch,
+            space_watch::space_unwatch,
+            space_watch::space_scan,
+            space_watch::file_identity,
             $($desktop)*
         ]
     };
@@ -393,6 +405,13 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
         .manage(Opened::default())
         .manage(uris::Pending::default());
     trace::mark("plugins: opener, os, deep link");
+
+    // Sync's store and the watch on the space folders: two empty slots, filled when the
+    // engine first asks, which is after the first paint. See sync_store.rs and
+    // space_watch.rs.
+    let builder = builder
+        .manage(sync_store::Stores::default())
+        .manage(space_watch::Watching::default());
 
     // What the `nib` command's requests wait in while the window answers them.
     // Managed here rather than where the socket opens, because a builder is the

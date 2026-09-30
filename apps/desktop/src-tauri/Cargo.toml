@@ -96,6 +96,21 @@ base64 = "0.22"
 # no runner but one compiled a thousand lines of it. The pure-Rust backend, so it
 # needs no C compiler and cross-compiles to a phone like anything else.
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+# The sync store: one SQLite file per account, on every platform, phones included,
+# because the device's half of sync v2 (what the account confirmed, what this device
+# has not sent yet, what nib last wrote to each file) is the same on all of them. See
+# sync_store.rs. Bundled so the store does not depend on whichever SQLite a machine
+# ships, and because a phone ships none an app may link.
+rusqlite = { version = "0.32", features = ["bundled"] }
+# The space folders watched for what other programs write into them: git, Obsidian,
+# a text editor. ReadDirectoryChangesW, FSEvents and inotify behind one interface, with
+# the debouncing done by space_watch/watching.rs rather than by notify's own debouncers,
+# because neither stitches a move between two folders on Windows. See space_watch.rs.
+notify = "8"
+# The sync store's device id, from the system's own randomness. Already in the lock
+# file as something tauri builds with, and on every platform now that every platform
+# has a sync store.
+getrandom = "0.3"
 
 # Desktop only: a second launch should hand its file to the running window, the
 # app installs its own updates, and files are chosen and saved in a dialog. A
@@ -125,10 +140,6 @@ keyring = { version = "3", default-features = false, features = [
   "sync-secret-service",
   "crypto-rust",
 ] }
-# The secret the local endpoint is reached with, from the system's own randomness.
-# Already in the lock file as something tauri builds with, so this adds nothing to
-# the build. Desktop only, because only a desktop has the endpoint.
-getrandom = "0.3"
 # What an agent's token is kept as: its SHA-256, so the file of grants is a list of
 # what each agent may do and not a way to be one. Already in the lock file as
 # something tauri builds with; see src/agents/grants.rs.
@@ -165,10 +176,6 @@ zeroize = "1"
 # driver the features compile in; this is the one feature it does not ask for itself.
 tokio = { version = "1", default-features = false, features = ["time"] }
 
-# Apple Notes keeps its notes in a SQLite database in a group container, which is
-# the only way into them: Notes has no export. Bundled so the read does not depend
-# on whichever SQLite the machine happens to ship, and a temporary folder to copy
-# the database into, because Notes is very likely running while it is read.
 # UIKit as the objects tao hands out, at the version it is built against. For the one
 # thing the phone build answers itself: a second window an iPad asks for, which is
 # given back rather than left blank (lifecycle.rs). And the iPhone's own keychain for
@@ -188,7 +195,10 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-rusqlite = { version = "0.32", features = ["bundled"] }
+# Apple Notes keeps its notes in a SQLite database in a group container, which is
+# the only way into them: Notes has no export. Read with the same `rusqlite` the sync
+# store uses (above), and a temporary folder to copy the database into, because Notes
+# is very likely running while it is read.
 tempfile = "3"
 # Where the main window was and how big it was, put back at the next launch the way
 # a Mac app puts back its frame. Only the size, the place and whether it was
@@ -282,6 +292,10 @@ javascriptcore-rs = "=1.1.2"
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
+# What a file *is*, apart from where it is: the volume and the file id, asked of an open
+# handle. notify's own crate for it, so the one unsafe call it takes is not ours; a Mac
+# and Linux need nothing but `std` for the same answer. See space_watch/identity.rs.
+file-id = "0.2"
 # Nib's registration as a browser, written and read back through a safe interface
 # rather than more unsafe calls; see default_browser.rs. Already in the lock file,
 # at this version, as something the updater's HTTP client builds with.
