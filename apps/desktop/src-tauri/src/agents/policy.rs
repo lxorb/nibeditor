@@ -321,8 +321,17 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
                 composed.then_some(Sends::ByShape)
             }
         }
-        Act::Enter => (composed || (body(&facts.field) && (social || message_box(&facts.field))))
-            .then_some(Sends::ByShape),
+        // Enter in a box is a new line, never its form's submit; it sends from a box
+        // that is a message's, or on a site for messages.
+        Act::Enter => {
+            let own = &facts.field;
+            let sent = if body(own) {
+                social || message_box(own)
+            } else {
+                composed
+            };
+            sent.then_some(Sends::ByShape)
+        }
     }
 }
 
@@ -1502,6 +1511,22 @@ mod tests {
             ),
             Some((Category::Sending, "Send on forum.example".to_string()))
         );
+        // Enter in a support form's box is a new line; in the one line of a form with
+        // one, it submits.
+        let support = vec![
+            field("email", "Email"),
+            field("textarea", "How can we help?"),
+        ];
+        assert!(!sent(
+            &enter_in(support[1].clone(), true, support.clone()),
+            Act::Enter,
+            "https://help.example/"
+        ));
+        assert!(sent(
+            &enter_in(support[0].clone(), true, support),
+            Act::Enter,
+            "https://help.example/"
+        ));
         // Enter in the subject line of a compose form submits it.
         assert!(sent(
             &enter_in(field("text", "Subject"), true, compose()),
