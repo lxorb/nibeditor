@@ -199,7 +199,6 @@ test('is a plane’s Duplicate while something on it is picked, and the tab’s 
   const note = new NoteDoc(
     { kind: 'canvas', path: '/space/Board.canvas', name: 'Board.canvas', text, dirty: false },
     () => undefined,
-    () => true,
   )
   const store = new CanvasStore(new Tab(note, 'pane'))
   const view = {
