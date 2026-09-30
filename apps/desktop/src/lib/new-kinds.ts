@@ -23,7 +23,11 @@
  *  note, there should be a menu (as if you would click the +) where you can decide
  *  what type."*, and 2026-09-27: *"Ctrl + T should always open a webpage by default
  *  [...] we need an other modal, not just a small one but a proper modal in the centre
- *  of the screen."* */
+ *  of the screen."* And 2026-09-30: *"add terminal as a new type of thing that you can
+ *  open when creating a new tab [...] if there are different kinds of terminals [...]
+ *  then you should be able to choose"*. A terminal is the one kind that is a session
+ *  rather than a document, and the one with more than one way to make it: the row makes
+ *  the default shell and its chevron lists the rest; see `others` and docs/terminal.md. */
 
 import type { FileMark } from './file-mark'
 import { t } from './i18n.svelte'
