@@ -230,10 +230,20 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
 
     for (const file of readSpaceFiles(one.files)) if (mine.has(file.hash)) found.add(file.hash)
 
+    // And the files of the space's tree (sync v2), whose bytes are these blobs by
+    // their hash; see sync2/files.ts.
+    const { results: files } = await env.DB.prepare(
+      `select hash from notes where space_id = ?1 and kind = 'file'
+          and hash in (select value from json_each(?2))`,
+    )
+      .bind(one.space, JSON.stringify([...mine]))
+      .all<{ hash: string }>()
+    for (const file of files) found.add(file.hash)
+
     const { results: notes } = await env.DB.prepare(
       one.item
-        ? 'select id from notes where space_id = ?1 and id = ?2 and size > 0'
-        : 'select id from notes where space_id = ?1 and size > 0 limit ?2',
+        ? "select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'"
+        : "select id from notes where space_id = ?1 and size > 0 and kind != 'file' limit ?2",
     )
       .bind(one.space, one.item || budget + 1)
       .all<{ id: string }>()

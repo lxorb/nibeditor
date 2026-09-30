@@ -5,12 +5,15 @@
  *  held, and taking whole texts in as operations under its own id. */
 
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { type Canvas, type CanvasNode, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import {
   hash32,
   type PullResponse,
   type PushResponse,
   roomNews,
+  seedPlane,
   seedUpdate,
+  type SnapshotPage,
 } from '@nib/sync-core'
 import { receive, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { Awareness } from 'y-protocols/awareness'
@@ -309,3 +312,68 @@ async function snapshotOf(id: string): Promise<Uint8Array> {
   if (!object) throw new Error('no snapshot')
   return new Uint8Array(await object.arrayBuffer())
 }
+
+describe('a canvas on sync v2', () => {
+  test('seeds as a device seeds it, and a v1 save of it lands as operations on its cards', async () => {
+    const canvas: Canvas = {
+      nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'One' }],
+      edges: [],
+      ink: [],
+      at: { a: 1 },
+      gone: {},
+    }
+    const id = await made('Board.canvas', writeCanvas(canvas))
+    await prepare()
+    await join(rooms.of(id).room, { id, spaceId: space, kind: 'plane' })
+    await rooms.settle()
+    expect(await snapshotOf(id)).toEqual(seedPlane(id, 1, readCanvas(writeCanvas(canvas))))
+
+    const next: Canvas = { ...canvas, nodes: [{ ...canvas.nodes[0], text: 'One two' } as CanvasNode], at: { a: 2 } }
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: writeCanvas(next), baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+    expect(await body(id)).toBe(writeCanvas(readCanvas(writeCanvas(next))))
+  })
+})
+
+describe('the bulk read and the kept side', () => {
+  test('a first sync reads every document, woken or not, in id order', async () => {
+    const one = await made('One.md', 'one\n')
+    const two = await made('Two.md', 'two\n')
+    await prepare()
+    const device = new Device(one, 'one\n', 'laptop')
+    await device.push(device.type(4, 'more\n'))
+    await rooms.settle()
+
+    const { value } = await framed<SnapshotPage>(env, `/v2/spaces/${space}/snapshot`, token)
+    const texts = new Map(
+      value.docs.map((doc) => {
+        const read = new Y.Doc()
+        Y.applyUpdateV2(read, doc.update)
+        return [doc.id, read.getText(TEXT).toJSON()]
+      }),
+    )
+    expect(texts.get(one)).toBe('one\nmore\n')
+    expect(texts.get(two)).toBe('two\n')
+    expect(value.next).toBeNull()
+  })
+
+  test('the side a modal answer let go of is kept as a version, named after its device', async () => {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    const kept = await call(env, '/v2/docs/keep', {
+      token,
+      body: { id, text: 'the words that lost\n', device: 'Laptop' },
+    })
+    expect(kept.status).toBe(200)
+
+    const versions = await call(env, `/v1/notes/${id}/versions`, { token })
+    const newest = (versions.json as unknown as { versions: { at: number; by: string }[] }).versions[0]
+    expect(newest?.by).toBe('Laptop')
+    const words = await call(env, `/v1/notes/${id}/versions/${String(newest?.at)}`, { token })
+    expect(words.json.content).toBe('the words that lost\n')
+  })
+})
