@@ -417,6 +417,86 @@ place to the system's cascade; see `created_away` in
 that way and ends one that shows up on a screen. It is on the trace as `window
 placement`.
 
+## Speed
+
+Emil's rule, 2026-09-14: nib opens in under a second, on slower devices too, and looks
+fully loaded when it does. What holds it, and how to measure it again:
+
+- **The first paint's weight**, on every change: `apps/desktop/test/weight.test.ts`,
+  our own source reached from `src/main.ts` without crossing a dynamic import, in bytes
+  and in modules, held to what was measured plus one per cent. The walk reads an import
+  prettier wrapped over several lines; until 2026-09-30 it did not, and 111 kilobytes of
+  the launch were outside the budget.
+- **The main thread after the paint**, on every change in the smoke job:
+  `apps/desktop/test/e2e/long-tasks.py`. No task over fifty milliseconds between the
+  first frame and the end of the launch order, but the one that builds the restored
+  note's editor, on a fixed space of a hundred notes, against a line scaled to the
+  machine it runs on. Red with a task of eighty reference milliseconds put into the
+  search stage's turn, green without it.
+- **The launch itself**: `python apps/desktop/test/e2e/launch.py` on a release probe
+  build (its docstring says how to make one). Cold is a first launch on a profile the
+  webview has never seen, warm is every one after, with a note open in the big space;
+  every launch through `run_probe`, off the screen; the machine's load and free memory
+  printed beside each table, because a machine out of memory pages the webview in from
+  disk and takes seconds at a low processor load.
+- **The slow device**: the same drive with `--throttle 4`, a warm launch whose page is
+  reloaded with its main thread slowed four times through the DevTools protocol, on a
+  port only the probe is given. The window and the webview's own start are the
+  machine's and are not slowed, so the total is the warm native half plus the slowed
+  page. No Android device or emulator answered adb on this machine, so there is no
+  phone row.
+
+Measured 2026-09-30 on a Snapdragon X Elite (X1E78100, 12 threads, 32 GB, Windows
+26200, WebView2 154.0.4258.37) with other agents' builds on it: load 23-59 %, 5-8.5 GB
+free. Milliseconds from before the process's first line, the median of seven launches
+each, the two builds launched turn and turn about so the machine's load lands on both.
+Before is main at bbef30bb, the first paint as this round found it (3,380,464 bytes of
+source counted whole); after is main at 0fa05816 (3,190,959). Both carry the same crate.
+
+| launch | window shown | page requested | modules | shell | tree read | first frame | pane | order done |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| cold, empty space, before | 312 | 300 | 497 | 528 | 562 | 658 | - | 758 |
+| cold, empty space, after | 320 | 307 | 526 | 563 | 611 | 700 | - | 768 |
+| warm, empty space, before | 321 | 307 | 438 | 478 | 504 | 557 | 590 | 676 |
+| warm, empty space, after | 318 | 303 | 442 | 484 | 510 | 565 | 601 | 687 |
+| cold, 5,000 notes, before | 409 | 387 | 542 | 584 | 645 | 749 | - | 1000 |
+| cold, 5,000 notes, after | 439 | 423 | 589 | 633 | 703 | 818 | - | 1063 |
+| warm, 5,000 notes, before | 393 | 377 | 532 | 576 | 629 | 667 | 754 | 821 |
+| warm, 5,000 notes, after | 349 | 336 | 478 | 518 | 571 | 608 | 693 | 759 |
+
+| four times slower, warm, after | page requested | modules | shell | tree read | first frame | pane | order done |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| empty space | 303 | 563 | 685 | 809 | 835 | 870 | 976 |
+| 5,000 notes | 336 | 598 | 755 | 967 | 1023 | 1321 | 1634 |
+
+Read it by its phases rather than its totals. `window shown` is late in a probe on
+purpose: a probe's window is created off the screen and shown once its webview is built
+(see `built_away` in placement.rs), where a real launch with a remembered ground is on
+screen in its own colour at about fifty milliseconds (see ground.rs). `page requested`
+is the webview coming up, which is native and none of the page's; `first frame` is the
+shell and the file list painted; `pane` is the note the window was left on, drawn in its
+editor, or the empty pane where there was none.
+
+What it says. Every first frame is under a second, cold or warm, and so is every launch
+order but the cold one over five thousand notes. At four times slower the empty space
+is whole in 0.87 s and done in 0.98; five thousand notes are not, at 1.02 s to the file
+list and 1.32 s to the note. The warm launch is not under half a second: it is 0.57 to
+0.61 s to a painted window, and 0.30 to 0.34 s of that is the webview starting before a
+line of the page runs. The 209 kilobytes of source this round took out of the first
+paint (49 kilobytes built) move no row here by more than the machine's own noise: on a
+machine this fast the page's own work is a quarter of a launch.
+
+What is next, in the order the table asks. The webview's start, the largest phase of
+every launch, overlapped with building the window rather than after it - a change to
+the crate's engine and window builder (`engine.rs`, `launch.rs` and the builder in
+`lib.rs`, under `apps/desktop/src-tauri/src`) that waits for the engine switch. Then the restored note on a slow device, 0.3 s of the
+slowed launch over five thousand notes: the note drawn as it reads first and its editor
+mounted a frame later, with nothing moving and the caret where it was. Then the listing
+of a big space, 0.2 s slowed. Tried and not kept: dropping the JavaScript side of Vite's
+module preloading, which took 87 ms off a first frame at full speed and put 55 back at
+four times slower, where the preloads are what keeps a door's modules from arriving one
+after another.
+
 ## Types
 
 Every package extends `tsconfig.base.json`. Beyond `strict`: an index may
