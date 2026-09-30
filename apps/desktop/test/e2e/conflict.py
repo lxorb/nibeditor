@@ -360,7 +360,7 @@ def history_here(page: Page, about: str) -> list[str]:
     Which is where the `newest` rule deliberately puts what loses: it is the rule
     that says "put the later one in front of me", and what it promises is not a second
     file but that the other copy is still somewhere. Every write that replaces a note
-    with words from elsewhere keeps one first - see `writeDown` in sync/pass.ts - so
+    with words from elsewhere keeps one first - see `writeDown` in sync/write-down.ts - so
     this is the other half of that promise, read back the way the history sheet reads
     it."""
     return page.evaluate(

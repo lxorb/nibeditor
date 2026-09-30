@@ -2,6 +2,7 @@
  *  of. A clash holds the other device's whole note, so this store is the one
  *  place on the device where somebody else's words are written outside the vault. */
 
+import { conflictPath } from '@nib/markdown/paths'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import type { Clash } from './conflicts'
@@ -145,6 +146,25 @@ describe('a path read back out of storage', () => {
 
     expect(invoked).toEqual([])
     expect(record.clashes).toHaveLength(0)
+  })
+})
+
+/** Keeping both writes the other copy under the name every second copy takes, and a
+ *  second clash about the same note on the same day lands on that same name. What is
+ *  already there is kept as a version first, as it is for every other write that
+ *  comes from elsewhere; see sync/write-down.ts. */
+describe('keeping both', () => {
+  test('keeps what was already at the second copy’s name as a version', async () => {
+    held([aClash('/Work/Plan.md')])
+
+    await record.settle(record.clashes[0]!, 'both')
+
+    const copy = conflictPath('/Work/Plan.md')
+    expect(invoked).toEqual([
+      { command: 'read_note', path: copy },
+      { command: 'snapshot_note', path: copy },
+      { command: 'write_note', path: copy },
+    ])
   })
 })
 

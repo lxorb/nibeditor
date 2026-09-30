@@ -272,8 +272,8 @@ export async function eraseLocalSpaces(ws: HoldsSpaces) {
 /** Deletes the space's folder. The app owns that folder, so dropping it from
  *  the list alone would only bring it back on the next launch. */
 /** `keep` puts the folder in this device's trash instead of deleting it, for
- *  a space that is in nobody's Recently deleted to be put back from - which
- *  is what a space somebody stopped sharing is. */
+ *  a space whose folder may hold more than any Recently deleted does - which
+ *  is every space sync takes away; see `reconcile` in sync.svelte.ts. */
 export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   const space = ws.spaces.find((entry) => entry.id === id)
   if (!space) return

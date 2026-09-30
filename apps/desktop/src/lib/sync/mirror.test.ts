@@ -48,6 +48,9 @@ const fake = vi.hoisted(() => {
   const unreadable = new Set<string>()
   /** What the account answers a delete with, where it does not simply take it. */
   const refusing: { delete: Error | null } = { delete: null }
+  /** This device's trash, by the id each thing put in it was given: where it was and
+   *  what it said. See src-tauri/src/trash.rs. */
+  const trash = new Map<string, { path: string; content: string }>()
   let seq = 0
 
   const text = (value: unknown) => (typeof value === 'string' ? value : '')
@@ -91,8 +94,29 @@ const fake = vi.hoisted(() => {
     }
 
     if (command === 'delete_note') {
+      calls.push(`delete ${path}`)
       disk.delete(path)
       return Promise.resolve(undefined as T)
+    }
+
+    if (command === 'trash_item') {
+      calls.push(`trash ${path}`)
+      const held = disk.get(path)
+      if (held === undefined) return Promise.reject(new Error('nothing is there'))
+
+      const id = `t-${trash.size}`
+      trash.set(id, { path, content: held })
+      disk.delete(path)
+      return Promise.resolve({ id } as T)
+    }
+
+    if (command === 'restore_trash') {
+      const held = trash.get(text(args.id))
+      if (!held) return Promise.reject(new Error('nothing to restore'))
+
+      trash.delete(text(args.id))
+      disk.set(held.path, held.content)
+      return Promise.resolve(held.path as T)
     }
 
     if (command === 'read_tree') {
@@ -219,6 +243,12 @@ const fake = vi.hoisted(() => {
     return note.id
   }
 
+  /** Another device's delete, as the account keeps it: a tombstone in the changes. */
+  function deleteRemote(id: string) {
+    const note = remote.get(id)
+    if (note) Object.assign(note, { deleted: true, version: note.version + 1, seq: ++seq })
+  }
+
   function editRemote(id: string, content: string, updatedAt = 0) {
     const note = remote.get(id)
     if (note) Object.assign(note, { content, version: note.version + 1, seq: ++seq, updatedAt })
@@ -230,6 +260,7 @@ const fake = vi.hoisted(() => {
     history.clear()
     modified.clear()
     unreadable.clear()
+    trash.clear()
     refusing.delete = null
     calls.length = 0
     fetched.length = 0
@@ -240,6 +271,7 @@ const fake = vi.hoisted(() => {
     addRemote,
     api,
     calls,
+    deleteRemote,
     disk,
     editRemote,
     fetched,
@@ -249,6 +281,7 @@ const fake = vi.hoisted(() => {
     refusing,
     remote,
     reset,
+    trash,
     unreadable,
   }
 })
@@ -1051,6 +1084,119 @@ describe('a delete the account did not take', () => {
     fake.calls.length = 0
     await push(mirror, 'token', NOBODY)
 
+    expect(fake.calls).toEqual([])
+  })
+})
+
+/** Another device deleted a note this one holds. Words typed here since the last pass
+ *  are words that device never saw, so the edit beats the delete and goes back up; a
+ *  note nobody wrote in here goes to this device's trash, never off the disk. */
+describe('a note deleted on another device', () => {
+  const live = () =>
+    [...fake.remote.values()].filter((one) => !one.deleted).map((one) => [one.path, one.content])
+
+  test('is kept when it was written in here since, and goes back up', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.disk.set(`${ROOT}/Plan.md`, '# Plan\ntyped offline\n')
+    fake.deleteRemote(id)
+
+    await pull(mirror, 'token', NOBODY)
+    expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\ntyped offline\n')
+
+    await push(mirror, 'token', NOBODY)
+    expect(fake.calls).toEqual(['createNote Plan.md'])
+    expect(live()).toEqual([['Plan.md', '# Plan\ntyped offline\n']])
+  })
+
+  test('goes to this device’s trash when nothing was written here, with a version', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.deleteRemote(id)
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.disk.has(`${ROOT}/Plan.md`)).toBe(false)
+    expect(fake.calls).toEqual([`trash ${ROOT}/Plan.md`])
+    expect(fake.history.get(`${ROOT}/Plan.md`)).toEqual(['# Plan\n'])
+    expect(live()).toEqual([])
+  })
+
+  test('and comes back from the trash, and up to the account with it', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.deleteRemote(id)
+    await pull(mirror, 'token', NOBODY)
+
+    const [held] = fake.trash.keys()
+    await fake.invoke('restore_trash', { id: held })
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\n')
+    expect(live()).toEqual([['Plan.md', '# Plan\n']])
+  })
+
+  test('in a folder deleted there keeps the one note written in here', async () => {
+    const kept = fake.addRemote('Work/Kept.md', '# Kept\n')
+    const left = fake.addRemote('Work/Left.md', '# Left\n')
+    fake.disk.set(`${ROOT}/Work/Kept.md`, '# Kept\n')
+    fake.disk.set(`${ROOT}/Work/Left.md`, '# Left\n')
+    const mirror = newMirror('s-one', ROOT)
+    await pull(mirror, 'token', NOBODY)
+
+    fake.disk.set(`${ROOT}/Work/Kept.md`, '# Kept\nand more\n')
+    fake.deleteRemote(kept)
+    fake.deleteRemote(left)
+    fake.calls.length = 0
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Work/Kept.md`)).toBe('# Kept\nand more\n')
+    expect(fake.disk.has(`${ROOT}/Work/Left.md`)).toBe(false)
+    expect(fake.calls).toEqual([`trash ${ROOT}/Work/Left.md`, 'createNote Work/Kept.md'])
+  })
+
+  test('is kept when the file here will not read, since nobody can say it is unchanged', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.unreadable.add(`${ROOT}/Plan.md`)
+    fake.deleteRemote(id)
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\n')
+    expect(fake.calls).toEqual([])
+  })
+
+  /** A room carries every keystroke up as it is typed, so the account - and its
+   *  Recently deleted - already holds what the file says, however far the file has
+   *  moved from the last pass. */
+  test('goes to the trash when its room already carried the writing up', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.disk.set(`${ROOT}/Plan.md`, '# Plan\ntyped in the room\n')
+    fake.deleteRemote(id)
+
+    await pull(mirror, 'token', new Set([id]))
+
+    expect(fake.disk.has(`${ROOT}/Plan.md`)).toBe(false)
+    expect(fake.calls).toEqual([`trash ${ROOT}/Plan.md`])
+  })
+
+  /** A delete names a note, not a path. The name can belong to another note by the
+   *  time the delete arrives - one made there since, that a create here was paired
+   *  with - and that note's file is not the deleted one's to take. */
+  test('leaves alone a file another note holds under that name by now', async () => {
+    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+    fake.remote.set('n-earlier', {
+      id: 'n-earlier',
+      path: 'Plan.md',
+      content: '# An earlier plan\n',
+      version: 2,
+      seq: 50,
+      deleted: true,
+    })
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\n')
+    expect(mirror.notes['Plan.md']?.id).toBe(id)
     expect(fake.calls).toEqual([])
   })
 })

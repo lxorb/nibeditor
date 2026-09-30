@@ -20,7 +20,6 @@
 import { log } from '../log'
 import { insideSpace, withinSpace } from '../space-paths'
 import { forget, isRecord, keep, stored } from '../stored'
-import { invoke } from '../tauri'
 import type { Answer, Clash } from './conflicts'
 
 const STORAGE_KEY = 'nib:sync-log'
@@ -135,12 +134,8 @@ class Record {
     }
 
     if (answer === 'theirs') {
-      const here = await invoke<string>('read_note', { path }).catch(() => null)
-      if (here?.trim()) {
-        await invoke('snapshot_note', { path, content: here }).catch(() => undefined)
-      }
-
-      await invoke('write_note', { path, content: clash.theirs })
+      const { writeDown } = await import('./write-down')
+      await writeDown(path, clash.theirs)
       // And the document, if the note is open. The file is theirs now and the
       // document is still holding what this machine said - so the note on screen
       // reads as words the file no longer has, and the first keystroke after that
@@ -151,9 +146,14 @@ class Record {
       workspace.reload(path, clash.theirs)
     }
 
+    // Under the name a second clash the same day would take too, so whatever is
+    // there already is kept as a version on the way past.
     if (answer === 'both') {
-      const { conflictPath } = await import('@nib/markdown/paths')
-      await invoke('write_note', { path: conflictPath(path), content: clash.theirs })
+      const [{ conflictPath }, { writeDown }] = await Promise.all([
+        import('@nib/markdown/paths'),
+        import('./write-down'),
+      ])
+      await writeDown(conflictPath(path), clash.theirs)
     }
 
     this.forget(clash.path)

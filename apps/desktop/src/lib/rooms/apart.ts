@@ -30,7 +30,7 @@
 import { conflictPath } from '@nib/markdown/paths'
 import { record } from '../sync/record.svelte'
 import { type ConflictRule } from '../sync/conflicts'
-import { writeDown } from '../sync/pass'
+import { writeDown } from '../sync/write-down'
 
 /** What the room does with the answer. `offer` puts this device's words into the
  *  room, `take` puts the room's words into the note, and `wait` leaves both alone;

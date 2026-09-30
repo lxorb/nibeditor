@@ -44,6 +44,8 @@ const fake = vi.hoisted(() => {
     calls: [] as string[],
     /** And every folder this machine took away, by how it took it. */
     local: [] as string[],
+    /** The spaces the account says were deleted, by id. */
+    deleted: [] as string[],
     seq: 0,
   }
 
@@ -190,7 +192,7 @@ const fake = vi.hoisted(() => {
     me: async () => ({ user }),
     signOut: async () => ({ ok: true as const }),
     usage: async () => ({ used: 0, limit: 1 }),
-    listSpaces: async () => ({ spaces: remote.spaces.map(listed), deleted: [] as string[] }),
+    listSpaces: async () => ({ spaces: remote.spaces.map(listed), deleted: remote.deleted }),
     createSpace: async (_token: string, name: string) => {
       remote.calls.push(`createSpace ${name}`)
       const space = { id: `s-${name}`, name }
@@ -322,6 +324,7 @@ const fake = vi.hoisted(() => {
     remote.notes = []
     remote.calls = []
     remote.local = []
+    remote.deleted = []
     remote.seq = 0
     rooms.clear()
     inTheMiddle = null
@@ -696,6 +699,26 @@ describe('a note that is open in its room while a pass runs', () => {
 
     // Nothing was sent and nothing clashed: the room had it the whole time.
     expect(fake.remote.calls).toEqual([])
+  })
+})
+
+/** Another device deleted a whole space. What this machine holds of it may be more
+ *  than the account ever saw - words typed offline, a picture that never travels -
+ *  so the folder goes where it can be had back from rather than off the disk. */
+describe('a space deleted on another device', () => {
+  test('leaves its folder in this device’s trash, with the words typed here', async () => {
+    accountWithNotes()
+    await signIn()
+    account.settled()
+    await sync.pass()
+
+    fake.disk.set('/Account/Hello.md', '# Hello from the account\ntyped offline')
+    fake.remote.spaces = []
+    fake.remote.deleted = ['s-Account']
+    await afterTheReconcileInterval(() => sync.pass())
+
+    expect(workspace.spaces).toEqual([])
+    expect(fake.remote.local).toEqual(['trash_item /Account'])
   })
 })
 

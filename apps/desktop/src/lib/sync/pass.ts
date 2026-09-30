@@ -29,6 +29,7 @@ import { invoke, joinPath } from '../tauri'
 import { isUntouchedWelcome } from '../welcome'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
+import { writeDown } from './write-down'
 import type { Entry } from '../workspace.svelte'
 
 /** A page of changes with the notes somebody is waiting on at the front.
@@ -82,40 +83,6 @@ async function holdsSameWords(local: string, hash: string): Promise<boolean> {
   if (!local.includes('\r')) return false
 
   return (await sha256(local.replace(/\r\n/gu, '\n'))) === hash
-}
-
-/** Writes a note that came from the account, keeping whatever the file said before
- *  it as a version first.
- *
- *  Saving keeps a version of the words it is about to replace; this is the other
- *  half of that. Words arriving from the account replace a file just as thoroughly
- *  as a save does, and they were the one overwrite that left nothing behind - so a
- *  note another device got wrong, or a conflict settled the wrong way round, was
- *  recoverable from every device except the one it landed on. Both platforms keep
- *  these the way a save's are kept, so they are in the same version history and the
- *  same sheet puts them back; see recovery.svelte.ts.
- *
- *  `was` is the body the pass has already read, when it has one. Anything else is
- *  read here, because a version of what is being replaced is the whole point: the
- *  conflict copies are written to a name that is usually free, and a second
- *  conflict in one day would otherwise land on the first without a word.
- *
- *  Nothing is kept for a file that is new, that says nothing, or that already says
- *  exactly this. Both platforms drop a version that repeats the one before it
- *  anyway; this saves them the round trip.
- *
- *  Exported for the room's side of the same question, which keeps the same copy
- *  beside a note under the same name and wants the same version kept on the way
- *  past; see rooms/apart.ts. */
-export async function writeDown(path: string, content: string, was?: string | null) {
-  const previous =
-    was === undefined ? await invoke<string>('read_note', { path }).catch(() => null) : was
-
-  if (previous !== null && previous !== content && previous.trim()) {
-    await invoke('snapshot_note', { path, content: previous }).catch(() => undefined)
-  }
-
-  await invoke('write_note', { path, content })
 }
 
 /** Whether the copy the account holds was written after the file here.
@@ -234,13 +201,7 @@ export async function pull(
       const target = joinPath(root, remote.path)
 
       if (remote.deleted) {
-        if (mirror.notes[remote.path]) {
-          await invoke('delete_note', { path: target }).catch(() => undefined)
-          mirror.notes = without(mirror.notes, remote.path)
-        }
-        // A write that was in the air about a note that has since gone says nothing
-        // about whatever is made at that name next.
-        mirror.offered = without(mirror.offered, remote.path)
+        await deletedThere(mirror, remote, target, joined)
         continue
       }
 
@@ -425,6 +386,50 @@ export async function pull(
   }
 
   return moved
+}
+
+/** A note another device deleted, taken off this one - unless this one has written
+ *  in it since.
+ *
+ *  The delete was made looking at the copy the account held, so that copy is what it
+ *  takes away. A file here whose words have moved on since the last pass holds
+ *  writing the other device never saw, and removing it used to lose that writing for
+ *  good: the account's Recently deleted has only what the account was given. So the
+ *  edit beats the delete, as sync v2 decides it (docs/sync-v2.md): the file stays,
+ *  its entry goes, and the push below offers it as the new note it now is. A file
+ *  that will not read stays the same way, since nothing can say it has not moved.
+ *
+ *  A file with nothing new in it goes, but to this device's trash rather than off the
+ *  disk, with a version kept first the way a delete made here keeps one. A note in a
+ *  room counts as unchanged: the room carried every keystroke up as it was typed.
+ *
+ *  A delete names a note, not a path, and the name may be another note's by now - one
+ *  made there since, that a create here was paired with. That note is left alone. */
+async function deletedThere(mirror: Mirror, remote: RemoteNote, target: string, joined: Joined) {
+  const tracked = mirror.notes[remote.path]
+  if (tracked && tracked.id !== remote.id) return
+
+  // A write that was in the air about a note that has since gone says nothing
+  // about whatever is made at that name next.
+  mirror.offered = without(mirror.offered, remote.path)
+  if (!tracked) return
+  mirror.notes = without(mirror.notes, remote.path)
+
+  const local = await invoke<string>('read_note', { path: target }).catch(() => null)
+  if (local === null && (await fileStamp(target)) === null) return
+
+  if (local === null || !(joined.has(remote.id) || (await holdsSameWords(local, tracked.hash)))) {
+    log('info', `sync: ${target} was deleted elsewhere after it was written in here, so it stays`)
+    return
+  }
+
+  await invoke('snapshot_note', { path: target, content: local }).catch(() => undefined)
+  await invoke('trash_item', { path: target, kind: 'note' }).catch((error: unknown) => {
+    log(
+      'warn',
+      `sync: ${target} was deleted elsewhere and stays, the trash refused it - ${String(error)}`,
+    )
+  })
 }
 
 /** A note or a folder that moved here - renamed, or dragged into another folder -

@@ -345,13 +345,12 @@ class Sync {
     // has to settle in a single pass, not leave a gap.
     for (const root of plan.remove) {
       const space = workspace.spaces.find((one) => one.root === root)
-      // A space somebody stopped sharing is in nobody's Recently deleted, so
-      // the copy on this disk is the only one left of what was read here. It
-      // goes to this device's trash rather than for good; a space the account
-      // says was deleted is in the account's own Recently deleted already.
-      const shared = this.mirrors[root]?.shared === true
+      // To this device's trash, never for good. The account's Recently deleted
+      // holds only what the account was given, and the folder may hold more:
+      // words typed offline, a picture that never travels, and - for a space
+      // somebody stopped sharing - the only copy left of what was read here.
       this.mirrors = without(this.mirrors, root)
-      if (space) await workspace.deleteSpace(space.id, shared)
+      if (space) await workspace.deleteSpace(space.id, true)
     }
 
     // Missing without a marker: not uploaded yet as far as anyone can tell, so

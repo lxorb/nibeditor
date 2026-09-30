@@ -116,7 +116,10 @@ the tests in section 12 name them.
    fixing in v1 now, not only in v2: skip the delete when the file no longer reads as the
    tracked hash, and let the push create it again. The other direction: a push that finds a
    file missing deletes the note on the account without asking whether another device wrote
-   in it meanwhile (`mirror.ts:730`); that one lands in Recently deleted.
+   in it meanwhile (`mirror.ts:730`); that one lands in Recently deleted. **Fixed in v1
+   since:** `deletedThere` in `sync/pass.ts` keeps an edited file for the push and sends an
+   unchanged one to the device trash with a version, and a space deleted elsewhere goes to
+   the device trash too.
 6. **An offline rename loses the note's identity.** `movedHere` only runs online. Offline,
    the next pass reads the rename off the folder as a create (new id, history gone) and a
    delete; if another device edited the note meanwhile, the delete takes those edits into
