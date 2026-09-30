@@ -161,9 +161,9 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | --- | --- | --- | --- | --- | --- | --- |
 | Web | A private tab | Chrome | missing | no code (`docs/browser.md:1198` plans it for batch 6), and Ctrl+Shift+N is New window | L | med |
 | Web | Dragging a link or a picture out of a page onto the strip or the file list | Chrome | missing | page drags stay inside the webview (`rs/web_tabs.rs:895`) | L | med |
-| Tooltips | Hover titles carry the key, e.g. `Back (Alt+←)`, the panel tabs, the sidebar toggle, the find steps | Chrome, VS Code, Obsidian | partial | keys appear only in menus and the palette: `lib/Sidebar.svelte:571` `title={item.label}`, `lib/web-tab/WebBar.svelte:151`. Touches every surface, so it goes last | M | med |
-| Files | Dragging a row out to Explorer or a mail | Explorer, VS Code | missing | a tree drag carries only `text/nib-*` types (`lib/drag-paths.ts:29-30`) | L | low |
-| Tabs | Hover cards, tab groups, tab search, multi-select | Chrome | missing | `docs/chrome-tabs.md:134` | L | low |
+| Tooltips | Hover titles carry the key, e.g. `Back (Alt+←)`, the panel tabs, the sidebar toggle, the find steps | Chrome, VS Code, Obsidian | done | one helper, `titled` (`lib/titled.ts`), on the title bar, the strip, the panel tabs and tools, the sidebar foot, the web bar, the find bar, the canvas bar and the format bar; a rebinding shows at once. Downloads, clip, the dots and the theme switch have no key to say | M | med |
+| Files | Dragging a row out to Explorer or a mail | Explorer, VS Code | missing | a tree drag carries only `text/nib-*` types (`lib/drag-paths.ts`). Chromium's `DownloadURL` would reach Windows alone and cannot be driven without a real pointer; the whole of it is a drag-out bridge in the crate (OLE's CF_HDROP of a copy, AppKit's dragging session, GTK), proved on three systems | L | low |
+| Tabs | Hover cards, tab groups, tab search, multi-select | Chrome | partial | hover cards and several tabs at once done (`lib/tab-strip/hover-card.svelte.ts`, `chosen.svelte.ts`, `picking.ts`); tab search is the palette; no groups. See `docs/chrome-tabs.md` | L | low |
 
 ## Decisions for Emil
 

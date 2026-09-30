@@ -268,9 +268,7 @@
     // The room opening for a drop is a tab that is not there yet, and a gap needs
     // no hairline either side of it.
     if (incoming !== null) ids.splice(incoming, 0, '')
-    const filled = new Set<string>([...lifted, ...picked, ''])
-    if (activeId !== null) filled.add(activeId)
-    if (hovered !== null) filled.add(hovered)
+    const filled = new Set([...lifted, ...picked, '', activeId ?? '', hovered ?? ''])
 
     return separated(ids, filled)
   })
@@ -472,7 +470,9 @@
     const node = event.currentTarget as HTMLElement
     const top = node.closest('.tab')?.getBoundingClientRect().top ?? event.clientY
     const along = alongOf(event.clientX)
-    const block = finger ? [] : tabs.filter((one) => picked.has(one.id) && one.pinned === tab.pinned)
+    const block = finger
+      ? []
+      : tabs.filter((one) => picked.has(one.id) && one.pinned === tab.pinned)
     carrying =
       block.length > 1 && picked.has(tab.id)
         ? { lead: tab.id, ids: block.map((one) => one.id) }
@@ -965,7 +965,8 @@
           data-tab={tab.id}
           aria-label={tab.shown}
           onfocus={(event) => {
-            if (event.currentTarget.matches(':focus-visible')) aimCard(tab, event.currentTarget, true)
+            if (event.currentTarget.matches(':focus-visible'))
+              aimCard(tab, event.currentTarget, true)
           }}
           onblur={() => unaimCard(tab.id)}
           onclick={(event) => {

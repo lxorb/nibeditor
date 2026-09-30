@@ -17,7 +17,7 @@ nib's. Source paths are under `chrome/browser/ui/`.
 | Hover fill | a detached rounded rectangle: top 6 down, 6 + 1 short of the bottom, every corner rounded | `GetPath(kHighlight)` | the same box, `--surface-hover` |
 | Hover in / out | 200 ms, ease-out in, ease-in out | `glow_hover_controller.cc` | `--dur-fast` |
 | Separator | 2 x 16, 2 margin either side, trailing edge of a tab | `tab_style.cc` | 1 x 16 |
-| Separator hides | next to a tab with a fill: active, selected, hovered; faded with the hover | `GetSeparatorOpacity` | active, hovered, dragged |
+| Separator hides | next to a tab with a fill: active, selected, hovered; faded with the hover | `GetSeparatorOpacity` | active, hovered, picked, dragged |
 | Tab overlap | 18 = 2 x 12 foot - (2 separator + 4 margins) | `GetTabOverlap` | none: tabs sit edge to edge, the feet are drawn outside the box |
 
 ## Widths
@@ -158,4 +158,25 @@ so a width change lays out that one tab and nothing beside it.
   nib is not always a toolbar. Under the glass theme the strip stands on the
   window's material and every pane paints its own paper, so the merge is exact
   there too.
-- **No hover cards, groups, multi-select or tab search.** nib has none of them.
+- **Hover cards are Chrome's**, read off `tab_hover_card_controller.cc`: the first waits 300 ms
+  at a pinned tab's width and 800 at the standard one on a logarithmic scale, measured on the
+  widest tab of the strip, and half a second more once every name is whole; the next tab's
+  comes at once and the card slides across, 200 ms; back on the strip within 300 ms of leaving
+  it, at once; a tab the keyboard arrives at, at once. The name in two lines, where the file
+  lives (its space and folders) or the site's host, and for a web tab that is not the one in
+  front the still of its page. Any press, key, wheel or the window losing the pointer puts it
+  away, and the pressed tab says nothing more until the pointer leaves it; never over a menu,
+  during a drag or under a finger. Over a native page it takes a place on the overlay stack,
+  so the pages stand behind their stills while it is up. The tab carries no native tooltip.
+  See `tab-strip/card.ts` and `tab-strip/hover-card.svelte.ts`.
+- **Several tabs at once are Chrome's pick**: Ctrl (Cmd on a Mac) and a click adds or takes
+  out, Shift a run from the last one clicked, both to add a run; the tab in front is always
+  one of them, and anything else bringing a tab to the front puts the pick down. A tab's menu
+  on a picked tab acts on all of them (Reload, Duplicate, Pin, Bookmark, Close, Close others,
+  to the right, all, Move to other pane) and says how many; Ctrl+W closes the pick. Dragging
+  one carries the others of its pinned state as one block, along the strip or into another
+  pane. A pick closed, and the tabs closed around one, come back with one Reopen closed tab,
+  as Firefox brings them back; Chrome hands them back one at a time. Shift and an arrow does
+  not extend a pick here: a tab brought to the front takes the keyboard into its note. See
+  `tab-strip/chosen.svelte.ts` and `tab-strip/picking.ts`.
+- **No groups.** Tab search is the palette.
