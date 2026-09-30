@@ -29,6 +29,15 @@ then fetches the way it would from GitHub, through the Browser row's own command
 
     python scripts/engine-switch-probe.py --exe .../nib.exe --release .../chromium-out
 
+**Do not run it on a machine somebody is working at.** nib's own Chromium can take the
+foreground on its own: on 2026-09-30 the watch found a Chromium probe the window in front
+five times in a row - while its reader switched windows, and while their own nib was in
+front - and neither pushing its windows to the bottom nor disabling them stopped it.
+The likeliest cause is Chromium's own: a browser made in a window is given the keyboard,
+and the runtime offers no way to make one with `WS_EX_NOACTIVATE`, which is how CEF is
+told not to; see docs/browser.md, section 0. The watch ends every
+process the moment it happens, which is a moment too late for whoever was typing.
+
 **Every process is watched, not only the first.** A relaunch starts the app again from
 inside the app, so the processes after it are nobody's children here; the drive finds
 them by their executable's path and holds each to the same rule `run_probe` holds the
@@ -56,6 +65,9 @@ from probe_app import close_app, in_view, run_probe
 
 switch = importlib.import_module("web-switch-probe")
 
+#: What the drive is doing, for the watch to say when something came into view.
+STEP = ["starting"]
+
 #: The port nib's own Chromium opens for the drive to read its pages through; see
 #: `debugging` in src-tauri/cef/src/main.rs. The system's engine ignores it.
 DEBUG_PORT = 22357
@@ -66,6 +78,8 @@ ENGINE_FILES = (".dll", ".pak", ".dat", ".bin", ".json")
 ENGINE_FOLDERS = ("locales",)
 
 PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+HWND_BOTTOM = 1
+SWP_NOSIZE, SWP_NOMOVE, SWP_NOACTIVATE = 0x0001, 0x0002, 0x0010
 
 kernel32 = ctypes.WinDLL("kernel32", use_last_error=True) if sys.platform == "win32" else None
 psapi = ctypes.WinDLL("psapi", use_last_error=True) if sys.platform == "win32" else None
@@ -86,6 +100,38 @@ def image_of(pid: int) -> str:
         return ""
     finally:
         kernel32.CloseHandle(handle)
+
+
+def step(name: str) -> None:
+    """Says what the drive is doing now, on stderr and to the watch."""
+
+    STEP[0] = name
+    print(f"{time.strftime('%H:%M:%S')} {name}", file=sys.stderr, flush=True)
+
+
+def lowest(pids: list[int], done: set[int]) -> None:
+    """Every window of these processes at the bottom of the z-order and closed to the
+    keyboard, once each, from the moment it exists: a window shown without the keyboard
+    still goes to the top, where a window closing elsewhere hands it the foreground; and
+    Chromium gives a page the keyboard whenever it is sent somewhere, which takes its
+    window to the front wherever Windows lets it. It is not enough for the second: see
+    the warning at the top of this file."""
+
+    assert probe_app.user32 is not None
+    user32 = probe_app.user32
+    wanted = set(pids)
+
+    def each(hwnd: int, _lparam: int) -> bool:
+        owner = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(owner))
+        if owner.value in wanted and hwnd not in done:
+            done.add(hwnd)
+            user32.EnableWindow(hwnd, False)
+            user32.SetWindowPos(hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE)
+        return True
+
+    kind = ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    user32.EnumWindows(kind(each), 0)
 
 
 def pids_running(exes: list[pathlib.Path]) -> list[int]:
@@ -123,12 +169,21 @@ class Watch:
             time.sleep(0.05)
 
     def _look(self) -> None:
+        lowered: set[int] = set()
         while not self.stopped:
+            lowest(list(self.pids), lowered)
             for pid in list(self.pids):
                 seen = in_view(pid)
                 if seen:
+                    front = probe_app.user32.GetForegroundWindow()
+                    kind = ctypes.create_unicode_buffer(256)
+                    probe_app.user32.GetClassNameW(front, kind, 256)
                     self.end()
-                    print(f"PROBE IN VIEW: {seen} (pid {pid}); ended every probe process.", file=sys.stderr)
+                    print(
+                        f"PROBE IN VIEW: {seen} (pid {pid}, {image_of(pid) or 'gone'}, class {kind.value!r},"
+                        f" during {STEP[0]!r}); ended every probe process.",
+                        file=sys.stderr,
+                    )
                     os._exit(3)
             time.sleep(probe_app.LOOK_EVERY)
 
@@ -227,8 +282,13 @@ def isolated(page_url: str, app: switch.App, tab: str, other: str) -> dict[str, 
     world without leaving anything in the page's."""
 
     found: dict[str, object] = {}
-    targets = devtools.targets(DEBUG_PORT)
-    page = next((one for one in targets if one.get("url", "").startswith(page_url)), None)
+    # A tab is live before its page has left the blank page it is built on.
+    page, targets, until = None, [], time.perf_counter() + 30
+    while page is None and time.perf_counter() < until:
+        targets = devtools.targets(DEBUG_PORT)
+        page = next((one for one in targets if one.get("url", "").startswith(page_url)), None)
+        if page is None:
+            time.sleep(0.25)
     if page is None:
         return {"error": f"no page at {page_url} among {[one.get('url') for one in targets]}"}
     session = devtools.Session(page)
@@ -236,7 +296,22 @@ def isolated(page_url: str, app: switch.App, tab: str, other: str) -> dict[str, 
         found["the page's own world has"] = session.value(
             "Object.getOwnPropertyNames(window).filter((name) => /tauri|ipc|nib/i.test(name))"
         )
-        world = session.world("nib")
+        # nib's world as the app made it: a world this session made under the same name
+        # would be this session's own, so the drive reads the contexts the page reports.
+        session.call("Runtime.enable")
+        session.listen(1)
+        frame = session.call("Page.getFrameTree").get("frameTree", {}).get("frame", {}).get("id")
+        worlds = [
+            one["params"]["context"]
+            for one in session.events
+            if one.get("method") == "Runtime.executionContextCreated"
+            and one["params"]["context"].get("name") == "nib"
+            and one["params"]["context"].get("auxData", {}).get("frameId") == frame
+        ]
+        found["nib's worlds in the page's frame"] = len(worlds)
+        if not worlds:
+            return found
+        world = worlds[-1]["id"]
         found["nib's world has its binding"] = session.value("typeof nibAsked", context=world)
         found["the page's world has none"] = session.value("typeof nibAsked")
 
@@ -294,6 +369,7 @@ def main() -> int:
     said: dict[str, object] = {}
 
     try:
+        step('the first launch')
         # One launch to write the endpoint file, so the window's own commands can be run.
         first = run_probe(system_exe, quiet=True)
         old, _ = switch.endpoint(args.identifier, 90)
@@ -303,6 +379,7 @@ def main() -> int:
             raise SystemExit("the first launch never ended")
         switch.allow_eval(args.identifier)
 
+        step("the system's engine")
         # The system's engine: the launch, and a web tab.
         began = time.perf_counter()
         running = run_probe(system_exe, quiet=True)
@@ -316,6 +393,7 @@ def main() -> int:
         said["system: state"] = invoke(app, "engine_state")
         said["system: web tab"] = web_tab(app, switch.WEB)
 
+        step('chromium chosen and fetched')
         # Chromium chosen, and the app started again.
         said["choose chromium"] = invoke(app, "engine_choose", {"engine": "chromium"})
         if args.release:
@@ -324,8 +402,9 @@ def main() -> int:
             said["fetch ms"] = round((time.perf_counter() - began) * 1000)
             said["fetched"] = {
                 "engine files": len(list(engine.iterdir())) if engine.exists() else 0,
-                "folders": sorted(one.name for one in engine.parent.iterdir()),
+                "folders": sorted(one.name for one in engine.parent.iterdir()) if engine.parent.exists() else [],
             }
+        step('the relaunch to chromium')
         began = time.perf_counter()
         invoke(app, "engine_relaunch", seconds=5)
         until = time.perf_counter() + 90
@@ -342,6 +421,7 @@ def main() -> int:
         app = switch.App(port_chromium, secret)
         time.sleep(4)
         said["chromium: state"] = invoke(app, "engine_state")
+        step('a web tab on chromium')
         said["chromium: web tab"] = web_tab(app, switch.OTHER)
         other_tab = switch.tab_of(app, switch.OTHER)
         said["chromium: the page's worlds"] = (
@@ -350,6 +430,7 @@ def main() -> int:
             else {"error": "no tab"}
         )
 
+        step('a second launch')
         # A second launch reaches the running app and ends.
         second = run_probe(system_exe, quiet=True, args=[f"http://127.0.0.1:{port}/page?second"])
         try:
@@ -363,14 +444,24 @@ def main() -> int:
             "chromium": len(pids_running([chromium_exe])) > 0,
         }
 
+        step('closing chromium')
         # A launch with Chromium chosen, the way a shortcut starts it: the system's build
         # is what the system starts, and it hands the launch over.
-        for pid in pids_running([chromium_exe]):
-            window = probe_app.main_window(pid)
-            if window:
-                probe_app.user32.PostMessageW(window, probe_app.WM_CLOSE, 0, 0)
-        if not watch.gone(60):
+        # Closed the way its close button closes it, and timed: the window hides at once,
+        # and the process goes once Chromium has let go of every page.
+        closed = [
+            window for window in map(probe_app.main_window, pids_running([chromium_exe])) if window
+        ]
+        began = time.perf_counter()
+        for window in closed:
+            probe_app.user32.PostMessageW(window, probe_app.WM_CLOSE, 0, 0)
+        while any(map(probe_app.user32.IsWindowVisible, closed)) and time.perf_counter() - began < 30:
+            time.sleep(0.02)
+        said["closed on chromium: window hidden ms"] = round((time.perf_counter() - began) * 1000)
+        if not watch.gone(120):
             raise SystemExit("Chromium never ended")
+        said["closed on chromium: every process gone ms"] = round((time.perf_counter() - began) * 1000)
+        step('a launch on chromium')
         began = time.perf_counter()
         run_probe(system_exe, quiet=True)
         window_after(watch, chromium_exe, 90)
@@ -380,6 +471,7 @@ def main() -> int:
         app = switch.App(port_chromium, secret)
         time.sleep(4)
 
+        step("the relaunch to the system's engine")
         # And back to the system's engine.
         said["choose system"] = invoke(app, "engine_choose", {"engine": "system"})
         began = time.perf_counter()
@@ -396,6 +488,7 @@ def main() -> int:
         time.sleep(1)
         said["back: state"] = invoke(app, "engine_state")
 
+        step("a launch on the system's engine")
         # And a launch on the system's engine again, cold of nothing but the process.
         for pid in pids_running([system_exe]):
             window = probe_app.main_window(pid)
