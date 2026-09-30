@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
-import { draftFile, fileNamed, followedName, hasWords, isDraft, namedByWords } from './drafts'
+import {
+  draftFile,
+  fileNamed,
+  hasWords,
+  isDraft,
+  isUnsaved,
+  namedByWords,
+  offeredName,
+} from './drafts'
 
 /** How a test document differs from a blank draft note. */
 interface Made {
@@ -13,9 +21,6 @@ interface Made {
 function doc(text: string, { path = null, kind = 'note', name = UNTITLED }: Made = {}) {
   return new NoteDoc({ kind, path, name, text, dirty: false }, () => undefined)
 }
-
-/** What a folder holding nothing else steps a name to: the name itself. */
-const free = (file: string) => file
 
 describe('a draft', () => {
   test('is a document with words of its own and no file for them', () => {
@@ -68,43 +73,44 @@ describe('the file a draft becomes', () => {
   })
 })
 
-describe('a note that follows its words', () => {
-  test('asks for the name its first line gives now', () => {
-    const note = doc('# Plan', { path: '/space/P.md', name: 'P.md' })
-    note.follows = true
-    expect(followedName(note, free)).toBe('Plan.md')
+describe('a tab waiting for a place', () => {
+  test('is a draft, or a web tab nobody has kept, and nothing with a file', () => {
+    expect(isUnsaved(doc(''))).toBe(true)
+    expect(isUnsaved(doc('', { kind: 'web', name: 'Site' }))).toBe(true)
+    expect(isUnsaved(doc('', { kind: 'web', path: '/space/Site.url' }))).toBe(false)
+    expect(isUnsaved(doc('', { kind: 'terminal', name: 'pwsh' }))).toBe(false)
+    expect(isUnsaved(doc('', { kind: 'graph', name: 'Graph' }))).toBe(false)
   })
 
-  test('and nothing where its file is already called that', () => {
-    const note = doc('# Plan', { path: '/space/Plan.md', name: 'Plan.md' })
-    note.follows = true
-    expect(followedName(note, free)).toBeNull()
+  /** A browser tab has nothing unwritten in it, so only the draft wears the dot. */
+  test('wears the dot only where it has words of its own', () => {
+    expect(isDraft(doc('', { kind: 'canvas' }))).toBe(true)
+    expect(isDraft(doc('', { kind: 'web', name: 'Site' }))).toBe(false)
   })
 
-  /** `Plan 2.md` beside somebody else's `Plan.md` is already what `Plan` asks for. */
-  test('and nothing where the folder stepped it aside to the name it has', () => {
-    const note = doc('# Plan', { path: '/space/Plan 2.md', name: 'Plan 2.md' })
-    note.follows = true
-    expect(followedName(note, () => 'Plan 2.md')).toBeNull()
+  test('a plane has something worth keeping once anything was drawn on it', () => {
+    const plane = doc('{}', { kind: 'canvas' })
+    expect(hasWords(plane)).toBe(false)
+
+    plane.live.replace('{"nodes":[{"id":"a"}]}', true)
+    expect(hasWords(plane)).toBe(true)
+  })
+})
+
+describe('the name Save offers', () => {
+  test('is a note’s first heading or line, and Untitled where there is none', () => {
+    expect(offeredName(doc('# Plan for Monday\n\nwords'))).toBe('Plan for Monday')
+    expect(offeredName(doc(''))).toBe(UNTITLED)
   })
 
-  /** Windows and a Mac call those one file, and refuse the rename. */
-  test('and nothing where only the case of its words changed', () => {
-    const note = doc('# Plan', { path: '/space/plan.md', name: 'plan.md' })
-    note.follows = true
-    expect(followedName(note, free)).toBeNull()
+  test('is a web tab’s page title, as a file can hold it', () => {
+    expect(offeredName(doc('', { kind: 'web', name: 'x.com' }), 'Home / X')).toBe('Home X')
+    expect(offeredName(doc('', { kind: 'web', name: 'svelte.dev' }))).toBe('svelte.dev')
+    // A page that has said nothing yet is called what its tab is.
+    expect(offeredName(doc('', { kind: 'web', name: 'Website' }), '')).toBe('Website')
   })
 
-  test('and nothing at all once somebody named it', () => {
-    const note = doc('# Plan', { path: '/space/P.md', name: 'P.md' })
-    expect(followedName(note, free)).toBeNull()
-  })
-
-  test('is called after its words on its tab as they are typed, not as the file catches up', () => {
-    const note = doc('# Plan', { path: '/space/P.md', name: 'P.md' })
-    note.follows = true
-    note.live.replace('# Plan for Monday', true)
-
-    expect(note.shown).toBe('Plan for Monday')
+  test('is the name an import came with', () => {
+    expect(offeredName(doc('# Other', { name: 'Report.md' }))).toBe('Report')
   })
 })

@@ -33,7 +33,7 @@ import {
 import { isRecord, keep, stored, storedText } from './stored'
 import { isNative } from './tauri'
 import { viewport } from './viewport.svelte'
-import { workspace } from './workspace.svelte'
+import { saveFront } from './save-place/door'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
@@ -311,18 +311,23 @@ class Shortcuts {
     return false
   }
 
-  /** Ctrl+S, Cmd+S on a Mac: the key nothing needs and every hand still presses.
-   *  Every document writes itself, so there is no Save; but a habit must never meet a
-   *  question, a file picker or the browser's Save page as. So it writes what is owed
-   *  now and keeps the note in front as a version. No row of the list: `handle` runs
-   *  first, so a command put on the chord wins. True when the press was answered. */
+  /** Ctrl+S as this platform writes it, for the rows that offer Save; see `writeKey`. */
+  get saveHint(): string {
+    return showCombination(WRITE_CHORD, this.platform)
+  }
+
+  /** Ctrl+S, Cmd+S on a Mac, which means one thing: put it on the disk. A document
+   *  with a file writes itself, so the key writes what is owed now and keeps the note
+   *  in front as a version, asking nothing; a tab with no file is asked where it goes
+   *  (save-place/ask.ts). No row of the list: `handle` runs first, so a command put on
+   *  the chord wins. True when the press was answered. */
   writeKey(event: KeyboardEvent): boolean {
     if (event.defaultPrevented || !matchesCombination(WRITE_CHORD, event, this.platform)) {
       return false
     }
 
     event.preventDefault()
-    void workspace.writeNow()
+    saveFront()
     return true
   }
 }

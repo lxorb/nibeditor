@@ -756,18 +756,22 @@ today's cadence.
 
 ### 5.13 In the autosave-only world
 
-- A new tab becomes a file on its first character (agent `autosave-only`). In v2 that
-  moment also makes the note's id on the device, a new document, and a queued `create`.
-  There is no waiting for the account to hand out an id, so the note can be live the moment
-  the device is online.
-- The name follows the first line while it is being typed; renames queue as `rename` ops and
-  the outbox coalesces them, so a title typed in ten seconds is one rename (or folds into the
-  `create` if it has not gone yet).
+- A new tab is a tab with no file until it is saved (agent `unsaved-tabs`): its words live
+  in this device's session and nowhere else - not the account, not a room, not the link
+  index - the way VS Code's hot exit keeps an untitled editor on one machine. Saving it is
+  the moment it becomes a file, and in v2 that moment also makes the note's id on the
+  device, a new document and a queued `create`; the file operation says `created` with the
+  document's key (`workspace/file-ops.ts`). There is no waiting for the account to hand out
+  an id, so the note can be live the moment the device is online.
+- A closed one with words is kept in this device's Recently deleted, not the account's: it
+  never reached the account, and restoring it makes it a file like any other.
 - There is no dirty state, so nothing ever refuses to take the account's words into an open
   note (`sync.svelte.ts` `refresh` goes). Ctrl+S is a flush, and v2 makes it a push as well.
 - Web tabs are ephemeral until kept. The lease is about the site session (section 6.1), so
-  an ephemeral tab on a site is covered exactly like a web note, and keeping it as a
-  `.url` changes nothing about the lease.
+  an ephemeral tab on a site is covered exactly like a web note, and keeping it as a `.url`
+  changes nothing about the lease - unless it is kept into a space whose store is another,
+  when the page is built again in that store and the lease follows it, asked the one way a
+  page's store is (`web-tab/rehome.ts`).
 
 ---
 

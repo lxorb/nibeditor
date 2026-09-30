@@ -91,6 +91,8 @@ import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
+import { isUnsaved } from './workspace/drafts'
+import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openRandomNote, randomChoices } from './random-note'
 
@@ -468,17 +470,6 @@ function webCommands(): Command[] {
       hint: shortcuts.hint(key),
       run: () => void pages.step(tab.id, step),
     })),
-    // Browsing writes nothing; this is the one row that keeps the page, as a web note
-    // in the space. Only for a tab that has no file yet: one that has is kept already.
-    ...(tab.path === null
-      ? [
-          {
-            id: 'web-keep',
-            label: t('Keep as web note'),
-            run: () => void workspace.keepAsWebNote(tab),
-          },
-        ]
-      : []),
     {
       id: 'web-find',
       label: t('Find'),
@@ -990,7 +981,22 @@ function spaceCommands(): Command[] {
 export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
 
+  const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
+
   return [
+    // Only for a tab with no file, which is the one thing Save still means: where it
+    // goes and under what name. A web tab kept as a web note is the same row. See
+    // save-place/ask.ts.
+    ...(unsaved
+      ? [
+          {
+            id: 'save',
+            label: t('Save'),
+            hint: shortcuts.saveHint,
+            run: () => askPlace(unsaved.id),
+          },
+        ]
+      : []),
     {
       id: 'new',
       label: t('New note'),

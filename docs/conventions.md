@@ -62,8 +62,9 @@ tree, the tabs and the panes. What has a rule of its own lives in
 
 | Module | What it owns |
 | --- | --- |
-| `saving.svelte.ts` | Writing what is open down, a moment after it changes: every note, canvas and page note, and a new tab the moment it has words. Its state is its own. |
-| `drafts.ts` | What a new tab's file is called and whether it follows its first line. Pure. |
+| `saving.svelte.ts` | Writing what is open down, a moment after it changes: every note, canvas and page note, and a new tab the moment it is given a place (`place`). Its state is its own. |
+| `drafts.ts` | What a tab with no file is (a draft wears the dot; a web tab nobody kept does not) and the name its file is offered. Pure. |
+| `placing.ts` | The less common halves of a tab with no file, fetched with the first: a web tab kept as a web note, and a closed draft's words in Recently deleted. |
 | `note-text.ts` | The words in a space's notes, read and written without opening them: a replacement, a tag renamed, a task ticked. |
 | `composing.ts` | One note out of another, and two into one. |
 | `spaces.ts` | The list of spaces: which exist, in what order, which is open. |
@@ -74,7 +75,8 @@ tree, the tabs and the panes. What has a rule of its own lives in
 
 Members of the class are not `private` because those modules read them:
 `documents`, `positions`, `reload`, `retarget`, `persist`, `scheduleSession`,
-`freeName`, and the tree-edit trio `entryAt`, `showEntry`, `freshEntry`. They are
+`freeName`, `remember`, `asUnsaved`, and the tree-edit trio `entryAt`, `showEntry`,
+`freshEntry`. They are
 the store's own rather than the app's - nothing outside `lib/workspace` touches
 them.
 

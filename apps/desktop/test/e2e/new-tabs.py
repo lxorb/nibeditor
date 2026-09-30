@@ -16,9 +16,10 @@ What it proves, in order:
   new tab a browser makes and what a fast hand is after.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
   website open with no file in the space and no row in the list.
-* **Nothing is saved by hand**: a new note becomes a file on its first word, named after
-  it; Ctrl+S asks nothing and writes no file for an untouched plane or a web tab; and
-  keeping a web tab is what writes its shortcut.
+* **A new tab waits for a place**: a new note typed into is still a tab with no file and a
+  dot after its name; Ctrl+S asks where, in the layer under the tab, and Enter writes it
+  there under its first line; Ctrl+S on a note with a file asks nothing; a web tab wears no
+  dot, and Ctrl+S and Enter write its shortcut.
 * **A pane with nothing open** shows those same kinds as buttons, with the keyboard on
   the first, and pressing one makes that kind; Ctrl+T over it is the same dialog.
 
@@ -70,6 +71,14 @@ STATE = """
     files: ws.files.map((one) => one.name),
     active: ws.active ? { kind: ws.active.kind, path: ws.active.path } : null,
   }
+}
+"""
+
+# Whether the tab in front wears the dot a tab with no file wears; see UnsavedDot.svelte.
+DOTTED = """
+() => {
+  const id = window.nibApp.workspace.active?.id
+  return !!document.querySelector(`[data-tab="${id}"] .nib-unsaved`)
 }
 """
 
@@ -365,12 +374,14 @@ def unsaved(page) -> None:
     page.screenshot(path=str(SHOTS / "unsaved-tabs.png"))
 
 
-def autosaving(page) -> None:
-    """No saving at all: a new tab becomes a file on its first word, Ctrl+S asks nothing,
-    and a web tab is written only when somebody keeps it."""
-    say("--- no saving: first words, Ctrl+S, keeping a page ---")
+def saving(page) -> None:
+    """A new tab waits for a place: typed into, it is still a tab with a dot; Ctrl+S asks
+    where, Enter writes it; a note with a file asks nothing; a web tab wears no dot and
+    is saved the same way."""
+    say("--- saving: a place for a new tab, Ctrl+S, a web tab ---")
 
-    # Ctrl+S on a plane nobody has drawn on: no sheet, no file, no question.
+    # Ctrl+S on a plane nobody has drawn on: the layer that asks where, and nothing
+    # written until it is answered. Escape leaves it as it was.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -381,15 +392,16 @@ def autosaving(page) -> None:
     page.wait_for_timeout(400)
     files = page.evaluate(STATE)["files"]
     page.keyboard.press("Control+KeyS")
-    page.wait_for_timeout(700)
-    if page.locator('[role="dialog"] input').count():
-        wrong("Ctrl+S on an untouched plane asked something")
+    if not DRIVE.waited(page, "() => !!document.querySelector('[role=\"dialog\"] input')", "the layer"):
+        wrong("Ctrl+S on an untouched plane did not ask where it goes")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(400)
     if page.evaluate(STATE)["files"] != files:
-        wrong("Ctrl+S on an untouched plane wrote a file")
+        wrong("Ctrl+S on an untouched plane wrote a file before it was answered")
     else:
-        say("Control+S on a plane   -> nothing asked, nothing written")
+        say("Control+S on a plane   -> asked where, nothing written")
 
-    # A new note, typed into: a file in the space from its first word, named after it.
+    # A new note, typed into: still a tab, with the dot after its name.
     page.evaluate("() => window.nibApp.workspace.openBlank()")
     page.wait_for_timeout(400)
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
@@ -397,23 +409,34 @@ def autosaving(page) -> None:
     page.wait_for_timeout(1200)
 
     state = page.evaluate(STATE)
-    path = (state["active"] or {}).get("path") or ""
-    if not path.endswith("/Plan for Monday.md"):
-        wrong(f"typing into a new tab did not make it a file named after it: {state['active']}")
+    if (state["active"] or {}).get("path") is not None or "Plan for Monday.md" in state["files"]:
+        wrong(f"typing into a new tab made it a file: {state['active']}")
+    elif not page.evaluate(DOTTED):
+        wrong("the new note wears no dot")
     else:
-        say(f"typed into a new tab   -> {path}")
-    if "Plan for Monday.md" not in state["files"]:
-        wrong(f"the space has no Plan for Monday.md: {state['files']}")
+        say("typed into a new tab   -> still a tab, with its dot")
     page.screenshot(path=str(SHOTS / "typed-new-tab.png"))
+
+    page.keyboard.press("Control+KeyS")
+    DRIVE.wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] input')", "the layer")
+    offered = page.locator('[role="dialog"] input').first.input_value()
+    page.screenshot(path=str(SHOTS / "save-layer.png"))
+    page.keyboard.press("Enter")
+    DRIVE.wait_for(
+        page,
+        "() => (window.nibApp.workspace.active?.path ?? '').endsWith('/Plan for Monday.md')",
+        "the note saved",
+    )
+    say(f"Control+S, Enter       -> {offered!r} saved as Plan for Monday.md")
 
     page.keyboard.press("Control+KeyS")
     page.wait_for_timeout(500)
     if page.locator('[role="dialog"] input').count():
-        wrong("Ctrl+S on a note asked something")
+        wrong("Ctrl+S on a note with a file asked something")
     else:
         say("Control+S on a note    -> nothing asked")
 
-    # A web tab: Ctrl+S writes no shortcut, and keeping it does.
+    # A web tab: no dot, and Ctrl+S and Enter write its shortcut.
     page.evaluate(
         """() => {
           const ws = window.nibApp.workspace
@@ -422,28 +445,17 @@ def autosaving(page) -> None:
         }"""
     )
     page.wait_for_timeout(400)
-    before = [one for one in page.evaluate(STATE)["files"] if one.endswith(".url")]
+    if page.evaluate(DOTTED):
+        wrong("a web tab wears the dot")
     page.keyboard.press("Control+KeyS")
-    page.wait_for_timeout(600)
-    after = [one for one in page.evaluate(STATE)["files"] if one.endswith(".url")]
-    if after != before:
-        wrong(f"Ctrl+S on a web tab wrote a shortcut: {after}")
-    else:
-        say("Control+S on a web tab -> no .url written")
-
-    page.evaluate(
-        """async () => {
-          const ws = window.nibApp.workspace
-          if (ws.active) await ws.keepAsWebNote(ws.active)
-        }"""
+    DRIVE.wait_for(page, "() => !!document.querySelector('[role=\"dialog\"] input')", "the layer")
+    page.keyboard.press("Enter")
+    DRIVE.wait_for(
+        page,
+        "() => (window.nibApp.workspace.active?.path ?? '').endsWith('.url')",
+        "the web tab saved",
     )
-    page.wait_for_timeout(800)
-    state = page.evaluate(STATE)
-    kept = (state["active"] or {}).get("path") or ""
-    if not kept.endswith(".url"):
-        wrong(f"keeping the web tab wrote no shortcut: {state['active']}")
-    else:
-        say(f"Keep as web note       -> {kept}")
+    say(f"Control+S on a web tab -> {page.evaluate(STATE)['active']['path']}")
 
 
 def nothing_open(page) -> None:
@@ -569,7 +581,7 @@ def drive(browser) -> None:
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     chooser(page)
     unsaved(page)
-    autosaving(page)
+    saving(page)
     nothing_open(page)
 
     page.screenshot(path=str(SHOTS / "after.png"))

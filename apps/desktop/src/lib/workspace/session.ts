@@ -57,6 +57,9 @@ export interface Draft {
   /** For a website: the address it was on, which may not be the one its file says.
    *  Absent for every other kind of tab. */
   address?: string | undefined
+  /** For a tab with no file: the space it was opened in, by id; see `home` in
+   *  documents.svelte.ts. */
+  space?: string | undefined
 }
 
 /** One pane: its strip of tabs, which of them was showing, and whether it was
@@ -110,6 +113,8 @@ export interface ClosedTab {
   at: number
   /** The stamp of the one gesture that closed it with others, which come back with it. */
   batch?: number
+  /** Its words' entry in Recently deleted, for a draft; see workspace/placing.ts. */
+  trashed?: string | undefined
 }
 
 export interface Session {
@@ -214,7 +219,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address } = value
+  const { folds, page, zoom, pinned, address, space } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -236,6 +241,7 @@ export function readDraft(value: unknown): Draft | null {
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),
+    ...(path === null && isString(space) ? { space } : {}),
   }
 }
 
@@ -337,6 +343,7 @@ export function readClosed(value: unknown): ClosedTab | null {
     paneId: isString(value.paneId) ? value.paneId : '',
     at: isNumber(value.at) && value.at >= 0 ? value.at : 0,
     ...(isNumber(value.batch) ? { batch: value.batch } : {}),
+    ...(isString(value.trashed) ? { trashed: value.trashed } : {}),
   }
 }
 

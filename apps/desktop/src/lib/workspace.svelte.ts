@@ -30,7 +30,7 @@ import {
   withinSpace,
 } from './space-paths'
 import { t } from './i18n.svelte'
-import { nameFromContent, nameFromTitle, shownName } from './note-name'
+import { nameFromContent, shownName } from './note-name'
 import type { TreeRow } from './tree-keys'
 import { isPlugin } from './plugin'
 import { scanFootnotes } from './footnotes'
@@ -68,7 +68,7 @@ import {
   UNTITLED,
 } from './workspace/documents.svelte'
 import { Layouts } from './workspace/layouts.svelte'
-import { OpenDocuments } from './workspace/open'
+import { OpenDocuments, secondWebTabs } from './workspace/open'
 import { type Along, type Frame, panesIn, withoutPane } from './workspace/pane-tree'
 import { type Landing, Panes } from './workspace/panes.svelte'
 import { byPin, pinnedRun, placeFor } from './workspace/pinning'
@@ -82,6 +82,7 @@ import type { Sides } from './workspace/panels'
 import * as spaces from './workspace/spaces'
 import * as text from './workspace/note-text'
 import { Saving } from './workspace/saving.svelte'
+import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import type { Picked } from './import/sources'
 import { FileActions } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
@@ -100,10 +101,10 @@ import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } f
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged } from './workspace/arranged.svelte'
 import { log } from './log'
-import { invoke, isNative, joinPath, openExternal } from './tauri'
+import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
 import { plainOrigin } from './web-tab/address'
-import { readWebFile, writeShortcut } from './web-tab/shortcut'
+import { readWebFile } from './web-tab/shortcut'
 import { pages } from './web-tab/pages.svelte'
 import { besideAt, howFor, type LinkAsk, type OpenHow, type TabAsk } from './new-tab'
 
@@ -230,13 +231,10 @@ function papers(): Promise<typeof import('./pdf/papers')> {
   return import('./pdf/papers')
 }
 
-/** Whether a tab is worth remembering once it has been closed. A blank new note
- *  is not: it is the empty page a window starts with, or a note that was begun and
- *  emptied again and goes with its tab, and reopening it would put back something
- *  nobody ever wrote. See `closed` in workspace/saving.svelte.ts. */
+/** Whether a tab is worth remembering once closed: not a new tab with nothing in it,
+ *  which would put back something nobody ever wrote. See workspace/drafts.ts. */
 function worthReopening(tab: Tab): boolean {
-  if (tab.kind !== 'note' || !tab.note.blank) return true
-  return tab.path !== null && !tab.note.follows
+  return !isDraft(tab.note) || hasWords(tab.note)
 }
 
 class Workspace {
@@ -251,7 +249,34 @@ class Workspace {
   /** Every tab in the window, whichever pane it sits in. One flat list, because
    *  half of what the app asks is "is this note open" rather than "where": a tab
    *  says which pane it is in, and a pane's strip is the tabs that name it. */
-  tabs = $state<Tab[]>([])
+  private strip = $state<Tab[]>([])
+
+  get tabs(): Tab[] {
+    return this.strip
+  }
+
+  /** One tab per web note of them; see `secondWebTabs` in workspace/open.ts. */
+  set tabs(next: Tab[]) {
+    const before = this.strip
+    this.strip = next
+    for (const [tab, keeper] of secondWebTabs(before, next)) this.asUnsaved(tab, keeper)
+  }
+
+  /** A tab over a web note made a web tab with no file at `keeper`'s page. */
+  asUnsaved(tab: Tab, keeper: Tab) {
+    const url = pages.addressOf(keeper.id) ?? keeper.address ?? this.webAddressOf(keeper)
+    tab.note = this.document({
+      kind: 'web',
+      path: null,
+      name: url ? plainOrigin(url) : t('Website'),
+      text: '',
+      dirty: false,
+      home: this.spaceOf(keeper.note),
+    })
+    tab.address = url ?? undefined
+    pages.of(tab.id).url = url
+    pages.of(tab.id).title = pages.of(keeper.id).title || tab.note.name
+  }
   /** How the panes are arranged and which one has the focus; see
    *  workspace/panes.svelte.ts. */
   readonly panes = new Panes(() => {
@@ -770,6 +795,7 @@ class Workspace {
                 name: draft.name,
                 text: draft.doc,
                 dirty: draft.dirty,
+                home: draft.space ?? null,
               })
 
         // Deleted or moved while Nib was away, and no words of its own to keep.
@@ -779,7 +805,7 @@ class Workspace {
 
       // Words that came back without their file having them - a window that was
       // killed before the pause, a tab closed a moment after its last keystroke -
-      // go down now, and a draft with words in it becomes the file it would have.
+      // go down now. A draft's stay in the session until it is given a place.
       for (const tab of made) if (tab.note.dirty) this.saving.owed(tab.note)
 
       return made
@@ -999,6 +1025,7 @@ class Workspace {
       ...(tab.page === undefined ? {} : { page: tab.page }),
       ...(tab.zoom === undefined ? {} : { zoom: tab.zoom }),
       ...(tab.address === undefined ? {} : { address: tab.address }),
+      ...(tab.path === null && tab.note.home !== null ? { space: tab.note.home } : {}),
     }
   }
 
@@ -1096,23 +1123,33 @@ class Workspace {
     this.scheduleSession()
   }
 
-  /** A new note: a tab, and nothing else, until its first word makes it a file; see
-   *  workspace/drafts.ts. One that arrives with words in it already - a document
-   *  imported, a file uploaded into the browser - is a file from the start. */
+  /** A new note, a tab until it is given a place (workspace/drafts.ts); one arriving
+   *  with words and a name, an import, is a file from the start. */
   openBlank(name = UNTITLED, doc = '') {
-    const note = this.document({ kind: 'note', path: null, name, text: doc, dirty: !!doc })
+    const note = this.document({
+      kind: 'note',
+      path: null,
+      name,
+      text: doc,
+      dirty: !!doc,
+      home: this.activeSpaceId,
+    })
     this.add(new Tab(note, this.panes.focusedId))
-    if (doc) this.saving.owed(note)
+    if (doc) void this.placeAtHome(note)
+  }
+
+  /** A draft written where it goes with nobody asked; see `draftHome`. */
+  private async placeAtHome(note: NoteDoc): Promise<void> {
+    const home = await this.draftHome(note.home).catch(() => null)
+    if (home !== null) await this.saving.place(note, home, draftFile(note))
   }
 
   /** A new plane, and a new stack of paper: a tab, and nothing else.
    *
-   *  No file in the space and no row in the list until something is drawn or written
-   *  on it, which is what a new note is and what Emil asked for the other three to be:
-   *  *"if you create a new webnote by clicking the plus for a new tab, then it should
-   *  open it as a tab and not create it in the sidebar. Same for canvas and page
-   *  notes."* An untouched plane closed again leaves nothing behind; the first stroke
-   *  makes it a file in the space, the way a note's first word does. See
+   *  No file in the space and no row in the list until it is saved, which is what a
+   *  new note is and what Emil asked for the other three to be: *"if you create a new
+   *  webnote by clicking the plus for a new tab, then it should open it as a tab and
+   *  not create it in the sidebar. Same for canvas and page notes."* See
    *  workspace/drafts.ts.
    *
    *  Clean rather than dirty, like the blank page a window starts with: an untouched
@@ -1145,7 +1182,14 @@ class Workspace {
     name = UNTITLED,
     beside: string | null = null,
   ) {
-    const file = this.document({ kind, path: null, name, text, dirty: false })
+    const file = this.document({
+      kind,
+      path: null,
+      name,
+      text,
+      dirty: false,
+      home: this.activeSpaceId,
+    })
     const tab = this.add(new Tab(file, this.panes.focusedId), true, beside)
     this.showNote()
     this.dropScaffolding(tab)
@@ -1230,25 +1274,27 @@ class Workspace {
     )
   }
 
-  /** The folder a new tab becomes a file in: the root of the space on screen. Read
-   *  first where the spaces are not known yet, so a note typed into in the launch's
-   *  first second lands in the space that is there; a machine with none gets its
-   *  first, as Obsidian's first launch ends in a vault. */
-  async draftHome(): Promise<string | null> {
+  /** The folder a new tab is saved into unless somebody picks another: the root of the
+   *  space it was opened in while that is still here, else the space on screen. A
+   *  machine with none gets its first, as Obsidian's first launch ends in a vault. */
+  async draftHome(home: string | null = null): Promise<string | null> {
     if (!this.activeSpace) await this.loadSpaces()
 
-    const here = this.activeSpace?.root
+    const here = (this.spaces.find((one) => one.id === home) ?? this.activeSpace)?.root
     if (here !== undefined) return here
 
     const made = await this.addSpace(t('Notes'))
     return made?.root ?? null
   }
 
-  /** A file the note's own words renamed: everything a rename owes - the links to
-   *  it, the stores that keep it by path, the account - with no step on the undo
-   *  stack, because nobody did it. See workspace/drafts.ts. */
-  async retitle(path: string, name: string) {
-    await this.renameFile(path, joinPath(folderOf(path), name), false)
+  /** The space a document belongs to, by id: the one holding its file, else the one
+   *  it was opened in; see `home` in workspace/documents.svelte.ts. */
+  spaceOf(note: NoteDoc): string | null {
+    const path = note.path
+    if (path === null) return note.home ?? this.activeSpaceId
+
+    const holding = this.spaces.find((one) => within(one.root, path) !== null)
+    return holding?.id ?? this.activeSpaceId
   }
 
   /** A file a new tab has just become, in the list and among the notes opened lately
@@ -1277,20 +1323,6 @@ class Workspace {
     }
 
     if (this.sortMode.startsWith('modified')) this.showEntry({ ...entry, modified: Date.now() })
-  }
-
-  /** A note born this sitting that ended up with nothing in it, gone again as its
-   *  last tab closed. Deleted outright rather than put in the trash or on the undo
-   *  stack: there is nothing in it to want back. See `closed` in
-   *  workspace/saving.svelte.ts. */
-  async discard(path: string) {
-    this.hideEntry(path)
-    await this.fileGone(path, 'file')
-    try {
-      await invoke('delete_note', { path })
-    } finally {
-      await this.loadTree()
-    }
   }
 
   /** Puts a tab in its pane and shows it. On a phone and a tablet the tab that
@@ -1564,6 +1596,14 @@ class Workspace {
       this.showTab(held, how)
       return
     }
+    // Or open in another window, which shows it instead; see web-tab/one-window.
+    if (isDesktop) {
+      const windows = await import('./web-tab/one-window.svelte')
+      if (windows.heldElsewhere(path)) {
+        windows.showElsewhere(path)
+        return
+      }
+    }
 
     // A website written when a website was a note becomes a shortcut the first time
     // it is opened, and it is the shortcut that opens. A note that turns out not to
@@ -1628,7 +1668,7 @@ class Workspace {
 
   /** A web tab with nowhere to go yet: what "Open a website" and Ctrl+T make. The
    *  address field takes the keyboard, and nothing is written: browsing leaves no
-   *  file behind until somebody keeps the page; see `keepAsWebNote`.
+   *  file behind until somebody saves the page; see `save`.
    *
    *  No file first, because this is the gesture that starts with an address rather
    *  than with a name: a folder of `Untitled` shortcuts is what asking for a name
@@ -1645,6 +1685,7 @@ class Workspace {
       name: t('Website'),
       text: '',
       dirty: false,
+      home: this.activeSpaceId,
     })
     const tab = new Tab(file, this.panes.focusedId)
     this.add(tab)
@@ -1663,7 +1704,7 @@ class Workspace {
    *  Nothing is written down. A tab with no file is a browser tab until somebody keeps
    *  it as a web note, which is exactly what a link followed and closed again deserves:
    *  a folder full of `.url` files nobody asked for is what writing here would leave
-   *  behind. See `keepAsWebNote`.
+   *  behind. See `save`.
    *
    *  A press with a modifier puts the tab beside the one it was pressed in, as a
    *  browser does; see new-tab.ts. `opener` is for a page asking for a window of its
@@ -1679,12 +1720,15 @@ class Workspace {
     const from = this.tabs.find((one) => one.id === opener)
     const pane = from?.paneId ?? this.panes.focusedId
 
+    // Out of a tab, in that tab's space and so its web data; see `spaceOf`.
+    const source = from ?? this.active
     const file = this.document({
       kind: 'web',
       path: null,
       name: plainOrigin(url),
       text: '',
       dirty: false,
+      home: source ? this.spaceOf(source.note) : this.activeSpaceId,
     })
     const tab = new Tab(file, pane)
     tab.address = url
@@ -1707,22 +1751,8 @@ class Workspace {
     return tab.id
   }
 
-  /** A website in a folder, named before it has an address.
-   *
-   *  The file list's gesture, and the mirror of a note's: a row goes into the tree
-   *  waiting to be named, the name it is given is the title, and the shortcut is
-   *  written the moment there is one - with no address in it yet, because the address
-   *  is what the bar asks for next. The row is in the list from that moment, which is
-   *  the whole point of naming a thing before making it.
-   *
-   *  Where there is no list to type in, the same stepped `Untitled` every other kind
-   *  falls back to.
-   *
-   *  What arrives from the list is a file name, ending and all - the field puts the
-   *  row's own ending back before it commits, as it does for every other kind - so
-   *  the ending comes off before the name is read as a title. Without that the row
-   *  wrote `Blog.url.url` and put `Blog.url` in the shortcut's own `Title`, which is
-   *  the `.url` Emil kept seeing in the file list. */
+  /** A website in a folder, named before it has an address, and opened; see
+   *  web-tab/new-site.ts. */
   async createWebsite(folder?: string, named?: string) {
     if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
 
@@ -1730,30 +1760,10 @@ class Workspace {
     if (!dir) return
     if (named === undefined && this.startNaming('web', dir)) return
 
-    const title = named === undefined ? UNTITLED : shownName(named)
-    const path = joinPath(dir, this.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
-    const content = writeShortcut('', title, new Date())
-
-    this.showEntry(this.freshEntry(path, false))
-    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
-
-    const file = this.document({
-      kind: 'web',
-      path,
-      name: nameOf(path),
-      text: content,
-      dirty: false,
-    })
-    const tab = this.add(new Tab(file, this.panes.focusedId))
-    pages.of(tab.id).title = title
-
-    this.showNote()
-    this.remember(path)
-    this.dropScaffolding(tab)
-
-    await writeFile(path, content)
+    const { newSite } = await import('./web-tab/new-site')
+    const path = await newSite(this, dir, named)
     await this.loadTree()
-    this.persist()
+    await this.openWeb(path)
   }
 
   /** The address a web tab's file says, or null for a tab with no file yet and for
@@ -1763,27 +1773,10 @@ class Workspace {
     return readWebFile(tab.path, tab.doc)?.url ?? null
   }
 
-  /** The reader typed an address into the bar, which is the one thing that changes
-   *  where a website points.
-   *
-   *  Following a link inside the page does not: the file says where the document
-   *  points and the session remembers where the reading got to, so a file that moved
-   *  under every click would be a file no link could point at. See `webWalked`. */
+  /** The reader typed an address into the bar; see web-tab/aimed.ts. */
   async webAimed(tab: Tab, url: string) {
-    // An address typed is the reader using the tab, in either build, so a website
-    // that was only being previewed stays; see web-tab/used.ts.
-    this.keep(tab.id)
-    if (tab.kind !== 'web' || tab.path === null) return
-
-    const was = readWebFile(tab.path, tab.doc)
-    if (was?.url === url) return
-
-    const title = was?.title ?? shownName(nameOf(tab.path))
-    const content = writeShortcut(url, title, new Date())
-    tab.note.replace(content, false)
-
-    await writeFile(tab.path, content).catch(() => undefined)
-    this.persist()
+    const { aimed } = await import('./web-tab/aimed')
+    await aimed(this, tab, url)
   }
 
   /** The page a web tab went to, written down for the session so a restart comes
@@ -1796,8 +1789,7 @@ class Workspace {
     this.scheduleSession()
   }
 
-  /** Which web tabs are in the middle of being written, so two reports of the same
-   *  page do not write two files. */
+  /** Which tabs are being saved, so a second Save of one does not write two files. */
   private readonly keeping = new Set<string>()
 
   /** What the strip calls a website nobody has kept: whatever the page calls itself.
@@ -1813,62 +1805,35 @@ class Workspace {
     if (named && tab.name !== named) tab.name = named
   }
 
-  /** Keeps a website as a web note: the shortcut for a tab that has none.
-   *
-   *  Browsing writes nothing - not as a note writes itself, and not on Ctrl+S - and
-   *  keeping a page is something somebody does, the way a bookmark is: from the tab's
-   *  menu or the palette, the address, the page's title and its mark, in the space on
-   *  screen, named after the page, asked nothing. From here on it is an ordinary file
-   *  and the reading follows it; see keep.ts.
-   *
-   *  The tab becomes the kept one in place - the same tab, the same page, still live -
-   *  because all that changes is which file the document is of.
-   *
-   *  Which makes this the one gesture that gives a file to a document that already
-   *  exists, and so the one that can put a second document on a file. A listing is a
-   *  round trip behind what is open, so two tabs kept in the same instant were once
-   *  handed the same name. The name is asked for against what is open as well as
-   *  what is listed, and claimed before the write begins: the same rule and the same
-   *  owner as opening a file. See workspace/open.ts. */
-  async keepAsWebNote(tab: Tab) {
-    if (tab.kind !== 'web' || tab.path !== null || this.keeping.has(tab.id)) return
+  /** A tab with no file given one, in place: a draft written in `folder` as `file`, a
+   *  web tab kept there as a shortcut. `folder` defaults to `draftHome`, `file` to the
+   *  name it offers; a note's row is the folder it would become, as a drop on it nests.
+   *  Answers the path, or null where nothing was saved. See workspace/drafts.ts. */
+  async save(tab: Tab, folder?: string, file?: string): Promise<string | null> {
+    if (!isUnsaved(tab.note) || this.keeping.has(tab.id)) return null
     this.keep(tab.id)
 
     this.keeping.add(tab.id)
     try {
-      const dir = await this.draftHome()
-      if (dir === null) return
+      const dir = folder ?? (await this.draftHome(tab.note.home))
+      if (dir === null) return null
+      await this.nestFor(dir, [])
 
-      const title = (pages.of(tab.id).title || tab.name || UNTITLED).trim()
-
-      // Picked and claimed with nothing between them, which is the whole of it: a
-      // second keep of the same name finds this one written down however closely it
-      // follows, and steps aside by number rather than landing on the same file.
-      const file = `${nameFromTitle(title) ?? UNTITLED}.url`
-      const target = joinPath(dir, this.freeName(dir, file))
-      await this.opened.opening(target, () => this.keptWeb(tab, target, title))
+      const saved =
+        tab.kind === 'web'
+          ? await import('./workspace/placing').then((one) =>
+              one.keepWeb(this, (path, run) => this.opened.opening(path, run), tab, dir, file),
+            )
+          : await this.saving.place(tab.note, dir, file ?? draftFile(tab.note))
+      this.persist()
+      return saved
+    } catch (error) {
+      // The tab keeps its words and its dot, and Save can be asked again.
+      log('error', `save: ${tab.shown} - ${String(error)}`)
+      return null
     } finally {
       this.keeping.delete(tab.id)
     }
-  }
-
-  /** The shortcut one keep writes, and the document it leaves at that file. Only
-   *  `keepAsWebNote` calls it, and only through the one claim. */
-  private async keptWeb(tab: Tab, path: string, title: string): Promise<NoteDoc | null> {
-    const page = pages.of(tab.id)
-    const url = page.url ?? tab.address ?? ''
-    const text = writeShortcut(url, title, new Date(), undefined, page.kept ?? undefined)
-
-    this.showEntry(this.freshEntry(path, false))
-    await writeFile(path, text)
-    await this.loadTree()
-
-    tab.note.path = path
-    tab.note.name = nameOf(path)
-    tab.note.replace(text, false)
-    this.remember(path)
-    this.persist()
-    return tab.note
   }
 
   /** A page note in the space, in a tab of its own. The same three lines a canvas
@@ -2666,9 +2631,9 @@ class Workspace {
 
   /** Closes a tab. Every close goes through here: the cross on the tab, Ctrl+W, the
    *  menu row, the palette, and everything that closes a tab because its note has
-   *  gone away. Nothing is asked - there is nothing unsaved to ask about - and what
-   *  the note was waiting to write goes down now; see `closed` in
-   *  workspace/saving.svelte.ts.
+   *  gone away. Nothing is asked, and what the note was waiting to write goes down now;
+   *  see `closed` in workspace/saving.svelte.ts. A draft with words keeps them on the
+   *  closed stack and in Recently deleted; see workspace/placing.ts.
    *
    *  A pinned tab has no cross, but its menu row and the middle button close it
    *  outright, as a browser's do.
@@ -2692,6 +2657,8 @@ class Workspace {
         at: Math.max(at, 0),
         ...(batch ? { batch } : {}),
       })
+      const last = !this.tabs.some((one) => one !== tab && one.note === tab.note)
+      if (last && isDraft(tab.note)) void this.trashWords(tab.note)
     }
 
     // The page is a webview of its own, and a tab that has gone is not holding a
@@ -2738,6 +2705,13 @@ class Workspace {
     for (let batch = this.closed.take(); batch.length; batch = this.closed.take()) {
       let back: { tab: Tab; paneId: string } | null = null
       for (const closed of batch) {
+        // A draft's words come back out of Recently deleted; see workspace/placing.ts.
+        const trashed = closed.trashed
+        if (trashed !== undefined) {
+          const { untrash } = await import('./workspace/placing')
+          if (!(await untrash(trashed))) continue
+        }
+
         const paneId = this.panes.at(closed.paneId) ? closed.paneId : this.panes.focusedId
         const [tab] = await this.tabsFrom([closed.draft], paneId)
         if (!tab) continue
@@ -2756,6 +2730,14 @@ class Workspace {
       this.persist()
       return
     }
+  }
+
+  /** A closed draft's words, into Recently deleted as well; see workspace/placing.ts. */
+  private async trashWords(note: NoteDoc) {
+    const { trashWords } = await import('./workspace/placing')
+    await trashWords(this, note).catch((error: unknown) => {
+      log('warn', `a closed tab's words did not reach Recently deleted: ${String(error)}`)
+    })
   }
 
   /** The flat list with a tab put at a place in a pane's strip: `at` counts along
@@ -2808,7 +2790,7 @@ class Workspace {
     )
   }
 
-  private remember(path: string) {
+  remember(path: string) {
     this.device.remember(path)
   }
 
@@ -3475,10 +3457,8 @@ class Workspace {
       return
     }
 
-    // Named by somebody now, so no longer after its first line; see
-    // workspace/drafts.ts. And after whatever write of it is in the air, so the
-    // write cannot put the old name back beside the new one.
-    note.follows = false
+    // After whatever write of it is in the air, so the write cannot put the old name
+    // back beside the new one.
     await this.saving.holding(note, () => this.renameFile(path, target, true))
   }
 
@@ -4146,6 +4126,11 @@ class Workspace {
     const open = this.tabs.find((one) => samePath(one.path, path))
     if (!open) {
       await this.dropNotes([path], { kind: 'pane', paneId: from, zone: 'right' })
+      return
+    }
+    // A web note is open once, where it is; see `secondWebTabs` in workspace/open.ts.
+    if (open.kind === 'web') {
+      this.showTab(open.note)
       return
     }
 

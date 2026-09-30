@@ -80,6 +80,7 @@ export class Pane {
 export function deskWith(notes: Record<string, string>, open: readonly string[] = []) {
   const disk = new Map(Object.entries(notes).map(([path, text]) => [`${SPACE.root}/${path}`, text]))
   const documents = new Map<string, NoteDoc>()
+  const drafts = new Map<string, NoteDoc>()
   const written: { changes: readonly Change[]; keeping: Keeping | undefined }[] = []
   const kept: { path: string; content: string; source: string }[] = []
   let front: Pane | null = null
@@ -121,6 +122,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
       return Promise.resolve()
     },
     scheme: () => 'dark',
+    draftIn: (tab) => drafts.get(tab) ?? null,
   }
 
   return {
@@ -131,6 +133,15 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     kept,
     /** Opens a note that was closed, as a pane on a new document. */
     open: opened,
+    /** A tab holding a note with no file, as a pane on it. */
+    draft: (tab: string, text: string): Pane => {
+      const note = new NoteDoc(
+        { kind: 'note', path: null, name: 'Untitled', text, dirty: false },
+        () => undefined,
+      )
+      drafts.set(tab, note)
+      return new Pane(note, 0)
+    },
     /** Closes a note: its pane and its document go, and the disk keeps its words. */
     close: (path: string) => {
       const at = `${SPACE.root}/${path}`

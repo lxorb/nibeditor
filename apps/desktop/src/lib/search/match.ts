@@ -72,6 +72,9 @@ export interface Hit {
    *  words are not on disk as text, so nothing on the other side of the bridge
    *  sends one of these. */
   page?: number
+  /** The tab of a note with no file yet, which opening the row brings forward; see
+   *  search/unsaved.ts. Absent for everything on the disk. */
+  tab?: string
   /** The line as a row shows it: trimmed, and cut short. */
   text: string
   /** Where in `text` the match sits. Empty for a note found by its path, its

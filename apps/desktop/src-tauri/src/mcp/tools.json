@@ -1,7 +1,7 @@
 [
   {
     "name": "get_context",
-    "description": "Where the reader is: the space, the tab in front (kind, path or address, title), the selected text and where it is, the lines on screen, every open tab, and whether they are typing right now.",
+    "description": "Where the reader is: the space, the tab in front (kind, path or address, title), the selected text and where it is, the lines on screen, every open tab (an `unsaved` one is a note with no file yet, read and edited by its tab), and whether they are typing right now.",
     "inputSchema": { "type": "object", "properties": {} },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
@@ -453,6 +453,10 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string", "description": "Path inside the space, such as ideas/plan.md" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "include": {
           "type": "array",
           "items": {
@@ -469,8 +473,7 @@
             ]
           }
         }
-      },
-      "required": ["path"]
+      }
     },
     "annotations": { "readOnlyHint": true, "openWorldHint": false }
   },
@@ -534,6 +537,10 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "edits": {
           "type": "array",
           "items": {
@@ -565,7 +572,7 @@
         },
         "if_rev": { "type": "string" }
       },
-      "required": ["path", "edits"]
+      "required": ["edits"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
@@ -577,10 +584,14 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "content": { "type": "string" },
         "if_rev": { "type": "string" }
       },
-      "required": ["path", "content"]
+      "required": ["content"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
@@ -592,10 +603,14 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "content": { "type": "string" },
         "under": { "type": "string" }
       },
-      "required": ["path", "content"]
+      "required": ["content"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
@@ -607,10 +622,14 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "key": { "type": "string" },
         "value": { "description": "Words, a number, true or false, a list of words, or null." }
       },
-      "required": ["path", "key", "value"]
+      "required": ["key", "value"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },
@@ -622,6 +641,10 @@
       "properties": {
         "space": { "type": "string" },
         "path": { "type": "string" },
+        "tab": {
+          "type": "string",
+          "description": "In place of path: a tab get_context marks unsaved, holding a note with no file yet."
+        },
         "at": {
           "type": "object",
           "properties": { "task": { "type": "string" }, "nth": { "type": "integer" } },
@@ -629,7 +652,7 @@
         },
         "done": { "type": "boolean" }
       },
-      "required": ["path", "at", "done"]
+      "required": ["at", "done"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": false }
   },

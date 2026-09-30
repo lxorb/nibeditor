@@ -917,6 +917,48 @@ select option {
   font-size: var(--text-sm);
 }
 
+/* ── Not on the disk yet ───────────────────── */
+
+/* The dot after the name of a document with no file yet, wherever the name is: a
+   tab, a phone's bar, the palette's row. Something still under way, which is what a
+   dot says everywhere in the app (docs/design.md). `.is-corner` sits it on the
+   shoulder of a tab that is only its mark, ringed in the ground so it reads on any
+   mark; `.is-pressable` is where a press on it is Save, and its press reaches five
+   pixels past it, as the close button's does. See UnsavedDot.svelte. */
+.nib-unsaved {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  margin-inline-start: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.nib-unsaved.is-corner {
+  position: absolute;
+  top: -2px;
+  inset-inline-end: -3px;
+  margin: 0;
+  box-shadow: 0 0 0 1.5px var(--bg);
+}
+
+.nib-unsaved.is-pressable:not(.is-corner) {
+  position: relative;
+}
+
+.nib-unsaved.is-pressable::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+@media (hover: hover) {
+  .nib-unsaved.is-pressable:hover {
+    transform: scale(1.5);
+  }
+}
+
 /* ── Badges ────────────────────────────────── */
 
 /* The rounded square in front of a name when the name belongs to somebody or

@@ -19,6 +19,7 @@ import { invoke } from '../../tauri'
 import { theme } from '../../theme.svelte'
 import { views } from '../../views.svelte'
 import { workspace } from '../../workspace.svelte'
+import { isDraft } from '../../workspace/drafts'
 import { type Desk, located, type NoteAt } from './desk'
 import { editNote, type NoteEdited, undoAgent, undoAt, writeNote } from './edit'
 import type { Agent } from './presence'
@@ -60,6 +61,10 @@ const desk: Desk = {
   backlinksOf: (path) => links.backlinks(path),
   snapshot: async (path, content, source) => {
     await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
+  },
+  draftIn(id) {
+    const tab = workspace.tabs.find((one) => one.id === id)
+    return tab?.kind === 'note' && isDraft(tab.note) ? tab.note : null
   },
   scheme: () => theme.current,
 }

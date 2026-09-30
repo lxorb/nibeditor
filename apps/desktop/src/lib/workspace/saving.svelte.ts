@@ -6,9 +6,9 @@
  *  beside a name, no question on the way out. Emil, 2026-09-30: *"I don't want
  *  there to be any manual saving anymore. Only autosaving, that's it."*
  *
- *  A document with no file yet - a new tab - is a draft, and the first words put
- *  in it are what make it a file: where it goes and what it is called are
- *  drafts.ts, and the moment itself is `born` below.
+ *  A document with no file yet - a new tab - is a draft, and nothing here writes
+ *  it until somebody gives it a place: its words are in the session meanwhile, and
+ *  what it is called is drafts.ts. The moment it gets one is `place` below.
  *
  *  Its own module because its state is its own: which documents are waiting for
  *  the pause, which file operation each is in the middle of, and the timers behind
@@ -21,13 +21,13 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { owesLast, settleUp } from '../parting'
-import { folderOf, nameOf, within } from '../space-paths'
+import { nameOf, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import { entryAt } from '../tree-edits'
 import type { Entry } from '../workspace.svelte'
 import { holdsWords, type NoteDoc, type Tab } from './documents.svelte'
-import { draftFile, followedName, hasWords, isDraft, namedByWords } from './drafts'
+import { isDraft } from './drafts'
 
 /** How long after the last change a document is written, in milliseconds.
  *
@@ -60,24 +60,19 @@ export interface Writes {
   scheduleSession(): void
   persist(): void
   loadTree(): Promise<void>
-  /** The folder a draft becomes a file in; see `draftHome` in workspace.svelte.ts. */
-  draftHome(): Promise<string | null>
   /** The name a folder will take: the wanted one, or the next number after it where
    *  the folder already holds that name - `except` left out of what it holds. The
    *  rule the file list follows for a duplicate, so a draft never writes over
    *  anything. */
   freeName(folder: string, name: string, except?: string): string
-  /** A file renamed because the words it is named after changed: everything a rename
-   *  owes, but no step on the undo stack; see `retitle` in workspace.svelte.ts. */
-  retitle(path: string, name: string): Promise<void>
   /** A file a draft has just become: its row in the list and a place among the notes
    *  opened lately, before the disk has it. */
   born(path: string): void
   /** A file written over, so a list sorted by when things changed moves it. */
   touched(path: string): void
-  /** A note born this sitting that ended up with nothing in it, gone again as its
-   *  last tab closes; see `closed`. */
-  discard(path: string): Promise<void>
+  /** A file that came to be, said once to everything that keeps files by path; `key`
+   *  names the open document it is. See workspace/file-ops.ts. */
+  fileCame(path: string, kind: 'file' | 'folder', key?: string): Promise<void>
 }
 
 export class Saving {
@@ -106,11 +101,6 @@ export class Saving {
    *  window going, and Ctrl+S. */
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   private readonly running = new Set<Promise<void>>()
-
-  /** Drafts on their way to being files, so a keystroke landing inside the round
-   *  trip that finds them a folder does not make a second file. */
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
-  private readonly bearing = new Set<NoteDoc>()
 
   /** Born and not written yet: their first write is the one that makes the file, so
    *  it is the one after which the list is read again. */
@@ -166,21 +156,11 @@ export class Saving {
    *  brought back with words a crash kept from the disk.
    *
    *  A file somebody shared on its own has no file here at all: its room is what
-   *  keeps it, and there is nowhere on this machine for a write to go. A draft is
-   *  written once it has something in it, which is the moment it becomes a file. */
+   *  keeps it, and there is nowhere on this machine for a write to go. Nor has a
+   *  draft, until it is given a place: the session is what keeps its words, and
+   *  `edited` has already asked for that. */
   owed(note: NoteDoc) {
-    if (note.shared !== null || !holdsWords(note.kind)) return
-
-    if (isDraft(note)) {
-      if (!hasWords(note)) return
-
-      const birth = this.born(note)
-      this.track(birth)
-      void birth.catch((error: unknown) =>
-        log('error', `save: a new ${note.kind} - ${String(error)}`),
-      )
-      return
-    }
+    if (note.shared !== null || !holdsWords(note.kind) || isDraft(note)) return
 
     this.waiting.add(note)
     this.soon()
@@ -211,23 +191,9 @@ export class Saving {
     void this.saveWaiting()
   }
 
-  /** A document's last tab has closed. What it was waiting to write goes down now,
-   *  and a note born this sitting that says nothing any more goes with its tab: it
-   *  was a file only because a draft once had a letter in it, and an empty
-   *  `Untitled` left behind by every note somebody changed their mind about is the
-   *  litter this whole way of making notes exists to avoid. */
+  /** A document's last tab has closed. What it was waiting to write goes down now. */
   closed(note: NoteDoc) {
     if (this.ws.tabs.some((tab) => tab.note === note)) return
-
-    const path = note.path
-    if (path !== null && note.follows && note.blank) {
-      this.waiting.delete(note)
-      this.making.delete(note)
-      void this.holding(note, () => this.ws.discard(path)).catch((error: unknown) => {
-        log('warn', `discard: ${path} - ${String(error)}`)
-      })
-      return
-    }
 
     this.hurry()
   }
@@ -348,36 +314,28 @@ export class Saving {
     void done.then(() => this.running.delete(done))
   }
 
-  /** A draft's first words, which make it a file: in the space, under the name its
-   *  words or its own name give it, written at once. See drafts.ts.
-   *
-   *  The path is claimed in the same breath as it is chosen - the document has it
-   *  before anything else can ask - so two drafts born together step aside from each
-   *  other rather than landing on one file; see `freeName` in workspace.svelte.ts,
-   *  which counts every open document's path. */
-  private async born(note: NoteDoc): Promise<void> {
-    if (this.bearing.has(note)) return
-    this.bearing.add(note)
+  /** A draft given a place: a file in `folder` called `file`, or the next number after
+   *  it, written at once; the path it landed at, or null for one with a file already.
+   *  Claimed as it is chosen, so two drafts saved together never land on one file; see
+   *  `freeName` in workspace.svelte.ts. */
+  async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
+    if (note.path !== null) return null
 
-    try {
-      const home = await this.ws.draftHome()
-      // Given a file some other way while the folder was being found, or nowhere
-      // to put one at all: either way this is not the moment.
-      if (home === null || note.path !== null) return
+    const path = joinPath(folder, this.ws.freeName(folder, file))
+    note.path = path
+    note.name = nameOf(path)
+    // What the tab holds is what the file has to say, typed in or not: an untouched
+    // plane is a blank plane's worth of JSON.
+    note.dirty = true
+    this.making.add(note)
+    this.ws.born(path)
 
-      const follows = namedByWords(note)
-      const path = joinPath(home, this.ws.freeName(home, draftFile(note)))
-      note.path = path
-      note.name = nameOf(path)
-      note.follows = follows
-      this.making.add(note)
-      this.ws.born(path)
-    } finally {
-      this.bearing.delete(note)
-    }
-
+    // Written the way every waiting document is, so a write the disk refuses is tried
+    // again rather than lost; see `saveWaiting`.
     this.waiting.add(note)
-    this.hurry()
+    this.soon.cancel()
+    await this.saveWaiting()
+    return path
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
@@ -442,24 +400,6 @@ export class Saving {
     const holding = note.arrivals
     const making = this.making.has(note)
 
-    // A note named after its words follows them: the name they ask for now, before
-    // the words go down. A file that is not on the disk yet is simply pointed at the
-    // new name; one that is, is renamed, links and all.
-    const was = path
-    const folder = folderOf(was)
-    const renamed = followedName(note, (file) => this.ws.freeName(folder, file, was))
-    if (renamed !== null) {
-      if (making) {
-        note.path = joinPath(folder, renamed)
-        note.name = renamed
-      } else {
-        await this.ws.retitle(was, renamed).catch((error: unknown) => {
-          log('warn', `retitle: ${was} - ${String(error)}`)
-        })
-      }
-      path = note.path ?? was
-    }
-
     // The words going down, and which revision of the note they are, both read
     // once. A keystroke landing inside the round trip belongs to the next write,
     // and the note has to be told which one it just had.
@@ -506,6 +446,8 @@ export class Saving {
     if (making) {
       this.making.delete(note)
       await this.ws.loadTree()
+      // The one file operation a new file owes, naming the document that is it.
+      await this.ws.fileCame(path, 'file', note.key)
     } else {
       this.ws.touched(path)
     }

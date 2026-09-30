@@ -17,6 +17,7 @@ import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
 import { workspace } from '../../workspace.svelte'
+import { isDraft } from '../../workspace/drafts'
 import { DocError, type NoteRead, notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, text, writerOf } from './call'
@@ -25,8 +26,13 @@ import { Refused } from './problem'
 import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
 
 /** The note a call names, in a space it may reach: its place, and its path as the
- *  space speaks of it, with `.md` where the name has no ending. */
-function noteOf(call: Call, writing: boolean): { place: Place; relative: string } {
+ *  space speaks of it, with `.md` where the name has no ending - or `tab`, a tab from
+ *  `get_context` holding a note with no file yet, which is its space's though it is
+ *  on no disk (workspace/drafts.ts). */
+function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {
+  const tab = maybe(call, 'tab')
+  if (tab !== null) return { place: placeFor(call, spaceOfDraft(tab)), relative: '', tab }
+
   const place = placeFor(call, maybe(call, 'space'))
   const asked = need(call, 'path')
   const safe = writing ? judgedForWriting(asked) : judged(asked)
@@ -42,8 +48,21 @@ function noteOf(call: Call, writing: boolean): { place: Place; relative: string 
   return { place, relative }
 }
 
-function at(place: Place, relative: string) {
-  return { path: relative, space: place.space.id }
+/** The space of the note with no file in a tab, by id. */
+function spaceOfDraft(id: string): string {
+  const tab = workspace.tabs.find((one) => one.id === id)
+  const space = tab?.kind === 'note' && isDraft(tab.note) ? workspace.spaceOf(tab.note) : null
+  if (space === null) {
+    throw new Refused(
+      'no_such_tab',
+      `tab ${id} holds no note without a file: get_context lists them`,
+    )
+  }
+  return space
+}
+
+function at({ place, relative, tab }: { place: Place; relative: string; tab?: string }) {
+  return { path: relative, space: place.space.id, ...(tab === undefined ? {} : { tab }) }
 }
 
 function ifRev(call: Call): string | undefined {
@@ -56,8 +75,9 @@ function wordsSent(call: Call): string | null {
 }
 
 export async function readNote(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, false)
-  const read: NoteRead = await notes.readNote(at(place, relative), call.args.include)
+  const named = noteOf(call, false)
+  const { place, relative } = named
+  const read: NoteRead = await notes.readNote(at(named), call.args.include)
 
   // The window's index is the open space's, so a note of another space has its links
   // read off that space's own.
@@ -72,17 +92,17 @@ export async function readNote(call: Call): Promise<AgentAnswer> {
 }
 
 export async function editNote(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, true)
+  const named = noteOf(call, true)
+  const { place, relative } = named
   const question = await asked(call, null, `Edit ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(
-    await notes.editNote(writerOf(call), at(place, relative), call.args.edits, ifRev(call)),
-  )
+  return done(await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call)))
 }
 
 export async function writeNote(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, true)
+  const named = noteOf(call, true)
+  const { place, relative } = named
   const words = wordsSent(call)
   if (words === null) throw new Refused('bad_arguments', 'say the content')
 
@@ -90,15 +110,16 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   // A note that is not there yet is made: the connector's write_note makes one too.
-  if ((await workspace.noteText(onDisk(place, relative))) === null) {
+  if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
     return done(await made(place, relative, words, false))
   }
 
-  return done(await notes.writeNote(writerOf(call), at(place, relative), words, ifRev(call)))
+  return done(await notes.writeNote(writerOf(call), at(named), words, ifRev(call)))
 }
 
 export async function appendNote(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, true)
+  const named = noteOf(call, true)
+  const { place, relative } = named
   const words = wordsSent(call)
   if (words === null) throw new Refused('bad_arguments', 'say the content')
 
@@ -107,13 +128,13 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
 
   // The day's note that is not there yet is the day's note to make, as nib://append
   // makes one.
-  if ((await workspace.noteText(onDisk(place, relative))) === null) {
+  if (!named.tab && (await workspace.noteText(onDisk(place, relative))) === null) {
     return done(await made(place, relative, words, false))
   }
 
   const under = maybe(call, 'under')
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
-  return done(await notes.editNote(writerOf(call), at(place, relative), [edit]))
+  return done(await notes.editNote(writerOf(call), at(named), [edit]))
 }
 
 /** A front matter value as the one line it is written on: a list in brackets, a
@@ -129,7 +150,8 @@ function yamlOf(value: unknown): string | null {
 }
 
 export async function setProperty(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, true)
+  const named = noteOf(call, true)
+  const { relative } = named
   const key = need(call, 'key')
   if (!/^[\w-][\w -]*$/.test(key)) throw new Refused('bad_arguments', `${key} is not a key`)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value, or null')
@@ -142,14 +164,14 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   // out from: a note the reader typed in meanwhile is read again rather than written
   // over.
   for (let tries = 0; ; tries++) {
-    const read = await notes.readNote(at(place, relative), ['text'])
+    const read = await notes.readNote(at(named), ['text'])
     const words = read.text ?? ''
     const edit = frontMatterEdit(words, key, value)
     if (!edit) return done({ path: relative, key, value, changed: false, rev: read.rev })
 
     const after = words.slice(0, edit.from) + edit.insert + words.slice(edit.to)
     try {
-      const wrote = await notes.writeNote(writerOf(call), at(place, relative), after, read.rev)
+      const wrote = await notes.writeNote(writerOf(call), at(named), after, read.rev)
       return done({ ...wrote, key, value, changed: true })
     } catch (error) {
       if (!(error instanceof DocError && error.code === 'rev_changed') || tries > 2) throw error
@@ -158,14 +180,15 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
 }
 
 export async function setTask(call: Call): Promise<AgentAnswer> {
-  const { place, relative } = noteOf(call, true)
+  const note = noteOf(call, true)
+  const { relative } = note
   const anchor = call.args.at
   if (typeof anchor !== 'object' || anchor === null || !('task' in anchor)) {
     throw new Refused('bad_arguments', 'at is {task, nth?}')
   }
   const wanted = flag(call, 'done')
 
-  const read = await notes.readNote(at(place, relative), ['text', 'tasks'])
+  const read = await notes.readNote(at(note), ['text', 'tasks'])
   const named = anchor as { task: unknown; nth?: unknown }
   const row = read.tasks?.find(
     (one) =>
@@ -186,10 +209,12 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
   const box = task.box + 1
   const ticked = line.slice(0, box) + (wanted ? 'x' : ' ') + line.slice(box + 1)
   const edit = { at: row.anchor, replace: ticked }
-  return done(await notes.editNote(writerOf(call), at(place, relative), [edit], read.rev))
+  return done(await notes.editNote(writerOf(call), at(note), [edit], read.rev))
 }
 
 export async function createNote(call: Call): Promise<AgentAnswer> {
+  if (maybe(call, 'tab') !== null)
+    throw new Refused('bad_arguments', 'a new note is made at a path')
   const { place, relative } = noteOf(call, true)
   if ((await workspace.noteText(onDisk(place, relative))) !== null) {
     throw new Refused('exists', `${relative} is already there, and nothing is written over`)

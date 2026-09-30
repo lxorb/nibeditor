@@ -17,10 +17,12 @@
    *  page the page is hidden - otherwise a menu would come up behind it. */
 
   import { onMount, untrack } from 'svelte'
+  import { fade } from 'svelte/transition'
   import { agentMarks } from '../agent-marks.svelte'
   import { fullscreen } from '../fullscreen.svelte'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
+  import { dur } from '../motion'
   import { tabAsk } from '../new-tab'
   import { overlays } from '../overlays'
   import { settings } from '../settings.svelte'
@@ -47,7 +49,6 @@
   import { isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
-  import { spaceOf } from './web-data'
   import { webData } from './web-data.svelte'
   import WebAsk from './WebAsk.svelte'
   import WebDialog from './WebDialog.svelte'
@@ -255,9 +256,11 @@
    *  a web note is a browser tab and the file says so. See web-tab/keep.ts. */
   const address = $derived(page.url ?? tab.address ?? workspace.webAddressOf(tab) ?? '')
 
-  /** Which history this tab's address field offers from and adds to: its space's, when
-   *  the space keeps its web data apart. See web-data.ts. */
-  const space = $derived(spaceOf(tab.path, workspace.spaces, workspace.activeSpaceId))
+  /** Which space the tab is in, and so which history its address field offers from and
+   *  adds to and whose web data its page is built in: the space holding its file,
+   *  wherever it was opened from, and for a tab with no file the space it was opened
+   *  in, kept across a switch to another. See `spaceOf` in workspace.svelte.ts. */
+  const space = $derived(workspace.spaceOf(tab.note))
   const book = $derived(webData.history(space))
 
   onMount(() => {
@@ -395,7 +398,7 @@
 
   // What the strip calls a tab with no file: what the page calls itself. Nothing is
   // written - a new web tab is a browser tab until somebody keeps it as a web note;
-  // see `keepAsWebNote` in workspace.svelte.ts.
+  // see `save` in workspace.svelte.ts.
   $effect(() => {
     const title = page.title
     untrack(() => workspace.webNamed(tab, title))
@@ -600,6 +603,13 @@
 
     <!-- A computer new to the account, waiting for one that has the web logins to let it
          have them: which one, and the six digits both screens show. -->
+    <!-- Saved into a space that keeps its web data apart: built again there, which may
+         have signed the site out, so this says so for a moment. See `rehome`. -->
+    {#if page.rehomed !== null}
+      <p class="waiting" transition:fade={{ duration: dur(140) }}>
+        {t('Reloaded with the web data of {space}', { space: page.rehomed })}
+      </p>
+    {/if}
     {#if pages.waiting}
       <p class="waiting">
         {t('Waiting for {who}', { who: pages.waiting.device })}

@@ -158,7 +158,9 @@ class Search {
    *  A loose hit is never one of them. There is nothing in its line for the query
    *  to replace, and guessing at what somebody meant is not a thing to do to
    *  their notes. */
-  readonly chosen = $derived(this.found.filter((hit) => !this.skipped.has(keyOf(hit))))
+  readonly chosen = $derived(
+    this.found.filter((hit) => hit.tab === undefined && !this.skipped.has(keyOf(hit))),
+  )
 
   /** Whether a hit will be replaced. */
   keeps(hit: Hit): boolean {
@@ -253,6 +255,9 @@ class Search {
     // top while the rest of the space is still being read. The guesses come in
     // the last handful, already ranked; see space.ts.
     const excluded = this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)
+    const { unsavedHits } = await import('./search/unsaved')
+    const unsaved = unsavedHits(this.query, workspace.activeSpaceId, MOST)
+    if (round === this.round && unsaved.length) this.found = unsaved
     await searchSpace(
       root,
       this.query,

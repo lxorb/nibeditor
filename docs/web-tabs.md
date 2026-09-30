@@ -170,23 +170,29 @@ which is the whole point of naming a thing before making it.
 
 **A new tab** - the strip's plus, Ctrl+T, the palette, the buttons a pane with
 nothing open shows - is the other way round, and is a browser tab: a live page with an
-address field and **no file at all**. Nothing is written while somebody is only reading,
-and Ctrl+S does not change that: browsing is not a document being saved. **Keep as web
-note** - on the tab's own menu, and in the palette while the page is in front - is the
-moment they say to keep it, the way a bookmark is kept: the shortcut goes down in the
-space with the address the tab is on, the page's title as its name and the mark the page
-reported, and the tab becomes that file in place, still live. Nothing is asked; the row
-can be renamed and moved like any other. See `keepAsWebNote` in `workspace.svelte.ts`.
+address field and **no file at all**, and no dot after its name, since a browser tab has
+nothing unwritten in it. Nothing is written while somebody is only reading. **Save** -
+Ctrl+S, the tab's own menu, the palette - is the moment they say to keep it, the way
+Chrome's star keeps a bookmark: a small layer under the tab with the page's title as the
+name and the places the Move sheet offers, starting on the root of the space the tab was
+opened in, and the shortcut goes down there with the address the tab is on and the mark
+the page reported. The tab becomes that file in place, still live. Dropping the tab on a
+row of the file list saves it there under the page's title. See `save` in
+`workspace.svelte.ts` and `save-place/ask.ts`.
 
 Emil, 2026-09-14: _"if you create a new webnote by clicking the plus for a new tab, then
 it should open it as a tab and not create it in the sidebar. Same for canvas and page
 notes. And like normal notes, then can then of course be saved as well, but they should
 be able to exist in an "unsaved" state. Just as a tab, like a browser tab normally
 would."_ Which is one model for all four kinds: see `newCanvas` and `newPages` beside
-`openWebsite` in `workspace.svelte.ts`. Since 2026-09-30 nothing is ever saved by hand: a
-new note, plane or deck becomes a file in the space on its first word or stroke, and only
-a web tab waits to be kept; see `workspace/drafts.ts`. A restart brings a tab with no file
-back the way a browser does - the session is the only place its words exist.
+`openWebsite` in `workspace.svelte.ts`. Since 2026-09-30 all four wait for a place: a new
+note, plane or deck is a tab with a dot after its name until it is saved, with its words
+kept in the session the whole time; see `workspace/drafts.ts`. Emil, 2026-09-30: _"When I
+open a new tab or note on nib it should be in an unsaved state (with no saving location)
+and there should be a dot behind it (indicating that). For web tabs there should not be
+the dot behind them if they're unsaved."_ A restart brings a tab with no file back the way
+a browser does - in its place in the strip, with its words, its space and the site's
+cached mark.
 
 Neither is offered on a phone, and neither is in the editor's `/` menu. A phone has
 no bar to type an address into and no tab to put a page in - the row would make a
@@ -200,6 +206,32 @@ points.** A web note is a browser tab, so the file says where the reading has go
 and opening the note again opens that page; see "The file" above. An address typed
 into the bar moves both, because that is somebody saying where the document itself
 points.
+
+### One tab per web note
+
+**A web note is open in one tab of one window.** Emil, 2026-09-30: _"it should NEVER be
+possible that we have the same web note open multiple times within one nib session. it
+just leads to confusion."_ Two tabs of one are two live pages writing where the reading got
+to into one file.
+
+- **Opening one that is open goes to it**, wherever it is - the file list, the palette, a
+  bookmark, a link, Ctrl+click, an agent's `workspace_tabs` open - as Chrome's "Switch to
+  tab" and VS Code's `workbench.editor.revealIfOpen` do. It is never pulled into the pane
+  in front: a live page with a login is not moved under the reader, and the layout they
+  made stays theirs. A press that asked for a tab behind changes nothing, since the tab is
+  already there.
+- **Duplicate, Split and a copy-drag make an unsaved web tab** at the page the note is on,
+  in the same space's web data, with no dot - a second tab, never a second tab of the file.
+  A split makes one rather than refusing, because Edge's split screen and Chrome's split
+  view both put two tabs side by side, and a row that does nothing is worse than either.
+- **One check does it**: the strip itself, whenever it changes, whichever way a tab came -
+  a session from an older build with two tabs on one file comes back as the tab and a copy.
+  See `secondWebTabs` in `workspace/open.ts`. Between windows, each says which web notes it holds on a
+  channel; one asked for a note another window holds shows it there and brings that window
+  forward, and two that came to hold one leave it with whoever had it first. See
+  `web-tab/one-window.svelte.ts`.
+
+Notes, planes and page notes may still be shown in two panes, as they always could.
 
 ## The tab, per platform
 
@@ -1248,6 +1280,24 @@ so every computer puts the space's pages in the same store (docs/sync-v2.md 6.1)
 Choosing builds the space's open pages again in the new store, each where it was and on
 the page it was on, so the choice is on screen at once.
 
+**Which space a page belongs to decides its store.** A web note's is the space holding its
+file, wherever it was opened from - global search, a link, an agent - never the space on
+screen. A web tab with no file belongs to the space it was opened in, and a page opened out
+of a tab to that tab's, so a link followed out of a work site stays signed in as work; the
+session writes that space down, and switching to another space with the tab open changes
+nothing about it. Emil, 2026-09-30: _"unsaved web tabs should use the current store of the
+current space. And a note should always use the data saving option from the space that it
+is from."_ See `spaceOf` in `workspace.svelte.ts`.
+
+**Saved into a space whose web data is kept apart, the page is built again in that
+space's store**, where it was and on the page it was on, with one quiet line under the bar
+for a few seconds naming the space: a site that signs out without a word looks like a site
+that broke. Arc does the same when a tab moves into a space with another profile; Chrome
+cannot move a tab between profiles at all, and leaving the page in the old store until it
+is next opened would make the file say one thing and the page do another. The store is
+asked the one way every page and every web login asks it, so the lease follows the page.
+See `web-tab/rehome.ts`.
+
 **A space kept apart keeps its history apart too.** The address field's history of
 pages (`visited.ts`) is `nib:web-visits` for every space on Global and
 `nib:web-visits:<id>` for a space on Space or Site, so a space that signs in apart does
@@ -1595,7 +1645,7 @@ versions and goes to the trash like every other document.
 | `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
 | `apps/desktop/src/lib/rooms/kind.ts`                  | no room for a website, said at the file's end                                                                                                                                                                                                          |
 | `services/sync/src/notes.ts`                          | the extensions the account carries                                                                                                                                                                                                                     |
-| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepAsWebNote`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                       |
+| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `save`, `webAimed` (web-tab/aimed.ts), `spaceOf`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                       |
 | `scripts/web-tab-e2e.py`                              | the drive: the file, the mark, the tab, the card, the clip                                                                                                                                                                                             |
 | `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
 | `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |

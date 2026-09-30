@@ -423,7 +423,7 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `list_notes` | `folder`?, `kind`? | notes, canvases, page notes, PDFs, web notes |
 | `search_notes` | `query` | the search panel's own search, as rows, without opening the panel |
 | `list_backlinks` | `path` | every link in the space that points at it; also `read_note`'s `backlinks` |
-| `read_note` | `path`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task |
+| `read_note` | `path` or `tab`, `include`?: `text`, `outline`, `properties`, `tasks`, `links`, `backlinks`, `blocks`, `selection` | the words **as they are on screen** when the note is open, unsaved ones included; `rev`, which changes with every edit; anchors for every heading, block and task. `tab` is a tab `get_context` marks `unsaved`: a new note with no file yet, which is its space's though it is on no disk, read and edited like any open note and kept no version of; the note tools below take it too |
 | `edit_note` | `path`, `edits`: `[{at, replace?, insert_before?, insert_after?, delete?}]` (one of the four), `if_rev`? | anchored edits in one transaction (8.2) |
 | `write_note` | `path`, `content`, `if_rev`? | the whole text, for parity with the account connector (whose argument is `content`, so every note tool here says `content` for words); applied as the smallest edit between what is there and what is sent, as one transaction, so it is an anchored edit like the rest |
 | `append_note` | `path`, `content`, `under`? (a heading) | |

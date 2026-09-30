@@ -349,6 +349,9 @@ export class Page {
    *  where it was; see `restore`. */
   pane: Rect | null = null
 
+  /** The space whose web data the page was just built again in; see rehome.ts. */
+  rehomed = $state<string | null>(null)
+
   /** When this tab was last looked at, so the least recently looked at is the one
    *  parked when there are more pages running than a window should hold. */
   looked = Date.now()

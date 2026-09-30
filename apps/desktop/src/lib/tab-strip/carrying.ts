@@ -1,12 +1,15 @@
 /** A tab carried out of its strip: where it would land, the drop zones kept in step
- *  with it, and the slide home when it is let go of over nothing. Only ever wanted once
+ *  with it, the file list's row it would be saved into when it has no file, and the
+ *  slide home when it is let go of over nothing. Only ever wanted once
  *  a tab has been lifted, so it is fetched with the first press on a tab, with the chip
  *  drawn under the pointer (TabChip.svelte), rather than carried into the first paint;
  *  see Tabs.svelte, which is the strip's own half. */
 
+import { dropTarget, targetFor } from '../drop-target.svelte'
 import { i18n } from '../i18n.svelte'
 import { dur } from '../motion'
 import { workspace } from '../workspace.svelte'
+import { isUnsaved } from '../workspace/drafts'
 import type { Landing } from '../workspace/panes.svelte'
 import { zoneAt } from '../workspace/zones'
 import type { Bounds } from './layout'
@@ -44,11 +47,47 @@ export function follow(drag: TabDrag, paneId: string) {
 
   const where = drag.out ? landingAt(drag.pointer.x, drag.pointer.y, tabId, paneId) : null
   if (keyOf(workspace.panes.landing) !== keyOf(where)) workspace.panes.landing = where
+  overList(tabId, drag.out && !where ? drag.pointer : null)
 
   const carried = drag.out ? tabId : null
   if ((workspace.panes.dragging?.tabId ?? null) !== carried) {
     workspace.panes.dragging = carried ? { tabId: carried } : null
   }
+}
+
+/** A tab with no file over the file list is saved where it is let go of, under the
+ *  name it offers, with nothing asked - the place is the answer, and the name can be
+ *  changed on the row. The row lights the way it lights for a note dragged within the
+ *  list, because it is the same question with the same answer (drop-target.svelte.ts):
+ *  a folder is itself, a note is the folder it would become, and the stretch below the
+ *  last row is the space. See workspace/drafts.ts. */
+function folderAt(x: number, y: number): string | null {
+  const under = document.elementFromPoint(x, y)
+  const row = under?.closest<HTMLElement>('[data-path]')
+  const path = row?.dataset.path
+  if (path) return targetFor(path, row.hasAttribute('aria-expanded'))
+
+  return under?.closest('[data-space-rest]') ? (workspace.activeSpace?.root ?? null) : null
+}
+
+function unsaved(tabId: string) {
+  const tab = workspace.tabs.find((one) => one.id === tabId)
+  return tab && isUnsaved(tab.note) ? tab : null
+}
+
+/** The carried tab is at `point`, or over something else where that is null. */
+export function overList(tabId: string, point: { x: number; y: number } | null): void {
+  const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
+  if (folder !== null) dropTarget.over(folder)
+  else if (dropTarget.folder !== null) dropTarget.clear()
+}
+
+/** Let go of: saved into the row that was lit, where there was one. */
+export function droppedOnList(tabId: string): void {
+  const folder = dropTarget.folder
+  const tab = unsaved(tabId)
+  dropTarget.clear()
+  if (folder !== null && tab) void workspace.save(tab, folder)
 }
 
 /** The app's one easing, read from the stylesheet that owns it. */

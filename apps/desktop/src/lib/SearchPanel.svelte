@@ -254,6 +254,12 @@
       workspace.openPdf(hit.path, hit.page, how)
       return
     }
+    // A note with no file is its tab; see search/unsaved.ts.
+    if (hit.tab !== undefined) {
+      workspace.activate(hit.tab)
+      ongoto?.(hit.line)
+      return
+    }
 
     await workspace.open(hit.path, how)
     if (ask !== 'behind') ongoto?.(hit.line)
@@ -411,9 +417,9 @@
         </div>
 
         {#each group.hits as hit (hit.line)}
-          {@const task = taskOf(hit)}
+          {@const task = hit.tab === undefined ? taskOf(hit) : null}
           <div class="line">
-            {#if search.replacing}
+            {#if search.replacing && hit.tab === undefined}
               <button
                 class="tick"
                 class:on={search.keeps(hit)}

@@ -35,6 +35,8 @@ import { pages } from '../web-tab/pages.svelte'
 import { viewport } from '../viewport.svelte'
 import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
+import { isUnsaved } from '../workspace/drafts'
+import { askPlace } from '../save-place/door'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
@@ -267,14 +269,13 @@ function closeEntries(tab: Tab): MenuEntry[] {
   ]
 }
 
-/** Only for a web tab with no file: browsing writes nothing, and this is where
- *  somebody pointing at the tab says to keep the page, as a web note in the space.
- *  Every other kind of tab writes itself and has nothing to keep. See
- *  `keepAsWebNote` in workspace.svelte.ts. */
-function keepWebEntry(tab: Tab): MenuEntry[] {
-  if (tab.kind !== 'web' || tab.path !== null) return []
+/** Only for a tab with no file - a new note, plane or page note, or a web tab nobody
+ *  has kept - which is where somebody pointing at the tab says where it goes. Every
+ *  tab with a file writes itself and has nothing to save. See save-place/ask.ts. */
+function saveEntry(tab: Tab): MenuEntry[] {
+  if (!isUnsaved(tab.note)) return []
 
-  return [{ label: t('Keep as web note'), run: () => void workspace.keepAsWebNote(tab) }]
+  return [{ label: t('Save'), hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER]
 }
 
 /** What a pick of tabs offers, all of it about every tab picked: Chrome's rows for a
@@ -382,7 +383,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
 
   return [
     ...agentEntries(tab),
-    ...keepWebEntry(tab),
+    ...saveEntry(tab),
     ...readingEntry(tab),
     ...pageEntries(tab),
     ...shellEntries(tab),

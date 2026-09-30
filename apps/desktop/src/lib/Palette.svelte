@@ -34,6 +34,8 @@
   import { pieces } from './palette/pieces'
   import { MOST, ranked } from './palette/rank'
   import type { OpenTab, Row } from './palette/rows'
+  import UnsavedDot from './UnsavedDot.svelte'
+  import { isDraft } from './workspace/drafts'
   import { settingsOf, settingValue } from './palette/settings'
   import { type Look, lookOf } from './palette/trying'
   import { preferences } from './preferences'
@@ -264,6 +266,12 @@
   /** The tab behind a tab row, for the mark the strip gives it. */
   const tabOf = (row: Extract<Row, { kind: 'tab' }>) =>
     workspace.tabs.find((one) => one.id === row.tab.id)
+
+  /** Whether a tab row is a tab with no file, which wears the strip's dot here too. */
+  const unsavedTab = (row: Extract<Row, { kind: 'tab' }>) => {
+    const tab = tabOf(row)
+    return tab !== undefined && isDraft(tab.note)
+  }
 
   /** Reads a value for its own sake, so the effect around it follows that
    *  value. Nothing wants the value itself. */
@@ -589,6 +597,7 @@
                       >{piece.text}</b
                     >{:else}{piece.text}{/if}{/each}</span
               >
+              {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
               {#if where}<span class="where">{where}</span>{/if}
               {#if row.kind === 'setting' && row.setting.field?.kind === 'switch'}
                 <span class="flip" aria-hidden="true"

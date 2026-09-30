@@ -417,6 +417,8 @@ describe('the badge in front of a name', () => {
       'lib/PublishSheet.svelte',
       'lib/ShareSheet.svelte',
       'lib/SpaceSwitcher.svelte',
+      // Save's places, which are the Move sheet's; see save-place/places.ts.
+      'lib/save-place/SavePlace.svelte',
     ])
   })
 })

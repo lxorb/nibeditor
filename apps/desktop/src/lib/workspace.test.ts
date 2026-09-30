@@ -45,6 +45,10 @@ const holding: { write: Promise<void> | null; read: Promise<void> | null; readPa
   readPath: '',
 }
 
+/** This device's Recently deleted, as the crate keeps it: what a closed tab with no
+ *  file left there. */
+const trash: { id: string; path: string; content: string }[] = []
+
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   invoke: async (command: string, args?: Record<string, unknown>) => {
@@ -60,6 +64,17 @@ vi.mock('./tauri', async (importOriginal) => ({
       throw new Error(`${pathOf(args)} is outside the notes folder`)
     }
     if (command === 'write_note' && holding.write) await holding.write
+    if (command === 'trash_words') {
+      const id = `t${String(trash.length + 1)}`
+      trash.push({ id, path: pathOf(args), content: String(args?.content) })
+      return { id }
+    }
+    if (command === 'list_trash') return trash.map((one) => ({ id: one.id }))
+    if (command === 'purge_trash') {
+      const at = trash.findIndex((one) => one.id === args?.id)
+      if (at >= 0) trash.splice(at, 1)
+      return undefined
+    }
     if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
       await holding.read
     }
@@ -115,6 +130,8 @@ const { pages } = await import('./web-tab/pages.svelte')
 const { links } = await import('./link-index.svelte')
 const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
+const { Tab } = await import('./workspace/documents.svelte')
+const { isDraft } = await import('./workspace/drafts')
 const { STARTS_RIGHT } = await import('./workspace/panels')
 type Entry = import('./workspace.svelte').Entry
 
@@ -2084,57 +2101,62 @@ describe('a new tab', () => {
     expect(written()).toEqual([])
   })
 
-  test('a note becomes a file in the space on its first character', async () => {
+  /** A tab and nothing else, however much is in it, until somebody gives it a place:
+   *  the words are the session's, the way VS Code's hot exit keeps an untitled editor. */
+  test('a note stays a tab with no file however much is written, and asks nothing', async () => {
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('no blank tab')
 
-    tab.note.live.replace('W')
+    tab.note.live.replace('# Weekly review\n\nwords')
+    await vi.advanceTimersByTimeAsync(2500)
     await workspace.writesSettled()
 
-    expect(tab.path).toBe('/space/W.md')
-    expect(written().map((one) => [one.path, one.content])).toEqual([['/space/W.md', 'W']])
+    expect(tab.path).toBeNull()
+    expect(written()).toEqual([])
     expect(sheet.asked).toEqual([])
+    const drafts = panesOf(workspace.layout().frame).flatMap((one) => one.tabs)
+    expect(drafts[0]?.doc).toBe('# Weekly review\n\nwords')
   })
 
-  /** Named after its first line as that line is typed, so it is not left called after
-   *  its first letter; and every link to it follows, as with any rename. */
-  test('and follows its first line, off the undo stack', async () => {
+  test('saved, is a file where it is put, under the name given, in the same tab', async () => {
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('no blank tab')
-
-    tab.note.live.replace('W')
-    await workspace.writesSettled()
-    const undoable = workspace.undone.last
     tab.note.live.replace('# Weekly review\n\nwords')
-    await workspace.writesSettled()
+
+    const saved = await workspace.save(tab, '/space', 'Review.md')
+
+    expect(saved).toBe('/space/Review.md')
+    expect(workspace.active).toBe(tab)
+    expect(tab.path).toBe('/space/Review.md')
+    expect(written().map((one) => [one.path, one.content])).toEqual([
+      ['/space/Review.md', '# Weekly review\n\nwords'],
+    ])
+  })
+
+  /** Where a new note has always gone, and under its first line, when nobody says. */
+  test('saved with nothing said, goes to the root of the space it was opened in', async () => {
+    workspace.spaces = [
+      { id: 's', name: 'Notes', root: '/space' },
+      { id: 't', name: 'Other', root: '/other' },
+    ]
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace('# Weekly review')
+    workspace.activeSpaceId = 't'
+
+    await workspace.save(tab)
 
     expect(tab.path).toBe('/space/Weekly review.md')
-    expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
-    expect(written().at(-1)?.path).toBe('/space/Weekly review.md')
-    expect(workspace.undone.last).toBe(undoable)
-  })
-
-  test('and stops following once somebody renames it', async () => {
-    workspace.openBlank()
-    const tab = workspace.active
-    if (!tab) throw new Error('no blank tab')
-    tab.note.live.replace('W')
-    await workspace.writesSettled()
-
-    await workspace.rename('/space/W.md', 'Mine.md')
-    tab.note.live.replace('# Something else')
-    await workspace.writesSettled()
-
-    expect(tab.path).toBe('/space/Mine.md')
-    expect(written().at(-1)?.path).toBe('/space/Mine.md')
   })
 
   /** An import and a file uploaded into the browser arrive with words and a name,
    *  and are files from the start. */
   test('that arrives with words is a file at once, under the name it came with', async () => {
     workspace.openBlank('Report', '# Quarterly\n\nwords')
+    await vi.advanceTimersByTimeAsync(0)
     await workspace.writesSettled()
 
     expect(workspace.active?.path).toBe('/space/Report.md')
@@ -2155,21 +2177,20 @@ describe('a new tab', () => {
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('no blank tab')
-
     tab.note.live.replace('W')
-    await workspace.writesSettled()
+
+    await workspace.save(tab)
 
     expect(tab.path).toBe('/space/W 2.md')
     workspace.tree = null
   })
 
-  test('a plane becomes a file on its first stroke, as Untitled', async () => {
+  test('a plane saved is written as it stands, as Untitled', async () => {
     await workspace.newCanvas()
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
 
-    tab.note.replace('{ "nodes": [1] }')
-    await workspace.writesSettled()
+    await workspace.save(tab)
 
     expect(tab.path).toBe('/space/Untitled.canvas')
     expect(written().map((one) => one.path)).toEqual(['/space/Untitled.canvas'])
@@ -2186,25 +2207,48 @@ describe('a new tab', () => {
     expect(sheet.asked).toEqual([])
     expect(workspace.tabs).toEqual([])
     expect(written()).toEqual([])
+    expect(workspace.closed.any).toBe(false)
   })
 
-  /** Begun and emptied again: an empty `Untitled` left behind by every note somebody
-   *  changed their mind about is the litter this way of making notes avoids. */
-  test('a note begun and emptied again goes with its tab', async () => {
+  /** A browser closes a tab without a question; the words are kept twice over. */
+  test('closed with words asks nothing, and keeps them for Ctrl+Shift+T and Recently deleted', async () => {
+    trash.length = 0
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('no blank tab')
-    tab.note.live.replace('W')
-    await workspace.writesSettled()
+    tab.note.live.replace('# Plan\n\nwords')
 
-    tab.note.live.replace('')
     workspace.close(tab.id)
-    await workspace.writesSettled()
+    await vi.waitFor(() => expect(workspace.closed.stack.at(-1)?.trashed).toBe('t1'))
 
-    expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
-      '/space/W.md',
-    ])
-    expect(workspace.closed.any).toBe(false)
+    expect(sheet.asked).toEqual([])
+    expect(written()).toEqual([])
+    expect(trash).toEqual([{ id: 't1', path: '/space/Plan.md', content: '# Plan\n\nwords' }])
+
+    await workspace.reopenClosed()
+
+    const back = workspace.tabs.at(-1)
+    expect(back?.doc).toBe('# Plan\n\nwords')
+    expect(back?.path).toBeNull()
+    // Back in the tab, and so no longer in Recently deleted as well.
+    expect(trash).toEqual([])
+  })
+
+  /** Put back as a note from Recently deleted, it is a note in the space now, and the
+   *  closed tab is not a second copy of it to reopen. */
+  test('restored from Recently deleted, is not reopened as well', async () => {
+    trash.length = 0
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace('# Plan')
+    workspace.close(tab.id)
+    await vi.waitFor(() => expect(workspace.closed.stack.at(-1)?.trashed).toBe('t1'))
+
+    trash.length = 0
+    await workspace.reopenClosed()
+
+    expect(workspace.tabs).toEqual([])
   })
 
   /** A web tab closes like a browser tab: no question, whatever the page is. */
@@ -2219,9 +2263,9 @@ describe('a new tab', () => {
     expect(workspace.tabs).toEqual([])
   })
 
-  /** Keeping is somebody's gesture, never Ctrl+S: the shortcut holds the address the
-   *  tab is on and is named after the page. See web-tab/shortcut.ts. */
-  test('a website is kept as a shortcut holding the address it is on', async () => {
+  /** The shortcut holds the address the tab is on and is named after the page. See
+   *  web-tab/shortcut.ts. */
+  test('a website is saved as a shortcut holding the address it is on', async () => {
     workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
@@ -2231,13 +2275,25 @@ describe('a new tab', () => {
     await workspace.writeNow()
     expect(written()).toEqual([])
 
-    await workspace.keepAsWebNote(tab)
+    await workspace.save(tab)
 
     const wrote = written()
     expect(wrote.map((one) => one.path)).toEqual(['/space/Example the page.url'])
     expect(wrote[0]!.content).toContain('URL=https://example.com/a')
     // The same tab, in place: what changed is which file the document is of.
     expect(tab.path).toBe('/space/Example the page.url')
+  })
+
+  test('and under the name and in the place given', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.address = 'https://example.com/a'
+
+    await workspace.save(tab, '/space/Reading', 'Later.url')
+
+    expect(tab.path).toBe('/space/Reading/Later.url')
+    expect(written()[0]!.content).toContain('Title=Later')
   })
 
   /** One file is one document, and keeping a website is a document being given a
@@ -2258,7 +2314,7 @@ describe('a new tab', () => {
     pages.of(first.id).title = 'Example'
     pages.of(second.id).title = 'Example'
 
-    await Promise.all([workspace.keepAsWebNote(first), workspace.keepAsWebNote(second)])
+    await Promise.all([workspace.save(first), workspace.save(second)])
 
     expect(first.path).toBe('/space/Example.url')
     expect(second.path).toBe('/space/Example 2.url')
@@ -2266,13 +2322,13 @@ describe('a new tab', () => {
     expect(written().map((one) => one.path)).toEqual(['/space/Example.url', '/space/Example 2.url'])
   })
 
-  test('a website kept twice from one tab is one file', async () => {
+  test('a website saved twice from one tab is one file', async () => {
     workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('nothing opened')
     pages.of(tab.id).title = 'Example'
 
-    await Promise.all([workspace.keepAsWebNote(tab), workspace.keepAsWebNote(tab)])
+    await Promise.all([workspace.save(tab), workspace.save(tab)])
 
     expect(written().map((one) => one.path)).toEqual(['/space/Example.url'])
   })
@@ -3058,17 +3114,19 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('Report')
   })
 
-  test('is still its words once the draft is a file, and the file name once named', async () => {
+  test('is its file name once the draft is saved, and the new one once renamed', async () => {
     workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
     workspace.activeSpaceId = 's'
     workspace.openBlank()
     const tab = workspace.active
     if (!tab) throw new Error('the draft did not open')
     tab.note.live.replace('# A draft: first\n')
-    await workspace.writesSettled()
+    expect(tab.shown).toBe('A draft: first')
+
+    await workspace.save(tab)
 
     expect(tab.path).toBe('/space/A draft first.md')
-    expect(tab.shown).toBe('A draft: first')
+    expect(tab.shown).toBe('A draft first')
 
     await workspace.rename('/space/A draft first.md', 'Kept.md')
     expect(tab.shown).toBe('Kept')
@@ -3669,14 +3727,14 @@ describe('a website the app writes', () => {
     delete notes['/space/Docs.url']
   })
 
-  test('and is linked once a tab nobody had kept is kept', async () => {
+  test('and is linked once a tab nobody had kept is saved', async () => {
     workspace.openWebsite()
     const tab = workspace.active
     if (!tab) throw new Error('no tab')
     tab.address = 'https://svelte.dev/'
     pages.of(tab.id).title = 'Docs'
 
-    await workspace.keepAsWebNote(tab)
+    await workspace.save(tab)
 
     expect(links.fileNamed('Docs.url')).toBe('Docs.url')
     expect(linkedFrom('/space/Docs.url')).toEqual(['One.md', 'One.md'])
@@ -4055,5 +4113,214 @@ describe('a tab asked for with a modifier', () => {
     expect(strip()).toEqual(['/space/b.md', '/space/a.md'])
     expect(workspace.active?.id).toBe(looking.id)
     expect(looking.path).toBe('/space/b.md')
+  })
+})
+
+/** Whose web data a page is built in, which is the space the tab belongs to: the one
+ *  holding its file, and for a tab with no file the one it was opened in. Emil,
+ *  2026-09-30: *"unsaved web tabs should use the current store of the current space.
+ *  And a note should always use the data saving option from the space that it is
+ *  from."* */
+describe('the space a tab belongs to', () => {
+  const WORK = { id: 'w', name: 'Work', root: '/work' }
+  const HOME = { id: 'h', name: 'Home', root: '/space' }
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [HOME, WORK]
+    workspace.activeSpaceId = 'w'
+  })
+
+  afterEach(() => {
+    delete notes['/work/Mail.url']
+  })
+
+  test('is the space a web tab was opened in, kept when another is opened', () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+
+    workspace.activeSpaceId = 'h'
+
+    expect(workspace.spaceOf(tab.note)).toBe('w')
+  })
+
+  test('and comes back with it after a restart', async () => {
+    workspace.openWebsite()
+    const layout = workspace.layout()
+    expect(panesOf(layout.frame)[0]?.tabs[0]?.space).toBe('w')
+
+    workspace.activeSpaceId = 'h'
+    onePane()
+    await workspace.applyLayout(layout)
+
+    const tab = workspace.tabs[0]
+    if (!tab) throw new Error('nothing came back')
+    expect(workspace.spaceOf(tab.note)).toBe('w')
+  })
+
+  test('is, for a web note, the space holding its file, whichever is on screen', async () => {
+    notes['/work/Mail.url'] = '[InternetShortcut]\r\nURL=https://mail.example.com/\r\n'
+    workspace.activeSpaceId = 'h'
+
+    await workspace.openWeb('/work/Mail.url')
+
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    expect(workspace.spaceOf(tab.note)).toBe('w')
+  })
+
+  /** A link followed out of a work page stays signed in as work. */
+  test('is, for a page opened out of a tab, that tab’s space', () => {
+    workspace.openWebsite()
+    const from = workspace.active
+    if (!from) throw new Error('nothing opened')
+    workspace.activeSpaceId = 'h'
+
+    const opened = workspace.openPage('https://example.com/', 'front', from.id)
+
+    const tab = workspace.tabs.find((one) => one.id === opened)
+    if (!tab) throw new Error('the page did not open')
+    expect(workspace.spaceOf(tab.note)).toBe('w')
+  })
+
+  test('is, for a new note, where it is saved to', async () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.note.live.replace('# Plan')
+    workspace.activeSpaceId = 'h'
+
+    await workspace.save(tab)
+
+    expect(tab.path).toBe('/work/Plan.md')
+  })
+})
+
+/** Emil, 2026-09-30: *"it should NEVER be possible that we have the same web note open
+ *  multiple times within one nib session."* One check in the strip itself, so every
+ *  door is held to it; see `secondWebTabs` in workspace/open.ts. */
+describe('a web note', () => {
+  const SITE = '/space/Site.url'
+
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/start\r\n'
+  })
+
+  afterEach(() => {
+    delete notes['/space/Site.url']
+  })
+
+  /** Every tab over the web note's file, which is never more than one. */
+  const onSite = () => workspace.tabs.filter((one) => one.path === SITE)
+
+  async function openSite() {
+    await workspace.openWeb(SITE)
+    const tab = workspace.active
+    if (tab?.path !== SITE) throw new Error('the site did not open')
+    // Where the reading got to, which the page says and the session remembers.
+    pages.of(tab.id).url = 'https://example.com/deep'
+    tab.address = 'https://example.com/deep'
+    return tab
+  }
+
+  test('opened again shows the tab it is in, wherever that is', async () => {
+    const tab = await openSite()
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    await workspace.openWeb(SITE)
+    await workspace.openEntry(SITE, { beside: true })
+    await workspace.openAside(SITE)
+
+    expect(onSite()).toEqual([tab])
+    expect(workspace.active).toBe(tab)
+  })
+
+  test('duplicated is an unsaved web tab at the page it is on, with no dot', async () => {
+    const tab = await openSite()
+
+    ops.duplicateTab(tab.id)
+
+    expect(onSite()).toEqual([tab])
+    const copy = workspace.tabs.find((one) => one !== tab)
+    expect(copy?.kind).toBe('web')
+    expect(copy?.path).toBeNull()
+    expect(copy?.address).toBe('https://example.com/deep')
+    expect(copy && isDraft(copy.note)).toBe(false)
+    expect(copy && workspace.spaceOf(copy.note)).toBe('s')
+  })
+
+  test('split is the same: a web tab of its own beside it', async () => {
+    const tab = await openSite()
+
+    workspace.split('row', tab.id)
+
+    expect(onSite()).toEqual([tab])
+    expect(workspace.tabs).toHaveLength(2)
+    expect(workspace.tabs.find((one) => one !== tab)?.address).toBe('https://example.com/deep')
+  })
+
+  test('is one tab however a second is put in the strip', async () => {
+    const tab = await openSite()
+
+    workspace.tabs = [...workspace.tabs, new Tab(tab.note, tab.paneId)]
+
+    expect(onSite()).toEqual([tab])
+    expect(workspace.tabs).toHaveLength(2)
+  })
+
+  test('two tabs of it in a session from before come back as one and a copy', async () => {
+    const tab = await openSite()
+    workspace.split('row', tab.id)
+    const layout = workspace.layout()
+    // As a build before this one wrote it: both tabs on the file.
+    for (const pane of panesOf(layout.frame)) {
+      for (const draft of pane.tabs) {
+        draft.path = SITE
+        draft.share = tab.note.key
+      }
+    }
+
+    onePane()
+    await workspace.applyLayout(layout)
+
+    expect(onSite()).toHaveLength(1)
+    expect(workspace.tabs).toHaveLength(2)
+  })
+
+  /** Markdown notes are out of it: a note may still be shown twice. */
+  test('a note may still be in two panes', async () => {
+    await workspace.open('/space/a.md')
+    workspace.split('row')
+
+    expect(workspace.tabs.filter((one) => one.path === '/space/a.md')).toHaveLength(2)
+  })
+})
+
+/** A note with no file is its space's though it is on no disk, so a search of the
+ *  space finds it where its words are; see search/unsaved.ts. */
+describe('a search of the space', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+  })
+
+  test('finds the words of a note with no file, by its tab', async () => {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('nothing opened')
+    tab.note.live.replace('# Plan\n\nbuy milk')
+    const { unsavedHits } = await import('./search/unsaved')
+    const { parseQuery } = await import('./search/query')
+
+    expect(unsavedHits(parseQuery('milk'), 's', 10)).toEqual([
+      expect.objectContaining({ tab: tab.id, line: 2, text: 'buy milk' }),
+    ])
+    expect(unsavedHits(parseQuery('milk'), 'another', 10)).toEqual([])
   })
 })

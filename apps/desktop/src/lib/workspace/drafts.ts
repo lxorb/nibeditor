@@ -1,85 +1,76 @@
-/** A tab with no file, and the file it becomes.
+/** A tab with no file, and the file it becomes once somebody gives it a place.
  *
- *  A new tab is a tab and nothing else, so one closed untouched leaves no `Untitled`
- *  behind; its first words make it a file in the space, asked nothing. Emil,
- *  2026-09-30: *"I don't want there to be any manual saving anymore."*
- *
- *  What the file is called is what its tab is called: its first heading or line
- *  (note-name.ts). And the name follows that line while the note is the draft it was
- *  born as, as in Apple Notes and iA Writer, until somebody names it; see `follows`
- *  in documents.svelte.ts. Pure: when and where are saving.svelte.ts's. */
+ *  A new tab is a tab and nothing else - no file, no row in the list - however much is
+ *  written in it, until it is saved: Ctrl+S or its dot, which ask where and under what
+ *  name, or the tab dropped on a row of the file list. Its words are in the session
+ *  meanwhile, the way VS Code's hot exit keeps an untitled editor, and closing it asks
+ *  nothing. Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an
+ *  unsaved state (with no saving location) and there should be a dot behind it
+ *  (indicating that). For web tabs there should not be the dot behind them if they're
+ *  unsaved."* Pure: when and where are the workspace's and saving.svelte.ts's. */
 
-import { endingOf, nameFromContent, TITLE_CHARS } from '../note-name'
+import { endingOf, nameFromContent, nameFromTitle, shownName, TITLE_CHARS } from '../note-name'
 import { isMarkdownPath } from '../space-paths'
 import { holdsWords, type NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
 
-/** The kinds of document a draft can be, and the ending each is written under. */
-type Bearable = 'note' | 'canvas' | 'pages'
+type Placeable = 'note' | 'canvas' | 'pages' | 'web'
 
-const EXTENSION: Record<Bearable, string> = {
+const EXTENSION: Record<Placeable, string> = {
   note: '.md',
   canvas: '.canvas',
   pages: '.pages',
+  web: '.url',
 }
 
-const bearable = (kind: TabKind): kind is Bearable => kind in EXTENSION
+const placeable = (kind: TabKind): kind is Placeable => kind in EXTENSION
 
-/** Whether a document is a draft: words of its own and no file for them. A file
- *  somebody shared on its own is not one: its room keeps it. */
+/** Whether a document is a draft: words of its own and no file for them, which is
+ *  what wears the dot. A file somebody shared on its own is not one: its room keeps
+ *  it. */
 export function isDraft(note: NoteDoc): boolean {
   return note.path === null && note.shared === null && holdsWords(note.kind)
 }
 
-/** Whether a draft has something in it worth a file. A note once it holds a
- *  character that is not white space; a plane or a deck on its first change, since
- *  every change to one is a stroke, a card or a page somebody made. */
+/** Whether a document is waiting for a place: a draft, or a web tab nobody has kept,
+ *  which wears no dot - a browser tab has nothing unwritten in it - but is saved the
+ *  same way. */
+export function isUnsaved(note: NoteDoc): boolean {
+  return isDraft(note) || (note.kind === 'web' && note.path === null && note.shared === null)
+}
+
+/** Whether a draft has anything in it worth keeping: a note once it holds a character
+ *  that is not white space, a plane or a deck once anything was drawn on it. */
 export function hasWords(note: NoteDoc): boolean {
-  return note.kind !== 'note' || !note.blank
+  return note.kind === 'note' ? !note.blank : note.dirty
 }
 
 /** The file a name comes to, under its kind's own ending, read the app's own way so
  *  `Plan.canvas` does not become `Plan.canvas.canvas`. */
 export function fileNamed(name: string, kind: TabKind): string {
-  if (!bearable(kind)) return name
+  if (!placeable(kind)) return name
 
   const already =
     kind === 'note' ? isMarkdownPath(name) : endingOf(name)?.toLowerCase() === EXTENSION[kind]
   return already ? name : `${name}${EXTENSION[kind]}`
 }
 
-/** What the top of a note would name a file: its first heading, else its first
- *  line, else Untitled. A fixed slice of the rope, never the whole, because this is
- *  asked again whenever a note that follows its words is written. */
-function nameFromWords(note: NoteDoc): string {
-  return nameFromContent(note.live.text.sliceString(0, TITLE_CHARS)) ?? UNTITLED
-}
-
-/** Whether a draft is named after its words, rather than after a name it came with:
- *  an import and a file uploaded in the browser arrive called what they were called.
- *  Only a note: a plane and a deck have no words at the top to read a name off. */
+/** Whether a draft is named after its words rather than after a name it came with, as
+ *  an import does. Only a note: a plane and a deck have no words to read a name off. */
 export function namedByWords(note: NoteDoc): boolean {
   return note.kind === 'note' && note.name === UNTITLED
 }
 
-/** The file a draft is first written as, before any number steps it aside from a
- *  name that is taken. */
-export function draftFile(note: NoteDoc): string {
-  const stem = namedByWords(note) ? nameFromWords(note) : note.name
-  return fileNamed(stem, note.kind)
+/** The name saving offers, without an ending: a note's first heading or line (a
+ *  fixed slice of the rope, never the whole), the name a document came with, or a web
+ *  tab's page title. */
+export function offeredName(note: NoteDoc, title?: string): string {
+  if (note.kind === 'web') return nameFromTitle(title?.trim() ? title : note.name) ?? UNTITLED
+  if (!namedByWords(note)) return shownName(note.name)
+
+  return nameFromContent(note.live.text.sliceString(0, TITLE_CHARS)) ?? UNTITLED
 }
 
-/** The name the file of a note that follows its words should have now, or null
- *  where it already has it. `free` steps a name aside from whatever else the folder
- *  holds, the note's own file left out: `Plan 2.md` beside somebody's `Plan.md` is
- *  already the name `Plan` asks for, and without leaving itself out it would step
- *  on to `Plan 3.md`.
- *
- *  A name that differs only in case is the name it has: Windows and a Mac call those
- *  one file and refuse the rename, which would otherwise be tried again at every
- *  pause for as long as the note was open. */
-export function followedName(note: NoteDoc, free: (file: string) => string): string | null {
-  if (!note.follows || note.path === null) return null
-
-  const wanted = free(fileNamed(nameFromWords(note), 'note'))
-  return wanted.toLowerCase() === note.name.toLowerCase() ? null : wanted
+/** The file a draft is written as where nobody typed a name. */
+export function draftFile(note: NoteDoc): string {
+  return fileNamed(offeredName(note), note.kind)
 }

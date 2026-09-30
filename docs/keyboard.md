@@ -238,7 +238,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | `>`, `#`, `:` in the palette | never needed, for a hand that knows them: `>` narrows to the commands, the ones run lately first; `#` lists the headings of the note in front; `:42` goes to its line 42 - VS Code's `>`, `@` and `:` |
 | Ctrl+Shift+P | the same palette narrowed to the commands, for the hand that learned VS Code: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to everything. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | the palette, a third key after Shift Shift and Ctrl+P: Obsidian's quick switcher, and what a hand reaching to open something finds, since nib opens nothing from outside its spaces. It was Open file, which is gone |
-| Ctrl+S | nothing to save: every note writes itself a moment after it changes. The key is harmless out of habit - it writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
+| Ctrl+S | put it on the disk, which means one thing for each kind of tab. A note with a file writes itself a moment after it changes, so the key writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A tab with no file yet - a new note, plane or page note, or a web tab nobody has kept - is asked where it goes and under what name, in the small layer under its tab; see `save-place/ask.ts`. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
 | Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
 
@@ -316,7 +316,7 @@ stops nothing, and the app still gets the key.
 | Ctrl+Shift+PgUp, Ctrl+Shift+PgDn | move the tab one slot, stopping at either end |
 | Ctrl+D | **put the tab down**: nothing in front of the pane, every tab still open |
 | Ctrl+W | close (already there) |
-| Ctrl+Shift+T | reopen the last closed one (already there) |
+| Ctrl+Shift+T | reopen the last closed one (already there), a new tab with no file with its words |
 | Ctrl+Alt+Right, Ctrl+Alt+Down | split (already there) |
 | Ctrl+Alt+O | the other pane (already there) |
 | Ctrl+Alt+Shift+Right | carry the tab to the other pane, or into a new one beside its own when there is none: split right, taking the tab along rather than a copy. VS Code has it on Ctrl+Alt+Right, which is Split right here |
