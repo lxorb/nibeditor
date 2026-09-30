@@ -3526,8 +3526,9 @@ class Workspace {
     await this.fileOps.tell({ op: 'removed', path, kind, root: this.rootHolding(path) })
   }
 
-  async fileCame(path: string, kind: 'file' | 'folder') {
-    await this.fileOps.tell({ op: 'created', path, kind, root: this.rootHolding(path) })
+  async fileCame(path: string, kind: 'file' | 'folder', key?: string) {
+    const root = this.rootHolding(path)
+    await this.fileOps.tell({ op: 'created', path, kind, root, ...(key ? { key } : {}) })
   }
 
   private rootHolding(path: string): string | null {

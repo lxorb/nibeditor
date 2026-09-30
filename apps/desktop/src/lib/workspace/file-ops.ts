@@ -22,9 +22,17 @@ export type Kind = 'file' | 'folder' | 'space'
 
 /** One file operation. `root` is the space the path was in, which an agent's move
  *  in a space the reader is not looking at shows is not always the open one; null
- *  for a path in no space. A space moving is itself: its old root and its new. */
+ *  for a path in no space. A space moving is itself: its old root and its new. A file
+ *  made for a document that was already open without one - a new tab given its place
+ *  - names that document by its `key` (see documents.svelte.ts). */
 export type FileOp =
-  | { op: 'created'; path: string; kind: Exclude<Kind, 'space'>; root: string | null }
+  | {
+      op: 'created'
+      path: string
+      kind: Exclude<Kind, 'space'>
+      root: string | null
+      key?: string
+    }
   | { op: 'moved'; from: string; to: string; kind: Kind; root: string | null }
   | { op: 'removed'; path: string; kind: Kind; root: string | null }
 
