@@ -584,10 +584,12 @@ macro_rules! verbs {
         }
 
         /// Every verb the crate answers, by name, in the table's order.
+        #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
         pub const NAMES: &[&str] = &[$($name),*];
 
         /// What each verb answers, by name, for the schemas. The type named is the
         /// `result` of an `ok`.
+        #[allow(dead_code, reason = "the list the MCP server's schemas and the tests read")]
         pub const ANSWERS: &[(&str, &str)] = &[$(($name, stringify!($answer))),*];
 
         impl Verb {
@@ -766,7 +768,7 @@ pub enum Answer {
         untrusted: Option<String>,
         /// A dialog the page is holding.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        dialog: Option<Dialog>,
+        dialog: Option<Box<Dialog>>,
     },
     /// Not done, and asked: `approval_status` says what the reader answered.
     NeedsApproval {
@@ -783,7 +785,7 @@ pub enum Answer {
         message: String,
         /// A dialog the page is holding.
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        dialog: Option<Dialog>,
+        dialog: Option<Box<Dialog>>,
     },
 }
 
@@ -793,15 +795,6 @@ impl Answer {
         Answer::Ok {
             result: serde_json::to_value(result).unwrap_or(Value::Null),
             untrusted: None,
-            dialog: None,
-        }
-    }
-
-    /// Done, with words from the page at `source`.
-    pub fn from_page(result: impl Serialize, source: &str) -> Self {
-        Answer::Ok {
-            result: serde_json::to_value(result).unwrap_or(Value::Null),
-            untrusted: Some(source.to_string()),
             dialog: None,
         }
     }
@@ -819,7 +812,9 @@ impl Answer {
     #[must_use]
     pub fn with_dialog(mut self, held: Option<Dialog>) -> Self {
         match &mut self {
-            Answer::Ok { dialog, .. } | Answer::Error { dialog, .. } => *dialog = held,
+            Answer::Ok { dialog, .. } | Answer::Error { dialog, .. } => {
+                *dialog = held.map(Box::new);
+            }
             Answer::NeedsApproval { .. } => {}
         }
         self
@@ -885,6 +880,9 @@ pub struct TabList {
 pub struct Opened {
     /// The new tab.
     pub tab: TabId,
+    /// The store it is in: the agent's own when the site is kept to it (6.3), whatever
+    /// was asked.
+    pub store: Store,
 }
 
 /// What a verb that acts answers.

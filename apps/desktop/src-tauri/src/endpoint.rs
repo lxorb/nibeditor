@@ -313,9 +313,9 @@ fn answer(
     // what only the engine can answer is answered where the engine is, and an agent's
     // browsing never waits on the window's thread (docs/agent-native.md 4).
     let args = asked.get("args").cloned().unwrap_or_default();
-    if let Some(read) = crate::agents::verbs::Verb::read(&verb, args) {
+    if let Some(read) = crate::agents::verbs::Verb::read(&verb, args.clone()) {
         let answered = match read {
-            Ok(one) => crate::agents::answer(app, &caller, one),
+            Ok(one) => crate::agents::answer(app, &caller, one, args),
             Err(why) => {
                 crate::agents::verbs::Answer::error(crate::agents::verbs::Code::BadArguments, why)
             }
@@ -337,11 +337,28 @@ fn answer(
     if let Err(why) = crate::agents::may_ask_the_window(&caller, &verb) {
         return say(&mut stream, 403, &refused(&why));
     }
+    let agent = matches!(caller, crate::agents::Caller::Agent(_));
     if let (Some(told), Some(body)) = (caller.told(), asked.as_object_mut()) {
         body.insert("agent".to_owned(), told);
     }
 
-    match ask_the_window(app, &mut asked) {
+    let started = std::time::Instant::now();
+    let outcome = ask_the_window(app, &mut asked);
+    // An agent's every call is in its log, the window's verbs as well as the crate's.
+    if agent {
+        let answered = match &outcome {
+            Ok(text) if text.contains("\"ok\":true") => {
+                crate::agents::verbs::Answer::ok(serde_json::Value::Null)
+            }
+            Ok(_) | Err(_) => crate::agents::verbs::Answer::error(
+                crate::agents::verbs::Code::Failed,
+                String::new(),
+            ),
+        };
+        let tab = args.get("tab").and_then(serde_json::Value::as_str);
+        crate::agents::logged(app, &caller, &verb, tab, args.clone(), &answered, started);
+    }
+    match outcome {
         Ok(answered) => say(&mut stream, 200, &answered),
         Err(reason) => say(&mut stream, 503, &refused(&reason)),
     }
@@ -350,9 +367,9 @@ fn answer(
 /// The crate asking the window one of its verbs on an agent's behalf, through the same
 /// road the command line takes, and waiting at most `patience` for the answer: the
 /// window's own `{ok, value}` or `{ok, error}`, read. See agents/verbs.rs `window`.
-#[allow(
-    dead_code,
-    reason = "the agents' first questions of the window land with their verbs"
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2's agent verbs ask the window")
 )]
 pub(crate) fn ask(
     app: &AppHandle,

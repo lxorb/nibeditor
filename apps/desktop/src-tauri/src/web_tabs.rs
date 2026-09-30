@@ -51,7 +51,80 @@ const LABEL: &str = "web-";
 /// the session open - rather than the app's.
 #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 pub(crate) fn is_page(label: &str) -> bool {
-    label.starts_with(LABEL)
+    label.starts_with(LABEL) || adopted_label(label)
+}
+
+/// Pages a tab took over rather than built, by the tab's id: an agent's page the reader
+/// was shown (docs/agent-native.md 6.7), which becomes a tab of the reader's without
+/// loading again. Every other tab's page is `web-<tab>`.
+static ADOPTED: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
+
+/// The label of a tab's page: the page it took over, or its own.
+pub(crate) fn label_of(tab: &str) -> String {
+    ADOPTED
+        .lock()
+        .ok()
+        .and_then(|held| held.as_ref()?.get(tab).cloned())
+        .unwrap_or_else(|| format!("{LABEL}{tab}"))
+}
+
+/// Whether a label is a page some tab took over.
+fn adopted_label(label: &str) -> bool {
+    ADOPTED.lock().is_ok_and(|held| {
+        held.as_ref()
+            .is_some_and(|all| all.values().any(|one| one == label))
+    })
+}
+
+/// Makes an existing page the page of a reader's tab, and gives it what a reader's tab
+/// has: the browser's keys, the page-first keys, full screen, finding, downloads and the
+/// permission bubble. The window places it as it places any tab's page, with `web_place`,
+/// and `web_open` finds it there rather than building another.
+pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Option<String>) {
+    if let Ok(mut held) = ADOPTED.lock() {
+        held.get_or_insert_with(HashMap::new)
+            .insert(tab.to_string(), label.to_string());
+    }
+    listening(app, tab, store);
+}
+
+/// A window an adopted page asked for, handed to the window as a tab beside it: the
+/// page's own handler for that belonged to the agent. Nothing for a page no tab took.
+pub(crate) fn opened_from_adopted(app: &AppHandle, label: &str, url: &str) {
+    let tab = ADOPTED.lock().ok().and_then(|held| {
+        held.as_ref()?
+            .iter()
+            .find(|(_, one)| *one == label)
+            .map(|(tab, _)| tab.clone())
+    });
+    let (Some(tab), Ok(parsed)) = (tab, url.parse::<Url>()) else {
+        return;
+    };
+    let Some(address) = handed_over(&parsed) else {
+        return;
+    };
+    let holder = app.get_webview(label).map_or_else(
+        || MAIN.to_string(),
+        |view| view.window().label().to_string(),
+    );
+    let _ = app.emit_to(
+        &holder,
+        OPENED,
+        Opening {
+            tab,
+            url: address,
+            behind: false,
+        },
+    );
+}
+
+/// Forgets that a tab took a page over, once the page is gone.
+fn unadopt(tab: &str) {
+    if let Ok(mut held) = ADOPTED.lock() {
+        if let Some(all) = held.as_mut() {
+            all.remove(tab);
+        }
+    }
 }
 
 /// The window's own page, which shares its label with the window it is in.
@@ -670,7 +743,7 @@ fn guard() -> String {
 }
 
 /// The reader script, told whether it is after a selection.
-fn reader(selection: bool) -> String {
+pub(crate) fn reader(selection: bool) -> String {
     READER
         .replace("__SELECTION__", if selection { "true" } else { "false" })
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
@@ -880,7 +953,7 @@ mod session {
 /// environment to hand round - that runtime is one browser process by construction - and
 /// `tauri::Wry` is not even a type there. See src/engine.rs.
 #[cfg(all(windows, not(feature = "cef")))]
-fn on_shared_session(
+pub(crate) fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
     window: &tauri::Window,
     app: &AppHandle,
@@ -892,6 +965,13 @@ fn on_shared_session(
         Some(env) => builder.with_environment(env),
         None => builder,
     }
+}
+
+/// Keeps the environment a page of an agent's was built on as its store's, the way a
+/// tab's page is kept in `listening`, so the store's next page shares its session.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
+    session::keep(store, platform.environment());
 }
 
 /// The webview for one tab, built and attached to the window that asked.
@@ -931,13 +1011,17 @@ pub async fn web_open(
     // one its space keeps apart. Checked before anything is built, because it is about
     // to become a folder name. See web_stores.rs.
     let store = crate::web_stores::named(store.as_deref())?.map(str::to_string);
-    let label = format!("{LABEL}{tab}");
+    let label = label_of(&tab);
     let app = webview.app_handle().clone();
 
     if app.get_webview(&label).is_some() {
         // A page closed while it was still fetching a file is kept, out of sight, until
         // the file is in; a tab opened again in the meantime has its page already.
         if crate::downloads::revive(&app, &tab) {
+            return Ok(());
+        }
+        // An agent's page the reader was shown is already this tab's page, loaded.
+        if adopted_label(&label) {
             return Ok(());
         }
         return Err("that tab already has a page".into());
@@ -1149,7 +1233,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
 
-    let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) else {
+    let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
 
@@ -1312,7 +1396,7 @@ fn origin_written(protocol: &str, host: &str, port: isize) -> String {
 /// that is still the old page's until the new one arrives, and an empty one is "no
 /// news" to the window - so a load stopped before it answered leaves the bar as it was.
 fn started(app: &AppHandle, tab: &str) {
-    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
+    if let Some(view) = app.get_webview(&label_of(tab)) {
         say(app, &view, tab, "", None, true);
     }
 }
@@ -1597,7 +1681,8 @@ pub async fn web_close(
     tab: String,
     keep: bool,
 ) -> Result<(), String> {
-    let label = format!("{LABEL}{tab}");
+    let label = label_of(&tab);
+    unadopt(&tab);
     let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
     let closing = app.clone();
     let named = tab.clone();
@@ -1694,7 +1779,7 @@ pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
 /// Closes the page in a tab, for a page that was kept until its downloads were in; see
 /// `web_close`.
 pub(crate) fn close_page(app: &AppHandle, tab: &str) {
-    if let Some(view) = app.get_webview(&format!("{LABEL}{tab}")) {
+    if let Some(view) = app.get_webview(&label_of(tab)) {
         let _ = view.close();
     }
 }
@@ -1703,7 +1788,7 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
 /// unloaded to give the memory back is the ordinary case rather than a failure, and
 /// the window opens it again instead of reporting anything.
 pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
-    app.get_webview(&format!("{LABEL}{tab}"))
+    app.get_webview(&label_of(tab))
         .ok_or_else(|| "that tab has no page open".to_string())
 }
 

@@ -261,11 +261,6 @@ impl Grant {
             .get(site)
             .is_some_and(|categories| categories.contains(&category))
     }
-
-    /// The rule for a site, if the grant has one.
-    pub fn site(&self, site: &str) -> Option<SiteRule> {
-        self.sites.get(site).copied()
-    }
 }
 
 /// A grant as the file keeps it: with its token's hash, which never leaves the crate.
@@ -407,6 +402,22 @@ impl Grants {
     }
 }
 
+/// A grant as it was last read, without reading the file: for the engine's own events,
+/// which have no app to find the file with and come only after a grant was read. `None`
+/// for an id no grant has, or before any grant was read.
+pub fn cached(id: &str) -> Option<Grant> {
+    super::AGENTS
+        .get()?
+        .grants
+        .0
+        .lock()
+        .ok()?
+        .as_ref()?
+        .iter()
+        .find(|one| one.grant.id == id)
+        .map(|one| one.grant.clone())
+}
+
 /// Where the grants are kept.
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join("agents.json"))
@@ -498,20 +509,31 @@ fn same(one: &str, other: &str) -> bool {
 
 /// The agents, for Settings > Agents.
 #[tauri::command(async)]
-pub fn agents_read(app: AppHandle) -> Result<Vec<Grant>, String> {
+pub fn agents_read(webview: tauri::Webview, app: AppHandle) -> Result<Vec<Grant>, String> {
+    super::from_the_app(&webview)?;
     super::state(&app).grants.all(&app)
 }
 
 /// The agents as Settings > Agents changed them: see `Grants::replace`.
 #[tauri::command(async)]
-pub fn agents_write(app: AppHandle, grants: Vec<Grant>) -> Result<Vec<Grant>, String> {
+pub fn agents_write(
+    webview: tauri::Webview,
+    app: AppHandle,
+    grants: Vec<Grant>,
+) -> Result<Vec<Grant>, String> {
+    super::from_the_app(&webview)?;
     super::state(&app).grants.replace(&app, grants)
 }
 
 /// A grant made by hand for a client somewhere else, or a script (9.1): its token is
 /// answered this once, for the reader to paste into that client.
 #[tauri::command(async)]
-pub fn agents_mint(app: AppHandle, name: String) -> Result<Minted, String> {
+pub fn agents_mint(
+    webview: tauri::Webview,
+    app: AppHandle,
+    name: String,
+) -> Result<Minted, String> {
+    super::from_the_app(&webview)?;
     let name = name.trim();
     if name.is_empty() {
         return Err("an agent needs a name".into());

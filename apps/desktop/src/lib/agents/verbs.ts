@@ -247,6 +247,41 @@ export interface Approval {
 /** Why an agent is paused. */
 export type PausedBy = 'reader' | 'takeover' | 'stop'
 
+/** `browser_open`'s answer: the store is the agent's own when the site is kept to it,
+ *  whatever was asked. */
+export interface Opened {
+  tab: string
+  store: Store
+}
+
+// ---- the window's commands ------------------------------------------------------------
+
+/** The commands the window calls the crate with: the settings pane (`agents_read`,
+ *  `agents_write`, `agents_mint`) and the activity panel (the rest). Each answers only
+ *  nib's own window. */
+export const AGENT_COMMANDS = [
+  'agents_read',
+  'agents_write',
+  'agents_mint',
+  'agents_stop',
+  'agents_resume',
+  'agents_answer',
+  'agents_ask',
+  'agents_state',
+  'agents_log',
+  'agents_adopt',
+] as const
+
+/** `agents_state`: everything the activity panel draws from at once; the events keep it
+ *  current after. `tabs` and `paused` are `[agent, tab]` pairs. */
+export interface Overview {
+  agents: Grant[]
+  tabs: [string, AgentTab][]
+  approvals: Approval[]
+  stopped: boolean
+  paused: [string, string][]
+}
+
 // ---- events ---------------------------------------------------------------------------
 
 /** The crate's news, on `AGENT_EVENT`. */

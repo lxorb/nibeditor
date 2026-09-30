@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import {
+  AGENT_COMMANDS,
   AGENT_EVENT,
   AGENT_WINDOW_VERBS,
   type AgentEvent,
@@ -19,6 +20,8 @@ import {
   type Dialog,
   type Grant,
   type Minted,
+  type Opened,
+  type Overview,
   type PausedBy,
   type ReaderTab,
   type SiteRule,
@@ -61,6 +64,17 @@ describe('the mirror of the crate agent verbs', () => {
 
   it('hears on the event the crate emits on', () => {
     expect(crate('verbs.rs')).toContain(`pub const EVENT: &str = "${AGENT_EVENT}";`)
+  })
+
+  it('names the commands the crate registers for the window', () => {
+    const registered = readFileSync(
+      fileURLToPath(new URL('../../../src-tauri/src/lib.rs', import.meta.url)),
+      'utf8',
+    )
+    const named = [...registered.matchAll(/agents::(?:grants::)?(agents_[a-z_]+),/g)].map(
+      (one) => one[1],
+    )
+    expect(named).toEqual([...AGENT_COMMANDS])
   })
 
   it('names the window verbs the crate asks as the crate does', () => {
@@ -142,6 +156,15 @@ describe('the mirror of the crate agent verbs', () => {
       answer,
     }
     const by: PausedBy = 'stop'
+    const opened: Opened = { tab: 'a1', store }
+    const overview: Overview = {
+      agents: [],
+      tabs: [['claude-code', own]],
+      approvals: [approval],
+      stopped: false,
+      paused: [['claude-code', opened.tab]],
+    }
+    expect(overview.tabs[0]?.[1].id).toBe('a1')
     const events: AgentEvent[] = [
       { kind: 'asked', approval },
       { kind: 'paused', agent: 'claude-code', by },
