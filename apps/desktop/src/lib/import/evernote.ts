@@ -145,12 +145,17 @@ function withoutEvernote(
 ): { html: string; encrypted: number } {
   let encrypted = 0
 
-  // A checkbox line is a task list item, which is what it was drawn as.
-  let html = enml.replace(
-    /<div[^>]*>\s*<en-todo([^>]*)\/?>\s*([\s\S]*?)<\/div>/gi,
-    (_whole, said: string, rest: string) =>
-      `<ul><li><input type="checkbox"${/checked="?true/i.test(said) ? ' checked' : ''}>${rest}</li></ul>`,
-  )
+  // A checkbox line is a task list item, which is what it was drawn as. Evernote
+  // draws a checklist as one such line under another, so lines that follow each
+  // other are one list: a list apiece came out a blank line apart, a checklist
+  // spaced like paragraphs.
+  let html = enml
+    .replace(
+      /<div[^>]*>\s*<en-todo([^>]*)\/?>\s*([\s\S]*?)<\/div>/gi,
+      (_whole, said: string, rest: string) =>
+        `<ul data-todo><li><input type="checkbox"${/checked="?true/i.test(said) ? ' checked' : ''}>${rest}</li></ul>`,
+    )
+    .replace(/<\/ul>\s*<ul data-todo>/gi, '')
 
   // One outside a div still says what it was.
   html = html.replace(/<en-todo([^>]*)\/?>/gi, (_whole, said: string) =>

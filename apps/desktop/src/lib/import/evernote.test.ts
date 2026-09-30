@@ -96,6 +96,22 @@ describe('an Evernote export', () => {
     expect(text).toContain('- [ ] Socks')
   })
 
+  // Evernote draws a checklist as one checkbox per line, each in a div of its own.
+  // Read as a list per line, the lines came out a blank line apart - one loose list,
+  // spaced like paragraphs - where the note had been a checklist.
+  test('checkboxes one under another are one checklist', async () => {
+    const list = `  <note>
+    <title>Packing</title>
+    <content><![CDATA[<en-note><div><en-todo checked="true"/>Passport</div>
+<div><en-todo/>Socks</div><div><en-todo/>Charger</div><div>After the list.</div></en-note>]]></content>
+  </note>`
+
+    const text = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Packing.md')
+
+    expect(text).toContain('- [x] Passport\n- [ ] Socks\n- [ ] Charger\n')
+    expect(text).toContain('After the list.')
+  })
+
   test('encrypted text is marked and counted rather than quietly dropped', async () => {
     const secret = `  <note>
     <title>Secret</title>
