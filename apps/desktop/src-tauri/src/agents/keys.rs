@@ -66,6 +66,13 @@ impl Key {
     pub fn submits(&self) -> bool {
         self.name == "Enter" && self.modifiers & (CONTROL | ALT | META) == 0
     }
+
+    /// Whether this press is what sends from a message box: Enter, or Control+Enter
+    /// where Enter is a new line (a mail's body, a comment). Shift+Enter is the new line
+    /// in a chat, and sends nothing.
+    pub fn sends(&self) -> bool {
+        self.name == "Enter" && self.modifiers & (ALT | SHIFT) == 0
+    }
 }
 
 /// A chord read: `Control+Shift+A` is A with two modifiers. `None` for a name that is not
@@ -241,5 +248,16 @@ mod tests {
         assert!(chord("Alt+ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("ArrowDown").expect("key").opens_a_picker());
         assert!(!chord("Control+Enter").expect("key").submits());
+    }
+
+    #[test]
+    fn enter_and_control_enter_send_and_shift_enter_is_a_new_line() {
+        assert!(chord("Enter").expect("key").sends());
+        assert!(chord("Control+Enter").expect("key").sends());
+        assert!(chord("Meta+Enter").expect("key").sends());
+        assert!(!chord("Shift+Enter").expect("key").sends());
+        assert!(chord("Shift+Enter").expect("key").submits());
+        assert!(!chord("Alt+Enter").expect("key").sends());
+        assert!(!chord("a").expect("key").sends());
     }
 }

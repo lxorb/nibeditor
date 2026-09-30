@@ -16,10 +16,12 @@
 //! **What is never done**: a `<select>`, a date field or a colour field is never pressed
 //! or keyed open, because its list is a window of the engine's own (6.5); they are set
 //! through the page. A password field is never typed into, never read and never
-//! photographed while focused (9.4).
+//! photographed while focused, and no secret field's value - a password's, a code's, a
+//! card's - is read back in any shape, not even as the bullets that count it: a picture
+//! has each filled one painted over (9.4).
 
-use std::collections::HashSet;
-use std::sync::{Arc, Mutex, PoisonError};
+use std::collections::{HashMap, HashSet};
+use std::sync::{Arc, LazyLock, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use base64::Engine as _;
@@ -28,7 +30,7 @@ use tauri::Webview;
 
 use super::cdp::{self, Heard};
 use super::keys::{self, Key};
-use super::policy::Facts;
+use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
 use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Until};
 
@@ -50,16 +52,11 @@ const LIT: Duration = Duration::from_millis(300);
 /// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
 
-/// What a page's element says about itself and its form, for the policy and for what
-/// may be done to it. Run with the element as `this`.
-const FACTS: &str = r"function () {
-  let el = this.nodeType === 1 ? this : this.parentElement
-  if (!el) return {}
-  // A part of a field the engine draws itself (a date's picker button) is that field.
-  const root = el.getRootNode && el.getRootNode()
-  if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
-  const tag = el.tagName.toLowerCase()
-  const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
+/// How the page's scripts read a field, as the policy's `Field` has it: shared by `FACTS`
+/// and the secret scan, so the two never read one field two ways. Reports what the page
+/// says - type, `autocomplete`, words, whether its style masks it, whether a message box
+/// @-mentions somebody - and leaves every judgement to `policy`.
+const FIELDS: &str = r"
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
   const labelOf = (field) => {
     const parts = [field.getAttribute('aria-label')]
@@ -71,19 +68,97 @@ const FACTS: &str = r"function () {
     }
     return text(parts.filter(Boolean).join(' '))
   }
+  const describe = (one) => {
+    const tag = one.tagName.toLowerCase()
+    const role = String(one.getAttribute('role') || '').toLowerCase()
+    const box = tag === 'textarea' || (!!one.isContentEditable && tag !== 'input')
+    let type = tag === 'input' ? String(one.type || 'text').toLowerCase() : tag === 'textarea' ? 'textarea' : box ? 'editable' : tag
+    if (role === 'searchbox' || (box && role === 'combobox')) type = 'search'
+    const label = labelOf(one) || text(one.getAttribute('placeholder'))
+    let masked = false
+    try {
+      const style = one.ownerDocument.defaultView.getComputedStyle(one)
+      masked = type !== 'password' && String(style.webkitTextSecurity || 'none') !== 'none'
+    } catch (_) {}
+    const words = box ? String(tag === 'textarea' ? one.value : one.innerText || '').slice(0, 5000) : ''
+    return {
+      type,
+      autocomplete: String(one.getAttribute('autocomplete') || '').toLowerCase(),
+      said: text([one.name, one.id, one.getAttribute('placeholder'), labelOf(one)].filter(Boolean).join(' ')).slice(0, 200),
+      label: label.slice(0, 200),
+      masked,
+      mentions: /(^|\s)@[\p{L}\p{N}_.-]{2,}/u.test(words),
+    }
+  }
+";
+
+/// What a page's element says about itself and its form, for the policy and for what
+/// may be done to it. Run with the element as `this`.
+const FACTS_BODY: &str = r"
+  let el = this.nodeType === 1 ? this : this.parentElement
+  if (!el) return {}
+  // A part of a field the engine draws itself (a date's picker button) is that field.
+  const root = el.getRootNode && el.getRootNode()
+  if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
+  const tag = el.tagName.toLowerCase()
+  const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
   const pressed = el.closest('button, a, [role=button], [role=link], [role=menuitem], input[type=submit], input[type=button], input[type=image], summary') || el
   const name = text(labelOf(pressed) || pressed.innerText || (pressed.tagName === 'INPUT' ? pressed.value : '') || pressed.getAttribute('title') || pressed.getAttribute('alt')).slice(0, 200)
   const form = el.form || el.closest('form')
   const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
   const editable = !!(el.isContentEditable || tag === 'textarea' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
+  // The form's fields, or the page's when it is in none: a webmail's Send and a chat
+  // widget's are in no form, and their message box is an editable region.
   const fields = []
-  for (const one of (form || el.ownerDocument).querySelectorAll('input, select, textarea')) {
-    if (fields.length >= 80) break
-    fields.push({ type: String(one.type || one.tagName).toLowerCase(), autocomplete: String(one.getAttribute('autocomplete') || '').toLowerCase(), said: text([one.name, one.id, one.getAttribute('placeholder'), labelOf(one)].filter(Boolean).join(' ')).slice(0, 200) })
+  for (const one of (form || el.ownerDocument).querySelectorAll('input, select, textarea, [contenteditable]:not([contenteditable=false])')) {
+    if (fields.length >= 200) break
+    fields.push(describe(one))
   }
-  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, editable, in_form: !!form, fields }
-}";
+  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, editable, in_form: !!form, fields, field: describe(el) }
+";
+
+/// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs.
+static FACTS: LazyLock<String> =
+    LazyLock::new(|| ["function () {", FIELDS, FACTS_BODY, "}"].concat());
+
+/// Every field words can be typed into, over the page and its frames of the same origin:
+/// the array the secret scan reads, one element at a time.
+const TYPED_INTO: &str = r"(() => {
+  const all = []
+  const walk = (doc) => {
+    for (const one of doc.querySelectorAll('input, textarea')) all.push(one)
+    for (const frame of doc.querySelectorAll('iframe, frame')) { try { if (frame.contentDocument) walk(frame.contentDocument) } catch (_) {} }
+  }
+  walk(document)
+  return all
+})()";
+
+/// What the secret scan's handles are held under, and let go of together.
+const SECRETS: &str = "nib-agent-secrets";
+
+/// Each of `TYPED_INTO`'s fields described, in its order, and whether it holds anything.
+static DESCRIBED: LazyLock<String> = LazyLock::new(|| {
+    [
+        "function () {",
+        FIELDS,
+        "return this.map((one) => Object.assign(describe(one), { filled: String(one.value || '') !== '' })) }",
+    ]
+    .concat()
+});
+
+/// The grey a filled secret field is painted in a picture of the page.
+const PAINTED: [u8; 3] = [128, 128, 128];
+
+/// A secret field on the page: which node, and whether anything is in it.
+struct Secret {
+    /// Its part's prefix, as its ref starts.
+    prefix: String,
+    /// Its node.
+    backend: u64,
+    /// Whether it holds a value.
+    filled: bool,
+}
 
 /// The element that has the keyboard, into frames of the same origin.
 const ACTIVE: &str = r"(() => {
@@ -121,13 +196,17 @@ const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
 const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: document.body ? document.body.innerText : '' }))()";
 
 /// The whole page's HTML with its links made absolute and its scripts left out, for
-/// `browser_read` as markdown.
+/// `browser_read` as markdown. No field's value goes with it: a password field is
+/// dropped and every other field's `value` too, so a page that writes a secret into the
+/// markup (a prefilled password, a card number) has nothing read back whatever the
+/// converter makes of a field. `innerText`, the text shape, never holds a field's value.
 const WHOLE: &str = r"(() => {
   const copy = document.body ? document.body.cloneNode(true) : document.createElement('body')
   for (const one of copy.querySelectorAll('script, style, noscript, template, svg, canvas, iframe')) one.remove()
   for (const one of copy.querySelectorAll('[href]')) { try { one.setAttribute('href', one.href) } catch (_) { one.removeAttribute('href') } }
   for (const one of copy.querySelectorAll('[src]')) { try { one.setAttribute('src', one.src) } catch (_) { one.removeAttribute('src') } }
   for (const one of copy.querySelectorAll('input[type=password]')) one.remove()
+  for (const one of copy.querySelectorAll('input[value]')) one.removeAttribute('value')
   return { url: location.href, title: document.title, html: copy.innerHTML.slice(0, 4000000), text: document.body ? document.body.innerText : '' }
 })()";
 
@@ -143,7 +222,7 @@ const SETTLED: &str = r"(still, most) => new Promise((done) => {
   setTimeout(end, most)
 })";
 
-/// A page's trees, and the password fields among their nodes.
+/// A page's trees, and the secret fields among their nodes.
 pub type Tree = (Vec<Part>, HashSet<(String, u64)>);
 
 /// A page an agent is acting on.
@@ -285,7 +364,7 @@ impl Page<'_> {
 
     /// What an element says about itself and its form.
     pub fn facts(&self, element: &Element) -> Result<Facts, Answer> {
-        let said = self.run_on(element, FACTS, &[])?;
+        let said = self.run_on(element, &FACTS, &[])?;
         Ok(serde_json::from_value(said).unwrap_or_default())
     }
 
@@ -300,7 +379,7 @@ impl Page<'_> {
         };
         let said = self.call(
             "Runtime.callFunctionOn",
-            &json!({ "objectId": object, "functionDeclaration": FACTS, "returnByValue": true }),
+            &json!({ "objectId": object, "functionDeclaration": FACTS.as_str(), "returnByValue": true }),
         )?;
         Ok(said
             .pointer("/result/value")
@@ -1005,32 +1084,8 @@ impl Page<'_> {
                     "DOM.scrollIntoViewIfNeeded",
                     &json!({ "backendNodeId": element.backend }),
                 );
-                let model = self.call_on(
-                    element,
-                    "DOM.getBoxModel",
-                    &json!({ "backendNodeId": element.backend }),
-                )?;
-                let border: Vec<f64> = model
-                    .pointer("/model/border")
-                    .and_then(Value::as_array)
-                    .map(|all| all.iter().filter_map(Value::as_f64).collect())
-                    .unwrap_or_default();
-                if border.len() != 8 {
-                    return Err(Answer::error(
-                        Code::Failed,
-                        "the element is not on the page",
-                    ));
-                }
-                let (offset_x, offset_y) = self.frame_offset(element)?;
-                let (left, top) = (
-                    border[0].min(border[6]) + offset_x,
-                    border[1].min(border[3]) + offset_y,
-                );
-                let (right, bottom) = (
-                    border[2].max(border[4]) + offset_x,
-                    border[5].max(border[7]) + offset_y,
-                );
-                (left + x, top + y, right - left, bottom - top)
+                let [left, top, right, bottom] = self.page_rect(element)?;
+                (left, top, right - left, bottom - top)
             }
             (None, true) => {
                 let metrics = self.call("Page.getLayoutMetrics", &json!({}))?;
@@ -1067,7 +1122,95 @@ impl Page<'_> {
             .unwrap_or_default()
             .to_string();
         let (width, height) = png_size(&png).unwrap_or_default();
+        let png = self.painted_over(png, clip, (width, height))?;
         Ok(Picture { png, width, height })
+    }
+
+    /// Where an element is on the page, in CSS pixels from the page's top left: its
+    /// left, top, right and bottom, through the frame it is in.
+    fn page_rect(&self, element: &Element) -> Result<[f64; 4], Answer> {
+        let model = self.call_on(
+            element,
+            "DOM.getBoxModel",
+            &json!({ "backendNodeId": element.backend }),
+        )?;
+        let border: Vec<f64> = model
+            .pointer("/model/border")
+            .and_then(Value::as_array)
+            .map(|all| all.iter().filter_map(Value::as_f64).collect())
+            .unwrap_or_default();
+        if border.len() != 8 {
+            return Err(Answer::error(
+                Code::Failed,
+                "the element is not on the page",
+            ));
+        }
+        let (offset_x, offset_y) = self.frame_offset(element)?;
+        let (_, _, x, y) = self.viewport()?;
+        let xs = [border[0], border[2], border[4], border[6]];
+        let ys = [border[1], border[3], border[5], border[7]];
+        let (left, right) = (
+            xs.iter().copied().fold(f64::INFINITY, f64::min),
+            xs.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+        );
+        let (top, bottom) = (
+            ys.iter().copied().fold(f64::INFINITY, f64::min),
+            ys.iter().copied().fold(f64::NEG_INFINITY, f64::max),
+        );
+        let (dx, dy) = (offset_x + x, offset_y + y);
+        Ok([left + dx, top + dy, right + dx, bottom + dy])
+    }
+
+    /// A picture of the page with every filled secret field in it painted over (9.4): a
+    /// password's bullets say how long it is, and a card's number is its digits. A field
+    /// that is not drawn is not in the picture; one that cannot be painted over keeps the
+    /// picture from being handed out at all.
+    fn painted_over(
+        &self,
+        png: String,
+        clip: (f64, f64, f64, f64),
+        size: (u32, u32),
+    ) -> Result<String, Answer> {
+        let mut prefixes = vec![String::new()];
+        prefixes.extend(
+            self.heard()
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .frames()
+                .into_iter()
+                .map(|(number, _)| format!("f{number}")),
+        );
+        let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
+        let rects: Vec<[f64; 4]> = self
+            .secrets(prefixes)
+            .into_iter()
+            .filter(|one| one.filled)
+            .filter_map(|one| {
+                let element = self
+                    .element(&format!("{}e{}", one.prefix, one.backend))
+                    .ok()?;
+                self.page_rect(&element).ok()
+            })
+            .map(|[left, top, right, bottom]| {
+                [
+                    (left - clip.0) * across,
+                    (top - clip.1) * down,
+                    (right - clip.0) * across,
+                    (bottom - clip.1) * down,
+                ]
+            })
+            .collect();
+        if rects.is_empty() {
+            return Ok(png);
+        }
+        paint_over(&png, &rects).map_err(|why| {
+            Answer::error(
+                Code::Failed,
+                format!(
+                    "a secret field could not be hidden in the picture, so there is none: {why}"
+                ),
+            )
+        })
     }
 
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
@@ -1123,7 +1266,7 @@ impl Page<'_> {
                 owner,
             });
         }
-        let secret = self.password_fields(&parts);
+        let secret = self.secret_fields(&parts);
         Ok((parts, secret))
     }
 
@@ -1142,11 +1285,21 @@ impl Page<'_> {
         Some((part, backend))
     }
 
-    /// Every password field on the page, by part prefix and node, so their values are
-    /// never written whatever the tree says.
-    fn password_fields(&self, parts: &[Part]) -> HashSet<(String, u64)> {
-        let mut found = HashSet::new();
+    /// Every secret field in the parts of the page, by part prefix and node, so that
+    /// nothing of theirs is written whatever the tree says.
+    fn secret_fields(&self, parts: &[Part]) -> HashSet<(String, u64)> {
         let prefixes: HashSet<String> = parts.iter().map(|part| part.prefix.clone()).collect();
+        self.secrets(prefixes)
+            .into_iter()
+            .map(|one| (one.prefix, one.backend))
+            .collect()
+    }
+
+    /// Every secret field (`policy::secret`: a password, a one-time code, a card) in the
+    /// page's parts with these prefixes. The page describes each field it has; the policy
+    /// judges; only the secret ones are resolved to nodes.
+    fn secrets(&self, prefixes: impl IntoIterator<Item = String>) -> Vec<Secret> {
+        let mut found = Vec::new();
         for prefix in prefixes {
             let session = if prefix.is_empty() {
                 None
@@ -1163,14 +1316,15 @@ impl Page<'_> {
                     })
                     .map(|frame| frame.session)
             };
-            let list = cdp::call_in(
-                self.view,
-                session.as_deref(),
+            let call = |method: &str, params: &Value| {
+                cdp::call_in(self.view, session.as_deref(), method, params, cdp::PATIENCE)
+            };
+            let Some(list) = call(
                 "Runtime.evaluate",
-                &json!({ "expression": "(() => { const all = []; const walk = (doc) => { for (const one of doc.querySelectorAll('input[type=password]')) all.push(one); for (const frame of doc.querySelectorAll('iframe, frame')) { try { if (frame.contentDocument) walk(frame.contentDocument) } catch (_) {} } }; walk(document); return all })()" }),
-                cdp::PATIENCE,
-            );
-            let Some(object) = list.ok().and_then(|value| {
+                &json!({ "expression": TYPED_INTO, "objectGroup": SECRETS }),
+            )
+            .ok()
+            .and_then(|value| {
                 value
                     .pointer("/result/objectId")
                     .and_then(Value::as_str)
@@ -1178,39 +1332,61 @@ impl Page<'_> {
             }) else {
                 continue;
             };
-            let Ok(properties) = cdp::call_in(
-                self.view,
-                session.as_deref(),
-                "Runtime.getProperties",
-                &json!({ "objectId": object, "ownProperties": true }),
-                cdp::PATIENCE,
-            ) else {
-                continue;
-            };
-            for one in properties
-                .get("result")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-            {
-                let Some(field) = one.pointer("/value/objectId").and_then(Value::as_str) else {
-                    continue;
-                };
-                if let Ok(described) = cdp::call_in(
-                    self.view,
-                    session.as_deref(),
-                    "DOM.describeNode",
-                    &json!({ "objectId": field }),
-                    cdp::PATIENCE,
-                ) {
-                    if let Some(backend) = described
-                        .pointer("/node/backendNodeId")
-                        .and_then(Value::as_u64)
+            let secret: HashMap<String, bool> = call(
+                "Runtime.callFunctionOn",
+                &json!({ "objectId": list, "functionDeclaration": DESCRIBED.as_str(), "returnByValue": true }),
+            )
+            .ok()
+            .and_then(|value| value.pointer("/result/value")?.as_array().cloned())
+            .unwrap_or_default()
+            .into_iter()
+            .enumerate()
+            .filter(|(_, said)| {
+                serde_json::from_value::<Field>(said.clone()).is_ok_and(|field| policy::secret(&field))
+            })
+            .map(|(at, said)| {
+                let filled = said.get("filled").and_then(Value::as_bool) != Some(false);
+                (at.to_string(), filled)
+            })
+            .collect();
+            if !secret.is_empty() {
+                let properties = call(
+                    "Runtime.getProperties",
+                    &json!({ "objectId": list, "ownProperties": true }),
+                )
+                .unwrap_or_default();
+                for one in properties
+                    .get("result")
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                {
+                    let Some(&filled) = one
+                        .get("name")
+                        .and_then(Value::as_str)
+                        .and_then(|at| secret.get(at))
+                    else {
+                        continue;
+                    };
+                    let Some(field) = one.pointer("/value/objectId").and_then(Value::as_str) else {
+                        continue;
+                    };
+                    if let Some(backend) = call("DOM.describeNode", &json!({ "objectId": field }))
+                        .ok()
+                        .and_then(|described| described.pointer("/node/backendNodeId")?.as_u64())
                     {
-                        found.insert((prefix.clone(), backend));
+                        found.push(Secret {
+                            prefix: prefix.clone(),
+                            backend,
+                            filled,
+                        });
                     }
                 }
             }
+            let _ = call(
+                "Runtime.releaseObjectGroup",
+                &json!({ "objectGroup": SECRETS }),
+            );
         }
         found
     }
@@ -1492,8 +1668,8 @@ impl Page<'_> {
 
     /// The elements that match, over every frame.
     pub fn find(&self, wanted: &snapshot::Wanted<'_>) -> Result<Vec<Match>, Answer> {
-        let (parts, _) = self.parts()?;
-        Ok(snapshot::find(&parts, wanted))
+        let (parts, secret) = self.parts()?;
+        Ok(snapshot::find(&parts, &secret, wanted))
     }
 }
 
@@ -1611,6 +1787,65 @@ fn png_size(base64: &str) -> Option<(u32, u32)> {
     Some((width, height))
 }
 
+/// A PNG, base64, with rectangles in its own pixels - left, top, right, bottom - painted
+/// flat grey.
+fn paint_over(png: &str, rects: &[[f64; 4]]) -> Result<String, String> {
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(png)
+        .map_err(|why| why.to_string())?;
+    let mut decoder = png::Decoder::new(std::io::Cursor::new(bytes));
+    decoder.set_transformations(png::Transformations::EXPAND);
+    let mut reader = decoder.read_info().map_err(|why| why.to_string())?;
+    let mut pixels = vec![
+        0;
+        reader
+            .output_buffer_size()
+            .ok_or("the picture is too big")?
+    ];
+    let info = reader
+        .next_frame(&mut pixels)
+        .map_err(|why| why.to_string())?;
+    let channels = match (info.color_type, info.bit_depth) {
+        (png::ColorType::Rgba, png::BitDepth::Eight) => 4,
+        (png::ColorType::Rgb, png::BitDepth::Eight) => 3,
+        other => return Err(format!("a picture of {other:?}")),
+    };
+    for &[left, top, right, bottom] in rects {
+        let (x0, x1) = (pixel(left, info.width), pixel(right.ceil(), info.width));
+        let (y0, y1) = (pixel(top, info.height), pixel(bottom.ceil(), info.height));
+        for row in y0..y1 {
+            for column in x0..x1 {
+                let at = row * info.line_size + column * channels;
+                pixels[at..at + 3].copy_from_slice(&PAINTED);
+                if channels == 4 {
+                    pixels[at + 3] = u8::MAX;
+                }
+            }
+        }
+    }
+    let mut out = Vec::new();
+    let mut encoder = png::Encoder::new(&mut out, info.width, info.height);
+    encoder.set_color(info.color_type);
+    encoder.set_depth(info.bit_depth);
+    encoder.set_compression(png::Compression::Fast);
+    let mut writer = encoder.write_header().map_err(|why| why.to_string())?;
+    writer
+        .write_image_data(&pixels[..info.buffer_size()])
+        .map_err(|why| why.to_string())?;
+    writer.finish().map_err(|why| why.to_string())?;
+    Ok(base64::engine::general_purpose::STANDARD.encode(out))
+}
+
+/// A coordinate as a pixel index, held inside a picture `most` pixels across.
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "clamped to the picture first, which is a few thousand pixels at most"
+)]
+fn pixel(value: f64, most: u32) -> usize {
+    value.floor().clamp(0.0, f64::from(most)) as usize
+}
+
 /// Markup's words, for a page the window could not convert.
 fn strip_tags(html: &str) -> String {
     // A script's or a style's insides are not words on the page.
@@ -1660,6 +1895,41 @@ mod tests {
         let one = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
         assert_eq!(png_size(one), Some((1, 1)));
         assert_eq!(png_size("nope"), None);
+    }
+
+    #[test]
+    fn a_secret_is_painted_over_and_nothing_else_moves() {
+        // A 4 by 2 picture, every pixel white, and a field over its middle two columns.
+        let mut raw = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut raw, 4, 2);
+            encoder.set_color(png::ColorType::Rgba);
+            encoder.set_depth(png::BitDepth::Eight);
+            let mut writer = encoder.write_header().expect("a header");
+            writer.write_image_data(&[255; 32]).expect("the pixels");
+            writer.finish().expect("a picture");
+        }
+        let white = base64::engine::general_purpose::STANDARD.encode(raw);
+        let painted = paint_over(&white, &[[1.2, -5.0, 2.5, 9.0]]).expect("painted");
+        assert_eq!(png_size(&painted), Some((4, 2)));
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(painted)
+            .expect("base64");
+        let mut reader = png::Decoder::new(std::io::Cursor::new(bytes))
+            .read_info()
+            .expect("a png");
+        let mut pixels = vec![0; reader.output_buffer_size().expect("a size")];
+        reader.next_frame(&mut pixels).expect("a frame");
+        let grey = [128, 128, 128, 255];
+        let white = [255; 4];
+        for row in 0..2 {
+            let at = |column: usize| &pixels[(row * 4 + column) * 4..(row * 4 + column + 1) * 4];
+            assert_eq!(at(0), white);
+            assert_eq!(at(1), grey);
+            assert_eq!(at(2), grey);
+            assert_eq!(at(3), white);
+        }
+        assert!(paint_over("not a picture", &[]).is_err());
     }
 
     #[test]

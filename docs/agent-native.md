@@ -380,7 +380,9 @@ press raised ends the wait and comes back on the answer.
 on - one element a line, indented, `- checkbox "Gift wrap" [checked] [ref=e47]` - with the
 states DevTools MCP writes (`[focused]`, `[disabled]`, `[expanded]`, `[selected]`,
 `[level=2]`, `[value="..."]`, a link's `[url=/path]`). Containers that say nothing give
-their children to their parent, and a password field's value is never written. Frames in
+their children to their parent. A secret field - a password, a one-time code, a card's
+number or code - is one line that says only whether it holds anything, `[filled]`, with
+nothing under it (9.4). Frames in
 the page's own process are in the page's tree under their frame element; a frame in a
 process of its own (another site, as Chromium isolates them) is reached through the
 session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
@@ -588,7 +590,9 @@ behind the tab in front unless it holds `workspace.focus`.
   not seen, and the agent's next snapshot simply finds the page scrolled. The frame turns
   to the muted ink, and the agent's next call on that tab answers `paused_by_reader`. One
   press on the tab's mark gives it back; nothing gives it back by itself (open question
-  5).
+  5). The harness proves it without a press on the machine it runs on:
+  `agents_test_reader_focus`, which answers only in debug and probe builds, says what the
+  engine's `GotFocus` says, through the same function.
 - **Take over** in the tab's menu does the same on purpose; **Stop** ends the agent's work
   in that tab and tells it so.
 - **`browser_takeover`** is the agent asking: the tab comes forward with the reason as its
@@ -798,10 +802,10 @@ In both modes, unless the reader turned the category off for that agent:
 | category | how it is recognised, without trusting the model |
 | --- | --- |
 | **paying** | a press in a form with a card number, expiry or security code field (`autocomplete="cc-*"`, or a field whose label reads as one), or a press whose accessible name reads as paying (`Pay`, `Buy`, `Place order`, `Checkout`, `Confirm purchase`, in every language nib has a catalogue for), or a request to a known payment processor's host |
-| **sending** | a press named `Send`, `Post`, `Reply`, `Publish`, `Submit` on a site in the mail, messaging or social list |
+| **sending** | from the page, on any site: a press named `Send`, `Post`, `Reply`, `Publish`, `Comment` (every language) beside a message box - a `<textarea>` or an editable region that is no search box - or beside somebody to send to (an address or phone field, a field labelled To, Cc or recipient, an @-mention in the box); `Submit` beside a message box; any submit of a form that holds both; Enter or Control+Enter in a box that calls itself a message, a reply, a comment or a chat. A site on the mail, messaging and social list is one more signal. A search, a sign-in and a newsletter's Subscribe are none of these, and the tests hold them apart |
 | **publishing and sharing** | anything in nib that puts words where somebody else can read them: publishing a space or a note, sharing a space, a room's door, a guest link; the palette's rows for them through `run_command` |
 | **deleting for good** | a press named `Delete`, `Remove`, `Erase` on a site; emptying Recently deleted; `restore_version` over a note |
-| **signing in** | any field of type password, or a sign-in form, which is a takeover (7.3), never typed |
+| **signing in** | any password field - by its type, its `autocomplete`, or masked by the page, so a show-password toggle is no way round - or a sign-in form: a takeover (7.3), never typed and never submitted. A press that submits one, Enter in one, and a press named `Sign in` beside a password field answer `password_field` |
 | **settings** | `write_setting` |
 | **the terminal** | any command not on the agent's list |
 
@@ -820,8 +824,15 @@ press as whatever it was told to; the card field is still a card field.
 ### 9.4 Credentials
 
 The agent never types a password and never reads one: `browser_type` refuses a password
-field, `browser_snapshot` and `browser_read` answer such a field's value as nothing, and a
-screenshot of a page with a focused password field is refused. Signing in is a takeover.
+field, a screenshot of a page with a focused password field is refused, and in every other
+picture each filled secret field is painted over in flat grey. Nor does it
+read any other secret - a one-time code, a card's number, expiry or security code - by
+any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
+under it (the engine's own value for a password is one bullet a character, and its words
+inside the field the same, so either would say how long it is); `browser_find` never looks
+inside one; a name the engine builds out of a field's value has the value taken out; and
+`browser_read` carries no field's value in any shape. Signing in is a takeover, and so is
+submitting a sign-in form.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.
 

@@ -436,6 +436,38 @@ pub fn agents_resume(
     Ok(())
 }
 
+/// What every probe build's identifier starts with (`scripts/probe_app.py`).
+const PROBE_IDENTIFIER: &str = "ch.emilvinu.nib.probe.";
+
+/// Whether a build answers test hooks: a debug build, or a probe's, which is built under
+/// an identifier of its own. The identifier is compiled into the build, so the app that
+/// ships, `ch.emilvinu.nib` from a release build, never answers one.
+fn test_hooks(identifier: &str, debug: bool) -> bool {
+    debug || identifier.starts_with(PROBE_IDENTIFIER)
+}
+
+/// A test hook, in debug and probe builds only: the reader taking the keyboard of one of
+/// their tabs, as the engine's `GotFocus` says it, without a press on this machine. It
+/// lets the harness prove the reader wins (7.3) with nobody's mouse or keyboard moved.
+#[tauri::command]
+pub fn agents_test_reader_focus(
+    webview: tauri::Webview,
+    app: AppHandle,
+    tab: String,
+) -> Result<(), String> {
+    from_the_app(&webview)?;
+    if !test_hooks(&app.config().identifier, cfg!(debug_assertions)) {
+        return Err("test hooks are only in debug and probe builds".into());
+    }
+    #[cfg(all(windows, not(feature = "cef")))]
+    return reader::focus_for_test(&app, &tab);
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    {
+        let _ = (app, tab);
+        Err("the reader's tabs are not available on this engine yet".into())
+    }
+}
+
 /// The reader's answer to a question: Allow or Don't allow, and "Always on this site".
 /// A takeover answered is the reader handing the tab back.
 #[tauri::command(async)]
@@ -604,6 +636,15 @@ mod tests {
 
         // The reader's own command line is not an agent.
         assert!(may_ask_the_window(&Caller::Reader, "files.write").is_ok());
+    }
+
+    #[test]
+    fn test_hooks_answer_in_debug_and_probe_builds_and_never_in_the_one_that_ships() {
+        assert!(test_hooks("ch.emilvinu.nib.probe.nightly", false));
+        assert!(test_hooks("ch.emilvinu.nib", true));
+        assert!(!test_hooks("ch.emilvinu.nib", false));
+        assert!(!test_hooks("ch.emilvinu.nib.probe", false));
+        assert!(!test_hooks("ch.emilvinu.nibprobe.x", false));
     }
 
     #[test]

@@ -345,6 +345,8 @@ fn acted(page: &Page<'_>) -> Answer {
 }
 
 /// Whether a press or a write asks first. `Ok` to go ahead; the answer to give when not.
+/// Signing in is refused outright, for the command line too, the way typing into a
+/// password field is: it is the reader's, through a takeover (9.4).
 fn judged(
     app: &AppHandle,
     caller: &Caller,
@@ -354,6 +356,12 @@ fn judged(
     act: Act,
     key: &str,
 ) -> Result<(), Answer> {
+    if policy::signs_in(facts, act) {
+        return Err(Answer::error(
+            Code::PasswordField,
+            "that signs in: the reader does, ask with browser_takeover",
+        ));
+    }
     let Caller::Agent(grant) = caller else {
         return Ok(());
     };
@@ -573,7 +581,7 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     facts.submit = facts.in_form;
                     let key =
                         approvals::key("browser_type_submit", Some(&tab), Some(&typing.element));
-                    judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                    judged(app, caller, page, place, &facts, Act::Enter, &key)?;
                 }
                 page.type_text(&target, &typing.text, typing.replace)?;
                 if typing.submit {
@@ -588,12 +596,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
             Verb::Press(pressing) => {
                 let key = keys::chord(&pressing.keys)
                     .map_err(|why| Answer::error(Code::BadArguments, why))?;
-                if key.submits() {
+                // Enter and Control+Enter are a message box's send as well as a form's
+                // submit; Shift+Enter only submits a form of single-line fields.
+                if key.sends() || key.submits() {
                     if let Some(mut facts) = page.active_facts()? {
-                        facts.submit = facts.in_form;
+                        facts.submit = facts.in_form && key.submits();
+                        let act = if key.sends() { Act::Enter } else { Act::Press };
                         let asked =
                             approvals::key("browser_press", Some(&tab), Some(&pressing.keys));
-                        judged(app, caller, page, place, &facts, Act::Press, &asked)?;
+                        judged(app, caller, page, place, &facts, act, &asked)?;
                     }
                 }
                 press(page, place, &key)?;

@@ -245,6 +245,7 @@ macro_rules! desktop_commands {
             agents::agents_state,
             agents::agents_log,
             agents::agents_adopt,
+            agents::agents_test_reader_focus,
             mcp::program::mcp_program,
             appearance::set_frame,
             appearance::set_translucency,

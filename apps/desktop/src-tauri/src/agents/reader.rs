@@ -121,7 +121,7 @@ fn follow_focus(app: &AppHandle, tab: &str, view: &Webview) {
         let pausing = app.clone();
         let named = tab.clone();
         let got = FocusChangedEventHandler::create(Box::new(move |_, _| {
-            super::stop::reader_took(&pausing, &named, &agents_on(&named));
+            took_the_keyboard(&pausing, &named);
             Ok(())
         }));
         let mut token = 0i64;
@@ -131,6 +131,26 @@ fn follow_focus(app: &AppHandle, tab: &str, view: &Webview) {
             let _ = platform.controller().add_GotFocus(&got, &raw mut token);
         }
     });
+}
+
+/// The reader took a tab's keyboard: every agent acting there is paused. What the
+/// engine's `GotFocus` says, and all it says.
+fn took_the_keyboard(app: &AppHandle, tab: &str) {
+    super::stop::reader_took(app, tab, &agents_on(tab));
+}
+
+/// The harness's stand-in for the reader's press (7.3): the engine's `GotFocus` on a tab,
+/// said without pressing anything on this machine, where a real press would move the
+/// keyboard of whoever is at it. The same `took_the_keyboard` the engine's handler calls,
+/// on a tab the handler is following. See `agents_test_reader_focus`.
+pub fn focus_for_test(app: &AppHandle, tab: &str) -> Result<(), String> {
+    if agents_on(tab).is_empty() {
+        return Err(format!(
+            "no agent has acted on {tab}: its keyboard is not being followed"
+        ));
+    }
+    took_the_keyboard(app, tab);
+    Ok(())
 }
 
 /// Forgets a reader's tab that closed.

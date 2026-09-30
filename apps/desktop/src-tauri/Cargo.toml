@@ -329,6 +329,10 @@ windows = { version = "0.58", features = [
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_LibraryLoader",
 ] }
+# An agent's picture of a page with every filled secret field painted over, so a
+# password's bullets and a card's digits never reach it; see agents/page.rs. Already
+# in the lock file, at this version, as what the menu and tray icons are read with.
+png = "0.18"
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
 # against, so the handles it hands out line up.

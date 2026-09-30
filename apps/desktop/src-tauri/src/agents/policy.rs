@@ -10,9 +10,25 @@
 //! | category | recognised by |
 //! | --- | --- |
 //! | paying | a press in a form with a card field, a press whose name reads as paying in any of nib's languages, a submit on a page that talks to a payment processor, a page going to one |
-//! | sending | a press named send, post, reply, publish or submit on a mail, messaging or social site |
+//! | sending | see `sends`: a press named send, post, reply, publish or comment beside a message box or an address, or on a mail, messaging or social site; a submit of a form that holds both; Enter in a message box |
 //! | deleting | a press named delete, remove or erase |
-//! | signing in | a password field, or any field of a form with one: never typed, a takeover |
+//! | signing in | a credential field, or any field of a form with one: never typed, never submitted, a takeover |
+//!
+//! **Sending is read off the page, not off a list of sites.** Operator and Claude in
+//! Chrome ask before a send because their model was taught to, which Operator measured at
+//! 92 per cent; the list of mail and social sites this used to be missed every self-hosted
+//! webmail, support form and chat widget. What a send looks like anywhere is a message
+//! box (a `<textarea>` or an editable region that is no search box) and somebody it goes
+//! to (an address or phone field, a field labelled To, Cc or recipient, an @-mention in
+//! the box), and a press that says so. A search box, a sign-in and a newsletter's
+//! Subscribe have neither box nor send word, and pressing into a message box is not
+//! pressing Send; the tests hold those apart in several languages. The list stays as one
+//! more signal.
+//!
+//! **A secret is nobody's but the reader's** (9.4): a password - by its type, by its
+//! `autocomplete`, or masked by the page's style, so a show-password toggle is not a way
+//! round - a one-time code, and a card's number, expiry and security code. One rule,
+//! `secret`, says which, for typing, the log, the snapshot and `browser_find` alike.
 //!
 //! Sites are registrable domains. A rule for `bank.example` covers `www.bank.example`
 //! and `login.bank.example`, which is what the reader means by the bank; the reader's
@@ -138,30 +154,39 @@ pub struct Facts {
     pub in_form: bool,
     /// The form's fields, or the page's when it is in none.
     pub fields: Vec<Field>,
+    /// The element itself, read the way each of `fields` is.
+    pub field: Field,
 }
 
 /// One field of the form the element is in.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
 pub struct Field {
-    /// Its type.
+    /// Its type: an input's own, `textarea`, `select`, `editable` for an editable
+    /// region, and `search` for a box that is a search whatever its tag.
     #[serde(rename = "type")]
     pub kind: String,
     /// Its `autocomplete`.
     pub autocomplete: String,
     /// Its name, id, label and placeholder, joined.
     pub said: String,
+    /// What a person reads as its name: its label, or its placeholder when it has none.
+    pub label: String,
+    /// Whether the page's style hides what is typed in it, the way a password field does.
+    pub masked: bool,
+    /// Whether it is a message box whose words @-mention somebody.
+    pub mentions: bool,
 }
 
 impl Facts {
-    /// Whether it is a password field.
+    /// Whether it is a password field, however the page dresses it.
     pub fn password(&self) -> bool {
-        self.kind == "password"
+        self.kind == "password" || credential(&self.field)
     }
 
     /// Whether it is in a sign-in form: a form with a password field.
     pub fn sign_in(&self) -> bool {
-        self.in_form && self.fields.iter().any(|one| one.kind == "password")
+        self.in_form && self.fields.iter().any(credential)
     }
 
     /// Whether its form asks for a card.
@@ -172,12 +197,12 @@ impl Facts {
     /// Whether it is a field an agent's typing into is kept out of the log.
     pub fn sensitive(&self) -> bool {
         self.password()
-            || self.autocomplete.starts_with("cc-")
-            || self.autocomplete.contains("one-time-code")
-            || card_field(&Field {
+            || secret(&self.field)
+            || secret(&Field {
                 kind: self.kind.clone(),
                 autocomplete: self.autocomplete.clone(),
                 said: self.name.clone(),
+                ..Field::default()
             })
     }
 
@@ -206,6 +231,128 @@ fn card_field(field: &Field) -> bool {
     CARD.iter().any(|one| said.contains(one))
 }
 
+/// Whether a field holds a credential: a password by its type or its `autocomplete`, or
+/// a field the page masks the way it would one. A show-password toggle turns the type to
+/// `text` and leaves the other two.
+fn credential(field: &Field) -> bool {
+    field.kind == "password"
+        || field.masked
+        || field
+            .autocomplete
+            .split_whitespace()
+            .any(|one| matches!(one, "current-password" | "new-password"))
+}
+
+/// Whether a field's value is nobody's but the reader's (9.4): a credential, a one-time
+/// code, or a card's number, expiry or security code. Nothing reads it back to an agent:
+/// not its value, not its length.
+pub fn secret(field: &Field) -> bool {
+    credential(field)
+        || field
+            .autocomplete
+            .split_whitespace()
+            .any(|one| one.starts_with("cc-") || one == "one-time-code")
+        || card_field(field)
+}
+
+/// Whether a field is a box words are written in: a `<textarea>` or an editable region,
+/// and no search box.
+fn body(field: &Field) -> bool {
+    matches!(field.kind.as_str(), "textarea" | "editable")
+}
+
+/// Whether a field says who a message goes to: an address or a phone number by type or
+/// `autocomplete`, a field labelled To, Cc or a recipient, or a message box that
+/// @-mentions somebody.
+fn addressed(field: &Field) -> bool {
+    matches!(field.kind.as_str(), "email" | "tel")
+        || field
+            .autocomplete
+            .split_whitespace()
+            .any(|one| one == "email" || one == "tel" || one.starts_with("tel-"))
+        || alone(&field.label, ADDRESSED_ALONE)
+        || says(&field.said, RECIPIENTS)
+        || (body(field) && field.mentions)
+}
+
+/// Whether a field is a message box: a box whose own words say it is for a message, a
+/// reply, a comment or a chat.
+fn message_box(field: &Field) -> bool {
+    body(field) && says(&field.said, MESSAGES)
+}
+
+/// How a press sends, when it does.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Sends {
+    /// Its own words say so: the reader is asked in them.
+    ByWords,
+    /// What it submits is a message to somebody, whatever the press is called.
+    ByShape,
+}
+
+/// Whether an act sends a message out of the reader's account (9.3), from the page: see
+/// the top of this file. A sign-in is never a send; it is refused before this is asked.
+fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
+    if facts.sign_in() {
+        return None;
+    }
+    let social = social(host);
+    let writing = facts.fields.iter().any(body);
+    let to_somebody = facts.fields.iter().any(addressed);
+    let composed = facts.submit && writing && to_somebody;
+    match act {
+        Act::Write => None,
+        Act::Press => {
+            // A press into a field is somebody starting to write, never the send.
+            let worded = !facts.editable
+                && ((says_sending(&facts.name) && (social || writing || to_somebody))
+                    || (says(&facts.name, SUBMITTING) && (social || writing)));
+            if worded {
+                Some(Sends::ByWords)
+            } else {
+                composed.then_some(Sends::ByShape)
+            }
+        }
+        Act::Enter => (composed || (body(&facts.field) && (social || message_box(&facts.field))))
+            .then_some(Sends::ByShape),
+    }
+}
+
+/// Whether a name reads as sending: a send word, and not one of the phrases that only
+/// contain one.
+fn says_sending(name: &str) -> bool {
+    (says(name, SENDING) || alone(name, SENDING_ALONE)) && !says(name, NOT_SENDING)
+}
+
+/// Whether an act signs in, which is the reader's to do and never an agent's (9.4, 7.3):
+/// a submit of a sign-in form, Enter in one or in a password field, or a press that reads
+/// as signing in beside a password field.
+pub fn signs_in(facts: &Facts, act: Act) -> bool {
+    match act {
+        Act::Write => false,
+        Act::Enter => facts.sign_in() || facts.password(),
+        Act::Press => {
+            (facts.submit && facts.sign_in())
+                || (!facts.editable
+                    && says(&facts.name, SIGNING_IN)
+                    && facts.fields.iter().any(credential))
+        }
+    }
+}
+
+/// Whether a name is, whole, one of the words: for the words too short or too common to
+/// be found inside a longer name (`To`, Thai `ส่ง` inside "delivery").
+fn alone(name: &str, words: &[&str]) -> bool {
+    let name = name
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join(" ")
+        .trim_end_matches([':', '\u{ff1a}'])
+        .trim()
+        .to_lowercase();
+    !name.is_empty() && words.contains(&name.as_str())
+}
+
 /// A press, judged: the category it asks under and the one line the reader reads, or
 /// nothing to ask about.
 pub struct Question {
@@ -218,8 +365,11 @@ pub struct Question {
 /// What an agent is doing to the element the facts are about.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Act {
-    /// Pressing it, or Enter in it.
+    /// Pressing it.
     Press,
+    /// Enter in it, or Control+Enter: its form's submit, and a message box's send. Its
+    /// `submit` says whether the key submits the field's form.
+    Enter,
     /// Typing into it or setting it.
     Write,
 }
@@ -235,13 +385,18 @@ pub fn judge(
 ) -> Option<Question> {
     let host = host_of(url).unwrap_or_default();
     let site = site_of(&host);
-    let label = short(&facts.name);
+    // Enter's element is the field, whose label is no name for what the key does.
+    let label = if act == Act::Enter {
+        String::new()
+    } else {
+        short(&facts.name)
+    };
     let ask = |category: Category, summary: String| {
         (grant.asks(category) && !grant.always(&site, category))
             .then_some(Question { category, summary })
     };
 
-    if act == Act::Press {
+    if act != Act::Write {
         let paying = facts.card_form()
             || says(&facts.name, PAYING)
             || (facts.submit && hosts.iter().any(|one| payment_host(one)));
@@ -250,15 +405,20 @@ pub fn judge(
                 return Some(question);
             }
         }
-        if says(&facts.name, SENDING) && social(&host) {
-            if let Some(question) = ask(Category::Sending, on(&label, "Send", &site)) {
+        if let Some(how) = sends(facts, act, &host) {
+            let said = if how == Sends::ByWords {
+                label.as_str()
+            } else {
+                ""
+            };
+            if let Some(question) = ask(Category::Sending, on(said, "Send", &site)) {
                 return Some(question);
             }
         }
-        if says(&facts.name, DELETING) {
-            if let Some(question) = ask(Category::Deleting, on(&label, "Delete", &site)) {
-                return Some(question);
-            }
+    }
+    if act == Act::Press && says(&facts.name, DELETING) {
+        if let Some(question) = ask(Category::Deleting, on(&label, "Delete", &site)) {
+            return Some(question);
         }
     }
 
@@ -455,52 +615,92 @@ pub const PAYING: &[&str] = &[
     "\u{4fbe}\u{9322}", "\u{843d}\u{55ae}",
 ];
 
-/// Presses that send, publish or post, in every language nib has a catalogue for.
-pub const SENDING: &[&str] = &[
+/// Presses that send, post, reply, publish or comment, in every language nib has a catalogue
+/// for; found inside a longer name (`Send message`, `Post comment`).
+const SENDING: &[&str] = &[
+    // English
     "send",
     "post",
     "reply",
     "publish",
-    "submit",
+    "comment",
     "tweet",
+    "retweet",
+    "repost",
     "reply all",
+    // German, Swiss German
     "senden",
     "absenden",
+    "abschicken",
+    "schicken",
     "posten",
     "ver\u{f6}ffentlichen",
     "antworten",
-    "abschicken",
+    "kommentieren",
+    "s\u{e4}nde",
+    "schicke",
+    "ver\u{f6}ffentliche",
+    "antworte",
+    "kommentiere",
+    // French
     "envoyer",
     "publier",
     "r\u{e9}pondre",
-    "soumettre",
     "poster",
+    "commenter",
+    // Spanish, Portuguese
     "enviar",
     "publicar",
     "responder",
+    "comentar",
+    // Italian
     "invia",
+    "inviare",
     "pubblica",
     "rispondi",
-    "submeter",
+    "commenta",
+    // Polish
     "wy\u{15b}lij",
-    "opublikuj",
-    "odpowiedz",
     "prze\u{15b}lij",
+    "opublikuj",
+    "publikuj",
+    "odpowiedz",
+    "skomentuj",
+    // Russian, Ukrainian
     "\u{43e}\u{442}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{44c}",
     "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{438}\u{43a}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
     "\u{43e}\u{442}\u{432}\u{435}\u{442}\u{438}\u{442}\u{44c}",
+    "\u{43f}\u{440}\u{43e}\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
+    "\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{438}\u{440}\u{43e}\u{432}\u{430}\u{442}\u{44c}",
     "\u{43d}\u{430}\u{434}\u{456}\u{441}\u{43b}\u{430}\u{442}\u{438}",
+    "\u{432}\u{456}\u{434}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{438}",
     "\u{43e}\u{43f}\u{443}\u{431}\u{43b}\u{456}\u{43a}\u{443}\u{432}\u{430}\u{442}\u{438}",
     "\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{441}\u{442}\u{438}",
+    "\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{443}\u{432}\u{430}\u{442}\u{438}",
+    // Turkish
     "g\u{f6}nder",
     "yay\u{131}nla",
+    "yay\u{131}mla",
     "yan\u{131}tla",
+    "yorum yap",
+    // Indonesian, Malay, Javanese, Filipino
     "kirim",
     "hantar",
     "terbitkan",
+    "siarkan",
     "balas",
+    "komentari",
+    "komen",
+    "terbitake",
+    "bales",
+    "wangsuli",
     "ipadala",
+    "ilathala",
     "sumagot",
+    "tumugon",
+    "i-post",
+    "magkomento",
+    // Swahili, Hausa, Amharic
     "tuma",
     "chapisha",
     "jibu",
@@ -509,6 +709,8 @@ pub const SENDING: &[&str] = &[
     "amsa",
     "\u{120b}\u{12ad}",
     "\u{12ed}\u{120b}\u{12a9}",
+    "\u{12a0}\u{1233}\u{1275}\u{121d}",
+    // Arabic, Persian, Pashto, Urdu
     "\u{625}\u{631}\u{633}\u{627}\u{644}",
     "\u{623}\u{631}\u{633}\u{644}",
     "\u{646}\u{634}\u{631}",
@@ -518,40 +720,334 @@ pub const SENDING: &[&str] = &[
     "\u{628}\u{641}\u{631}\u{633}\u{62a}",
     "\u{627}\u{646}\u{62a}\u{634}\u{627}\u{631}",
     "\u{67e}\u{627}\u{633}\u{62e}",
+    "\u{644}\u{6d0}\u{696}\u{644}",
+    "\u{62e}\u{67e}\u{631}\u{648}\u{644}",
+    "\u{681}\u{648}\u{627}\u{628}",
     "\u{628}\u{6be}\u{6cc}\u{62c}\u{6cc}\u{6ba}",
+    "\u{645}\u{646}\u{62a}\u{634}\u{631} \u{6a9}\u{646}",
+    "\u{634}\u{627}\u{626}\u{639} \u{6a9}\u{631}\u{6cc}\u{6ba}",
+    "\u{62c}\u{648}\u{627}\u{628} \u{62f}\u{6cc}\u{6ba}",
+    // Hindi, Marathi, Bengali, Gujarati, Punjabi
     "\u{92d}\u{947}\u{91c}\u{947}\u{902}",
+    "\u{92d}\u{947}\u{91c}\u{94b}",
     "\u{92a}\u{94d}\u{930}\u{915}\u{93e}\u{936}\u{93f}\u{924}",
     "\u{91c}\u{935}\u{93e}\u{92c} \u{926}\u{947}\u{902}",
+    "\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940} \u{915}\u{930}\u{947}\u{902}",
     "\u{92a}\u{93e}\u{920}\u{935}\u{93e}",
+    "\u{909}\u{924}\u{94d}\u{924}\u{930} \u{926}\u{94d}\u{92f}\u{93e}",
     "\u{9aa}\u{9be}\u{9a0}\u{9be}\u{9a8}",
-    "\u{a2e}\u{acb}\u{a95}\u{ab2}\u{acb}",
+    "\u{9aa}\u{9cd}\u{9b0}\u{995}\u{9be}\u{9b6} \u{995}\u{9b0}\u{9c1}\u{9a8}",
+    "\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0} \u{9a6}\u{9bf}\u{9a8}",
+    "\u{aae}\u{acb}\u{a95}\u{ab2}\u{acb}",
+    "\u{aaa}\u{acd}\u{ab0}\u{a95}\u{abe}\u{ab6}\u{abf}\u{aa4} \u{a95}\u{ab0}\u{acb}",
+    "\u{a9c}\u{ab5}\u{abe}\u{aac} \u{a86}\u{aaa}\u{acb}",
     "\u{a2d}\u{a47}\u{a1c}\u{a4b}",
+    "\u{a1b}\u{a3e}\u{a2a}\u{a4b}",
+    "\u{a1c}\u{a35}\u{a3e}\u{a2c} \u{a26}\u{a3f}\u{a13}",
+    // Tamil, Telugu, Kannada, Malayalam
     "\u{b85}\u{ba9}\u{bc1}\u{baa}\u{bcd}\u{baa}\u{bc1}",
+    "\u{bb5}\u{bc6}\u{bb3}\u{bbf}\u{baf}\u{bbf}\u{b9f}\u{bc1}",
+    "\u{baa}\u{ba4}\u{bbf}\u{bb2}\u{bb3}\u{bbf}",
     "\u{c2a}\u{c02}\u{c2a}\u{c41}",
+    "\u{c2a}\u{c02}\u{c2a}\u{c02}\u{c21}\u{c3f}",
+    "\u{c2a}\u{c4d}\u{c30}\u{c1a}\u{c41}\u{c30}\u{c3f}\u{c02}\u{c1a}\u{c41}",
+    "\u{c2a}\u{c4d}\u{c30}\u{c24}\u{c4d}\u{c2f}\u{c41}\u{c24}\u{c4d}\u{c24}\u{c30}\u{c02}",
     "\u{c95}\u{cb3}\u{cc1}\u{cb9}\u{cbf}\u{cb8}\u{cbf}",
+    "\u{caa}\u{ccd}\u{cb0}\u{c95}\u{c9f}\u{cbf}\u{cb8}\u{cbf}",
+    "\u{c89}\u{ca4}\u{ccd}\u{ca4}\u{cb0}\u{cbf}\u{cb8}\u{cbf}",
     "\u{d05}\u{d2f}\u{d2f}\u{d4d}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
-    "\u{e2a}\u{e48}\u{e07}",
+    "\u{d2a}\u{d4d}\u{d30}\u{d38}\u{d3f}\u{d26}\u{d4d}\u{d27}\u{d40}\u{d15}\u{d30}\u{d3f}\u{d15}\u{d4d}\u{d15}\u{d41}\u{d15}",
+    "\u{d2e}\u{d31}\u{d41}\u{d2a}\u{d1f}\u{d3f}",
+    // Thai, Burmese, Vietnamese
+    "\u{e2a}\u{e48}\u{e07}\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
     "\u{e42}\u{e1e}\u{e2a}\u{e15}\u{e4c}",
+    "\u{e40}\u{e1c}\u{e22}\u{e41}\u{e1e}\u{e23}\u{e48}",
     "\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
-    "\u{1015}\u{102d}\u{102f}\u{1037}",
+    "\u{1015}\u{102d}\u{102f}\u{1037}\u{101b}\u{1014}\u{103a}",
+    "\u{1011}\u{102f}\u{1010}\u{103a}\u{1015}\u{103c}\u{1014}\u{103a}",
+    "\u{1015}\u{103c}\u{1014}\u{103a}\u{1005}\u{102c}",
     "g\u{1eed}i",
-    "\u{111}\u{103}ng",
+    "xu\u{1ea5}t b\u{1ea3}n",
     "tr\u{1ea3} l\u{1edd}i",
+    "b\u{ec}nh lu\u{1ead}n",
+    // Japanese, Korean, Chinese
     "\u{9001}\u{4fe1}",
     "\u{6295}\u{7a3f}",
     "\u{8fd4}\u{4fe1}",
+    "\u{516c}\u{958b}\u{3059}\u{308b}",
     "\u{bcf4}\u{b0b4}\u{ae30}",
     "\u{c804}\u{c1a1}",
-    "\u{ac8c}\u{c2dc}",
+    "\u{ac8c}\u{c2dc}\u{d558}\u{ae30}",
     "\u{b2f5}\u{c7a5}",
+    "\u{b313}\u{ae00} \u{b2ec}\u{ae30}",
     "\u{53d1}\u{9001}",
     "\u{53d1}\u{5e03}",
+    "\u{53d1}\u{8868}",
     "\u{56de}\u{590d}",
     "\u{767c}\u{9001}",
     "\u{50b3}\u{9001}",
-    "\u{767c}\u{5e03}",
     "\u{767c}\u{4f48}",
+    "\u{767c}\u{5e03}",
+    "\u{767c}\u{8868}",
     "\u{56de}\u{8986}",
+    "\u{9001}\u{51fa}",
+];
+
+/// Send words only when they are the whole name: each is inside everyday words of its
+/// language (Thai `ส่ง` in "delivery", Vietnamese `đăng` in "sign in", Korean `게시` in
+/// "board").
+const SENDING_ALONE: &[&str] = &[
+    // Thai, Vietnamese, Burmese, Korean, Japanese
+    "\u{e2a}\u{e48}\u{e07}",
+    "\u{111}\u{103}ng",
+    "\u{1015}\u{102d}\u{102f}\u{1037}",
+    "\u{ac8c}\u{c2dc}",
+    "\u{516c}\u{958b}",
+    "\u{9001}\u{308b}",
+];
+
+/// Names with a send word in them that send nothing.
+const NOT_SENDING: &[&str] = &["post code", "post office"];
+
+/// Presses that submit a form, which is a send only beside a message box.
+const SUBMITTING: &[&str] = &[
+    "submit",
+    "soumettre",
+    "submeter",
+    "einreichen",
+    "\u{fc}bermitteln",
+    "\u{63d0}\u{4ea4}",
+    "\u{63d0}\u{51fa}",
+    "\u{c81c}\u{cd9c}",
+];
+
+/// What a field a message goes to is called, in every language nib has a catalogue for.
+const RECIPIENTS: &[&str] = &[
+    "recipient",
+    "recipients",
+    "empf\u{e4}nger",
+    "destinataire",
+    "destinataires",
+    "destinatario",
+    "destinatarios",
+    "destinatari",
+    "destinat\u{e1}rio",
+    "destinat\u{e1}rios",
+    "odbiorca",
+    "odbiorcy",
+    "\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{44c}",
+    "\u{43f}\u{43e}\u{43b}\u{443}\u{447}\u{430}\u{442}\u{435}\u{43b}\u{438}",
+    "\u{430}\u{434}\u{440}\u{435}\u{441}\u{430}\u{442}",
+    "\u{43e}\u{434}\u{435}\u{440}\u{436}\u{443}\u{432}\u{430}\u{447}",
+    "\u{43e}\u{442}\u{440}\u{438}\u{43c}\u{443}\u{432}\u{430}\u{447}",
+    "al\u{131}c\u{131}",
+    "al\u{131}c\u{131}lar",
+    "penerima",
+    "tatanggap",
+    "mpokeaji",
+    "\u{1270}\u{1240}\u{1263}\u{12ed}",
+    "\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}",
+    "\u{627}\u{644}\u{645}\u{633}\u{62a}\u{644}\u{645}\u{64a}\u{646}",
+    "\u{6af}\u{6cc}\u{631}\u{646}\u{62f}\u{647}",
+    "\u{648}\u{635}\u{648}\u{644} \u{6a9}\u{646}\u{646}\u{62f}\u{6c1}",
+    "\u{92a}\u{94d}\u{930}\u{93e}\u{92a}\u{94d}\u{924}\u{915}\u{930}\u{94d}\u{924}\u{93e}",
+    "\u{9aa}\u{9cd}\u{9b0}\u{9be}\u{9aa}\u{995}",
+    "\u{aaa}\u{acd}\u{ab0}\u{abe}\u{aaa}\u{acd}\u{aa4}\u{a95}\u{ab0}\u{acd}\u{aa4}\u{abe}",
+    "\u{a2a}\u{a4d}\u{a30}\u{a3e}\u{a2a}\u{a24}\u{a15}\u{a30}\u{a24}\u{a3e}",
+    "\u{baa}\u{bc6}\u{bb1}\u{bc1}\u{ba8}\u{bb0}\u{bcd}",
+    "\u{c17}\u{c4d}\u{c30}\u{c39}\u{c40}\u{c24}",
+    "\u{cb8}\u{ccd}\u{cb5}\u{cc0}\u{c95}\u{cb0}\u{cbf}\u{cb8}\u{cc1}\u{cb5}\u{cb5}\u{cb0}\u{cc1}",
+    "\u{d38}\u{d4d}\u{d35}\u{d40}\u{d15}\u{d7c}\u{d24}\u{d4d}\u{d24}\u{d3e}\u{d35}\u{d4d}",
+    "\u{e1c}\u{e39}\u{e49}\u{e23}\u{e31}\u{e1a}",
+    "\u{101c}\u{1000}\u{103a}\u{1001}\u{1036}\u{101e}\u{1030}",
+    "ng\u{1b0}\u{1edd}i nh\u{1ead}n",
+    "\u{5b9b}\u{5148}",
+    "\u{bc1b}\u{b294} \u{c0ac}\u{b78c}",
+    "\u{c218}\u{c2e0}\u{c790}",
+    "\u{6536}\u{4ef6}\u{4eba}",
+    "\u{6536}\u{4ef6}\u{8005}",
+];
+
+/// A field labelled only this is who a message goes to: `To:`, `Cc`, `An`.
+const ADDRESSED_ALONE: &[&str] = &[
+    "to",
+    "cc",
+    "bcc",
+    "send to",
+    "an",
+    "\u{e0}",
+    "a",
+    "para",
+    "do",
+    "\u{43a}\u{43e}\u{43c}\u{443}",
+    "kime",
+    "kepada",
+    "kwa",
+    "\u{625}\u{644}\u{649}",
+    "\u{628}\u{647}",
+    "\u{62a}\u{647}",
+    "\u{915}\u{94b}",
+    "\u{92a}\u{94d}\u{930}\u{924}\u{93f}",
+    "\u{9aa}\u{9cd}\u{9b0}\u{9a4}\u{9bf}",
+    "\u{e16}\u{e36}\u{e07}",
+    "\u{111}\u{1ebf}n",
+];
+
+/// What a message box calls itself (`Type a message`, `Write a reply`, `Message #general`),
+/// in every language nib has a catalogue for.
+const MESSAGES: &[&str] = &[
+    "message",
+    "reply",
+    "comment",
+    "chat",
+    "nachricht",
+    "antwort",
+    "kommentar",
+    "r\u{e9}ponse",
+    "commentaire",
+    "mensaje",
+    "respuesta",
+    "comentario",
+    "messaggio",
+    "risposta",
+    "commento",
+    "mensagem",
+    "resposta",
+    "coment\u{e1}rio",
+    "wiadomo\u{15b}\u{107}",
+    "odpowied\u{17a}",
+    "komentarz",
+    "\u{441}\u{43e}\u{43e}\u{431}\u{449}\u{435}\u{43d}\u{438}\u{435}",
+    "\u{43e}\u{442}\u{432}\u{435}\u{442}",
+    "\u{43a}\u{43e}\u{43c}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}\u{438}\u{439}",
+    "\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{43e}\u{43c}\u{43b}\u{435}\u{43d}\u{43d}\u{44f}",
+    "\u{432}\u{456}\u{434}\u{43f}\u{43e}\u{432}\u{456}\u{434}\u{44c}",
+    "\u{43a}\u{43e}\u{43c}\u{435}\u{43d}\u{442}\u{430}\u{440}",
+    "mesaj",
+    "yan\u{131}t",
+    "yorum",
+    "pesan",
+    "balasan",
+    "komentar",
+    "mesej",
+    "komen",
+    "pesen",
+    "mensahe",
+    "sagot",
+    "komento",
+    "ujumbe",
+    "jibu",
+    "maoni",
+    "sa\u{199}o",
+    "amsa",
+    "sharhi",
+    "\u{1218}\u{120d}\u{12a5}\u{12ad}\u{1275}",
+    "\u{12a0}\u{1235}\u{1270}\u{12eb}\u{12e8}\u{1275}",
+    "\u{631}\u{633}\u{627}\u{644}\u{629}",
+    "\u{627}\u{644}\u{631}\u{633}\u{627}\u{644}\u{629}",
+    "\u{631}\u{62f}",
+    "\u{62a}\u{639}\u{644}\u{64a}\u{642}",
+    "\u{67e}\u{6cc}\u{627}\u{645}",
+    "\u{67e}\u{627}\u{633}\u{62e}",
+    "\u{646}\u{638}\u{631}",
+    "\u{67e}\u{6cc}\u{63a}\u{627}\u{645}",
+    "\u{681}\u{648}\u{627}\u{628}",
+    "\u{62c}\u{648}\u{627}\u{628}",
+    "\u{62a}\u{628}\u{635}\u{631}\u{6c1}",
+    "\u{938}\u{902}\u{926}\u{947}\u{936}",
+    "\u{91c}\u{935}\u{93e}\u{92c}",
+    "\u{91f}\u{93f}\u{92a}\u{94d}\u{92a}\u{923}\u{940}",
+    "\u{9ac}\u{9be}\u{9b0}\u{9cd}\u{9a4}\u{9be}",
+    "\u{9ae}\u{9a8}\u{9cd}\u{9a4}\u{9ac}\u{9cd}\u{9af}",
+    "\u{989}\u{9a4}\u{9cd}\u{9a4}\u{9b0}",
+    "\u{ab8}\u{a82}\u{aa6}\u{ac7}\u{ab6}",
+    "\u{a9f}\u{abf}\u{aaa}\u{acd}\u{aaa}\u{aa3}\u{ac0}",
+    "\u{a38}\u{a41}\u{a28}\u{a47}\u{a39}\u{a3e}",
+    "\u{a1f}\u{a3f}\u{a71}\u{a2a}\u{a23}\u{a40}",
+    "\u{b9a}\u{bc6}\u{baf}\u{bcd}\u{ba4}\u{bbf}",
+    "\u{b95}\u{bb0}\u{bc1}\u{ba4}\u{bcd}\u{ba4}\u{bc1}",
+    "\u{c38}\u{c02}\u{c26}\u{c47}\u{c36}\u{c02}",
+    "\u{c35}\u{c4d}\u{c2f}\u{c3e}\u{c16}\u{c4d}\u{c2f}",
+    "\u{cb8}\u{c82}\u{ca6}\u{cc7}\u{cb6}",
+    "\u{c95}\u{cbe}\u{cae}\u{cc6}\u{c82}\u{c9f}\u{ccd}",
+    "\u{d38}\u{d28}\u{d4d}\u{d26}\u{d47}\u{d36}\u{d02}",
+    "\u{d15}\u{d2e}\u{d28}\u{d4d}\u{d31}\u{d4d}",
+    "\u{e02}\u{e49}\u{e2d}\u{e04}\u{e27}\u{e32}\u{e21}",
+    "\u{e04}\u{e27}\u{e32}\u{e21}\u{e04}\u{e34}\u{e14}\u{e40}\u{e2b}\u{e47}\u{e19}",
+    "\u{e15}\u{e2d}\u{e1a}\u{e01}\u{e25}\u{e31}\u{e1a}",
+    "\u{1019}\u{1000}\u{103a}\u{1006}\u{1031}\u{1037}\u{1001}\u{103b}\u{103a}",
+    "\u{1019}\u{103e}\u{1010}\u{103a}\u{1001}\u{103b}\u{1000}\u{103a}",
+    "tin nh\u{1eaf}n",
+    "tr\u{1ea3} l\u{1edd}i",
+    "b\u{ec}nh lu\u{1ead}n",
+    "\u{30e1}\u{30c3}\u{30bb}\u{30fc}\u{30b8}",
+    "\u{8fd4}\u{4fe1}",
+    "\u{30b3}\u{30e1}\u{30f3}\u{30c8}",
+    "\u{ba54}\u{c2dc}\u{c9c0}",
+    "\u{b2f5}\u{c7a5}",
+    "\u{b313}\u{ae00}",
+    "\u{6d88}\u{606f}",
+    "\u{4fe1}\u{606f}",
+    "\u{56de}\u{590d}",
+    "\u{8bc4}\u{8bba}",
+    "\u{8a0a}\u{606f}",
+    "\u{56de}\u{8986}",
+    "\u{7559}\u{8a00}",
+    "\u{8a55}\u{8ad6}",
+];
+
+/// Presses that sign in, in every language nib has a catalogue for.
+const SIGNING_IN: &[&str] = &[
+    "sign in",
+    "log in",
+    "login",
+    "log on",
+    "anmelden",
+    "einloggen",
+    "aamelde",
+    "iilogge",
+    "se connecter",
+    "connexion",
+    "iniciar sesi\u{f3}n",
+    "iniciar sess\u{e3}o",
+    "acceder",
+    "entrar",
+    "accedi",
+    "zaloguj",
+    "\u{432}\u{43e}\u{439}\u{442}\u{438}",
+    "\u{443}\u{432}\u{456}\u{439}\u{442}\u{438}",
+    "oturum a\u{e7}",
+    "giri\u{15f} yap",
+    "masuk",
+    "mlebu",
+    "mag-sign in",
+    "mag-log in",
+    "ingia",
+    "shiga",
+    "\u{130d}\u{1263}",
+    "\u{62a}\u{633}\u{62c}\u{64a}\u{644} \u{627}\u{644}\u{62f}\u{62e}\u{648}\u{644}",
+    "\u{648}\u{631}\u{648}\u{62f}",
+    "\u{646}\u{646}\u{648}\u{62a}\u{644}",
+    "\u{633}\u{627}\u{626}\u{646} \u{627}\u{646}",
+    "\u{644}\u{627}\u{6af} \u{627}\u{646}",
+    "\u{938}\u{93e}\u{907}\u{928} \u{907}\u{928}",
+    "\u{932}\u{949}\u{917} \u{907}\u{928}",
+    "\u{9b8}\u{9be}\u{987}\u{9a8} \u{987}\u{9a8}",
+    "\u{ab8}\u{abe}\u{a87}\u{aa8} \u{a87}\u{aa8}",
+    "\u{a38}\u{a3e}\u{a08}\u{a28} \u{a07}\u{a28}",
+    "\u{b89}\u{bb3}\u{bcd}\u{ba8}\u{bc1}\u{bb4}\u{bc8}",
+    "\u{c38}\u{c48}\u{c28}\u{c4d} \u{c07}\u{c28}\u{c4d}",
+    "\u{cb8}\u{cc8}\u{ca8}\u{ccd} \u{c87}\u{ca8}\u{ccd}",
+    "\u{d38}\u{d48}\u{d7b} \u{d07}\u{d7b}",
+    "\u{e40}\u{e02}\u{e49}\u{e32}\u{e2a}\u{e39}\u{e48}\u{e23}\u{e30}\u{e1a}\u{e1a}",
+    "\u{1021}\u{1000}\u{1031}\u{102c}\u{1004}\u{1037}\u{103a}\u{101d}\u{1004}\u{103a}",
+    "\u{111}\u{103}ng nh\u{1ead}p",
+    "\u{30b5}\u{30a4}\u{30f3}\u{30a4}\u{30f3}",
+    "\u{30ed}\u{30b0}\u{30a4}\u{30f3}",
+    "\u{b85c}\u{adf8}\u{c778}",
+    "\u{767b}\u{5f55}",
+    "\u{767b}\u{5165}",
+    "\u{767b}\u{9304}",
 ];
 
 /// Presses that delete, in every language nib has a catalogue for.
@@ -810,7 +1306,7 @@ mod tests {
             ("Senden", "https://outlook.office.com/mail/", Some(Category::Sending)),
             ("Publier", "https://www.linkedin.com/feed/", Some(Category::Sending)),
             ("\u{53d1}\u{9001}", "https://weibo.com/", Some(Category::Sending)),
-            // Send on a site that is not for messages is not a message leaving.
+            // Send with nothing on the page to send and nobody to send it to.
             ("Send", "https://shop.example/contact", None),
             ("Delete", "https://drive.example/", Some(Category::Deleting)),
             ("Endg\u{fc}ltig l\u{f6}schen", "https://drive.example/", Some(Category::Deleting)),
@@ -837,6 +1333,7 @@ mod tests {
             kind: "text".into(),
             autocomplete: "cc-number".into(),
             said: String::new(),
+            ..Field::default()
         }];
         assert_eq!(
             category(&facts, "https://shop.example/"),
@@ -846,6 +1343,7 @@ mod tests {
             kind: "text".into(),
             autocomplete: String::new(),
             said: "Kartennummer".into(),
+            ..Field::default()
         }];
         assert_eq!(
             category(&facts, "https://shop.example/"),
@@ -875,6 +1373,323 @@ mod tests {
             &hosts
         )
         .is_none());
+    }
+
+    fn field(kind: &str, label: &str) -> Field {
+        Field {
+            kind: kind.into(),
+            said: label.into(),
+            label: label.into(),
+            ..Field::default()
+        }
+    }
+
+    /// A press on a form's submit button.
+    fn submitting(name: &str, fields: Vec<Field>) -> Facts {
+        Facts {
+            tag: "button".into(),
+            name: name.into(),
+            submit: true,
+            in_form: true,
+            fields,
+            ..Facts::default()
+        }
+    }
+
+    /// A press on a button in no form, on a page with these fields.
+    fn on_the_page(name: &str, fields: Vec<Field>) -> Facts {
+        Facts {
+            tag: "div".into(),
+            name: name.into(),
+            fields,
+            ..Facts::default()
+        }
+    }
+
+    /// Enter in a field, and whether it submits a form of these fields.
+    fn enter_in(own: Field, in_form: bool, fields: Vec<Field>) -> Facts {
+        Facts {
+            tag: if own.kind == "textarea" {
+                "textarea"
+            } else {
+                "input"
+            }
+            .into(),
+            editable: true,
+            submit: in_form,
+            in_form,
+            fields,
+            field: own,
+            ..Facts::default()
+        }
+    }
+
+    fn compose() -> Vec<Field> {
+        vec![
+            field("email", "To"),
+            field("text", "Subject"),
+            field("textarea", "Message"),
+        ]
+    }
+
+    /// What an act asks, as its category and summary.
+    fn asked(facts: &Facts, act: Act, url: &str) -> Option<(Category, String)> {
+        judge(&grant(), facts, act, url, &[]).map(|one| (one.category, one.summary))
+    }
+
+    fn sent(facts: &Facts, act: Act, url: &str) -> bool {
+        asked(facts, act, url).is_some_and(|(category, _)| category == Category::Sending)
+    }
+
+    #[test]
+    fn a_compose_form_on_any_site_asks_before_it_sends() {
+        // The harness's own mail page, on no list of mail sites.
+        let send = submitting("Send", compose());
+        assert_eq!(
+            asked(&send, Act::Press, "http://127.0.0.1:23960/mail"),
+            Some((Category::Sending, "Send on 127.0.0.1".to_string()))
+        );
+        // A self-hosted webmail's Send, a `<div>` in no form beside an editable body.
+        let webmail = on_the_page(
+            "Send",
+            vec![
+                field("text", "To recipients"),
+                field("text", "Subject"),
+                field("editable", "Message Body"),
+            ],
+        );
+        assert!(sent(&webmail, Act::Press, "https://mail.example.org/"));
+        // A support form, whose words are only Submit.
+        let support = submitting(
+            "Submit",
+            vec![
+                field("text", "Name"),
+                field("email", "Email"),
+                field("textarea", "How can we help?"),
+            ],
+        );
+        assert!(sent(&support, Act::Press, "https://help.example/contact"));
+        // A chat widget's send button, and Enter in its box.
+        let widget = vec![field("textarea", "Type a message\u{2026}")];
+        assert!(sent(
+            &on_the_page("Send message", widget.clone()),
+            Act::Press,
+            "https://shop.example/"
+        ));
+        assert!(sent(
+            &enter_in(widget[0].clone(), false, widget.clone()),
+            Act::Enter,
+            "https://shop.example/"
+        ));
+        // A form that holds a box and somebody to send it to sends whatever its button is
+        // called, and is asked about as a send.
+        let mut mention = field("textarea", "");
+        mention.mentions = true;
+        assert_eq!(
+            asked(
+                &submitting("\u{2192}", vec![mention]),
+                Act::Press,
+                "https://forum.example/"
+            ),
+            Some((Category::Sending, "Send on forum.example".to_string()))
+        );
+        // Enter in the subject line of a compose form submits it.
+        assert!(sent(
+            &enter_in(field("text", "Subject"), true, compose()),
+            Act::Enter,
+            "https://mail.example.org/"
+        ));
+        // The list of social sites is still a signal of its own.
+        assert!(sent(
+            &on_the_page("Post", Vec::new()),
+            Act::Press,
+            "https://www.linkedin.com/feed/"
+        ));
+    }
+
+    #[test]
+    fn sending_is_read_in_every_language() {
+        let composer = || vec![field("textarea", "")];
+        for name in [
+            "Senden",
+            "Abschicken",
+            "Envoyer",
+            "Enviar",
+            "Invia",
+            "Wy\u{15b}lij",
+            "\u{41e}\u{442}\u{43f}\u{440}\u{430}\u{432}\u{438}\u{442}\u{44c}",
+            "G\u{f6}nder",
+            "Kirim",
+            "Tuma",
+            "\u{625}\u{631}\u{633}\u{627}\u{644}",
+            "\u{92d}\u{947}\u{91c}\u{947}\u{902}",
+            "\u{e2a}\u{e48}\u{e07}",
+            "G\u{1eed}i",
+            "\u{9001}\u{4fe1}",
+            "\u{bcf4}\u{b0b4}\u{ae30}",
+            "\u{53d1}\u{9001}",
+            "\u{50b3}\u{9001}",
+            "Reply all",
+            "Post comment",
+        ] {
+            assert!(
+                sent(
+                    &on_the_page(name, composer()),
+                    Act::Press,
+                    "https://a.example/"
+                ),
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_search_a_sign_in_or_a_newsletter_is_no_send() {
+        let url = "https://a.example/";
+        let never = [
+            // A search, even a box that is a `<textarea>`, and even with a Submit.
+            submitting("Search", vec![field("search", "Search")]),
+            submitting("Submit", vec![field("search", "q Search")]),
+            submitting("Google Search", vec![field("search", "q Search")]),
+            // A sign-in, whatever its button says.
+            submitting(
+                "Submit",
+                vec![field("email", "Email"), field("password", "Password")],
+            ),
+            submitting(
+                "Send",
+                vec![field("email", "Email"), field("password", "Password")],
+            ),
+            // A newsletter: an address and no box.
+            submitting("Subscribe", vec![field("email", "Email")]),
+            submitting("Submit", vec![field("email", "Email")]),
+            // A flight: a field called To, and nothing to send.
+            submitting("Submit", vec![field("text", "From"), field("text", "To")]),
+            // A setting with a box and no send word, and nobody to send it to.
+            submitting("Save", vec![field("textarea", "Bio")]),
+            // Words that only hold a send word, beside a box.
+            on_the_page("\u{110}\u{103}ng nh\u{1ead}p", vec![field("textarea", "")]),
+            on_the_page(
+                "\u{e08}\u{e31}\u{e14}\u{e2a}\u{e48}\u{e07}\u{e1f}\u{e23}\u{e35}",
+                vec![field("textarea", "")],
+            ),
+            on_the_page("Find by post code", vec![field("textarea", "")]),
+            on_the_page("Sender", vec![field("textarea", "")]),
+            // Send with nothing to send.
+            on_the_page("Send", Vec::new()),
+        ];
+        for facts in &never {
+            assert!(
+                !sent(facts, Act::Press, url),
+                "{} {:?}",
+                facts.name,
+                facts.fields
+            );
+        }
+        // Pressing into a message box is starting to write in it.
+        let mut into = enter_in(
+            field("textarea", "Reply"),
+            false,
+            vec![field("textarea", "Reply")],
+        );
+        into.name = "Reply".into();
+        assert!(!sent(&into, Act::Press, url));
+        // Enter in a box that is no message box is a new line (the harness's keys page).
+        let words = field("textarea", "words Words");
+        assert!(!sent(
+            &enter_in(words.clone(), false, vec![words]),
+            Act::Enter,
+            url
+        ));
+        // Enter in a search box.
+        let search = field("search", "q Search");
+        assert!(!sent(
+            &enter_in(search.clone(), true, vec![search]),
+            Act::Enter,
+            url
+        ));
+    }
+
+    #[test]
+    fn a_sign_in_is_the_readers_whatever_the_page_calls_it() {
+        let sign_in = vec![field("email", "Email"), field("password", "Password")];
+        assert!(signs_in(
+            &submitting("Sign in", sign_in.clone()),
+            Act::Press
+        ));
+        assert!(signs_in(&submitting("Weiter", sign_in.clone()), Act::Press));
+        assert!(signs_in(
+            &enter_in(field("email", "Email"), true, sign_in.clone()),
+            Act::Enter
+        ));
+        // A show-password toggle turns the field's type to text: its autocomplete stays.
+        let mut shown = field("text", "Password");
+        shown.autocomplete = "current-password".into();
+        assert!(signs_in(
+            &submitting("Log in", vec![field("email", "Email"), shown.clone()]),
+            Act::Press
+        ));
+        // A field the page masks itself is one too.
+        let mut masked = field("text", "PIN");
+        masked.masked = true;
+        assert!(signs_in(
+            &enter_in(masked.clone(), false, vec![masked]),
+            Act::Enter
+        ));
+        // A page with no form: its sign-in button beside a password field.
+        assert!(signs_in(
+            &on_the_page("Anmelden", sign_in.clone()),
+            Act::Press
+        ));
+        assert!(signs_in(
+            &on_the_page("\u{30ed}\u{30b0}\u{30a4}\u{30f3}", sign_in.clone()),
+            Act::Press
+        ));
+
+        // Not a sign-in: a button that submits nothing, the first step with no password
+        // yet, and a sign-in button with no password on the page.
+        let mut show = submitting("Show password", sign_in.clone());
+        show.submit = false;
+        assert!(!signs_in(&show, Act::Press));
+        assert!(!signs_in(
+            &submitting("Next", vec![field("email", "Email")]),
+            Act::Press
+        ));
+        assert!(!signs_in(&on_the_page("Sign in", Vec::new()), Act::Press));
+        assert!(!signs_in(&submitting("Sign in", sign_in), Act::Write));
+    }
+
+    #[test]
+    fn a_secret_is_a_credential_a_code_or_a_card() {
+        let with = |kind: &str, autocomplete: &str, label: &str| Field {
+            autocomplete: autocomplete.into(),
+            ..field(kind, label)
+        };
+        for one in [
+            with("password", "", "Password"),
+            with("text", "current-password", "Password"),
+            with("text", "section-a new-password", "New password"),
+            with("text", "one-time-code", "Code"),
+            with("text", "cc-number", ""),
+            with("text", "billing cc-csc", ""),
+            with("text", "", "CVC"),
+            with("text", "", "Expiry"),
+            with("text", "", "Kartennummer"),
+            Field {
+                masked: true,
+                ..field("text", "PIN")
+            },
+        ] {
+            assert!(secret(&one), "{one:?}");
+        }
+        for one in [
+            with("email", "email", "Email"),
+            with("text", "name", "Name"),
+            with("search", "", "Search"),
+            with("textarea", "", "Message"),
+        ] {
+            assert!(!secret(&one), "{one:?}");
+        }
     }
 
     #[test]
