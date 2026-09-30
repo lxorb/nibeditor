@@ -13,7 +13,7 @@ import { bearer } from './mcp/tokens'
 import { programMayReach } from './programs'
 import { fillFronts } from './blog/fill'
 import { sweepLeftovers } from './leftovers'
-import { forgetHalfDone, second } from './second'
+import { forgetHalfDone, resealBorrowed, second } from './second'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
@@ -300,6 +300,9 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
   context.waitUntil(forgetHalfDone(env, at))
+  // And every second factor still sealed under the AI key's secret, moved under its
+  // own, so that rotating that secret locks nobody out; see second.ts.
+  context.waitUntil(resealBorrowed(env))
   // And what a deleted account left in the bucket and the rooms that the request
   // deleting it did not get to; see leftovers.ts.
   context.waitUntil(sweepLeftovers(env))

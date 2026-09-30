@@ -15,10 +15,13 @@
  *  work everywhere, need no new dependency, and are the thing every authenticator
  *  app already does. See docs/sync.md, which says this out loud.
  *
- *  How it is kept: the secret is encrypted under the environment's own secret,
- *  the way the OpenAI key is (see ask/key.ts) and with a derivation of its own,
- *  so a leaked database is not a drawer full of working authenticators. No
- *  secret configured means no second factor rather than one stored in the clear.
+ *  How it is kept: the secret is encrypted under an environment secret of its own,
+ *  `SECOND_FACTOR_SECRET`, the way the OpenAI key is under `OPENAI_KEY_SECRET`
+ *  (see ask/key.ts), so a leaked database is not a drawer full of working
+ *  authenticators. It used to borrow the OpenAI one, which meant rotating the AI
+ *  key's secret locked every enrolled account out of its own factor; see `seal`
+ *  below for how the rows written then move across. No secret configured means no
+ *  second factor rather than one stored in the clear.
  *
  *  Recovery codes are ten one-shot words, hashed at rest and spent the moment
  *  they work, which is how every other one-shot secret here behaves. Losing a
@@ -272,19 +275,120 @@ async function writeRecovery(env: Env, userId: string): Promise<string[]> {
   return codes
 }
 
-/** Whether this account has a second factor, and the secret when it has one.
- *  Null for an account with none, and for one whose secret will not open - which
- *  is the same answer, because a factor nobody can verify is not one. */
-async function secondFor(env: Env, userId: string): Promise<string | null> {
+/** What a seal made under the factor's own secret starts with. A row without it
+ *  was sealed under `OPENAI_KEY_SECRET`, by a build from before the factor had a
+ *  secret of its own or by this one before `SECOND_FACTOR_SECRET` was set. The row
+ *  says which, so opening one is never a guess and the nightly job can find the
+ *  borrowed ones with a `like`. */
+const OWN = 'own:'
+
+/** The secret a new seal is made under: the factor's own, or - until somebody has
+ *  set that - the one it used to borrow, so that deploying this changes nothing for
+ *  anybody until the new secret exists. Django's `SECRET_KEY_FALLBACKS` is the same
+ *  shape: the new key writes, the old one only reads, and it can be retired once
+ *  nothing it wrote is left. */
+function sealingSecret(env: Env): { secret: string; own: boolean } | null {
+  if (env.SECOND_FACTOR_SECRET) return { secret: env.SECOND_FACTOR_SECRET, own: true }
+  if (env.OPENAI_KEY_SECRET) return { secret: env.OPENAI_KEY_SECRET, own: false }
+  return null
+}
+
+/** Whether the service can keep a factor at all. */
+function mayKeep(env: Env): boolean {
+  return sealingSecret(env) !== null
+}
+
+/** One authenticator secret, sealed under whichever secret `sealingSecret` names,
+ *  and marked when that is the factor's own. */
+async function seal(env: Env, userId: string, secretHex: string): Promise<string | null> {
+  const under = sealingSecret(env)
+  if (!under) return null
+
+  const made = await sealed(under.secret, userId, secretHex, SALT)
+  return under.own ? `${OWN}${made}` : made
+}
+
+/** One stored seal, opened under the secret its mark names, or null. */
+function unseal(env: Env, userId: string, stored: string): Promise<string | null> {
+  const own = stored.startsWith(OWN)
+  const secret = own ? env.SECOND_FACTOR_SECRET : env.OPENAI_KEY_SECRET
+  if (!secret) return Promise.resolve(null)
+
+  return opened(secret, userId, own ? stored.slice(OWN.length) : stored, SALT)
+}
+
+/** Moves one borrowed seal under the factor's own secret, once there is one.
+ *
+ *  Conditional on the row still holding the seal that was read, so a factor turned
+ *  off or replaced in the meantime is never written back over. */
+async function reseal(env: Env, userId: string, stored: string, secretHex: string) {
+  if (stored.startsWith(OWN) || !env.SECOND_FACTOR_SECRET) return
+
+  const moved = await seal(env, userId, secretHex)
+  if (!moved) return
+
+  await env.DB.prepare('update users set totp_secret = ? where id = ? and totp_secret = ?')
+    .bind(moved, userId, stored)
+    .run()
+}
+
+/** Whether this account has a second factor, and the secret when it has one, with
+ *  the seal it was read out of. Null for an account with none, and for one whose
+ *  secret will not open - which is the same answer, because a factor nobody can
+ *  verify is not one. */
+async function secondFor(
+  env: Env,
+  userId: string,
+): Promise<{ secret: string; stored: string } | null> {
   const row = await env.DB.prepare(
     'select totp_secret, totp_at from users where id = ? and totp_at is not null',
   )
     .bind(userId)
     .first<{ totp_secret: string | null; totp_at: number | null }>()
 
-  if (!row?.totp_secret || !env.OPENAI_KEY_SECRET) return null
+  if (!row?.totp_secret) return null
 
-  return await opened(env.OPENAI_KEY_SECRET, userId, row.totp_secret, SALT)
+  const secret = await unseal(env, userId, row.totp_secret)
+  return secret === null ? null : { secret, stored: row.totp_secret }
+}
+
+/** How many borrowed seals the nightly job reads at a time. */
+const RESEAL_PAGE = 100
+
+/** Every seal still made under `OPENAI_KEY_SECRET`, moved under the factor's own,
+ *  by the nightly job.
+ *
+ *  A seal also moves on its account's next good code, but an account nobody signs
+ *  in to for a year would otherwise keep its factor bound to the AI key's secret
+ *  for that year - and rotating that secret is exactly what must not lock anybody
+ *  out. After one night with both secrets set nothing depends on the old one. A
+ *  seal that will not open under it is left as it is: it was dead before this. */
+export async function resealBorrowed(env: Env): Promise<number> {
+  if (!env.SECOND_FACTOR_SECRET || !env.OPENAI_KEY_SECRET) return 0
+
+  let after = ''
+  let moved = 0
+  for (;;) {
+    const { results } = await env.DB.prepare(
+      `select id, totp_secret from users
+        where totp_secret is not null and totp_secret not like '${OWN}%' and id > ?
+        order by id limit ?`,
+    )
+      .bind(after, RESEAL_PAGE)
+      .all<{ id: string; totp_secret: string }>()
+
+    for (const row of results) {
+      const secret = await unseal(env, row.id, row.totp_secret)
+      if (secret === null) continue
+
+      await reseal(env, row.id, row.totp_secret, secret)
+      moved += 1
+    }
+
+    const last = results.at(-1)
+    if (!last || results.length < RESEAL_PAGE) return moved
+    after = last.id
+  }
 }
 
 /** Whether the account asks for a second factor at all. Asked before the secret
@@ -317,10 +421,17 @@ export async function accepted(
   if (!(await mayTrySecondFrom(env, machine))) return false
   if (!(await mayTrySecond(env, userId))) return false
 
-  const secret = await secondFor(env, userId)
-  if (secret) {
-    const step = await stepMatching(secret, given)
-    if (step !== null) return await spendStep(env, userId, step)
+  const factor = await secondFor(env, userId)
+  if (factor) {
+    const step = await stepMatching(factor.secret, given)
+    if (step !== null) {
+      if (!(await spendStep(env, userId, step))) return false
+
+      // A good code is the moment a borrowed seal moves under the factor's own
+      // secret; see `reseal`.
+      await reseal(env, userId, factor.stored, factor.secret)
+      return true
+    }
   }
 
   const tidied = given.trim().toLowerCase().replace(/\s/g, '')
@@ -341,14 +452,15 @@ export async function accepted(
  *  when the phone is gone. Replaces whatever was there: turning it on twice is
  *  two secrets and one of them would be a way in nobody remembers. */
 async function turnOn(env: Env, userId: string, secretHex: string): Promise<string[]> {
-  if (!env.OPENAI_KEY_SECRET) return []
+  const kept = await seal(env, userId, secretHex)
+  if (!kept) return []
 
   // And the step a code was last accepted at, which belonged to the secret being
   // replaced: leaving it would refuse the new app's first several codes.
   await env.DB.prepare(
     'update users set totp_secret = ?, totp_at = ?, totp_step = null where id = ?',
   )
-    .bind(await sealed(env.OPENAI_KEY_SECRET, userId, secretHex, SALT), now(), userId)
+    .bind(kept, now(), userId)
     .run()
 
   return await writeRecovery(env, userId)
@@ -376,7 +488,7 @@ second.get('/', async (context) => {
     // Without the environment's secret there is nowhere safe to keep a secret,
     // so the pane offers nothing rather than offering something that would be
     // stored in the clear.
-    possible: !!context.env.OPENAI_KEY_SECRET,
+    possible: mayKeep(context.env),
   })
 })
 
@@ -386,7 +498,7 @@ second.get('/', async (context) => {
  *  written to the account by the confirm below - so somebody who never finishes
  *  is not locked out of their own account by a factor they cannot answer. */
 second.post('/', async (context) => {
-  if (!context.env.OPENAI_KEY_SECRET) {
+  if (!mayKeep(context.env)) {
     return context.json({ error: 'this service cannot keep a secret safely' }, 503)
   }
 

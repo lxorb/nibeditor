@@ -312,8 +312,12 @@ Worker uses is still a hundred thousand.
 
 Two operational facts worth writing down.
 
-The secret the authenticator secrets are encrypted under is the service's, so
-rotating it makes every enrolled authenticator stop verifying. The recovery codes
+The authenticator secrets are encrypted under `SECOND_FACTOR_SECRET`, a secret of
+their own. They used to borrow `OPENAI_KEY_SECRET`; a seal made then still opens
+under that secret, and moves under the factor's own on its next good code and on the
+next nightly run, so after one night with both set the AI key's secret can be rotated
+without touching anybody's factor. Rotating `SECOND_FACTOR_SECRET` itself makes every
+enrolled authenticator stop verifying. The recovery codes
 still work - they are hashed, not encrypted - so there is a way back in, but
 everyone would have to enrol again. **An account that has spent all ten of its
 recovery codes before such a rotation has no way back in at all**, because asking

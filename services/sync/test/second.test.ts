@@ -13,7 +13,9 @@ import {
   recoveryCodes,
   recoveryCost,
   recoveryHash,
+  resealBorrowed,
 } from '../src/second'
+import { opened } from '../src/ask/key'
 
 /** The nightly job, run to the end: what it hands to `waitUntil` is what it is
  *  doing, so a test that wants the sweep awaits those. */
@@ -623,6 +625,139 @@ describe('what an abandoned enrolment leaves behind', () => {
     await nightly(env)
 
     expect(secretOf(env)).toBe('')
+  })
+})
+
+/** The factor's secret is its own, and the one it used to borrow only reads.
+ *
+ *  Rotating the AI key's secret locked every enrolled account out of its factor
+ *  while the two were one secret. Each case below rotates one of them by writing
+ *  over it in the environment, which is what `wrangler secret put` does to a
+ *  running Worker. */
+describe('a secret of its own', () => {
+  const AI = 'the AI key secret'
+  const OWN_SECRET = 'the second factor secret'
+
+  let env: TestEnv
+
+  afterEach(() => env.close())
+
+  /** An account with a factor turned on, under whatever the environment holds. */
+  async function enrolled(): Promise<string> {
+    const token = await signIn(env, 'a@b.dev')
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const secret = secretOf(env)
+    await call(env, '/v1/second/confirm', {
+      token,
+      body: { holding: begun.json.holding, code: await codeAt(secret, step()) },
+    })
+
+    return secret
+  }
+
+  /** What the account's row holds, sealed. */
+  function sealedNow(): string {
+    const row = env.db.prepare('select totp_secret from users').get() as { totp_secret: string }
+    return row.totp_secret
+  }
+
+  /** Whether a whole sign-in goes through with the app's code `ahead` steps on:
+   *  a later step for a second sign-in, because a code once answered with is
+   *  spent. */
+  async function signsIn(secret: string, ahead: number): Promise<boolean> {
+    const half = await signInHalfWay(env)
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(secret, step() + ahead) },
+    })
+
+    return done.status === 200
+  }
+
+  test('is what a new factor is sealed under', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI, SECOND_FACTOR_SECRET: OWN_SECRET })
+    await enrolled()
+
+    expect(sealedNow().startsWith('own:')).toBe(true)
+  })
+
+  test('so rotating the AI key secret leaves the factor working', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI, SECOND_FACTOR_SECRET: OWN_SECRET })
+    const secret = await enrolled()
+
+    env.OPENAI_KEY_SECRET = 'a rotated AI key secret'
+
+    expect(await signsIn(secret, 0)).toBe(true)
+  })
+
+  test('and rotating the factor secret leaves the AI key working', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI, SECOND_FACTOR_SECRET: OWN_SECRET })
+    const token = await signIn(env, 'a@b.dev')
+    const key = `sk-${'a'.repeat(48)}`
+    await call(env, '/v1/ask/key', { method: 'PUT', token, body: { key } })
+
+    env.SECOND_FACTOR_SECRET = 'a rotated second factor secret'
+
+    const row = env.db.prepare('select id, openai_key from users').get() as {
+      id: string
+      openai_key: string
+    }
+    expect(await opened(AI, row.id, row.openai_key)).toBe(key)
+  })
+
+  test('without it, nothing changes: the factor is kept the way it was', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI })
+    const secret = await enrolled()
+
+    expect(sealedNow().startsWith('own:')).toBe(false)
+    expect(await signsIn(secret, 0)).toBe(true)
+  })
+
+  test('a borrowed seal still opens once it exists, and moves on its next good code', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI })
+    const secret = await enrolled()
+
+    env.SECOND_FACTOR_SECRET = OWN_SECRET
+    expect(await signsIn(secret, 0)).toBe(true)
+    expect(sealedNow().startsWith('own:')).toBe(true)
+
+    // And from then on the AI key's secret is nothing to it.
+    env.OPENAI_KEY_SECRET = 'a rotated AI key secret'
+    expect(await signsIn(secret, 1)).toBe(true)
+  })
+
+  test('but not on a wrong one', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI })
+    await enrolled()
+    const before = sealedNow()
+
+    env.SECOND_FACTOR_SECRET = OWN_SECRET
+    const half = await signInHalfWay(env)
+    await call(env, '/v1/auth/second', { body: { holding: half.json.holding, code: '000000' } })
+
+    expect(sealedNow()).toBe(before)
+  })
+
+  test('and an account nobody signs in to moves with the nightly job', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI })
+    const secret = await enrolled()
+
+    env.SECOND_FACTOR_SECRET = OWN_SECRET
+    await nightly(env)
+    expect(sealedNow().startsWith('own:')).toBe(true)
+
+    env.OPENAI_KEY_SECRET = 'a rotated AI key secret'
+    expect(await signsIn(secret, 0)).toBe(true)
+  })
+
+  test('which leaves alone a seal it cannot open', async () => {
+    env = testEnv({ OPENAI_KEY_SECRET: AI })
+    await enrolled()
+    const before = sealedNow()
+
+    env.OPENAI_KEY_SECRET = 'rotated before the move'
+    env.SECOND_FACTOR_SECRET = OWN_SECRET
+    expect(await resealBorrowed(env)).toBe(0)
+    expect(sealedNow()).toBe(before)
   })
 })
 

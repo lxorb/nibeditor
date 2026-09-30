@@ -44,6 +44,13 @@ export interface Env {
    *  pane says the server cannot keep one yet - which is the right way round: a key
    *  somebody believes is encrypted and is not is worse than no key. */
   OPENAI_KEY_SECRET?: string
+
+  /** What the second factor's authenticator secrets are encrypted under; see
+   *  second.ts. A secret of its own so that rotating either leaves the other
+   *  working. Set with `wrangler secret put SECOND_FACTOR_SECRET`; until it is,
+   *  factors are sealed under `OPENAI_KEY_SECRET` as they were, and once it is they
+   *  move across on their next use and on the next nightly run. */
+  SECOND_FACTOR_SECRET?: string
 }
 
 /** The `send_email` binding's surface, which workers-types does not yet cover. */

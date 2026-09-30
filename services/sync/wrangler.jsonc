@@ -90,6 +90,13 @@
   // makes every key already stored unreadable, and every reader has to paste
   // theirs again; there is no way to read one out and re-encrypt it, which is the
   // point. See src/ask/key.ts and docs/even.md.
+  //
+  // The second factor's authenticator secrets are kept under a secret of their
+  // own, so that rotating the one above locks nobody out:
+  //   wrangler secret put SECOND_FACTOR_SECRET
+  // Until it is set they are sealed under OPENAI_KEY_SECRET as before; once it is,
+  // each moves across on its next good code and on the next nightly run, and after
+  // that night OPENAI_KEY_SECRET can be rotated freely. See src/second.ts.
   "vars": {
     "BLOG_ROOT": "nibeditor.com",
     "BLOG_CNAME_TARGET": "cname.nibeditor.com",
