@@ -180,17 +180,10 @@ async function renameSpace(space: Space) {
   workspace.startRenaming(space.root)
 }
 
-/** And what the name that was typed does. Here rather than on the workspace, which
- *  knows nothing about syncing. */
+/** And what the name that was typed does. The account hears of it the way it hears
+ *  of every file that moves; see workspace/file-ops.ts. */
 export async function commitSpaceName(space: Space, name: string) {
-  const from = space.root
   await workspace.renameSpace(space.id, name)
-
-  // The folder has a new path now, and the mirror is keyed by the old one.
-  // Left alone, the next pass would read this as a space the account has never
-  // seen and upload a second copy of it.
-  const { sync } = await import('./sync.svelte')
-  await sync.renamed(from, space.root, space.name)
 }
 
 /** Who else may reach a space, and at what. The one sheet; see ShareSheet.svelte. */

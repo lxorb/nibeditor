@@ -9,7 +9,6 @@
 import { account } from './account.svelte'
 import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
-import { links } from './link-index.svelte'
 import { prompt } from './prompt.svelte'
 import { sync } from './sync.svelte'
 import { folderOf } from './space-paths'
@@ -119,9 +118,12 @@ class Trash {
         workspace.undone.forget(item.ref)
         await workspace.loadSpaces()
         await workspace.loadTree()
-        // And the links to what came back resolve again at once. A space is read
-        // whole when it is opened, like any other.
-        if (item.kind !== 'space') await links.cameBack(at, item.kind === 'folder')
+        // And what came back is said like any file that came to be, so the links to
+        // it resolve again at once. A space is read whole when it is opened, like
+        // any other.
+        if (item.kind !== 'space') {
+          await workspace.fileCame(at, item.kind === 'folder' ? 'folder' : 'file')
+        }
         return
       }
 

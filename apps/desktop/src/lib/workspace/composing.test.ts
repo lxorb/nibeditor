@@ -32,7 +32,6 @@ vi.mock('../tauri', () => ({
 vi.mock('../link-index.svelte', () => ({
   links: {
     noteSaved: (path: string) => void told.push(`saved ${path}`),
-    noteGone: (path: string) => void told.push(`gone ${path}`),
   },
 }))
 
@@ -55,7 +54,12 @@ function space(notes: Record<string, string>, openAt?: string) {
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
     flush: () => undefined,
-    close: (id: string) => void told.push(`closed ${id}`),
+    // Said once to everything kept by path, the tabs of it among them; see
+    // workspace/file-ops.ts.
+    fileGone: (path: string) => {
+      told.push(`gone ${path}`)
+      return Promise.resolve()
+    },
     reload: (path: string) => void told.push(`reloaded ${path}`),
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)

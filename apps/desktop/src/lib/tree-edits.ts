@@ -13,7 +13,7 @@
  *  filesystem: they are what the tree would look like if the operation
  *  succeeded, which it usually does. */
 
-import { folderOf, nameOf } from './space-paths'
+import { folderOf, nameOf, samePath, within } from './space-paths'
 import type { Entry } from './workspace.svelte'
 
 /** Whether `path` names something inside the folder at `base`, at any depth. */
@@ -59,17 +59,37 @@ export function withoutEntry(tree: Entry, path: string): Entry {
   )
 }
 
-/** The entry at `path`, or null. */
+/** The entry at `path`, or null: the row spelled as asked, and otherwise the row
+ *  the disk would find under that spelling - `plan.md` where the listing has
+ *  `Plan.md`, on a disk that calls them one file. See `samePath` in space-paths.ts. */
 export function entryAt(tree: Entry | null, path: string): Entry | null {
+  return spelledAs(tree, path) ?? (tree ? spelledOtherwise(tree, path) : null)
+}
+
+function spelledAs(tree: Entry | null, path: string): Entry | null {
   if (!tree) return null
   if (tree.path === path) return tree
   if (!path.startsWith(tree.path)) return null
 
   for (const child of tree.children) {
-    const found = entryAt(child, path)
+    const found = spelledAs(child, path)
     if (found) return found
   }
   return null
+}
+
+/** The row a path names a step at a time, each name compared the one way names are. */
+function spelledOtherwise(tree: Entry, path: string): Entry | null {
+  const rest = within(tree.path, path)
+  if (!rest) return rest === '' ? tree : null
+
+  let at: Entry = tree
+  for (const step of rest.split('/')) {
+    const next = at.children.find((child) => samePath(child.name, step, tree.path))
+    if (!next) return null
+    at = next
+  }
+  return at
 }
 
 /** Every path under `entry`, itself included, rewritten from `from` to `to`.

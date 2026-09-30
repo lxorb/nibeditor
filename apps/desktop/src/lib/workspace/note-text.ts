@@ -19,6 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
+import { samePath } from '../space-paths'
 import { applied, changeOf, type Edit, reverse } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
@@ -62,7 +63,7 @@ export async function loadTags(ws: HoldsNotes): Promise<void> {
   await links.scanned()
   // Read again rather than remembered: the scan takes as long as the space is big,
   // and the space that is open may not be the one that was.
-  if (ws.activeSpace.root === root) ws.tags = links.spaceTags
+  if (samePath(ws.activeSpace.root, root)) ws.tags = links.spaceTags
 }
 
 /** Renames a tag, and everything under it, in every note of the space.
@@ -244,7 +245,7 @@ async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promi
   await keep(change.path, before, keeping)
   await writeFile(change.path, after)
 
-  return { path: change.path, content: before, edits: reverse(before, edits) }
+  return { path: change.path, content: before, after, edits: reverse(before, edits) }
 }
 
 /** A note nobody has open, written as the change says. A pane that opened it while
@@ -258,7 +259,7 @@ async function writeClosed(ws: HoldsNotes, change: Change, keeping: Keeping): Pr
   const edits = late?.live.carried(change.edits, change.before)
   if (late && edits) catchUp(late, edits, change.after)
 
-  return { path: change.path, content: change.before, edits: change.back }
+  return { path: change.path, content: change.before, after: change.after, edits: change.back }
 }
 
 /** A note opened from the file a write was about to replace, brought up to it. Its

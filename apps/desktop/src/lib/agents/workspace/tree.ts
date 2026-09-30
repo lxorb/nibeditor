@@ -24,7 +24,7 @@ import { type Entry, workspace } from '../../workspace.svelte'
 import { revOf } from '../docs/rev'
 import { asked } from './asks'
 import { type Call, count, done, flag, maybe, need, needScope, sourceOf } from './call'
-import { heldIndex, indexOf } from './links'
+import { indexOf } from './links'
 import { Refused } from './problem'
 import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
 
@@ -147,7 +147,7 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   if (place.open) await movedIn(place.space.root, from, to)
-  else await movedAway(place, source, onDisk(place, to))
+  else await movedAway(place, source, onDisk(place, to), entry.is_dir)
 
   return done({ from, to })
 }
@@ -155,26 +155,18 @@ export async function moveFile(call: Call): Promise<AgentAnswer> {
 /** A move in a space the reader is not in: the same obligations the tree's own rename
  *  owes, met where that space is. The links are rewritten against that space's index as
  *  it was before the move, which is the only way to find what pointed at the old name;
- *  see `renameFile` in workspace.svelte.ts, which this follows step for step, and
- *  `pathMoved`, which tells each store of the space the path is in.
+ *  see `renameFile` in workspace.svelte.ts, which this follows step for step. Then the
+ *  move is said the way every file operation is, and everything kept by path hears it
+ *  of the space the path is in - that space's index among them; see
+ *  workspace/file-ops.ts.
  *
  *  Not on the reader's own undo, which is about the space in front of them. */
-async function movedAway(place: Place, from: string, to: string): Promise<void> {
+async function movedAway(place: Place, from: string, to: string, folder: boolean): Promise<void> {
   const index = await indexOf(place)
 
   await invoke('rename_note', { from, to })
-  workspace.positions.move(from, to)
   await index.retarget(from, to, place.space.root)
-  workspace.pathMoved(from, to)
-  index.notesMoved(from, to)
-
-  const open = workspace.documentAt(from)
-  if (open) {
-    open.path = to
-    open.name = nameOf(to)
-  }
-
-  await workspace.movedOnAccount(from, to)
+  await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
 }
 
 export async function trashFile(call: Call): Promise<AgentAnswer> {
@@ -207,7 +199,6 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   if (question) return question
 
   await workspace.remove(path, entry.is_dir, sourceOf(call))
-  if (!place.open) heldIndex(place)?.noteGone(path)
 
   return done({ path: relative, trashed: true })
 }

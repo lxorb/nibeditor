@@ -30,7 +30,7 @@
  *  about the notes, so it stays on the machine, in workspace/device.svelte.ts,
  *  beside how far down the list each space was left. */
 
-import { insideItsSpace, nameOf, relativeTo } from '../space-paths'
+import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '../space-paths'
 import { renamedIn, withoutName } from '../tree-order'
 import { isRecord, isString, keep } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
@@ -191,7 +191,7 @@ export class Arranged {
 
     const at = relativeTo(root, folder)
     const shown = this.showing
-    if (shown?.root === root && shown.folder === at) return shown.names
+    if (shown && samePath(shown.root, root) && shown.folder === at) return shown.names
 
     return this.of(root)[at] ?? []
   }
@@ -282,6 +282,8 @@ export class Arranged {
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
+    if (!was) return
+
     const held = this.of(root)
     let next = held
 
@@ -290,9 +292,9 @@ export class Arranged {
     const rekeyed: Record<string, string[]> = {}
     let touched = false
     for (const [folder, names] of Object.entries(held)) {
-      const under = folder === was || folder.startsWith(`${was}/`)
-      rekeyed[under ? now + folder.slice(was.length) : folder] = names
-      touched ||= under
+      const moved = movedTo(folder, was, now, root)
+      rekeyed[moved ?? folder] = names
+      touched ||= moved !== null
     }
     if (touched) next = rekeyed
 
@@ -318,12 +320,14 @@ export class Arranged {
     if (root === null) return
 
     const at = relativeTo(root, path)
+    if (!at) return
+
     const held = this.of(root)
     let next: Record<string, string[]> = {}
     let touched = false
 
     for (const [folder, names] of Object.entries(held)) {
-      if (folder === at || folder.startsWith(`${at}/`)) {
+      if (within(at, folder, root) !== null) {
         touched = true
         continue
       }

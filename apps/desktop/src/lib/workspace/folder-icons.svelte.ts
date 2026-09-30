@@ -26,7 +26,7 @@
  *  Windows. `nib:bookmarks` is this store's twin in every respect, down to
  *  remembering which account a space's map has been folded into. */
 
-import { insideItsSpace, relativeTo } from '../space-paths'
+import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
 import { isRecord, isString, keep } from '../stored'
 import {
   filledIn,
@@ -199,22 +199,23 @@ export class FolderIcons {
    *
    *  The one thing a dotfile inside the folder would have got for free, and the
    *  reason every path that changes has to say so: a key nobody rewrote is an
-   *  icon that quietly stops being drawn. Called from the same three places
-   *  `positions.move` is - a rename, a move, and the undo of either. */
+   *  icon that quietly stops being drawn. Said by every file operation that moves
+   *  one; see workspace/file-ops.ts. */
   moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
+    if (!was) return
 
     const rekeyed = (held: Record<string, string>) => {
       const next: Record<string, string> = {}
       let touched = false
 
       for (const [path, name] of Object.entries(held)) {
-        const under = path === was || path.startsWith(`${was}/`)
-        next[under ? now + path.slice(was.length) : path] = name
-        touched ||= under
+        const moved = movedTo(path, was, now, root)
+        next[moved ?? path] = name
+        touched ||= moved !== null
       }
 
       return touched ? next : null
@@ -229,11 +230,11 @@ export class FolderIcons {
     if (root === null) return
 
     const at = relativeTo(root, path)
+    if (!at) return
+
     const held = this.of(root)
     const kept = (map: Record<string, string>) =>
-      Object.fromEntries(
-        Object.entries(map).filter(([one]) => one !== at && !one.startsWith(`${at}/`)),
-      )
+      Object.fromEntries(Object.entries(map).filter(([one]) => within(at, one, root) === null))
 
     const next = kept(held)
     if (Object.keys(next).length !== Object.keys(held).length) {

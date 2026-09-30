@@ -10,6 +10,7 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller, READER } from '../../automation/caller'
 import { AGENT_WINDOW_VERBS } from '../verbs'
+import { type FileOp, FileOps, type Kind } from '../../workspace/file-ops'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -148,9 +149,12 @@ const workspace = {
     remove: vi.fn(),
   },
   documentAt: () => null,
-  positions: { move: vi.fn() },
-  pathMoved: vi.fn(),
-  movedOnAccount: vi.fn(() => Promise.resolve()),
+  // The one sentence every file operation is said as, heard for real by whatever
+  // follows it; see workspace/file-ops.ts.
+  fileOps: new FileOps(),
+  fileMoved: vi.fn((from: string, to: string, kind: Kind) =>
+    workspace.fileOps.tell({ op: 'moved', from, to, kind, root: '/s/Home' }),
+  ),
 }
 
 vi.mock('../../workspace.svelte', () => ({ workspace }))
@@ -256,6 +260,10 @@ vi.mock('../../link-index.svelte', () => {
     }
     noteGone(...args: unknown[]) {
       indexed.push({ root: this.root, asked: 'noteGone', args })
+    }
+    follow(op: FileOp) {
+      if (op.op === 'moved') this.notesMoved(op.from, op.to)
+      else if (op.op === 'removed') this.noteGone(op.path)
     }
     noteSaved() {
       return undefined
@@ -502,8 +510,17 @@ describe('another space, without switching', () => {
       asked: 'retarget',
       args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home'],
     })
-    expect(workspace.pathMoved).toHaveBeenCalledWith('/s/Home/Soup.md', '/s/Home/Food/Soup.md')
-    expect(workspace.movedOnAccount).toHaveBeenCalled()
+    expect(workspace.fileMoved).toHaveBeenCalledWith(
+      '/s/Home/Soup.md',
+      '/s/Home/Food/Soup.md',
+      'file',
+    )
+    // And the index of Home hears it the way every store does: said once, followed.
+    expect(indexed).toContainEqual({
+      root: '/s/Home',
+      asked: 'notesMoved',
+      args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md'],
+    })
     // The tree's own rename is the open space's, and its undo the reader's.
     expect(workspace.rename).not.toHaveBeenCalled()
     expect(workspace.moveMany).not.toHaveBeenCalled()

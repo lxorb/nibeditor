@@ -1,48 +1,42 @@
 /** Putting the last file operation back.
  *
  *  Seven kinds of operation and seven ways back, each of them a write or two and then
- *  the same three things said to the rest of the app: the index hears what the
- *  file says now, a document open on it takes those words, and the row moves. What
- *  is on the stack and how long it stays there is workspace/undo.svelte.ts; this is
- *  what one entry means when somebody asks for it back; redoing.ts is the way
- *  forward again.
+ *  the operation said the way every file operation is: once, to everything kept by
+ *  path (see workspace/file-ops.ts), with a document open on a file taking the words
+ *  it says now. What is on the stack and how long it stays there is
+ *  workspace/undo.svelte.ts; this is what one entry means when somebody asks for it
+ *  back; redoing.ts is the way forward again.
  *
  *  Its own module because none of it is about the workspace's own state. Every one
  *  of these reads a recorded action and writes the disk, which is why it can be
  *  tested by handing it a stand-in store rather than a workspace. */
 
-import { links } from '../link-index.svelte'
-import { nameOf } from '../space-paths'
+import { oneEdit } from '@nib/markdown/edits'
+import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'
+import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
-import type { NoteDoc, Tab } from './documents.svelte'
-import type { Positions } from './positions'
+import type { NoteDoc } from './documents.svelte'
+import type { Kind } from './file-ops'
 import type { FileAction, FileActions } from './undo.svelte'
 import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
 export interface PutsBack {
   readonly undone: FileActions
-  readonly tabs: Tab[]
-  readonly positions: Positions
   readonly archive: Archive
   openEntry(path: string): Promise<void>
   /** The document a file is open as; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null
-  /** A plane whose name now says the other kind, shown as that kind; see `rekind` in
-   *  workspace.svelte.ts. A rename put back is a rename. */
-  rekind(note: NoteDoc): void
-  close(id: string): void
+  entryAt(path: string): Entry | null
   reload(path: string, content: string): void
   retarget(from: string, to: string): Promise<number>
-  /** Everything kept under a path told it is another now; see `pathMoved` in
-   *  workspace.svelte.ts. One call rather than the stores it tells, so a store that
-   *  starts keeping files by path is told here by being told there. */
-  pathMoved(from: string, to: string): void
-  /** The account told which note moved, so it keeps the id it has always had; see
-   *  `movedOnAccount` in workspace.svelte.ts. An undo is a rename like any other
-   *  and owes the same sentence. */
-  movedOnAccount(from: string, to: string): Promise<void>
+  /** A file operation, said once to everything kept by path; see `fileMoved` in
+   *  workspace.svelte.ts. A rename put back is a rename, a delete put back is a file
+   *  come back, and an import or a copy taken back is files gone. */
+  fileMoved(from: string, to: string, kind: Kind): Promise<void>
+  fileGone(path: string, kind: 'file' | 'folder'): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -56,7 +50,7 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
     switch (action.kind) {
       case 'delete':
         // And the index reads it again, so the links to it resolve at once.
-        await links.cameBack(await putBack(action), false)
+        await ws.fileCame(await putBack(action), 'file')
         break
       case 'merge':
         await unmerge(ws, action)
@@ -110,22 +104,17 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
     const gone = await invoke('delete_note', { path })
       .then(() => true)
       .catch(() => false)
-    if (!gone) continue
-
-    for (const tab of ws.tabs.filter((entry) => entry.path === path)) ws.close(tab.id)
-    links.noteGone(path)
+    if (gone) await ws.fileGone(path, 'file')
   }
 }
 
 /** A copy taken back: what it made, gone again. Outright, like an import's: the
  *  original is still where it was, so there is nothing in the copy the trash would
- *  be keeping safe. A tab open on anything in it is closed. */
+ *  be keeping safe. A tab open on anything in it closes as it goes. */
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
     await invoke(folder ? 'delete_folder' : 'delete_note', { path })
-
-    for (const tab of ws.tabs.filter((one) => one.path?.startsWith(path))) ws.close(tab.id)
-    links.noteGone(path)
+    await ws.fileGone(path, folder ? 'folder' : 'file')
   }
 }
 
@@ -166,35 +155,61 @@ async function unarchive(
   for (const path of action.closed) await ws.openEntry(path)
 }
 
-/** Puts a replacement back: every note that was touched says what it said,
- *  and a note open in a pane takes its old words as the words that changed,
- *  so undoing costs nobody their caret either. */
+/** Puts a replacement back: every note that was touched says what it said, with
+ *  whatever has been typed into it since the replacement kept.
+ *
+ *  The edits that take it back were worked out against the words the replacement
+ *  left, and the reader may have gone on writing. So a note open in a pane takes
+ *  them carried onto the words it holds now, through everything the document
+ *  remembers changing - the same road the replacement itself took (see `writeOpen`
+ *  in workspace/note-text.ts) - and keeps its caret; and a note nobody has open
+ *  takes them carried past the one span its file has changed by since, an edit
+ *  that falls inside that span being the reader's writing and left alone. */
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
   for (const note of action.notes) {
-    await writeFile(note.path, note.content)
-    ws.documentAt(note.path)?.edited(note.edits, note.content)
+    const open = ws.documentAt(note.path)
+    if (open) {
+      open.flush()
+      const edits = open.live.carried(note.edits, note.after, true) ?? note.edits
+      const back = applied(open.text, edits)
+      open.edited(edits, back)
+      await writeFile(note.path, back)
+      continue
+    }
+
+    const now = await invoke<string>('read_note', { path: note.path }).catch(() => note.after)
+    await writeFile(note.path, now === note.after ? note.content : carriedPast(note, now))
   }
+}
+
+/** The edits that take a replacement back, applied to a file that has changed since
+ *  by one span: those before it as they were, those after it moved by what it grew
+ *  or shrank by, and those it overlaps left out. */
+function carriedPast(note: { after: string; edits: readonly Edit[] }, now: string): string {
+  const since = oneEdit(note.after, now)
+  if (!since) return applied(now, note.edits)
+
+  const grew = since.insert.length - (since.to - since.from)
+  const carried = note.edits.flatMap((one) => {
+    if (one.to <= since.from) return [one]
+    if (one.from >= since.to) return [{ ...one, from: one.from + grew, to: one.to + grew }]
+    return []
+  })
+
+  return applied(now, carried)
 }
 
 /** Puts a rename or a move back: the file where it was, and the links that
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
+  const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
   await invoke('rename_note', { from: action.to, to: action.from })
-  ws.positions.move(action.to, action.from)
-
-  const note = ws.documentAt(action.to)
-  if (note) {
-    note.path = action.from
-    note.name = nameOf(action.from)
-    ws.rekind(note)
-  }
 
   // The rename rewrote every link that pointed at the note; putting the name
   // back has to put those back too, which is the same rewrite the other way
-  // round - and, again, before the index is told the note moved.
+  // round - and, again, before anything is told the note moved.
   if (action.rewrote) await ws.retarget(action.to, action.from)
-  ws.pathMoved(action.to, action.from)
-  await ws.movedOnAccount(action.to, action.from)
+  await ws.fileMoved(action.to, action.from, kind)
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded
@@ -213,8 +228,6 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
   await writeFile(action.from, action.fromContent)
   await invoke('delete_note', { path: action.created }).catch(() => undefined)
-  links.noteGone(action.created)
-
-  for (const tab of ws.tabs.filter((one) => one.path === action.created)) ws.close(tab.id)
+  await ws.fileGone(action.created, 'file')
   ws.reload(action.from, action.fromContent)
 }

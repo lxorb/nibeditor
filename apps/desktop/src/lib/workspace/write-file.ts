@@ -11,7 +11,8 @@
  *  `noteSaved` knows a note from a canvas, a page note and a website by its name,
  *  so this is the same call whatever kind of file is written. The editor's own save
  *  tells the index itself, between the write and the rest of what a save does; see
- *  saving.svelte.ts. Bytes and copies owe the index the same sentence. */
+ *  saving.svelte.ts. Bytes owe the index the same sentence; a copy is a file
+ *  operation and is said as one. */
 
 import { links } from '../link-index.svelte'
 import { invoke } from '../tauri'
@@ -27,8 +28,8 @@ export async function writeBytes(path: string, base64: string): Promise<void> {
   await links.cameBack(path, false)
 }
 
-/** A file or a folder copied, byte for byte; see `copy_path` in notes.rs. */
-export async function copyPath(from: string, to: string, folder: boolean): Promise<void> {
+/** A file or a folder copied, byte for byte; see `copy_path` in notes.rs. What it
+ *  made is a file operation, which the caller says; see workspace/file-ops.ts. */
+export async function copyPath(from: string, to: string): Promise<void> {
   await invoke('copy_path', { from, to })
-  await links.cameBack(to, folder)
 }

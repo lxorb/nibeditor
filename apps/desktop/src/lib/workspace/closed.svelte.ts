@@ -8,6 +8,8 @@
  *  Bounded, and the oldest goes first: a sitting that closes a hundred notes
  *  should not carry the text of all hundred around with it. */
 
+import { movedTo, nameOf } from '../space-paths'
+import type { FileOp } from './file-ops'
 import type { ClosedTab } from './session'
 
 /** Far more than anybody reaches back through, and few enough that what is kept
@@ -33,6 +35,20 @@ export class ClosedTabs {
     if (last) this.stack = this.stack.slice(0, -1)
 
     return last
+  }
+
+  /** A closed tab of a file that has since moved comes back on the file where it is
+   *  now, rather than on a name nothing answers to. */
+  follow(op: FileOp) {
+    if (op.op !== 'moved') return
+
+    const stack = this.stack.map((closed) => {
+      const path = closed.draft.path === null ? null : movedTo(closed.draft.path, op.from, op.to)
+      return path === null
+        ? closed
+        : { ...closed, draft: { ...closed.draft, path, name: nameOf(path) } }
+    })
+    if (stack.some((one, at) => one !== this.stack[at])) this.stack = stack
   }
 
   /** What the session had written down, oldest first. Trimmed on the way in as

@@ -60,10 +60,11 @@ import {
   nameOf,
   noteName,
   relativePath,
-  relativeTo,
+  within,
 } from './space-paths'
 import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
+import type { FileOp } from './workspace/file-ops'
 
 /** One place a link was found, as a row in the panel. */
 export interface Reference {
@@ -751,10 +752,23 @@ class Links {
   }
 
   /** A path the app holds as one the index speaks in, or null for a note that
-   *  lives outside the open space, which has no place in this space's links. */
+   *  lives outside the open space, which has no place in this space's links - a
+   *  space called `Notes 2` beside this one's `Notes` among them. */
   private relative(path: string): string | null {
     const root = this.root
-    return root && path.startsWith(root) ? relativeTo(root, path) : null
+    return root ? within(root, path) : null
+  }
+
+  /** A file operation, heard the way every store keeping files by path hears one;
+   *  see workspace/file-ops.ts. A space that moved is read again when it is next
+   *  listed, which is what `loadTree` asks for a root this index is not of. */
+  follow(op: FileOp): Promise<void> | undefined {
+    if (op.kind === 'space') return undefined
+    if (op.op === 'moved') this.notesMoved(op.from, op.to)
+    else if (op.op === 'removed') this.noteGone(op.path)
+    else return this.cameBack(op.path, op.kind === 'folder')
+
+    return undefined
   }
 
   /** What the editor is handed: the notes, which one is open, and a way to read

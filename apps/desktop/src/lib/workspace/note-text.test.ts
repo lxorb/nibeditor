@@ -51,6 +51,8 @@ vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged')
 const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
   await import('./note-text')
 const { FileActions } = await import('./undo.svelte')
+const { undoLastFileAction } = await import('./undoing')
+type PutsBack = import('./undoing').PutsBack
 const { NoteDoc } = await import('./documents.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
 
@@ -123,6 +125,7 @@ describe('a replacement across the space', () => {
           {
             path: `${SPACE}/a.md`,
             content: 'before',
+            after: 'after',
             edits: [{ from: 0, to: 5, insert: 'before' }],
           },
         ],
@@ -292,6 +295,7 @@ describe('a note written from a hover card', () => {
           {
             path: `${SPACE}/a.md`,
             content: 'the plan for monday',
+            after: 'the plan for tuesday',
             // `mon` became `tues`, and nothing either side of it moved.
             edits: [{ from: 13, to: 17, insert: 'mon' }],
           },
@@ -414,6 +418,7 @@ describe('a replacement while the reader types', () => {
           {
             path: NOTE,
             content: 'Re: the plan for monday',
+            after: 'Re: the plan for tuesday',
             edits: [{ from: 17, to: 21, insert: 'mon' }],
           },
         ],
@@ -437,5 +442,37 @@ describe('a replacement while the reader types', () => {
 
     expect(disk.get(`${SPACE}/other.md`)).toBe('also #job')
     expect(live()).toBe('- [ ] now call #job')
+  })
+})
+
+/** And the other way round: a replacement taken back after the reader went on
+ *  typing. What the undo held was the words as they were before the replacement,
+ *  and it put those back whole - over whatever had been typed since. The edits that
+ *  take the replacement back are carried onto the words as they are now instead, the
+ *  way the replacement's own were; see `putWordsBack` in workspace/undoing.ts. */
+describe('a replacement taken back while the reader types', () => {
+  const NOTE = `${SPACE}/plan.md`
+
+  test('keeps what was typed after it, in an open note', async () => {
+    const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
+    await writeNoteText(ws, NOTE, 'the plan for monday', 'the plan for tuesday')
+    type(0, 'Re: ')
+
+    await undoLastFileAction(ws as unknown as PutsBack)
+
+    expect(live()).toBe('Re: the plan for monday')
+    note.flush()
+    expect(note.text).toBe('Re: the plan for monday')
+    expect(disk.get(NOTE) === live() || note.dirty).toBe(true)
+  })
+
+  test('and in a note that was closed again after the typing was written', async () => {
+    const { ws } = space({ [NOTE]: 'the plan for monday' })
+    await writeNoteText(ws, NOTE, 'the plan for monday', 'the plan for tuesday')
+    disk.set(NOTE, 'Re: the plan for tuesday')
+
+    await undoLastFileAction(ws as unknown as PutsBack)
+
+    expect(disk.get(NOTE)).toBe('Re: the plan for monday')
   })
 })

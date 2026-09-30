@@ -24,6 +24,8 @@ interface Held {
   built: Promise<void>
   /** When it is let go, unless asked again first. */
   going: ReturnType<typeof setTimeout> | undefined
+  /** Stops it following the file operations; see workspace/file-ops.ts. */
+  stop: () => void
 }
 
 const held = new Map<string, Held>()
@@ -40,14 +42,22 @@ export async function indexOf(place: Place): Promise<Links> {
   if (!found) {
     const index = spaceLinks()
     index.archivedIn = (of) => workspace.archive.keysOf(of)
-    found = { index, built: index.build(root), going: undefined }
+    // A file of that space moving or going is said once, like any other, and this
+    // index hears it the way the window's does; one of another space is not its own.
+    const stop = workspace.fileOps.follow((op) => index.follow(op))
+    found = { index, built: index.build(root), going: undefined, stop }
     held.set(root, found)
   }
 
   clearTimeout(found.going)
-  found.going = setTimeout(() => held.delete(root), KEPT)
+  found.going = setTimeout(() => letGo(root), KEPT)
   await found.built
   return found.index
+}
+
+function letGo(root: string) {
+  held.get(root)?.stop()
+  held.delete(root)
 }
 
 /** The index of another space, only when one is already held: what a write there
@@ -58,6 +68,8 @@ export function heldIndex(place: Place): Links | null {
 
 /** Every index of another space let go: what the tests start from. */
 export function forgetIndexes(): void {
-  for (const one of held.values()) clearTimeout(one.going)
-  held.clear()
+  for (const [root, one] of held) {
+    clearTimeout(one.going)
+    letGo(root)
+  }
 }

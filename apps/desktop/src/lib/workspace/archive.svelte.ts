@@ -6,7 +6,7 @@
  *  archived. A folder stands for everything under it. See archive-map.ts for how two
  *  copies meet, and docs/archive.md. */
 
-import { insideItsSpace, relativeTo } from '../space-paths'
+import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
 import { isNumber, isRecord, keep } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
 
@@ -46,8 +46,8 @@ export function coveredBy(keys: ReadonlySet<string>, at: string): string | null 
   }
 }
 
-function under(path: string, key: string): boolean {
-  return path === key || path.startsWith(`${key}/`)
+function under(path: string, key: string, root: string): boolean {
+  return !!key && within(key, path, root) !== null
 }
 
 interface Kept extends Folded {
@@ -113,7 +113,10 @@ export class Archive {
   /** Whether a path is archived, or holds something that is: what deleting asks. */
   holdsIn(root: string, path: string): boolean {
     const at = relativeTo(root, path)
-    return this.coverIn(root, path) !== null || [...this.keysOf(root)].some((one) => under(one, at))
+    return (
+      this.coverIn(root, path) !== null ||
+      [...this.keysOf(root)].some((one) => under(one, at, root))
+    )
   }
 
   /** A row renamed or moved: archived at the new path, taken back at the old. */
@@ -122,8 +125,8 @@ export class Archive {
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
-    const carried = [...this.keysOf(root)].filter((one) => under(one, was))
-    const landed = carried.map((one) => now + one.slice(was.length))
+    const carried = [...this.keysOf(root)].filter((one) => under(one, was, root))
+    const landed = carried.map((one) => movedTo(one, was, now, root) ?? one)
     if (carried.length) void this.change(root, landed, carried)
   }
 

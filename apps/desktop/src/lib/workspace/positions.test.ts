@@ -54,10 +54,13 @@ describe('where a note was last looked at', () => {
 })
 
 describe('a note that moves', () => {
+  const moved = (from: string, to: string, kind: 'file' | 'folder' = 'file') =>
+    ({ op: 'moved', from, to, kind, root: '/' }) as const
+
   test('takes its place along and leaves none behind', () => {
     const places = new Positions()
     places.remember('/a.md', 3, 4)
-    places.move('/a.md', '/f/a.md')
+    places.follow(moved('/a.md', '/f/a.md'))
 
     expect(places.of('/f/a.md')).toMatchObject({ cursor: 3, scroll: 4 })
     expect(places.of('/a.md')).toEqual({})
@@ -65,8 +68,22 @@ describe('a note that moves', () => {
 
   test('is left alone when there was nothing to move', () => {
     const places = new Positions()
-    places.move('/a.md', '/f/a.md')
+    places.follow(moved('/a.md', '/f/a.md'))
     expect(places.all).toEqual({})
+  })
+
+  test('and every note in a folder that moves takes its own, and no note beside it', () => {
+    const places = new Positions()
+    places.remember('/Work/a.md', 1, 1)
+    places.remember('/Work/deep/b.md', 2, 2)
+    places.remember('/Workshop.md', 3, 3)
+    places.follow(moved('/Work', '/Play', 'folder'))
+
+    expect(Object.keys(places.all).sort()).toEqual([
+      '/Play/a.md',
+      '/Play/deep/b.md',
+      '/Workshop.md',
+    ])
   })
 })
 

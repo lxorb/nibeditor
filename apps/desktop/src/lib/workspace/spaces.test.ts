@@ -39,14 +39,11 @@ const { applySpaceOrder, deleteSpace, loadSpaces, moveSpace, renameSpace } =
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('../workspace.svelte').Space
 
-/** A store holding the spaces given, with the first of them open. The five things
- *  a space's own stores are asked are recorded rather than done. */
+/** A store holding the spaces given, with the first of them open. What a space
+ *  moving or going is said as is recorded rather than done: who follows it is
+ *  workspace/file-ops.ts, tested with the store in file-ops.store.test.ts. */
 function store(spaces: Space[]) {
   const told: string[] = []
-  const follows = (name: string) => ({
-    spaceMoved: (from: string, to: string) => void told.push(`${name} ${from} -> ${to}`),
-    forget: (root: string) => void told.push(`${name} forgot ${root}`),
-  })
 
   const ws = {
     // Copies: a rename writes the new name and root into the space it was given,
@@ -58,20 +55,14 @@ function store(spaces: Space[]) {
     panel: null,
     notes: [],
     tabs: [],
-    documents: [],
-    bookmarks: {
-      ...follows('bookmarks'),
-      migrate: (roots: string[]) => void told.push(`migrated ${roots.join()}`),
+    fileMoved: (from: string, to: string, kind: string) => {
+      told.push(`moved ${kind} ${from} -> ${to}`)
+      return Promise.resolve()
     },
-    device: {
-      moveIcon: (from: string, to: string) => void told.push(`icon ${from} -> ${to}`),
-      moveOrder: (from: string, to: string) => void told.push(`order ${from} -> ${to}`),
+    fileGone: (path: string, kind: string) => {
+      told.push(`gone ${kind} ${path}`)
+      return Promise.resolve()
     },
-    folderIcons: follows('folder icons'),
-    arranged: follows('arranged'),
-    graphSettings: follows('graph'),
-    excluded: follows('left out'),
-    archive: follows('archive'),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
     loadTree: () => Promise.resolve(),
@@ -177,16 +168,7 @@ describe('a space renamed', () => {
     await renameSpace(ws, 'w', 'Studio')
 
     expect(ws.spaces[0]).toEqual({ id: 'w', name: 'Studio', root: '/spaces/Studio' })
-    expect(told).toEqual([
-      'icon /spaces/Work -> /spaces/Studio',
-      'order /spaces/Work -> /spaces/Studio',
-      'folder icons /spaces/Work -> /spaces/Studio',
-      'arranged /spaces/Work -> /spaces/Studio',
-      'graph /spaces/Work -> /spaces/Studio',
-      'left out /spaces/Work -> /spaces/Studio',
-      'archive /spaces/Work -> /spaces/Studio',
-      'bookmarks /spaces/Work -> /spaces/Studio',
-    ])
+    expect(told).toEqual(['moved space /spaces/Work -> /spaces/Studio'])
   })
 
   test('and the field it was typed in is done with, whatever the folder answers', async () => {
@@ -208,18 +190,12 @@ describe('a space renamed', () => {
 })
 
 describe('a space deleted', () => {
-  test('is forgotten by each of its own stores, and the next one opens', async () => {
+  test('is said once, as a space that went, and the next one opens', async () => {
     const { ws, told } = store([WORK, HOME])
     await deleteSpace(ws, 'w')
 
     expect(ws.spaces.map((one) => one.id)).toEqual(['h'])
-    expect(told).toEqual([
-      'folder icons forgot /spaces/Work',
-      'arranged forgot /spaces/Work',
-      'graph forgot /spaces/Work',
-      'left out forgot /spaces/Work',
-      'archive forgot /spaces/Work',
-    ])
+    expect(told).toEqual(['gone space /spaces/Work'])
     expect(ws.activeSpaceId).toBe('h')
   })
 

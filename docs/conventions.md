@@ -46,6 +46,8 @@ kind; a second copy is the bug the file's own header describes.
 | Wait, then. | `apps/desktop/src/lib/timing.ts`: `waited` for a pause, `afterQuiet` for after the typing stops, `onceAFrame` for work that reads the layout. `breathe.ts` is the other half - handing the thread back inside a long pass. |
 | How long may it move for? | `apps/desktop/src/lib/motion.ts`: `dur`, and `LAYER` for every layer the app puts up. A bare number is a transition that ignores a reader who asked for less movement; `test/motion.test.ts` forbids one. |
 | Where does this path point? | `apps/desktop/src/lib/space-paths.ts`. `nameOf` and `folderOf` split a path whichever separator wrote it; `relativeTo`, `withinSpace`, `insideSpace` and `insideAnyOf` convert; `insideItsSpace` judges what a store may keep. |
+| Are these two paths one file? | The same file: `samePath`, `within` and `movedTo`, which set separators, composition and, where the space's disk does, case aside (each space's disk is asked once, `askCase`); `pathKey` for a set of them. A rename's own question, whether a name is written differently at all, is `sameSpelling`. `test/one-path.test.ts` forbids a bare `===` or `startsWith` between two paths in the workspace. |
+| Something kept by path, and a file moves or goes? | `apps/desktop/src/lib/workspace/file-ops.ts`. Every operation says `created`, `moved` or `removed` once through `workspace.fileMoved`, `fileGone` and `fileCame`; a store follows (`keeping` for one kept under each space's root) and no operation names it. |
 | What is a row of a menu? | `apps/desktop/src/lib/menu-item.ts`: `MenuItem` and `DIVIDER`, for a row's own menu, the app menu and the palette alike. What a row *draws* stays each list's own - a hint is a `kbd` in one and a word in another. |
 | Dropping a key from a map? | `apps/desktop/src/lib/records.ts`: `without`, `withOrWithout`. |
 
@@ -64,6 +66,7 @@ tree, the tabs and the panes. What has a rule of its own lives in
 | `composing.ts` | One note out of another, and two into one. |
 | `spaces.ts` | The list of spaces: which exist, in what order, which is open. |
 | `undoing.ts` | What each kind of file operation means going back. `undo.svelte.ts` is the stack it reads. |
+| `file-ops.ts` | Every file operation said once, and everything kept by path following it: the open documents and tabs, positions, recents, the per-space stores, the link index, the papers and the account. |
 | `panels.ts` | Which side a panel sits on. Pure: it answers what the three fields would be, and the store writes them. |
 | the rest | One store each: `bookmarks`, `closed`, `device`, `documents`, `excluded`, `folder-icons`, `graph-settings`, `layouts`, `pane-tree`, `panes`, `positions`, `selection`, `session`, `zones`. |
 

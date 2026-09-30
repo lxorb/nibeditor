@@ -34,7 +34,6 @@ const {
   BOOKMARK_KINDS,
   Bookmarks,
   bookmarkList,
-  bookmarksFromPins,
   isBookmark,
   mergeBookmarks,
   MOST_BOOKMARKS,
@@ -121,33 +120,6 @@ describe('merging what a machine had into what the account holds', () => {
     const merged = mergeBookmarks(theirs, mine)
     expect(merged).toHaveLength(MOST_BOOKMARKS)
     expect(merged).not.toContainEqual(note('mine.md'))
-  })
-})
-
-describe('the pins an older build kept', () => {
-  test('become the bookmarks of the space each one is in', () => {
-    const found = bookmarksFromPins(
-      ['/Notes/Read me.md', '/Notes/Work', '/Notes/Work/Plan.markdown', '/Other/x.md'],
-      ['/Notes', '/Other'],
-    )
-
-    expect(found).toEqual({
-      '/Notes': [note('Read me.md'), folder('Work'), note('Work/Plan.markdown')],
-      '/Other': [note('x.md')],
-    })
-  })
-
-  test('go when they belong to no space this machine has', () => {
-    expect(bookmarksFromPins(['/Gone/a.md'], ['/Notes'])).toEqual({})
-  })
-
-  test('are not claimed by a space that merely starts the same way', () => {
-    expect(bookmarksFromPins(['/Notebook/a.md'], ['/Note'])).toEqual({})
-  })
-
-  test('go to the innermost space that holds them', () => {
-    const found = bookmarksFromPins(['/Notes/Inner/a.md'], ['/Notes', '/Notes/Inner'])
-    expect(found).toEqual({ '/Notes/Inner': [note('a.md')] })
   })
 })
 
@@ -335,47 +307,6 @@ describe('signing in', () => {
     // as an account that holds none.
     expect(marks.adopt('/Notes', undefined as unknown as Bookmark[], 'u1')).toEqual([note('a.md')])
     expect(marks.list).toEqual([note('a.md')])
-  })
-})
-
-describe('the migration from pins', () => {
-  test('runs once and takes the old entry with it', () => {
-    localStorage.setItem('nib:pinned', JSON.stringify(['/Notes/a.md', '/Notes/Work']))
-
-    const marks = store()
-    marks.migrate(['/Notes'])
-    expect(marks.list).toEqual([note('a.md'), folder('Work')])
-    expect(localStorage.getItem('nib:pinned')).toBeNull()
-
-    // A second run has nothing left to read, so nothing is doubled.
-    marks.migrate(['/Notes'])
-    expect(marks.list).toEqual([note('a.md'), folder('Work')])
-  })
-
-  test('leaves bookmarks that are already there in front', () => {
-    localStorage.setItem('nib:pinned', JSON.stringify(['/Notes/a.md']))
-
-    const marks = store()
-    marks.toggle(search('tea'))
-    marks.migrate(['/Notes'])
-
-    expect(marks.list).toEqual([search('tea'), note('a.md')])
-  })
-
-  test('is silent when there were never any pins', () => {
-    const marks = store()
-    marks.migrate(['/Notes'])
-
-    expect(marks.list).toEqual([])
-  })
-
-  test('drops a pin whose folder is not a space any more', () => {
-    localStorage.setItem('nib:pinned', JSON.stringify(['/Gone/a.md']))
-
-    const marks = store()
-    marks.migrate(['/Notes'])
-    expect(marks.list).toEqual([])
-    expect(localStorage.getItem('nib:pinned')).toBeNull()
   })
 })
 

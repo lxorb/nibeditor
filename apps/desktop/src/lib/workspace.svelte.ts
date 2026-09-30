@@ -15,12 +15,18 @@ import { links } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
+  askCase,
   folderOf,
   insideSpace,
   isMarkdownPath,
   nameOf,
   noteName,
+  pathKey,
+  pathKeys,
   relativeTo,
+  samePath,
+  sameSpelling,
+  within,
   withinSpace,
 } from './space-paths'
 import { t } from './i18n.svelte'
@@ -31,7 +37,6 @@ import { scanFootnotes } from './footnotes'
 import { lineOfHeading, scanHeadings } from './outline'
 import type { Change } from './search/apply'
 import { warm } from './search/warm.svelte'
-import { within } from './sync/mirror'
 import { startup } from './startup.svelte'
 import { nextTask } from './breathe'
 import { mark, markPainted } from './trace'
@@ -70,6 +75,7 @@ import { byPin, pinnedRun, placeFor } from './workspace/pinning'
 import { type Around, closedAround } from './workspace/closing-around'
 import { alongOf, madeFirst, type Side } from './workspace/zones'
 import { Positions } from './workspace/positions'
+import { FileOps, keeping, type Kind } from './workspace/file-ops'
 import * as composing from './workspace/composing'
 import * as panels from './workspace/panels'
 import type { Sides } from './workspace/panels'
@@ -358,6 +364,36 @@ class Workspace {
   /** Where each note was last being read; see workspace/positions.ts. */
   positions = new Positions()
 
+  /** Every file operation, said once by the operation that did it; see
+   *  workspace/file-ops.ts. */
+  readonly fileOps = new FileOps()
+
+  constructor() {
+    // Everything here kept by path follows what the operations say, and nothing an
+    // operation does names one of them. The open documents first, so that anything
+    // asking about a note between two followers already meets its new path.
+    this.fileOps.follow((op) => this.opened.follow(op, (id) => this.close(id)))
+    this.fileOps.follow((op) => this.positions.follow(op))
+    this.fileOps.follow((op) => this.device.follow(op))
+    this.fileOps.follow((op) => this.closed.follow(op))
+    for (const store of [
+      this.bookmarks,
+      this.folderIcons,
+      this.arranged,
+      this.excluded,
+      this.archive,
+      this.graphSettings,
+    ]) {
+      this.fileOps.follow(keeping(store))
+    }
+    this.fileOps.follow((op) => links.follow(op))
+    this.fileOps.follow((op) => {
+      if (op.op === 'moved' && op.kind !== 'space') {
+        void papers().then(({ paperMoved }) => paperMoved(op.from, op.to))
+      } else if (op.op === 'removed') void papers().then(({ paperGone }) => paperGone(op.path))
+    })
+  }
+
   readonly activeSpace = $derived(
     this.spaces.find((space) => space.id === this.activeSpaceId) ?? null,
   )
@@ -425,7 +461,7 @@ class Workspace {
     const path = this.active?.path ?? this.recent[0] ?? null
     if (root === undefined || path === null) return null
 
-    return path.startsWith(root) ? relativeTo(root, path) : null
+    return within(root, path)
   })
 
   /** The tab a side panel is held on, or null while the panels follow whichever
@@ -449,7 +485,7 @@ class Workspace {
     const path = this.panelTab?.path ?? null
     if (root === undefined || path === null) return null
 
-    return path.startsWith(root) ? relativeTo(root, path) : null
+    return within(root, path)
   })
 
   /** Holds the panels on a tab, or lets them follow again. */
@@ -661,7 +697,7 @@ class Workspace {
     else if (state.tabs?.length) await this.restoreStrip(state.tabs, state.active ?? 0)
     else {
       for (const path of state.openPaths ?? []) {
-        await this.openEntry(path, { activate: path === state.activePath })
+        await this.openEntry(path, { activate: samePath(path, state.activePath) })
       }
     }
 
@@ -699,7 +735,10 @@ class Workspace {
     return this.opened.arranging(async () => {
       const made: Tab[] = []
 
-      for (const draft of drafts) {
+      for (const written of drafts) {
+        // Spelled as the listing spells it, whatever the sitting wrote down.
+        const draft = written.path ? { ...written, path: this.spelled(written.path) } : written
+
         // A tab from a sitting before nib stopped opening files from outside its
         // spaces goes quietly: nothing in nib opens that file any more.
         if (draft.path && !(await this.opens(draft.path))) {
@@ -750,7 +789,7 @@ class Workspace {
    *  words. */
   private already(draft: Draft): NoteDoc | null {
     const shared = draft.share ? this.opened.withKey(draft.share) : null
-    if (shared?.path === draft.path) return shared
+    if (shared && samePath(shared.path, draft.path)) return shared
 
     return draft.path ? this.opened.at(draft.path) : null
   }
@@ -1221,7 +1260,7 @@ class Workspace {
     // space, or of a folder the list leaves out is not a row of this list.
     if (!entry) {
       const folder = folderOf(path)
-      if (folder === this.tree?.path || this.entryAt(folder)?.is_dir) this.born(path)
+      if (samePath(folder, this.tree?.path) || this.entryAt(folder)?.is_dir) this.born(path)
       return
     }
 
@@ -1234,7 +1273,7 @@ class Workspace {
    *  workspace/saving.svelte.ts. */
   async discard(path: string) {
     this.hideEntry(path)
-    links.noteGone(path)
+    await this.fileGone(path, 'file')
     try {
       await invoke('delete_note', { path })
     } finally {
@@ -1327,13 +1366,14 @@ class Workspace {
    *  and, when a link named a page, turns to it.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  openPdf(path: string, page: number | null = null, how: OpenHow = {}) {
+  openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
     // Not in the glasses' plugin, which has no viewer to draw one: a link or a search
     // hit asks here directly rather than through `openerFor`. See `pdfSurface`.
     if (__EVEN_PLUGIN__) return
 
+    const path = this.spelled(asked)
     const paneId = this.panes.focusedId
-    const existing = this.tabs.find((tab) => tab.kind === 'pdf' && tab.path === path)
+    const existing = this.tabs.find((tab) => tab.kind === 'pdf' && samePath(tab.path, path))
 
     if (existing) {
       if (how.activate !== false) this.activeTabId = existing.id
@@ -1364,11 +1404,12 @@ class Workspace {
    *  note's tab does: whether it keeps itself, the mark, Ctrl+S and the closing
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
-  async openCanvas(path: string, how: OpenHow = {}) {
+  async openCanvas(asked: string, how: OpenHow = {}) {
     // Not in the glasses' plugin, which has no plane to draw: a link asks here
     // directly rather than through `openerFor`. See `canvasSurface`.
     if (__EVEN_PLUGIN__) return
 
+    const path = this.spelled(asked)
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
 
@@ -1498,12 +1539,13 @@ class Workspace {
    *  browser has all four, and the file is still theirs in the space - so a website is
    *  a bookmark there, which is what a website on a phone is worth being. Tauri has
    *  no child webviews on a phone either; see docs/web-tabs.md. */
-  async openWeb(path: string, how: OpenHow = {}) {
+  async openWeb(asked: string, how: OpenHow = {}) {
     // Not in front of a pair of glasses, for the reason a canvas is not: there is no
     // page on seven lines of a heads-up display, and the viewer is not in that build
     // at all. See vite.even.config.ts.
     if (isPlugin()) return
 
+    const path = this.spelled(asked)
     // Already open, before anything is written: the conversion below makes a file.
     const held = this.opened.at(path)
     if (held) {
@@ -1681,7 +1723,7 @@ class Workspace {
     const content = writeShortcut('', title, new Date())
 
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
     const file = this.document({
       kind: 'web',
@@ -1823,10 +1865,11 @@ class Workspace {
    *  between words and a file works here without knowing what a page is.
    *
    *  `page` counts from one, and null means wherever the tab was left. */
-  async openPages(path: string, page: number | null = null, how: OpenHow = {}) {
+  async openPages(asked: string, page: number | null = null, how: OpenHow = {}) {
     // Not in the plugin either, for the canvas's reason. See `pagesSurface`.
     if (__EVEN_PLUGIN__) return
 
+    const path = this.spelled(asked)
     const tab = this.showTab(
       await this.opened.opening(path, () => this.openDeck(path, page, how)),
       how,
@@ -1888,7 +1931,7 @@ class Workspace {
     const content = blankPages(modes.pagesPaper)
 
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
     const file = this.document({
       kind: 'pages',
@@ -1931,12 +1974,12 @@ class Workspace {
    *  want on screen. */
   async leaveTheWelcomeNote(): Promise<void> {
     const only = this.tabs.length === 1 ? this.tabs[0] : null
-    if (only?.path !== WELCOME_PATH || only.dirty) return
+    if (!only || !samePath(only.path, WELCOME_PATH) || only.dirty) return
 
     // Where they were last, if that note is still there, and otherwise the first
     // note that is theirs.
-    const mine = this.notes.filter((one) => one.path !== WELCOME_PATH)
-    const back = this.recent.find((path) => mine.some((one) => one.path === path))
+    const mine = this.notes.filter((one) => !samePath(one.path, WELCOME_PATH))
+    const back = this.recent.find((path) => mine.some((one) => samePath(one.path, path)))
     const next = back ?? mine[0]?.path
     if (!next) return
 
@@ -2067,6 +2110,16 @@ class Workspace {
     // the bridge and the parse, and here to `tree painted` is the rows. See tree.rs.
     mark('tree read')
 
+    // And whether this space's disk tells `Plan.md` from `plan.md`, once, in the
+    // index's turn: nothing but the listing goes before the first frame. See
+    // space-paths.ts and startup.svelte.ts.
+    void startup.turn('index').then(() =>
+      askCase(
+        root,
+        this.files.map((one) => one.path),
+      ),
+    )
+
     // Rows that went away take themselves out of the selection.
     this.picked.keepOnly((path) => !!this.entryAt(path))
     this.keepNaming()
@@ -2081,7 +2134,7 @@ class Workspace {
     // on a space of a few thousand notes is the same thing. Opening a second space
     // is the case that is not the launch: see `turn` in startup.svelte.ts, which is
     // what makes the frame with the rows in it go out first either way.
-    if (links.rootOf() !== root) {
+    if (!samePath(links.rootOf(), root)) {
       void links.build(root)
       // And the search holds the space it is about to be asked about, a turn after
       // the index; see search/warm.svelte.ts. The papers of the space are the same
@@ -2123,9 +2176,10 @@ class Workspace {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
-    if (target === from || intoFolder.startsWith(from)) return
+    if (samePath(target, from) || within(from, intoFolder) !== null) return
 
     // The row is in its new folder as soon as the drop lands.
+    const kind = this.kindAt(from)
     this.showMove(from, target)
 
     // And back where it was if the move did not happen - something already there,
@@ -2138,23 +2192,12 @@ class Workspace {
       await this.loadTree()
       throw error
     }
-    this.positions.move(from, target)
 
     // A note that moved is a note every link to it has to be pointed at again;
-    // see `rename` below, including why this comes before the index is told.
+    // see `renameFile`, including why this comes before everything is told.
     const rewrote = (await this.retarget(from, target)) > 0
-    this.pathMoved(from, target)
     this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
-
-    // One document per file, so a path that changes moves rather than being written
-    // over one of several; see workspace/open.ts.
-    const note = this.opened.at(from)
-    if (note) {
-      note.path = target
-      note.name = name
-    }
-
-    await this.movedOnAccount(from, target)
+    await this.fileMoved(from, target, kind)
     await this.loadTree()
     await this.unnest(folderOf(from))
     this.persist()
@@ -2217,7 +2260,9 @@ class Workspace {
     await this.open(own?.path ?? folderNotePath(path), { ...options, blank: !own })
   }
 
-  async open(path: string, options: OpenHow & { blank?: boolean } = {}) {
+  async open(asked: string, options: OpenHow & { blank?: boolean } = {}) {
+    const path = this.spelled(asked)
+
     // One open of a file at a time, whoever asked: a second click on the row, a link
     // followed twice, a note clicked while the session is still reading that very
     // note. A file already open answers with its document and reads nothing; one
@@ -2322,6 +2367,15 @@ class Workspace {
     return note
   }
 
+  /** A path as the listing spells it, which is how the disk spells it: `plan.md`
+   *  asked for where the list has `Plan.md` opens `Plan.md`, so a file is one
+   *  document, in one room, on one row, however a link or a caller spelled it - the
+   *  way git goes on remembering `Makefile` when a listing says `makefile`. A file
+   *  the listing does not hold yet is as it was asked for. */
+  private spelled(path: string): string {
+    return this.entryAt(path)?.path ?? path
+  }
+
   /** Where the note was last being read on this device. */
   private placeAt(tab: Tab, path: string) {
     const place = this.positions.of(path)
@@ -2372,7 +2426,7 @@ class Workspace {
    *  rest of that trail a road not taken. Arriving where it already is changes
    *  nothing, so opening the same note twice does not fill the trail with it. */
   private walked(tab: Tab, path: string) {
-    if (tab.trail[tab.at] === path) return
+    if (samePath(tab.trail[tab.at], path)) return
 
     const behind = tab.trail.slice(0, tab.at + 1)
     tab.trail = [...behind, path].slice(-TRAIL)
@@ -2408,7 +2462,7 @@ class Workspace {
     this.flush()
     const note = await this.opened.opening(path, () => this.stepped(tab, path))
     if (!note) {
-      tab.trail = tab.trail.filter((one) => one !== path)
+      tab.trail = tab.trail.filter((one) => !samePath(one, path))
       tab.at = Math.min(tab.at, Math.max(tab.trail.length - 1, 0))
       return
     }
@@ -2885,7 +2939,7 @@ class Workspace {
   private async copied(landed: string[], into: string | null) {
     if (!landed.length) return
 
-    if (into !== null && into !== this.activeSpace?.root) this.device.expand(into)
+    if (into !== null && !samePath(into, this.activeSpace?.root)) this.device.expand(into)
     await this.loadTree()
     this.picked.all(landed)
     this.persist()
@@ -2916,7 +2970,7 @@ class Workspace {
 
   entryAt(path: string): Entry | null {
     const found = entryAt(this.tree, path)
-    return found && found.path !== this.tree?.path ? found : null
+    return found && !samePath(found.path, this.tree?.path) ? found : null
   }
 
   /** A row put into the tree, taken out of it, or moved within it, before the
@@ -3002,7 +3056,7 @@ class Workspace {
     await this.open(path, how)
     if (!said) return
 
-    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const doc = this.tabs.find((tab) => samePath(tab.path, path))?.doc ?? ''
     const line = lineOfTarget(doc, {
       path: relative,
       target: relative,
@@ -3017,7 +3071,7 @@ class Workspace {
    *  folder can be shown where it sits rather than only named. */
   revealFolder(path: string) {
     const root = this.activeSpace?.root
-    if (root === undefined || !path.startsWith(root)) return
+    if (root === undefined || within(root, path) === null) return
 
     // Each step down is a folder of its own, and its own row to open.
     let here = root
@@ -3044,7 +3098,7 @@ class Workspace {
     }
 
     const holder = folderOf(isFolderNote(path) ? folderOf(path) : path)
-    if (holder !== root) this.revealFolder(holder)
+    if (!samePath(holder, root)) this.revealFolder(holder)
 
     this.showPanel('tree')
     this.revealing = path
@@ -3072,7 +3126,7 @@ class Workspace {
     const path = insideSpace(root, relative)
     await this.open(path, how)
 
-    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const doc = this.tabs.find((tab) => samePath(tab.path, path))?.doc ?? ''
     const line = lineOfHeading(scanHeadings(doc), heading)
     if (line !== null) this.goto = { path, line }
   }
@@ -3134,7 +3188,7 @@ class Workspace {
     // a note is the one thing that should never feel like waiting for a disk,
     // and everything below knows what the note will say.
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
     const note = this.document({
       kind: 'note',
@@ -3194,7 +3248,7 @@ class Workspace {
     const content = blankCanvas()
 
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
     const file = this.document({
       kind: 'canvas',
@@ -3229,7 +3283,7 @@ class Workspace {
     if (!entry) return
 
     const folder = entry.is_dir ? path : folderFor(path)
-    if (folder === path && !entry.is_dir) return
+    if (samePath(folder, path) && !entry.is_dir) return
 
     if (!entry.is_dir) await this.moveMany([], folder)
     await this.createNote(folder)
@@ -3246,9 +3300,11 @@ class Workspace {
    *  Its own copy took the last dot of the name for an extension however little was
    *  in front of it, so `.hidden` came back as ` 2.hidden`. */
   freeName(dir: string, wanted: string, except?: string): string {
-    const taken = this.everyPath()
-    if (except !== undefined) taken.delete(except)
-    return freePath(wanted, (candidate) => taken.has(joinPath(dir, candidate)))
+    // By key rather than as written: on a disk that looks `plan.md` up as `Plan.md`
+    // the one is taken by the other, and writing it would be writing over it.
+    const taken = pathKeys(this.everyPath(), dir)
+    if (except !== undefined) taken.delete(pathKey(except, dir))
+    return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -3280,7 +3336,7 @@ class Workspace {
    *  space's name is in the header over every panel, so it needs only that the
    *  sidebar is open at all. */
   startRenaming(path: string, appending = false) {
-    const inHeader = this.spaces.some((space) => space.root === path)
+    const inHeader = this.spaces.some((space) => samePath(space.root, path))
     // The file list on whichever side it was moved to.
     const listed = this.openOn(this.sideOf('tree')) === 'tree'
     if (!(inHeader ? this.panel !== null : listed)) return
@@ -3311,7 +3367,7 @@ class Workspace {
 
     const path = joinPath(dir, this.freeName(dir, PLACEHOLDER[kind]))
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
     this.naming = { path, appending: false, making: kind }
 
     return true
@@ -3367,15 +3423,19 @@ class Workspace {
    *  row. */
   namesBeside(path: string): string[] {
     const folder = entryAt(this.tree, folderOf(path))
-    return (folder?.children ?? []).filter((one) => one.path !== path).map((one) => one.name)
+    return (folder?.children ?? [])
+      .filter((one) => !samePath(one.path, path))
+      .map((one) => one.name)
   }
 
   async rename(path: string, name: string) {
     const clean = name.trim()
     if (!clean || clean.includes('/') || clean.includes('\\')) return
 
+    // Spelled the same, not the same file: a name that only changes its case is a
+    // rename, and the crate respells it; see `respell` in notes.rs.
     const target = joinPath(folderOf(path), clean)
-    if (target === path) return
+    if (sameSpelling(target, path)) return
 
     const note = this.opened.at(path)
     if (!note) {
@@ -3391,10 +3451,12 @@ class Workspace {
   }
 
   /** One file under another name in the same folder, and everything that owes: the
-   *  row, the links to it, the stores that keep it by path, the account, and the open
-   *  document. `undoable` is whether somebody did it - a row renamed - or the note's
-   *  own words did; only the first is a step to undo and a heading to rewrite. */
+   *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
+   *  `undoable` is whether somebody did it - a row renamed - or the note's own words
+   *  did; only the first is a step to undo and a heading to rewrite. */
   private async renameFile(path: string, target: string, undoable: boolean) {
+    const kind = this.kindAt(path)
+
     // The new name is on the row before the rename has happened; the listing
     // that follows is what settles it.
     this.showMove(path, target)
@@ -3411,16 +3473,11 @@ class Workspace {
       await this.loadTree()
       throw error
     }
-    this.positions.move(path, target)
 
     // Every link to the note now points at a name nothing answers to, so they
     // are rewritten, silently, as Obsidian does. Recorded on the action so that
     // undoing the rename undoes the rewrite with it.
-    //
-    // Before the index is told the note moved, not after: finding the links that
-    // pointed at the old name means resolving them against the space as it was.
     const rewrote = (await this.retarget(path, target)) > 0
-    this.pathMoved(path, target)
     if (undoable) {
       this.undone.record({
         kind: 'rename',
@@ -3443,97 +3500,40 @@ class Workspace {
         // Nobody typed this, so it goes in the way any other outside edit does.
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
       }
-
-      note.path = target
-      note.name = nameOf(target)
-      this.rekind(note)
     }
 
-    await this.movedOnAccount(path, target)
+    await this.fileMoved(path, target, kind)
     await this.loadTree()
     this.persist()
   }
 
-  /** A plane renamed across its two kinds, shown as the kind its name says now.
-   *
-   *  A page note and a canvas are one format - a plane of cards and ink, the page note
-   *  with its pages over it - so the same words under the other name are the other
-   *  kind. The open document kept the kind it was opened as, and one file is one
-   *  document, so the tab went on as a page note named as a canvas and opening the
-   *  file again found that same page note. So the words, and whether they are written,
-   *  go over to a document of the new kind, and every tab showing the file shows it.
-   *
-   *  Only between those two. A note's words are no plane: shown as a canvas they are
-   *  an empty one, and a stroke on it would write that plane over them. A note renamed
-   *  to a plane's name goes on showing its words until it is opened again. */
-  rekind(note: NoteDoc) {
-    const path = note.path
-    const kind =
-      path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
-    if (path === null || kind === null || kind === note.kind) return
-    if (note.kind !== 'canvas' && note.kind !== 'pages') return
-
-    const fresh = this.document({
-      kind,
-      path,
-      name: note.name,
-      text: note.latest,
-      dirty: note.dirty,
-    })
-    for (const tab of this.tabs) if (tab.note === note) tab.note = fresh
+  /** Whether a row is a folder or a file, asked before it moves. */
+  private kindAt(path: string): 'file' | 'folder' {
+    return this.entryAt(path)?.is_dir === true ? 'folder' : 'file'
   }
 
-  /** Everything kept under a path, told that the path is another one now.
-   *
-   *  The index, the papers, a folder's icon, the order a folder was arranged into,
-   *  what was left out of the space and the bookmarks all keep a file by its path,
-   *  so each has to hear that it changed - and every way a path changes owes all of
-   *  them the same sentence: a rename, a move, and either of those put back. Said
-   *  here once rather than listed at each, because the list is what keeps growing:
-   *  undo was missing the arranged order until a test caught it, and the bookmarks
-   *  were missing everywhere. A folder carries everything under it along.
-   *
-   *  After the links are rewritten, never before: finding the links that pointed at
-   *  the old name means resolving them against the space as it was.
-   *
-   *  Each store hears of the path's own space, which an agent's may not be (8.6 in
-   *  docs/agent-native.md).
-   *
-   *  Not private because putting a rename back is a rename; see workspace/undoing.ts. */
-  pathMoved(from: string, to: string) {
-    const root = this.rootHolding(from)
-    links.notesMoved(from, to)
-    void papers().then(({ paperMoved }) => paperMoved(from, to))
-    this.folderIcons.moved(from, to, root)
-    this.arranged.moved(from, to, root)
-    this.excluded.moved(from, to, root)
-    this.archive.moved(from, to, root)
-    this.bookmarks.moved(from, to, root)
+  /** A file, a folder or a space that moved, went or came to be without being
+   *  written word by word (a copy, a delete undone, something back out of Recently
+   *  deleted), said once to everything kept by path; see workspace/file-ops.ts. A move
+   *  after its links are rewritten, never before: finding what pointed at the old name
+   *  means resolving it against the space as it was. Each store hears of the path's
+   *  own space, which an agent's may not be (8.6 in docs/agent-native.md). */
+  async fileMoved(from: string, to: string, kind: Kind) {
+    const root = kind === 'space' ? from : this.rootHolding(from)
+    await this.fileOps.tell({ op: 'moved', from, to, kind, root })
+  }
+
+  async fileGone(path: string, kind: Kind) {
+    await this.fileOps.tell({ op: 'removed', path, kind, root: this.rootHolding(path) })
+  }
+
+  async fileCame(path: string, kind: 'file' | 'folder') {
+    await this.fileOps.tell({ op: 'created', path, kind, root: this.rootHolding(path) })
   }
 
   private rootHolding(path: string): string | null {
-    const holding = this.spaces.find((one) => withinSpace(one.root, path) !== null)
+    const holding = this.spaces.find((one) => within(one.root, path) !== null)
     return holding?.root ?? this.activeSpace?.root ?? null
-  }
-
-  /** And the account, which keeps a note under an id rather than under its name.
-   *
-   *  Said from the two operations that move a file rather than by whoever asked for
-   *  one, because the askers are what keep being added: the field in the file list,
-   *  a drag, a drop onto a note, the palette, an automation, an undo, a folder that
-   *  stopped holding anything. Every one of them is a `rename` or a `move`, and this
-   *  is the sentence both of them owe. See `moved` in sync.svelte.ts, and
-   *  `movedHere` in sync/pass.ts for what the account is told and why the mirror
-   *  is re-keyed only afterwards.
-   *
-   *  Fetched rather than imported, like every other word this store has for the
-   *  account: nothing about syncing is in a window that never signs in.
-   *
-   *  Not private because putting a rename back is a rename, and that lives next
-   *  door; see workspace/undoing.ts. */
-  async movedOnAccount(from: string, to: string) {
-    const { sync } = await import('./sync.svelte')
-    await sync.moved(from, to)
   }
 
   /** `source`: an agent the last version is kept for (docs/agent-native.md 8.5). */
@@ -3584,17 +3584,7 @@ class Workspace {
       throw error
     }
 
-    for (const tab of this.tabs.filter((entry) => entry.path?.startsWith(path))) {
-      this.close(tab.id)
-    }
-
-    const root = this.rootHolding(path)
-    links.noteGone(path)
-    this.folderIcons.gone(path, root)
-    this.arranged.gone(path, root)
-    this.excluded.gone(path, root)
-    // A paper that has gone has no words worth searching any more.
-    void papers().then(({ paperGone }) => paperGone(path))
+    await this.fileGone(path, isFolder ? 'folder' : 'file')
     await this.loadTree()
     // The row deleted may have been the last thing keeping a nested note nested.
     await this.unnest(folderOf(path))
@@ -3619,7 +3609,7 @@ class Workspace {
    *  syncing loop's business and is settled by the mirror rather than here. See
    *  `pull` in sync/pass.ts, which says when each body lands. */
   async arrived(path: string) {
-    const waiting = this.tabs.filter((tab) => tab.coming && tab.path === path)
+    const waiting = this.tabs.filter((tab) => tab.coming && samePath(tab.path, path))
     if (!waiting.length) return
 
     const content = await invoke<string>('read_note', { path }).catch(() => null)
@@ -3662,7 +3652,9 @@ class Workspace {
       const revision = note.revision
       const fresh = await invoke<string>('read_note', { path }).catch(() => null)
       if (fresh === null) continue
-      if (note.path !== path || note.arrivals !== holding || note.revision !== revision) continue
+      if (!samePath(note.path, path) || note.arrivals !== holding || note.revision !== revision) {
+        continue
+      }
 
       if (fresh !== note.text) note.replace(fresh, false)
     }
@@ -3745,7 +3737,7 @@ class Workspace {
   private landOn(path: string, jump: NoteJump) {
     if (jump.heading === null && jump.block === null) return
 
-    const doc = this.tabs.find((tab) => tab.path === path)?.doc ?? ''
+    const doc = this.tabs.find((tab) => samePath(tab.path, path))?.doc ?? ''
     const line = lineOfTarget(doc, jump)
     if (line !== null) this.goto = { path, line }
   }
@@ -3818,7 +3810,7 @@ class Workspace {
     const content = '# '
 
     this.showEntry(this.freshEntry(path, false))
-    if (dir !== this.activeSpace?.root) this.device.expand(dir)
+    if (!samePath(dir, this.activeSpace?.root)) this.device.expand(dir)
 
     const note = this.document({
       kind: 'note',
@@ -4103,7 +4095,7 @@ class Workspace {
       return
     }
 
-    const open = this.tabs.find((one) => one.path === path)
+    const open = this.tabs.find((one) => samePath(one.path, path))
     if (!open) {
       await this.dropNotes([path], { kind: 'pane', paneId: from, zone: 'right' })
       return

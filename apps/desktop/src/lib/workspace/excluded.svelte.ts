@@ -16,7 +16,7 @@
  *  `nib:folder-icons` is this store's twin in every respect, down to remembering
  *  which account a space's list has been folded into. */
 
-import { insideItsSpace, relativeTo } from '../space-paths'
+import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
 import { isString, keep } from '../stored'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
 
@@ -66,8 +66,8 @@ const PATHS: Folding<string[]> = {
 }
 
 /** Whether a path is the one excluded, or inside a folder that is. */
-function under(path: string, excluded: string): boolean {
-  return path === excluded || path.startsWith(`${excluded}/`)
+function under(path: string, excluded: string, root?: string): boolean {
+  return !!excluded && within(excluded, path, root) !== null
 }
 
 export class Excluded {
@@ -120,7 +120,7 @@ export class Excluded {
     if (root === null) return false
 
     const at = relativeTo(root, path)
-    return this.of(root).includes(at)
+    return this.of(root).some((one) => samePath(one, at, root))
   }
 
   /** Leaves a path out, or takes it back. */
@@ -132,10 +132,10 @@ export class Excluded {
     if (!insideItsSpace(at)) return
 
     const held = this.of(root)
-    if (held.includes(at)) {
+    if (held.some((one) => samePath(one, at, root))) {
       this.put(
         root,
-        held.filter((one) => one !== at),
+        held.filter((one) => !samePath(one, at, root)),
       )
       return
     }
@@ -143,10 +143,10 @@ export class Excluded {
     if (held.length >= MOST_EXCLUDED) return
     // A path inside a folder that is already left out says nothing more than the
     // folder does.
-    if (held.some((one) => under(at, one))) return
+    if (held.some((one) => under(at, one, root))) return
 
     // And a folder being left out says everything the paths under it said.
-    this.put(root, [...held.filter((one) => !under(one, at)), at])
+    this.put(root, [...held.filter((one) => !under(one, at, root)), at])
   }
 
   /** A note or a folder that has been renamed or moved, with everything under it.
@@ -157,8 +157,10 @@ export class Excluded {
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
+    if (!was) return
+
     const held = this.of(root)
-    const next = held.map((one) => (under(one, was) ? now + one.slice(was.length) : one))
+    const next = held.map((one) => movedTo(one, was, now, root) ?? one)
 
     if (!same(held, next)) this.put(root, next)
   }
@@ -169,7 +171,7 @@ export class Excluded {
 
     const at = relativeTo(root, path)
     const held = this.of(root)
-    const next = held.filter((one) => !under(one, at))
+    const next = held.filter((one) => !under(one, at, root))
 
     if (!same(held, next)) this.put(root, next)
   }

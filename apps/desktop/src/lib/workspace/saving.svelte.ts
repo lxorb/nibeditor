@@ -21,7 +21,7 @@ import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { log } from '../log'
 import { owesLast, settleUp } from '../parting'
-import { folderOf, nameOf } from '../space-paths'
+import { folderOf, nameOf, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { afterQuiet } from '../timing'
 import { entryAt } from '../tree-edits'
@@ -400,7 +400,7 @@ export class Saving {
     const tree = this.ws.tree
     if (path === null || !tree || this.making.has(note)) return false
     if (this.ws.tabs.some((tab) => tab.note === note)) return false
-    if (!path.startsWith(`${tree.path}/`)) return false
+    if (!within(tree.path, path)) return false
 
     return !entryAt(tree, path)
   }

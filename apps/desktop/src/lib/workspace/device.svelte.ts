@@ -18,7 +18,8 @@
 
 import { isBoolean, isNumber, isString, keep, recordOf, stored, stringList } from '../stored'
 import { without, withOrWithout } from '../records'
-import { withinSpace } from '../space-paths'
+import { movedTo, samePath, withinSpace } from '../space-paths'
+import type { FileOp } from './file-ops'
 import { FIRST_MODE, isSortMode, type SortMode } from '../tree-order'
 
 export const RECENT_KEY = 'nib:recent'
@@ -126,7 +127,10 @@ export class DeviceView {
   }
 
   remember(path: string) {
-    this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
+    this.recent = [path, ...this.recent.filter((entry) => !samePath(entry, path))].slice(
+      0,
+      RECENT_LIMIT,
+    )
     keep(RECENT_KEY, JSON.stringify(this.recent))
     // And a use of it; see frecency.ts.
     void import('../frecency').then((one) => one.frecency.use(`note:${path}`))
@@ -134,7 +138,7 @@ export class DeviceView {
 
   /** One note off the list: Shift+Delete in the palette. */
   unremember(path: string) {
-    this.recent = this.recent.filter((entry) => entry !== path)
+    this.recent = this.recent.filter((entry) => !samePath(entry, path))
     keep(RECENT_KEY, JSON.stringify(this.recent))
   }
 
@@ -205,9 +209,36 @@ export class DeviceView {
     keep(LIST_ORDER_KEY, JSON.stringify(this.listOrder))
   }
 
-  /** Carries a chosen order over to a renamed space folder, the way the icon is
-   *  carried: the record is keyed by the folder, and the folder is what moved. */
-  moveOrder(from: string, to: string) {
+  /** What this machine keeps by path, following a file operation: the notes opened
+   *  lately and the folders standing open keep their places under their new names,
+   *  and a space folder that moved takes its icon, the order its list is read in and
+   *  where that list was left scrolled to; each is kept under the folder, and the
+   *  folder is what moved. */
+  follow(op: FileOp) {
+    if (op.op !== 'moved') return
+
+    if (op.kind === 'space') {
+      this.moveIcon(op.from, op.to)
+      this.moveOrder(op.from, op.to)
+      const at = this.listScroll[op.from]
+      if (at !== undefined) this.listScroll = { ...without(this.listScroll, op.from), [op.to]: at }
+    }
+
+    const moved = (path: string) => movedTo(path, op.from, op.to) ?? path
+    const recent = this.recent.map(moved)
+    if (recent.some((one, at) => one !== this.recent[at])) {
+      this.recent = recent
+      keep(RECENT_KEY, JSON.stringify(recent))
+    }
+
+    const open = Object.keys(this.expanded)
+    if (open.some((path) => moved(path) !== path)) {
+      this.expanded = Object.fromEntries(open.map((path) => [moved(path), true]))
+      keep(EXPANDED_KEY, JSON.stringify(this.expanded))
+    }
+  }
+
+  private moveOrder(from: string, to: string) {
     const mode = this.listOrder[from]
     if (!mode || from === to) return
 
@@ -281,9 +312,9 @@ export class DeviceView {
     return unsaid
   }
 
-  /** Carries a chosen icon over to a renamed folder. Without this a rename
-   *  looks like a space that never had an icon, and it falls back to a letter. */
-  moveIcon(from: string, to: string) {
+  /** Without this a rename looks like a space that never had an icon, and it falls
+   *  back to a letter. */
+  private moveIcon(from: string, to: string) {
     const icon = this.icons[from]
     if (!icon || from === to) return
 

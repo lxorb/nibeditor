@@ -11,8 +11,7 @@
  *  a store rather than a string. */
 
 import { extracted, merged, splitAt } from '../composer'
-import { links } from '../link-index.svelte'
-import { folderOf } from '../space-paths'
+import { folderOf, samePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
@@ -21,11 +20,11 @@ import { writeFile } from './write-file'
 /** What composing needs of the store the notes are open in. */
 export interface Composes {
   readonly active: Tab | null
-  readonly tabs: Tab[]
   readonly undone: FileActions
   flush(): void
-  close(id: string): void
   reload(path: string, content: string): void
+  /** The note merged away, said the way a delete is; see workspace/file-ops.ts. */
+  fileGone(path: string, kind: 'file'): Promise<void>
   retarget(from: string, to: string): Promise<number>
   open(path: string): Promise<void>
   freeName(dir: string, wanted: string): string
@@ -36,7 +35,7 @@ export interface Composes {
 /** Appends this note into another, deletes it, and points every link that came
  *  here at the note it went into. */
 export async function mergeInto(ws: Composes, from: string, into: string): Promise<void> {
-  if (from === into) return
+  if (samePath(from, into)) return
 
   const [fromContent, intoContent] = await Promise.all([
     invoke<string>('read_note', { path: from }).catch(() => null),
@@ -55,9 +54,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
   await invoke('delete_note', { path: from })
-  links.noteGone(from)
-
-  for (const tab of ws.tabs.filter((one) => one.path === from)) ws.close(tab.id)
+  await ws.fileGone(from, 'file')
 
   ws.undone.record({ kind: 'merge', from, fromContent, into, intoContent })
   await ws.loadTree()

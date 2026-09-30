@@ -1621,6 +1621,17 @@ then `web_sync`.
   `web_key_*` (device key, wrap, unwrap, digits), each tested on its own.
 - The hub lane exposes `pokeSpace(env, ctx, spaceId, seq)` in `src/hub/poke.ts` in the Worker
   as its **first** push (a no-op until the object exists), so the docs lane can call it.
+- The workspace says every file operation once, `created`, `moved` or `removed` with the
+  old and new path, the kind (file, folder, space) and the space's root
+  (`lib/workspace/file-ops.ts`, robust-core). The engine hears renames, moves and a space's
+  folder moving by following `workspace.fileOps`, as `sync.follow` does today, and never by
+  a call written into an operation: tree ops (5.9) are made there. A follower answers what it
+  still has to do as a promise, and the operation waits for it, so two operations reach the
+  account in the order they were done. v1 re-keys the mirror of a renamed space in the same
+  moment the notes' paths change, and answers a moved note's id for its new path while the
+  account is being told, so an open note never leaves its room over a rename; the mirror's
+  shapes are untouched, and its older shapes (`load`, `readMirror`) are left for this lane
+  to retire with v1.
 
 ---
 

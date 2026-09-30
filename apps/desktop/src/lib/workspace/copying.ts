@@ -9,7 +9,7 @@
  *  Every file lands through the one write (`write-file.ts`), so the link index
  *  knows it the moment it is there. A row that is a folder drawn as its note keeps
  *  being one: the note inside `Trip copy/` is renamed `Trip copy.md` through the
- *  one sentence every renamed path owes (`pathMoved`), or the copy would be a
+ *  rename every file operation is said as (`fileMoved`), or the copy would be a
  *  folder holding a note called something else.
  *
  *  However many rows one copy made, it is one thing to undo. */
@@ -27,14 +27,16 @@ import type { Copied, FileActions } from './undo.svelte'
 import { copyPath, writeBytes, writeFile } from './write-file'
 
 /** What copying needs of the store: the tree-edit trio, the numbering every new
- *  name goes through, the sentence a renamed path owes, and the undo stack. */
+ *  name goes through, the two file operations a copy is said as, and the undo
+ *  stack. */
 export interface Copies {
   readonly undone: FileActions
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
   freeName(dir: string, wanted: string): string
-  pathMoved(from: string, to: string): void
+  fileMoved(from: string, to: string, kind: 'file'): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
 }
 
 /** One row to copy, and the folder it goes into. */
@@ -105,17 +107,18 @@ async function copyEntry(ws: Copies, entry: Entry, path: string): Promise<boolea
   // step past this one: the listing is a round trip behind.
   ws.showEntry(ws.freshEntry(path, entry.is_dir))
 
-  const landed = await copyPath(entry.path, path, entry.is_dir)
+  const landed = await copyPath(entry.path, path)
     .then(() => true)
     .catch(() => false)
   if (!landed) return false
+  await ws.fileCame(path, entry.is_dir ? 'folder' : 'file')
 
   const own = ownNoteRenamed(entry, path)
   if (own) {
     const renamed = await invoke('rename_note', own)
       .then(() => true)
       .catch(() => false)
-    if (renamed) ws.pathMoved(own.from, own.to)
+    if (renamed) await ws.fileMoved(own.from, own.to, 'file')
   }
 
   return true

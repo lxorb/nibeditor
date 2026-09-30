@@ -15,10 +15,13 @@ import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke } from './tauri'
-import { type Mirror, newMirror, readMirror, within } from './sync/mirror'
+import { type Mirror, newMirror, readMirror, type Tracked, within } from './sync/mirror'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
+import type { FileOp } from './workspace/file-ops'
+import { samePath } from './space-paths'
+import { joinPath } from './tauri'
 
 export const STORAGE_KEY = 'nib:mirrors'
 
@@ -36,6 +39,13 @@ class Sync {
    *  rooms.svelte.ts. Shallow, because a pass writes into these all the way down
    *  and a proxy on that path would cost every note in the space. */
   private mirrors = $state.raw<Record<string, Mirror>>({})
+  /** Notes that have just moved and whose new name the account has not taken yet,
+   *  by where each is now. The table is re-keyed only once the account has answered
+   *  (see `movedHere` in sync/pass.ts, which says why that order is the safety of
+   *  it), and until then a note at its new name is still the note it always was: the
+   *  same id, and so the same room. Held in memory only, and gone when the account
+   *  has answered either way. */
+  private moving = $state.raw<readonly { root: string; path: string; tracked: Tracked }[]>([])
   private timer: ReturnType<typeof setTimeout> | null = null
   /** When the pass that timer is for comes due, so a nudge can tell whether its
    *  own delay would be sooner than what is already planned; see `nudge`. */
@@ -134,8 +144,21 @@ class Sync {
     return waiting
   }
 
+  /** A file operation, heard the way everything kept by path hears one; see
+   *  workspace/file-ops.ts. A space's folder moving re-keys the table in the same
+   *  moment as its notes' paths change, so no note is ever at a path the account
+   *  has no id for; a note or a folder moving is told to the account. */
+  follow(op: FileOp): Promise<void> | undefined {
+    if (op.op !== 'moved') return undefined
+    if (op.kind !== 'space') return this.moved(op.from, op.to)
+
+    const name = workspace.spaces.find((one) => samePath(one.root, op.to))?.name
+    return name === undefined ? undefined : this.renamed(op.from, op.to, name)
+  }
+
   /** The folder moved. The account's copy follows it rather than the next pass
-   *  deciding this is a brand new space and uploading a second one. */
+   *  deciding this is a brand new space and uploading a second one. The table is
+   *  re-keyed before anything is awaited, which is what `follow` counts on. */
   async renamed(from: string, to: string, name: string) {
     const mirror = this.mirrors[from]
     if (!mirror) return
@@ -158,10 +181,39 @@ class Sync {
     const token = account.token
     if (!token) return
 
-    const { movedHere } = await import('./sync/pass')
-    for (const mirror of Object.values(this.mirrors)) {
-      if (await movedHere(mirror, token, from, to)) this.save()
+    const moving = this.movingFrom(from, to)
+    if (moving.length) this.moving = [...this.moving, ...moving]
+
+    try {
+      const { movedHere } = await import('./sync/pass')
+      for (const mirror of Object.values(this.mirrors)) {
+        if (await movedHere(mirror, token, from, to)) this.save()
+      }
+    } finally {
+      if (moving.length) this.moving = this.moving.filter((one) => !moving.includes(one))
     }
+  }
+
+  /** The notes a move of `from` to `to` carries, each at its new name. */
+  private movingFrom(from: string, to: string): { root: string; path: string; tracked: Tracked }[] {
+    const out: { root: string; path: string; tracked: Tracked }[] = []
+
+    for (const mirror of Object.values(this.mirrors)) {
+      const was = within(mirror.root, from)
+      const now = within(mirror.root, to)
+      if (was === null || now === null) continue
+
+      for (const [path, tracked] of Object.entries(mirror.notes)) {
+        if (path !== was && !path.startsWith(`${was}/`)) continue
+        out.push({
+          root: mirror.root,
+          path: joinPath(mirror.root, now + path.slice(was.length)),
+          tracked,
+        })
+      }
+    }
+
+    return out
   }
 
   /** Deleting a space here deletes it from the account too. Anything less and
@@ -470,7 +522,8 @@ class Sync {
       if (held) return { id: held.id, version: held.version, hash: held.hash }
     }
 
-    return null
+    const moving = this.moving.find((one) => samePath(one.path, path))?.tracked
+    return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
   }
 
   /** What a pull over this space tells whoever is waiting on it, and what it
@@ -863,3 +916,5 @@ function withoutCaches(mirrors: Record<string, Mirror>): Record<string, Mirror> 
 }
 
 export const sync = new Sync()
+
+workspace.fileOps.follow((op) => sync.follow(op))

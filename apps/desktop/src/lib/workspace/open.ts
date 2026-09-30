@@ -24,7 +24,10 @@
  *  note taking on another, a website being given its first file - move rather than
  *  add: there is no second copy of the fact to update and none to go stale. */
 
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { movedTo, nameOf, samePath, within } from '../space-paths'
 import type { DocumentStart, NoteDoc, Tab } from './documents.svelte'
+import type { FileOp } from './file-ops'
 
 export class OpenDocuments {
   /** Opens whose file has not come back yet, by the path being opened. The one
@@ -72,7 +75,8 @@ export class OpenDocuments {
     return out
   }
 
-  /** The document a file is open as, whichever pane is showing it.
+  /** The document a file is open as, whichever pane is showing it, however the
+   *  path was spelled; see `samePath` in space-paths.ts.
    *
    *  Total rather than the first of several: with one document per file there is
    *  nothing to be first of. `workspace.reload` used to answer with the first match,
@@ -81,11 +85,11 @@ export class OpenDocuments {
    *  save. */
   at(path: string): NoteDoc | null {
     for (const tab of this.showing()) {
-      if (tab.note.path === path) return tab.note
+      if (samePath(tab.note.path, path)) return tab.note
     }
 
     for (const note of this.building) {
-      if (note.path === path) return note
+      if (samePath(note.path, path)) return note
     }
 
     return null
@@ -137,8 +141,7 @@ export class OpenDocuments {
     const held = this.at(path)
     if (held) return Promise.resolve(held)
 
-    const coming = this.coming.get(path)
-    if (coming) return coming
+    for (const [one, coming] of this.coming) if (samePath(one, path)) return coming
 
     // Written down before the read begins rather than when it comes back, which is
     // the whole of this: nothing runs between these two lines, so a second open of
@@ -155,6 +158,58 @@ export class OpenDocuments {
     } finally {
       this.coming.delete(path)
     }
+  }
+
+  /** The open documents following a file operation, and the tabs showing them: a
+   *  document moves with its file however deep in a folder that moved and wears the
+   *  kind its new name says (see `rekind`), a tab's trail walks the new names, and a
+   *  tab of something that went goes, through `close`. See workspace/file-ops.ts. */
+  follow(op: FileOp, close: (id: string) => void) {
+    if (op.op === 'created') return
+
+    if (op.op === 'removed') {
+      for (const tab of this.showing()) {
+        if (tab.path !== null && within(op.path, tab.path) !== null) close(tab.id)
+      }
+      return
+    }
+
+    for (const note of this.all) {
+      const to = note.path === null ? null : movedTo(note.path, op.from, op.to)
+      if (to === null) continue
+
+      note.path = to
+      note.name = nameOf(to)
+      this.rekind(note)
+    }
+
+    for (const tab of this.showing()) {
+      const trail = tab.trail.map((one) => movedTo(one, op.from, op.to) ?? one)
+      if (trail.some((one, at) => one !== tab.trail[at])) tab.trail = trail
+    }
+  }
+
+  /** A plane renamed across its two kinds, shown as the kind its name says now.
+   *
+   *  A page note and a canvas are one format - a plane of cards and ink, the page note
+   *  with its pages over it - so the same words under the other name are the other
+   *  kind. The open document kept the kind it was opened as, and one file is one
+   *  document, so the tab went on as a page note named as a canvas and opening the
+   *  file again found that same page note. So the words, and whether they are written,
+   *  go over to a document of the new kind, and every tab showing the file shows it.
+   *
+   *  Only between those two. A note's words are no plane: shown as a canvas they are
+   *  an empty one, and a stroke on it would write that plane over them. A note renamed
+   *  to a plane's name goes on showing its words until it is opened again. */
+  private rekind(note: NoteDoc) {
+    const path = note.path
+    const kind =
+      path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
+    if (path === null || kind === null || kind === note.kind) return
+    if (note.kind !== 'canvas' && note.kind !== 'pages') return
+
+    const fresh = this.make({ kind, path, name: note.name, text: note.latest, dirty: note.dirty })
+    for (const tab of this.showing()) if (tab.note === note) tab.note = fresh
   }
 
   /** Runs an arrangement's read with every document it makes held open.

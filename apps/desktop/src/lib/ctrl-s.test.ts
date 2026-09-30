@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
  *  page as. See `writeKey` in shortcuts.svelte.ts. */
 
 const writeNow = vi.fn(() => Promise.resolve())
-vi.mock('./workspace.svelte', () => ({ workspace: { writeNow } }))
+vi.mock('./workspace.svelte', () => ({
+  workspace: { writeNow, fileOps: { follow: () => () => undefined } },
+}))
 
 /** The store asks the browser what kind of machine this is, and reads its storage. */
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })

@@ -7,23 +7,17 @@
  *  the account's, so every machine's switcher reads alike.
  *
  *  Its own module because the list is a thing with rules of its own - ids that
- *  survive a reload, an order two machines have to agree on, four per-space stores
- *  that follow a folder when it is renamed and are forgotten when it goes - and
- *  none of those rules is about what is open in a pane. */
+ *  survive a reload, an order two machines have to agree on, a folder renamed or
+ *  gone said once to everything kept under it - and none of those rules is about
+ *  what is open in a pane. */
 
 import { account } from '../account.svelte'
 import { identifier } from '../identifier'
+import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import { isUntouchedWelcome } from '../welcome'
 import type { Entry, Naming, Panel, Space } from '../workspace.svelte'
-import type { Bookmarks } from './bookmarks.svelte'
-import type { DeviceView } from './device.svelte'
-import type { NoteDoc, Tab } from './documents.svelte'
-import type { Arranged } from './arranged.svelte'
-import type { Excluded } from './excluded.svelte'
-import type { Archive } from './archive.svelte'
-import type { FolderIcons } from './folder-icons.svelte'
-import type { SpaceGraphSettings } from './graph-settings.svelte'
+import type { Tab } from './documents.svelte'
 
 /** What the list of spaces needs of the store holding it. */
 export interface HoldsSpaces {
@@ -34,14 +28,8 @@ export interface HoldsSpaces {
   panel: Panel | null
   readonly notes: Entry[]
   readonly tabs: Tab[]
-  readonly documents: NoteDoc[]
-  readonly bookmarks: Bookmarks
-  readonly device: DeviceView
-  readonly folderIcons: FolderIcons
-  readonly arranged: Arranged
-  readonly graphSettings: SpaceGraphSettings
-  readonly excluded: Excluded
-  readonly archive: Archive
+  fileMoved(from: string, to: string, kind: 'space'): Promise<void>
+  fileGone(path: string, kind: 'space'): Promise<void>
   close(id: string): void
   clearSelection(): void
   loadTree(): Promise<void>
@@ -73,11 +61,6 @@ export async function loadSpaces(ws: HoldsSpaces) {
   if (!ws.spaces.some((space) => space.id === ws.activeSpaceId)) {
     ws.activeSpaceId = ws.spaces[0]?.id ?? null
   }
-
-  // Pins became bookmarks, and a pin is a path this machine wrote down, so
-  // the spaces have to be known before it can be said which space it was in.
-  // Runs itself once and then has nothing left to read.
-  ws.bookmarks.migrate(ws.spaces.map((space) => space.root))
 }
 
 /** Creates a space folder under the one the app owns. The name is the only
@@ -106,7 +89,7 @@ export async function adoptSpace(
 
   if (!created) return null
 
-  if (!ws.spaces.some((space) => space.root === created.path)) {
+  if (!ws.spaces.some((space) => samePath(space.root, created.path))) {
     const space: Space = { id: identifier(), name: created.name, root: created.path }
     ws.spaces = [...ws.spaces, space]
 
@@ -147,27 +130,17 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
 
   if (!renamed) return
 
-  // Open notes point into the old folder, so move them with it.
-  for (const note of ws.documents) {
-    if (note.path?.startsWith(space.root)) {
-      note.path = renamed.path + note.path.slice(space.root.length)
-    }
-  }
-
-  // The icon is keyed by folder, so it has to follow the folder - and the
-  // folder icons inside it are kept under the root, so they follow it too.
-  ws.device.moveIcon(space.root, renamed.path)
-  // And which order its list is read in, which is kept under the root too.
-  ws.device.moveOrder(space.root, renamed.path)
-  ws.folderIcons.spaceMoved(space.root, renamed.path)
-  ws.arranged.spaceMoved(space.root, renamed.path)
-  ws.graphSettings.spaceMoved(space.root, renamed.path)
-  ws.excluded.spaceMoved(space.root, renamed.path)
-  ws.archive.spaceMoved(space.root, renamed.path)
-  ws.bookmarks.spaceMoved(space.root, renamed.path)
-
+  // A space moving is a file operation like any other, said once: the open notes
+  // move with their folder, and everything kept under the root follows it - the
+  // icon, the order its list is read in, the folder icons and the rest, and the
+  // account's table of what it holds, in the same breath as the notes' paths, so a
+  // note is never for a moment at a path the account has no id for. See
+  // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
+  const from = space.root
   space.name = renamed.name
   space.root = renamed.path
+  await ws.fileMoved(from, renamed.path, 'space')
+
   if (ws.activeSpaceId === id) await ws.loadTree()
   ws.persist()
 }
@@ -295,15 +268,9 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
     if (!gone) return
   }
 
-  for (const tab of ws.tabs.filter((tab) => tab.path?.startsWith(space.root))) {
-    ws.close(tab.id)
-  }
-
-  ws.folderIcons.forget(space.root)
-  ws.arranged.forget(space.root)
-  ws.graphSettings.forget(space.root)
-  ws.excluded.forget(space.root)
-  ws.archive.forget(space.root)
+  // Its tabs close and what was kept under its root goes with it; see
+  // workspace/file-ops.ts.
+  await ws.fileGone(space.root, 'space')
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   if (ws.activeSpaceId !== id) {
     ws.persist()

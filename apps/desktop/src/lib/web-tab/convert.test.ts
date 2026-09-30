@@ -43,7 +43,6 @@ vi.mock('../account.svelte', () => ({
 
 vi.mock('../link-index.svelte', () => ({
   links: {
-    noteGone: (path: string) => void told.push(`gone ${path}`),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
     // The `url:` of a note, for convertWebsites' own filter. A note is a website
     // when its text has a url line; the fixtures below carry one.
@@ -89,6 +88,12 @@ function store(notes: Record<string, string>) {
     },
     showEntry: (entry: Entry) => void shown.push(entry.path),
     freshEntry: (path: string, isFolder: boolean) => ({ path, is_dir: isFolder }) as Entry,
+    // Said once to everything kept by path, the index among them; see
+    // workspace/file-ops.ts.
+    fileGone: (path: string) => {
+      told.push(`gone ${path}`)
+      return Promise.resolve()
+    },
     loadTree: () => Promise.resolve(),
   }
 

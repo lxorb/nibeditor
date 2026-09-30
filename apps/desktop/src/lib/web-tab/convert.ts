@@ -38,6 +38,9 @@ export interface Converts {
   freeName(dir: string, wanted: string): string
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
+  /** The note that went, said the way every file operation is; see
+   *  workspace/file-ops.ts. */
+  fileGone(path: string, kind: 'file'): Promise<void>
   loadTree(): Promise<void>
 }
 
@@ -84,7 +87,7 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const kept = keptBody(text)
   if (kept === null) {
     await oldNoteGone(path)
-    links.noteGone(path)
+    await ws.fileGone(path, 'file')
   } else await writeFile(path, kept).catch(() => undefined)
 
   await ws.loadTree()

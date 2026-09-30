@@ -6,16 +6,169 @@
  *  index and the composer all need them. */
 
 import { insideOnly } from './automation/inside'
-import { joinPath } from './tauri'
+import { invoke, isNative, joinPath, platform } from './tauri'
+
+/** One file is one path, however it was spelled.
+ *
+ *  The same note reaches the app under more than one spelling: a separator of
+ *  either kind, an accent composed as one letter or as a letter and a mark (a Mac
+ *  keyboard writes the second), and on Windows and on a Mac a capital where the
+ *  listing has none, since those disks look `plan.md` up as `Plan.md`. Compared as
+ *  written, the two were two notes: two documents over one file, the second write
+ *  replacing the first, and a new note under a name the disk already had.
+ *
+ *  So a path is compared in one place, here, and by one rule: separators made one,
+ *  the text composed, and case set aside where the disk sets it aside. Which disks
+ *  do is asked of each space's own disk once, the way git asks at `git init`; see
+ *  `askCase`. Until it has answered, the platform's habit stands. */
+const folding = new Map<string, boolean>()
+
+/** Whether this platform's disks look a name up without its case, as its own
+ *  filesystem does by default: NTFS and APFS do, ext4 and the browser build's rows
+ *  do not. */
+function foldsHere(): boolean {
+  const os = platform()
+  return os === 'windows' || os === 'macos' || os === 'ios'
+}
+
+/** A path's steps, whichever separator wrote them and however many of them there
+ *  were between two names, without a separator at its end. The first step of a path
+ *  from the top of a disk is empty, or a drive. */
+function steps(path: string): string[] {
+  const out = path.split(/[\\/]+/)
+  while (out.length > 1 && out.at(-1) === '') out.pop()
+  return out
+}
+
+/** Whether two names are one name: composed alike, and alike but for case where
+ *  the disk sets case aside. Which it is, is only asked of two names that differ by
+ *  nothing else. */
+function sameName(one: string, other: string, folds: () => boolean): boolean {
+  if (one === other) return true
+
+  const a = one.normalize('NFC')
+  const b = other.normalize('NFC')
+  return a === b || (a.toLowerCase() === b.toLowerCase() && folds())
+}
+
+/** Whether the disk holding `path` looks names up without their case: the answer
+ *  its space's disk gave, or this platform's habit where none has been asked. */
+function foldsAt(path: string): boolean {
+  for (const [root, folds] of folding) {
+    if (holds(steps(root), steps(path), () => true)) return folds
+  }
+
+  return foldsHere()
+}
+
+/** Whether a folder's steps are where a path's steps begin. */
+function holds(head: readonly string[], file: readonly string[], folds: () => boolean): boolean {
+  return head.length <= file.length && head.every((one, at) => sameName(one, file[at] ?? '', folds))
+}
+
+/** Whether two paths name one file, which is the only way two paths are compared. A
+ *  path inside a space as a store keeps it compares the same way, by the habit of
+ *  the space's disk, which `root` names. */
+export function samePath(
+  one: string | null | undefined,
+  other: string | null | undefined,
+  root?: string,
+): boolean {
+  if (one === other) return true
+  if (one == null || other == null) return false
+
+  const a = steps(one)
+  const b = steps(other)
+  return a.length === b.length && holds(a, b, () => foldsAt(root ?? one))
+}
+
+/** A path as one key: its steps composed alike with `/` between them, in one case
+ *  where the disk holding it sets case aside. What a set of paths is kept by, where
+ *  asking `samePath` of every member would be a walk. */
+export function pathKey(path: string, root?: string): string {
+  const key = steps(path)
+    .map((one) => one.normalize('NFC'))
+    .join('/')
+  return foldsAt(root ?? path) ? key.toLowerCase() : key
+}
+
+/** The keys of many paths at once, for asking whether one is among them. */
+export function pathKeys(paths: Iterable<string>, root?: string): Set<string> {
+  return new Set([...paths].map((one) => pathKey(one, root)))
+}
+
+/** Whether two paths are written alike, case and all. What a rename asks: a name
+ *  that only changes its case names the same file and is still a new name. */
+export function sameSpelling(one: string, other: string): boolean {
+  const a = steps(one)
+  const b = steps(other)
+  return a.length === b.length && holds(a, b, () => false)
+}
+
+/** Where `path` is inside `folder`: the empty string for the folder itself, what is
+ *  left of it with `/` separators for anything under it - spelled as the path spells
+ *  it - and null for a path that is neither. `Work` holds `Work/plan.md` and not
+ *  `Workshop.md`: a folder is matched a whole step at a time. A folder of `''` is the
+ *  top of a space, which holds every path a space speaks. */
+export function within(folder: string, path: string, root?: string): string | null {
+  if (!folder) return path.replace(/\\/g, '/')
+
+  // The path spelled as the folder spells it, which is nearly every time: the same
+  // answer without taking either apart.
+  if (path.startsWith(folder) && !/[\\/]$/.test(folder)) {
+    const rest = path.slice(folder.length)
+    if (!rest || /^[\\/]/.test(rest)) return rest.split(/[\\/]+/).filter(Boolean).join('/')
+  }
+
+  const head = steps(folder)
+  const file = steps(path)
+  return holds(head, file, () => foldsAt(root ?? folder)) ? file.slice(head.length).join('/') : null
+}
+
+/** Where `path` is once `from` has moved to `to`: `to` itself, or under it, for a
+ *  path that was `from` or under it, and null for one the move did not touch. Said
+ *  with `to`'s own separators, so a path on this disk stays one. */
+export function movedTo(path: string, from: string, to: string, root?: string): string | null {
+  const rest = within(from, path, root)
+  if (rest === null) return null
+  if (!rest) return to
+
+  return to ? joinPath(to, rest) : rest
+}
+
+/** Asks a space's disk, once, whether it looks names up without their case: one of
+ *  its files is asked for under its name with every letter's case turned over. The
+ *  crate's own tests ask a disk the same way (`ignores_case` in notes.rs). A space
+ *  with no file that has a letter in its name has nothing to be confused about yet,
+ *  and asks again the next time it is listed. */
+export async function askCase(root: string, files: readonly string[]): Promise<void> {
+  if (!isNative || folding.has(root)) return
+
+  const probe = files.find((path) => turned(nameOf(path)) !== nameOf(path))
+  if (probe === undefined) return
+
+  const other = joinPath(folderOf(probe), turned(nameOf(probe)))
+  const found = await invoke<unknown>('file_stamp', { path: other }).catch(() => null)
+  folding.set(root, found !== null && found !== undefined)
+}
+
+/** Every letter's case turned over. */
+function turned(name: string): string {
+  return name.replace(/\p{L}/gu, (one) =>
+    one === one.toLowerCase() ? one.toUpperCase() : one.toLowerCase(),
+  )
+}
+
+/** What a disk answered, said by a test in place of asking one. */
+export function answeredCase(root: string, folds: boolean | null): void {
+  if (folds === null) folding.delete(root)
+  else folding.set(root, folds)
+}
 
 /** A path inside a space as the space speaks of it: relative to the root, and
  *  with `/` separators whichever the platform writes. */
 export function relativeTo(root: string, path: string): string {
-  if (!root || !path.startsWith(root)) return path.replace(/\\/g, '/')
-  return path
-    .slice(root.length)
-    .replace(/^[\\/]+/, '')
-    .replace(/\\/g, '/')
+  return (root ? within(root, path) : null) ?? path.replace(/\\/g, '/')
 }
 
 /** The same, for a path that may not be inside the space at all: null when this
@@ -33,11 +186,8 @@ export function relativeTo(root: string, path: string): string {
  *  Both separators, because which one a path is written with says nothing about
  *  where it points. */
 export function withinSpace(root: string, path: string): string | null {
-  const folder = root.replace(/\\/g, '/').replace(/\/+$/, '')
-  const file = path.replace(/\\/g, '/')
-  if (!folder || !file.startsWith(`${folder}/`)) return null
-
-  return insideOnly(file.slice(folder.length + 1))
+  const rest = root ? within(root, path) : null
+  return rest ? insideOnly(rest) : null
 }
 
 /** The same path back as one the filesystem understands. */

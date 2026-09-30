@@ -27,9 +27,14 @@ export type FileAction =
   | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
   /** A replacement run across the space. However many notes it touched, it is
    *  one thing somebody did and so one thing to take back. Each note keeps the
-   *  words it had and the edits that put them back, so a note open in a pane
-   *  gets its old words the way it got the new ones and keeps its caret. */
-  | { kind: 'replace'; notes: { path: string; content: string; edits: Edit[] }[] }
+   *  words it had, the edits that put them back and the words those edits are
+   *  measured against - what the replacement left - so a note open in a pane gets
+   *  its old words the way it got the new ones and keeps its caret, and what was
+   *  typed since the replacement is carried rather than written over. */
+  | {
+      kind: 'replace'
+      notes: { path: string; content: string; after: string; edits: Edit[] }[]
+    }
   /** An import. However many files it wrote, what somebody did was import once,
    *  so it is one thing to take back. The paths alone: undoing is removing files
    *  that were not there a minute ago, and a file nobody has touched yet needs no
@@ -56,7 +61,7 @@ export interface Copied {
 }
 
 import { shownName } from '../note-name'
-import { nameOf } from '../space-paths'
+import { nameOf, samePath } from '../space-paths'
 
 /** Twenty is far more than anyone reaches back through, and stops a long
  *  session from holding the text of every note it ever deleted. */
@@ -100,7 +105,7 @@ export class FileActions {
   /** The trash id of a deletion, once the trash has answered with one. */
   trashed(path: string, id: string) {
     const last = this.last
-    if (last?.kind === 'delete' && last.path === path) last.trashId = id
+    if (last?.kind === 'delete' && samePath(last.path, path)) last.trashId = id
   }
 
   /** Everything except the deletion whose copy has been restored some other

@@ -58,7 +58,7 @@ describe('the icon a space wears', () => {
   test('follows the folder when it is renamed', () => {
     const view = new DeviceView()
     view.setIcon('/Uni', 'GraduationCap')
-    view.moveIcon('/Uni', '/University')
+    view.follow({ op: 'moved', from: '/Uni', to: '/University', kind: 'space', root: '/Uni' })
 
     expect(view.iconOf('/Uni')).toBeNull()
     expect(view.iconOf('/University')).toBe('GraduationCap')
@@ -129,7 +129,7 @@ describe('the colour a space is drawn in', () => {
   test('follows the folder when it is renamed, the way the icon does', () => {
     const view = new DeviceView()
     view.setIcon('/Uni', 'GraduationCap', 'teal')
-    view.moveIcon('/Uni', '/University')
+    view.follow({ op: 'moved', from: '/Uni', to: '/University', kind: 'space', root: '/Uni' })
 
     expect(view.tintOf('/Uni')).toBeNull()
     expect(view.tintOf('/University')).toBe('teal')

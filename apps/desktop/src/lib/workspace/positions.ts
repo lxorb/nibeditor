@@ -7,7 +7,8 @@
  *  enough to write down on every pause in the typing. */
 
 import type { FoldLines } from '@nib/editor'
-import { without } from '../records'
+import { movedTo, samePath } from '../space-paths'
+import type { FileOp } from './file-ops'
 import type { Position } from './session'
 
 /** Enough for every note anyone comes back to, small enough for storage. */
@@ -28,10 +29,17 @@ export class Positions {
   /** Where a note was last looked at. Nothing at all for one nobody has
    *  opened, which reads as the top of the note. */
   of(path: string): Partial<Pick<Position, 'cursor' | 'scroll' | 'anchor' | 'folds'>> {
-    const known = this.places[path]
+    const known = this.places[path] ?? this.spelledOtherwise(path)
     return known
       ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor, folds: known.folds }
       : {}
+  }
+
+  /** The place kept under another spelling of the same path: a note opened as
+   *  `plan.md` on a disk that calls it `Plan.md`. */
+  private spelledOtherwise(path: string): Position | undefined {
+    for (const [one, place] of Object.entries(this.places)) if (samePath(one, path)) return place
+    return undefined
   }
 
   remember(
@@ -62,11 +70,17 @@ export class Positions {
     this.places = Object.fromEntries(entries)
   }
 
-  /** A note that moves takes its place along. */
-  move(from: string, to: string) {
-    const known = this.places[from]
-    if (!known) return
+  /** A note that moves takes its place along, and every note in a folder or a space
+   *  that moves takes its own. */
+  follow(op: FileOp) {
+    if (op.op !== 'moved') return
 
-    this.places = { ...without(this.places, from), [to]: known }
+    const was = Object.entries(this.places)
+    const now = was.map(([path, place]): [string, Position] => [
+      movedTo(path, op.from, op.to) ?? path,
+      place,
+    ])
+
+    if (now.some(([path], at) => path !== was[at]?.[0])) this.places = Object.fromEntries(now)
   }
 }

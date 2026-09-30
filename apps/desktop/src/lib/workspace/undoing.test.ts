@@ -27,18 +27,13 @@ vi.mock('../tauri', () => ({
   },
 }))
 
-/** The index hears about a file that went or was written, and everything kept by
- *  path hears about one that moved. What they do with that is their own business
- *  and tested there; what matters here is that they are told. */
+/** The index hears about a file that was written, and every file operation is said
+ *  once to everything kept by path. What they do with that is their own business
+ *  and tested there; what matters here is that it is said. */
 const told: string[] = []
 
 vi.mock('../link-index.svelte', () => ({
   links: {
-    cameBack: (path: string) => {
-      told.push(`back ${path}`)
-      return Promise.resolve()
-    },
-    noteGone: (path: string) => void told.push(`gone ${path}`),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
   },
 }))
@@ -55,22 +50,28 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
   const undone = new FileActions()
   undone.record(action)
 
-  const moved: string[] = []
   const kept = {
     undone,
-    tabs: [],
     documentAt: () => null,
-    positions: { move: (from: string, to: string) => void moved.push(`${from} -> ${to}`) },
-    pathMoved: (from: string, to: string) => void told.push(`moved ${from} -> ${to}`),
-    close: () => undefined,
+    entryAt: () => null,
+    // The three file operations, said the way the store says them; who follows
+    // each is workspace/file-ops.ts and tested with the store.
+    fileMoved: (from: string, to: string) => {
+      told.push(`moved ${from} -> ${to}`)
+      return Promise.resolve()
+    },
+    fileGone: (path: string) => {
+      told.push(`gone ${path}`)
+      return Promise.resolve()
+    },
+    fileCame: (path: string) => {
+      told.push(`back ${path}`)
+      return Promise.resolve()
+    },
     reload: (path: string) => void told.push(`reloaded ${path}`),
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
-    },
-    movedOnAccount: (from: string, to: string) => {
-      told.push(`account ${from} -> ${to}`)
-      return Promise.resolve()
     },
     loadTree: () => {
       kept.loaded += 1
@@ -81,7 +82,6 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     },
     loaded: 0,
     wrote: 0,
-    moved,
   }
 
   return kept as unknown as PutsBack & { loaded: number; wrote: number }
@@ -161,11 +161,6 @@ describe('an import taken back', () => {
   })
 })
 
-/** Putting a name back is a rename, and owes everything a rename owes - the links
- *  that followed the note, the index, the papers, and the account, which keeps a
- *  note under an id rather than under a name. Without that last one the note that
- *  came back from a mistaken rename is a third note up there, with the history of
- *  neither; see `movedHere` in sync/pass.ts. */
 describe('a copy taken back', () => {
   test('takes away what it made, a folder as a folder, and tells the index', async () => {
     const ws = store({
@@ -296,24 +291,25 @@ describe('doing it again', () => {
   })
 })
 
+/** Putting a name back is a rename, and owes everything a rename owes - the links
+ *  that followed the note, and the move said to everything kept by path, the account
+ *  among them, which keeps a note under an id rather than under a name. Without that
+ *  the note that came back from a mistaken rename is a third note up there, with the
+ *  history of neither; see `movedHere` in sync/pass.ts. */
 describe('a name put back', () => {
   test('rewrites the links that followed it, and only when they were rewritten', async () => {
     const ws = store({ kind: 'rename', from: '/s/a.md', to: '/s/b.md', rewrote: true })
     await undoLastFileAction(ws)
 
     expect(sent).toEqual([{ command: 'rename_note', path: '', content: '' }])
-    expect(told).toEqual([
-      'retargeted /s/b.md -> /s/a.md',
-      'moved /s/b.md -> /s/a.md',
-      'account /s/b.md -> /s/a.md',
-    ])
+    expect(told).toEqual(['retargeted /s/b.md -> /s/a.md', 'moved /s/b.md -> /s/a.md'])
   })
 
   test('and leaves the links alone where the rename did not touch them', async () => {
     const ws = store({ kind: 'move', from: '/s/a.md', to: '/s/f/a.md' })
     await undoLastFileAction(ws)
 
-    expect(told).toEqual(['moved /s/f/a.md -> /s/a.md', 'account /s/f/a.md -> /s/a.md'])
+    expect(told).toEqual(['moved /s/f/a.md -> /s/a.md'])
   })
 })
 

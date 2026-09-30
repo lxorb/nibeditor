@@ -9,14 +9,11 @@
  *  Kept per space, so two spaces cannot crowd each other out of one list and a
  *  space that goes takes its bookmarks with it. */
 
-import { isMarkdownPath, relativeTo } from '../space-paths'
+import { movedTo, relativeTo, samePath, within } from '../space-paths'
 import { type Folded, type Folding, meet, readSpaces, without } from '../records'
-import { forget, isRecord, isString, keep, stored, stringList } from '../stored'
+import { isRecord, isString, keep } from '../stored'
 
 const STORAGE_KEY = 'nib:bookmarks'
-
-/** What pins were kept under. Read once and dropped; see `migrate`. */
-const PINNED_KEY = 'nib:pinned'
 
 /** More than anyone keeps above a file list. The service holds an account to
  *  the same number, so a list that fits here fits there. */
@@ -113,7 +110,7 @@ export function bookmarkList(value: unknown): Bookmark[] {
  *  and moving it into a group is moving the bookmark it already is rather than
  *  making a second one. */
 export function sameBookmark(one: Bookmark, other: Bookmark): boolean {
-  return one.kind === other.kind && one.path === other.path && one.text === other.text
+  return one.kind === other.kind && samePath(one.path, other.path) && one.text === other.text
 }
 
 function sameList(one: readonly Bookmark[], other: readonly Bookmark[]): boolean {
@@ -134,38 +131,6 @@ function sameList(one: readonly Bookmark[], other: readonly Bookmark[]): boolean
 export function mergeBookmarks(theirs: Bookmark[], mine: Bookmark[]): Bookmark[] {
   const extra = mine.filter((one) => !theirs.some((held) => sameBookmark(held, one)))
   return [...theirs, ...extra].slice(0, MOST_BOOKMARKS)
-}
-
-/** True when `path` names something inside `root` rather than merely starting
- *  with the same letters: `Nib/Work` does not hold `Nib/Working`. */
-function startsInside(root: string, path: string): boolean {
-  return path.length > root.length && path.startsWith(root) && /[\\/]/.test(path[root.length] ?? '')
-}
-
-/** The pins an older build kept, as the bookmarks of the space each one is in.
- *
- *  A pin was a path on this disk and a bookmark is a path a space speaks, so a
- *  pin that belongs to none of the spaces at hand has nowhere to go and is
- *  dropped. Whether it named a note or a folder is read off its extension,
- *  which is what the file list would have gone by anyway. */
-export function bookmarksFromPins(
-  pins: readonly string[],
-  roots: readonly string[],
-): Record<string, Bookmark[]> {
-  const out: Record<string, Bookmark[]> = {}
-  // Longest first, so a space that sits inside another one claims its own pins.
-  const deepest = [...roots].sort((one, other) => other.length - one.length)
-
-  for (const pin of pins) {
-    const root = deepest.find((one) => startsInside(one, pin))
-    if (!root) continue
-
-    const path = relativeTo(root, pin)
-    const mark: Bookmark = { kind: isMarkdownPath(path) ? 'note' : 'folder', path, text: '' }
-    out[root] = [...(out[root] ?? []), mark]
-  }
-
-  return out
 }
 
 /** One space's list, and which account it has already been reconciled with. */
@@ -340,6 +305,8 @@ export class Bookmarks {
 
     const was = relativeTo(root, from)
     const now = relativeTo(root, to)
+    if (!was) return
+
     const held = this.of(root)
     const next = held.map((one) => {
       if (!POINTS_AT_A_FILE.has(one.kind)) return one
@@ -348,9 +315,8 @@ export class Bookmarks {
       // part in front of the `#`. See forBlock.
       const cut = one.kind === 'block' ? one.path.indexOf('#') : -1
       const file = cut === -1 ? one.path : one.path.slice(0, cut)
-      if (file !== was && !file.startsWith(`${was}/`)) return one
-
-      return { ...one, path: now + one.path.slice(was.length) }
+      const moved = movedTo(file, was, now, root)
+      return moved === null ? one : { ...one, path: moved + one.path.slice(file.length) }
     })
 
     if (sameList(held, next)) return
@@ -385,7 +351,8 @@ export class Bookmarks {
 
   forEntry(entry: { path: string; is_dir: boolean }): Bookmark | null {
     const root = this.root()
-    if (root === null || !startsInside(root, entry.path)) return null
+    // Inside the space rather than the space itself, or a row of another one.
+    if (root === null || !within(root, entry.path)) return null
 
     return { kind: entry.is_dir ? 'folder' : 'note', path: relativeTo(root, entry.path), text: '' }
   }
@@ -451,29 +418,6 @@ export class Bookmarks {
     this.write()
 
     return met.tell ? met.value : null
-  }
-
-  /** Turns the pins an older build kept into bookmarks. Silent, and once: a
-   *  pinned note simply is a bookmarked one now. */
-  migrate(roots: readonly string[]) {
-    const pins = stringList(stored(PINNED_KEY))
-    if (!pins) return
-
-    // Dropped whatever comes of it, so a pin that belonged to no space still
-    // here does not have this run again on every launch.
-    forget(PINNED_KEY)
-
-    const next = { ...this.spaces }
-    for (const [root, pinned] of Object.entries(bookmarksFromPins(pins, roots))) {
-      const kept = next[root]
-      next[root] = {
-        list: mergeBookmarks(kept?.list ?? [], pinned),
-        account: kept?.account ?? null,
-      }
-    }
-
-    this.spaces = next
-    this.write()
   }
 
   put(root: string, list: Bookmark[]) {
