@@ -77,8 +77,9 @@
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
 
-  /** A phone has no web tab, so it has no pages to go to either. */
-  const browses = $derived(viewport.device !== 'phone')
+  /** A phone has no web tab, so it has no pages to go to either; nor has the glasses'
+   *  plugin on any screen, whose package leaves the history and the address rows out. */
+  const browses = $derived(!__EVEN_PLUGIN__ && viewport.device !== 'phone')
 
   /** Something was taken out of the history or the list of things used: the one
    *  change the stores below do not say themselves. */
@@ -379,7 +380,9 @@
     frecency.forget(key)
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
-    if (row.kind === 'page') visited.remove(webData.history(workspace.activeSpaceId), row.url)
+    if (!__EVEN_PLUGIN__ && row.kind === 'page') {
+      visited.remove(webData.history(workspace.activeSpaceId), row.url)
+    }
     forgotten++
   }
 

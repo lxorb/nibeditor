@@ -56,6 +56,12 @@ function pageDialogs(): Promise<typeof import('./dialogs.svelte')> {
   return import('./dialogs.svelte')
 }
 
+/** A closed tab's dialogs, cancelled. Never in the glasses' plugin, which opens no page
+ *  and so leaves the store out of its package. */
+function dropDialogs(tab: string): void {
+  if (!__EVEN_PLUGIN__) void pageDialogs().then(({ dialogs }) => dialogs.dropped(tab))
+}
+
 /** How long a parked page's webview goes on running after the tab showing it went
  *  away.
  *
@@ -893,7 +899,7 @@ class Pages {
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
       grants.dropped(tabId)
-      void pageDialogs().then(({ dialogs }) => dialogs.dropped(tabId))
+      dropDialogs(tabId)
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
@@ -916,7 +922,7 @@ class Pages {
 
     this.held.delete(tabId)
     grants.dropped(tabId)
-    void pageDialogs().then(({ dialogs }) => dialogs.dropped(tabId))
+    dropDialogs(tabId)
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
@@ -974,8 +980,9 @@ class Pages {
     // this is now started with the first page in the window rather than with the first
     // placement: a test that says it is a desktop without putting a document under it
     // reaches here, where it never used to. The same guard tauri.ts puts on the line
-    // that decides which platform this is, and for the same reason.
-    if (this.listening || !isDesktop || typeof window === 'undefined') return
+    // that decides which platform this is, and for the same reason. The glasses'
+    // plugin is never a desktop, and says so first so its package leaves all of it out.
+    if (__EVEN_PLUGIN__ || this.listening || !isDesktop || typeof window === 'undefined') return
     this.listening = true
 
     const { listen } = await import('@tauri-apps/api/event')
