@@ -43,6 +43,8 @@ export interface Desk {
   backlinksOf(path: string): unknown[]
   /** Keeps a version of a note, saying who it was kept for. */
   snapshot(path: string, content: string, source: string): Promise<void>
+  /** The note with no file yet in a tab, by the tab's id, or null. */
+  draftIn(tab: string): NoteDoc | null
   /** Which scheme a caret's colour is for. */
   scheme(): 'dark' | 'light'
 }
@@ -52,6 +54,8 @@ export interface Desk {
 export interface NoteAt {
   path: string
   space?: string
+  /** A tab holding a note with no file yet, in place of a path; see workspace/drafts.ts. */
+  tab?: string
 }
 
 /** A note an agent named, found: its space, its path as the space speaks of it, and
@@ -60,6 +64,8 @@ export interface Located {
   space: Space
   relative: string
   path: string
+  /** The document itself, for a note with no file: always open, and on no disk. */
+  draft?: NoteDoc
 }
 
 /** The space an agent named by id or by name, or the open one. */
@@ -83,6 +89,13 @@ function spaceOf(desk: Desk, named: string | undefined): Space {
 export function located(desk: Desk, at: NoteAt): Located {
   const space = spaceOf(desk, at.space)
 
+  if (at.tab !== undefined) {
+    const draft = desk.draftIn(at.tab)
+    if (!draft) throw new DocError('no_such_note', at.tab, `tab ${at.tab} holds no unsaved note`)
+    // Its key stands for a path: what a note is known by in the edits and the undo.
+    return { space, relative: '', path: `unsaved:${draft.key}`, draft }
+  }
+
   const judged = insideOnly(at.path)
   if (judged === null) {
     throw new DocError('no_such_note', at.path, `${at.path} is not a path inside the space`)
@@ -98,6 +111,7 @@ export function located(desk: Desk, at: NoteAt): Located {
 
 /** The document a located note is open as, when it is open as a note. */
 export function openNote(desk: Desk, note: Located): NoteDoc | null {
+  if (note.draft) return note.draft
   const open = desk.documentAt(note.path)
   return open?.kind === 'note' ? open : null
 }
@@ -105,7 +119,7 @@ export function openNote(desk: Desk, note: Located): NoteDoc | null {
 /** A located note's words, with the one line ending the editor holds, or an error
  *  saying it is not there. */
 export async function wordsOf(desk: Desk, note: Located): Promise<string> {
-  const text = await desk.noteText(note.path)
+  const text = note.draft ? note.draft.latest : await desk.noteText(note.path)
   if (text === null)
     throw new DocError('no_such_note', note.relative, `there is no note at ${note.relative}`)
 

@@ -233,3 +233,32 @@ export class OpenDocuments {
     }
   }
 }
+
+/** One tab per web note (Emil, 2026-09-30: *"it should NEVER be possible that we have
+ *  the same web note open multiple times"*), the same rule one step on: one document
+ *  per file above, and a web note's document in one tab. Asked of the whole strip
+ *  whenever it changes, so no way of making a tab is left to forget it. The tab open
+ *  already keeps the file; a second becomes an unsaved web tab at the same page. Notes,
+ *  planes and page notes may still show twice. See docs/web-tabs.md. */
+
+interface Held {
+  kind: string
+  path: string | null
+  note: object
+}
+
+/** Each second tab of `next` over a web note, with the tab that keeps it: one of
+ *  `before` where there is one, else the first. */
+export function secondWebTabs<T extends Held>(before: readonly T[], next: readonly T[]): [T, T][] {
+  const kept = new Map<object, T>()
+  const second: [T, T][] = []
+
+  for (const tab of [...before.filter((one) => next.includes(one)), ...next]) {
+    if (tab.kind !== 'web' || tab.path === null) continue
+
+    const first = kept.get(tab.note)
+    if (!first) kept.set(tab.note, tab)
+    else if (first !== tab && !second.some(([one]) => one === tab)) second.push([tab, first])
+  }
+  return second
+}

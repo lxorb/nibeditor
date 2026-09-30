@@ -75,6 +75,8 @@
   import { store as themeStore } from './lib/themes/store.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
+  import { saveFront } from './lib/save-place/door'
+  import { isDraft } from './lib/workspace/drafts'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
@@ -154,7 +156,7 @@
   // is said here rather than in start.ts; `:e` opens it on its note search,
   // which is what a reader typing `:e` is after.
   setVimCommands({
-    write: () => void workspace.writeNow(),
+    write: saveFront,
     quit: () => void workspace.closeActive(),
     edit: () => {
       palette = true
@@ -169,7 +171,7 @@
   // facts are read here so the effect follows them. See window-document.ts.
   $effect(() => {
     const active = workspace.active
-    const facts = active && { shown: active.shown, path: active.path }
+    const facts = active && { shown: active.shown, path: active.path, draft: isDraft(active.note) }
     void import('./lib/window-document').then(({ windowDocument }) => {
       const inWindow = windowDocument(facts, onMac)
       document.title = inWindow.title

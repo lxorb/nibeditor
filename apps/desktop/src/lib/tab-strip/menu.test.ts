@@ -26,7 +26,8 @@ type Tab = import('../workspace.svelte').Tab
 /** Only what the menu reads of a tab. */
 function tab(path: string | null, kind: Tab['kind'] = 'note'): Tab {
   // A stand-in, because a real tab is built round a document read off a disk.
-  return { id: 'one', path, kind, pinned: false, reading: false } as Tab
+  const note = { path, kind, shared: null }
+  return { id: 'one', path, kind, pinned: false, reading: false, note } as unknown as Tab
 }
 
 function labels(one: Tab): string[] {

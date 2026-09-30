@@ -67,6 +67,32 @@ Contents (`tab.cc` `UpdateIconVisibility`, `tab.h`):
 | Leaving that mode | the pointer leaves the strip plus 40 below and 60 past its end; a tab opened or moved; touch: 2 s after the close; widths back at preferred | same |
 | Only when needed | not entered while tabs are already at their preferred width | same |
 
+### A tab with no file
+
+**A new note, plane or page note is a tab with no file, and a dot after its name says
+so** - `.nib-unsaved` in the themes package, drawn by `UnsavedDot.svelte` in the strip,
+the bar over a phone's note and the palette's row, and on the mark's shoulder for a tab
+that is only its mark. The press on the dot is Save, as Ctrl+S is: a small layer under
+the tab, Chrome's bookmark bubble, with the name its first line offers and the places the
+Move sheet offers, starting on the root of the space it was opened in. A tab dropped on a
+row of the file list is saved there. A web tab nobody has kept wears no dot - a browser
+tab has nothing unwritten in it - and is saved the same way. See `workspace/drafts.ts`.
+
+**Closing one asks nothing**, as a browser asks nothing: an empty one just goes, and one
+with words keeps them twice over, on the closed stack for Ctrl+Shift+T and in Recently
+deleted for fourteen days, from where it is restored as the note it would have been
+(`trash_words` in `trash.rs`, `workspace/placing.ts`). VS Code and Notepad ask "Save
+changes?" here; nib has no such question anywhere.
+
+**A session brings every tab back, whatever its kind.** A tab is written down as a
+`Draft` (`workspace/session.ts`): its kind, its file or none, its words where the disk
+has not got them - which for a tab with no file is always - the space a tab with no file
+was opened in (`space`), and the view state its kind keeps. `draftOf` writes one and
+`tabsFrom` reads it back, for the session, a named layout and the closed stack alike; a
+kind that restores is a kind whose words are enough to rebuild it (a terminal's are its
+shell and folder, see `terminal/spec.ts`), so a new kind adds fields to `Draft` and reads
+them there rather than keeping a second record.
+
 ## Motion
 
 | Rule | Chrome | Source | nib |
@@ -180,3 +206,8 @@ so a width change lays out that one tab and nothing beside it.
   not extend a pick here: a tab brought to the front takes the keyboard into its note. See
   `tab-strip/picking.svelte.ts`.
 - **No groups.** Tab search is the palette.
+- **A web note is open in one tab**, across panes, splits and windows: opening it again
+  goes to where it is, as Chrome's "Switch to tab" and VS Code's `revealIfOpen` do, and
+  never pulls it into the pane in front. Duplicate, a split and a copy-drag of one make
+  an unsaved web tab at the same page instead of a second tab of the file. Notes,
+  planes and page notes may still be shown twice. See docs/web-tabs.md.

@@ -98,21 +98,3 @@ export function storeName(choice: WebData, space: string, site: string | null): 
 export function historyKey(choice: WebData, space: string | null): string {
   return choice === 'global' || !space ? 'nib:web-visits' : `nib:web-visits:${space}`
 }
-
-/** Which space a page belongs to: the one whose folder holds its note, or the space
- *  that is open for a tab with no note yet, which is the space it was opened in. */
-export function spaceOf(
-  path: string | null,
-  spaces: readonly { id: string; root: string }[],
-  open: string | null,
-): string | null {
-  if (!path) return open
-
-  const at = path.replaceAll('\\', '/')
-  const holding = spaces.find((space) => {
-    const root = space.root.replaceAll('\\', '/').replace(/\/+$/, '')
-    return at.startsWith(`${root}/`)
-  })
-
-  return holding?.id ?? open
-}

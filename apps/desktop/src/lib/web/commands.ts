@@ -369,6 +369,21 @@ async function trashItem(path: string, kind: string): Promise<TrashEntry> {
   return entry
 }
 
+/** Words that never had a file, in the trash as a note deleted from `path` would be;
+ *  see `trash_words` in trash.rs. */
+async function trashWords(path: string, content: string): Promise<TrashEntry> {
+  const source = normalise(path)
+  if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
+
+  const id = `${now()}-${trashCounter++}`
+  const name = basename(source)
+  await writeNote(`${TRASH}/${id}/${name}`, content)
+
+  const entry = { id, kind: 'note', name, from: source, trashedAt: now() }
+  await saveTrash([...(await trashEntries()), entry])
+  return entry
+}
+
 async function restoreTrash(id: string): Promise<string> {
   const entries = await trashEntries()
   const entry = entries.find((one) => one.id === id)
@@ -816,6 +831,9 @@ export async function webInvoke<T>(
     case 'trash_item':
       return (await trashItem(path, args.kind as string)) as T
 
+    case 'trash_words':
+      return (await trashWords(path, args.content as string)) as T
+
     case 'list_trash':
       return (await trashEntries()).sort((a, b) => b.trashedAt - a.trashedAt) as T
 
@@ -951,6 +969,12 @@ export async function webInvoke<T>(
 
     case 'new_window':
       window.open(location.href, '_blank')
+      return undefined as T
+
+    // Another tab of the app asked for a web note this one has open. A page cannot
+    // bring its own browser tab forward; asking is the most it may do.
+    case 'show_window':
+      window.focus()
       return undefined as T
 
     // An AI provider's key. A browser has no keychain and no hardware store, so it

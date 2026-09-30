@@ -58,25 +58,12 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
         return Err(format!("{kind} is not something nibeditor can delete"));
     }
 
-    let base = spaces_dir(&app)?;
     // Refuses anything outside the notes folder, and the trash itself: what is
     // already deleted cannot be deleted again.
-    let source = in_spaces(&app, &path)?;
-
-    let relative = source
-        .strip_prefix(&base)
-        .map_err(|_| format!("{path} is not in the notes folder"))?;
-    if relative.as_os_str().is_empty() {
-        return Err("that cannot be deleted".into());
-    }
+    let (source, from, name) = placed(&app, &path)?;
     if !source.exists() {
         return Err("nothing is there".into());
     }
-
-    let name = source
-        .file_name()
-        .map(|name| name.to_string_lossy().to_string())
-        .ok_or("that has no name")?;
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
@@ -98,19 +85,85 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
         id,
         kind,
         name,
-        from: relative.to_string_lossy().replace('\\', "/"),
+        from,
         trashed_at: clock::now(),
     };
 
-    let mut entries = read_manifest(&dir);
-    entries.push(entry.clone());
-
     // An entry that cannot be written down is a note nobody could find again, so
     // it goes back where it came from instead.
-    if let Err(error) = write_manifest(&dir, &entries) {
+    recorded(&dir, entry, || {
         let _ = fs::rename(&held, &source);
         move_highlights(&held, &source);
         let _ = fs::remove_dir_all(&slot);
+    })
+}
+
+/// Words that never had a file, put in the trash as though a note at `path` had been
+/// deleted: a new tab closed with something written in it. Closing one asks nothing,
+/// because this is where its words go - for fourteen days, like any note, and Restore
+/// puts them at `path`. Nothing is written in the space itself: `path` is only where
+/// the note would have been, judged the way a real one is.
+#[tauri::command(async)]
+pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<TrashEntry, String> {
+    let (_, from, name) = placed(&app, &path)?;
+    if !is_name(&name) {
+        return Err(format!("{name} is not a name nibeditor can keep"));
+    }
+
+    let _guard = locked();
+    let dir = trash_dir(&app)?;
+    let id = new_id();
+    let slot = dir.join(&id);
+    made(&slot)?;
+
+    if let Err(error) = write_atomically(&slot.join(&name), content.as_bytes()) {
+        let _ = fs::remove_dir_all(&slot);
+        return Err(error);
+    }
+
+    let entry = TrashEntry {
+        id,
+        kind: "note".into(),
+        name,
+        from,
+        trashed_at: clock::now(),
+    };
+    recorded(&dir, entry, || {
+        let _ = fs::remove_dir_all(&slot);
+    })
+}
+
+/// A path the trash is asked about, judged: where it is on this disk, where it is
+/// inside the notes folder with `/` between parts, and its name. The notes folder
+/// itself is not something to put in the trash.
+fn placed(app: &AppHandle, path: &str) -> Result<(PathBuf, String, String), String> {
+    let base = spaces_dir(app)?;
+    let source = in_spaces(app, path)?;
+
+    let relative = source
+        .strip_prefix(&base)
+        .map_err(|_| format!("{path} is not in the notes folder"))?;
+    if relative.as_os_str().is_empty() {
+        return Err("that cannot be deleted".into());
+    }
+    let from = relative.to_string_lossy().replace('\\', "/");
+
+    let name = source
+        .file_name()
+        .map(|name| name.to_string_lossy().to_string())
+        .ok_or("that has no name")?;
+
+    Ok((source, from, name))
+}
+
+/// One more entry in the manifest. One that cannot be written down is something
+/// nobody could find again, so `undo` puts things back as they were instead.
+fn recorded(dir: &Path, entry: TrashEntry, undo: impl FnOnce()) -> Result<TrashEntry, String> {
+    let mut entries = read_manifest(dir);
+    entries.push(entry.clone());
+
+    if let Err(error) = write_manifest(dir, &entries) {
+        undo();
         return Err(error);
     }
 
@@ -338,8 +391,8 @@ fn is_name(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        is_name, is_slot, purge, read_manifest, restore_target, write_manifest, TrashEntry,
-        MANIFEST,
+        is_name, is_slot, purge, read_manifest, recorded, restore_target, write_manifest,
+        TrashEntry, MANIFEST,
     };
     use std::path::{Path, PathBuf};
 
@@ -473,6 +526,26 @@ mod tests {
         let target = restore_target(base, &entry("1-0", "Idea.md", "Idea.md")).expect("a place");
         assert_eq!(target, base.join("Idea 2.md"));
         assert!(Path::new(&target).parent().is_some());
+    }
+
+    /// An entry goes on the end of what the manifest already holds, and nothing is
+    /// undone when it was written down.
+    #[test]
+    fn a_recorded_entry_joins_the_manifest() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        write_manifest(dir.path(), &[entry("1-0", "Idea.md", "Work/Idea.md")]).expect("one");
+
+        let mut undone = false;
+        let kept = recorded(dir.path(), entry("1-1", "Plan.md", "Work/Plan.md"), || {
+            undone = true;
+        })
+        .expect("recorded");
+
+        assert_eq!(kept.name, "Plan.md");
+        assert!(!undone);
+        let read = read_manifest(dir.path());
+        assert_eq!(read.len(), 2);
+        assert_eq!(read[1].from, "Work/Plan.md");
     }
 
     #[test]

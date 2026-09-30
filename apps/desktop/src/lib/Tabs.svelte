@@ -15,6 +15,8 @@
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
+  import UnsavedDot from './UnsavedDot.svelte'
+  import { askPlace } from './save-place/door'
   import type { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
   import {
@@ -45,6 +47,7 @@
   import { workspace, type Tab } from './workspace.svelte'
   import type { Landing } from './workspace/panes.svelte'
   import { pinnedRun } from './workspace/pinning'
+  import { isDraft } from './workspace/drafts'
   import { inside } from './workspace/zones'
   import { dur } from './motion'
   import Cross from './Cross.svelte'
@@ -490,8 +493,9 @@
       if (from) handOver(ending.tabId, from.left, from.top)
       if (carried) carried.dropped(where)
       else workspace.dropTab(ending.tabId, where)
-    } else if (from) {
-      flyHome(ending.tabId, from)
+    } else {
+      carry?.droppedOnList(ending.tabId)
+      if (from) flyHome(ending.tabId, from)
     }
   }
 
@@ -517,6 +521,7 @@
     drag.cancel()
     unfollow()
     if (!tabId) return
+    carry?.overList(tabId, null)
 
     settle(tabId)
     if (from) flyHome(tabId, from)
@@ -831,6 +836,9 @@
             // A click with Ctrl or Shift was a pick, and its press answered it.
             if (event.detail > 0 && picksWith(event)) return
             workspace.activate(tab.id)
+            if (event.target instanceof Element && event.target.closest('.nib-unsaved')) {
+              askPlace(tab.id)
+            }
           }}
           ondblclick={() => workspace.keep(tab.id)}
           oncontextmenu={(event) => showMenu(event, tab)}
@@ -854,7 +862,12 @@
                are read. The icon the file chose for its row where it chose one,
                because it is the same file and one file wears one mark - which is the
                whole of what a pinned tab is reduced to. See TabMark.svelte. -->
-          <span class="face" class:hidden={!parts.mark}><TabMark {tab} /></span>
+          <span class="face" class:hidden={!parts.mark}
+            ><TabMark {tab} />{#if isDraft(tab.note) && (tab.pinned || !parts.title)}<UnsavedDot
+                corner
+                pressable
+              />{/if}</span
+          >
           {#if tab.reading}
             <!-- An open book, quietly: the tab says which face of the note is up
                  without spending a word on it. -->
@@ -879,6 +892,9 @@
                who cannot see it, and what the title shows. -->
           {#if !tab.pinned}
             <span class="label" class:hidden={!parts.title}>{tab.shown}</span>
+          {/if}
+          {#if isDraft(tab.note) && !tab.pinned && parts.title}
+            <UnsavedDot pressable />
           {/if}
           <!-- Chrome's speaker, struck through on a muted site. -->
           {#if tab.kind === 'web' && parts.title}
@@ -1227,6 +1243,7 @@
   }
 
   .face {
+    position: relative;
     display: flex;
     flex: none;
   }

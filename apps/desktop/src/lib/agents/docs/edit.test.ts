@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { editNote, PATIENCE, undoAgent, writeNote } from './edit'
+import { readNote } from './read'
 import { SHOWN_FOR } from './presence'
 import { DocError } from './problem'
 import { revOf } from './rev'
@@ -421,5 +422,34 @@ describe('taking an agent’s edits back', () => {
 
     await undoAgent(desk, agent, { path: 'plan.md' })
     expect(again.text).toBe('my words!')
+  })
+})
+
+/** A new tab is a note of its space with no file yet (workspace/drafts.ts): an agent
+ *  reaches it by the tab `get_context` lists, and its edits land in the words on screen
+ *  like any open note's, with nothing kept on a disk it is not on. */
+describe('a note with no file yet', () => {
+  test('is read and edited by its tab, as one step, and keeps no version', async () => {
+    const { desk, draft, kept } = deskWith({})
+    const pane = draft('tab-1', '# Plan\n\nfirst')
+    const agent = anAgent()
+
+    const read = await readNote(desk, { path: '', tab: 'tab-1' })
+    expect(read.text).toBe('# Plan\n\nfirst')
+
+    await editNote(desk, agent, { path: '', tab: 'tab-1' }, [
+      { at: { end: true }, insert_after: 'second' },
+    ])
+
+    expect(pane.text).toBe('# Plan\n\nfirst\n\nsecond')
+    expect(kept).toEqual([])
+    expect(await undoAgent(desk, agent, { path: '', tab: 'tab-1' })).toEqual({ undone: 1 })
+    expect(pane.text).toBe('# Plan\n\nfirst')
+  })
+
+  test('is refused by a tab that holds none', async () => {
+    const { desk } = deskWith({})
+
+    expect(await refusal(readNote(desk, { path: '', tab: 'nope' }))).toBe('no_such_note')
   })
 })

@@ -6,6 +6,9 @@
   import SidebarToggle from './SidebarToggle.svelte'
   import SpaceSwitcher from './SpaceSwitcher.svelte'
   import TabMark from './TabMark.svelte'
+  import UnsavedDot from './UnsavedDot.svelte'
+  import { askPlace } from './save-place/door'
+  import { isDraft } from './workspace/drafts'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
   import { shortcuts } from './shortcuts.svelte'
@@ -114,9 +117,14 @@
     <!-- One document at a time, so its name goes here rather than a strip of
          tabs too narrow to read: the mark for what it is, and what it is called.
          The rest is behind the three dots. -->
-    <h1 class="title">
+    <h1 class="title" data-save-anchor>
       {#if showing}<TabMark tab={showing} />{/if}
       <span class="name">{title}</span>
+      {#if showing && isDraft(showing.note)}
+        <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
+          ><UnsavedDot pressable /></button
+        >
+      {/if}
     </h1>
 
     <!-- Everything the desktop's menu bar holds, as one menu with its groups and

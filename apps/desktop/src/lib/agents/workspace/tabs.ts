@@ -16,6 +16,7 @@ import { relativeTo } from '../../space-paths'
 import { views } from '../../views.svelte'
 import { pages } from '../../web-tab/pages.svelte'
 import { type Tab, workspace } from '../../workspace.svelte'
+import { isDraft } from '../../workspace/drafts'
 import type { ReaderTab } from '../verbs'
 import { TYPING } from '../docs/edit'
 import { type Call, done, flag, maybe, need, needScope } from './call'
@@ -45,6 +46,8 @@ function tabOf(tab: Tab) {
     id: tab.id,
     kind: tab.kind,
     ...(tab.path !== null && root ? { path: relativeTo(root, tab.path) } : {}),
+    // A note with no file yet: read and edited by this tab's id; see notes.ts.
+    ...(isDraft(tab.note) ? { unsaved: true } : {}),
     ...(url ? { url } : {}),
     title: tab.shown,
     front: front(tab),

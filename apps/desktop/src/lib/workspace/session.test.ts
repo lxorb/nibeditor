@@ -191,6 +191,17 @@ describe('reading one tab', () => {
 
     expect(back).toMatchObject({ kind: 'terminal', path: null, name: 'PowerShell', doc })
   })
+
+  /** A tab with no file keeps the space it was opened in; one with a file is in the
+   *  space holding it, which a session has no business saying otherwise. */
+  test('brings a tab with no file back in the space it was opened in', () => {
+    const web = { kind: 'web', path: null, name: 'Site', doc: '', space: 'w' }
+    const kept = { ...web, path: '/Notes/Site.url' }
+
+    expect(readDraft(web)).toMatchObject({ space: 'w' })
+    expect(readDraft(kept)).not.toHaveProperty('space')
+    expect(readDraft({ ...web, space: 7 })).not.toHaveProperty('space')
+  })
 })
 
 describe('reading a closed tab', () => {
@@ -211,6 +222,13 @@ describe('reading a closed tab', () => {
 
     expect(back?.paneId).toBe('')
     expect(back?.at).toBe(0)
+  })
+
+  test('brings back where its words were put in Recently deleted', () => {
+    const draft = { path: null, name: 'Untitled', doc: '# draft' }
+
+    expect(readClosed({ draft, trashed: 't1' })?.trashed).toBe('t1')
+    expect(readClosed({ draft, trashed: 1 })).not.toHaveProperty('trashed')
   })
 
   test('is nothing at all without a tab in it', () => {

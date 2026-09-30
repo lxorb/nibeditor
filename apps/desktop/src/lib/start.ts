@@ -172,6 +172,11 @@ export function start(): () => void {
     )
   }
 
+  // A web note is open in one window of the app; see web-tab/one-window.svelte.ts.
+  if (!__EVEN_PLUGIN__ && isDesktop) {
+    void startup.turn('rooms').then(() => import('./web-tab/one-window.svelte'))
+  }
+
   // The pointer hides while somebody types; see typing-pointer.ts.
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {

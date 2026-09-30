@@ -246,7 +246,8 @@ function changeOpen(
   // The version before, kept once per agent and note, and said whose edit it was
   // kept for. After the edit rather than before it, because nothing may come between
   // resolving and applying; the words are the ones read above.
-  if (first) void desk.snapshot(note.path, text, agent.name)
+  // A note with no file has nowhere a version could be kept.
+  if (first && !note.draft) void desk.snapshot(note.path, text, agent.name)
 
   const last = planned.edits.at(-1)
   if (last) showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme())

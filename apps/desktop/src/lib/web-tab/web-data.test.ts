@@ -1,6 +1,6 @@
 import { getDomain } from 'tldts'
 import { describe, expect, test, vi } from 'vitest'
-import { historyKey, hostOf, isWebData, siteOf, spaceOf, storeName, WEB_DATA } from './web-data'
+import { historyKey, hostOf, isWebData, siteOf, storeName, WEB_DATA } from './web-data'
 
 /** Storage for the test, since node has none; what the app writes is read back from
  *  here. */
@@ -99,26 +99,6 @@ describe('the history a space offers', () => {
     expect(historyKey('space', '0-a')).toBe('nib:web-visits:0-a')
     expect(historyKey('site', '0-a')).toBe('nib:web-visits:0-a')
     expect(historyKey('space', null)).toBe('nib:web-visits')
-  })
-})
-
-describe('which space a page is in', () => {
-  const spaces = [
-    { id: 'w', root: 'C:\\Users\\me\\Documents\\Nib\\Work' },
-    { id: 'wx', root: 'C:\\Users\\me\\Documents\\Nib\\Work extra' },
-    { id: 'h', root: '/home/me/Nib/Home/' },
-  ]
-
-  test('the space whose folder holds the note', () => {
-    expect(spaceOf('C:\\Users\\me\\Documents\\Nib\\Work\\Moodle.url', spaces, 'h')).toBe('w')
-    expect(spaceOf('C:/Users/me/Documents/Nib/Work extra/a/Site.url', spaces, 'h')).toBe('wx')
-    expect(spaceOf('/home/me/Nib/Home/Site.url', spaces, 'w')).toBe('h')
-  })
-
-  test('a tab with no note, or a note outside every space, is in the open one', () => {
-    expect(spaceOf(null, spaces, 'h')).toBe('h')
-    expect(spaceOf('/elsewhere/Site.url', spaces, 'w')).toBe('w')
-    expect(spaceOf(null, spaces, null)).toBeNull()
   })
 })
 

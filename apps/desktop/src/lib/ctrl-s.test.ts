@@ -1,13 +1,27 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Ctrl+S, which every hand still presses and nothing needs: a silent write of what
- *  is owed, never a question, never a file picker, and never the browser's own Save
- *  page as. See `writeKey` in shortcuts.svelte.ts. */
+/** Ctrl+S, which means one thing: put it on the disk. For a file, a silent write of
+ *  what is owed - never a question, never a file picker, and never the browser's own
+ *  Save page as; for a tab with no file, where it goes. See `writeKey` in
+ *  shortcuts.svelte.ts. */
 
 const writeNow = vi.fn(() => Promise.resolve())
+/** The tab in front: a note with a file unless a test says otherwise. */
+const front = {
+  active: { id: 'tab', note: { path: '/s/a.md' as string | null, shared: null, kind: 'note' } },
+}
 vi.mock('./workspace.svelte', () => ({
-  workspace: { writeNow, fileOps: { follow: () => () => undefined } },
+  workspace: {
+    writeNow,
+    fileOps: { follow: () => () => undefined },
+    get active() {
+      return front.active
+    },
+  },
 }))
+
+const askPlace = vi.fn()
+vi.mock('./save-place/ask', () => ({ askPlace }))
 
 /** The store asks the browser what kind of machine this is, and reads its storage. */
 vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' })
@@ -42,6 +56,9 @@ function press(key: string, held: { ctrl?: boolean; meta?: boolean; shift?: bool
 
 beforeEach(() => {
   writeNow.mockClear()
+  askPlace.mockClear()
+  front.active.note.path = '/s/a.md'
+  front.active.note.kind = 'note'
 })
 
 describe('Ctrl+S', () => {
@@ -66,6 +83,24 @@ describe('Ctrl+S', () => {
 
     expect(shortcuts.writeKey(event)).toBe(false)
     expect(writeNow).not.toHaveBeenCalled()
+  })
+
+  /** VS Code's Ctrl+S on an untitled editor, without its file dialog: the one thing
+   *  about a new tab nobody has said is where it goes. */
+  test('asks where a tab with no file goes, and writes nothing', async () => {
+    front.active.note.path = null
+
+    expect(shortcuts.writeKey(press('s', { ctrl: true }))).toBe(true)
+    await vi.waitFor(() => expect(askPlace).toHaveBeenCalledWith('tab'))
+    expect(writeNow).not.toHaveBeenCalled()
+  })
+
+  test('and the same of a web tab nobody has kept', async () => {
+    front.active.note.path = null
+    front.active.note.kind = 'web'
+
+    shortcuts.writeKey(press('s', { ctrl: true }))
+    await vi.waitFor(() => expect(askPlace).toHaveBeenCalledWith('tab'))
   })
 
   test('and no command of the registry has it', () => {

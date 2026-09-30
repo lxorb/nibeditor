@@ -352,6 +352,14 @@ fn bring_forward(window: &tauri::Window) {
     crate::placement::raised(window);
 }
 
+/// The window asking, brought forward: another window wanted a web note that is
+/// open in this one, and a web note is open in one tab of one window. Through
+/// `bring_forward`, so a run sent off the screen is never brought onto it.
+#[tauri::command]
+pub fn show_window(window: tauri::Window) {
+    bring_forward(&window);
+}
+
 /// One of the app's windows as `receiver` weighs it.
 struct Seen {
     label: String,

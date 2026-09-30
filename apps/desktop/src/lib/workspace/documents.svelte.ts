@@ -62,6 +62,8 @@ export interface DocumentStart {
    *  note out of their space, which has no file on this machine and never gets
    *  one. Null for everything else, which is almost everything. */
   shared?: string | null
+  /** The space a document with no file was opened in, by id; see `home`. */
+  home?: string | null
 }
 
 export class NoteDoc {
@@ -105,13 +107,11 @@ export class NoteDoc {
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false
 
-  /** Whether this note is still called after its own first words: a draft that
-   *  became a file when the first of them was typed, and whose file has followed
-   *  its first line since, the way a note in Apple Notes or a new document in iA
-   *  Writer does. For this document only - the sitting it was born in - and until
-   *  somebody names it themselves; see drafts.ts and `rename` in
-   *  workspace.svelte.ts. Reactive because what the tab is called turns on it. */
-  follows = $state(false)
+  /** The space a document with no file was opened in, by id: where it is saved to,
+   *  whose search it is in and whose web data its page is built in, kept across a
+   *  switch to another space. A file's space is the one holding it; see `spaceOf` in
+   *  workspace.svelte.ts. */
+  readonly home: string | null
 
   /** The words the file held when this document took it on, until the first
    *  write of the sitting has kept them as a version. What going back to how a
@@ -125,6 +125,7 @@ export class NoteDoc {
   constructor(start: DocumentStart, edited: (doc: NoteDoc) => void) {
     this.kind = start.kind
     this.shared = start.shared ?? null
+    this.home = start.home ?? null
     this.path = start.path
     this.name = start.name
     this.dirty = start.dirty
@@ -170,13 +171,11 @@ export class NoteDoc {
   pasted = $state(false)
 
   /** Whether nobody has given this document a name: no file and the placeholder the
-   *  openers hand out, or a file named after its words that is still following them.
-   *  A note like that is called after its own first words as they are typed, rather
-   *  than as the file catches up with them on the pause; a plane or a deck of pages is
-   *  called Untitled, because what is in one of those is not words to read a title
-   *  off. */
+   *  openers hand out. A note like that is called after its own first words as they
+   *  are typed; a plane or a deck of pages is called Untitled, because what is in one
+   *  of those is not words to read a title off. */
   private get unnamed(): boolean {
-    return (this.path === null && this.name === UNTITLED) || this.follows
+    return this.path === null && this.name === UNTITLED
   }
 
   /** The words at the top of an unnamed note: its first heading, else its first
@@ -309,7 +308,6 @@ export class NoteDoc {
   adopt(note: { path: string; name: string; text: string }) {
     this.path = note.path
     this.name = note.name
-    this.follows = false
     this.before = note.text
     this.arrivals++
 

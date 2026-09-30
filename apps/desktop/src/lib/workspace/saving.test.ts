@@ -4,9 +4,9 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
  *
  *  The workspace's own tests take the rules the long way round, through tabs and
  *  files; see workspace.test.ts. What is here is the machinery on its own clock:
- *  the pause, the ceiling on it, a draft's first word making a file, the name that
- *  follows the first line, one file operation at a time per document, the version
- *  a sitting's first write keeps, and a write the disk refuses. */
+ *  the pause, the ceiling on it, a draft that stays a tab until it is given a place,
+ *  one file operation at a time per document, the version a sitting's first write
+ *  keeps, and a write the disk refuses. */
 
 const sent: { command: string; path: string; content: string }[] = []
 
@@ -90,8 +90,7 @@ interface Starting {
 /** A store with one document open in it: a note at `path`, or a draft with none. */
 function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {}) {
   let tree = listing(path?.startsWith(`${SPACE}/`) ? [path] : [])
-  const retitled: [string, string][] = []
-  const discarded: string[] = []
+  const came: { path: string; key: string | undefined }[] = []
 
   const ws: Writes & { persisted: number; lists: number } = {
     tabs: [],
@@ -112,7 +111,6 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     persist() {
       this.persisted += 1
     },
-    draftHome: () => Promise.resolve(SPACE),
     // What the listing and every open document hold, the one asking left out.
     freeName: (folder: string, name: string, except?: string) => {
       const taken = new Set([
@@ -127,19 +125,10 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
         if (!taken.has(`${folder}/${candidate}`)) return candidate
       }
     },
-    retitle(from: string, name: string) {
-      retitled.push([from, name])
-      const note = ws.documents.find((one) => one.path === from)
-      if (note) {
-        note.path = `${SPACE}/${name}`
-        note.name = name
-      }
-      return Promise.resolve()
-    },
     born: () => undefined,
     touched: () => undefined,
-    discard(path: string) {
-      discarded.push(path)
+    fileCame(path: string, _kind: 'file' | 'folder', key?: string) {
+      came.push({ path, key })
       return Promise.resolve()
     },
   }
@@ -194,7 +183,7 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     note.live.replace(words, true)
   }
 
-  return { saving, note, tab, ws, deleted, closed, beside, type, retitled, discarded }
+  return { saving, note, tab, ws, deleted, closed, beside, type, came }
 }
 
 beforeEach(() => {
@@ -259,57 +248,57 @@ describe('what the pause after the typing writes', () => {
 })
 
 describe('a draft', () => {
-  /** A new tab is a tab and nothing else, and its first word makes it a file:
-   *  Apple Notes and Notion have no Save, and neither does a new note here. */
-  test('becomes a file on its first character, named after it, at once', async () => {
-    const { note, type, saving, ws } = open(null, { text: '' })
-
-    type('P')
-    await saving.settled()
-
-    expect(note.path).toBe(`${SPACE}/P.md`)
-    expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/P.md`, content: 'P' }])
-    // The list is read again once, for the file that is new.
-    expect(ws.lists).toBe(1)
-  })
-
-  test('and follows its first line on the pause after, rather than on every keystroke', async () => {
+  /** A new tab is a tab and nothing else until somebody gives it a place: its words
+   *  are the session's to keep, the way VS Code's hot exit keeps an untitled editor. */
+  test('stays a tab however much is written in it', async () => {
     vi.useFakeTimers()
-    const { note, type, saving, retitled } = open(null, { text: '' })
+    const { note, type, saving } = open(null, { text: '' })
 
-    type('P')
-    await saving.settled()
     type('# Plan for Monday\n\nwords')
-    type('# Plan for Monday\n\nmore words')
-    expect(retitled).toEqual([])
-
-    await vi.advanceTimersByTimeAsync(400)
-    expect(retitled).toEqual([[`${SPACE}/P.md`, 'Plan for Monday.md']])
-    expect(note.path).toBe(`${SPACE}/Plan for Monday.md`)
-    expect(written().at(-1)?.path).toBe(`${SPACE}/Plan for Monday.md`)
-  })
-
-  test('and stops following once somebody names it', async () => {
-    vi.useFakeTimers()
-    const { note, type, saving, retitled } = open(null, { text: '' })
-
-    type('P')
-    await saving.settled()
-    note.follows = false
-    type('# Something else')
-    await vi.advanceTimersByTimeAsync(400)
-
-    expect(retitled).toEqual([])
-  })
-
-  test('keeps the name it came with, where it came with one', async () => {
-    const { note, saving } = open(null, { text: '' })
-    note.name = 'Imported'
-    note.live.replace('words', true)
+    await vi.advanceTimersByTimeAsync(2500)
     await saving.settled()
 
-    expect(note.path).toBe(`${SPACE}/Imported.md`)
-    expect(note.follows).toBe(false)
+    expect(note.path).toBeNull()
+    expect(written()).toEqual([])
+  })
+
+  test('given a place, is a file there at once, under the name it is given', async () => {
+    const { note, type, saving, came } = open(null, { text: '' })
+    type('# Plan')
+
+    const landed = await saving.place(note, `${SPACE}/Work`, 'Monday.md')
+
+    expect(landed).toBe(`${SPACE}/Work/Monday.md`)
+    expect(note.path).toBe(landed)
+    expect(note.dirty).toBe(false)
+    expect(written()).toEqual([{ command: 'write_note', path: landed, content: '# Plan' }])
+    // The one file operation a new file owes, naming the document that is it.
+    expect(came).toEqual([{ path: landed, key: note.key }])
+  })
+
+  test('steps aside from a name the folder already has', async () => {
+    const { note, saving, beside } = open(null, { text: 'x' })
+    beside(`${SPACE}/Plan.md`)
+
+    expect(await saving.place(note, SPACE, 'Plan.md')).toBe(`${SPACE}/Plan 2.md`)
+  })
+
+  test('a plane is written as it stands, drawn on or not', async () => {
+    const { note, saving } = open(null, { text: '{"nodes":[]}', kind: 'canvas' })
+
+    await saving.place(note, SPACE, 'Board.canvas')
+
+    expect(written()).toEqual([
+      { command: 'write_note', path: `${SPACE}/Board.canvas`, content: '{"nodes":[]}' },
+    ])
+  })
+
+  test('given a place twice is written once', async () => {
+    const { note, saving } = open(null, { text: 'x' })
+
+    await saving.place(note, SPACE, 'A.md')
+    expect(await saving.place(note, SPACE, 'B.md')).toBeNull()
+    expect(written()).toHaveLength(1)
   })
 
   test('says nothing of white space: a blank draft stays a tab', async () => {
@@ -322,52 +311,26 @@ describe('a draft', () => {
     expect(written()).toEqual([])
   })
 
-  test('closed untouched leaves nothing behind', async () => {
-    const { closed, saving, discarded } = open(null, { text: '' })
+  test('closed leaves nothing behind on the disk', async () => {
+    const { type, closed, saving } = open(null, { text: '' })
 
+    type('words')
     closed()
     await saving.settled()
 
     expect(written()).toEqual([])
-    expect(discarded).toEqual([])
   })
 
-  /** A note begun and emptied again is litter, the empty `Untitled` every app
-   *  that makes the file first leaves behind; it goes with its tab. */
-  test('born and emptied again goes with its tab', async () => {
-    const { type, saving, closed, discarded } = open(null, { text: '' })
-
-    type('P')
-    await saving.settled()
-    type('')
-    closed()
-    await saving.settled()
-
-    expect(discarded).toEqual([`${SPACE}/P.md`])
-  })
-
-  test('a plane is born on its first change, as Untitled', async () => {
-    const { note, saving } = open(null, { text: '{}', kind: 'canvas' })
-
-    note.replace('{"nodes":[{"id":"a"}]}')
-    await saving.settled()
-
-    expect(note.path).toBe(`${SPACE}/Untitled.canvas`)
-    expect(note.follows).toBe(false)
-  })
-
-  test('two born together never land on one file', async () => {
-    const { note, type, saving, ws } = open(null, { text: '' })
+  test('two given places together never land on one file', async () => {
+    const { note, saving, ws } = open(null, { text: 'P' })
     const other = new NoteDoc(
-      { kind: 'note', path: null, name: UNTITLED, text: '', dirty: false },
+      { kind: 'note', path: null, name: UNTITLED, text: 'P', dirty: false },
       (one) => saving.edited(one),
     )
     ws.tabs.push(new Tab(other, 'p2'))
     ws.documents.push(other)
 
-    type('P')
-    other.live.replace('P', true)
-    await saving.settled()
+    await Promise.all([saving.place(note, SPACE, 'P.md'), saving.place(other, SPACE, 'P.md')])
 
     expect(new Set([note.path, other.path]).size).toBe(2)
   })

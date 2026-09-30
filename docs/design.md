@@ -691,8 +691,11 @@ nothing to slip, in the box the two share so the name beside them does not move.
 
 A dot is one fact: something is still under way. The two lights that are about
 work in progress rather than about a file - a request waiting to be let in, the
-foot's sync light - wear it. A tab wears none: every note writes itself a moment
-after it changes, so there is never anything unwritten worth a mark.
+foot's sync light - wear it, and so does a tab with no file yet: a new note, plane or
+page note has not been given a place, which is the one thing about it still to do
+(`.nib-unsaved`, see `UnsavedDot.svelte`). A tab with a file wears none - every note
+writes itself a moment after it changes - and nor does a web tab nobody has kept,
+which is a browser tab with nothing unwritten in it.
 
 That somebody else is in this at all is a mark, never a dot. `SharedMark.svelte`
 draws it once - Lucide's `users`, at `--icon-sm` in `--muted`, in the row's
