@@ -38,7 +38,7 @@ const BODIES: usize = 20;
 const LONGEST_BODY: usize = 100_000;
 
 /// Where a verb acts.
-enum Place {
+pub(super) enum Place {
     /// One of this agent's own tabs.
     Own(Tab),
     /// A tab of the reader's, by its id.
@@ -274,19 +274,42 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
     let Some(tab) = tab_of(&verb) else {
         return Answer::error(Code::BadArguments, format!("{name} needs a tab"));
     };
-    let (place, view) = match place(app, caller, &tab) {
-        Ok(found) => found,
-        Err(refused) => return refused,
-    };
-    let page = match gate(app, caller, &tab, name, &view, &place, since) {
-        Ok(page) => page,
-        Err(refused) => return refused,
-    };
-    let held = super::quiet::dialog_of(&page.label);
     let lets_through = matches!(
         verb,
         Verb::Dialog(_) | Verb::Console(_) | Verb::Network(_) | Verb::Takeover(_) | Verb::Show(_)
     );
+    on_tab(
+        app,
+        caller,
+        &tab,
+        name,
+        since,
+        lets_through,
+        |place, page| act(app, caller, place, page, verb),
+    )
+}
+
+/// One act on one tab, `name` as the activity panel shows it, through the gate at the
+/// top of this file; a dialog the page is holding stops it unless it `lets_through`, and
+/// rides on the answer either way. The window's `agents_capture` comes in here too.
+pub(super) fn on_tab(
+    app: &AppHandle,
+    caller: &Caller,
+    tab: &str,
+    name: &str,
+    since: u64,
+    lets_through: bool,
+    act: impl FnOnce(&Place, &Page<'_>) -> Answer,
+) -> Answer {
+    let (place, view) = match place(app, caller, tab) {
+        Ok(found) => found,
+        Err(refused) => return refused,
+    };
+    let page = match gate(app, caller, tab, name, &view, &place, since) {
+        Ok(page) => page,
+        Err(refused) => return refused,
+    };
+    let held = super::quiet::dialog_of(&page.label);
     if held.is_some() && !lets_through {
         return Answer::error(
             Code::Failed,
@@ -294,7 +317,7 @@ fn on_a_tab(app: &AppHandle, caller: &Caller, verb: Verb, since: u64) -> Answer 
         )
         .with_dialog(held);
     }
-    let answered = act(app, caller, &place, &page, verb);
+    let answered = act(&place, &page);
     answered.with_dialog(super::quiet::dialog_of(&page.label))
 }
 
@@ -511,14 +534,9 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                         origin: &origin,
                     },
                 );
-                let title = page
-                    .isolated("document.title")
-                    .ok()
-                    .and_then(|one| one.as_str().map(str::to_string))
-                    .unwrap_or_default();
                 from_page(Answer::ok(Snapped {
                     url,
-                    title,
+                    title: page.title(),
                     text: written.text,
                     truncated: written.truncated,
                 }))

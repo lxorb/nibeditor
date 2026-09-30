@@ -212,6 +212,19 @@ pub struct Read {
     pub max_chars: Option<usize>,
 }
 
+/// What `capture_to_note` asks the crate for when it puts a page into a note: the
+/// window's `agents_capture`, never an agent's own verb (docs/agent-native.md 5.4).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CaptureAs {
+    /// The article as the clip button picks it, as HTML for the clipper's converter.
+    Clip,
+    /// A picture of the page, every filled secret field painted over.
+    Screenshot,
+    /// The page printed to a PDF on the reader's paper.
+    Pdf,
+}
+
 /// Which mouse button.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -983,6 +996,25 @@ pub struct Picture {
     pub width: u32,
     /// Its height in pixels.
     pub height: u32,
+}
+
+/// `agents_capture`: the page as the window writes it into a note. One of the three is
+/// there, the one asked for.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Captured {
+    /// Where the page is.
+    pub url: String,
+    /// What it calls itself.
+    pub title: String,
+    /// The article's HTML, links made absolute and no field's value in it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub html: Option<String>,
+    /// The picture, as base64.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub png: Option<String>,
+    /// The PDF, as base64.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pdf: Option<String>,
 }
 
 /// One line of a page's console.

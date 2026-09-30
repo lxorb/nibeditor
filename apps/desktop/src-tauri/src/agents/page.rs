@@ -33,6 +33,7 @@ use super::keys::{self, Key};
 use super::policy::{self, Facts, Field};
 use super::snapshot::{self, Part};
 use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Until};
+use crate::pdf::PdfPage;
 
 /// What an agent's refs are resolved and scripts run under, in the page.
 const WORLD: &str = "nib-agent";
@@ -196,20 +197,54 @@ const IN_PAGE_KEY: &str = r"function (key, code, modifiers) {
 /// The page as the reader reads it, for `browser_read` as text.
 const TEXT: &str = r"(() => ({ url: location.href, title: document.title, text: document.body ? document.body.innerText : '' }))()";
 
-/// The whole page's HTML with its links made absolute and its scripts left out, for
-/// `browser_read` as markdown. No field's value goes with it: a password field is
+/// What no field carries into the markup an agent reads (9.4): a password field is
 /// dropped and every other field's `value` too, so a page that writes a secret into the
 /// markup (a prefilled password, a card number) has nothing read back whatever the
-/// converter makes of a field. `innerText`, the text shape, never holds a field's value.
-const WHOLE: &str = r"(() => {
-  const copy = document.body ? document.body.cloneNode(true) : document.createElement('body')
+/// converter makes of a field. Words typed into a field are never in markup at all,
+/// which writes attributes, not a field's live value; nor in `innerText`, the text
+/// shape.
+const UNVALUED: &str = r"const unvalued = (root) => {
+  for (const one of root.querySelectorAll('input[type=password]')) one.remove()
+  for (const one of root.querySelectorAll('input[value]')) one.removeAttribute('value')
+  return root
+}";
+
+/// The whole page's HTML with its links made absolute and its scripts left out, for
+/// `browser_read` as markdown, unvalued.
+static WHOLE: LazyLock<String> = LazyLock::new(|| {
+    [
+        "(() => {\n",
+        UNVALUED,
+        r"
+  const copy = unvalued(document.body ? document.body.cloneNode(true) : document.createElement('body'))
   for (const one of copy.querySelectorAll('script, style, noscript, template, svg, canvas, iframe')) one.remove()
   for (const one of copy.querySelectorAll('[href]')) { try { one.setAttribute('href', one.href) } catch (_) { one.removeAttribute('href') } }
   for (const one of copy.querySelectorAll('[src]')) { try { one.setAttribute('src', one.src) } catch (_) { one.removeAttribute('src') } }
-  for (const one of copy.querySelectorAll('input[type=password]')) one.remove()
-  for (const one of copy.querySelectorAll('input[value]')) one.removeAttribute('value')
   return { url: location.href, title: document.title, html: copy.innerHTML.slice(0, 4000000), text: document.body ? document.body.innerText : '' }
-})()";
+})()",
+    ]
+    .concat()
+});
+
+/// The article as the clip button reads it - the very script, `web_tabs::reader` - with
+/// its markup unvalued: parsed into a template, which runs nothing and fetches nothing,
+/// and written out again. For `browser_read` as an article and for a clip, which are
+/// the same words.
+static CLIPPED: LazyLock<String> = LazyLock::new(|| {
+    [
+        "(() => {\n",
+        UNVALUED,
+        "\n  const read = ",
+        &crate::web_tabs::reader(false),
+        r"
+  const held = document.createElement('template')
+  held.innerHTML = String(read.html || '')
+  unvalued(held.content)
+  return { url: read.url, title: read.title, html: held.innerHTML }
+})()",
+    ]
+    .concat()
+});
 
 /// Whether the document has stopped changing: resolves once nothing moved for `still`
 /// milliseconds, or at `most`.
@@ -1172,18 +1207,9 @@ impl Page<'_> {
         clip: (f64, f64, f64, f64),
         size: (u32, u32),
     ) -> Result<String, Answer> {
-        let mut prefixes = vec![String::new()];
-        prefixes.extend(
-            self.heard()
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .frames()
-                .into_iter()
-                .map(|(number, _)| format!("f{number}")),
-        );
         let (across, down) = (f64::from(size.0) / clip.2, f64::from(size.1) / clip.3);
         let rects: Vec<[f64; 4]> = self
-            .secrets(prefixes)
+            .secrets(self.every_part())
             .into_iter()
             .filter(|one| one.filled)
             .filter_map(|one| {
@@ -1212,6 +1238,21 @@ impl Page<'_> {
                 ),
             )
         })
+    }
+
+    /// The prefix of every part of the page: its own document, and each frame in a
+    /// process of its own.
+    fn every_part(&self) -> Vec<String> {
+        let mut prefixes = vec![String::new()];
+        prefixes.extend(
+            self.heard()
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .frames()
+                .into_iter()
+                .map(|(number, _)| format!("f{number}")),
+        );
+        prefixes
     }
 
     /// The page's accessibility tree, with its frames, as the parts `snapshot` writes.
@@ -1402,8 +1443,8 @@ impl Page<'_> {
         use super::verbs::ReadAs;
         let said = match shape {
             ReadAs::Text => self.isolated(TEXT)?,
-            ReadAs::Markdown => self.isolated(WHOLE)?,
-            ReadAs::Article => self.isolated(&crate::web_tabs::reader(false))?,
+            ReadAs::Markdown => self.isolated(&WHOLE)?,
+            ReadAs::Article => self.isolated(&CLIPPED)?,
         };
         let text_at = |key: &str| {
             said.get(key)
@@ -1437,6 +1478,59 @@ impl Page<'_> {
             }
         });
         Ok((url, title, words))
+    }
+
+    /// What the page calls itself, read in nib's own world.
+    pub fn title(&self) -> String {
+        self.isolated("document.title")
+            .ok()
+            .and_then(|one| one.as_str().map(str::to_string))
+            .unwrap_or_default()
+    }
+
+    /// The article as the clip button reads it, in nib's own world and unvalued:
+    /// `(url, title, html)`. The window turns the HTML into the clip's markdown with the
+    /// clipper's own converter, so a clip of an agent's tab and of the reader's are the
+    /// same words.
+    pub fn clip(&self) -> Result<(String, String, String), Answer> {
+        let said = self.isolated(&CLIPPED)?;
+        Ok((
+            text(&said, "url"),
+            text(&said, "title"),
+            text(&said, "html"),
+        ))
+    }
+
+    /// The page printed to a PDF, as base64: the engine's own print, laid out on the
+    /// paper given.
+    ///
+    /// Refused while a filled secret field is anywhere on the page. A field prints as
+    /// what it shows, and a password shows as one bullet a character, which says how
+    /// long it is; a picture has such a field painted over (9.4), and a PDF is text and
+    /// shapes that nothing here can paint over after the engine has laid them out. So
+    /// the agent is told to take the picture instead, rather than handed a weaker print.
+    pub fn pdf(&self, paper: &PdfPage) -> Result<String, Answer> {
+        if self.secrets(self.every_part()).iter().any(|one| one.filled) {
+            return Err(Answer::error(
+                Code::PasswordField,
+                "a filled secret field is on the page, and it would print as bullets that say how long it is: capture a screenshot, which paints it over",
+            ));
+        }
+        let printed = self
+            .call("Page.printToPDF", &printing(paper))
+            .map_err(|refused| match refused {
+                Answer::Error { message, .. } if unprintable(&message) => Answer::error(
+                    Code::UnsupportedOnThisEngine,
+                    format!("this engine does not print a page to a PDF: {message}"),
+                ),
+                other => other,
+            })?;
+        printed
+            .get("data")
+            .and_then(Value::as_str)
+            .filter(|data| !data.is_empty())
+            .map(str::to_string)
+            .ok_or_else(|| Answer::error(Code::Failed, "the engine printed nothing"))
     }
 
     /// Waits for what the agent asked, stop and dialogs ending it early.
@@ -1672,6 +1766,36 @@ impl Page<'_> {
         let (parts, secret) = self.parts()?;
         Ok(snapshot::find(&parts, &secret, wanted))
     }
+}
+
+/// What `Page.printToPDF` is asked: the reader's paper as their own PDF export lays a
+/// note on it (`pdf.rs`, `PdfPage`, upright and turned by `landscape`), the page's
+/// backgrounds, and none of the browser's own lines - the address and the date that a
+/// print dialog writes into the margins are not the page.
+fn printing(paper: &PdfPage) -> Value {
+    let margin = paper.margin.max(0.0);
+    json!({
+        "landscape": paper.landscape,
+        "paperWidth": paper.width,
+        "paperHeight": paper.height,
+        "marginTop": margin,
+        "marginBottom": margin,
+        "marginLeft": margin,
+        "marginRight": margin,
+        "printBackground": true,
+        "displayHeaderFooter": false,
+        "preferCSSPageSize": false,
+        "transferMode": "ReturnAsBase64",
+    })
+}
+
+/// Whether the engine's refusal of a print is that it has no printing at all, rather
+/// than that this page could not be printed.
+fn unprintable(said: &str) -> bool {
+    let said = said.to_ascii_lowercase();
+    said.contains("not implemented")
+        || said.contains("not supported")
+        || said.contains("wasn't found")
 }
 
 /// A coordinate as the whole number the protocol takes for a hit test.
@@ -1931,6 +2055,46 @@ mod tests {
             assert_eq!(at(3), white);
         }
         assert!(paint_over("not a picture", &[]).is_err());
+    }
+
+    #[test]
+    fn a_print_is_on_the_readers_paper_with_no_line_of_the_browsers() {
+        let a4 = PdfPage {
+            width: 8.27,
+            height: 11.69,
+            margin: 0.787,
+            landscape: false,
+        };
+        let asked = printing(&a4);
+        assert_eq!(asked["paperWidth"], 8.27);
+        assert_eq!(asked["paperHeight"], 11.69);
+        assert_eq!(asked["marginLeft"], 0.787);
+        assert_eq!(asked["landscape"], false);
+        assert_eq!(asked["printBackground"], true);
+        assert_eq!(asked["displayHeaderFooter"], false);
+        assert_eq!(asked["transferMode"], "ReturnAsBase64");
+
+        // Given upright and turned by the flag, as the reader's own export is.
+        let turned = printing(&PdfPage {
+            margin: -1.0,
+            landscape: true,
+            ..a4
+        });
+        assert_eq!(turned["paperWidth"], 8.27);
+        assert_eq!(turned["landscape"], true);
+        assert_eq!(turned["marginTop"], 0.0);
+
+        assert!(unprintable("PrintToPDF is not implemented"));
+        assert!(unprintable("'Page.printToPDF' wasn't found"));
+        assert!(!unprintable("Printing failed"));
+    }
+
+    #[test]
+    fn a_clip_is_the_clip_buttons_own_script_and_no_field_value() {
+        assert!(CLIPPED.contains(&crate::web_tabs::reader(false)));
+        assert!(CLIPPED.contains("unvalued(held.content)"));
+        assert!(CLIPPED.contains("input[type=password]"));
+        assert!(WHOLE.contains("unvalued(document.body"));
     }
 
     #[test]
