@@ -1174,6 +1174,8 @@ export const bn: Dictionary = {
     'এটি আপনার অথেন্টিকেটর অ্যাপে দিন, তারপর তার কোড লিখুন।',
   Secret: 'গোপন কী',
   'Code from the app': 'অ্যাপের কোড',
+  'Code to change sign-in': 'সাইন-ইন বদলানোর কোড',
+  'App code to delete': 'মুছতে অ্যাপের কোড',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'এগুলো নিরাপদ জায়গায় রাখুন। প্রতিটি একবার কাজ করে, আর দেখানো হয় না।',
   'Recovery codes': 'রিকভারি কোড',

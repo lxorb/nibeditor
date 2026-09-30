@@ -1146,6 +1146,8 @@ export const zhHant: Dictionary = {
     '把它加進你的驗證器應用程式，然後輸入它的驗證碼。',
   Secret: '密鑰',
   'Code from the app': '應用程式中的驗證碼',
+  'Code to change sign-in': '變更登入方式的驗證碼',
+  'App code to delete': '用於刪除的應用程式驗證碼',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     '請妥善保存。每一個只能用一次，而且不會再顯示。',
   'Recovery codes': '復原碼',

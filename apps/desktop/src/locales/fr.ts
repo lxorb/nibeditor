@@ -1217,6 +1217,8 @@ export const fr: Dictionary = {
     'Mettez ceci dans votre application d’authentification, puis tapez son code.',
   Secret: 'Secret',
   'Code from the app': 'Code de l’application',
+  'Code to change sign-in': 'Code pour modifier la connexion',
+  'App code to delete': 'Code de l’application pour supprimer',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Gardez-les en lieu sûr. Chacun ne sert qu’une fois et ils ne sont plus affichés.',
   'Recovery codes': 'Codes de secours',

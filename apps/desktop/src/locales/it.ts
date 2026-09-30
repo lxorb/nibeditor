@@ -1216,6 +1216,8 @@ export const it: Dictionary = {
     'Metti questo nell’app di autenticazione, poi digita il suo codice.',
   Secret: 'Segreto',
   'Code from the app': 'Codice dell’app',
+  'Code to change sign-in': 'Codice per modificare l’accesso',
+  'App code to delete': 'Codice dell’app per eliminare',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Conservali al sicuro. Ognuno funziona una volta e non vengono più mostrati.',
   'Recovery codes': 'Codici di recupero',

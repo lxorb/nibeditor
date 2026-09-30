@@ -1207,6 +1207,8 @@ export const ptPT: Dictionary = {
     'Pôr isto na aplicação de autenticação e escrever o código dela.',
   Secret: 'Segredo',
   'Code from the app': 'Código da aplicação',
+  'Code to change sign-in': 'Código para alterar o início de sessão',
+  'App code to delete': 'Código da aplicação para eliminar',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Guardar num lugar seguro. Cada um serve uma vez e não voltam a ser mostrados.',
   'Recovery codes': 'Códigos de recuperação',

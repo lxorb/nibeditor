@@ -1193,6 +1193,8 @@ export const ha: Dictionary = {
     'Saka wannan cikin manhajar tabbatarwa, sannan rubuta lambar ta.',
   Secret: 'Asiri',
   'Code from the app': 'Lamba daga manhajar',
+  'Code to change sign-in': 'Lambar canza shiga',
+  'App code to delete': 'Lambar manhaja don gogewa',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Ajiye waɗannan a wuri mai aminci. Kowane yana aiki sau ɗaya, kuma ba a sake nuna su.',
   'Recovery codes': 'Lambobin farfaɗowa',

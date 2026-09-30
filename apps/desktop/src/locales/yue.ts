@@ -1146,6 +1146,8 @@ export const yue: Dictionary = {
     '將佢加進你嘅驗證器應用程式，然後輸入佢嘅驗證碼。',
   Secret: '密鑰',
   'Code from the app': '應用程式中嘅驗證碼',
+  'Code to change sign-in': '更改登入方式嘅驗證碼',
+  'App code to delete': '用嚟刪除嘅應用程式驗證碼',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     '請妥善保存。每一個只能用一次，而且唔會再顯示。',
   'Recovery codes': '恢復碼',

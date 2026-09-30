@@ -161,12 +161,12 @@
       </label>
       {#if second}
         <label class="nib-setting setting" transition:fade={{ duration: dur(130) }}>
-          <span class="name">{t('Code from the app')}</span>
+          <span class="name">{t('App code to delete')}</span>
           <input
             class="inline"
             bind:value={fromApp}
             placeholder="000000"
-            aria-label={t('Code from the app')}
+            aria-label={t('App code to delete')}
             inputmode="numeric"
             autocomplete="one-time-code"
             spellcheck="false"

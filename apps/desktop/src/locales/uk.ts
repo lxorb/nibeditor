@@ -1237,6 +1237,8 @@ export const uk: Dictionary = {
     'Внесіть це до програми-автентифікатора, потім введіть її код.',
   Secret: 'Секрет',
   'Code from the app': 'Код із програми',
+  'Code to change sign-in': 'Код для зміни входу',
+  'App code to delete': 'Код із програми для видалення',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Збережіть їх у надійному місці. Кожен працює один раз і більше не показується.',
   'Recovery codes': 'Коди відновлення',

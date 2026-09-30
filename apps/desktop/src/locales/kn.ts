@@ -1185,6 +1185,8 @@ export const kn: Dictionary = {
     'ಇದನ್ನು ನಿಮ್ಮ ಅಥೆಂಟಿಕೇಟರ್ ಅಪ್ಲಿಕೇಶನ್‌ನಲ್ಲಿ ಹಾಕಿ, ನಂತರ ಅದರ ಕೋಡ್ ಟೈಪ್ ಮಾಡಿ.',
   Secret: 'ರಹಸ್ಯ',
   'Code from the app': 'ಅಪ್ಲಿಕೇಶನ್‌ನ ಕೋಡ್',
+  'Code to change sign-in': 'ಸೈನ್-ಇನ್ ಬದಲಾಯಿಸುವ ಕೋಡ್',
+  'App code to delete': 'ಅಳಿಸಲು ಅಪ್ಲಿಕೇಶನ್‌ನ ಕೋಡ್',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'ಇವನ್ನು ಸುರಕ್ಷಿತ ಸ್ಥಳದಲ್ಲಿ ಇಡಿ. ಪ್ರತಿಯೊಂದೂ ಒಮ್ಮೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಮತ್ತೆ ತೋರಿಸಲಾಗುವುದಿಲ್ಲ.',
   'Recovery codes': 'ಮರುಪಡೆಯುವ ಕೋಡ್‌ಗಳು',

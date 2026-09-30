@@ -1262,6 +1262,8 @@ export const ar: Dictionary = {
     'أدخل هذا في تطبيق المصادقة، ثم اكتب رمزه.',
   Secret: 'السر',
   'Code from the app': 'الرمز من التطبيق',
+  'Code to change sign-in': 'رمز لتغيير تسجيل الدخول',
+  'App code to delete': 'رمز التطبيق للحذف',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'احفظ هذه في مكان آمن. كل واحد يعمل مرة، ولا تُعرض مرة أخرى.',
   'Recovery codes': 'رموز الاستعادة',

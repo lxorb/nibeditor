@@ -1173,6 +1173,8 @@ export const hi: Dictionary = {
     'इसे अपने ऑथेंटिकेटर ऐप में डालें, फिर उसका कोड लिखें।',
   Secret: 'गुप्त कुंजी',
   'Code from the app': 'ऐप का कोड',
+  'Code to change sign-in': 'साइन-इन बदलने का कोड',
+  'App code to delete': 'मिटाने के लिए ऐप का कोड',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'इन्हें कहीं सुरक्षित रखें। हर एक एक बार चलता है, और ये फिर नहीं दिखेंगे।',
   'Recovery codes': 'रिकवरी कोड',

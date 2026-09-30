@@ -1180,6 +1180,8 @@ export const te: Dictionary = {
     'దీన్ని మీ అథెంటికేటర్ యాప్‌లో పెట్టి, దాని కోడ్ టైప్ చేయండి.',
   Secret: 'రహస్యం',
   'Code from the app': 'యాప్ కోడ్',
+  'Code to change sign-in': 'సైన్-ఇన్ మార్చడానికి కోడ్',
+  'App code to delete': 'తొలగించడానికి యాప్ కోడ్',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'ఇవి సురక్షిత చోట ఉంచండి. ఒక్కొక్కటి ఒకసారే పని చేస్తుంది, మళ్లీ చూపబడవు.',
   'Recovery codes': 'రికవరీ కోడ్‌లు',

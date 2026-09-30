@@ -1193,6 +1193,8 @@ export const ta: Dictionary = {
     'இதை உங்கள் அங்கீகார செயலியில் இட்டு, அதன் குறியீட்டை உள்ளிடவும்.',
   Secret: 'ரகசியம்',
   'Code from the app': 'செயலியின் குறியீடு',
+  'Code to change sign-in': 'உள்நுழைவை மாற்றுவதற்கான குறியீடு',
+  'App code to delete': 'நீக்குவதற்கான செயலியின் குறியீடு',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'இவற்றைப் பாதுகாப்பான இடத்தில் வைக்கவும். ஒவ்வொன்றும் ஒரு முறை வேலை செய்யும், மீண்டும் காட்டப்படாது.',
   'Recovery codes': 'மீட்பு குறியீடுகள்',

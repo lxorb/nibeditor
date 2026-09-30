@@ -1176,6 +1176,8 @@ export const fa: Dictionary = {
     'این را در برنامه اصالت‌سنج خود بگذارید، سپس کدش را بنویسید.',
   Secret: 'راز',
   'Code from the app': 'کد از برنامه',
+  'Code to change sign-in': 'کد برای تغییر ورود',
+  'App code to delete': 'کد برنامه برای حذف',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'این‌ها را جایی امن نگه دارید. هر یک یک بار کار می‌کند و دیگر نشان داده نمی‌شوند.',
   'Recovery codes': 'کدهای بازیابی',

@@ -1163,6 +1163,8 @@ export const ja: Dictionary = {
     'これを認証アプリに登録し、そのコードを入力してください。',
   Secret: 'シークレット',
   'Code from the app': 'アプリのコード',
+  'Code to change sign-in': 'サインインを変更するコード',
+  'App code to delete': '削除用のアプリのコード',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     '安全な場所に保管してください。各コードは一度だけ使え、再表示されません。',
   'Recovery codes': '回復コード',

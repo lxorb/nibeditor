@@ -1180,6 +1180,8 @@ export const pa: Dictionary = {
     'ਇਹ ਆਪਣੀ ਪਛਾਣ ਐਪ ਵਿੱਚ ਪਾਓ, ਫਿਰ ਉਸ ਦਾ ਕੋਡ ਲਿਖੋ।',
   Secret: 'ਗੁਪਤ',
   'Code from the app': 'ਐਪ ਦਾ ਕੋਡ',
+  'Code to change sign-in': 'ਸਾਈਨ-ਇਨ ਬਦਲਣ ਦਾ ਕੋਡ',
+  'App code to delete': 'ਮਿਟਾਉਣ ਲਈ ਐਪ ਦਾ ਕੋਡ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'ਇਹ ਸੁਰੱਖਿਅਤ ਥਾਂ ਰੱਖੋ। ਹਰ ਇੱਕ ਇੱਕੋ ਵਾਰ ਚੱਲਦਾ ਹੈ, ਤੇ ਮੁੜ ਨਹੀਂ ਦਿਖਾਏ ਜਾਂਦੇ।',
   'Recovery codes': 'ਮੁੜ ਪ੍ਰਾਪਤੀ ਕੋਡ',

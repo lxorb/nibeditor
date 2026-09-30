@@ -1176,6 +1176,8 @@ export const ur: Dictionary = {
     'یہ اپنی تصدیقی ایپ میں ڈالیں، پھر اس کا کوڈ لکھیں۔',
   Secret: 'راز',
   'Code from the app': 'ایپ کا کوڈ',
+  'Code to change sign-in': 'سائن اِن بدلنے کا کوڈ',
+  'App code to delete': 'حذف کرنے کے لیے ایپ کا کوڈ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'انہیں کسی محفوظ جگہ رکھیں۔ ہر ایک ایک بار چلتا ہے، اور یہ دوبارہ نہیں دکھائے جاتے۔',
   'Recovery codes': 'بازیابی کوڈز',

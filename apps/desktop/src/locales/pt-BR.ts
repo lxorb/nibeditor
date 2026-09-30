@@ -1200,6 +1200,8 @@ export const ptBR: Dictionary = {
     'Pôr isto no app autenticador e digitar o código dele.',
   Secret: 'Segredo',
   'Code from the app': 'Código do app',
+  'Code to change sign-in': 'Código para alterar o login',
+  'App code to delete': 'Código do app para excluir',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Guardar num lugar seguro. Cada um serve uma vez e não são mostrados de novo.',
   'Recovery codes': 'Códigos de recuperação',

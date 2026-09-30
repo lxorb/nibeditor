@@ -1150,6 +1150,8 @@ export const th: Dictionary = {
     'ใส่สิ่งนี้ในแอปยืนยันตัวตน แล้วพิมพ์รหัสของมัน',
   Secret: 'รหัสลับ',
   'Code from the app': 'รหัสจากแอป',
+  'Code to change sign-in': 'รหัสสำหรับเปลี่ยนการลงชื่อเข้าใช้',
+  'App code to delete': 'รหัสจากแอปเพื่อลบ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'เก็บไว้ในที่ปลอดภัย แต่ละรหัสใช้ได้ครั้งเดียว และไม่แสดงอีก',
   'Recovery codes': 'รหัสกู้คืน',

@@ -1165,6 +1165,8 @@ export const ms: Dictionary = {
     'Masukkan ini ke dalam aplikasi pengesah anda, kemudian taip kodnya.',
   Secret: 'Rahsia',
   'Code from the app': 'Kod daripada aplikasi',
+  'Code to change sign-in': 'Kod untuk menukar log masuk',
+  'App code to delete': 'Kod aplikasi untuk memadam',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Simpan ini di tempat selamat. Setiap satu berfungsi sekali dan tidak ditunjukkan lagi.',
   'Recovery codes': 'Kod pemulihan',

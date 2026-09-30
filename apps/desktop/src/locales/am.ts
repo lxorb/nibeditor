@@ -1159,6 +1159,8 @@ export const am: Dictionary = {
     'ይህን በማረጋገጫ መተግበሪያህ ውስጥ አስገባ፣ ከዚያ ኮዱን ጻፍ።',
   Secret: 'ምስጢር',
   'Code from the app': 'ከመተግበሪያው ኮድ',
+  'Code to change sign-in': 'መግቢያን ለመቀየር ኮድ',
+  'App code to delete': 'ለመሰረዝ የመተግበሪያው ኮድ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'እነዚህን በአስተማማኝ ቦታ አስቀምጥ። እያንዳንዱ አንድ ጊዜ ይሠራል፣ እና ዳግም አይታዩም።',
   'Recovery codes': 'የመልሶ ማግኛ ኮዶች',

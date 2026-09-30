@@ -1160,6 +1160,8 @@ export const my: Dictionary = {
     'ဤအရာကို သင့်အတည်ပြုအက်ပ်တွင် ထည့်၍ ကုဒ်ကို ရိုက်ပါ။',
   Secret: 'လှျို့ဝှက်ချက်',
   'Code from the app': 'အက်ပ်မှ ကုဒ်',
+  'Code to change sign-in': 'ဝင်ရောက်မှု ပြောင်းရန် ကုဒ်',
+  'App code to delete': 'ဖျက်ရန် အက်ပ်ကုဒ်',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'ဤအရာများကို လုံခြုံသောနေရာတွင် ထားပါ။ တစ်ခုစီ တစ်ကြိမ်သာ အလုပ်လုပ်၍ ထပ်မပြပါ။',
   'Recovery codes': 'ပြန်ယူကုဒ်များ',

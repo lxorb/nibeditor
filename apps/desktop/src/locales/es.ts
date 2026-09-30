@@ -1210,6 +1210,8 @@ export const es: Dictionary = {
     'Poner esto en la app de autenticación y escribir su código.',
   Secret: 'Secreto',
   'Code from the app': 'Código de la app',
+  'Code to change sign-in': 'Código para cambiar el inicio de sesión',
+  'App code to delete': 'Código de la app para eliminar',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Guardarlos en un lugar seguro. Cada uno sirve una vez y no se vuelven a mostrar.',
   'Recovery codes': 'Códigos de recuperación',

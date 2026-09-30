@@ -1158,6 +1158,8 @@ export const ko: Dictionary = {
     '이것을 인증 앱에 넣고 그 코드를 입력하세요.',
   Secret: '비밀 키',
   'Code from the app': '앱의 코드',
+  'Code to change sign-in': '로그인 변경용 코드',
+  'App code to delete': '삭제용 앱 코드',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     '안전한 곳에 보관하세요. 각각 한 번만 쓰이고 다시 표시되지 않습니다.',
   'Recovery codes': '복구 코드',

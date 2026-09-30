@@ -1181,6 +1181,8 @@ export const gsw: Dictionary = {
     'Das i di Authenticator-App iitrage, denn dere Code iigäh.',
   Secret: 'Gheimnis',
   'Code from the app': 'Code us de App',
+  'Code to change sign-in': 'Code zum d Aamäldig ändere',
+  'App code to delete': 'App-Code zum Lösche',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Die sicher ufbewahre. Jede funktioniert einisch, und si werded nöd wieder zeigt.',
   'Recovery codes': 'Wiederherstellungscodes',

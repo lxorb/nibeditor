@@ -130,7 +130,7 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
     'Notes on this device stay; only the account and its synced copies go.',
   )
   // No second field for an account without a second factor.
-  expect(host.querySelector('input[aria-label="Code from the app"]')).toBeNull()
+  expect(host.querySelector('input[aria-label="App code to delete"]')).toBeNull()
 
   type('Code', '111111')
   submit()
@@ -158,7 +158,7 @@ test('the codes, the second one, the last question, and then signed out and quie
   await settled()
 
   type('Code', '123456')
-  type('Code from the app', '654321')
+  type('App code to delete', '654321')
   submit()
   await settled()
 

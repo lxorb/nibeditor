@@ -1188,6 +1188,8 @@ export const ml: Dictionary = {
     'ഇത് നിങ്ങളുടെ ഓതന്റിക്കേറ്റർ ആപ്പിൽ ഇട്ട്, അതിന്റെ കോഡ് ടൈപ്പ് ചെയ്യുക.',
   Secret: 'രഹസ്യം',
   'Code from the app': 'ആപ്പിലെ കോഡ്',
+  'Code to change sign-in': 'സൈൻ-ഇൻ മാറ്റാനുള്ള കോഡ്',
+  'App code to delete': 'ഇല്ലാതാക്കാൻ ആപ്പിലെ കോഡ്',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'ഇവ സുരക്ഷിതമായ ഇടത്ത് സൂക്ഷിക്കുക. ഓരോന്നും ഒരിക്കൽ പ്രവർത്തിക്കും, വീണ്ടും കാണിക്കില്ല.',
   'Recovery codes': 'വീണ്ടെടുപ്പ് കോഡുകൾ',

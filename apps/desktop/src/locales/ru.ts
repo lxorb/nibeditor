@@ -1240,6 +1240,8 @@ export const ru: Dictionary = {
     'Внесите это в приложение-аутентификатор, затем введите его код.',
   Secret: 'Секрет',
   'Code from the app': 'Код из приложения',
+  'Code to change sign-in': 'Код для изменения входа',
+  'App code to delete': 'Код из приложения для удаления',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Сохраните их в надёжном месте. Каждый работает один раз и больше не показывается.',
   'Recovery codes': 'Коды восстановления',

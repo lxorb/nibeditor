@@ -1177,6 +1177,8 @@ export const ps: Dictionary = {
     'دا په خپل د تصديق کاريال کې کېږدئ، بيا يې کوډ وليکئ.',
   Secret: 'راز',
   'Code from the app': 'له کاريال کوډ',
+  'Code to change sign-in': 'د ننوتلو د بدلولو کوډ',
+  'App code to delete': 'د ړنګولو لپاره د کاريال کوډ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'دا په خوندي ځای کې وساتئ. هر يو يو ځل کار کوي او بيا نه ښودل کېږي.',
   'Recovery codes': 'د بيا ترلاسه کولو کوډونه',

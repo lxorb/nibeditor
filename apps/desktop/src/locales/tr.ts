@@ -1176,6 +1176,8 @@ export const tr: Dictionary = {
     'Bunu kimlik doğrulayıcı uygulamanıza girin, sonra kodunu yazın.',
   Secret: 'Gizli anahtar',
   'Code from the app': 'Uygulamadan gelen kod',
+  'Code to change sign-in': 'Girişi değiştirme kodu',
+  'App code to delete': 'Silmek için uygulama kodu',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Bunları güvenli bir yerde tutun. Her biri bir kez çalışır ve bir daha gösterilmez.',
   'Recovery codes': 'Kurtarma kodları',

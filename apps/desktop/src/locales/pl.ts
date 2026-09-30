@@ -1238,6 +1238,8 @@ export const pl: Dictionary = {
     'Wpisz to w aplikacji uwierzytelniającej, potem podaj jej kod.',
   Secret: 'Sekret',
   'Code from the app': 'Kod z aplikacji',
+  'Code to change sign-in': 'Kod do zmiany logowania',
+  'App code to delete': 'Kod z aplikacji do usunięcia',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Zachowaj je w bezpiecznym miejscu. Każdy działa raz i już się nie pokażą.',
   'Recovery codes': 'Kody odzyskiwania',

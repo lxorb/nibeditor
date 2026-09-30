@@ -1175,6 +1175,8 @@ export const mr: Dictionary = {
     'हे तुमच्या ऑथेंटिकेटर ॲपमध्ये टाका, मग त्याचा कोड लिहा.',
   Secret: 'गुप्त किल्ली',
   'Code from the app': 'ॲपचा कोड',
+  'Code to change sign-in': 'साइन-इन बदलण्याचा कोड',
+  'App code to delete': 'हटवण्यासाठी ॲपचा कोड',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'हे कुठे सुरक्षित ठेवा. प्रत्येक एकदाच चालतो, आणि ते पुन्हा दिसणार नाहीत.',
   'Recovery codes': 'रिकव्हरी कोड',

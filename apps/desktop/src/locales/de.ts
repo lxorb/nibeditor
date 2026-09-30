@@ -1195,6 +1195,8 @@ export const de: Dictionary = {
     'Das in die Authenticator-App eintragen, dann deren Code eingeben.',
   Secret: 'Geheimnis',
   'Code from the app': 'Code aus der App',
+  'Code to change sign-in': 'Code zum Ändern der Anmeldung',
+  'App code to delete': 'App-Code zum Löschen',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Diese sicher aufbewahren. Jeder funktioniert einmal, und sie werden nicht wieder gezeigt.',
   'Recovery codes': 'Wiederherstellungscodes',

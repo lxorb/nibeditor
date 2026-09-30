@@ -241,13 +241,16 @@
         <span class="name">{t('Recovery codes left')}</span>
         <span class="text">{factor.codesLeft}</span>
       </div>
+      <!-- The code both presses under it ask for. Named for what it does, because the
+           row that deletes the account asks for the same app's code a little further
+           down, and two fields called the same thing on one pane were one too many. -->
       <div class="nib-setting setting">
-        <span class="name">{t('Code from the app')}</span>
+        <span class="name">{t('Code to change sign-in')}</span>
         <input
           class="inline"
           bind:value={code}
           placeholder="000000"
-          aria-label={t('Code from the app')}
+          aria-label={t('Code to change sign-in')}
           inputmode="numeric"
           autocomplete="one-time-code"
           spellcheck="false"

@@ -1162,6 +1162,8 @@ export const jv: Dictionary = {
     'Lebokake iki ing aplikasi autentikator sampeyan, banjur tulis kodene.',
   Secret: 'Wadi',
   'Code from the app': 'Kode saka aplikasi',
+  'Code to change sign-in': 'Kode kanggo ngganti mlebu',
+  'App code to delete': 'Kode aplikasi kanggo mbusak',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Simpen iki ing papan sing aman. Saben mung mlaku sepisan lan ora ditampilake maneh.',
   'Recovery codes': 'Kode pambalen',

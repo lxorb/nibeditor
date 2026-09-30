@@ -1145,6 +1145,8 @@ export const zhHans: Dictionary = {
     '把它添加到你的身份验证器应用，然后输入其验证码。',
   Secret: '密钥',
   'Code from the app': '应用中的验证码',
+  'Code to change sign-in': '更改登录方式的验证码',
+  'App code to delete': '用于删除的应用验证码',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     '请妥善保存。每个只能用一次，且不会再次显示。',
   'Recovery codes': '恢复码',

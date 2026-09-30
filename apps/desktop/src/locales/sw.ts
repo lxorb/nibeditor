@@ -1191,6 +1191,8 @@ export const sw: Dictionary = {
     'Weka hii kwenye programu yako ya uthibitishaji, kisha andika kodi yake.',
   Secret: 'Siri',
   'Code from the app': 'Kodi kutoka programu',
+  'Code to change sign-in': 'Kodi ya kubadilisha kuingia',
+  'App code to delete': 'Kodi ya programu ya kufuta',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Hifadhi hizi mahali salama. Kila moja hufanya kazi mara moja, na hazionyeshwi tena.',
   'Recovery codes': 'Kodi za uokoaji',

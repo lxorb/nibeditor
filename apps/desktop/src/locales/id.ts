@@ -1168,6 +1168,8 @@ export const id: Dictionary = {
     'Masukkan ini ke aplikasi autentikator Anda, lalu ketik kodenya.',
   Secret: 'Rahasia',
   'Code from the app': 'Kode dari aplikasi',
+  'Code to change sign-in': 'Kode untuk mengubah masuk',
+  'App code to delete': 'Kode aplikasi untuk menghapus',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Simpan ini di tempat aman. Masing-masing berlaku sekali dan tidak ditampilkan lagi.',
   'Recovery codes': 'Kode pemulihan',

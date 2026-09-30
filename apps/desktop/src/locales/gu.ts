@@ -1170,6 +1170,8 @@ export const gu: Dictionary = {
     'આ તમારી પ્રમાણક એપમાં મૂકો, પછી તેનો કોડ લખો.',
   Secret: 'ગુપ્ત',
   'Code from the app': 'એપનો કોડ',
+  'Code to change sign-in': 'સાઇન-ઇન બદલવાનો કોડ',
+  'App code to delete': 'કાઢી નાખવા માટે એપનો કોડ',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'આ સલામત જગ્યાએ રાખો. દરેક એક વાર ચાલે છે, અને ફરી બતાવાતા નથી.',
   'Recovery codes': 'પુનઃપ્રાપ્તિ કોડ',

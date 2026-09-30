@@ -1160,6 +1160,8 @@ export const vi: Dictionary = {
     'Đưa cái này vào ứng dụng xác thực, rồi gõ mã của nó.',
   Secret: 'Khoá bí mật',
   'Code from the app': 'Mã từ ứng dụng',
+  'Code to change sign-in': 'Mã để thay đổi đăng nhập',
+  'App code to delete': 'Mã ứng dụng để xóa',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Giữ ở nơi an toàn. Mỗi mã dùng một lần, và không hiện lại.',
   'Recovery codes': 'Mã phục hồi',

@@ -1194,6 +1194,8 @@ export const fil: Dictionary = {
     'Ilagay ito sa authenticator app mo, pagkatapos i-type ang code nito.',
   Secret: 'Lihim',
   'Code from the app': 'Code mula sa app',
+  'Code to change sign-in': 'Code para baguhin ang pag-sign in',
+  'App code to delete': 'Code ng app para magbura',
   'Keep these somewhere safe. Each works once, and they are not shown again.':
     'Itago ito sa ligtas na lugar. Isang beses lang gumagana ang bawat isa at hindi na ipapakita.',
   'Recovery codes': 'Mga recovery code',
