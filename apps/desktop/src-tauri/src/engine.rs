@@ -257,6 +257,8 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 }
 
 #[cfg(feature = "cef")]
+pub(crate) mod devtools;
+#[cfg(feature = "cef")]
 pub(crate) mod gate;
 
 #[cfg(test)]
