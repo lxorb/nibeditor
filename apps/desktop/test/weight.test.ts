@@ -515,7 +515,12 @@ function holds(tail: string): boolean {
  *  (schemes.ts). The production build preloads 1,338,577 bytes in 153 chunks against
  *  1,337,206 in 151: the door itself, and the bundler cutting the sheet's pull and the
  *  theme store out of the chunk they shared with the bin, since the picker asks for
- *  those two and not for it. */
+ *  those two and not for it.
+ *
+ *  Not raised 2026-09-30 for Alt and a digit, the tabs by number (shortcuts/registry.ts),
+ *  and a press AltGr or an input method is typing told from a chord (keys.ts), both read
+ *  by the first key: the branch had asked for 3,282,000 on the main before the theme
+ *  picker, and on this one it measures 3,241,634 and 374 modules. */
 const BUDGET = 3_279_000
 const MOST_FILES = 376
 

@@ -9,10 +9,11 @@
 //! Chrome's rule is the one kept here. A handful of chords are the browser's and a page
 //! is never offered them: a new tab, closing one, going round them, moving one along,
 //! reopening the last, a new window - and F6, which a hand in a browser presses to get
-//! out of the page to the address field. Everything else is the page's, which is what
-//! lets a site's own Ctrl+K work, so nothing else is touched. Reloading needs nothing
-//! here: F5 and Ctrl+R pressed in a page are the engine's own, as they are in Chrome. See
-//! docs/web-tabs.md.
+//! out of the page to the address field. And nib's own Alt and a digit, the tabs by
+//! number, which Chrome keeps from a page on Linux. Everything else is the page's, which
+//! is what lets a site's own Ctrl+K work, so nothing else is touched. Reloading needs
+//! nothing here: F5 and Ctrl+R pressed in a page are the engine's own, as they are in
+//! Chrome. See docs/web-tabs.md.
 //!
 //! Finding and the address field's other two keys are not among them, because Chrome
 //! asks the page first: Google Docs, Notion and VS Code on the web have a find of their
@@ -101,6 +102,14 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
         return Some(pressed("F6", "F6"));
     }
 
+    // Alt and a digit, nib's own way to the tabs by number, and Chrome's and Firefox's on
+    // Linux. Alt alone is not a character on Windows - AltGr is Ctrl and Alt together,
+    // which is the page's below - so the one thing a page loses is a digit `accesskey`,
+    // as it does in those two.
+    if held.alt && !held.ctrl && !held.shift {
+        return digit(vk).map(|(key, code)| pressed(key, code));
+    }
+
     // Chrome's reserved chords are all Ctrl and never Alt: Ctrl+Alt is AltGr on half
     // the keyboards in Europe, and a character typed with it is the page's.
     if !held.ctrl || held.alt {
@@ -123,9 +132,11 @@ pub fn meaning(vk: u32, held: Held, down: bool, repeat: bool) -> Option<Pressed>
     }
 }
 
-/// Ctrl+1 to Ctrl+9, which a browser jumps between its tabs with.
+/// A digit on the top row, which a browser jumps between its tabs with: Ctrl+1 to
+/// Ctrl+9, and here Alt+0 to Alt+9 as well.
 fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
-    const DIGITS: [(&str, &str); 9] = [
+    const DIGITS: [(&str, &str); 10] = [
+        ("0", "Digit0"),
         ("1", "Digit1"),
         ("2", "Digit2"),
         ("3", "Digit3"),
@@ -137,7 +148,7 @@ fn digit(vk: u32) -> Option<(&'static str, &'static str)> {
         ("9", "Digit9"),
     ];
 
-    let at = usize::try_from(vk.checked_sub(0x31)?).ok()?;
+    let at = usize::try_from(vk.checked_sub(0x30)?).ok()?;
     DIGITS.get(at).copied()
 }
 
@@ -319,6 +330,35 @@ mod tests {
     #[test]
     fn a_chord_with_alt_is_a_character_on_altgr_keyboards() {
         assert_eq!(meaning(0x54, Held { alt: true, ..CTRL }, true, false), None);
+        // AltGr and a digit too: a Swiss `@`, a German `{`.
+        assert_eq!(meaning(0x32, Held { alt: true, ..CTRL }, true, false), None);
+        assert_eq!(meaning(0x37, Held { alt: true, ..CTRL }, true, false), None);
+    }
+
+    #[test]
+    fn alt_and_a_digit_are_the_tabs_by_number_nought_included() {
+        let alt = |shift| Held {
+            ctrl: false,
+            shift,
+            alt: true,
+        };
+        let pressed = |vk, held| meaning(vk, held, true, false).map(|one| (one.key, one.code));
+
+        assert_eq!(pressed(0x31, alt(false)), Some(("1", "Digit1")));
+        assert_eq!(pressed(0x33, alt(false)), Some(("3", "Digit3")));
+        assert_eq!(pressed(0x39, alt(false)), Some(("9", "Digit9")));
+        assert_eq!(pressed(0x30, alt(false)), Some(("0", "Digit0")));
+        // Said with the Alt it was pressed with, so the window reads Alt and the digit.
+        assert!(meaning(0x30, alt(false), true, false).is_some_and(|one| one.held.alt));
+
+        // With Shift it is a character on some layout, and the page's.
+        assert_eq!(pressed(0x31, alt(true)), None);
+        // A letter with Alt is the page's: Alt+D asks the page first; see web_opens.rs.
+        assert_eq!(pressed(0x44, alt(false)), None);
+        // And the digits on the number pad are numbers, not places.
+        assert_eq!(pressed(0x61, alt(false)), None);
+        // Ctrl and the nought is still the page's zoom.
+        assert_eq!(down(0x30, false), None);
     }
 
     #[test]
