@@ -90,9 +90,9 @@ const BLANK: &str = "about:blank";
 
 /// Puts a revived page back where the reading was.
 ///
-/// It is there from before the page's own first script - in nib's own world on
-/// `WebView2`, where the page cannot see it; see `web_worlds.rs` - and does its work when
-/// the document is ready: a scroll offset set before there is a document to scroll is
+/// It is there from before the page's own first script - in nib's own world, where the
+/// page cannot see it; see `web_worlds.rs` - and does its work when the document is
+/// ready: a scroll offset set before there is a document to scroll is
 /// an offset set on nothing. Three times, because a page that lays itself out in
 /// stages - a font, a picture without a size, a script that writes the body - is
 /// shorter than its final self when the document is first ready, and a browser
@@ -566,9 +566,8 @@ fn handed_over(url: &Url) -> Option<String> {
 /// sign-in in a store the page is not in would be a sign-in to nothing. Handed nothing
 /// of the app's and kept to the web like a tab's page - a sign-in page is exactly the
 /// kind that breaks on a global it did not expect - and labelled so it is granted
-/// nothing. What it
-/// asks for in turn opens as a tab beside the page that opened it. It closes when its
-/// page does; see `WindowCloseRequested` in wry.
+/// nothing. What it asks for in turn opens as a tab beside the page that opened it. It
+/// closes when its page does; see `WindowCloseRequested` in wry.
 #[cfg(all(windows, not(feature = "cef")))]
 fn popup(
     app: &AppHandle,
@@ -1132,8 +1131,8 @@ fn reporting(
     })
 }
 
-/// Starts listening for what the site in this tab asks to be given, and then - on
-/// `WebView2`, where the page was built on the blank page - sends it to the site.
+/// Starts listening for what the site in this tab asks to be given, and then sends the
+/// page to the site from the blank page it was built on.
 ///
 /// After the build, because it is the engine's own event on the webview that has just
 /// been made, and on the window's thread, because that is the only thread the engine's
@@ -2732,8 +2731,8 @@ mod tests {
     /// nib's own scripts for a page declare nothing and touch nothing of the page's
     /// world: no global written, deleted or redefined, no prototype patched, none of the
     /// runtime's names. Each is a function called on the spot, so it leaves no name
-    /// behind at the top level of whichever world it runs in - the page's own, on an
-    /// engine without a world of nib's own. What a browser asks about - the camera, the
+    /// behind at the top level of whichever world it runs in - the page's own, under
+    /// nib's own Chromium. What a browser asks about - the camera, the
     /// microphone, the hardware buses, the credential store - is the engine's to raise
     /// and the window's to answer, never a script's to hide; see `ask`.
     #[test]
