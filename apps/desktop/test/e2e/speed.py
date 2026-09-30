@@ -17,7 +17,11 @@ their own so neither is what the machine was doing while the other was measured.
                     tag, a task - and whether the notes were read again for any
                     of them, which is the counter the worker keeps
     graph           five thousand nodes, panned
-    canvas          ten thousand strokes: opened, panned, zoomed, drawn on
+    scan            the space read for the link index on the way up: how long, and
+                    the longest task it put on the thread
+    canvas          ten thousand strokes: opened, the ink filling in, and then seen
+                    whole - panned, drawn on, rubbed out - before it is zoomed into
+                    and drawn on again
     reading         the big note as a page
     memory          the heap once the launch has settled
 
@@ -404,7 +408,7 @@ async (plan) => {
 
       for (const row of rows.slice(from, from + SIZE)) {
         files.put(row)
-        listing?.put({ path: row.path, modified: row.modified, created: row.created })
+        listing?.put({ path: row.path, modified: row.modified, created: row.created, size: row.content.length })
       }
     })
   }
@@ -1100,19 +1104,63 @@ def part_canvas(lane: Lane, page: Page) -> dict[str, object]:
     if not box:
         return {"canvas-open": opened["ms"]}
 
+    filling = fill_in(lane, page)
     panned = drag(lane, page, box, "canvas panned")
+    # Drawn on and rubbed out with the whole plane in view, which is where a stroke
+    # lands on a tile holding hundreds of others: the plane opens framed to fit, and
+    # nothing has zoomed it yet. Both taken back afterwards, so every round is the
+    # same plane.
+    whole = draw(lane, page, box, "stroke drawn on the whole plane")
+    rubbed = rub(lane, page, box)
+    for _ in range(2):
+        page.keyboard.press("Control+z")
+    page.wait_for_timeout(300)
     zoomed = wheel(lane, page, box)
     drawn = draw(lane, page, box)
 
     return {
         "canvas-open": opened["ms"],
+        "fill-worst": filling["worst"],
+        "fill-long": len(filling["loaf"]),
         "canvas-fps": panned["fps"],
         "canvas-worst": panned["worst"],
+        "fit-draw-worst": whole["worst"],
+        "fit-erase-worst": rubbed["worst"],
         "zoom-fps": zoomed["fps"],
         "zoom-worst": zoomed["worst"],
         "draw-fps": drawn["fps"],
         "draw-worst": drawn["worst"],
     }
+
+
+def fill_in(lane: Lane, page: Page) -> dict:
+    """The seconds after a plane is opened, with nothing touched: the cards are on
+    screen and the ink arrives behind them, a slice a frame. What a reader waits
+    through is the longest of those frames."""
+    page.evaluate(WATCH_START)
+    page.wait_for_timeout(3000)
+    found = page.evaluate(WATCH_STOP)
+    lane.profile("ink filling in", found["loaf"])
+    return found
+
+
+def rub(lane: Lane, page: Page, box: dict) -> dict:
+    """The eraser across the middle of the plane, which takes strokes out of the
+    plane on every move it crosses one."""
+    page.keyboard.press("e")
+    page.wait_for_timeout(300)
+    start = (box["x"] + box["width"] / 2 - 150, box["y"] + box["height"] / 2)
+    page.mouse.move(*start)
+    page.evaluate(WATCH_START)
+    page.mouse.down()
+    for step in range(60):
+        page.mouse.move(start[0] + step * 5, start[1] - (step % 12) * 4)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+    found = page.evaluate(WATCH_STOP)
+    lane.profile("strokes rubbed out", found["loaf"])
+    page.keyboard.press("Escape")
+    return found
 
 
 OPEN_CANVAS = r"""
@@ -1176,7 +1224,7 @@ def wheel(lane: Lane, page: Page, box: dict) -> dict:
     return found
 
 
-def draw(lane: Lane, page: Page, box: dict) -> dict:
+def draw(lane: Lane, page: Page, box: dict, what: str = "stroke drawn") -> dict:
     """One more stroke on a plane that already holds ten thousand."""
     page.keyboard.press("d")
     page.wait_for_timeout(300)
@@ -1189,9 +1237,47 @@ def draw(lane: Lane, page: Page, box: dict) -> dict:
     page.mouse.up()
     page.wait_for_timeout(300)
     found = page.evaluate(WATCH_STOP)
-    lane.profile("stroke drawn", found["loaf"])
+    lane.profile(what, found["loaf"])
     page.keyboard.press("Escape")
     return found
+
+
+def part_scan(lane: Lane, page: Page) -> dict[str, object]:
+    """A launch, watched until the space has been read for the link index.
+
+    The read is chunks of the space with the thread let go of between them, so what
+    a reader feels is the longest of those chunks: the keystroke that lands during
+    one waits for all of it. Counted from the file list, which is on screen before
+    the scan is let start, to the index having the space - and not from the editor,
+    which a launch that reopens on a canvas never draws."""
+    if lane.space == "empty":
+        return {}
+
+    page.goto(lane.origin, wait_until="commit")
+    page.wait_for_function("() => window.__marks.tree !== null", timeout=120000)
+    page.wait_for_function(
+        "() => !!window.nibApp && !window.nibApp.links.scanning && !!window.nibApp.links.rootOf()",
+        timeout=180000,
+    )
+    found = page.evaluate(SCAN)
+    lane.profile("the space read for the index", found.pop("loaf"))
+    return found
+
+
+SCAN = r"""
+() => {
+  const marks = window.__marks
+  const after = marks.tree ?? 0
+  const read = performance.now()
+  const tasks = marks.tasks.filter((one) => one.at >= after && one.at <= read)
+  return {
+    'scan-read': read - after,
+    'scan-worst': tasks.reduce((most, one) => Math.max(most, one.ms), 0),
+    'scan-long': tasks.filter((one) => one.ms >= 50).length,
+    loaf: marks.loaf.filter((one) => one.at >= after && one.ms >= 50),
+  }
+}
+"""
 
 
 def part_links(lane: Lane, page: Page) -> dict[str, object]:
@@ -1254,6 +1340,7 @@ PARTS = {
     "note": part_note,
     "shell": part_shell,
     "search": part_search,
+    "scan": part_scan,
     "links": part_links,
     "graph": part_graph,
     "canvas": part_canvas,
@@ -1481,6 +1568,9 @@ SAID = [
     ("q-tag-read", "search: rows read for it", ""),
     ("q-task", "search: a task", "ms"),
     ("q-task-read", "search: rows read for it", ""),
+    ("scan-read", "scan: file list to the space read for the index", "ms"),
+    ("scan-worst", "scan: longest task while it reads", "ms"),
+    ("scan-long", "scan: tasks over 50ms while it reads", ""),
     ("links-panel", "links: what points here, on screen", "ms"),
     ("links-rows", "links: rows in the panel", ""),
     ("graph-open", "graph: opened", "ms"),
@@ -1489,8 +1579,12 @@ SAID = [
     ("hover-fps", "graph: frames a second, hovered", "fps"),
     ("hover-worst", "graph: worst hover frame", "ms"),
     ("canvas-open", "canvas: opened", "ms"),
+    ("fill-worst", "canvas: worst frame while the ink fills in", "ms"),
+    ("fill-long", "canvas: frames over 50ms while it fills in", ""),
     ("canvas-fps", "canvas: frames a second, panned", "fps"),
     ("canvas-worst", "canvas: worst frame", "ms"),
+    ("fit-draw-worst", "canvas: worst frame, drawing on it seen whole", "ms"),
+    ("fit-erase-worst", "canvas: worst frame, rubbing out seen whole", "ms"),
     ("zoom-fps", "canvas: frames a second, zoomed", "fps"),
     ("zoom-worst", "canvas: worst zoom frame", "ms"),
     ("draw-fps", "canvas: frames a second, drawing", "fps"),
