@@ -35,17 +35,17 @@ const HASH = /^[a-f0-9]{64}$/
 
 /** The largest file that goes up in one request; past it, parts. A Worker holds a
  *  request's body in 128 MB of memory, and hashes it there. */
-export const ONE_REQUEST = 64 * 1024 * 1024
+const ONE_REQUEST = 64 * 1024 * 1024
 
 /** How big a part is. R2 takes parts of at least 5 MB, all but the last the same size. */
-export const PART = 8 * 1024 * 1024
+const PART = 8 * 1024 * 1024
 
 /** The largest file a space keeps: the account's whole quota is the other bound. */
 const LARGEST = 1024 * 1024 * 1024
 
 /** A file nobody can reach, or one that is not a file. A reader can bring it about -
  *  opening a file somebody removed a moment ago - so it has a row in every catalogue. */
-export const NO_SUCH_FILE = 'no such file'
+const NO_SUCH_FILE = 'no such file'
 
 /** Bytes whose hash is not the name they arrived under. A correct client never sends
  *  these, so it reaches no reader and stays English. */

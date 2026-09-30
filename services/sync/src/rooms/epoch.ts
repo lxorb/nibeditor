@@ -36,7 +36,7 @@ export function seedOf(kind: RoomKind, noteId: string, epoch: number, text: stri
 }
 
 /** The id the room writes under, which no device ever uses. */
-export function accountClient(noteId: string): number {
+function accountClient(noteId: string): number {
   return hash32(noteId, 'account')
 }
 

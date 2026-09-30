@@ -110,7 +110,7 @@ function split(path: string): { folders: string[]; name: string } {
 /** The live note a v1 app's path already names, if there is one: a create at that
  *  path is the 409 it always was, and a Linux device's other spelling of the same
  *  name answers the same way. */
-export function noteAtPath(tree: Tree, path: string): string | null {
+function noteAtPath(tree: Tree, path: string): string | null {
   const { folders, name } = split(path)
   let parent: string | null = null
   for (const folder of folders) {

@@ -292,7 +292,7 @@ function writing(
 /** A device's changed entries, each standing until a later one of its key arrives, and
  *  the v1 columns written from all of them. Answers the cursor, or null when the
  *  columns would be past what a space keeps. */
-export async function writeEntries(
+async function writeEntries(
   env: Env,
   spaceId: string,
   changes: readonly Entry[],
@@ -419,7 +419,7 @@ export async function reproject(env: Env, spaceId: string): Promise<void> {
 }
 
 /** What changed since a cursor, a page at a time. */
-export async function entriesSince(
+async function entriesSince(
   env: Env,
   spaceId: string,
   since: number,
@@ -470,7 +470,7 @@ const NOT_AN_ENTRY = 'that is not an entry this space keeps'
 /** Entries that would make one of the columns past what a space keeps; see
  *  spaces/columns.ts. A person can arrange and dress their way there, so it has a row
  *  in every catalogue. */
-export const TOO_MUCH_ABOUT_THE_TREE = 'that is more than a space keeps about its tree'
+const TOO_MUCH_ABOUT_THE_TREE = 'that is more than a space keeps about its tree'
 
 export const v2Maps = new Hono<App>()
 

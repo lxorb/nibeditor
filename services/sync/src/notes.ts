@@ -217,7 +217,7 @@ async function placeNote(
 }
 
 /** A create at a path a live note already answers to. */
-export class NoteTaken extends Error {
+class NoteTaken extends Error {
   constructor(readonly id: string) {
     super('a note already lives there')
   }

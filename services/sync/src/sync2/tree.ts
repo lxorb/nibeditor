@@ -475,7 +475,7 @@ export class Tree {
 /** Every document of a space still on no epoch, put on the first one, seeded from the
  *  words it has now (section 11, step 3). One statement, so the words and the hash the
  *  epoch names can never be two different moments. */
-export function markEpochs(db: D1Database, space: string): D1PreparedStatement {
+function markEpochs(db: D1Database, space: string): D1PreparedStatement {
   return db
     .prepare(
       `update notes set epoch = 1, epoch_base = hash
@@ -499,7 +499,7 @@ function emptyContent(kind: EntryKind): Content {
 }
 
 /** sha256 of nothing, which is what an empty note's row says its words hash to. */
-export const EMPTY_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+const EMPTY_HASH = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
 /** Refuses the batch when the space's cursor is not where it was when the tree was
  *  read. It inserts the space's own cursor row a second time exactly then, which the
@@ -708,7 +708,7 @@ async function cursorMoved(env: Env, spaceId: string, next: number): Promise<boo
 
 /** How long an op's answer is kept for a device that sends it again. The nightly job
  *  takes older ones; see `sweepTreeOps`. */
-export const OPS_KEPT_FOR = 30 * 24 * 60 * 60 * 1000
+const OPS_KEPT_FOR = 30 * 24 * 60 * 60 * 1000
 
 /** What the space answered any of these ops with before: what makes a retried op the
  *  same op. The ids travel as one JSON list, because two hundred of them bound one by
