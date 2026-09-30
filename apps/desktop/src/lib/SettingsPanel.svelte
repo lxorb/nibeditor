@@ -624,7 +624,7 @@
       <DefaultBrowser />
     </div>
     <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
-         there is a choice: the system's engine is the one engine on Linux. -->
+         there is a choice, which is Windows for now; see `systemName`. -->
     {#if systemName(platform())}
       <div class="nib-setting setting">
         <span class="name">{t('Engine')}</span>
