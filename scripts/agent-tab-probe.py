@@ -150,6 +150,19 @@ def pages(other: str) -> dict[str, tuple[str, str]]:
 <p id="sent"></p>
 <script>window.keys = []; addEventListener('keydown', (e) => window.keys.push([e.key, e.isTrusted]))</script>
 """)),
+        "/more": (html, page("More", """
+<h1>More</h1>
+<div id="hover" style="width:200px;height:40px;background:#fff" onmouseover="window.hovered = true">Hover me</div>
+<div id="drag" draggable="true" style="width:120px;height:40px;background:#ccc" ondragstart="event.dataTransfer.setData('text/plain', 'the card')">Card</div>
+<div id="drop" style="width:200px;height:80px;background:#eee" ondragover="event.preventDefault()" ondrop="event.preventDefault(); window.dropped = event.dataTransfer.getData('text/plain')">Drop here</div>
+<input id="hidden-file" type="file" style="display:none" onchange="window.chosen = this.files[0] && this.files[0].name">
+<button id="choose" onclick="document.getElementById('hidden-file').click()">Attach a file</button>
+<button id="where" onclick="navigator.geolocation.getCurrentPosition(() => { window.located = 'yes' }, (e) => { window.located = 'refused ' + e.code })">Where am I</button>
+<button id="slow" onclick="fetch('/slow').then(r => r.text()).then(t => { document.getElementById('late').textContent = t })">Fetch slowly</button>
+<p id="late"></p>
+<div style="height:3000px"></div>
+<p id="bottom">The bottom</p>
+""")),
         "/other": (html, page("Other", "<h1>Terms</h1>")),
         "/meter": (html, page("Meter", "<h1>Meter</h1>")),
         "/user": (html, page("User page", "<h1>User page</h1><button id='mine' onclick=\"this.textContent='pressed'\">Mine</button>", "background:#00c000")),
@@ -180,6 +193,14 @@ def serve(port: int, other: str) -> None:
     class Handler(http.server.BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - the base class names it
             path = self.path.split("?")[0]
+            if path == "/slow":
+                time.sleep(1.2)
+            if path == "/auth":
+                self.send_response(401)
+                self.send_header("www-authenticate", 'Basic realm="probe"')
+                self.send_header("content-length", "0")
+                self.end_headers()
+                return
             if path == "/file.bin":
                 body = b"nib agent download " * 64
                 self.send_response(200)
@@ -738,6 +759,52 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
             "clear": cli.call("browser_storage", tab=own_tab, op="clear"),
         }
 
+        # ---- the rest of the verbs: hover, drag, scroll, waits, the chooser, permissions ----
+        cli.call("browser_navigate", tab=tab, url=f"{site}/more")
+        msnap = cli.call("browser_snapshot", tab=tab)
+        mtext = str(result(msnap).get("text", ""))
+        def ref_named(words: str) -> str | None:
+            for line in mtext.splitlines():
+                if words in line and "[ref=" in line:
+                    return line.split("[ref=")[1].split("]")[0]
+            return None
+        found_text = cli.call("browser_find", tab=tab, text="drop here")
+        more = {
+            "find by text": found_text,
+            "hover": cli.call("browser_hover", tab=tab, ref=ref_named("Hover me")),
+            "drag": cli.call("browser_drag", tab=tab, **{"from": ref_named("Card"), "to": ref_named("Drop here")}),
+            "scroll by": cli.call("browser_scroll", tab=tab, dy=1200),
+            "scrolled by": result(cli.call("browser_evaluate", tab=tab, expression="Math.round(scrollY)")).get("value"),
+            "scroll to": cli.call("browser_scroll", tab=tab, ref=ref_named("The bottom")),
+            "scrolled to": result(cli.call("browser_evaluate", tab=tab, expression="Math.round(scrollY)")).get("value"),
+            "chooser": cli.call("browser_upload", tab=tab, ref=ref_named("Attach a file"), files=[receipt_file]),
+            "permission": cli.call("browser_click", tab=tab, ref=ref_named("Where am I")),
+            "wait ref": cli.call("browser_wait", tab=tab, **{"for": {"ref": ref_named("Drop here")}}),
+        }
+        cli.call("browser_click", tab=tab, ref=ref_named("Fetch slowly"))
+        more["wait network idle"] = cli.call("browser_wait", tab=tab, **{"for": "network_idle", "timeout_ms": 8000})
+        more["page"] = result(cli.call("browser_evaluate", tab=tab, world="page", expression="({ hovered: window.hovered, dropped: window.dropped, scrolled: Math.round(scrollY), chosen: window.chosen, located: window.located, late: document.getElementById('late').textContent })")).get("value")
+        more["isolated world"] = result(cli.call("browser_evaluate", tab=tab, expression="typeof window.m")).get("value")
+        more["page world"] = result(cli.call("browser_evaluate", tab=tab, world="page", expression="typeof window.m")).get("value")
+        more["bodies"] = [row.get("body", "")[:40] for row in result(cli.call("browser_network", tab=tab, match="/slow", bodies=True)).get("requests", [])]
+        more["console"] = [line.get("text") for line in result(cli.call("browser_console", tab=tab, level="warning")).get("lines", [])]
+        more["to basic auth"] = cli.call("browser_navigate", tab=tab, url=f"{site}/auth")
+        time.sleep(0.5)
+        lines_now = result(cli.call("browser_console", tab=tab)).get("lines", [])
+        more["basic auth"] = [line.get("text") for line in lines_now if "sign-in" in str(line.get("text"))]
+        more["console after auth"] = [line.get("text") for line in lines_now][-6:]
+        said["more"] = more
+        page_now = more["page"] if isinstance(more["page"], dict) else {}
+        check.that("hover reaches the page", page_now.get("hovered") is True, more)
+        check.that("a drag drops, through the engine's intercepted drag", page_now.get("dropped") == "the card", more)
+        check.that("a scroll scrolls, by an amount and to an element", (more["scrolled by"] or 0) >= 1000 and (more["scrolled to"] or 0) > (more["scrolled by"] or 0), more)
+        check.that("a chooser a press opens is answered, never shown", page_now.get("chosen") == "receipt.txt", more)
+        check.that("a permission is refused, never asked", str(page_now.get("located", "")).startswith("refused"), more)
+        check.that("network idle waits for the slow request", page_now.get("late") not in (None, ""), more)
+        check.that("scripts run in nib's own world by default", more["isolated world"] == "undefined" and more["page world"] == "function", more)
+        check.that("basic authentication is refused and said", bool(more["basic auth"]), more)
+        unmoved("the rest of the verbs")
+
         # ---- the agent's grant and the policy, recognised from the page ----
         atab = str(result(agent.call("browser_open", url=f"{site}/shop")).get("tab", ""))
         asnap = agent.call("browser_snapshot", tab=atab)
@@ -754,6 +821,16 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         check.that("scripts need browser.script", scripted.get("code") == "not_granted", scripted)
         foreign = agent.call("browser_snapshot", tab=tab)
         check.that("another agent's tab does not exist to it", foreign.get("code") == "no_such_tab", foreign)
+        shown = agent.call("browser_show", tab=atab)
+        check.that("showing an agent tab asks", shown.get("status") == "needs_approval", shown)
+        taken = agent.call("browser_takeover", tab=atab, reason="Sign in to the probe")
+        paused = agent.call("browser_snapshot", tab=atab)
+        cli.window(f"window.__TAURI_INTERNALS__.invoke('agents_answer', {{ id: {json.dumps(taken.get('approval'))}, allow: true, always: false }})")
+        handed = agent.call("browser_snapshot", tab=atab)
+        state = cli.window("window.__TAURI_INTERNALS__.invoke('agents_state')")
+        said["show and takeover"] = {"show": shown, "takeover": taken, "while taken": paused.get("code"), "handed back": handed.get("status"),
+                                     "state": {k: (len(v) if isinstance(v, list) else v) for k, v in state.items()} if isinstance(state, dict) else state}
+        check.that("a takeover pauses the agent until it is handed back", taken.get("status") == "needs_approval" and paused.get("code") == "paused_by_reader" and handed.get("status") == "ok", said["show and takeover"])
 
         # ---- the reader's own tab: the agent's presses never take the keyboard ----
         if reader_tab:
@@ -772,6 +849,14 @@ def main() -> int:  # noqa: PLR0915 - one run, step by step
         resumed = agent.call("browser_tabs")
         said["stop"] = {"stopped": stopped.get("code"), "resumed": resumed.get("status")}
         check.that("the stop stops and resumes", stopped.get("code") == "stopped" and resumed.get("status") == "ok", said["stop"])
+
+        # ---- the audit log: every call, one line each, no secret in it ----
+        logs = pathlib.Path(os.environ["LOCALAPPDATA"]) / args.identifier / "agents" / "log"
+        lines = [json.loads(line) for day in sorted(logs.glob("*.jsonl")) for line in day.read_text(encoding="utf-8").splitlines() if line]
+        raw = "\n".join(day.read_text(encoding="utf-8") for day in logs.glob("*.jsonl"))
+        said["log"] = {"lines": len(lines), "agents": sorted({one.get("agent") for one in lines}), "verbs": len({one.get("verb") for one in lines})}
+        check.that("every call is in the log", len(lines) > 50 and "probe-agent" in said["log"]["agents"], said["log"])
+        check.that("no token and no password is in the log", token not in raw and "hunter2" not in raw, said["log"])
 
         said["engine memory with tabs"] = engine_memory(running.pid)
         said["window picture"] = photograph(running.pid, args.out / "agent-probe-window.png")

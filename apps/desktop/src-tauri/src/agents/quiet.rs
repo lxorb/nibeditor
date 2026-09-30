@@ -427,7 +427,7 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
             say(
                 &label,
                 "warning",
-                format!("nib refused the page a permission (kind {})", kind.0),
+                format!("nib refused the page {}", permission_named(kind.0)),
             );
         }
         Ok(())
@@ -435,6 +435,25 @@ fn permissions(core: &ICoreWebView2, owner: &Owner) {
     let mut token = 0i64;
     // Safe: as above.
     let _ = unsafe { core.add_PermissionRequested(&handler, &raw mut token) };
+}
+
+/// What a permission is called, from `WebView2`'s numbering of them.
+fn permission_named(kind: i32) -> &'static str {
+    match kind {
+        1 => "the microphone",
+        2 => "the camera",
+        3 => "where it is",
+        4 => "notifications",
+        5 => "the sensors",
+        6 => "reading the clipboard",
+        7 => "several downloads at once",
+        8 => "files on the machine",
+        9 => "playing sound by itself",
+        10 => "the machine's fonts",
+        11 => "MIDI devices",
+        12 => "placing windows",
+        _ => "a permission",
+    }
 }
 
 /// Downloads, into the agent's own folder, never past 500 MB, and never with the
