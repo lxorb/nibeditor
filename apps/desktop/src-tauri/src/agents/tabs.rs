@@ -299,6 +299,7 @@ pub fn close(app: &AppHandle, id: &str) {
     };
     if let Some(tab) = gone {
         let_go(app, &tab.label());
+        super::stop::tab_gone(&tab.id);
         let _ = app.emit(
             EVENT,
             Event::Closed {
