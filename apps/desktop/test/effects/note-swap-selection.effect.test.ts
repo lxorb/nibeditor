@@ -65,6 +65,7 @@ test('the pane says so when another note is swapped into its editor', () => {
   const props = reactive({
     tab: one,
     kept: [one, two],
+    focused: true,
     onselection: (view: EditorView) => heard.push(view.state.doc.toString()),
   })
 
