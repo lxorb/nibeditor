@@ -783,7 +783,7 @@ fn popup(
     let asking = tab.to_string();
     let holding = holder.to_string();
 
-    let window = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
+    let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
         .window_features(features)
         .title(url.host_str().unwrap_or_default())
         .initialization_script(guard())
@@ -801,9 +801,10 @@ fn popup(
         })
         .on_document_title_changed(|window, title| {
             let _ = window.set_title(&title);
-        })
-        .build()
-        .ok()?;
+        });
+    // Where the page asked for it, unless this run's windows were sent off the screen:
+    // then after them, whatever `left` and `top` the page named. See `built`.
+    let window = crate::placement::built(building).ok()?;
 
     let closing = window.clone();
     let _ = window.with_webview(move |platform| crate::web_opens::closing(&platform, closing));
