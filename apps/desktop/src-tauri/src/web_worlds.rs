@@ -50,12 +50,11 @@ use serde_json::{json, Value};
 /// The name of nib's own world in a page: where its page scripts run and what it reads
 /// a page from. Anything but the empty name is an isolated world; the page's own is the
 /// empty one.
-#[cfg_attr(feature = "cef", allow(dead_code))]
 pub(crate) const WORLD: &str = "nib";
 
 /// A script the engine is asked to register only to learn how far its own numbering has
 /// got. It is taken back with everything registered before it, so it never runs.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 const MARK: &str = "void 0";
 
 /// The identifiers of every script registered before the one the engine just filed
@@ -67,20 +66,20 @@ const MARK: &str = "void 0";
 /// not a counting number is `None`, and then nothing is taken back: a tab that still
 /// carries the runtime's globals is where every web tab was before this existed, and a
 /// sweep that guessed could take back something it did not mean to.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn taken_back(last: &str) -> Option<std::ops::RangeInclusive<u32>> {
     let last = last.trim().parse::<u32>().ok().filter(|one| *one > 0)?;
     Some(1..=last)
 }
 
 /// What the protocol is asked to register a script in nib's world with.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn registering(source: &str) -> String {
     json!({ "source": source, "worldName": WORLD }).to_string()
 }
 
 /// The page's own frame, out of the protocol's frame tree.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn frame_of(tree: &str) -> Option<String> {
     let said: Value = serde_json::from_str(tree).ok()?;
     said.pointer("/frameTree/frame/id")?
@@ -89,13 +88,13 @@ fn frame_of(tree: &str) -> Option<String> {
 }
 
 /// What the protocol is asked for nib's world in that frame with.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn world_in(frame: &str) -> String {
     json!({ "frameId": frame, "worldName": WORLD }).to_string()
 }
 
 /// The world it answered with, as the context an evaluation is run in.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn context_of(world: &str) -> Option<i64> {
     let said: Value = serde_json::from_str(world).ok()?;
     said.get("executionContextId")?.as_i64()
@@ -103,7 +102,7 @@ fn context_of(world: &str) -> Option<i64> {
 
 /// What the protocol is asked to run an expression in that world with: waiting for a
 /// promise, and answering with the value itself rather than a handle to it.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn evaluating(expression: &str, context: i64) -> String {
     json!({
         "expression": expression,
@@ -122,7 +121,7 @@ fn evaluating(expression: &str, context: i64) -> String {
 /// `WebView2` puts it in a renderer of its own, which the protocol treats as a target of
 /// its own. Measured on the probe: a same-site frame had nib's world, and one from
 /// another site did not until this. Its links and its keys are the page's all the same.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn attaching() -> String {
     json!({
         "autoAttach": true,
@@ -135,7 +134,7 @@ fn attaching() -> String {
 
 /// The session of a frame the protocol has just attached to, out of the event that says
 /// so, or `None` for any other kind of target.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn attached_frame(event: &str) -> Option<String> {
     let said: Value = serde_json::from_str(event).ok()?;
     if said.pointer("/targetInfo/type")?.as_str()? != "iframe" {
@@ -149,7 +148,7 @@ fn attached_frame(event: &str) -> Option<String> {
 /// frames followed the same way, and then let go. The last is sent whatever became of
 /// the others, because a frame held at its start and never let go is a frame that never
 /// loads.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
 fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
     [
         ("Page.enable", "{}".to_string()),
@@ -163,7 +162,6 @@ fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
 }
 
 /// What was done to a page before it was sent to the site, for the launch trace.
-#[cfg_attr(feature = "cef", allow(dead_code))]
 #[derive(Default)]
 pub struct Cleared {
     /// Whether the runtime's scripts were taken back.
@@ -176,7 +174,6 @@ pub struct Cleared {
     frames: bool,
 }
 
-#[cfg_attr(feature = "cef", allow(dead_code))]
 impl Cleared {
     /// One line for the launch trace.
     pub fn said(&self) -> String {
@@ -516,6 +513,122 @@ mod engine {
                 },
             );
         });
+    }
+}
+
+#[cfg(feature = "cef")]
+pub use engine::{evaluate, sent};
+
+/// nib's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
+/// runtime's own door to the page's agent (see engine/devtools.rs). What the runtime puts
+/// in every page is two things there: a script it registers over the protocol, taken
+/// back here the way `WebView2`'s are, and `window.ipc`, which nib's own renderer never
+/// gives a page that is not the app's (see cef/src/helper.rs).
+#[cfg(feature = "cef")]
+mod engine {
+    use std::time::Duration;
+
+    use serde_json::{json, Value};
+    use tauri::{Url, Webview};
+
+    use crate::engine::devtools;
+
+    use super::{
+        attached_frame, attaching, context_of, evaluating, frame_of, in_frame, registering,
+        taken_back, world_in, Cleared, MARK,
+    };
+
+    /// How long one step of the clearing waits for the page's agent.
+    const PATIENCE: Duration = Duration::from_secs(10);
+
+    /// One call, its answer or `None`; the parameters as the helpers above write them.
+    fn called(view: &Webview, method: &str, params: &str) -> Option<Value> {
+        let params: Value = serde_json::from_str(params).ok()?;
+        devtools::call(view, None, method, &params, PATIENCE).ok()
+    }
+
+    /// Clears a page built on `about:blank` - the runtime's scripts taken back, nib's own
+    /// registered in nib's world, frames from other sites followed - and sends it to the
+    /// site. On a thread of its own: every step waits for the page's agent, whose answers
+    /// arrive on the window's thread.
+    ///
+    /// The runtime registers its script before the blank page loads, and the protocol
+    /// answers in the order it is asked, so the mark registered here is numbered after the
+    /// runtime's and every identifier up to it is the runtime's. The site is loaded
+    /// whatever the clearing says, as on `WebView2`.
+    pub fn sent(view: &Webview, url: &Url, scripts: &str) -> Cleared {
+        let enabled = called(view, "Page.enable", "{}").is_some();
+        let taken = called(
+            view,
+            "Page.addScriptToEvaluateOnNewDocument",
+            &json!({ "source": MARK }).to_string(),
+        )
+        .and_then(|said| said.get("identifier")?.as_str().map(str::to_string))
+        .as_deref()
+        .and_then(taken_back)
+        .map(|every| {
+            every
+                .filter(|id| {
+                    called(
+                        view,
+                        "Page.removeScriptToEvaluateOnNewDocument",
+                        &json!({ "identifier": id.to_string() }).to_string(),
+                    )
+                    .is_some()
+                })
+                .count()
+        });
+
+        let ours = scripts.is_empty()
+            || (enabled
+                && called(
+                    view,
+                    "Page.addScriptToEvaluateOnNewDocument",
+                    &registering(scripts),
+                )
+                .is_some());
+        let frames = scripts.is_empty() || following(view, scripts);
+
+        let _ = view.navigate(url.clone());
+        Cleared {
+            swept: taken.is_some(),
+            counted: taken,
+            ours,
+            frames,
+        }
+    }
+
+    /// Follows the page's frames from other sites and gives each nib's scripts before its
+    /// first document, as on `WebView2`: the frame's own session is told, in order and
+    /// without waiting, from inside the event that says it was attached.
+    fn following(view: &Webview, scripts: &str) -> bool {
+        let telling = view.clone();
+        let scripts = scripts.to_string();
+        let heard = devtools::hear(view, move |method, _session, params| {
+            if method != "Target.attachedToTarget" {
+                return;
+            }
+            let Some(session) = attached_frame(&params.to_string()) else {
+                return;
+            };
+            let said = in_frame(&scripts)
+                .into_iter()
+                .filter_map(|(method, params)| Some((method, serde_json::from_str(&params).ok()?)))
+                .collect();
+            devtools::tell(&telling, Some(&session), said);
+        });
+        heard.is_ok() && called(view, "Target.setAutoAttach", &attaching()).is_some()
+    }
+
+    /// Runs `expression` in nib's world in the page as it is now and answers the
+    /// protocol's answer, `{"result": {"value": ...}}`, or `None`. On a thread of its own,
+    /// like `sent`.
+    pub fn evaluate(view: &Webview, expression: &str) -> Option<Value> {
+        let tree = called(view, "Page.getFrameTree", "{}")?;
+        let frame = frame_of(&tree.to_string())?;
+        let world = called(view, "Page.createIsolatedWorld", &world_in(&frame))?;
+        let context = context_of(&world.to_string())?;
+        called(view, "Runtime.evaluate", &evaluating(expression, context))
     }
 }
 
