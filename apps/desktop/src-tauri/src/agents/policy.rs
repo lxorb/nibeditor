@@ -136,6 +136,10 @@ pub fn script_allowed(grant: &Grant, host: &str) -> bool {
 /// What the page says about the element being acted on, read by `FACTS` in the page.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(default)]
+#[allow(
+    clippy::struct_excessive_bools,
+    reason = "four things the page reports apart - submits, follows a link, takes words, in a form - which the policy reads one at a time, in every combination"
+)]
 pub struct Facts {
     /// Its tag, lower case.
     pub tag: String,
@@ -148,6 +152,9 @@ pub struct Facts {
     pub autocomplete: String,
     /// Whether pressing it submits a form.
     pub submit: bool,
+    /// Whether pressing it follows a link to another page: a navigation, which neither
+    /// sends nor signs in whatever it is called (a forum's Reply, a Forgot login?).
+    pub link: bool,
     /// Whether words can be typed into it.
     pub editable: bool,
     /// Whether it is in a form.
@@ -305,6 +312,7 @@ fn sends(facts: &Facts, act: Act, host: &str) -> Option<Sends> {
         Act::Press => {
             // A press into a field is somebody starting to write, never the send.
             let worded = !facts.editable
+                && !facts.link
                 && ((says_sending(&facts.name) && (social || writing || to_somebody))
                     || (says(&facts.name, SUBMITTING) && (social || writing)));
             if worded {
@@ -334,6 +342,7 @@ pub fn signs_in(facts: &Facts, act: Act) -> bool {
         Act::Press => {
             (facts.submit && facts.sign_in())
                 || (!facts.editable
+                    && !facts.link
                     && says(&facts.name, SIGNING_IN)
                     && facts.fields.iter().any(credential))
         }
@@ -1577,6 +1586,11 @@ mod tests {
             on_the_page("Sender", vec![field("textarea", "")]),
             // Send with nothing to send.
             on_the_page("Send", Vec::new()),
+            // A link to a reply page, beside a box, and on a social site.
+            Facts {
+                link: true,
+                ..on_the_page("Reply", vec![field("textarea", "")])
+            },
         ];
         for facts in &never {
             assert!(
@@ -1656,6 +1670,11 @@ mod tests {
             Act::Press
         ));
         assert!(!signs_in(&on_the_page("Sign in", Vec::new()), Act::Press));
+        let forgot = Facts {
+            link: true,
+            ..on_the_page("Forgot your login?", sign_in.clone())
+        };
+        assert!(!signs_in(&forgot, Act::Press));
         assert!(!signs_in(&submitting("Sign in", sign_in), Act::Write));
     }
 

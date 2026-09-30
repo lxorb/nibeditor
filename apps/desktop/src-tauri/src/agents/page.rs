@@ -107,6 +107,7 @@ const FACTS_BODY: &str = r"
   const form = el.form || el.closest('form')
   const buttonType = pressed.tagName === 'BUTTON' ? String(pressed.getAttribute('type') || 'submit').toLowerCase() : ''
   const submit = !!form && ((pressed.tagName === 'BUTTON' && buttonType === 'submit') || (pressed.tagName === 'INPUT' && ['submit', 'image'].includes(String(pressed.type).toLowerCase())))
+  const link = pressed.tagName === 'A' && !/^\s*(#|javascript:|$)/i.test(String(pressed.getAttribute('href') || ''))
   const editable = !!(el.isContentEditable || tag === 'textarea' || (tag === 'input' && !['checkbox', 'radio', 'submit', 'button', 'image', 'file', 'reset', 'hidden', 'range', 'color'].includes(kind)))
   // The form's fields, or the page's when it is in none: a webmail's Send and a chat
   // widget's are in no form, and their message box is an editable region.
@@ -115,7 +116,7 @@ const FACTS_BODY: &str = r"
     if (fields.length >= 200) break
     fields.push(describe(one))
   }
-  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, editable, in_form: !!form, fields, field: describe(el) }
+  return { tag, type: kind, name, autocomplete: String(el.getAttribute('autocomplete') || '').toLowerCase(), submit, link, editable, in_form: !!form, fields, field: describe(el) }
 ";
 
 /// `FACTS_BODY` with `FIELDS` in front of it, as the function the protocol runs.
