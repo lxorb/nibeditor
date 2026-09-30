@@ -46,6 +46,8 @@
    *  them, they are asked when the bar would go. */
   let pointer = false
   let keyboard = false
+  /** The bar, which the pointer is measured against. */
+  let bar = $state<HTMLElement>()
 
   let coming: ReturnType<typeof setTimeout> | undefined
   let going: ReturnType<typeof setTimeout> | undefined
@@ -55,8 +57,18 @@
    *  the window is dragged by; see Titlebar.svelte, which says it on the root. */
   const lights = document.documentElement.hasAttribute('data-lights')
 
-  function arm(y: number) {
-    if (shown || !atEdge(y)) {
+  /** Where the pointer is, from every move over the window. Measured rather than heard
+   *  from the bar's own enter and leave, because the bar arrives under a pointer that has
+   *  stopped, and a browser says nothing about an element that came to the pointer. */
+  function moved(y: number) {
+    if (shown) {
+      pointer = y >= 0 && y < (bar?.getBoundingClientRect().bottom ?? 0)
+      if (pointer) hold()
+      else letGo()
+      return
+    }
+
+    if (!atEdge(y)) {
       clearTimeout(coming)
       coming = undefined
       return
@@ -64,19 +76,23 @@
     coming ??= setTimeout(() => {
       coming = undefined
       shown = true
+      pointer = true
     }, COMES_AFTER)
   }
 
-  /** The bar goes, a moment after the last thing holding it has let go. */
+  /** The bar goes, a moment after the last thing holding it has let go. Counted from the
+   *  first moment nothing held it, not from the last move: a pointer moving about the
+   *  page below has let go however long it keeps moving. */
   function letGo() {
-    clearTimeout(going)
-    going = setTimeout(() => {
+    going ??= setTimeout(() => {
+      going = undefined
       if (mayHide({ pointer, keyboard, layers: overlays.depth })) shown = false
     }, GOES_AFTER)
   }
 
   function hold() {
     clearTimeout(going)
+    going = undefined
   }
 
   /** Escape, where nothing on the page wanted it: after every layer has had its turn
@@ -128,7 +144,10 @@
   })
 </script>
 
-<svelte:window onpointermove={(event: PointerEvent) => arm(event.clientY)} onkeydown={onKeydown} />
+<svelte:window
+  onpointermove={(event: PointerEvent) => moved(event.clientY)}
+  onkeydown={onKeydown}
+/>
 
 {#if lights}
   <div class="lights" data-tauri-drag-region></div>
@@ -141,11 +160,10 @@
   class="bar"
   class:shown
   inert={!shown}
-  onpointerenter={() => {
-    pointer = true
-    hold()
-  }}
+  bind:this={bar}
   onpointerleave={() => {
+    // Off the window altogether, or onto a web page, which is a window of its own that
+    // the page is told nothing about.
     pointer = false
     letGo()
   }}
