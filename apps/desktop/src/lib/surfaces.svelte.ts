@@ -413,6 +413,9 @@ export async function warmDoors(): Promise<void> {
     import('./tab-cycle.svelte'),
     // The tabs' numbers while Alt is held.
     __EVEN_PLUGIN__ ? undefined : import('./tab-strip/numbers.svelte'),
+    // The bar a tab filling the window keeps, so the first Shift+F11 is one layout and
+    // not two; the command itself comes with a tab's menu above.
+    __EVEN_PLUGIN__ ? undefined : fillBar(),
     // The editor in the card a pointer resting on a link opens, which a hand can ask
     // for at any moment; see `previewCard` in Editor.svelte.
     import('./preview-card'),
