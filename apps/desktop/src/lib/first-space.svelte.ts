@@ -7,7 +7,7 @@
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
 import { message, t } from './i18n.svelte'
-import type { Picked } from './import/sources'
+import { insideFolder, pickedFolder, sourcesFrom, type Picked } from './import/sources'
 import { markSeeded, wasSeeded } from './seeded'
 import { joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -38,7 +38,7 @@ class FirstSpace {
   async importFolder() {
     const { pickFolder } = await import('./import/picking')
     const picked = await pickFolder()
-    const name = folderNamed(picked)
+    const name = pickedFolder(picked)
     if (!name) return
 
     await this.while(() =>
@@ -91,34 +91,15 @@ class FirstSpace {
   }
 }
 
-/** What the picked folder is called: the first step of the paths inside it, which the
- *  webview writes as `Folder/inside/note.md`. Null for nothing picked. */
-export function folderNamed(picked: readonly Picked[]): string | null {
-  const first = picked[0]?.webkitRelativePath?.split('/')[0]?.trim()
-  if (!first) return null
-  return first
-}
-
-/** The same files with that first step taken off, so the space is the folder rather
- *  than a space holding a folder of the same name. */
-export function inside(picked: readonly Picked[]): Picked[] {
-  return picked.map((one) => ({
-    name: one.name,
-    webkitRelativePath: (one.webkitRelativePath ?? '').split('/').slice(1).join('/'),
-    arrayBuffer: () => one.arrayBuffer(),
-  }))
-}
-
 /** Reads what was picked before anything is made, so a folder that holds no notes
  *  leaves no empty space behind it. */
 async function importAsSpace(name: string, picked: readonly Picked[]): Promise<Space | null> {
-  const [{ sourcesFrom }, { detect, readAs }, { applyImport }] = await Promise.all([
-    import('./import/sources'),
+  const [{ detect, readAs }, { applyImport }] = await Promise.all([
     import('./import/read'),
     import('./import/apply'),
   ])
 
-  const sources = await sourcesFrom(inside(picked))
+  const sources = await sourcesFrom(insideFolder(picked))
   const format = await detect(sources)
   if (!format) throw new Error(t('Nothing in there can be read as notes.'))
 

@@ -15,7 +15,14 @@ import { message, t } from './i18n.svelte'
 import { applyImport } from './import/apply'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
 import { detect, readAs } from './import/read'
-import { sourcesFrom, tooMuch, type Picked, type Source } from './import/sources'
+import {
+  insideFolder,
+  pickedFolder,
+  sourcesFrom,
+  tooMuch,
+  type Picked,
+  type Source,
+} from './import/sources'
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
@@ -114,7 +121,9 @@ class Importing {
     this.root ??= workspace.activeSpace?.root ?? null
 
     try {
-      this.sources = await sourcesFrom(picked)
+      // A folder picked whole is the import's own folder, named after it below, so
+      // what is read is what was inside it; see `insideFolder`.
+      this.sources = await sourcesFrom(insideFolder(picked))
       this.format = await detect(this.sources)
 
       if (!this.format) {
@@ -287,7 +296,7 @@ function saidBy(error: unknown): string {
  *  the file's name is one an exporter made up. */
 export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
   const first = picked[0]
-  const named = picked.length === 1 && first ? stemOf(first) : ''
+  const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
   const stripped = named.replace(MACHINE_MADE, '').trim()
 
   // `Export-9f1c2d3e.zip` leaves `9f1c2d3e`, which is the export's id rather than
@@ -332,14 +341,10 @@ function nameOfFormat(format: FormatId): string {
   }
 }
 
+/** A file picked on its own, named without its extension. A folder is named by
+ *  `pickedFolder` instead. */
 function stemOf(picked: Picked): string {
-  // A folder that was dropped is named by the folder rather than by whichever
-  // file inside it came back first, which is what its first part is.
-  const inside = (picked.webkitRelativePath ?? '').trim()
-  const path = inside.length ? inside : picked.name
-  const first = path.split('/').find(Boolean) ?? ''
-
-  return first.replace(/\.[^.]+$/, '')
+  return picked.name.replace(/\.[^.]+$/, '')
 }
 
 export const importing = new Importing()

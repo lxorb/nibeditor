@@ -77,7 +77,8 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
-const { firstSpace, folderNamed, inside } = await import('./first-space.svelte')
+const { firstSpace } = await import('./first-space.svelte')
+const { insideFolder, pickedFolder } = await import('./import/sources')
 const { WELCOME, WELCOME_NAME, isUntouchedWelcome } = await import('./welcome')
 
 beforeEach(() => {
@@ -207,13 +208,13 @@ describe('a folder brought in as a space', () => {
   })
 
   test('is named after the folder', () => {
-    expect(folderNamed([picked('Vault/Plan.md'), picked('Vault/a/b.md')])).toBe('Vault')
-    expect(folderNamed([])).toBeNull()
+    expect(pickedFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')])).toBe('Vault')
+    expect(pickedFolder([])).toBeNull()
   })
 
   test('holds what was inside it rather than a folder of the same name', () => {
     expect(
-      inside([picked('Vault/Plan.md'), picked('Vault/a/b.md')]).map(
+      insideFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')]).map(
         (one) => one.webkitRelativePath,
       ),
     ).toEqual(['Plan.md', 'a/b.md'])

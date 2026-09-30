@@ -42,6 +42,37 @@ export function sourceOf(path: string, bytes: Uint8Array): Source {
   }
 }
 
+/** The folder the reader chose, when every file came out of one: a folder picked
+ *  whole or dropped, whose name the browser writes as the first step of each file's
+ *  relative path. Null for loose files, and for nothing picked. */
+export function pickedFolder(picked: readonly Picked[]): string | null {
+  let folder: string | null = null
+
+  for (const one of picked) {
+    const [first, ...rest] = tidyPath((one.webkitRelativePath ?? '').trim()).split('/')
+    if (!first || !rest.length || (folder !== null && first !== folder)) return null
+    folder = first
+  }
+
+  return folder
+}
+
+/** The same files with that folder taken off the front of each path. What is brought
+ *  in is named after the folder - a space of that name, or the import's own folder -
+ *  and the same name again inside it would be a folder holding a folder of its own
+ *  name, the way a zip's own name is dropped below. Loose files come back as they
+ *  were. */
+export function insideFolder(picked: readonly Picked[]): Picked[] {
+  const folder = pickedFolder(picked)
+  if (folder === null) return [...picked]
+
+  return picked.map((one) => ({
+    name: one.name,
+    webkitRelativePath: tidyPath((one.webkitRelativePath ?? '').trim()).slice(folder.length + 1),
+    arrayBuffer: () => one.arrayBuffer(),
+  }))
+}
+
 /** Every file behind what the reader picked, zips opened. */
 export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> {
   const found: Source[] = []
