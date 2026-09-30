@@ -476,8 +476,8 @@ cannot be, by construction:
   placement.rs are the crate's only ways to bring a window forward or hand a webview the
   keyboard, the page reaches them only as `take_keyboard` and `raise_window`, and all
   four do nothing under the switch. Tests hold both halves to it: nothing else in the
-  crate calls `set_focus` or any of Windows' own ways to the front, and nothing in the
-  page calls `setFocus` or is granted it.
+  crate calls `set_focus`, `WebView2`'s `MoveFocus` or any of Windows' own ways to the
+  front, and nothing in the page calls `setFocus` or is granted it.
 
 **Keyboard input to a probe** never goes through the real keyboard and never needs the
 probe in front. A drive types through the DevTools protocol - `Input.dispatchKeyEvent`
