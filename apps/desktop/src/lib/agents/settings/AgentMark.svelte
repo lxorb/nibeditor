@@ -12,6 +12,6 @@
 <span
   class="nib-badge"
   style:--badge-fill={accentFor(name, theme.current)}
-  style:--badge-ink="#fff"
+  style:--badge-ink="var(--accent-ink)"
   aria-hidden="true">{initial(name)}</span
 >

@@ -108,7 +108,7 @@
     top: 100%;
     left: 0;
     right: 0;
-    z-index: 20;
+    z-index: var(--z-float);
     margin-inline: auto;
     width: min(26rem, calc(100% - var(--space-4)));
     padding: var(--space-3);

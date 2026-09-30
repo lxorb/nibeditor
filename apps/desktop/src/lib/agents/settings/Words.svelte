@@ -8,6 +8,7 @@
    *  What was typed is read by `parse` first, which answers the word to keep or
    *  nothing; nothing leaves the field as it was, marked, so the reader can see what
    *  was not taken and put it right. */
+  import Cross from '../../Cross.svelte'
   import { t } from '../../i18n.svelte'
 
   const {
@@ -44,7 +45,7 @@
     <div class="list">
       {#each words as word (word)}
         <button class="word" title={t('Remove')} onclick={() => onremove(word)}>
-          {word}<span aria-hidden="true">×</span>
+          {word}<Cross small />
         </button>
       {/each}
     </div>
@@ -98,8 +99,11 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .word span {
+  .word :global(svg) {
+    width: 8px;
+    height: 8px;
     color: var(--muted);
+    stroke-width: 1.4;
   }
 
   @media (hover: hover) {
@@ -108,7 +112,7 @@
       color: var(--danger);
     }
 
-    .word:hover span {
+    .word:hover :global(svg) {
       color: inherit;
     }
   }

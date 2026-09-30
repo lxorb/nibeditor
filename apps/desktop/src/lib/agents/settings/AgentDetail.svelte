@@ -12,6 +12,7 @@
    *  Every change goes through `pane.change`, which writes it to what the crate holds
    *  (see pane.svelte.ts), so a switch here is the grant, not a copy of it. */
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
+  import Cross from '../../Cross.svelte'
   import { i18n, t } from '../../i18n.svelte'
   import { prompt } from '../../prompt.svelte'
   import Select from '../../Select.svelte'
@@ -240,7 +241,7 @@
                   change((one) => withoutAlways(one, site, category))
                 }}
               >
-                {CATEGORY_WORDS[category]()}<span aria-hidden="true">×</span>
+                {CATEGORY_WORDS[category]()}<Cross small />
               </button>
             {/each}
           </span>
@@ -266,7 +267,7 @@
             change((one) => withSite(one, site, null))
           }}
         >
-          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          <Cross />
         </button>
       {/if}
     </div>
@@ -483,13 +484,16 @@
     transition: color var(--dur-fast) var(--ease-out);
   }
 
-  .drop svg {
+  .drop :global(svg) {
     width: 12px;
     height: 12px;
-    fill: none;
-    stroke: currentColor;
     stroke-width: 1.5;
-    stroke-linecap: round;
+  }
+
+  .said :global(svg) {
+    width: 8px;
+    height: 8px;
+    stroke-width: 1.4;
   }
 
   @media (hover: hover) {
