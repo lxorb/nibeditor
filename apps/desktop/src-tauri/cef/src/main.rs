@@ -6,13 +6,15 @@
 //! library's, unchanged, and the only thing this file decides is what the engine is and
 //! where its profiles go. See ../Cargo.toml, ../../src/engine.rs and docs/browser.md.
 //!
-//! `cef_entry_point` is what makes one binary serve as Chromium's renderer, GPU and
-//! utility processes as well: it runs CEF's `execute_process` before anything else and
-//! returns. It has to be the first thing that happens - on macOS, loading the framework
-//! replaces the process's malloc zone, and an allocation on another thread racing that
-//! swap corrupts the heap.
+//! One binary is also Chromium's renderer, GPU and utility processes: a process started
+//! with `--type=` is one of those, and runs as `helper::run` before anything else happens
+//! and then ends. It has to be the first thing - on macOS, loading the framework replaces
+//! the process's malloc zone, and an allocation on another thread racing that swap
+//! corrupts the heap. Why the helper is nib's own and not the runtime's is in helper.rs.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod helper;
 
 use std::path::PathBuf;
 
@@ -80,6 +82,34 @@ fn debugging() -> RemoteDebugging {
         })
 }
 
+/// Lets a run that asked for a debugging port have one.
+///
+/// The runtime pins Chromium's own "may be debugged" preference off, in the profile's
+/// `Local State`, on every run without a port - and a preference it sets for a run that
+/// has one arrives after Chromium has read the file, so a probe following an ordinary
+/// launch was refused ("disallowed by the system admin"). So the file says yes before
+/// Chromium opens it, and only on a run that named a port.
+fn allow_debugging(root: &std::path::Path) {
+    let state = root.join("Local State");
+    let Ok(text) = std::fs::read_to_string(&state) else {
+        return;
+    };
+    let Ok(mut said) = serde_json::from_str::<serde_json::Value>(&text) else {
+        return;
+    };
+    if let Some(devtools) = said
+        .as_object_mut()
+        .map(|all| all.entry("devtools").or_insert_with(|| serde_json::json!({})))
+        .and_then(serde_json::Value::as_object_mut)
+    {
+        devtools.insert(
+            "remote_debugging".to_owned(),
+            serde_json::json!({ "allowed": true }),
+        );
+        let _ = std::fs::write(&state, said.to_string());
+    }
+}
+
 /// Where the engine's profiles go: `<the app's settings folder>/web`.
 ///
 /// The same two steps Tauri takes for `app_config_dir`, with the same crate, so the path
@@ -114,8 +144,12 @@ fn off_screen() -> bool {
     std::env::var_os("NIB_OFF_SCREEN").is_some_and(|value| !value.is_empty() && value != "0")
 }
 
-#[tauri_runtime_cef::cef_entry_point]
 fn main() {
+    if helper::is_helper() {
+        helper::run();
+        return;
+    }
+
     let mut engine = Cef::default()
         .sandbox(sandbox())
         // `nib://` links reach the app the same way they do on the system's engine; the
@@ -123,18 +157,15 @@ fn main() {
         .deep_link_schemes(["nib"])
         .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()));
 
-    if let Some(path) = root_cache_path() {
-        engine = engine.root_cache_path(path);
-    }
-
-    // The runtime pins Chromium's own "may be debugged" preference off in the profile
-    // whenever a run has no port, and does not put it back when a later run has one - so a
-    // probe after an ordinary launch was refused. Said out loud both ways here.
     let debugging = debugging();
     let debugged = !matches!(debugging, RemoteDebugging::Disabled);
-    engine = engine
-        .remote_debugging(debugging)
-        .global_preference("devtools.remote_debugging.allowed", debugged);
+    if let Some(path) = root_cache_path() {
+        if debugged {
+            allow_debugging(&path);
+        }
+        engine = engine.root_cache_path(path);
+    }
+    engine = engine.remote_debugging(debugging);
 
     // A probe's window is off the screen (see placement.rs), and Chromium counts a window
     // nobody can see as hidden: it stops painting it and stops its animation frames, and
