@@ -1575,6 +1575,12 @@ export const my: Dictionary = {
   'no such device': 'ထိုစက် မရှိပါ',
   'give the device a name': 'စက်ကို အမည်ပေးပါ',
   'that computer is no longer waiting': 'ထိုကွန်ပျူတာ စောင့်မနေတော့ပါ',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'ဤကွန်ပျူတာပေါ်ရှိ အေးဂျင့်များ',

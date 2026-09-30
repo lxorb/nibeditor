@@ -1578,6 +1578,12 @@ export const jv: Dictionary = {
   'no such device': 'ora ana piranti kuwi',
   'give the device a name': 'wenehi jeneng piranti',
   'that computer is no longer waiting': 'komputer kuwi wis ora ngenteni',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agen ing komputer iki',

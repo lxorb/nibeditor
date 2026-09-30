@@ -1550,6 +1550,10 @@ export const zhHant: Dictionary = {
   'no such device': '沒有這部裝置',
   'give the device a name': '請為裝置命名',
   'that computer is no longer waiting': '那部電腦已不再等候',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': '沒有這個檔案',
+  'too many changes at once - try again in a minute': '一次變更過多，請一分鐘後再試',
+  'that is more than a space keeps about its tree': '超出了空間能為其目錄樹保存的內容',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': '這台電腦上的代理',

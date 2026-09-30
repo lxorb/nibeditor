@@ -1646,6 +1646,12 @@ export const fr: Dictionary = {
   'no such device': 'Cet appareil n’existe pas',
   'give the device a name': 'Donnez un nom à l’appareil',
   'that computer is no longer waiting': 'Cet ordinateur n’attend plus',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'Ce fichier n’existe pas',
+  'too many changes at once - try again in a minute':
+    'Trop de modifications à la fois - réessayez dans une minute',
+  'that is more than a space keeps about its tree':
+    'C’est plus que ce qu’un espace garde sur son arborescence',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agents sur cet ordinateur',

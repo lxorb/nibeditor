@@ -1606,6 +1606,12 @@ export const kn: Dictionary = {
   'no such device': 'ಅಂತಹ ಸಾಧನ ಇಲ್ಲ',
   'give the device a name': 'ಸಾಧನಕ್ಕೆ ಹೆಸರು ನೀಡಿ',
   'that computer is no longer waiting': 'ಆ ಕಂಪ್ಯೂಟರ್ ಇನ್ನು ಕಾಯುತ್ತಿಲ್ಲ',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿರುವ ಏಜೆಂಟ್‌ಗಳು',

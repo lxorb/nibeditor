@@ -1566,6 +1566,12 @@ export const ko: Dictionary = {
   'no such device': '그런 기기가 없습니다',
   'give the device a name': '기기 이름을 지정하세요',
   'that computer is no longer waiting': '그 컴퓨터는 더 이상 기다리지 않습니다',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': '그런 파일이 없습니다',
+  'too many changes at once - try again in a minute':
+    '한 번에 변경이 너무 많습니다 - 1분 뒤에 다시 하세요',
+  'that is more than a space keeps about its tree':
+    '스페이스가 트리에 대해 보관할 수 있는 양을 넘습니다',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': '이 컴퓨터의 에이전트',

@@ -1656,6 +1656,11 @@ export const uk: Dictionary = {
   'no such device': 'Такого пристрою немає',
   'give the device a name': 'Дайте пристрою назву',
   'that computer is no longer waiting': 'Цей комп’ютер більше не чекає',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'такого файлу немає',
+  'too many changes at once - try again in a minute': 'забагато змін одразу - спробуйте за хвилину',
+  'that is more than a space keeps about its tree':
+    'це більше, ніж простір зберігає про своє дерево',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Агенти на цьому комп’ютері',

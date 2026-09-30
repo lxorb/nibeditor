@@ -1550,6 +1550,10 @@ export const yue: Dictionary = {
   'no such device': '冇呢部裝置',
   'give the device a name': '幫裝置改個名',
   'that computer is no longer waiting': '嗰部電腦已經唔再等',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': '冇呢個檔案',
+  'too many changes at once - try again in a minute': '一次改得太多，請一分鐘後再試',
+  'that is more than a space keeps about its tree': '超出咗空間可以為佢嘅目錄樹保存嘅內容',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': '呢部電腦上面嘅代理',

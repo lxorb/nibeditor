@@ -1574,6 +1574,12 @@ export const vi: Dictionary = {
   'no such device': 'không có thiết bị đó',
   'give the device a name': 'đặt tên cho thiết bị',
   'that computer is no longer waiting': 'máy tính đó không còn chờ nữa',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Tác tử trên máy tính này',

@@ -1613,6 +1613,12 @@ export const ta: Dictionary = {
   'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
   'give the device a name': 'சாதனத்திற்கு ஒரு பெயர் கொடுங்கள்',
   'that computer is no longer waiting': 'அந்தக் கணினி இனி காத்திருக்கவில்லை',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',

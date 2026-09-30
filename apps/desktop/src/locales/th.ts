@@ -1556,6 +1556,12 @@ export const th: Dictionary = {
   'no such device': 'ไม่มีอุปกรณ์นี้',
   'give the device a name': 'ตั้งชื่อให้อุปกรณ์',
   'that computer is no longer waiting': 'คอมพิวเตอร์เครื่องนั้นไม่ได้รอแล้ว',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',

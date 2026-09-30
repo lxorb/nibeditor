@@ -1587,6 +1587,12 @@ export const hi: Dictionary = {
   'no such device': 'ऐसा कोई डिवाइस नहीं',
   'give the device a name': 'डिवाइस को नाम दें',
   'that computer is no longer waiting': 'वह कंप्यूटर अब इंतज़ार नहीं कर रहा',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'इस कंप्यूटर पर एजेंट',

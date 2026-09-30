@@ -1622,6 +1622,12 @@ export const ptBR: Dictionary = {
   'no such device': 'esse dispositivo não existe',
   'give the device a name': 'dê um nome ao dispositivo',
   'that computer is no longer waiting': 'esse computador não está mais esperando',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'esse arquivo não existe',
+  'too many changes at once - try again in a minute':
+    'alterações demais de uma vez - tentar daqui a um minuto',
+  'that is more than a space keeps about its tree':
+    'é mais do que um espaço guarda sobre sua árvore',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agentes neste computador',

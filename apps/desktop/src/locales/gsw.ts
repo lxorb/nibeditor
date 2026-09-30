@@ -1598,6 +1598,12 @@ export const gsw: Dictionary = {
   'no such device': 'Das Gerät gits nöd',
   'give the device a name': 'Gib em Gerät en Name',
   'that computer is no longer waiting': 'De Computer wartet nüme',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'Die Datei gits nöd',
+  'too many changes at once - try again in a minute':
+    'Z vill Änderige uf eimal - probier s in ere Minute no einisch',
+  'that is more than a space keeps about its tree':
+    'Das isch meh, als en Bereich über sin Baum bhaltet',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agänte uf däm Computer',

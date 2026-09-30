@@ -1625,6 +1625,12 @@ export const fil: Dictionary = {
   'no such device': 'walang ganoong device',
   'give the device a name': 'bigyan ng pangalan ang device',
   'that computer is no longer waiting': 'hindi na naghihintay ang computer na iyon',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Mga agent sa computer na ito',

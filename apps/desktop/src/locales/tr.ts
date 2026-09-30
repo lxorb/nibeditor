@@ -1594,6 +1594,12 @@ export const tr: Dictionary = {
   'no such device': 'böyle bir cihaz yok',
   'give the device a name': 'cihaza bir ad verin',
   'that computer is no longer waiting': 'o bilgisayar artık beklemiyor',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'böyle bir dosya yok',
+  'too many changes at once - try again in a minute':
+    'aynı anda çok fazla değişiklik - bir dakika sonra yine deneyin',
+  'that is more than a space keeps about its tree':
+    'bu, bir alanın ağacı hakkında tuttuğundan fazla',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',

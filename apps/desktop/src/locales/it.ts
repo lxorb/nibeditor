@@ -1643,6 +1643,12 @@ export const it: Dictionary = {
   'no such device': 'dispositivo inesistente',
   'give the device a name': 'dai un nome al dispositivo',
   'that computer is no longer waiting': 'quel computer non è più in attesa',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'file inesistente',
+  'too many changes at once - try again in a minute':
+    'troppe modifiche insieme - riprova tra un minuto',
+  'that is more than a space keeps about its tree':
+    'è più di quanto uno spazio conservi sul suo albero',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agenti su questo computer',

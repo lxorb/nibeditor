@@ -1683,6 +1683,12 @@ export const ar: Dictionary = {
   'no such device': 'لا يوجد جهاز كهذا',
   'give the device a name': 'أعطِ الجهاز اسمًا',
   'that computer is no longer waiting': 'ذلك الحاسوب لم يعد ينتظر',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',

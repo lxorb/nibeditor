@@ -1580,6 +1580,12 @@ export const ja: Dictionary = {
   'no such device': 'そのデバイスはありません',
   'give the device a name': 'デバイスに名前を付けてください',
   'that computer is no longer waiting': 'そのコンピューターはもう待っていません',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'そのファイルはありません',
+  'too many changes at once - try again in a minute':
+    '一度に変更が多すぎます - 1分後にもう一度お試しください',
+  'that is more than a space keeps about its tree':
+    'スペースがツリーについて保存できる量を超えています',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'このコンピューターのエージェント',

@@ -1567,6 +1567,12 @@ export const am: Dictionary = {
   'no such device': 'እንዲህ ያለ መሣሪያ የለም',
   'give the device a name': 'ለመሣሪያው ስም ስጠው',
   'that computer is no longer waiting': 'ያ ኮምፒውተር ከእንግዲህ እየጠበቀ አይደለም',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',

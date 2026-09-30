@@ -1629,6 +1629,12 @@ export const de: Dictionary = {
   'no such device': 'Dieses Gerät gibt es nicht',
   'give the device a name': 'Gib dem Gerät einen Namen',
   'that computer is no longer waiting': 'Dieser Computer wartet nicht mehr',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'Diese Datei gibt es nicht',
+  'too many changes at once - try again in a minute':
+    'Zu viele Änderungen auf einmal - versuch es in einer Minute noch einmal',
+  'that is more than a space keeps about its tree':
+    'Das ist mehr, als ein Bereich über seinen Baum behält',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'Agenten auf diesem Computer',

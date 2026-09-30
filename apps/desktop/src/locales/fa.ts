@@ -1588,6 +1588,12 @@ export const fa: Dictionary = {
   'no such device': 'چنین دستگاهی نیست',
   'give the device a name': 'برای دستگاه نامی بگذارید',
   'that computer is no longer waiting': 'آن رایانه دیگر منتظر نیست',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': 'no such file',
+  'too many changes at once - try again in a minute':
+    'too many changes at once - try again in a minute',
+  'that is more than a space keeps about its tree':
+    'that is more than a space keeps about its tree',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': 'عامل‌های این رایانه',

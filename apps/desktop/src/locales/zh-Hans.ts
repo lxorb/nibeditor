@@ -1549,6 +1549,10 @@ export const zhHans: Dictionary = {
   'no such device': '没有这个设备',
   'give the device a name': '请为设备命名',
   'that computer is no longer waiting': '那台电脑已不再等待',
+  // Sync v2: the files of a space, the tree changing too fast, and its maps
+  'no such file': '没有这个文件',
+  'too many changes at once - try again in a minute': '一次更改过多，请一分钟后再试',
+  'that is more than a space keeps about its tree': '超出了空间能为其目录树保存的内容',
   // Settings > Agents: every agent, what it may do and what it did, and the way
   // to connect one more.
   'Agents on this computer': '这台电脑上的代理',
