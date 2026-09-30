@@ -6,13 +6,13 @@ sees. So the card photographs the pages on screen and takes a place on the overl
 stack while it is up, and the pages stand behind their stills - which is what a menu
 does, and what this asks the pixels about (lib/tab-strip/hover-card.svelte.ts).
 
-The page is one flat colour and says in its own title whether its engine thinks it is
-seen, which the tab shows as its name. The drive rests a mouse on the other tab - a
-pointer event of the window's own, never the machine's pointer - waits Chrome's delay,
-and asks the window where the card is; then it photographs the window and counts how
-much of the card's rectangle is still the page's colour. A card full of it is a card
-behind the page. Then the pointer leaves, and the card has to be gone and the page seen
-again.
+The page says in its own title whether its engine thinks it is seen, and the crate
+hands that title back (`web_clip`). The drive rests a mouse on the other tab - a pointer
+event of the window's own, never the machine's pointer - waits Chrome's delay, and asks:
+is there a card, is the page out of sight, and is its still what the pane holds. Then
+the pointer leaves, and the card has to be gone and the page seen again. It photographs
+the window as well; a window kept off every screen may photograph black, and then the
+pictures say nothing and the answers are the page's and the pane's.
 
     python scripts/hover-card-probe.py --exe path/to/nib.exe --identifier ch.emilvinu.nib.probe.tabs-hints
 
@@ -84,6 +84,23 @@ WHERE = """(() => {
 
 NAMES = "JSON.stringify([...document.querySelectorAll('.tab .label')].map((one) => one.textContent))"
 
+# What the page says about being seen, read back through the crate.
+SEEN = """(async () => {
+  const tab = nib.workspace.tabs.find((one) => one.kind === 'web')
+  const clip = await window.__TAURI_INTERNALS__.invoke('web_clip', { tab: tab.id, selection: false })
+  return JSON.stringify(clip.title)
+})()"""
+
+# Whether the pane holds the page's still.
+STILL = "JSON.stringify(document.querySelector('.hole')?.classList.contains('still') ?? null)"
+
+
+def _all_black(shot: pathlib.Path) -> bool:
+    from PIL import Image
+
+    with Image.open(shot) as picture:
+        return picture.convert("RGB").getextrema() == ((0, 0), (0, 0), (0, 0))
+
 
 def main() -> int:
     if sys.platform != "win32":
@@ -142,17 +159,25 @@ def main() -> int:
         time.sleep(6)
 
         said["the strip"] = app.ask(NAMES)
+        said["the page, alone"] = app.ask(SEEN)
         overlays.shoot(hwnd, "page-alone")
 
         said["rested on Idea"] = app.ask(POINT % ("Idea", "pointerenter"))
         time.sleep(2.2)
         where = app.ask(WHERE)
         said["the card"] = where
-        said["the strip with the card up"] = app.ask(NAMES)
+        said["the page, with the card up"] = app.ask(SEEN)
+        said["the pane holds the still"] = app.ask(STILL)
         shot = overlays.shoot(hwnd, "card-over-the-page")
         if not isinstance(where, list) or len(where) != 4:
             failed.append("no card came up over the page")
-        else:
+        elif said["the page, with the card up"] != "page hidden":
+            failed.append("the page stayed in front of the card")
+        if said["the pane holds the still"] is not True:
+            failed.append("the pane held no still of the page under the card")
+        # Only a picture with something in it says anything about pixels.
+        blank = _all_black(shot)
+        if not blank and isinstance(where, list) and len(where) == 4:
             behind = round(overlays.how_much(shot, tuple(int(one) for one in where)), 3)
             said["the card's rectangle that is still the page"] = behind
             if behind > ENOUGH:
@@ -161,12 +186,11 @@ def main() -> int:
         app.ask(POINT % ("Idea", "pointerleave"))
         time.sleep(1.2)
         said["the card after leaving"] = app.ask(WHERE)
-        said["the strip after leaving"] = app.ask(NAMES)
+        said["the page, after"] = app.ask(SEEN)
         overlays.shoot(hwnd, "card-gone")
         if said["the card after leaving"] is not None:
             failed.append("the card stayed after the pointer left")
-        names = said["the strip after leaving"]
-        if isinstance(names, list) and "page hidden" in names:
+        if said["the page, after"] != "page visible":
             failed.append("the page stayed hidden after the card went")
     finally:
         if running is not None:
