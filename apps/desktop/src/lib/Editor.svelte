@@ -41,6 +41,7 @@
   import { pickedLink } from './composer'
   import { EditorStates } from './editor-states'
   import { t } from './i18n.svelte'
+  import { mark } from './trace'
   import { modes } from './modes.svelte'
   import { PROPERTY_CHOICES } from './property-choices'
   import { carriedRows } from './drag-paths'
@@ -222,6 +223,9 @@
   $effect(() => {
     const first = untrack(() => tab)
     const created = createEditor({ parent: host, ...untrack(() => optionsFor(first)) })
+    // The note a launch restores arriving in its editor: one task, and the one the
+    // long-task guard does not count; see test/e2e/long-tasks.py.
+    mark('editor built')
 
     states.started(
       first,

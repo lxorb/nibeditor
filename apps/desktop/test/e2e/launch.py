@@ -1,197 +1,208 @@
-"""What a launch of the installed app costs, from before its first line to a usable
-shell.
+"""What a launch of a release build costs, from before its first line to a usable
+shell, cold and warm, on an empty space and on five thousand notes.
 
-The one thing about this app that cannot be measured anywhere but on the machine
-complaining about it, so the app times itself: `NIB_TRACE_STARTUP=1` and every
-launch appends a page and one line of JSON to `startup-trace.log`. This reads the
-JSON, runs the app as many times as asked, and reports the median of each step.
+The one thing about this app that cannot be measured anywhere but on a real machine,
+so the app times itself: `NIB_TRACE_STARTUP=1` and every launch appends a page and one
+line of JSON to `startup-trace.log`. This runs a probe build as many times as asked,
+reads the JSON and reports the median of every step, with the machine and what else
+it was doing beside the table - a launch measured on a busy machine is a measurement
+of the machine.
 
-One step in the table is not the app's own: `window on screen, as Windows reports it`
-is the window manager's answer, polled from here, because that step is the one the app
-cannot time about itself - the whole point of it is that it happens before there is a
-webview to run a page that could say so.
+Every launch goes through `run_probe` in scripts/probe_app.py: off the screen, never
+taking the keyboard, with a watch that ends the run if any window of it is ever on a
+screen or in front, and `NIB_SPACES_DIR` in a folder of this run's own. So a probe
+never opens in front of whoever is working at the machine, and never reads their notes.
 
-Two columns, and the second is the one to read:
+    python apps/desktop/test/e2e/launch.py --runs 7
 
-    ms      what somebody waited through, which is the question - and also what
-            every other program on the machine was doing at the time
-    cpu      what this process itself spent, user plus kernel. The same number on a
-            quiet machine as on a loaded one, so it is the column that says whether
-            a change made the app do less work rather than get luckier
+The build is a release build under an identifier of its own, as a version no release
+passes and looking for updates on a port nothing listens on; see probe_app.py:
 
-Run it from the repository root. It never builds and never launches the app
-somebody actually uses:
+    pnpm --dir apps/desktop tauri build --no-bundle --config \\
+      '{"identifier":"ch.emilvinu.nib.launch","version":"99.0.0",
+        "plugins":{"updater":{"endpoints":["https://127.0.0.1:9/latest.json"]}}}'
 
-    python apps/desktop/test/e2e/launch.py --runs 5
+Its own identifier rather than a `.probe` one, because the app holds a single-instance
+lock keyed by it: a launch made while another build with the same identifier is
+running hands its arguments over and exits without a window. `--exe` and
+`--identifier` point at another build, which is how two builds are compared.
 
-The build has to be a release build under the probe identifier, because a debug
-build loads the dev server rather than the page inside it and a window with no page
-has no launch to trace:
+**Cold** is a first launch: the identifier's own folders are wiped before each one, so
+the webview starts on a profile it has never seen, and nothing about the last window -
+its colour, its place, the tabs in it - is remembered. **Warm** is every launch after
+the first, with the webview's profile and caches in place and one note open, the way
+somebody reopens the app they closed. A primed launch between the two opens that note
+and is not counted.
 
-    pnpm --dir apps/desktop tauri build --no-bundle \\
-      --config '{"identifier":"ch.emilvinu.nib.launch"}'
+**Throttled** (`--throttle 4`) is the slow device, as Chrome's own DevTools makes one:
+the page is reloaded inside a warm launch with the webview's main thread slowed four
+times through the DevTools protocol, on a port the probe alone is given. Only the page
+is slowed - the window and the webview's own start are the machine's - so the figure
+reported is the unslowed native half of a warm launch plus the slowed page.
 
-Every run gets `NIB_SPACES_DIR` pointed at a folder of its own, so nothing here
-reads or writes the notes anybody has. `--corpus big` copies the five thousand note
-fixture in first; `--corpus empty` leaves the folder empty, which is the launch of
-somebody who has just installed it.
-
-Cold is the first launch after a build - the machine has not read the binary before
-and neither has whatever scans it. Warm is every launch after that. They are
-different questions and the table says which it is.
-
-`--slow` pins the process to one core and puts it below normal, and it is here with a
-warning on it: measured, it does not slow the app down. Four warm launches of the five
-thousand note space came out at 735ms to a painted tree unpinned and 644ms pinned, on
-the same machine in the same minute - pinning took the process off the cores the rest of
-the machine was busy with, which helped. So it is not a slow device and nothing here
-should be read as one. A real answer for a slow device wants a slow device, or the
-webview throttled from the inside; neither is this.
-
-What it said on this machine, over five thousand notes of four kilobytes each, before
-this round and after it. Warm, median of four, and the machine had other work on it both
-times - so the rows to trust are the differences inside one launch rather than the
-totals, and the processor column beside them:
-
-    first pixel on screen              370ms ->   46ms
-    the tree read, asked to answered   142ms ->   38ms
-      of which the walk itself         117ms ->   11ms
-      processor spent by then          375ms ->  164ms
-    modules evaluated                   89ms ->   86ms
-    the shell painted, from the window
-      being on screen                  162ms ->  514ms
-
-The last row is the one to read twice. It grew because its zero moved: the window is on
-screen 324ms earlier than it was, and the shell lands where it always did. Nothing was
-made slower - the same launch, measured from a mark that now happens much sooner. Which
-is the whole of what this round did on Windows: the wait is the same length and most of
-it now happens behind a window somebody can see, in the colour they left it in.
+One step in the table is not the app's own: `window shown, as Windows reports it` is
+the window manager's answer, polled from here, because that step happens before there
+is a page to say so.
 """
 
 from __future__ import annotations
 
 import argparse
-import ctypes
-import ctypes.wintypes
 import json
 import os
+import pathlib
+import platform
 import shutil
 import statistics
 import subprocess
+import sys
+import tempfile
 import time
-from pathlib import Path
+import urllib.request
+import winreg
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = pathlib.Path(__file__).resolve().parents[4]
 APP = ROOT / "apps" / "desktop"
+sys.path.insert(0, str(ROOT / "scripts"))
 
-#: The identifier this build carries, and so the folder it keeps its own log and
-#: settings in. Never the one somebody's real notes are under.
-#:
-#: Its own rather than the `.probe` other measurements here use, because the app holds a
-#: single-instance lock keyed by exactly this string: a launch made while another build
-#: with the same identifier is running never opens a window at all. It hands its
-#: arguments to the one already up and exits, and leaves nothing behind - no window, no
-#: trace, and a drive reporting "no line" for a reason that has nothing to do with the
-#: app being slow. Four runs were lost that way before this was written, to another
-#: agent's probe in another worktree; see `handed over` in `launched`.
-PROBE = "ch.emilvinu.nib.launch"
+from probe_app import close_app, main_window, run_probe  # noqa: E402
+
+#: The identifier the default build carries; see the module's docs.
+IDENTIFIER = "ch.emilvinu.nib.launch"
 
 #: Where that build puts the binary.
 EXE = APP / "src-tauri" / "target" / "release" / "nib.exe"
 
-#: How long a launch is given before it is asked to go away. Long enough for the
-#: window's own half of the trace to be sent, which waits for the stages the launch
-#: order lets go of; see `SETTLE` in lib/trace.ts.
-WATCH = 26
+#: How long a launch is given to finish its launch order and hand its trace over,
+#: which it does `SETTLE` after the order finishes; see lib/trace.ts.
+PATIENCE = 45
 
-#: And how long to wait for the file to be written after that.
-WRITTEN = 3
+#: How often to ask Windows whether the window is up, in seconds.
+PEEK = 0.002
 
-#: How long to give a launch to prove it is one. A build that met the single-instance
-#: lock is gone well inside this; one that is opening a window is not.
-ALIVE = 2
+#: The step the poll is written into the trace as.
+SHOWN = "window shown, as Windows reports it"
 
-#: How often to ask Windows whether there is a window yet, in seconds. Fine enough that
-#: the answer is the window's moment rather than the poll's.
-PEEK = 0.004
+#: The step whose arrival means the window has handed its trace over.
+LAST = "window: launch order finished"
 
-#: The step the poll below is written into the trace as. Named rather than numbered
-#: because its zero is a shade different from the trace's own: the trace counts from the
-#: app's first line and this counts from just before the process was started, so it
-#: carries whatever `CreateProcess` costs the parent. A millisecond or two, against a
-#: figure worth hundreds.
-ON_SCREEN = "window on screen, as Windows reports it"
+#: The note a warm launch has open, in the five thousand note space.
+OPENED = "note-0000.md"
 
-#: A window smaller than this is not the window. A process can own message-only and
-#: tooltip windows, and they are visible as far as the API is concerned.
-SMALLEST = 100
-
-
-def on_screen(pid: int) -> bool:
-    """Whether this process has a window on screen, asked of Windows.
-
-    The one thing the app cannot answer about itself. Every mark the app makes is a mark
-    it makes *after* something happened, and "the window is up" is the one step whose
-    whole point is that it happens before the app is in a position to say so - the
-    webview that would run the page does not exist yet. So this asks the window manager
-    instead.
-    """
-    user = ctypes.windll.user32
-    proc = ctypes.wintypes.DWORD()
-    found = False
-
-    class Rect(ctypes.Structure):
-        _fields_ = [
-            ("left", ctypes.c_long),
-            ("top", ctypes.c_long),
-            ("right", ctypes.c_long),
-            ("bottom", ctypes.c_long),
-        ]
-
-    def each(window: int, _unused: int) -> bool:
-        nonlocal found
-        user.GetWindowThreadProcessId(window, ctypes.byref(proc))
-        if proc.value != pid or not user.IsWindowVisible(window):
-            return True
-
-        box = Rect()
-        if not user.GetClientRect(window, ctypes.byref(box)):
-            return True
-        if box.right - box.left < SMALLEST or box.bottom - box.top < SMALLEST:
-            return True
-
-        found = True
-        return False
-
-    shape = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
-    user.EnumWindows(shape(each), 0)
-
-    return found
+#: The phases the table in docs/conventions.md is made of, in order: the name the
+#: trace gives each and the name the table does.
+PHASES = [
+    (SHOWN, "window shown"),
+    ("window: page requested", "webview up, page requested"),
+    ("window: modules evaluated", "modules evaluated"),
+    ("window: shell painted", "shell painted"),
+    ("window: tree read", "tree read"),
+    ("window: first frame painted", "first frame"),
+    ("window: active tab painted", "note painted"),
+    (LAST, "launch order finished"),
+]
 
 
 def say(words: str) -> None:
     print(f"  {words}", flush=True)
 
 
-def logs() -> Path:
-    local = os.environ.get("LOCALAPPDATA")
-    if not local:
-        raise SystemExit("no LOCALAPPDATA, so no idea where the log goes")
-
-    return Path(local) / PROBE / "logs"
+def roaming(identifier: str) -> pathlib.Path:
+    return pathlib.Path(os.environ["APPDATA"]) / identifier
 
 
-def corpus(kind: str, into: Path) -> None:
-    """The notes a launch reads, in a folder of this run's own."""
-    into.mkdir(parents=True, exist_ok=True)
+def local(identifier: str) -> pathlib.Path:
+    return pathlib.Path(os.environ["LOCALAPPDATA"]) / identifier
+
+
+def wipe(identifier: str) -> None:
+    """Everything the identifier keeps, for a cold launch. Refused for any identifier
+    that is not a launch probe's, so this can never take the reader's own nib."""
+
+    if ".launch" not in identifier:
+        raise SystemExit(f"{identifier} is not a launch probe's identifier; nothing is wiped")
+    for folder in (roaming(identifier), local(identifier)):
+        for _ in range(20):
+            shutil.rmtree(folder, ignore_errors=True)
+            if not folder.exists():
+                break
+            # The webview's processes can outlive the app by a moment and hold a file.
+            time.sleep(0.25)
+
+
+def trace_file(identifier: str) -> pathlib.Path:
+    return local(identifier) / "logs" / "startup-trace.log"
+
+
+def load() -> float:
+    """The whole machine's processor load over one second, in per cent."""
+
+    try:
+        import psutil
+
+        return float(psutil.cpu_percent(interval=1.0))
+    except ImportError:
+        answer = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-Command",
+                "(Get-CimInstance Win32_Processor | Measure-Object LoadPercentage -Average).Average",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return float(answer.stdout.strip() or "nan")
+
+
+def machine() -> str:
+    """The machine a table was measured on, in one line."""
+
+    name = platform.processor() or platform.machine()
+    try:
+        with winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\CentralProcessor\0"
+        ) as key:
+            name = str(winreg.QueryValueEx(key, "ProcessorNameString")[0]).strip()
+    except OSError:
+        pass
+    cores = os.cpu_count() or 0
+    memory = ""
+    try:
+        import psutil
+
+        memory = f", {psutil.virtual_memory().total / 2**30:.0f} GB"
+    except ImportError:
+        pass
+    webview = "?"
+    for hive, path in (
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        ),
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}",
+        ),
+    ):
+        try:
+            with winreg.OpenKey(hive, path) as key:
+                webview = str(winreg.QueryValueEx(key, "pv")[0])
+                break
+        except OSError:
+            continue
+    return f"{name}, {cores} threads{memory}, Windows {platform.version()}, WebView2 {webview}"
+
+
+def corpus(kind: str, into: pathlib.Path) -> None:
+    """The notes a launch reads: one empty space, or the five thousand note fixture
+    speed.py seeds into a browser, on the disk this time."""
+
+    space = into / ("Big" if kind == "big" else "Notes")
+    space.mkdir(parents=True, exist_ok=True)
     if kind != "big":
         return
-
-    # The fixture speed.py seeds into a browser's storage, on the disk this time:
-    # the same five thousand notes, the same four kilobytes each, so the two drives
-    # are talking about one corpus.
-    space = into / "Big"
-    space.mkdir(parents=True, exist_ok=True)
     for at in range(5000):
         (space / f"note-{at:04d}.md").write_text(note(at), encoding="utf-8")
 
@@ -219,7 +230,6 @@ def note(at: int) -> str:
         "- [x] Slides out of a note",
         "",
     ]
-
     part = 0
     while len("\n".join(lines)) < 4000:
         lines += [
@@ -230,18 +240,66 @@ def note(at: int) -> str:
             "",
         ]
         part += 1
-
     return "\n".join(lines)
 
 
-def launched(spaces: Path, slow: bool) -> dict | None:
-    """One launch, and the line it left behind.
+def endpoint(identifier: str, patience: float = 20) -> tuple[int, str] | None:
+    """The running app's automation port and secret, once it has written them."""
 
-    Killed by the process object rather than by name: another agent's build may be
-    running under the same name, and a drive has no business ending anybody else's
-    process.
-    """
-    trace = logs() / "startup-trace.log"
+    path = roaming(identifier) / "automation.json"
+    until = time.monotonic() + patience
+    while time.monotonic() < until:
+        try:
+            held = json.loads(path.read_text(encoding="utf-8"))
+            if held.get("port") and held.get("secret"):
+                return int(held["port"]), str(held["secret"])
+        except (OSError, ValueError):
+            pass
+        time.sleep(0.2)
+    return None
+
+
+def asked(identifier: str, verb: str, args: dict) -> dict:
+    found = endpoint(identifier)
+    if not found:
+        return {"ok": False, "error": "no endpoint"}
+    port, secret = found
+    request = urllib.request.Request(
+        f"http://127.0.0.1:{port}/",
+        data=json.dumps({"verb": verb, "args": args, "rest": []}).encode(),
+        headers={"authorization": f"Bearer {secret}", "content-type": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=30) as answer:
+        return json.loads(answer.read().decode())
+
+
+def last_line(path: pathlib.Path) -> dict | None:
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    lines = [one for one in text.splitlines() if one.startswith("{")]
+    return json.loads(lines[-1]) if lines else None
+
+
+def launched(
+    exe: pathlib.Path,
+    identifier: str,
+    spaces: pathlib.Path,
+    *,
+    cold: bool,
+    then=None,
+    args: dict | None = None,
+) -> dict | None:
+    """One launch, watched off the screen, and the line it left behind.
+
+    `then` runs against the app once its launch order has finished and before it is
+    closed - the primed launch opens a note in it, the throttled one reloads it slowed.
+    Closed the way a person closes it, so what the session keeps is written."""
+
+    if cold:
+        wipe(identifier)
+    trace = trace_file(identifier)
     if trace.exists():
         trace.unlink()
 
@@ -249,152 +307,269 @@ def launched(spaces: Path, slow: bool) -> dict | None:
         **os.environ,
         "NIB_TRACE_STARTUP": "1",
         "NIB_SPACES_DIR": str(spaces),
+        **(args or {}),
     }
+    begun = time.perf_counter()
+    app = run_probe(exe, env=environment, quiet=True)
+    shown: float | None = None
+    read: dict | None = None
+    try:
+        until = begun + PATIENCE
+        while time.perf_counter() < until:
+            if app.poll() is not None:
+                say("the process ended by itself: another build holds this identifier's lock?")
+                return None
+            if shown is None and main_window(app.pid):
+                shown = (time.perf_counter() - begun) * 1000
+            if shown is not None:
+                read = last_line(trace)
+                if read and any(one["step"] == LAST for one in read["steps"]):
+                    break
+            time.sleep(PEEK if shown is None else 0.1)
+        if then is not None and read is not None:
+            read = then(app, read) or read
+    finally:
+        if not close_app(app, seconds=20):
+            app.kill()
+            app.wait(timeout=30)
+        settled(identifier)
 
-    from_here = time.perf_counter()
-    started = subprocess.Popen([str(EXE)], env=environment)
-
-    # Whether this process is the one that opens the window, or whether it found a window
-    # already up under the same identifier and handed itself over to it. The second is
-    # not a slow launch and not a failed one: it is no launch, and reporting it as either
-    # is a measurement of nothing.
-    #
-    # Waited out by polling for the window rather than by sleeping, so that the one step
-    # the app cannot time about itself is timed here; see `on_screen`.
-    appeared: float | None = None
-    while time.perf_counter() - from_here < ALIVE:
-        if started.poll() is not None:
-            say("handed over to a build already running under this identifier: no launch")
-            return None
-        if on_screen(started.pid):
-            appeared = (time.perf_counter() - from_here) * 1000
-            break
-        time.sleep(PEEK)
-
-    if slow:
-        # The process pinned to a single core and put below normal.
-        #
-        # Meant as the nearest thing to a slow device this machine can offer, and kept
-        # because somebody will want to try it - but it is not one, and the docstring
-        # says so with the numbers. A launch pinned to one core measured *faster* than
-        # the same launch unpinned, because the core it was pinned to was not the one
-        # the rest of the machine was busy on.
-        subprocess.run(
-            [
-                "powershell",
-                "-NoProfile",
-                "-Command",
-                f"$p = Get-Process -Id {started.pid} -ErrorAction SilentlyContinue;"
-                " if ($p) { $p.ProcessorAffinity = 1; $p.PriorityClass = 'BelowNormal' }",
-            ],
-            capture_output=True,
-            check=False,
-        )
-
-    # Whatever is left of the watch, and the poll kept going until there is a window:
-    # a launch slower than `ALIVE` has one later rather than never.
-    waited = time.perf_counter() - from_here
-    while appeared is None and time.perf_counter() - from_here < WATCH:
-        if on_screen(started.pid):
-            appeared = (time.perf_counter() - from_here) * 1000
-            break
-        time.sleep(PEEK)
-
-    time.sleep(max(0.0, WATCH - max(waited, time.perf_counter() - from_here)))
-    started.kill()
-    started.wait(timeout=30)
-    time.sleep(WRITTEN)
-
-    if not trace.exists():
+    if read is None:
         return None
-
-    lines = [
-        one
-        for one in trace.read_text(encoding="utf-8", errors="replace").splitlines()
-        if one.startswith("{")
-    ]
-    if not lines:
-        return None
-
-    read = json.loads(lines[-1])
-
-    # The poll's answer goes in with the app's own marks, so one table holds the whole
-    # launch. `table` sorts by the median moment, so it lands where it happened.
-    if appeared is not None:
-        read["steps"].append({"step": ON_SCREEN, "at": appeared})
-
+    if shown is not None:
+        read["steps"].append({"step": SHOWN, "at": shown})
     return read
 
 
-def table(runs: list[dict], what: str) -> None:
-    """The median of each step, in both columns, in the order they happened."""
+def settled(identifier: str, patience: float = 30) -> None:
+    """Waits for the webview's own processes to go after the app has. They outlive it
+    by anything from a moment to seconds, holding the profile, and the next launch's
+    webview waits for them: two launches of twenty seconds and forty on a first run of
+    this drive were that and nothing else."""
+
+    try:
+        import psutil
+    except ImportError:
+        time.sleep(2.0)
+        return
+    until = time.monotonic() + patience
+    while time.monotonic() < until:
+        alive = False
+        for one in psutil.process_iter(["name", "cmdline"]):
+            try:
+                if one.info["name"] == "msedgewebview2.exe" and identifier in " ".join(
+                    one.info["cmdline"] or []
+                ):
+                    alive = True
+                    break
+            except (psutil.Error, TypeError):
+                continue
+        if not alive:
+            return
+        time.sleep(0.2)
+
+
+def opened_note(identifier: str):
+    def run(_app, read: dict) -> dict:
+        answer = asked(identifier, "open", {"path": f"Big/{OPENED}"})
+        if not answer.get("ok"):
+            say(f"the note would not open: {answer.get('error')}")
+        # Long enough for the session to be written as it would be by somebody who
+        # opened a note and read it.
+        time.sleep(3)
+        return read
+
+    return run
+
+
+def throttled(identifier: str, rate: float):
+    """Reloads the page inside a warm launch with its main thread slowed `rate` times,
+    and reads the page's own marks off its timeline."""
+
+    def run(_app, read: dict) -> dict:
+        from playwright.sync_api import sync_playwright
+
+        port_file = next(local(identifier).rglob("DevToolsActivePort"), None)
+        if port_file is None:
+            say("no DevTools port: the probe was not started with one")
+            return read
+        port = port_file.read_text().splitlines()[0].strip()
+        with sync_playwright() as driver:
+            browser = driver.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
+            page = next(
+                (
+                    one
+                    for context in browser.contexts
+                    for one in context.pages
+                    if "tauri.localhost" in one.url or one.url.startswith("tauri:")
+                ),
+                None,
+            )
+            if page is None:
+                say("no app page behind the DevTools port")
+                return read
+            session = page.context.new_cdp_session(page)
+            session.send("Emulation.setCPUThrottlingRate", {"rate": rate})
+            page.reload(wait_until="commit")
+            marks: dict[str, float] = {}
+            until = time.monotonic() + PATIENCE
+            while time.monotonic() < until:
+                try:
+                    marks = page.evaluate(
+                        "() => Object.fromEntries(performance.getEntriesByType('mark')"
+                        ".filter((one) => one.name.startsWith('nib: '))"
+                        ".map((one) => [one.name.slice(5), one.startTime]))"
+                    )
+                except Exception:  # noqa: BLE001 - the page is mid-navigation
+                    marks = {}
+                if "launch order finished" in marks:
+                    break
+                time.sleep(0.2)
+            session.send("Emulation.setCPUThrottlingRate", {"rate": 1})
+            browser.close()
+        read["throttled"] = {"rate": rate, "marks": marks}
+        return read
+
+    return run
+
+
+def table(runs: list[dict], what: str) -> dict[str, float]:
+    """The median of each step, in the order they happened, and the medians by name."""
+
     names: list[str] = []
     for run in runs:
         for step in run["steps"]:
             if step["step"] not in names:
                 names.append(step["step"])
-
-    # In the order the medians say, not the order the first run happened to have:
-    # two runs whose stages interleave differently would otherwise print a step
-    # before the one it came after, and a "since" column of nonsense with it.
     rows = []
     for name in names:
         at = [one["at"] for run in runs for one in run["steps"] if one["step"] == name]
         cpu = [
-            one["cpu"]
-            for run in runs
-            for one in run["steps"]
-            if one["step"] == name and "cpu" in one
+            one["cpu"] for run in runs for one in run["steps"] if one["step"] == name and "cpu" in one
         ]
-        rows.append((statistics.median(at), name, statistics.median(cpu) if cpu else None))
-
+        rows.append((statistics.median(at), name, statistics.median(cpu) if cpu else None, len(at)))
     rows.sort()
 
     print()
     print(f"{what}, median of {len(runs)}:")
-    print(f"  {'step':44} {'at':>9} {'since':>9} {'cpu':>9}")
-
+    print(f"  {'step':52} {'at':>9} {'since':>9} {'cpu':>9}")
     last = 0.0
-    for middle, name, spent in rows:
+    for middle, name, spent, _count in rows:
         column = f"{spent:9.1f}" if spent is not None else " " * 9
-        print(f"  {name:44} {middle:9.1f} {middle - last:9.1f} {column}")
+        print(f"  {name[:52]:52} {middle:9.1f} {middle - last:9.1f} {column}")
         last = middle
+    return {name: middle for middle, name, _spent, _count in rows}
+
+
+def phases(medians: dict[str, float]) -> list[str]:
+    return [
+        f"{label} {medians[name]:.0f}" if name in medians else f"{label} -" for name, label in PHASES
+    ]
 
 
 def main() -> int:
-    ask = argparse.ArgumentParser(description=__doc__)
-    ask.add_argument("--runs", type=int, default=5)
-    ask.add_argument("--corpus", default="empty", choices=["empty", "big"])
-    ask.add_argument(
-        "--slow", action="store_true", help="one core, below normal - not a slow device"
-    )
+    if sys.platform != "win32":
+        print("this drive launches a Windows build")
+        return 0
+
+    ask = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ask.add_argument("--exe", type=pathlib.Path, default=EXE)
+    ask.add_argument("--identifier", default=IDENTIFIER)
+    ask.add_argument("--runs", type=int, default=7, help="launches per row, cold and warm")
+    ask.add_argument("--corpus", default="both", choices=["empty", "big", "both"])
+    ask.add_argument("--only", choices=["cold", "warm"], help="one half of the table")
+    ask.add_argument("--throttle", type=float, default=0, help="also a warm launch slowed this many times")
+    ask.add_argument("--json", type=pathlib.Path, help="every launch's line, written here")
     told = ask.parse_args()
 
-    if not EXE.exists():
-        raise SystemExit(f"no probe build at {EXE}; see this file's docstring")
+    if not told.exe.exists():
+        raise SystemExit(f"no probe build at {told.exe}; see this file's docstring")
 
-    spaces = APP / "test" / "e2e" / "shots" / f"launch-{told.corpus}"
-    if spaces.exists():
-        shutil.rmtree(spaces, ignore_errors=True)
-    say(f"the {told.corpus} corpus, in {spaces}")
-    corpus(told.corpus, spaces)
+    print(f"machine: {machine()}")
+    kept: dict[str, list[dict]] = {}
+    summary: list[str] = []
+    corpora = ["empty", "big"] if told.corpus == "both" else [told.corpus]
+    with tempfile.TemporaryDirectory(prefix="nib-launch-") as scratch:
+        for kind in corpora:
+            spaces = pathlib.Path(scratch) / kind
+            corpus(kind, spaces)
 
-    cold = launched(spaces, told.slow)
-    if cold:
-        table([cold], f"cold, {told.corpus}" + (" , one core" if told.slow else ""))
-    else:
-        say("the cold launch left no line")
+            if told.only != "warm":
+                before = load()
+                cold = []
+                for at in range(told.runs):
+                    one = launched(told.exe, told.identifier, spaces, cold=True)
+                    if one:
+                        cold.append(one)
+                    say(f"cold {kind} {at + 1} of {told.runs}: {'read' if one else 'no line'}")
+                after = load()
+                if cold:
+                    kept[f"cold {kind}"] = cold
+                    medians = table(cold, f"cold, {kind} (load {before:.0f}% before, {after:.0f}% after)")
+                    summary.append(f"cold {kind}: " + ", ".join(phases(medians)))
 
-    warm: list[dict] = []
-    for at in range(told.runs):
-        one = launched(spaces, told.slow)
-        if one:
-            warm.append(one)
-        say(f"warm {at + 1} of {told.runs}: {'read' if one else 'no line'}")
+            if told.only != "cold":
+                # Primed: a profile that has run once, with a note open in the big space.
+                launched(
+                    told.exe,
+                    told.identifier,
+                    spaces,
+                    cold=told.only == "warm",
+                    then=opened_note(told.identifier) if kind == "big" else None,
+                )
+                before = load()
+                warm = []
+                for at in range(told.runs):
+                    one = launched(told.exe, told.identifier, spaces, cold=False)
+                    if one:
+                        warm.append(one)
+                    say(f"warm {kind} {at + 1} of {told.runs}: {'read' if one else 'no line'}")
+                after = load()
+                if warm:
+                    kept[f"warm {kind}"] = warm
+                    medians = table(warm, f"warm, {kind} (load {before:.0f}% before, {after:.0f}% after)")
+                    summary.append(f"warm {kind}: " + ", ".join(phases(medians)))
 
-    if warm:
-        table(warm, f"warm, {told.corpus}" + (", one core" if told.slow else ""))
+                if told.throttle and warm:
+                    slowed = []
+                    port = {"WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS": "--remote-debugging-port=0"}
+                    for at in range(told.runs):
+                        one = launched(
+                            told.exe,
+                            told.identifier,
+                            spaces,
+                            cold=False,
+                            then=throttled(told.identifier, told.throttle),
+                            args=port,
+                        )
+                        if one and one.get("throttled", {}).get("marks"):
+                            slowed.append(one["throttled"]["marks"])
+                        say(f"{told.throttle:g}x {kind} {at + 1} of {told.runs}: {'read' if one else 'no line'}")
+                    if slowed:
+                        native = statistics.median(
+                            next(s["at"] for s in run["steps"] if s["step"] == "window: page requested")
+                            for run in warm
+                            if any(s["step"] == "window: page requested" for s in run["steps"])
+                        )
+                        print()
+                        print(
+                            f"{told.throttle:g}x slower page, {kind}, median of {len(slowed)}, "
+                            f"on top of {native:.0f} ms of warm native launch to the page request:"
+                        )
+                        names = sorted(
+                            {name for marks in slowed for name in marks},
+                            key=lambda name: statistics.median(m[name] for m in slowed if name in m),
+                        )
+                        for name in names:
+                            page = statistics.median(m[name] for m in slowed if name in m)
+                            print(f"  {name[:52]:52} {page:9.1f}  total {native + page:9.1f}")
+                        kept[f"throttled {kind}"] = [{"native": native, "marks": m} for m in slowed]
 
+    print()
+    for line in summary:
+        print(line)
+    if told.json:
+        told.json.write_text(json.dumps(kept, indent=1), encoding="utf-8")
     return 0
 
 
