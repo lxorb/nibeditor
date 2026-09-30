@@ -127,12 +127,27 @@ page has no `ipc`, `isTauri` or `__TAURI_INTERNALS__`, in its world or in nib's.
 release builds, `scripts/engine-switch-probe.py`): a launch with Chromium chosen is at
 its window in 263-699 ms, the hand-over included (reading the choice costs 4 ms); the
 system's engine 449-1100 ms on the same runs, the spread being the machine's. A switch
-is about a second of quitting and a launch.
+is about a second of quitting and a launch. The fetch, from a release served on the
+machine itself, was 3.3 s for its 190 MB (180 of them the runtime), checked and unpacked.
+
+**Two things measured and not yet understood**, both Chromium's and both Windows':
+
+- *Closing takes a while.* The window hides at once, but the process stays 15-25 s after
+  the close button while Chromium lets go of the interface's page, and its utility
+  processes a few seconds more, where a relaunch, which quits the app rather than
+  closing its window, let go in 1-4.5 s. A launch in that time finds the app still
+  running, as a second launch.
+- *It can take the foreground.* A probe of it, off the screen, was the window in front
+  five times running while the machine's reader switched windows or had their own nib
+  in front; pushing its windows to the bottom and disabling them did not stop it. The
+  likeliest cause is that CEF gives a browser made in a window the keyboard unless the
+  window is made with `WS_EX_NOACTIVATE`, and `tauri-runtime-cef` offers no way to say
+  so. Until it does, `engine-switch-probe.py` is not for a machine somebody is using.
 
 **What still stands between this and Chromium as the default:** Windows runs it
 **without Chromium's sandbox** (the runtime passes no broker; a sandboxed CEF app is a
-DLL `bootstrap.exe` hosts), H.264 is not in CEF's builds, and Linux has no row. Section
-10 has the rest.
+DLL `bootstrap.exe` hosts), H.264 is not in CEF's builds, Linux has no row, and the two
+above. Section 10 has the rest.
 
 ---
 
