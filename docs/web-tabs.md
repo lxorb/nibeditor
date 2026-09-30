@@ -90,14 +90,15 @@ and the best for a sixteen pixel box on a double density screen is chosen. See
 **And the device keeps every mark it has seen**, because a browser tab has no file to
 keep one in: after a restart the strip, a parked tab, a tab reopened, the address
 field's rows and the palette's all wear the site before any page loads. One cache,
-`web-tab/favicons.svelte.ts`, and one door to it, `siteMark`: the live page's mark,
-else the last one this device saw at that page (or, where that page showed none, at
-its origin - Chrome's host fallback, Firefox's root icon), else the file's `Nib-Icon`.
-It holds only what pages showed, never fetches anything to fill itself, keeps one mark
-per page so an unread count replaces rather than piles up (Firefox bug 1598371 stored
-207,000 of those), is capped at 500 pages and half a megabyte with the least recently
-used going first, and forgets a page when its history row is removed. It is read
-synchronously, so a restored tab's first frame already has its mark.
+`favicons` in `web-tab/pages.svelte.ts`, and one door to it, `siteMark`: the live
+page's mark, else the last one this device saw at that page (or, where that page showed
+none, at its origin - Chrome's host fallback, Firefox's root icon), else the file's
+`Nib-Icon`. It holds only what pages showed, never fetches anything to fill itself,
+keeps one mark per page so an unread count replaces rather than piles up (Firefox bug
+1598371 stored 207,000 of those), is capped at 500 pages and half a megabyte with the
+least recently used going first, and forgets a page when its history row is removed.
+It is read synchronously, so a restored tab's first frame already has its mark; the
+writing is `web-tab/favicons.ts`, fetched with the first mark.
 
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
