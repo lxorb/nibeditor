@@ -41,6 +41,10 @@ const NOTED: readonly string[] = [
      select 'spaces/' || space_id || '/' || id, ?3 from notes where space_id in (${OWNED})`,
   `insert or ignore into leftovers (what, since)
      select 'rooms/' || id, ?3 from notes where space_id in (${OWNED})`,
+  // And the snapshot of each note's document a room writes at every settle (sync v2);
+  // see rooms/epoch.ts.
+  `insert or ignore into leftovers (what, since)
+     select 'crdt/' || id, ?3 from notes where space_id in (${OWNED})`,
   `insert or ignore into leftovers (what, since)
      select distinct 'versions/' || hash, ?3 from note_versions where note_id in (${OWNED_NOTES})`,
   `insert or ignore into leftovers (what, since)
@@ -82,6 +86,11 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['guest_sessions', `delete from guest_sessions where guest_id in (${GUESTS_AT})`],
   ['guests', 'delete from guests where email = ?2'],
   ['notes', `delete from notes where space_id in (${OWNED})`],
+  // Sync v2's tree of those spaces, the answers it gave their operations, and the maps
+  // they keep per entry; see sync2/.
+  ['folders', `delete from folders where space_id in (${OWNED})`],
+  ['tree_ops', `delete from tree_ops where space_id in (${OWNED})`],
+  ['space_entries', `delete from space_entries where space_id in (${OWNED})`],
   ['space_cursor', `delete from space_cursor where space_id in (${OWNED})`],
   // The ceilings counted against the account, its address and its spaces - and a
   // site's password guesses, which are counted per space and machine. What is

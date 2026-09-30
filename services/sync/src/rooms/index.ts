@@ -16,13 +16,15 @@
  *  `Authorization`, and a socket has none. */
 
 import { Hono } from 'hono'
-import { NO_SUCH_NOTE, SIGN_IN } from '../refused'
+import { NO_SUCH_NOTE, ROOM_AWAY, SIGN_IN } from '../refused'
 import { subprotocol, tokenOf } from '@nib/rooms'
+import { DEVICE_PROTOCOL, ROOM_V2 } from '@nib/sync-core'
 import { chunks } from '../bound'
 import { now, sha256 } from '../crypto'
 import { note } from '../failed'
-import type { Env } from '../types'
+import type { Env, Note } from '../types'
 import { roomKind } from './kind'
+import type { Ingested } from './room'
 
 /** All three halves of the question in one round trip: whether the session is
  *  live, whether the note belongs to a space the person behind it can reach, and
@@ -60,6 +62,7 @@ const ALLOWED = `with me as (
 reached as (
   select n.space_id as space_id,
          n.path as path,
+         n.epoch as epoch,
          case when sp.user_id = me.user_id then 'owner'
               when 'write' in (coalesce(ms.role, ''), coalesce(mi.role, ''),
                                coalesce(gs.role, ''), coalesce(gi.role, '')) then 'write'
@@ -79,6 +82,7 @@ reached as (
 select (select coalesce(user_id, guest_id) from me) as who,
        (select space_id from reached) as space_id,
        (select path from reached) as path,
+       (select epoch from reached) as epoch,
        (select role from reached) as role`
 
 /** How long a client is told to wait before asking for the room again. A second:
@@ -150,7 +154,8 @@ rooms.get('/:noteId', async (context) => {
     return context.json({ error: 'a room is a websocket' }, 426)
   }
 
-  const token = tokenOf(context.req.header('sec-websocket-protocol'))
+  const offered = context.req.header('sec-websocket-protocol')
+  const token = tokenOf(offered)
   const noteId = context.req.param('noteId')
 
   const allowed = await context.env.DB.prepare(ALLOWED)
@@ -159,6 +164,7 @@ rooms.get('/:noteId', async (context) => {
       who: string | null
       space_id: string | null
       path: string | null
+      epoch: number | null
       role: string | null
     }>()
 
@@ -195,6 +201,12 @@ rooms.get('/:noteId', async (context) => {
       // up and never learns what it names; what it is for is being told that
       // this one is not in the space any more. See `roomsRevoked`.
       'x-nib-who': allowed.who,
+      // Sync v2: which epoch the note's document is on, whether the socket speaks
+      // `nib.v2` (and so hears acknowledgements and new epochs), and which device it
+      // said it is. See `NoteRoom` and docs/sync-v2.md section 7.
+      'x-nib-epoch': String(allowed.epoch ?? 0),
+      'x-nib-v2': offers(offered, ROOM_V2) ? 'yes' : 'no',
+      ...deviceIn(offered),
     },
     context.req.header('cf-ray') ?? null,
   )
@@ -204,7 +216,7 @@ rooms.get('/:noteId', async (context) => {
   // a handshake that did not open like any other close and comes back on its own
   // backoff; see rooms/socket.ts.
   if (!answer) {
-    return context.json({ error: 'this room is not answering - try again' }, 503, {
+    return context.json({ error: ROOM_AWAY }, 503, {
       'retry-after': TRY_AGAIN_IN,
     })
   }
@@ -221,6 +233,79 @@ rooms.get('/:noteId', async (context) => {
     webSocket: answer.webSocket,
   })
 })
+
+/** What a route asks a note's room over HTTP, for sync v2: a device's pending edits
+ *  (`push`), what a device is missing (`pull`), or a whole text from a writer with no
+ *  document of its own (`ingest`). See `push`, `pull` and `ingest` in room.ts. */
+export type RoomAsk = 'push' | 'pull' | 'ingest'
+
+/** Asks a note's room one thing, answering its response or null when the room could
+ *  not be reached. Asked twice, for the reason `reach` gives: the commonest reason for
+ *  an object not to answer is a deploy, and the second ask lands on its successor. */
+export async function askRoom(
+  env: Env,
+  target: { id: string; space_id: string; path: string; epoch?: number },
+  ask: RoomAsk,
+  body: Uint8Array,
+): Promise<Response | null> {
+  const namespace = env.ROOMS
+  if (!namespace) return null
+
+  for (let asked = 0; asked < 2; asked++) {
+    try {
+      const room = namespace.get(namespace.idFromName(target.id))
+      return await room.fetch(
+        new Request(`https://rooms.invalid/${target.id}`, {
+          method: 'POST',
+          headers: {
+            'x-nib-doc': ask,
+            'x-nib-note': target.id,
+            'x-nib-space': target.space_id,
+            'x-nib-kind': roomKind(target.path),
+            'x-nib-epoch': String(target.epoch ?? 0),
+          },
+          body,
+        }),
+      )
+    } catch {
+      // A reset object: the loop asks the one that replaced it.
+    }
+  }
+  return null
+}
+
+/** A whole text handed to a note's room to take in; see `ingest` in room.ts. Null when
+ *  the room could not be reached, or answered with something that is not an answer. */
+export async function ingestInto(
+  env: Env,
+  target: Note,
+  text: string,
+  writer: { name: string; device?: string; base?: number },
+): Promise<Ingested | null> {
+  const body = new TextEncoder().encode(JSON.stringify({ text, ...writer }))
+  const answer = await askRoom(env, target, 'ingest', body)
+  if (!answer?.ok) return null
+
+  // The room's own answer, written by `ingest` and nothing else.
+  return (await answer.json()) as Ingested
+}
+
+/** The subprotocols a socket offered, one by one. */
+function protocolsIn(header: string | undefined): string[] {
+  return (header ?? '').split(',').map((one) => one.trim())
+}
+
+function offers(header: string | undefined, protocol: string): boolean {
+  return protocolsIn(header).includes(protocol)
+}
+
+/** The device a v2 socket said it is, as the header the room reads; nothing for one that
+ *  said nothing, or something that is not a device id. */
+function deviceIn(header: string | undefined): Record<string, string> {
+  const said = protocolsIn(header).find((one) => one.startsWith(DEVICE_PROTOCOL))
+  const device = said?.slice(DEVICE_PROTOCOL.length) ?? ''
+  return /^[A-Za-z0-9_-]{1,64}$/.test(device) ? { 'x-nib-device-id': device } : {}
+}
 
 /** How many of somebody's open files one revocation wakes at a time. A bound on
  *  the fan-out of a single request rather than on the revocation itself; see

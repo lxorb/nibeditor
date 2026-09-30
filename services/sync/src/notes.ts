@@ -1,5 +1,5 @@
 import { type Context, Hono } from 'hono'
-import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE } from './refused'
+import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
@@ -18,6 +18,11 @@ import {
   spaceOf,
   type Reached,
 } from './spaces/space'
+import { laterOf, pokeSpace } from './hub/poke'
+import { ingestInto } from './rooms'
+import { deviceOf } from './sync2/device'
+import { createByPath, deleteById, moveByPath } from './sync2/ops'
+import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
 import type { Env, Note, Variables, Whoever } from './types'
 import {
   countVersionsAt,
@@ -118,7 +123,16 @@ export async function addNote(
   path: string,
   content: string,
   by = '',
+  device?: string,
 ): Promise<Note> {
+  // A space whose tree is rows makes a note the way a v2 device does, as a create in
+  // the folders its path names; see sync2/ops.ts. A space nobody prepared makes it as
+  // it always has.
+  const space = await env.DB.prepare('select prepared_at from spaces where id = ?')
+    .bind(spaceId)
+    .first<{ prepared_at: number | null }>()
+  if (space?.prepared_at) return await placeNote(env, spaceId, path, content, by, device)
+
   const note: Note = {
     id: newId(),
     space_id: spaceId,
@@ -165,6 +179,48 @@ export async function addNote(
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
 
   return note
+}
+
+/** A note made in a space whose tree is rows: a create with a server id in the folders
+ *  its path names, on the first epoch, seeded from the words it arrives with. Refused
+ *  as a path that is taken - the answer a v1 app has always had - where a live note
+ *  there already answers to its name as Windows and a Mac compare names. */
+async function placeNote(
+  env: Env,
+  spaceId: string,
+  path: string,
+  content: string,
+  by: string,
+  device: string | undefined,
+): Promise<Note> {
+  const hash = await sha256(content)
+  const document = DOCUMENT_KINDS.has(kindOfName(path))
+  const placed = await createByPath(env, spaceId, device, path, {
+    hash,
+    size: byteLength(content),
+    front: writeFront(content),
+    epoch: document ? 1 : 0,
+    epochBase: document ? hash : null,
+  })
+  if ('taken' in placed) throw new NoteTaken(placed.taken)
+
+  const note = await env.DB.prepare('select * from notes where id = ?')
+    .bind(placed.made)
+    .first<Note>()
+  if (!note) throw new Error('a note made in the tree is not there')
+
+  // The row first, then the bytes, for the reason `addNote` gives.
+  await env.NOTES.put(noteKey(spaceId, note.id), content)
+  await keepVersion(env, note, content, by).catch(() => undefined)
+  await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  return note
+}
+
+/** A create at a path a live note already answers to. */
+export class NoteTaken extends Error {
+  constructor(readonly id: string) {
+    super('a note already lives there')
+  }
 }
 
 /** The live note at a path, if there is one. */
@@ -241,36 +297,55 @@ export async function noteBeside(
  *  together (see rooms/room.ts), so a note that arrives either way lands in one
  *  shape and everything that reads notes - the file sync, publishing, the
  *  connector, the glasses, search - carries on unaware there was a difference. */
+/** Who a save is for and which document it is: the device that wrote the words, and
+ *  the epoch the writer holds the note at. */
+export interface Saving {
+  docBy?: string
+  epoch?: number
+}
+
 export async function saveNote(
   env: Env,
   note: Note,
   content: string,
   path: string,
   by = '',
+  saving: Saving = {},
 ): Promise<Note | null> {
   const size = byteLength(content)
   const hash = await sha256(content)
   if (hash === note.hash && path === note.path) return note
 
+  const seq = await nextSeq(env, note.space_id)
+  const words = hash !== note.hash
   const updated: Note = {
     ...note,
     path,
-    seq: await nextSeq(env, note.space_id),
+    seq,
     version: note.version + 1,
     updated_at: now(),
     deleted: 0,
     size,
     hash,
     front: writeFront(content),
+    // What sync v2's feed says about the words moving, and who moved them; see
+    // sync2/tree.ts.
+    doc_seq: words ? seq : (note.doc_seq ?? null),
+    doc_by: words ? (saving.docBy ?? null) : (note.doc_by ?? null),
+    updated_by: saving.docBy ?? null,
   }
 
   // The row first, because naming the version in it is what claims the write.
   // The bytes follow only once that has landed: a save that lost the claim must
   // not have replaced the bucket's copy, which the winner's row now describes.
+  //
+  // And the epoch: once a note has a document its room is the only thing that writes
+  // it (docs/sync-v2.md section 5.3), so a writer that read the note before it had one
+  // loses the claim as surely as one that read an older version.
   const written = await env.DB.prepare(
     `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?,
-                      hash = ?, front = ?
-      where id = ? and version = ?`,
+                      hash = ?, front = ?, doc_seq = ?, doc_by = ?, updated_by = ?
+      where id = ? and version = ? and epoch = ?`,
   )
     .bind(
       updated.path,
@@ -280,8 +355,12 @@ export async function saveNote(
       updated.size,
       updated.hash,
       updated.front,
+      updated.doc_seq ?? null,
+      updated.doc_by ?? null,
+      updated.updated_by ?? null,
       note.id,
       note.version,
+      saving.epoch ?? note.epoch ?? 0,
     )
     .run()
 
@@ -331,8 +410,11 @@ notes.get('/spaces/:spaceId/changes', atLeast('read', 'spaceId'), async (context
   const asked = Math.floor(Number(context.req.query('since') ?? 0))
   const since = Number.isFinite(asked) && asked > 0 ? asked : 0
 
+  // Never a file of sync v2's tree: a v1 app reads every row here as a note whose words
+  // it fetches, and a file's bytes are a blob.
   const { results } = await context.env.DB.prepare(
-    'select * from notes where space_id = ? and seq > ? order by seq limit 1000',
+    `select * from notes where space_id = ? and seq > ? and kind != 'file'
+      order by seq limit 1000`,
   )
     .bind(space.id, since)
     .all<Note>()
@@ -372,6 +454,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   // that lost used to come back as a 500 rather than as the same 409 it would
   // have been given a moment earlier. Read again rather than told apart by the
   // error's words, which are the database's to change.
+  const device = await deviceOf(context)
   let note: Note
   try {
     note = await addNote(
@@ -380,14 +463,19 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
       path,
       content,
       deviceIn(context.req.header('x-nib-device')),
+      device,
     )
   } catch (error) {
-    const won = await noteAt(context.env, space.id, path)
+    const won =
+      error instanceof NoteTaken
+        ? await noteById(context.env, error.id)
+        : await noteAt(context.env, space.id, path)
     if (!won) throw error
 
     return context.json({ error: 'a note already lives there', note: presentNote(won) }, 409)
   }
 
+  await pokeSpace(context.env, laterOf(context), space.id, note.seq, device)
   return context.json({ note: presentNote(note) }, 201)
 })
 
@@ -410,9 +498,10 @@ async function reachedNote(
   who: Whoever,
   noteId: string,
 ): Promise<{ note: Note; space: Reached; only: boolean } | null> {
-  const note = await env.DB.prepare('select * from notes where id = ?').bind(noteId).first<Note>()
+  const note = await noteById(env, noteId)
 
-  if (!note) return null
+  // A file of sync v2's tree is a blob by hash, never words to read or write here.
+  if (!note || note.kind === 'file') return null
 
   const space = await reachedSpace(env, who, note.space_id)
   if (space) return { note, space, only: false }
@@ -503,13 +592,11 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   }
 
   const asking = deviceIn(context.req.header('x-nib-device'))
+  const device = await deviceOf(context)
 
   let written = 0
   for (const one of changed) {
-    const note = await context.env.DB.prepare('select * from notes where id = ?')
-      .bind(one.note_id)
-      .first<Note>()
-
+    const note = await noteById(context.env, one.note_id)
     if (!note) continue
 
     const object = await context.env.NOTES.get(versionKey(one.hash))
@@ -519,8 +606,11 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
     // history saying which machine made it is the same answer to the same
     // question. A word of our own here ("rolled back") would be one English
     // phrase in a column of device names, shown untranslated to everybody.
-    const saved = await saveNote(context.env, note, await object.text(), note.path, asking)
-    if (saved) written += 1
+    const saved = await writeWords(context.env, note, await object.text(), note.path, {
+      name: asking,
+      device,
+    })
+    if (saved !== null && saved !== MOVED) written += 1
   }
 
   // What is left is what was not reached this time: the rows beyond the ceiling,
@@ -577,6 +667,9 @@ notes.put('/notes/:id', async (context) => {
   // Reassigned when a canvas has to be put back together with the copy the
   // server already holds; see the note above.
   let content = sent ?? ''
+  // The version the words were written on, for a note whose room judges it. A canvas
+  // put back together here is written on the version it was put together with.
+  let base = baseVersion
 
   if (baseVersion !== undefined && baseVersion !== note.version) {
     if (!isCanvasTarget(path)) return await conflict(context, note.id)
@@ -586,6 +679,7 @@ notes.put('/notes/:id', async (context) => {
     if (byteLength(content) > MAX_NOTE_BYTES) {
       return context.json({ error: TOO_LARGE }, 413)
     }
+    base = note.version
   }
 
   // The note's current bytes come back as it is replaced, so editing a large
@@ -595,20 +689,33 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  const saved = await saveNote(
-    context.env,
-    note,
-    content,
-    path,
-    deviceIn(context.req.header('x-nib-device')),
-  )
+  // In a space whose tree is rows, the words are one write and the place another: the
+  // words go to whoever writes the note, and a new path is a rename or a move the
+  // tree makes; see sync2/ops.ts.
+  const placed = !!note.name_key
+  const device = await deviceOf(context)
+  const written = await writeWords(context.env, note, content, placed ? note.path : path, {
+    name: deviceIn(context.req.header('x-nib-device')),
+    device,
+    ...(base === undefined ? {} : { base }),
+  })
+
+  // The room the note is in could not be reached; the client asks again.
+  if (written === null) return context.json({ error: ROOM_AWAY }, 503, { 'retry-after': '1' })
 
   // Somebody else - another device, or the room this note is open in - saved
   // between the row being read above and the write. The same answer a version
   // that did not match gets, because it is the same thing to the client: what
   // it edited is not what is held, and here is what is.
-  if (!saved) return await conflict(context, note.id)
+  if (written === MOVED) return await conflict(context, note.id)
 
+  let saved = written
+  if (placed && path !== note.path) {
+    await moveByPath(context.env, note.space_id, device, note.id, path)
+    saved = (await noteById(context.env, note.id)) ?? saved
+  }
+
+  await pokeSpace(context.env, laterOf(context), note.space_id, saved.seq, device)
   return context.json({ note: presentNote(saved) })
 })
 
@@ -648,13 +755,76 @@ notes.delete('/notes/:id', async (context) => {
     return context.json({ error: 'this note was shared with you, not its folder' }, 403)
   }
   const { note } = found
+  const device = await deviceOf(context)
+
+  // In a space whose tree is rows, a delete the tree says: a v1 delete names no version
+  // to judge an edit against, so it asks nothing and goes to Recently deleted exactly
+  // as it always has, and the tree keeps what it took with it. See sync2/ops.ts.
+  if (note.name_key) {
+    await deleteById(context.env, note.space_id, device, note.id)
+    await pokeSpace(context.env, laterOf(context), note.space_id, note.seq, device)
+    return context.json({ ok: true })
+  }
 
   const at = now()
+  const seq = await nextSeq(context.env, note.space_id)
   await context.env.DB.prepare(
     'update notes set deleted = 1, deleted_at = ?, seq = ?, version = version + 1, updated_at = ? where id = ?',
   )
-    .bind(at, await nextSeq(context.env, note.space_id), at, note.id)
+    .bind(at, seq, at, note.id)
     .run()
 
   return context.json({ ok: true })
 })
+
+/** The note by id, whatever it is and wherever. */
+function noteById(env: Env, id: string): Promise<Note | null> {
+  return env.DB.prepare('select * from notes where id = ?').bind(id).first<Note>()
+}
+
+/** What `writeWords` answers for a note that moved past the version the writer named. */
+export const MOVED = 'moved'
+
+/** Who is writing a whole text, and the version they read, where they read one. */
+export interface Writer {
+  name: string
+  device?: string
+  base?: number
+}
+
+/** A whole text written into a note by whichever writer the note has.
+ *
+ *  Once a note has an epoch its room is the only thing that writes it (docs/sync-v2.md
+ *  section 5.3), so the text goes to the room, which takes it in as the operations it
+ *  differs by and settles at once; see `ingest` in rooms/room.ts. Before, it is a save
+ *  like it always was. Answers the note as it now stands, `MOVED` where the note moved
+ *  past the version the writer read, and null where its room could not be reached.
+ *
+ *  `path` is where a note without a tree goes; a note with one is moved by the tree,
+ *  and its words never move it. */
+export async function writeWords(
+  env: Env,
+  note: Note,
+  text: string,
+  path: string,
+  writer: Writer,
+): Promise<Note | typeof MOVED | null> {
+  if ((note.epoch ?? 0) >= 1) {
+    const answer = await ingestInto(env, note, text, writer)
+    if (!answer || 'refused' in answer) return null
+    return 'conflict' in answer ? MOVED : answer.note
+  }
+
+  const saved = await saveNote(env, note, text, path, writer.name, {
+    ...(writer.device === undefined ? {} : { docBy: writer.device }),
+  })
+  if (saved) return saved
+
+  // Lost the claim. Somebody saved in between, or the note was given a document since
+  // it was read - and then its room is the writer, and nothing else has moved.
+  const now = await noteById(env, note.id)
+  if (now && (now.epoch ?? 0) >= 1 && now.version === note.version) {
+    return await writeWords(env, now, text, path, writer)
+  }
+  return MOVED
+}

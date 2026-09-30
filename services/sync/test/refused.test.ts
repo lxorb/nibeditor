@@ -32,6 +32,8 @@ describe('what the service refuses with', () => {
     expect(refused.NO_ADDRESS).toBe('choose an address')
     expect(refused.SIGN_IN_TO_DO_THAT).toBe('sign in to do that')
     expect(refused.FENCED).toBe('another device is using this site now')
+    expect(refused.ROOM_AWAY).toBe('this room is not answering - try again')
+    expect(refused.TOO_MANY_CHANGES).toBe('too many changes at once - try again in a minute')
   })
 
   test('and every one of them is lowercase, so it drops into a line of text', () => {

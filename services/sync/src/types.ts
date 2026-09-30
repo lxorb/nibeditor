@@ -160,6 +160,10 @@ export interface Space {
    *  `global` until the owner chooses. Optional because a space made in this very
    *  request has not been read back, and it is `global` then too. */
   web_store?: string
+  /** When a v2 device first asked for its tree as rows; null before. From then on
+   *  every write that places a note keeps the rows current; see src/sync2/prepare.ts.
+   *  Optional for the same reason as the web store. */
+  prepared_at?: number | null
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }
@@ -180,6 +184,22 @@ export interface Note {
    *  a note that says nothing, and for one last written before the site read
    *  such things at all. */
   front: string | null
+  /** Sync v2's tree and document (migration 0040): the folder it is in and its name
+   *  there, what kind of entry it is, the epoch of its document and the hash of the
+   *  text that epoch was seeded from, and the cursor and device of its latest content
+   *  change and of its latest change of any sort. Optional because a note is also
+   *  made in memory before it is read back, and a space nobody prepared has none of
+   *  the tree's columns filled; see src/sync2/. */
+  folder_id?: string | null
+  name?: string | null
+  name_key?: string | null
+  kind?: string
+  epoch?: number
+  epoch_base?: string | null
+  doc_seq?: number | null
+  doc_by?: string | null
+  updated_by?: string | null
+  deleted_in?: number | null
 }
 
 /** What the session guard puts on the request for the routes behind it, and

@@ -89,10 +89,10 @@ export async function sweepLeftovers(env: Env): Promise<number> {
 
 /** Which of these names a row still answers for.
  *
- *  A note's body and its room are the note's, so the note's row is the question. A
- *  version's body and a picture are addressed by their contents and shared by
- *  whoever holds the same bytes, so the question there is whether any row at all
- *  still names the hash. A web login's bytes and a hub are named by the account
+ *  A note's body, its room and its document's snapshot are the note's, so the note's
+ *  row is the question. A version's body and a picture are addressed by their contents
+ *  and shared by whoever holds the same bytes, so the question there is whether any
+ *  row at all still names the hash. A web login's bytes and a hub are named by the account
  *  itself, which never comes back: nothing else can name them. */
 async function stillNamed(env: Env, names: readonly string[]): Promise<Set<string>> {
   const byNote = new Map<string, string>()
@@ -103,7 +103,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     const [kind, ...rest] = name.split('/')
     const last = rest[rest.length - 1] ?? ''
 
-    if (kind === 'spaces' || kind === 'rooms') byNote.set(name, last)
+    if (kind === 'spaces' || kind === 'rooms' || kind === 'crdt') byNote.set(name, last)
     else if (kind === 'versions') versions.set(name, last)
     else if (kind === 'blobs') blobs.set(name, last)
   }

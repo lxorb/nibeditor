@@ -39,12 +39,25 @@ import {
   syncUpdate,
 } from '@nib/rooms'
 import { fold } from '@nib/rooms/fold'
+import {
+  ackFrame,
+  epochFrame,
+  frame,
+  MOST_UPDATE_BYTES,
+  NEW_EPOCH,
+  type PushAnswer,
+  unframe,
+} from '@nib/sync-core'
+import * as Y from 'yjs'
 import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
+import { pokeSpace } from '../hub/poke'
 import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
+import { revive } from '../sync2/ops'
 import type { Env, Note } from '../types'
-import { deviceIn } from '../versions'
+import { deviceIn, versionKey } from '../versions'
+import { ingested, seedOf, snapshotKey } from './epoch'
 import {
   fileOf,
   fill,
@@ -97,6 +110,14 @@ export interface Held {
    *  written down before this was kept, which is a room that says nothing about
    *  itself until its next settle. */
   hash?: string
+  /** The epoch of the document this room holds, for a note on sync v2, and the hash of
+   *  the words it was seeded from. Absent for a room that has only ever held a v1
+   *  note, which is epoch 0. See `startEpoch`. */
+  epoch?: number
+  epochBase?: string
+  /** The document's version the bucket's snapshot is of, so a settle that changed
+   *  nothing does not write the same snapshot again. */
+  snapshot?: number
 }
 
 /** What a socket has announced, kept on the socket so that a room which was
@@ -111,12 +132,24 @@ interface Attached {
   clients: number[]
   mayWrite: boolean
   who: string
+  /** Whether it offered `nib.v2`, and so hears the room's acknowledgements and its
+   *  new epochs; a socket without it is a v1 app and hears neither. */
+  v2?: boolean
+  /** The device on the other end, when it said which: whose the words it types are,
+   *  for the tree's rule that a device's own writing never stands against its own
+   *  delete. */
+  device?: string
 }
 
 /** What the door decided about the person on the other end of a socket. */
 export interface Joining {
   writes: boolean
   who: string
+  v2?: boolean
+  device?: string
+  /** The note's epoch as the door read it, which may be newer than the one this room
+   *  holds; see `caughtUpWithEpoch`. */
+  epoch?: number
 }
 
 /** How long a row saying somebody has a file open is believed. Well past any
@@ -142,6 +175,9 @@ function heldIn(value: unknown): Held | null {
     kind: kindOf(held.kind),
     ...(typeof held.version === 'number' ? { version: held.version } : {}),
     ...(typeof held.hash === 'string' && held.hash ? { hash: held.hash } : {}),
+    ...(typeof held.epoch === 'number' ? { epoch: held.epoch } : {}),
+    ...(typeof held.epochBase === 'string' ? { epochBase: held.epochBase } : {}),
+    ...(typeof held.snapshot === 'number' ? { snapshot: held.snapshot } : {}),
   }
 }
 
@@ -166,6 +202,145 @@ function mayWrite(socket: WebSocket): boolean {
 function whoOf(socket: WebSocket): string {
   const held = attachedTo(socket)?.who
   return typeof held === 'string' ? held : ''
+}
+
+/** Whether a socket speaks sync v2; see `Attached`. */
+function speaksV2(socket: WebSocket): boolean {
+  return attachedTo(socket)?.v2 === true
+}
+
+/** The device a socket said it is, if it said. */
+function deviceIdOf(socket: WebSocket): string | undefined {
+  const device = attachedTo(socket)?.device
+  return typeof device === 'string' && device ? device : undefined
+}
+
+/** A socket's attachment with some of it changed and the rest kept, which is how every
+ *  write to one is made: a field one write knows about is not one the next drops. */
+function attach(socket: WebSocket, change: Partial<Attached>) {
+  const device = deviceIdOf(socket)
+  const kept: Attached = {
+    clients: announcedBy(socket),
+    mayWrite: mayWrite(socket),
+    who: whoOf(socket),
+    ...(speaksV2(socket) ? { v2: true } : {}),
+    ...(device === undefined ? {} : { device }),
+  }
+  socket.serializeAttachment({ ...kept, ...change } satisfies Attached)
+}
+
+/** What a change an HTTP request brought is marked as having come from, so the room
+ *  can tell it from a socket's. */
+const PUSHED = 'push'
+
+/** How many pushes a room remembers the answer to, so one whose answer was lost is
+ *  answered the same way when it comes again; see `PushDoc` in @nib/sync-core. A device
+ *  resends only its latest, so a few dozen covers every device a note has. */
+const REMEMBERED_PUSHES = 64
+
+interface Remembered {
+  push: string
+  seq: number
+  sv: Uint8Array
+}
+
+function rememberedIn(value: unknown): Remembered[] {
+  if (!Array.isArray(value)) return []
+  return value.filter((one: unknown): one is Remembered => {
+    if (typeof one !== 'object' || one === null) return false
+    const { push, seq, sv } = one as Partial<Remembered>
+    return typeof push === 'string' && typeof seq === 'number' && sv instanceof Uint8Array
+  })
+}
+
+/** A pushed document as the room reads it, off the envelope the route framed. */
+interface Pushed {
+  push: string
+  epoch: number
+  seq: number
+  base: Uint8Array
+  update: Uint8Array
+  device?: string
+  name?: string
+}
+
+function pushedIn(value: unknown): Pushed | null {
+  if (typeof value !== 'object' || value === null) return null
+  const { push, epoch, seq, base, update, device, name } = value as Record<string, unknown>
+  if (typeof push !== 'string' || typeof epoch !== 'number' || typeof seq !== 'number') return null
+  if (!(base instanceof Uint8Array) || !(update instanceof Uint8Array)) return null
+  return {
+    push,
+    epoch,
+    seq,
+    base,
+    update,
+    ...(typeof device === 'string' ? { device } : {}),
+    ...(typeof name === 'string' ? { name } : {}),
+  }
+}
+
+/** What a push to the room answers, before the route names the document. */
+type Unnamed<T> = T extends unknown ? Omit<T, 'id'> : never
+type RoomAnswer = Unnamed<PushAnswer>
+
+/** What an ingest answers: the note as it now stands, a 409 for a v1 save that named
+ *  an older version, or why nothing was written. */
+export type Ingested = { note: Note } | { conflict: true } | { refused: string }
+
+/** A whole text to ingest, as the route sent it. */
+interface Ingesting {
+  text: string
+  base?: number
+  name?: string
+  device?: string
+}
+
+function ingestIn(body: Uint8Array): Ingesting | null {
+  let value: unknown
+  try {
+    value = JSON.parse(new TextDecoder().decode(body))
+  } catch {
+    // Only the route sends this, so a body that does not parse is a bug there, and
+    // what it gets is the refusal below.
+    return null
+  }
+  if (typeof value !== 'object' || value === null) return null
+  const { text, base, name, device } = value as Record<string, unknown>
+  if (typeof text !== 'string') return null
+  return {
+    text,
+    ...(typeof base === 'number' ? { base } : {}),
+    ...(typeof name === 'string' ? { name } : {}),
+    ...(typeof device === 'string' ? { device } : {}),
+  }
+}
+
+/** What a v1 app's socket is closed with when its room starts a new document: the code
+ *  its own join logic reads as "this room was rebuilt", which drops the document it
+ *  held and meets the room again from the file, rather than reconnecting and merging
+ *  two documents made separately from the same words. See `REBUILT` in the app's
+ *  rooms/door.ts. */
+const REBUILT = 1012
+
+/** An epoch a header said, or nothing for one that did not say a whole number. */
+function epochIn(header: string | null): number | undefined {
+  const said = Number(header ?? '')
+  return header !== null && Number.isSafeInteger(said) && said >= 0 ? said : undefined
+}
+
+function octets(body: Uint8Array): Response {
+  return new Response(body, { headers: { 'content-type': 'application/octet-stream' } })
+}
+
+/** The row a room reads about its note to know which document it should hold. */
+interface Placed {
+  version: number
+  path: string
+  epoch: number
+  epoch_base: string | null
+  hash: string
+  deleted: number
 }
 
 /** What the device on the other end of a socket calls itself.
@@ -196,8 +371,10 @@ function deviceOf(socket: WebSocket, awareness: Awareness): string {
 }
 
 export class NoteRoom implements DurableObject {
-  private readonly state: RoomState
-  private readonly awareness: Awareness
+  /** Not readonly: a room that starts a new epoch starts a new document, and a Yjs
+   *  document cannot be emptied; see `startEpoch`. */
+  private state: RoomState
+  private awareness: Awareness
   /** Settles once the document has been read back out of storage, or seeded from
    *  the note. Held so that two joins landing together do not both seed it. */
   private opened: Promise<void> | null = null
@@ -210,6 +387,9 @@ export class NoteRoom implements DurableObject {
    *  where nothing said - a room the runtime woke to fire an alarm has forgotten, and
    *  no name is better than another device's. */
   private settling = ''
+  /** And which device that was, by id rather than by name, for the tree; see
+   *  `Attached`. */
+  private settlingDevice: string | undefined = undefined
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -217,20 +397,27 @@ export class NoteRoom implements DurableObject {
   ) {
     this.state = new RoomState(ctx.storage)
     this.awareness = new Awareness(this.state.doc)
+    this.listen()
+  }
+
+  /** What the room does when its document or its awareness changes. Apart from the
+   *  constructor because a room starting a new epoch listens to a new document. */
+  private listen() {
     // A room is a place, not somebody in it, and it must be able to sleep; see
     // `unattended`.
     unattended(this.awareness)
 
+    const awareness = this.awareness
     this.state.doc.on('update', (update: Uint8Array, origin: unknown) => {
       this.ctx.waitUntil(this.spread(update, origin))
     })
 
-    this.awareness.on('update', (changed: AwarenessChange, origin: unknown) => {
+    awareness.on('update', (changed: AwarenessChange, origin: unknown) => {
       const clients = [...changed.added, ...changed.updated, ...changed.removed]
       if (!clients.length) return
 
       this.announced(origin, changed)
-      this.send(awarenessUpdate(this.awareness, clients), origin)
+      this.send(awarenessUpdate(awareness, clients), origin)
     })
   }
 
@@ -249,15 +436,31 @@ export class NoteRoom implements DurableObject {
     if (!noteId || !spaceId) return new Response('no note', { status: 400 })
 
     const kind = kindOf(request.headers.get('x-nib-kind'))
+    const held: Held = { noteId, spaceId, kind }
+
+    // A device without a socket, sync v2's HTTP half: a push, a pull, or a whole text
+    // handed in by something that has no document of its own. See `push`, `pull` and
+    // `ingest`.
+    const asked = request.headers.get('x-nib-doc')
+    if (asked === 'push' || asked === 'pull' || asked === 'ingest') {
+      const body = new Uint8Array(await request.arrayBuffer())
+      await this.open(held)
+      await this.caughtUpWithEpoch(epochIn(request.headers.get('x-nib-epoch')))
+      if (asked === 'push') return octets(await this.push(body))
+      if (asked === 'pull') return octets(await this.pull(body))
+      return Response.json(await this.ingest(body))
+    }
+
+    const device = request.headers.get('x-nib-device-id')
+    const epoch = epochIn(request.headers.get('x-nib-epoch'))
     const pair = new WebSocketPair()
-    await this.enter(
-      pair[1],
-      { noteId, spaceId, kind },
-      {
-        writes: writesOf(request.headers.get('x-nib-write')),
-        who: request.headers.get('x-nib-who') ?? '',
-      },
-    )
+    await this.enter(pair[1], held, {
+      writes: writesOf(request.headers.get('x-nib-write')),
+      who: request.headers.get('x-nib-who') ?? '',
+      v2: request.headers.get('x-nib-v2') === 'yes',
+      ...(device ? { device } : {}),
+      ...(epoch === undefined ? {} : { epoch }),
+    })
 
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
@@ -272,6 +475,7 @@ export class NoteRoom implements DurableObject {
   ): Promise<void> {
     await this.crossed(held.kind)
     await this.open(held)
+    await this.caughtUpWithEpoch(joining.epoch)
 
     // Written down where a revocation can find it, and written before the socket
     // is taken: the row is the whole of how an owner reaches this socket later, so
@@ -290,6 +494,8 @@ export class NoteRoom implements DurableObject {
       clients: [],
       mayWrite: joining.writes,
       who: joining.who,
+      ...(joining.v2 ? { v2: true } : {}),
+      ...(joining.device ? { device: joining.device } : {}),
     } satisfies Attached)
 
     // The greeting, both halves at once: what this room holds, and who is in it.
@@ -409,11 +615,7 @@ export class NoteRoom implements DurableObject {
       if (toRead) {
         // Still in the room and still seeing every keystroke, which is what a
         // reader is; what they may no longer do is add one.
-        socket.serializeAttachment({
-          clients: announcedBy(socket),
-          mayWrite: false,
-          who,
-        } satisfies Attached)
+        attach(socket, { mayWrite: false })
         continue
       }
 
@@ -561,14 +763,28 @@ export class NoteRoom implements DurableObject {
       if (before?.noteId === held.noteId) {
         if (before.version !== undefined) held.version ??= before.version
         if (before.hash !== undefined) held.hash ??= before.hash
+        if (before.epoch !== undefined) held.epoch ??= before.epoch
+        if (before.epochBase !== undefined) held.epochBase ??= before.epochBase
+        if (before.snapshot !== undefined) held.snapshot ??= before.snapshot
       }
 
       await this.ctx.storage.put('note', held)
 
-      // A room with nothing stored of its own is filled from the file as the store
-      // holds it. Only ever the first time: a plane somebody emptied is empty, and
-      // seeding it again would put every card back.
-      if (!(await this.state.load())) {
+      const loaded = await this.state.load()
+      const row = await this.placed(held.noteId)
+
+      // A note on sync v2 has a document of an epoch, and the room holds that one:
+      // seeded, the first time, from the words the epoch names, and started again from
+      // them if what it holds is a v1 room's or an older epoch's. See `startEpoch`.
+      if (row && row.epoch >= 1) {
+        if (!loaded) await this.startEpoch(held, row, null)
+        else if ((held.epoch ?? 0) !== row.epoch) {
+          await this.startEpoch(held, row, await this.carried(held))
+        }
+      } else if (!loaded) {
+        // A room with nothing stored of its own is filled from the file as the store
+        // holds it. Only ever the first time: a plane somebody emptied is empty, and
+        // seeding it again would put every card back.
         const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
         const file = object ? await object.text() : ''
         await this.state.seed((doc) => fill(held.kind, doc, file))
@@ -578,12 +794,12 @@ export class NoteRoom implements DurableObject {
         // it; see `keptBeside`. Read after the bytes rather than before: a version
         // that moved in between then reads as one the room never saw, which is the
         // safe way round to be wrong.
-        const row = await this.env.DB.prepare('select version from notes where id = ?')
+        const level = await this.env.DB.prepare('select version from notes where id = ?')
           .bind(held.noteId)
           .first<{ version: number }>()
 
-        if (row) {
-          held.version = row.version
+        if (level) {
+          held.version = level.version
           // The words themselves, as this room would settle them: a plane read back
           // out of a file is the same drawing and not always the same bytes, and what
           // this answers is whether the room is carrying anything of its own.
@@ -677,7 +893,10 @@ export class NoteRoom implements DurableObject {
     // last to arrive is the one the settle is about, which is what the sheet means by
     // the device beside a moment: several devices in a note make a version each as
     // each of them pauses.
-    if (isSocket(origin)) this.settling = deviceOf(origin, this.awareness)
+    if (isSocket(origin)) {
+      this.settling = deviceOf(origin, this.awareness)
+      this.settlingDevice = deviceIdOf(origin)
+    }
 
     // The state refuses an update past the ceiling as well, and reaching that is
     // this file's mistake rather than a reader's: the message was refused at the
@@ -733,11 +952,7 @@ export class NoteRoom implements DurableObject {
       .filter((one) => !gone.has(one))
       .slice(-MOST_ANNOUNCED)
 
-    origin.serializeAttachment({
-      clients,
-      mayWrite: mayWrite(origin),
-      who: whoOf(origin),
-    } satisfies Attached)
+    attach(origin, { clients })
   }
 
   /** The file as it now stands, written into the note store the way any other save
@@ -763,6 +978,10 @@ export class NoteRoom implements DurableObject {
     // room's snapshot too, and nothing is left only in memory.
     await this.state.flush()
 
+    // A note on sync v2 settles as a document; see `settleDocument`. Everything below
+    // is a v1 room's settle, unchanged.
+    if ((held.epoch ?? 0) >= 1) return await this.settleDocument(held, crossing)
+
     const file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
       .bind(held.noteId)
       .first<Note>()
@@ -770,6 +989,15 @@ export class NoteRoom implements DurableObject {
     // The note was deleted while the room was open. There is nothing to write
     // it into, and putting it back is Recently deleted's job, not a room's.
     if (!file) return false
+
+    // The note moved to sync v2 while this room held it as v1: the room starts the
+    // note's document, keeping what it held that the note does not have yet, and
+    // settles as a document from then on (section 11, step 3).
+    if ((file.epoch ?? 0) >= 1) {
+      await this.startEpoch(held, placedOf(file), await this.carried(held))
+      await this.settleSoon()
+      return false
+    }
 
     // The file is not the kind of thing this room holds any more: it was renamed
     // across the two while the room was open, and writing now would be the settle
@@ -873,6 +1101,383 @@ export class NoteRoom implements DurableObject {
     return true
   }
 
+  /* ── Sync v2: the note's document ────────────────────────────────────── */
+
+  /** The row that says which document this room should hold. */
+  private placed(noteId: string): Promise<Placed | null> {
+    return this.env.DB.prepare(
+      'select version, path, epoch, epoch_base, hash, deleted from notes where id = ?',
+    )
+      .bind(noteId)
+      .first<Placed>()
+  }
+
+  /** A join or a request said the note is on a newer epoch than this room holds: the
+   *  room starts it now rather than at its next settle. */
+  private async caughtUpWithEpoch(said: number | undefined): Promise<void> {
+    const held = this.held
+    if (!held || said === undefined || said <= (held.epoch ?? 0)) return
+
+    const row = await this.placed(held.noteId)
+    if (!row || row.epoch <= (held.epoch ?? 0)) return
+    await this.ctx.blockConcurrencyWhile(async () => {
+      await this.startEpoch(held, row, await this.carried(held))
+    })
+  }
+
+  /** What this room holds that the note does not say yet: the words typed since its
+   *  last settle, or null when it holds nothing of its own. */
+  private async carried(held: Held): Promise<string | null> {
+    if (neverHeld(this.state.doc)) return null
+    const mine = fileOf(held.kind, this.state.doc)
+    if (held.hash !== undefined && (await sha256(mine)) === held.hash) return null
+    return mine
+  }
+
+  /** The room holds the note's document at the epoch its row names, from now on.
+   *
+   *  The seed is the words the epoch was seeded from - which is the note as it reads
+   *  now, because once a note has an epoch nothing but its room writes it - put in
+   *  under `hash32(noteId, epoch)`, byte for byte what any device seeding the same
+   *  words makes (section 5.3). Two things can make the words not be there: somebody
+   *  writing between the epoch being marked and the room reading (the version the
+   *  account kept of them serves then, and what was written since goes in as
+   *  operations), or nothing keeping them at all, when the note starts the next epoch
+   *  from what it says and every device on the old one falls back to its three-way
+   *  path.
+   *
+   *  What the room held before - a v1 room's words, or an older epoch's - is not
+   *  dropped: `carried` goes in as operations on top of the seed, under the room's own
+   *  id. Only where somebody else wrote the note since this room last settled does it
+   *  go beside the note instead, which is what a v1 room would have done with it.
+   *
+   *  Every socket is closed first, because none of them can merge into a new document:
+   *  a v2 device hears the new epoch and 4001, and a v1 app 1012 - the one code its own
+   *  join logic reads as "this room was rebuilt, meet it again from your file". */
+  private async startEpoch(held: Held, row: Placed, carried: string | null): Promise<void> {
+    const object = await this.env.NOTES.get(noteKey(held.spaceId, held.noteId))
+    const body = object ? await object.text() : ''
+    const bodyHash = await sha256(body)
+
+    let epoch = row.epoch
+    let base = row.epoch_base ?? bodyHash
+    let seed: string | null = bodyHash === base ? body : null
+    if (seed === null) {
+      const kept = await this.env.NOTES.get(versionKey(base))
+      if (kept) seed = await kept.text()
+    }
+    if (seed === null) {
+      await this.env.DB.prepare(
+        'update notes set epoch = ?, epoch_base = ? where id = ? and epoch = ?',
+      )
+        .bind(epoch + 1, bodyHash, held.noteId, epoch)
+        .run()
+      const again = await this.placed(held.noteId)
+      epoch = again?.epoch ?? epoch + 1
+      base = again?.epoch_base ?? bodyHash
+      seed = body
+    }
+
+    // Written in before the note was last written by somebody else: kept beside it,
+    // since there is no ancestor to fold it in against.
+    let target = body
+    if (carried !== null) {
+      if (held.hash === undefined || held.hash === bodyHash) target = carried
+      else await this.besideTheNote(held, carried)
+    }
+
+    await this.closeForEpoch(epoch, base)
+    await this.state.clear()
+    this.state.doc.destroy()
+    this.awareness.destroy()
+    this.state = new RoomState(this.ctx.storage)
+    this.awareness = new Awareness(this.state.doc)
+    this.listen()
+
+    Y.applyUpdateV2(this.state.doc, seedOf(held.kind, held.noteId, epoch, seed), PUSHED)
+    const seeded = fileOf(held.kind, this.state.doc)
+    held.epoch = epoch
+    held.epochBase = base
+    held.version = row.version
+    held.hash = await sha256(seeded)
+    delete held.snapshot
+
+    const update = ingested(held.kind, this.state.doc, held.noteId, seeded, target)
+    if (update) Y.applyUpdateV2(this.state.doc, update, PUSHED)
+
+    await this.state.compact()
+    await this.ctx.storage.put('note', held)
+  }
+
+  /** Words this room held that the note cannot take, as a note beside it; see
+   *  `startEpoch`. */
+  private async besideTheNote(held: Held, words: string): Promise<void> {
+    const file = await this.env.DB.prepare('select * from notes where id = ?')
+      .bind(held.noteId)
+      .first<Note>()
+    if (file && !(await noteBeside(this.env, file, words, this.settling))) {
+      noted(`room ${held.noteId}`, new Error('there was nowhere free to keep it'), null)
+    }
+  }
+
+  /** Every socket closed, because the document they were joined to is gone; see
+   *  `startEpoch`. */
+  private async closeForEpoch(epoch: number, base: string): Promise<void> {
+    const sockets = this.ctx.getWebSockets()
+    for (const socket of sockets) {
+      forget(this.awareness, announcedBy(socket), socket)
+      try {
+        if (speaksV2(socket)) {
+          socket.send(epochFrame(epoch, base))
+          socket.close(NEW_EPOCH, 'this note starts a new document')
+        } else {
+          socket.close(REBUILT, 'this note starts a new document')
+        }
+      } catch {
+        // A socket the runtime already gave up on is closed either way.
+      }
+    }
+
+    // A close this side asked for brings no close handler with it.
+    if (sockets.length && this.held) {
+      await this.env.DB.prepare('delete from room_sockets where note_id = ?')
+        .bind(this.held.noteId)
+        .run()
+    }
+  }
+
+  /** The document as it is written down, with its version and state vector, read in
+   *  the same moment: what an answer may name, since nothing in it can be lost. */
+  private async durable(): Promise<{
+    bytes: Uint8Array
+    seq: number
+    sv: Uint8Array
+    at: number
+  }> {
+    await this.state.flushAll()
+    // Nothing between the last write and these reads: the runtime delivers nothing
+    // while a storage write is on its way, and there is no await from here on.
+    return {
+      bytes: Y.encodeStateAsUpdateV2(this.state.doc),
+      seq: this.state.seq,
+      sv: Y.encodeStateVector(this.state.doc),
+      at: this.state.changedAt,
+    }
+  }
+
+  /** A document's settle: the words into the note store as any save, the snapshot
+   *  into the bucket, and every v2 socket told what is now durable (section 5.10).
+   *
+   *  Where a v1 room's settle keeps a copy beside a note somebody else wrote, this one
+   *  has nobody else to meet: once a note has an epoch, its room is its only writer.
+   *  Words landing on a note that was deleted meanwhile bring it back, with its
+   *  folders, because an edit beats a delete (section 5.9). */
+  private async settleDocument(held: Held, crossing: boolean): Promise<boolean> {
+    let file = await this.env.DB.prepare('select * from notes where id = ?')
+      .bind(held.noteId)
+      .first<Note>()
+    if (!file) return false
+
+    if ((file.epoch ?? 0) > (held.epoch ?? 0)) {
+      await this.startEpoch(held, placedOf(file), await this.carried(held))
+      await this.settleSoon()
+      return false
+    }
+
+    // The same four refusals as a v1 settle, for the same reasons; see below.
+    if (!crossing && roomKind(file.path) !== held.kind) {
+      noted(`room ${held.noteId}`, new Error(`the file is a ${roomKind(file.path)} room now`), null)
+      return false
+    }
+    const settled = fileOf(held.kind, this.state.doc)
+    const size = byteLength(settled)
+    if (size > MAX_NOTE_BYTES) return false
+    if (leavesAPlane(held.kind, this.state.doc)) {
+      noted(`room ${held.noteId}`, new Error('this room holds a plane and is read as words'), null)
+      return false
+    }
+    if (!settled && file.size > 0 && neverHeld(this.state.doc)) {
+      noted(`room ${held.noteId}`, new Error('this room never held the file it would empty'), null)
+      return false
+    }
+
+    if (crossing || (await sha256(settled)) !== held.hash) {
+      if (file.deleted) {
+        await revive(this.env, held.spaceId, this.settlingDevice, held.noteId)
+        file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
+          .bind(held.noteId)
+          .first<Note>()
+        if (!file) return false
+      }
+
+      if (size > file.size) {
+        const owner = await this.env.DB.prepare('select user_id from spaces where id = ?')
+          .bind(file.space_id)
+          .first<{ user_id: string }>()
+        if (owner && !(await fits(this.env, owner.user_id, size, file.size))) return false
+      }
+
+      const saved = await saveNote(this.env, file, settled, file.path, this.settling, {
+        epoch: held.epoch ?? 0,
+        ...(this.settlingDevice === undefined ? {} : { docBy: this.settlingDevice }),
+      })
+      if (!saved) {
+        await this.settleSoon()
+        return false
+      }
+
+      held.version = saved.version
+      held.hash = saved.hash
+      if (saved !== file) {
+        await pokeSpace(this.env, this.ctx, held.spaceId, saved.seq, this.settlingDevice)
+      }
+    }
+
+    const durable = await this.durable()
+    if (held.snapshot !== durable.seq) {
+      await this.env.NOTES.put(snapshotKey(held.noteId), durable.bytes, {
+        httpMetadata: { contentType: 'application/octet-stream' },
+        customMetadata: {
+          seq: String(durable.seq),
+          epoch: String(held.epoch ?? 0),
+          epochBase: held.epochBase ?? '',
+          at: String(durable.at),
+        },
+      })
+      held.snapshot = durable.seq
+    }
+    await this.ctx.storage.put('note', held)
+
+    // Every v2 socket hears what is durable now, which is what moves its pending
+    // edits into what it has confirmed.
+    const ack = ackFrame(durable.seq, durable.sv)
+    for (const socket of this.ctx.getWebSockets()) {
+      if (!speaksV2(socket)) continue
+      try {
+        socket.send(ack)
+      } catch {
+        // Its close handler takes care of it.
+      }
+    }
+
+    this.settling = ''
+    this.settlingDevice = undefined
+    return true
+  }
+
+  /** A device's pending edits, arriving by HTTP (section 5.4): applied and written
+   *  down before the answer when they were made on the version the room is at, and
+   *  answered `moved` - with what the device is missing - when the room has moved on
+   *  since, so the device whose edits arrive second is the one that checks. */
+  private async push(body: Uint8Array): Promise<Uint8Array> {
+    const pushed = pushedIn(unframe(body))
+    const held = this.held
+    if (!pushed || !held) return frame({ refused: 'gone' } satisfies RoomAnswer)
+    if (pushed.epoch !== (held.epoch ?? 0)) {
+      return frame({ epoch: held.epoch ?? 0 } satisfies RoomAnswer)
+    }
+
+    // Sent before, and its answer lost: the same answer again.
+    const remembered = rememberedIn(await this.ctx.storage.get('pushes'))
+    const before = remembered.find((one) => one.push === pushed.push)
+    if (before) return frame({ ok: true, seq: before.seq, sv: before.sv } satisfies RoomAnswer)
+
+    if (pushed.update.length > MOST_UPDATE_BYTES || this.state.full()) {
+      return frame({ refused: 'large' } satisfies RoomAnswer)
+    }
+
+    if (pushed.seq !== this.state.seq) {
+      await this.state.flushAll()
+      try {
+        return frame({
+          moved: Y.encodeStateAsUpdateV2(this.state.doc, pushed.base),
+          seq: this.state.seq,
+          sv: Y.encodeStateVector(this.state.doc),
+          at: this.state.changedAt,
+        } satisfies RoomAnswer)
+      } catch {
+        // A state vector that does not read as one names no state to diff against.
+        return frame({ refused: 'gone' } satisfies RoomAnswer)
+      }
+    }
+
+    this.settling = deviceIn(pushed.name)
+    this.settlingDevice = pushed.device
+    try {
+      Y.applyUpdateV2(this.state.doc, pushed.update, PUSHED)
+    } catch {
+      return frame({ refused: 'gone' } satisfies RoomAnswer)
+    }
+
+    // The version and state this push brought the document to, read before anything
+    // else can arrive: a socket's keystrokes landing while it is written down belong
+    // to a later version, which this device has not seen and must meet as `moved`.
+    const seq = this.state.seq
+    const sv = Y.encodeStateVector(this.state.doc)
+    await this.state.flushAll()
+    await this.ctx.storage.put('pushes', [...remembered, { push: pushed.push, seq, sv }].slice(-REMEMBERED_PUSHES))
+    await this.settleSoon()
+
+    return frame({ ok: true, seq, sv } satisfies RoomAnswer)
+  }
+
+  /** What a device is missing, against its state vector: for a pull the bucket could
+   *  not answer, which is only ever a note whose snapshot is not there yet. */
+  private async pull(body: Uint8Array): Promise<Uint8Array> {
+    const asked: unknown = unframe(body)
+    const sv = (asked as { sv?: unknown } | null)?.sv
+    const held = this.held
+    if (!(sv instanceof Uint8Array) || !held) return frame({ refused: 'gone' })
+
+    await this.state.flushAll()
+    try {
+      return frame({
+        update: Y.encodeStateAsUpdateV2(this.state.doc, sv),
+        seq: this.state.seq,
+        epoch: held.epoch ?? 0,
+        epochBase: held.epochBase ?? '',
+      })
+    } catch {
+      return frame({ refused: 'gone' })
+    }
+  }
+
+  /** A whole text, from something with no document of its own - a v1 app's save, the
+   *  connector, a rollback - taken in as the operations it differs by, under the room's
+   *  own id (section 5.10). What the room held unsettled is settled first, so a v1
+   *  save naming the version it edited is judged against the words the room really
+   *  holds: equal, and the text goes in; older, and the answer is the 409 a v1 app has
+   *  always had for a note that moved. Settled at once, so the caller answers with the
+   *  note as it now stands. */
+  private async ingest(body: Uint8Array): Promise<Ingested> {
+    const asked = ingestIn(body)
+    const held = this.held
+    if (!asked || !held || (held.epoch ?? 0) < 1) return { refused: 'gone' }
+
+    if ((await sha256(fileOf(held.kind, this.state.doc))) !== held.hash) await this.settle()
+
+    const row = await this.env.DB.prepare('select * from notes where id = ?')
+      .bind(held.noteId)
+      .first<Note>()
+    if (!row) return { refused: 'gone' }
+    if (asked.base !== undefined && row.version !== asked.base) return { conflict: true }
+
+    const current = fileOf(held.kind, this.state.doc)
+    const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)
+    if (!update) return { note: row }
+
+    this.settling = deviceIn(asked.name)
+    this.settlingDevice = asked.device
+    Y.applyUpdateV2(this.state.doc, update, PUSHED)
+    await this.state.flushAll()
+    if (!(await this.settle())) return { refused: 'unsaved' }
+
+    const after = await this.env.DB.prepare('select * from notes where id = ?')
+      .bind(held.noteId)
+      .first<Note>()
+    return after ? { note: after } : { refused: 'gone' }
+  }
+
   /** The note as it stands, kept as a second note beside it, because the settle is
    *  about to write over it and the room never saw what it says.
    *
@@ -922,6 +1527,17 @@ export class NoteRoom implements DurableObject {
     } catch (wrong) {
       noted(`room ${file.id}`, wrong instanceof Error ? wrong : new Error(String(wrong)), null)
     }
+  }
+}
+
+function placedOf(note: Note): Placed {
+  return {
+    version: note.version,
+    path: note.path,
+    epoch: note.epoch ?? 0,
+    epoch_base: note.epoch_base ?? null,
+    hash: note.hash,
+    deleted: note.deleted,
   }
 }
 

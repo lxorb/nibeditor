@@ -295,6 +295,22 @@ export function mayAskForWebKey(env: Env, userId: string): Promise<boolean> {
   return within(env, 'web-key', userId, WEB_KEY_REQUESTS_AN_HOUR, AN_HOUR)
 }
 
+/** How many requests that change a tree, and how many that push documents, one
+ *  account (or one guest) may make in a minute. Each request carries up to two hundred
+ *  ops or fifty documents, and a device coming back from a week away sends a few; six
+ *  hundred is a script gone wrong, not a person. Keyed by the account or the guest, so
+ *  deleting either takes its rows; see erase.ts. See docs/sync-v2.md section 8. */
+const TREE_CHANGES_A_MINUTE = 600
+const DOCUMENT_PUSHES_A_MINUTE = 600
+
+export function mayChangeTree(env: Env, whoId: string): Promise<boolean> {
+  return within(env, 'tree-ops', whoId, TREE_CHANGES_A_MINUTE, A_MINUTE)
+}
+
+export function mayPushDocuments(env: Env, whoId: string): Promise<boolean> {
+  return within(env, 'doc-push', whoId, DOCUMENT_PUSHES_A_MINUTE, A_MINUTE)
+}
+
 /** How many messages one address may be sent in an hour, and in a day, whoever
  *  caused them and whichever kind they were.
  *

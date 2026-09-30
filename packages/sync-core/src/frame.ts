@@ -110,7 +110,7 @@ export function unframe(bytes: Uint8Array): unknown {
   let header: unknown
   try {
     header = JSON.parse(
-      new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(at, at + headerLength)),
+      new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes.subarray(at, at + headerLength)),
     )
   } catch {
     // Not JSON, or not UTF-8: not an envelope, and the caller answers 400.
@@ -173,7 +173,7 @@ export function roomNews(bytes: Uint8Array): RoomNews | null {
 
   try {
     const body: unknown = JSON.parse(
-      new TextDecoder('utf-8', { fatal: true }).decode(bytes.subarray(1)),
+      new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(bytes.subarray(1)),
     )
     if (!isRecord(body)) return null
     const { epoch, epochBase } = body

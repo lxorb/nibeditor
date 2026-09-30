@@ -57,3 +57,12 @@ export const SIGN_IN_TO_DO_THAT = 'sign in to do that'
  *  See hub/hub.ts. A capture uploads in the background and the app answers a 409 with
  *  its own lock surface, so nobody reads this and it has no catalogue row. */
 export const FENCED = 'another device is using this site now'
+
+/** A note's room that did not answer: a moment to wait through, as a deploy is. The
+ *  room's own door answers it to a socket, and a v1 save of a note whose room writes
+ *  it answers it too. */
+export const ROOM_AWAY = 'this room is not answering - try again'
+
+/** Too many changes to a space's tree, or too many documents pushed, in a minute; see
+ *  `mayChangeTree` in limits.ts. */
+export const TOO_MANY_CHANGES = 'too many changes at once - try again in a minute'

@@ -27,6 +27,8 @@ import { hubDoor } from './hub/door'
 import { web } from './hub/web'
 import { webStore } from './spaces/web-store'
 import { settings } from './settings'
+import { v2Docs, v2Spaces } from './sync2'
+import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
 import { recheckDomains } from './spaces/proof'
@@ -257,6 +259,11 @@ app.route('/v2/web', web)
 app.route('/v2/devices', devices)
 app.route('/v2/spaces', webStore)
 
+// Sync v2, the documents' half: a space's tree and its feed, documents in batches,
+// and a space's files. See sync2/index.ts and docs/sync-v2.md section 7.
+app.route('/v2/spaces', v2Spaces)
+app.route('/v2/docs', v2Docs)
+
 app.get('/health', (context) => context.json({ ok: true }))
 
 /** The Even Realities plugin, which is the same web app with a bridge to a pair
@@ -336,6 +343,9 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(expireClients(env, at))
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
+  // And the answers sync v2 gave tree operations, once no device would send one again;
+  // see sync2/tree.ts.
+  context.waitUntil(sweepTreeOps(env, at))
   // And what readers typed into forms, once it is older than a space keeps it; see
   // spaces/answers.ts.
   context.waitUntil(sweepAnswers(env, at))

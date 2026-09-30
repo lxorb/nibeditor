@@ -21,6 +21,8 @@ import * as Y from 'yjs'
 const SNAPSHOT = 'state:'
 const LOG = 'log:'
 const COUNT = 'count'
+/** The document's version on the account and when it last changed; see `Version`. */
+const VERSION = 'version'
 
 /** How large a room's document may get.
  *
@@ -71,6 +73,28 @@ export interface RoomStorage {
 interface Count {
   updates: number
   bytes: number
+}
+
+/** The document's version on the account, and when it last changed on the account's
+ *  clock (docs/sync-v2.md section 5.2).
+ *
+ *  `seq` moves on with every change the room applies, whoever made it. It, and not a
+ *  state vector, says whether the document changed: a Yjs deletion moves no client's
+ *  clock, so two copies with one state vector can read differently. It is written in
+ *  the same storage write as the updates it counts, so the version and the document
+ *  are always the same moment - which is what lets an answer name a version at all. */
+export interface Version {
+  seq: number
+  at: number
+}
+
+function versionIn(value: unknown): Version {
+  if (typeof value !== 'object' || value === null) return { seq: 0, at: 0 }
+  const { seq, at } = value as Partial<Version>
+  return {
+    seq: typeof seq === 'number' && Number.isSafeInteger(seq) && seq >= 0 ? seq : 0,
+    at: typeof at === 'number' && Number.isFinite(at) ? at : 0,
+  }
 }
 
 /** How wide a key's number is written. Six digits, which is past what either kind
@@ -125,6 +149,8 @@ export class RoomState {
   readonly doc = new Y.Doc()
 
   private count: Count = { updates: 0, bytes: 0 }
+  /** The document's version, as of what it holds in memory; see `Version`. */
+  private version: Version = { seq: 0, at: 0 }
   /** Where the next log entry goes. Reset by every compaction. */
   private next = 0
   /** How large the document was when it was last written out, in bytes. Taken from
@@ -147,6 +173,7 @@ export class RoomState {
     const snapshot = await this.storage.list<unknown>({ prefix: SNAPSHOT })
     const log = await this.storage.list<unknown>({ prefix: LOG })
     const held = await this.storage.get<Count>(COUNT)
+    const version = versionIn(await this.storage.get<unknown>(VERSION))
 
     if (!snapshot.size && !log.size) return false
 
@@ -169,8 +196,42 @@ export class RoomState {
 
     this.count = held ?? { updates: log.size, bytes: 0 }
     this.next = log.size
+    // Set after the document is put back, since putting it back is not a change.
+    this.version = version
     this.measure()
     return true
+  }
+
+  /** The document's version as of what it holds now. */
+  get seq(): number {
+    return this.version.seq
+  }
+
+  /** When it last changed, on the account's clock. */
+  get changedAt(): number {
+    return this.version.at
+  }
+
+  /** Whether everything the document holds is written down. */
+  get durable(): boolean {
+    return this.pending.length === 0
+  }
+
+  /** Writes down whatever is waiting until nothing is: what an answer that names a
+   *  version waits for, so no device is ever told of a version the room could lose. */
+  async flushAll(): Promise<void> {
+    while (!this.durable) await this.flush()
+  }
+
+  /** Everything this room keeps of its document taken away, for a room starting a new
+   *  one; see `startEpoch` in room.ts. The `Y.Doc` itself cannot be emptied, so the
+   *  caller makes a fresh state after this. */
+  async clear(): Promise<void> {
+    await this.writing
+    this.pending = []
+    const snapshot = await this.storage.list<unknown>({ prefix: SNAPSHOT })
+    const log = await this.storage.list<unknown>({ prefix: LOG })
+    await this.storage.delete([...snapshot.keys(), ...log.keys(), COUNT, VERSION])
   }
 
   /** The room's first content, put in by whoever knows what the document holds;
@@ -200,6 +261,7 @@ export class RoomState {
 
     this.pending.push(update)
     this.count = { updates: this.count.updates + 1, bytes: this.count.bytes + update.length }
+    this.version = { seq: this.version.seq + 1, at: Date.now() }
 
     // Held only up to a point: past it the pile is worth a write of its own,
     // whether or not anybody has stopped typing.
@@ -243,7 +305,11 @@ export class RoomState {
       const merged = waiting.length === 1 ? waiting[0] : Y.mergeUpdates(waiting)
       if (!merged) return
 
-      await this.storage.put({ [logKey(this.next++)]: merged, [COUNT]: this.count })
+      await this.storage.put({
+        [logKey(this.next++)]: merged,
+        [COUNT]: this.count,
+        [VERSION]: this.version,
+      })
     })
   }
 
@@ -270,7 +336,10 @@ export class RoomState {
     this.size = whole.length
 
     const pieces = chunk(whole)
-    const entries: Record<string, unknown> = { [COUNT]: { updates: 0, bytes: 0 } }
+    const entries: Record<string, unknown> = {
+      [COUNT]: { updates: 0, bytes: 0 },
+      [VERSION]: this.version,
+    }
     for (const [at, piece] of pieces.entries()) {
       entries[`${SNAPSHOT}${String(at).padStart(DIGITS, '0')}`] = piece
     }

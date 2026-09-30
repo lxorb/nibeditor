@@ -29,6 +29,7 @@
     "@lezer/yaml": "^1.0.4",
     "@nib/markdown": "workspace:*",
     "@nib/rooms": "workspace:*",
+    "@nib/sync-core": "workspace:*",
     "hono": "^4.13.5",
     "y-protocols": "^1.0.7",
     "yjs": "^13.6.32"

@@ -33,7 +33,7 @@
  *  against the account's own gigabyte - that is Emil's to decide - so this is the
  *  only thing holding them. */
 
-import { cleanPersonName, now } from './crypto'
+import { byteLength, cleanPersonName, now, sha256 } from './crypto'
 import type { Env, Note } from './types'
 
 /** How long the account keeps a version, in days: a month, or a year. The two
@@ -186,6 +186,38 @@ export async function keepVersion(
     .run()
 
   await keepAtMost(env, note.id)
+}
+
+/** Keeps a text as a version of a note now, whatever else it has kept lately: the
+ *  words that lost a modal answer in sync v2 (docs/sync-v2.md section 5.4), which are
+ *  the one version somebody asked for by name and so are never thinned into the next
+ *  one. A moment of its own, after the newest, so two kept in one millisecond are
+ *  both kept. */
+export async function keepVersionNow(
+  env: Env,
+  noteId: string,
+  content: string,
+  by: string,
+): Promise<void> {
+  const hash = await sha256(content)
+  const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
+    .bind(hash)
+    .first<{ one: number }>()
+  if (!held) await env.NOTES.put(versionKey(hash), content)
+
+  const newest = await env.DB.prepare(
+    'select max(at) as at from note_versions where note_id = ?',
+  )
+    .bind(noteId)
+    .first<{ at: number | null }>()
+
+  await env.DB.prepare(
+    'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+  )
+    .bind(noteId, Math.max(now(), (newest?.at ?? 0) + 1), hash, byteLength(content), deviceIn(by))
+    .run()
+
+  await keepAtMost(env, noteId)
 }
 
 /** The ceiling on one note's history, held where the version is written.
