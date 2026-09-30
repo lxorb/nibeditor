@@ -67,7 +67,7 @@
   {:else}
     <Copyable label={t('Command')} value={line} />
   {/if}
-  <p class="hint">{t('Nib asks you once, the first time it connects.')}</p>
+  <p class="hint">{t('nibeditor asks you once, the first time it connects.')}</p>
 {/if}
 
 <button class="disclose" aria-expanded={making} onclick={fold}>

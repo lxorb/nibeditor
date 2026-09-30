@@ -1574,7 +1574,8 @@ export const vi: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Tác tử trên máy tính này',
   'Your account’s connector': 'Trình kết nối của tài khoản',
-  'Nib asks you once, the first time it connects.': 'Nib hỏi bạn một lần, khi nó kết nối lần đầu.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor hỏi bạn một lần, khi nó kết nối lần đầu.',
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
   'Shown only once.': 'Chỉ hiện một lần.',
   'Remove {name}?': 'Gỡ {name}?',

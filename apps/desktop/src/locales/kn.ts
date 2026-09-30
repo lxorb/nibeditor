@@ -1606,8 +1606,8 @@ export const kn: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿರುವ ಏಜೆಂಟ್‌ಗಳು',
   'Your account’s connector': 'ನಿಮ್ಮ ಖಾತೆಯ ಕನೆಕ್ಟರ್',
-  'Nib asks you once, the first time it connects.':
-    'ಮೊದಲ ಬಾರಿ ಸಂಪರ್ಕಿಸಿದಾಗ Nib ನಿಮ್ಮನ್ನು ಒಮ್ಮೆ ಕೇಳುತ್ತದೆ.',
+  'nibeditor asks you once, the first time it connects.':
+    'ಮೊದಲ ಬಾರಿ ಸಂಪರ್ಕಿಸಿದಾಗ nibeditor ನಿಮ್ಮನ್ನು ಒಮ್ಮೆ ಕೇಳುತ್ತದೆ.',
   'A client on another machine?': 'ಬೇರೆ ಯಂತ್ರದಲ್ಲಿನ ಕ್ಲೈಂಟ್?',
   'Shown only once.': 'ಒಮ್ಮೆ ಮಾತ್ರ ತೋರಿಸಲಾಗುತ್ತದೆ.',
   'Remove {name}?': '{name} ತೆಗೆದುಹಾಕಬೇಕೆ?',

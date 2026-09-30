@@ -1588,8 +1588,8 @@ export const fa: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'عامل‌های این رایانه',
   'Your account’s connector': 'رابط حساب شما',
-  'Nib asks you once, the first time it connects.':
-    'Nib یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
   'Shown only once.': 'فقط یک بار نشان داده می‌شود.',
   'Remove {name}?': '{name} حذف شود؟',

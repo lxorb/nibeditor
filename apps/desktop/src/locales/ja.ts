@@ -1580,8 +1580,8 @@ export const ja: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'このコンピューターのエージェント',
   'Your account’s connector': 'アカウントのコネクタ',
-  'Nib asks you once, the first time it connects.':
-    '初めて接続したときに、Nib が一度だけ確認します。',
+  'nibeditor asks you once, the first time it connects.':
+    '初めて接続したときに、nibeditor が一度だけ確認します。',
   'A client on another machine?': '別のマシンのクライアントですか？',
   'Shown only once.': '一度だけ表示されます。',
   'Remove {name}?': '{name} を削除しますか？',

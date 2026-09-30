@@ -1629,8 +1629,8 @@ export const de: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agenten auf diesem Computer',
   'Your account’s connector': 'Connector deines Kontos',
-  'Nib asks you once, the first time it connects.':
-    'Nib fragt dich einmal, wenn er sich zum ersten Mal verbindet.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor fragt dich einmal, wenn er sich zum ersten Mal verbindet.',
   'A client on another machine?': 'Ein Client auf einem anderen Gerät?',
   'Shown only once.': 'Wird nur einmal angezeigt.',
   'Remove {name}?': '{name} entfernen?',

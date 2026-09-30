@@ -1631,8 +1631,8 @@ export const ptPT: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agentes neste computador',
   'Your account’s connector': 'Conector da sua conta',
-  'Nib asks you once, the first time it connects.':
-    'O Nib pergunta uma vez, na primeira vez que ele se liga.',
+  'nibeditor asks you once, the first time it connects.':
+    'O nibeditor pergunta uma vez, na primeira vez que ele se liga.',
   'A client on another machine?': 'Um cliente noutra máquina?',
   'Shown only once.': 'Mostrado apenas uma vez.',
   'Remove {name}?': 'Remover {name}?',

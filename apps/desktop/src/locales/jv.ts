@@ -1578,7 +1578,8 @@ export const jv: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agen ing komputer iki',
   'Your account’s connector': 'Konektor akunmu',
-  'Nib asks you once, the first time it connects.': 'Nib takon sepisan, nalika pisanan nyambung.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor takon sepisan, nalika pisanan nyambung.',
   'A client on another machine?': 'Klien ing mesin liya?',
   'Shown only once.': 'Mung ditampilake sepisan.',
   'Remove {name}?': 'Busak {name}?',

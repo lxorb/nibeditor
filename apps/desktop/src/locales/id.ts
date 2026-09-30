@@ -1586,8 +1586,8 @@ export const id: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agen di komputer ini',
   'Your account’s connector': 'Konektor akunmu',
-  'Nib asks you once, the first time it connects.':
-    'Nib bertanya sekali, saat pertama kali ia terhubung.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor bertanya sekali, saat pertama kali ia terhubung.',
   'A client on another machine?': 'Klien di mesin lain?',
   'Shown only once.': 'Ditampilkan sekali saja.',
   'Remove {name}?': 'Hapus {name}?',

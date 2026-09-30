@@ -1609,8 +1609,8 @@ export const ml: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ',
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
-  'Nib asks you once, the first time it connects.':
-    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ Nib നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
+  'nibeditor asks you once, the first time it connects.':
+    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ nibeditor നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
   'Shown only once.': 'ഒരിക്കൽ മാത്രം കാണിക്കും.',
   'Remove {name}?': '{name} നീക്കം ചെയ്യണോ?',

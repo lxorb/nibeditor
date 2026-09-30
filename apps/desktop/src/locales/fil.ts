@@ -1625,8 +1625,8 @@ export const fil: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Mga agent sa computer na ito',
   'Your account’s connector': 'Connector ng iyong account',
-  'Nib asks you once, the first time it connects.':
-    'Magtatanong ang Nib nang isang beses, sa unang pagkonekta nito.',
+  'nibeditor asks you once, the first time it connects.':
+    'Magtatanong ang nibeditor nang isang beses, sa unang pagkonekta nito.',
   'A client on another machine?': 'Isang client sa ibang makina?',
   'Shown only once.': 'Ipinapakita nang isang beses lang.',
   'Remove {name}?': 'Alisin ang {name}?',

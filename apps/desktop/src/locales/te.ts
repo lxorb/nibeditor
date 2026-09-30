@@ -1595,8 +1595,8 @@ export const te: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ఈ కంప్యూటర్‌లోని ఏజెంట్‌లు',
   'Your account’s connector': 'మీ ఖాతా కనెక్టర్',
-  'Nib asks you once, the first time it connects.':
-    'మొదటిసారి కనెక్ట్ అయినప్పుడు Nib మిమ్మల్ని ఒకసారి అడుగుతుంది.',
+  'nibeditor asks you once, the first time it connects.':
+    'మొదటిసారి కనెక్ట్ అయినప్పుడు nibeditor మిమ్మల్ని ఒకసారి అడుగుతుంది.',
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
   'Shown only once.': 'ఒక్కసారి మాత్రమే చూపబడుతుంది.',
   'Remove {name}?': '{name}ని తీసివేయాలా?',

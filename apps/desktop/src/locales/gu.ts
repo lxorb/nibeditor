@@ -1579,8 +1579,8 @@ export const gu: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'આ કમ્પ્યુટર પરના એજન્ટ',
   'Your account’s connector': 'તમારા ખાતાનું કનેક્ટર',
-  'Nib asks you once, the first time it connects.':
-    'પહેલી વાર જોડાય ત્યારે Nib તમને એક વાર પૂછે છે.',
+  'nibeditor asks you once, the first time it connects.':
+    'પહેલી વાર જોડાય ત્યારે nibeditor તમને એક વાર પૂછે છે.',
   'A client on another machine?': 'બીજા મશીન પરનો ક્લાયન્ટ?',
   'Shown only once.': 'ફક્ત એક જ વાર બતાવાય છે.',
   'Remove {name}?': '{name} દૂર કરીએ?',

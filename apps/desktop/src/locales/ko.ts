@@ -1566,7 +1566,8 @@ export const ko: Dictionary = {
   // to connect one more.
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
-  'Nib asks you once, the first time it connects.': '처음 연결할 때 Nib이 한 번 묻습니다.',
+  'nibeditor asks you once, the first time it connects.':
+    '처음 연결할 때 nibeditor가 한 번 묻습니다.',
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
   'Shown only once.': '한 번만 표시됩니다.',
   'Remove {name}?': '{name}을(를) 제거할까요?',

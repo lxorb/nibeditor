@@ -1613,8 +1613,8 @@ export const ta: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
-  'Nib asks you once, the first time it connects.':
-    'முதல் முறை இணையும்போது Nib உங்களிடம் ஒருமுறை கேட்கும்.',
+  'nibeditor asks you once, the first time it connects.':
+    'முதல் முறை இணையும்போது nibeditor உங்களிடம் ஒருமுறை கேட்கும்.',
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
   'Shown only once.': 'ஒருமுறை மட்டுமே காட்டப்படும்.',
   'Remove {name}?': '{name} ஐ அகற்றவா?',

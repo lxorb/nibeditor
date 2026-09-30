@@ -1663,8 +1663,8 @@ export const pl: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agenci na tym komputerze',
   'Your account’s connector': 'Łącznik twojego konta',
-  'Nib asks you once, the first time it connects.':
-    'Nib zapyta cię raz, przy pierwszym połączeniu.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor zapyta cię raz, przy pierwszym połączeniu.',
   'A client on another machine?': 'Klient na innym komputerze?',
   'Shown only once.': 'Pokazywany tylko raz.',
   'Remove {name}?': 'Usunąć {name}?',

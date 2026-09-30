@@ -1556,7 +1556,8 @@ export const th: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
-  'Nib asks you once, the first time it connects.': 'Nib จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
   'Shown only once.': 'แสดงเพียงครั้งเดียว',
   'Remove {name}?': 'นำ {name} ออกไหม',

@@ -1661,8 +1661,8 @@ export const ru: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Агенты на этом компьютере',
   'Your account’s connector': 'Коннектор вашего аккаунта',
-  'Nib asks you once, the first time it connects.':
-    'Nib спросит вас один раз, при первом подключении.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor спросит вас один раз, при первом подключении.',
   'A client on another machine?': 'Клиент на другом компьютере?',
   'Shown only once.': 'Показывается только один раз.',
   'Remove {name}?': 'Удалить {name}?',

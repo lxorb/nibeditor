@@ -1615,8 +1615,8 @@ export const sw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Mawakala kwenye kompyuta hii',
   'Your account’s connector': 'Kiunganishi cha akaunti yako',
-  'Nib asks you once, the first time it connects.':
-    'Nib hukuuliza mara moja, mara ya kwanza inapounganishwa.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor hukuuliza mara moja, mara ya kwanza inapounganishwa.',
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
   'Shown only once.': 'Huonyeshwa mara moja tu.',
   'Remove {name}?': 'Ondoa {name}?',

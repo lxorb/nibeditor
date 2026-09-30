@@ -1575,8 +1575,8 @@ export const my: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ဤကွန်ပျူတာပေါ်ရှိ အေးဂျင့်များ',
   'Your account’s connector': 'သင့်အကောင့်၏ ချိတ်ဆက်ကိရိယာ',
-  'Nib asks you once, the first time it connects.':
-    'ပထမဆုံးချိတ်ဆက်သည့်အခါ Nib က တစ်ကြိမ်မေးပါမည်။',
+  'nibeditor asks you once, the first time it connects.':
+    'ပထမဆုံးချိတ်ဆက်သည့်အခါ nibeditor က တစ်ကြိမ်မေးပါမည်။',
   'A client on another machine?': 'အခြားစက်ပေါ်ရှိ client လား။',
   'Shown only once.': 'တစ်ကြိမ်သာ ပြသည်။',
   'Remove {name}?': '{name} ကို ဖယ်ရှားမလား။',

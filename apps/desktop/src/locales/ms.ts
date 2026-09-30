@@ -1585,8 +1585,8 @@ export const ms: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Ejen pada komputer ini',
   'Your account’s connector': 'Penyambung akaun anda',
-  'Nib asks you once, the first time it connects.':
-    'Nib bertanya sekali, kali pertama ia bersambung.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor bertanya sekali, kali pertama ia bersambung.',
   'A client on another machine?': 'Klien pada mesin lain?',
   'Shown only once.': 'Ditunjukkan sekali sahaja.',
   'Remove {name}?': 'Buang {name}?',

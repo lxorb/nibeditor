@@ -1683,7 +1683,8 @@ export const ar: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'الوكلاء على هذا الحاسوب',
   'Your account’s connector': 'موصّل حسابك',
-  'Nib asks you once, the first time it connects.': 'يسألك Nib مرة واحدة، عند أول اتصال.',
+  'nibeditor asks you once, the first time it connects.':
+    'يسألك nibeditor مرة واحدة، عند أول اتصال.',
   'A client on another machine?': 'عميل على جهاز آخر؟',
   'Shown only once.': 'يُعرض مرة واحدة فقط.',
   'Remove {name}?': 'إزالة {name}؟',

@@ -1550,7 +1550,8 @@ export const yue: Dictionary = {
   // to connect one more.
   'Agents on this computer': '呢部電腦上面嘅代理',
   'Your account’s connector': '你帳戶嘅連接器',
-  'Nib asks you once, the first time it connects.': '第一次連線嘅時候，Nib 會問你一次。',
+  'nibeditor asks you once, the first time it connects.':
+    '第一次連線嘅時候，nibeditor 會問你一次。',
   'A client on another machine?': '另一部機器上面嘅用戶端？',
   'Shown only once.': '只會顯示一次。',
   'Remove {name}?': '移除 {name}？',

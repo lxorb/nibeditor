@@ -1589,8 +1589,8 @@ export const mr: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'या संगणकावरील एजंट',
   'Your account’s connector': 'तुमच्या खात्याचा कनेक्टर',
-  'Nib asks you once, the first time it connects.':
-    'पहिल्यांदा जोडले जाताना Nib तुम्हाला एकदाच विचारते.',
+  'nibeditor asks you once, the first time it connects.':
+    'पहिल्यांदा जोडले जाताना nibeditor तुम्हाला एकदाच विचारते.',
   'A client on another machine?': 'दुसऱ्या मशीनवरील क्लायंट?',
   'Shown only once.': 'फक्त एकदाच दाखवले जाते.',
   'Remove {name}?': '{name} काढायचा?',

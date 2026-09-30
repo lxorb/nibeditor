@@ -1594,7 +1594,8 @@ export const tr: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
-  'Nib asks you once, the first time it connects.': 'Nib ilk bağlandığında sana bir kez sorar.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor ilk bağlandığında sana bir kez sorar.',
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
   'Shown only once.': 'Yalnızca bir kez gösterilir.',
   'Remove {name}?': '{name} kaldırılsın mı?',

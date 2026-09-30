@@ -1598,8 +1598,8 @@ export const gsw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agänte uf däm Computer',
   'Your account’s connector': 'Connector vo dim Konto',
-  'Nib asks you once, the first time it connects.':
-    'Nib fragt di einisch, wenn er sich s erscht Mal verbindet.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor fragt di einisch, wenn er sich s erscht Mal verbindet.',
   'A client on another machine?': 'En Client uf eme andere Grät?',
   'Shown only once.': 'Wird nume einisch azeigt.',
   'Remove {name}?': '{name} entferne?',

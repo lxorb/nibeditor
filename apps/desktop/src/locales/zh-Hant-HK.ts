@@ -1549,7 +1549,7 @@ export const zhHantHK: Dictionary = {
   // to connect one more.
   'Agents on this computer': '這部電腦上的代理',
   'Your account’s connector': '你帳戶的連接器',
-  'Nib asks you once, the first time it connects.': '首次連線時，Nib 會問你一次。',
+  'nibeditor asks you once, the first time it connects.': '首次連線時，nibeditor 會問你一次。',
   'A client on another machine?': '另一部機器上的用戶端？',
   'Shown only once.': '只顯示一次。',
   'Remove {name}?': '移除 {name}？',

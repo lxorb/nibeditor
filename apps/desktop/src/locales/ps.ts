@@ -1591,8 +1591,8 @@ export const ps: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'په دې کمپیوټر کې اجنټان',
   'Your account’s connector': 'ستاسو د حساب نښلونکی',
-  'Nib asks you once, the first time it connects.':
-    'Nib له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
   'Shown only once.': 'یوازې یو ځل ښودل کېږي.',
   'Remove {name}?': '{name} لرې شي؟',

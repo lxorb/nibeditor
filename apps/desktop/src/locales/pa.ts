@@ -1594,8 +1594,8 @@ export const pa: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ਇਸ ਕੰਪਿਊਟਰ ਉੱਤੇ ਏਜੰਟ',
   'Your account’s connector': 'ਤੁਹਾਡੇ ਖਾਤੇ ਦਾ ਕਨੈਕਟਰ',
-  'Nib asks you once, the first time it connects.':
-    'ਪਹਿਲੀ ਵਾਰ ਜੁੜਨ ’ਤੇ Nib ਤੁਹਾਨੂੰ ਇੱਕ ਵਾਰ ਪੁੱਛਦਾ ਹੈ।',
+  'nibeditor asks you once, the first time it connects.':
+    'ਪਹਿਲੀ ਵਾਰ ਜੁੜਨ ’ਤੇ nibeditor ਤੁਹਾਨੂੰ ਇੱਕ ਵਾਰ ਪੁੱਛਦਾ ਹੈ।',
   'A client on another machine?': 'ਕਿਸੇ ਹੋਰ ਮਸ਼ੀਨ ਉੱਤੇ ਕਲਾਇੰਟ?',
   'Shown only once.': 'ਸਿਰਫ਼ ਇੱਕ ਵਾਰ ਦਿਖਾਇਆ ਜਾਂਦਾ ਹੈ।',
   'Remove {name}?': '{name} ਹਟਾਉਣਾ ਹੈ?',

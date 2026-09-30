@@ -1614,8 +1614,8 @@ export const ha: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Wakilai a wannan kwamfuta',
   'Your account’s connector': 'Mahaɗin asusunka',
-  'Nib asks you once, the first time it connects.':
-    'Nib zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor zai tambaye ka sau ɗaya, a farkon lokacin da ya haɗu.',
   'A client on another machine?': "Abokin ciniki a wata na'ura?",
   'Shown only once.': 'Ana nuna shi sau ɗaya kawai.',
   'Remove {name}?': 'Cire {name}?',

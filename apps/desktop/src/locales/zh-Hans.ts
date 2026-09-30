@@ -1549,7 +1549,7 @@ export const zhHans: Dictionary = {
   // to connect one more.
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
-  'Nib asks you once, the first time it connects.': '首次连接时，Nib 会问你一次。',
+  'nibeditor asks you once, the first time it connects.': '首次连接时，nibeditor 会问你一次。',
   'A client on another machine?': '另一台机器上的客户端？',
   'Shown only once.': '只显示一次。',
   'Remove {name}?': '移除 {name}？',

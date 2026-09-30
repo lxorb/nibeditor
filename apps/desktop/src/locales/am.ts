@@ -1567,7 +1567,8 @@ export const am: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
-  'Nib asks you once, the first time it connects.': 'Nib ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
+  'nibeditor asks you once, the first time it connects.':
+    'nibeditor ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
   'Shown only once.': 'አንድ ጊዜ ብቻ ይታያል።',
   'Remove {name}?': '{name} ይወገድ?',
