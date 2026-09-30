@@ -267,14 +267,110 @@ pub fn away() -> Option<(f64, f64)> {
 /// window that is still hidden is honoured wherever it goes. And it is shown without
 /// being brought forward: built unfocused, tao shows it the way `SW_SHOWNOACTIVATE`
 /// does, so the window that was in front stays in front.
+///
+/// And on Windows it is not even created in the cascade's place: see `created_away`,
+/// which hands the system the place tao would have dropped. Hidden is a state a window
+/// can leave by any road - one probe window in about twenty cold launches was once
+/// seen on a screen at the cascade's corner before the drive had asked it anything -
+/// and a window that has never had a pixel of itself on any screen has no frame there
+/// to show, whichever road it took.
 pub fn built_away<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
     (x, y): (f64, f64),
 ) -> tauri::Result<WebviewWindow<R>> {
+    #[cfg(windows)]
+    let window = created_away::during(|| building.visible(false).focused(false).build())?;
+    #[cfg(not(windows))]
     let window = building.visible(false).focused(false).build()?;
     window.set_position(LogicalPosition::new(x, y))?;
     window.show()?;
     Ok(window)
+}
+
+/// Every top-level window this thread creates while `during` runs is created off the
+/// screen, whatever place it asked for.
+///
+/// tao turns a starting place that is on no screen into `CW_USEDEFAULT`, so a window
+/// sent away is born at the system's cascade - on the primary screen - and only moved
+/// off it once the webview inside has been built, which on a cold profile is seconds.
+/// A computer-based-training hook is the system's own seam for exactly this: it is
+/// told of each window before it exists, with the structure the window will be
+/// created from, and may change it. Here it changes the place and nothing else, for
+/// the windows of this thread alone, and only while one build runs.
+#[cfg(windows)]
+mod created_away {
+    use std::cell::Cell;
+
+    use windows::Win32::Foundation::{HINSTANCE, LPARAM, LRESULT, WPARAM};
+    use windows::Win32::System::Threading::GetCurrentThreadId;
+    use windows::Win32::UI::WindowsAndMessaging::{
+        CallNextHookEx, SetWindowsHookExW, UnhookWindowsHookEx, CBT_CREATEWNDW, HCBT_CREATEWND,
+        HHOOK, WH_CBT, WS_CHILD,
+    };
+
+    /// Off every screen, in the pixels `CreateWindowEx` takes: the corner a minimised
+    /// window is parked in. The system clamps it nearer, and nearer is still far past
+    /// any desk of monitors.
+    const PARKED: i32 = -32_000;
+
+    thread_local! {
+        /// Whether a build on this thread is asking, so a window created by anything else
+        /// on the thread - later, or by a build that was not sent away - is left alone.
+        static ASKING: Cell<bool> = const { Cell::new(false) };
+    }
+
+    #[allow(
+        unsafe_code,
+        reason = "a window hook is a callback the system calls with pointers it owns"
+    )]
+    unsafe extern "system" fn creating(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+        if u32::try_from(code) == Ok(HCBT_CREATEWND) && ASKING.get() {
+            // Safe: for `HCBT_CREATEWND` the system passes a live `CBT_CREATEWND` whose
+            // `lpcs` is the structure the window is about to be created from, and it is
+            // ours to change until this returns.
+            unsafe {
+                let told = lparam.0 as *const CBT_CREATEWNDW;
+                if let Some(creating) = told.as_ref().and_then(|told| told.lpcs.as_mut()) {
+                    // A child goes where its parent does; only a window of its own has a
+                    // place on the screen.
+                    if u32::from_ne_bytes(creating.style.to_ne_bytes()) & WS_CHILD.0 == 0 {
+                        creating.x = PARKED;
+                        creating.y = PARKED;
+                    }
+                }
+            }
+        }
+        // Safe: handing the call on is what a hook owes the rest of the chain.
+        unsafe { CallNextHookEx(HHOOK::default(), code, wparam, lparam) }
+    }
+
+    /// Runs `making` with every top-level window it creates on this thread created off
+    /// the screen. Where the hook cannot be set, `making` runs as it always did, and the
+    /// window is moved away after it is built as it always was.
+    #[allow(
+        unsafe_code,
+        reason = "setting and removing a window hook is a Win32 call"
+    )]
+    pub fn during<T>(making: impl FnOnce() -> T) -> T {
+        // Safe: a hook on this thread alone, with a procedure that lives for the whole
+        // process, removed below before this returns.
+        let hook = unsafe {
+            SetWindowsHookExW(
+                WH_CBT,
+                Some(creating),
+                HINSTANCE::default(),
+                GetCurrentThreadId(),
+            )
+        };
+        ASKING.set(true);
+        let made = making();
+        ASKING.set(false);
+        if let Ok(hook) = hook {
+            // Safe: the hook set above, removed once.
+            let _ = unsafe { UnhookWindowsHookEx(hook) };
+        }
+        made
+    }
 }
 
 /// Brings a window forward because somebody asked for the app - a second launch, a

@@ -19,7 +19,8 @@ missing_docs = "warn"
 # processes a terminal asks before it closes on a running one, Ctrl+C let
 # through to a terminal's shells (see terminal/process.rs and
 # terminal/session.rs), and the shell's answer to which program opens a web
-# address (default_browser.rs). Two more on a Mac: the
+# address (default_browser.rs), and the hook that has a probe's window created off
+# the screen rather than moved there (placement.rs). Two more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), and the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
