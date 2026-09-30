@@ -1438,6 +1438,7 @@ export const ps: Dictionary = {
   'wants to': 'غواړي',
   'Don’t allow': 'اجازه نه ورکول',
   Allow: 'اجازه ورکول',
+  OK: 'سمه ده',
   'Use your camera': 'ستاسو کامرې کارول',
   'Use your microphone': 'ستاسو مایکروفون کارول',
   'Know your location': 'ستاسو موقعیت پېژندل',

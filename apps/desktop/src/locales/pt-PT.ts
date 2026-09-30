@@ -1472,6 +1472,7 @@ export const ptPT: Dictionary = {
   'wants to': 'quer',
   'Don’t allow': 'Não permitir',
   Allow: 'Permitir',
+  OK: 'OK',
   'Use your camera': 'Usar a sua câmara',
   'Use your microphone': 'Usar o seu microfone',
   'Know your location': 'Conhecer a sua localização',

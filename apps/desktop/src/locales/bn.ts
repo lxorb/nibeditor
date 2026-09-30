@@ -1432,6 +1432,7 @@ export const bn: Dictionary = {
   'wants to': 'চায়',
   'Don’t allow': 'অনুমতি দেবেন না',
   Allow: 'অনুমতি দিন',
+  OK: 'ঠিক আছে',
   'Use your camera': 'আপনার ক্যামেরা ব্যবহার করুন',
   'Use your microphone': 'আপনার মাইক্রোফোন ব্যবহার করুন',
   'Know your location': 'আপনার লোকেশন জানুন',

@@ -1416,6 +1416,7 @@ export const ko: Dictionary = {
   'wants to': '에서 다음 권한을 요청합니다',
   'Don’t allow': '허용 안함',
   Allow: '허용',
+  OK: '확인',
   'Use your camera': '카메라 사용',
   'Use your microphone': '마이크 사용',
   'Know your location': '내 위치 확인',

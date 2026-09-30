@@ -1439,6 +1439,7 @@ export const te: Dictionary = {
   'wants to': 'వీటిని చేయాలనుకుంటోంది',
   'Don’t allow': 'అనుమతించవద్దు',
   Allow: 'అనుమతించండి',
+  OK: 'సరే',
   'Use your camera': 'మీ కెమెరాను ఉపయోగించడం',
   'Use your microphone': 'మీ మైక్రోఫోన్‌ను ఉపయోగించడం',
   'Know your location': 'మీ లొకేషన్‌ను తెలుసుకోవడం',

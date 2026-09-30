@@ -1497,6 +1497,7 @@ export const uk: Dictionary = {
   'wants to': 'хоче',
   'Don’t allow': 'Не дозволяти',
   Allow: 'Дозволити',
+  OK: 'OK',
   'Use your camera': 'Використовувати вашу камеру',
   'Use your microphone': 'Використовувати ваш мікрофон',
   'Know your location': 'Бачити ваше місцезнаходження',

@@ -1401,6 +1401,7 @@ export const yue: Dictionary = {
   'wants to': '要求以下權限',
   'Don’t allow': '唔允許',
   Allow: '允許',
+  OK: '確定',
   'Use your camera': '用你嘅相機',
   'Use your microphone': '用你嘅麥克風',
   'Know your location': '掌握你嘅位置',

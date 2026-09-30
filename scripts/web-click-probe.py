@@ -415,8 +415,19 @@ def press_in_page(app: App, identifier: str, base: str, link: str, press: str) -
     if tools is None or not isinstance(opener, str):
         return "no page to press in"
     try:
-        box = tools.value(f"JSON.stringify(document.getElementById('{link}').getBoundingClientRect())")
-        rect = json.loads(str(box))
+        # The page is found as soon as its address is, which can be before its body has
+        # the link: asked again until it does.
+        rect = None
+        until = time.perf_counter() + 10
+        while rect is None and time.perf_counter() < until:
+            box = tools.value(
+                f"JSON.stringify(document.getElementById('{link}')?.getBoundingClientRect() ?? null)"
+            )
+            rect = json.loads(box) if isinstance(box, str) and box.startswith("{") else None
+            if rect is None:
+                time.sleep(0.2)
+        if rect is None:
+            return "no link to press"
         before = strip(app)
         button, modifiers = PRESSES[press]
         tools.click(rect["x"] + 30, rect["y"] + rect["height"] / 2, button, modifiers)

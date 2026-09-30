@@ -1460,6 +1460,7 @@ export const sw: Dictionary = {
   'wants to': 'inataka',
   'Don’t allow': 'Usiruhusu',
   Allow: 'Ruhusu',
+  OK: 'Sawa',
   'Use your camera': 'Kutumia kamera yako',
   'Use your microphone': 'Kutumia kipazasauti chako',
   'Know your location': 'Kujua mahali ulipo',

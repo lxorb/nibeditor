@@ -1467,6 +1467,7 @@ export const fil: Dictionary = {
   'wants to': 'ay gustong',
   'Don’t allow': 'Huwag payagan',
   Allow: 'Payagan',
+  OK: 'OK',
   'Use your camera': 'Gamitin ang iyong camera',
   'Use your microphone': 'Gamitin ang iyong mikropono',
   'Know your location': 'Alamin ang iyong lokasyon',

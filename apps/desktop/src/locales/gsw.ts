@@ -1445,6 +1445,7 @@ export const gsw: Dictionary = {
   'wants to': 'wott',
   'Don’t allow': 'Nöd erlaube',
   Allow: 'Erlaube',
+  OK: 'OK',
   'Use your camera': 'Dini Kamera bruuche',
   'Use your microphone': 'Dis Mikrofon bruuche',
   'Know your location': 'Din Standort wüsse',

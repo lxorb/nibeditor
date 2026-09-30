@@ -1519,6 +1519,7 @@ export const ar: Dictionary = {
   'wants to': 'يريد',
   'Don’t allow': 'عدم السماح',
   Allow: 'سماح',
+  OK: 'حسنًا',
   'Use your camera': 'استخدام الكاميرا',
   'Use your microphone': 'استخدام الميكروفون',
   'Know your location': 'معرفة موقعك',

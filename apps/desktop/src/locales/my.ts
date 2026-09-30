@@ -1424,6 +1424,7 @@ export const my: Dictionary = {
   'wants to': 'က ပြုလုပ်လိုသည်မှာ',
   'Don’t allow': 'ခွင့်မပြုပါ',
   Allow: 'ခွင့်ပြုရန်',
+  OK: 'အိုကေ',
   'Use your camera': 'သင့်ကင်မရာအား အသုံးပြုရန်',
   'Use your microphone': 'သင့်မိုက်ခရိုဖုန်းကို အသုံးပြုရန်',
   'Know your location': 'သင့်တည်နေရာအား သိရန်',

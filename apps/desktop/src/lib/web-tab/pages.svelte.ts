@@ -32,6 +32,7 @@
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
 import { grants, readAsked } from './permissions.svelte'
+import { dialogs, readDialog } from './dialogs.svelte'
 import { placeOf, placeKept } from './place'
 
 /** This device's history, asked for by the first page that says where it is rather
@@ -886,6 +887,7 @@ class Pages {
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
       grants.dropped(tabId)
+      dialogs.dropped(tabId)
       if (isDesktop) void invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
@@ -908,6 +910,7 @@ class Pages {
 
     this.held.delete(tabId)
     grants.dropped(tabId)
+    dialogs.dropped(tabId)
     await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
   }
 
@@ -978,6 +981,14 @@ class Pages {
     await listen('nib://web-ask', (event) => {
       const said = readAsked(event.payload)
       if (said && this.held.has(said.tab)) grants.heard(said)
+    })
+
+    // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its
+    // script waits for the answer, which the card over the pane gives; see
+    // dialogs.svelte.ts and web_dialogs.rs.
+    await listen('nib://web-dialog', (event) => {
+      const said = readDialog(event.payload)
+      if (said && this.held.has(said.tab)) dialogs.heard(said)
     })
 
     // A page has asked for a window of its own - `target="_blank"`, `window.open`, a

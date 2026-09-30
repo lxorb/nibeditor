@@ -1430,6 +1430,7 @@ export const ja: Dictionary = {
   'wants to': 'が次の許可を求めています',
   'Don’t allow': '許可しない',
   Allow: '許可する',
+  OK: 'OK',
   'Use your camera': 'カメラを使用する',
   'Use your microphone': 'マイクを使用する',
   'Know your location': '現在地の認識',

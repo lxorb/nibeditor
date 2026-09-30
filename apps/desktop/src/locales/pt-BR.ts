@@ -1464,6 +1464,7 @@ export const ptBR: Dictionary = {
   'wants to': 'quer',
   'Don’t allow': 'Não permitir',
   Allow: 'Permitir',
+  OK: 'OK',
   'Use your camera': 'Usar câmera',
   'Use your microphone': 'Usar microfone',
   'Know your location': 'Saber sua localização',

@@ -1400,6 +1400,7 @@ export const zhHantHK: Dictionary = {
   'wants to': '要求以下權限',
   'Don’t allow': '不允許',
   Allow: '允許',
+  OK: '確定',
   'Use your camera': '使用您的相機',
   'Use your microphone': '使用您的麥克風',
   'Know your location': '掌握您的位置',

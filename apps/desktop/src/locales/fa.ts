@@ -1436,6 +1436,7 @@ export const fa: Dictionary = {
   'wants to': 'می‌خواهد',
   'Don’t allow': 'اجازه ندادن',
   Allow: 'اجازه دادن',
+  OK: 'تأیید',
   'Use your camera': 'استفاده از دوربین شما',
   'Use your microphone': 'استفاده از میکروفون شما',
   'Know your location': 'دانستن مکان شما',

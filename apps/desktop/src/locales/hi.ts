@@ -1435,6 +1435,7 @@ export const hi: Dictionary = {
   'wants to': 'को अनुमति चाहिए',
   'Don’t allow': 'अनुमति न दें',
   Allow: 'अनुमति दें',
+  OK: 'ठीक है',
   'Use your camera': 'अपना कैमरा उपयोग करें',
   'Use your microphone': 'अपना माइक्रोफ़ोन उपयोग करें',
   'Know your location': 'आपकी जगह की जानकारी ऐक्सेस करने की',

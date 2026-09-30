@@ -43,12 +43,14 @@
   import { pages, type Rect, type Step } from './pages.svelte'
   import { seek, shut, sought } from './seek'
   import { grants, siteOf } from './permissions.svelte'
+  import { dialogs } from './dialogs.svelte'
   import { isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { spaceOf } from './web-data'
   import { webData } from './web-data.svelte'
   import WebAsk from './WebAsk.svelte'
+  import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
   import WebDownloads from './WebDownloads.svelte'
   import WebSite from './WebSite.svelte'
@@ -438,6 +440,10 @@
    *  tab nobody has answered. One at a time, the way a browser asks. */
   const asking = $derived(grants.asking.find((one) => one.tab === tab.id) ?? null)
 
+  /** The dialog this tab's page has open, if any: its script is waiting on it, so it
+   *  comes before anything else the pane could show. */
+  const dialog = $derived(dialogs.open.find((one) => one.tab === tab.id) ?? null)
+
   // Open, and every page the tab arrives on while it is: the words are looked for again,
   // because the matches were the last page's. See seek.ts.
   $effect(() => {
@@ -580,11 +586,16 @@
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
     />
 
-    <!-- What a site asked for, and what a site is: one at a time, because a question
-         waiting to be answered is the only thing worth reading. Both are on the overlay
-         stack, so the page is out of sight while either is up and the still picture of
-         it stands in; see `covered`. -->
-    {#if asking}
+    <!-- What the page said, what a site asked for, and what a site is: one at a time,
+         because a question waiting to be answered is the only thing worth reading, and
+         the page's own dialog first, because its script is stopped until it is answered.
+         All are on the overlay stack, so the page is out of sight while one is up and
+         the still picture of it stands in; see `covered`. -->
+    {#if dialog}
+      {#key dialog.id}
+        <WebDialog {dialog} icon={page.icon} />
+      {/key}
+    {:else if asking}
       <WebAsk {asking} icon={page.icon} />
     {:else if showingSite && page.url !== null}
       <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />

@@ -1400,6 +1400,7 @@ export const zhHans: Dictionary = {
   'wants to': '想要',
   'Don’t allow': '不允许',
   Allow: '允许',
+  OK: '确定',
   'Use your camera': '使用您的摄像头',
   'Use your microphone': '使用您的麦克风',
   'Know your location': '获取您的位置',

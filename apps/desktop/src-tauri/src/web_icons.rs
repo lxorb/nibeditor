@@ -297,8 +297,9 @@ impl Telling {
 /// pixels - measured, on a screen at twice that - so a mark drawn from it is blurred on
 /// exactly the screens a mark is looked at on. The engine's choice of which picture to
 /// fetch is the right one, a size that fills the box on this screen, and `FaviconUri`
-/// says what it chose. So that address is read again inside the page, where the site's
-/// cookies and its own origin are, and the bytes come back as they were served; see
+/// says what it chose. So that address is read again inside the page - in nib's own
+/// world there, which the page cannot see - where the site's cookies and its own origin
+/// are, and the bytes come back as they were served; see
 /// `FETCH`. Where the page will not hand them over - a mark on another origin that does
 /// not allow reading it, or a page whose policy forbids the request - the engine's own
 /// sixteen pixels are the answer, and those always arrive.
@@ -308,9 +309,6 @@ impl Telling {
     reason = "a page's favicon is WebView2's own, reached through its COM interfaces"
 )]
 fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15, told: Telling) {
-    use webview2_com::CallDevToolsProtocolMethodCompletedHandler;
-    use windows_core::HSTRING;
-
     // Safe: a string the engine allocated for this call, taken and freed here.
     let uri = unsafe {
         let mut uri = windows_core::PWSTR::null();
@@ -339,24 +337,16 @@ fn fetch(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_15,
         return;
     }
 
+    // In nib's own world rather than the page's, so a page that has wrapped `fetch` - to
+    // log it, retry it, or route it through its own worker - neither sees this read nor
+    // changes what it answers; see web_worlds.rs.
     let fallback = core.clone();
-    let handler =
-        CallDevToolsProtocolMethodCompletedHandler::create(Box::new(move |result, answer| {
-            match result.ok().and_then(|()| read_back(&answer)) {
-                Some(icon) => told.tell(&icon),
-                None => decoded(&fallback, told),
-            }
-            Ok(())
-        }));
-
-    // Safe: the engine holds the handler until it answers, on this same thread.
-    unsafe {
-        let _ = core.CallDevToolsProtocolMethod(
-            &HSTRING::from("Runtime.evaluate"),
-            &HSTRING::from(fetching(&uri)),
-            &handler,
-        );
-    }
+    crate::web_worlds::evaluate(core, fetching(&uri), move |answer| {
+        match answer.as_deref().and_then(read_back) {
+            Some(icon) => told.tell(&icon),
+            None => decoded(&fallback, told),
+        }
+    });
 }
 
 /// The engine's own picture of the page's mark, sixteen pixels square, and the window
@@ -388,13 +378,20 @@ fn decoded(core: &webview2_com::Microsoft::Web::WebView2::Win32::ICoreWebView2_1
     }
 }
 
-/// Reads the mark the engine chose, inside the page: with the page's cookies, from the
-/// page's own origin, and out of the cache the engine has just filled. The answer is a
-/// `data:` address or nothing. `__URI__` is the address, as a JSON string.
+/// Reads the mark the engine chose, inside the page: from the page's own origin, with
+/// its cookies where the mark is on that origin, and out of the cache the engine has just
+/// filled. The answer is a `data:` address or nothing. `__URI__` is the address, as a
+/// JSON string.
+///
+/// Cookies go to the page's own origin and no other - the fetch's own default - because
+/// a mark on a shared host answers anybody with `Access-Control-Allow-Origin: *`, which
+/// the engine refuses for a request that carries credentials: Google's editors keep
+/// theirs on `ssl.gstatic.com`, and asked with cookies it was refused every time, in red
+/// in the page's own console.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 const FETCH: &str = r"(async () => {
   try {
-    const answer = await fetch(__URI__, { credentials: 'include', cache: 'force-cache' })
+    const answer = await fetch(__URI__, { cache: 'force-cache' })
     if (!answer.ok) return ''
     const body = await answer.blob()
     if (!/^image\//.test(body.type) || body.size > __LARGEST__) return ''
@@ -409,20 +406,14 @@ const FETCH: &str = r"(async () => {
   }
 })()";
 
-/// What the engine is asked to run for `FETCH`: the protocol's own evaluation, because
+/// `FETCH` for one address: what the protocol's own evaluation is asked to run, because
 /// it waits for a promise and a plain script does not.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 fn fetching(uri: &str) -> String {
     let address = serde_json::to_string(uri).unwrap_or_else(|_| "''".into());
-    let expression = FETCH
+    FETCH
         .replace("__URI__", &address)
-        .replace("__LARGEST__", &LARGEST.to_string());
-    serde_json::json!({
-        "expression": expression,
-        "awaitPromise": true,
-        "returnByValue": true,
-    })
-    .to_string()
+        .replace("__LARGEST__", &LARGEST.to_string())
 }
 
 /// The picture out of the protocol's answer to `fetching`, or nothing.
@@ -643,13 +634,7 @@ mod tests {
 
     #[test]
     fn the_address_reaches_the_page_as_a_string_and_nothing_more() {
-        let asked: serde_json::Value =
-            serde_json::from_str(&fetching(r#"https://a.example/i.png?x='1'&y="2""#))
-                .expect("json");
-        assert_eq!(asked["awaitPromise"], true);
-        assert_eq!(asked["returnByValue"], true);
-
-        let expression = asked["expression"].as_str().expect("a script");
+        let expression = fetching(r#"https://a.example/i.png?x='1'&y="2""#);
         assert!(expression.contains(r#"fetch("https://a.example/i.png?x='1'&y=\"2\"", "#));
         assert!(!expression.contains("__URI__") && !expression.contains("__LARGEST__"));
     }
