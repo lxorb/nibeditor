@@ -30,16 +30,8 @@
   let at = $state<{ x: number; y: number } | null>(null)
 
   /** The editor the bar was last placed over. Not a rune: nothing is drawn from it,
-   *  and the effect below it must not wake when `follow` writes it. */
+   *  and the effect that asks after it must not wake when `follow` writes it. */
   let over: EditorView | null = null
-
-  // The bar is told where to stand by the selection moving, and an editor that has
-  // been taken apart never moves again: the last tab in a pane closed with a line
-  // selected, or the window's keyboard gone to another pane. So once the window's
-  // editor is not the one the bar stands over, it goes.
-  $effect(() => {
-    if (view !== over) at = null
-  })
 
   let bar = $state<HTMLElement>()
   /** Whether the colours are showing instead of the actions. */
@@ -93,12 +85,13 @@
     if (!docked) viewport.covered = 0
   })
 
-  /** An editor taken down takes its callout with it. A tab turned into its reading
-   *  view is one: the editor goes, reports no last selection on the way, and the
-   *  pane forgets it - so the bar, which only hears from editors, stayed over the
-   *  rendered page. With no editor there is nothing to format. */
+  /** An editor taken down takes its callout with it, and so does one the window's
+   *  keyboard has left. The bar only hears from editors, and one that has gone reports
+   *  no last selection on the way: a tab turned into its reading view, the last tab of
+   *  a pane closed with a line selected, the keyboard gone to another pane. So once the
+   *  window's editor is not the one the bar stands over, there is nothing to format. */
   $effect(() => {
-    if (view) return
+    if (view === over) return
     at = null
     colouring = false
   })

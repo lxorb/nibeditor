@@ -80,3 +80,21 @@ test('stands over a selection, and goes when the editor under it does', () => {
   flushSync()
   expect(callout()).toBe(false)
 })
+
+// And one the window's keyboard has left: the last tab of a pane closed with a line
+// selected puts the keyboard in the pane beside it, whose editor is another one. The
+// editor that went reports nothing on its way, so the bar has to see it is not the one
+// the window holds now.
+test('and when the window holds another editor than the one it stood over', () => {
+  const view = writing()
+  const props = reactive<{ view: EditorView | undefined }>({ view })
+  shown = mount(FormatBar, { target, props }) as typeof shown
+  flushSync()
+
+  shown?.follow(view)
+  flushSync()
+
+  props.view = writing()
+  flushSync()
+  expect(callout()).toBe(false)
+})
