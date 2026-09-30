@@ -250,12 +250,15 @@ interface Held {
 /** Each second tab of `next` over a web note, with the tab that keeps it: one of
  *  `before` where there is one, else the first. */
 export function secondWebTabs<T extends Held>(before: readonly T[], next: readonly T[]): [T, T][] {
+  // Asked on every change of the strip, so it stays one pass over it.
+  const web = next.filter((tab) => tab.kind === 'web' && tab.path !== null)
+  if (web.length < 2) return []
+
+  const staying = new Set(web)
   const kept = new Map<object, T>()
   const second: [T, T][] = []
 
-  for (const tab of [...before.filter((one) => next.includes(one)), ...next]) {
-    if (tab.kind !== 'web' || tab.path === null) continue
-
+  for (const tab of [...before.filter((one) => staying.has(one)), ...web]) {
     const first = kept.get(tab.note)
     if (!first) kept.set(tab.note, tab)
     else if (first !== tab && !second.some(([one]) => one === tab)) second.push([tab, first])
