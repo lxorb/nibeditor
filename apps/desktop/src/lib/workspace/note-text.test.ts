@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { EditorState } from '@nib/editor'
 
 /** Writing across a space without opening it, driven by a stand-in store.
  *
@@ -14,19 +15,25 @@ const told: string[] = []
 /** What is on this disk, for the reads that do not go through an open document. */
 const disk = new Map<string, string>()
 
+/** A command held open until the test lets it go, so a keystroke can land inside
+ *  the round trip it is. */
+let holding: { command: string; until: Promise<void> } | null = null
+
 vi.mock('../tauri', () => ({
-  invoke: (command: string, args?: Record<string, unknown>) => {
+  invoke: async (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
     sent.push({ command, path, content })
+    if (holding?.command === command) await holding.until
 
     if (command === 'read_note') {
       const held = disk.get(path)
-      return held === undefined ? Promise.reject(new Error('no such note')) : Promise.resolve(held)
+      if (held === undefined) throw new Error('no such note')
+      return held
     }
 
     if (command === 'write_note') disk.set(path, content)
-    return Promise.resolve('')
+    return ''
   },
 }))
 
@@ -44,6 +51,7 @@ vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged')
 const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
   await import('./note-text')
 const { FileActions } = await import('./undo.svelte')
+const { NoteDoc } = await import('./documents.svelte')
 type HoldsNotes = import('./note-text').HoldsNotes
 
 const SPACE = '/space'
@@ -55,15 +63,15 @@ function space(notes: Record<string, string>, openAt?: string) {
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
 
   const edits: string[] = []
-  const open = openAt
-    ? [
-        {
-          path: openAt,
-          text: notes[openAt] ?? '',
-          edited: (_: unknown, after: string) => void edits.push(after),
-        },
-      ]
-    : []
+  const open = openAt ? [openNote(openAt, notes[openAt] ?? '')] : []
+  for (const note of open) {
+    // What the pane was handed: the words the edits left, each time.
+    const edited = note.edited.bind(note)
+    note.edited = (changes, after) => {
+      edits.push(after)
+      edited(changes, after)
+    }
+  }
 
   const ws = {
     activeSpace: { id: 's', name: 'Space', root: SPACE },
@@ -86,6 +94,7 @@ function space(notes: Record<string, string>, openAt?: string) {
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  holding = null
 })
 
 describe('a replacement across the space', () => {
@@ -308,5 +317,126 @@ describe('a note written from a hover card', () => {
 
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
+  })
+})
+
+/** A note open in a pane, as the real document it is. */
+function openNote(path: string, words: string) {
+  return new NoteDoc(
+    { kind: 'note', path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
+    () => undefined,
+    () => true,
+  )
+}
+
+/** A note open in a pane, with a pane on it that can be typed in: the words, the
+ *  live text every view shares, and the dirty mark. */
+function typedIn(path: string, words: string) {
+  const { ws } = space({ [path]: words })
+  const note = openNote(path, words)
+
+  const view = {
+    state: EditorState.create({ doc: note.live.text }),
+    dispatch(spec: Parameters<EditorState['update']>[0]) {
+      view.state = view.state.update(spec).state
+    },
+  }
+  note.live.join(view)
+
+  const held = ws as unknown as { documents: unknown[]; documentAt: (at: string) => unknown }
+  held.documents = [note]
+  held.documentAt = (at: string) => (at === path ? note : null)
+
+  /** A keystroke, the way the editor hands one over: applied in the view, then
+   *  given to the document. See the update listener in editor.ts. */
+  const type = (at: number, insert: string) => {
+    const made = view.state.update({ changes: { from: at, insert } })
+    view.state = made.state
+    note.live.local(made.changes, made.state.selection, view)
+  }
+
+  const live = () => note.live.text.toString()
+  return { ws, note, type, live }
+}
+
+/** Holds a command open, and answers what lets it go. */
+function hold(command: string): () => void {
+  // In an object, so the compiler sees the promise's executor fill it in.
+  const held = { release: () => undefined as unknown }
+  const until = new Promise<void>((resolve) => (held.release = resolve))
+  holding = { command, until }
+  return () => void held.release()
+}
+
+/** The reader goes on typing while a replacement is on its way to the note. The
+ *  replacement was worked out against the words as they were read, and it lands on
+ *  the words as they are: measured against the first, applied to the second, a
+ *  keystroke in between used to shift every edit after it and was then written
+ *  over by a text that never had it. See docs/agent-native.md 8.2. */
+describe('a replacement while the reader types', () => {
+  const NOTE = `${SPACE}/plan.md`
+
+  test('keeps a keystroke typed while the version was being kept', async () => {
+    const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
+    const before = await noteText(ws, NOTE)
+    if (before === null) throw new Error('the note is open')
+
+    const release = hold('snapshot_note')
+    const writing = writeNoteText(ws, NOTE, before, 'the plan for tuesday')
+    type(0, 'Re: ')
+    release()
+    await writing
+
+    expect(live()).toBe('Re: the plan for tuesday')
+    note.flush()
+    expect(note.text).toBe('Re: the plan for tuesday')
+    // The keystroke is on the disk, or the note still says it has to be written.
+    expect(disk.get(NOTE) === live() || note.dirty).toBe(true)
+  })
+
+  test('keeps a keystroke typed between the read and the write', async () => {
+    const { ws, note, type, live } = typedIn(NOTE, 'the plan for monday')
+    const before = await noteText(ws, NOTE)
+    if (before === null) throw new Error('the note is open')
+
+    type(0, 'Re: ')
+    await writeNoteText(ws, NOTE, before, 'the plan for tuesday')
+
+    expect(live()).toBe('Re: the plan for tuesday')
+    note.flush()
+    expect(note.text).toBe('Re: the plan for tuesday')
+    expect(disk.get(NOTE) === live() || note.dirty).toBe(true)
+    // And taking the replacement back puts back what the reader had, keystroke
+    // and all, rather than the words as they were read.
+    expect(ws.undone.stack).toEqual([
+      {
+        kind: 'replace',
+        notes: [
+          {
+            path: NOTE,
+            content: 'Re: the plan for monday',
+            edits: [{ from: 17, to: 21, insert: 'mon' }],
+          },
+        ],
+      },
+    ])
+  })
+
+  test('keeps a keystroke typed in one note while another is being written', async () => {
+    const { ws, type, live } = typedIn(NOTE, '- [ ] call #work')
+    disk.set(`${SPACE}/other.md`, 'also #work')
+    const notes = ws as unknown as { notes: { path: string }[] }
+    notes.notes = [{ path: `${SPACE}/other.md` }, { path: NOTE }]
+
+    const release = hold('snapshot_note')
+    const renaming = retagNotes(ws, 'work', 'job')
+    // The rename has read both notes and is keeping the first one's version.
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    type(6, 'now ')
+    release()
+    await renaming
+
+    expect(disk.get(`${SPACE}/other.md`)).toBe('also #job')
+    expect(live()).toBe('- [ ] now call #job')
   })
 })

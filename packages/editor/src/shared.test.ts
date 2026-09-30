@@ -428,3 +428,78 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(fromInput('deleteContentBackward')).toBeNull()
   })
 })
+
+/** Something that read the note a moment ago - a replacement across the space, an
+ *  agent's edit - landing on the words as they are now. What it was worked out
+ *  against is words the document held; what it lands on may have a keystroke more. */
+describe('edits carried onto the words as they are now', () => {
+  test('land where they meant after the reader typed before them', () => {
+    const note = new SharedDoc('the plan for monday')
+    const pane = new Pane(note)
+    pane.type(0, 'Re: ')
+
+    const edits = note.carried([{ from: 13, to: 16, insert: 'tues' }], 'the plan for monday')
+
+    expect(edits).toEqual([{ from: 17, to: 20, insert: 'tues' }])
+  })
+
+  test('and through every change since, whoever made it', () => {
+    const note = new SharedDoc('one two three')
+    const pane = new Pane(note)
+    pane.type(0, 'zero ')
+    note.arrived([{ from: 8, to: 8, insert: ' and a half' }])
+    note.edit([{ from: 0, to: 4, insert: 'nil' }])
+
+    const edits = note.carried([{ from: 8, to: 13, insert: 'THREE' }], 'one two three')
+
+    expect(edits).toEqual([{ from: 23, to: 28, insert: 'THREE' }])
+    expect(note.text.toString()).toBe('nil one and a half two three')
+  })
+
+  test('keep a keystroke made at the very place they change, before them', () => {
+    const note = new SharedDoc('ab')
+    const pane = new Pane(note)
+    pane.type(1, 'X')
+
+    const edits = note.carried([{ from: 1, to: 1, insert: 'Y' }], 'ab') ?? []
+    note.edit(edits)
+
+    expect(note.text.toString()).toBe('aXYb')
+  })
+
+  test('come back unchanged where nothing moved', () => {
+    const note = new SharedDoc('same')
+
+    expect(note.carried([{ from: 0, to: 4, insert: 'new' }], 'same')).toEqual([
+      { from: 0, to: 4, insert: 'new' },
+    ])
+  })
+
+  test('are refused for words the document never held, unless it may guess', () => {
+    const note = new SharedDoc('the plan for monday!')
+
+    expect(note.carried([{ from: 0, to: 3, insert: 'a' }], 'the plan for monday')).toBeNull()
+    // The one span the two differ by is at the end, clear of the edit.
+    expect(note.carried([{ from: 0, to: 3, insert: 'a' }], 'the plan for monday', true)).toEqual([
+      { from: 0, to: 3, insert: 'a' },
+    ])
+  })
+
+  test('and forgotten when the document takes another note on', () => {
+    const note = new SharedDoc('first note')
+    note.edit([{ from: 0, to: 0, insert: '# ' }])
+    note.takeOn('second note')
+
+    expect(note.since('first note')).toBeNull()
+    expect(note.since('second note')?.empty).toBe(true)
+  })
+
+  test('remembered for hundreds of keystrokes, and no further', () => {
+    const note = new SharedDoc('')
+    const pane = new Pane(note)
+    for (let at = 0; at < 1000; at++) pane.type(at, 'x')
+
+    expect(note.since('x'.repeat(700))?.length).toBe(700)
+    expect(note.since('')).toBeNull()
+  })
+})

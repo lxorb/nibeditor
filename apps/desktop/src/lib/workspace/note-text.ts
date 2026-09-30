@@ -19,7 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/match'
-import { changeOf } from '../search/replace'
+import { applied, changeOf, type Edit, reverse } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
 import type { NoteDoc } from './documents.svelte'
@@ -163,26 +163,27 @@ export async function writeNoteText(
   await replaceInNotes(ws, [changeOf(path, before, [edit])])
 }
 
+/** One note's share of a replacement, as it is put back later. */
+type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]
+
 /** Writes a replacement across the space. Every note keeps a snapshot of
  *  what it said before it is written, a note open in a pane takes the change
  *  as the words that changed so no caret moves, and however many notes were
- *  touched it is one thing to undo. */
+ *  touched it is one thing to undo.
+ *
+ *  Each change was worked out against the words as they were read, and the reader
+ *  may have typed since: between the read and this call, and inside the writes of
+ *  the notes before it. So a note that is open takes its edits carried onto the
+ *  words it holds at that moment, and is written as it then stands; see
+ *  `writeOpen`. */
 export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[]): Promise<void> {
   if (!changes.length) return
 
-  const done: Extract<FileAction, { kind: 'replace' }>['notes'] = []
+  const done: Undone[] = []
 
   for (const change of changes) {
-    // Keeping the version about to be replaced, the same way saving does.
-    await invoke('snapshot_note', {
-      path: change.path,
-      content: change.before,
-    }).catch(() => undefined)
-
-    await writeFile(change.path, change.after)
-
-    done.push({ path: change.path, content: change.before, edits: change.back })
-    ws.documentAt(change.path)?.edited(change.edits, change.after)
+    const open = ws.documentAt(change.path)
+    done.push(open ? await writeOpen(open, change) : await writeClosed(ws, change))
   }
 
   ws.undone.record({ kind: 'replace', notes: done })
@@ -193,4 +194,55 @@ export async function replaceInNotes(ws: HoldsNotes, changes: readonly Change[])
   // the two would import each other. Same as the writing beside it.
   const { sync } = await import('../sync.svelte')
   sync.nudge()
+}
+
+/** A note that is open: the edits carried onto the words it holds now and applied in
+ *  the same breath as they are read, so no keystroke can fall between the two, and
+ *  then the note written as it stands - keystrokes included - rather than as the
+ *  change imagined it. A keystroke landing while the write is in the air is the
+ *  document's own, and marks it for the next write like any other.
+ *
+ *  Carried by guessing where the document no longer remembers the words the change
+ *  was read from, because a replacement somebody asked for has to be written; the
+ *  guess is exact wherever the edits are clear of what changed. */
+async function writeOpen(open: NoteDoc, change: Change): Promise<Undone> {
+  open.flush()
+  const before = open.text
+  const edits = open.live.carried(change.edits, change.before, true) ?? change.edits
+  const after = applied(before, edits)
+
+  open.edited(edits, after)
+
+  // Keeping the version about to be replaced, the same way saving does: the words
+  // the reader had, unsaved ones and all.
+  await invoke('snapshot_note', { path: change.path, content: before }).catch(() => undefined)
+  await writeFile(change.path, after)
+
+  return { path: change.path, content: before, edits: reverse(before, edits) }
+}
+
+/** A note nobody has open, written as the change says. A pane that opened it while
+ *  the write was in the air read the file before it, and takes the edits the way an
+ *  open note does; one that read it after already has them. */
+async function writeClosed(ws: HoldsNotes, change: Change): Promise<Undone> {
+  await invoke('snapshot_note', { path: change.path, content: change.before }).catch(
+    () => undefined,
+  )
+  await writeFile(change.path, change.after)
+
+  const late = ws.documentAt(change.path)
+  const edits = late?.live.carried(change.edits, change.before)
+  if (late && edits) catchUp(late, edits, change.after)
+
+  return { path: change.path, content: change.before, edits: change.back }
+}
+
+/** A note opened from the file a write was about to replace, brought up to it. Its
+ *  words are the file's again unless the reader has typed in the meantime, which
+ *  is then what the next write is for. */
+function catchUp(note: NoteDoc, edits: readonly Edit[], written: string) {
+  note.flush()
+  const text = applied(note.text, edits)
+  note.edited(edits, text)
+  if (text !== written) note.dirty = true
 }

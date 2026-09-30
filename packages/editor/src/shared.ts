@@ -20,7 +20,7 @@
 
 import { history, redo, undo } from '@codemirror/commands'
 import {
-  type ChangeSet,
+  ChangeSet,
   type EditorSelection,
   EditorState,
   type Extension,
@@ -108,6 +108,32 @@ interface Landing {
   selection: EditorSelection
 }
 
+/** One span of characters replaced, in the offsets of the words before it. */
+interface Replacement {
+  from: number
+  to: number
+  insert: string
+}
+
+/** How many of its latest changes a document remembers; see `recent`. Hundreds of
+ *  keystrokes, which is minutes of typing: longer than any write across a space
+ *  takes to come back, and far longer than an edit takes between being worked out
+ *  and being applied. */
+const REMEMBERED = 400
+
+/** Whether a rope holds exactly these words, read chunk by chunk and given up at the
+ *  first that differs, so asking costs nothing like turning the rope into a string. */
+function holds(doc: Text, words: string): boolean {
+  if (doc.length !== words.length) return false
+
+  let at = 0
+  for (const chunk = doc.iter(); !chunk.next().done; at += chunk.value.length) {
+    if (!words.startsWith(chunk.value, at)) return false
+  }
+
+  return true
+}
+
 export class SharedDoc {
   /** The document itself: the text, and the history of what was done to it.
    *  No language, no decorations, nothing that draws, so applying a change to
@@ -147,6 +173,21 @@ export class SharedDoc {
    *  whatever the history thinks. */
   private ownUndo = 0
   private ownRedo = 0
+
+  /** The latest changes, oldest first, each beside the words it was made to.
+   *
+   *  What lets something that read this note a moment ago still land where it meant.
+   *  A replacement across the space is worked out against the words as they were
+   *  read and applied after a write or two; an agent's edit is resolved against
+   *  what it read. Between the two the reader may have typed, and edits measured
+   *  against the old words would land a keystroke's width off and take the
+   *  keystroke with them. With the changes since, they are carried through it
+   *  instead; see `carried`.
+   *
+   *  A push per change and a trim now and then, so a keystroke pays nothing for it.
+   *  A rope is shared with the one after it but for the piece that changed, so the
+   *  words kept here weigh what was typed rather than the note times four hundred. */
+  private recent: { before: Text; changes: ChangeSet }[] = []
 
   /** How many steps of this note's own are there to take back, and to put back.
    *  Zero for a document that has just taken another note on, whatever was done in
@@ -197,8 +238,10 @@ export class SharedDoc {
     }
 
     // A history of its own rather than the old one emptied: a fresh state cannot
-    // be holding a step from the note this document has just left.
+    // be holding a step from the note this document has just left. The same for
+    // what it remembers: the old note's words carry nothing into this one.
     this.state = EditorState.create({ doc: text, extensions: [history()] })
+    this.recent = []
     this.ownUndo = 0
     this.ownRedo = 0
     this.onChange?.(this.state.doc)
@@ -294,6 +337,7 @@ export class SharedDoc {
    *  the document too, so undoing this edit later comes back to where it was
    *  made rather than to wherever another pane happens to be. */
   local(changes: ChangeSet, selection: EditorSelection, from: DocView) {
+    this.took(changes)
     this.state = this.state.update({ changes, selection }).state
 
     this.did()
@@ -327,6 +371,7 @@ export class SharedDoc {
       ...(recorded ? {} : { annotations: Transaction.addToHistory.of(false) }),
     })
 
+    this.took(made.changes)
     this.state = made.state
     if (recorded) this.did()
     this.carry(made.changes, null)
@@ -347,9 +392,10 @@ export class SharedDoc {
    *  view holds is mapped through a change set, and a change set covering the
    *  document maps every caret in it to the same place; the words that changed
    *  leave every caret but the ones inside them where they were. */
-  edit(changes: readonly { from: number; to: number; insert: string }[]) {
+  edit(changes: readonly Replacement[]) {
     const made = this.state.update({ changes })
 
+    this.took(made.changes)
     this.state = made.state
     this.did()
     this.carry(made.changes, null)
@@ -363,12 +409,13 @@ export class SharedDoc {
    *  it. And it is kept out of the history: pressing undo takes back what you
    *  wrote, never what somebody else did, which is what undo has to mean when
    *  two people are writing at once. */
-  arrived(changes: readonly { from: number; to: number; insert: string }[]) {
+  arrived(changes: readonly Replacement[]) {
     const made = this.state.update({
       changes,
       annotations: Transaction.addToHistory.of(false),
     })
 
+    this.took(made.changes)
     this.state = made.state
     this.carry(made.changes, null)
     this.onChange?.(this.state.doc)
@@ -426,10 +473,67 @@ export class SharedDoc {
     const done = made.transaction
     if (!ran || !done) return false
 
+    this.took(done.changes)
     this.state = done.state
     this.carry(done.changes, null, { view: asked, selection: done.state.selection })
     this.made(done.changes)
     return true
+  }
+
+  /** Edits worked out against `before`, words this document held a moment ago, as
+   *  they fall on the words it holds now: carried through everything that changed
+   *  in between, so a keystroke typed meanwhile is neither shifted nor written over.
+   *  An edit and a keystroke at the same place both stay, the keystroke first.
+   *
+   *  Null when this document does not remember holding `before`: more changes ago
+   *  than it keeps, or words it never held. With `guess`, those are carried through
+   *  the one span the two texts differ by instead, which is exact wherever the
+   *  edits are clear of it - the answer for a caller that has to write something. */
+  carried(edits: readonly Replacement[], before: string, guess = false): Replacement[] | null {
+    const since = this.since(before) ?? (guess ? this.across(before) : null)
+    if (!since) return null
+    if (since.empty) return edits.map((edit) => ({ ...edit }))
+
+    const out: Replacement[] = []
+    ChangeSet.of(edits, before.length)
+      .map(since)
+      .iterChanges((from, to, _fromB, _toB, inserted) => {
+        out.push({ from, to, insert: inserted.toString() })
+      })
+
+    return out
+  }
+
+  /** Everything that changed since this document held `before`, as one change from
+   *  those words to these. Null when it does not remember holding them. */
+  since(before: string): ChangeSet | null {
+    let carried = ChangeSet.empty(this.state.doc.length)
+    if (holds(this.state.doc, before)) return carried
+
+    for (let at = this.recent.length - 1; at >= 0; at--) {
+      const step = this.recent[at]
+      if (!step) break
+
+      carried = step.changes.compose(carried)
+      if (holds(step.before, before)) return carried
+    }
+
+    return null
+  }
+
+  /** The one span `before` and these words differ by, as a change from one to the
+   *  other; see `carried`. */
+  private across(before: string): ChangeSet {
+    const span = fold(before, this.state.doc.toString())
+    return ChangeSet.of(span ? [span] : [], before.length)
+  }
+
+  /** A change about to be made, remembered with the words it is made to. */
+  private took(changes: ChangeSet) {
+    this.recent.push({ before: this.state.doc, changes })
+    // Trimmed in halves rather than one at a time, so the copy is paid once per
+    // few hundred keystrokes.
+    if (this.recent.length > REMEMBERED * 2) this.recent = this.recent.slice(-REMEMBERED)
   }
 
   /** A change made here, reported once: to the app, which writes the words down,
