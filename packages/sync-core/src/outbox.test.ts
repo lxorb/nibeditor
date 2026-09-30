@@ -180,7 +180,10 @@ function shape(state: TreeState) {
     .sort()
   const keys = [...state.entries.values()]
     .filter((entry) => !entry.deleted)
-    .map((entry) => `${entry.parent ?? ''}/${nameKey(entry.name).replace(/ \d+(?=\.|$)/, '')}`)
+    .map(
+      (entry) =>
+        `${entry.parent ?? ''}/${nameKey(entry.name).replace(/( \d+)+(?=\.[^.]*$|$)/, '')}`,
+    )
     .sort()
   return { alive, keys }
 }

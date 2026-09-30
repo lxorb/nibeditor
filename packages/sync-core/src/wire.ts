@@ -314,86 +314,359 @@ export interface DeviceRow {
 }
 
 // ---------------------------------------------------------------------------
-// Checks and codecs
+// Checks: unknown in, the type or null out
 
-/** A JSON value whose leaves may also be bytes: what `frame` carries. */
-export type Framed =
-  | string
-  | number
-  | boolean
-  | null
-  | Uint8Array
-  | readonly Framed[]
-  | { readonly [key: string]: Framed | undefined }
+export { ackFrame, epochFrame, frame, type Framed, roomNews, unframe } from './frame'
 
-export function frame(_value: Framed): Uint8Array {
-  throw new Error('not yet')
+/** The longest id, op id, key or device name anything here carries. */
+const LONGEST_ID = 200
+
+/** The longest name of one file or folder, in code units: what every filesystem nib
+ *  runs on holds. */
+export const LONGEST_NAME = 255
+
+/** The largest text `/v2/docs/keep` carries: twice the longest note (section 10). */
+const MOST_KEPT = 8 * 1024 * 1024
+
+type Checked<T> = (value: unknown) => T | null
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-export function unframe(_bytes: Uint8Array): unknown {
-  throw new Error('not yet')
+function isId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ID
 }
 
-export function roomNews(_frame: Uint8Array): RoomNews | null {
-  throw new Error('not yet')
+function isCount(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 }
 
-export function ackFrame(_sv: Uint8Array): Uint8Array {
-  throw new Error('not yet')
+function isTime(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value)
 }
 
-export function epochFrame(_epoch: number, _epochBase: string): Uint8Array {
-  throw new Error('not yet')
+function isBytes(value: unknown): value is Uint8Array {
+  return value instanceof Uint8Array
 }
 
-export function opOf(_value: unknown): Op | null {
-  throw new Error('not yet')
+function isParent(value: unknown): value is string | null {
+  return value === null || isId(value)
 }
 
-export function opsRequestOf(_value: unknown): OpsRequest | null {
-  throw new Error('not yet')
+/** A name one file or folder may have on the account: not empty, not `.` or `..`, no
+ *  slash, no NUL, no longer than a filesystem holds. Names one platform cannot hold
+ *  (`CON`, `a:b`, a trailing dot) are allowed: the account keeps them as written and
+ *  each device maps them to a local spelling (section 5.9). */
+export function isName(value: unknown): value is string {
+  if (typeof value !== 'string' || !value || value.length > LONGEST_NAME) return false
+  if (value === '.' || value === '..') return false
+  return !value.includes('/') && !value.includes('\u0000')
 }
 
-export function opsResponseOf(_value: unknown): OpsResponse | null {
-  throw new Error('not yet')
+function isKind(value: unknown): value is EntryKind {
+  return ENTRY_KINDS.some((kind) => kind === value)
 }
 
-export function feedPageOf(_value: unknown): FeedPage | null {
-  throw new Error('not yet')
+/** A list of checked things, no longer than `most`; null if any one fails. */
+function listOf<T>(value: unknown, each: Checked<T>, most = Number.MAX_SAFE_INTEGER): T[] | null {
+  if (!Array.isArray(value) || value.length > most) return null
+  const out: T[] = []
+  for (const one of value) {
+    const checked = each(one)
+    if (checked === null) return null
+    out.push(checked)
+  }
+  return out
 }
 
-export function pullRequestOf(_value: unknown): PullRequest | null {
-  throw new Error('not yet')
+/** One tree operation, as a device sent it. */
+export function opOf(value: unknown): Op | null {
+  if (!isRecord(value) || !isId(value.op) || !isCount(value.seen) || !isId(value.id)) return null
+  const { op, seen, id } = value
+
+  switch (value.t) {
+    case 'mkdir':
+      if (!isParent(value.parent) || !isName(value.name)) return null
+      return { op, t: 'mkdir', id, parent: value.parent, name: value.name, seen }
+
+    case 'create': {
+      const { kind, parent, name, hash, mergeable } = value
+      if (!isKind(kind) || kind === 'folder' || !isParent(parent) || !isName(name)) return null
+      if (hash !== undefined && !isId(hash)) return null
+      if (mergeable !== undefined && !(isRecord(mergeable) && typeof mergeable.text === 'string')) {
+        return null
+      }
+      const made: CreateOp = { op, t: 'create', id, kind, parent, name, seen }
+      if (hash !== undefined) made.hash = hash
+      if (isRecord(mergeable) && typeof mergeable.text === 'string') {
+        made.mergeable = { text: mergeable.text }
+      }
+      return made
+    }
+
+    case 'rename':
+      return isName(value.name) ? { op, t: 'rename', id, name: value.name, seen } : null
+
+    case 'move': {
+      if (!isParent(value.parent)) return null
+      if (value.name !== undefined && !isName(value.name)) return null
+      const moved: MoveOp = { op, t: 'move', id, parent: value.parent, seen }
+      if (value.name !== undefined) moved.name = value.name
+      return moved
+    }
+
+    case 'delete':
+      return { op, t: 'delete', id, seen }
+
+    case 'restore':
+      return { op, t: 'restore', id, seen }
+
+    default:
+      return null
+  }
 }
 
-export function pullResponseOf(_value: unknown): PullResponse | null {
-  throw new Error('not yet')
+const REFUSALS: readonly Refusal[] = ['cycle', 'edited', 'role', 'gone']
+const DOC_REFUSALS: readonly DocRefusal[] = ['role', 'gone', 'large']
+
+function opResultOf(value: unknown): OpResult | null {
+  if (!isRecord(value) || !isId(value.op)) return null
+  const { op } = value
+
+  if (value.ok === true) {
+    if (value.id === undefined) return { op, ok: true }
+    if (!isId(value.id) || !isParent(value.parent) || !isName(value.name)) return null
+    return { op, ok: true, id: value.id, parent: value.parent, name: value.name }
+  }
+  if (isId(value.merged)) return { op, merged: value.merged }
+  const refused = REFUSALS.find((one) => one === value.refused)
+  return refused ? { op, refused } : null
 }
 
-export function pushRequestOf(_value: unknown): PushRequest | null {
-  throw new Error('not yet')
+/** `POST /v2/spaces/:space/ops`, as the Worker reads it: at most `OPS_BATCH` ops. */
+export function opsRequestOf(value: unknown): OpsRequest | null {
+  if (!isRecord(value)) return null
+  const ops = listOf(value.ops, opOf, OPS_BATCH)
+  return ops ? { ops } : null
 }
 
-export function pushResponseOf(_value: unknown): PushResponse | null {
-  throw new Error('not yet')
+/** The account's answer to a batch of ops, as a device reads it. */
+export function opsResponseOf(value: unknown): OpsResponse | null {
+  if (!isRecord(value) || !isCount(value.cursor)) return null
+  const results = listOf(value.results, opResultOf)
+  return results ? { results, cursor: value.cursor } : null
 }
 
-export function keepRequestOf(_value: unknown): KeepRequest | null {
-  throw new Error('not yet')
+function feedItemOf(value: unknown): FeedItem | null {
+  if (!isRecord(value)) return null
+  const { id, kind, parent, name, deleted, seq, docSeq, epoch, epochBase, hash, size, by, at } =
+    value
+  if (!isId(id) || !isKind(kind) || !isParent(parent) || !isName(name)) return null
+  if (typeof deleted !== 'boolean' || !isCount(seq) || typeof hash !== 'string') return null
+  if (!isCount(size) || typeof by !== 'string' || !isTime(at)) return null
+  if (docSeq !== undefined && !isCount(docSeq)) return null
+  if (epoch !== undefined && !isCount(epoch)) return null
+  if (epochBase !== undefined && typeof epochBase !== 'string') return null
+
+  const item: FeedItem = { id, kind, parent, name, deleted, seq, hash, size, by, at }
+  if (docSeq !== undefined) item.docSeq = docSeq
+  if (epoch !== undefined) item.epoch = epoch
+  if (epochBase !== undefined) item.epochBase = epochBase
+  return item
 }
 
-export function snapshotPageOf(_value: unknown): SnapshotPage | null {
-  throw new Error('not yet')
+/** One page of a space's feed, as a device reads it. */
+export function feedPageOf(value: unknown): FeedPage | null {
+  if (!isRecord(value) || !isCount(value.cursor) || typeof value.more !== 'boolean') return null
+  const items = listOf(value.items, feedItemOf, FEED_PAGE)
+  return items ? { items, cursor: value.cursor, more: value.more } : null
 }
 
-export function deviceFrameOf(_value: unknown): DeviceFrame | null {
-  throw new Error('not yet')
+function pullDocOf(value: unknown): PullDoc | null {
+  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isBytes(value.sv)) {
+    return null
+  }
+  return { id: value.id, epoch: value.epoch, sv: value.sv }
 }
 
-export function hubFrameOf(_value: unknown): HubFrame | null {
-  throw new Error('not yet')
+/** `POST /v2/docs/pull`, as the Worker reads it: at most `PULL_BATCH` documents. */
+export function pullRequestOf(value: unknown): PullRequest | null {
+  if (!isRecord(value)) return null
+  const docs = listOf(value.docs, pullDocOf, PULL_BATCH)
+  return docs ? { docs } : null
 }
 
-export function deviceRowsOf(_value: unknown): DeviceRow[] | null {
-  throw new Error('not yet')
+function docRefusalOf(value: unknown): DocRefusal | null {
+  return DOC_REFUSALS.find((one) => one === value) ?? null
+}
+
+function pullAnswerOf(value: unknown): PullAnswer | null {
+  if (!isRecord(value) || !isId(value.id)) return null
+  const { id } = value
+  if (isBytes(value.update)) return { id, update: value.update }
+  if (isCount(value.epoch) && typeof value.epochBase === 'string') {
+    return { id, epoch: value.epoch, epochBase: value.epochBase }
+  }
+  const refused = docRefusalOf(value.refused)
+  return refused ? { id, refused } : null
+}
+
+/** The account's answer to a pull, as a device reads it. */
+export function pullResponseOf(value: unknown): PullResponse | null {
+  if (!isRecord(value)) return null
+  const docs = listOf(value.docs, pullAnswerOf, PULL_BATCH)
+  return docs ? { docs } : null
+}
+
+function pushDocOf(value: unknown): PushDoc | null {
+  if (!isRecord(value)) return null
+  const { id, epoch, base, checked, update, at } = value
+  if (!isId(id) || !isCount(epoch) || !isBytes(base) || !isBytes(update) || !isTime(at)) {
+    return null
+  }
+  if (checked !== undefined && !isBytes(checked)) return null
+
+  const doc: PushDoc = { id, epoch, base, update, at }
+  if (checked !== undefined) doc.checked = checked
+  return doc
+}
+
+/** `POST /v2/docs/push`, as the Worker reads it: at most `PUSH_BATCH` documents. The
+ *  size of each update is the route's to judge, so it can answer `large` for that one
+ *  document rather than refuse the batch. */
+export function pushRequestOf(value: unknown): PushRequest | null {
+  if (!isRecord(value)) return null
+  const docs = listOf(value.docs, pushDocOf, PUSH_BATCH)
+  return docs ? { docs } : null
+}
+
+function pushAnswerOf(value: unknown): PushAnswer | null {
+  if (!isRecord(value) || !isId(value.id)) return null
+  const { id } = value
+  if (value.ok === true && isBytes(value.sv)) return { id, ok: true, sv: value.sv }
+  if (isBytes(value.moved) && isBytes(value.sv)) return { id, moved: value.moved, sv: value.sv }
+  if (isCount(value.epoch)) return { id, epoch: value.epoch }
+  const refused = docRefusalOf(value.refused)
+  return refused ? { id, refused } : null
+}
+
+/** The account's answer to a push, as a device reads it. */
+export function pushResponseOf(value: unknown): PushResponse | null {
+  if (!isRecord(value)) return null
+  const docs = listOf(value.docs, pushAnswerOf, PUSH_BATCH)
+  return docs ? { docs } : null
+}
+
+/** `POST /v2/docs/keep`, as the Worker reads it. */
+export function keepRequestOf(value: unknown): KeepRequest | null {
+  if (!isRecord(value) || !isId(value.id) || !isId(value.device)) return null
+  if (typeof value.text !== 'string' || value.text.length > MOST_KEPT) return null
+  return { id: value.id, text: value.text, device: value.device }
+}
+
+function snapshotDocOf(value: unknown): SnapshotDoc | null {
+  if (!isRecord(value) || !isId(value.id) || !isCount(value.epoch) || !isBytes(value.update)) {
+    return null
+  }
+  if (value.epochBase !== undefined && typeof value.epochBase !== 'string') return null
+  const doc: SnapshotDoc = { id: value.id, epoch: value.epoch, update: value.update }
+  if (typeof value.epochBase === 'string') doc.epochBase = value.epochBase
+  return doc
+}
+
+/** One page of a first sync's bulk read, as a device reads it. */
+export function snapshotPageOf(value: unknown): SnapshotPage | null {
+  if (!isRecord(value) || !(value.next === null || isId(value.next))) return null
+  const docs = listOf(value.docs, snapshotDocOf)
+  return docs ? { docs, next: value.next } : null
+}
+
+/** A text frame from a device, as the hub reads it: parsed JSON in, a frame or null. */
+export function deviceFrameOf(value: unknown): DeviceFrame | null {
+  if (!isRecord(value)) return null
+  switch (value.t) {
+    case 'hello': {
+      const { device, name, platform, app } = value
+      if (!isId(device) || !isId(name) || !isId(platform) || !isId(app)) return null
+      return { t: 'hello', device, name, platform, app }
+    }
+    case 'active':
+      return { t: 'active' }
+    case 'idle':
+      return { t: 'idle' }
+    case 'acquire':
+      return isId(value.key) && typeof value.take === 'boolean'
+        ? { t: 'acquire', key: value.key, take: value.take }
+        : null
+    case 'release':
+    case 'flushed':
+      return isId(value.key) && isCount(value.version)
+        ? { t: value.t, key: value.key, version: value.version }
+        : null
+    case 'want-key':
+      return isId(value.pub) ? { t: 'want-key', pub: value.pub } : null
+    case 'grant-key': {
+      const { to, wrapped, generation } = value
+      if (!isId(to) || typeof wrapped !== 'string' || !isCount(generation)) return null
+      return { t: 'grant-key', to, wrapped, generation }
+    }
+    case 'deny-key':
+      return isId(value.to) ? { t: 'deny-key', to: value.to } : null
+    default:
+      return null
+  }
+}
+
+/** A text frame from the hub, as a device reads it. */
+export function hubFrameOf(value: unknown): HubFrame | null {
+  if (!isRecord(value)) return null
+  const { key } = value
+  switch (value.t) {
+    case 'poke':
+      return isId(value.space) && isCount(value.seq)
+        ? { t: 'poke', space: value.space, seq: value.seq }
+        : null
+    case 'granted':
+      return isId(key) && isCount(value.fence) && isCount(value.version)
+        ? { t: 'granted', key, fence: value.fence, version: value.version }
+        : null
+    case 'busy':
+    case 'lost':
+      return isId(key) && isId(value.device) ? { t: value.t, key, device: value.device } : null
+    case 'flush':
+      return isId(key) && isCount(value.fence) ? { t: 'flush', key, fence: value.fence } : null
+    case 'free':
+      return isId(key) ? { t: 'free', key } : null
+    case 'state':
+      return isId(key) && isCount(value.version)
+        ? { t: 'state', key, version: value.version }
+        : null
+    case 'key-wanted': {
+      const { device, name, pub } = value
+      if (!isId(device) || !isId(name) || !isId(pub)) return null
+      return { t: 'key-wanted', device, name, pub }
+    }
+    case 'key':
+      return typeof value.wrapped === 'string' && isCount(value.generation)
+        ? { t: 'key', wrapped: value.wrapped, generation: value.generation }
+        : null
+    case 'key-denied':
+      return { t: 'key-denied' }
+    default:
+      return null
+  }
+}
+
+function deviceRowOf(value: unknown): DeviceRow | null {
+  if (!isRecord(value)) return null
+  const { id, name, platform, createdAt, lastSeenAt } = value
+  if (!isId(id) || typeof name !== 'string' || typeof platform !== 'string') return null
+  if (!isTime(createdAt) || !(lastSeenAt === null || isTime(lastSeenAt))) return null
+  return { id, name, platform, createdAt, lastSeenAt }
+}
+
+/** `GET /v2/devices`, as a device reads it. */
+export function deviceRowsOf(value: unknown): DeviceRow[] | null {
+  return listOf(value, deviceRowOf)
 }

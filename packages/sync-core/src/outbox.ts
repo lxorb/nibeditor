@@ -118,6 +118,14 @@ export function coalesce(ops: readonly Op[]): Op[] {
     const gone = new Set<string>([op.id, ...inside])
     const existed = inside.filter((id) => making.get(id) === undefined)
 
+    // Something made in it and moved out again still names it as the place it was
+    // made; the folder then has to exist for a moment on the account too.
+    const named = queue.some(
+      (one) =>
+        one && 'parent' in one && one.parent !== null && gone.has(one.parent) && !gone.has(one.id),
+    )
+    if (named) continue
+
     for (let other = 0; other <= at; other++) {
       const one = queue[other]
       if (one && 'id' in one && gone.has(one.id)) queue[other] = null
