@@ -573,6 +573,12 @@ began hiding it. See `BROWSER_ARGS` in `src-tauri/src/engine.rs`: one list, beca
 webview on one user data folder has to be started with the same switches or the engine
 refuses the second one.
 
+The app's own page hides it again itself, as a style (2026-09-30): typing into a note, a
+card or a field puts `cursor: none` on that page and the first move takes it off, so no
+count is ever touched and nothing another process does can leave it hidden. Over a web
+page the pointer is that page's whatever the app's page says, so a site is never affected.
+See `apps/desktop/src/lib/typing-pointer.ts`.
+
 #### One notch of the wheel is one notch
 
 Emil, 2026-09-30: _"the scrolling doesn't feel like it should. I have the feeling it may be

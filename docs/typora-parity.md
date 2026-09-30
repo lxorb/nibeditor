@@ -649,6 +649,20 @@ Features Typora does not have, which are the reason this exists.
       the way. Inside the front matter it answers under a `tags:` key as well -
       on its own line, after a comma, or under an item of the list - where a tag
       is written without the hash because YAML reads one as a comment
+- [x] A `#tag` reads as a tag wherever a note is drawn: a quiet pill in the tag's
+      ink (`--tag`), the hash inside it and `#a/b` one pill, in the live preview,
+      the reading view, a card on a plane, an export and a published page. The same
+      grammar as the popup, so never in code, maths, an address, a comment or a
+      link's words. The caret in one shows the source it is typed as - the wash
+      goes and nothing moves. Ctrl+click in the editor, a click (or Enter) in the
+      reading view, asks the space's search `tag:` about it. See
+      `packages/markdown/src/tags.ts`
+- [x] Random note, Obsidian's: a palette row and an unbound command, any note of
+      the space but the one open, never an excluded or archived one
+- [x] The pointer hides while somebody types - a character, Enter, Backspace,
+      Delete, a composition - into a note, a card or a field, and comes back on the
+      first move, as in Word and Chrome. Never while a button is held, never after
+      a touch, never over a web page; see `apps/desktop/src/lib/typing-pointer.ts`
 - [x] `aliases` in a note's front matter, whichever of the three ways YAML writes
       a list. `[[Roadmap]]` finds the note that declared it, the completion
       offers an alias under the note's own name, and backlinks and unlinked
