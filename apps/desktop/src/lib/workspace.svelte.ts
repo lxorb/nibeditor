@@ -3051,7 +3051,7 @@ class Workspace {
     const relative = cut < 0 ? target : target.slice(0, cut)
     const said = cut < 0 ? '' : target.slice(cut + 1)
 
-    const path = insideSpace(root, relative)
+    const path = this.spelled(insideSpace(root, relative))
     await this.open(path, how)
     if (!said) return
 
@@ -3122,7 +3122,7 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return
 
-    const path = insideSpace(root, relative)
+    const path = this.spelled(insideSpace(root, relative))
     await this.open(path, how)
 
     const doc = this.tabs.find((tab) => samePath(tab.path, path))?.doc ?? ''
@@ -3736,9 +3736,10 @@ class Workspace {
   }
 
   /** The heading or the block a followed link named, gone to in the note it opened. */
-  private landOn(path: string, jump: NoteJump) {
+  private landOn(asked: string, jump: NoteJump) {
     if (jump.heading === null && jump.block === null) return
 
+    const path = this.spelled(asked)
     const doc = this.tabs.find((tab) => samePath(tab.path, path))?.doc ?? ''
     const line = lineOfTarget(doc, jump)
     if (line !== null) this.goto = { path, line }
