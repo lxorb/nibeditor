@@ -33,6 +33,8 @@
 //! a window.
 
 #[cfg(desktop)]
+mod agent_tabs;
+#[cfg(desktop)]
 mod appearance;
 #[cfg(desktop)]
 mod apple_notes;
@@ -205,6 +207,10 @@ macro_rules! desktop_commands {
     () => {
         commands![
             endpoint::automation_result,
+            agent_tabs::agent_open,
+            agent_tabs::agent_cdp,
+            agent_tabs::agent_dialogs,
+            agent_tabs::agent_close,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_ground,

@@ -879,7 +879,7 @@ mod session {
 /// environment to hand round - that runtime is one browser process by construction - and
 /// `tauri::Wry` is not even a type there. See src/engine.rs.
 #[cfg(all(windows, not(feature = "cef")))]
-fn on_shared_session(
+pub(crate) fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
     window: &tauri::Window,
     app: &AppHandle,
