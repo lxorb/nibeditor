@@ -752,8 +752,8 @@ the keyboard's Ctrl+click. A tab asked for this way is never the preview. The ru
 
 Inside a page the engine opens every such link as a window it asks the app for, and
 `WebView2` does not say how it was pressed. `src-tauri/src/web_opens.rs` works it out
-at the moment the request is raised: a page script answers the middle button and opens
-the link under a window name that says so, Ctrl and Shift are read off the keyboard,
+at the moment the request is raised: a script in nib's own world in the page answers the
+middle button and opens the link under a window name that says so, Ctrl and Shift are read off the keyboard,
 and the page's own "open link" menu row is recognised by the link the menu was raised
 on. A plain `target="_blank"` opens in front. A page that asks for a window at a size of
 its own - a sign-in, a share dialog - gets a framed window on the opener's own store,
@@ -800,7 +800,8 @@ engines say nothing, and what each one does there is said with it.
   F3 step; Escape closes it and the marks go. It is also a row in the dots and in the
   palette. Inside the page the keys are the page's first, which is Chrome's order: Google
   Docs, Notion, VS Code on the web and Figma have a find of their own on Ctrl+F and keep
-  it. A line of script in every page listens last and, when nothing in the page took the
+  it. A line of script in every page - in nib's own world there, which the page cannot
+  see - listens last and, when nothing in the page took the
   key, asks for the bar under one of the window names `web_opens.rs` reads - find, next,
   previous, and the address field for Ctrl+L and Alt+D - for that tab alone, said to the
   window as `nib://web-passed`. Never a command name, so a page can reach its own find
@@ -832,6 +833,19 @@ engines say nothing, and what each one does there is said with it.
   Inspect open the engine's own tools for the page, from inside it or from the bar. The
   build that ships has them for web tabs only - the `devtools` feature, on desktops -
   and nib's own window keeps them to a development build.
+- **Its dialogs.** A page's `alert`, `confirm` and `prompt`, and the question a page asks
+  before it is left, are a card at the top of the page, as in Chrome: the site's mark and
+  name, what the page said, and a browser's answers - OK alone for an alert, Cancel and OK
+  for the others, Cancel and Leave for a page that would rather not be left, and a field
+  for a prompt. The page's script is stopped until it is answered and is given what a
+  browser gives it - `true` or `false`, the words or `null` - and Escape is Cancel. The
+  engine is told to leave them to the app (`AreDefaultScriptDialogsEnabled`), each is held
+  open while the card is up, and a tab closed under one cancels it. They used to be the
+  dialog plugin's, which answered a site's `confirm()` yes before anybody was asked; see
+  "What a page is given: nothing". `WebView2`'s alone: a Mac's `WKWebView` has no one to
+  ask without a delegate for it, so there `alert()` shows nothing and `confirm()` is
+  `false`, and Linux draws `WebKitGTK`'s own. See `src-tauri/src/web_dialogs.rs` and
+  `web-tab/dialogs.svelte.ts`.
 - **View page source.** The page menu's row asks for `view-source:` and the address,
   which opens as a tab: the source of anything a tab may hold and nothing else. The
   address field takes it typed, as Chrome's does.
@@ -1058,8 +1072,8 @@ there, so there is nothing yet to give an expiry through.
    windows they always did, because a webview built by `WebviewWindowBuilder`
    carries the window's label, and a web tab's `web-...` is not among them.
 2. A remote origin matches no capability here, which Tauri refuses on its own.
-3. The globals that reach the crate are deleted before the page's first script
-   runs - **or rather, they are meant to be, and they are not. See below.**
+3. The page is handed nothing of the app's at all: no global, no script in its own
+   world, no channel. See "What a page is given: nothing" below.
 
 ### Where a space keeps its web data
 
@@ -1117,58 +1131,132 @@ pages (`visited.ts`) is `nib:web-visits` for every space on Global and
 `nib:web-visits:<id>` for a space on Space or Site, so a space that signs in apart does
 not offer its pages to the others as they type.
 
-### What a page is given that a browser would not give it
+### What a page is given: nothing
 
-**This is open, it breaks Google Docs, Sheets and Slides, and it is the one thing on
-this page that is a lie about what ships.** Measured on 2026-09-18 by
-`scripts/web-globals-probe.py`, which is a page in a real web tab asking what it was
-handed:
+**A page in a web tab is handed nothing of nib's: no global, no script in its own world,
+no channel to the app.** Emil, 2026-09-30, on Google Sheets in a web tab, which is every
+sheet he opens: _"Loading issue - Troubleshoot this issue by clearing application
+resources. Step 1: Follow these instructions to clear your cache and cookies. Step 2:
+Then, reload this page."_ The sheet behind the dialog was drawn, so the page had started
+and then stopped.
 
-|                                                         | in a web tab                                                                                                     | in Edge |
-| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
-| a classic script may declare `let ipc` at the top level | **no**                                                                                                           | yes     |
-| what is on `window` of the app's                        | **`ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__`** | nothing |
+Nothing was wrong with the storage, and the dialog's advice would not have helped. The
+page's console, read over the `DevTools` protocol on the probe, said it outright: `Uncaught
+SyntaxError: Identifier 'ipc' has already been declared` in the editor's own bundle, then
+`RITZ_initializeModules is not defined`, `waffle_api is not defined` and
+`DOCS_initialLoadTiming is not defined` as the rest of the editor found its first half
+missing - six uncaught exceptions on every load.
 
-A web tab is a Tauri webview, and a Tauri webview carries the app's own machinery into
-whatever page it shows. wry writes one of those globals for its message channel, before
-any script this crate supplies:
+**Why.** A web tab is a Tauri webview, and a Tauri webview is built to carry the app into
+whatever it shows. wry writes one global for its message channel into every document:
 
 ```js
 Object.defineProperty(window, 'ipc', { value: Object.freeze({ postMessage: ... }) })
 ```
 
-`Object.defineProperty` leaves `configurable` out, so it defaults to false - and **a
-classic script may not declare `let ipc`, `const ipc` or `class ipc` at the top level
+Tauri writes `isTauri`, `__TAURI_INTERNALS__` and each plugin's internals beside it, the
+same way. `Object.defineProperty` leaves `configurable` out, so it defaults to false, and
+**a classic script may not declare `let ipc`, `const ipc` or `class ipc` at the top level
 while the global object carries a non-configurable `ipc`.** The whole script is a
-`SyntaxError` before its first line runs. `ipc` is three letters and an ordinary name
-for a bundle to use, and Google's editors bundle uses it, so a sheet in a web tab
-rendered for a moment and was then replaced by Google's own _"Loading issue -
-Troubleshoot this issue by clearing application resources"_ page. Its console said so
-outright: `Uncaught SyntaxError: Identifier 'ipc' has already been declared` at
-`m=core:1`, and then `RITZ_initializeModules is not defined`, `waffle_api is not
-defined`, `DOCS_initialLoadTiming is not defined`. **Nothing was wrong with the
-storage.** `navigator.storage.estimate()`, `navigator.cookieEnabled`, a cookie written
-and read back, `localStorage`, `sessionStorage`, IndexedDB written and read back, the
-Cache API, Web Locks, `getRegistrations()`, workers and the user agent all answer in a
-web tab exactly as they answer in Edge on this machine, and the browsing profile on
-disk has a `https_docs.google.com_0.indexeddb.leveldb` in it.
+`SyntaxError` before its first line runs. `ipc` is three letters and an ordinary name for
+a bundle to use, and the spreadsheet editor's uses it. Nothing inside the page could undo
+it: `delete window.ipc` answers false and redefining it throws. The guard script that used
+to delete the app's globals as a page began deleted nothing, for that reason and because
+it ran before Tauri's scripts had written them.
 
-`GUARD` cannot undo any of it. It is one of the injected scripts and it runs **in the
-middle** of them - after wry's and before Tauri's own - so the globals it deletes are
-not there yet and all of them are there by the time the site's first script runs. And
-`ipc` could not be deleted from anywhere: `delete window.ipc` answers false and
-`Object.defineProperty` throws `Cannot redefine property: ipc`, because a page may not
-redefine a non-configurable property of its own global object.
+It was bisected on the probe, on a build that hands a page nothing, by putting each of the
+old scripts back into the page's own world one at a time and loading the sheet again:
 
-So it cannot be answered from inside the page, and it has to be answered where the
-scripts are registered. The engine will take them back - `RemoveScriptToExecuteOnDocument
-Created` removed wry's and `window.ipc` was gone, measured - but an identifier is what it
-takes, `WebView2` hands those out as a counter this crate never sees, and the removal has
-to happen before the first document is created, which means a tab's webview being built
-on `about:blank` and navigated afterwards. That is a change to `web_open`'s shape and it
-belongs to a change of its own. The honest upstream fix is one word: wry writing
-`configurable: true` in that descriptor, which would let `GUARD` delete it and let a page
-declare its own `ipc` either way.
+| put back                                             | the sheet                              |
+| ---------------------------------------------------- | -------------------------------------- |
+| nothing                                              | loads                                  |
+| wry's `ipc`                                          | **`SyntaxError`, and "Loading issue"** |
+| wry's `ipc`, but `configurable: true`                | loads                                  |
+| Tauri's `isTauri` and `__TAURI_INTERNALS__`          | loads                                  |
+| the plugins' internals                               | loads                                  |
+| nib's old guard, the middle-button script, the place | loads                                  |
+
+So `ipc` alone breaks Google, and the rest is taken away for the other reason: a browser
+gives a page nothing of itself, and any of those names is one bundle away from being the
+next `ipc`. Two of the plugins' scripts were doing harm of their own besides. The dialog
+plugin replaced `alert` and `confirm` in every page with calls into the app, which a site's
+origin is refused: `alert()` showed nothing, and `confirm()` returned a promise at once -
+truthy, so a site's _"Delete this?"_ went ahead as if the reader had said yes. And the
+opener plugin took every Ctrl+click, Shift+click and `target="_blank"` link away from the
+page to hand it to the system browser, which a site is never granted either, so those
+opened nothing at all.
+
+**What a browser does, and what nib does now.** A browser runs nothing of its own in a
+page's world. What an extension or a test tool runs in a page runs in a world of its own -
+Chrome's content scripts, Electron's context isolation, Puppeteer's utility world, Safari's
+`WKContentWorld` - which shares the page's document and events and none of its globals or
+prototypes, so neither side can see or break the other. A web tab is built that way now
+(see `apps/desktop/src-tauri/src/web_worlds.rs`):
+
+1. **The tab is built on `about:blank`, and every script the runtime registered is taken
+   back before it is sent to the site.** None of it is needed: every event nib follows on a
+   page is the engine's own, and every question it asks a page comes back through the
+   engine's own script callback. On `WebView2` a script is taken back only by the
+   identifier the engine handed out, which wry and Tauri throw away; it numbers them from
+   one, so one more is registered to learn how far it has got, and everything up to it
+   goes. A numbering this cannot read takes nothing back, and the page is sent as it was
+   before rather than left blank. `WKWebView` and `WebKitGTK` empty a tab's user scripts
+   in one call.
+2. **The message channel goes too** - `window.chrome.webview` on `WebView2`, the handler
+   behind `window.webkit.messageHandlers` on the other two - so the page has nothing to
+   post to the app, and nothing to tell it that it is inside one.
+3. **nib's own page scripts run in a world named `nib`**: the middle button and the keys a
+   page lets go by (see "A link in a tab of its own" and `web_opens.rs`), and a revived
+   tab's place. On `WebView2` the world is registered through the engine's `DevTools`
+   protocol, which is the one way it offers into an isolated world, and frames from other
+   sites - which run in a process of their own, out of the page's registration's reach -
+   are followed and given the same world before their first document. The page's
+   `window`, `window.open`, `addEventListener` and prototypes are its own.
+4. **What nib reads out of a page on its own account is read in that world too** on
+   `WebView2`: the site's mark (see `web_icons.rs`), so a page that wraps `fetch` neither
+   sees the read nor changes its answer.
+5. **A page's dialogs are the page's again.** `confirm()` stops the page's script until
+   it is answered and gives back `true` or `false`, `prompt()` the words or `null`, and
+   `alert()` shows - in nib's own card rather than a window of the engine's; see "The page
+   itself".
+
+Measured on the probe on 2026-09-30, `scripts/web-globals-probe.py --real`, on the build
+before and after:
+
+|                                                        | before                                                                                                       | after                                                   |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| a classic script may declare `let ipc` at the top level | no                                                                                                           | **yes**                                                 |
+| what is on `window` of the app's                       | `ipc`, `isTauri`, `__TAURI_INTERNALS__`, `__TAURI_OS_PLUGIN_INTERNALS__`, `__TAURI_EVENT_PLUGIN_INTERNALS__` | **nothing**                                             |
+| `window.chrome.webview`                                | deleted by the guard, in the page's own world                                                                | **never there**                                         |
+| nib's listeners                                        | on the page's own `window`                                                                                   | **in nib's world**: the page, a same-site frame, and a frame from another site |
+| Google Sheets, a public sheet                          | "Loading issue", six uncaught exceptions                                                                     | **loads, none**                                         |
+| Google Docs, Slides and the sign-in page               | load, with the app's globals on `window`                                                                     | load, nothing                                           |
+| YouTube, GitHub, Proton Mail, Moodle's sign-in         | load, with the app's globals on `window`                                                                     | load, nothing, no exceptions                            |
+| a site's `confirm()`, answered Cancel                  | a promise at once, before anybody was asked                                                                  | **`false`, after the answer**                           |
+| a site's `prompt()`, answered with a word              | the engine's own window                                                                                      | **the word, from nib's card**                           |
+
+**A profile the old build broke needs no cleaning.** The probe profile that had just shown
+the dialog opened the sheet in the new build with no exception and nothing cleared: the
+editor had never written anything wrong, it had simply never started.
+
+**What a browser asks about is still asked about, and nothing is hidden any more.** The old
+guard also took the hardware buses and the credential store off `navigator`, in the page's
+own world. That was a script changing what a page sees, and a browser does not do it:
+Chrome and Edge hand every page `navigator.usb`, `navigator.hid`, `navigator.serial`,
+`navigator.bluetooth` and `navigator.credentials` and ask at the moment of use. The engine
+answers the same way here, and a passkey or a security key at a sign-in now reaches the
+system's own prompt.
+
+**The honest upstream fix for Google is one word**: wry writing `configurable: true` in
+that descriptor, which the bisection above shows is enough. wry 0.57 injects `ipc` only
+when an IPC handler is set, and Tauri always sets one, so an upgrade alone would not have
+helped.
+
+**Measured on Windows only.** The probes drive `WebView2`. The same clearing is built on
+`WKWebView` and `WebKitGTK` against their own documented calls - the user content
+controller's `removeAllUserScripts` and `WKContentWorld`, WebKitGTK's
+`remove_all_scripts` and a script world - and is checked there by the compiler and the
+unit tests, not yet by a drive.
 
 ### What a site may do
 
@@ -1268,11 +1356,12 @@ reads the `.weba` off the disk afterwards. A machine that refuses a microphone -
 own privacy settings, a desk with none on it - is not a failure there; a request that
 never settles is.
 
-**What is still refused outright** is the buses a page can reach hardware over -
-Bluetooth, USB, serial, HID - and the credential store. Those are taken off
-`Navigator.prototype` before the page's first script, because a note-taking app has no
-business handing them to a page and because no sentence in a bubble would help anybody
-decide.
+**Nothing is refused outright any more.** The buses a page can reach hardware over -
+Bluetooth, USB, serial, HID - and the credential store used to be taken off
+`Navigator.prototype` before the page's first script. That was nib changing what a page
+sees, which a browser does not do, and the engine raises no request for them that the
+bubble would answer: a device chooser and a passkey are the engine's and the system's
+to ask about. See "What a page is given: nothing".
 
 **On macOS the camera and the microphone go through the same bubble.** What was here
 before said a Mac site got the engine's own prompt, and that was not true: wry sets a UI
@@ -1320,7 +1409,9 @@ versions and goes to the trash like every other document.
 
 |                                                       |                                                                                                                                                                                                                                                        |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_worlds.rs` | what a page is handed: the runtime's scripts taken back, the channel off, nib's own in a world of their own on each engine, and what nib reads in that world. Unit tested |
+| `apps/desktop/src-tauri/src/web_dialogs.rs` | a page's `alert`, `confirm`, `prompt` and leave, held open for the window's card. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
@@ -1343,6 +1434,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/keep.ts`                | the file keeping up with the page, debounced. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/permissions.svelte.ts`  | what each site was told, and the requests waiting for an answer. Tested                                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/WebAsk.svelte`          | the bubble a site is answered in                                                                                                                                                                                                                       |
+| `apps/desktop/src/lib/web-tab/dialogs.svelte.ts` | the page's dialogs waiting for an answer, and the answer sent back. Tested |
+| `apps/desktop/src/lib/web-tab/WebDialog.svelte` | the card a page's dialog is answered in |
 | `apps/desktop/src/lib/web-tab/WebSite.svelte`         | what a site is, behind the mark in the bar                                                                                                                                                                                                             |
 | `apps/desktop/src/lib/web-tab/downloads.svelte.ts`    | the list the glyph and the bubble draw, and the ring. Tested                                                                                                                                                                                           |
 | `apps/desktop/src/lib/web-tab/WebDownloads.svelte`    | the list under the glyph                                                                                                                                                                                                                               |
@@ -1375,7 +1468,8 @@ versions and goes to the trash like every other document.
 | `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one and a `localStorage` token, read back out of the page, all three kept |
 | `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
-| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, what of the app's is on its `window`, whether nib's listeners are in nib's world in every frame, what a page's dialogs give back, and with `--real` Google's editors and the regression sites, read over the `DevTools` protocol. See "What a page is given: nothing" |
+| `scripts/devtools.py` | the `DevTools` protocol with the standard library, for a drive to read a page's own console without pressing anything in it |
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
@@ -1408,11 +1502,17 @@ versions and goes to the trash like every other document.
 - **A page holding the whole screen, the speaker and the find's marks are `WebView2`'s
   alone.** A Mac and Linux have no event for the first two reachable through wry, and
   their find marks one match at a time; see "The page itself".
-- **A page still gets `ipc` and the app's other globals, and Google's editors will not
-  load because of it.** The whole of it is in "What a page is given that a browser would
-  not give it" above, with the measurement and what the fix costs. It is the largest
-  thing open here: it is not one site, it is any site whose bundle happens to declare a
-  top level `ipc`, and nothing in the page can tell the reader why.
+- **Clearing a page is measured on Windows only.** On a Mac and on Linux it is built
+  against each engine's documented calls and held to by the compiler; no drive runs there
+  yet. See "What a page is given: nothing".
+- **A page's dialogs are nib's card on Windows only.** A Mac's `WKWebView` answers them
+  itself without a delegate - `alert()` shows nothing, `confirm()` is `false` - and Linux
+  draws `WebKitGTK`'s own. A delegate beside the capture prompt's (see `ask` in
+  `web_tabs.rs`) is where the card would come from on a Mac.
+- **The clip, the place and a step read the page in its own world.** They are questions
+  asked when somebody presses something, they leave nothing behind, and a page that has
+  wrapped `querySelector` or `history.go` sees them; the site's mark is read in nib's world
+  on `WebView2` and in the page's own elsewhere.
 - **A page's still picture is Windows and macOS only.** `CapturePreview` and
   `WKWebView`'s `takeSnapshot` are reachable; WebKitGTK's equivalent is not through what
   wry hands out, so an overlay over a page on Linux still blinks the pane.

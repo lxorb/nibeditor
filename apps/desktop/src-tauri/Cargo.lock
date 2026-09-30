@@ -2484,6 +2484,7 @@ dependencies = [
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
  "tempfile",
+ "webkit2gtk",
  "webview2-com",
  "window-vibrancy",
  "windows 0.58.0",

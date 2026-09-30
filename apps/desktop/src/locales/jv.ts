@@ -1429,6 +1429,7 @@ export const jv: Dictionary = {
   'wants to': 'pengin',
   'Don’t allow': 'Aja diulehake',
   Allow: 'Ulehake',
+  OK: 'OK',
   'Use your camera': 'Nganggo kamera sampeyan',
   'Use your microphone': 'Nganggo mikrofon sampeyan',
   'Know your location': 'Ngerti lokasi sampeyan',

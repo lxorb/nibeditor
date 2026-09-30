@@ -1428,6 +1428,7 @@ export const gu: Dictionary = {
   'wants to': 'ને આ પરવાનગીની જરૂર છે',
   'Don’t allow': 'મંજૂરી આપશો નહીં',
   Allow: 'મંજૂરી આપો',
+  OK: 'ઠીક છે',
   'Use your camera': 'તમારા કૅમેરાનો ઉપયોગ કરો',
   'Use your microphone': 'તમારા માઇક્રોફોનનો ઉપયોગ કરો',
   'Know your location': 'તમારું સ્થાન જાણો',

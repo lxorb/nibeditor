@@ -1462,6 +1462,7 @@ export const ha: Dictionary = {
   'wants to': 'yana son',
   'Don’t allow': 'Kar ka bari',
   Allow: 'Bari',
+  OK: 'To',
   'Use your camera': 'Yi amfani da kamararka',
   'Use your microphone': 'Yi amfani da makirufonka',
   'Know your location': 'San wurin da kake',

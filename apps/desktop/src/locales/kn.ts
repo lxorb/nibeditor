@@ -1448,6 +1448,7 @@ export const kn: Dictionary = {
   'wants to': 'ಗೆ ಅನುಮತಿ ಬೇಕಿದೆ',
   'Don’t allow': 'ಅನುಮತಿಸಬೇಡಿ',
   Allow: 'ಅನುಮತಿಸಿ',
+  OK: 'ಸರಿ',
   'Use your camera': 'ನಿಮ್ಮ ಕ್ಯಾಮರಾವನ್ನು ಬಳಸಿ',
   'Use your microphone': 'ನಿಮ್ಮ ಮೈಕ್ರೋಫೋನ್ ಅನ್ನು ಬಳಸಿ',
   'Know your location': 'ನಿಮ್ಮ ಸ್ಥಳವನ್ನು ತಿಳಿದುಕೊಳ್ಳಿ',

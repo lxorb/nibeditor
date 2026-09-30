@@ -1454,6 +1454,7 @@ export const ml: Dictionary = {
   'wants to': 'ഇത് ചെയ്യാൻ ആവശ്യപ്പെടുന്നു',
   'Don’t allow': 'അനുവദിക്കരുത്',
   Allow: 'അനുവദിക്കുക',
+  OK: 'ശരി',
   'Use your camera': 'നിങ്ങളുടെ ക്യാമറ ഉപയോഗിക്കുക',
   'Use your microphone': 'നിങ്ങളുടെ മൈക്രോഫോൺ ഉപയോഗിക്കുക',
   'Know your location': 'നിങ്ങളുടെ ലൊക്കേഷൻ അറിയുക',
