@@ -110,6 +110,9 @@ class Session {
   /** Keystrokes on their way, in order; see `send`. */
   private outgoing: { data: string; binary: boolean }[] = []
   private sending = false
+  /** The shell being started, which keystrokes and a new size wait for: typed in the
+   *  first moment, they would reach a session the crate has not made yet. */
+  private spawning: Promise<unknown> = Promise.resolve()
   private resting: ReturnType<typeof setTimeout> | undefined
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
@@ -291,18 +294,26 @@ class Session {
     const output = new Channel<unknown>()
     output.onmessage = (message) => this.heard(id, message)
 
+    const { cols, rows } = this.term
+    this.spawning = invoke('pty_spawn', {
+      id,
+      shell: spec.shell,
+      folder: spec.folder,
+      cols,
+      rows,
+      output,
+    })
+
     try {
-      await invoke('pty_spawn', {
-        id,
-        shell: spec.shell,
-        folder: spec.folder,
-        cols: this.term.cols,
-        rows: this.term.rows,
-        output,
-      })
+      await this.spawning
     } catch {
       if (this.pty === id) await this.failed(spec)
+      return
     }
+
+    // The screen may have been sized again while the shell was starting.
+    if (this.term.cols !== cols || this.term.rows !== rows)
+      this.sized(this.term.cols, this.term.rows)
   }
 
   /** A shell that would not start. Most often one that is not on this machine any
@@ -393,6 +404,8 @@ class Session {
   private async send() {
     if (this.sending) return
     this.sending = true
+
+    await this.spawning.catch(() => undefined)
 
     while (this.outgoing.length && this.pty !== null) {
       const binary = this.outgoing[0]?.binary ?? false
