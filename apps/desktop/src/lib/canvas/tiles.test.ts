@@ -61,7 +61,8 @@ beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
 })
 
-const { FILLED_A_FRAME, InkTiles, OUTLINE_WEIGHT, TILE } = await import('./tiles')
+const { FILE_WEIGHT, FILLED_A_FRAME, InkTiles, OUTLINE_WEIGHT, TILE } = await import('./tiles')
+const { InkGrid } = await import('./ink-grid')
 const { strokesFilled } = await import('./paint')
 
 interface Rect {
@@ -384,24 +385,33 @@ describe('a plane seen whole, arriving', () => {
 
     const frames: number[] = []
     const outlines: number[] = []
+    const filings: number[] = []
+    const filing = vi.spyOn(InkGrid.prototype, 'add')
     for (let owed = true; owed;) {
       const filled = strokesFilled()
       const traced = CountingPath.traced
+      const filed = filing.mock.calls.length
       owed = tiles.paint(layer.ctx, strokes, whole, palette)
       frames.push(strokesFilled() - filled)
       outlines.push(CountingPath.traced - traced)
+      filings.push(filing.mock.calls.length - filed)
       if (frames.length > 400) throw new Error('the ink never finished arriving')
     }
+    filing.mockRestore()
 
-    // More than one frame, and none of them over the budget, outlines and fills
-    // together: this is the four hundred milliseconds a frame that the plane used
-    // to be.
+    // More than one frame, and none of them over the budget, filing, outlines and
+    // fills together: this is the four hundred milliseconds a frame that the plane
+    // used to be, and the thirty the first frame spent filing before it began.
     expect(frames.length).toBeGreaterThan(1)
     frames.forEach((filled, at) => {
-      expect(filled + (outlines[at] ?? 0) * OUTLINE_WEIGHT).toBeLessThanOrEqual(FILLED_A_FRAME)
+      const outlined = (outlines[at] ?? 0) * OUTLINE_WEIGHT
+      expect(filled + outlined + (filings[at] ?? 0) * FILE_WEIGHT).toBeLessThanOrEqual(
+        FILLED_A_FRAME,
+      )
     })
 
-    // Every stroke outlined once and every tile filled once.
+    // Every stroke filed once, outlined once, and every tile filled once.
+    expect(sum(filings)).toBe(strokes.length)
     expect(sum(outlines)).toBe(strokes.length)
     expect(sum(frames)).toBe(sum([...expected(strokes, whole).values()]))
   })

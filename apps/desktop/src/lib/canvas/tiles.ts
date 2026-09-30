@@ -68,6 +68,15 @@ export const FILLED_A_FRAME = 2048
  *  frame spend both: sixty to ninety milliseconds, where either alone is twenty. */
 export const OUTLINE_WEIGHT = 8
 
+/** What filing one stroke under the cells of the plane it touches costs, in strokes
+ *  filled: its box measured and a few cells written, which measured a tenth of a
+ *  fill over a plane of ten thousand strokes and is counted as a quarter, so the
+ *  frame that files is never the long one. Out of the same budget as the outlines,
+ *  because a plane just opened files every stroke before a tile can be painted, and
+ *  that was a first frame of thirty milliseconds before the budget had spent
+ *  anything. See `#file`. */
+export const FILE_WEIGHT = 0.25
+
 /** How many tiles are kept, as a multiple of the tiles the layer shows: the screen
  *  and about as much again around it, so panning back is a copy and not a fill. */
 const KEPT = 2
@@ -213,6 +222,11 @@ export class InkTiles {
 
   #strokes: readonly InkStroke[] = []
   readonly #grid = new InkGrid()
+  /** Strokes on the plane not filed under the grid yet, and how far along them the
+   *  filing has got. No tile is painted until they are all filed, since until then
+   *  the grid could leave one of them off it. */
+  #unfiled: InkStroke[] = []
+  #filed = 0
   #order = new Map<string, number>()
   #palette: Palette | null = null
 
@@ -354,13 +368,45 @@ export class InkTiles {
       this.#touched(strokeBox(stroke), (tile) => mark(stroke, tile))
     }
 
+    // Filed a frame's budget at a time; see `#file`. A stroke gone before its turn
+    // came is not filed at all.
+    if (gone.length && this.#filed < this.#unfiled.length) {
+      const left = new Set(gone)
+      this.#unfiled = this.#unfiled.slice(this.#filed).filter((stroke) => !left.has(stroke))
+      this.#filed = 0
+    }
+    for (const stroke of added) this.#unfiled.push(stroke)
+
+    // A plane just opened has no tiles to tell, and measuring its strokes here would
+    // be the filing's cost paid anyway, outside the budget.
+    if (!this.#tiles.size) return
     for (const stroke of added) {
-      this.#grid.add(stroke)
       this.#touched(strokeBox(stroke), (tile) => {
         mark(stroke, tile)
         tile.adds.push(stroke)
       })
     }
+  }
+
+  /** Strokes filed under the grid out of this frame's budget: every one on the frame
+   *  after an edit, which adds a stroke or two, and a frame's worth at a time on a
+   *  plane just opened. Answers what it spent. */
+  #file(): number {
+    let spent = 0
+    const queue = this.#unfiled
+
+    while (this.#filed < queue.length && spent + FILE_WEIGHT <= FILLED_A_FRAME) {
+      const stroke = queue[this.#filed++]
+      if (stroke) this.#grid.add(stroke)
+      spent += FILE_WEIGHT
+    }
+
+    if (this.#filed === queue.length) {
+      this.#unfiled = []
+      this.#filed = 0
+    }
+
+    return spent
   }
 
   /** The tiles the layer shows, from the middle of the view outwards: what somebody
@@ -401,7 +447,8 @@ export class InkTiles {
   /** As much of what is missing, out of date or edited as one frame's budget covers.
    *  Answers whether any is left. */
   #fill(wanted: readonly Spot[], palette: Palette): boolean {
-    let spent = 0
+    let spent = this.#file()
+    if (this.#unfiled.length) return true
 
     // Outlines first, out of the same budget: a stroke nobody has outlined yet is a
     // stroke its tile waits for.
