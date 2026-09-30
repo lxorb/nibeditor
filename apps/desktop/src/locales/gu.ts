@@ -1525,4 +1525,6 @@ export const gu: Dictionary = {
   'Storing the file': 'Storing the file',
   'That file is larger than a note can keep.': 'That file is larger than a note can keep.',
   'That file could not be kept.': 'That file could not be kept.',
+  // Nib as the default browser
+  'Default browser': 'મૂળ બ્રાઉઝર',
 }

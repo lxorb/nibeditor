@@ -1,17 +1,23 @@
-//! Starting up and opening windows: the files the app is handed, and the extra
-//! windows someone asks for while it is running.
+//! Starting up and opening windows: what the app is handed, and the extra windows
+//! someone asks for while it is running.
 //!
-//! A file reaches the app three ways, and all three end here. A command line,
-//! which is how Windows and Linux open a note from the file manager. A second
-//! launch, which is the same thing reaching an app that is already open. And on a
-//! Mac, where the Finder never puts a document on a command line, the system's own
-//! "open these" - a double click, Open With, a note dropped on the Dock icon; see
-//! lifecycle.rs.
+//! Two kinds of thing are handed to the app, and both end here.
 //!
-//! Whichever way, a file arriving before a window can open it waits here until one
-//! asks, and a file arriving after goes to the window in front, the way a second
-//! document double-clicked in the Finder lands in the window being worked in
-//! rather than in every window at once.
+//! Notes. A file reaches the app three ways: a command line, which is how Windows and
+//! Linux open a note from the file manager; a second launch, which is the same thing
+//! reaching an app that is already open; and on a Mac, where the Finder never puts a
+//! document on a command line, the system's own "open these" - a double click, Open
+//! With, a note dropped on the Dock icon; see lifecycle.rs.
+//!
+//! And web pages, because nib can be the browser: a link clicked in another program
+//! arrives by the same three ways. Which of what arrived is a page is `web_handed.rs`;
+//! which window shows it is the same question as for a note, answered here the same
+//! way.
+//!
+//! Whichever kind, what arrives before a window can take it waits here until one
+//! asks, and what arrives after goes to the window in front, the way a second
+//! document double-clicked in the Finder lands in the window being worked in rather
+//! than in every window at once.
 
 use std::collections::HashSet;
 use std::path::Path;
@@ -27,40 +33,74 @@ use crate::paths::is_markdown;
 /// built.
 static WINDOWS: AtomicU32 = AtomicU32::new(0);
 
-/// What a window is told when files arrive for it while it is running.
-const OPEN_FILES: &str = "nib://open-files";
-
 /// The label of the window the app starts with.
 const MAIN: &str = "main";
 
-/// Files handed to the app that no window has taken yet, and which windows are
+/// The two kinds of thing the system hands the app.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Handed {
+    /// Notes to open.
+    Files,
+    /// Web pages to show in tabs of their own; see `web_handed.rs`.
+    Pages,
+}
+
+impl Handed {
+    /// What a window is told when some arrive for it while it is running.
+    fn event(self) -> &'static str {
+        match self {
+            Self::Files => "nib://open-files",
+            Self::Pages => "nib://open-pages",
+        }
+    }
+}
+
+/// What was handed to the app that no window has taken yet, and which windows are
 /// listening for more.
 #[derive(Default)]
 pub struct Pending(Mutex<Waiting>);
 
-/// What `Pending` holds, behind one lock so the three are always read together.
+/// What `Pending` holds, behind one lock so it is always read together.
 #[derive(Default)]
 struct Waiting {
-    /// Files for the next window that asks.
-    files: Vec<String>,
-    /// The windows whose page has asked for its files, and so has its listener
-    /// up: a window still loading would drop an event on the floor.
-    listening: HashSet<String>,
-    /// Whether the launch has built its own window. Until it has, a file that
-    /// finds no window waits for that one rather than opening another.
+    files: Road,
+    pages: Road,
+    /// Whether the launch has built its own window. Until it has, whatever finds no
+    /// window waits for that one rather than opening another.
     launched: bool,
 }
 
+/// One kind of thing on its way to a window.
+#[derive(Default)]
+struct Road {
+    /// For the next window that asks.
+    waiting: Vec<String>,
+    /// The windows whose page has asked, and so has its listener up: a window still
+    /// loading would drop an event on the floor. A set per kind, because a page
+    /// listens for pages later than for files - that listener is fetched after the
+    /// first paint; see lib/web-tab/handed.ts.
+    listening: HashSet<String>,
+}
+
+impl Waiting {
+    fn road(&mut self, handed: Handed) -> &mut Road {
+        match handed {
+            Handed::Files => &mut self.files,
+            Handed::Pages => &mut self.pages,
+        }
+    }
+}
+
 impl Pending {
-    /// Puts files aside for the next window that asks.
-    pub fn hold(&self, files: Vec<String>) {
+    /// Puts what arrived aside for the next window that asks.
+    pub fn hold(&self, handed: Handed, arrived: Vec<String>) {
         if let Ok(mut waiting) = self.0.lock() {
-            waiting.files.extend(files);
+            waiting.road(handed).waiting.extend(arrived);
         }
     }
 
-    /// Says the launch has built its window, so a file that finds none from now on
-    /// is one that has to open one.
+    /// Says the launch has built its window, so what finds none from now on has to
+    /// open one.
     pub fn launched(&self) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.launched = true;
@@ -72,15 +112,34 @@ impl Pending {
     /// until it says so.
     pub fn forget(&self, label: &str) {
         if let Ok(mut waiting) = self.0.lock() {
-            waiting.listening.remove(label);
+            waiting.files.listening.remove(label);
+            waiting.pages.listening.remove(label);
         }
     }
 
-    /// Whether a window's page is up and listening.
+    /// Whether a window's page is up: its files are the first thing it asks for, as
+    /// its launch begins; see start.ts.
     pub fn is_listening(&self, label: &str) -> bool {
+        self.hears(Handed::Files, label)
+    }
+
+    /// Whether a window is listening for this kind.
+    fn hears(&self, handed: Handed, label: &str) -> bool {
         self.0
             .lock()
-            .is_ok_and(|waiting| waiting.listening.contains(label))
+            .is_ok_and(|mut waiting| waiting.road(handed).listening.contains(label))
+    }
+
+    /// Everything of a kind waiting, for the window asking, which is listening for more
+    /// from now on.
+    fn take(&self, handed: Handed, label: &str) -> Vec<String> {
+        let Ok(mut waiting) = self.0.lock() else {
+            return Vec::new();
+        };
+
+        let road = waiting.road(handed);
+        road.listening.insert(label.to_owned());
+        std::mem::take(&mut road.waiting)
     }
 }
 
@@ -106,6 +165,20 @@ pub fn markdown_files<I: IntoIterator<Item = String>>(paths: I) -> Vec<String> {
         .collect()
 }
 
+/// What a command line hands the app: the notes it names, and the pages it asks
+/// for. A launch Windows made for a link is about that link alone, so nothing else
+/// on it is read as a note; see `for_a_link` in `web_handed.rs`.
+pub fn handed_by(args: Vec<String>) -> (Vec<String>, Vec<String>) {
+    let pages = crate::web_handed::pages_in(&args);
+    let files = if crate::web_handed::for_a_link(&args) {
+        Vec::new()
+    } else {
+        markdown_paths(args)
+    };
+
+    (files, pages)
+}
+
 /// Handed to the window once it is ready; clearing them stops a reload from
 /// reopening the same files a second time. Asking is also how a window says it is
 /// listening for the files that arrive later, which is why the page listens first
@@ -115,16 +188,21 @@ pub fn take_startup_files(
     window: tauri::Window,
     pending: tauri::State<'_, Pending>,
 ) -> Vec<String> {
-    let Ok(mut waiting) = pending.0.lock() else {
-        return Vec::new();
-    };
+    pending.take(Handed::Files, window.label())
+}
 
-    waiting.listening.insert(window.label().to_owned());
-    std::mem::take(&mut waiting.files)
+/// The same for web pages: the links the app was started for, and from now on the
+/// ones that arrive while it runs.
+#[tauri::command]
+pub fn take_startup_pages(
+    window: tauri::Window,
+    pending: tauri::State<'_, Pending>,
+) -> Vec<String> {
+    pending.take(Handed::Pages, window.label())
 }
 
 /// A second launch of the app, which belongs to the one already open: its window
-/// comes forward and takes whatever file the launch was asked to open.
+/// comes forward and takes whatever the launch was asked to open.
 pub fn second_launch(app: &AppHandle, argv: Vec<String>, _cwd: String) {
     // The window, not the webview window, which a window holding a page in a tab
     // is not; see web_tabs.rs.
@@ -132,26 +210,32 @@ pub fn second_launch(app: &AppHandle, argv: Vec<String>, _cwd: String) {
         bring_forward(&window);
     }
 
-    hand_over(app, markdown_paths(argv));
+    let (files, pages) = handed_by(argv);
+    hand_over(app, Handed::Files, files);
+    hand_over(app, Handed::Pages, pages);
 }
 
-/// Files for the app, from whichever way they came, opened in the window in front.
+/// What arrived for the app, from whichever way it came, opened in the window in
+/// front.
 ///
 /// What a Mac does with a document double-clicked in the Finder while its app is
-/// open (`TextEdit`, Typora, Obsidian): one window takes it, and that window comes
-/// forward. When no window is listening yet the files wait for the first that
-/// asks, and when there is no window at all - a Mac app lives on in the Dock with
-/// every window closed - one is opened for them.
-pub fn hand_over(app: &AppHandle, files: Vec<String>) {
-    if files.is_empty() {
+/// open (`TextEdit`, Typora, Obsidian), and what a browser does with a link clicked
+/// elsewhere (Chrome, Edge): one window takes it, and that window comes forward. When
+/// no window is listening yet it waits for the first that asks, and when there is no
+/// window at all - a Mac app lives on in the Dock with every window closed - one is
+/// opened for it.
+pub fn hand_over(app: &AppHandle, handed: Handed, arrived: Vec<String>) {
+    if arrived.is_empty() {
         return;
     }
-    crate::remember(app, &files);
+    if handed == Handed::Files {
+        crate::remember(app, &arrived);
+    }
 
     let Some(pending) = app.try_state::<Pending>() else {
         return;
     };
-    let seen = seen(app, &pending);
+    let seen = seen(app, &pending, handed);
     let launched = pending.0.lock().is_ok_and(|waiting| waiting.launched);
 
     match receiver(&seen, launched) {
@@ -159,11 +243,11 @@ pub fn hand_over(app: &AppHandle, files: Vec<String>) {
             if let Some(window) = app.get_window(&label) {
                 bring_forward(&window);
             }
-            let _ = app.emit_to(label.as_str(), OPEN_FILES, files);
+            let _ = app.emit_to(label.as_str(), handed.event(), arrived);
         }
-        Handover::Hold => pending.hold(files),
+        Handover::Hold => pending.hold(handed, arrived),
         Handover::HoldAndOpen => {
-            pending.hold(files);
+            pending.hold(handed, arrived);
             let _ = open_again(app);
         }
     }
@@ -316,33 +400,33 @@ struct Seen {
     listening: bool,
 }
 
-/// The app's windows, as `receiver` needs to see them.
-fn seen(app: &AppHandle, pending: &Pending) -> Vec<Seen> {
+/// The app's windows, as `receiver` needs to see them for one kind of thing.
+fn seen(app: &AppHandle, pending: &Pending, handed: Handed) -> Vec<Seen> {
     document_windows(app)
         .into_iter()
         .map(|window| Seen {
             focused: window.is_focused().unwrap_or(false),
-            listening: pending.is_listening(window.label()),
+            listening: pending.hears(handed, window.label()),
             label: window.label().to_owned(),
         })
         .collect()
 }
 
-/// Where arriving files go.
+/// Where what arrived goes.
 #[derive(Debug, PartialEq, Eq)]
 enum Handover {
     /// To this window, which is listening.
     To(String),
-    /// Nowhere yet: a window is on its way and will ask for them.
+    /// Nowhere yet: a window is on its way and will ask for it.
     Hold,
     /// Nowhere yet, and there is no window to ask, so one has to be opened.
     HoldAndOpen,
 }
 
-/// Which window takes arriving files: the one in front if it is listening, else
-/// the first window if that is, else any window that is. None listening means one
-/// is still loading, or the launch has not built its window yet, and the files
-/// wait; no window at all after the launch means opening one.
+/// Which window takes what arrived: the one in front if it is listening, else the
+/// first window if that is, else any window that is. None listening means one is
+/// still loading, or the launch has not built its window yet, and it waits; no
+/// window at all after the launch means opening one.
 fn receiver(windows: &[Seen], launched: bool) -> Handover {
     let listening = || windows.iter().filter(|one| one.listening);
     let chosen = listening()
@@ -373,7 +457,9 @@ fn free_label(app: &AppHandle) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_document_window, markdown_paths, receiver, Handover, Seen};
+    use super::{
+        handed_by, is_document_window, markdown_paths, receiver, Handed, Handover, Pending, Seen,
+    };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
         Seen {
@@ -472,5 +558,63 @@ mod tests {
 
         let args = vec!["nib.exe".to_string(), note.to_string_lossy().to_string()];
         assert_eq!(markdown_paths(args).len(), 1);
+    }
+
+    #[test]
+    fn a_window_listens_for_pages_apart_from_files() {
+        let pending = Pending::default();
+        pending.hold(Handed::Pages, vec!["https://example.com/".into()]);
+
+        // The page asks for its files first, as its launch begins, and for its pages
+        // once that listener has been fetched: until then a page is held, not sent.
+        assert!(pending.take(Handed::Files, "main").is_empty());
+        assert!(pending.is_listening("main"));
+        assert!(!pending.hears(Handed::Pages, "main"));
+
+        assert_eq!(
+            pending.take(Handed::Pages, "main"),
+            vec!["https://example.com/".to_owned()]
+        );
+        assert!(pending.hears(Handed::Pages, "main"));
+        // A reload asks again and follows nothing a second time.
+        assert!(pending.take(Handed::Pages, "main").is_empty());
+    }
+
+    #[test]
+    fn a_window_that_went_listens_for_nothing() {
+        let pending = Pending::default();
+        pending.take(Handed::Files, "nib-2");
+        pending.take(Handed::Pages, "nib-2");
+
+        pending.forget("nib-2");
+        assert!(!pending.hears(Handed::Files, "nib-2"));
+        assert!(!pending.hears(Handed::Pages, "nib-2"));
+    }
+
+    #[test]
+    fn a_link_launch_hands_over_its_page_and_no_note() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let note = dir.path().join("Idea.md");
+        std::fs::write(&note, "# Idea").expect("a note");
+        let note = note.to_string_lossy().to_string();
+
+        // A note on an ordinary command line is a note, and a page beside it a page.
+        let (files, pages) = handed_by(vec![
+            "nib.exe".into(),
+            note.clone(),
+            "https://example.com".into(),
+        ]);
+        assert_eq!(files, vec![note.clone()]);
+        assert_eq!(pages, vec!["https://example.com/".to_owned()]);
+
+        // The same path smuggled into a link's command line is part of the address.
+        let (files, pages) = handed_by(vec![
+            "nib.exe".into(),
+            "--url".into(),
+            "https://example.com/".into(),
+            note,
+        ]);
+        assert!(files.is_empty());
+        assert_eq!(pages.len(), 1);
     }
 }

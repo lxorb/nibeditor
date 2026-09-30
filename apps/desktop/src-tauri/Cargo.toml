@@ -12,10 +12,11 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the five functions that
+# Unsafe is denied everywhere and excepted by name in the six functions that
 # call Windows directly: the shell's recent documents list, the two registry
-# calls behind Explorer's New menu, WebView2's print engine, and the launch
-# trace's question about when this process was created. Two more on a Mac: the
+# calls behind Explorer's New menu, WebView2's print engine, the launch
+# trace's question about when this process was created, and the shell's answer
+# to which program opens a web address (default_browser.rs). Two more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), and the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
@@ -165,15 +166,17 @@ tempfile = "3"
 # window's close button and the file it stands for (document_window.rs), the one
 # method AppKit asks before it quits (lifecycle.rs), the Dock's recent documents
 # (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), the
-# menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs), and
+# menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs),
 # WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
-# web_tabs.rs, web_cookies.rs).
+# web_tabs.rs, web_cookies.rs), and which browser opens the web and the question
+# that makes nib it (default_browser.rs).
 objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
   "std",
   "block2",
   "NSArray",
+  "NSBundle",
   "NSData",
   "NSDate",
   "NSDictionary",
@@ -205,8 +208,10 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSPrintInfo",
   "NSPrintOperation",
   "NSResponder",
+  "NSRunningApplication",
   "NSView",
   "NSWindow",
+  "NSWorkspace",
 ] }
 objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
@@ -229,6 +234,10 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 
 # Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
+# Nib's registration as a browser, written and read back through a safe interface
+# rather than more unsafe calls; see default_browser.rs. Already in the lock file,
+# at this version, as something the updater's HTTP client builds with.
+windows-registry = "0.6"
 windows = { version = "0.58", features = [
   "Win32_UI_Shell",
   "Win32_Foundation",

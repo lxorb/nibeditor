@@ -82,6 +82,10 @@
     "windows": {
       "nsis": {
         "installerHooks": "installer.nsh"
+      },
+      "wix": {
+        "fragmentPaths": ["wix/browser.wxs"],
+        "componentRefs": ["NibBrowser"]
       }
     },
     "iOS": {

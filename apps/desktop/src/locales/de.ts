@@ -1576,4 +1576,6 @@ export const de: Dictionary = {
   'That file is larger than a note can keep.':
     'Diese Datei ist größer, als eine Notiz behalten kann.',
   'That file could not be kept.': 'Diese Datei konnte nicht gespeichert werden.',
+  // Nib as the default browser
+  'Default browser': 'Standardbrowser',
 }
