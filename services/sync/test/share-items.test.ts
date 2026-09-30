@@ -547,7 +547,12 @@ describe('the ceilings', () => {
     expect(written.status).toBe(507)
   })
 
-  test('and bound how many files one space shares on their own', async () => {
+  /** Two hundred notes made and shared one request at a time, against the real SQL,
+   *  because what this is about is the number the service refuses at: three seconds
+   *  alone, and past the project's thirty beside the rest of the suite on a busy
+   *  machine. The budget is this test's own - a wall a slow honest run must not hit;
+   *  the statuses are what say whether it is right. */
+  test('and bound how many files one space shares on their own', { timeout: 120_000 }, async () => {
     // Every share the space is allowed, and then one more file.
     for (let made = 0; made < MOST_ITEMS; made++) {
       const id = made === 0 ? note : await makeNote(`plans/note-${made}.md`, 'x')
