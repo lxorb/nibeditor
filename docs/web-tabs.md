@@ -679,6 +679,7 @@ address field or the first page a tab arrives at reads it.
 | F5, Ctrl+R              | reload; Ctrl+Shift+R and Ctrl+F5 past the cache                                                                                                                                                   |
 | Escape                  | stops a page on its way in                                                                                                                                                                        |
 | Ctrl+1 to 9             | the tab at that place along the strip, the ninth the last                                                                                                                                         |
+| Alt+1 to 9, Alt+0       | the tab at that place, the ninth included, and the last; over a note too                                                                                                                          |
 | Alt+Enter in the field  | the address in a tab of its own, in front                                                                                                                                                         |
 | Ctrl+Enter in the field | one word as a `.com`: `svelte` becomes `https://www.svelte.com`, which is the press every browser has had since Netscape. Anything that already reads as an address is left to the ordinary press |
 | Alt+Left, Alt+Right     | back and forward, which in a web tab is the page's history - the same key a note tab walks its own trail with                                                                                     |
@@ -699,9 +700,9 @@ showing a page has no editor to shadow. It is in the registry like every other k
 browser's own.** After a click into a site the app never sees the press: that is what a
 webview of its own means. The exception is Chrome's: the chords a browser never offers
 a page - a new tab, closing one, reopening the last, going round them and moving one
-along, a new window, Ctrl+1 to 9, and F6 back to the address field - are taken before
-the page sees them and played on the app's own window, and the keyboard goes back to the
-app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
+along, a new window, Ctrl+1 to 9, nib's own Alt+0 to 9, and F6 back to the address
+field - are taken before the page sees them and played on the app's own window, and the
+keyboard goes back to the app with them. F5 and Ctrl+R in a page are the engine's own reload, as in Chrome, and
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page

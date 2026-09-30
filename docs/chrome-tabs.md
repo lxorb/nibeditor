@@ -140,7 +140,9 @@ so a width change lays out that one tab and nothing beside it.
   window, the task manager - have nothing behind them in nib. A held finger asks for
   it too. See `tab-strip/strip-menu.ts`.
 - **Double click on a tab keeps a preview** (VS Code's rule; nib opens previews).
-- **Ctrl+1..9 are Ctrl+Alt+1..9**, because Ctrl and a digit is a heading level.
+- **Ctrl+1..9 are Alt+1..9 and Ctrl+Alt+1..9**, because Ctrl and a digit is a heading
+  level. Alt+9 is the ninth tab and Alt+0 the last (Emil's rule); Ctrl+Alt+9 stays
+  Chrome's last. A place past the end does nothing, as in Chrome.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active
   tab has something to be cut out of.
 - **The cross turns the danger colour on hover**, over Chrome's grey circle: nib's

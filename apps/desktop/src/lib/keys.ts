@@ -171,6 +171,7 @@ interface Keystroke {
   metaKey?: boolean | undefined
   altKey?: boolean | undefined
   shiftKey?: boolean | undefined
+  isComposing?: boolean | undefined
 }
 
 /** Which modifiers were down, as plain yes or no. A keystroke may arrive with
@@ -190,6 +191,23 @@ function unshifted(event: Keystroke): string | undefined {
   return event.code === undefined ? undefined : PHYSICAL[event.code]
 }
 
+/** Whether a keystroke is AltGr typing a character, which Windows says as Ctrl and Alt:
+ *  a Swiss `@` is AltGr+2. What it typed is its only name then, or the `@` would be
+ *  Ctrl+Alt+2 and a tab. CodeMirror reads its own keys the same way. Not with Shift,
+ *  which AZERTY needs for Ctrl+Alt and a digit. */
+function typedWithAltGr(event: Keystroke, platform: Platform): boolean {
+  const down = held(event)
+  return (
+    platform === 'win' &&
+    down.ctrl &&
+    down.alt &&
+    !down.meta &&
+    !down.shift &&
+    event.key.length === 1 &&
+    event.key !== ' '
+  )
+}
+
 /** What was pressed, written down. Null while only modifiers are held, which
  *  is what the recorder waits through. */
 export function readCombination(event: Keystroke, platform: Platform): string | null {
@@ -198,9 +216,11 @@ export function readCombination(event: Keystroke, platform: Platform): string | 
   const down = held(event)
   const physical = unshifted(event)
   // With Shift or Alt down the character on the key is not the key: the
-  // combination is named after the key itself.
+  // combination is named after the key itself, unless AltGr typed it.
   const key =
-    (down.shift || down.alt) && physical !== undefined ? physical : normalizeKey(event.key)
+    (down.shift || down.alt) && physical !== undefined && !typedWithAltGr(event, platform)
+      ? physical
+      : normalizeKey(event.key)
   if (!key) return null
 
   return writeCombination({ ...down, key }, platform)
@@ -252,8 +272,13 @@ function isDigit(key: string): boolean {
  *
  *  Digits only. A letter is two names for one key - `E` and `e` - so forgiving Shift
  *  there would make Ctrl+Shift+E fire Ctrl+E as well, and a chord that asks for Shift
- *  is still matched exactly, so nothing can be both. */
+ *  is still matched exactly, so nothing can be both.
+ *
+ *  A press an input method is composing is never a chord, and nor is the `Process`
+ *  that starts one. */
 export function matchesCombination(text: string, event: Keystroke, platform: Platform): boolean {
+  if (event.isComposing === true || event.key === 'Process') return false
+
   const wanted = parseCombination(text, platform)
   if (!wanted) return false
 
@@ -262,14 +287,17 @@ export function matchesCombination(text: string, event: Keystroke, platform: Pla
   if (wanted.meta !== down.meta) return false
   if (wanted.alt !== down.alt) return false
 
+  const typed = normalizeKey(event.key)
+  const underneath = typedWithAltGr(event, platform) ? typed : unshifted(event)
+
   if (wanted.shift !== down.shift) {
     // The one forgiveness, and the code has to name the very key: a digit typed on a
     // layout that needs Shift for it.
     if (wanted.shift || !isDigit(wanted.key)) return false
-    return wanted.key === unshifted(event)
+    return wanted.key === underneath
   }
 
-  return wanted.key === normalizeKey(event.key) || wanted.key === unshifted(event)
+  return wanted.key === typed || wanted.key === underneath
 }
 
 /** How a key reads on a Mac, where modifiers are signs rather than words. */

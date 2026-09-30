@@ -22,8 +22,8 @@ export interface Bindings {
 export type BarKey =
   | { to: 'address' }
   | { to: 'step'; step: 'reload' | 'fresh' }
-  /** A tab along the pane's strip, from nought; the ninth is the last. */
-  | { to: 'tab'; index: number }
+  /** A tab along the pane's strip, from nought, or the last one, which the ninth is. */
+  | { to: 'tab'; at: number | 'last' }
 
 export function barKey(event: KeyboardEvent, keys: Bindings): BarKey | null {
   // One of an entry's keys, its second key included.
@@ -39,7 +39,7 @@ export function barKey(event: KeyboardEvent, keys: Bindings): BarKey | null {
 
   for (let index = 0; index < 9; index++) {
     if (matchesCombination(`Mod-${index + 1}`, event, keys.platform)) {
-      return { to: 'tab', index }
+      return { to: 'tab', at: index === 8 ? 'last' : index }
     }
   }
 

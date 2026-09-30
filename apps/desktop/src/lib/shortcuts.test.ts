@@ -704,6 +704,96 @@ describe('the keyboard', () => {
   })
 })
 
+/** Emil, 2026-09-30: *"Add shortcuts alt + 1, alt + 2, ... where alt + x opens the tab
+ *  at position x and alt + 0 opens the last tab."* The places themselves are the
+ *  effect test's; see test/effects/tab-digits.effect.test.ts. */
+describe('Alt and a digit', () => {
+  const ALT = { alt: true }
+  const digit = (one: number) => press(String(one), { ...ALT, code: `Digit${one}` })
+
+  test('is every place along the strip, the ninth included, and the nought the last', () => {
+    const { shortcuts } = registry
+    for (let place = 1; place <= 8; place++) {
+      expect(shortcuts.keyFor(`app.note-${place}.alt`)).toBe(`Alt-${place}`)
+    }
+    expect(shortcuts.keyFor('app.note-ninth')).toBe('Alt-9')
+    expect(shortcuts.keyFor('app.note-9.alt')).toBe('Alt-0')
+  })
+
+  /** A second key for the eight places and the last, which kept Ctrl+Alt: the list
+   *  shows them under the same names. The ninth place had no key before. */
+  test('is a second key for the commands that had one, and the ninth place its own', () => {
+    const found = (id: string) => registry.SHORTCUTS.find((one) => one.id === id)!
+
+    for (const [second, first] of [
+      ['app.note-1.alt', 'app.note-1'],
+      ['app.note-8.alt', 'app.note-8'],
+      ['app.note-9.alt', 'app.note-9'],
+    ] as const) {
+      expect(found(second).alias, second).toBe(true)
+      expect(found(second).label()).toBe(found(first).label())
+      expect(defaultKeyFor(found(first), 'win'), first).toMatch(/^Mod-Alt-\d$/)
+    }
+
+    const ninth = found('app.note-ninth')
+    expect(ninth.alias).toBeUndefined()
+    expect(ninth.label()).toBe('Note 9')
+    expect(ninth.label()).not.toBe(found('app.note-9').label())
+  })
+
+  test('runs from the window, and says so', () => {
+    const { shortcuts } = registry
+    const context = { palette: () => undefined, fullscreen: () => undefined }
+
+    for (const one of [1, 3, 9, 0])
+      expect(shortcuts.handle(digit(one), context), `Alt+${one}`).toBe(true)
+  })
+
+  /** AltGr is Ctrl and Alt on Windows, so a character typed with it is not a tab. */
+  test('is never AltGr typing a character', () => {
+    const { shortcuts } = registry
+    const context = { palette: () => undefined, fullscreen: () => undefined }
+
+    const swissAt = press('@', { ctrl: true, alt: true, code: 'Digit2' })
+    expect(shortcuts.handle(swissAt, context)).toBe(false)
+    // While Ctrl+Alt and the digit itself is still the old key.
+    expect(shortcuts.handle(press('2', { ctrl: true, alt: true, code: 'Digit2' }), context)).toBe(
+      true,
+    )
+  })
+
+  test('is not a chord while an input method is composing', () => {
+    const { shortcuts } = registry
+    const context = { palette: () => undefined, fullscreen: () => undefined }
+
+    const composing = Object.assign(digit(3), { isComposing: true })
+    expect(shortcuts.handle(composing, context)).toBe(false)
+  })
+
+  /** What it took from anybody: nothing. No default, no keyboard and no surface had a
+   *  key on Alt and a digit; strikethrough's Alt+Shift+5 is Shift and the key, and the
+   *  editor reads it before the window does. */
+  test.each(PLATFORMS)('displaces no other key (%s)', (platform) => {
+    const taken = registry.SHORTCUTS.filter((one) => !one.id.startsWith('app.note-')).flatMap(
+      (one) => {
+        const key = defaultKeyFor(one, platform)
+        return key && /^Alt-\d$/.test(key) ? [`${one.id} on ${key}`] : []
+      },
+    )
+    expect(taken).toEqual([])
+  })
+
+  test('is none of the keyboards’ to take', async () => {
+    const { PRESETS } = await import('./shortcuts/presets')
+    const written = PRESETS.flatMap((preset) =>
+      Object.entries(preset.keys).flatMap(([id, key]) =>
+        key && /^Alt-\d$/.test(key) ? [`${preset.id}: ${id} on ${key}`] : [],
+      ),
+    )
+    expect(written).toEqual([])
+  })
+})
+
 describe('the file list', () => {
   test('reads its own keys from the registry', () => {
     const { shortcuts } = registry
@@ -1032,6 +1122,11 @@ describe('on a Mac', () => {
     ['app.previous-note.alt', 'Mod-Shift-[', 'Mod-PageUp'],
     ['app.note-1', 'Mod-1', 'Mod-Alt-1'],
     ['app.note-9', 'Mod-9', 'Mod-Alt-9'],
+    // Option and a digit types a character on a Mac, and Cmd and a digit is the tab.
+    ['app.note-1.alt', null, 'Alt-1'],
+    ['app.note-8.alt', null, 'Alt-8'],
+    ['app.note-ninth', null, 'Alt-9'],
+    ['app.note-9.alt', null, 'Alt-0'],
     ['paragraph.heading-1', 'Mod-Alt-1', 'Mod-1'],
     ['paragraph.heading-6', 'Mod-Alt-6', 'Mod-6'],
     ['paragraph.quote', 'Mod-Alt-q', 'Mod-Shift-q'],
