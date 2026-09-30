@@ -11,8 +11,14 @@ const disk = vi.hoisted(() => {
   const assets = new Map<string, AssetRow>()
   const meta = new Map<string, string>()
   const snapshots: SnapshotRow[] = []
+  /** Every stretch of the files read at once, as the rows it answered. */
+  const reads: FileRow[][] = []
+  /** Whether the listing says how long each file is, as a listing written since it
+   *  kept sizes does, and the sizes a scan wrote back into it. */
+  const sized = { yes: true }
+  const learnt = new Map<string, number>()
 
-  return { files, assets, meta, snapshots }
+  return { files, assets, meta, snapshots, reads, sized, learnt }
 })
 
 vi.mock('./store', () => ({
@@ -26,13 +32,14 @@ vi.mock('./store', () => ({
       for (const path of [...disk.files.keys()].sort()) visit(disk.files.get(path)!)
       return Promise.resolve()
     },
-    between: (from: string, to: string) =>
-      Promise.resolve(
-        [...disk.files.keys()]
-          .sort()
-          .filter((path) => path >= from && path <= to)
-          .map((path) => disk.files.get(path)!),
-      ),
+    between: (from: string, to: string) => {
+      const rows = [...disk.files.keys()]
+        .sort()
+        .filter((path) => path >= from && path <= to)
+        .map((path) => disk.files.get(path)!)
+      disk.reads.push(rows)
+      return Promise.resolve(rows)
+    },
     put: (row: FileRow) => Promise.resolve(void disk.files.set(row.path, row)),
     remove: (path: string) => Promise.resolve(void disk.files.delete(path)),
     // The real one is a single transaction; here it is a single statement,
@@ -58,17 +65,26 @@ vi.mock('./store', () => ({
   stats: {
     all: () =>
       Promise.resolve([
-        ...[...disk.files.values()].map((row) => ({
-          path: row.path,
-          modified: row.modified,
-          created: row.created,
-        })),
+        ...[...disk.files.values()].map((row) => {
+          const size = disk.sized.yes ? row.content.length : disk.learnt.get(row.path)
+          return {
+            path: row.path,
+            modified: row.modified,
+            created: row.created,
+            ...(size === undefined ? {} : { size }),
+          }
+        }),
         ...[...disk.assets.values()].map((row) => ({
           path: row.path,
           modified: row.modified,
           created: row.modified,
+          ...(disk.sized.yes ? { size: row.data.length } : {}),
         })),
       ]),
+    learn: (found: { path: string; size: number }[]) => {
+      for (const one of found) disk.learnt.set(one.path, one.size)
+      return Promise.resolve()
+    },
   },
   meta: {
     get: (key: string) => Promise.resolve(disk.meta.get(key)),
@@ -103,7 +119,7 @@ function memoryStorage(): Storage {
 
 vi.stubGlobal('localStorage', memoryStorage())
 
-const { seed, webInvoke } = await import('./commands')
+const { SCANNED_AT_ONCE, seed, webInvoke } = await import('./commands')
 const { stamped, stampOf } = await import('../themes/validate')
 const { forgetSeedStore, rememberSeedIn } = await import('../seeded')
 const { WELCOME, WELCOME_PATH } = await import('../welcome')
@@ -117,6 +133,9 @@ beforeEach(() => {
   disk.assets.clear()
   disk.meta.clear()
   disk.snapshots.length = 0
+  disk.reads.length = 0
+  disk.sized.yes = true
+  disk.learnt.clear()
   localStorage.clear()
   forgetSeedStore()
 })
@@ -675,6 +694,58 @@ describe('reading a whole space for the link index', () => {
     // The picture, and neither the marker that keeps a folder nor the highlights
     // that are part of a paper.
     expect(found.files).toEqual(['pictures/shot.png'])
+  })
+
+  /** What a chunk read costs is what its notes are long, not how many there are:
+   *  128 notes a chunk put a canvas of seven megabytes in one task with the notes
+   *  beside it. So what is counted is the characters each read handed back. */
+  test('reads a chunk of about the same length at a time, and a long file on its own', async () => {
+    const page = 'the wind was steady and the ink took its time. '.repeat(90)
+    for (let at = 0; at < 300; at++) {
+      await write(`/Notes/note-${String(at).padStart(3, '0')}.md`, `# ${at}\n\n${page}`)
+    }
+    const plane = JSON.stringify({ nodes: [], nib: { ink: [], padding: 'x'.repeat(3_000_000) } })
+    await write('/Notes/note-150.canvas', plane)
+
+    await webInvoke('scan_links', { root: '/Notes' })
+
+    const lengths = disk.reads.map((rows) => rows.reduce((sum, row) => sum + row.content.length, 0))
+    for (const [at, rows] of disk.reads.entries()) {
+      if (rows.length > 1) expect(lengths[at]).toBeLessThanOrEqual(SCANNED_AT_ONCE)
+    }
+
+    // The plane, alone: nothing waits behind it and it waits behind nothing.
+    const alone = disk.reads.find((rows) => rows.some((row) => row.path.endsWith('.canvas')))
+    expect(alone?.map((row) => row.path)).toEqual(['/Notes/note-150.canvas'])
+    // And every file was read exactly once.
+    expect(disk.reads.flat()).toHaveLength(301)
+  })
+
+  test('a listing that does not know how long its files are is read as it always was', async () => {
+    disk.sized.yes = false
+    for (let at = 0; at < 300; at++) {
+      await write(`/Notes/note-${String(at).padStart(3, '0')}.md`, `# ${at}`)
+    }
+
+    await webInvoke('scan_links', { root: '/Notes' })
+
+    expect(disk.reads.map((rows) => rows.length)).toEqual([128, 128, 44])
+  })
+
+  test('and learns them as it reads, so the next scan is read by length', async () => {
+    disk.sized.yes = false
+    const page = 'the wind was steady and the ink took its time. '.repeat(90)
+    for (let at = 0; at < 300; at++) {
+      await write(`/Notes/note-${String(at).padStart(3, '0')}.md`, `# ${at}\n\n${page}`)
+    }
+
+    await webInvoke('scan_links', { root: '/Notes' })
+    expect(disk.learnt.size).toBe(300)
+
+    disk.reads.length = 0
+    await webInvoke('scan_links', { root: '/Notes' })
+    const lengths = disk.reads.map((rows) => rows.reduce((all, row) => all + row.content.length, 0))
+    for (const length of lengths) expect(length).toBeLessThanOrEqual(SCANNED_AT_ONCE)
   })
 
   test('a space nothing is in answers nothing', async () => {

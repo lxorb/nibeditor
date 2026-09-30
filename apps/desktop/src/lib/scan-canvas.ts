@@ -10,10 +10,28 @@
  *  returns: one index, whatever kind of file went into it. */
 
 import { readCanvas } from './canvas/format'
+import { skim } from './json-skim'
 import type { ScannedNote } from './scan-note'
 
+/** The part of a plane the index reads, as a plane of its own: the cards, and the
+ *  icon and its colour under `nib`. The ink, the shapes and the pages are walked
+ *  past rather than read, which on a plane of ten thousand strokes is nearly all of
+ *  it; see json-skim.ts. What is kept goes through `readCanvas` all the same, so a
+ *  card is judged by the one reader there is. */
+function indexed(content: string): string {
+  const top = skim(content, ['nodes', 'nib'])
+  if (!top) return ''
+
+  const nodes = top.get('nodes')
+  const nib = top.get('nib')
+  const marks = nib ? skim(content, ['icon', 'iconColor'], nib) : null
+  const worn = [...(marks ?? [])].map(([key, at]) => `"${key}":${content.slice(at.from, at.to)}`)
+
+  return `{"nodes":${nodes ? content.slice(nodes.from, nodes.to) : '[]'},"nib":{${worn.join(',')}}}`
+}
+
 export function scanCanvas(path: string, content: string): ScannedNote {
-  const canvas = readCanvas(content)
+  const canvas = readCanvas(indexed(content))
 
   return {
     path,

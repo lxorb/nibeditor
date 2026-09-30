@@ -44,11 +44,19 @@ export interface SnapshotRow {
 }
 
 /** What a file list needs and nothing else: a path and its two times. The same
- *  three fields the desktop's `read_tree` gets out of one `stat`. */
+ *  three fields the desktop's `read_tree` gets out of one `stat`.
+ *
+ *  And how long the file is, in characters, which is what lets a pass over the
+ *  whole space take it a known amount at a time; see `scanLinks` in commands.ts.
+ *  Missing from a row written before the listing kept it, until that pass has read
+ *  the file and said; see `stats.learn`. Learnt rather than filled in by an upgrade
+ *  of the database, because an upgrade waits on every tab still holding the old
+ *  version open, and the tab an update leaves behind never lets go of it. */
 export interface StatRow {
   path: string
   modified: number
   created: number
+  size?: number
 }
 
 let open: Promise<IDBDatabase> | null = null
@@ -113,7 +121,8 @@ function fillStats(change: IDBTransaction | null) {
  *  never told when it was made is as old as its last write. */
 function statOf(row: FileRow | AssetRow): StatRow {
   const created = 'created' in row ? row.created : row.modified
-  return { path: row.path, modified: row.modified, created }
+  const size = 'content' in row ? row.content.length : row.data.length
+  return { path: row.path, modified: row.modified, created, size }
 }
 
 function run<T>(
@@ -389,6 +398,23 @@ export const stats = {
       (after, most) => slice<StatRow>('stats', after, most),
       (row) => row.path,
     ),
+  /** Sizes a pass over the files found out, written into the rows that did not
+   *  have one. Only into a row still describing the file that was read - the same
+   *  modified time - since a file written meanwhile has written its own. */
+  learn: (found: readonly { path: string; modified: number; size: number }[]) =>
+    batch(['stats'], (change) => {
+      const listing = change.objectStore('stats')
+
+      for (const one of found) {
+        const asked = listing.get(one.path)
+        asked.onsuccess = () => {
+          const row = asked.result as StatRow | undefined
+          if (row?.size === undefined && row?.modified === one.modified) {
+            listing.put({ ...row, size: one.size })
+          }
+        }
+      }
+    }),
 }
 
 export const meta = {

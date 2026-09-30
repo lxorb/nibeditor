@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import { readCanvas } from './canvas/format'
 import { scanCanvas } from './scan-canvas'
 import { scanNote, scanShortcut } from './scan-note'
 
@@ -120,6 +121,50 @@ describe('reading a canvas for the index', () => {
    *  written with, and nothing writes `[[Board]]` for a canvas. */
   test('and never an alias', () => {
     expect(scanCanvas('Board.canvas', '{"nib":{"icon":"rocket"}}').aliases).toEqual([])
+  })
+
+  /** A plane of ten thousand strokes is megabytes of ink, and the scan of a space
+   *  read all of it into strokes to find a row's icon: the chunk holding a plane of
+   *  seven megabytes was a third of a second in one task. What is counted is what
+   *  was handed to `JSON.parse`, which is what building the plane costs. */
+  test('reads the cards and the icon of a plane without reading its ink', () => {
+    const ink = Array.from({ length: 10_000 }, (_, one) => ({
+      id: `s${one}`,
+      tool: 'pen',
+      color: 'ink',
+      size: 3,
+      points: Array.from({ length: 60 }, (_, at) => Math.round((one + at) * 13.7) / 10),
+    }))
+    const plane = JSON.stringify({
+      nodes: [
+        {
+          id: 'a',
+          type: 'file',
+          x: 0,
+          y: 0,
+          width: 1,
+          height: 1,
+          file: 'Plan.md',
+          subpath: '#Later',
+        },
+        { id: 'b', type: 'text', x: 0, y: 0, width: 1, height: 1, text: 'a card with [[words]]' },
+      ],
+      edges: [],
+      nib: { version: 1, ink, icon: 'rocket', iconColor: 'violet' },
+    })
+
+    const parse = vi.spyOn(JSON, 'parse')
+    const read = scanCanvas('Board.canvas', plane)
+    const parsed = parse.mock.calls.reduce((sum, [text]) => sum + text.length, 0)
+    parse.mockRestore()
+
+    expect(parsed).toBeLessThan(plane.length / 1000)
+
+    // And it is the reading the whole plane gives.
+    const whole = readCanvas(plane)
+    expect(read.icon).toBe(whole.icon)
+    expect(read.iconColor).toBe(whole.iconColor)
+    expect(read.links.map((link) => [link.target, link.heading])).toEqual([['Plan.md', 'Later']])
   })
 })
 

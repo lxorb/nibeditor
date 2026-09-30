@@ -42,10 +42,43 @@ interface TreeOptions {
 
 const now = () => Date.now()
 
-/** How many notes a chunk of the link scan reads and reads through before letting
- *  go of the thread. Short enough to stay inside a frame on a phone, long enough
- *  that the yields are not most of the work. */
-const SCANNED_AT_ONCE = 128
+/** How much of a space one chunk of the link scan reads and reads through before
+ *  letting go of the thread, in characters of the files themselves.
+ *
+ *  Characters rather than notes, because reading the links out of a note costs what
+ *  the note is long. A chunk was 128 notes, which for notes of four kilobytes is
+ *  half a megabyte and fifty to seventy milliseconds of a task, and for a chunk that
+ *  held a canvas of seven megabytes was a third of a second. A quarter of a megabyte
+ *  is twenty to thirty. A file longer than this is a chunk on its own: what it costs
+ *  is its own, and nothing else waits behind it. */
+export const SCANNED_AT_ONCE = 256 * 1024
+
+/** What a file counts for where the listing does not say how long it is: the share
+ *  of a chunk each note had when a chunk was 128 notes, so a listing written before
+ *  it kept sizes is read the way it always was. See `StatRow` in store.ts. */
+const UNSIZED = SCANNED_AT_ONCE / 128
+
+/** Paths in order, in runs of about `SCANNED_AT_ONCE` characters each. */
+function chunksOf(paths: readonly string[], sizes: ReadonlyMap<string, number>): string[][] {
+  const out: string[][] = []
+  let chunk: string[] = []
+  let held = 0
+
+  for (const path of paths) {
+    const size = sizes.get(path) ?? UNSIZED
+    if (chunk.length && held + size > SCANNED_AT_ONCE) {
+      out.push(chunk)
+      chunk = []
+      held = 0
+    }
+
+    chunk.push(path)
+    held += size
+  }
+
+  if (chunk.length) out.push(chunk)
+  return out
+}
 
 /** Whether a file is one the tree shows: a note, a PDF beside one, a canvas, a page
  *  note, or a website. The same kinds the desktop's `read_tree` lists, and for the
@@ -390,13 +423,14 @@ async function spaceTags(root: string) {
  *  each note is read by `scanNote`, which is also what the index uses for a note
  *  that has just been saved.
  *
- *  A handful of notes at a time, with the thread let go of between them. The whole
- *  store at once was one task of two thirds of a second on a space of three
+ *  A stretch of the space at a time, with the thread let go of between them. The
+ *  whole store at once was one task of two thirds of a second on a space of three
  *  thousand notes, which is two thirds of a second of somebody's keystrokes
  *  appearing all at once when it ended - and it happens on the launch, while they
- *  are reading the note it opened. In chunks it is the same work in a couple of
- *  dozen short tasks with room for a keystroke between them, and nothing is held
- *  twice: the names come first, cheaply, and only a chunk's bodies are in hand.
+ *  are reading the note it opened. In chunks it is the same work in short tasks
+ *  with room for a keystroke between them, and nothing is held twice: the names
+ *  and their sizes come first, cheaply, and only a chunk's bodies are in hand. See
+ *  `SCANNED_AT_ONCE` for how much a chunk is.
  *
  *  Off the launch's critical path as well; see `build` in link-index.svelte.ts and
  *  startup.svelte.ts. */
@@ -407,12 +441,22 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
   const paths = (await files.paths()).filter((path) => within(base, path))
+  const sizes = new Map<string, number>()
+  for (const row of await stats.all()) {
+    if (row.size !== undefined && within(base, row.path)) sizes.set(row.path, row.size)
+  }
 
-  for (let at = 0; at < paths.length; at += SCANNED_AT_ONCE) {
-    const chunk = paths.slice(at, at + SCANNED_AT_ONCE)
+  // What the listing did not know and this pass found out, so the next pass knows.
+  const learnt: { path: string; modified: number; size: number }[] = []
+
+  for (const chunk of chunksOf(paths, sizes)) {
     // Every path in the space sorts together, so the stretch between the first and
     // the last of a chunk is that chunk and nothing else.
     for (const row of await files.between(chunk[0] ?? '', chunk.at(-1) ?? '')) {
+      if (!sizes.has(row.path)) {
+        learnt.push({ path: row.path, modified: row.modified, size: row.content.length })
+      }
+
       // A canvas is read too, for the icon its `nib` key may carry: every row of
       // the tree wants that, and the desktop's `scan_links` reads it on the same
       // pass for the same reason.
@@ -439,6 +483,10 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
     await breathe()
   }
+
+  // A size that is not written down is a chunk of the old length next time, which
+  // is how every chunk was read before sizes were kept: nothing to report.
+  if (learnt.length) await stats.learn(learnt).catch(() => undefined)
 
   // Pictures live in their own store here, and only their names are wanted.
   const pictures = (await assets.paths()).filter((path) => within(base, path))
