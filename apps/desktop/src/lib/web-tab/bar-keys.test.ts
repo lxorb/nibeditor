@@ -14,6 +14,9 @@ const DEFAULTS: Record<string, string> = {
   'web.fresh': 'Mod-Shift-r',
   'web.fresh.alt': 'Mod-F5',
   'web.stop': 'Escape',
+  'app.zoom-in': 'Mod-=',
+  'app.zoom-out': 'Mod--',
+  'app.zoom-reset': 'Mod-0',
 }
 
 function bindings(keys: Record<string, string> = DEFAULTS): Bindings {
@@ -66,7 +69,39 @@ describe('a key in front of a page', () => {
     expect(barKey(press('9', CTRL), keys)).toEqual({ to: 'tab', index: 8 })
     // Ctrl+Alt and a digit is the app's own jump, which the window answers.
     expect(barKey(press('1', { ctrlKey: true, altKey: true }), keys)).toBeNull()
-    expect(barKey(press('0', CTRL), keys)).toBeNull()
+  })
+
+  test("zooms the page on Chrome's keys, which size a note's words elsewhere", () => {
+    const keys = bindings()
+    const zoom = (step: string) => ({ to: 'zoom', step })
+
+    expect(barKey(press('=', { ...CTRL, code: 'Equal' }), keys)).toEqual(zoom('in'))
+    expect(barKey(press('-', { ...CTRL, code: 'Minus' }), keys)).toEqual(zoom('out'))
+    expect(barKey(press('0', CTRL), keys)).toEqual(zoom('reset'))
+    // Ctrl and +: Shift and = on an American keyboard, its own key on a German one,
+    // and the number pad's, whose - and 0 are the same characters as the row's.
+    expect(barKey(press('+', { ...CTRL, shiftKey: true, code: 'Equal' }), keys)).toEqual(zoom('in'))
+    expect(barKey(press('+', { ...CTRL, code: 'BracketRight' }), keys)).toEqual(zoom('in'))
+    expect(barKey(press('+', { ...CTRL, code: 'NumpadAdd' }), keys)).toEqual(zoom('in'))
+    expect(barKey(press('-', { ...CTRL, code: 'NumpadSubtract' }), keys)).toEqual(zoom('out'))
+    expect(barKey(press('0', { ...CTRL, code: 'Numpad0' }), keys)).toEqual(zoom('reset'))
+  })
+
+  test('leaves a sign typed with AltGr, or with no Ctrl, to whatever has the keyboard', () => {
+    const keys = bindings()
+    expect(barKey(press('+', { ctrlKey: true, altKey: true, code: 'Equal' }), keys)).toBeNull()
+    expect(barKey(press('+', { shiftKey: true, code: 'Equal' }), keys)).toBeNull()
+    expect(barKey(press('=', { code: 'Equal' }), keys)).toBeNull()
+    expect(barKey(press('+', { metaKey: true, code: 'NumpadAdd' }), keys)).toBeNull()
+  })
+
+  test('zooms on Cmd and + on a Mac, and not on Ctrl', () => {
+    const mac: Bindings = { platform: 'mac', pressed: () => false }
+    expect(barKey(press('+', { metaKey: true, shiftKey: true, code: 'Equal' }), mac)).toEqual({
+      to: 'zoom',
+      step: 'in',
+    })
+    expect(barKey(press('+', { ...CTRL, code: 'NumpadAdd' }), mac)).toBeNull()
   })
 
   test("follows a reader's own bindings", () => {
@@ -74,6 +109,16 @@ describe('a key in front of a page', () => {
     expect(barKey(press('F5'), keys)).toBeNull()
     expect(barKey(press('r', CTRL), keys)).toBeNull()
     expect(barKey(press('F9'), keys)).toEqual({ to: 'step', step: 'reload' })
+  })
+
+  test("zooms on the reader's own keys for the words' size", () => {
+    const keys = bindings({ ...DEFAULTS, 'app.zoom-out': 'Mod-Shift-j', 'app.zoom-reset': '' })
+    expect(barKey(press('-', { ...CTRL, code: 'Minus' }), keys)).toBeNull()
+    expect(barKey(press('0', CTRL), keys)).toBeNull()
+    expect(barKey(press('J', { ...CTRL, shiftKey: true }), keys)).toEqual({
+      to: 'zoom',
+      step: 'out',
+    })
   })
 
   test('leaves every other key alone', () => {

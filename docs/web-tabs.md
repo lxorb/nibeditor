@@ -749,9 +749,10 @@ Ctrl+L keeps it, and the app answers only when the page lets the key go by; see 
 itself". On `WebView2` only; see `docs/keyboard.md` and
 `src-tauri/src/web_keys.rs`.
 
-The bar reads F5, the reload keys and Ctrl and a digit before the window's own handler
-does, and only in the focused pane, because they share their keys with Present and a
-heading level: a pane showing a page has neither. See `web-tab/bar-keys.ts`.
+The bar reads F5, the reload keys, Ctrl and a digit and the zoom keys before the window's
+own handler does, and only in the focused pane, because they share their keys with
+Present, a heading level and the size of a note's words: a pane showing a page has none of
+the three. See `web-tab/bar-keys.ts`.
 
 The mark at the left of the field is the site: the page's own favicon, and a lock for
 a site that has none - or a warning for an `http:` page. Pressing it says what this
@@ -865,10 +866,38 @@ engines say nothing, and what each one does there is said with it.
   until it is unmuted - the speaker is struck through while it would be playing. By
   site, as the bar shows it, on this device; see `web-tab/sites.ts` and
   `web-tab/mute.ts`. Elsewhere a mute is the page's media elements told to be quiet.
-- **Zoom.** Ctrl and the wheel, Ctrl and a sign, and the dots' three rows all move one
-  zoom, and the menu's percentage says what it is however it was made. Each site opens
-  at the size it was left at and every other at a hundred per cent, the way Chrome keeps
-  zoom by site.
+- **Zoom.** Ctrl and the wheel over the page, Ctrl and `=`, `+`, `-` or `0`, and the dots'
+  three rows all move one zoom, a rung of Chrome's ladder at a time from 25 to 500 per
+  cent, and the menu's percentage says what it is however it was made. Each site opens at
+  the size it was left at and every other at a hundred per cent, the way Chrome keeps zoom
+  by site. A pinch on a touchpad or a screen magnifies the page the way Chrome's does,
+  without laying it out again or moving the percentage; it comes on with the rest.
+
+  Inside the page the wheel and the keys are the engine's own zoom, which every webview
+  has off unless it asks: a web tab's page asks (`zoom_hotkeys_enabled` in `web_tabs.rs`)
+  and the app's own page does not, since Ctrl and the wheel there size a note's words. So
+  the page hears them first, as in Chrome: a map, a spreadsheet or a design tool that
+  zooms itself on Ctrl and the wheel keeps it, and only what the page let go by zooms the
+  page. A wheel reaches the page through `web_wheel.rs` with Ctrl held as Windows wrote
+  it, one message a notch, so a notch is one rung. With the keyboard in the app - the
+  address field, the sidebar - the bar reads the same keys, the text size's own bindings
+  and Chrome's Ctrl and `+` beside them.
+
+  The engine keeps a zoom made in the page for that one page and goes back, at the next,
+  to the last size the app set - saying so, which read as the site going back to that
+  size. So a zoom the engine reports is set again as the app's own at once, and a site
+  keeps it from page to page; and the engine's own Ctrl+0, which goes back to that same
+  size, is asked of the app the way the find keys are, when nothing in the page took it.
+  See `src-tauri/src/web_page.rs`. Measured by `scripts/web-zoom-probe.py`: before, a
+  notch of Ctrl and the wheel moved no rung; with the engine's zoom switched on and nothing
+  more, a site zoomed to 110 per cent was back at 100 on its next page, and forgotten. Now a
+  notch is one rung, the next page of the site keeps it, another site opens at 100, and a
+  page with a Ctrl and the wheel of its own hears the notch and is not zoomed.
+
+  The engine's zoom is `WebView2`'s alone. Elsewhere the dots' rows zoom the page, and so
+  do the bar's keys but on a Mac, where the menu bar's Zoom rows take them first: Tauri's
+  stand-in for the engine's zoom there is a script put into the page, which a site should
+  never be given.
 - **Developer tools.** F12, Ctrl+Shift+I (Cmd+Alt+I on a Mac) and the page menu's
   Inspect open the engine's own tools for the page, from inside it or from the bar. The
   build that ships has them for web tabs only - the `devtools` feature, on desktops -
@@ -1378,7 +1407,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
 | `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
-| `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom; and a mute. Unit tested |
+| `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom, kept as the app's own, and Ctrl+0; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
 | `apps/desktop/src-tauri/src/web_handed.rs` | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested |
@@ -1413,7 +1442,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
 | `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
 | `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
-| `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, Escape. Pure, tested |
+| `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested |
 | `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |
 | `apps/desktop/src/lib/web-tab/sites.ts` | a site muted, and the size a site is drawn at, per device. Tested |
 | `apps/desktop/src/lib/web-tab/mute.ts` | Mute site, in every tab showing it |
@@ -1436,6 +1465,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
 | `scripts/web-scroll-probe.py` | the drive for the wheel: one notch at the legacy window and at the page's own, frame by frame, against Chrome headless. See "One notch of the wheel is one notch" |
+| `scripts/web-zoom-probe.py` | the drive for the zoom: Ctrl and the wheel, the same site, another site, a site with its own Ctrl and the wheel, the keys in the app, and Ctrl+0 from inside the page. See "Zoom" under "The page itself" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
 | `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |

@@ -39,6 +39,11 @@
 //! find opened or stepped through, or its own address field - which is what its keys
 //! already get it. A name is never a command: there are four, and nothing else is read.
 //!
+//! **And Ctrl+0.** The engine's own Ctrl+0 goes back to the zoom the app last set rather
+//! than to a hundred per cent (see `web_page.rs`), so it asks the same way, under
+//! `nib-actual-size`, and the crate draws the page at a hundred per cent without taking
+//! the keyboard out of it. All a page gets by asking is its own zoom reset.
+//!
 //! `WebView2`'s alone, like `web_keys.rs`: elsewhere nothing is known, and every tab a
 //! page asks for opens in front, as before.
 
@@ -64,6 +69,9 @@ const FIND: &str = "nib-find";
 const FIND_NEXT: &str = "nib-find-next";
 const FIND_PREVIOUS: &str = "nib-find-previous";
 const ADDRESS: &str = "nib-address";
+
+/// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
+const ACTUAL: &str = "nib-actual-size";
 
 /// The event the window hears those on.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
@@ -118,9 +126,9 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// made, on a web address, that the page itself has not already answered; with Shift it
 /// is a tab in front, as in Chrome.
 ///
-/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L and Alt+D that nothing in
-/// the page took ask for nib's answer by name, and are taken so the engine does not
-/// answer them too. By Windows' key code, which is what the engine and Chrome read a
+/// Ctrl+F, Ctrl+G and F3 (Shift for the one before), Ctrl+L and Alt+D, and Ctrl+0 on
+/// the row or the number pad, that nothing in the page took ask for nib's answer by
+/// name, and are taken so the engine does not answer them too. By Windows' key code, which is what the engine and Chrome read a
 /// chord by, so a layout whose letters are not Latin still has them. Ctrl+Alt types a
 /// character on half the keyboards in Europe, and is left alone.
 ///
@@ -169,6 +177,7 @@ pub const SCRIPT: &str = r"(function () {
     else if (alt) name = code === 68 && !back ? 'nib-address' : null
     else if (ctrl && code === 70 && !back) name = 'nib-find'
     else if (ctrl && code === 76 && !back) name = 'nib-address'
+    else if (ctrl && (code === 48 || code === 96) && !back) name = 'nib-actual-size'
     else if (ctrl && code === 71) name = back ? 'nib-find-previous' : 'nib-find-next'
     else if (!ctrl && code === 114) name = back ? 'nib-find-previous' : 'nib-find-next'
     if (!name) return
@@ -188,6 +197,13 @@ pub fn sought(name: &str) -> Option<Passed> {
         ADDRESS => Some(Passed::Address),
         _ => None,
     }
+}
+
+/// Whether a window asked for under `name` is Ctrl+0 that the page let go by. Pure, and
+/// the only reading of that name.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn actual(name: &str) -> bool {
+    name == ACTUAL
 }
 
 /// What one request said, down to where its tab goes, or `None` for a request nobody
@@ -244,7 +260,7 @@ mod heard {
     };
     use windows_core::Interface;
 
-    use super::{passed, placed, sought, Asked, Held};
+    use super::{actual, passed, placed, sought, Asked, Held};
 
     thread_local! {
         /// What each tab's last request said, until `on_new_window` takes it. The
@@ -337,6 +353,13 @@ mod heard {
                     }
                     return Ok(());
                 }
+                // The keyboard stays in the page: a zoom is not a reason to leave it.
+                if actual(&name) {
+                    if user.as_bool() {
+                        crate::web_page::actual_size(&app, &window, &asking);
+                    }
+                    return Ok(());
+                }
 
                 let menu = MENU
                     .with_borrow_mut(|menu| menu.remove(&asking).is_some_and(|link| link == uri));
@@ -405,7 +428,7 @@ pub fn taken(_tab: &str) -> Option<Asked> {
 
 #[cfg(test)]
 mod tests {
-    use super::{placed, sought, Ask, Asked, Held, Passed, SCRIPT};
+    use super::{actual, placed, sought, Ask, Asked, Held, Passed, SCRIPT};
 
     const NONE: Held = Held {
         ctrl: false,
@@ -489,9 +512,24 @@ mod tests {
             "'nib-find-next'",
             "'nib-find-previous'",
             "'nib-address'",
+            "'nib-actual-size'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }
+    }
+
+    /// Ctrl+0 is answered in the crate and never reaches the window as an ask, since the
+    /// keyboard stays in the page; and no window of that name is ever a tab.
+    #[test]
+    fn ctrl_0_asks_by_a_name_of_its_own() {
+        assert!(actual("nib-actual-size"));
+        assert_eq!(sought("nib-actual-size"), None);
+        assert_eq!(placed("nib-actual-size", true, NONE, false), None);
+        for name in ["", "nib-find", "nib-actual", "NIB-ACTUAL-SIZE", "_blank"] {
+            assert!(!actual(name), "{name:?}");
+        }
+        // The key on the row and on the number pad, with Ctrl and without Shift.
+        assert!(SCRIPT.contains("ctrl && (code === 48 || code === 96) && !back"));
     }
 
     #[test]

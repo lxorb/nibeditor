@@ -657,14 +657,19 @@ slider in Appearance sets and the value the keys step - and never the webview's
 zoom: that would scale the panel and the tab strip with the words, would not be
 remembered, and would not reach the phone or the browser build. The listener is
 not passive and prevents the default, which is what stops WebView2 and WKWebView
-from zooming underneath; the window's own zoom hotkeys are off for the same
-reason. What has just happened is said once, as a badge over the note, and goes.
+from zooming underneath; the engine's own zoom hotkeys are off in the app's page for
+the same reason. What has just happened is said once, as a badge over the note, and goes.
 
 The keys are the three every browser uses, and Obsidian and Typora with them:
 **Ctrl+=**, **Ctrl+-** and **Ctrl+0**. A reader who wants bigger words presses one of
 those before they open a shortcut list, so those are what they are. Ctrl+0 is matched
 by the key rather than by the character it printed, which is what makes it Ctrl+0 on
 AZERTY too, where the nought is the shifted character; see the digit rule above.
+
+Over a web page the same keys, and Chrome's Ctrl and `+` beside them, zoom the page
+rather than the words, as they do in Chrome: the bar in the focused pane reads them before
+the window does. Inside the page, Ctrl and the wheel and the keys are the engine's own,
+switched on for a web tab's page alone. See "Zoom" in `docs/web-tabs.md`.
 
 They were Heading up, Heading down and Paragraph in the editor. The first two moved one
 modifier over, to **Ctrl+Shift+=** and **Ctrl+Shift+-**; Obsidian binds neither at all,

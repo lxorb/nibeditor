@@ -923,7 +923,8 @@ const APP_ENTRIES: Shortcut[] = [
   // with. They are the note's own text size here - `--zoom`, never the webview's; see
   // text-size.ts - and they are these three keys because a reader who wants bigger
   // words does not read a shortcut list first. Heading up, heading down and Paragraph
-  // used to hold them and are one modifier over now; see keymap.ts in the editor.
+  // used to hold them and are one modifier over now; see keymap.ts in the editor. Over a
+  // web page they zoom the page, as in Chrome; see web-tab/bar-keys.ts.
   {
     id: 'app.zoom-in',
     label: () => t('Zoom in'),

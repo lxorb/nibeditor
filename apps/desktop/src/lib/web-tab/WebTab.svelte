@@ -31,11 +31,12 @@
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { plainOrigin, webAddress } from './address'
+  import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
   import { ALLOW, SANDBOX } from './frame'
   import { keepPage } from './keep'
-  import { trailSteps, webRows, type WebActions } from './menu'
+  import { trailSteps, webRows, zoomed, type WebActions } from './menu'
   import { mute, muteSite } from './mute'
   import { shownAddress } from './omnibox'
   import { pages, type Rect, type Step } from './pages.svelte'
@@ -463,6 +464,15 @@
     menu.show(event, rows, { title: forward ? t('Forward') : t('Back') })
   }
 
+  /** Draws the page at `factor`, from the dots or a key while the app has the keyboard.
+   *  The engine says nothing about a zoom it was told to make, only one made in the
+   *  page, so this one is kept for the site here. */
+  function zoomTo(factor: number) {
+    page.zoom = factor
+    keepZoom(site, factor)
+    void pages.zoom(tab.id, factor)
+  }
+
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
     newTab: () => workspace.openWebsite(),
@@ -470,11 +480,7 @@
     // file list, which is where the app already draws them; see Bookmarks.svelte.
     bookmarks: () => workspace.showPanel('tree'),
     zoom: (factor: number) => {
-      page.zoom = factor
-      // The engine says nothing about a zoom it was told to make, only one made in the
-      // page, so this one is kept for the site here.
-      keepZoom(site, factor)
-      void pages.zoom(tab.id, factor)
+      zoomTo(factor)
       // The menu is still open on the row that was pressed, so the size it says has to
       // be the size it now is.
       menu.replace(webRows(page, factor, actions))
@@ -548,6 +554,7 @@
         // date any more.
         pages.of(tab.id).typing = on
       }}
+      onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
     />
 
     <!-- What a site asked for, and what a site is: one at a time, because a question
