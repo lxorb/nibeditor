@@ -1551,6 +1551,8 @@ export const gu: Dictionary = {
   Clear: 'સાફ કરો',
   'Exited with code {code}': 'કોડ {code} સાથે બંધ થયું',
   'Could not start {shell}': '{shell} શરૂ કરી શકાયું નહીં',
+  'Restore history': 'ઇતિહાસ પુનઃસ્થાપિત કરો',
+  'Restored {time}': 'પુનઃસ્થાપિત {time}',
   'Stop what is running in {name}?': '{name} માં જે ચાલે છે તે બંધ કરવું?',
   'Stop what is running in these terminals?': 'આ ટર્મિનલોમાં જે ચાલે છે તે બંધ કરવું?',
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },

@@ -1565,6 +1565,8 @@ export const te: Dictionary = {
   Clear: 'క్లియర్ చేయి',
   'Exited with code {code}': 'కోడ్ {code}తో ముగిసింది',
   'Could not start {shell}': '{shell}ను ప్రారంభించలేకపోయాము',
+  'Restore history': 'చరిత్రను పునరుద్ధరించు',
+  'Restored {time}': 'పునరుద్ధరించబడింది {time}',
   'Stop what is running in {name}?': '{name}లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Stop what is running in these terminals?': 'ఈ టెర్మినల్స్‌లో నడుస్తున్నదాన్ని ఆపాలా?',
   'Paste {count} lines?': {

@@ -1556,6 +1556,8 @@ export const ja: Dictionary = {
   Clear: 'クリア',
   'Exited with code {code}': 'コード {code} で終了しました',
   'Could not start {shell}': '{shell} を起動できませんでした',
+  'Restore history': '履歴を復元',
+  'Restored {time}': '{time} から復元',
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
   'Paste {count} lines?': '{count} 行を貼り付けますか？',

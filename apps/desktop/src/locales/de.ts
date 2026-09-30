@@ -1601,6 +1601,8 @@ export const de: Dictionary = {
   Clear: 'Leeren',
   'Exited with code {code}': 'Beendet mit Code {code}',
   'Could not start {shell}': '{shell} konnte nicht gestartet werden',
+  'Restore history': 'Verlauf wiederherstellen',
+  'Restored {time}': 'Wiederhergestellt {time}',
   'Stop what is running in {name}?': 'Beenden, was in {name} läuft?',
   'Stop what is running in these terminals?': 'Beenden, was in diesen Terminals läuft?',
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },

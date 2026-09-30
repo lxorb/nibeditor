@@ -1551,6 +1551,8 @@ export const my: Dictionary = {
   Clear: 'ရှင်းလင်းရန်',
   'Exited with code {code}': 'ကုဒ် {code} ဖြင့် ပြီးဆုံးသည်',
   'Could not start {shell}': '{shell} ကို စတင်၍ မရပါ',
+  'Restore history': 'မှတ်တမ်းကို ပြန်ယူရန်',
+  'Restored {time}': 'ပြန်ယူထားသည် {time}',
   'Stop what is running in {name}?': '{name} တွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Stop what is running in these terminals?': 'ဤတာမင်နယ်များတွင် လုပ်ဆောင်နေသည်ကို ရပ်မလား?',
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',

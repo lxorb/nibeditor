@@ -1602,6 +1602,8 @@ export const ptPT: Dictionary = {
   Clear: 'Limpar',
   'Exited with code {code}': 'Terminado com o código {code}',
   'Could not start {shell}': 'Não foi possível iniciar {shell}',
+  'Restore history': 'Restaurar histórico',
+  'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está a ser executado em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está a ser executado nestes terminais?',
   'Paste {count} lines?': {

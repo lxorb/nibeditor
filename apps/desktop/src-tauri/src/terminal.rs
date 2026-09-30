@@ -25,8 +25,11 @@
 //!
 //! **Nothing outlives its window.** A session ends when its tab closes (the window says
 //! so), when the page it belongs to loads again, when its window is destroyed, and when
-//! the app exits - so no shell is ever left running with nothing to show it.
+//! the app exits - so no shell is ever left running with nothing to show it. What a
+//! restart brings back is the tab's own words, its folder among them, and its last lines,
+//! which are kept in the app's local data folder and never in a space (history.rs).
 
+pub mod history;
 pub(crate) mod process;
 mod session;
 pub mod shells;

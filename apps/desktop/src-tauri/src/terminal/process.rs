@@ -14,8 +14,8 @@
 //! in the Linux kernel and are not on that list, so a WSL tab closes without asking.
 //!
 //! **The folder** is what brings a terminal back where it was after a restart. The shells
-//! nib starts say it themselves (see shells.rs); on Linux the kernel is asked as well,
-//! for the shells that do not.
+//! nib starts say it themselves (see shells.rs); on Linux and on a Mac the kernel is asked
+//! as well, for the shells that do not - zsh and fish, a Mac's own among them.
 
 use portable_pty::MasterPty;
 
@@ -163,9 +163,50 @@ pub fn folder(shell: Option<u32>) -> Option<String> {
     Some(link.to_string_lossy().into_owned())
 }
 
-/// Nowhere else can, without reading another process's memory; the shells say it
+/// Which folder the shell is in, where the kernel can say: a Mac's `proc_pidinfo`, which
+/// is what `lsof -d cwd` asks. zsh, a Mac's own shell, is taught nothing about saying its
+/// folder, so this is how a terminal of it comes back where it was.
+#[cfg(target_os = "macos")]
+#[allow(
+    unsafe_code,
+    reason = "proc_pidinfo is the kernel's own call and has no safe wrapper"
+)]
+pub fn folder(shell: Option<u32>) -> Option<String> {
+    let pid = libc::c_int::try_from(shell?).ok()?;
+    let size = libc::c_int::try_from(std::mem::size_of::<libc::proc_vnodepathinfo>()).ok()?;
+    let mut info = std::mem::MaybeUninit::<libc::proc_vnodepathinfo>::zeroed();
+
+    // SAFETY: the buffer is a whole `proc_vnodepathinfo`, `size` says as much, and the
+    // kernel writes no more than it is told it may.
+    let written = unsafe {
+        libc::proc_pidinfo(
+            pid,
+            libc::PROC_PIDVNODEPATHINFO,
+            0,
+            info.as_mut_ptr().cast(),
+            size,
+        )
+    };
+    if written != size {
+        return None;
+    }
+
+    // SAFETY: zeroed and then filled by the kernel, and every field of it is plain data.
+    let info = unsafe { info.assume_init() };
+    let path: Vec<u8> = info
+        .pvi_cdir
+        .vip_path
+        .iter()
+        .flatten()
+        .map(|one| one.to_ne_bytes()[0])
+        .take_while(|one| *one != 0)
+        .collect();
+    (!path.is_empty()).then(|| String::from_utf8_lossy(&path).into_owned())
+}
+
+/// Windows cannot, without reading another process's memory; the shells say it
 /// themselves instead.
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", target_os = "macos")))]
 pub fn folder(_shell: Option<u32>) -> Option<String> {
     None
 }
@@ -226,5 +267,26 @@ mod tests {
             process(20, 0, "pwsh.exe"),
         ];
         assert!(!busy_below(20, &listed));
+    }
+
+    /// The kernel's own answer, on the two systems that have one: a process started in a
+    /// folder is found there, which is what brings a zsh or fish tab back where it was.
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    #[test]
+    fn the_kernel_says_where_a_process_is() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut child = std::process::Command::new("sleep")
+            .arg("5")
+            .current_dir(dir.path())
+            .spawn()
+            .unwrap();
+        let found = folder(Some(child.id()));
+        let _ = child.kill();
+        let _ = child.wait();
+
+        // A Mac's temporary folder is under a link, and the kernel answers the real path.
+        let wanted = dir.path().canonicalize().unwrap();
+        assert_eq!(found.map(std::path::PathBuf::from), Some(wanted));
+        assert_eq!(folder(None), None);
     }
 }

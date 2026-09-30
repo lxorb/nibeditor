@@ -1611,6 +1611,8 @@ export const it: Dictionary = {
   Clear: 'Cancella',
   'Exited with code {code}': 'Terminato con codice {code}',
   'Could not start {shell}': 'Impossibile avviare {shell}',
+  'Restore history': 'Ripristina cronologia',
+  'Restored {time}': 'Ripristinato {time}',
   'Stop what is running in {name}?': 'Interrompere ciò che è in esecuzione in {name}?',
   'Stop what is running in these terminals?':
     'Interrompere ciò che è in esecuzione in questi terminali?',

@@ -1523,6 +1523,8 @@ export const zhHans: Dictionary = {
   Clear: '清除',
   'Exited with code {code}': '已退出，代码 {code}',
   'Could not start {shell}': '无法启动 {shell}',
+  'Restore history': '恢复历史记录',
+  'Restored {time}': '已恢复 {time}',
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
   'Paste {count} lines?': '粘贴 {count} 行？',

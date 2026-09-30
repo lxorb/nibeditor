@@ -15,7 +15,7 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import { handBack, handingBack, settleUp } from './parting'
+import { GIVE_UP, handBack, handingBack, settleUp, stillWriting, written } from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { reloading } from './reloading.svelte'
@@ -230,11 +230,6 @@ interface Closable {
   destroy(): Promise<void>
 }
 
-/** How long a window going waits for its writes. A disk that does not answer must
- *  not hold a window open for ever, and what did not land is in the session, which
- *  the next launch writes; see `owed` in workspace/saving.svelte.ts. */
-const GIVE_UP = 3000
-
 /** Whether the window is already on its way out, so a second close waits for the
  *  first rather than starting another. */
 let going = false
@@ -261,7 +256,7 @@ async function onClose(event: Closing, window: Closable) {
 
   // Nothing being written, no web login to hand back and no update to put in place: the
   // window just goes.
-  if (!workspace.writing && !handingBack() && !ready() && !going) return
+  if (!workspace.writing && !stillWriting() && !handingBack() && !ready() && !going) return
 
   event.preventDefault()
   if (going) return
@@ -298,6 +293,7 @@ async function go(): Promise<void> {
     await Promise.race([
       Promise.all([
         workspace.writesSettled(),
+        written(),
         Promise.race([handBack(), waited(HANDS_BACK_WITHIN)]),
       ]),
       waited(GIVE_UP),

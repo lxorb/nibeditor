@@ -1,5 +1,7 @@
+import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
 import { invoke, isDesktop } from './tauri'
+import { waited } from './timing'
 
 /** The two streams of releases a machine can follow: the tagged releases, or the
  *  build of every push to main. Which endpoint each one looks at is decided in the
@@ -110,8 +112,11 @@ export async function discard() {
  *  someone who would rather not wait until the next launch.
  *
  *  On Windows the installer takes the app down itself, so the relaunch below is
- *  only reached on the platforms where it does not. */
+ *  only reached on the platforms where it does not. What a close would write is
+ *  written and waited for first, as a close waits; see start.ts. */
 export async function restartToUpdate() {
+  settleUp()
+  await Promise.race([written(), waited(GIVE_UP)])
   await installStaged()
 
   try {

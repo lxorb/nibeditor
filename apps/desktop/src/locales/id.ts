@@ -1560,6 +1560,8 @@ export const id: Dictionary = {
   Clear: 'Bersihkan',
   'Exited with code {code}': 'Selesai dengan kode {code}',
   'Could not start {shell}': 'Tidak dapat memulai {shell}',
+  'Restore history': 'Pulihkan riwayat',
+  'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang berjalan di {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang berjalan di terminal ini?',
   'Paste {count} lines?': 'Tempel {count} baris?',

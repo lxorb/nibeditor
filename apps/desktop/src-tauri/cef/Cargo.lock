@@ -3405,6 +3405,7 @@ dependencies = [
  "hmac",
  "javascriptcore-rs",
  "keyring",
+ "libc",
  "minisign-verify",
  "notify",
  "objc2",

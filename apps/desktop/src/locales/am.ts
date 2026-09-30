@@ -1538,6 +1538,8 @@ export const am: Dictionary = {
   Clear: 'አጽዳ',
   'Exited with code {code}': 'በኮድ {code} ተጠናቋል',
   'Could not start {shell}': '{shell}ን ማስጀመር አልተቻለም',
+  'Restore history': 'ታሪክን መልስ',
+  'Restored {time}': 'ተመልሷል {time}',
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },

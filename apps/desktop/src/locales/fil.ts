@@ -1594,6 +1594,8 @@ export const fil: Dictionary = {
   Clear: 'I-clear',
   'Exited with code {code}': 'Natapos na may code {code}',
   'Could not start {shell}': 'Hindi masimulan ang {shell}',
+  'Restore history': 'Ibalik ang history',
+  'Restored {time}': 'Naibalik {time}',
   'Stop what is running in {name}?': 'Ihinto ang tumatakbo sa {name}?',
   'Stop what is running in these terminals?': 'Ihinto ang tumatakbo sa mga terminal na ito?',
   'Paste {count} lines?': {

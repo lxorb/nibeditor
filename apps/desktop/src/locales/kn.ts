@@ -1575,6 +1575,8 @@ export const kn: Dictionary = {
   Clear: 'ತೆರವುಗೊಳಿಸಿ',
   'Exited with code {code}': 'ಕೋಡ್ {code} ನೊಂದಿಗೆ ಮುಗಿಯಿತು',
   'Could not start {shell}': '{shell} ಪ್ರಾರಂಭಿಸಲಾಗಲಿಲ್ಲ',
+  'Restore history': 'ಇತಿಹಾಸವನ್ನು ಮರುಸ್ಥಾಪಿಸಿ',
+  'Restored {time}': 'ಮರುಸ್ಥಾಪಿಸಲಾಗಿದೆ {time}',
   'Stop what is running in {name}?': '{name} ನಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
   'Stop what is running in these terminals?': 'ಈ ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿ ನಡೆಯುತ್ತಿರುವುದನ್ನು ನಿಲ್ಲಿಸಬೇಕೆ?',
   'Paste {count} lines?': {

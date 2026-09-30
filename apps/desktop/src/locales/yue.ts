@@ -1523,6 +1523,8 @@ export const yue: Dictionary = {
   Clear: '清除',
   'Exited with code {code}': '以代碼 {code} 結束咗',
   'Could not start {shell}': '開唔到 {shell}',
+  'Restore history': '還原歷史紀錄',
+  'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',

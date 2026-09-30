@@ -1559,6 +1559,8 @@ export const hi: Dictionary = {
   Clear: 'साफ़ करें',
   'Exited with code {code}': 'कोड {code} के साथ बंद हुआ',
   'Could not start {shell}': '{shell} शुरू नहीं हो सका',
+  'Restore history': 'इतिहास पुनर्स्थापित करें',
+  'Restored {time}': 'पुनर्स्थापित {time}',
   'Stop what is running in {name}?': '{name} में जो चल रहा है उसे रोकें?',
   'Stop what is running in these terminals?': 'इन टर्मिनलों में जो चल रहा है उसे रोकें?',
   'Paste {count} lines?': { one: '{count} पंक्ति चिपकाएँ?', other: '{count} पंक्तियाँ चिपकाएँ?' },

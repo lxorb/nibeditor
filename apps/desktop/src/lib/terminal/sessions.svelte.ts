@@ -26,17 +26,29 @@ import '@xterm/xterm/css/xterm.css'
 import { untrack } from 'svelte'
 import { copyText } from '../clipboard'
 import { dragged, isTreeDrag } from '../drag-paths'
-import { key, plural, t } from '../i18n.svelte'
+import { i18n, key, plural, t } from '../i18n.svelte'
+import { identifier } from '../identifier'
 import { showCombination } from '../keys'
 import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
 import { Channel } from '../native'
 import { tabAsk } from '../new-tab'
+import { owes } from '../parting'
 import { SHORTCUTS, shortcuts } from '../shortcuts.svelte'
 import { isNumber, isRecord } from '../stored'
 import { invoke, platform } from '../tauri'
 import { type Tab, workspace } from '../workspace.svelte'
+import {
+  dropHistory,
+  fitted,
+  type History,
+  historyOf,
+  keepHistory,
+  moveLegacy,
+  type Place,
+  restoredAbove,
+  restoredLine,
+} from './history'
 import { type Route, routeKey } from './keys'
-import { keepLines, LINES, linesOf } from './lines'
 import { findColours, monospace, terminalTheme } from './look'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
@@ -49,11 +61,18 @@ import { readSpec, reportedFolder, type Spec, writeSpec } from './spec'
 const SCROLLBACK = 5000
 
 /** How long the output has to rest before the last lines are written down; see
- *  lines.ts. */
+ *  history.ts. */
 const QUIET = 2000
 
-/** How long after Enter a Linux shell is asked where it is: long enough for a `cd` to
- *  have happened. See `pty_folder`. */
+/** And how long they wait at most while it never rests - a server printing a line a
+ *  second - so a crash in the middle of one loses no more than this. */
+const FLOOD = 10_000
+
+/** The systems whose kernel says where a shell is, asked after Enter; see `pty_folder`. */
+const KERNEL_SAYS = ['linux', 'macos']
+
+/** How long after Enter a shell is asked where it is: long enough for a `cd` to have
+ *  happened. See `pty_folder`. */
 const AFTER_ENTER = 500
 
 /** Which Windows this is, for xterm.js's ConPTY allowances: the os plugin writes the
@@ -115,6 +134,17 @@ class Session {
    *  first moment, they would reach a session the crate has not made yet. */
   private spawning: Promise<unknown> = Promise.resolve()
   private resting: ReturnType<typeof setTimeout> | undefined
+  /** Whether the screen has changed since it was last written down, and since when. */
+  private changed = false
+  private since = 0
+  /** Whether xterm.js has its element: before that there is no screen to fit, focus or
+   *  write down. */
+  private drawn = false
+  /** What the tab had on its screen last time, asked for once, as it is first drawn. */
+  private coming: Promise<History | null> | null = null
+  /** Whether that screen is being written back, which a fit waits for: it is written at
+   *  the width it was written at, and the fit after it reflows it. */
+  private replaying = false
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
   /** The find bar, when it is up; see TerminalTab.svelte. */
@@ -205,28 +235,86 @@ class Session {
     workspace.scheduleSession()
   }
 
-  /** Drawn inside `place`: opened the first time, with the last lines it had and a
-   *  shell started; moved there every time after. */
+  /** Where this tab's history is kept; see history.ts. */
+  private place(): Place {
+    return placeOf(this.tab)
+  }
+
+  /** Drawn inside `place`: opened the first time, with the screen it had last time put
+   *  back and a shell started under it; moved there every time after. */
   async attach(place: HTMLElement, focus: boolean): Promise<void> {
     place.append(this.host)
 
     if (!this.opened) {
       this.opened = true
-      await typeReady()
+      this.coming ??= this.lastScreen()
+      const [history] = await Promise.all([this.coming, typeReady()])
       if (!this.host.isConnected) {
         this.opened = false
         return
       }
 
+      this.coming = null
       this.term.open(this.host)
-      this.putBack()
-      this.fit()
-      void this.start()
+      this.drawn = true
+      this.replay(history)
     } else {
       this.fit()
     }
 
     if (focus) this.focus()
+  }
+
+  /** What this tab had on its screen last time - unless Restore history is off, or this
+   *  is a tab duplicated from one running now and so carrying its key. That one is given
+   *  a key of its own instead, so two tabs never write one file, and so is a tab from
+   *  before there were keys. */
+  private async lastScreen(): Promise<History | null> {
+    const spec = this.spec()
+    const twin = [...sessions.values()].some(
+      (other) => other !== this && other.opened && other.spec().key === spec.key,
+    )
+    if (twin || !spec.key) {
+      this.respec({ ...spec, key: identifier() })
+      return null
+    }
+
+    return shells.restoring ? historyOf(this.place()) : null
+  }
+
+  /** The last screen, written back at the size it was written at and fitted to the pane
+   *  after, which reflows it the way a resize would; the line saying when under it; and
+   *  only then the shell, so its prompt lands under that line. On Windows the replayed
+   *  lines go above the screen first, at the pane's own height; see `restoredAbove`. */
+  private replay(history: History | null) {
+    const fitted = () => {
+      this.replaying = false
+      this.fit()
+    }
+    if (!history) {
+      fitted()
+      void this.start()
+      return
+    }
+
+    this.replaying = true
+    const { cols, rows } = history
+    if (cols >= 2 && cols <= 1000 && rows >= 1 && rows <= 500) this.term.resize(cols, rows)
+    const when = i18n.when(history.at, { dateStyle: 'medium', timeStyle: 'short' })
+    const words = t('Restored {time}', { time: when })
+
+    if (platform() !== 'windows') {
+      this.term.write(history.text + restoredLine(words), () => {
+        fitted()
+        void this.start()
+      })
+      return
+    }
+
+    this.term.write(history.text, () => {
+      fitted()
+      this.term.write(restoredAbove(words, this.term.rows), () => void this.start())
+    })
   }
 
   /** Out of the pane, and still running. */
@@ -236,12 +324,12 @@ class Session {
   }
 
   focus() {
-    if (this.opened) this.term.focus()
+    if (this.drawn) this.term.focus()
   }
 
   /** The screen, sized to its place, and the shell told. */
   fit() {
-    if (!this.opened || !this.host.isConnected) return
+    if (!this.drawn || this.replaying || !this.host.isConnected) return
     this.fitting.fit()
   }
 
@@ -260,10 +348,19 @@ class Session {
     }
   }
 
-  /** The tab has gone: the shell with it, and the screen. Its last lines stay, for the
+  /** The tab has gone: the shell with it, and the screen. Its file goes too - a closed tab
+   *  leaves nothing of itself on the disk - and its last screen stays in memory, for the
    *  tab coming back through Reopen closed tab. */
   end() {
-    this.remember()
+    clearTimeout(this.resting)
+    const place = this.place()
+    if (this.drawn || !shells.restoring) {
+      dropHistory(place, shells.restoring ? this.snapshot() : null)
+    } else {
+      // Never drawn: what it had is the file's, which goes into memory on its way out.
+      void (this.coming ?? historyOf(place)).then((last) => dropHistory(place, last))
+    }
+
     if (this.pty !== null) void invoke('pty_kill', { id: this.pty }).catch(() => undefined)
     this.pty = null
     setPty(this.tab.id, null)
@@ -273,23 +370,34 @@ class Session {
     this.host.remove()
   }
 
-  /** What was on the screen last time, above the new prompt - unless another terminal
-   *  running now has the same key, which is a tab duplicated from it, not one coming
-   *  back. */
-  private putBack() {
-    const key = this.spec().key
-    const twin = [...sessions.values()].some(
-      (other) => other !== this && other.opened && other.spec().key === key,
-    )
-    const lines = twin ? null : linesOf(key)
-    if (lines) this.term.write(`${lines}\x1b[0m\r\n`)
-  }
-
-  /** The screen, written down; see lines.ts. */
+  /** The screen, written down if it has changed since it last was; see history.ts. */
   remember() {
     clearTimeout(this.resting)
-    if (!this.opened) return
-    keepLines(this.spec().key, this.serializing.serialize({ scrollback: LINES }))
+    this.resting = undefined
+    if (!this.changed || !shells.restoring) return
+
+    const history = this.snapshot()
+    if (!history) return
+    this.changed = false
+    this.since = 0
+    keepHistory(this.place(), history)
+  }
+
+  /** The screen as it stands, as much of it as one history may hold. */
+  private snapshot(): History | null {
+    if (!this.drawn) return null
+    const text = fitted((lines) => this.serializing.serialize({ scrollback: lines }))
+    return text ? { cols: this.term.cols, rows: this.term.rows, at: Date.now(), text } : null
+  }
+
+  /** Something was printed: written down once the output rests, and at least every
+   *  `FLOOD` while it does not. */
+  private printed() {
+    this.changed = true
+    const now = Date.now()
+    this.since ||= now
+    clearTimeout(this.resting)
+    this.resting = setTimeout(() => this.remember(), Math.min(QUIET, this.since + FLOOD - now))
   }
 
   /** A shell, in the tab's shell and folder, at the screen's size. */
@@ -359,8 +467,7 @@ class Session {
         bytes,
         () => void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined),
       )
-      clearTimeout(this.resting)
-      this.resting = setTimeout(() => this.remember(), QUIET)
+      this.printed()
       return
     }
 
@@ -375,7 +482,6 @@ class Session {
     setPty(this.tab.id, null)
 
     if (code === 0 && workspace.tabs.some((one) => one.id === this.tab.id)) {
-      this.remember()
       workspace.close(this.tab.id)
       return
     }
@@ -403,7 +509,7 @@ class Session {
     this.outgoing.push({ data, binary })
     void this.send()
 
-    if (!binary && data.includes('\r') && platform() === 'linux') {
+    if (!binary && data.includes('\r') && KERNEL_SAYS.includes(platform())) {
       setTimeout(() => void this.lookWhere(), AFTER_ENTER)
     }
   }
@@ -434,7 +540,8 @@ class Session {
       void invoke('pty_resize', { id: this.pty, cols, rows }).catch(() => undefined)
   }
 
-  /** Where the shell is, asked of Linux's /proc for a shell that does not say. */
+  /** Where the shell is, asked of the kernel for a shell that does not say: Linux's
+   *  /proc, a Mac's `proc_pidinfo` - zsh, a Mac's own, says nothing. */
   private async lookWhere() {
     if (this.pty === null) return
 
@@ -635,6 +742,14 @@ function searchOptions(incremental: boolean): ISearchOptions {
   }
 }
 
+/** Where a terminal tab's history is kept: the space its document was opened in, once
+ *  documents with no file say which (unsaved tabs' `home`, documents.svelte.ts), and the
+ *  key its words carry. */
+function placeOf(tab: Tab): Place {
+  const home = (tab.note as { home?: string | null }).home ?? null
+  return { space: home, key: readSpec(tab.doc)?.key ?? '' }
+}
+
 /** Every terminal, by its tab's id. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- a registry of screens; nothing renders from it
 const sessions = new Map<string, Session>()
@@ -655,7 +770,8 @@ export type { Session }
  *  first terminal: a tab that has gone takes its shell with it, the type follows the
  *  setting, and the colours follow the theme - including a theme file that arrives a
  *  moment after it was chosen, which is why the page itself is watched rather than the
- *  store that asked for it. And the last lines are written as the window goes. */
+ *  store that asked for it. And the last lines are written as the window goes, which
+ *  waits for them. */
 function watch() {
   $effect.root(() => {
     $effect(() => {
@@ -699,9 +815,12 @@ function watch() {
   })
   page.observe(document.head, { childList: true, subtree: true, characterData: true })
 
-  window.addEventListener('pagehide', () => {
+  owes(() => {
     for (const one of sessions.values()) one.remember()
   })
+
+  // The lines this page's own storage held, before they were the crate's.
+  moveLegacy(workspace.tabs.filter((tab) => tab.kind === 'terminal').map(placeOf))
 }
 
 watch()

@@ -1586,6 +1586,8 @@ export const sw: Dictionary = {
   Clear: 'Futa',
   'Exited with code {code}': 'Imemalizika kwa msimbo {code}',
   'Could not start {shell}': 'Imeshindwa kuanzisha {shell}',
+  'Restore history': 'Rejesha historia',
+  'Restored {time}': 'Imerejeshwa {time}',
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
