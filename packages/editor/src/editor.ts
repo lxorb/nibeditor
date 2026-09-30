@@ -19,6 +19,7 @@ import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
 import { imageHandling, imageResolver, type ImageSink } from './images'
 import { propertyChoices } from './live-preview/properties'
 import { linkClicks, type LinkPress, linkOpener } from './links'
+import { tagClicks, tagOpener, type TagOpener } from './tag-press'
 import { trustedMarkup } from './markup'
 import { wikilinks } from './wikilink'
 import { blockNamer } from './wikilink/block-namer'
@@ -91,6 +92,8 @@ export interface StateOptions {
   notes?: NoteIndex
   /** Follows a link between notes: opens it, or makes it when there is none. */
   openNote?: NoteOpener
+  /** Asks the space about a pressed `#tag`; see tag-press.ts. */
+  openTag?: TagOpener
   /** Names a block of another note, so a link can point at the block. */
   nameBlock?: (path: string, line: number) => Promise<string | null>
   /** Spells a link to another note, so what the `[[` popup writes is what the
@@ -217,6 +220,8 @@ export function editorState(options: StateOptions): EditorState {
       noteIndexExtension(options.notes),
       trustedMarkup(options.trustedMarkup),
       ...(openNote ? [noteOpener.of(openNote)] : []),
+      tagClicks,
+      ...(options.openTag ? [tagOpener.of(options.openTag)] : []),
       ...(nameBlock ? [blockNamer.of(nameBlock)] : []),
       ...(writeLink ? [linkWriter.of(writeLink)] : []),
       noteDrops,

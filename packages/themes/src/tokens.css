@@ -537,6 +537,14 @@
   --callout-bug: #d4569b;
   --callout-example: var(--accent);
   --callout-quote: var(--muted-strong);
+
+  /* A `#tag`'s ink; its pill is a wash of the same ink (document.css). The accent
+     a step toward the text on either side - lighter on a dark page, darker on a
+     light one, which is what `--accent-hover` already is - because a tag sits on a
+     wash of itself, and the plain accent on its own wash comes to 4.14 to one on
+     the dark side. This is 4.95 there, 5.49 on the light side and 8.3 in the
+     contrast theme. */
+  --tag: var(--accent-hover);
 }
 
 @media (prefers-reduced-motion: reduce) {

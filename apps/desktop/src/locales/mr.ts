@@ -279,6 +279,8 @@ export const mr: Dictionary = {
   '⌘-click to open the note': 'नोंद उघडण्यासाठी ⌘-क्लिक',
   'Ctrl+Click to create the note': 'नोंद तयार करण्यासाठी Ctrl+क्लिक',
   '⌘-click to create the note': 'नोंद तयार करण्यासाठी ⌘-क्लिक',
+  'Ctrl+Click to search the tag': 'टॅग शोधण्यासाठी Ctrl+क्लिक',
+  '⌘-click to search the tag': 'टॅग शोधण्यासाठी ⌘-क्लिक',
   'Note not found': 'नोंद सापडली नाही',
   'Align left': 'डावीकडे संरेखित',
   'Align center': 'मध्यभागी संरेखित',

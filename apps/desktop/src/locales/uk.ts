@@ -294,6 +294,8 @@ export const uk: Dictionary = {
   '⌘-click to open the note': '⌘-клік відкриває нотатку',
   'Ctrl+Click to create the note': 'Ctrl+клік створює нотатку',
   '⌘-click to create the note': '⌘-клік створює нотатку',
+  'Ctrl+Click to search the tag': 'Ctrl+клік шукає тег',
+  '⌘-click to search the tag': '⌘-клік шукає тег',
   'Note not found': 'Нотатку не знайдено',
   'Align left': 'За лівим краєм',
   'Align center': 'По центру',

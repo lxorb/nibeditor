@@ -11,4 +11,5 @@ export const markTags = {
   math: Tag.define(),
   footnote: Tag.define(),
   frontMatter: Tag.define(),
+  hashtag: Tag.define(),
 }

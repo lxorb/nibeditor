@@ -279,6 +279,8 @@ export const ur: Dictionary = {
   '⌘-click to open the note': 'نوٹ کھولنے کے لیے ⌘+کلک',
   'Ctrl+Click to create the note': 'نوٹ بنانے کے لیے Ctrl+کلک',
   '⌘-click to create the note': 'نوٹ بنانے کے لیے ⌘+کلک',
+  'Ctrl+Click to search the tag': 'ٹیگ تلاش کرنے کے لیے Ctrl+کلک',
+  '⌘-click to search the tag': 'ٹیگ تلاش کرنے کے لیے ⌘+کلک',
   'Note not found': 'نوٹ نہیں ملا',
   'Align left': 'بائیں سیدھ',
   'Align center': 'درمیان سیدھ',

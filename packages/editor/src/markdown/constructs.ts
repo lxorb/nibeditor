@@ -1,6 +1,7 @@
 import { tags } from '@lezer/highlight'
 import type { BlockContext, Line, MarkdownConfig } from '@lezer/markdown'
 import { parseWikilink, shownSpan } from '@nib/markdown/links'
+import { opensTag, tagNameAt } from '@nib/markdown/tags'
 import { markTags } from './tags'
 import {
   BACKSLASH,
@@ -10,6 +11,7 @@ import {
   CARET,
   DOLLAR,
   EQUALS,
+  HASH,
   isSpace,
   NEWLINE,
   PERCENT,
@@ -129,6 +131,32 @@ const Wikilink: MarkdownConfig = {
         }
 
         return -1
+      },
+    },
+  ],
+}
+
+/** `#work/nib`, by the grammar in @nib/markdown's tags.ts that the renderer reads
+ *  too. A parser node rather than a pattern over the lines: code, maths, comments,
+ *  addresses and HTML claim their characters first, a heading's `# ` is the
+ *  block's, and the tree is parsed incrementally, so a keystroke never costs a pass
+ *  over the note. */
+const Hashtag: MarkdownConfig = {
+  defineNodes: [{ name: 'Hashtag', style: markTags.hashtag }],
+  parseInline: [
+    {
+      name: 'Hashtag',
+      parse(cx, next, pos) {
+        if (next !== HASH) return -1
+
+        // Nothing before the section's first character: a paragraph opening on a tag.
+        const before = pos === cx.offset ? '' : cx.slice(pos - 1, pos)
+        if (!opensTag(before)) return -1
+
+        const name = tagNameAt(cx.text, pos - cx.offset)
+        if (name === null) return -1
+
+        return cx.addElement(cx.elt('Hashtag', pos, pos + 1 + name.length))
       },
     },
   ],
@@ -431,6 +459,7 @@ export {
   DefinitionList,
   Footnote,
   FrontMatter,
+  Hashtag,
   Highlight,
   InlineMath,
   PercentComment,

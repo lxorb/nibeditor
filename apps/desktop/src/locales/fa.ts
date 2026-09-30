@@ -279,6 +279,8 @@ export const fa: Dictionary = {
   '⌘-click to open the note': '⌘+کلیک برای گشودن یادداشت',
   'Ctrl+Click to create the note': 'Ctrl+کلیک برای ساختن یادداشت',
   '⌘-click to create the note': '⌘+کلیک برای ساختن یادداشت',
+  'Ctrl+Click to search the tag': 'Ctrl+کلیک برای جستجوی برچسب',
+  '⌘-click to search the tag': '⌘+کلیک برای جستجوی برچسب',
   'Note not found': 'یادداشت یافت نشد',
   'Align left': 'چیدن از چپ',
   'Align center': 'چیدن در میان',

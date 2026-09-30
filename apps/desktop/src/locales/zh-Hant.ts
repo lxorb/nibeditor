@@ -279,6 +279,8 @@ export const zhHant: Dictionary = {
   '⌘-click to open the note': '按⌘點按開啟筆記',
   'Ctrl+Click to create the note': '按Ctrl+點按建立筆記',
   '⌘-click to create the note': '按⌘點按建立筆記',
+  'Ctrl+Click to search the tag': '按Ctrl+點按搜尋標籤',
+  '⌘-click to search the tag': '按⌘點按搜尋標籤',
   'Note not found': '找不到筆記',
   'Align left': '靠左對齊',
   'Align center': '置中對齊',

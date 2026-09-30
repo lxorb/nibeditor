@@ -300,6 +300,8 @@ export const ar: Dictionary = {
   '⌘-click to open the note': '⌘+نقر لفتح الملاحظة',
   'Ctrl+Click to create the note': 'Ctrl+نقر لإنشاء الملاحظة',
   '⌘-click to create the note': '⌘+نقر لإنشاء الملاحظة',
+  'Ctrl+Click to search the tag': 'Ctrl+نقر للبحث عن الوسم',
+  '⌘-click to search the tag': '⌘+نقر للبحث عن الوسم',
   'Note not found': 'الملاحظة غير موجودة',
   'Align left': 'محاذاة لليسار',
   'Align center': 'محاذاة للوسط',

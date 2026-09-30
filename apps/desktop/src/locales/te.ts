@@ -279,6 +279,8 @@ export const te: Dictionary = {
   '⌘-click to open the note': 'నోట్ తెరవడానికి ⌘-క్లిక్',
   'Ctrl+Click to create the note': 'నోట్ సృష్టించడానికి Ctrl+క్లిక్',
   '⌘-click to create the note': 'నోట్ సృష్టించడానికి ⌘-క్లిక్',
+  'Ctrl+Click to search the tag': 'ట్యాగ్ వెతకడానికి Ctrl+క్లిక్',
+  '⌘-click to search the tag': 'ట్యాగ్ వెతకడానికి ⌘-క్లిక్',
   'Note not found': 'నోట్ దొరకలేదు',
   'Align left': 'ఎడమకు సర్దు',
   'Align center': 'మధ్యకు సర్దు',

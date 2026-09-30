@@ -279,6 +279,8 @@ export const ms: Dictionary = {
   '⌘-click to open the note': '⌘+klik untuk membuka nota',
   'Ctrl+Click to create the note': 'Ctrl+klik untuk mencipta nota',
   '⌘-click to create the note': '⌘+klik untuk mencipta nota',
+  'Ctrl+Click to search the tag': 'Ctrl+klik untuk mencari tag',
+  '⌘-click to search the tag': '⌘+klik untuk mencari tag',
   'Note not found': 'Nota tidak ditemui',
   'Align left': 'Jajarkan kiri',
   'Align center': 'Jajarkan tengah',

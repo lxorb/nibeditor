@@ -279,6 +279,8 @@ export const ta: Dictionary = {
   '⌘-click to open the note': 'குறிப்பைத் திறக்க ⌘-கிளிக்',
   'Ctrl+Click to create the note': 'குறிப்பை உருவாக்க Ctrl+கிளிக்',
   '⌘-click to create the note': 'குறிப்பை உருவாக்க ⌘-கிளிக்',
+  'Ctrl+Click to search the tag': 'குறிச்சொல்லைத் தேட Ctrl+கிளிக்',
+  '⌘-click to search the tag': 'குறிச்சொல்லைத் தேட ⌘-கிளிக்',
   'Note not found': 'குறிப்பு கிடைக்கவில்லை',
   'Align left': 'இடப்புறம் சீரமை',
   'Align center': 'நடுவில் சீரமை',

@@ -117,6 +117,8 @@
       ...(onselection ? { onSelection: onselection } : {}),
       ...(notes ? { notes: notes(one) } : {}),
       ...(opennote ? { openNote: opennote } : {}),
+      // A pressed `#tag` searches the space; see tag-search.ts.
+      openTag: (tag: string) => void import('./tag-search').then(({ searchTag }) => searchTag(tag)),
       ...(nameblock ? { nameBlock: nameblock } : {}),
       // How a link the `[[` popup writes is spelled: the app's one writer, so the
       // Links setting reaches the popup the way it reaches the grip's Copy link.

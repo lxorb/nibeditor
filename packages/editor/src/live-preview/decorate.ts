@@ -19,6 +19,8 @@ import { emojiFor } from '../emoji'
 import { HEADING_LEVEL } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
 import { hrefOf, linkTitle } from '../links'
+import { enclosingNamed } from '../nodes'
+import { tagTitle } from '../tag-press'
 import { calloutOf } from '@nib/markdown/callouts'
 import { readChart } from '@nib/markdown/chart'
 import { onEngines } from '@nib/markdown/engines'
@@ -60,6 +62,9 @@ const LINE_CLASS: Record<string, string> = {
 }
 
 for (const [name, level] of Object.entries(HEADING_LEVEL)) LINE_CLASS[name] = `nib-h${level}`
+
+/** Where a tag is a link's words, and a press means the link. */
+const LINKED = new Set(['Link', 'Image', 'Wikilink'])
 
 class Decorator {
   private readonly marks: Range<Decoration>[] = []
@@ -213,6 +218,9 @@ class Decorator {
         return true
       case 'Wikilink':
         return this.wikilink(node)
+      case 'Hashtag':
+        this.tag(node)
+        return false
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
         // A bare address, or one between the `<` `>` of an autolink: shown as
@@ -317,6 +325,26 @@ class Decorator {
             : 'nib-link',
         attributes: { 'data-note': linkTarget(link), title: noteLinkTitle(link, missing) },
       }).range(from, to),
+    )
+  }
+
+  /** `#work/nib` as a pill, hash inside. With the caret in it, it is being written
+   *  and reads as its source: the wash goes, the words stay put (editor.css). It
+   *  carries its name for the press that searches it; see tag-press.ts. */
+  private tag(node: SyntaxNode) {
+    if (enclosingNamed(node, LINKED)) return
+
+    // A name, not a word the checker should underline.
+    const said = {
+      'data-tag': this.state.doc.sliceString(node.from + 1, node.to),
+      spellcheck: 'false',
+    }
+    const title = tagTitle(this.state)
+    this.marks.push(
+      Decoration.mark({
+        class: overlaps(this.state, node.from, node.to) ? 'tag is-open' : 'tag',
+        attributes: title ? { ...said, title } : said,
+      }).range(node.from, node.to),
     )
   }
 

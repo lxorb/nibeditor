@@ -279,6 +279,8 @@ export const tr: Dictionary = {
   '⌘-click to open the note': 'Notu açmak için ⌘+tıklama',
   'Ctrl+Click to create the note': 'Notu oluşturmak için Ctrl+tıklama',
   '⌘-click to create the note': 'Notu oluşturmak için ⌘+tıklama',
+  'Ctrl+Click to search the tag': 'Etiketi aramak için Ctrl+tıklama',
+  '⌘-click to search the tag': 'Etiketi aramak için ⌘+tıklama',
   'Note not found': 'Not bulunamadı',
   'Align left': 'Sola hizala',
   'Align center': 'Ortaya hizala',

@@ -282,6 +282,8 @@ export const pa: Dictionary = {
   '⌘-click to open the note': 'ਨੋਟ ਖੋਲ੍ਹਣ ਲਈ ⌘+ਕਲਿੱਕ',
   'Ctrl+Click to create the note': 'ਨੋਟ ਬਣਾਉਣ ਲਈ Ctrl+ਕਲਿੱਕ',
   '⌘-click to create the note': 'ਨੋਟ ਬਣਾਉਣ ਲਈ ⌘+ਕਲਿੱਕ',
+  'Ctrl+Click to search the tag': 'ਟੈਗ ਖੋਜਣ ਲਈ Ctrl+ਕਲਿੱਕ',
+  '⌘-click to search the tag': 'ਟੈਗ ਖੋਜਣ ਲਈ ⌘+ਕਲਿੱਕ',
   'Note not found': 'ਨੋਟ ਨਹੀਂ ਮਿਲੀ',
   'Align left': 'ਖੱਬੇ ਸਿੱਧਾ ਕਰੋ',
   'Align center': 'ਵਿਚਾਲੇ ਸਿੱਧਾ ਕਰੋ',

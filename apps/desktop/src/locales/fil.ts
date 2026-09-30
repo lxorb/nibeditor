@@ -282,6 +282,8 @@ export const fil: Dictionary = {
   '⌘-click to open the note': '⌘+click para buksan ang tala',
   'Ctrl+Click to create the note': 'Ctrl+click para gumawa ng tala',
   '⌘-click to create the note': '⌘+click para gumawa ng tala',
+  'Ctrl+Click to search the tag': 'Ctrl+click para hanapin ang tag',
+  '⌘-click to search the tag': '⌘+click para hanapin ang tag',
   'Note not found': 'Hindi nahanap ang tala',
   'Align left': 'Ikaliwa',
   'Align center': 'Igitna',

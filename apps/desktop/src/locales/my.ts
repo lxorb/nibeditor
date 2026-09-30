@@ -279,6 +279,8 @@ export const my: Dictionary = {
   '⌘-click to open the note': 'မှတ်စုဖွင့်ရန် ⌘-click',
   'Ctrl+Click to create the note': 'မှတ်စုဖန်တီးရန် Ctrl+Click',
   '⌘-click to create the note': 'မှတ်စုဖန်တီးရန် ⌘-click',
+  'Ctrl+Click to search the tag': 'တဂ်ရှာရန် Ctrl+Click',
+  '⌘-click to search the tag': 'တဂ်ရှာရန် ⌘-click',
   'Note not found': 'မှတ်စုမတွေ့',
   'Align left': 'ဘယ်ညှိ',
   'Align center': 'အလယ်ညှိ',

@@ -279,6 +279,8 @@ export const id: Dictionary = {
   '⌘-click to open the note': '⌘+klik untuk membuka catatan',
   'Ctrl+Click to create the note': 'Ctrl+klik untuk membuat catatan',
   '⌘-click to create the note': '⌘+klik untuk membuat catatan',
+  'Ctrl+Click to search the tag': 'Ctrl+klik untuk mencari tag',
+  '⌘-click to search the tag': '⌘+klik untuk mencari tag',
   'Note not found': 'Catatan tidak ditemukan',
   'Align left': 'Rata kiri',
   'Align center': 'Rata tengah',

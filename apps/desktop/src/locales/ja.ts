@@ -279,6 +279,8 @@ export const ja: Dictionary = {
   '⌘-click to open the note': '⌘クリックでノートを開きます',
   'Ctrl+Click to create the note': 'Ctrl+クリックでノートを作成します',
   '⌘-click to create the note': '⌘クリックでノートを作成します',
+  'Ctrl+Click to search the tag': 'Ctrl+クリックでタグを検索します',
+  '⌘-click to search the tag': '⌘クリックでタグを検索します',
   'Note not found': 'ノートが見つかりません',
   'Align left': '左揃え',
   'Align center': '中央揃え',

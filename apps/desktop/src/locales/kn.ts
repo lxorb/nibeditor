@@ -282,6 +282,8 @@ export const kn: Dictionary = {
   '⌘-click to open the note': 'ಟಿಪ್ಪಣಿ ತೆರೆಯಲು ⌘-ಕ್ಲಿಕ್',
   'Ctrl+Click to create the note': 'ಟಿಪ್ಪಣಿ ರಚಿಸಲು Ctrl+ಕ್ಲಿಕ್',
   '⌘-click to create the note': 'ಟಿಪ್ಪಣಿ ರಚಿಸಲು ⌘-ಕ್ಲಿಕ್',
+  'Ctrl+Click to search the tag': 'ಟ್ಯಾಗ್ ಹುಡುಕಲು Ctrl+ಕ್ಲಿಕ್',
+  '⌘-click to search the tag': 'ಟ್ಯಾಗ್ ಹುಡುಕಲು ⌘-ಕ್ಲಿಕ್',
   'Note not found': 'ಟಿಪ್ಪಣಿ ಸಿಗಲಿಲ್ಲ',
   'Align left': 'ಎಡಕ್ಕೆ ಹೊಂದಿಸಿ',
   'Align center': 'ಮಧ್ಯಕ್ಕೆ ಹೊಂದಿಸಿ',

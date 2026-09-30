@@ -18,6 +18,7 @@ export const BRACKET_CLOSE = 93
 export const CARET = 94
 export const BACKSLASH = 92
 export const BANG = 33
+export const HASH = 35
 export const NEWLINE = 10
 
 /** Whether a code is whitespace, a line break, or the end of the input, which

@@ -177,6 +177,28 @@
   opacity: 1;
 }
 
+/* A tag the caret is in is being written, so it reads as the words it is made
+   of: the wash fades and nothing moves, because the pill's padding stays where it
+   was (document.css draws the pill). The fade is on the element the caret made,
+   the way a revealed mark bleeds in, so a note opening does not fade every tag.
+   Written with the id, which is what the pill's own rule outranks everything with. */
+.cm-editor #write .tag.is-open {
+  background: transparent;
+  animation: tag-open var(--dur-fast) var(--ease-out);
+}
+
+@keyframes tag-open {
+  from {
+    background: color-mix(in srgb, var(--tag) 14%, transparent);
+  }
+}
+
+/* The hand while the modifier would make a press ask about the tag, as on a link.
+   Only on a tag that says so, which is one in an editor that can ask. */
+.cm-content.nib-modifier .tag[title] {
+  cursor: pointer;
+}
+
 /* `<u>text</u>`, with the tags hidden the way `**` is. */
 .nib-underline {
   text-decoration: underline;

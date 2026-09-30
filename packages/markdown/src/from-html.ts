@@ -21,6 +21,7 @@ import { gfm } from 'turndown-plugin-gfm'
 import { escapeText } from './escapes'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
 import { appHref, safeHref, safeSrc } from './html'
+import { tagNameAt } from './tags'
 
 /** What a note never contains.
  *
@@ -688,6 +689,21 @@ function converter(options: FromHtmlOptions): TurndownService {
 
       return `[${content}](${destination(href)}${titleOf(node)})`
     },
+  })
+
+  // A tag, as this renderer draws one and as Obsidian's pages do: the words it is
+  // written with. The reading view draws one as a link, because a press there asks
+  // the space about it, and the rule above would have written that link down as
+  // `[#work](#work)` - a copy out of the reading view pasted into a note came back
+  // as a link to a place that is not one. Only an element whose words are one whole
+  // tag, so a `tag` class on anything else is left to the rules it always met.
+  // Added after the link rule, which is what makes it answer first.
+  service.addRule('tag', {
+    filter: (node) => {
+      const words = node.textContent
+      return node.classList.contains('tag') && tagNameAt(words, 0) === words.slice(1)
+    },
+    replacement: (_content, node) => node.textContent,
   })
 
   // The two things a picture says, and no `title`, which is the one place it

@@ -73,6 +73,8 @@ export const nibHighlightStyle = HighlightStyle.define([
   { tag: markTags.math, fontFamily: 'var(--font-mono)', color: 'var(--muted-strong)' },
   { tag: markTags.footnote, color: 'var(--accent)', fontSize: '0.8em', verticalAlign: 'super' },
   { tag: markTags.frontMatter, fontFamily: 'var(--font-mono)', color: 'var(--muted)' },
+  // The ink alone: the pill is the preview's, so source mode shows a tag undressed.
+  { tag: markTags.hashtag, color: 'var(--tag)' },
 ])
 
 // Code fences are coloured separately, in `code-theme.ts`, so the syntax theme

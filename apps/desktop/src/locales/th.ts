@@ -279,6 +279,8 @@ export const th: Dictionary = {
   '⌘-click to open the note': '⌘-คลิกเพื่อเปิดโน้ต',
   'Ctrl+Click to create the note': 'Ctrl+คลิกเพื่อสร้างโน้ต',
   '⌘-click to create the note': '⌘-คลิกเพื่อสร้างโน้ต',
+  'Ctrl+Click to search the tag': 'Ctrl+คลิกเพื่อค้นหาแท็ก',
+  '⌘-click to search the tag': '⌘-คลิกเพื่อค้นหาแท็ก',
   'Note not found': 'ไม่พบโน้ต',
   'Align left': 'จัดซ้าย',
   'Align center': 'จัดกลาง',

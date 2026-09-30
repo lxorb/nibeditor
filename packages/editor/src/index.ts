@@ -98,6 +98,7 @@ export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
 export { imageResolver, type ImageSink } from './images'
 export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './links'
+export { type TagOpener } from './tag-press'
 export {
   type FileDrawing,
   type LinkWrite,

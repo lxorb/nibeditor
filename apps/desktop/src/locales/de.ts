@@ -283,6 +283,8 @@ export const de: Dictionary = {
   '⌘-click to open the note': '⌘-Klick öffnet die Notiz',
   'Ctrl+Click to create the note': 'Strg+Klick erstellt die Notiz',
   '⌘-click to create the note': '⌘-Klick erstellt die Notiz',
+  'Ctrl+Click to search the tag': 'Strg+Klick sucht das Schlagwort',
+  '⌘-click to search the tag': '⌘-Klick sucht das Schlagwort',
   'Note not found': 'Notiz nicht gefunden',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',

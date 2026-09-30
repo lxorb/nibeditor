@@ -21,7 +21,7 @@
   import { inlineFiles } from './reading/drawn'
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
-  import { readingHtml } from './reading/render'
+  import { readingHtml, tagAnchor } from './reading/render'
   import { trustsHtmlIn } from './sharing.svelte'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
@@ -74,7 +74,7 @@
   async function draw() {
     const mine = ++latest
     const source = note()
-    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note))
+    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note), tagAnchor)
     if (mine !== latest) return
 
     html = next
@@ -314,6 +314,17 @@
     // answers no query either.
     if (!middle && pressRow(event.target)) {
       event.preventDefault()
+      return
+    }
+
+    // A tag asks the space's search about itself, the way one pressed with the
+    // modifier in the editor does; see tag-search.ts. The middle button has no tab
+    // to open a search in, so it does nothing here rather than something else.
+    const tag = (event.target as Element | null)?.closest('a.tag[data-tag]')
+    if (tag) {
+      event.preventDefault()
+      const name = tag.getAttribute('data-tag')
+      if (name && !middle) void import('./tag-search').then(({ searchTag }) => searchTag(name))
       return
     }
 

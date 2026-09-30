@@ -279,6 +279,8 @@ export const am: Dictionary = {
   '⌘-click to open the note': 'ማስታወሻ ለመክፈት ⌘+ጠቅታ',
   'Ctrl+Click to create the note': 'ማስታወሻ ለመፍጠር Ctrl+ጠቅታ',
   '⌘-click to create the note': 'ማስታወሻ ለመፍጠር ⌘+ጠቅታ',
+  'Ctrl+Click to search the tag': 'መለያውን ለመፈለግ Ctrl+ጠቅታ',
+  '⌘-click to search the tag': 'መለያውን ለመፈለግ ⌘+ጠቅታ',
   'Note not found': 'ማስታወሻ አልተገኘም',
   'Align left': 'ወደ ግራ አስተካክል',
   'Align center': 'ወደ መካከል አስተካክል',

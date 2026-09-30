@@ -287,6 +287,8 @@ export const ptPT: Dictionary = {
   '⌘-click to open the note': '⌘-clique para abrir a nota',
   'Ctrl+Click to create the note': 'Ctrl+clique para criar a nota',
   '⌘-click to create the note': '⌘-clique para criar a nota',
+  'Ctrl+Click to search the tag': 'Ctrl+clique para procurar a etiqueta',
+  '⌘-click to search the tag': '⌘-clique para procurar a etiqueta',
   'Note not found': 'Nota não encontrada',
   'Align left': 'Alinhar à esquerda',
   'Align center': 'Centrar',

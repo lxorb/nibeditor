@@ -15,6 +15,23 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<a href="https://x.dev">site</a>')).toBe('[site](https://x.dev)')
   })
 
+  /** The reading view draws a tag as a link a press follows, and Obsidian's pages do
+   *  too; copied out and pasted into a note, it is the tag again. */
+  test('a tag comes back as the tag, whichever element drew it', () => {
+    const read = renderMarkdown('Filed #work/nib and #reading', { tagHref: (tag) => `#${tag}` })
+    expect(htmlToMarkdown(read)).toBe('Filed #work/nib and #reading')
+    expect(htmlToMarkdown(renderMarkdown('#first words'))).toBe('#first words')
+    expect(htmlToMarkdown('<p><a href="#idea" class="tag" target="_blank">#idea</a></p>')).toBe(
+      '#idea',
+    )
+  })
+
+  test('a tag class on anything else is left to the other rules', () => {
+    expect(htmlToMarkdown('<a class="tag" href="https://x.dev/v1">v1.2 notes</a>')).toBe(
+      '[v1.2 notes](https://x.dev/v1)',
+    )
+  })
+
   /** A note outlives the page it was clipped from, and every surface refuses these
    *  when it renders one - so the file does not carry them either. The words stay,
    *  which is what an unresolvable link is anywhere. */

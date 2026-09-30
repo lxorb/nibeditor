@@ -279,6 +279,8 @@ export const gsw: Dictionary = {
   '⌘-click to open the note': '⌘-Klick macht d Notiz uf',
   'Ctrl+Click to create the note': 'Strg+Klick leit d Notiz a',
   '⌘-click to create the note': '⌘-Klick leit d Notiz a',
+  'Ctrl+Click to search the tag': 'Strg+Klick suecht s Schlagwort',
+  '⌘-click to search the tag': '⌘-Klick suecht s Schlagwort',
   'Note not found': 'Notiz nöd gfunde',
   'Align left': 'Linksbündig',
   'Align center': 'Zentriert',

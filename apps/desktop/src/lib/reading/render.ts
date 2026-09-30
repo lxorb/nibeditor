@@ -10,6 +10,7 @@
 
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
 import { mapSources } from '@nib/markdown/sources'
+import type { TagHref } from '@nib/markdown/tags'
 import { t } from '../i18n.svelte'
 import { links } from '../link-index.svelte'
 import { modes } from '../modes.svelte'
@@ -64,11 +65,25 @@ export function withPictures(html: string, note: Note): string {
  *  the page, so it is worth being able to ask. */
 const MEASURE = 'nib:reading'
 
+/** Where a `#tag` on the reading view's own page points: a link its click handler
+ *  answers by asking the space's search, so a tag is a real anchor Tab reaches and
+ *  Enter presses. Only the page itself asks for it. An embed and the preview over a
+ *  link are drawn by the same render inside the editor, where nothing is listening
+ *  for the press and an anchor would take the window to a fragment; there a tag is
+ *  drawn and goes nowhere, the way an export draws one. See Reading.svelte. */
+export const tagAnchor: TagHref = (tag) => `#${tag}`
+
 /** `trusted` is whether the HTML in the note is markup rather than the characters
  *  it is made of. A note the reader wrote is rendered the way Typora renders one;
  *  a note from a shared space, a room, a guest or a paste is not. The rule is
- *  trust.ts, and the caller has already asked it. */
-export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean): Promise<string> {
+ *  trust.ts, and the caller has already asked it. `tagHref` is `tagAnchor` above
+ *  for the reading view's own page and nothing anywhere else. */
+export async function readingHtml(
+  note: Note,
+  scheme: Scheme,
+  trusted: boolean,
+  tagHref?: TagHref,
+): Promise<string> {
   // The diagram drawers and the syntax parsers, which are most of what the app can
   // load; asked for here rather than at startup, since a note is read after the app
   // is open. Not through the exporter, which used to be the way to them and brought
@@ -102,6 +117,7 @@ export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean):
       code: fence,
       resolveLink: pointer(note),
       resolveEmbed: embed,
+      ...(tagHref ? { tagHref } : {}),
     }),
     note,
   )

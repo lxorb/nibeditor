@@ -279,6 +279,8 @@ export const bn: Dictionary = {
   '⌘-click to open the note': 'নোট খুলতে ⌘-ক্লিক',
   'Ctrl+Click to create the note': 'নোট তৈরি করতে Ctrl+ক্লিক',
   '⌘-click to create the note': 'নোট তৈরি করতে ⌘-ক্লিক',
+  'Ctrl+Click to search the tag': 'ট্যাগ খুঁজতে Ctrl+ক্লিক',
+  '⌘-click to search the tag': 'ট্যাগ খুঁজতে ⌘-ক্লিক',
   'Note not found': 'নোট পাওয়া যায়নি',
   'Align left': 'বাঁ দিকে',
   'Align center': 'মাঝে',

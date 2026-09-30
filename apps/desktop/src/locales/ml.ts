@@ -282,6 +282,8 @@ export const ml: Dictionary = {
   '⌘-click to open the note': 'കുറിപ്പ് തുറക്കാൻ ⌘-ക്ലിക്ക്',
   'Ctrl+Click to create the note': 'കുറിപ്പ് ഉണ്ടാക്കാൻ Ctrl+ക്ലിക്ക്',
   '⌘-click to create the note': 'കുറിപ്പ് ഉണ്ടാക്കാൻ ⌘-ക്ലിക്ക്',
+  'Ctrl+Click to search the tag': 'ടാഗ് തിരയാൻ Ctrl+ക്ലിക്ക്',
+  '⌘-click to search the tag': 'ടാഗ് തിരയാൻ ⌘-ക്ലിക്ക്',
   'Note not found': 'കുറിപ്പ് കണ്ടില്ല',
   'Align left': 'ഇടത്ത് വിന്യസിക്കുക',
   'Align center': 'നടുവിൽ വിന്യസിക്കുക',

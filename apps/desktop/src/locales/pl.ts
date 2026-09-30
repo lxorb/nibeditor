@@ -294,6 +294,8 @@ export const pl: Dictionary = {
   '⌘-click to open the note': '⌘-klik otwiera notatkę',
   'Ctrl+Click to create the note': 'Ctrl+klik tworzy notatkę',
   '⌘-click to create the note': '⌘-klik tworzy notatkę',
+  'Ctrl+Click to search the tag': 'Ctrl+klik wyszukuje tag',
+  '⌘-click to search the tag': '⌘-klik wyszukuje tag',
   'Note not found': 'Nie znaleziono notatki',
   'Align left': 'Wyrównaj do lewej',
   'Align center': 'Wyśrodkuj',

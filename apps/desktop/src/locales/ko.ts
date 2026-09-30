@@ -279,6 +279,8 @@ export const ko: Dictionary = {
   '⌘-click to open the note': '⌘+클릭으로 노트 열기',
   'Ctrl+Click to create the note': 'Ctrl+클릭으로 노트 만들기',
   '⌘-click to create the note': '⌘+클릭으로 노트 만들기',
+  'Ctrl+Click to search the tag': 'Ctrl+클릭으로 태그 검색',
+  '⌘-click to search the tag': '⌘+클릭으로 태그 검색',
   'Note not found': '노트를 찾을 수 없습니다',
   'Align left': '왼쪽 맞춤',
   'Align center': '가운데 맞춤',

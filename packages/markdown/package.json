@@ -35,6 +35,7 @@
     "./slide-breaks": "./src/slide-breaks.ts",
     "./slides": "./src/slides.ts",
     "./sources": "./src/sources.ts",
+    "./tags": "./src/tags.ts",
     "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts",
     "./words": "./src/words.ts"

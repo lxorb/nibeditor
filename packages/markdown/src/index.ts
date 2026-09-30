@@ -15,6 +15,7 @@ import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
+import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, webCard } from './web-embed'
 import {
   type EmbedResolver,
@@ -80,6 +81,9 @@ export interface RenderOptions {
    *  serve - which renders as the words, exactly as an unresolved wikilink does.
    *  Without it every markdown link is left as it was written. */
   resolveNoteHref?: (target: string) => string | null
+  /** Where a pressed `#tag` goes, for the reading view, which searches it. Without
+   *  it a tag goes nowhere, as an export and a published page want. See tags.ts. */
+  tagHref?: TagHref
   /** What a `![[wikilink]]` shows: the markdown of the note it names. Without it
    *  an embed reads as a link. One level deep - a `![[…]]` inside an embedded
    *  note is rendered without this, so it comes out as a link of its own. */
@@ -237,6 +241,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
       ...(options.resolveEmbed ? { resolveEmbed: options.resolveEmbed } : {}),
     }),
   )
+  marked.use(hashtags(options.tagHref))
 
   const taken = new Map<string, number>()
 
@@ -448,6 +453,7 @@ function needsOwn(options: RenderOptions): boolean {
     options.code !== undefined ||
     options.resolveLink !== undefined ||
     options.resolveNoteHref !== undefined ||
+    options.tagHref !== undefined ||
     options.resolveEmbed !== undefined ||
     // A caller that wants the headings wants them from its own parse: the two
     // shared renderers hand theirs to an array nobody is holding.

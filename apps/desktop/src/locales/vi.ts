@@ -279,6 +279,8 @@ export const vi: Dictionary = {
   '⌘-click to open the note': '⌘-click để mở ghi chú',
   'Ctrl+Click to create the note': 'Ctrl+Click để tạo ghi chú',
   '⌘-click to create the note': '⌘-click để tạo ghi chú',
+  'Ctrl+Click to search the tag': 'Ctrl+Click để tìm thẻ',
+  '⌘-click to search the tag': '⌘-click để tìm thẻ',
   'Note not found': 'Không thấy ghi chú',
   'Align left': 'Căn trái',
   'Align center': 'Căn giữa',

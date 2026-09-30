@@ -287,6 +287,8 @@ export const fr: Dictionary = {
   '⌘-click to open the note': '⌘-clic pour ouvrir la note',
   'Ctrl+Click to create the note': 'Ctrl+clic pour créer la note',
   '⌘-click to create the note': '⌘-clic pour créer la note',
+  'Ctrl+Click to search the tag': 'Ctrl+clic pour rechercher le mot-clé',
+  '⌘-click to search the tag': '⌘-clic pour rechercher le mot-clé',
   'Note not found': 'Note introuvable',
   'Align left': 'Aligner à gauche',
   'Align center': 'Centrer',

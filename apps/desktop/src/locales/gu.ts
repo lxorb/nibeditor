@@ -279,6 +279,8 @@ export const gu: Dictionary = {
   '⌘-click to open the note': 'નોંધ ખોલવા ⌘+ક્લિક',
   'Ctrl+Click to create the note': 'નોંધ બનાવવા Ctrl+ક્લિક',
   '⌘-click to create the note': 'નોંધ બનાવવા ⌘+ક્લિક',
+  'Ctrl+Click to search the tag': 'ટૅગ શોધવા Ctrl+ક્લિક',
+  '⌘-click to search the tag': 'ટૅગ શોધવા ⌘+ક્લિક',
   'Note not found': 'નોંધ મળી નથી',
   'Align left': 'ડાબે ગોઠવો',
   'Align center': 'મધ્યમાં ગોઠવો',

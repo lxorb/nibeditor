@@ -294,6 +294,8 @@ export const ru: Dictionary = {
   '⌘-click to open the note': '⌘-щелчок открывает заметку',
   'Ctrl+Click to create the note': 'Ctrl+щелчок создаёт заметку',
   '⌘-click to create the note': '⌘-щелчок создаёт заметку',
+  'Ctrl+Click to search the tag': 'Ctrl+щелчок ищет тег',
+  '⌘-click to search the tag': '⌘-щелчок ищет тег',
   'Note not found': 'Заметка не найдена',
   'Align left': 'По левому краю',
   'Align center': 'По центру',

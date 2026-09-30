@@ -279,6 +279,8 @@ export const ps: Dictionary = {
   '⌘-click to open the note': '⌘+کليک د يادښت پرانيستلو لپاره',
   'Ctrl+Click to create the note': 'Ctrl+کليک د يادښت جوړولو لپاره',
   '⌘-click to create the note': '⌘+کليک د يادښت جوړولو لپاره',
+  'Ctrl+Click to search the tag': 'Ctrl+کليک د نښکې لټولو لپاره',
+  '⌘-click to search the tag': '⌘+کليک د نښکې لټولو لپاره',
   'Note not found': 'يادښت ونه موندل شو',
   'Align left': 'کيڼ لور برابرول',
   'Align center': 'مېنځ برابرول',

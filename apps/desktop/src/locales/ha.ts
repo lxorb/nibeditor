@@ -282,6 +282,8 @@ export const ha: Dictionary = {
   '⌘-click to open the note': '⌘+danna don buɗe bayanin kula',
   'Ctrl+Click to create the note': 'Ctrl+danna don ƙirƙiri bayanin kula',
   '⌘-click to create the note': '⌘+danna don ƙirƙiri bayanin kula',
+  'Ctrl+Click to search the tag': 'Ctrl+danna don neman tambari',
+  '⌘-click to search the tag': '⌘+danna don neman tambari',
   'Note not found': 'Ba a sami bayanin kula ba',
   'Align left': 'Daidaita hagu',
   'Align center': 'Daidaita tsakiya',

@@ -279,6 +279,8 @@ export const jv: Dictionary = {
   '⌘-click to open the note': '⌘+klik kanggo mbukak cathetan',
   'Ctrl+Click to create the note': 'Ctrl+klik kanggo nggawe cathetan',
   '⌘-click to create the note': '⌘+klik kanggo nggawe cathetan',
+  'Ctrl+Click to search the tag': 'Ctrl+klik kanggo nggoleki tag',
+  '⌘-click to search the tag': '⌘+klik kanggo nggoleki tag',
   'Note not found': 'Cathetan ora ketemu',
   'Align left': 'Rata kiwa',
   'Align center': 'Rata tengah',

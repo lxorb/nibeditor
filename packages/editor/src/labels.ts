@@ -41,6 +41,8 @@ const DEFAULTS = {
   openNoteMac: '⌘-click to open the note',
   createNote: 'Ctrl+Click to create the note',
   createNoteMac: '⌘-click to create the note',
+  searchTag: 'Ctrl+Click to search the tag',
+  searchTagMac: '⌘-click to search the tag',
   noteNotFound: 'Note not found',
   /** Beside a note `[[` offers although it has been put away. */
   archived: 'Archived',

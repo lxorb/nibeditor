@@ -34,6 +34,7 @@
 
 import type { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
+import { TAG_NAME } from '@nib/markdown/tags'
 import { enclosingNamed } from './nodes'
 import { fuzzy, noteIndex, type SpaceTag } from './wikilink/notes'
 
@@ -42,9 +43,9 @@ const MOST_SHOWN = 40
 
 /** What a tag's name may hold: a letter, then letters, digits, and the three
  *  characters that join words - the slash among them, which is what makes a tag
- *  nestable. The twin of `NAME` in the app's search/tags.ts, and the one source of
- *  the four patterns below. */
-const NAME = String.raw`[\p{L}][\p{L}\p{N}\-_/]*`
+ *  nestable. The grammar the parser pills a tag by, so the popup offers exactly
+ *  what will be drawn as one; the one source of the four patterns below. */
+const NAME = TAG_NAME
 
 /** A `#` that opens a word, and the name being written after it. */
 const TYPED = new RegExp(String.raw`(?:^|[\s(])#(${NAME})?$`, 'u')

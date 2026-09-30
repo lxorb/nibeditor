@@ -282,6 +282,8 @@ export const sw: Dictionary = {
   '⌘-click to open the note': '⌘+bofya kufungua dokezo',
   'Ctrl+Click to create the note': 'Ctrl+bofya kuunda dokezo',
   '⌘-click to create the note': '⌘+bofya kuunda dokezo',
+  'Ctrl+Click to search the tag': 'Ctrl+bofya kutafuta lebo',
+  '⌘-click to search the tag': '⌘+bofya kutafuta lebo',
   'Note not found': 'Dokezo halipatikani',
   'Align left': 'Sawazisha kushoto',
   'Align center': 'Sawazisha katikati',
