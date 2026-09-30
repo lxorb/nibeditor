@@ -36,7 +36,7 @@
   import { middleOpens } from '../new-tab'
   import { overlays } from '../overlays'
   import { shortcuts } from '../shortcuts.svelte'
-  import { showNumbered } from '../shortcuts/registry'
+  import { showTab } from '../shortcuts/registry'
   import { present } from '../slides/present.svelte'
   import AddressField from './AddressField.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
@@ -164,7 +164,7 @@
       if (said.to === 'address') take()
       else if (said.to === 'step') onstep(said.step)
       else if (said.to === 'zoom') onzoom(said.step)
-      else showNumbered(said.index)
+      else showTab(said.at)
     }
 
     // Escape last: whatever is open over the page, and the field being typed in, have

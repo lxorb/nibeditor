@@ -980,6 +980,8 @@ const APP_ENTRIES: Shortcut[] = [
 /** The ninth digit, which is the last tab rather than the ninth. */
 const LAST = 8
 
+const noteAt = (index: number) => t('Note {number}', { number: index + 1 })
+
 /** The notes of the pane being worked in, by number. Eight of them and then the
  *  last, which is Chrome's rule and Obsidian's: nobody counts nine along a strip,
  *  but everybody knows which tab is the last one.
@@ -989,20 +991,42 @@ const LAST = 8
  *  Cmd and a digit is the tab in Obsidian and Safari. */
 const NUMBERED: Shortcut[] = Array.from({ length: 9 }, (_unused, index) => ({
   id: `app.note-${index + 1}`,
-  label: () => (index === LAST ? t('Last note') : t('Note {number}', { number: index + 1 })),
+  label: () => (index === LAST ? t('Last note') : noteAt(index)),
   category: 'view' as const,
   scope: 'app' as const,
   key: `Mod-Alt-${index + 1}`,
   mac: `Mod-${index + 1}`,
-  run: () => showNumbered(index),
+  run: () => showTab(index === LAST ? 'last' : index),
 }))
 
-/** The tab at a place along the focused pane's strip, counting from nought, and the
- *  last one for the ninth. Also Chrome's own Ctrl and a digit while a page is in
+/** Emil, 2026-09-30: *"alt + x opens the tab at position x and alt + 0 opens the last
+ *  tab."* Second keys of the eight places and the last; the ninth place is its own. None
+ *  on a Mac, where Option and a digit types a character and Cmd has the tabs. */
+const ALT_NUMBERED: Shortcut[] = Array.from({ length: 10 }, (_unused, index): Shortcut => {
+  // Along the top row: one to nine, then the nought.
+  const digit = (index + 1) % 10
+  const at = digit === 0 ? 'last' : index
+  const ninth = at === LAST
+
+  return {
+    id: ninth ? 'app.note-ninth' : `app.note-${at === 'last' ? LAST + 1 : digit}.alt`,
+    label: () => (at === 'last' ? t('Last note') : noteAt(at)),
+    category: 'view',
+    scope: 'app',
+    key: `Alt-${digit}`,
+    mac: null,
+    ...(ninth ? {} : { alias: true }),
+    run: () => showTab(at),
+  }
+})
+
+/** The tab at a place along the focused pane's strip, counting from nought, or the
+ *  last one. Pinned tabs count, as in Chrome, and a place past the end is nothing, as
+ *  Chrome's Ctrl+1 to 8 are. Also Chrome's own Ctrl and a digit while a page is in
  *  front, where no heading is waiting for it; see WebBar.svelte. */
-export function showNumbered(index: number) {
+export function showTab(at: number | 'last') {
   const tabs = workspace.tabsIn(workspace.panes.focusedId)
-  const tab = index === LAST ? tabs[tabs.length - 1] : tabs[index]
+  const tab = at === 'last' ? tabs.at(-1) : tabs[at]
   if (tab) workspace.activate(tab.id)
 }
 
@@ -1456,6 +1480,7 @@ export const FIXED_ENTRIES: Shortcut[] = [
 export const SHORTCUTS: Shortcut[] = [
   ...APP_ENTRIES,
   ...NUMBERED,
+  ...ALT_NUMBERED,
   ...EDITOR_SPECS.map(fromEditor),
   ...PANEL_ENTRIES,
   ...CANVAS_ENTRIES,
