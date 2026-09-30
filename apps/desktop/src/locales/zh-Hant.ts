@@ -1313,6 +1313,8 @@ export const zhHant: Dictionary = {
     '讀者的造訪會送給提供該腳本的一方。留空則什麼都不傳送。',
   Answers: '回答',
   'Save as CSV': '存為 CSV',
+  'Kept for {days}': '保留{days}',
+  Full: '已滿',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '無法寄出信件，請再試一次',
   'start again - that took too long': '花太久了，請重新開始',

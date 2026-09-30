@@ -1410,6 +1410,8 @@ export const uk: Dictionary = {
     'Відвідування йде тому, хто віддає цей скрипт. Порожнє поле нічого не надсилає.',
   Answers: 'Відповіді',
   'Save as CSV': 'Зберегти як CSV',
+  'Kept for {days}': 'Зберігаються {days}',
+  Full: 'Заповнено',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не вдалося надіслати лист - спробуйте знову',
   'start again - that took too long': 'почніть знову - це тривало надто довго',

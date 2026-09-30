@@ -1350,6 +1350,8 @@ export const ps: Dictionary = {
     'د لوستونکي کتنه هغه ته ځي چې دا سکرېپټ ورکوي. که تش وي، هېڅ نه لېږل کېږي.',
   Answers: 'ځوابونه',
   'Save as CSV': 'لکه CSV خوندي کړه',
+  'Kept for {days}': 'د {days} لپاره ساتل کېږي',
+  Full: 'ډک',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ليک ونه لېږل شو - بيا هڅه وکړئ',
   'start again - that took too long': 'بيا پيل کړئ - هغه ډېر وخت ونيو',

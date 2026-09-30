@@ -1326,6 +1326,8 @@ export const ko: Dictionary = {
     '방문 기록은 그 스크립트를 제공하는 쪽으로 갑니다. 비워 두면 아무것도 보내지 않습니다.',
   Answers: '답변',
   'Save as CSV': 'CSV로 저장',
+  'Kept for {days}': '{days} 동안 보관',
+  Full: '가득 참',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '메일을 보낼 수 없었습니다 - 다시 하세요',
   'start again - that took too long': '다시 시작하세요 - 너무 오래 걸렸습니다',

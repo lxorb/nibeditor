@@ -17,6 +17,8 @@ interface World {
   domain: { state: string; dns: never[]; detail: string | null }
   /** The answers the forms on the site have collected. */
   answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
+  /** Whether the site's forms have stopped taking answers. */
+  full: boolean
 }
 
 const world = vi.hoisted((): World => ({
@@ -26,6 +28,7 @@ const world = vi.hoisted((): World => ({
   available: { available: true },
   domain: { state: 'pending', dns: [], detail: null },
   answers: [],
+  full: false,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -54,7 +57,12 @@ vi.mock('./api', async (importOriginal) => {
         answer(`preview ${id}`, { pages: 0, before: 0, adds: [], removes: [], more: false }),
       domainStatus: (_token: string, id: string) => answer(`status ${id}`, world.domain),
       answers: (_token: string, id: string) =>
-        answer(`answers ${id}`, { answers: world.answers, more: false }),
+        answer(`answers ${id}`, {
+          answers: world.answers,
+          more: false,
+          keptDays: 180,
+          full: world.full,
+        }),
       answersCsv: (_token: string, id: string) =>
         answer(`answers.csv ${id}`, ['"when","Your name"', '"1","Ada"', ''].join('\n')),
       forgetAnswer: (_token: string, id: string, one: string) =>
@@ -116,6 +124,7 @@ beforeEach(() => {
   world.available = { available: true }
   world.domain = { state: 'pending', dns: [], detail: null }
   world.answers = []
+  world.full = false
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -416,6 +425,20 @@ describe('the answers a site has collected', () => {
 
     expect(world.asked).toContain('answers space-1')
     expect(publish.answers).toEqual([one])
+  })
+
+  test('with how long they are kept and whether the forms still take more', async () => {
+    account.spaces = [remote('space-1', 'owner', { enabled: true, subdomain: 'field' })]
+    world.answers = [one]
+    world.full = true
+
+    publish.show(local('Notes'))
+    await publish.readAnswers()
+    expect(publish.kept).toEqual({ days: 180, full: true })
+
+    // And none of it is carried to the next space the sheet opens on.
+    publish.show(local('Notes'))
+    expect(publish.kept).toBeNull()
   })
 
   test('and not for a space that is not published at all', async () => {

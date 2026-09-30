@@ -1386,6 +1386,8 @@ export const es: Dictionary = {
     'La visita va a quien sirva ese script. Si está vacío no se envía nada.',
   Answers: 'Respuestas',
   'Save as CSV': 'Guardar como CSV',
+  'Kept for {days}': 'Se conservan {days}',
+  Full: 'Completo',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'no se pudo enviar el correo - probar de nuevo',
   'start again - that took too long': 'empezar de nuevo - eso tardó demasiado',

@@ -14,6 +14,7 @@ import { programMayReach } from './programs'
 import { fillFronts } from './blog/fill'
 import { sweepLeftovers } from './leftovers'
 import { forgetHalfDone, resealBorrowed, second } from './second'
+import { sweepAnswers } from './spaces/answers'
 import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
@@ -299,6 +300,9 @@ function scheduled(_event: ScheduledEvent, env: Env, context: ExecutionContext) 
   context.waitUntil(expireClients(env, at))
   context.waitUntil(recheckDomains(env, at))
   context.waitUntil(sweepVersions(env, at))
+  // And what readers typed into forms, once it is older than a space keeps it; see
+  // spaces/answers.ts.
+  context.waitUntil(sweepAnswers(env, at))
   context.waitUntil(forgetHalfDone(env, at))
   // And every second factor still sealed under the AI key's secret, moved under its
   // own, so that rotating that secret locks nobody out; see second.ts.

@@ -1340,6 +1340,8 @@ export const gu: Dictionary = {
     'વાચકની મુલાકાત તે સ્ક્રિપ્ટ આપનારને જાય છે. ખાલી હોય તો કંઈ મોકલાતું નથી.',
   Answers: 'જવાબો',
   'Save as CSV': 'CSV તરીકે સાચવો',
+  'Kept for {days}': '{days} સુધી રાખવામાં આવે છે',
+  Full: 'ભરાઈ ગયું',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ટપાલ મોકલી શકાઈ નહીં - ફરી પ્રયત્ન કરો',
   'start again - that took too long': 'ફરી શરૂ કરો - એમાં બહુ વાર લાગી',

@@ -1347,6 +1347,8 @@ export const hi: Dictionary = {
     'पाठक का आगमन उसी तक जाता है जो वह स्क्रिप्ट देता है। खाली हो तो कुछ नहीं भेजा जाता।',
   Answers: 'उत्तर',
   'Save as CSV': 'CSV के रूप में सहेजें',
+  'Kept for {days}': '{days} तक रखे जाते हैं',
+  Full: 'भरा हुआ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'मेल नहीं भेज सके - फिर कोशिश करें',
   'start again - that took too long': 'फिर शुरू करें - बहुत समय लगा',

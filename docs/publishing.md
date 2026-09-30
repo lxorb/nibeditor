@@ -542,6 +542,17 @@ machine, two hundred to one site - which is the same rate limit every other rout
 uses, keyed by a hash that lives as long as the window. No captcha: a captcha is a
 third party watching the reader.
 
+**And not for ever, and not without end.** Counting bounds how fast answers
+arrive, not how many pile up: at that pace one site could put about eleven gigabytes
+a month into the database every account shares. So a space keeps at most 5,000
+answers and 10 MiB of them, measured in the bytes they are stored as, and an answer
+older than 180 days goes with the nightly job. A space that is full stops taking
+answers - the reader is told "This form is full." and nothing is recorded - the way
+Typeform and Google Forms close a form at its limit, rather than letting a flood of
+spam push out the messages nobody has read yet. The sheet says how long answers are
+kept, and says full when it is; both numbers come from the service, so the two can
+never disagree. See `services/sync/src/spaces/answers.ts`.
+
 The answers are read in the publish sheet: which page was asking, what came back,
 when, and a row to delete one. `Save as CSV` writes the file the server built, so
 what a column is called is decided where an answer is stored.

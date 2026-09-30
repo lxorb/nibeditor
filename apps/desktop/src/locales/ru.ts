@@ -1414,6 +1414,8 @@ export const ru: Dictionary = {
     'Посещение уходит тому, кто отдаёт этот скрипт. Пустое поле ничего не отправляет.',
   Answers: 'Ответы',
   'Save as CSV': 'Сохранить как CSV',
+  'Kept for {days}': 'Хранятся {days}',
+  Full: 'Заполнено',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'не удалось отправить письмо - попробуйте снова',
   'start again - that took too long': 'начните снова - это заняло слишком долго',

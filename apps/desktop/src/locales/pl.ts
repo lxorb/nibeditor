@@ -1413,6 +1413,8 @@ export const pl: Dictionary = {
     'Wizyta trafia do tego, kto podaje ten skrypt. Puste pole nic nie wysyła.',
   Answers: 'Odpowiedzi',
   'Save as CSV': 'Zapisz jako CSV',
+  'Kept for {days}': 'Przechowywane przez {days}',
+  Full: 'Pełne',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'nie udało się wysłać wiadomości - spróbuj ponownie',
   'start again - that took too long': 'zacznij od nowa - trwało to za długo',

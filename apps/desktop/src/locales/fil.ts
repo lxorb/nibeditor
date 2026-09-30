@@ -1373,6 +1373,8 @@ export const fil: Dictionary = {
     'Ang bisita ay napupunta sa kung sino ang naghahatid ng script. Walang ipinapadala kapag walang laman.',
   Answers: 'Sagot',
   'Save as CSV': 'I-save bilang CSV',
+  'Kept for {days}': 'Itinatago nang {days}',
+  Full: 'Puno na',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'hindi maipadala ang mail - subukan muli',
   'start again - that took too long': 'magsimula muli - masyadong tumagal',

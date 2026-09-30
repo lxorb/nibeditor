@@ -537,6 +537,15 @@
          have none; see services/sync/src/blog/form.ts. -->
     {#if publish.answers.length}
       <h3>{t('Answers')}</h3>
+      <!-- How long they stay, and whether the forms have stopped taking more: the
+           service's own numbers, said in the fewest words; see
+           services/sync/src/spaces/answers.ts. -->
+      {#if publish.kept}
+        <p class="hint" class:bad={publish.kept.full}>
+          {t('Kept for {days}', { days: t('{count} days', { count: publish.kept.days }) })}
+          {#if publish.kept.full}· {t('Full')}{/if}
+        </p>
+      {/if}
 
       <div class="card">
         {#each publish.answers.slice(0, SHOWN_ANSWERS) as one (one.id)}

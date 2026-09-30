@@ -3,6 +3,7 @@ import { asked, hasWords } from '../src/blog/find'
 import { answersFrom, asCsv, formOf, formHtml } from '../src/blog/form'
 import { around, backlinks, inOrder, type Listed, navigation } from '../src/blog/nav'
 import { plainWords } from '../src/blog/words'
+import worker from '../src/index'
 import { call, signIn, testEnv, type TestEnv } from './harness'
 
 /** The second half of publishing: what a reader of a site is given besides the
@@ -331,6 +332,96 @@ describe('a site with forms on it', () => {
     expect(csv.headers.get('content-type')).toContain('text/csv')
     expect(csv.text).toContain('"Your name"')
     expect(csv.text).toContain('"Ada"')
+  })
+
+  /** One answer sent the way a reader's browser sends it. */
+  const answer = (name = 'Ada') =>
+    call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: `your-name=${encodeURIComponent(name)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+
+  /** Answers written straight into the table, `count` of them at `bytes` each and
+   *  `at` old: what a flood that already happened left behind. */
+  let batches = 0
+  function held(count: number, bytes: number, at = Date.now()) {
+    batches += 1
+    env.db
+      .prepare(
+        `with recursive n(i) as (select 1 union all select i + 1 from n where i < ?)
+         insert into form_answers (id, space_id, note_id, at, answers, bytes)
+         select ? || '-' || i, ?, ?, ?, '{}', ? from n`,
+      )
+      .run(count, `held-${batches}`, space, note, at, bytes)
+  }
+
+  const shown = async () =>
+    (
+      await call<{
+        answers: { answers: Record<string, string> }[]
+        keptDays: number
+        full: boolean
+      }>(env, `/v1/spaces/${space}/answers`, { token })
+    ).json
+
+  test('says how long it keeps them, and that it is taking more', async () => {
+    const said = await shown()
+
+    expect(said.keptDays).toBe(180)
+    expect(said.full).toBe(false)
+  })
+
+  test('stops taking answers once the space holds as many as it keeps', async () => {
+    held(4999, 2)
+    expect((await answer()).headers.get('location')).toBe(`/hello?sent=${note}`)
+
+    // The five thousandth was the last; the next is refused, and nothing is kept.
+    const refused = await answer('Grace')
+    expect(refused.headers.get('location')).toBe(
+      `/hello?wrong=${encodeURIComponent('This form is full.')}`,
+    )
+    expect(env.db.prepare('select count(*) as many from form_answers').get()).toEqual({
+      many: 5000,
+    })
+    expect((await shown()).full).toBe(true)
+  })
+
+  test('or as many bytes of them', async () => {
+    // Ten mebibytes less a few: room for a short answer, and not for a longer one.
+    held(9, 1024 * 1024)
+    held(1, 1024 * 1024 - 20)
+
+    expect((await answer('A')).headers.get('location')).toBe(`/hello?sent=${note}`)
+    expect((await answer('A name longer than the room left')).headers.get('location')).toContain(
+      'wrong=',
+    )
+  })
+
+  test('and measures an answer in the bytes it is stored as', async () => {
+    await answer('Zoë 🌱')
+
+    const row = env.db.prepare('select answers, bytes from form_answers').get() as {
+      answers: string
+      bytes: number
+    }
+    expect(row.bytes).toBe(new TextEncoder().encode(row.answers).byteLength)
+    expect(row.bytes).toBeGreaterThan(row.answers.length)
+  })
+
+  test('and the nightly job lets go of an answer older than it keeps them', async () => {
+    const DAY = 24 * 60 * 60 * 1000
+    held(1, 2, Date.now() - 181 * DAY)
+    await answer()
+
+    const waiting: Promise<unknown>[] = []
+    const context = { waitUntil: (work: Promise<unknown>) => waiting.push(work) }
+    worker.scheduled({} as ScheduledEvent, env, context as unknown as ExecutionContext)
+    await Promise.all(waiting)
+
+    const left = (await shown()).answers
+    expect(left.map((one) => one.answers)).toEqual([{ 'Your name': 'Ada' }])
   })
 
   test('and the theme the author chose is linked after the site’s own sheet', async () => {

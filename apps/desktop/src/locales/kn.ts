@@ -1358,6 +1358,8 @@ export const kn: Dictionary = {
     'ಓದುಗನ ಭೇಟಿ ಆ ಸ್ಕ್ರಿಪ್ಟ್ ಕೊಡುವವರಿಗೆ ಹೋಗುತ್ತದೆ. ಖಾಲಿ ಇದ್ದರೆ ಏನೂ ಕಳಿಸುವುದಿಲ್ಲ.',
   Answers: 'ಉತ್ತರಗಳು',
   'Save as CSV': 'CSV ಆಗಿ ಉಳಿಸು',
+  'Kept for {days}': '{days} ಇರಿಸಲಾಗುತ್ತದೆ',
+  Full: 'ತುಂಬಿದೆ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ಮೇಲ್ ಕಳುಹಿಸಲಾಗಲಿಲ್ಲ - ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
   'start again - that took too long': 'ಮತ್ತೆ ಪ್ರಾರಂಭಿಸಿ - ಅದು ತುಂಬಾ ಸಮಯ ತೆಗೆದುಕೊಂಡಿತು',

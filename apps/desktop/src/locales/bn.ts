@@ -1346,6 +1346,8 @@ export const bn: Dictionary = {
     'পাঠকের আগমন যায় সেই স্ক্রিপ্ট যে দেয় তার কাছে। খালি থাকলে কিছুই পাঠানো হয় না।',
   Answers: 'উত্তর',
   'Save as CSV': 'CSV হিসেবে রাখুন',
+  'Kept for {days}': '{days} রাখা হয়',
+  Full: 'পূর্ণ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'মেইল পাঠানো গেল না - আবার চেষ্টা করুন',
   'start again - that took too long': 'আবার শুরু করুন - অনেক সময় লেগেছে',

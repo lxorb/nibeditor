@@ -1353,6 +1353,8 @@ export const pa: Dictionary = {
     'ਪੜ੍ਹਨ ਵਾਲੇ ਦੀ ਆਮਦ ਉਸ ਕੋਲ ਜਾਂਦੀ ਹੈ ਜੋ ਇਹ ਸਕ੍ਰਿਪਟ ਦਿੰਦਾ ਹੈ। ਖ਼ਾਲੀ ਹੋਵੇ ਤਾਂ ਕੁਝ ਨਹੀਂ ਭੇਜਿਆ ਜਾਂਦਾ।',
   Answers: 'ਜਵਾਬ',
   'Save as CSV': 'CSV ਵਜੋਂ ਸਾਂਭੋ',
+  'Kept for {days}': '{days} ਲਈ ਰੱਖੇ ਜਾਂਦੇ ਹਨ',
+  Full: 'ਭਰਿਆ ਹੋਇਆ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ਡਾਕ ਨਹੀਂ ਭੇਜੀ ਜਾ ਸਕੀ - ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
   'start again - that took too long': 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ - ਉਸ ਵਿੱਚ ਬਹੁਤ ਸਮਾਂ ਲੱਗਾ',

@@ -156,3 +156,40 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
     database.close()
   })
 })
+
+describe('0042, the answers a form took before they were measured', () => {
+  test('are measured in the bytes they are stored as', () => {
+    const database = upTo('0041_space_archived.sql')
+    seed(database)
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, size, hash)
+       values ('n', 'sp', 'Hello.md', 1, 1, 0, 1, 'abc')`,
+    )
+    database.exec(
+      `insert into form_answers (id, space_id, note_id, at, answers)
+       values ('plain', 'sp', 'n', 1, '{"Your name":"Ada"}'),
+              ('wide', 'sp', 'n', 1, '{"Your name":"Zoë 🌱"}')`,
+    )
+
+    database.exec(sql('0042_form_answer_bytes.sql'))
+
+    const rows = database
+      .prepare('select id, answers, bytes from form_answers order by id')
+      .all() as { id: string; answers: string; bytes: number }[]
+    for (const row of rows) {
+      expect(row.bytes, row.id).toBe(new TextEncoder().encode(row.answers).byteLength)
+    }
+    expect(rows.find((one) => one.id === 'wide')?.bytes).toBeGreaterThan(
+      rows.find((one) => one.id === 'wide')?.answers.length ?? 0,
+    )
+    database.close()
+  })
+
+  test('indexes what the ceiling and the sweep read', () => {
+    const database = upTo('0042_form_answer_bytes.sql')
+    expect(indexes(database, 'form_answers')).toEqual(
+      expect.arrayContaining(['form_answers_space_bytes', 'form_answers_at']),
+    )
+    database.close()
+  })
+})

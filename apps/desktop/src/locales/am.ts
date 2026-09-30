@@ -1330,6 +1330,8 @@ export const am: Dictionary = {
     'የአንባቢው ጉብኝት ያንን ስክሪፕት ለሚያቀርበው ሁሉ ይሄዳል። ባዶ ከሆነ ምንም አይላክም።',
   Answers: 'መልሶች',
   'Save as CSV': 'እንደ CSV አስቀምጥ',
+  'Kept for {days}': 'ለ{days} ይቀመጣል',
+  Full: 'ሞልቷል',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ደብዳቤ መላክ አልተቻለም - እንደገና ሞክር',
   'start again - that took too long': 'እንደገና ጀምር - ያ በጣም ረዘመ',

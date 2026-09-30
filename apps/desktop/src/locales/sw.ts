@@ -1366,6 +1366,8 @@ export const sw: Dictionary = {
     'Mtembelezi huenda kwa yule anayetoa hati hiyo. Ikiwa wazi, hakuna kinachotumwa.',
   Answers: 'Majibu',
   'Save as CSV': 'Hifadhi kama CSV',
+  'Kept for {days}': 'Huhifadhiwa kwa {days}',
+  Full: 'Imejaa',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'barua haikutumwa - jaribu tena',
   'start again - that took too long': 'anza tena - hiyo ilichukua muda mrefu mno',

@@ -1369,6 +1369,8 @@ export const ha: Dictionary = {
     'Ziyarar mai karatu na zuwa ga wanda ke bayar da wannan rubutu. Idan babu komai, ba a aika kome.',
   Answers: 'Amsoshi',
   'Save as CSV': 'Ajiye a matsayin CSV',
+  'Kept for {days}': 'Ana ajiye su na {days}',
+  Full: 'Ya cika',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ba a iya aika imel ba - sake gwadawa',
   'start again - that took too long': 'sake farawa - wannan ya ɗauki lokaci mai tsawo',

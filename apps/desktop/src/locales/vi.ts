@@ -1333,6 +1333,8 @@ export const vi: Dictionary = {
     'Lượt xem đi tới bên phục vụ script đó. Để trống thì không gửi gì.',
   Answers: 'Câu trả lời',
   'Save as CSV': 'Lưu thành CSV',
+  'Kept for {days}': 'Lưu trong {days}',
+  Full: 'Đã đầy',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'không gửi được thư - thử lại',
   'start again - that took too long': 'bắt đầu lại - việc đó quá lâu',

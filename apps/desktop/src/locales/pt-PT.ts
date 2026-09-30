@@ -1383,6 +1383,8 @@ export const ptPT: Dictionary = {
     'A visita vai para quem serve esse script. Vazio, nada é enviado.',
   Answers: 'Respostas',
   'Save as CSV': 'Guardar como CSV',
+  'Kept for {days}': 'Guardadas durante {days}',
+  Full: 'Cheio',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'não foi possível enviar o correio - tentar de novo',
   'start again - that took too long': 'começar de novo - isso demorou demasiado',

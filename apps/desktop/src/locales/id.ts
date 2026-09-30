@@ -1340,6 +1340,8 @@ export const id: Dictionary = {
     'Kunjungan pembaca pergi ke siapa pun yang menyajikan skrip itu. Kosong berarti tidak ada yang dikirim.',
   Answers: 'Jawaban',
   'Save as CSV': 'Simpan sebagai CSV',
+  'Kept for {days}': 'Disimpan {days}',
+  Full: 'Penuh',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'tidak dapat mengirim surat - coba lagi',
   'start again - that took too long': 'mulai lagi - itu terlalu lama',

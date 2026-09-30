@@ -1022,7 +1022,15 @@ export const api = {
   /** What the forms on a site have collected, newest first, and the same as a
    *  file for a spreadsheet. */
   answers: (token: string, spaceId: string) =>
-    request<{ answers: FormAnswer[]; more: boolean }>(`/v1/spaces/${spaceId}/answers`, { token }),
+    request<{
+      answers: FormAnswer[]
+      more: boolean
+      /** How long the service keeps an answer, and whether the forms have stopped
+       *  taking more because the space holds as many as it keeps. A Worker from
+       *  before the ceiling says neither. See services/sync/src/spaces/answers.ts. */
+      keptDays?: number
+      full?: boolean
+    }>(`/v1/spaces/${spaceId}/answers`, { token }),
 
   answersCsv: async (token: string, spaceId: string) => {
     const response = await fetch(`${BASE}/v1/spaces/${spaceId}/answers.csv`, {

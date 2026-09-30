@@ -1347,6 +1347,8 @@ export const ur: Dictionary = {
     'پڑھنے والے کی آمد اُس تک جاتی ہے جو یہ اسکرپٹ دیتا ہے۔ خالی ہو تو کچھ نہیں بھیجا جاتا۔',
   Answers: 'جوابات',
   'Save as CSV': 'CSV کے طور پر محفوظ کریں',
+  'Kept for {days}': '{days} تک رکھے جاتے ہیں',
+  Full: 'بھرا ہوا',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'میل نہیں بھیجی جا سکی - دوبارہ کوشش کریں',
   'start again - that took too long': 'دوبارہ شروع کریں - بہت دیر لگ گئی',

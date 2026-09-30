@@ -1363,6 +1363,8 @@ export const ml: Dictionary = {
     'വായനക്കാരന്റെ സന്ദർശനം ആ സ്ക്രിപ്റ്റ് നൽകുന്നവരിലേക്ക് പോകും. ശൂന്യമെങ്കിൽ ഒന്നും അയയ്ക്കില്ല.',
   Answers: 'ഉത്തരങ്ങൾ',
   'Save as CSV': 'CSV ആയി സൂക്ഷിക്കുക',
+  'Kept for {days}': '{days} സൂക്ഷിക്കും',
+  Full: 'നിറഞ്ഞു',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'മെയിൽ അയയ്ക്കാനായില്ല - വീണ്ടും ശ്രമിക്കുക',
   'start again - that took too long': 'വീണ്ടും തുടങ്ങുക - അത് വളരെ സമയമെടുത്തു',

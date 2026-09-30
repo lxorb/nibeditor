@@ -1333,6 +1333,8 @@ export const my: Dictionary = {
     'ဖတ်သူ၏ အလည်လာမှုသည် ထိုစကရစ်ကို ပေးသူဆီ သွားသည်။ ကွက်လပ်ဆိုပါက မည်သည့်အရာမျှ မပို့ပါ။',
   Answers: 'အဖြေများ',
   'Save as CSV': 'CSV အဖြစ် သိမ်းမည်',
+  'Kept for {days}': '{days} သိမ်းထားသည်',
+  Full: 'ပြည့်နေပြီ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'စာပို့မရပါ - ထပ်စမ်းပါ',
   'start again - that took too long': 'ပြန်စပါ - အလွန်ကြာသွားပြီ',

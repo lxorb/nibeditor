@@ -1348,6 +1348,8 @@ export const tr: Dictionary = {
     'Ziyaret, o betiği sunan kime aitse ona gider. Boşken hiçbir şey gönderilmez.',
   Answers: 'Yanıtlar',
   'Save as CSV': 'CSV olarak kaydet',
+  'Kept for {days}': '{days} saklanır',
+  Full: 'Dolu',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'posta gönderilemedi - yine deneyin',
   'start again - that took too long': 'yeniden başlayın - bu çok uzun sürdü',

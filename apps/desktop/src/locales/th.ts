@@ -1319,6 +1319,8 @@ export const th: Dictionary = {
     'การเข้าชมไปถึงผู้ที่ให้บริการสคริปต์นั้น เว้นว่างไว้จะไม่ส่งอะไรเลย',
   Answers: 'คำตอบ',
   'Save as CSV': 'บันทึกเป็น CSV',
+  'Kept for {days}': 'เก็บไว้ {days}',
+  Full: 'เต็ม',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ส่งเมลไม่ได้ - ลองใหม่',
   'start again - that took too long': 'เริ่มใหม่ - ใช้เวลานานเกินไป',

@@ -1393,6 +1393,8 @@ export const fr: Dictionary = {
     'La visite part vers qui sert ce script. Rien n’est envoyé quand le champ est vide.',
   Answers: 'Réponses',
   'Save as CSV': 'Enregistrer en CSV',
+  'Kept for {days}': 'Conservées {days}',
+  Full: 'Complet',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'l’envoi du message a échoué - réessayez',
   'start again - that took too long': 'recommencez - cela a pris trop de temps',

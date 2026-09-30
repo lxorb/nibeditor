@@ -1354,6 +1354,8 @@ export const gsw: Dictionary = {
     'De Bsuech gaht a die, wo das Skript uusliefere. Wänn s läär isch, wird nüt gschickt.',
   Answers: 'Antworte',
   'Save as CSV': 'Als CSV spichere',
+  'Kept for {days}': '{days} lang ufbewahrt',
+  Full: 'Voll',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'D Mail hät me nöd chöne schicke - probier s nomal',
   'start again - that took too long': 'Fang nomal a - das hät z lang duuret',

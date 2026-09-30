@@ -33,8 +33,8 @@ import { type Around, aside, bar, contents, counter, ownFiles, underneath } from
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
-import { newId } from './crypto'
 import { noteKey } from './notes'
+import { keepAnswer } from './spaces/answers'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './blog/site'
 import type { Env, Note, Space } from './types'
@@ -998,6 +998,10 @@ function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap
   }
 }
 
+/** What a reader is told when the space already holds as many answers as it
+ *  keeps. The page's own words, like the other two a form can come back with. */
+const FORM_FULL = 'This form is full.'
+
 /** An answer somebody typed into a form on a page.
  *
  *  Answered with a redirect rather than a page, so that a reload after sending
@@ -1065,11 +1069,11 @@ async function takeAnswer(
   const read = answersFrom(form, sent)
   if ('wrong' in read) return back(`${where}?wrong=${encodeURIComponent(read.wrong)}`)
 
-  await env.DB.prepare(
-    'insert into form_answers (id, space_id, note_id, at, answers) values (?, ?, ?, ?, ?)',
-  )
-    .bind(newId(), space.id, note.id, Date.now(), JSON.stringify(read.answers))
-    .run()
+  // A space keeps so many answers and no more; one that is full says so, and the
+  // owner sees the same word in the publish sheet. See spaces/answers.ts.
+  if (!(await keepAnswer(env, space.id, note.id, read.answers))) {
+    return back(`${where}?wrong=${encodeURIComponent(FORM_FULL)}`)
+  }
 
   return back(`${where}?sent=${encodeURIComponent(note.id)}`)
 }

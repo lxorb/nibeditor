@@ -1432,6 +1432,8 @@ export const ar: Dictionary = {
     'تذهب زيارة القارئ إلى من يقدّم ذلك السكربت. ولا يُرسل شيء إذا كان فارغًا.',
   Answers: 'الأجوبة',
   'Save as CSV': 'حفظ بصيغة CSV',
+  'Kept for {days}': 'تُحفظ لمدة {days}',
+  Full: 'ممتلئ',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'تعذّر إرسال البريد - حاول مرة أخرى',
   'start again - that took too long': 'ابدأ من جديد - استغرق ذلك وقتًا طويلًا',

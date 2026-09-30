@@ -1375,6 +1375,8 @@ export const de: Dictionary = {
     'Der Besuch geht an wen auch immer dieses Skript ausliefert. Leer wird nichts gesendet.',
   Answers: 'Antworten',
   'Save as CSV': 'Als CSV speichern',
+  'Kept for {days}': '{days} lang aufbewahrt',
+  Full: 'Voll',
 
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again':

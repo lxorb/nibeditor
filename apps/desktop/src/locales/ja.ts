@@ -1337,6 +1337,8 @@ export const ja: Dictionary = {
     '訪問の記録はそのスクリプトの提供元に送られます。空欄なら何も送りません。',
   Answers: '回答',
   'Save as CSV': 'CSV で保存',
+  'Kept for {days}': '{days}間保存',
+  Full: '上限に到達',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'メールを送信できませんでした。もう一度お試しください',
   'start again - that took too long': '時間がかかりすぎました。最初からやり直してください',

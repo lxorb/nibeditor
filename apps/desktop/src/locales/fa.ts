@@ -1349,6 +1349,8 @@ export const fa: Dictionary = {
     'بازدید خواننده به هر کسی که آن اسکریپت را می‌دهد می‌رسد. خالی باشد چیزی فرستاده نمی‌شود.',
   Answers: 'پاسخ‌ها',
   'Save as CSV': 'ذخیره به شکل CSV',
+  'Kept for {days}': 'به مدت {days} نگه داشته می‌شود',
+  Full: 'پر',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'نامه فرستاده نشد - دوباره بیازمایید',
   'start again - that took too long': 'از نو آغاز کنید - آن بسیار درازید',

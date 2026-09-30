@@ -1313,6 +1313,8 @@ export const zhHans: Dictionary = {
     '读者的访问会送给提供该脚本的一方。留空则什么都不发送。',
   Answers: '回答',
   'Save as CSV': '存为 CSV',
+  'Kept for {days}': '保留{days}',
+  Full: '已满',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '邮件发送失败，请重试',
   'start again - that took too long': '耗时过长，请重新开始',

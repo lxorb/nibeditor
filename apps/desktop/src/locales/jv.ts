@@ -1335,6 +1335,8 @@ export const jv: Dictionary = {
     'Dolanané sing maca marang sapa waé sing nyediyakaké skrip iku. Yèn kosong ora ana sing dikirim.',
   Answers: 'Wangsulan',
   'Save as CSV': 'Simpen minangka CSV',
+  'Kept for {days}': 'Disimpen {days}',
+  Full: 'Kebak',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'ora bisa ngirim layang - coba maneh',
   'start again - that took too long': 'wiwiti maneh - kuwi suwe banget',

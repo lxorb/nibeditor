@@ -1345,6 +1345,8 @@ export const mr: Dictionary = {
     'वाचकाची भेट ती स्क्रिप्ट देणाऱ्याकडे जाते. रिकामे असल्यास काहीच पाठवले जात नाही.',
   Answers: 'उत्तरे',
   'Save as CSV': 'CSV म्हणून जतन करा',
+  'Kept for {days}': '{days} ठेवले जातात',
+  Full: 'भरले',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'मेल पाठवता आला नाही - पुन्हा पाहा',
   'start again - that took too long': 'पुन्हा सुरू करा - फार वेळ लागला',

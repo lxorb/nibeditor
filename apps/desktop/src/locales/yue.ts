@@ -1314,6 +1314,8 @@ export const yue: Dictionary = {
     '讀者嘅造訪會送去提供嗰個腳本嘅一方。留空就咩都唔傳送。',
   Answers: '回答',
   'Save as CSV': '存為 CSV',
+  'Kept for {days}': '保留{days}',
+  Full: '已滿',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': '冇辦法發出郵件，請再試一次',
   'start again - that took too long': '花太久喇，請重新開始',

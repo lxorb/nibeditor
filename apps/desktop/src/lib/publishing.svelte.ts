@@ -89,6 +89,11 @@ class Publish {
    *  and one answer is worth seeing at once. */
   answers = $state<FormAnswer[]>([])
 
+  /** How the account keeps them: for how many days, and whether the site has
+   *  stopped taking more. The service's own numbers, so the sheet never promises a
+   *  length the nightly job does not keep. */
+  kept = $state<{ days: number; full: boolean } | null>(null)
+
   busy = $state(false)
   error = $state<string | null>(null)
   /** What to add at the registrar, as the last publish answered. */
@@ -141,6 +146,7 @@ class Publish {
     // them is a request away, and a space with no forms never clears a list it
     // does not know about.
     this.answers = []
+    this.kept = null
     this.open = true
   }
 
@@ -213,11 +219,14 @@ class Publish {
     if (!id || !account.accountToken || !this.published) return
 
     try {
-      this.answers = (await api.answers(account.accountToken, id)).answers
+      const read = await api.answers(account.accountToken, id)
+      this.answers = read.answers
+      this.kept = read.keptDays ? { days: read.keptDays, full: read.full === true } : null
     } catch {
       // A site with no forms on it answers this the same way as one whose
       // answers could not be read: with nothing to show.
       this.answers = []
+      this.kept = null
     }
   }
 

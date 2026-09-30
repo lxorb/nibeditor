@@ -1349,6 +1349,8 @@ export const te: Dictionary = {
     'పాఠకుడి రాక ఆ స్క్రిప్ట్ ఇచ్చేవారికి వెళ్తుంది. ఖాళీగా ఉంటే ఏదీ పంపబడదు.',
   Answers: 'జవాబులు',
   'Save as CSV': 'CSV గా భద్రపరచు',
+  'Kept for {days}': '{days} ఉంచబడతాయి',
+  Full: 'నిండింది',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'మెయిల్ పంపలేకపోయింది - మళ్లీ ప్రయత్నించండి',
   'start again - that took too long': 'మళ్లీ మొదలుపెట్టండి - అది చాలా సమయం తీసుకుంది',

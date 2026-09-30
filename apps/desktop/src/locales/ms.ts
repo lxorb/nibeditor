@@ -1340,6 +1340,8 @@ export const ms: Dictionary = {
     'Kunjungan pembaca pergi kepada sesiapa yang menyajikan skrip itu. Kosong, tiada apa dihantar.',
   Answers: 'Jawapan',
   'Save as CSV': 'Simpan sebagai CSV',
+  'Kept for {days}': 'Disimpan selama {days}',
+  Full: 'Penuh',
   // Signing in, and the mail that carries a code.
   'could not send the mail - try again': 'tidak dapat menghantar mel - cuba lagi',
   'start again - that took too long': 'mula semula - itu mengambil masa terlalu lama',
