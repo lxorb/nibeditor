@@ -662,7 +662,9 @@
           class="nib-glyph tool"
           title={t('Stop agents')}
           aria-label={t('Stop agents')}
-          onclick={() => void import('./agents/ui/index').then((one) => one.stopAgents())}
+          onclick={() => {
+            if (!__EVEN_PLUGIN__) void import('./agents/ui/index').then((one) => one.stopAgents())
+          }}
         >
           <svg viewBox="0 0 13 13"
             ><rect class="solid" x="3.2" y="3.2" width="6.6" height="6.6" rx="1.2" /></svg

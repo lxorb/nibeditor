@@ -811,7 +811,9 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-Shift-k',
     mac: 'Mod-Ctrl-Alt-k',
-    run: () => void import('../agents/ui/index').then(({ stopAgents }) => stopAgents()),
+    run: () => {
+      if (!__EVEN_PLUGIN__) void import('../agents/ui/index').then(({ stopAgents }) => stopAgents())
+    },
     desktop: true,
   },
   // Round the regions of the window: the sidebar's header, its panel tabs, the

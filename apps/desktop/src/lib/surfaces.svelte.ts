@@ -124,8 +124,14 @@ export const findBar = held(() => import('./FindBar.svelte'))
  *  carries a ranking engine. */
 export const searchPanel = held(() => import('./SearchPanel.svelte'))
 
-/** The activity panel, whose tab is there only once an agent has spoken. */
-export const agentsPanel = held(() => import('./agents/ui/ActivityPanel.svelte'))
+/** The activity panel, whose tab is there only once an agent has spoken. Never the
+ *  glasses' plugin's, which no agent reaches: an agent comes through the installed
+ *  app's own program. */
+export const agentsPanel = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no agents in the Even Realities plugin'))
+    : import('./agents/ui/ActivityPanel.svelte'),
+)
 
 /** The settings sheet: every pane it has, the theme store, the sync pane, the AI pane,
  *  the security pane. The app's largest single panel, and not on screen when the window

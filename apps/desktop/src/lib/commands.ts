@@ -364,7 +364,7 @@ const tabOps = () => import('./tab-strip/ops')
  *  see docs/agent-native.md 8.5. What does it is fetched on the press. */
 function agentUndoRows(): Command[] {
   const path = workspace.active?.path
-  if (!path) return []
+  if (__EVEN_PLUGIN__ || !path) return []
 
   return touchedBy(path).map((agent) => ({
     id: `agent-undo:${agent.id}`,
@@ -377,7 +377,7 @@ function agentUndoRows(): Command[] {
  *  that there is nothing to show and nobody to stop. The stop is the window's own - a
  *  link or another program is not the reader pressing it. See lib/agents/ui. */
 function agentRows(): Command[] {
-  if (!agentMarks.heard) return []
+  if (__EVEN_PLUGIN__ || !agentMarks.heard) return []
 
   return [
     { id: 'agents-panel', label: t('Agents'), run: () => revealPanel('agents') },
