@@ -92,7 +92,7 @@ function pointer(type: string, clientX: number): PointerEvent {
   })
 }
 
-test('a web tab pressed on its favicon and carried along moves the tab', () => {
+test('a web tab pressed on its favicon and carried along moves the tab', async () => {
   workspace.tabs = []
   for (let at = 0; at < 3; at++) workspace.openWebsite()
   const paneId = workspace.panes.focusedId
@@ -125,5 +125,11 @@ test('a web tab pressed on its favicon and carried along moves the tab', () => {
       .indexOf(first ?? ''),
   ).toBe(2)
 
+  // The press fetched what a carried tab is drawn and landed with; waited for here, so
+  // nothing of it is still loading once the test's environment is gone.
+  await Promise.all([
+    import('../../src/lib/tab-strip/TabChip.svelte'),
+    import('../../src/lib/tab-strip/carrying'),
+  ])
   void unmount(app, { outro: false })
 })
