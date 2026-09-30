@@ -517,10 +517,13 @@ function holds(tail: string): boolean {
  *  theme store out of the chunk they shared with the bin, since the picker asks for
  *  those two and not for it.
  *
- *  Not raised 2026-09-30 for Alt and a digit, the tabs by number (shortcuts/registry.ts),
- *  and a press AltGr or an input method is typing told from a chord (keys.ts), both read
- *  by the first key: the branch had asked for 3,282,000 on the main before the theme
- *  picker, and on this one it measures 3,241,634 and 374 modules. */
+ *  Not raised 2026-09-30 for four branches that came in together over a main at 3,244,888
+ *  and 374 modules: Alt and a digit, the tabs by number (shortcuts/registry.ts), with a
+ *  press AltGr or an input method is typing told from a chord (keys.ts); the one search
+ *  on Shift twice, heard from the launch's last turn (tapped.ts); Ctrl+click in a page;
+ *  and Ctrl+D putting the tab down. Alt and a digit had asked for 3,282,000 on the main
+ *  before the theme picker; together they measure 3,249,717 and 374. The production
+ *  build preloads 1,343,538 bytes in 154 chunks against 1,339,283 in 152. */
 const BUDGET = 3_279_000
 const MOST_FILES = 376
 

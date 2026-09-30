@@ -329,10 +329,10 @@ describe('the bundle a package is made of', () => {
     // 8,167,705 bytes on 2026-09-28, down from 8,382,180 the same morning: the emoji
     // table ships as its names and characters alone; see `SLIM_EMOJI`.
     //
-    // 8,373,264 on 2026-09-30. The one palette put it over, at 8,413,981 against
-    // 8,386,712 for main at cff3a1b5, and what came out was the web tab: the plugin
-    // never opens a website (`openWeb`), and its surface is behind `__EVEN_PLUGIN__`
-    // now, as the terminal's is.
+    // 8,363,483 on 2026-09-30, over main at 266750cf. The one palette had put it
+    // over, at 8,413,981 against 8,386,712 for main at cff3a1b5, and what came out
+    // was the web tab: the plugin never opens a website (`openWeb`), and its surface
+    // is behind `__EVEN_PLUGIN__` now, as the terminal's is.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 
