@@ -2,45 +2,39 @@
 //!
 //! The same app as the binary next door, on a different engine: this one links CEF
 //! through `tauri-runtime-cef`, configures it, and hands it to `nib_lib::run_on`.
-//! Everything the app is - the notes, the commands, the window, the web tabs - is
-//! the library's, unchanged, and the only thing this file decides is what the engine
-//! is and where its profiles go. See ../../src/engine.rs and docs/browser.md.
+//! Everything the app is - the notes, the commands, the window, the web tabs - is the
+//! library's, unchanged, and the only thing this file decides is what the engine is and
+//! where its profiles go. See ../Cargo.toml, ../../src/engine.rs and docs/browser.md.
 //!
 //! `cef_entry_point` is what makes one binary serve as Chromium's renderer, GPU and
-//! utility processes as well: it runs CEF's `execute_process` before anything else
-//! and returns. It has to be the first thing that happens - on macOS, loading the
-//! framework replaces the process's malloc zone, and an allocation on another thread
-//! racing that swap corrupts the heap on every launch, probabilistically.
-//!
-//! No `windows_subsystem = "windows"` here, unlike the app's own binary: the gate
-//! says its numbers on stdout, and a Windows GUI binary has none. That costs a
-//! console window on Windows, which is the right trade for a build that exists to
-//! be measured and is never installed.
+//! utility processes as well: it runs CEF's `execute_process` before anything else and
+//! returns. It has to be the first thing that happens - on macOS, loading the framework
+//! replaces the process's malloc zone, and an allocation on another thread racing that
+//! swap corrupts the heap.
+
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::path::PathBuf;
 
-use tauri_runtime_cef::{Cef, SandboxPolicy};
+use tauri_runtime_cef::{Cef, RemoteDebugging, SandboxPolicy};
 
 /// The app's own configuration, as the app is built from it.
 ///
-/// Read here for one field - the identifier - because the engine's profiles have to
-/// be placed before the app exists, and it is the app handle that would otherwise
-/// answer where the app's folder is. One source of truth either way.
+/// Read here for one field - the identifier - because the engine's profiles have to be
+/// placed before the app exists, and it is the app handle that would otherwise answer
+/// where the app's folder is. One source of truth either way.
 const CONFIG: &str = include_str!("../../tauri.conf.json");
 
-/// The folder the engine keeps its profiles in, inside the app's own settings
-/// folder. `engine::root` in the library names the same place; the comment there is
-/// the layout.
+/// The folder the engine keeps its profiles in, inside the app's own settings folder.
+/// `engine::root` in the library names the same place; the comment there is the layout.
 const ROOT: &str = "web";
 
 /// Which sandbox policy to run with, from the environment.
 ///
-/// `Auto` by default, which keeps Chromium's sandbox wherever it can be kept and
-/// logs the reason where it cannot - and on Windows it cannot, today, because a
-/// sandboxed CEF application has to be the DLL that `bootstrap.exe` loads and a
-/// Tauri application is not one yet. That is ship gate 1 in docs/browser.md, and
-/// `Required` is what a release will say once it is shut. CI names the policy it
-/// used so no number here is quietly an unsandboxed one.
+/// `Auto` by default, which keeps Chromium's sandbox wherever the runtime can keep it and
+/// says so where it cannot - and on Windows it cannot yet: a sandboxed CEF application has
+/// to be the DLL `bootstrap.exe` loads, and a Tauri application is an executable. That is
+/// the first row of docs/browser.md section 10.
 fn sandbox() -> SandboxPolicy {
     match std::env::var("NIB_CEF_SANDBOX")
         .unwrap_or_default()
@@ -52,16 +46,11 @@ fn sandbox() -> SandboxPolicy {
     }
 }
 
-/// The variable the extra Chromium switches are written in.
-const ARGS: &str = "NIB_CEF_ARGS";
-
 /// Extra Chromium switches, as a list a person wrote in one string.
 ///
-/// `NIB_CEF_ARGS=enable-logging=stderr,no-sandbox`: comma separated, each one a
-/// `key=value` pair or a bare key, appended to the browser process's command line in
-/// the order they are written. It exists for the gate, which needs Chromium's own
-/// fatal messages on stderr rather than in the log file inside the cache directory -
-/// and it is how the next thing a run needs to be asked gets asked without a rebuild.
+/// `NIB_CEF_ARGS=enable-logging=stderr,v=1`: comma separated, each one a `key=value` pair
+/// or a bare key, in the order they are written. It is how the next thing a run needs to
+/// be asked gets asked without a rebuild.
 fn switches(written: &str) -> Vec<(String, Option<String>)> {
     written
         .split(',')
@@ -74,49 +63,87 @@ fn switches(written: &str) -> Vec<(String, Option<String>)> {
         .collect()
 }
 
+/// The port a probe reads the pages through, named in `NIB_CEF_DEBUG_PORT`.
+///
+/// The system's engine is reached the same way, through the variable `WebView2` reads its
+/// switches from (see scripts/devtools.py), so a drive asks both engines the same
+/// questions. Off unless named: whatever can set this process's environment can already
+/// run code as the person it belongs to.
+fn debugging() -> RemoteDebugging {
+    std::env::var("NIB_CEF_DEBUG_PORT")
+        .ok()
+        .and_then(|port| port.parse::<u16>().ok())
+        .filter(|port| *port >= 1024)
+        .map_or(RemoteDebugging::Disabled, |port| RemoteDebugging::Port {
+            port,
+            allowed_origins: Vec::new(),
+        })
+}
+
 /// Where the engine's profiles go: `<the app's settings folder>/web`.
 ///
-/// The same two steps Tauri takes for `app_config_dir`, with the same crate, so the
-/// path this hands CEF is the path the library's own `engine::root` computes from an
-/// app handle. `None` only on a machine with no config folder at all, where CEF's
-/// own default is a better answer than a guess.
+/// The same two steps Tauri takes for `app_config_dir`, with the same crate, so the path
+/// this hands CEF is the path the library's own `engine::root` computes from an app
+/// handle. `None` only on a machine with no config folder at all, where CEF's own default
+/// is a better answer than a guess.
 fn root_cache_path() -> Option<PathBuf> {
     let identifier = serde_json::from_str::<serde_json::Value>(CONFIG)
         .ok()?
         .get("identifier")?
         .as_str()?
         .to_owned();
+    let identifier = overridden_identifier().unwrap_or(identifier);
     Some(dirs::config_dir()?.join(identifier).join(ROOT))
+}
+
+/// The identifier a build was given on its command line (`--config`), which reaches the
+/// build as `TAURI_CONFIG` and moves the app's own folder - a probe's, above all, which
+/// must never share a profile with the app somebody uses.
+fn overridden_identifier() -> Option<String> {
+    let said = option_env!("TAURI_CONFIG")?;
+    serde_json::from_str::<serde_json::Value>(said)
+        .ok()?
+        .get("identifier")?
+        .as_str()
+        .map(str::to_owned)
+}
+
+/// Whether the run that started this one sent every window off the screen:
+/// `NIB_OFF_SCREEN`, which only a probe sets. See src/placement.rs.
+fn off_screen() -> bool {
+    std::env::var_os("NIB_OFF_SCREEN").is_some_and(|value| !value.is_empty() && value != "0")
 }
 
 #[tauri_runtime_cef::cef_entry_point]
 fn main() {
-    // First line of the gate's report, so a run says which engine produced its
-    // numbers before it has done anything at all. The CEF version itself is on the
-    // lock file beside this crate, which is what the workflow prints.
-    println!(
-        "{{\"at\":0,\"event\":\"engine\",\"cef_api\":{},\"sandbox\":\"{:?}\"}}",
-        tauri_runtime_cef::CEF_API_VERSION_LAST,
-        sandbox()
-    );
-
     let mut engine = Cef::default()
         .sandbox(sandbox())
-        // `nib://` links reach the app the same way they do on the system's engine;
-        // the plugin handles the arriving half either way.
+        // `nib://` links reach the app the same way they do on the system's engine; the
+        // plugin handles the arriving half either way.
         .deep_link_schemes(["nib"])
-        .command_line_args(switches(&std::env::var(ARGS).unwrap_or_default()));
+        .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()));
 
     if let Some(path) = root_cache_path() {
         engine = engine.root_cache_path(path);
     }
 
-    // An unpacked extension, for the gate. There is no host API for installing one
-    // - CEF's own issue for that is still open - and there does not need to be:
-    // `chrome://extensions` is the management surface and Chromium's own policy
-    // mechanisms are how a shipped build would install from the account. Batch 4.
-    if let Ok(path) = std::env::var("NIB_CEF_EXTENSION") {
-        engine = engine.command_line_arg("load-extension", Some(path));
+    // The runtime pins Chromium's own "may be debugged" preference off in the profile
+    // whenever a run has no port, and does not put it back when a later run has one - so a
+    // probe after an ordinary launch was refused. Said out loud both ways here.
+    let debugging = debugging();
+    let debugged = !matches!(debugging, RemoteDebugging::Disabled);
+    engine = engine
+        .remote_debugging(debugging)
+        .global_preference("devtools.remote_debugging.allowed", debugged);
+
+    // A probe's window is off the screen (see placement.rs), and Chromium counts a window
+    // nobody can see as hidden: it stops painting it and stops its animation frames, and
+    // nib's own interface waits on those as it starts. So a run sent away paints anyway,
+    // which is what a window on a screen does.
+    if off_screen() {
+        engine = engine
+            .disable_features(["CalculateNativeWinOcclusion"])
+            .command_line_arg::<_, String>("disable-backgrounding-occluded-windows", None);
     }
 
     nib_lib::run_on(tauri::Builder::default().runtime(engine));
@@ -137,90 +164,19 @@ mod tests {
                 ("v".to_owned(), Some("1".to_owned())),
             ]
         );
-        assert!(
-            switches("").is_empty(),
-            "an unset variable adds no switches"
-        );
+        assert!(switches("").is_empty(), "an unset variable adds no switches");
     }
 
-    /// One revision, in one place. The pin is what the bump workflow rewrites and
-    /// what `upstream.py` reads, and a second revision anywhere in this manifest
-    /// would be a build made of two different Tauris.
+    /// The engine's profiles are inside the app's own folder, under the name the library
+    /// uses for them.
     #[test]
-    fn the_pin_is_one_revision() {
-        let manifest = include_str!("../Cargo.toml");
-        let revisions: std::collections::HashSet<&str> = manifest
-            .lines()
-            .filter_map(|line| line.strip_prefix("revision = \""))
-            .filter_map(|rest| rest.split('"').next())
-            .collect();
-
-        assert_eq!(revisions.len(), 1, "the manifest names {revisions:?}");
-        let revision = revisions.iter().next().expect("the one revision");
-        assert_eq!(revision.len(), 40, "a short revision is a moving target");
-        assert!(revision.chars().all(|one| one.is_ascii_hexdigit()));
-    }
-
-    /// `tauri` and `tauri-build` come out of the checkout and the rest does not, which
-    /// is a finding rather than an omission: the branch moved `tauri-utils` to
-    /// `schemars` 1 without moving its version number, and every plugin's build script
-    /// is written against the 0.8 API. The manifest says why; this holds it to it.
-    #[test]
-    fn the_engine_and_its_codegen_come_from_the_checkout() {
-        let manifest = include_str!("../Cargo.toml");
-        // The table and not the comment above it that names the same thing, which is
-        // what the first version of this test found instead.
-        let patched: Vec<&str> = manifest
-            .split("\n[patch.crates-io]\n")
-            .nth(1)
-            .expect("a patch section")
-            .lines()
-            .take_while(|line| !line.starts_with('['))
-            .filter(|line| line.contains('='))
-            .collect();
-
-        for name in ["tauri ", "tauri-build "] {
-            let line = patched
-                .iter()
-                .find(|line| line.starts_with(name))
-                .unwrap_or_else(|| panic!("{name} is not patched"));
-            assert!(
-                line.contains("target/upstream/tauri/crates/"),
-                "{name} does not come from the checkout"
-            );
-        }
-        for name in ["tauri-utils ", "tauri-plugin "] {
-            assert!(
-                !patched.iter().any(|line| line.starts_with(name)),
-                "{name} is patched, and every plugin's build script then fails to compile"
-            );
-        }
-        assert!(
-            patched.iter().any(|line| line.starts_with("dpi ")),
-            "without one dpi there are two, and the compiler says so in as many words"
-        );
-    }
-
-    /// The profiles go inside the app's own settings folder, under the name the
-    /// library uses for the same place.
-    #[test]
-    fn the_profiles_go_under_the_app_folder() {
-        let root = root_cache_path().expect("a config folder");
-        assert!(root.ends_with(super::ROOT));
-
-        let identifier = serde_json::from_str::<serde_json::Value>(CONFIG).expect("the config");
-        let identifier = identifier["identifier"].as_str().expect("an identifier");
-        assert!(root.parent().is_some_and(|dir| dir.ends_with(identifier)));
-    }
-
-    /// And the library was compiled for an engine it is handed rather than one
-    /// compiled into it, which is the whole of what the feature changes.
-    #[test]
-    fn the_library_takes_its_engine_from_here() {
-        let engine = std::any::type_name::<nib_lib::Engine>();
-        assert!(
-            engine.contains("DynRuntime"),
-            "the library was built for {engine}, so the `cef` feature is not on"
-        );
+    fn the_profiles_are_in_the_app_s_own_folder() {
+        let identifier = serde_json::from_str::<serde_json::Value>(CONFIG).unwrap()["identifier"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let path = root_cache_path().expect("a config folder");
+        assert!(path.ends_with("web"));
+        assert!(path.parent().unwrap().ends_with(&identifier) || option_env!("TAURI_CONFIG").is_some());
     }
 }

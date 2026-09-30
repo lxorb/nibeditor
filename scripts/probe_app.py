@@ -72,8 +72,9 @@ SWP_NOACTIVATE = 0x0010
 
 #: Windows the process keeps for messages alone: visible by their style and 13 pixels
 #: square in the corner of the primary screen, and never drawn. tao's event loop has one,
-#: and the single instance plugin one named after the identifier with `-sic` on the end.
-UNDRAWN = frozenset({"Tao Thread Event Target"})
+#: winit's has its twin under nib's own Chromium (see src-tauri/cef), and the single
+#: instance plugin one named after the identifier with `-sic` on the end.
+UNDRAWN = frozenset({"Tao Thread Event Target", "Winit Thread Event Target"})
 UNDRAWN_SUFFIX = "-sic"
 
 #: `MonitorFromRect`: no screen at all where the rectangle is on none.
