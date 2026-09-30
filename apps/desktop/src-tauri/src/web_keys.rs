@@ -283,7 +283,7 @@ pub fn listen(webview: &tauri::webview::PlatformWebview, app: tauri::AppHandle, 
                 args.SetHandled(true)?;
                 if !pressed.keeps_page() {
                     if let Some(ours) = app.get_webview(&window) {
-                        let _ = ours.set_focus();
+                        crate::placement::keyboard_to(&ours);
                     }
                 }
             }
@@ -448,7 +448,7 @@ pub mod chromium {
         std::thread::spawn(move || {
             if down && !pressed.keeps_page() {
                 if let Some(ours) = app.get_webview(&window) {
-                    let _ = ours.set_focus();
+                    crate::placement::keyboard_to(&ours);
                 }
             }
             let _ = app.emit_to(window.as_str(), PRESSED, pressed);

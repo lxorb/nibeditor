@@ -18,6 +18,7 @@
   import { accentFor } from '../accents'
   import { t } from '../i18n.svelte'
   import { initial } from '../icons'
+  import { keyboardHere } from '../keyboard-here'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import { isDesktop } from '../tauri'
@@ -47,13 +48,6 @@
     card?.focus({ preventScroll: true })
     if (isDesktop && !document.hasFocus()) void keyboardHere()
   })
-
-  async function keyboardHere(): Promise<void> {
-    const { getCurrentWebview } = await import('@tauri-apps/api/webview')
-    await getCurrentWebview()
-      .setFocus()
-      .catch(() => undefined)
-  }
 </script>
 
 {#if asking}

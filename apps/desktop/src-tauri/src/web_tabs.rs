@@ -1142,6 +1142,10 @@ pub async fn web_open(
 
     let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
+        // A new tab has the keyboard, as in a browser - but not in a run sent off the
+        // screen, where a page given the keyboard activates its window; see
+        // `keyboard_to` in placement.rs.
+        .focused(crate::placement::away().is_none())
         .on_navigation(move |to| {
             let going = allowed(to);
             if going {

@@ -12,7 +12,7 @@
 
 import type { SlideShape } from '@nib/markdown/slides'
 import type { Scheme } from '../theme.svelte'
-import { isDesktop } from '../tauri'
+import { invoke, isDesktop } from '../tauri'
 
 /** Everything the presenter's window draws. Sent whole on every change rather
  *  than patched, because it is three short strings and a number. */
@@ -149,9 +149,11 @@ export async function openPresenter(): Promise<boolean> {
       import('@tauri-apps/api/window'),
     ])
 
+    // Brought forward by the crate, which never does so in a run whose windows were
+    // sent off the screen; see `raise_window` in src-tauri/src/placement.rs.
     const standing = await WebviewWindow.getByLabel(LABEL)
     if (standing) {
-      await standing.setFocus()
+      await invoke('raise_window', { label: LABEL })
       return true
     }
 

@@ -16,6 +16,7 @@
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { t } from '../i18n.svelte'
+  import { keyboardHere } from '../keyboard-here'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import { isDesktop } from '../tauri'
@@ -45,13 +46,6 @@
     }
     if (isDesktop && !document.hasFocus()) void keyboardHere()
   })
-
-  async function keyboardHere(): Promise<void> {
-    const { getCurrentWebview } = await import('@tauri-apps/api/webview')
-    await getCurrentWebview()
-      .setFocus()
-      .catch(() => undefined)
-  }
 </script>
 
 <div

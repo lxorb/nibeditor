@@ -33,6 +33,7 @@ import type {
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
 import { i18n, t } from './i18n.svelte'
+import { keyboardHere } from './keyboard-here'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
 import {
@@ -416,7 +417,7 @@ class MenuBar {
 
     const at: KeyboardAt = away ? 'away' : this.context?.view?.hasFocus ? 'note' : 'page'
     if (entry.key && !keyRuns(entry.anywhere, at)) return
-    if (away) void this.takeKeyboard()
+    if (away) void keyboardHere()
 
     run()
   }
@@ -440,13 +441,6 @@ class MenuBar {
     // Nothing to be done about one that fails: it is the key doing nothing, which is
     // what it did before.
     void invoke('hand_to_keyboard', { action }).catch(() => undefined)
-  }
-
-  private async takeKeyboard(): Promise<void> {
-    const { getCurrentWebview } = await import('@tauri-apps/api/webview')
-    await getCurrentWebview()
-      .setFocus()
-      .catch(() => undefined)
   }
 
   /** The window's full screen and the app's, kept saying the same thing. The app's

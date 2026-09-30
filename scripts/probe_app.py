@@ -262,7 +262,7 @@ def run_probe(
     shown.dwFlags |= STARTF_USESHOWWINDOW
     shown.wShowWindow = SW_SHOWNOACTIVATE
     output = subprocess.DEVNULL if quiet else None
-    app = subprocess.Popen(
+    app = _started_bare(
         [str(exe), *args],
         env=environment,
         cwd=str(exe.parent),
@@ -273,6 +273,37 @@ def run_probe(
     )
     threading.Thread(target=_watch, args=(app,), name="off-screen watch", daemon=True).start()
     return app
+
+
+def _started_bare(argv: list[str], **how: Any) -> subprocess.Popen[bytes]:
+    """Starts a process from a thread that has never asked the window manager anything.
+
+    Windows hands the right to take the foreground on to a new process from the thread
+    that created it: a process started while its creator could come forward may come
+    forward itself, and the first window it activates is then the window in front, off
+    the screen or not. A drive's own threads are windowing threads - the watch walks
+    every window, `main_window` asks for the app's - and a drive started from an agent's
+    shell, whose terminal is often the window in front, can hold that right. A thread
+    that has never called into the window manager has no windowing state for the right
+    to be read from: in scripts/probe-foreground-stress.py four launches were started by
+    a process that could have taken the foreground, and not one of the four probes
+    could. The probe holds itself out of the foreground besides; see
+    apps/desktop/src-tauri/src/foreground.rs."""
+
+    made: list[subprocess.Popen[bytes] | BaseException] = []
+
+    def start() -> None:
+        try:
+            made.append(subprocess.Popen(argv, **how))
+        except BaseException as error:  # noqa: BLE001 - handed back to the caller's thread
+            made.append(error)
+
+    starter = threading.Thread(target=start, name="probe start")
+    starter.start()
+    starter.join()
+    if isinstance(made[0], BaseException):
+        raise made[0]
+    return made[0]
 
 
 # ---- the watch: what is in view, decided over numbers ----

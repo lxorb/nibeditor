@@ -451,6 +451,59 @@ rather than the focused one; and it left other tabs open, so `.cm-content` picke
 by document order was another pane's editor. The keys then walked a note nobody
 was looking at and every check after that read as a bug in the find bar.
 
+### Probes
+
+A probe, a native build a drive starts through `run_probe` in `scripts/probe_app.py`,
+is never the window in front of anybody: not for a frame, and not off the screen.
+Somebody is working at the machine it runs on, and the window in front is the one
+their typing goes into. The watch in `run_probe` ends a probe that is in front, but a
+second or four too late, which is what happened ten times on 2026-09-30. So a probe
+cannot be, by construction:
+
+- **Started with no right to the front.** Windows lets a process take the foreground
+  when the process in front started it, and an agent's shell is started by a terminal
+  that is often in front. `run_probe` starts the probe from a thread of its own that
+  has never asked the window manager anything, rather than from the drive's windowing
+  threads, and the proof below saw it hold: four launches were started by a process
+  that could have taken the foreground, and not one of the four probes could.
+- **Held back from its first line**, under `NIB_OFF_SCREEN`
+  (`apps/desktop/src-tauri/src/foreground.rs`): the process locks the foreground where
+  it could have taken it, every activation on the app's thread is refused - nib's own
+  Chromium's included, whose windows are that thread's - and every top-level window is
+  `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW` with no taskbar button from the moment it
+  is made, whatever tao or winit write over it later.
+- **Asking for the keyboard answers nothing.** `raised` and `keyboard_to` in
+  placement.rs are the crate's only ways to bring a window forward or hand a webview the
+  keyboard, the page reaches them only as `take_keyboard` and `raise_window`, and all
+  four do nothing under the switch. Tests hold both halves to it: nothing else in the
+  crate calls `set_focus` or any of Windows' own ways to the front, and nothing in the
+  page calls `setFocus` or is granted it.
+
+**Keyboard input to a probe** never goes through the real keyboard and never needs the
+probe in front. A drive types through the DevTools protocol - `Input.dispatchKeyEvent`
+and `Input.insertText` on the page it means, which is how Playwright types into a page
+nobody is looking at - or posts `WM_KEYDOWN`, `WM_CHAR` and `WM_KEYUP` to the probe's
+own window, as `scripts/web-cursor-probe.py` does. A step that only works with the probe
+in front is a step that takes somebody's typing: it is skipped, and the drive says so.
+
+**The proof** is `scripts/probe-foreground-stress.py`: fifty launches of a release probe
+back to back through `run_probe`, cold and warm, on an empty space and on five thousand
+notes, while the owner of the window in front is asked every twenty milliseconds and
+every change of it is heard as it happens. A launch fails when that owner was ever the
+probe or a process under it, and each launch says whether the process that started it
+could have taken the foreground and whether the probe could (the probe says so as it
+starts; see `run_on` in `apps/desktop/src-tauri/src/lib.rs`).
+
+Measured 2026-10-01 on a Snapdragon X Elite, fifty launches each: main at
+dc8ef262 had no probe in front in 50, and neither did this. The launches of main never
+met the condition the incidents needed - a launcher able to take the foreground, which
+takes a terminal in front and nobody typing - so the count alone proves little either
+way; what the change is proved by is the four launches after it that did meet it, the
+tests in foreground.rs and placement.rs, and the windows themselves. On main a probe's
+window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it and every
+other top-level window of the process, tao's and the single-instance plugin's included,
+are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
+
 ## The launch
 
 A slow launch can only be measured on the machine that has one: the disk, the

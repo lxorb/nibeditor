@@ -19,7 +19,9 @@ missing_docs = "warn"
 # through to a terminal's shells (see terminal/process.rs and
 # terminal/session.rs), and the shell's answer to which program opens a web
 # address (default_browser.rs), and the hook that has a probe's window created off
-# the screen rather than moved there (placement.rs). Three more on a Mac: the
+# the screen rather than moved there (placement.rs), and what keeps a probe out of
+# the foreground: its lock, and the hook and the procedure that refuse every
+# activation and hold every window's style (foreground.rs). Three more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see

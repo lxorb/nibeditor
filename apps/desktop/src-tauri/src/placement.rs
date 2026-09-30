@@ -36,8 +36,8 @@ use std::sync::{Mutex, OnceLock};
 use serde::{Deserialize, Serialize};
 use tauri::utils::config::WindowConfig;
 use tauri::{
-    AppHandle, LogicalPosition, Manager, Monitor, Runtime, WebviewWindow, WebviewWindowBuilder,
-    Window, WindowEvent,
+    AppHandle, LogicalPosition, Manager, Monitor, Runtime, Webview, WebviewWindow,
+    WebviewWindowBuilder, Window, WindowEvent,
 };
 
 use crate::paths::{config_dir, made, write_atomically};
@@ -246,7 +246,7 @@ fn named(config: &WindowConfig, away: bool) -> WindowConfig {
 
 /// Whether the drive that started this run asked for every window off the screen.
 /// Any value but `0`, as with the launch trace's switch.
-fn asked_away() -> bool {
+pub(crate) fn asked_away() -> bool {
     std::env::var_os(OFF_SCREEN).is_some_and(|value| !value.is_empty() && value != "0")
 }
 
@@ -285,9 +285,13 @@ pub fn built_away<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
     (x, y): (f64, f64),
 ) -> tauri::Result<WebviewWindow<R>> {
+    // No taskbar button either, which tao and winit add to any window not asked to skip
+    // it, whatever its style: a button is a way to bring the window forward. See
+    // foreground.rs for the rest of what keeps a probe's window from ever being in front.
     let building = building
         .visible(false)
         .focused(false)
+        .skip_taskbar(true)
         .always_on_bottom(true);
     #[cfg(windows)]
     let window = created_away::during(|| building.build())?;
@@ -405,12 +409,47 @@ pub fn built<R: Runtime, M: Manager<R>>(
 /// Brings a window forward because somebody asked for the app - a second launch, a
 /// link - unless this run's windows were sent off the screen, where coming forward
 /// would take the keyboard from whoever is working and show them nothing.
+///
+/// On Windows tao's own way forward, where the system says no, presses Alt for the
+/// app - a key the window in front receives - and asks again, which no lock refuses: so
+/// under the switch this must never be reached at all, and nothing else in the crate
+/// asks a window for the keyboard; see the test below.
 pub fn raised<R: Runtime>(window: &Window<R>) {
     if away().is_some() {
         return;
     }
     let _ = window.unminimize();
     let _ = window.set_focus();
+}
+
+/// Gives the keyboard to one of the app's own webviews - the page taking it back from a
+/// web tab's, a chord the app answers - unless this run's windows were sent off the
+/// screen. A webview given the keyboard activates the window it is in, and in a process
+/// that may take the foreground an activated window is the window in front, off the
+/// screen or not: a key pressed inside a probe's page did exactly that on 2026-09-30,
+/// by way of `web_keys.rs`.
+pub fn keyboard_to<R: Runtime>(webview: &Webview<R>) {
+    if away().is_some() {
+        return;
+    }
+    let _ = webview.set_focus();
+}
+
+/// The keyboard back to the page that asks, from a web tab's page holding it: a site's
+/// question, a pairing request, a row of a Mac's menu bar. The page's one way to it, so
+/// it is `keyboard_to`'s answer as well.
+#[tauri::command]
+pub fn take_keyboard(webview: Webview) {
+    keyboard_to(&webview);
+}
+
+/// One of the app's windows brought forward from the page - the presenter's, asked for
+/// again while it is open. The page's one way to it, so it is `raised`'s answer as well.
+#[tauri::command]
+pub fn raise_window(app: AppHandle, label: String) {
+    if let Some(window) = app.get_window(&label) {
+        raised(&window);
+    }
 }
 
 fn read(app: &AppHandle) -> Option<Placement> {
@@ -869,6 +908,68 @@ mod tests {
         assert!(
             unplaced.is_empty(),
             "built past `placement::built`: {unplaced:?}"
+        );
+    }
+
+    /// Nothing in the crate asks for the keyboard or the front but `raised` and
+    /// `keyboard_to`, which both do nothing where a drive sent the windows away; and
+    /// nothing asks Windows for the front at all. Read off the source for the same reason
+    /// as the test above: a call that forgets is only ever found by the person whose
+    /// typing it took. foreground.rs, which keeps a probe out of the front, is the one
+    /// file that names the system's calls, and its test the one that makes them.
+    #[test]
+    fn nothing_takes_the_keyboard_or_the_front_past_the_guard() {
+        let asks_the_system = [
+            "SetForegroundWindow",
+            "AllowSetForegroundWindow",
+            "BringWindowToTop",
+            "SetActiveWindow",
+            "SwitchToThisWindow",
+            "SetFocus",
+            "SendInput",
+            "keybd_event",
+        ];
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut sources = vec![root.clone()];
+        let mut found = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let name = path
+                    .strip_prefix(&root)
+                    .expect("under the source")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                if name == "placement.rs" || name == "foreground.rs" {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                for (at, line) in text.lines().enumerate() {
+                    let code = line.trim_start();
+                    if code.starts_with("//") {
+                        continue;
+                    }
+                    let named = asks_the_system.iter().any(|call| {
+                        code.match_indices(call).any(|(from, _)| {
+                            !code[..from].ends_with(|c: char| c.is_alphanumeric() || c == '_')
+                        })
+                    });
+                    if code.contains(".set_focus()") || named {
+                        found.push(format!("{name}:{}", at + 1));
+                    }
+                }
+            }
+        }
+        assert!(
+            found.is_empty(),
+            "the keyboard or the front asked for past `raised` and `keyboard_to`: {found:?}"
         );
     }
 }

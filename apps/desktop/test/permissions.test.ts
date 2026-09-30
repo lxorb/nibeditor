@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
@@ -54,23 +55,21 @@ const PRESENTING: Record<string, string> = {
   'new WebviewWindow(': 'core:webview:allow-create-webview-window',
   'availableMonitors()': 'core:window:allow-available-monitors',
   'currentMonitor()': 'core:window:allow-current-monitor',
-  'setFocus()': 'core:window:allow-set-focus',
 }
 
-/** The one webview command the Mac's menu bar calls, for the same reason as the
- *  list above: it is the Tauri API directly, on this window's own page. See
- *  native-menu-bar.svelte.ts. */
-const MENU_BAR: Record<string, string> = {
-  'getCurrentWebview()': 'core:webview:allow-set-webview-focus',
-}
+/** Nothing in the page gives the keyboard or the front itself. It asks the crate, whose
+ *  `take_keyboard` and `raise_window` do neither in a run whose windows were sent off the
+ *  screen: a webview given the keyboard activates its window, and an activated window
+ *  can be the one in front of whoever is working, off the screen or not. So the Tauri
+ *  API's own two ways are neither called nor granted. See src-tauri/src/placement.rs. */
+const TAKING = ['core:window:allow-set-focus', 'core:webview:allow-set-webview-focus']
 
-/** The same webview command, which does not go through `WindowLike` either: a window
- *  with a web tab in it holds several webviews, and this is the app's own taking the
- *  keyboard back from a page. Written as the calls are, in the file that makes them. */
-const FOCUSING = {
-  file: '../src/lib/web-tab/WebAsk.svelte',
-  calls: ['getCurrentWebview()', '.setFocus()'],
-  permission: 'core:webview:allow-set-webview-focus',
+/** Every script and component under src, as text, by path. */
+function sources(): [string, string][] {
+  const root = fileURLToPath(new URL('../src/', import.meta.url))
+  return readdirSync(root, { recursive: true, encoding: 'utf8' })
+    .filter((name) => /\.(ts|svelte)$/.test(name) && !/\.test\.ts$/.test(name))
+    .map((name) => [name, readFileSync(join(root, name), 'utf8')])
 }
 
 /** The method names declared on the `WindowLike` interface. */
@@ -116,17 +115,6 @@ describe('window permissions', () => {
     expect(missing.map(([call]) => call)).toEqual([])
   })
 
-  test('every call the Mac menu bar makes is granted, and it makes each of them', () => {
-    const source = read('../src/lib/native-menu-bar.svelte.ts')
-
-    const missing = Object.entries(MENU_BAR).filter(
-      ([call, permission]) =>
-        !source.includes(call) || !capabilities.permissions.includes(permission),
-    )
-
-    expect(missing.map(([call]) => call)).toEqual([])
-  })
-
   test('a Mac’s window is told the scheme, and is granted that', () => {
     const source = read(APPEARANCE.file)
 
@@ -134,19 +122,22 @@ describe('window permissions', () => {
     expect(capabilities.permissions).toContain(APPEARANCE.permission)
   })
 
-  test('a site’s question takes the keyboard back, and is granted that', () => {
-    const source = read(FOCUSING.file)
+  test('nothing in the page takes the keyboard or the front past the crate', () => {
+    // Guards the test itself: a walk that found nothing would pass silently.
+    expect(sources().length).toBeGreaterThan(100)
 
-    expect(FOCUSING.calls.filter((call) => !source.includes(call))).toEqual([])
-    expect(capabilities.permissions).toContain(FOCUSING.permission)
+    const calling = sources()
+      .filter(([, text]) => text.includes('.setFocus('))
+      .map(([name]) => name)
+
+    expect(calling).toEqual([])
+    expect(capabilities.permissions.filter((one) => TAKING.includes(one))).toEqual([])
   })
 
   test('nothing is granted that the app never calls', () => {
     const used = new Set([
       ...Object.values(NEEDS),
       ...Object.values(PRESENTING),
-      ...Object.values(MENU_BAR),
-      FOCUSING.permission,
       APPEARANCE.permission,
     ])
     const stale = capabilities.permissions

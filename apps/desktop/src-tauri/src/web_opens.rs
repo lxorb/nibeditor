@@ -185,7 +185,7 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     use tauri::{Emitter, Manager};
 
     if let Some(ours) = app.get_webview(window) {
-        let _ = ours.set_focus();
+        crate::placement::keyboard_to(&ours);
     }
     let _ = app.emit_to(window, event, said);
 }

@@ -82,7 +82,7 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
             // until somebody clicked. The frame is switched from the page's own
             // settings, so the page is what gets it back.
             if let Some(page) = app.get_webview(window.label()) {
-                let _ = page.set_focus();
+                crate::placement::keyboard_to(&page);
             }
         }
     }

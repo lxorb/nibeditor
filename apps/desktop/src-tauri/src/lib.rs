@@ -73,6 +73,8 @@ mod endpoint;
 mod engine;
 #[cfg(desktop)]
 mod engine_switch;
+#[cfg(desktop)]
+mod foreground;
 mod front_matter;
 mod fuzzy;
 #[cfg(desktop)]
@@ -290,6 +292,8 @@ macro_rules! desktop_commands {
             lifecycle::keep_running,
             document_window::show_document,
             menu_bar::hand_to_keyboard,
+            placement::take_keyboard,
+            placement::raise_window,
             pandoc::has_pandoc,
             pandoc::run_pandoc,
             pandoc::import_document,
@@ -427,6 +431,16 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // machine loading the binary before any of this ran - is on the trace as well;
     // see trace.rs. Off unless NIB_TRACE_STARTUP says otherwise.
     trace::begin();
+
+    // A probe's process is held out of the foreground before anything in it can make a
+    // window or start an engine; see foreground.rs. And said, so a drive knows which of
+    // its probes started able to take the front.
+    #[cfg(desktop)]
+    if foreground::hold() {
+        eprintln!(
+            "nib: this probe started able to take the foreground; it is locked (see src-tauri/src/foreground.rs)"
+        );
+    }
 
     #[cfg_attr(
         not(desktop),
