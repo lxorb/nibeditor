@@ -55,7 +55,8 @@ engine costs **170 ms** on Windows and **1006 ms** on a macOS runner.
 Emil, 2026-09-30: *"For the chromium engine: it should for now be possible to switch
 between chromium and the alternative."* So nib's own Chromium is not the app's engine
 yet; it is one of two, and **Settings > General > Browser > Engine** chooses:
-`Chromium | Edge` on Windows, `Chromium | Safari` on a Mac, no row on Linux.
+`Chromium | Edge` on Windows. A Mac gets `Chromium | Safari` once its web tabs load (below);
+Linux gets no row.
 
 **Two builds of one source.** The app that ships stays on Tauri 2 and the system's
 engine, byte for byte. `nib-chromium` is the same `src/lib.rs` compiled a second time,
@@ -93,8 +94,12 @@ fills and stops it when pressed.
   turn of the event loop of its own (`second_launch_heard` in launch.rs). The rule for
   anything that runs inside one of the engine's events: ask no window and no webview
   anything; hand the work to a thread or to the event loop.
-- *"A web tab never loads on macOS"* is not measured here; this machine is Windows, and
-  the Mac is `cef.yml`'s.
+- *"A web tab never loads on macOS"* still stands. `cef.yml` on 2026-09-30, this build:
+  the Mac build starts and shows nib's window in 2.5 s, and the app's own command to
+  open a web tab never comes back; the window's thread is blocked from then on (on
+  Windows, the same gate opens both tabs and both of Chromium's own pages). So the row
+  is Windows' alone (`OFFERED` in engine_switch.rs) until a Mac is there to find which
+  wait it is - the Windows one was nib's own, so look there first.
 
 **The isolated world, on both engines.** A web tab is built on `about:blank`, the
 runtime's scripts are taken back over the engine's `DevTools` protocol the way

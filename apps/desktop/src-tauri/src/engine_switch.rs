@@ -68,10 +68,13 @@ pub const THIS: Engine = if cfg!(feature = "cef") {
 
 /// Whether this platform can run nib's own Chromium at all.
 ///
-/// Windows and macOS. Not Linux: the runtime is GTK 4 and the app's file dialogs are
-/// GTK 3, and one process cannot load both (docs/browser.md section 10), so there is no
-/// Chromium row there rather than one that cannot start.
-pub const OFFERED: bool = cfg!(any(windows, target_os = "macos"));
+/// Windows. Not Linux: the runtime is GTK 4 and the app's file dialogs are GTK 3, and
+/// one process cannot load both (docs/browser.md section 10), so there is no Chromium row
+/// there rather than one that cannot start. And not a Mac yet: the Mac build starts, but
+/// its window stops answering at the first web tab (measured by .github/workflows/cef.yml
+/// on 2026-09-30, docs/browser.md section 0) - a row there would offer an app that
+/// freezes. The build is still made and proved on a Mac, so the row is one line away.
+pub const OFFERED: bool = cfg!(windows);
 
 /// How many launches in a row may end before the Chromium build shows its window
 /// before a launch stays on the system's engine instead.
