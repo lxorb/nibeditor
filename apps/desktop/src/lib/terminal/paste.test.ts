@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { asksFirst, linesIn, pasted } from './paste'
+import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 
 describe('a paste into a terminal', () => {
   /** Windows Terminal's trimPaste: a command copied with the line break that ended it
@@ -13,6 +13,16 @@ describe('a paste into a terminal', () => {
     expect(pasted('cd x\nls\n')).toBe('cd x\nls\n')
     expect(linesIn('cd x\nls\n')).toBe(3)
     expect(linesIn('one line\n')).toBe(1)
+  })
+
+  /** A row of the file list dropped on a terminal: its path, as the shell reads one. */
+  test('a dropped path is spelled for the shell it lands in', () => {
+    expect(spokenPath('C:\\Users\\me\\notes', 'pwsh')).toBe('C:\\Users\\me\\notes')
+    expect(spokenPath('C:\\Users\\me\\My notes', 'cmd')).toBe('"C:\\Users\\me\\My notes"')
+    expect(spokenPath('C:\\Users\\me\\My notes', 'git-bash')).toBe("'/c/Users/me/My notes'")
+    expect(spokenPath('C:\\Users\\me\\notes', 'wsl:Ubuntu')).toBe('/mnt/c/Users/me/notes')
+    expect(spokenPath("/home/me/it's here", '/bin/zsh')).toBe("'/home/me/it'\\''s here'")
+    expect(spokenPath('/home/me/notes.md', '/bin/bash')).toBe('/home/me/notes.md')
   })
 
   /** VS Code's "auto": only where the lines would run as they land. */
