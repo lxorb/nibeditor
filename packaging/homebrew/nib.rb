@@ -1,6 +1,6 @@
 cask "nib" do
-  version "0.8.0"
-  sha256 "ccd9a60db5d44324e8b940410b65585eb7a074faf2fe2c6da34b8755c4ce08a9"
+  version "0.10.0"
+  sha256 "85b3fada253e4415935939ecaa22862f3f187e161277feaa0876edc3e610d980"
 
   url "https://github.com/lxorb/nibeditor/releases/download/v#{version}/Nib-#{version}-macos-universal.dmg",
       verified: "github.com/lxorb/nibeditor/"
@@ -14,7 +14,7 @@ cask "nib" do
   end
 
   auto_updates true
-  depends_on macos: ">= :catalina"
+  depends_on macos: ">= :ventura"
 
   app "Nib.app"
 

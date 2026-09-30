@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.12.0.schema.json
+
+PackageIdentifier: lxorb.Nib
+PackageVersion: 0.10.0
+InstallerLocale: en-US
+InstallerType: nullsoft
+Scope: user
+InstallModes:
+- interactive
+- silent
+- silentWithProgress
+UpgradeBehavior: install
+ProductCode: Nib
+ReleaseDate: 2026-09-30
+AppsAndFeaturesEntries:
+- DisplayName: Nib
+  Publisher: emilvinu
+  ProductCode: Nib
+InstallationMetadata:
+  DefaultInstallLocation: '%LOCALAPPDATA%\Nib'
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/lxorb/nibeditor/releases/download/v0.10.0/Nib-0.10.0-windows-x64-setup.exe
+  InstallerSha256: 42090F70E5E1C9A12AAD21D31A4F03F40D8E684C1363AF0276A8481F281FB0D9
+- Architecture: arm64
+  InstallerUrl: https://github.com/lxorb/nibeditor/releases/download/v0.10.0/Nib-0.10.0-windows-arm64-setup.exe
+  InstallerSha256: 7CDFC4754A5E1EA0E131D630BC65ED6A89715AF09739121139306E6C1259D0D3
+ManifestType: installer
+ManifestVersion: 1.12.0

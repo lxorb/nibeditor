@@ -15,17 +15,17 @@
   outputs =
     { self, nixpkgs }:
     let
-      version = "0.8.0";
+      version = "0.10.0";
 
       # One AppImage per architecture, from the release the version names.
       appimages = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-6AbuZdVPglht1UXihgPOukobBdb6QqCMqy1AUva3AEY=";
+          hash = "sha256-bVZ5P0ckLqt8zlgszBdvJsJuVbb2RthDIHibfQb9Utc=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-jySknMvUumEswYyQuIOpISrTxHXrPp6Fs2mIZVXTBTQ=";
+          hash = "sha256-4o6pFGhYKaUeVxskGzMJgXjGs4K2pGn06cyKX3YVu2M=";
         };
       };
 

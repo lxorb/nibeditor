@@ -15,8 +15,8 @@ $ErrorActionPreference = 'Stop'
 $packageArgs = @{
   packageName    = $env:ChocolateyPackageName
   fileType       = 'MSI'
-  url            = 'https://github.com/lxorb/nibeditor/releases/download/v0.8.0/Nib-0.8.0-windows-x64.msi'
-  checksum       = 'CB5F70B6104ADCBC124A28DC329B882C325411ECB3DC9BC5EB11B7651E478941'
+  url            = 'https://github.com/lxorb/nibeditor/releases/download/v0.10.0/Nib-0.10.0-windows-x64.msi'
+  checksum       = '72709B3CA457ABA9D9FDD8C571B1F226B880863D7166F51AC8D5C84A8CF0D66B'
   checksumType   = 'sha256'
   softwareName   = 'Nib'
   silentArgs     = '/qn /norestart'
@@ -26,8 +26,8 @@ $packageArgs = @{
 # Chocolatey's own url/url64bit pair has no slot for ARM64, and an ARM64 machine
 # reports as 64-bit, so the architecture is picked by hand here.
 if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') {
-  $packageArgs['url'] = 'https://github.com/lxorb/nibeditor/releases/download/v0.8.0/Nib-0.8.0-windows-arm64.msi'
-  $packageArgs['checksum'] = '8C3213B6E1E725F06BF5166FAF41DC4C2ED9FE77FD9C6CEC10976645BCCF429F'
+  $packageArgs['url'] = 'https://github.com/lxorb/nibeditor/releases/download/v0.10.0/Nib-0.10.0-windows-arm64.msi'
+  $packageArgs['checksum'] = '49719FD347179FDEF6F061C60FE4214415E9E27BA1C348CAAEC93EB5369A3687'
 } elseif ((Get-OSArchitectureWidth) -ne 64) {
   throw 'nibeditor requires 64-bit Windows (x64 or ARM64).'
 }

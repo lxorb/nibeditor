@@ -97,7 +97,7 @@ the key have to be yours.
 5. Publish the current release:
 
    ```
-   gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.8.0
+   gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.10.0
    ```
 
    The AUR creates the package base on first push, so there is nothing to
@@ -108,7 +108,7 @@ If you would rather do the first push yourself:
 ```
 git clone ssh://aur@aur.archlinux.org/nib-bin.git
 cp packaging/aur/nib-bin/{PKGBUILD,.SRCINFO,nib.desktop} nib-bin/
-cd nib-bin && git add -A && git commit -m "nib 0.8.0" && git push
+cd nib-bin && git add -A && git commit -m "nib 0.10.0" && git push
 ```
 
 ## Flathub
@@ -313,7 +313,7 @@ desktop users look for software, and a snap is the only way to be in it.
    rm snapcraft-creds.txt
    ```
 
-4. `gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.8.0` uploads
+4. `gh workflow run publish-linux.yml --repo lxorb/nibeditor -f tag=v0.10.0` uploads
    both architectures to the stable channel.
 
 The first upload of a graphical snap goes through a manual review if it asks for
@@ -348,7 +348,7 @@ stay pinned to the last release they were checked against, though, which is what
 makes the validation workflow meaningful. To move them forward by hand:
 
 ```
-version=0.8.0
+version=0.10.0
 base=https://github.com/lxorb/nibeditor/releases/download/v$version
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.deb" | sha256sum; done
 for a in x64 arm64; do curl -fsSL "$base/Nib-$version-linux-$a.AppImage" | sha256sum; done
