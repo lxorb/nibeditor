@@ -504,6 +504,8 @@
         onopen={(path: string, how: OpenHow) => workspace.openRelative(path, how)}
         onescape={() => void workspace.closeAsking(tab.id)}
       />
+    {:catch}
+      {@render unreachable()}
     {/await}
   {:else if tab?.kind === 'canvas'}
     <!-- A plane of cards, in the note's place. Keyed like the reading view and a
@@ -512,6 +514,8 @@
     {#key tab.id}
       {#await canvasSurface() then Canvas}
         <Canvas {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if tab?.kind === 'pages'}
@@ -521,6 +525,8 @@
     {#key tab.id}
       {#await pagesSurface() then Pages}
         <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if tab?.kind === 'pdf'}
@@ -530,6 +536,8 @@
     {#key tab.id}
       {#await pdfSurface() then Pdf}
         <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if tab?.kind === 'web'}
@@ -539,6 +547,8 @@
     {#key tab.id}
       {#await webSurface() then WebTab}
         <WebTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if tab?.kind === 'terminal'}
@@ -547,6 +557,8 @@
     {#key tab.id}
       {#await terminalSurface() then TerminalTab}
         <TerminalTab {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if tab?.coming}
@@ -564,6 +576,8 @@
     {#key tab.id}
       {#await readingSurface() then Reading}
         <Reading {tab} focused={workspace.panes.focusedId === pane.id} />
+      {:catch}
+        {@render unreachable()}
       {/await}
     {/key}
   {:else if stacking}
@@ -655,6 +669,8 @@
          that opens on a note never asks for it. -->
     {#await emptySurface() then NewHere}
       <NewHere paneId={pane.id} />
+    {:catch}
+      {@render unreachable()}
     {/await}
   {/if}
 
@@ -672,6 +688,16 @@
     </div>
   {/if}
 </div>
+
+{#snippet unreachable()}
+  <!-- What fills this pane could not be fetched: in the browser build, the site deployed
+       again under a tab left open, and the chunk it names is gone. A browser that cannot
+       reach a page offers Reload, and so does this; the door keeps its answer, so
+       nothing short of a reload would ever fill the pane. See Pane.test.ts. -->
+  <div class="coming" role="alert">
+    <button class="nib-button" onclick={() => location.reload()}>{t('Reload')}</button>
+  </div>
+{/snippet}
 
 <style>
   /* The paper whatever the pane shows is written on. The window's ground was the paper
