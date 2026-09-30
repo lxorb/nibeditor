@@ -52,7 +52,7 @@
     top: calc(var(--header-height) + var(--inset-top));
     left: 50%;
     translate: -50% calc(var(--at) - 50%);
-    z-index: 24;
+    z-index: var(--z-float);
     display: grid;
     place-items: center;
     width: 34px;
@@ -102,6 +102,6 @@
   }
 
   .ready .arrow {
-    stroke: #fff;
+    stroke: var(--accent-ink);
   }
 </style>

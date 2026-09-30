@@ -1169,8 +1169,6 @@ export const ha: Dictionary = {
   'Take theirs': 'Karɓi nasu',
   'Keep both': 'Riƙe duka biyu',
   'What synced': 'Abin da aka daidaita',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Babu komai tukuna. Zango da bai motsa komai ba ba a rubuta shi.',
   'Clear the list': 'Cire jerin',
   '{count} down': '{count} ƙasa',
   '{count} up': '{count} sama',
@@ -1189,10 +1187,6 @@ export const ha: Dictionary = {
     one: 'Bayanin kula {count} ya koma.',
     other: 'Bayanan kula {count} sun koma.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'Asusu na riƙe sigogin wata ɗaya na kowane bayanin kula da ke daidaitawa.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Asusu na riƙe sigogin shekara ɗaya na kowane bayanin kula da ke daidaitawa.',
   'That did not work.': 'Wannan bai yi aiki ba.',
   'Signing in': 'Shiga',
   'Ask for a code from an app': 'Nemi lamba daga manhaja',
@@ -1435,7 +1429,6 @@ export const ha: Dictionary = {
   'Reset the bar': 'Mayar da sanda',
   'Pulling down': 'Jawo kasa',
   'A pull past the top runs': 'Jan sama yana tafiyar da',
-  'On the note, and on the list of them.': 'A kan bayanin, da kuma jerin su.',
   Nothing: 'Babu',
 
   // A way of looking at the space's graph, kept in the bookmarks.

@@ -96,7 +96,7 @@
     position: absolute;
     top: 100%;
     left: var(--space-2);
-    z-index: 20;
+    z-index: var(--z-float);
     width: min(20rem, calc(100% - var(--space-4)));
     padding: var(--space-3);
     display: flex;

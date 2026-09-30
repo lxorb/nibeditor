@@ -22,6 +22,7 @@
   import { PAINT, store } from './themes/store.svelte'
   import { dur, LAYER } from './motion'
   import { trap } from './trap'
+  import Cross from './Cross.svelte'
 
   const STYLE_ID = 'nib-theme-miniatures'
   const PALETTE_ID = 'nib-theme-palettes'
@@ -211,7 +212,7 @@
       {/if}
 
       <button class="nib-glyph shut" onclick={() => store.close()} aria-label={t('Close')}>
-        <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+        <Cross />
       </button>
     </header>
 
@@ -385,7 +386,7 @@
 <style>
   /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 44;
+    --scrim-z: var(--z-store);
     --scrim-ink: 55%;
   }
 
@@ -398,7 +399,7 @@
     translate: -50% 0;
     width: min(52rem, calc(100vw - 4rem));
     height: 68vh;
-    z-index: 45;
+    z-index: var(--z-store);
     display: grid;
     grid-template-rows: auto 1fr;
     background: var(--surface);

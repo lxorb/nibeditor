@@ -158,13 +158,13 @@ function cardFor(link: LinkSpan, path: string | null, side: -1 | 1) {
     const body = document.createElement('div')
     // The card is a writing surface like every other place a note is read.
     // CodeMirror hangs a tooltip off the editor rather than inside its
-    // content, so without the id this sits outside `#write` - the one scope
+    // content, so without the class this sits outside `#write` - the one scope
     // every prose rule in @nib/themes and in a reader's own theme is written
     // against - and a code block in it would arrive with no frame and no
-    // colours, a callout with no icon, a table with no rules. Reading.svelte,
-    // a slide and the presenter carry it for the same reason.
-    body.id = 'write'
-    body.className = 'nib-note-preview-body'
+    // colours, a callout with no icon, a table with no rules. The class and not
+    // the id, which belongs to the note the card was opened over; see write.ts
+    // in @nib/themes.
+    body.className = 'nib-note-preview-body nib-write'
     body.textContent = label('loadingNote')
     dom.append(body)
 

@@ -175,7 +175,7 @@
      under it instead when there is no room above. */
   .over {
     position: absolute;
-    z-index: 7;
+    z-index: var(--z-bars);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -248,7 +248,7 @@
   }
 
   .gone:active {
-    background: color-mix(in srgb, var(--danger) 16%, transparent);
+    background: var(--danger-soft);
   }
 
   .swatch::after {

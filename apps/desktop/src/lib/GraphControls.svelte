@@ -444,7 +444,7 @@
     position: absolute;
     inset-inline-start: var(--space-2);
     bottom: calc(var(--space-2) + var(--inset-bottom));
-    z-index: 6;
+    z-index: var(--z-tools);
     display: flex;
     flex-direction: column;
     align-items: flex-start;

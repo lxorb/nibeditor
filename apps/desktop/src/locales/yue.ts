@@ -1128,8 +1128,6 @@ export const yue: Dictionary = {
   'Take theirs': '採用對方嘅',
   'Keep both': '兩者都留',
   'What synced': '同步記錄',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    '仲冇記錄。冇搬動任何嘢嘅同步唔會記下來。',
   'Clear the list': '清空列表',
   '{count} down': '下載{count}',
   '{count} up': '上載{count}',
@@ -1142,10 +1140,6 @@ export const yue: Dictionary = {
   '{count} notes would go back to what they said then.': '{count}篇筆記會回到當時嘅內容。',
   'Nothing has changed since then.': '從嗰時起冇任何變化。',
   '{count} notes went back.': '{count}篇筆記已回溯。',
-  'The account keeps a month of versions of every note that syncs.':
-    '帳戶會為每篇同步嘅筆記保留一個月嘅版本。',
-  'The account keeps a year of versions of every note that syncs.':
-    '帳戶會為每篇同步嘅筆記保留一年嘅版本。',
   'That did not work.': '冇成功。',
   'Signing in': '登入',
   'Ask for a code from an app': '要求應用程式提供驗證碼',
@@ -1375,7 +1369,6 @@ export const yue: Dictionary = {
   'Reset the bar': '重設工具列',
   'Pulling down': '下拉',
   'A pull past the top runs': '從頂端再下拉則執行',
-  'On the note, and on the list of them.': '喺筆記上，都喺筆記清單上。',
   Nothing: '無',
 
   // A way of looking at the space's graph, kept in the bookmarks.

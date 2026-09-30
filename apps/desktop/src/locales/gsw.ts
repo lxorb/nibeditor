@@ -1157,8 +1157,6 @@ export const gsw: Dictionary = {
   'Take theirs': 'Di anderi nä',
   'Keep both': 'Beidi behalte',
   'What synced': 'Was synchronisiert worde isch',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'No nüt. En Durchgang, wo nüt bewegt, wird nöd notiert.',
   'Clear the list': 'Lischte leere',
   '{count} down': '{count} abe',
   '{count} up': '{count} ufe',
@@ -1177,10 +1175,6 @@ export const gsw: Dictionary = {
     one: '{count} Notiz isch zruggagangen.',
     other: '{count} Notize sind zruggagangen.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'S Konto behaltet en Monet Fassige vo jedere synchronisierte Notiz.',
-  'The account keeps a year of versions of every note that syncs.':
-    'S Konto behaltet es Jahr Fassige vo jedere synchronisierte Notiz.',
   'That did not work.': 'Das het nöd funktioniert.',
   'Signing in': 'Aamäldig',
   'Ask for a code from an app': 'Code us ere App verlange',
@@ -1419,7 +1413,6 @@ export const gsw: Dictionary = {
   'Reset the bar': 'Leischte zrugsetze',
   'Pulling down': 'Abezieh',
   'A pull past the top runs': 'Zieh über de Afang startet',
-  'On the note, and on the list of them.': 'Uf de Notiz und uf de Lischte.',
   Nothing: 'Nüt',
 
   // A way of looking at the space's graph, kept in the bookmarks.

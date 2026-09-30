@@ -9,6 +9,7 @@
     "./contrast": "./src/contrast.ts",
     "./glass": "./src/glass.ts",
     "./raw": "./src/raw.ts",
+    "./write": "./src/write.ts",
     "./tokens.css": "./src/tokens.css",
     "./base.css": "./src/base.css",
     "./*": "./src/*"

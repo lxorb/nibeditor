@@ -1149,8 +1149,6 @@ export const id: Dictionary = {
   'Take theirs': 'Ambil milik mereka',
   'Keep both': 'Simpan keduanya',
   'What synced': 'Apa yang tersinkron',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Belum ada. Lintasan yang tidak memindahkan apa pun tidak dicatat.',
   'Clear the list': 'Bersihkan daftar',
   '{count} down': '{count} turun',
   '{count} up': '{count} naik',
@@ -1164,10 +1162,6 @@ export const id: Dictionary = {
     '{count} catatan akan kembali ke isinya waktu itu.',
   'Nothing has changed since then.': 'Tidak ada yang berubah sejak itu.',
   '{count} notes went back.': '{count} catatan dikembalikan.',
-  'The account keeps a month of versions of every note that syncs.':
-    'Akun menyimpan versi sebulan untuk setiap catatan yang tersinkron.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Akun menyimpan versi setahun untuk setiap catatan yang tersinkron.',
   'That did not work.': 'Itu tidak berhasil.',
   'Signing in': 'Masuk',
   'Ask for a code from an app': 'Minta kode dari sebuah aplikasi',
@@ -1409,7 +1403,6 @@ export const id: Dictionary = {
   'Reset the bar': 'Setel ulang bilah',
   'Pulling down': 'Menarik ke bawah',
   'A pull past the top runs': 'Tarikan melewati atas menjalankan',
-  'On the note, and on the list of them.': 'Pada catatan, dan pada daftarnya.',
   Nothing: 'Tidak ada',
 
   // A way of looking at the space's graph, kept in the bookmarks.

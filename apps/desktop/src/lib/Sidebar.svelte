@@ -998,7 +998,7 @@
     bottom: 0;
     inset-inline-end: -4px;
     width: 8px;
-    z-index: 2;
+    z-index: var(--z-lifted);
     cursor: col-resize;
   }
 
@@ -1135,9 +1135,9 @@
     min-width: 13px;
     height: 13px;
     padding: 0 3px;
-    border-radius: 7px;
+    border-radius: 99px;
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
     font-family: var(--font-ui);
     font-size: 9px;
     font-weight: var(--weight-strong);

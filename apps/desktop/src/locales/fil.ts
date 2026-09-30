@@ -1170,8 +1170,6 @@ export const fil: Dictionary = {
   'Take theirs': 'Kunin ang kanila',
   'Keep both': 'Itago ang dalawa',
   'What synced': 'Ano ang nag-sync',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Wala pa. Hindi itinatala ang pasadang walang inilipat.',
   'Clear the list': 'Alisin ang listahan',
   '{count} down': '{count} pababa',
   '{count} up': '{count} pataas',
@@ -1190,10 +1188,6 @@ export const fil: Dictionary = {
     one: 'Bumalik ang {count} tala.',
     other: 'Bumalik ang {count} tala.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'Itinatago ng account ang isang buwang bersyon ng bawat talang nagsi-sync.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Itinatago ng account ang isang taong bersyon ng bawat talang nagsi-sync.',
   'That did not work.': 'Hindi umubra.',
   'Signing in': 'Pag-sign in',
   'Ask for a code from an app': 'Humiling ng code mula sa app',
@@ -1441,7 +1435,6 @@ export const fil: Dictionary = {
   'Reset the bar': 'I-reset ang bar',
   'Pulling down': 'Paghila pababa',
   'A pull past the top runs': 'Ang hila lampas sa itaas ay magpapatakbo ng',
-  'On the note, and on the list of them.': 'Sa tala, at sa listahan nila.',
   Nothing: 'Wala',
 
   // A way of looking at the space's graph, kept in the bookmarks.

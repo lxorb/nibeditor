@@ -38,6 +38,7 @@
   import { canWriteIn } from './sharing.svelte'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
+  import Cross from './Cross.svelte'
 
   const {
     onsearch,
@@ -237,7 +238,7 @@
                       title={t('Remove')}
                       aria-label={t('Remove')}
                       onclick={() => writeItems(property.key, withoutItem(property, item))}
-                      >×</button
+                      ><Cross small /></button
                     >
                   {/if}
                 </span>
@@ -422,10 +423,19 @@
   }
 
   .chip-off {
+    display: grid;
+    place-items: center;
     line-height: 1;
     color: var(--muted);
     opacity: 0;
     transition: opacity var(--dur-fast) var(--ease-out);
+  }
+
+  /* The small cross a tab closes with, at the size it is on a tab. */
+  .chip-off :global(svg) {
+    width: 8px;
+    height: 8px;
+    stroke-width: 1.4;
   }
 
   @media (hover: hover) {

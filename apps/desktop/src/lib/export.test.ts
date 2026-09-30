@@ -94,7 +94,7 @@ describe('a styled export', () => {
     expect(html).toContain('#write')
     expect(html).toContain('@media print')
     expect(html).toContain('--accent: #5b4be0')
-    expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0f9b8e')
+    expect(buildHtml(NOTE, 'x.md', { accent: 'teal' })).toContain('--accent: #0d8277')
   })
 
   /** WebKit, which a Mac prints with, does not honour `break-after: avoid`, and a

@@ -69,6 +69,6 @@
     top: calc(var(--titlebar-height) + var(--space-4));
     left: 50%;
     translate: -50% 0;
-    z-index: 30;
+    z-index: var(--z-notice);
   }
 </style>

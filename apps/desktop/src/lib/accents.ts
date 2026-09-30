@@ -1,6 +1,12 @@
 /** The accent colours a person can pick, the way GNOME offers a row of them.
  *  Each carries its own shade per scheme, because a colour bright enough to
- *  read on black is usually too pale on white. */
+ *  read on black is usually too pale on white.
+ *
+ *  And each shade carries its scheme's `--accent-ink` at four and a half to one or
+ *  better - the dark ink on every dark shade, white on every light one - so a button,
+ *  a badge or a caret's name is readable whichever colour it was filled with. Teal,
+ *  green and yellow were a step too light for white on the light side (3.44, 4.10
+ *  and 4.48) and are a step darker. See test/ink.test.ts. */
 
 import { t } from './i18n.svelte'
 import type { ThemeSetting } from './themes/settings'
@@ -19,9 +25,9 @@ const VIOLET: Accent = { id: 'violet', name: 'Violet', dark: '#7c6bf5', light: '
 export const ACCENTS: Accent[] = [
   VIOLET,
   { id: 'blue', name: 'Blue', dark: '#3584e4', light: '#1c71d8' },
-  { id: 'teal', name: 'Teal', dark: '#33c7ba', light: '#0f9b8e' },
-  { id: 'green', name: 'Green', dark: '#3fcf8e', light: '#1a8f5c' },
-  { id: 'yellow', name: 'Yellow', dark: '#e5b23c', light: '#a26c07' },
+  { id: 'teal', name: 'Teal', dark: '#33c7ba', light: '#0d8277' },
+  { id: 'green', name: 'Green', dark: '#3fcf8e', light: '#188556' },
+  { id: 'yellow', name: 'Yellow', dark: '#e5b23c', light: '#9f6a07' },
   { id: 'orange', name: 'Orange', dark: '#f08437', light: '#c64600' },
   { id: 'red', name: 'Red', dark: '#f2555a', light: '#c01c28' },
   { id: 'pink', name: 'Pink', dark: '#e56ba8', light: '#c4287f' },
@@ -73,7 +79,7 @@ function toHex([r, g, b]: [number, number, number]): string {
   return `#${[r, g, b].map((one) => Math.round(one).toString(16).padStart(2, '0')).join('')}`
 }
 
-/** Moves a colour toward white or black, for the hover shade. */
+/** Moves a colour toward white or black, for the hover and the press shades. */
 function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   const target = towards === 'light' ? 255 : 0
   return toHex(
@@ -99,15 +105,18 @@ export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<strin
 
   return {
     '--accent': base,
-    // Hover moves away from the background, whichever way that is.
+    // Hover moves away from the background, whichever way that is, and a press a
+    // step further: away from the page is away from the ink too, so the words on a
+    // filled button only get clearer as it is pressed.
     '--accent-hover': shift(base, away),
+    '--accent-press': shift(base, away, 0.26),
     '--accent-soft': `rgb(${r} ${g} ${b} / ${soft})`,
     '--accent-line': `rgb(${r} ${g} ${b} / ${line})`,
     '--selection': `rgb(${r} ${g} ${b} / ${chosen})`,
   }
 }
 
-/** The accent as a theme setting: declared in code for its words and its five tokens,
+/** The accent as a theme setting: declared in code for its words and its six tokens,
  *  and shared, so it follows the reader across themes; see themes/settings.ts. */
 export function accentSetting(): ThemeSetting {
   return {

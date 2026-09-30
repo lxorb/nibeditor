@@ -1132,8 +1132,6 @@ export const th: Dictionary = {
   'Take theirs': 'เอาของเขา',
   'Keep both': 'เก็บทั้งสอง',
   'What synced': 'ซิงก์อะไรไป',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ยังไม่มี รอบที่ไม่ย้ายอะไรจะไม่ถูกบันทึก',
   'Clear the list': 'ล้างรายการ',
   '{count} down': 'ลง {count}',
   '{count} up': 'ขึ้น {count}',
@@ -1146,10 +1144,6 @@ export const th: Dictionary = {
   '{count} notes would go back to what they said then.': '{count} โน้ตจะกลับไปเป็นอย่างที่เคยเป็น',
   'Nothing has changed since then.': 'ไม่มีอะไรเปลี่ยนตั้งแต่ตอนนั้น',
   '{count} notes went back.': '{count} โน้ตย้อนกลับแล้ว',
-  'The account keeps a month of versions of every note that syncs.':
-    'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งเดือนของทุกโน้ตที่ซิงก์',
-  'The account keeps a year of versions of every note that syncs.':
-    'บัญชีเก็บเวอร์ชันย้อนหลังหนึ่งปีของทุกโน้ตที่ซิงก์',
   'That did not work.': 'ทำไม่สำเร็จ',
   'Signing in': 'กำลังเข้าสู่ระบบ',
   'Ask for a code from an app': 'ขอรหัสจากแอป',
@@ -1381,7 +1375,6 @@ export const th: Dictionary = {
   'Reset the bar': 'ตั้งแถบใหม่',
   'Pulling down': 'การลากลง',
   'A pull past the top runs': 'ลากเลยด้านบนแล้วสั่ง',
-  'On the note, and on the list of them.': 'บนโน้ตและบนรายการโน้ต',
   Nothing: 'ไม่มี',
 
   // A way of looking at the space's graph, kept in the bookmarks.

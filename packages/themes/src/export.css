@@ -73,6 +73,9 @@ body {
     --danger: #c01c28;
     --success: #1a8f5c;
     --selection: transparent;
+    /* Paper takes the light side's accent (see accentCss in export.ts), and with it
+       the light side's ink on a fill of it. */
+    --accent-ink: #ffffff;
   }
 
   html,

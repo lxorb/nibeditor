@@ -1219,7 +1219,7 @@
   /* Above the drawer, which is fixed over the whole height of the window. */
   .notices.over {
     position: relative;
-    z-index: 31;
+    z-index: var(--z-notice);
   }
 
   /* Room only around something. `:global`, or the compiler drops a rule about
@@ -1243,7 +1243,7 @@
     position: absolute;
     top: max(var(--space-2), var(--inset-top));
     inset-inline-end: max(var(--space-2), var(--inset-end));
-    z-index: 20;
+    z-index: var(--z-float);
     display: grid;
     place-items: center;
     padding: 0;
@@ -1320,17 +1320,17 @@
   /* Sits above the document, clear of the gesture bar. */
   .fab {
     position: absolute;
-    inset-inline-end: max(16px, var(--inset-end));
-    bottom: calc(16px + var(--inset-bottom));
-    z-index: 20;
-    width: 56px;
-    height: 56px;
+    inset-inline-end: max(var(--space-4), var(--inset-end));
+    bottom: calc(var(--space-4) + var(--inset-bottom));
+    z-index: var(--z-float);
+    width: var(--touch-row);
+    height: var(--touch-row);
     display: grid;
     place-items: center;
     border: none;
-    border-radius: 18px;
+    border-radius: calc(var(--touch-row) * var(--radius-third));
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
     box-shadow: var(--shadow-lg);
     cursor: default;
     transition: transform var(--dur-fast) var(--ease-spring);
@@ -1341,8 +1341,8 @@
   }
 
   .fab svg {
-    width: 24px;
-    height: 24px;
+    width: var(--touch-icon);
+    height: var(--touch-icon);
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
@@ -1364,7 +1364,7 @@
     position: fixed;
     inset-block: 0 var(--keyboard, 0px);
     inset-inline: 0 auto;
-    z-index: 30;
+    z-index: var(--z-drawer);
     transform: translateX(calc(var(--dir) * -100%));
     transition: transform var(--dur-base) var(--ease-out);
     box-shadow: var(--shadow-lg);
@@ -1408,7 +1408,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 29;
+    z-index: calc(var(--z-drawer) - 1);
     background: color-mix(in srgb, var(--bg) 62%, transparent);
     animation: scrim-in var(--dur-fast) var(--ease-out);
   }
@@ -1439,7 +1439,7 @@
      the note rather than beside it. */
   :global([data-drawer][data-narrow]) .panels.right {
     width: min(86%, 20rem);
-    z-index: 30;
+    z-index: var(--z-drawer);
     box-shadow: var(--shadow-lg);
     transition: transform var(--dur-base) var(--ease-out);
     transform: translateX(calc(var(--dir) * 100%));
@@ -1470,7 +1470,7 @@
      the list, back over it when a note is chosen. */
   :global([data-drawer][data-narrow]) .panels {
     width: 100%;
-    z-index: 1;
+    z-index: var(--z-raised);
     transform: none;
     box-shadow: none;
     transition: none;
@@ -1480,7 +1480,7 @@
      in a drag: at rest off the screen it was a grey band over the list's end. */
   :global([data-drawer][data-narrow]) .document {
     position: relative;
-    z-index: 2;
+    z-index: var(--z-lifted);
     background: var(--bg);
     box-shadow: calc(var(--dir) * -16px) 0 40px rgb(0 0 0 / calc(0.3 * var(--shade)));
     transition:

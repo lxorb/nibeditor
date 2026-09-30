@@ -209,7 +209,7 @@ const style = EditorView.baseTheme({
     padding: '0 4px 1px',
     borderRadius: '3px 3px 3px 0',
     background: 'var(--peer)',
-    color: '#fff',
+    color: 'var(--accent-ink)',
     font: `500 10px/1.5 var(--font-ui)`,
     letterSpacing: '0.02em',
     whiteSpace: 'nowrap',

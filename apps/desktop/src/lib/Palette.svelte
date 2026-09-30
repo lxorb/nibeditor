@@ -381,7 +381,7 @@
 <style>
   /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 20;
+    --scrim-z: var(--z-screen);
   }
 
   /* The shape is `.nib-screen` in the themes package - the surface, the corner,
@@ -393,7 +393,7 @@
     --screen-width: 34rem;
 
     top: 16vh;
-    z-index: 21;
+    z-index: var(--z-screen);
     overflow: hidden;
   }
 

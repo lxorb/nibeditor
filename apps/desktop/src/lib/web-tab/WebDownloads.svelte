@@ -116,7 +116,7 @@
     position: absolute;
     top: 100%;
     right: var(--space-2);
-    z-index: 20;
+    z-index: var(--z-float);
     width: min(22rem, calc(100% - var(--space-4)));
     max-width: none;
     max-height: 60vh;

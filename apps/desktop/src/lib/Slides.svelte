@@ -544,7 +544,7 @@
   <div class="stage">
     {#key place.slide}
       <div class="slide" data-shape={current?.shape ?? 'prose'}>
-        <div id="write" bind:this={page}>
+        <div class="nib-write" bind:this={page}>
           <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, through the renderer the reading view and every export use -->
           {@html current?.html ?? ''}
         </div>

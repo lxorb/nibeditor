@@ -1141,8 +1141,6 @@ export const vi: Dictionary = {
   'Take theirs': 'Lấy bản của họ',
   'Keep both': 'Giữ cả hai',
   'What synced': 'Đã đồng bộ gì',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Chưa có gì. Lượt nào không chuyển gì thì không ghi lại.',
   'Clear the list': 'Xoá danh sách',
   '{count} down': 'xuống {count}',
   '{count} up': 'lên {count}',
@@ -1156,10 +1154,6 @@ export const vi: Dictionary = {
     '{count} ghi chú sẽ trở về nội dung lúc đó.',
   'Nothing has changed since then.': 'Không có gì đổi từ lúc đó.',
   '{count} notes went back.': '{count} ghi chú đã trở về.',
-  'The account keeps a month of versions of every note that syncs.':
-    'Tài khoản giữ một tháng phiên bản của mọi ghi chú có đồng bộ.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Tài khoản giữ một năm phiên bản của mọi ghi chú có đồng bộ.',
   'That did not work.': 'Không thành công.',
   'Signing in': 'Đang đăng nhập',
   'Ask for a code from an app': 'Xin mã từ một ứng dụng',
@@ -1398,7 +1392,6 @@ export const vi: Dictionary = {
   'Reset the bar': 'Đặt lại thanh',
   'Pulling down': 'Kéo xuống',
   'A pull past the top runs': 'Kéo quá đầu trang sẽ chạy',
-  'On the note, and on the list of them.': 'Trên ghi chú và trên danh sách ghi chú.',
   Nothing: 'Không có gì',
 
   // A way of looking at the space's graph, kept in the bookmarks.

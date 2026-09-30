@@ -708,7 +708,7 @@
      hidden and the picture of it arriving. */
   .head {
     position: relative;
-    z-index: 1;
+    z-index: var(--z-raised);
     flex: none;
   }
 

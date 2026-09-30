@@ -233,6 +233,6 @@
     position: absolute;
     top: calc(100% + 4px);
     inset-inline-start: 0;
-    z-index: 6;
+    z-index: var(--z-popover);
   }
 </style>

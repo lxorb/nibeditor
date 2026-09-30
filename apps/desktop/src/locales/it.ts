@@ -1186,8 +1186,6 @@ export const it: Dictionary = {
   'Take theirs': 'Prendi la loro',
   'Keep both': 'Tieni entrambe',
   'What synced': 'Cosa si è sincronizzato',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Ancora nulla. Un passaggio che non muove nulla non viene annotato.',
   'Clear the list': 'Svuota l’elenco',
   '{count} down': '{count} scaricate',
   '{count} up': '{count} inviate',
@@ -1212,10 +1210,6 @@ export const it: Dictionary = {
     many: '{count} note sono tornate indietro.',
     other: '{count} note sono tornate indietro.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'L’account tiene un mese di versioni di ogni nota che si sincronizza.',
-  'The account keeps a year of versions of every note that syncs.':
-    'L’account tiene un anno di versioni di ogni nota che si sincronizza.',
   'That did not work.': 'Non ha funzionato.',
   'Signing in': 'Accesso in corso',
   'Ask for a code from an app': 'Chiedi un codice a un’app',
@@ -1459,7 +1453,6 @@ export const it: Dictionary = {
   'Reset the bar': 'Ripristina la barra',
   'Pulling down': 'Trascinamento verso il basso',
   'A pull past the top runs': 'Un trascinamento oltre l’inizio esegue',
-  'On the note, and on the list of them.': 'Sulla nota e sul loro elenco.',
   Nothing: 'Niente',
 
   // A way of looking at the space's graph, kept in the bookmarks.

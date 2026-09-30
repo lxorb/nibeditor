@@ -516,7 +516,7 @@
     left: var(--space-2);
     right: var(--space-2);
     bottom: calc(var(--space-2) + var(--inset-bottom));
-    z-index: 6;
+    z-index: var(--z-tools);
     display: flex;
     flex-direction: column;
     /* The bar is as wide as what is on it and no wider, centred in the pane, so a

@@ -117,7 +117,7 @@
      opens, and under the first sync's surface (40), which takes over once a sign-in
      lands. See .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 28;
+    --scrim-z: var(--z-screen);
     --scrim-ink: 100%;
     --scrim-blur: 0px;
   }
@@ -130,7 +130,7 @@
      question's way down it: there is nothing else on screen to leave room for. */
   .card {
     --screen-width: 26rem;
-    z-index: 29;
+    z-index: var(--z-screen);
     top: 50%;
     translate: -50% -50%;
     padding: var(--space-6) var(--space-5) var(--space-5);

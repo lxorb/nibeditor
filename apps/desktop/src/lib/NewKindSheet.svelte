@@ -136,7 +136,7 @@
   .sheet {
     top: 50%;
     translate: -50% -50%;
-    z-index: 51;
+    z-index: var(--z-sheet);
     display: grid;
     grid-template-columns: repeat(var(--kinds), minmax(0, auto));
     gap: var(--space-3);

@@ -227,7 +227,7 @@
             <span
               class="nib-badge"
               style:--badge-fill={colourOf(person)}
-              style:--badge-ink="#fff"
+              style:--badge-ink="var(--accent-ink)"
               aria-hidden="true">{initial(name(person))}</span
             >
             <span class="name">
@@ -258,7 +258,7 @@
         <span
           class="nib-badge"
           style:--badge-fill={accentFor(who.owner.email, theme.current)}
-          style:--badge-ink="#fff"
+          style:--badge-ink="var(--accent-ink)"
           aria-hidden="true">{initial(called(who.owner))}</span
         >
         <span class="name">
@@ -279,7 +279,7 @@
           <span
             class="nib-badge"
             style:--badge-fill={person.pending ? 'var(--surface-3)' : colourOf(person)}
-            style:--badge-ink={person.pending ? colourOf(person) : '#fff'}
+            style:--badge-ink={person.pending ? colourOf(person) : 'var(--accent-ink)'}
             aria-hidden="true">{initial(name(person))}</span
           >
           <span class="name">
@@ -411,7 +411,7 @@
     border: none;
     border-radius: var(--radius-row);
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
     cursor: default;
     transition: background var(--dur-fast) var(--ease-out);
   }

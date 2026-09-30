@@ -64,7 +64,7 @@
       <span
         class="nib-badge"
         style:--badge-fill={accentFor(client, theme.current)}
-        style:--badge-ink="#fff"
+        style:--badge-ink="var(--accent-ink)"
         aria-hidden="true">{initial(client)}</span
       >
       <span class="client">{t('{client} wants to connect', { client })}</span>
@@ -82,7 +82,7 @@
     top: calc(var(--titlebar-height) + var(--space-2));
     inset-inline-end: var(--space-3);
     /* Over the panes and under a sheet's scrim, where the notices row is. */
-    z-index: 31;
+    z-index: var(--z-notice);
     width: min(20rem, calc(100vw - var(--space-6)));
     max-width: none;
     padding: var(--space-3);

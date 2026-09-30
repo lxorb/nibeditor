@@ -324,7 +324,7 @@
      is left here is where this one is put. */
   .menu {
     position: fixed;
-    z-index: 60;
+    z-index: var(--z-menu);
     min-width: 11rem;
     padding: var(--space-1);
     transform-origin: top left;
@@ -361,7 +361,7 @@
   }
 
   button.danger:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--danger) 16%, transparent);
+    background: var(--danger-soft);
     color: var(--danger);
   }
 
@@ -435,7 +435,7 @@
      callout, which sits beside a selection that has to stay readable, and dimmed
      under a sheet, which is a layer over the app. */
   .scrim {
-    --scrim-z: 60;
+    --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
     --scrim-blur: 2px;
     /* A finger on it neither scrolls nor pinches what is underneath. */
@@ -443,7 +443,7 @@
   }
 
   .touch {
-    z-index: 61;
+    z-index: var(--z-menu);
   }
 
   /* The row scale gives a thumb the whole line; what a sheet adds is the danger
@@ -453,7 +453,7 @@
   }
 
   .touch button.danger:active:not(:disabled) {
-    background: color-mix(in srgb, var(--danger) 16%, transparent);
+    background: var(--danger-soft);
   }
 
   .touch hr {

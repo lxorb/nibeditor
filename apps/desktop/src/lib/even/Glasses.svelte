@@ -308,7 +308,7 @@
      what happened the one time it was more than that. */
   .frame {
     position: fixed;
-    z-index: 3;
+    z-index: var(--z-drawn);
     box-sizing: border-box;
     border: 1.5px solid var(--accent);
     border-radius: var(--radius-md);

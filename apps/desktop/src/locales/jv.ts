@@ -1143,8 +1143,6 @@ export const jv: Dictionary = {
   'Take theirs': 'Jupuk duweke',
   'Keep both': 'Simpen loro-lorone',
   'What synced': 'Apa sing diselarasake',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Durung ana. Liwatan sing ora mindhah apa-apa ora dicathet.',
   'Clear the list': 'Busak dhaptare',
   '{count} down': '{count} mudhun',
   '{count} up': '{count} munggah',
@@ -1158,10 +1156,6 @@ export const jv: Dictionary = {
     '{count} cathetan bakal bali menyang isine nalika kuwi.',
   'Nothing has changed since then.': 'Ora ana sing owah wiwit kuwi.',
   '{count} notes went back.': '{count} cathetan wis dibalekake.',
-  'The account keeps a month of versions of every note that syncs.':
-    'Akun nyimpen versi sasi kanggo saben cathetan sing diselarasake.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Akun nyimpen versi taun kanggo saben cathetan sing diselarasake.',
   'That did not work.': 'Kuwi ora kasil.',
   'Signing in': 'Mlebu',
   'Ask for a code from an app': 'Njaluk kode saka aplikasi',
@@ -1402,7 +1396,6 @@ export const jv: Dictionary = {
   'Reset the bar': 'Balèkaké palang',
   'Pulling down': 'Nyèrèd mangisor',
   'A pull past the top runs': 'Sèrèdan ngliwati ndhuwur nglakokaké',
-  'On the note, and on the list of them.': 'Ing cathetan, lan ing daftaré.',
   Nothing: 'Ora ana',
 
   // A way of looking at the space's graph, kept in the bookmarks.

@@ -1149,8 +1149,6 @@ export const gu: Dictionary = {
   'Take theirs': 'તેમનું લો',
   'Keep both': 'બંને રાખો',
   'What synced': 'શું સમન્વય થયું',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'હજી કંઈ નહીં. જે ફેરો કંઈ ખસેડતો નથી તે નોંધાતો નથી.',
   'Clear the list': 'યાદી ખાલી કરો',
   '{count} down': '{count} નીચે',
   '{count} up': '{count} ઉપર',
@@ -1166,10 +1164,6 @@ export const gu: Dictionary = {
   },
   'Nothing has changed since then.': 'ત્યારથી કંઈ બદલાયું નથી.',
   '{count} notes went back.': { one: '{count} નોંધ પાછી ગઈ.', other: '{count} નોંધ પાછી ગઈ.' },
-  'The account keeps a month of versions of every note that syncs.':
-    'ખાતું સમન્વય થતી દરેક નોંધની એક મહિનાની આવૃત્તિ રાખે છે.',
-  'The account keeps a year of versions of every note that syncs.':
-    'ખાતું સમન્વય થતી દરેક નોંધની એક વર્ષની આવૃત્તિ રાખે છે.',
   'That did not work.': 'એ ચાલ્યું નહીં.',
   'Signing in': 'સાઇન ઇન',
   'Ask for a code from an app': 'એપ પાસેથી કોડ માંગો',
@@ -1401,7 +1395,6 @@ export const gu: Dictionary = {
   'Reset the bar': 'પટ્ટી રીસેટ કરો',
   'Pulling down': 'નીચે ખેંચવું',
   'A pull past the top runs': 'ઉપરથી ખેંચતાં ચાલે',
-  'On the note, and on the list of them.': 'નોંધ પર, અને તેમની યાદી પર.',
   Nothing: 'કંઈ નહીં',
 
   // A way of looking at the space's graph, kept in the bookmarks.

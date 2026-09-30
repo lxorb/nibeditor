@@ -37,6 +37,7 @@
   import { dur } from './motion'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive, leave } from './slide'
+  import Cross from './Cross.svelte'
 
   /** The three things a match may be fussy about: the same three the editor's
    *  query already has, named here as what they are rather than declared again,
@@ -274,9 +275,7 @@
         aria-label={t('Close')}
         onclick={onclose}
       >
-        <svg viewBox="0 0 13 13" aria-hidden="true"
-          ><path d="M3.6 3.6l5.8 5.8M9.4 3.6l-5.8 5.8" /></svg
-        >
+        <Cross />
       </button>
     </span>
   </div>
@@ -535,14 +534,14 @@
     .apply:hover:not(:disabled) {
       background: var(--accent);
       border-color: var(--accent);
-      color: #fff;
+      color: var(--accent-ink);
     }
   }
 
   .apply:active:not(:disabled) {
     background: var(--accent-press);
     border-color: var(--accent-press);
-    color: #fff;
+    color: var(--accent-ink);
   }
 
   .apply:disabled {

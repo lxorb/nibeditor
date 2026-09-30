@@ -616,7 +616,7 @@
     height: 100%;
   }
 
-  /* The writing surface carries Typora's `#write`, which in the app is the page
+  /* The writing surface is Typora's `#write`, which in the app is the page
      column: a measure, a margin that centres it, and half a screen of padding
      underneath. A card is not a page, so inside one it is the card - at the same
      size and in the same place as the rendered words it replaces, which is what

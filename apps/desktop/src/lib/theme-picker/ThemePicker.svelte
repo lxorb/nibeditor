@@ -394,7 +394,7 @@
   /* The layer behind it; see .nib-scrim in packages/themes. Over the panes and
      under a menu, which is the one thing that can be opened on top of it. */
   .scrim {
-    --scrim-z: 57;
+    --scrim-z: var(--z-menu);
   }
 
   /* The surface is `.nib-layer` where it hangs from a point and `.nib-screen` where
@@ -405,7 +405,7 @@
     --screen-width: var(--picker-width);
 
     position: fixed;
-    z-index: 58;
+    z-index: var(--z-menu);
     width: min(var(--picker-width), calc(100vw - 16px));
     display: flex;
     flex-direction: column;

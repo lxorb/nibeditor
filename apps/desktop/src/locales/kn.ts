@@ -1161,8 +1161,6 @@ export const kn: Dictionary = {
   'Take theirs': 'ಅವರದನ್ನು ತೆಗೆದುಕೊಳ್ಳಿ',
   'Keep both': 'ಎರಡನ್ನೂ ಇಡಿ',
   'What synced': 'ಸಿಂಕ್ ಆದವು',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ಇನ್ನೂ ಏನೂ ಇಲ್ಲ. ಏನನ್ನೂ ಸರಿಸದ ಸಿಂಕ್ ದಾಖಲಾಗುವುದಿಲ್ಲ.',
   'Clear the list': 'ಪಟ್ಟಿ ತೆರವುಗೊಳಿಸಿ',
   '{count} down': '{count} ಇಳಿದವು',
   '{count} up': '{count} ಏರಿದವು',
@@ -1181,10 +1179,6 @@ export const kn: Dictionary = {
     one: '{count} ಟಿಪ್ಪಣಿ ಮರಳಿತು.',
     other: '{count} ಟಿಪ್ಪಣಿಗಳು ಮರಳಿದವು.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ತಿಂಗಳ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
-  'The account keeps a year of versions of every note that syncs.':
-    'ಸಿಂಕ್ ಆಗುವ ಪ್ರತಿ ಟಿಪ್ಪಣಿಯ ಒಂದು ವರ್ಷದ ಆವೃತ್ತಿಗಳನ್ನು ಖಾತೆ ಇಡುತ್ತದೆ.',
   'That did not work.': 'ಅದು ಕೆಲಸ ಮಾಡಲಿಲ್ಲ.',
   'Signing in': 'ಸೈನ್ ಇನ್ ಆಗುತ್ತಿದೆ',
   'Ask for a code from an app': 'ಅಪ್ಲಿಕೇಶನ್‌ನಿಂದ ಕೋಡ್ ಕೇಳಿ',
@@ -1423,7 +1417,6 @@ export const kn: Dictionary = {
   'Reset the bar': 'ಪಟ್ಟಿಯನ್ನು ಮರುಹೊಂದಿಸಿ',
   'Pulling down': 'ಕೆಳಗೆ ಎಳೆಯುವುದು',
   'A pull past the top runs': 'ಮೇಲಿನಿಂದ ಎಳೆದರೆ ಚಲಿಸುತ್ತದೆ',
-  'On the note, and on the list of them.': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿ, ಮತ್ತು ಅವುಗಳ ಪಟ್ಟಿಯಲ್ಲಿ.',
   Nothing: 'ಏನೂ ಇಲ್ಲ',
 
   // A way of looking at the space's graph, kept in the bookmarks.

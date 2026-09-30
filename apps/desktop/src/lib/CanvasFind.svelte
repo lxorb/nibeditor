@@ -11,6 +11,7 @@
   import type { Canvas } from './canvas/format'
   import { matches } from './canvas/find'
   import { t } from './i18n.svelte'
+  import Cross from './Cross.svelte'
 
   const {
     canvas,
@@ -90,8 +91,8 @@
   <button type="button" aria-label={t('Next')} title={t('Next')} onclick={() => go(1)}>
     <svg viewBox="0 0 14 14"><path d="M4 5.5 7 8.5l3-3" /></svg>
   </button>
-  <button type="button" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
-    <svg viewBox="0 0 14 14"><path d="M4 4l6 6M10 4l-6 6" /></svg>
+  <button type="button" class="shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
+    <Cross />
   </button>
 </div>
 
@@ -124,7 +125,7 @@
     position: absolute;
     right: var(--space-3);
     top: var(--space-3);
-    z-index: 7;
+    z-index: var(--z-bars);
     align-items: center;
     gap: 2px;
   }
@@ -156,7 +157,8 @@
     text-align: end;
   }
 
-  svg {
+  svg,
+  .shut :global(svg) {
     width: 14px;
     height: 14px;
     fill: none;
@@ -171,7 +173,7 @@
     position: absolute;
     right: var(--space-3);
     top: calc(var(--space-3) + 40px);
-    z-index: 7;
+    z-index: var(--z-bars);
     width: 280px;
     max-height: 40vh;
     margin: 0;

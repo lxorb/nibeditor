@@ -24,6 +24,7 @@
   import { scrollbar } from './scrollbar'
   import { LAYER } from './motion'
   import { trap } from './trap'
+  import Cross from './Cross.svelte'
 
   const {
     open,
@@ -85,7 +86,7 @@
            nothing about it is drawn differently. -->
       <h2 class="title">{title}</h2>
       <button class="nib-glyph shut" aria-label={t('Close')} title={t('Close')} onclick={onclose}>
-        <svg viewBox="0 0 14 14"><path d="M3.5 3.5l7 7M10.5 3.5l-7 7" /></svg>
+        <Cross />
       </button>
     </div>
 
@@ -112,7 +113,7 @@
     flex-direction: column;
     max-height: 72vh;
     overflow: hidden;
-    z-index: 51;
+    z-index: var(--z-sheet);
   }
 
   /* The head stays while the cards under it scroll: on a phone the sheet is most

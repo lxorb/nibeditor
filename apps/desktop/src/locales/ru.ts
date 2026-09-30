@@ -1207,8 +1207,6 @@ export const ru: Dictionary = {
   'Take theirs': 'Взять чужую',
   'Keep both': 'Оставить обе',
   'What synced': 'Что синхронизировалось',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Пока ничего. Проход, который ничего не переносит, не записывается.',
   'Clear the list': 'Очистить список',
   '{count} down': 'получено: {count}',
   '{count} up': 'отправлено: {count}',
@@ -1236,10 +1234,6 @@ export const ru: Dictionary = {
     many: '{count} заметок вернулись.',
     other: '{count} заметки вернулись.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'Аккаунт хранит версии за месяц для каждой синхронизируемой заметки.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Аккаунт хранит версии за год для каждой синхронизируемой заметки.',
   'That did not work.': 'Не получилось.',
   'Signing in': 'Вход',
   'Ask for a code from an app': 'Запрашивать код из приложения',
@@ -1475,7 +1469,6 @@ export const ru: Dictionary = {
   'Reset the bar': 'Сбросить панель',
   'Pulling down': 'Потягивание вниз',
   'A pull past the top runs': 'Потягивание за верх запускает',
-  'On the note, and on the list of them.': 'На заметке и на их списке.',
   Nothing: 'Ничего',
 
   // A way of looking at the space's graph, kept in the bookmarks.

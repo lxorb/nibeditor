@@ -598,6 +598,7 @@
             <Editor
               bind:view={columnViews[one.id]}
               tab={one}
+              focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
               kept={strip}
               onimage={saveImage}
               resolveimage={resolveImage}
@@ -631,6 +632,7 @@
       <Editor
         bind:view
         {tab}
+        focused={workspace.panes.focusedId === pane.id}
         kept={strip}
         onimage={saveImage}
         resolveimage={resolveImage}
@@ -697,7 +699,7 @@
      lands between the tabs rather than being taken by the pane underneath. */
   .head {
     position: relative;
-    z-index: 6;
+    z-index: var(--z-tools);
     display: flex;
     align-items: stretch;
     flex: none;
@@ -759,7 +761,7 @@
   .spine {
     position: sticky;
     inset-inline-start: 0;
-    z-index: 1;
+    z-index: var(--z-raised);
     flex: none;
     width: var(--titlebar-height);
     border: 0;
@@ -827,7 +829,7 @@
   .zones {
     position: absolute;
     inset: 0;
-    z-index: 5;
+    z-index: var(--z-grip);
     /* The zones themselves take the drag, not the gaps between them: a canvas
        has to keep the middle of the pane, which is a card's place to land. */
     pointer-events: none;

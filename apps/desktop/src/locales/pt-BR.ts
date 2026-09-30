@@ -1174,8 +1174,6 @@ export const ptBR: Dictionary = {
   'Take theirs': 'Pegar a outra',
   'Keep both': 'Guardar as duas',
   'What synced': 'O que sincronizou',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Nada ainda. Uma passada que não move nada não é anotada.',
   'Clear the list': 'Limpar a lista',
   '{count} down': '{count} recebidas',
   '{count} up': '{count} enviadas',
@@ -1196,10 +1194,6 @@ export const ptBR: Dictionary = {
     many: '{count} notas voltaram.',
     other: '{count} notas voltaram.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'A conta guarda um mês de versões de cada nota que sincroniza.',
-  'The account keeps a year of versions of every note that syncs.':
-    'A conta guarda um ano de versões de cada nota que sincroniza.',
   'That did not work.': 'Isso não funcionou.',
   'Signing in': 'Entrando',
   'Ask for a code from an app': 'Pedir um código a um app',
@@ -1438,7 +1432,6 @@ export const ptBR: Dictionary = {
   'Reset the bar': 'Restaurar a barra',
   'Pulling down': 'Puxar para baixo',
   'A pull past the top runs': 'Puxar além do topo executa',
-  'On the note, and on the list of them.': 'Na nota e na lista delas.',
   Nothing: 'Nada',
 
   // A way of looking at the space's graph, kept in the bookmarks.

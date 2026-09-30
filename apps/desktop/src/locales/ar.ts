@@ -1223,8 +1223,6 @@ export const ar: Dictionary = {
   'Take theirs': 'أخذ نسختهم',
   'Keep both': 'الاحتفاظ بالاثنتين',
   'What synced': 'ما تزامن',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'لا شيء بعد. الجولة التي لا تنقل شيئًا لا تُسجّل.',
   'Clear the list': 'تفريغ القائمة',
   '{count} down': '{count} وارد',
   '{count} up': '{count} صادر',
@@ -1258,10 +1256,6 @@ export const ar: Dictionary = {
     many: 'عادت {count} ملاحظة.',
     other: 'عادت {count} ملاحظة.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'يحفظ الحساب نسخ شهر لكل ملاحظة تتزامن.',
-  'The account keeps a year of versions of every note that syncs.':
-    'يحفظ الحساب نسخ سنة لكل ملاحظة تتزامن.',
   'That did not work.': 'لم ينجح ذلك.',
   'Signing in': 'جارٍ تسجيل الدخول',
   'Ask for a code from an app': 'طلب رمز من تطبيق',
@@ -1493,7 +1487,6 @@ export const ar: Dictionary = {
   'Reset the bar': 'إعادة الشريط',
   'Pulling down': 'السحب للأسفل',
   'A pull past the top runs': 'سحبة بعد الأعلى تشغّل',
-  'On the note, and on the list of them.': 'على الملاحظة وعلى قائمتها.',
   Nothing: 'لا شيء',
 
   // A way of looking at the space's graph, kept in the bookmarks.

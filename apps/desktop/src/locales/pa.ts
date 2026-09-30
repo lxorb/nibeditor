@@ -1159,8 +1159,6 @@ export const pa: Dictionary = {
   'Take theirs': 'ਉਨ੍ਹਾਂ ਦੀ ਲਵੋ',
   'Keep both': 'ਦੋਵੇਂ ਰੱਖੋ',
   'What synced': 'ਕੀ ਸਮਕਾਲ ਹੋਇਆ',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ਹਾਲੇ ਕੁਝ ਨਹੀਂ। ਜੋ ਗੇੜਾ ਕੁਝ ਨਹੀਂ ਹਿਲਾਉਂਦਾ ਉਹ ਨਹੀਂ ਲਿਖਿਆ ਜਾਂਦਾ।',
   'Clear the list': 'ਸੂਚੀ ਖ਼ਾਲੀ ਕਰੋ',
   '{count} down': '{count} ਹੇਠਾਂ',
   '{count} up': '{count} ਉੱਪਰ',
@@ -1176,10 +1174,6 @@ export const pa: Dictionary = {
   },
   'Nothing has changed since then.': 'ਉਸ ਵੇਲੇ ਤੋਂ ਕੁਝ ਨਹੀਂ ਬਦਲਿਆ।',
   '{count} notes went back.': { one: '{count} ਨੋਟ ਵਾਪਸ ਗਈ।', other: '{count} ਨੋਟਾਂ ਵਾਪਸ ਗਈਆਂ।' },
-  'The account keeps a month of versions of every note that syncs.':
-    'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਮਹੀਨੇ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
-  'The account keeps a year of versions of every note that syncs.':
-    'ਖਾਤਾ ਸਮਕਾਲ ਹੁੰਦੀ ਹਰ ਨੋਟ ਦੇ ਇੱਕ ਸਾਲ ਦੇ ਰੂਪ ਰੱਖਦਾ ਹੈ।',
   'That did not work.': 'ਉਹ ਨਹੀਂ ਚੱਲਿਆ।',
   'Signing in': 'ਸਾਈਨ ਇਨ',
   'Ask for a code from an app': 'ਐਪ ਤੋਂ ਕੋਡ ਮੰਗੋ',
@@ -1415,7 +1409,6 @@ export const pa: Dictionary = {
   'Reset the bar': 'ਪੱਟੀ ਰੀਸੈੱਟ ਕਰੋ',
   'Pulling down': 'ਹੇਠਾਂ ਖਿੱਚਣਾ',
   'A pull past the top runs': 'ਉੱਪਰੋਂ ਖਿੱਚਣ ’ਤੇ ਚੱਲੇ',
-  'On the note, and on the list of them.': 'ਨੋਟ ਉੱਤੇ, ਅਤੇ ਉਨ੍ਹਾਂ ਦੀ ਸੂਚੀ ਉੱਤੇ।',
   Nothing: 'ਕੁਝ ਨਹੀਂ',
 
   // A way of looking at the space's graph, kept in the bookmarks.

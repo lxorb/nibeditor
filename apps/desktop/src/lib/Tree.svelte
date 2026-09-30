@@ -1257,7 +1257,7 @@
      so nothing here may set one. */
   :global(.row.carried) {
     position: fixed;
-    z-index: 90;
+    z-index: var(--z-carried);
     pointer-events: none;
     border-radius: var(--radius-sm);
     background: var(--surface);

@@ -38,7 +38,7 @@
   .track {
     position: absolute;
     inset: 0 0 auto 0;
-    z-index: 15;
+    z-index: var(--z-float);
     pointer-events: none;
     animation: fade-in var(--dur-fast) var(--ease-out);
   }

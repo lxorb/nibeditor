@@ -34,7 +34,7 @@ interface Common {
   /** The app's own rather than a theme's: inherited by every theme that does not
    *  paint over it, and filed under the app, so it follows the reader across themes. */
   shared?: boolean
-  /** Every custom property a value writes: the accent is five tokens, not one. */
+  /** Every custom property a value writes: the accent is six tokens, not one. */
   paint(value: ThemeValue, scheme: Scheme): Record<string, string>
 }
 

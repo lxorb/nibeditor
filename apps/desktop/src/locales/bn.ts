@@ -1150,8 +1150,6 @@ export const bn: Dictionary = {
   'Take theirs': 'তাদেরটি নিন',
   'Keep both': 'দুটিই রাখুন',
   'What synced': 'কী সিংক হয়েছে',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'এখনো কিছু নেই। যে পাসে কিছু সরে না, তা লেখা হয় না।',
   'Clear the list': 'তালিকা মুছুন',
   '{count} down': '{count} নামল',
   '{count} up': '{count} উঠল',
@@ -1170,10 +1168,6 @@ export const bn: Dictionary = {
     one: '{count}টি নোট ফিরে গেছে।',
     other: '{count}টি নোট ফিরে গেছে।',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক মাসের ভার্সন রাখে।',
-  'The account keeps a year of versions of every note that syncs.':
-    'অ্যাকাউন্ট সিংক হওয়া প্রতিটি নোটের এক বছরের ভার্সন রাখে।',
   'That did not work.': 'এটি কাজ করল না।',
   'Signing in': 'সাইন ইন হচ্ছে',
   'Ask for a code from an app': 'অ্যাপ থেকে কোড চান',
@@ -1406,7 +1400,6 @@ export const bn: Dictionary = {
   'Reset the bar': 'বার রিসেট করুন',
   'Pulling down': 'নিচে টানা',
   'A pull past the top runs': 'উপর থেকে টানলে চলবে',
-  'On the note, and on the list of them.': 'নোটে, আর তাদের তালিকায়।',
   Nothing: 'কিছুই নয়',
 
   // A way of looking at the space's graph, kept in the bookmarks.

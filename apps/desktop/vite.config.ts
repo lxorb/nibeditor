@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { everySurface } from '@nib/themes/write'
 import manifest from './even.app.json'
 import tauri from './src-tauri/tauri.conf.json'
 import { CSP } from './src/csp'
@@ -41,6 +42,19 @@ function when(): string {
   return `${new Date().toISOString().slice(0, 16)}Z`
 }
 
+/** Every rule about `#write` reaching every page a note is on, in the app's own
+ *  stylesheets and in each component's: the app has several of those pages at once and
+ *  only one of them can be the id. The sheets say `#write`, as Typora and every theme
+ *  do, and an exported or a published note keeps its one; see @nib/themes/write. */
+const everyPage = {
+  postcssPlugin: 'nib-every-page',
+  Rule(rule: { selector: string }) {
+    // Only when it changes: a rule that changed is visited again.
+    const wide = everySurface(rule.selector)
+    if (wide !== rule.selector) rule.selector = wide
+  },
+}
+
 export default defineConfig(({ command, mode }) => ({
   plugins: [svelte()],
   // This build is the editor: on the desktop, on the web, in the presenter's
@@ -67,6 +81,7 @@ export default defineConfig(({ command, mode }) => ({
       command === 'serve' || mode === 'drive' || mode === 'development',
     ),
   },
+  css: { postcss: { plugins: [everyPage] } },
   clearScreen: false,
   // The same policy the installed app is served with. `tauri dev` loads the dev
   // server rather than the bundle, so without this the app being worked on is a

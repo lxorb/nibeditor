@@ -64,6 +64,12 @@
   /* The corner a row is drawn with. Its own token because it grows with the
      row: a 56px row a thumb lands on wants more of a corner than a 28px one. */
   --radius-row: 6px;
+  /* A rounded square that is a thing rather than a control - a space's badge, a
+     face, the round button a thumb makes a note with - has a corner a third of its
+     side, so it is one shape at 24px under a pointer and at 56 under a thumb. A
+     share of the side rather than a length, because the side is the caller's: the
+     round button wrote its own 18px, which is this at 56. */
+  --radius-third: 0.32;
 
   /* How wide one column of a stacked pane is, and how wide the active one is. Two
      numbers rather than a share of the pane: a column is a column of words, and what
@@ -249,6 +255,55 @@
   --dur-stage: 170ms;
   --dur-slow: 340ms;
   --dur-slower: 520ms;
+
+  /* The stack: what is in front of what, as one ladder written once. Sixty-five
+     numbers used to say it, each picked by whoever wrote the layer against the
+     numbers they could see - so a question arriving during the first sync, or a
+     menu opened from a sheet, landed wherever two strangers' numbers put it. A
+     layer takes the rung that says what it is; a new one is placed by name, next
+     to the things it has to be over and under. Obsidian's `--layer-*` is the same
+     idea. apps/desktop/test/stack.test.ts holds every component to it.
+
+     The first four are about siblings and nothing else: a part inside something
+     that is already positioned, over or under the parts beside it. */
+  --z-under: -1;
+  --z-base: 0;
+  --z-raised: 1;
+  --z-lifted: 2;
+  /* On a surface - a note, a plane, a page - and inside its pane: what is drawn
+     over the content (ink on the plane, the frame the glasses read through), what
+     a pointer takes hold of (a port, a handle, the lasso, a scrollbar, where a
+     dragged tab would land), the tools over the surface (a pane's head, the
+     plane's bar, the graph's corner), and a bar over those (finding on the plane,
+     what is picked, a page's zoom). */
+  --z-drawn: 3;
+  --z-grip: 5;
+  --z-tools: 6;
+  --z-bars: 7;
+  /* Out of a control and over what is beside it: a dropdown's list, the list of
+     spaces, the `[[` suggestions, the sentence behind an `i`. */
+  --z-popover: 12;
+  /* Over the app, from the note outwards. The new-note button, the way out of full
+     screen, the line that says something is loading and a site's bubbles float
+     over the note; the format bar over those; a list panel that is a drawer over
+     that; a surface that replaces part of the screen (the palette, signing in,
+     choosing a space) over the drawer; a notice over all of it; the first sync
+     covering the window; the settings; the theme store opened from them; a sheet
+     over any of those; a menu over everything open; a picture looked at on its
+     own; a deck being presented; and what the pointer is carrying. */
+  --z-float: 20;
+  --z-bar: 25;
+  --z-drawer: 30;
+  --z-screen: 31;
+  --z-notice: 32;
+  --z-cover: 40;
+  --z-settings: 41;
+  --z-store: 45;
+  --z-sheet: 51;
+  --z-menu: 61;
+  --z-lightbox: 70;
+  --z-stage: 200;
+  --z-carried: 1000;
 }
 
 /* Urdu is written in Nastaliq, which hangs each word down and back rather than
@@ -342,9 +397,23 @@
   --text-strong: #f4f7fb;
   --accent: #7c6bf5;
   --accent-hover: #8d7ef7;
-  --accent-press: #6a58ef;
+  /* A step past hover, the way the surfaces go: away from the page, which on this
+     side is lighter. It was darker than the accent, which under the dark ink below
+     would dim a button's words at the moment the press lands. */
+  --accent-press: #9e91f8;
   --accent-soft: rgb(124 107 245 / 0.15);
   --accent-line: rgb(124 107 245 / 0.42);
+  /* What is written or drawn on a fill of the accent: a button's words, the plus
+     that makes a note, the letter in the badge of the space you are in, the knob
+     of a switch that is on. Not white on this side: white on #7c6bf5 is 3.98 to
+     one, and on the High contrast theme's lighter accent it was 2.67. An accent
+     bright enough to be read on a dark page is too bright to carry white, so the
+     ink is the page's own darkest, the way Material's `onPrimary` is on a dark
+     scheme: 4.89 on the accent at rest and more on its hover and its press, and
+     every colour a reader can pick carries it at 4.5 or better (see accents.ts).
+     A theme whose accent wants the other ink says so here, like any other colour.
+     apps/desktop/test/ink.test.ts measures all of them. */
+  --accent-ink: #0b0d10;
   /* A word about something that failed, held to the same floor: 4.55 inside a
      menu, where #f2555a was 4.47. */
   --danger: #f5585d;
@@ -441,6 +510,9 @@
   --accent-press: #4131c2;
   --accent-soft: rgb(91 75 224 / 0.1);
   --accent-line: rgb(91 75 224 / 0.38);
+  /* On this side an accent that reads on a white page is dark enough to carry
+     white: 5.95 to one at rest. */
+  --accent-ink: #ffffff;
   /* Words, not only fills: a failure is said in this colour and a sync light is
      drawn in that one, and on this side both were short of the floor as text -
      3.81 and 3.26. Darker rather than a different hue, so a fill they are
@@ -495,11 +567,16 @@
      open. A theme that restates this token keeps its own answer. */
   --active-file-bg-color: color-mix(in srgb, var(--accent) 16%, transparent);
   --active-file-text-color: var(--text-strong);
+  /* A row that takes something away, under the pointer or the finger: a wash of the
+     danger colour, the way `--accent-soft` is a wash of the accent. Four surfaces
+     had their own at 12 and 16 per cent, and the spelling list read one nobody had
+     declared, so its word lost its chip altogether under the pointer. */
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
   --active-file-border-color: var(--accent);
   --window-border: var(--line);
   --select-text-bg-color: var(--selection);
   --search-select-bg-color: var(--accent);
-  --search-select-text-color: #ffffff;
+  --search-select-text-color: var(--accent-ink);
   --code-block-bg-color: var(--surface);
   /* A hairline. A table is read for what is in it; the grid is there to keep
      the columns apart, not to be the darkest thing on the page. */

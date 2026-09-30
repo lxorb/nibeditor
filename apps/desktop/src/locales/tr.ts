@@ -1155,8 +1155,6 @@ export const tr: Dictionary = {
   'Take theirs': 'Onlarınkini al',
   'Keep both': 'İkisini de tut',
   'What synced': 'Ne eşitlendi',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Henüz bir şey yok. Hiçbir şey taşımayan bir geçiş yazılmaz.',
   'Clear the list': 'Listeyi temizle',
   '{count} down': '{count} indi',
   '{count} up': '{count} çıktı',
@@ -1172,10 +1170,6 @@ export const tr: Dictionary = {
   },
   'Nothing has changed since then.': 'O zamandan beri bir şey değişmedi.',
   '{count} notes went back.': { one: '{count} not geri döndü.', other: '{count} not geri döndü.' },
-  'The account keeps a month of versions of every note that syncs.':
-    'Hesap, eşitlenen her notun bir aylık sürümlerini tutar.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Hesap, eşitlenen her notun bir yıllık sürümlerini tutar.',
   'That did not work.': 'Bu işe yaramadı.',
   'Signing in': 'Oturum açma',
   'Ask for a code from an app': 'Bir uygulamadan kod iste',
@@ -1413,7 +1407,6 @@ export const tr: Dictionary = {
   'Reset the bar': 'Çubuğu sıfırla',
   'Pulling down': 'Aşağı çekme',
   'A pull past the top runs': 'Üstten çekmek şunu çalıştırır',
-  'On the note, and on the list of them.': 'Notta ve notların listesinde.',
   Nothing: 'Hiçbiri',
 
   // A way of looking at the space's graph, kept in the bookmarks.

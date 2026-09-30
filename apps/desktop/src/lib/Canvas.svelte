@@ -2085,7 +2085,7 @@
     position: absolute;
     box-sizing: border-box;
     translate: -50% -50%;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   .port {
@@ -2105,7 +2105,7 @@
   .port.aiming {
     background: var(--accent);
     opacity: 1;
-    z-index: 6;
+    z-index: var(--z-tools);
   }
 
   /* An end of a connector that is over nothing: still there, still where the pointer
@@ -2137,7 +2137,7 @@
     border-color: var(--muted-strong);
     background: color-mix(in srgb, var(--surface) 35%, transparent);
     pointer-events: none;
-    z-index: 6;
+    z-index: var(--z-tools);
   }
 
   /* The ring that turns what is picked, above it and clear of every corner. */
@@ -2155,7 +2155,7 @@
     border: 1px solid var(--accent);
     border-radius: 3px;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   .band {
@@ -2164,7 +2164,7 @@
     border: 1px solid var(--accent-line);
     border-radius: 2px;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   /* What is being pulled out of the bar, while it is being pulled: the box it will
@@ -2190,7 +2190,7 @@
     left: 0;
     top: 0;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   .drawing path {
@@ -2214,7 +2214,7 @@
     background: var(--accent);
     opacity: 0.7;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   .lasso {
@@ -2222,7 +2222,7 @@
     left: 0;
     top: 0;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   .lasso path {

@@ -1204,8 +1204,6 @@ export const uk: Dictionary = {
   'Take theirs': 'Узяти чужу',
   'Keep both': 'Залишити обидві',
   'What synced': 'Що синхронізувалося',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Поки нічого. Прохід, який нічого не переносить, не записується.',
   'Clear the list': 'Очистити список',
   '{count} down': 'отримано: {count}',
   '{count} up': 'надіслано: {count}',
@@ -1233,10 +1231,6 @@ export const uk: Dictionary = {
     many: '{count} нотаток повернулися.',
     other: '{count} нотатки повернулося.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'Акаунт зберігає версії за місяць для кожної синхронізованої нотатки.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Акаунт зберігає версії за рік для кожної синхронізованої нотатки.',
   'That did not work.': 'Не вийшло.',
   'Signing in': 'Вхід',
   'Ask for a code from an app': 'Запитувати код із програми',
@@ -1471,7 +1465,6 @@ export const uk: Dictionary = {
   'Reset the bar': 'Скинути смужку',
   'Pulling down': 'Потягування вниз',
   'A pull past the top runs': 'Потягування за верх запускає',
-  'On the note, and on the list of them.': 'На нотатці й на їхньому списку.',
   Nothing: 'Нічого',
 
   // A way of looking at the space's graph, kept in the bookmarks.

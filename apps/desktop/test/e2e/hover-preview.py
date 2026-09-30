@@ -189,8 +189,8 @@ INSIDE = """
 
   return {
     // The scope: the body is a writing surface, like every other place a note is
-    // read or written in this app.
-    scope: body.id,
+    // read or written in this app - by the class, since the id is the pane's.
+    scope: body.classList.contains('nib-write') && body.id !== 'write' ? 'write' : body.id,
     words: (inner ?? body).textContent.slice(0, 40),
     // The lines inside the card's own box, which is what a reader sees of it. The
     // card holds the whole note - what is typed in it goes back to the file - so

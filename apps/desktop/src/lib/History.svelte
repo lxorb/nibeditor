@@ -244,7 +244,7 @@
     translate: -50% 0;
     width: min(46rem, calc(100vw - 3rem));
     height: 70vh;
-    z-index: 51;
+    z-index: var(--z-sheet);
     display: flex;
     background: var(--surface);
     border: 1px solid var(--line-strong);

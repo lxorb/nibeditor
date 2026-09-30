@@ -873,6 +873,6 @@
 
   .pen:hover svg path:first-child,
   .pen:active svg path:first-child {
-    stroke: #fff;
+    stroke: var(--accent-ink);
   }
 </style>

@@ -389,7 +389,7 @@
     padding: var(--space-1);
     list-style: none;
     overflow-y: auto;
-    z-index: 5;
+    z-index: var(--z-popover);
   }
 
   .list.above {
@@ -436,7 +436,7 @@
   }
 
   .list li.danger.cursor {
-    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    background: var(--danger-soft);
   }
 
   .tick {
@@ -454,7 +454,7 @@
 
   /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 60;
+    --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
     --scrim-blur: 2px;
   }
@@ -464,7 +464,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 61;
+    z-index: var(--z-menu);
     max-height: 70dvh;
     display: flex;
     flex-direction: column;

@@ -1138,8 +1138,6 @@ export const am: Dictionary = {
   'Take theirs': 'የነሱን ውሰድ',
   'Keep both': 'ሁለቱንም ያዝ',
   'What synced': 'የተመሳሰለው',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'እስካሁን ምንም የለም። ምንም የማያንቀሳቅስ ዙር አይመዘገብም።',
   'Clear the list': 'ዝርዝሩን አጥፋ',
   '{count} down': '{count} ወደ ታች',
   '{count} up': '{count} ወደ ላይ',
@@ -1155,10 +1153,6 @@ export const am: Dictionary = {
   },
   'Nothing has changed since then.': 'ከዚያ ወዲህ ምንም አልተቀየረም።',
   '{count} notes went back.': { one: '{count} ማስታወሻ ተመለሰ።', other: '{count} ማስታወሻዎች ተመለሱ።' },
-  'The account keeps a month of versions of every note that syncs.':
-    'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ወር ቅጂ ይይዛል።',
-  'The account keeps a year of versions of every note that syncs.':
-    'መዝገቡ የሚመሳሰል እያንዳንዱ ማስታወሻ የአንድ ዓመት ቅጂ ይይዛል።',
   'That did not work.': 'ያ አልሠራም።',
   'Signing in': 'መግቢያ',
   'Ask for a code from an app': 'ከመተግበሪያ ኮድ ጠይቅ',
@@ -1389,7 +1383,6 @@ export const am: Dictionary = {
   'Reset the bar': 'አሞሌውን እንደነበር መልስ',
   'Pulling down': 'ወደ ታች መጎተት',
   'A pull past the top runs': 'ከላይ ማለፍ ያስኬዳል',
-  'On the note, and on the list of them.': 'በማስታወሻው ላይ፣ እና በዝርዝራቸው ላይ።',
   Nothing: 'ምንም',
 
   // A way of looking at the space's graph, kept in the bookmarks.

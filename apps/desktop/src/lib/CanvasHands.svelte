@@ -172,7 +172,7 @@
     left: 0;
     top: 0;
     pointer-events: none;
-    z-index: 5;
+    z-index: var(--z-grip);
   }
 
   /* A name beside somebody else's caret. The fade was written as `190ms ease`,

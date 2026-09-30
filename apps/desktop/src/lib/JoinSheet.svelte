@@ -103,7 +103,7 @@
 <style>
   /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 30;
+    --scrim-z: var(--z-screen);
   }
 
   /* `.nib-screen` in the themes package; see Palette.svelte. */
@@ -111,7 +111,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
-    z-index: 31;
+    z-index: var(--z-screen);
     padding: var(--space-5);
   }
 

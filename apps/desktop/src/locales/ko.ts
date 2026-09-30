@@ -1139,8 +1139,6 @@ export const ko: Dictionary = {
   'Take theirs': '상대 것 가져오기',
   'Keep both': '둘 다 남기기',
   'What synced': '동기화된 내용',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    '아직 없습니다. 아무것도 옮기지 않은 회차는 기록하지 않습니다.',
   'Clear the list': '목록 지우기',
   '{count} down': '{count}개 내려옴',
   '{count} up': '{count}개 올라감',
@@ -1154,10 +1152,6 @@ export const ko: Dictionary = {
     '노트 {count}개가 그때 내용으로 돌아갑니다.',
   'Nothing has changed since then.': '그 뒤로 바뀐 것이 없습니다.',
   '{count} notes went back.': '노트 {count}개를 되돌렸습니다.',
-  'The account keeps a month of versions of every note that syncs.':
-    '계정은 동기화되는 모든 노트의 한 달 분 버전을 보관합니다.',
-  'The account keeps a year of versions of every note that syncs.':
-    '계정은 동기화되는 모든 노트의 1년 분 버전을 보관합니다.',
   'That did not work.': '되지 않았습니다.',
   'Signing in': '로그인',
   'Ask for a code from an app': '앱에서 코드 받기',
@@ -1390,7 +1384,6 @@ export const ko: Dictionary = {
   'Reset the bar': '막대 초기화',
   'Pulling down': '아래로 당기기',
   'A pull past the top runs': '맨 위에서 더 당기면 실행',
-  'On the note, and on the list of them.': '노트에서, 그리고 노트 목록에서.',
   Nothing: '없음',
 
   // A way of looking at the space's graph, kept in the bookmarks.

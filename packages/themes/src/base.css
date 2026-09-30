@@ -479,10 +479,13 @@ select option {
    the same five lines out, and by then three of them had drifted to a different
    ink and a softer blur, so two sheets opened over two different greys.
 
-   Where it sits in the stack is the caller's, as `--scrim-z`, because that is the
-   one thing each of them genuinely means differently: a dropdown's scrim is over
-   the sheet that opened it, and a sign-in's is under the palette. `--scrim-ink`
-   and `--scrim-blur` are there for the three that still spend less of both - the
+   Which layer it is put up under is the caller's, as `--scrim-z`, because that is
+   the one thing each of them genuinely means differently: a dropdown's scrim is
+   over the sheet that opened it, and the palette's is under a notice. The caller
+   names the rung its own surface stands on - `var(--z-menu)`, `var(--z-screen)` -
+   and the scrim takes the step under it, so the two can never be put the wrong
+   way round whichever of them comes first in the page. `--scrim-ink` and
+   `--scrim-blur` are there for the three that still spend less of both - the
    store, a dropdown and a menu on a phone, each of which covers a surface that
    has to stay readable behind it.
 
@@ -492,7 +495,7 @@ select option {
 .nib-scrim {
   position: fixed;
   inset: 0;
-  z-index: var(--scrim-z, 50);
+  z-index: calc(var(--scrim-z, var(--z-sheet)) - 1);
   background: color-mix(in srgb, var(--bg) var(--scrim-ink, 62%), transparent);
   backdrop-filter: blur(var(--scrim-blur, 3px));
 }
@@ -586,7 +589,7 @@ select option {
 /* Above the point it was given, centred on it, and clear of the caret. */
 .nib-bar-at {
   position: fixed;
-  z-index: 25;
+  z-index: var(--z-bar);
   transform: translate(-50%, calc(-100% - 10px));
   animation: nib-bar-in var(--dur-fast) var(--ease-out);
 }
@@ -626,13 +629,13 @@ select option {
 @media (hover: hover) {
   .nib-bar button:hover {
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
   }
 }
 
 .nib-bar button:active {
   background: var(--accent-press);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 /* ── The row ───────────────────────────────── */
@@ -938,7 +941,7 @@ select option {
   place-items: center;
   width: var(--row-height-sm);
   height: var(--row-height-sm);
-  border-radius: calc(var(--row-height-sm) * 0.32);
+  border-radius: calc(var(--row-height-sm) * var(--radius-third));
   background: var(--badge-fill, var(--surface-3));
   color: var(--badge-ink, var(--muted-strong));
   font-family: var(--font-ui);
@@ -953,7 +956,7 @@ select option {
    accent, which is what the open note's mark wears too. */
 .nib-badge.is-on {
   --badge-fill: var(--accent);
-  --badge-ink: #fff;
+  --badge-ink: var(--accent-ink);
 }
 
 /* A badge that is a place for a mark rather than an object: the plus at the
@@ -1011,7 +1014,7 @@ select option {
 }
 
 .nib-switch.on::after {
-  background: #fff;
+  background: var(--accent-ink);
   transform: translateX(calc(var(--dir) * 16px));
 }
 
@@ -1064,7 +1067,7 @@ select option {
   border: none;
   border-radius: var(--radius-md);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   font-family: var(--font-ui);
   font-size: var(--text-base);
   font-weight: var(--weight-strong);
@@ -1514,7 +1517,7 @@ select:focus-visible,
      would put the surface's own origin on the other side under a right-to-left
      interface and leave the measurement pointing at the wrong half. */
   left: 0;
-  z-index: 0;
+  z-index: var(--z-base);
   border-radius: calc(var(--radius-md) - 3px);
   background: var(--segment-raised);
   box-shadow: var(--shadow-sm);
@@ -1527,7 +1530,7 @@ select:focus-visible,
 /* Over the surface, or the words would be behind it. */
 .nib-segmented button {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 .nib-segmented button {
@@ -1615,8 +1618,9 @@ select:focus-visible,
     var(--surface-3);
 }
 
-/* The knob. White, like the switch's when it is on - it sits on the filled half
-   of the track as often as not - and ringed with the hairline every other edge
+/* The knob. White - it sits on the filled half of the track and on the empty
+   half as often as not, so it is a surface of its own rather than ink on either -
+   and ringed with the hairline every other edge
    in the app is drawn in rather than with a shade of black: 12% black against a
    light theme's track was a white circle on a near-white groove with nothing to
    tell them apart, and it could only ever be right on one of the two schemes.
@@ -1692,7 +1696,7 @@ select:focus-visible,
 
 ::highlight(nib-find-here) {
   background-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 /* ── Scrollbars ────────────────────────────────────── */
@@ -1703,7 +1707,7 @@ select:focus-visible,
 .nib-scrollbar {
   position: absolute;
   width: var(--scrollbar-width);
-  z-index: 4;
+  z-index: var(--z-grip);
   opacity: 0;
   /* Only the thumb can be grabbed; the track is not in the way of the text. */
   pointer-events: none;
@@ -1948,7 +1952,7 @@ select:focus-visible,
   top: 1px;
   width: 4px;
   height: 8px;
-  border: solid #fff;
+  border: solid var(--accent-ink);
   border-width: 0 2px 2px 0;
   transform: rotate(43deg);
   animation: check-draw var(--dur-base) var(--ease-spring);

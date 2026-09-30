@@ -341,7 +341,7 @@
      transform. */
   .docked {
     position: fixed;
-    z-index: 25;
+    z-index: var(--z-bar);
     left: 0;
     right: 0;
     justify-content: space-around;

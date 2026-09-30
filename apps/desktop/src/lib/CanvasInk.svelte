@@ -356,7 +356,7 @@
     left: 0;
     top: 0;
     pointer-events: none;
-    z-index: 3;
+    z-index: var(--z-drawn);
   }
 
   /* Its own layer, so moving it while the plane is panned is a composite and
@@ -367,6 +367,6 @@
   }
 
   .live {
-    z-index: 4;
+    z-index: var(--z-drawn);
   }
 </style>

@@ -68,7 +68,7 @@
   .arriving {
     position: fixed;
     inset: 0;
-    z-index: 40;
+    z-index: var(--z-cover);
     display: flex;
     flex-direction: column;
     align-items: center;

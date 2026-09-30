@@ -1153,8 +1153,6 @@ export const ps: Dictionary = {
   'Take theirs': 'د هغوی اخيستل',
   'Keep both': 'دواړه ساتل',
   'What synced': 'څه همغږي شول',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'تر اوسه هيڅ. هغه ګذر چې هيڅ نه خوځوي نه ليکل کېږي.',
   'Clear the list': 'لړ پاکول',
   '{count} down': '{count} ښکته',
   '{count} up': '{count} پورته',
@@ -1173,10 +1171,6 @@ export const ps: Dictionary = {
     one: '{count} يادښت بېرته شوه.',
     other: '{count} يادښتونه بېرته شول.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'حساب د هرې همغږې يادښت يوه مياشت بڼې ساتي.',
-  'The account keeps a year of versions of every note that syncs.':
-    'حساب د هرې همغږې يادښت يو کال بڼې ساتي.',
   'That did not work.': 'هغه کار ونه کړ.',
   'Signing in': 'ننوتل',
   'Ask for a code from an app': 'له کاريال کوډ غوښتل',
@@ -1412,7 +1406,6 @@ export const ps: Dictionary = {
   'Reset the bar': 'پټه بیا تنظیمول',
   'Pulling down': 'ښکته کشول',
   'A pull past the top runs': 'له سر تېره کشونه چلوي',
-  'On the note, and on the list of them.': 'پر یادښت او پر لړ یې.',
   Nothing: 'هیڅ',
 
   // A way of looking at the space's graph, kept in the bookmarks.

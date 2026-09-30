@@ -1156,8 +1156,6 @@ export const te: Dictionary = {
   'Take theirs': 'వారిది తీసుకో',
   'Keep both': 'రెండూ ఉంచు',
   'What synced': 'సింక్ అయినవి',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ఇంకా ఏమీ లేదు. ఏదీ కదపని సింక్ నమోదు కాదు.',
   'Clear the list': 'జాబితా తొలగించు',
   '{count} down': '{count} దిగినవి',
   '{count} up': '{count} ఎక్కినవి',
@@ -1176,10 +1174,6 @@ export const te: Dictionary = {
     one: '{count} నోట్ తిరిగి వెళ్లింది.',
     other: '{count} నోట్‌లు తిరిగి వెళ్లాయి.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక నెల ఉంచుతుంది.',
-  'The account keeps a year of versions of every note that syncs.':
-    'సింక్ అయే ప్రతి నోట్ వెర్షన్‌లను ఖాతా ఒక సంవత్సరం ఉంచుతుంది.',
   'That did not work.': 'అది పని చేయలేదు.',
   'Signing in': 'సైన్ ఇన్ అవుతోంది',
   'Ask for a code from an app': 'యాప్ నుండి కోడ్ అడుగు',
@@ -1413,7 +1407,6 @@ export const te: Dictionary = {
   'Reset the bar': 'పట్టీని మళ్లీ అమర్చండి',
   'Pulling down': 'కిందకు లాగడం',
   'A pull past the top runs': 'పై నుంచి లాగితే నడుస్తుంది',
-  'On the note, and on the list of them.': 'నోట్‌పై, వాటి జాబితాపై.',
   Nothing: 'ఏమీ లేదు',
 
   // A way of looking at the space's graph, kept in the bookmarks.

@@ -198,7 +198,7 @@
   .sheet {
     --screen-width: 22rem;
 
-    z-index: 51;
+    z-index: var(--z-sheet);
     padding: var(--space-5);
   }
 

@@ -1141,8 +1141,6 @@ export const my: Dictionary = {
   'Take theirs': 'သူတို့၏ကို ယူပါ',
   'Keep both': 'နှစ်ခုစလုံးထားပါ',
   'What synced': 'ဘာချိန်ကိုက်ခဲ့သလဲ',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'မရှိသေးပါ။ မည်သည့်အရာမျှ မရွှေ့သော အလှည့်ကို မမှတ်တမ်းတင်ပါ။',
   'Clear the list': 'စာရင်းရှင်းပါ',
   '{count} down': '{count} ဆင်း',
   '{count} up': '{count} တက်',
@@ -1156,10 +1154,6 @@ export const my: Dictionary = {
     'မှတ်စု {count} သည် ထိုအချိန်အတိုင်း ပြန်သွားမည်။',
   'Nothing has changed since then.': 'ထိုအချိန်မှစ၍ မည်သည့်အရာမျှ မပြောင်းပါ။',
   '{count} notes went back.': 'မှတ်စု {count} ပြန်သွားပြီ။',
-  'The account keeps a month of versions of every note that syncs.':
-    'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်လစာ ဗားရှင်းများကို ထားသည်။',
-  'The account keeps a year of versions of every note that syncs.':
-    'အကောင့်သည် ချိန်ကိုက်သော မှတ်စုတိုင်း၏ တစ်နှစ်စာ ဗားရှင်းများကို ထားသည်။',
   'That did not work.': 'ထိုအရာ အလုပ်မလုပ်ပါ။',
   'Signing in': 'ဝင်မှု',
   'Ask for a code from an app': 'အက်ပ်မှ ကုဒ်တောင်းပါ',
@@ -1398,7 +1392,6 @@ export const my: Dictionary = {
   'Reset the bar': 'ဘားကို ပြန်စပါ',
   'Pulling down': 'အောက်သို့ ဆွဲခြင်း',
   'A pull past the top runs': 'အပေါ်မှ ဆွဲလွန်လျှင် အလုပ်လုပ်မည်',
-  'On the note, and on the list of them.': 'မှတ်စုပေါ်နှင့် စာရင်းပေါ်တွင်။',
   Nothing: 'မရှိ',
 
   // A way of looking at the space's graph, kept in the bookmarks.

@@ -65,6 +65,7 @@
     opennote,
     nameblock,
     onfind,
+    focused,
     view = $bindable(),
   }: {
     /** The note showing in this pane. Anything that depends on which note it is
@@ -85,6 +86,9 @@
     /** Ctrl+F and Ctrl+H, which are keys in the editor and a bar in the pane;
      *  null when something in the editor closed it. See find.ts. */
     onfind?: (ask: FindAsk | null) => void
+    /** Whether this is the page a reader is in: the note in the focused pane, and in
+     *  a column of stacked notes the column in front. */
+    focused: boolean
     /** Bound back out: undefined until the view has been made. */
     view?: EditorView | undefined
   } = $props()
@@ -260,16 +264,25 @@
   // is a note.
   //
   // Set on the element and not through `contentAttributes`, which is where the
-  // `#write` id comes from: the pane's view outlives every note in it and each
-  // note is a whole state swapped in, so a facet appended to the state that built
-  // the view goes with the first swap. An attribute the library never set is one it
-  // never takes off again; see updateAttrs in @codemirror/view.
+  // page's `nib-write` class comes from: the pane's view outlives every note in it
+  // and each note is a whole state swapped in, so a facet appended to the state that
+  // built the view goes with the first swap. An attribute the library never set is
+  // one it never takes off again; see updateAttrs in @codemirror/view.
   //
   // In an effect of its own because the name is the one thing about this editor
   // that is in the reader's language: read where the view is built, a window
   // switched to another language would rebuild every editor in it.
   $effect(() => {
     view?.contentDOM.setAttribute('aria-label', t('The note'))
+  })
+
+  // The page in the focused pane is `#write`, and no other: a window with its panes
+  // split, a column of stacked notes or a card open over a link has several pages,
+  // and an id is one element. Every page wears the class the themes reach them all
+  // by; see write.ts in @nib/themes. Set on the element for the reason the name is.
+  $effect(() => {
+    if (focused) view?.contentDOM.setAttribute('id', 'write')
+    else view?.contentDOM.removeAttribute('id')
   })
 
   // The note, and the space around it. Swapped in whole, in the same frame as

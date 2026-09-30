@@ -1169,8 +1169,6 @@ export const ta: Dictionary = {
   'Take theirs': 'அவர்களுடையதை எடு',
   'Keep both': 'இரண்டையும் வை',
   'What synced': 'ஒத்திசைந்தவை',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'இன்னும் எதுவும் இல்லை. எதையும் நகர்த்தாத ஒத்திசைவு பதிவாகாது.',
   'Clear the list': 'பட்டியலை அழி',
   '{count} down': '{count} இறக்கம்',
   '{count} up': '{count} ஏற்றம்',
@@ -1189,10 +1187,6 @@ export const ta: Dictionary = {
     one: '{count} குறிப்பு திரும்பியது.',
     other: '{count} குறிப்புகள் திரும்பின.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு மாத பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
-  'The account keeps a year of versions of every note that syncs.':
-    'ஒத்திசையும் ஒவ்வொரு குறிப்பின் ஒரு ஆண்டு பதிப்புகளைக் கணக்கு வைத்திருக்கும்.',
   'That did not work.': 'அது வேலை செய்யவில்லை.',
   'Signing in': 'உள்நுழைகிறது',
   'Ask for a code from an app': 'செயலியிலிருந்து ஒரு குறியீடு கேள்',
@@ -1431,7 +1425,6 @@ export const ta: Dictionary = {
   'Reset the bar': 'பட்டையை மீட்டமை',
   'Pulling down': 'கீழே இழுத்தல்',
   'A pull past the top runs': 'மேலிருந்து இழுத்தால் இயங்கும்',
-  'On the note, and on the list of them.': 'குறிப்பிலும், அவற்றின் பட்டியலிலும்.',
   Nothing: 'ஒன்றுமில்லை',
 
   // A way of looking at the space's graph, kept in the bookmarks.

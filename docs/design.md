@@ -221,6 +221,16 @@ name - what is drawn and what can be hit are two sizes: the glyph grows to
 `--touch-icon` and an invisible `::after` grows the target to `--touch-target`.
 A 48px circle in the middle of a label would be the label's size.
 
+The cross that shuts something or takes it away is one drawing, `Cross.svelte`,
+in two sizes of box: a 16 box with arms across half of it for a button, which at
+`--icon-lg` is Lucide's own `x`, and an 8 box with arms across three quarters of it
+for a cross inside something small - a tab, a chip - where half of 8px would be a
+dot. Seven components drew their own in five boxes (16, 14, 13, 10, 8), so the cross
+on a sheet was heavier than the theme store's beside it and the find bar's smaller
+than both, and two more spelled it as a `×` in the text. How big it is and how heavy
+its line is are the button's. The window's own close button is not this cross: it
+is the platform's caption glyph, in the platform's box beside the other two.
+
 ### Rows
 
 | Token | Desktop | Touch |
@@ -422,6 +432,60 @@ copy of one of them and the copies had already drifted:
 
 Where it sits is the caller's. What it is, is the class.
 
+A thing that is a rounded square rather than a control - a space's badge, a face,
+the round button a thumb makes a note with - has a corner of `--radius-third` of its
+side, so it is one shape at any size. The round button wrote its own 18px, which is
+that share of 56.
+
+### The stack
+
+What is in front of what is one ladder of names in `tokens.css`, and a layer takes
+the rung that says what it is. Sixty-five numbers said it before, each picked against
+the numbers its author could see: 4 and 5 for two lists, 20 and 21 for the palette,
+57 and 58 for the theme picker, 90 for a row being carried and 1000 for a tab, so
+nothing said which of them had to be over which. Obsidian's `--layer-*` is the model.
+
+| Rung | What stands on it |
+| --- | --- |
+| `--z-under`, `--z-base`, `--z-raised`, `--z-lifted` | a part over or under its siblings, inside something already positioned |
+| `--z-drawn` | drawn over a surface's content: ink on the plane, the frame the glasses read through |
+| `--z-grip` | what a pointer takes hold of: a port, a handle, the lasso, a scrollbar |
+| `--z-tools` | the tools over a surface: a pane's head, the plane's bar, the graph's corner |
+| `--z-bars` | a bar over those: finding on the plane, what is picked, a page's zoom |
+| `--z-popover` | out of a control: a dropdown's list, the list of spaces, the `[[` suggestions, the sentence behind an `i` |
+| `--z-float` | floating over the note: the new-note button, the way out of full screen, the loading line, a site's bubbles |
+| `--z-bar` | the format bar |
+| `--z-drawer` | a list panel that is a drawer |
+| `--z-screen` | what replaces part of the screen: the palette, signing in, joining, choosing a space |
+| `--z-notice` | a notice over all of that |
+| `--z-cover` | the first sync, covering the window |
+| `--z-settings`, `--z-store` | the settings, and the theme store opened from them |
+| `--z-sheet` | a sheet over any of those |
+| `--z-menu` | a menu over everything open, the theme picker, a dropdown's sheet |
+| `--z-lightbox`, `--z-stage`, `--z-carried` | a picture on its own, a deck presented, what the pointer carries |
+
+A scrim names the rung of the layer it is put up under, `--scrim-z: var(--z-menu)`,
+and stands one step below it, so a layer and its scrim can never be the wrong way
+round and no component writes a pair of numbers again. `test/stack.test.ts` refuses a
+number in any stylesheet or script, a rung that is not on the ladder, and a ladder
+that does not climb.
+
+### The page a note is on
+
+Typora calls it `#write`, and every sheet here, every theme in the registry and every
+reader's custom.css is written against that. An id is one element, and a document is
+one page: an export and a published note have exactly one and keep it. The app has
+several at once - panes side by side, a column of stacked notes, the card over a link,
+this slide and the next in the presenter's window - and each of them carried the id.
+
+So every page wears `.nib-write`, and only the page in the focused pane wears
+`#write` as well: the one a reader is in, which is what a drive, a shortcut and a
+theme mean by it. The rules reach every page because the app reads each of them as
+`:is(#write, .nib-write)` where it puts them on the page - its own sheets in the
+build, a theme, custom.css and the code palette as they are injected - and `:is()`
+weighs what its heaviest argument weighs whichever one matched, so no rule wins or
+loses by it. See `write.ts` in @nib/themes; `test/write.test.ts` holds it.
+
 ### The surfaces a row wears
 
 Four states, four tokens, one meaning each, and each defined from a token a
@@ -496,8 +560,38 @@ the signature was named instead: `--faint` is the shade the `#` and the `**`
 bleed in at, and `--md-char-color` and `--heading-char-color` read it. Markup
 says the same thing the heading already says; prose does not.
 
-Two colours are still short of the floor, and both are one decision rather than a
-number - see "What needs deciding" at the end of this file.
+### Ink on a fill
+
+The accent cannot be both the ink and the fill: a colour bright enough to be read
+on the dark page is too bright to carry white, which came to 3.98 to one on every
+primary button and to 2.67 on the High contrast theme. So what is written on a fill
+of the accent is a token of its own, `--accent-ink`, answered per scheme the way
+Material's `onPrimary` is: the page's darkest ink on the dark side, white on the
+light one. Every filled accent surface reads it - a button's words, the plus that
+makes a note, the letter in the badge of the space you are in, the knob of a switch
+that is on, a bar's button under the pointer, the match find is on, a caret's name.
+
+| Palette | at rest | hovered | pressed |
+| --- | --- | --- | --- |
+| dark | 4.89 | 5.99 | 7.28 |
+| light | 5.95 | 7.04 | 8.60 |
+| High contrast, dark | 7.29 | 9.23 | 5.91 |
+| High contrast, light | 9.18 | 11.09 | 13.36 |
+
+On the dark side `--accent-press` moved away from the page, which is lighter, rather
+than towards it: under a dark ink a press that darkened the fill dimmed the words as
+it landed. The accents a reader can pick write their own press the same way, and
+three of their light shades - teal, green and yellow - are a step darker, because
+they were short of white at 3.44, 4.10 and 4.48. `test/ink.test.ts` measures every
+palette and every accent at rest, hovered and pressed, and refuses a white written
+straight onto anything.
+
+A theme whose accent wants the other ink says so with `--accent-ink`, like any other
+colour.
+
+The accent written as text on a surface lighter than the page, and the tab strip's
+inactive labels, are the two questions left; see "What needs deciding" at the end of
+this file.
 
 ### Alignment
 
@@ -913,7 +1007,14 @@ in one `[data-touch]` block in the tokens rather than per component.
 control. It gains the row: `.nib-row` is drawn in `base.css` and nowhere else,
 and no list paints a hover or a press of its own. It gains the badge and the
 switch on the same terms, and `SpaceMark.svelte`, which is the one answer to what
-goes inside a space's badge.
+goes inside a space's badge. And the cross: an X is drawn in `Cross.svelte` and
+nowhere else, and no button spells one as a letter.
+
+Three more stand beside it. `stack.test.ts` refuses a z-index that is not a rung of
+the ladder. `ink.test.ts` measures the ink on an accent fill on every palette the app
+ships and every accent a reader can pick, and refuses a white written straight onto
+anything. `write.test.ts` holds the page a note is on to one id and every page to the
+class.
 
 Three things are **not** guarded yet, and each of them is how the drift being
 undone here got in:
@@ -933,15 +1034,11 @@ undone here got in:
 
 ## What needs deciding
 
-Two colours are still under the floor, and neither is a number to nudge:
-
-**The accent cannot be both the ink and the fill.** On the dark palette
+**The accent as text on a surface lighter than the page.** On the dark palette
 `--accent` carries 4.52 against a panel, 4.20 against a card and 3.73 inside a
-menu - so the accent as *text* fails wherever the surface is lighter than the
-page - and white on an accent fill carries 3.98, which is every primary button's
-words. Making the accent darker fixes the fill and makes the text worse; making
-it lighter does the opposite. The answer is two tokens - the accent to write in,
-and the accent to fill with - and picking them is picking the brand.
+menu. The fill has its ink now (see "Ink on a fill"); the accent written *as* text
+- a link in a menu, a chip's word under the pointer - is still the brand colour,
+and lifting it is picking the brand.
 
 **The tab strip's inactive labels.** They are `--muted` by design, which now
 clears the floor; what is left is whether the tab you are *not* in should be

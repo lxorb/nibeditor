@@ -1164,8 +1164,6 @@ export const ml: Dictionary = {
   'Take theirs': 'അവരുടേത് എടുക്കുക',
   'Keep both': 'രണ്ടും സൂക്ഷിക്കുക',
   'What synced': 'സിങ്ക് ആയത്',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ഇനിയും ഒന്നുമില്ല. ഒന്നും നീക്കാത്ത സിങ്ക് രേഖപ്പെടുത്തില്ല.',
   'Clear the list': 'ലിസ്റ്റ് മായ്ക്കുക',
   '{count} down': '{count} ഇറങ്ങി',
   '{count} up': '{count} കയറി',
@@ -1184,10 +1182,6 @@ export const ml: Dictionary = {
     one: '{count} കുറിപ്പ് മടങ്ങി.',
     other: '{count} കുറിപ്പുകൾ മടങ്ങി.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു മാസത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
-  'The account keeps a year of versions of every note that syncs.':
-    'സിങ്ക് ചെയ്യുന്ന എല്ലാ കുറിപ്പിന്റെയും ഒരു വർഷത്തെ പതിപ്പുകൾ അക്കൗണ്ട് സൂക്ഷിക്കുന്നു.',
   'That did not work.': 'അത് പ്രവർത്തിച്ചില്ല.',
   'Signing in': 'സൈൻ ഇൻ ചെയ്യുന്നു',
   'Ask for a code from an app': 'ആപ്പിൽ നിന്ന് ഒരു കോഡ് ചോദിക്കുക',
@@ -1427,7 +1421,6 @@ export const ml: Dictionary = {
   'Reset the bar': 'ബാർ പുനഃസജ്ജമാക്കുക',
   'Pulling down': 'താഴേക്ക് വലിക്കൽ',
   'A pull past the top runs': 'മുകളിൽ നിന്ന് വലിച്ചാൽ ഓടും',
-  'On the note, and on the list of them.': 'കുറിപ്പിലും അവയുടെ പട്ടികയിലും.',
   Nothing: 'ഒന്നുമില്ല',
 
   // A way of looking at the space's graph, kept in the bookmarks.

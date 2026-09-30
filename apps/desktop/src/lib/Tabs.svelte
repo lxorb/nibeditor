@@ -40,6 +40,7 @@
   import { pinnedRun } from './workspace/pinning'
   import { inside, zoneAt } from './workspace/zones'
   import { dur } from './motion'
+  import Cross from './Cross.svelte'
 
   /** `caption` is the window's own titlebar: there the empty stretch of the strip is
    *  what the window is dragged by, and a double click on it maximises, the way it
@@ -938,7 +939,7 @@
             aria-label={t('Close')}
             onclick={(event) => closeTab(tab, pointerOf(event))}
           >
-            <svg viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" /></svg>
+            <Cross small />
           </button>
         {/if}
       </div>
@@ -1079,12 +1080,12 @@
   }
 
   .tab.active {
-    z-index: 1;
+    z-index: var(--z-raised);
   }
 
   .tab.carried,
   .tab.settling {
-    z-index: 2;
+    z-index: var(--z-lifted);
   }
 
   /* Out over the panes, where the tab is drawn at the end of the page instead. It
@@ -1360,7 +1361,7 @@
 
   /* A mark inside a row that is not the row's own, which is `--icon-sm`, drawn a
      little smaller here so the cross sits inside its circle. */
-  .shut svg {
+  .shut :global(svg) {
     width: 8px;
     height: 8px;
     fill: none;
@@ -1409,7 +1410,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000;
+    z-index: var(--z-carried);
     height: calc(var(--titlebar-height) - var(--tab-top, 5px));
     display: flex;
     align-items: center;

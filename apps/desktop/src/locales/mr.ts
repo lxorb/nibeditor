@@ -1151,8 +1151,6 @@ export const mr: Dictionary = {
   'Take theirs': 'त्यांचे घ्या',
   'Keep both': 'दोन्ही ठेवा',
   'What synced': 'काय सिंक झाले',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'अजून काही नाही. काहीच हलवत नाही अशी फेरी नोंदवली जात नाही.',
   'Clear the list': 'यादी रिकामी करा',
   '{count} down': '{count} आले',
   '{count} up': '{count} गेले',
@@ -1171,10 +1169,6 @@ export const mr: Dictionary = {
     one: '{count} नोंद मागे गेली.',
     other: '{count} नोंदी मागे गेल्या.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'सिंक होणाऱ्या प्रत्येक नोंदीच्या महिनाभराच्या आवृत्त्या खाते ठेवते.',
-  'The account keeps a year of versions of every note that syncs.':
-    'सिंक होणाऱ्या प्रत्येक नोंदीच्या वर्षभराच्या आवृत्त्या खाते ठेवते.',
   'That did not work.': 'ते जमले नाही.',
   'Signing in': 'साइन इन होत आहे',
   'Ask for a code from an app': 'ॲपकडून कोड मागा',
@@ -1411,7 +1405,6 @@ export const mr: Dictionary = {
   'Reset the bar': 'पट्टी रीसेट करा',
   'Pulling down': 'खाली ओढणे',
   'A pull past the top runs': 'वरून ओढल्यास चालते',
-  'On the note, and on the list of them.': 'टिपणावर, आणि त्यांच्या यादीवर.',
   Nothing: 'काहीही नाही',
 
   // A way of looking at the space's graph, kept in the bookmarks.

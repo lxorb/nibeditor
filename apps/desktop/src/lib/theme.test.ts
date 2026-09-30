@@ -686,12 +686,13 @@ describe('the settings a theme offers', () => {
 
     expect(theme.accent).toBe('teal')
     expect(painted['--accent']).toBe('#33c7ba')
-    // Five and not one: the hover, the wash, the rule and the selection move with
-    // the colour, which is the whole reason a setting paints a map.
+    // Six and not one: the hover, the press, the wash, the rule and the selection
+    // move with the colour, which is the whole reason a setting paints a map.
     expect(Object.keys(painted).sort()).toEqual([
       '--accent',
       '--accent-hover',
       '--accent-line',
+      '--accent-press',
       '--accent-soft',
       '--selection',
     ])

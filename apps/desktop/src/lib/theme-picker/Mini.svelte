@@ -64,7 +64,7 @@
   .window {
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: var(--z-base);
     display: grid;
     grid-template-columns: 30% 1fr;
     grid-template-rows: 17% 1fr;

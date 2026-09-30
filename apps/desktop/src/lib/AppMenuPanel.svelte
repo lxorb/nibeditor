@@ -324,7 +324,7 @@
   /* The layer behind it; see .nib-scrim in packages/themes. Clear here, where
      the menu is a popover beside a button. */
   .scrim {
-    --scrim-z: 44;
+    --scrim-z: var(--z-menu);
     --scrim-ink: 55%;
     --scrim-blur: 2px;
   }
@@ -340,7 +340,7 @@
     position: fixed;
     top: calc(var(--titlebar-height) + var(--space-1));
     inset-inline-start: var(--space-2);
-    z-index: 45;
+    z-index: var(--z-menu);
     /* Rows to press, as the right-click menu's are; see ContextMenu.svelte. */
     user-select: none;
     -webkit-user-select: none;

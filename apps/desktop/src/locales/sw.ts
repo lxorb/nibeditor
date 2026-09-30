@@ -1167,8 +1167,6 @@ export const sw: Dictionary = {
   'Take theirs': 'Chukua lao',
   'Keep both': 'Hifadhi yote mawili',
   'What synced': 'Kilichosawazishwa',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'Hakuna bado. Mzunguko usiosogeza kitu hauandikwi.',
   'Clear the list': 'Ondoa orodha',
   '{count} down': 'imeshuka {count}',
   '{count} up': 'imepanda {count}',
@@ -1187,10 +1185,6 @@ export const sw: Dictionary = {
     one: 'Dokezo {count} lilirudi.',
     other: 'Madokezo {count} yalirudi.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'Akaunti huhifadhi matoleo ya mwezi mmoja ya kila dokezo linalosawazishwa.',
-  'The account keeps a year of versions of every note that syncs.':
-    'Akaunti huhifadhi matoleo ya mwaka mmoja ya kila dokezo linalosawazishwa.',
   'That did not work.': 'Hiyo haikufanya kazi.',
   'Signing in': 'Kuingia',
   'Ask for a code from an app': 'Omba kodi kutoka programu',
@@ -1434,7 +1428,6 @@ export const sw: Dictionary = {
   'Reset the bar': 'Rejesha upau',
   'Pulling down': 'Kuvuta chini',
   'A pull past the top runs': 'Kuvuta kupita juu huendesha',
-  'On the note, and on the list of them.': 'Kwenye noti, na kwenye orodha yao.',
   Nothing: 'Hakuna',
 
   // A way of looking at the space's graph, kept in the bookmarks.

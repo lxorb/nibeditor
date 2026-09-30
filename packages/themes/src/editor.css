@@ -270,7 +270,7 @@
    there - would never reach the editor. So it lets the pointer through. */
 .cm-editor .cm-nib-selection,
 .cm-editor .cm-selectionLayer {
-  z-index: 1 !important;
+  z-index: var(--z-raised) !important;
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -323,7 +323,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: var(--z-under);
   background: var(--code-block-bg-color);
   pointer-events: none;
 }
@@ -836,7 +836,7 @@
   top: 0.5px;
   width: 4px;
   height: 8px;
-  border: solid #fff;
+  border: solid var(--accent-ink);
   border-width: 0 2px 2px 0;
   transform: rotate(43deg);
   animation: check-draw var(--dur-base) var(--ease-spring);
@@ -1102,7 +1102,7 @@
 .nib-table-btn:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
   transform: scale(1.14);
 }
 
@@ -1128,7 +1128,7 @@
   width: 7px;
   height: 100%;
   cursor: col-resize;
-  z-index: 1;
+  z-index: var(--z-raised);
 }
 
 /* Kept inside the last cell: a handle past the table's edge is overflow,
@@ -1931,7 +1931,7 @@
    is lifted above the layer to stay clean. */
 .nib-image-frame.is-selected {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-lifted);
   /* The frame's own room above and below would still show the layer through
      it; the page's ground fills it, so the ring alone marks the selection. */
   background: var(--bg);
@@ -2101,7 +2101,7 @@
   position: absolute;
   bottom: calc(100% + 8px);
   left: 50%;
-  z-index: 2;
+  z-index: var(--z-lifted);
   display: flex;
   align-items: center;
   gap: 1px;
@@ -2186,7 +2186,7 @@
 
 .nib-image-tool:hover:not(:disabled) {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .nib-image-tool:disabled {
@@ -2214,7 +2214,7 @@
 .nib-lightbox {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: var(--z-lightbox);
   display: grid;
   place-items: center;
   padding: 4vh 4vw;
@@ -2415,7 +2415,7 @@
   gap: 0.55em;
   width: 100%;
   padding: 0.5em var(--space-4);
-  color: var(--fg);
+  color: var(--text);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   text-align: start;

@@ -1152,8 +1152,6 @@ export const ur: Dictionary = {
   'Take theirs': 'ان کی لیں',
   'Keep both': 'دونوں رکھیں',
   'What synced': 'کیا سنک ہوا',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'ابھی کچھ نہیں۔ جو دور کچھ نہ ہلائے وہ لکھا نہیں جاتا۔',
   'Clear the list': 'فہرست صاف کریں',
   '{count} down': '{count} آئے',
   '{count} up': '{count} گئے',
@@ -1172,10 +1170,6 @@ export const ur: Dictionary = {
     one: '{count} نوٹ واپس چلا گیا۔',
     other: '{count} نوٹس واپس چلے گئے۔',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک ماہ کے ورژن رکھتا ہے۔',
-  'The account keeps a year of versions of every note that syncs.':
-    'اکاؤنٹ ہر سنک ہونے والے نوٹ کے ایک سال کے ورژن رکھتا ہے۔',
   'That did not work.': 'یہ کام نہیں کر سکا۔',
   'Signing in': 'سائن ان ہو رہا ہے',
   'Ask for a code from an app': 'ایپ سے کوڈ منگوائیں',
@@ -1408,7 +1402,6 @@ export const ur: Dictionary = {
   'Reset the bar': 'پٹی ری سیٹ کریں',
   'Pulling down': 'نیچے کھینچنا',
   'A pull past the top runs': 'اوپر سے کھینچنے پر چلے',
-  'On the note, and on the list of them.': 'نوٹ پر، اور ان کی فہرست پر۔',
   Nothing: 'کچھ نہیں',
 
   // A way of looking at the space's graph, kept in the bookmarks.

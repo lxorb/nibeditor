@@ -126,7 +126,7 @@
     position: absolute;
     top: calc(100% + 6px);
     inset-inline-start: -8px;
-    z-index: 6;
+    z-index: var(--z-popover);
   }
 
   /* A thumb needs a target, and the sentence needs the width the screen has.

@@ -619,7 +619,7 @@
     border: 1px solid transparent;
     border-radius: var(--radius-row);
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
     font-family: var(--font-ui);
     font-size: var(--text-row);
     cursor: default;
@@ -740,7 +740,7 @@
   .tick.on {
     border-color: var(--accent);
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
   }
 
   .tick:focus-visible {

@@ -37,10 +37,11 @@ export function sizeStepFor(
   return event.deltaY < 0 ? 1 : -1
 }
 
-/** Whether what the wheel was over is the note. `#write` is the writing surface
- *  and the editor, the reading view and a slide all carry it. */
+/** Whether what the wheel was over is the note: a page a note is written or read
+ *  on, which the editor, the reading view and a slide all are; see write.ts in
+ *  @nib/themes. */
 function overNote(target: EventTarget | null): boolean {
-  return target instanceof Element && !!target.closest('#write')
+  return target instanceof Element && !!target.closest('.nib-write')
 }
 
 /** Listens for it, and answers how to stop.

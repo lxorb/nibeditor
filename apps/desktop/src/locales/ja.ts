@@ -1144,8 +1144,6 @@ export const ja: Dictionary = {
   'Take theirs': '相手の方を使う',
   'Keep both': '両方残す',
   'What synced': '同期の記録',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'まだありません。何も動かなかった処理は記録しません。',
   'Clear the list': '一覧を消す',
   '{count} down': '{count} 件受信',
   '{count} up': '{count} 件送信',
@@ -1159,10 +1157,6 @@ export const ja: Dictionary = {
     '{count} 件のノートが当時の内容に戻ります。',
   'Nothing has changed since then.': 'それ以降、変更はありません。',
   '{count} notes went back.': '{count} 件のノートを戻しました。',
-  'The account keeps a month of versions of every note that syncs.':
-    'アカウントは同期する全ノートの版を 1 か月保持します。',
-  'The account keeps a year of versions of every note that syncs.':
-    'アカウントは同期する全ノートの版を 1 年保持します。',
   'That did not work.': 'うまくいきませんでした。',
   'Signing in': 'サインイン',
   'Ask for a code from an app': 'アプリのコードを要求する',
@@ -1404,7 +1398,6 @@ export const ja: Dictionary = {
   'Reset the bar': 'バーを初期化',
   'Pulling down': '下に引く',
   'A pull past the top runs': '先頭より下に引くと実行',
-  'On the note, and on the list of them.': 'ノートとノートの一覧で。',
   Nothing: 'なし',
 
   // A way of looking at the space's graph, kept in the bookmarks.

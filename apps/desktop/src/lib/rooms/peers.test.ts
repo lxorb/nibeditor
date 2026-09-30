@@ -58,7 +58,7 @@ describe('who else is in a note', () => {
 
     // Teal, in the shade a dark background needs; the light one is another value.
     expect(carets[0]?.colour).toBe('#33c7ba')
-    expect(peersIn(two.awareness, two.doc, 'light').carets[0]?.colour).toBe('#0f9b8e')
+    expect(peersIn(two.awareness, two.doc, 'light').carets[0]?.colour).toBe('#0d8277')
   })
 
   test('moves the caret along when words are written above it', () => {

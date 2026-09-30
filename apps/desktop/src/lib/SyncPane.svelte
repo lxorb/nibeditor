@@ -292,7 +292,7 @@
 <h3>{t('What synced')}</h3>
 
 {#if !passes.length}
-  <p class="hint">{t('Nothing yet. A pass that moves nothing is not written down.')}</p>
+  <p class="hint">{t('Nothing here.')}</p>
 {:else}
   <div class="card">
     {#each passes as pass, at (at)}
@@ -378,15 +378,6 @@
     </button>
   {/if}
 </div>
-
-<!-- What the account actually keeps, which is either of the two the row above
-     chose. One sentence per horizon rather than one with a number in it: "a year" is
-     what the setting says and "365 days" is not. -->
-<p class="hint">
-  {modes.keepVersions === KEEP_YEAR
-    ? t('The account keeps a year of versions of every note that syncs.')
-    : t('The account keeps a month of versions of every note that syncs.')}
-</p>
 
 <style>
   /* The settings pane's own shapes. A section in its own component does not

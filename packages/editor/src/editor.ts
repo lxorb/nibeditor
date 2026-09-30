@@ -194,9 +194,11 @@ export function editorState(options: StateOptions): EditorState {
       findExtensions(options.onFind),
       EditorView.lineWrapping,
       ...(options.coveredBelow ? [coveredBelow(options.coveredBelow)] : []),
-      // The writing surface carries Typora's `#write` id, so Typora themes
-      // that target `#write` style our editor directly.
-      EditorView.contentAttributes.of({ id: 'write' }),
+      // The writing surface is Typora's `#write`, so a theme written for Typora
+      // styles this editor directly. As a class: a window has several of these
+      // pages at once and an id is one element, so the host gives the id to the
+      // one in front; see write.ts in @nib/themes.
+      EditorView.contentAttributes.of({ class: 'nib-write' }),
       syntaxHighlighting(nibHighlightStyle),
       codeThemeExtension(options.codeTheme),
       // Told how long the document is, because a note too long to parse is built

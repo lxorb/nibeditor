@@ -1,4 +1,5 @@
 import { contrastCss } from '@nib/themes/contrast'
+import { everySurface } from '@nib/themes/write'
 import { ACCENTS, accentSetting, DEFAULT_ACCENT } from './accents'
 import { tintSystemBars } from './insets'
 import { log } from './log'
@@ -480,7 +481,8 @@ class Themes {
       // Last in <head>, so it outranks the theme it sits on top of.
       document.head.append(style)
     }
-    style.textContent = css
+    // Written against Typora's one `#write`, and the app has several; see write.ts.
+    style.textContent = everySurface(css)
   }
 
   /** Chooses the theme, and only the theme. The scheme is left exactly as it
@@ -753,7 +755,8 @@ class Themes {
       // Before any custom.css block, which must stay last.
       document.head.insertBefore(style, document.getElementById(CUSTOM_ID))
     }
-    style.textContent = css
+    // A theme is written against Typora's one `#write`; see write.ts.
+    style.textContent = everySurface(css)
   }
 }
 

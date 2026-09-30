@@ -4,9 +4,10 @@
    *  The same page an export writes and a published blog serves, in the same
    *  column and at the same size the editor was using, so switching between the
    *  two is one page changing its skin rather than a jump to somewhere else. The
-   *  writing surface carries Typora's `#write` id and so does this, which is what
-   *  puts every rule in the theme - and in a reader's own custom.css - on both
-   *  faces of a note at once.
+   *  writing surface is Typora's `#write` and so is this, which is what puts every
+   *  rule in the theme - and in a reader's own custom.css - on both faces of a note
+   *  at once. The class on every page, the id only on the one in the focused pane;
+   *  see write.ts in @nib/themes.
    *
    *  Nothing here writes to the note. The tab it is given is the pane's view of
    *  the document, and the document may be being typed into in another pane; when
@@ -577,9 +578,15 @@
   >
     <!-- A piece of writing, and an `article` says so: everything under here is the
          note's own headings and paragraphs, and a reader landing in a `div` has
-         nothing telling it where the document starts or what it is called. The id
-         stays what every theme selects on; see base.css and Typora's `#write`. -->
-    <article id="write" class="page" dir={direction} aria-label={tab.shown} bind:this={surface}>
+         nothing telling it where the document starts or what it is called. Typora's
+         `#write` is what every theme selects on; see write.ts in @nib/themes. -->
+    <article
+      id={focused ? 'write' : undefined}
+      class="page nib-write"
+      dir={direction}
+      aria-label={tab.shown}
+      bind:this={surface}
+    >
       <!-- eslint-disable-next-line svelte/no-at-html-tags -- the note's own words, rendered by the same renderer the export uses -->
       {@html html}
     </article>

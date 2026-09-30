@@ -80,6 +80,6 @@
     top: var(--space-3);
     left: 50%;
     translate: -50% 0;
-    z-index: 7;
+    z-index: var(--z-bars);
   }
 </style>

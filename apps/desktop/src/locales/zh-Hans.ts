@@ -1127,8 +1127,6 @@ export const zhHans: Dictionary = {
   'Take theirs': '采用对方的',
   'Keep both': '两者都留',
   'What synced': '同步记录',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    '暂无记录。没有变动的同步不会记录。',
   'Clear the list': '清空列表',
   '{count} down': '下载{count}',
   '{count} up': '上传{count}',
@@ -1141,10 +1139,6 @@ export const zhHans: Dictionary = {
   '{count} notes would go back to what they said then.': '{count}篇笔记会回到当时的内容。',
   'Nothing has changed since then.': '自那时起没有任何变化。',
   '{count} notes went back.': '{count}篇笔记已回退。',
-  'The account keeps a month of versions of every note that syncs.':
-    '账户会为每篇同步的笔记保留一个月的版本。',
-  'The account keeps a year of versions of every note that syncs.':
-    '账户会为每篇同步的笔记保留一年的版本。',
   'That did not work.': '操作没有成功。',
   'Signing in': '登录',
   'Ask for a code from an app': '要求应用提供验证码',
@@ -1374,7 +1368,6 @@ export const zhHans: Dictionary = {
   'Reset the bar': '重置工具条',
   'Pulling down': '下拉',
   'A pull past the top runs': '从顶部再下拉则运行',
-  'On the note, and on the list of them.': '在笔记上，也在笔记列表上。',
   Nothing: '无',
 
   // A way of looking at the space's graph, kept in the bookmarks.

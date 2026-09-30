@@ -44,7 +44,7 @@ export const nibTheme = EditorView.theme({
   },
   '.cm-searchMatch.cm-searchMatch-selected': {
     backgroundColor: 'var(--accent)',
-    color: '#fff',
+    color: 'var(--accent-ink)',
   },
 })
 

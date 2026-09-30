@@ -45,6 +45,7 @@
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
   import { trap } from './trap'
+  import Cross from './Cross.svelte'
 
   const { view }: { view?: EditorView | undefined } = $props()
 
@@ -387,7 +388,7 @@
         </h1>
 
         <button class="icon" aria-label={t('Close')} onclick={() => (settings.open = false)}>
-          <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          <Cross />
         </button>
       </header>
     {/if}
@@ -653,7 +654,7 @@
               title={t('Remove')}
               onclick={() => modes.toggleSpellWord(word, view)}
             >
-              {word}<span aria-hidden="true">×</span>
+              {word}<Cross small />
             </button>
           {/each}
         </div>
@@ -1060,7 +1061,7 @@
           aria-label={t('Take it off')}
           onclick={() => toolbar.remove(id)}
         >
-          <svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8" /></svg>
+          <Cross />
         </button>
       </div>
     {:else}
@@ -1077,10 +1078,7 @@
   <h3>{t('Pulling down')}</h3>
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">
-        {t('A pull past the top runs')}
-        <small>{t('On the note, and on the list of them.')}</small>
-      </span>
+      <span class="name">{t('A pull past the top runs')}</span>
       <div class="pick">
         <Select
           value={pull.id}
@@ -1243,7 +1241,7 @@
 <style>
   /* The layer behind it; see .nib-scrim in packages/themes. */
   .scrim {
-    --scrim-z: 40;
+    --scrim-z: var(--z-settings);
   }
 
   /* The shape is `.nib-screen` in the themes package - the surface, the corner,
@@ -1254,7 +1252,7 @@
     --screen-width: 56rem;
     top: 10vh;
     height: 76vh;
-    z-index: 41;
+    z-index: var(--z-settings);
     /* Two columns: the list of panes, and the pane. */
     display: grid;
     grid-template-columns: 14rem 1fr;
@@ -1588,7 +1586,7 @@
     }
   }
 
-  .revert svg {
+  .revert :global(svg) {
     width: 14px;
     height: 14px;
     fill: none;
@@ -1632,7 +1630,7 @@
   .clash .take {
     border-color: transparent;
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
   }
 
   /* A key that may never arrive. Quiet rather than red: on a browser several of
@@ -1762,7 +1760,7 @@
     gap: 0.4em;
     padding: 0.1em 0.55em;
     border: none;
-    border-radius: 999px;
+    border-radius: 99px;
     background: var(--surface-2);
     color: var(--text-strong);
     font-family: var(--font-ui);
@@ -1773,8 +1771,11 @@
       color var(--dur-fast) var(--ease-out);
   }
 
-  .chip span {
+  .chip :global(svg) {
+    width: 8px;
+    height: 8px;
     color: var(--muted);
+    stroke-width: 1.4;
   }
 
   @media (hover: hover) {
@@ -1783,7 +1784,7 @@
       color: var(--danger);
     }
 
-    .chip:hover span {
+    .chip:hover :global(svg) {
       color: inherit;
     }
   }
@@ -1936,7 +1937,7 @@
     background: var(--surface-2);
   }
 
-  .sheet.phone .bar .icon svg {
+  .sheet.phone .bar .icon :global(svg) {
     width: var(--touch-icon);
     height: var(--touch-icon);
     fill: none;

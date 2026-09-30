@@ -1,5 +1,6 @@
 import { LanguageDescription, type LanguageSupport } from '@codemirror/language'
 import { CODE_PALETTES, type CodePalette, fenceLanguages } from '@nib/editor'
+import { everySurface } from '@nib/themes/write'
 
 export type Parser = LanguageSupport['language']['parser']
 
@@ -82,5 +83,6 @@ export function paintCodePalette(id: string) {
     document.head.prepend(sheet)
   }
 
-  sheet.textContent = palette ? paletteCss(palette) : ''
+  // On every page a note is on, which in the app is more than one; see write.ts.
+  sheet.textContent = palette ? everySurface(paletteCss(palette)) : ''
 }

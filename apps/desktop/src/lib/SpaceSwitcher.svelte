@@ -429,7 +429,7 @@
     top: 100%;
     left: var(--space-1);
     right: var(--space-1);
-    z-index: 12;
+    z-index: var(--z-popover);
     padding: var(--space-1);
     max-height: 60vh;
     overflow-y: auto;
@@ -447,7 +447,7 @@
   .catch {
     position: fixed;
     inset: 0;
-    z-index: 11;
+    z-index: calc(var(--z-popover) - 1);
   }
 
   /* A row and the button at the end of it share one line, so the name gives way

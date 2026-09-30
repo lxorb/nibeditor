@@ -98,7 +98,7 @@
     top: calc(100% + var(--space-1));
     left: 0;
     right: 0;
-    z-index: 4;
+    z-index: var(--z-popover);
     max-height: 15em;
     overflow-y: auto;
     margin: 0;

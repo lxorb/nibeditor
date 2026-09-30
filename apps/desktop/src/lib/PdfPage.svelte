@@ -304,7 +304,7 @@
     text-size-adjust: none;
     forced-color-adjust: none;
     transform-origin: 0 0;
-    z-index: 1;
+    z-index: var(--z-raised);
     --min-font-size: 1;
     --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
     --min-font-size-inv: calc(1 / var(--min-font-size));

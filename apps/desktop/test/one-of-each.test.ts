@@ -443,6 +443,80 @@ describe('the switch', () => {
   })
 })
 
+/** Every straight line a path draws, as its two ends. Moves and lines only, which is
+ *  all a cross is ever drawn with; a path with a curve in it is not one. */
+function segments(d: string): [number, number, number, number][] | null {
+  const parts = d.match(/[MmLl]|-?\d*\.?\d+/g) ?? []
+  const out: [number, number, number, number][] = []
+  let [x, y] = [0, 0]
+  let command = ''
+
+  for (let at = 0; at < parts.length;) {
+    const part = parts[at] ?? ''
+    if (/[MmLl]/.test(part)) {
+      command = part
+      at++
+      continue
+    }
+
+    const [dx, dy] = [Number(parts[at]), Number(parts[at + 1])]
+    if (Number.isNaN(dx) || Number.isNaN(dy)) return null
+    const relative = command === 'm' || command === 'l'
+    const [nx, ny] = relative ? [x + dx, y + dy] : [dx, dy]
+
+    if (command === 'L' || command === 'l') out.push([x, y, nx, ny])
+    else command = command === 'm' ? 'l' : 'L'
+    ;[x, y] = [nx, ny]
+    at += 2
+  }
+
+  return /[^MmLl\d\s.,-]/.test(d) ? null : out
+}
+
+/** Whether a path is two diagonals that cross each other: an X. */
+function isCross(d: string): boolean {
+  const lines = segments(d)
+  if (lines?.length !== 2) return false
+  const [one, two] = lines as [[number, number, number, number], [number, number, number, number]]
+  const slope = ([ax, ay, bx, by]: number[]) => ((by ?? 0) - (ay ?? 0)) / ((bx ?? 0) - (ax ?? 0))
+  // A chevron is two diagonals too, but they meet at an end rather than crossing.
+  const ends = (line: number[]) => [`${line[0]},${line[1]}`, `${line[2]},${line[3]}`]
+  const meet = ends(one).some((end) => ends(two).includes(end))
+
+  return (
+    !meet && Math.abs(slope(one) + slope(two)) < 0.01 && Math.abs(Math.abs(slope(one)) - 1) < 0.01
+  )
+}
+
+/** The cross that shuts something or takes it away. Seven components drew their own
+ *  in five view boxes, so a sheet's was heavier than the theme store's beside it and
+ *  the find bar's smaller than both; two more spelled it as a letter. */
+describe('the cross that shuts something', () => {
+  test('is drawn in one component, at one drawing per size it is seen at', () => {
+    const drawing = components
+      .filter((one) =>
+        [...one.text.matchAll(/\bd="([^"]+)"/g)].some((path) => isCross(path[1] ?? '')),
+      )
+      .map((one) => one.name)
+      .sort()
+
+    expect(drawing).toEqual([
+      'lib/Cross.svelte',
+      // The window's own close button, in the platform's caption box beside the
+      // other two; see Titlebar.svelte.
+      'lib/Titlebar.svelte',
+    ])
+  })
+
+  test('and no button spells one as a letter', () => {
+    const spelled = components
+      .filter((one) => /(<button[^>]*>|aria-hidden="true">)\s*[×✕✖]\s*</.test(one.text))
+      .map((one) => one.name)
+
+    expect(spelled).toEqual([])
+  })
+})
+
 /** The one thing a dialog or a sheet is there to do. Seven components had their own
  *  and were brought onto `.nib-button`; five more - the version history, the theme
  *  gallery, the settings, the connectors and every sheet built on Sheet.svelte -

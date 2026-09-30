@@ -425,7 +425,7 @@
     left: 50%;
     translate: -50% 0;
     width: min(30rem, calc(100vw - 3rem));
-    z-index: 51;
+    z-index: var(--z-sheet);
     display: flex;
     flex-direction: column;
     gap: var(--space-3);
@@ -505,7 +505,7 @@
 
   .cell.active {
     background: var(--accent);
-    color: #fff;
+    color: var(--accent-ink);
   }
 
   /* The box Icon.svelte fills, and the size an emoji in it is set at. */

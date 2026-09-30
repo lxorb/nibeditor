@@ -1152,8 +1152,6 @@ export const fa: Dictionary = {
   'Take theirs': 'گرفتن از آن‌ها',
   'Keep both': 'نگه داشتن هر دو',
   'What synced': 'چه همگام شد',
-  'Nothing yet. A pass that moves nothing is not written down.':
-    'هنوز چیزی نیست. گذری که چیزی جابه‌جا نکند نوشته نمی‌شود.',
   'Clear the list': 'پاک کردن فهرست',
   '{count} down': '{count} پایین',
   '{count} up': '{count} بالا',
@@ -1172,10 +1170,6 @@ export const fa: Dictionary = {
     one: '{count} یادداشت بازگشت.',
     other: '{count} یادداشت بازگشتند.',
   },
-  'The account keeps a month of versions of every note that syncs.':
-    'حساب یک ماه نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
-  'The account keeps a year of versions of every note that syncs.':
-    'حساب یک سال نسخه از هر یادداشتی که همگام می‌شود نگه می‌دارد.',
   'That did not work.': 'آن کار نکرد.',
   'Signing in': 'ورود',
   'Ask for a code from an app': 'خواستن کد از یک برنامه',
@@ -1410,7 +1404,6 @@ export const fa: Dictionary = {
   'Reset the bar': 'بازنشانی نوار',
   'Pulling down': 'کشیدن به پایین',
   'A pull past the top runs': 'کشیدن از بالا اجرا می‌کند',
-  'On the note, and on the list of them.': 'روی یادداشت و روی فهرست آن‌ها.',
   Nothing: 'هیچ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
