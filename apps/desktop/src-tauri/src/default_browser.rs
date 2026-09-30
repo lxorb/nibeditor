@@ -368,10 +368,15 @@ mod platform {
     }
 
     /// Asks for both schemes, which the system turns into its one question: use nib, or
-    /// keep the browser there is.
+    /// keep the browser there is. Only from an app bundle, which is what the system
+    /// files a handler under; a bare binary has nothing to name.
     pub fn make_default(_app: &AppHandle) -> Result<(), String> {
+        let main = NSBundle::mainBundle();
+        if main.bundleIdentifier().is_none() {
+            return Err("only the installed app can be the default browser".into());
+        }
         let workspace = NSWorkspace::sharedWorkspace();
-        let bundle = NSBundle::mainBundle().bundleURL();
+        let bundle = main.bundleURL();
         for scheme in ["http", "https"] {
             workspace.setDefaultApplicationAtURL_toOpenURLsWithScheme_completionHandler(
                 &bundle,
@@ -388,7 +393,7 @@ mod platform {
                 let askers = NSRunningApplication::runningApplicationsWithBundleIdentifier(
                     &NSString::from_str(ASKER),
                 );
-                for asker in askers.iter() {
+                for asker in &askers {
                     let _ = asker
                         .activateWithOptions(NSApplicationActivationOptions::ActivateAllWindows);
                 }
@@ -580,10 +585,22 @@ mod tests {
         }
     }
 
+    /// The product's name as tauri.conf.json says it, which is the name the app registers
+    /// under at run time and the one the MSI's fragment has to spell out.
+    fn product_name(config: &str) -> String {
+        let parsed: serde_json::Value = serde_json::from_str(config).expect("the config");
+        parsed["productName"]
+            .as_str()
+            .expect("a product name")
+            .to_owned()
+    }
+
     #[test]
     fn the_msi_writes_what_the_app_writes() {
         let fragment = source("wix/browser.wxs");
-        let lines = in_words("{{product_name}}", "[!Path]", |one| {
+        let config = source("tauri.conf.json");
+        let product = product_name(&config);
+        let lines = in_words(&product, "[!Path]", |one| {
             let name = if one.name.is_empty() {
                 String::new()
             } else {
@@ -601,7 +618,6 @@ mod tests {
         }
 
         // And the bundle builds it into the MSI.
-        let config = source("tauri.conf.json");
         assert!(config.contains(r#""fragmentPaths": ["wix/browser.wxs"]"#));
         assert!(config.contains(r#""componentRefs": ["NibBrowser"]"#));
         assert!(fragment.contains(r#"<Component Id="NibBrowser""#));

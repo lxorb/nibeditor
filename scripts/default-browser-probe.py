@@ -45,7 +45,7 @@ import time
 import urllib.error
 import urllib.request
 
-from probe_app import main_window, run_probe, sized
+from probe_app import close_app, main_window, run_probe, sized
 
 HERE = pathlib.Path(__file__).resolve().parent
 
@@ -204,9 +204,11 @@ def tabs(port: int, secret: str) -> dict[str, object]:
 
 
 def settled_tabs(port: int, secret: str, want: int) -> dict[str, object]:
-    """The strip once it holds `want` web tabs, or as it is after twenty seconds."""
+    """The strip once it holds `want` web tabs, or as it is after a minute. The window
+    answers nothing until its launch has restored the space, which on a cold start is
+    most of that minute's first seconds, so an answer that is an error is asked again."""
 
-    until = time.perf_counter() + 20
+    until = time.perf_counter() + 60
     said: dict[str, object] = {}
     while time.perf_counter() < until:
         said = tabs(port, secret)
@@ -215,6 +217,16 @@ def settled_tabs(port: int, secret: str, want: int) -> dict[str, object]:
             return said
         time.sleep(0.3)
     return said
+
+
+def shown(pid: int) -> None:
+    """Waits for the app's window to exist, which is what the endpoint asks."""
+
+    until = time.perf_counter() + 60
+    while not main_window(pid):
+        if time.perf_counter() > until:
+            raise SystemExit("the app never showed a window")
+        time.sleep(0.1)
 
 
 def hand_over(exe: pathlib.Path, *args: str) -> None:
@@ -278,19 +290,27 @@ def main() -> int:
         # turned on and the next launch comes back to a space.
         running = run_probe(options.exe, quiet=True)
         port_, secret = endpoint(options.identifier, 90, running.pid)
+        shown(running.pid)
         act(port_, secret, "open", {"path": f"{NOTE}.md", "space": SPACE})
         time.sleep(3)
-        running.terminate()
+        # Closed the way a person closes it, so the engine lets go of its profile before
+        # the next launch wants it: a killed app leaves the engine's own processes
+        # holding it, and the next window waits for them.
+        if not close_app(running):
+            running.terminate()
         running.wait(timeout=30)
         allow_eval(options.identifier)
 
-        # Cold: nib is not running, and Windows starts it for a link.
-        started = time.perf_counter()
+        # Cold: nib is not running, and Windows starts it for a link. How soon the tab
+        # is there is the launch trace's to say (NIB_TRACE_STARTUP): a question asked
+        # before the window listens is never answered and waits out the endpoint's whole
+        # timeout, so this asks only once the window has had time to restore.
         running = run_probe(options.exe, quiet=True, args=["--url", f"{site}/cold"])
         port_, secret = endpoint(options.identifier, 90, running.pid)
+        shown(running.pid)
+        time.sleep(3)
         cold = settled_tabs(port_, secret, 1)
         said["cold"] = cold
-        said["cold s"] = round(time.perf_counter() - started, 2)
         if f"{site}/cold" not in (cold.get("strip") or []):
             wrong.append(f"a launch for a link did not open it: {cold}")
         if cold.get("front") != f"{site}/cold":

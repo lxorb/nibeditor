@@ -4,27 +4,28 @@
      to them), in the installing person's own hive, where Default apps reads them, and
      taken away again when the MSI is uninstalled.
 
-     A template Tauri renders before WiX reads it, so the product's name is its own
-     `product_name` and the program is the file the main template calls `Path`. -->
+     WiX reads this file as it is, so the product's name is written out: it is
+     `productName` in tauri.conf.json, and the test holds the two together. The
+     program is the file Tauri's own template calls `Path`. -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="INSTALLDIR">
       <Component Id="NibBrowser" Guid="{325FDB6B-186F-426A-99A8-EA80EC722D97}">
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}" Type="string" Value="{{product_name}}" KeyPath="yes" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\DefaultIcon" Type="string" Value="[!Path],0" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\shell\open\command" Type="string" Value="&quot;[!Path]&quot;" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities" Name="ApplicationName" Type="string" Value="{{product_name}}" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities" Name="ApplicationDescription" Type="string" Value="Notes and the web in one window." />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities" Name="ApplicationIcon" Type="string" Value="[!Path],0" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities\Startmenu" Name="StartMenuInternet" Type="string" Value="{{product_name}}" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities\URLAssociations" Name="http" Type="string" Value="NibURL" />
-        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities\URLAssociations" Name="https" Type="string" Value="NibURL" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\NibURL" Type="string" Value="{{product_name}} URL" />
-        <RegistryValue Root="HKCU" Key="Software\Classes\NibURL\Application" Name="ApplicationName" Type="string" Value="{{product_name}}" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib" Type="string" Value="Nib" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\DefaultIcon" Type="string" Value="[!Path],0" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\shell\open\command" Type="string" Value="&quot;[!Path]&quot;" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities" Name="ApplicationName" Type="string" Value="Nib" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities" Name="ApplicationDescription" Type="string" Value="Notes and the web in one window." />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities" Name="ApplicationIcon" Type="string" Value="[!Path],0" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities\Startmenu" Name="StartMenuInternet" Type="string" Value="Nib" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities\URLAssociations" Name="http" Type="string" Value="NibURL" />
+        <RegistryValue Root="HKCU" Key="Software\Clients\StartMenuInternet\Nib\Capabilities\URLAssociations" Name="https" Type="string" Value="NibURL" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibURL" Type="string" Value="Nib URL" />
+        <RegistryValue Root="HKCU" Key="Software\Classes\NibURL\Application" Name="ApplicationName" Type="string" Value="Nib" />
         <RegistryValue Root="HKCU" Key="Software\Classes\NibURL\Application" Name="ApplicationIcon" Type="string" Value="[!Path],0" />
         <RegistryValue Root="HKCU" Key="Software\Classes\NibURL\DefaultIcon" Type="string" Value="[!Path],0" />
         <RegistryValue Root="HKCU" Key="Software\Classes\NibURL\shell\open\command" Type="string" Value="&quot;[!Path]&quot; --url &quot;%1&quot;" />
-        <RegistryValue Root="HKCU" Key="Software\RegisteredApplications" Name="{{product_name}}" Type="string" Value="Software\Clients\StartMenuInternet\{{product_name}}\Capabilities" />
+        <RegistryValue Root="HKCU" Key="Software\RegisteredApplications" Name="Nib" Type="string" Value="Software\Clients\StartMenuInternet\Nib\Capabilities" />
       </Component>
     </DirectoryRef>
   </Fragment>
