@@ -377,6 +377,17 @@ describe('the bar', () => {
     expect(one.find).toMatchObject({ query: '', count: 0, at: -1 })
     shut('t1', one)
     expect(one.find.open).toBe(false)
-    expect(called.map((one) => one.command)).toEqual(['web_find_stop', 'web_find_stop'])
+    expect(called.map((one) => one.command)).toEqual([
+      'web_find_stop',
+      'web_find_stop',
+      'keyboard_back',
+    ])
+  })
+
+  test('gives the page its keyboard back as it closes, as in Chrome', () => {
+    const one = new Page()
+    one.find = { open: true, query: 'a', count: 3, at: 1 }
+    shut('t1', one)
+    expect(called.at(-1)).toEqual({ command: 'keyboard_back', args: { tab: 't1' } })
   })
 })

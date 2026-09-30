@@ -6,13 +6,12 @@
    *  drawn, handed over as this arrives and taken back as it goes. See
    *  sessions.svelte.ts.
    *
-   *  The keyboard comes here when the tab comes to the front of the pane that has it, and
+   *  The keyboard comes here when the tab comes to the front of the pane that has it. It
    *  comes back when whatever was put over it - the palette, a menu, a question - goes,
-   *  the way a note's caret does. */
+   *  and when the window does, from where the window keeps it; see keyboard-home.ts. */
 
   import { onMount, untrack } from 'svelte'
   import FindBar from '../FindBar.svelte'
-  import { overlays } from '../overlays'
   import type { Tab } from '../workspace.svelte'
   import { sessionOf } from './sessions.svelte'
 
@@ -25,13 +24,6 @@
 
   let place = $state<HTMLElement>()
 
-  /** Whether the keyboard is nowhere in particular, which is when a layer that has gone
-   *  hands it back here rather than taking it from wherever somebody put it since. */
-  function adrift(): boolean {
-    const at = document.activeElement
-    return !at || at === document.body || !!place?.contains(at)
-  }
-
   onMount(() => {
     if (place)
       void session.attach(
@@ -39,14 +31,7 @@
         untrack(() => focused),
       )
 
-    const letGo = overlays.watch(() => {
-      if (overlays.depth === 0 && untrack(() => focused) && adrift()) session.focus()
-    })
-
-    return () => {
-      letGo()
-      session.detach()
-    }
+    return () => session.detach()
   })
 
   // To the front of the pane that has the keyboard: the keyboard comes with it.

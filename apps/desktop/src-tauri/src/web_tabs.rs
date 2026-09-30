@@ -1267,6 +1267,7 @@ pub async fn web_open(
 
     tabs.built(&tab);
     made?;
+    crate::keyboard::built(&label_of(&tab));
 
     // One notch of the wheel over the page is one notch, wherever the keyboard is; from
     // the first page of the run. See web_wheel.rs.
@@ -1423,6 +1424,9 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
                         host.window_handle().0 as isize,
                         &keyed,
                     );
+                    // Where the keyboard goes back to as the window comes back; see
+                    // keyboard.rs.
+                    crate::keyboard::chromium_page(&label, &keyed, host);
                 }
             });
         }
@@ -1434,6 +1438,7 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     }
 
     let window = view.window().label().to_string();
+    let label = view.label().to_string();
     let asking = app.clone();
     let named = tab.to_string();
     let _ = view.with_webview(move |platform| {
@@ -1446,6 +1451,8 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // The browser's own chords, which the page is never offered, on a page in any
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
+        // Whether it has the keyboard, which is where it goes back to; see keyboard.rs.
+        crate::keyboard::page(&platform, &label, &window);
         // How a window it asks for was pressed for; see web_opens.rs.
         crate::web_opens::listen(&platform, asking.clone(), named.clone(), window.clone());
         // Its sound, its full screen and its zoom; see web_page.rs. And finding in it;
@@ -1677,7 +1684,12 @@ pub fn web_place(app: AppHandle, tab: String, pane: Pane, visible: bool) -> Resu
     .map_err(|error| format!("that page could not be placed: {error}"))?;
 
     if visible { view.show() } else { view.hide() }
-        .map_err(|error| format!("that page could not be shown: {error}"))
+        .map_err(|error| format!("that page could not be shown: {error}"))?;
+
+    // A page shown again after a layer that closed over it may be owed the keyboard; see
+    // keyboard.rs.
+    crate::keyboard::placed(&app, view.label(), visible);
+    Ok(())
 }
 
 /// Sends a tab to an address.
@@ -1909,6 +1921,7 @@ pub async fn web_close(
             // Its find and its dialogs go with it, whichever way the page goes.
             crate::web_find::forget(&named);
             crate::web_dialogs::forget(&named);
+            crate::keyboard::closed(view.label());
             #[cfg(feature = "cef")]
             let_go(view.label());
             if crate::downloads::linger(&closing, &named) {
@@ -1999,6 +2012,7 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
         #[cfg(feature = "cef")]
         let_go(view.label());
+        crate::keyboard::closed(view.label());
         let _ = view.close();
     }
 }

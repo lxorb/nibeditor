@@ -53,13 +53,18 @@ function lands(node: HTMLElement): HTMLElement | null {
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }
 
+/** Set on the root while the keyboard's place is a site in a web tab; see keyboard-home.ts. */
+export const IN_A_PAGE = 'data-keyboard-in-page'
+
 /** `holds` false leaves the keyboard where it is; see field-menu.ts. */
 export function trap(node: HTMLElement, holds = true) {
   if (!holds) return { destroy: () => undefined }
 
   /** What had the keyboard before this opened. Read now, because by the time this
-   *  closes the answer is whatever is inside it. */
-  const from = document.activeElement
+   *  closes the answer is whatever is inside it. Nothing of the app's own while a site in
+   *  a web tab had it: the app's page only held it to open this, and it goes back to the
+   *  site; see keyboard-home.ts. */
+  const from = document.documentElement.hasAttribute(IN_A_PAGE) ? null : document.activeElement
 
   // Already holding it - a field the layer focused itself, the palette's box -
   // and then taking it again would put the caret back at the start of what

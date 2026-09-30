@@ -24,10 +24,11 @@ export function seek(tab: string, page: Page, query: string, look: 'fresh' | 'ne
   void invoke('web_find', { tab, term: query, look }).catch(() => undefined)
 }
 
-/** Closes the bar, and the page is the page again. */
+/** Closes the bar, and the page is the page again, with its keyboard back as in Chrome. */
 export function shut(tab: string, page: Page) {
   page.find.open = false
   void invoke('web_find_stop', { tab }).catch(() => undefined)
+  void invoke('keyboard_back', { tab }).catch(() => undefined)
 }
 
 /** Ctrl+F opens the bar; Ctrl+G and F3 step, or open it when it is shut, as in Chrome.

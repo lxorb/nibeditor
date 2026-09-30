@@ -78,6 +78,8 @@ mod fuzzy;
 mod ground;
 mod highlights;
 mod history;
+#[cfg(desktop)]
+mod keyboard;
 mod lane;
 #[cfg(desktop)]
 mod launch;
@@ -310,6 +312,10 @@ macro_rules! desktop_commands {
             updates::check_update,
             web_tabs::web_open,
             web_tabs::web_place,
+            keyboard::keyboard_watch,
+            keyboard::keyboard_here,
+            keyboard::keyboard_went,
+            keyboard::keyboard_back,
             web_tabs::web_navigate,
             web_tabs::web_step,
             web_tabs::web_trail,

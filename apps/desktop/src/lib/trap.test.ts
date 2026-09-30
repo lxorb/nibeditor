@@ -198,6 +198,23 @@ describe('the keyboard once the layer has gone', () => {
     expect(active).toBe(field)
   })
 
+  test("nothing of the app's own takes it back from a site that had it", () => {
+    const body = fake('BODY')
+    const root = fake('HTML')
+    root.hasAttribute = (name) => name === 'data-keyboard-in-page'
+    const opener = fake('BUTTON')
+    pretendDocument(body, root)
+    pretendHTMLElement()
+
+    // What the app's page last had focused, before a site in a web tab took the
+    // keyboard; the crate hands it back to the site once the layer has gone.
+    opener.focus()
+    const held = open(layer([fake('BUTTON')]))
+    active = body
+    held.destroy()
+    expect(opener.focused).toBe(1)
+  })
+
   test('nothing goes back to a row the layer itself deleted', () => {
     const body = fake('BODY')
     const root = fake('HTML')

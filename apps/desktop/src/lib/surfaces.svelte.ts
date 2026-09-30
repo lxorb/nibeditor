@@ -424,5 +424,7 @@ export async function warmDoors(): Promise<void> {
     import('./note-cover'),
     // Before a deploy can take it away; see reloading.svelte.ts.
     import('./reload-when'),
+    // Where the keyboard was, put back as the window or a layer gives it back.
+    import('./keyboard-home'),
   ])
 }

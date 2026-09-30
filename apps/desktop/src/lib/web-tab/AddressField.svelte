@@ -106,7 +106,9 @@
   }
 
   function onFocus() {
-    if (!here() || !field) return
+    // Back from another window with the half-typed address still in the field; see
+    // `onBlur`.
+    if (!here() || !field || editing) return
 
     visited.wake(book)
     editing = true
@@ -120,7 +122,9 @@
   }
 
   function onBlur() {
-    if (!here() || !field) return
+    // The window going, not the field: it still has the keyboard as far as this page is
+    // concerned, and comes back with it, caret and all, as Chrome's address field does.
+    if (!here() || !field || document.activeElement === field) return
 
     editing = false
     ontyping(false)

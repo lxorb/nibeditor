@@ -785,6 +785,36 @@ its field loses it. So the menu is walked from the field. The arrows, Home and
 End light a row, Enter chooses it, Escape closes the menu and nothing else, and
 any other key closes it and goes on into the field. See `lib/field-menu.ts`.
 
+A layer opened while a site in a web tab had the keyboard - the chooser Ctrl+T opens
+there, a menu, a site's own question or permission bubble - hands it back to the site,
+not to whatever the app's page last had focused: the app's page only held it to open the
+layer. The same when a web tab's find bar closes, as in Chrome.
+
+### Coming back
+
+Emil, 2026-09-30: *"when I Alt+Tab out of nib and back in, I usually have to click again
+before I can type."* However the window comes back - Alt+Tab, the taskbar, Win and a
+digit, a notification, a dialog or another program's window closing over it - the next
+key lands where the last one did: the site's own field with its caret and selection, the
+address field with what was half typed in it, a terminal's prompt, a note's caret. And
+after a drag of the window, which used to leave it in the app's own page.
+
+On Windows every activation handed the keyboard to the window, and the runtime moved it
+into the app's own page, never into a web tab's. So each window keeps one record of
+which of its pages had the keyboard, or none, which is the app's own page; it is written
+only when the keyboard really moves - a site taking it, or a person taking it into the
+app's page with a key or into a place one types in - and never by the window's own
+activation or by nib handing a browser chord back to itself. A button pressed with the
+pointer on the way to a menu is not a place, the way Chrome's toolbar never takes the
+keyboard from the page. The window takes the record back inside the message that gives
+it the keyboard, so a click that brought it forward still lands where it clicked; only a
+page that is on screen, never an agent's own, and never while another program is in
+front. The element inside a page is the engine's to keep, and the app's page keeps a net
+under it for its own. nib's own Chromium had nothing hand the keyboard to any page at
+all, and now does, through each browser's host. A Mac and Linux keep a window's first
+responder across activation themselves; they share the record for the layers. See
+`src-tauri/src/keyboard.rs` and `lib/keyboard-home.ts`.
+
 ### The ring
 
 One token, `--focus-ring`, in `packages/themes/src/tokens.css`, and one rule in
@@ -866,6 +896,8 @@ glasses have no keyboard at all. Touch is unaffected by every word above.
 | `apps/desktop/src/lib/list-keys.ts` | spelling a name, shared by every list |
 | `apps/desktop/src/lib/tree-keys.ts` | left and right in a list that holds lists |
 | `apps/desktop/src/lib/trap.ts` | a layer holds the keyboard and hands it back, and lands it on the layer's `[data-lands]` where it says so |
+| `apps/desktop/src/lib/keyboard-home.ts` | where the keyboard was in the app's own page, back as the window or a layer gives it back |
+| `apps/desktop/src-tauri/src/keyboard.rs` | which webview of a window had the keyboard, back as the window comes back. The record is tested |
 | `apps/desktop/src/lib/shortcuts/registry.ts` | every chord there is |
 | `apps/desktop/src/lib/terminal/keys.ts` | which of them a terminal lets the app have. Pure, tested |
 | `apps/desktop/src/lib/tab-fill/rules.ts` | when a tab fills the window, when it stops, and when Escape is its. Pure, tested |
