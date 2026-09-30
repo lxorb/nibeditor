@@ -2006,9 +2006,9 @@ pub(crate) fn close_page(app: &AppHandle, tab: &str) {
 /// `engine/devtools.rs` and `web_keys.rs`.
 #[cfg(feature = "cef")]
 fn let_go(label: &str) {
-    crate::engine::devtools::forget(label);
+    crate::engine::devtools::let_go_of(label);
     #[cfg(windows)]
-    crate::web_keys::chromium::gone(label);
+    crate::web_keys::chromium::page_closed(label);
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been

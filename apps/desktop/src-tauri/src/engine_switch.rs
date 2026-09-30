@@ -175,7 +175,7 @@ pub fn executable(folder: &Path) -> PathBuf {
 
 /// The choice written down, or the system's engine where nothing is, or where what is
 /// written cannot be read.
-pub fn read(path: &Path) -> Choice {
+pub fn read_choice(path: &Path) -> Choice {
     std::fs::read_to_string(path)
         .ok()
         .and_then(|text| serde_json::from_str(&text).ok())
@@ -183,7 +183,7 @@ pub fn read(path: &Path) -> Choice {
 }
 
 /// Writes the choice down, whole, so a launch never reads half of one.
-pub fn write(path: &Path, choice: &Choice) -> Result<(), String> {
+pub fn write_choice(path: &Path, choice: &Choice) -> Result<(), String> {
     if let Some(folder) = path.parent() {
         crate::paths::made(folder)?;
     }
@@ -235,7 +235,7 @@ pub fn decide(
 static HELD: OnceLock<File> = OnceLock::new();
 
 /// Takes the lock, or answers that another app on this identifier holds it.
-fn claim(path: &Path) -> Option<File> {
+fn claim_lock(path: &Path) -> Option<File> {
     if let Some(folder) = path.parent() {
         let _ = std::fs::create_dir_all(folder);
     }
@@ -252,7 +252,7 @@ fn claim(path: &Path) -> Option<File> {
 fn claim_after(path: &Path) -> Option<File> {
     let until = Instant::now() + PATIENCE;
     loop {
-        if let Some(file) = claim(path) {
+        if let Some(file) = claim_lock(path) {
             return Some(file);
         }
         if Instant::now() >= until {
@@ -265,7 +265,7 @@ fn claim_after(path: &Path) -> Option<File> {
 /// Starts another build of the app with this launch's arguments, and answers whether it
 /// started. Its environment says it was handed the launch, and nothing else of this
 /// process's switches goes with it.
-fn start(exe: &Path, launcher: Option<&Path>) -> bool {
+fn start_build(exe: &Path, launcher: Option<&Path>) -> bool {
     let mut command = Command::new(exe);
     command
         .args(std::env::args_os().skip(1))
@@ -296,7 +296,7 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
     let held = if std::env::var_os(AFTER).is_some() {
         claim_after(&places.lock)
     } else {
-        claim(&places.lock)
+        claim_lock(&places.lock)
     };
     // Another app on this identifier is running: this launch is a second one, and the
     // single instance plugin hands it to that app. Nothing is decided here.
@@ -304,7 +304,7 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
         return false;
     };
 
-    let choice = read(&places.choice);
+    let choice = read_choice(&places.choice);
     let handed = std::env::var_os(HANDED).is_some();
     let installed = places.chromium_exe();
     let back = launcher();
@@ -315,7 +315,7 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
             false
         }
         Launch::FallBack => {
-            let _ = write(
+            let _ = write_choice(
                 &places.choice,
                 &Choice {
                     engine: Engine::System,
@@ -331,7 +331,7 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
                 let _ = HELD.set(held);
                 return false;
             };
-            let _ = write(
+            let _ = write_choice(
                 &places.choice,
                 &Choice {
                     tries: choice.tries.saturating_add(1),
@@ -340,7 +340,7 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
             );
             drop(held);
             let here = std::env::current_exe().ok();
-            start(&exe, here.as_deref())
+            start_build(&exe, here.as_deref())
         }
         Launch::ToSystem => {
             let Some(exe) = back else {
@@ -348,23 +348,23 @@ pub fn handed_over(identifier: &str, version: &str) -> bool {
                 return false;
             };
             drop(held);
-            start(&exe, None)
+            start_build(&exe, None)
         }
     }
 }
 
 /// The Chromium build has shown its window: the tries start again from nought. On the
 /// system's engine there is nothing to count.
-pub fn shown(app: &AppHandle) {
+pub fn window_shown(app: &AppHandle) {
     if THIS != Engine::Chromium {
         return;
     }
     let Some(places) = Places::app(app) else {
         return;
     };
-    let choice = read(&places.choice);
+    let choice = read_choice(&places.choice);
     if choice.tries != 0 {
-        let _ = write(&places.choice, &Choice { tries: 0, ..choice });
+        let _ = write_choice(&places.choice, &Choice { tries: 0, ..choice });
     }
 }
 
@@ -384,8 +384,8 @@ pub struct State {
     pub fell_back: bool,
 }
 
-fn state(places: &Places) -> State {
-    let choice = read(&places.choice);
+fn row_state(places: &Places) -> State {
+    let choice = read_choice(&places.choice);
     State {
         running: THIS,
         chosen: choice.engine,
@@ -403,14 +403,14 @@ fn places(app: &AppHandle) -> Result<Places, String> {
 #[tauri::command(async)]
 pub fn engine_state(app: AppHandle) -> Result<State, String> {
     let places = places(&app)?;
-    let said = state(&places);
+    let said = row_state(&places);
     // Said once: the row that shows it is the reader having seen it.
     if said.fell_back {
-        let _ = write(
+        let _ = write_choice(
             &places.choice,
             &Choice {
                 fell_back: false,
-                ..read(&places.choice)
+                ..read_choice(&places.choice)
             },
         );
     }
@@ -425,7 +425,7 @@ pub fn engine_choose(app: AppHandle, engine: Engine) -> Result<State, String> {
         return Err("Chromium is not available on this system".into());
     }
     let places = places(&app)?;
-    write(
+    write_choice(
         &places.choice,
         &Choice {
             engine,
@@ -433,7 +433,7 @@ pub fn engine_choose(app: AppHandle, engine: Engine) -> Result<State, String> {
             fell_back: false,
         },
     )?;
-    Ok(state(&places))
+    Ok(row_state(&places))
 }
 
 /// Whether the app should start its next launch as it leaves.
@@ -442,7 +442,9 @@ static RELAUNCHING: AtomicBool = AtomicBool::new(false);
 /// Quits the careful way - every window asked, every note saved - and starts the app
 /// again once this one has gone, on the engine that is chosen. The next launch is the
 /// system's build, which reads the choice like any other launch; see `handed_over`.
-#[tauri::command]
+///
+/// Off the window's thread: the careful quit writes down where every window is.
+#[tauri::command(async)]
 pub fn engine_relaunch(app: AppHandle) {
     RELAUNCHING.store(true, Ordering::SeqCst);
     crate::lifecycle::quit(&app);
@@ -456,7 +458,7 @@ pub fn relaunch_called_off() {
 
 /// The app is ending: where a relaunch was asked for, the next launch starts now and
 /// waits for this process to let go of the lock.
-pub fn leaving() {
+pub fn on_leaving() {
     if !RELAUNCHING.swap(false, Ordering::SeqCst) {
         return;
     }
@@ -481,7 +483,9 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
 
 #[cfg(test)]
 mod tests {
-    use super::{decide, read, write, Choice, Engine, Launch, Places, OFFERED, TRIES};
+    use super::{
+        decide, read_choice, write_choice, Choice, Engine, Launch, Places, OFFERED, TRIES,
+    };
 
     fn chosen(engine: Engine, tries: u8) -> Choice {
         Choice {
@@ -602,19 +606,19 @@ mod tests {
     fn a_choice_is_read_back_as_it_was_written_and_nothing_is_the_system() {
         let folder = tempfile::tempdir().expect("a folder");
         let path = folder.path().join("engine.json");
-        assert_eq!(read(&path), Choice::default());
+        assert_eq!(read_choice(&path), Choice::default());
 
         let written = Choice {
             engine: Engine::Chromium,
             tries: 1,
             fell_back: true,
         };
-        write(&path, &written).expect("written");
-        assert_eq!(read(&path), written);
+        write_choice(&path, &written).expect("written");
+        assert_eq!(read_choice(&path), written);
 
         std::fs::write(&path, "{ half").expect("broken");
         assert_eq!(
-            read(&path).engine,
+            read_choice(&path).engine,
             Engine::System,
             "an unreadable choice is no choice"
         );

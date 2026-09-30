@@ -27,7 +27,7 @@ export function systemName(os: string): string {
 
 /** What sits beside the control: nothing, the Relaunch chip once the chosen engine
  *  is ready to be started, or the ring while it is being fetched. */
-export type Beside = 'nothing' | 'relaunch' | 'fetching'
+type Beside = 'nothing' | 'relaunch' | 'fetching'
 
 export function beside(state: EngineState, fetching: boolean): Beside {
   if (fetching) return 'fetching'

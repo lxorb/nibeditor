@@ -26,7 +26,9 @@ missing_docs = "warn"
 # lifecycle.rs). And the agents' own reach into WebView2 in src/agents: the
 # DevTools Protocol's calls and events, an agent tab's settings and the events it
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
-# keeping its client's pipes out of the app it starts (src/mcp/app.rs). None of
+# keeping its client's pipes out of the app it starts (src/mcp/app.rs). And on nib's
+# own Chromium, the keyboard hook that hears the browser's chords in a web tab's page
+# (web_keys.rs), which the runtime offers no event for. None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
