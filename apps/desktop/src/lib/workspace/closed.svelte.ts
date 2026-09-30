@@ -24,17 +24,43 @@ export class ClosedTabs {
    *  menu offers the row at all. */
   readonly any = $derived(this.stack.length > 0)
 
+  /** The stamp every tab closed by the gesture under way carries, or null, and the
+   *  last one given: a clock, so a stamp read back out of a session is never given
+   *  again, and never the same twice. */
+  private joining: number | null = null
+  private stamped = 0
+
   record(closed: ClosedTab) {
-    this.stack = [...this.stack, closed].slice(-MOST_CLOSED)
+    const entry = this.joining === null ? closed : { ...closed, batch: this.joining }
+    this.stack = [...this.stack, entry].slice(-MOST_CLOSED)
   }
 
-  /** The newest, off the stack. Taken rather than read, because reopening is
-   *  the one thing anybody does with it. */
-  take(): ClosedTab | undefined {
-    const last = this.stack.at(-1)
-    if (last) this.stack = this.stack.slice(0, -1)
+  /** Everything `close` closes is one entry to take back rather than one each: a pick
+   *  of tabs closed together, or the tabs around one, comes back with one Reopen closed
+   *  tab, as Firefox brings them back. Chrome hands them back one press at a time. */
+  together(close: () => void) {
+    this.stamped = Math.max(Date.now(), this.stamped + 1)
+    this.joining = this.stamped
+    try {
+      close()
+    } finally {
+      this.joining = null
+    }
+  }
 
-    return last
+  /** The newest, off the stack, with every tab that was closed along with it, newest
+   *  first - which is the order that puts each back at its own place. Taken rather
+   *  than read, because reopening is the one thing anybody does with it. */
+  take(): ClosedTab[] {
+    const last = this.stack.at(-1)
+    if (!last) return []
+
+    let from = this.stack.length - 1
+    while (last.batch !== undefined && this.stack[from - 1]?.batch === last.batch) from -= 1
+
+    const taken = this.stack.slice(from).reverse()
+    this.stack = this.stack.slice(0, from)
+    return taken
   }
 
   /** A closed tab of a file that has since moved comes back on the file where it is
