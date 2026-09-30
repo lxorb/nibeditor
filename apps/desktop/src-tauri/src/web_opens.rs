@@ -29,7 +29,9 @@
 //!    made by a tool that holds no key on the machine, and a key let go of before the
 //!    engine asks, are both still the press they were. A site that opens a window under
 //!    the same name gets a tab behind it, which is less than it could already do by
-//!    asking for one in front.
+//!    asking for one in front. The script runs in nib's own world in the page, which
+//!    shares the page's document and events and none of its globals, so the page can
+//!    neither see it nor replace the `window.open` it calls; see `web_worlds.rs`.
 //! 2. **The keys held.** Ctrl, and Shift, as the input this thread shares with the
 //!    page's window has them, the same reading `web_keys.rs` makes - for a window the
 //!    page's own script asks for in answer to a press, which is not a link the script
@@ -179,7 +181,10 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
     let _ = app.emit_to(window, event, said);
 }
 
-/// The script in every page and every frame.
+/// The script in every page and every frame, in nib's own world there rather than the
+/// page's: it adds no global, patches nothing, and a page that wraps `window.open`,
+/// `addEventListener` or `Element.prototype.closest` wraps its own and not these. See
+/// `web_worlds.rs`.
 ///
 /// A link pressed for a tab of its own - the middle button, or the main one with Ctrl or
 /// Shift held - opens as a window under a name that says where its tab goes, and the
@@ -197,11 +202,12 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// All of them run last, after every handler the page has, so they see whether one of
 /// them took the key or the press. Being on the window is not enough for that: the
 /// page's own window handlers were put there after this script's, and a target's
-/// handlers run in the order they were added - the probe caught a page's Ctrl+F answered twice. So each
-/// press puts the answer back at the end of the window's list on its way down, in the
-/// capturing turn, which is before the page's bubbling handlers run and after they were
-/// added. A page that stops the press on its way up is left to the engine, whose own find
-/// then opens, as a browser's would.
+/// handlers run in the order they were added - the probe caught a page's Ctrl+F
+/// answered twice. So each press puts the answer back at the end of the window's list on
+/// its way down, in the capturing turn, which is before the page's bubbling handlers run
+/// and after they were added. The list is the document's and not a world's, so this
+/// holds from nib's own world as it did from the page's. A page that stops the press on
+/// its way up is left to the engine, whose own find then opens, as a browser's would.
 ///
 /// A modifier tapped twice on its own asks by name as well, counted by the rules
 /// `lib/double-tap.ts` keeps and waiting as long (`within`, which that file's test holds
@@ -209,9 +215,6 @@ fn told<S: Serialize + Clone>(app: &tauri::AppHandle, window: &str, event: &str,
 /// can stop one on its way, so a letter the page swallowed still ends a tap; and the
 /// ask waits for the last release to have gone past the page, so a Shift the page took
 /// for itself does not open anything.
-///
-/// `window.open` is held from before the page's own first script, so a page that
-/// replaces it has not replaced this.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)

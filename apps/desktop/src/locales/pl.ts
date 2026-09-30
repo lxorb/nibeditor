@@ -1503,6 +1503,7 @@ export const pl: Dictionary = {
   'wants to': 'prosi o pozwolenie na',
   'Don’t allow': 'Nie zezwalaj',
   Allow: 'Zezwalaj',
+  OK: 'OK',
   'Use your camera': 'Korzystanie z Twojej kamery',
   'Use your microphone': 'Korzystanie z Twojego mikrofonu',
   'Know your location': 'Sprawdzanie Twojej lokalizacji',

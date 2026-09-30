@@ -1490,6 +1490,7 @@ export const fr: Dictionary = {
   'wants to': 'souhaite',
   'Don’t allow': 'Ne pas autoriser',
   Allow: 'Autoriser',
+  OK: 'OK',
   'Use your camera': 'Utiliser votre caméra',
   'Use your microphone': 'Utiliser votre micro',
   'Know your location': 'Connaître votre position',

@@ -1406,6 +1406,7 @@ export const th: Dictionary = {
   'wants to': 'ต้องการที่จะ',
   'Don’t allow': 'ไม่อนุญาต',
   Allow: 'อนุญาต',
+  OK: 'ตกลง',
   'Use your camera': 'ใช้กล้องถ่ายรูปของคุณ',
   'Use your microphone': 'ใช้ไมโครโฟนของคุณ',
   'Know your location': 'ทราบตำแหน่งของคุณ',

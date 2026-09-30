@@ -28,9 +28,10 @@
 //! The site gets nothing of the app. It is granted no command, because the
 //! capabilities name the app's own webviews rather than the windows they sit in
 //! and because a remote origin matches no capability here (see
-//! capabilities/default.json); and the globals that reach the app are taken away
-//! before the page's first script runs, along with the devices nobody asked to
-//! hand over. See `GUARD`.
+//! capabilities/default.json); and the page's own world is handed nothing at all - no
+//! global, no script, no channel - because every script the runtime registered is taken
+//! back before the page is sent to the site and nib's own run in a world of their own.
+//! See `web_worlds.rs`.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
@@ -89,7 +90,9 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
         held.get_or_insert_with(HashMap::new)
             .insert(tab.to_string(), label.to_string());
     }
-    listening(app, tab, store);
+    // Already loaded, so there is nothing to send it on to: it keeps what it was built
+    // with rather than being cleared the way a tab's own page is; see web_worlds.rs.
+    listening(app, tab, store, None);
     // Its loads and its title, said to the window as a built page's are.
     #[cfg(all(windows, not(feature = "cef")))]
     reported(app, tab, label);
@@ -242,55 +245,19 @@ const OPENED: &str = "nib://web-open";
 /// `MAX_NOTE_BYTES` in the clipper.
 const LONGEST_PAGE: usize = 4_000_000;
 
-/// What a site in a web tab does not get, taken away before its own first script
-/// runs.
+/// The page a tab's webview is built on before it is sent anywhere.
 ///
-/// Two kinds of thing, and it used to be three. The app's own globals, so nothing in
-/// the page can speak to the crate even by accident: the capabilities already refuse
-/// it, and this is the lock that does not depend on a list of labels being right. And
-/// the buses a page can reach hardware over - Bluetooth, USB, serial, HID - and the
-/// credential store, none of which a note-taking app has any business handing to a
-/// page and none of which a browser asks about in a bubble anybody could answer.
-///
-/// **What is no longer here is the camera, the microphone, where you are,
-/// notifications and the clipboard.** Those were taken off `Navigator.prototype` too,
-/// so the engine never had a request to raise and the only way to allow one was a row
-/// in a menu saying "Allow the camera" - which is not how a browser works and not how
-/// anybody expects to be asked. Emil, 2026-09-13: *"a lot of stuff is still done
-/// extremely bad, e.g. having explicit buttons for allow clipboard or allow camera. I
-/// don't think chrome does it like this."* He is right: Chrome asks at the point of
-/// use, in a bubble under the address bar, and remembers the answer for that site. So
-/// the APIs are left where they are and the engine's own request is what the window
-/// answers; see `ask` and `web_answer`.
-const GUARD: &str = r"(function () {
-  try {
-    delete window.__TAURI_INTERNALS__
-    delete window.__TAURI__
-    delete window.__TAURI_EVENT_PLUGIN_INTERNALS__
-    if (window.chrome) delete window.chrome.webview
-  } catch (error) {
-    // A page that has frozen its own globals keeps them. The capabilities are
-    // what actually refuse the call; this is the second lock, not the first.
-  }
-
-  function hide(on, name) {
-    try {
-      Object.defineProperty(on, name, { configurable: true, get: () => undefined })
-    } catch (error) {
-      // A property that will not be redefined is a bus the engine will still ask
-      // about, and a request nothing answers is a request that was refused.
-    }
-  }
-
-  for (const name of ['bluetooth', 'usb', 'serial', 'hid', 'credentials']) {
-    hide(Navigator.prototype, name)
-  }
-})()";
+/// A tab is built here and navigated afterwards, because the runtime's scripts have to be
+/// taken back off the webview before the site's first document is created, and a webview
+/// built on the site would be racing the network to do it; see `web_worlds.rs`. It is
+/// never somewhere a tab has been, so nothing is said about it.
+const BLANK: &str = "about:blank";
 
 /// Puts a revived page back where the reading was.
 ///
-/// It runs before the page's own first script, like the guard, and does its work when
-/// the document is ready: a scroll offset set before there is a document to scroll is
+/// It is there from before the page's own first script - in nib's own world, where the
+/// page cannot see it; see `web_worlds.rs` - and does its work when the document is
+/// ready: a scroll offset set before there is a document to scroll is
 /// an offset set on nothing. Three times, because a page that lays itself out in
 /// stages - a font, a picture without a size, a script that writes the body - is
 /// shorter than its final self when the document is first ready, and a browser
@@ -761,10 +728,11 @@ fn handed_over(url: &Url) -> Option<String> {
 ///
 /// Framed and at the size asked for, and on the opener's own store, which is what
 /// `window_features` hands it: the engine refuses a new window on any other, and a
-/// sign-in in a store the page is not in would be a sign-in to nothing. Guarded and
-/// kept to the web like a tab's page, and labelled so it is granted nothing. What it
-/// asks for in turn opens as a tab beside the page that opened it. It closes when its
-/// page does; see `WindowCloseRequested` in wry.
+/// sign-in in a store the page is not in would be a sign-in to nothing. Handed nothing
+/// of the app's and kept to the web like a tab's page - a sign-in page is exactly the
+/// kind that breaks on a global it did not expect - and labelled so it is granted
+/// nothing. What it asks for in turn opens as a tab beside the page that opened it. It
+/// closes when its page does; see `WindowCloseRequested` in wry.
 #[cfg(all(windows, not(feature = "cef")))]
 fn popup(
     app: &AppHandle,
@@ -778,15 +746,14 @@ fn popup(
     static NEXT: AtomicU64 = AtomicU64::new(1);
 
     let label = format!("{POPUP}{}", NEXT.fetch_add(1, Ordering::Relaxed));
-    let blank = Url::parse("about:blank").ok()?;
+    let blank = Url::parse(BLANK).ok()?;
     let opening = app.clone();
     let asking = tab.to_string();
     let holding = holder.to_string();
 
-    let window = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
+    let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
         .window_features(features)
         .title(url.host_str().unwrap_or_default())
-        .initialization_script(guard())
         .on_navigation(allowed)
         .on_new_window(move |url, _| {
             if let Some(address) = handed_over(&url) {
@@ -801,12 +768,27 @@ fn popup(
         })
         .on_document_title_changed(|window, title| {
             let _ = window.set_title(&title);
-        })
-        .build()
-        .ok()?;
+        });
 
+    // Where this run's windows were sent off the screen - a drive's, see placement.rs -
+    // the popup goes where they went and does not take the keyboard. A sign-in page is
+    // exactly what a drive of the web opens, and a window of its own in front of whoever
+    // is working is the one thing a drive must never do.
+    let window = match crate::placement::away() {
+        Some(at) => crate::placement::built_away(building, at),
+        None => building.build(),
+    }
+    .ok()?;
+
+    // Cleared before it is handed back, which is before the engine sends it anywhere:
+    // this runs on the window's own thread, where `with_webview` answers inline, and the
+    // engine navigates the popup only once the request it came from is answered.
     let closing = window.clone();
-    let _ = window.with_webview(move |platform| crate::web_opens::closing(&platform, closing));
+    let _ = window.with_webview(move |platform| {
+        crate::web_opens::closing(&platform, closing);
+        let cleared = crate::web_worlds::cleared(&platform, "");
+        crate::trace::mark(&format!("web popup: {}", cleared.said()));
+    });
     Some(window)
 }
 
@@ -820,18 +802,6 @@ fn address(url: &str) -> Result<Url, String> {
     }
 }
 
-/// The guard script, which is the same for every page now.
-///
-/// It used to be built per origin, out of a list of what that site had been allowed,
-/// and a change to the list meant building the webview again - which threw away the
-/// page somebody was reading to answer a question about the camera. What a site may do
-/// is now answered where a browser answers it, while the page goes on running; see
-/// `ask`. Kept as a function because the script is a constant and this is the one
-/// place that says so.
-fn guard() -> String {
-    GUARD.to_string()
-}
-
 /// The reader script, told whether it is after a selection.
 pub(crate) fn reader(selection: bool) -> String {
     READER
@@ -839,8 +809,13 @@ pub(crate) fn reader(selection: bool) -> String {
         .replace("__LONGEST__", &LONGEST_PAGE.to_string())
 }
 
-/// The script a webview is built with: the guard, and - for a tab being revived - the
-/// place the reading was left at.
+/// nib's own scripts for a page: on `WebView2` a link pressed for a tab of its own and
+/// the keys a page lets go by (see `web_opens.rs`), and - for a tab being revived - the
+/// place the reading was left at. Empty for a page that needs none of them.
+///
+/// They run in nib's own world, where the page can neither see them nor trip over them;
+/// see `web_worlds.rs`. Under nib's own Chromium they run in the page's own world, as the
+/// builder's initialization script.
 ///
 /// One string, because a builder is handed one script and two calls to it on one
 /// builder is a thing this crate should not have to be sure about.
@@ -849,17 +824,26 @@ fn opening(place: Option<Place>, url: &str) -> String {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
-    match want {
-        None => guard(),
-        // The semicolon is load bearing, and it cost an afternoon. Both halves are
-        // `(function () { ... })()`, and JavaScript has no statement boundary between
-        // `})()` and `(function`: the parser reads the second one as an argument list
-        // applied to whatever the first returned, so the guard ran, the place was
-        // evaluated as a function expression, and the call threw `undefined is not a
-        // function` before the place was ever put back. A revived page opened at the top
-        // and nothing said why; see scripts/web-switch-probe.py, which is what caught it.
-        Some(one) => format!("{};\n{};\n", guard(), PLACE.replace("__PLACE__", &one)),
+    #[cfg(all(windows, not(feature = "cef")))]
+    let mut scripts = vec![crate::web_opens::SCRIPT.to_string()];
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    let mut scripts: Vec<String> = Vec::new();
+
+    if let Some(one) = want {
+        scripts.push(PLACE.replace("__PLACE__", &one));
     }
+
+    // The semicolon is load bearing, and it cost an afternoon. Every script here is
+    // `(function () { ... })()`, and JavaScript has no statement boundary between `})()`
+    // and `(function`: the parser reads the second one as an argument list applied to
+    // whatever the first returned, so the first ran, the place was evaluated as a
+    // function expression, and the call threw `undefined is not a function` before the
+    // place was ever put back. A revived page opened at the top and nothing said why; see
+    // scripts/web-switch-probe.py, which is what caught it.
+    scripts
+        .iter()
+        .flat_map(|one| [one.as_str(), ";\n"])
+        .collect()
 }
 
 /// The one browser session every web tab shares, kept alive for as long as the app
@@ -1001,7 +985,7 @@ mod session {
             return;
         }
 
-        let Ok(blank) = "about:blank".parse::<tauri::Url>() else {
+        let Ok(blank) = super::BLANK.parse::<tauri::Url>() else {
             return;
         };
 
@@ -1126,9 +1110,21 @@ pub async fn web_open(
     // engine history that is empty.
     tabs.restore(&tab, revived.trail, revived.at);
 
+    // nib's own scripts for the page, and where the page is built: on the blank page, and
+    // sent to the site once the runtime's scripts are off it and these are in nib's own
+    // world (see `listening` and web_worlds.rs). Under nib's own Chromium it is built on
+    // the site with these in the page's own world, as it always was.
+    let scripts = opening(revived.place, &url);
+    #[cfg(not(feature = "cef"))]
+    let (built_on, onward) = (
+        Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
+        Some((address, scripts)),
+    );
+    #[cfg(feature = "cef")]
+    let (built_on, onward) = (address, None::<(Url, String)>);
+
     let starting = (app.clone(), tab.clone());
-    let builder = WebviewBuilder::new(label, WebviewUrl::External(address))
-        .initialization_script(opening(revived.place, &url))
+    let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
         .on_navigation(move |to| {
             let going = allowed(to);
             if going {
@@ -1140,11 +1136,8 @@ pub async fn web_open(
         // business, and the app is not in the middle of it.
         .disable_drag_drop_handler();
 
-    // The middle button, a Ctrl+click and a Shift+click on a link, answered in the page
-    // so the tab each opens goes where the press said; see web_opens.rs. In every frame,
-    // since a link in a frame is a link.
-    #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.initialization_script_for_all_frames(crate::web_opens::SCRIPT);
+    #[cfg(feature = "cef")]
+    let builder = builder.initialization_script(scripts);
 
     // Where the site's own storage goes, decided once by the engine this build runs
     // on rather than here: a store the app's own session is not in under the system
@@ -1253,7 +1246,7 @@ pub async fn web_open(
     tabs.built(&tab);
     made?;
 
-    listening(&app, &tab, store);
+    listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
     Ok(())
 }
@@ -1314,15 +1307,26 @@ fn reporting(
     })
 }
 
-/// Starts listening for what the site in this tab asks to be given.
+/// Starts listening for what the site in this tab asks to be given, and then sends the
+/// page to the site from the blank page it was built on.
 ///
 /// After the build, because it is the engine's own event on the webview that has just
 /// been made, and on the window's thread, because that is the only thread the engine's
 /// objects may be touched from. See `ask`.
-fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
-    // Only `WebView2` keeps an environment per store; see `session`.
+///
+/// `onward` is the site and nib's own scripts for it. Listening first and sending
+/// second, both in one turn of the window's thread and in that order: a `WebView2` page
+/// whose permission request finds nothing listening waits for ever, so nothing may reach
+/// the site before the listeners are on; and clearing the page runs a nested message
+/// pump, so a navigation posted from elsewhere would be dispatched in the middle of it -
+/// the site's first document arriving before the runtime's scripts were off.
+fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(Url, String)>) {
+    // Only `WebView2` keeps an environment per store; see `session`. And only the
+    // system's engines build on the blank page; see web_worlds.rs.
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
+    #[cfg(feature = "cef")]
+    let _ = onward;
 
     let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
@@ -1351,7 +1355,15 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>) {
         // The site's own mark, followed for as long as the page is open; see
         // web_icons.rs.
         crate::web_icons::listen(&platform, asking.clone(), named.clone(), window.clone());
+        // Its `alert`, `confirm` and `prompt`, in nib's own card; see web_dialogs.rs.
+        crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
+
+        #[cfg(not(feature = "cef"))]
+        if let Some((address, scripts)) = onward {
+            let cleared = crate::web_worlds::sent(&platform, address.as_str(), &scripts);
+            crate::trace::mark(&format!("web tab: {}", cleared.said()));
+        }
     });
 }
 
@@ -1493,6 +1505,10 @@ fn started(app: &AppHandle, tab: &str) {
 }
 
 /// Says where a page is, to the window that holds it and to nothing else.
+///
+/// The blank page a tab is built on is not somewhere it has been, so nothing is said
+/// about it: the bar would wear `about:blank` for a moment and the back arrow would light
+/// for it for good.
 fn say(
     app: &AppHandle,
     view: &Webview,
@@ -1501,6 +1517,10 @@ fn say(
     title: Option<String>,
     loading: bool,
 ) {
+    if url == BLANK {
+        return;
+    }
+
     let stepping = app.try_state::<WebTabs>().and_then(|tabs| {
         tabs.trails.lock().ok().map(|mut open| {
             let trail = open.entry(tab.to_string()).or_default();
@@ -1783,8 +1803,9 @@ pub async fn web_close(
             // A page still fetching a file stays until the file is in, out of sight; the
             // engine stops reporting a download whose webview has gone. See
             // `downloads::linger`.
-            // Its find goes with it, whichever way the page goes.
+            // Its find and its dialogs go with it, whichever way the page goes.
             crate::web_find::forget(&named);
+            crate::web_dialogs::forget(&named);
             if crate::downloads::linger(&closing, &named) {
                 let _ = view.hide();
             } else {
@@ -2653,8 +2674,8 @@ mod shot {
 #[cfg(test)]
 mod tests {
     use super::{
-        allowed, capture_kinds, guard, handed_over, is_ours, opening, origin_of, origin_written,
-        reader, Place, Trail, WebTabs,
+        address, allowed, capture_kinds, handed_over, is_ours, opening, origin_of, origin_written,
+        reader, Place, Trail, WebTabs, BLANK,
     };
     use tauri::Url;
 
@@ -2884,21 +2905,64 @@ mod tests {
         );
     }
 
-    /// The app is not in the page, and neither are the buses. What a browser asks about
-    /// is deliberately still there - the camera, the microphone, where you are,
-    /// notifications, the clipboard - because the engine's own request is what the
-    /// window answers now; see `ask`.
+    /// nib's own scripts for a page declare nothing and touch nothing of the page's
+    /// world: no global written, deleted or redefined, no prototype patched, none of the
+    /// runtime's names. Each is a function called on the spot, so it leaves no name
+    /// behind at the top level of whichever world it runs in - the page's own, under
+    /// nib's own Chromium. What a browser asks about - the camera, the
+    /// microphone, the hardware buses, the credential store - is the engine's to raise
+    /// and the window's to answer, never a script's to hide; see `ask`.
     #[test]
-    fn the_app_and_the_hardware_buses_are_taken_away() {
-        let script = guard();
-        assert!(script.contains("delete window.__TAURI_INTERNALS__"));
-        assert!(script.contains("'usb'"));
-        assert!(script.contains("'bluetooth'"));
-        assert!(script.contains("'credentials'"));
+    fn nib_s_page_scripts_leave_the_page_s_world_alone() {
+        for scripts in [
+            opening(None, "https://a.example/page"),
+            opening(Some(Place { x: 0.0, y: 940.0 }), "https://a.example/page"),
+        ] {
+            for script in scripts.split(";\n").filter(|one| !one.is_empty()) {
+                assert!(script.starts_with("(function () {"), "{script}");
+                assert!(script.ends_with("})()"), "{script}");
+            }
+            for written in [
+                "window.__",
+                "window.ipc",
+                "__TAURI",
+                "isTauri",
+                "defineProperty",
+                "delete window",
+                "prototype",
+                "window.open =",
+                "chrome.webview",
+            ] {
+                assert!(!scripts.contains(written), "{written}");
+            }
+        }
+    }
 
-        assert!(!script.contains("'mediaDevices'"));
-        assert!(!script.contains("'geolocation'"));
-        assert!(!script.contains("Notification"));
+    /// On `WebView2` a page opened for the first time is handed the keys and the middle
+    /// button, in nib's own world, and nothing else; see `web_worlds.rs`.
+    #[cfg(all(windows, not(feature = "cef")))]
+    #[test]
+    fn a_page_is_handed_the_keys_script_and_nothing_else() {
+        assert_eq!(
+            opening(None, "https://a.example/page"),
+            format!("{};\n", crate::web_opens::SCRIPT)
+        );
+    }
+
+    /// And every other engine is handed nothing at all until there is a place to put
+    /// back.
+    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[test]
+    fn a_page_is_handed_nothing() {
+        assert_eq!(opening(None, "https://a.example/page"), "");
+    }
+
+    /// The blank page a tab is built on is not somewhere anybody opens a tab, nor a
+    /// window a page may ask for.
+    #[test]
+    fn nobody_opens_a_tab_on_the_blank_page() {
+        assert!(address(BLANK).is_err());
+        assert!(handed_over(&at(BLANK)).is_none());
     }
 
     /// A revived tab is put back where the reading was, and one that is being opened

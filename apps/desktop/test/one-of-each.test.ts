@@ -601,9 +601,9 @@ describe('a value beside its copy button', () => {
 })
 
 /** The card a sentence appears in: behind the `i` after a setting's name, under a name
- *  that cannot be written, and - on a web tab - the two a browser hangs under its
- *  address bar. Four surfaces, one shape, and the only part any of them states for
- *  itself is where it sits. */
+ *  that cannot be written, and - on a web tab - what a browser hangs under its address
+ *  bar and a page's own dialog at the top of the page. Many surfaces, one shape, and the
+ *  only part any of them states for itself is where it sits. */
 describe('the bubble a sentence appears in', () => {
   test('is drawn in the themes package and nowhere else', () => {
     const shared = readFileSync(join(THEMES, 'base.css'), 'utf8')
@@ -611,7 +611,7 @@ describe('the bubble a sentence appears in', () => {
     expect(draw(/\.nib-bubble/)).toEqual([])
   })
 
-  test('and the five that show one wear the class rather than a card of their own', () => {
+  test('and the six that show one wear the class rather than a card of their own', () => {
     const own = components
       .filter((one) => one.text.includes('nib-bubble'))
       .map((one) => one.name)
@@ -621,6 +621,7 @@ describe('the bubble a sentence appears in', () => {
       'lib/Hint.svelte',
       'lib/NameField.svelte',
       'lib/web-tab/WebAsk.svelte',
+      'lib/web-tab/WebDialog.svelte',
       'lib/web-tab/WebDownloads.svelte',
       'lib/web-tab/WebSite.svelte',
     ])

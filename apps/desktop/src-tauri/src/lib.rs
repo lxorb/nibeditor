@@ -118,6 +118,8 @@ mod uris;
 #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
+mod web_dialogs;
+#[cfg(desktop)]
 mod web_find;
 #[cfg(desktop)]
 mod web_handed;
@@ -137,6 +139,8 @@ mod web_state;
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;
+#[cfg(desktop)]
+mod web_worlds;
 
 use paths::Opened;
 #[cfg(desktop)]
@@ -290,6 +294,7 @@ macro_rules! desktop_commands {
             web_find::web_find_stop,
             web_tabs::web_shot,
             web_tabs::web_answer,
+            web_dialogs::web_dialog_answer,
             downloads::web_downloads,
             downloads::web_download_open,
             downloads::web_download_show,

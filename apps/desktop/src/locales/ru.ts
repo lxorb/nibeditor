@@ -1502,6 +1502,7 @@ export const ru: Dictionary = {
   'wants to': 'запрашивает разрешение на',
   'Don’t allow': 'Запретить',
   Allow: 'Разрешить',
+  OK: 'ОК',
   'Use your camera': 'Использование камеры',
   'Use your microphone': 'Использование микрофона',
   'Know your location': 'Доступ к данным о вашем местоположении',

@@ -1441,6 +1441,7 @@ export const pa: Dictionary = {
   'wants to': 'ਇਹ ਕਰਨਾ ਚਾਹੁੰਦੀ ਹੈ',
   'Don’t allow': 'ਆਗਿਆ ਨਾ ਦਿਓ',
   Allow: 'ਆਗਿਆ ਦਿਓ',
+  OK: 'ਠੀਕ ਹੈ',
   'Use your camera': 'ਆਪਣਾ ਕੈਮਰਾ ਵਰਤੋ',
   'Use your microphone': 'ਆਪਣਾ ਮਾਈਕ੍ਰੋਫੋਨ ਵਰਤੋ',
   'Know your location': 'ਆਪਣੇ ਨਿਰਧਾਰਿਤ ਸਥਾਨ ਬਾਰੇ ਜਾਣੋ',

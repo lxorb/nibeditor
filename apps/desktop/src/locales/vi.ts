@@ -1423,6 +1423,7 @@ export const vi: Dictionary = {
   'wants to': 'muốn',
   'Don’t allow': 'Không cho phép',
   Allow: 'Cho phép',
+  OK: 'OK',
   'Use your camera': 'Sử dụng camera của bạn',
   'Use your microphone': 'Sử dụng micrô của bạn',
   'Know your location': 'Biết vị trí của bạn',

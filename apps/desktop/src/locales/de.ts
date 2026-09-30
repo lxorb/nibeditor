@@ -1478,6 +1478,7 @@ export const de: Dictionary = {
   'wants to': 'möchte',
   'Don’t allow': 'Nicht zulassen',
   Allow: 'Zulassen',
+  OK: 'OK',
   'Use your camera': 'Deine Kamera verwenden',
   'Use your microphone': 'Mikrofon verwenden',
   'Know your location': 'Deinen Standort abrufen',
