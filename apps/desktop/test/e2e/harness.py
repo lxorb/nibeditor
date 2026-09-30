@@ -756,7 +756,7 @@ class Drive:
         be the editor, or nothing at all."""
         page.evaluate("() => window.nibApp.workspace.toggleReading()")
         self.wait_for(
-            page, "document.querySelector('article#write')?.childElementCount", "the reading view", patience
+            page, "document.querySelector('article.nib-write')?.childElementCount", "the reading view", patience
         )
         self.settled(page)
 
