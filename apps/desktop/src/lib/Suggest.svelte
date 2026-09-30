@@ -9,8 +9,10 @@
    *
    *  A value is shown as itself unless the field says otherwise: the address bar
    *  keeps an address as the value and shows it the way a browser does, with the
-   *  page's own name after it. See web-tab/AddressField.svelte. */
+   *  page's own name after it, and each row wearing the site's mark in front, as
+   *  Chrome's omnibox rows do. See web-tab/AddressField.svelte. */
 
+  import type { Snippet } from 'svelte'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { dur } from './motion'
@@ -24,6 +26,7 @@
     onchoose,
     shown = (value: string) => value,
     aside,
+    lead,
   }: {
     values: string[]
     typed: string
@@ -37,6 +40,8 @@
     shown?: (value: string) => string
     /** A quieter second half after it, or the empty string for none. */
     aside?: (value: string) => string
+    /** What stands in front of a row, where the rows wear a mark. */
+    lead?: Snippet<[string]>
   } = $props()
 
   /** The value in three parts, so the letters that were typed can be marked
@@ -81,8 +86,11 @@
           onchoose(value)
         }}
       >
-        {parts.before}<span class="matched">{parts.hit}</span>{parts.after}
-        {#if after}<span class="aside">{after}</span>{/if}
+        {@render lead?.(value)}
+        <span class="words"
+          >{parts.before}<span class="matched">{parts.hit}</span>{parts.after}
+          {#if after}<span class="aside">{after}</span>{/if}</span
+        >
       </button>
     </li>
   {/each}
@@ -108,7 +116,9 @@
 
   button {
     width: 100%;
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
     padding: 5px 10px;
     border: none;
     background: none;
@@ -117,9 +127,6 @@
     font-size: var(--text-sm);
     line-height: 1.5;
     text-align: start;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     cursor: default;
     transition:
       background var(--dur-instant) var(--ease-out),
@@ -130,6 +137,16 @@
   button.on {
     background: var(--accent-soft);
     color: var(--text-strong);
+  }
+
+  /* The words take what the mark leaves, and are cut with an ellipsis rather than
+     pushed out of the row. */
+  .words {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* The second half, in the grey a row's quieter half is everywhere, a word's

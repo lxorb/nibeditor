@@ -459,8 +459,10 @@ class Links {
     return map
   })
 
-  /** The websites that carry the site's own mark, by path: a `.url`'s `Nib-Icon`,
-   *  which the file list draws in front of the row rather than the plain globe.
+  /** The websites, by path: where each `.url` points and the `Nib-Icon` it wrote down,
+   *  which the file list draws in front of the row rather than the plain globe - the
+   *  address being what this device's own sight of the site is looked up by; see
+   *  web-tab/favicons.svelte.ts.
    *
    *  The same shape as the icons above and for the same reason: a space holds a
    *  handful of websites, so the map is the size of what is there rather than of the
@@ -468,12 +470,14 @@ class Links {
    *  which is what makes a favicon a page found land in the tree without the row being
    *  told. It is kept apart from `icons` because a favicon is an address the row draws
    *  as a picture, not an icon name icons.ts reads. See file-mark and web-tab. */
-  private readonly favicons = $derived.by(() => {
+  private readonly websites = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
-    const map = new Map<string, string>()
+    const map = new Map<string, { address: string | null; favicon: string | null }>()
 
     for (const note of this.notes) {
-      if (note.favicon) map.set(note.path, note.favicon)
+      if (note.favicon || note.address) {
+        map.set(note.path, { address: note.address, favicon: note.favicon })
+      }
     }
 
     return map
@@ -535,7 +539,14 @@ class Links {
    *  Takes either spelling of a path, like the icon above it. */
   faviconOf(path: string): string | null {
     const relative = this.relative(path) ?? path.replace(/\\/g, '/')
-    return this.favicons.get(relative) ?? null
+    return this.websites.get(relative)?.favicon ?? null
+  }
+
+  /** Where the website at this path points, or null for anything that is not one.
+   *  Takes either spelling of a path, like the rest. */
+  shortcutOf(path: string): string | null {
+    const relative = this.relative(path) ?? path.replace(/\\/g, '/')
+    return this.websites.get(relative)?.address ?? null
   }
 
   /** Whether this space still holds a website written as a note, which is what the

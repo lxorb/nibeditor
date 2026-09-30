@@ -202,7 +202,7 @@ describe('the mark a file or folder chose for itself', () => {
   test('the store is reached through the façade, never named here', () => {
     expect(source).not.toContain('links.')
     expect(source).toContain("from './chosen-icon'")
-    expect(source).toContain('faviconFor(path)')
+    expect(source).toContain('faviconFor(path, url)')
   })
 
   /** One box, whichever of the three kinds is in it, and one size in it: `--icon-md`

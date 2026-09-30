@@ -42,6 +42,7 @@
   import { barKey, stops, type ZoomStep } from './bar-keys'
   import { plainOrigin } from './address'
   import { downloads, progressOf } from './downloads.svelte'
+  import { siteMark } from './favicons.svelte'
   import { addressing } from './passed.svelte'
   import { clipSource } from './note'
   import type { Page } from './pages.svelte'
@@ -92,6 +93,10 @@
   const progress = $derived(progressOf(downloads.list))
   const RING = 2 * Math.PI * 10
 
+  /** The site's own mark: the page's, else the last one this device saw there, so a
+   *  tab coming back wears it before its page does. See favicons.svelte.ts. */
+  const mark = $derived(siteMark(page.icon, page.url))
+
   /** Whether the site's own mark arrived. A site with none, or one the engine will not
    *  fetch, leaves a broken picture where a mark should be, and the lock reads better
    *  than that. */
@@ -99,7 +104,7 @@
 
   // A new page is a new mark to look for.
   $effect(() => {
-    if (page.icon) marked = true
+    if (mark) marked = true
   })
 
   let field = $state<{ take(): void }>()
@@ -271,8 +276,8 @@
     disabled={page.url === null}
     onclick={onsite}
   >
-    {#if page.icon && marked}
-      <img class="mark" src={page.icon} alt="" draggable="false" onerror={() => (marked = false)} />
+    {#if mark && marked}
+      <img class="mark" src={mark} alt="" draggable="false" onerror={() => (marked = false)} />
     {:else}
       <svg viewBox="0 0 24 24" aria-hidden="true">
         {#each page.url?.startsWith('https:') ? Lock : Globe as [tag, attrs], index (index)}
