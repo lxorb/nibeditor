@@ -1500,6 +1500,10 @@ export const zhHans: Dictionary = {
   'Paste {count} lines?': '粘贴 {count} 行？',
   // Nib as the default browser
   'Default browser': '默认浏览器',
+  // The engine web tabs run on
+  Engine: '引擎',
+  Relaunch: '重新启动',
+  'Chromium did not start': 'Chromium 未能启动',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
   // The archive: a row put away and taken back, and what refuses to delete it

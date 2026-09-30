@@ -1536,6 +1536,10 @@ export const id: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Nib as the default browser
   'Default browser': 'Peramban bawaan',
+  // The engine web tabs run on
+  Engine: 'Mesin',
+  Relaunch: 'Luncurkan ulang',
+  'Chromium did not start': 'Chromium tidak dapat dimulai',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

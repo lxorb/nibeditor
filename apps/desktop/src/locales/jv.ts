@@ -1530,6 +1530,10 @@ export const jv: Dictionary = {
   'Paste {count} lines?': 'Tempel {count} baris?',
   // Nib as the default browser
   'Default browser': 'Panjelajah gawan',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

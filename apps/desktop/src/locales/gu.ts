@@ -1528,6 +1528,10 @@ export const gu: Dictionary = {
   'Paste {count} lines?': { one: '{count} લાઇન પેસ્ટ કરવી?', other: '{count} લાઇનો પેસ્ટ કરવી?' },
   // Nib as the default browser
   'Default browser': 'મૂળ બ્રાઉઝર',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
   // The archive: a row put away and taken back, and what refuses to delete it

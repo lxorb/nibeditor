@@ -1542,6 +1542,10 @@ export const te: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
   // The archive: a row put away and taken back, and what refuses to delete it

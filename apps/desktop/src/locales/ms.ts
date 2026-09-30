@@ -1535,6 +1535,10 @@ export const ms: Dictionary = {
   'Paste {count} lines?': 'Tampal {count} baris?',
   // Nib as the default browser
   'Default browser': 'Pelayar lalai',
+  // The engine web tabs run on
+  Engine: 'Enjin',
+  Relaunch: 'Lancarkan semula',
+  'Chromium did not start': 'Chromium tidak bermula',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Buat asal suntingan {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

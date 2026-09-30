@@ -1560,6 +1560,10 @@ export const ta: Dictionary = {
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
   // Nib as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
   // The archive: a row put away and taken back, and what refuses to delete it

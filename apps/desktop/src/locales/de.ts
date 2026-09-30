@@ -1579,6 +1579,10 @@ export const de: Dictionary = {
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
   // Nib as the default browser
   'Default browser': 'Standardbrowser',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Neu starten',
+  'Chromium did not start': 'Chromium ist nicht gestartet',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
   // The archive: a row put away and taken back, and what refuses to delete it

@@ -3,7 +3,7 @@ name = "nib"
 version = "0.8.0"
 edition = "2021"
 license = "AGPL-3.0-only"
-rust-version = "1.82"
+rust-version = "1.89"
 
 [lib]
 name = "nib_lib"
@@ -155,6 +155,17 @@ window-vibrancy = "0.6"
 # Wezterm's own crate: it hands over a reader, a writer, a resize and the child, and
 # nothing else. See src/terminal.rs.
 portable-pty = "0.9"
+# nib's own Chromium, fetched the first time somebody picks it in Settings rather than
+# carried by every installer, and checked against the updater's own key before a byte of
+# it is unpacked: the folders the app keeps things in before Tauri has started, the
+# download, the signature and the archive. Every one of them is in the lock file
+# already, through the updater plugin, with the same features, so this adds nothing to
+# the build. See src/engine_switch.rs and src/engine_switch/fetch.rs.
+dirs = "6"
+reqwest = { version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls = { version = "0.23", default-features = false, features = ["ring"] }
+minisign-verify = "0.2"
+tar = "0.4"
 # A web login carried between computers is sealed on the device and opened only on
 # another of the person's own: an X25519 key pair per computer, the web key wrapped
 # to each one in a sealed box, and every bundle XChaCha20-Poly1305 under a key HKDF

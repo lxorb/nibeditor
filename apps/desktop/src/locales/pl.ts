@@ -1609,6 +1609,10 @@ export const pl: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'Domyślna przeglądarka',
+  // The engine web tabs run on
+  Engine: 'Silnik',
+  Relaunch: 'Uruchom ponownie',
+  'Chromium did not start': 'Chromium się nie uruchomił',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

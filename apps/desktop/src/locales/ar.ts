@@ -1628,6 +1628,10 @@ export const ar: Dictionary = {
   },
   // Nib as the default browser
   'Default browser': 'المتصفح الافتراضي',
+  // The engine web tabs run on
+  Engine: 'المحرك',
+  Relaunch: 'إعادة التشغيل',
+  'Chromium did not start': 'لم يبدأ Chromium',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
   // The archive: a row put away and taken back, and what refuses to delete it

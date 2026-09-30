@@ -1524,6 +1524,10 @@ export const my: Dictionary = {
   'Paste {count} lines?': 'စာကြောင်း {count} ကြောင်း ကူးထည့်မလား?',
   // Nib as the default browser
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
+  // The engine web tabs run on
+  Engine: 'Engine',
+  Relaunch: 'Relaunch',
+  'Chromium did not start': 'Chromium did not start',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
   // The archive: a row put away and taken back, and what refuses to delete it
