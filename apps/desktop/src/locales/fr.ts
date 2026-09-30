@@ -1702,4 +1702,8 @@ export const fr: Dictionary = {
     many: '{count} d’appels',
     other: '{count} appels',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Ouvert sur {device}',
+  'Use here': 'Utiliser ici',
+  '{device} wants your web logins': '{device} demande vos connexions web',
 }

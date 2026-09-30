@@ -1653,4 +1653,8 @@ export const gsw: Dictionary = {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Offe uf {device}',
+  'Use here': 'Da bruuche',
+  '{device} wants your web logins': '{device} wott dini Web-Aamäldige',
 }

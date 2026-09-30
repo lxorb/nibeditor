@@ -1713,4 +1713,8 @@ export const uk: Dictionary = {
     many: '{count} викликів',
     other: '{count} виклику',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Відкрито на {device}',
+  'Use here': 'Використати тут',
+  '{device} wants your web logins': '{device} просить ваші входи на сайти',
 }

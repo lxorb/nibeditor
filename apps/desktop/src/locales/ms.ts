@@ -1637,4 +1637,8 @@ export const ms: Dictionary = {
   'Calls a minute': 'Panggilan seminit',
   'Pages a minute': 'Halaman seminit',
   '{count} calls': '{count} panggilan',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Dibuka di {device}',
+  'Use here': 'Guna di sini',
+  '{device} wants your web logins': '{device} mahu log masuk web anda',
 }

@@ -1664,4 +1664,8 @@ export const ml: Dictionary = {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device}-ൽ തുറന്നിരിക്കുന്നു',
+  'Use here': 'ഇവിടെ ഉപയോഗിക്കുക',
+  '{device} wants your web logins': '{device} നിങ്ങളുടെ വെബ് ലോഗിനുകൾ ആവശ്യപ്പെടുന്നു',
 }

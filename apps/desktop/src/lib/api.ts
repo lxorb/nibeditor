@@ -13,6 +13,10 @@ export interface Account {
   email: string
   /** Shown on anything the account publishes. Null until chosen. */
   name: string | null
+  /** Whether the account's web logins travel between its computers: a switch flipped
+   *  one account at a time, answered by `/v1/me` alone; see lib/sync2/connect.svelte.ts
+   *  and docs/sync-v2.md section 11. */
+  webSync?: boolean
 }
 
 /** What this account may do in a space: its own, one somebody shared to write
@@ -155,6 +159,9 @@ export interface RemoteSpace {
   /** What this account may do here. Everything the app offers in a space asks
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
+  /** Which web store its pages live in on every computer, while web logins travel;
+   *  absent from a build of the service older than this app. See web-data.svelte.ts. */
+  webStore?: string
   /** Whether anybody besides the owner is in it, which is the dot on its row in
    *  the switcher. About the space itself: a file of it shared on its own is a
    *  mark on that row, and does not make the whole space shared. */

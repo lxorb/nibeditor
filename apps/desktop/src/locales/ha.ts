@@ -1669,4 +1669,8 @@ export const ha: Dictionary = {
     one: 'Kira {count}',
     other: 'Kira {count}',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'A buɗe a kan {device}',
+  'Use here': 'Yi amfani a nan',
+  '{device} wants your web logins': '{device} yana son shigarku na yanar gizo',
 }

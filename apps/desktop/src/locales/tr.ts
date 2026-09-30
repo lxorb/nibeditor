@@ -1649,4 +1649,8 @@ export const tr: Dictionary = {
     one: '{count} çağrı',
     other: '{count} çağrı',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} üzerinde açık',
+  'Use here': 'Burada kullan',
+  '{device} wants your web logins': '{device} web oturum açma bilgilerinizi istiyor',
 }

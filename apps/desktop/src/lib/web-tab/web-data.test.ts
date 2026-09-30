@@ -152,3 +152,50 @@ describe('the choice each space has made', () => {
     expect(JSON.parse(localStorage.getItem('nib:web-data') ?? '{}')).toEqual({})
   })
 })
+
+/** While web logins travel, the choice is the space's on the account: every computer
+ *  puts the space's pages in the same store. See docs/sync-v2.md section 6.1. */
+describe('the choice on the account', () => {
+  test('is the one that counts, is written there, and a device’s own goes up once', async () => {
+    const { webData } = await import('./web-data.svelte')
+    localStorage.clear()
+    webData.set('mine-1', 'site')
+    webData.set('local-1', 'space')
+
+    const written: [string, string][] = []
+    const writeUp = (space: string, choice: string) => {
+      written.push([space, choice])
+      return Promise.resolve()
+    }
+
+    const changed = webData.follow(
+      [
+        { id: 'mine-1', role: 'owner', webStore: 'global' },
+        { id: 'theirs-1', role: 'write', webStore: 'space' },
+      ],
+      writeUp,
+    )
+
+    // This device's choice for a space the account kept on Global goes up, once.
+    expect(written).toEqual([['mine-1', 'site']])
+    expect(webData.of('mine-1')).toBe('site')
+    // Somebody else's space is in the store its owner chose, on every computer.
+    expect(webData.of('theirs-1')).toBe('space')
+    expect(changed).toEqual(['theirs-1'])
+    // A space the account does not have goes by the device, as it always did.
+    expect(webData.of('local-1')).toBe('space')
+
+    // Chosen again on this computer: written to the account, not to the device.
+    webData.set('mine-1', 'global')
+    expect(written.at(-1)).toEqual(['mine-1', 'global'])
+    expect(webData.of('mine-1')).toBe('global')
+
+    // Listed again with the account's own word: nothing goes up a second time.
+    written.length = 0
+    webData.follow([{ id: 'mine-1', role: 'owner', webStore: 'global' }], writeUp)
+    expect(written).toEqual([])
+
+    webData.unfollow()
+    expect(webData.of('mine-1')).toBe('site')
+  })
+})

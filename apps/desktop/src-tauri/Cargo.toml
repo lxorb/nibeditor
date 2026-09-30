@@ -28,7 +28,9 @@ missing_docs = "warn"
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
 # keeping its client's pipes out of the app it starts (src/mcp/app.rs). And on nib's
 # own Chromium, the keyboard hook that hears the browser's chords in a web tab's page
-# (web_keys.rs), which the runtime offers no event for. None of
+# (web_keys.rs), which the runtime offers no event for. And asking the system when it
+# last had input and which window is in front, on Windows and a Mac, so a web login is
+# not handed away from somebody typing in a page (src/presence.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"

@@ -14,13 +14,15 @@ import { joining } from './joining.svelte'
 import { collectErrors, log } from './log'
 import { onTheActivity } from './mobile/bridge'
 import { modes } from './modes.svelte'
-import { settleUp } from './parting'
+import { handBack, handingBack, settleUp } from './parting'
 import { warmDoors } from './surfaces.svelte'
 import { recovery } from './recovery.svelte'
 import { record } from './sync/record.svelte'
 import { settings } from './settings.svelte'
+import { startup } from './startup.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { currentWindow, isDesktop, isMobile } from './tauri'
+import { HANDS_BACK_WITHIN } from './backoff'
 import { waited } from './timing'
 import { mark } from './trace'
 import { theme } from './theme.svelte'
@@ -149,6 +151,16 @@ export function start(): () => void {
   // it is the last turn of the launch order. See `warmDoors` in surfaces.svelte.ts.
   void warmDoors()
 
+  // The account's hub, beside the sockets the open notes join, after the first paint;
+  // never the glasses' plugin, which stays on sync v1. See sync2/connect.svelte.ts.
+  if (!__EVEN_PLUGIN__) {
+    void startup.turn('rooms').then(() =>
+      import('./sync2/connect.svelte').then(({ connect }) => {
+        connect()
+      }),
+    )
+  }
+
   // The pointer hides while somebody types; see typing-pointer.ts.
   let stopPointer: (() => void) | null = null
   if (!__EVEN_PLUGIN__) {
@@ -235,8 +247,9 @@ async function onClose(event: Closing, window: Closable) {
   // writes them.
   if (!isDesktop) return
 
-  // Nothing being written and no update to put in place: the window just goes.
-  if (!workspace.writing && !ready() && !going) return
+  // Nothing being written, no web login to hand back and no update to put in place: the
+  // window just goes.
+  if (!workspace.writing && !handingBack() && !ready() && !going) return
 
   event.preventDefault()
   if (going) return
@@ -265,11 +278,18 @@ function settle() {
   workspace.graphSettings.flush()
 }
 
-/** The writes that are owed, waited for, and a waiting update put in place. */
+/** The writes that are owed, and the web logins this computer holds handed back to the
+ *  account, waited for; and a waiting update put in place. */
 async function go(): Promise<void> {
   going = true
   try {
-    await Promise.race([workspace.writesSettled(), waited(GIVE_UP)])
+    await Promise.race([
+      Promise.all([
+        workspace.writesSettled(),
+        Promise.race([handBack(), waited(HANDS_BACK_WITHIN)]),
+      ]),
+      waited(GIVE_UP),
+    ])
     await installStaged()
   } finally {
     going = false

@@ -1600,4 +1600,8 @@ export const zhHans: Dictionary = {
   'Calls a minute': '每分钟调用次数',
   'Pages a minute': '每分钟页面数',
   '{count} calls': '{count} 次调用',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '已在 {device} 上打开',
+  'Use here': '在此使用',
+  '{device} wants your web logins': '{device} 请求你的网页登录',
 }

@@ -1626,4 +1626,8 @@ export const vi: Dictionary = {
   'Calls a minute': 'Lượt gọi mỗi phút',
   'Pages a minute': 'Trang mỗi phút',
   '{count} calls': '{count} lượt gọi',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Đang mở trên {device}',
+  'Use here': 'Dùng ở đây',
+  '{device} wants your web logins': '{device} muốn các thông tin đăng nhập web của bạn',
 }

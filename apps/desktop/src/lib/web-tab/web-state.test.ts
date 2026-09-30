@@ -12,6 +12,13 @@ interface World {
 
 const world = vi.hoisted((): World => ({ desktop: true, asked: [], answer: null }))
 
+vi.mock('../native', () => ({
+  invoke: (command: string, bytes: Uint8Array, options: { headers: Record<string, string> }) => {
+    world.asked.push({ command, args: { size: bytes.length, ...options.headers } })
+    return Promise.resolve(null)
+  },
+}))
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
   get isDesktop() {
@@ -23,12 +30,14 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-const { NotHere, webKey, webState } = await import('./web-state')
+const { folderName, NotHere, webKey, webState } = await import('./web-state')
 
 const CAPTURED = {
   folder: 'C:/nib/web-state/out-1',
   manifest: { name: 'manifest', size: 812 },
   chunks: [{ name: 'a'.repeat(64), size: 4096 }],
+  named: ['a'.repeat(64)],
+  digest: 'd'.repeat(64),
   skipped: [{ name: 'mail-cache', version: 3, size: 90_000_000, why: 'large' }],
   cookies: 7,
 }
@@ -70,6 +79,44 @@ describe('webState', () => {
         },
       },
     ])
+  })
+
+  test('a light capture says so, and a full one says nothing', async () => {
+    world.answer = CAPTURED
+    await webState.capture(null, 'ethz.ch', [], undefined, undefined, true)
+    await webState.capture(null, 'ethz.ch', [])
+
+    expect(world.asked[0]?.args).toMatchObject({ databases: false })
+    expect(world.asked[1]?.args).not.toHaveProperty('databases')
+  })
+
+  test('the chunks a download still wants are asked of the manifest it names', async () => {
+    world.answer = ['b'.repeat(64)]
+    await expect(webState.wants(null, 'ethz.ch', 'C:/in-1/manifest')).resolves.toEqual([
+      'b'.repeat(64),
+    ])
+    expect(world.asked[0]).toEqual({
+      command: 'web_state_wants',
+      args: { store: null, site: 'ethz.ch', manifestPath: 'C:/in-1/manifest' },
+    })
+  })
+
+  test('a file of a bundle is named by its folder’s name, never by a path', async () => {
+    world.answer = new Uint8Array([1, 2, 3]).buffer
+    const bytes = await webState.file(String.raw`C:\nib\web-state\out-0123456789abcdef`, 'manifest')
+
+    expect([...bytes]).toEqual([1, 2, 3])
+    expect(world.asked[0]).toEqual({
+      command: 'web_state_file',
+      args: { folder: 'out-0123456789abcdef', name: 'manifest' },
+    })
+
+    await webState.put('/home/a/web-state/in-0123456789abcdef/', 'b'.repeat(64), new Uint8Array(5))
+    expect(world.asked[1]).toEqual({
+      command: 'web_state_put',
+      args: { size: 5, 'x-nib-folder': 'in-0123456789abcdef', 'x-nib-name': 'b'.repeat(64) },
+    })
+    expect(folderName('in-1')).toBe('in-1')
   })
 
   test('a restore names the manifest and hands the session back', async () => {

@@ -1600,4 +1600,8 @@ export const zhHantHK: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁面數',
   '{count} calls': '{count} 次呼叫',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '已在 {device} 開啟',
+  'Use here': '在此使用',
+  '{device} wants your web logins': '{device} 要求你的網頁登入',
 }

@@ -22,7 +22,7 @@ use tauri::Webview;
 
 use super::bundle::{inflated, Manifest, Session, Skipped, VERSION};
 use super::capture::{checked_origin, quoted};
-use super::crypto::{Bound, Kind};
+use super::crypto::{Bound, Kind, WebKey};
 use super::keys::{self, Vault};
 use super::restore_view::Hidden;
 use super::{cookies, folders, isolated, RESTORE};
@@ -44,6 +44,63 @@ pub(crate) struct Restored {
     pub at: u64,
 }
 
+/// The manifest at `path`, opened with the generation of the key it names and held to
+/// the store and site it is asked for as; with the key and that generation.
+fn opened_manifest(
+    vault: &impl Vault,
+    label: &str,
+    site: &str,
+    path: &Path,
+) -> Result<(Manifest, WebKey, u32), String> {
+    let file =
+        std::fs::read(path).map_err(|error| format!("the manifest could not be read: {error}"))?;
+    let (generation, sealed) = folders::unframed(&file)?;
+    let key = keys::at(vault, generation)?.ok_or_else(|| {
+        "this computer does not have the key that web state was sealed with".to_owned()
+    })?;
+
+    let bound = Bound {
+        kind: Kind::Manifest,
+        store: label,
+        site,
+    };
+    let manifest: Manifest = serde_json::from_slice(&inflated(&key.open(bound, sealed)?)?)
+        .map_err(|error| format!("the manifest is not one: {error}"))?;
+    if manifest.v != VERSION {
+        return Err(format!(
+            "that web state is version {}, which this app cannot read",
+            manifest.v
+        ));
+    }
+    if manifest.store != label || manifest.site != site {
+        return Err("that web state is another site's".to_owned());
+    }
+    Ok((manifest, key, generation))
+}
+
+/// The chunks the manifest at `path` names that its folder does not hold yet: what a
+/// download fetches after the manifest, since only this computer can read the list.
+pub(crate) fn chunks_wanted(
+    vault: &impl Vault,
+    label: &str,
+    site: &str,
+    path: &Path,
+) -> Result<Vec<String>, String> {
+    let folder = path
+        .parent()
+        .ok_or_else(|| "that web state has no folder".to_owned())?;
+    let (manifest, _, _) = opened_manifest(vault, label, site, path)?;
+
+    let mut wanted: Vec<String> = Vec::new();
+    for database in manifest.origins.iter().flat_map(|origin| &origin.databases) {
+        let here = folders::is_file_name(&database.chunk) && folder.join(&database.chunk).is_file();
+        if !here && !wanted.contains(&database.chunk) {
+            wanted.push(database.chunk.clone());
+        }
+    }
+    Ok(wanted)
+}
+
 /// Opens the manifest at `path` and puts everything in it into `store`.
 pub(crate) async fn restore(
     caller: &Webview,
@@ -56,30 +113,12 @@ pub(crate) async fn restore(
     let folder = path
         .parent()
         .ok_or_else(|| "that web state has no folder".to_owned())?;
-    let file =
-        std::fs::read(path).map_err(|error| format!("the manifest could not be read: {error}"))?;
-    let (generation, sealed) = folders::unframed(&file)?;
-    let key = keys::at(vault, generation)?.ok_or_else(|| {
-        "this computer does not have the key that web state was sealed with".to_owned()
-    })?;
-
+    let (manifest, key, generation) = opened_manifest(vault, label, site, path)?;
     let bound = |kind| Bound {
         kind,
         store: label,
         site,
     };
-    let manifest: Manifest =
-        serde_json::from_slice(&inflated(&key.open(bound(Kind::Manifest), sealed)?)?)
-            .map_err(|error| format!("the manifest is not one: {error}"))?;
-    if manifest.v != VERSION {
-        return Err(format!(
-            "that web state is version {}, which this app cannot read",
-            manifest.v
-        ));
-    }
-    if manifest.store != label || manifest.site != site {
-        return Err("that web state is another site's".to_owned());
-    }
 
     let mut hidden = Hidden::open(&caller.window(), store).await?;
     let cookies = cookies::write(hidden.view(), site, &manifest.cookies).await?;
@@ -141,4 +180,77 @@ pub(crate) async fn restore(
         engine: manifest.engine,
         at: manifest.at,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::bundle::{deflated, Database, Manifest, Storage, VERSION};
+    use super::super::crypto::{Bound, Kind};
+    use super::super::folders::{framed, MANIFEST};
+    use super::super::keys::{rotate, Memory};
+    use super::chunks_wanted;
+
+    /// A manifest naming two chunks, sealed the way a capture seals one, in a folder of
+    /// its own that holds one of the two.
+    fn sealed_bundle(vault: &Memory) -> std::path::PathBuf {
+        let key = rotate(vault).expect("a key");
+        let database = |chunk: &str| Database {
+            name: chunk.to_owned(),
+            version: 1,
+            chunk: chunk.to_owned(),
+            size: 3,
+        };
+        let manifest = Manifest {
+            v: VERSION,
+            store: "global".into(),
+            site: "ethz.ch".into(),
+            engine: "webview2".into(),
+            at: 1,
+            generation: key.generation(),
+            cookies: vec![],
+            origins: vec![Storage {
+                origin: "https://moodle.ethz.ch".into(),
+                local: None,
+                databases: vec![database("aa11"), database("bb22"), database("aa11")],
+                skipped: vec![],
+            }],
+            session: None,
+            app: None,
+        };
+        let bound = Bound {
+            kind: Kind::Manifest,
+            store: "global",
+            site: "ethz.ch",
+        };
+        let text = serde_json::to_vec(&manifest).expect("json");
+        let sealed = key
+            .seal(bound, &deflated(&text).expect("deflated"))
+            .expect("sealed");
+
+        let folder = std::env::temp_dir().join(format!("nib-wanted-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+        std::fs::create_dir_all(&folder).expect("a folder");
+        std::fs::write(folder.join(MANIFEST), framed(key.generation(), &sealed)).expect("written");
+        std::fs::write(folder.join("aa11"), b"here").expect("written");
+        folder
+    }
+
+    /// A download asks for exactly the chunks the manifest names that are not beside it
+    /// yet, each once.
+    #[test]
+    fn a_download_asks_for_the_chunks_it_is_missing() {
+        let vault = Memory::default();
+        let folder = sealed_bundle(&vault);
+        let path = folder.join(MANIFEST);
+
+        assert_eq!(
+            chunks_wanted(&vault, "global", "ethz.ch", &path),
+            Ok(vec!["bb22".to_owned()])
+        );
+        // Held to the store and the site it is asked as, like the restore itself.
+        assert!(chunks_wanted(&vault, "global", "uzh.ch", &path).is_err());
+        assert!(chunks_wanted(&Memory::default(), "global", "ethz.ch", &path).is_err());
+
+        let _ = std::fs::remove_dir_all(&folder);
+    }
 }

@@ -1627,4 +1627,8 @@ export const my: Dictionary = {
   'Calls a minute': 'တစ်မိနစ်လျှင် ခေါ်ဆိုမှု',
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} တွင် ဖွင့်ထားသည်',
+  'Use here': 'ဤနေရာတွင် သုံးမည်',
+  '{device} wants your web logins': '{device} က သင်၏ ဝဘ် လော့ဂ်အင်များကို လိုချင်သည်',
 }

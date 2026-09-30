@@ -1106,6 +1106,72 @@ parts), because base64 would cost a third more on every update.
   out what would not fit), the 503 of a hub that is away and the per-minute lease ceiling
   reach no reader and stay English, which also keeps the glasses package under its 8 MiB.
 
+**As built** (lane `web-lease`: `lib/sync2/hub.svelte.ts`, `lib/web-tab/lease.svelte.ts` and
+the files beside it), where it adds to or decides what sections 4 and 6 leave open:
+
+- **The switch.** `users.web_sync` (migration `0043`), answered by `/v1/me` as `webSync` and
+  read nowhere else; the app keeps the last answer (`nib:web-sync`) so a launch goes by it
+  until the account has spoken. Off, nothing of the lease is even fetched
+  (`lib/sync2/connect.svelte.ts`); the hub socket itself opens for every signed-in device.
+- **One socket per device, not per window.** The first window takes a Web Lock and holds
+  the socket; every other window speaks and hears through it over a `BroadcastChannel`,
+  and inherits the lock when it goes. Two windows each with a socket would replace each
+  other on the hub for ever. The beat is kept by a worker's clock: a hidden page's own
+  timers fall to once a minute after a few minutes, and a minimised window would lose its
+  leases.
+- **Keyed means the hub said so.** A computer holds the web key once its hub hands it
+  `key`; a key in the keychain the account does not know would name leases no other
+  computer can see. The first computer makes the key as its socket opens (a `grant-key`
+  to itself); one on an account where another holds it sends `want-key` and shows the
+  waiting line; the bubble shows on every computer that holds it. Only the window holding
+  the socket walks this road and says `active`/`idle`.
+- **Before a page runs.** A held lease answers at once. Otherwise the page waits for the
+  hub's answer at most `LEASE_WAITS` (800 ms) and then runs on this computer's state; a
+  `busy` that arrives later stops it. A grant whose state is newer is waited for until it
+  is restored, at most 20 s. A link that leads to another site is asked about after the
+  fact. A tab of a site that was taken from this computer asks again when it is looked at,
+  at most every 30 s, because the hub tells only waiting computers `free`.
+- **Somebody at this computer** is input to the app's own page, or the system's last input
+  (`GetLastInputInfo`, CoreGraphics' idle time) while a nib window is the one in front,
+  which is how typing into a web page counts (`src-tauri/src/presence.rs`); a page playing
+  sound; an agent at work. Linux has only the app's own page.
+- **Moving the state.** A capture's files cross the bridge by the folder's name, never a
+  path (`web_state_file`, `web_state_put`), and a download asks the crate which chunks the
+  sealed manifest names (`web_state_wants`). The two-minute and settled-load uploads are
+  **light** captures (`databases: false`): cookies and localStorage read, each database the
+  chunk this run's last full capture took, so a mail app's database is read on a handover,
+  a release, going idle and the close, and not every two minutes. A capture carries a
+  digest of what it says with its time left out, and a light one that did not change is
+  not sent; a chunk sent once this run is not sent again.
+- **What travels in `app`**: each host's zoom and permission grants, where each web note
+  on the site was left (by space id and path, since two computers keep a space in two
+  folders), and which note's tab the sessionStorage belongs to, given back to that tab
+  once it is built.
+- **Letting go.** The last tab of a site closing releases its lease three seconds later,
+  after an upload in full; the window going hands every lease back inside the close's
+  existing hold, at most two seconds, and what does not make it is the last upload.
+- **The store choice** is the space's on the account while web logins travel: the account's
+  `webStore` is what counts, a choice is written through the space route (owners), a
+  device's own choice for a space the account keeps on Global goes up once, and the
+  device's own is what a space the account does not have goes by.
+- **Agent tabs** never acquire and never take a lease: an agent cannot press Use here for
+  the reader, and a lease asked for while the other computer's person stepped away would be
+  handed over without asking them. The window tells the crate which sites another
+  computer holds (`web_lease_elsewhere`), and `browser_open` in the reader's store answers
+  `in_use_elsewhere` with that computer's name; an agent at work keeps this computer
+  active. A site this computer has never asked about is run on its own state, as the
+  reader's pages are while the hub is out of reach. See docs/agent-native.md 7.4.
+- **Measured** with `scripts/web-lease-probe.py` (two probe builds on one account under
+  `wrangler dev`, 2026-09-30, a loaded Snapdragon X Elite): Use here to the other computer's
+  page signed in with the first one's cookies and storage 0.8 s, and 8.7 s with a debugging
+  port open on every browser process and other builds running, nearly all of it the restore;
+  a computer held still with its socket open lost its lease to the waiting one 26.6 to 27.1 s
+  later, on the hub's 30 s liveness; its next upload was fenced, and it stopped its pages.
+- **Not built.** Moving everybody to a new key generation after a computer is ended: the
+  device list carries no public keys, so no computer can wrap the new generation to the
+  others; `granted`'s `rotate` is read and nothing is done with it yet. And nib's own
+  Chromium (`cef`) has no capture, so there leases never start.
+
 ### What a program token may reach
 
 `nib_...` tokens (`programs.ts`) reach the feed, `/v2/docs/pull`, and the v1 note routes they

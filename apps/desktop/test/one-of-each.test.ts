@@ -314,6 +314,9 @@ describe('the ring a keyboard leaves', () => {
       // The theme picker on a phone, which holds the keys itself rather than putting
       // the keyboard up over the cards for a search nobody asked for.
       'lib/theme-picker/ThemePicker.svelte',
+      // Another computer asking for the web logins, which holds the keys for the same
+      // reason: a key meant for a page must not give the logins away.
+      'lib/web-tab/WebApprove.svelte',
       // A site's question, which holds the keys so neither answer is a stray Enter.
       'lib/web-tab/WebAsk.svelte',
     ])
@@ -392,6 +395,8 @@ describe('the badge in front of a name', () => {
       'lib/agents/settings/AgentMark.svelte',
       // A program asking to become an agent, as the Share sheet shows a person.
       'lib/agents/ui/PairingBubble.svelte',
+      // Another of the person's computers asking for the web logins, the same way.
+      'lib/web-tab/WebApprove.svelte',
     ])
   })
 
@@ -704,6 +709,8 @@ describe('the bubble a sentence appears in', () => {
       'lib/NameField.svelte',
       // A program asking to become an agent: a site's question, asked of the app.
       'lib/agents/ui/PairingBubble.svelte',
+      // Another computer asking for the web logins, in the same shape as a program.
+      'lib/web-tab/WebApprove.svelte',
       'lib/web-tab/WebAsk.svelte',
       'lib/web-tab/WebDialog.svelte',
       'lib/web-tab/WebDownloads.svelte',

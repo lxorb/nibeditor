@@ -1680,4 +1680,8 @@ export const fil: Dictionary = {
     one: '{count} tawag',
     other: '{count} na tawag',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Bukas sa {device}',
+  'Use here': 'Gamitin dito',
+  '{device} wants your web logins': 'Gusto ng {device} ang iyong mga web login',
 }

@@ -1642,4 +1642,8 @@ export const bn: Dictionary = {
     one: '{count}টি কল',
     other: '{count}টি কল',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device}-এ খোলা',
+  'Use here': 'এখানে ব্যবহার করুন',
+  '{device} wants your web logins': '{device} আপনার ওয়েব লগইন চায়',
 }

@@ -64,6 +64,7 @@ use std::path::PathBuf;
 use base64::engine::general_purpose::STANDARD;
 use base64::Engine as _;
 use serde::Serialize;
+use tauri::ipc::{InvokeBody, Request, Response};
 use tauri::{Manager as _, Webview};
 
 use keys::Keychain;
@@ -138,8 +139,10 @@ fn web_key(vault: &Keychain) -> Result<crypto::WebKey, String> {
 /// Takes a site's state out of a store and seals it into a folder of its own: the
 /// cookies, and per origin in `origins` its localStorage and `IndexedDB`; with `tab`, the
 /// web note's page is read first and its sessionStorage goes too. `app` is carried as
-/// it is (the trail, zoom, grants, the fence). Answers the folder, the manifest's and
-/// every chunk's name and size, and what stayed behind.
+/// it is (the trail, zoom, grants, the fence). `databases: false` is the light capture,
+/// which carries the databases of this run's last full one instead of reading them (see
+/// `Asked`). Answers the folder, the manifest's and every chunk's name and size, every
+/// chunk the manifest names, what it says as a digest, and what stayed behind.
 #[cfg(not(feature = "cef"))]
 #[tauri::command]
 pub async fn web_state_capture(
@@ -149,6 +152,7 @@ pub async fn web_state_capture(
     origins: Vec<String>,
     tab: Option<String>,
     app: Option<serde_json::Value>,
+    databases: Option<bool>,
 ) -> Result<capture::Captured, String> {
     ours(&webview)?;
     let (label, store) = store_of(store.as_deref())?;
@@ -168,6 +172,7 @@ pub async fn web_state_capture(
             origins,
             tab,
             app,
+            databases: databases.unwrap_or(true),
         },
     )
     .await
@@ -212,6 +217,24 @@ pub async fn web_state_session(
     session::seed(&view, &origin, &items).await
 }
 
+/// The chunks a downloaded manifest names that its folder does not hold yet, which the
+/// window fetches next: only this computer can read the list, since the manifest is
+/// sealed.
+#[cfg(not(feature = "cef"))]
+#[tauri::command(async)]
+pub fn web_state_wants(
+    webview: Webview,
+    store: Option<String>,
+    site: String,
+    manifest_path: String,
+) -> Result<Vec<String>, String> {
+    ours(&webview)?;
+    let (label, _) = store_of(store.as_deref())?;
+    let site = site_of(&site)?;
+    let path = folders::manifest_at(webview.app_handle(), &manifest_path)?;
+    restore::chunks_wanted(&Keychain::of(webview.app_handle()), label, site, &path)
+}
+
 /// What a capture and a restore say on nib's own Chromium, which has no door to them
 /// from this crate yet; see the top of this file.
 #[cfg(feature = "cef")]
@@ -236,6 +259,47 @@ pub fn web_state_restore() -> Result<(), String> {
 #[tauri::command(async)]
 pub fn web_state_session() -> Result<(), String> {
     Err(NOT_HERE.to_owned())
+}
+
+/// See the system engine's `web_state_wants`.
+#[cfg(feature = "cef")]
+#[tauri::command(async)]
+pub fn web_state_wants() -> Result<(), String> {
+    Err(NOT_HERE.to_owned())
+}
+
+/// One file of a bundle, as bytes, for the window to upload: a capture's manifest or one
+/// of its chunks, by the folder's name and its own. Everything in it is ciphertext.
+#[tauri::command(async)]
+pub fn web_state_file(webview: Webview, folder: String, name: String) -> Result<Response, String> {
+    ours(&webview)?;
+    let folder = folders::folder_named(webview.app_handle(), &folder)?;
+    Ok(Response::new(folders::read(&folder, &name)?))
+}
+
+/// One file of a downloaded bundle, written into the folder `web_state_inbox` made: the
+/// bytes are the request's body, and the folder's name and the file's are its
+/// `x-nib-folder` and `x-nib-name` headers, since the body is not JSON.
+#[tauri::command(async)]
+pub fn web_state_put(webview: Webview, request: Request<'_>) -> Result<(), String> {
+    ours(&webview)?;
+    let header = |name: &str| {
+        request
+            .headers()
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_owned)
+            .ok_or_else(|| format!("say the {name}"))
+    };
+    let folder = folders::folder_named(webview.app_handle(), &header("x-nib-folder")?)?;
+    let name = header("x-nib-name")?;
+    if !folders::is_file_name(&name) {
+        return Err("that is not a file of a web state".to_owned());
+    }
+    let InvokeBody::Raw(bytes) = request.body() else {
+        return Err("a web state is sent as bytes".to_owned());
+    };
+    folders::write(&folder.join(name), bytes)
 }
 
 /// A new, empty folder to download a bundle into, for `web_state_restore` to read.

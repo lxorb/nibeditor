@@ -1641,4 +1641,8 @@ export const ur: Dictionary = {
     one: '{count} کال',
     other: '{count} کالز',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} پر کھلا ہے',
+  'Use here': 'یہاں استعمال کریں',
+  '{device} wants your web logins': '{device} آپ کے ویب لاگ اِن چاہتا ہے',
 }

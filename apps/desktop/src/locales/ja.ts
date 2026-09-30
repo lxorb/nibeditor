@@ -1632,4 +1632,8 @@ export const ja: Dictionary = {
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
   '{count} calls': '{count} 件の呼び出し',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} で開いています',
+  'Use here': 'ここで使う',
+  '{device} wants your web logins': '{device} が Web のログインを求めています',
 }

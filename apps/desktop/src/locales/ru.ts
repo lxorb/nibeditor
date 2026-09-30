@@ -1718,4 +1718,8 @@ export const ru: Dictionary = {
     many: '{count} вызовов',
     other: '{count} вызова',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Открыто на {device}',
+  'Use here': 'Использовать здесь',
+  '{device} wants your web logins': '{device} запрашивает ваши входы на сайты',
 }

@@ -96,6 +96,8 @@ mod paths;
 mod pdf;
 #[cfg(desktop)]
 mod placement;
+#[cfg(desktop)]
+mod presence;
 mod query;
 mod regex;
 mod search;
@@ -317,6 +319,9 @@ macro_rules! desktop_commands {
             web_state::web_state_restore,
             web_state::web_state_session,
             web_state::web_state_inbox,
+            web_state::web_state_wants,
+            web_state::web_state_file,
+            web_state::web_state_put,
             web_state::web_key_device,
             web_state::web_key_digits,
             web_state::web_key_wrap,
@@ -325,6 +330,11 @@ macro_rules! desktop_commands {
             web_state::web_key_current,
             web_state::web_key_lease,
             web_state::web_key_forget,
+            // Whether somebody is at this computer, and what it is called; see
+            // presence.rs.
+            presence::input_idle,
+            presence::device_name,
+            agents::leases::web_lease_elsewhere,
         ]
     };
 }

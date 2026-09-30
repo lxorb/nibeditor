@@ -144,6 +144,23 @@ interface Wanted {
   covering: boolean
 }
 
+/** A web login another computer is using, over a tab of that site: the computer's name,
+ *  whether Use here is being answered, and Use here itself. See lease.svelte.ts. */
+export interface Lock {
+  device: string
+  pressed: boolean
+  take(): void
+}
+
+/** What a web login asks of a page's life (lease.svelte.ts), set once web logins
+ *  travel: whether a page may be built or sent somewhere, where each page says it is,
+ *  and which tabs have gone. Absent, every page runs as it always did. */
+interface PageWatch {
+  admit(tab: string, page: Page): Promise<boolean>
+  moved(tab: string, page: Page, settled: boolean): void
+  closed(tab: string): void
+}
+
 /** What a browser build is showing in the pane: the card that stands for the page,
  *  or the frame the reader asked for. A desktop has neither - the page is a webview
  *  of its own; see frame.ts for why a browser is asked at all. */
@@ -352,6 +369,13 @@ export class Page {
     this.arriving = loading ? Infinity : Date.now() + ARRIVES
   }
 
+  /** Another computer's web login over this tab, or null. Drawn by the pane in place of
+   *  the page; see WebLocked.svelte. */
+  lock = $state<Lock | null>(null)
+
+  /** Whether the tab is on screen in its pane, page or no page. Not drawn. */
+  onScreen = false
+
   /** What the engine says beside where the page is; see heard.ts. */
   playing = $state(false)
   muted = $state(false)
@@ -377,6 +401,18 @@ class Pages {
   /** Started once, on the first web tab, and never taken down: the window hears
    *  about every page in it through one listener. */
   private listening = false
+
+  /** The web login's say over pages, once web logins travel; see `PageWatch`. */
+  watch: PageWatch | null = null
+
+  /** The computer this one waits on for the web key, and the six digits both show, for
+   *  the quiet line under a web tab's bar. See approval.svelte.ts. */
+  waiting = $state<{ device: string; digits: string } | null>(null)
+
+  /** Every tab's page, for the web login to walk. */
+  each(): [string, Page][] {
+    return [...this.held.entries()]
+  }
 
   /** The state for a tab, made the first time it is asked for. */
   of(tabId: string): Page {
@@ -420,6 +456,7 @@ class Pages {
     const page = this.of(tabId)
     this.wake(page)
     page.url ??= url
+    page.onScreen = true
 
     if (!isDesktop) {
       page.live = true
@@ -493,6 +530,15 @@ class Pages {
     // say something else while it happens; the tail below applies whichever came last.
     if (!visible) page.wanted = { pane, visible, covering: true }
 
+    // A site whose login another computer is using runs nowhere but there: the pane
+    // shows who has it instead. Asked while the page counts as on its way, so the pane's
+    // next look waits for this answer rather than asking again. See lease.svelte.ts.
+    if (this.watch && !(await this.watch.admit(tabId, page))) {
+      page.opening = false
+      page.wanted = null
+      return
+    }
+
     // Where this tab was left, if it is the page being opened: a parked tab comes back
     // at the place it was parked at, and a note opened again tomorrow comes back at the
     // place the reading got to. The crate restores it inside the page as it loads,
@@ -543,6 +589,13 @@ class Pages {
     if (this.held.get(tabId) !== page) {
       page.live = false
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
+      return
+    }
+
+    // The site's login went to another computer while its page was on its way here, which
+    // the pane now says instead: the page is put away as it lands. See lease.svelte.ts.
+    if (page.lock !== null) {
+      await this.park(tabId)
       return
     }
 
@@ -621,6 +674,7 @@ class Pages {
   hide(tabId: string, pane: Rect) {
     const page = this.held.get(tabId)
     if (!page) return
+    page.onScreen = false
 
     void this.place(tabId, pane, false)
     if (!isDesktop) return
@@ -801,6 +855,12 @@ class Pages {
 
     if (!page.live) return
 
+    // Another site may be another computer's login; see `build`.
+    if (this.watch && !(await this.watch.admit(tabId, page))) {
+      await this.park(tabId)
+      return
+    }
+
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -901,6 +961,7 @@ class Pages {
     clearTimeout(page.parking)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
+    this.watch?.closed(tabId)
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
@@ -1094,6 +1155,9 @@ class Pages {
         page.shot = null
         void this.shoot(said.tab)
       }
+      // A link can lead to another site, and so to another web login; and a page that
+      // has finished loading is a moment worth keeping its login at. See lease.svelte.ts.
+      this.watch?.moved(said.tab, page, was && !said.loading)
     })
   }
 }

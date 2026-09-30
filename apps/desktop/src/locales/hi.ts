@@ -1642,4 +1642,8 @@ export const hi: Dictionary = {
     one: '{count} कॉल',
     other: '{count} कॉल',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} पर खुला है',
+  'Use here': 'यहाँ इस्तेमाल करें',
+  '{device} wants your web logins': '{device} आपके वेब लॉगिन चाहता है',
 }

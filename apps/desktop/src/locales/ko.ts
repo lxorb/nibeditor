@@ -1618,4 +1618,8 @@ export const ko: Dictionary = {
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
   '{count} calls': '호출 {count}회',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device}에서 열려 있음',
+  'Use here': '여기에서 사용',
+  '{device} wants your web logins': '{device}에서 웹 로그인을 요청합니다',
 }

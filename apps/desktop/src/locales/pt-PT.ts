@@ -1687,4 +1687,8 @@ export const ptPT: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Aberto em {device}',
+  'Use here': 'Usar aqui',
+  '{device} wants your web logins': '{device} quer os seus inícios de sessão web',
 }

@@ -1650,4 +1650,8 @@ export const te: Dictionary = {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device}లో తెరిచి ఉంది',
+  'Use here': 'ఇక్కడ ఉపయోగించండి',
+  '{device} wants your web logins': '{device} మీ వెబ్ లాగిన్‌లను కోరుతోంది',
 }

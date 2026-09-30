@@ -1668,4 +1668,8 @@ export const ta: Dictionary = {
     one: '{count} அழைப்பு',
     other: '{count} அழைப்புகள்',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} இல் திறந்துள்ளது',
+  'Use here': 'இங்கே பயன்படுத்து',
+  '{device} wants your web logins': '{device} உங்கள் இணைய உள்நுழைவுகளைக் கேட்கிறது',
 }

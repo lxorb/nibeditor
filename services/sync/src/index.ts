@@ -176,13 +176,19 @@ async function asProgram(env: Env, header: string | undefined): Promise<Asking |
   return { kind: 'user', user, program: true, readOnly: !!token.read_only }
 }
 
-app.get('/v1/me', (context) => {
+app.get('/v1/me', async (context) => {
   const who = context.get('who')
   // A guest is not an account and is not answered as one: what comes back is a
   // name, which is all a guest has and all the other people in a note need.
-  return who.kind === 'guest'
-    ? context.json({ guest: presentGuest(who.guest) })
-    : context.json({ user: presentUser(who.user) })
+  if (who.kind === 'guest') return context.json({ guest: presentGuest(who.guest) })
+
+  // Whether the account's web logins travel between its computers, which is a switch
+  // flipped one account at a time (docs/sync-v2.md section 11). Read here and not on
+  // every request's user: the app asks it once, as it starts.
+  const flags = await context.env.DB.prepare('select web_sync from users where id = ?')
+    .bind(who.user.id)
+    .first<{ web_sync: number }>()
+  return context.json({ user: { ...presentUser(who.user), webSync: flags?.web_sync === 1 } })
 })
 
 /** The one thing about whoever is here that can be changed: what to call them.

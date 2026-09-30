@@ -56,3 +56,44 @@ export function roomDelay(tries: number, spread = Math.random()): number {
 export function saveRetryDelay(tries: number): number {
   return Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
 }
+
+/** The heartbeat on the account's hub socket. The hub counts a device alive while its
+ *  last beat is under thirty seconds old, so three can go missing before a lease this
+ *  device holds is anybody else's; see docs/sync-v2.md section 6.2. */
+export const BEAT_EVERY = 10_000
+
+/** How long nobody may touch this computer before it tells its hub it is idle, which is
+ *  what lets another computer have a web login without Use here. Five minutes: shorter
+ *  hands a session over while somebody reads, longer makes them press Use here after
+ *  switching computers (docs/sync-v2.md, open question 2). */
+export const IDLE_AFTER = 5 * 60_000
+
+/** How often the system is asked when it last had input, for the keys and the pointer
+ *  that go to a web page rather than to the app's own; see presence.rs. A tenth of the
+ *  idle time, so going idle is said at most half a minute late. */
+export const INPUT_EVERY = 30_000
+
+/** How long a page waits for its hub to say whose a web login is before it loads on
+ *  this computer's own state anyway. The answer is one round trip on a socket already
+ *  open, a few tens of milliseconds; a hub that has not answered in this long is a hub
+ *  somewhere else, and the page is not kept waiting for it (the answer still arrives, and
+ *  a login that turns out to be another computer's stops the page then). */
+export const LEASE_WAITS = 800
+
+/** While somebody is using a site, its cookies and localStorage go up this often, when
+ *  they changed, so a computer that crashes loses at most this much of a login. */
+export const LIGHT_EVERY = 2 * 60_000
+
+/** A page that has finished loading sends its site's login up at most this often: a
+ *  sign-in is several pages in a row, and each is worth keeping without every one being
+ *  an upload. */
+export const LIGHT_AT_MOST = 60_000
+
+/** How long a site's lease is kept after its last tab closed before it is let go of,
+ *  so closing a tab and opening the site again is not two trips to the hub. */
+export const RELEASE_AFTER = 3_000
+
+/** How long a window going waits for the web logins it holds to be handed back: inside
+ *  the two seconds it already waits for the engine to keep its session cookies. What
+ *  does not make it is the last upload from before, at most `LIGHT_EVERY` old. */
+export const HANDS_BACK_WITHIN = 2_000

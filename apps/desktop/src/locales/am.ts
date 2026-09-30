@@ -1622,4 +1622,8 @@ export const am: Dictionary = {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'በ{device} ላይ ክፍት ነው',
+  'Use here': 'እዚህ ተጠቀም',
+  '{device} wants your web logins': '{device} የድር መግቢያዎችህን ይፈልጋል',
 }

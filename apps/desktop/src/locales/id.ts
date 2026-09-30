@@ -1638,4 +1638,8 @@ export const id: Dictionary = {
   'Calls a minute': 'Panggilan per menit',
   'Pages a minute': 'Halaman per menit',
   '{count} calls': '{count} panggilan',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Terbuka di {device}',
+  'Use here': 'Gunakan di sini',
+  '{device} wants your web logins': '{device} meminta login web Anda',
 }

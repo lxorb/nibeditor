@@ -1634,4 +1634,8 @@ export const gu: Dictionary = {
     one: '{count} કૉલ',
     other: '{count} કૉલ',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} પર ખુલ્લું',
+  'Use here': 'અહીં વાપરો',
+  '{device} wants your web logins': '{device} તમારા વેબ લોગિન માંગે છે',
 }

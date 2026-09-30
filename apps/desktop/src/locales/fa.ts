@@ -1643,4 +1643,8 @@ export const fa: Dictionary = {
     one: '{count} فراخوان',
     other: '{count} فراخوان',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'باز در {device}',
+  'Use here': 'اینجا استفاده کن',
+  '{device} wants your web logins': '{device} ورودهای وب شما را می‌خواهد',
 }

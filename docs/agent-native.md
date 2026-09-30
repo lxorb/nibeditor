@@ -674,6 +674,14 @@ to the desktop in the middle of an agent's job. An agent never takes a lease ano
 is actively using: `browser_open` answers `in_use_elsewhere` with the device's name, and
 the agent can wait, or use its own store. An agent store is not synced and needs no lease.
 
+As built (lane `web-lease`): an agent never acquires or takes a lease at all. It cannot press
+Use here on the reader's behalf, and an ask of its own would be a handover the other
+computer's person was never asked about the moment they stepped away. So the window tells
+the crate which sites another computer holds (`web_lease_elsewhere`, see
+`src-tauri/src/agents/leases.rs`), `browser_open` refuses those, an agent at work counts as
+somebody at this computer (`web-tab/activity.ts`), and a site this computer has never asked
+about runs on its own state, as the reader's pages do while the hub is out of reach.
+
 ---
 
 ## 8. Notes and the rest of the workspace

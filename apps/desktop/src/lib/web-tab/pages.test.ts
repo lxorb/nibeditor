@@ -211,6 +211,115 @@ test('a page that was built is placed and shown', async () => {
   expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: PANE })
 })
 
+/** A web login another of the person's computers is using: the page is asked about
+ *  before it is built, and one it may not run is never built at all, so nothing of the
+ *  site's runs here. See lease.svelte.ts. */
+describe("a site whose login is another computer's", () => {
+  afterEach(() => {
+    pages.watch = null
+  })
+
+  test('is never built', async () => {
+    const admitted: string[] = []
+    pages.watch = {
+      admit: (tab) => {
+        admitted.push(tab)
+        return Promise.resolve(false)
+      },
+      moved: () => undefined,
+      closed: () => undefined,
+    }
+
+    await pages.show('a', SITE, PANE)
+    await settle()
+
+    expect(admitted).toEqual(['a'])
+    expect(commands()).not.toContain('web_open')
+    expect(pages.of('a').live).toBe(false)
+  })
+
+  test('is built once the login is this computer’s', async () => {
+    pages.watch = {
+      admit: () => Promise.resolve(true),
+      moved: () => undefined,
+      closed: () => undefined,
+    }
+
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+
+    expect(pages.of('a').live).toBe(true)
+  })
+
+  test('hears where each page goes, whether it settled, and each tab that closed', async () => {
+    const moved: [string, boolean][] = []
+    const closed: string[] = []
+    pages.watch = {
+      admit: () => Promise.resolve(true),
+      moved: (tab, _page, settled) => moved.push([tab, settled]),
+      closed: (tab) => closed.push(tab),
+    }
+
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await settle()
+
+    const tell = await hearing('nib://web-tab')
+    const load = (loading: boolean) =>
+      tell({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
+    load(true)
+    load(false)
+    pages.forget('a')
+
+    expect(moved).toEqual([
+      ['a', false],
+      ['a', true],
+    ])
+    expect(closed).toEqual(['a'])
+  })
+
+  test('a page whose login went elsewhere while it was being built is put away as it lands', async () => {
+    pages.watch = {
+      admit: () => Promise.resolve(true),
+      moved: () => undefined,
+      closed: () => undefined,
+    }
+
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    pages.of('a').lock = { device: 'Laptop', pressed: false, take: () => undefined }
+    arrive()
+    await shown
+    await settle()
+
+    expect(pages.of('a').live).toBe(false)
+    expect(last('web_close')).toMatchObject({ tab: 'a', keep: true })
+    pages.of('a').lock = null
+  })
+
+  test('typed into the bar of a running page stops the page instead of sending it', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const arrive = await asked()
+    arrive()
+    await shown
+    pages.watch = {
+      admit: () => Promise.resolve(false),
+      moved: () => undefined,
+      closed: () => undefined,
+    }
+
+    await pages.go('a', 'https://elsewhere.example/')
+    await settle()
+
+    expect(commands()).not.toContain('web_navigate')
+    expect(last('web_close')).toMatchObject({ tab: 'a', keep: true })
+  })
+})
+
 /** A tab whose pane is measured while something of the app's is still over it.
  *
  *  This is what "browser tabs take an eternity to load" was. Every way of opening a

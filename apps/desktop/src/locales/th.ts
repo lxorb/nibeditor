@@ -1608,4 +1608,8 @@ export const th: Dictionary = {
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
   '{count} calls': '{count} การเรียก',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'เปิดอยู่บน {device}',
+  'Use here': 'ใช้ที่นี่',
+  '{device} wants your web logins': '{device} ต้องการการเข้าสู่ระบบเว็บของคุณ',
 }

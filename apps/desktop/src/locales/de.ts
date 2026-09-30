@@ -1684,4 +1684,8 @@ export const de: Dictionary = {
     one: '{count} Aufruf',
     other: '{count} Aufrufe',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Offen auf {device}',
+  'Use here': 'Hier verwenden',
+  '{device} wants your web logins': '{device} möchte deine Web-Anmeldungen',
 }

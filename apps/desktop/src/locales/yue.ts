@@ -1602,4 +1602,8 @@ export const yue: Dictionary = {
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁數',
   '{count} calls': '{count} 次呼叫',
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '喺 {device} 開咗',
+  'Use here': '喺呢度用',
+  '{device} wants your web logins': '{device} 想要你嘅網頁登入',
 }

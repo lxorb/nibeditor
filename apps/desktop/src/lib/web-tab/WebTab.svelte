@@ -53,6 +53,7 @@
   import WebDialog from './WebDialog.svelte'
   import WebBar from './WebBar.svelte'
   import WebDownloads from './WebDownloads.svelte'
+  import WebLocked from './WebLocked.svelte'
   import WebSite from './WebSite.svelte'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
@@ -340,6 +341,17 @@
   // An agent began acting here or let go: the page moves in by the frame or back out.
   $effect(() => follow(worn !== null))
 
+  // Another computer's web login came or went. Going, the page is asked for again at
+  // once, which is what makes a page come back by itself when the site is free; see
+  // lease.svelte.ts.
+  $effect(() => {
+    if (page.lock !== null) return
+    untrack(() => {
+      told = ''
+      follow()
+    })
+  })
+
   // A drag over the panes began or ended. Neither is a press this pane hears - the
   // tab lifts ten pixels after its own press, whenever the hand gets there - nor
   // anything on the overlay stack, so the page is told here; see `covered`.
@@ -586,6 +598,17 @@
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
     />
 
+    <!-- A computer new to the account, waiting for one that has the web logins to let it
+         have them: which one, and the six digits both screens show. -->
+    {#if pages.waiting}
+      <p class="waiting">
+        {t('Waiting for {who}', { who: pages.waiting.device })}
+        <span class="digits"
+          >{pages.waiting.digits.slice(0, 3)} {pages.waiting.digits.slice(3)}</span
+        >
+      </p>
+    {/if}
+
     <!-- What the page said, what a site asked for, and what a site is: one at a time,
          because a question waiting to be answered is the only thing worth reading, and
          the page's own dialog first, because its script is stopped until it is answered.
@@ -643,7 +666,11 @@
       class:still={page.shot !== null}
       style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
       bind:this={hole}
-    ></div>
+    >
+      {#if page.lock}
+        <WebLocked lock={page.lock} icon={page.icon ?? page.kept} {address} />
+      {/if}
+    </div>
   {:else if page.framing === 'frame' && address}
     <iframe
       class="framed"
@@ -734,9 +761,27 @@
   /* The page's own room. `--bg` rather than nothing, because for one frame between
      the hole being measured and the webview arriving this box is what shows. */
   .hole {
+    position: relative;
     flex: 1;
     min-height: 0;
     background: var(--bg);
+  }
+
+  /* Quiet, under the bar: the one line a computer new to the account says while it
+     waits, with the digits in figures of one width so they read as a code. */
+  .waiting {
+    margin: 0;
+    padding: var(--space-1) var(--space-3);
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .digits {
+    margin-inline-start: var(--space-2);
+    color: var(--text-strong);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.04em;
   }
 
   /* The still picture of the page, from the top left corner at its own size: it was

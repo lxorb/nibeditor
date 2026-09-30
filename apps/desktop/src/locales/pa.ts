@@ -1649,4 +1649,8 @@ export const pa: Dictionary = {
     one: '{count} ਕਾਲ',
     other: '{count} ਕਾਲਾਂ',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} ਉੱਤੇ ਖੁੱਲ੍ਹਾ ਹੈ',
+  'Use here': 'ਇੱਥੇ ਵਰਤੋ',
+  '{device} wants your web logins': '{device} ਤੁਹਾਡੇ ਵੈੱਬ ਲੌਗਇਨ ਚਾਹੁੰਦਾ ਹੈ',
 }

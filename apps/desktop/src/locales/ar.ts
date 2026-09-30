@@ -1742,4 +1742,8 @@ export const ar: Dictionary = {
     many: '{count} استدعاءً',
     other: '{count} استدعاء',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'مفتوح على {device}',
+  'Use here': 'استخدم هنا',
+  '{device} wants your web logins': 'يريد {device} عمليات تسجيل دخولك على الويب',
 }

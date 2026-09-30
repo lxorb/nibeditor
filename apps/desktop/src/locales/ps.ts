@@ -1646,4 +1646,8 @@ export const ps: Dictionary = {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'په {device} کې پرانیستی',
+  'Use here': 'دلته یې وکاروئ',
+  '{device} wants your web logins': '{device} ستاسو د ویب ننوتنې غواړي',
 }

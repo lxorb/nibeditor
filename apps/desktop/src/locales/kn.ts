@@ -1661,4 +1661,8 @@ export const kn: Dictionary = {
     one: '{count} ಕರೆ',
     other: '{count} ಕರೆಗಳು',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': '{device} ನಲ್ಲಿ ತೆರೆದಿದೆ',
+  'Use here': 'ಇಲ್ಲಿ ಬಳಸಿ',
+  '{device} wants your web logins': '{device} ನಿಮ್ಮ ವೆಬ್ ಲಾಗಿನ್‌ಗಳನ್ನು ಬಯಸುತ್ತದೆ',
 }

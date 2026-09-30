@@ -1240,7 +1240,9 @@ global login where it was.
 which a rename keeps - and never from its name or its folder. So the same store comes
 back on every launch, and **changing the setting loses nothing**: the store left behind
 stays on disk with its logins in it, and choosing it again is choosing them. The choice
-is this device's (`nib:web-data`), because the stores are folders on this device.
+is this device's (`nib:web-data`), because the stores are folders on this device - until
+web logins travel between the account's computers, when it is the space's on the account
+so every computer puts the space's pages in the same store (docs/sync-v2.md 6.1).
 Choosing builds the space's open pages again in the new store, each where it was and on
 the page it was on, so the choice is on screen at once.
 
@@ -1568,7 +1570,16 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
 | `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
 | `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
-| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
+| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device, or on the account while web logins travel. Tested |
+| `apps/desktop/src/lib/web-tab/lease.svelte.ts` | a web login as a lease: whether a page may run, handing over, losing it, what goes up and when. Tested; see docs/sync-v2.md 6 |
+| `apps/desktop/src/lib/web-tab/lease-transfer.ts` | a site's login uploaded under the fence and downloaded for a restore. Tested |
+| `apps/desktop/src/lib/web-tab/carried.ts` | what travels with a login besides the site's storage: zoom, grants, where each web note was left. Tested |
+| `apps/desktop/src/lib/web-tab/approval.svelte.ts` | the web key: made, asked for, given. Tested |
+| `apps/desktop/src/lib/web-tab/activity.ts` | whether somebody is at this computer. Tested |
+| `apps/desktop/src/lib/web-tab/web-sync.svelte.ts` | all of that started, where the account says web logins travel |
+| `apps/desktop/src/lib/web-tab/WebLocked.svelte` | `Open on {device}` and Use here, in place of a page another computer is using |
+| `apps/desktop/src/lib/web-tab/WebApprove.svelte` | another computer asking for the web logins, with the six digits |
+| `scripts/web-lease-probe.py` | the drive for the lease: two probe builds on one account under `wrangler dev`, the surface, Use here, and a computer that goes away without a word |
 | `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
 | `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested |
 | `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |

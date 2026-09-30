@@ -99,15 +99,42 @@ pub(crate) fn manifest_at(app: &AppHandle, asked: &str) -> Result<PathBuf, Strin
     }
 }
 
+/// One of the bundle folders, by the name `fresh` gave it (`in-` or `out-` and sixteen
+/// hex digits), as the window hands it back to upload from or download into: a name,
+/// never a path, so nothing the window says can reach outside the folder bundles are in.
+pub(crate) fn folder_named(app: &AppHandle, name: &str) -> Result<PathBuf, String> {
+    let folder = root(app)?.join(name);
+    if is_folder_name(name) && folder.is_dir() {
+        Ok(folder)
+    } else {
+        Err("that is not a web state of this app's".to_owned())
+    }
+}
+
+/// Whether a name is one `fresh` gives a folder.
+fn is_folder_name(name: &str) -> bool {
+    let random = name
+        .strip_prefix("in-")
+        .or_else(|| name.strip_prefix("out-"));
+    random.is_some_and(|random| {
+        random.len() == 16 && random.bytes().all(|byte| byte.is_ascii_hexdigit())
+    })
+}
+
 /// Writes one file of a bundle.
 pub(crate) fn write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     write_atomically(path, bytes)
 }
 
-/// Reads one file of a bundle, by name, from its folder: a chunk's name is hex, so it
-/// cannot climb out of the folder it is read from.
+/// Whether a name is one a file of a bundle can have: the manifest's, or a chunk's, which
+/// is hex, so it cannot climb out of the folder it is in.
+pub(crate) fn is_file_name(name: &str) -> bool {
+    !name.is_empty() && name.bytes().all(|byte| byte.is_ascii_alphanumeric())
+}
+
+/// Reads one file of a bundle, by name, from its folder.
 pub(crate) fn read(folder: &Path, name: &str) -> Result<Vec<u8>, String> {
-    if name.is_empty() || !name.bytes().all(|byte| byte.is_ascii_alphanumeric()) {
+    if !is_file_name(name) {
         return Err("that is not a chunk of a web state".to_owned());
     }
     fs::read(folder.join(name)).map_err(|error| format!("{name} could not be read: {error}"))
@@ -131,7 +158,7 @@ pub(crate) fn unframed(bytes: &[u8]) -> Result<(u32, &[u8]), String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{framed, read, unframed};
+    use super::{framed, is_file_name, is_folder_name, read, unframed};
 
     /// The generation goes in front and comes back off, and the rest is untouched.
     #[test]
@@ -148,6 +175,26 @@ mod tests {
         let folder = std::env::temp_dir();
         for bad in ["", "..", "../x", "a/b", "a\\b", "C:x", "."] {
             assert!(read(&folder, bad).is_err(), "{bad} was read");
+            assert!(!is_file_name(bad), "{bad} was a name");
+        }
+        assert!(is_file_name("manifest"));
+        assert!(is_file_name("0a1b2c"));
+    }
+
+    /// A folder is named the way `fresh` names one, and nothing else is one.
+    #[test]
+    fn a_folder_is_one_fresh_made() {
+        assert!(is_folder_name("in-0123456789abcdef"));
+        assert!(is_folder_name("out-0123456789abcdef"));
+        for bad in [
+            "in-",
+            "in-0123",
+            "x-0123456789abcdef",
+            "in-0123456789abcdeg",
+            "..",
+            "in-../../",
+        ] {
+            assert!(!is_folder_name(bad), "{bad} was a folder");
         }
     }
 }

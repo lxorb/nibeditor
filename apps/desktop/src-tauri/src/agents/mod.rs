@@ -57,7 +57,7 @@ mod keys;
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only WebView2 opens agent tabs")
 )]
-mod leases;
+pub(crate) mod leases;
 mod limits;
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),

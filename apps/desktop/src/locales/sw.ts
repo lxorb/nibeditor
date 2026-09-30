@@ -1670,4 +1670,8 @@ export const sw: Dictionary = {
     one: 'simu {count}',
     other: 'simu {count}',
   },
+  // A web login another computer is using, and another computer asking for them
+  'Open on {device}': 'Imefunguliwa kwenye {device}',
+  'Use here': 'Tumia hapa',
+  '{device} wants your web logins': '{device} inaomba kuingia kwako kwenye wavuti',
 }

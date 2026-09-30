@@ -30,11 +30,16 @@ interface BundleFile {
 }
 
 /** What a capture made: a folder holding the sealed manifest and one sealed chunk per
- *  database, which is uploaded as `PUT /v2/web/:key` and `PUT /v2/web/chunks/:name`. */
+ *  database, which is uploaded as `PUT /v2/web/:key` and `PUT /v2/web/chunks/:name`.
+ *  `named` is every chunk the manifest names, which a light capture's carried ones are
+ *  among without being in the folder, and `digest` is what the bundle says, so an
+ *  unchanged state is not uploaded again. */
 export interface Captured {
   folder: string
   manifest: BundleFile
   chunks: BundleFile[]
+  named: string[]
+  digest: string
   skipped: Skipped[]
   cookies: number
 }
@@ -112,6 +117,9 @@ function isCaptured(value: unknown): value is Captured {
     value.chunks.every(isFile) &&
     Array.isArray(value.skipped) &&
     value.skipped.every(isSkipped) &&
+    Array.isArray(value.named) &&
+    value.named.every(isString) &&
+    isString(value.digest) &&
     isNumber(value.cookies)
   )
 }
@@ -156,15 +164,22 @@ const isName = (value: unknown): value is string => isString(value) && /^[0-9a-f
 export const webState = {
   /** Takes the site out of `store`: its cookies, and for each of `origins` its
    *  localStorage and IndexedDB; with `tab`, the web note's own page is read first and
-   *  its sessionStorage goes too. `app` is carried as it is (the trail, zoom, grants). */
+   *  its sessionStorage goes too. `app` is carried as it is (the trail, zoom, grants).
+   *  `light` reads no database and carries the ones this run's last full capture of
+   *  the site took, which the lease asks for every couple of minutes. */
   capture(
     store: string | null,
     site: string,
     origins: string[],
     tab?: string,
     app?: unknown,
+    light = false,
   ): Promise<Captured> {
-    return asked('web_state_capture', { store, site, origins, tab, app }, isCaptured)
+    return asked(
+      'web_state_capture',
+      { store, site, origins, tab, app, ...(light ? { databases: false } : {}) },
+      isCaptured,
+    )
   },
 
   /** Puts a downloaded bundle into `store`: the manifest in a folder `inbox` made, with
@@ -187,6 +202,41 @@ export const webState = {
   inbox(): Promise<string> {
     return asked('web_state_inbox', {}, isString)
   },
+
+  /** The chunks a downloaded manifest names that are not beside it yet: only this
+   *  computer can read the list, since the manifest is sealed. */
+  wants(store: string | null, site: string, manifestPath: string): Promise<string[]> {
+    return asked(
+      'web_state_wants',
+      { store, site, manifestPath },
+      (value): value is string[] => Array.isArray(value) && value.every(isString),
+    )
+  },
+
+  /** One file of a capture's folder, as the bytes that are uploaded. */
+  async file(folder: string, name: string): Promise<Uint8Array> {
+    if (!isDesktop) throw new NotHere()
+    const answer = await invoke<unknown>('web_state_file', { folder: folderName(folder), name })
+    if (answer instanceof ArrayBuffer) return new Uint8Array(answer)
+    if (Array.isArray(answer) && answer.every(isNumber)) return Uint8Array.from(answer)
+    throw new Error('web_state_file answered something else')
+  },
+
+  /** One downloaded file, written into a folder `inbox` made. The bytes go as the
+   *  request's body rather than as JSON numbers, four characters a byte. */
+  async put(folder: string, name: string, bytes: Uint8Array): Promise<void> {
+    if (!isDesktop) throw new NotHere()
+    const native = await import('../native')
+    await native.invoke('web_state_put', bytes, {
+      headers: { 'x-nib-folder': folderName(folder), 'x-nib-name': name },
+    })
+  },
+}
+
+/** A bundle folder by the name the crate gave it, which is all the crate takes back: a
+ *  name cannot point anywhere else on the disk. */
+export function folderName(folder: string): string {
+  return folder.split(/[\\/]/).filter(Boolean).at(-1) ?? ''
 }
 
 /** The keys: this computer's pair, and the web key every approved computer shares. No
