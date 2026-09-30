@@ -198,7 +198,6 @@ export const th: Dictionary = {
   'That tag could not be deleted.': 'ลบแท็กนั้นไม่ได้',
   'Show sidebar': 'แสดงแถบข้าง',
   'Hide sidebar': 'ซ่อนแถบข้าง',
-  'Go to note, or > for commands': 'ไปที่โน้ต หรือ > สำหรับคำสั่ง',
   'Search notes and commands': 'ค้นหาโน้ตและคำสั่ง',
   'Sort by relevance': 'เรียงตามความเกี่ยวข้อง',
   'Page {page}': 'หน้า {page}',

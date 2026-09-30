@@ -66,10 +66,7 @@ export const CATEGORIES: { id: Category; label: () => string }[] = [
  *  on screen, and the two things that live in App.svelte's own state. */
 export interface AppContext {
   view?: EditorView | undefined
-  /** Opens the palette. `'commands'` opens it on the commands rather than on the
-   *  notes, which is the `>` in the field and nothing else: one palette with two
-   *  ways in, so the field is what says which of the two it is showing and
-   *  deleting the `>` is the way back. */
+  /** Opens the palette; `'commands'` is a `>` in its field, narrowed to them. */
   palette(mode?: 'commands'): void
   fullscreen(): void
 }
@@ -513,10 +510,8 @@ const APP_ENTRIES: Shortcut[] = [
     run: () => settings.show('shortcuts'),
   },
   {
-    // The note on paper. No key out of the box, because the one every hand
-    // reaches for is Ctrl+P and that is the command palette here, the way it is
-    // in Obsidian and in a code editor. Printing is a row in File and in the
-    // palette, and anybody who prints daily can put it on a key.
+    // The note on paper. No key: Ctrl+P is the palette's, as in Obsidian and a code
+    // editor. A row in File and in the palette, and anybody may give it one.
     id: 'app.print',
     label: () => t('Print'),
     category: 'file',
@@ -645,25 +640,25 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
   },
+  // Shift twice, JetBrains' key and Emil's; Ctrl+P second. See tapped.ts.
   {
     id: 'app.palette',
     label: () => t('Command palette'),
     category: 'view',
     scope: 'app',
-    key: 'Mod-p',
+    key: 'Shift Shift',
     run: (context) => context.palette(),
   },
-  // The same palette, opened on the commands: the field arrives holding `>` with the
-  // caret after it, so nothing new has to be learned and deleting the `>` is the way
-  // back to the notes. Ctrl+Shift+P because that is where VS Code, Obsidian and every
-  // editor that has a command palette put it, and because it is Ctrl+P with the one
-  // modifier a reader already reaches for to mean "the other one of these".
-  //
-  // Emil asked for it by name: "Ctrl + P is very very handy, I really like it. There
-  // should be another shortcut that is for commands (so you don't have to type > all
-  // the time, maybe Ctrl + Shift + P?)". Paragraph held the chord until this took it
-  // and needs none now, because setting a heading to the level it already is turns it
-  // back into prose; see setHeading in @nib/editor.
+  {
+    id: 'app.palette.alt',
+    label: () => t('Command palette'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-p',
+    alias: true,
+    run: (context) => context.palette(),
+  },
+  // Where every editor puts its commands, as Emil asked; Paragraph gave it up.
   {
     id: 'app.commands',
     label: () => t('Commands'),
@@ -672,9 +667,7 @@ const APP_ENTRIES: Shortcut[] = [
     key: 'Mod-Shift-p',
     run: (context) => context.palette('commands'),
   },
-  // A second key for the same palette on commands, with none of its own: the Obsidian
-  // keyboard puts it on Ctrl+P, which is Obsidian's command palette, and leaves
-  // Ctrl+Shift+P where every other editor has it. See presets.ts.
+  // With no key of its own: the Obsidian keyboard's Ctrl+P. See presets.ts.
   {
     id: 'app.commands.alt',
     label: () => t('Commands'),

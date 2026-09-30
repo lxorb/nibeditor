@@ -198,7 +198,6 @@ export const ur: Dictionary = {
   'That tag could not be deleted.': 'ٹیگ حذف نہیں ہو سکا۔',
   'Show sidebar': 'سائیڈ بار دکھائیں',
   'Hide sidebar': 'سائیڈ بار چھپائیں',
-  'Go to note, or > for commands': 'نوٹ پر جائیں، یا کمانڈ کے لیے >',
   'Search notes and commands': 'نوٹس اور کمانڈ تلاش کریں',
   'Sort by relevance': 'مناسبت کے مطابق ترتیب',
   'Page {page}': 'صفحہ {page}',

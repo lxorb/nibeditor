@@ -137,6 +137,14 @@ export class DeviceView {
   remember(path: string) {
     this.recent = [path, ...this.recent.filter((entry) => entry !== path)].slice(0, RECENT_LIMIT)
     keep(RECENT_KEY, JSON.stringify(this.recent))
+    // And a use of it; see frecency.ts.
+    void import('../frecency').then((one) => one.frecency.use(`note:${path}`))
+  }
+
+  /** One note off the list: Shift+Delete in the palette. */
+  unremember(path: string) {
+    this.recent = this.recent.filter((entry) => entry !== path)
+    keep(RECENT_KEY, JSON.stringify(this.recent))
   }
 
   forgetRecent() {

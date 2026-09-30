@@ -198,7 +198,6 @@ export const uk: Dictionary = {
   'That tag could not be deleted.': 'Не вдалося видалити тег.',
   'Show sidebar': 'Показати бічну панель',
   'Hide sidebar': 'Сховати бічну панель',
-  'Go to note, or > for commands': 'Перейти до нотатки або > для команд',
   'Search notes and commands': 'Пошук нотаток і команд',
   'Sort by relevance': 'За релевантністю',
   'Page {page}': 'Сторінка {page}',

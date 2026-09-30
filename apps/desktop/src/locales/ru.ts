@@ -198,7 +198,6 @@ export const ru: Dictionary = {
   'That tag could not be deleted.': 'Не удалось удалить тег.',
   'Show sidebar': 'Показать боковую панель',
   'Hide sidebar': 'Скрыть боковую панель',
-  'Go to note, or > for commands': 'Перейти к заметке или > для команд',
   'Search notes and commands': 'Поиск заметок и команд',
   'Sort by relevance': 'По релевантности',
   'Page {page}': 'Страница {page}',

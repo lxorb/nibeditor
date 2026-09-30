@@ -37,7 +37,18 @@
 //! `nib://web-passed`, and never become a window, since `about:blank` is not an address
 //! a tab may open. Any page can ask by those names, and all it can get is its own tab's
 //! find opened or stepped through, or its own address field - which is what its keys
-//! already get it. A name is never a command: there are four, and nothing else is read.
+//! already get it. A name is never a command: there are seven, and nothing else is read.
+//!
+//! **A modifier tapped twice, the same way.** Shift pressed twice on its own opens nib's
+//! palette wherever the keyboard is (see `lib/double-tap.ts`), and a page never tells
+//! the host about a lone Shift: the engine offers the host a key only with Ctrl or Alt
+//! held, and never Shift. So the script counts the taps itself, by the same rules, and
+//! asks under `nib-twice-shift` (or `-ctrl`, `-alt`) when two came; the page keeps every
+//! key, and a tap it answered itself does not count. A modifier grants a page no user
+//! activation in Chromium, so this ask cannot lean on the engine saying a person asked;
+//! it is taken instead when a key was really pressed a moment ago and this page has the
+//! keyboard (`typing_here`), which is what keeps a page from opening the palette over
+//! somebody typing anywhere else.
 //!
 //! **And Ctrl+0.** The engine's own Ctrl+0 goes back to the zoom the app last set rather
 //! than to a hundred per cent (see `web_page.rs`), so it asks the same way, under
@@ -73,14 +84,19 @@ const ADDRESS: &str = "nib-address";
 /// And the one Ctrl+0 asks for a hundred per cent by, which the crate answers itself.
 const ACTUAL: &str = "nib-actual-size";
 
+/// And a modifier tapped twice on its own.
+const TWICE_SHIFT: &str = "nib-twice-shift";
+const TWICE_CTRL: &str = "nib-twice-ctrl";
+const TWICE_ALT: &str = "nib-twice-alt";
+
 /// The event the window hears those on.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 const PASSED: &str = "nib://web-passed";
 
 /// A key the page let go by, as what it asks of nib: to open the find (Ctrl+F), to step
 /// to the next match or the one before (Ctrl+G and F3, with Shift for the one before),
-/// or to go to the address field (Ctrl+L and Alt+D). The whole of what a page can say
-/// this way.
+/// to go to the address field (Ctrl+L and Alt+D), or a modifier tapped twice. The whole
+/// of what a page can say this way.
 #[derive(Clone, Copy, Debug, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
@@ -89,6 +105,20 @@ pub enum Passed {
     Next,
     Previous,
     Address,
+    #[serde(rename = "shift-shift")]
+    ShiftTwice,
+    #[serde(rename = "ctrl-ctrl")]
+    CtrlTwice,
+    #[serde(rename = "alt-alt")]
+    AltTwice,
+}
+
+impl Passed {
+    /// Whether it is a modifier tapped twice, which no engine says a person asked for.
+    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+    pub const fn is_tap(self) -> bool {
+        matches!(self, Self::ShiftTwice | Self::CtrlTwice | Self::AltTwice)
+    }
 }
 
 /// One page's ask, named by the tab it came from.
@@ -142,6 +172,13 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// added. A page that stops the press on its way up is left to the engine, whose own find
 /// then opens, as a browser's would.
 ///
+/// A modifier tapped twice on its own asks by name as well, counted by the rules
+/// `lib/double-tap.ts` keeps and waiting as long (`within`, which that file's test holds
+/// to its own). The keys are watched on the capturing turn, before anything in the page
+/// can stop one on its way, so a letter the page swallowed still ends a tap; and the
+/// ask waits for the last release to have gone past the page, so a Shift the page took
+/// for itself does not open anything.
+///
 /// `window.open` is held from before the page's own first script, so a page that
 /// replaces it has not replaced this.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
@@ -185,6 +222,59 @@ pub const SCRIPT: &str = r"(function () {
     event.preventDefault()
     open('about:blank', name)
   })
+
+  var within = 350
+  var twice = { Shift: 'nib-twice-shift', Control: 'nib-twice-ctrl', Alt: 'nib-twice-alt' }
+  var down = null
+  var tap = null
+  var asking = null
+  function broken() {
+    down = null
+    tap = null
+  }
+  function alone(event, key) {
+    return (key === 'Shift' || !event.shiftKey) && (key === 'Control' || !event.ctrlKey) &&
+      (key === 'Alt' || !event.altKey) && !event.metaKey
+  }
+  addEventListener('keydown', function (event) {
+    if (!event.isTrusted || event.repeat) return
+    if (event.isComposing || event.key === 'Process') return broken()
+    if (twice[event.key] && down === null && alone(event, event.key)) {
+      if (tap && event.timeStamp - tap.at > within) tap = null
+      down = { key: event.key, at: event.timeStamp }
+      return
+    }
+    broken()
+  }, true)
+  addEventListener('keyup', function (event) {
+    asking = null
+    if (!event.isTrusted) return
+    if (!down || down.key !== event.key) return broken()
+    var key = down.key
+    var at = down.at
+    down = null
+    if (event.timeStamp - at > within) {
+      tap = null
+      return
+    }
+    var again = tap && tap.key === key && at - tap.at <= within
+    if (again && tap.spent) {
+      tap = { key: key, at: event.timeStamp, spent: true }
+      return
+    }
+    tap = { key: key, at: event.timeStamp, spent: again }
+    if (again) asking = key
+  }, true)
+  addEventListener('pointerdown', broken, true)
+  addEventListener('wheel', broken, true)
+  addEventListener('blur', function (event) {
+    if (event.target === window) broken()
+  }, true)
+  last('keyup', function (event) {
+    var key = asking
+    asking = null
+    if (key && !event.defaultPrevented) open('about:blank', twice[key])
+  })
 })()";
 
 /// What a window asked for under `name` asks of nib, or `None` for a window. Pure, and
@@ -196,6 +286,9 @@ pub fn sought(name: &str) -> Option<Passed> {
         FIND_NEXT => Some(Passed::Next),
         FIND_PREVIOUS => Some(Passed::Previous),
         ADDRESS => Some(Passed::Address),
+        TWICE_SHIFT => Some(Passed::ShiftTwice),
+        TWICE_CTRL => Some(Passed::CtrlTwice),
+        TWICE_ALT => Some(Passed::AltTwice),
         _ => None,
     }
 }
@@ -205,6 +298,21 @@ pub fn sought(name: &str) -> Option<Passed> {
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub fn actual(name: &str) -> bool {
     name == ACTUAL
+}
+
+/// How long ago a key may have been pressed for a tap to be a person's: the second
+/// release and the ask arriving here are a few milliseconds apart, and a second is the
+/// widest a loaded machine could stretch that.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+const LATELY_MS: u32 = 1000;
+
+/// Whether an ask is one a person made. The engine says so for a key that grants the
+/// page an activation; a modifier grants none, so a tap is taken when a key was
+/// pressed `since` milliseconds ago, at most `LATELY_MS`, and this page has the
+/// keyboard. Pure, so the rule has tests; the two facts are read in `typing_here`.
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+pub fn taken_as_a_person_s(key: Passed, user: bool, since: u32, focused: bool) -> bool {
+    user || (key.is_tap() && focused && since <= LATELY_MS)
 }
 
 /// What one request said, down to where its tab goes, or `None` for a request nobody
@@ -256,12 +364,16 @@ mod heard {
         ContextMenuRequestedEventHandler, NewWindowRequestedEventHandler,
         WindowCloseRequestedEventHandler,
     };
+    use windows::Win32::Foundation::HWND;
+    use windows::Win32::System::SystemInformation::GetTickCount;
     use windows::Win32::UI::Input::KeyboardAndMouse::{
-        GetAsyncKeyState, GetKeyState, VIRTUAL_KEY, VK_CONTROL, VK_SHIFT,
+        GetAsyncKeyState, GetFocus, GetKeyState, GetLastInputInfo, LASTINPUTINFO, VIRTUAL_KEY,
+        VK_CONTROL, VK_SHIFT,
     };
+    use windows::Win32::UI::WindowsAndMessaging::IsChild;
     use windows_core::Interface;
 
-    use super::{actual, passed, placed, sought, Asked, Held};
+    use super::{actual, passed, placed, sought, taken_as_a_person_s, Asked, Held};
 
     thread_local! {
         /// What each tab's last request said, until `on_new_window` takes it. The
@@ -302,6 +414,33 @@ mod heard {
         SAID.with_borrow_mut(|said| said.remove(tab)).flatten()
     }
 
+    /// How long ago this machine last heard a key or the pointer, in milliseconds, and
+    /// whether the keyboard is in the page under `host`: the two facts a double tap is
+    /// taken on. The focus is asked of the input this thread shares with the page's
+    /// window, the way `web_keys.rs` asks for a modifier.
+    #[allow(
+        unsafe_code,
+        reason = "the last input and the window with the keyboard are Win32's to say"
+    )]
+    fn typing_here(host: HWND) -> (u32, bool) {
+        let mut last = LASTINPUTINFO {
+            cbSize: u32::try_from(std::mem::size_of::<LASTINPUTINFO>()).unwrap_or(8),
+            dwTime: 0,
+        };
+
+        // Safe: both read state and take nothing but the struct they fill.
+        unsafe {
+            let since = if GetLastInputInfo(&raw mut last).as_bool() {
+                GetTickCount().wrapping_sub(last.dwTime)
+            } else {
+                u32::MAX
+            };
+            let focus = GetFocus();
+            let here = !focus.is_invalid() && (focus == host || IsChild(host, focus).as_bool());
+            (since, here)
+        }
+    }
+
     #[allow(
         unsafe_code,
         reason = "a page asking for a window is one of WebView2's own events, and its objects are reached through COM"
@@ -319,6 +458,12 @@ mod heard {
             let Ok(core) = webview.controller().CoreWebView2() else {
                 return;
             };
+
+            // The window the page is drawn in, which the keyboard is inside while the
+            // page has it. The controller hands it over in its own crate's type.
+            let mut parent = windows_com::Win32::Foundation::HWND::default();
+            let _ = webview.controller().ParentWindow(&raw mut parent);
+            let host = HWND(parent.0);
 
             let asking = tab.clone();
             let requested = NewWindowRequestedEventHandler::create(Box::new(move |_, args| {
@@ -349,7 +494,8 @@ mod heard {
                 // pressed something, so a page cannot take the keyboard from wherever
                 // the reader is typing by asking on its own.
                 if let Some(key) = sought(&name) {
-                    if user.as_bool() {
+                    let (since, focused) = typing_here(host);
+                    if taken_as_a_person_s(key, user.as_bool(), since, focused) {
                         passed(&app, &window, &asking, key);
                     }
                     return Ok(());
@@ -429,7 +575,7 @@ pub fn taken(_tab: &str) -> Option<Asked> {
 
 #[cfg(test)]
 mod tests {
-    use super::{actual, placed, sought, Ask, Asked, Held, Passed, SCRIPT};
+    use super::{actual, placed, sought, taken_as_a_person_s, Ask, Asked, Held, Passed, SCRIPT};
 
     const NONE: Held = Held {
         ctrl: false,
@@ -487,12 +633,15 @@ mod tests {
     }
 
     #[test]
-    fn four_names_ask_for_nib_s_answer_and_nothing_else_does() {
+    fn seven_names_ask_for_nib_s_answer_and_nothing_else_does() {
         assert_eq!(sought("nib-find"), Some(Passed::Find));
         assert_eq!(sought("nib-find-next"), Some(Passed::Next));
         assert_eq!(sought("nib-find-previous"), Some(Passed::Previous));
         assert_eq!(sought("nib-address"), Some(Passed::Address));
-        // A name is one of the three exactly, or a window.
+        assert_eq!(sought("nib-twice-shift"), Some(Passed::ShiftTwice));
+        assert_eq!(sought("nib-twice-ctrl"), Some(Passed::CtrlTwice));
+        assert_eq!(sought("nib-twice-alt"), Some(Passed::AltTwice));
+        // A name is one of the seven exactly, or a window.
         for name in [
             "",
             "_blank",
@@ -501,6 +650,8 @@ mod tests {
             "NIB-FIND",
             "nib-find ",
             "nib-find-all",
+            "nib-twice-meta",
+            "nib-twice",
         ] {
             assert_eq!(sought(name), None, "{name:?}");
         }
@@ -514,6 +665,9 @@ mod tests {
             "'nib-find-previous'",
             "'nib-address'",
             "'nib-actual-size'",
+            "'nib-twice-shift'",
+            "'nib-twice-ctrl'",
+            "'nib-twice-alt'",
         ] {
             assert!(SCRIPT.contains(name), "{name}");
         }
@@ -534,7 +688,24 @@ mod tests {
     }
 
     #[test]
-    fn an_ask_reaches_the_window_as_one_of_four_words_for_its_tab() {
+    fn a_tap_is_a_person_s_when_a_key_just_went_and_the_page_has_the_keyboard() {
+        let tap = Passed::ShiftTwice;
+        assert!(taken_as_a_person_s(tap, false, 40, true));
+        // Too long ago, or the keyboard is somewhere else: a page asking on its own.
+        assert!(!taken_as_a_person_s(tap, false, 5000, true));
+        assert!(!taken_as_a_person_s(tap, false, 40, false));
+        // The engine's word is enough for anything.
+        assert!(taken_as_a_person_s(tap, true, u32::MAX, false));
+    }
+
+    #[test]
+    fn the_other_asks_still_want_the_engine_s_word() {
+        assert!(!taken_as_a_person_s(Passed::Find, false, 40, true));
+        assert!(taken_as_a_person_s(Passed::Address, true, 40, false));
+    }
+
+    #[test]
+    fn an_ask_reaches_the_window_as_one_of_seven_words_for_its_tab() {
         let said = |key| {
             serde_json::to_value(Ask {
                 tab: "t1".into(),
@@ -546,6 +717,9 @@ mod tests {
         assert_eq!(said(Passed::Next)["key"], "next");
         assert_eq!(said(Passed::Previous)["key"], "previous");
         assert_eq!(said(Passed::Address)["key"], "address");
+        assert_eq!(said(Passed::ShiftTwice)["key"], "shift-shift");
+        assert_eq!(said(Passed::CtrlTwice)["key"], "ctrl-ctrl");
+        assert_eq!(said(Passed::AltTwice)["key"], "alt-alt");
         assert_eq!(said(Passed::Find)["tab"], "t1");
     }
 }

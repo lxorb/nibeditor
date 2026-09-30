@@ -154,3 +154,28 @@ describe('closing the pane', () => {
     expect(rebind.turnedDown).toBeNull()
   })
 })
+
+describe('a modifier tapped twice', () => {
+  test('is the key of a row the window runs', () => {
+    rebind.listen('app.graph')
+    rebind.tapped('Alt')
+
+    expect(shortcuts.keyFor('app.graph')).toBe('Alt Alt')
+    expect(rebind.listening).toBeNull()
+  })
+
+  test('clashes with the palette, which Shift twice already opens', () => {
+    rebind.listen('app.graph')
+    rebind.tapped('Shift')
+
+    expect(rebind.clash?.holders.map((one) => one.id)).toEqual(['app.palette'])
+  })
+
+  test('is not a key for the editor, which has no such thing, so the row goes on waiting', () => {
+    rebind.listen('format.bold')
+    rebind.tapped('Shift')
+
+    expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
+    expect(rebind.listening).toBe('format.bold')
+  })
+})

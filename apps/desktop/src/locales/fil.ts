@@ -198,7 +198,6 @@ export const fil: Dictionary = {
   'That tag could not be deleted.': 'Hindi natanggal ang tag na iyon.',
   'Show sidebar': 'Ipakita ang sidebar',
   'Hide sidebar': 'Itago ang sidebar',
-  'Go to note, or > for commands': 'Pumunta sa tala, o > para sa utos',
   'Search notes and commands': 'Maghanap ng tala at utos',
   'Sort by relevance': 'Isunod-sunod ayon sa kaugnayan',
   'Page {page}': 'Pahina {page}',

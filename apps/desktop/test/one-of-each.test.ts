@@ -437,6 +437,8 @@ describe('the switch', () => {
     expect(wearing).toEqual([
       'lib/GraphControls.svelte',
       'lib/McpSetup.svelte',
+      // A setting's row in the palette, which flips where it stands.
+      'lib/Palette.svelte',
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
     ])

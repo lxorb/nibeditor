@@ -198,7 +198,6 @@ export const te: Dictionary = {
   'That tag could not be deleted.': 'ఆ ట్యాగ్ తొలగించలేకపోయింది.',
   'Show sidebar': 'సైడ్‌బార్ చూపు',
   'Hide sidebar': 'సైడ్‌బార్ దాచు',
-  'Go to note, or > for commands': 'నోట్‌కు వెళ్లు, కమాండ్‌లకు >',
   'Search notes and commands': 'నోట్‌లు, కమాండ్‌లు వెతుకు',
   'Sort by relevance': 'సంబంధం ప్రకారం క్రమం',
   'Page {page}': 'పేజీ {page}',

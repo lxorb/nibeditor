@@ -198,7 +198,6 @@ export const pa: Dictionary = {
   'That tag could not be deleted.': 'ਉਹ ਟੈਗ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
   'Show sidebar': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਦਿਖਾਓ',
   'Hide sidebar': 'ਪਾਸੇ ਦੀ ਪੱਟੀ ਲੁਕਾਓ',
-  'Go to note, or > for commands': 'ਨੋਟ ਉੱਤੇ ਜਾਓ, ਜਾਂ ਹੁਕਮਾਂ ਲਈ >',
   'Search notes and commands': 'ਨੋਟਾਂ ਤੇ ਹੁਕਮ ਲੱਭੋ',
   'Sort by relevance': 'ਸੰਬੰਧ ਮੁਤਾਬਕ ਲੜੀਬੱਧ ਕਰੋ',
   'Page {page}': 'ਸਫ਼ਾ {page}',

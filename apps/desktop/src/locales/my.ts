@@ -198,7 +198,6 @@ export const my: Dictionary = {
   'That tag could not be deleted.': 'ထိုတဂ်ဖျက်မရပါ။',
   'Show sidebar': 'ဘေးတန်းပြ',
   'Hide sidebar': 'ဘေးတန်းဖျောက်',
-  'Go to note, or > for commands': 'မှတ်စုသို့ သို့မဟုတ်အမိန့်အတွက် >',
   'Search notes and commands': 'မှတ်စုနှင့်အမိန့်ရှာ',
   'Sort by relevance': 'သက်ဆိုင်မှုအလိုက်စီ',
   'Page {page}': 'စာမျက်နှာ {page}',

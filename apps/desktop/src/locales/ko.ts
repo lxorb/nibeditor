@@ -198,7 +198,6 @@ export const ko: Dictionary = {
   'That tag could not be deleted.': '그 태그를 삭제할 수 없었습니다.',
   'Show sidebar': '사이드바 보이기',
   'Hide sidebar': '사이드바 숨기기',
-  'Go to note, or > for commands': '노트로 이동, 명령은 >',
   'Search notes and commands': '노트와 명령 검색',
   'Sort by relevance': '관련도순 정렬',
   'Page {page}': '{page}쪽',

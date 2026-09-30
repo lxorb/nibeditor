@@ -3,14 +3,14 @@ import { lineAsked, modeOf } from './mode'
 
 describe('the mark in front of the field', () => {
   test('says which list it is', () => {
-    expect(modeOf('plan')).toEqual({ mode: 'notes', term: 'plan' })
+    expect(modeOf('plan')).toEqual({ mode: 'everything', term: 'plan' })
     expect(modeOf('> fold ')).toEqual({ mode: 'commands', term: 'fold' })
     expect(modeOf('#intro')).toEqual({ mode: 'headings', term: 'intro' })
     expect(modeOf(':42')).toEqual({ mode: 'line', term: '42' })
   })
 
   test('only counts at the very start', () => {
-    expect(modeOf(' #intro')).toEqual({ mode: 'notes', term: '#intro' })
+    expect(modeOf(' #intro')).toEqual({ mode: 'everything', term: '#intro' })
   })
 })
 

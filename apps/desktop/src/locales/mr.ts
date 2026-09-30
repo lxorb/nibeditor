@@ -198,7 +198,6 @@ export const mr: Dictionary = {
   'That tag could not be deleted.': 'तो टॅग हटवता आला नाही.',
   'Show sidebar': 'साइडबार दाखवा',
   'Hide sidebar': 'साइडबार लपवा',
-  'Go to note, or > for commands': 'नोंदीवर जा, किंवा कमांडसाठी >',
   'Search notes and commands': 'नोंदी आणि कमांड शोधा',
   'Sort by relevance': 'सुसंगतीनुसार क्रम',
   'Page {page}': 'पान {page}',

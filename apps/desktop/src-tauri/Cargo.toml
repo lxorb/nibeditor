@@ -344,9 +344,12 @@ windows = { version = "0.58", features = [
   # See agents/memory.rs.
   "Win32_System_ProcessStatus",
   # A wheel over a page, seen before Windows delivers it and sent to the page's own
-  # window, where the engine handles it once. See web_wheel.rs.
+  # window, where the engine handles it once (web_wheel.rs); and whether a page asking
+  # for the palette has the keyboard, and a key was just pressed, which a double tap is
+  # taken on (web_opens.rs).
   "Win32_UI_WindowsAndMessaging",
   "Win32_System_LibraryLoader",
+  "Win32_System_SystemInformation",
 ] }
 # An agent's picture of a page with every filled secret field painted over, so a
 # password's bullets and a card's digits never reach it; see agents/page.rs. Already

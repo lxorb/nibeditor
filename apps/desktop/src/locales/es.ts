@@ -198,7 +198,6 @@ export const es: Dictionary = {
   'That tag could not be deleted.': 'No se pudo eliminar esa etiqueta.',
   'Show sidebar': 'Mostrar la barra lateral',
   'Hide sidebar': 'Ocultar la barra lateral',
-  'Go to note, or > for commands': 'Ir a una nota, o > para comandos',
   'Search notes and commands': 'Buscar notas y comandos',
   'Sort by relevance': 'Ordenar por relevancia',
   'Page {page}': 'Página {page}',

@@ -198,7 +198,6 @@ export const hi: Dictionary = {
   'That tag could not be deleted.': 'वह टैग हटाया नहीं जा सका।',
   'Show sidebar': 'साइडबार दिखाएँ',
   'Hide sidebar': 'साइडबार छिपाएँ',
-  'Go to note, or > for commands': 'नोट पर जाएँ, या कमांड के लिए >',
   'Search notes and commands': 'नोट और कमांड खोजें',
   'Sort by relevance': 'प्रासंगिकता से क्रम',
   'Page {page}': 'पेज {page}',

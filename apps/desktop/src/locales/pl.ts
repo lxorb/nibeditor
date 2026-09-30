@@ -198,7 +198,6 @@ export const pl: Dictionary = {
   'That tag could not be deleted.': 'Nie udało się usunąć tagu.',
   'Show sidebar': 'Pokaż panel boczny',
   'Hide sidebar': 'Ukryj panel boczny',
-  'Go to note, or > for commands': 'Przejdź do notatki lub > dla poleceń',
   'Search notes and commands': 'Szukaj notatek i poleceń',
   'Sort by relevance': 'Sortuj po trafności',
   'Page {page}': 'Strona {page}',

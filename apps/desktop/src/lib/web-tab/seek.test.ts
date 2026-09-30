@@ -45,6 +45,12 @@ interface Key {
   altKey?: boolean
   metaKey?: boolean
   isTrusted?: boolean
+  /** The key by name and when it was pressed, which a tap is counted by. */
+  key?: string
+  timeStamp?: number
+  repeat?: boolean
+  isComposing?: boolean
+  target?: unknown
 }
 
 interface Heard {
@@ -107,10 +113,15 @@ function page(own: number | null = null) {
     const now = heard.filter((one) => one.type === event.type && one.capture === capture)
     for (const one of now) if (heard.includes(one)) one.handler(event)
   }
-  const press = (key: Key) => {
+  const press = (key: Key, type = 'keydown') => {
     let prevented = false
     const event: Pressed = {
-      type: 'keydown',
+      type,
+      key: '',
+      timeStamp: 0,
+      repeat: false,
+      isComposing: false,
+      target: null,
       ctrlKey: false,
       shiftKey: false,
       altKey: false,
@@ -128,7 +139,13 @@ function page(own: number | null = null) {
     turn(event, false)
     return { opened: opened.splice(0), prevented }
   }
-  return { press, own: () => ownFind }
+  /** A page that answers Shift itself, the way a game might. */
+  const takeShift = () =>
+    addEventListener('keyup', (event) => {
+      if (event.key === 'Shift') event.preventDefault()
+    })
+
+  return { press, own: () => ownFind, window, takeShift }
 }
 
 describe('the script in every page', () => {
@@ -215,9 +232,86 @@ describe('the script in every page', () => {
   })
 })
 
+describe('a modifier tapped twice in a page', () => {
+  /** Shift pressed and let go at `at`, and what the page asked for. */
+  function tap(one: ReturnType<typeof page>, at: number, key = 'Shift') {
+    const held = { key, keyCode: 16, shiftKey: key === 'Shift', ctrlKey: key === 'Control' }
+    one.press({ ...held, timeStamp: at }, 'keydown')
+    return one.press({ key, keyCode: 16, timeStamp: at + 40 }, 'keyup').opened
+  }
+
+  test('asks for the palette on the second release', () => {
+    const one = page()
+    expect(tap(one, 0)).toEqual([])
+    expect(tap(one, 150)).toEqual(['nib-twice-shift'])
+  })
+
+  test('by the same rules as the app: too slow, a letter between, or a click is not one', () => {
+    const slow = page()
+    tap(slow, 0)
+    expect(tap(slow, 1000)).toEqual([])
+
+    const typed = page()
+    tap(typed, 0)
+    typed.press({ key: 'a', keyCode: 65, timeStamp: 100 }, 'keydown')
+    expect(tap(typed, 150)).toEqual([])
+
+    const clicked = page()
+    tap(clicked, 0)
+    clicked.press({ keyCode: 0, timeStamp: 100 }, 'pointerdown')
+    expect(tap(clicked, 150)).toEqual([])
+  })
+
+  test('once for five presses, which Windows reads as Sticky Keys', () => {
+    const one = page()
+    const asked = [0, 100, 200, 300, 400].flatMap((at) => tap(one, at))
+    expect(asked).toEqual(['nib-twice-shift'])
+  })
+
+  test('for Ctrl as well, under a name of its own', () => {
+    const one = page()
+    tap(one, 0, 'Control')
+    expect(tap(one, 150, 'Control')).toEqual(['nib-twice-ctrl'])
+  })
+
+  test('not where the page took the Shift for itself, and never for a synthetic one', () => {
+    const own = page()
+    own.takeShift()
+    tap(own, 0)
+    expect(tap(own, 150)).toEqual([])
+
+    const fake = page()
+    for (const at of [0, 150]) {
+      fake.press(
+        { key: 'Shift', keyCode: 16, shiftKey: true, timeStamp: at, isTrusted: false },
+        'keydown',
+      )
+      expect(
+        fake.press({ key: 'Shift', keyCode: 16, timeStamp: at + 40, isTrusted: false }, 'keyup')
+          .opened,
+      ).toEqual([])
+    }
+  })
+
+  test('never takes the key from the page', () => {
+    const one = page()
+    const down = one.press({ key: 'Shift', keyCode: 16, shiftKey: true, timeStamp: 0 }, 'keydown')
+    const up = one.press({ key: 'Shift', keyCode: 16, timeStamp: 40 }, 'keyup')
+    expect([down.prevented, up.prevented]).toEqual([false, false])
+  })
+})
+
 describe("the crate's word for an ask", () => {
-  test('is one of four, for a tab', () => {
-    for (const key of ['find', 'next', 'previous', 'address']) {
+  test('is one of seven, for a tab', () => {
+    for (const key of [
+      'find',
+      'next',
+      'previous',
+      'address',
+      'shift-shift',
+      'ctrl-ctrl',
+      'alt-alt',
+    ]) {
       expect(readAsk({ tab: 't1', key })).toEqual({ tab: 't1', key })
     }
   })
