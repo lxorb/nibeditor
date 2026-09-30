@@ -291,7 +291,12 @@ function corners(shape: Point[]): number {
 describe('a stroke written down against the stroke that was drawn', () => {
   /** What the reader sees is the outline, so that is what has to survive being
    *  written down: the same curve, within a fraction of a plane unit, for every
-   *  pen on the bar. */
+   *  pen on the bar.
+   *
+   *  Every tool at three sizes, outlined and rasterised twice each: the heaviest test
+   *  in the file, most of a second alone and past the project's thirty under a whole
+   *  gate on a busy machine. So it carries a budget of its own - a wall a slow honest
+   *  run must not hit, not a claim about how long it takes. */
   test('paints within a fraction of a unit of it, for every tool', () => {
     for (const tool of INK_TOOLS) {
       for (const size of [3, 8, 18]) {
@@ -302,7 +307,7 @@ describe('a stroke written down against the stroke that was drawn', () => {
         expect(gap.worst, `${tool} ${size}`).toBeLessThan(2)
       }
     }
-  })
+  }, 120_000)
 
   /** The outliner smooths the points it is handed one at a time, so the same
    *  curve used to come out a different shape depending on how many samples the
