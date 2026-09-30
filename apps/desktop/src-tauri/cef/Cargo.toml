@@ -69,7 +69,7 @@ cef = "152.3.0"
 tauri-build = "=3.0.0-alpha.1"
 
 [dependencies]
-tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "custom-protocol"] }
+tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "unstable", "custom-protocol"] }
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["unstable"] }
 cef = { version = "=152.3.0", default-features = false }
 tauri-plugin-opener = "=3.0.0-alpha.1"
