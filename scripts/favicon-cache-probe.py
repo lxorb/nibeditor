@@ -208,7 +208,14 @@ def main() -> int:
         running, app, _ = switch.launch(args.exe, args.identifier, unlike=app.port)
         app.open("Idea.md", switch.SPACE)
         time.sleep(2)
-        said["opened"] = app.ask(f"nib.workspace.openPage({json.dumps(url)}) && 'opened'")
+        # Asked until the window answers: on a busy machine it can still be coming up.
+        until = time.perf_counter() + 60
+        opened: object = None
+        while time.perf_counter() < until and opened != "opened":
+            opened = app.ask(f"nib.workspace.openPage({json.dumps(url)}) && 'opened'")
+            if opened != "opened":
+                time.sleep(1)
+        said["opened"] = opened
         until = time.perf_counter() + 30
         before: object = None
         while time.perf_counter() < until:
