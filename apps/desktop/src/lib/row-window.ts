@@ -220,6 +220,33 @@ export function autoScrollBy(y: number, room: number, edge: number, most: number
   return 0
 }
 
+/** Which element each drawn row is drawn in: a number per row, by the row's own
+ *  key, handed on from the numbers the last drawing gave out.
+ *
+ *  A row keeps its number for as long as it is drawn, which is what lets a focus
+ *  or a name being typed survive the window moving under it. Where nothing that was
+ *  drawn is drawn any more - another space's rows arriving, or a jump to the far end
+ *  of the list - the new rows take the old numbers over, in order, so each element
+ *  is told what it now shows rather than every one of them being thrown away and
+ *  built again: that was thirty-two rows destroyed and thirty-two made in the
+ *  longest task of a space switch. */
+export function slotsFor(
+  held: ReadonlyMap<string, number>,
+  keys: readonly string[],
+): Map<string, number> {
+  const out = new Map<string, number>()
+  const numbers = [...held.values()].sort((one, other) => one - other)
+  let next = (numbers.at(-1) ?? -1) + 1
+
+  if (keys.some((key) => held.has(key))) {
+    for (const key of keys) out.set(key, held.get(key) ?? next++)
+    return out
+  }
+
+  keys.forEach((key, at) => out.set(key, numbers[at] ?? next++))
+  return out
+}
+
 function clamp(value: number, least: number, most: number): number {
   return Math.min(Math.max(value, least), most)
 }

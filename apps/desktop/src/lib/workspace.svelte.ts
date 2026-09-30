@@ -239,7 +239,12 @@ function worthReopening(tab: Tab): boolean {
 class Workspace {
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
-  tree = $state<Entry | null>(null)
+  /** The space's listing. Raw, because it is only ever replaced whole - every edit
+   *  of it builds a new tree; see tree-edits.ts - and a deep proxy over a listing of
+   *  thousands of entries charged every walk of it a signal per field read: the
+   *  file list's rows, the palette and every folder's own note, all at once as a
+   *  space switch landed. */
+  tree = $state.raw<Entry | null>(null)
   /** Every tab in the window, whichever pane it sits in. One flat list, because
    *  half of what the app asks is "is this note open" rather than "where": a tab
    *  says which pane it is in, and a pane's strip is the tabs that name it. */

@@ -55,7 +55,15 @@
   import { carried, carriedNothing, carry, landing } from './drag-paths'
   import { dropOnList, fileClipboard } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
-  import { autoScrollBy, heightOf, offsetOf, type Fold, type Rows, windowFor } from './row-window'
+  import {
+    autoScrollBy,
+    heightOf,
+    offsetOf,
+    type Fold,
+    type Rows,
+    slotsFor,
+    windowFor,
+  } from './row-window'
   import { ListView, tokenFloor, tokenRow } from './row-window.svelte'
   import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
@@ -197,6 +205,18 @@
 
     return out.sort((one, other) => one.index - other.index)
   })
+
+  /** Which element each drawn row is in; see `slotsFor` in row-window.ts. The last
+   *  answer is kept in a plain holder rather than in state: it is only what the
+   *  drawing before this one said. */
+  const lastSlots = { held: new Map<string, number>() }
+  const slots = $derived.by(
+    () =>
+      (lastSlots.held = slotsFor(
+        lastSlots.held,
+        drawn.map((one) => one.row.entry.path),
+      )),
+  )
 
   function pathAt(path: string | null | undefined): number | null {
     if (path === null || path === undefined) return null
@@ -1042,7 +1062,7 @@
   <!-- The rows above the window, as height. -->
   <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
 
-  {#each drawn as one (one.row.entry.path)}
+  {#each drawn as one (slots.get(one.row.entry.path) ?? one.row.entry.path)}
     {@render line(one)}
   {/each}
 

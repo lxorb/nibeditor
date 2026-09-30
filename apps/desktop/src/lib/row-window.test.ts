@@ -8,6 +8,7 @@ import {
   listHeight,
   offsetOf,
   type Rows,
+  slotsFor,
   windowFor,
 } from './row-window'
 
@@ -346,5 +347,38 @@ describe('the lists that draw through it', () => {
     // `{#each rows as reference}` over a thousand backlinks.
     expect(text).toContain('HitList')
     expect(text).not.toMatch(/\{#each\s+rows\s+as/)
+  })
+})
+
+/** Which element a row is drawn in. Counted in elements made: a number the last
+ *  drawing did not give out is an element built, and one it gave out and nobody
+ *  takes is an element thrown away. */
+describe('the element each row is drawn in', () => {
+  const made = (held: ReadonlyMap<string, number>, next: ReadonlyMap<string, number>) =>
+    [...next.values()].filter((one) => ![...held.values()].includes(one)).length
+
+  const first = slotsFor(new Map(), ['a', 'b', 'c'])
+
+  test('stays the row�s own while the row is drawn, whatever moves around it', () => {
+    const next = slotsFor(first, ['x', 'a', 'c'])
+
+    expect(next.get('a')).toBe(first.get('a'))
+    expect(next.get('c')).toBe(first.get('c'))
+    expect(made(first, next)).toBe(1)
+  })
+
+  test('is handed over, in order, when every row drawn is a new one', () => {
+    const next = slotsFor(first, ['p', 'q', 'r', 's'])
+
+    expect(['p', 'q', 'r'].map((key) => next.get(key))).toEqual(
+      ['a', 'b', 'c'].map((key) => first.get(key)),
+    )
+    expect(made(first, next)).toBe(1)
+  })
+
+  test('is one element each, never two rows in one', () => {
+    const next = slotsFor(slotsFor(first, ['x', 'a']), ['y', 'z', 'x'])
+
+    expect(new Set(next.values()).size).toBe(3)
   })
 })

@@ -94,9 +94,16 @@ describe('the row a name is being typed on', () => {
    *  typed into it. See `keepNaming` in workspace.svelte.ts.
    *
    *  And what keeps a scroll cheap: the rows a window slides in and out are keyed,
-   *  so a scroll of one row makes one row rather than remaking twenty. */
+   *  so a scroll of one row makes one row rather than remaking twenty.
+   *
+   *  Keyed by the element a path was given, which is the path's for as long as it
+   *  is drawn and is handed to a new row only when nothing drawn before is drawn
+   *  now - another space's rows; see `slotsFor` in row-window.ts. */
   test('and the list is keyed by path, so a fresh listing does not remake it', () => {
-    expect(tree).toContain('{#each drawn as one (one.row.entry.path)}')
+    expect(tree).toContain(
+      '{#each drawn as one (slots.get(one.row.entry.path) ?? one.row.entry.path)}',
+    )
+    expect(tree).toContain('drawn.map((one) => one.row.entry.path)')
   })
 
   /** And a name being typed on a row far off screen is a row the window has to keep:
