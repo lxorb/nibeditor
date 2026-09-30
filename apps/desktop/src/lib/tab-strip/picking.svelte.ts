@@ -85,7 +85,7 @@ export function pick(paneId: string, id: string, how: Picking): string | null {
     chosen.anchor = id
   } else {
     const run = runOf(order, anchor, id)
-    ids = how === 'run' ? run : [...new Set([...now, ...run])]
+    ids = how === 'run' ? run : [...now, ...run.filter((one) => !now.includes(one))]
     chosen.anchor = anchor
   }
 

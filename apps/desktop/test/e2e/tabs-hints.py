@@ -10,7 +10,9 @@ screen:
     and never over a menu (lib/tab-strip/hover-card.svelte.ts);
   - three tabs picked with Ctrl, dragged along the strip together, carried to the
     other pane together, closed together, and brought back by one Reopen closed tab
-    (lib/tab-strip/picking.svelte.ts).
+    (lib/tab-strip/picking.svelte.ts);
+  - each tab's number while Alt is held a moment, in the light and the dark, none for a
+    quick Alt+3, and none once Alt is let go of (lib/tab-strip/numbers.svelte.ts).
 
 Serves the built web app and drives it headless in the machine's own Chrome. The
 build has to be one a drive may steer - `--mode drive` - or `window.nibApp` is not
@@ -414,6 +416,48 @@ def several(page: Page) -> None:
     shot(page, "08-reopened")
 
 
+def alt_numbers(page: Page, scheme: str) -> None:
+    say(f"[{scheme}] the numbers while Alt is held")
+    page.emulate_media(color_scheme=scheme)
+    # One pane again, with every tab in its strip.
+    page.evaluate('() => window.nibApp.workspace.collapsePanes()')
+    page.wait_for_timeout(400)
+    page.mouse.move(640, 500)
+    page.locator(".cm-content").first.click()
+    page.wait_for_timeout(300)
+    count = len(strip(page)[0]["tabs"])
+
+    # A quick Alt+3 goes to the third tab and never shows a number.
+    page.keyboard.down("Alt")
+    page.keyboard.press("3")
+    page.wait_for_timeout(500)
+    if page.locator(".numeral").count():
+        wrong(f"[{scheme}] a quick Alt+3 flashed the numbers")
+    page.keyboard.up("Alt")
+    page.wait_for_timeout(200)
+
+    # Held a moment: one on each tab of the strip, the last wearing 0.
+    page.keyboard.down("Alt")
+    page.wait_for_timeout(200)
+    if page.locator(".numeral").count():
+        wrong(f"[{scheme}] the numbers came before the hold was a hold")
+    page.wait_for_timeout(400)
+    worn = page.locator(".numeral").all_inner_texts()
+    say(f"[{scheme}] worn {worn} on {count} tabs")
+    wanted = [str(at + 1) for at in range(min(count - 1, 9))] + ["0"]
+    if worn != wanted:
+        wrong(f"[{scheme}] the numbers read {worn}, not {wanted}")
+    shot(page, f"09-numbers-{scheme}")
+    SCRATCH = os.environ.get("NIB_SHOTS_TOO")
+    if SCRATCH:
+        shutil.copy(SHOTS / f"09-numbers-{scheme}.png", Path(SCRATCH) / f"numbers-{scheme}.png")
+
+    page.keyboard.up("Alt")
+    page.wait_for_timeout(250)
+    if page.locator(".numeral").count():
+        wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
+
+
 def main() -> int:
     sys.stdout.reconfigure(encoding="utf-8")
     build()
@@ -436,6 +480,8 @@ def main() -> int:
             tooltips(page)
             hover_cards(page)
             several(page)
+            for scheme in ("light", "dark"):
+                alt_numbers(page, scheme)
             browser.close()
     finally:
         server.shutdown()
