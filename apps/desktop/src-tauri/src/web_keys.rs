@@ -20,7 +20,8 @@
 //! own on Ctrl+F, and many a site its own Ctrl+L. The browser's answer comes only when
 //! the page let the key go by. So the page has Ctrl+F, Ctrl+G, F3, Ctrl+L and Alt+D, and
 //! a line of script in it asks for nib's answer when nothing in the page took them; see
-//! `web_opens.rs`.
+//! `web_opens.rs`. Ctrl+D too, Chrome's bookmark and nib's Deselect tab: Sheets fills
+//! down with it and Figma duplicates.
 //!
 //! **How they get out.** `WebView2` tells the host about every key pressed with Ctrl or
 //! Alt held before the page sees it (`AcceleratorKeyPressed`), and a key the host marks
@@ -51,7 +52,7 @@ use serde::Serialize;
 
 /// The event the window hears a key on.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
-const PRESSED: &str = "nib://web-key";
+pub const PRESSED: &str = "nib://web-key";
 
 /// The modifiers held with a key.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
@@ -72,6 +73,26 @@ pub struct Pressed {
     repeat: bool,
     /// Pressed rather than let go of.
     down: bool,
+}
+
+impl Pressed {
+    /// A letter pressed with Ctrl alone, once: a chord the page was offered first and
+    /// let go by, said in the same words as the ones here. Ctrl+D is the one, which
+    /// Chrome gives the page first as well; see `web_opens.rs`.
+    #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+    pub const fn with_ctrl(key: &'static str, code: &'static str) -> Self {
+        Self {
+            key,
+            code,
+            held: Held {
+                ctrl: true,
+                shift: false,
+                alt: false,
+            },
+            repeat: false,
+            down: true,
+        }
+    }
 }
 
 /// What a key means here, from the virtual key code Windows names it by and the
@@ -313,6 +334,27 @@ mod tests {
             ..Held::default()
         };
         assert_eq!(meaning(0x44, alt, true, false), None);
+    }
+
+    #[test]
+    fn ctrl_d_is_the_page_s_first_as_in_chrome() {
+        // Chrome reserves only the tab and window chords, so Sheets fills down, Figma
+        // duplicates and vscode.dev selects the next one on Ctrl+D. nib's Deselect tab
+        // comes after the page, by way of web_opens.rs.
+        assert_eq!(down(0x44, false), None);
+        assert_eq!(down(0x44, true), None);
+    }
+
+    #[test]
+    fn a_chord_let_go_by_is_said_as_one_of_these() {
+        let said = serde_json::to_value(super::Pressed::with_ctrl("d", "KeyD")).expect("a key");
+        assert_eq!(said["key"], "d");
+        assert_eq!(said["code"], "KeyD");
+        assert_eq!(said["ctrl"], true);
+        assert_eq!(said["shift"], false);
+        assert_eq!(said["alt"], false);
+        assert_eq!(said["repeat"], false);
+        assert_eq!(said["down"], true);
     }
 
     #[test]

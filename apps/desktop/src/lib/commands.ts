@@ -28,6 +28,7 @@ import {
   moveBlockUp,
   reformatDocument,
   reverseLines,
+  selectWord,
   setHeading,
   shiftHeading,
   shrinkSelection,
@@ -420,6 +421,13 @@ function tabCommands(): Command[] {
       run: () => void workspace.closeAround(id, 'all'),
     },
     {
+      id: 'deselect-tab',
+      label: t('Deselect tab'),
+      hint: shortcuts.hint('app.deselect-tab'),
+      disabled: !tab,
+      run: () => workspace.deselect(),
+    },
+    {
       id: 'duplicate-tab',
       label: t('Duplicate tab'),
       hint: shortcuts.hint('app.duplicate-tab'),
@@ -693,6 +701,8 @@ function lineCommands(view?: EditorView): Command[] {
   return [
     row('edit.expand-selection', t('Expand the selection'), expandSelection, false),
     row('edit.shrink-selection', t('Shrink the selection'), shrinkSelection, false),
+    // Typora's Ctrl+D, which has no key now that Ctrl+D puts the tab down.
+    row('edit.select-word', t('Select the word, then the next'), selectWord, false),
     row('edit.insert-line-above', t('Insert a line above'), insertLineAbove),
     row('edit.delete-line', t('Delete the line'), deleteLine),
     row('edit.join-lines', t('Join the lines'), joinLines),

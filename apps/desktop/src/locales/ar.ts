@@ -86,6 +86,7 @@ export const ar: Dictionary = {
   'Close all': 'إغلاق الكل',
   'Close all tabs': 'إغلاق كل التبويبات',
   'Duplicate tab': 'تكرار التبويب',
+  'Deselect tab': 'إلغاء تحديد التبويب',
   'Move to other pane': 'النقل إلى الجزء الآخر',
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',

@@ -62,7 +62,7 @@ its own files, except three that everyone appends to: `lib/shortcuts/registry.ts
 | Files | Shift+↑↓ extends the selection and Ctrl+Space toggles a row | Explorer, VS Code | done `3864ecf8` | the selection comes from clicks only (`lib/Tree.svelte:206-217`) | S | med |
 | Files | Ctrl-drag (Alt on a Mac) copies instead of moving | Explorer, Finder, VS Code | done `3864ecf8` | `effectAllowed = 'move'` (`lib/drag-paths.ts:31`), `dropEffect = 'move'` (`lib/Tree.svelte:612,621`) | S | med |
 | Files | Ctrl+N with the list focused makes the note inside the focused folder | VS Code, Obsidian | done `3864ecf8` | `app.new` → `workspace.openBlank()` (`lib/shortcuts/registry.ts:278`) ignores the list | S | med |
-| Files | Ctrl+D duplicates the selected note | Finder, Notion | done `3864ecf8` | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
+| Files | Ctrl+D duplicates the selected note | Finder, Notion | done `3864ecf8`; the key went to Deselect tab 2026-09-30, the row stays | Duplicate is a menu row only (`lib/row-menu.ts:78-81`) | S | low |
 
 ## Batch 4: everywhere
 

@@ -86,6 +86,7 @@ export const vi: Dictionary = {
   'Close all': 'Đóng tất cả',
   'Close all tabs': 'Đóng tất cả tab',
   'Duplicate tab': 'Nhân bản tab',
+  'Deselect tab': 'Bỏ chọn tab',
   'Move to other pane': 'Chuyển sang ngăn khác',
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',

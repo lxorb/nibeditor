@@ -896,11 +896,14 @@ class Workspace {
     return {
       frame: frameDraft(this.panes.frame, (pane) => {
         const tabs = this.tabsIn(pane.id)
+        // A pane put down with Ctrl+D writes the tab it showed last: showing nothing
+        // is a moment's view, like a menu being open, and a launch brings the work back.
+        const shown = pane.activeTabId ?? this.panes.lastOf(tabs.map((tab) => tab.id))
         return {
           tabs: tabs.map((tab) => this.draftOf(tab)),
           active: Math.max(
             0,
-            tabs.findIndex((tab) => tab.id === pane.activeTabId),
+            tabs.findIndex((tab) => tab.id === shown),
           ),
         }
       }),
@@ -2314,6 +2317,14 @@ class Workspace {
   activate(id: string) {
     this.activeTabId = id
     this.persist()
+  }
+
+  /** Ctrl+D: the pane shows nothing, and every tab in it stays open. Emil, 2026-09-30:
+   *  *"Effectively it just deselects the currently selected tab."* What it shows then
+   *  is what a pane with no tabs shows (NewHere.svelte), and a click, a digit or Ctrl+Tab
+   *  brings a tab back. */
+  deselect(paneId: string = this.panes.focusedId) {
+    this.panes.deselect(paneId)
   }
 
   /** Which pane a key or a command is talking about. */

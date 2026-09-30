@@ -753,11 +753,13 @@ keyboard goes back to the app with them. F5 and Ctrl+R in a page are the engine'
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
-itself". Shift pressed twice on its own opens the palette over a page as over a note: the
-engine never tells the host about a lone Shift, so the page's own script counts the taps
-and asks, the page keeping every Shift and one it answered itself not counting, and the
-crate takes the ask only while that page has the keyboard and a key was just pressed. On
-`WebView2` only; see `docs/keyboard.md`, `src-tauri/src/web_keys.rs` and
+itself". So is Ctrl+D, which is Chrome's bookmark and nib's Deselect tab: Sheets fills
+down with it and Figma duplicates, and what a page lets go by is played on the window as
+the key it was. Shift pressed twice on its own opens the palette over a page as over a
+note: the engine never tells the host about a lone Shift, so the page's own script counts
+the taps and asks, the page keeping every Shift and one it answered itself not counting,
+and the crate takes the ask only while that page has the keyboard and a key was just
+pressed. On `WebView2` only; see `docs/keyboard.md`, `src-tauri/src/web_keys.rs` and
 `src-tauri/src/web_opens.rs`.
 
 The bar reads F5, the reload keys, Ctrl and a digit and the zoom keys before the window's

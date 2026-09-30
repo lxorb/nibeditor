@@ -87,6 +87,7 @@ export const de: Dictionary = {
   'Close all': 'Alle schließen',
   'Close all tabs': 'Alle Tabs schließen',
   'Duplicate tab': 'Tab duplizieren',
+  'Deselect tab': 'Tab abwählen',
   'Move to other pane': 'In anderes Teilfenster verschieben',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Strg+Tab in Nutzungsreihenfolge',

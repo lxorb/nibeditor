@@ -86,6 +86,7 @@ export const ja: Dictionary = {
   'Close all': 'すべて閉じる',
   'Close all tabs': 'すべてのタブを閉じる',
   'Duplicate tab': 'タブを複製',
+  'Deselect tab': 'タブの選択を解除',
   'Move to other pane': '別のペインに移動',
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',

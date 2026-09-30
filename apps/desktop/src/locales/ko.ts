@@ -86,6 +86,7 @@ export const ko: Dictionary = {
   'Close all': '모두 닫기',
   'Close all tabs': '모든 탭 닫기',
   'Duplicate tab': '탭 복제',
+  'Deselect tab': '탭 선택 해제',
   'Move to other pane': '다른 창으로 이동',
   Tabs: '탭',
   'Ctrl+Tab in order of use': 'Ctrl+Tab을 사용 순서로',

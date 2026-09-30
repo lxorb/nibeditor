@@ -86,6 +86,7 @@ export const fr: Dictionary = {
   'Close all': 'Tout fermer',
   'Close all tabs': 'Fermer tous les onglets',
   'Duplicate tab': 'Dupliquer l’onglet',
+  'Deselect tab': 'Désélectionner l’onglet',
   'Move to other pane': 'Déplacer vers l’autre volet',
   Tabs: 'Onglets',
   'Ctrl+Tab in order of use': 'Ctrl+Tab dans l’ordre d’utilisation',

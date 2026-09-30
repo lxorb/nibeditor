@@ -86,6 +86,7 @@ export const ml: Dictionary = {
   'Close all': 'Close all',
   'Close all tabs': 'Close all tabs',
   'Duplicate tab': 'Duplicate tab',
+  'Deselect tab': 'Deselect tab',
   'Move to other pane': 'Move to other pane',
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in order of use',

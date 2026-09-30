@@ -86,6 +86,7 @@ export const es: Dictionary = {
   'Close all': 'Cerrar todas',
   'Close all tabs': 'Cerrar todas las pestañas',
   'Duplicate tab': 'Duplicar pestaña',
+  'Deselect tab': 'Deseleccionar pestaña',
   'Move to other pane': 'Mover al otro panel',
   Tabs: 'Pestañas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por orden de uso',
