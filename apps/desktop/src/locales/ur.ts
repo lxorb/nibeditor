@@ -1549,4 +1549,8 @@ export const ur: Dictionary = {
     one: '{count} آرکائیو شدہ آئٹم اندر',
     other: '{count} آرکائیو شدہ آئٹمز اندر',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ایسا کوئی آلہ نہیں',
+  'give the device a name': 'آلے کو نام دیں',
+  'that computer is no longer waiting': 'وہ کمپیوٹر اب انتظار نہیں کر رہا',
 }

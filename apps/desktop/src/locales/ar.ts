@@ -1647,4 +1647,8 @@ export const ar: Dictionary = {
     many: '{count} عنصرًا مؤرشفًا بالداخل',
     other: '{count} عنصر مؤرشف بالداخل',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'لا يوجد جهاز كهذا',
+  'give the device a name': 'أعطِ الجهاز اسمًا',
+  'that computer is no longer waiting': 'ذلك الحاسوب لم يعد ينتظر',
 }

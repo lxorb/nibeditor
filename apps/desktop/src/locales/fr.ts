@@ -1611,4 +1611,8 @@ export const fr: Dictionary = {
     many: '{count} d’éléments archivés dedans',
     other: '{count} éléments archivés dedans',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Cet appareil n’existe pas',
+  'give the device a name': 'Donnez un nom à l’appareil',
+  'that computer is no longer waiting': 'Cet ordinateur n’attend plus',
 }

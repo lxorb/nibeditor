@@ -1625,4 +1625,8 @@ export const ru: Dictionary = {
     many: '{count} архивных элементов внутри',
     other: '{count} архивного элемента внутри',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Такого устройства нет',
+  'give the device a name': 'Дайте устройству имя',
+  'that computer is no longer waiting': 'Этот компьютер больше не ждёт',
 }

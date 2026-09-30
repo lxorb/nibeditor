@@ -1553,4 +1553,8 @@ export const fa: Dictionary = {
     one: '{count} مورد بایگانی‌شده در آن',
     other: '{count} مورد بایگانی‌شده در آن',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'چنین دستگاهی نیست',
+  'give the device a name': 'برای دستگاه نامی بگذارید',
+  'that computer is no longer waiting': 'آن رایانه دیگر منتظر نیست',
 }

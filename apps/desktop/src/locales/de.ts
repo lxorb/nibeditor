@@ -1594,4 +1594,8 @@ export const de: Dictionary = {
     one: '{count} archivierter Eintrag darin',
     other: '{count} archivierte Einträge darin',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Dieses Gerät gibt es nicht',
+  'give the device a name': 'Gib dem Gerät einen Namen',
+  'that computer is no longer waiting': 'Dieser Computer wartet nicht mehr',
 }

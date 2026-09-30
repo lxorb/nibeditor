@@ -1518,4 +1518,8 @@ export const th: Dictionary = {
   'Nothing archived is deleted': 'สิ่งที่เก็บถาวรจะไม่ถูกลบ',
   'Show them': 'แสดง',
   '{count} archived items inside': 'มี {count} รายการที่เก็บถาวรอยู่ข้างใน',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ไม่มีอุปกรณ์นี้',
+  'give the device a name': 'ตั้งชื่อให้อุปกรณ์',
+  'that computer is no longer waiting': 'คอมพิวเตอร์เครื่องนั้นไม่ได้รอแล้ว',
 }

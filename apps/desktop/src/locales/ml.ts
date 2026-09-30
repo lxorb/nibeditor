@@ -1571,4 +1571,8 @@ export const ml: Dictionary = {
     one: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനം',
     other: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനങ്ങൾ',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
+  'give the device a name': 'ഉപകരണത്തിന് ഒരു പേര് നൽകുക',
+  'that computer is no longer waiting': 'ആ കമ്പ്യൂട്ടർ ഇനി കാത്തിരിക്കുന്നില്ല',
 }

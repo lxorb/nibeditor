@@ -17,6 +17,8 @@ const OWNER = 'owner@example.com'
 const GUEST = 'guest@example.com'
 const STRANGER = 'nobody@example.com'
 const SHARED = 'Plans'
+/** A lease key, as a device makes one: an HMAC nobody but its computers can read. */
+const WEB_KEY = 'k'.repeat(43)
 
 let env: TestEnv
 let owner: string
@@ -491,6 +493,38 @@ describe('a guest session', () => {
     {
       what: 'ending every other one',
       go: (token) => call(env, '/v1/sessions', { method: 'DELETE', token }),
+    },
+    // Sync v2's devices and web logins, which are an account's: a guest's hub socket
+    // hears pokes and nothing else, and none of these routes is a guest's at all.
+    { what: 'the devices', go: (token) => call(env, '/v2/devices', { token }) },
+    {
+      what: 'ending a device',
+      go: (token) => call(env, '/v2/devices/device-x', { method: 'DELETE', token }),
+    },
+    { what: 'a site’s web state', go: (token) => call(env, `/v2/web/${WEB_KEY}`, { token }) },
+    {
+      what: 'writing one',
+      go: (token) =>
+        call(env, `/v2/web/${WEB_KEY}`, {
+          method: 'PUT',
+          token,
+          raw: new Uint8Array([1]),
+          headers: { 'x-nib-fence': '1', 'x-nib-generation': '1' },
+        }),
+    },
+    {
+      what: 'a chunk of one',
+      go: (token) =>
+        call(env, `/v2/web/chunks/${WEB_KEY}`, { method: 'PUT', token, raw: new Uint8Array([1]) }),
+    },
+    {
+      what: 'the store a space’s pages live in',
+      go: (token) =>
+        call(env, `/v2/spaces/${space}/web-store`, {
+          method: 'PUT',
+          token,
+          body: { store: 'site' },
+        }),
     },
   ]
 

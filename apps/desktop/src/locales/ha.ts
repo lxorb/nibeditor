@@ -1578,4 +1578,8 @@ export const ha: Dictionary = {
     one: 'Abu {count} da aka ajiye a ciki',
     other: 'Abubuwa {count} da aka ajiye a ciki',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': "babu irin wannan na'ura",
+  'give the device a name': "ba na'urar suna",
+  'that computer is no longer waiting': 'wannan kwamfuta ba ta jira kuma',
 }

@@ -1587,4 +1587,8 @@ export const fil: Dictionary = {
     one: '{count} na-archive na item sa loob',
     other: '{count} na-archive na item sa loob',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'walang ganoong device',
+  'give the device a name': 'bigyan ng pangalan ang device',
+  'that computer is no longer waiting': 'hindi na naghihintay ang computer na iyon',
 }

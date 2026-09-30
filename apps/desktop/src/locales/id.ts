@@ -1548,4 +1548,8 @@ export const id: Dictionary = {
   'Nothing archived is deleted': 'Tidak ada yang diarsipkan yang dihapus',
   'Show them': 'Tampilkan',
   '{count} archived items inside': '{count} item diarsipkan di dalamnya',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'tidak ada perangkat itu',
+  'give the device a name': 'beri perangkat itu nama',
+  'that computer is no longer waiting': 'komputer itu tidak menunggu lagi',
 }

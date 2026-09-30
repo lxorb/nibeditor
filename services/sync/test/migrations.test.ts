@@ -156,3 +156,74 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
     database.close()
   })
 })
+
+describe('0039, the account’s devices and web logins', () => {
+  /** A device of the account, with the web key wrapped to it and a state it wrote. */
+  function device(database: DatabaseSync): void {
+    database.exec(
+      `insert into devices (id, user_id, name, platform, created_at) values ('d', 'u', 'L', 'mac', 1);
+       insert into web_keys (user_id, device_id, wrapped, generation) values ('u', 'd', 'w', 1);
+       insert into web_states (user_id, key, fence, version, generation, size, device_id, at)
+         values ('u', 'k', 1, 1, 1, 1, 'd', 1);
+       insert into web_chunks (user_id, name, size, at) values ('u', 'c', 1, 1);`,
+    )
+  }
+
+  const count = (database: DatabaseSync, table: string) =>
+    (database.prepare(`select count(*) as many from ${table}`).get() as { many: number }).many
+
+  test('puts every space there already is in the shared web store', () => {
+    const database = upTo('0038_leftovers.sql')
+    seed(database)
+
+    database.exec(sql('0039_sync2_devices_web.sql'))
+
+    expect(database.prepare(`select web_store from spaces where id = 'sp'`).get()).toEqual({
+      web_store: 'global',
+    })
+    database.close()
+  })
+
+  test('holds a space to the three stores there are', () => {
+    const database = upTo('0039_sync2_devices_web.sql')
+    seed(database)
+
+    expect(() => database.exec(`update spaces set web_store = 'other' where id = 'sp'`)).toThrow()
+    for (const store of ['global', 'space', 'site']) {
+      database.exec(`update spaces set web_store = '${store}' where id = 'sp'`)
+    }
+    database.close()
+  })
+
+  test('takes the key wrapped to a device with the device', () => {
+    const database = upTo('0039_sync2_devices_web.sql')
+    seed(database)
+    device(database)
+
+    database.exec(`delete from devices where id = 'd'`)
+
+    expect(count(database, 'web_keys')).toBe(0)
+    database.close()
+  })
+
+  test('takes everything of an account with the account', () => {
+    const database = upTo('0039_sync2_devices_web.sql')
+    seed(database)
+    device(database)
+
+    database.exec(`delete from users where id = 'u'`)
+
+    for (const table of ['devices', 'web_keys', 'web_states', 'web_chunks']) {
+      expect(count(database, table), table).toBe(0)
+    }
+    database.close()
+  })
+
+  test('indexes what the hub’s door and the device list look for', () => {
+    const database = upTo('0039_sync2_devices_web.sql')
+    expect(indexes(database, 'devices')).toEqual(
+      expect.arrayContaining(['devices_user', 'devices_session']),
+    )
+    database.close()
+  })
+})

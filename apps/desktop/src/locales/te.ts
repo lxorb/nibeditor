@@ -1557,4 +1557,8 @@ export const te: Dictionary = {
     one: 'లోపల {count} ఆర్కైవ్ అంశం',
     other: 'లోపల {count} ఆర్కైవ్ అంశాలు',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'అలాంటి పరికరం లేదు',
+  'give the device a name': 'పరికరానికి ఒక పేరు ఇవ్వండి',
+  'that computer is no longer waiting': 'ఆ కంప్యూటర్ ఇక వేచి ఉండటం లేదు',
 }

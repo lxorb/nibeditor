@@ -1547,4 +1547,8 @@ export const ms: Dictionary = {
   'Nothing archived is deleted': 'Tiada apa yang diarkibkan dipadam',
   'Show them': 'Tunjukkan',
   '{count} archived items inside': '{count} item diarkibkan di dalam',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'tiada peranti sedemikian',
+  'give the device a name': 'beri nama kepada peranti',
+  'that computer is no longer waiting': 'komputer itu tidak lagi menunggu',
 }

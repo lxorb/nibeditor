@@ -1513,4 +1513,8 @@ export const yue: Dictionary = {
   'Nothing archived is deleted': '封存咗嘅嘢唔會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '入面有 {count} 個封存咗嘅項目',
+  // Web logins that travel, and the devices of an account
+  'no such device': '冇呢部裝置',
+  'give the device a name': '幫裝置改個名',
+  'that computer is no longer waiting': '嗰部電腦已經唔再等',
 }

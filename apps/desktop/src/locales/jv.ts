@@ -1542,4 +1542,8 @@ export const jv: Dictionary = {
   'Nothing archived is deleted': 'Ora ana sing diarsipaké sing dibusak',
   'Show them': 'Tuduhaké',
   '{count} archived items inside': '{count} item diarsipaké ing njero',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ora ana piranti kuwi',
+  'give the device a name': 'wenehi jeneng piranti',
+  'that computer is no longer waiting': 'komputer kuwi wis ora ngenteni',
 }

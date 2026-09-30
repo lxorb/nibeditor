@@ -266,6 +266,35 @@ export async function mayGuess(
   return within(env, 'guess-from', `${spaceId}:${machine}`, GUESSES_FROM_ONE_MACHINE, AN_HOUR)
 }
 
+const A_MINUTE = 60 * 1000
+
+/** How often one device may ask its hub for a web login, and how often one site's
+ *  login may be written, and how often an account may ask for its web key.
+ *
+ *  Each is a loop's ceiling rather than a person's: a tab flapping between two
+ *  states asks for its lease every frame, a capture that never settles uploads on
+ *  every page load, and a new computer that keeps reconnecting asks for the key
+ *  each time. Thirty a minute is a handover every two seconds; sixty an hour is
+ *  one a minute, which is what capturing while active does at most; five requests
+ *  an hour is somebody asking again after a no, not a script walking the digits.
+ *  Keyed under the account so that deleting it takes the rows with it; see
+ *  erase.ts. See docs/sync-v2.md section 8. */
+const LEASES_A_MINUTE = 30
+const WEB_UPLOADS_AN_HOUR = 60
+const WEB_KEY_REQUESTS_AN_HOUR = 5
+
+export function mayAcquire(env: Env, userId: string, deviceId: string): Promise<boolean> {
+  return within(env, 'lease', `${userId}:${deviceId}`, LEASES_A_MINUTE, A_MINUTE)
+}
+
+export function mayUploadWebState(env: Env, userId: string, key: string): Promise<boolean> {
+  return within(env, 'web-up', `${userId}:${key}`, WEB_UPLOADS_AN_HOUR, AN_HOUR)
+}
+
+export function mayAskForWebKey(env: Env, userId: string): Promise<boolean> {
+  return within(env, 'web-key', userId, WEB_KEY_REQUESTS_AN_HOUR, AN_HOUR)
+}
+
 /** How many messages one address may be sent in an hour, and in a day, whoever
  *  caused them and whichever kind they were.
  *

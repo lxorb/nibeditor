@@ -1543,4 +1543,8 @@ export const gu: Dictionary = {
     one: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
     other: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'એવું ઉપકરણ નથી',
+  'give the device a name': 'ઉપકરણને નામ આપો',
+  'that computer is no longer waiting': 'તે કમ્પ્યુટર હવે રાહ જોતું નથી',
 }

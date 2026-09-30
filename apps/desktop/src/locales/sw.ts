@@ -1577,4 +1577,8 @@ export const sw: Dictionary = {
     one: 'Kipengee {count} cha kumbukumbu ndani',
     other: 'Vipengee {count} vya kumbukumbu ndani',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'hakuna kifaa kama hicho',
+  'give the device a name': 'kipe kifaa jina',
+  'that computer is no longer waiting': 'kompyuta hiyo haisubiri tena',
 }

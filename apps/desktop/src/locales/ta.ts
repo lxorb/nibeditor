@@ -1575,4 +1575,8 @@ export const ta: Dictionary = {
     one: 'உள்ளே {count} காப்பக உருப்படி',
     other: 'உள்ளே {count} காப்பக உருப்படிகள்',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
+  'give the device a name': 'சாதனத்திற்கு ஒரு பெயர் கொடுங்கள்',
+  'that computer is no longer waiting': 'அந்தக் கணினி இனி காத்திருக்கவில்லை',
 }

@@ -1557,4 +1557,8 @@ export const tr: Dictionary = {
     one: 'İçeride {count} arşivlenmiş öğe',
     other: 'İçeride {count} arşivlenmiş öğe',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'böyle bir cihaz yok',
+  'give the device a name': 'cihaza bir ad verin',
+  'that computer is no longer waiting': 'o bilgisayar artık beklemiyor',
 }

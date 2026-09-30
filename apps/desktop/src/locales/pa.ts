@@ -1557,4 +1557,8 @@ export const pa: Dictionary = {
     one: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀ ਆਈਟਮ',
     other: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀਆਂ ਆਈਟਮਾਂ',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ਅਜਿਹਾ ਕੋਈ ਡਿਵਾਈਸ ਨਹੀਂ',
+  'give the device a name': 'ਡਿਵਾਈਸ ਨੂੰ ਨਾਂ ਦਿਓ',
+  'that computer is no longer waiting': 'ਉਹ ਕੰਪਿਊਟਰ ਹੁਣ ਉਡੀਕ ਨਹੀਂ ਕਰ ਰਿਹਾ',
 }

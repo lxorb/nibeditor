@@ -1620,4 +1620,8 @@ export const uk: Dictionary = {
     many: '{count} архівних елементів усередині',
     other: '{count} архівного елемента всередині',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Такого пристрою немає',
+  'give the device a name': 'Дайте пристрою назву',
+  'that computer is no longer waiting': 'Цей комп’ютер більше не чекає',
 }

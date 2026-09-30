@@ -1552,4 +1552,8 @@ export const mr: Dictionary = {
     one: 'आत {count} संग्रहित आयटम',
     other: 'आत {count} संग्रहित आयटम',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'असे डिव्हाइस नाही',
+  'give the device a name': 'डिव्हाइसला नाव द्या',
+  'that computer is no longer waiting': 'तो संगणक आता वाट पाहत नाही',
 }

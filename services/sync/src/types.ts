@@ -10,6 +10,12 @@ export interface Env {
    *  directly rather than through a namespace. */
   ROOMS?: DurableObjectNamespace
 
+  /** One hub per account (and per guest): the socket every signed-in device keeps
+   *  open, for pokes, web leases and the web key's relay; see hub/hub.ts. Absent in
+   *  the route tests that do not ask for it, and every caller copes: a poke with no
+   *  hub is a poke nobody hears, which polling covers. */
+  HUB?: DurableObjectNamespace
+
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside
@@ -143,6 +149,10 @@ export interface Space {
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string
+  /** Which web store its pages live in on every computer; see spaces/web-store.ts.
+   *  `global` until the owner chooses. Optional because a space made in this very
+   *  request has not been read back, and it is `global` then too. */
+  web_store?: string
   /** When it went to Recently deleted; null while alive, and again once purged. */
   deleted_at: number | null
 }

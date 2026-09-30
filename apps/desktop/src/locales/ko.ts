@@ -1526,4 +1526,8 @@ export const ko: Dictionary = {
   'Nothing archived is deleted': '보관한 항목은 삭제되지 않습니다',
   'Show them': '보기',
   '{count} archived items inside': '안에 보관된 항목 {count}개',
+  // Web logins that travel, and the devices of an account
+  'no such device': '그런 기기가 없습니다',
+  'give the device a name': '기기 이름을 지정하세요',
+  'that computer is no longer waiting': '그 컴퓨터는 더 이상 기다리지 않습니다',
 }

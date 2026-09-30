@@ -1063,6 +1063,49 @@ parts), because base64 would cost a third more on every update.
 - `GET /v2/devices`, `PATCH /v2/devices/:id` (a name), `DELETE /v2/devices/:id` (ends its
   sessions, revokes its key, closes its sockets and rooms).
 
+**As built** (lane `sync-server-hub`, `services/sync/src/hub/`), where it adds to the above:
+
+- The socket offers `nib.token.<token>` and `nib.device.<id>` (`[A-Za-z0-9_-]{8,64}`, made
+  per account and kept in the sync store); the hub names the device protocol back. A device
+  id is bound to the session of its last `hello`: the same id on another live session is
+  refused (409), one another account has is refused (403). A second socket of one device
+  replaces the first (closed 4000). Guests get a hub of their own that only hears `poke`.
+- `hello` may carry `pub`; a changed `pub` drops the key wrapped to the old one. The name is
+  written once and then belongs to the account (`PATCH`); `platform` and `app` follow the
+  device. The hub answers `hello` with `key` whenever one is wrapped to the device, and a key
+  holder's `hello` with every `key-wanted` still pending.
+- `busy` and `lost` also carry `name`; `granted` carries `rotate: true` while a device that
+  held the key has been ended and no upload under a newer generation has landed. `release`
+  and `flushed` may carry `version`, which is not read: the hub counts versions itself.
+- New from the hub: `{t:'key-settled', device}` to the other key holders once a request is
+  granted or denied (their prompts close), and `{t:'refused', to, key?, error}` for a frame
+  it will not act on (a guest, no `hello` yet, no key yet, a rate limit, a lapsed request).
+- Alive: the socket is open and the hub's clock minus its last auto-response (or, before
+  the first beat, the moment it was let in) is under 30 s. A socket that closes is not
+  alive at once. A pending `want-key` lives while the asking device is connected and 15
+  minutes after; asking again with the same `pub` is not counted again.
+- `PUT /v2/web/:key`: raw `application/octet-stream` (not the wire envelope), headers
+  `x-nib-fence`, `x-nib-generation`, `x-nib-chunks` (the chunk names it references,
+  comma-separated, at most 64, each uploaded first). Answers `{ version }`; the device is the
+  one whose session made the request. `GET` answers the bytes with `x-nib-version`,
+  `x-nib-fence`, `x-nib-generation`. `PUT /v2/web/chunks/:name` answers `{ name, stored }`.
+  Keys and names are `[A-Za-z0-9_-]{16,128}`. Chunks no manifest names are collected an
+  hour after their last upload.
+- `GET /v2/devices` answers `{ devices: [{ id, name, platform, app, createdAt, lastSeenAt,
+  current, webKey }] }`, ended devices left out. `webKey` is how a new computer tells
+  whether anybody can approve it or whether it makes the key itself (a `grant-key` to
+  itself on an account where no device holds one, which deletes the old bundles).
+- `PUT /v2/spaces/:id/web-store` with `{ store: 'global' | 'space' | 'site' }`, owner only,
+  answers `{ webStore }`; `GET /v1/spaces` carries `webStore` on every space.
+- Ending a session from `/v1/sessions`, ending every other one, and signing out end the
+  device behind that session the same way `DELETE /v2/devices/:id` does.
+- Catalogue rows exist for the refusals a person causes: `no such device`, `give the
+  device a name`, `that computer is no longer waiting`. The web quota's 507 is the
+  service's own `out of space`, and both hourly ceilings the existing `too many tries - try
+  again in an hour`. The 409 fenced upload, the 413 of a bundle past 32 MB (the app leaves
+  out what would not fit), the 503 of a hub that is away and the per-minute lease ceiling
+  reach no reader and stay English, which also keeps the glasses package under its 8 MiB.
+
 ### What a program token may reach
 
 `nib_...` tokens (`programs.ts`) reach the feed, `/v2/docs/pull`, and the v1 note routes they
@@ -1144,11 +1187,13 @@ create table devices (
   name text not null,
   platform text not null,
   public_key text,
+  app text,
   created_at integer not null,
   last_seen_at integer,
   revoked_at integer
 );
 create index devices_user on devices(user_id);
+create index devices_session on devices(session_id);
 
 create table web_states (
   user_id text not null references users(id) on delete cascade,
@@ -1178,7 +1223,8 @@ create table web_keys (
   primary key (user_id, device_id)
 );
 
-alter table spaces add column web_store text not null default 'global';
+alter table spaces add column web_store text not null default 'global'
+  check (web_store in ('global', 'space', 'site'));
 ```
 
 D1 stays far from its 10 GB: no Yjs bytes and no web bytes live in it.

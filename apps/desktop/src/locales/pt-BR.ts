@@ -1586,4 +1586,8 @@ export const ptBR: Dictionary = {
     many: '{count} de itens arquivados dentro',
     other: '{count} itens arquivados dentro',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'esse dispositivo não existe',
+  'give the device a name': 'dê um nome ao dispositivo',
+  'that computer is no longer waiting': 'esse computador não está mais esperando',
 }

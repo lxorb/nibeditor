@@ -1554,4 +1554,8 @@ export const ps: Dictionary = {
     one: '{count} آرشیف شوی توکی دننه',
     other: '{count} آرشیف شوي توکي دننه',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'داسې وسیله نشته',
+  'give the device a name': 'وسیلې ته نوم ورکړئ',
+  'that computer is no longer waiting': 'هغه کمپیوټر نور انتظار نه کوي',
 }

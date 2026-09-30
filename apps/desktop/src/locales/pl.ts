@@ -1626,4 +1626,8 @@ export const pl: Dictionary = {
     many: '{count} zarchiwizowanych elementów w środku',
     other: '{count} zarchiwizowanego elementu w środku',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'nie ma takiego urządzenia',
+  'give the device a name': 'nadaj urządzeniu nazwę',
+  'that computer is no longer waiting': 'ten komputer już nie czeka',
 }

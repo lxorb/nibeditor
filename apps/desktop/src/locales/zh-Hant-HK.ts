@@ -1512,4 +1512,8 @@ export const zhHantHK: Dictionary = {
   'Nothing archived is deleted': '已封存的內容不會被刪除',
   'Show them': '顯示',
   '{count} archived items inside': '其中有 {count} 個已封存項目',
+  // Web logins that travel, and the devices of an account
+  'no such device': '沒有這部裝置',
+  'give the device a name': '請為裝置命名',
+  'that computer is no longer waiting': '那部電腦已不再等候',
 }

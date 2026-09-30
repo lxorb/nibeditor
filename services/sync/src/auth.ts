@@ -15,6 +15,7 @@ import { codeMessage, mailer, refusedMail } from './email'
 import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
+import { devicesEnded } from './hub/devices'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
 import { deviceIn } from './versions'
@@ -486,8 +487,12 @@ sessions.delete('/:id', async (context) => {
     .run()
 
   // And whatever that device had open, which a deleted row does not reach: a socket
-  // is not a request. See `roomsSignedOut`.
-  if (gone.meta.changes) await roomsSignedOut(context.env, user.id)
+  // is not a request. See `roomsSignedOut`. The device behind the session is ended
+  // with it - its hub socket and the web key wrapped to it; see hub/devices.ts.
+  if (gone.meta.changes) {
+    await roomsSignedOut(context.env, user.id)
+    await devicesEnded(context.env, user.id, [context.req.param('id')])
+  }
 
   return context.json({ ok: !!gone.meta.changes })
 })
@@ -496,18 +501,33 @@ sessions.delete('/:id', async (context) => {
  *  missing: the sessions end, and every device that had one signs in again. */
 sessions.delete('/', async (context) => {
   const user = context.get('user')
-  const mine = tokenIn(context.req.header('authorization')) ?? ''
+  const mine = await sha256(tokenIn(context.req.header('authorization')) ?? '')
+
+  // Which sessions those are, read before they go, so their devices can go too.
+  const { results: ending } = await context.env.DB.prepare(
+    'select id from sessions where user_id = ? and token_hash <> ? and id is not null',
+  )
+    .bind(user.id, mine)
+    .all<{ id: string }>()
 
   const gone = await context.env.DB.prepare(
     'delete from sessions where user_id = ? and token_hash <> ?',
   )
-    .bind(user.id, await sha256(mine))
+    .bind(user.id, mine)
     .run()
 
   // The rooms as well, which is the whole point of the row for a laptop that has
   // gone missing: its session is ended and its socket is closed. This device's own
-  // rooms are closed with them and rejoin at once; see `roomsSignedOut`.
-  if (gone.meta.changes) await roomsSignedOut(context.env, user.id)
+  // rooms are closed with them and rejoin at once; see `roomsSignedOut`. And the
+  // devices behind those sessions, with the web key wrapped to each.
+  if (gone.meta.changes) {
+    await roomsSignedOut(context.env, user.id)
+    await devicesEnded(
+      context.env,
+      user.id,
+      ending.map((one) => one.id),
+    )
+  }
 
   return context.json({ ended: gone.meta.changes })
 })
@@ -515,9 +535,11 @@ sessions.delete('/', async (context) => {
 auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))
   if (token) {
-    const held = await context.env.DB.prepare('select user_id from sessions where token_hash = ?')
+    const held = await context.env.DB.prepare(
+      'select user_id, id from sessions where token_hash = ?',
+    )
       .bind(await sha256(token))
-      .first<{ user_id: string }>()
+      .first<{ user_id: string; id: string | null }>()
 
     await context.env.DB.prepare('delete from sessions where token_hash = ?')
       .bind(await sha256(token))
@@ -525,8 +547,12 @@ auth.post('/signout', async (context) => {
 
     // A device signing itself out closes its own rooms rather than leaving them to
     // notice; see `roomsSignedOut`. The account is read before the row goes, because
-    // this route carries a token and not a session.
-    if (held) await roomsSignedOut(context.env, held.user_id)
+    // this route carries a token and not a session. The device forgets its key as it
+    // signs out, so the account forgets the key wrapped to it too.
+    if (held) {
+      await roomsSignedOut(context.env, held.user_id)
+      if (held.id) await devicesEnded(context.env, held.user_id, [held.id])
+    }
   }
   return context.json({ ok: true })
 })

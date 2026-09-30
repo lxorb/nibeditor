@@ -1532,4 +1532,8 @@ export const am: Dictionary = {
     one: 'በውስጡ {count} በማህደር የተቀመጠ ንጥል',
     other: 'በውስጡ {count} በማህደር የተቀመጡ ንጥሎች',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'እንዲህ ያለ መሣሪያ የለም',
+  'give the device a name': 'ለመሣሪያው ስም ስጠው',
+  'that computer is no longer waiting': 'ያ ኮምፒውተር ከእንግዲህ እየጠበቀ አይደለም',
 }

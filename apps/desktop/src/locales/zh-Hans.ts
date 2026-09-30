@@ -1512,4 +1512,8 @@ export const zhHans: Dictionary = {
   'Nothing archived is deleted': '已归档的内容不会被删除',
   'Show them': '显示',
   '{count} archived items inside': '其中有 {count} 个已归档项目',
+  // Web logins that travel, and the devices of an account
+  'no such device': '没有这个设备',
+  'give the device a name': '请为设备命名',
+  'that computer is no longer waiting': '那台电脑已不再等待',
 }

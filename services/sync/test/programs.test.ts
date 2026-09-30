@@ -61,6 +61,25 @@ describe('what a program may reach', () => {
     expect(programMayReach('GET', '/v1/spaces/abc/rollback', false)).toBe(false)
   })
 
+  /** Sync v2's half that is about computers rather than notes: a token in a CI
+   *  secret has no device to be, no web login to hold and no key to ask for. */
+  test('and nothing of the hub: devices, web state, or a space’s web store', () => {
+    const key = 'k'.repeat(43)
+    for (const [method, path] of [
+      ['GET', '/v2/hub'],
+      ['GET', '/v2/devices'],
+      ['PATCH', '/v2/devices/abc'],
+      ['DELETE', '/v2/devices/abc'],
+      ['GET', `/v2/web/${key}`],
+      ['PUT', `/v2/web/${key}`],
+      ['GET', `/v2/web/chunks/${key}`],
+      ['PUT', `/v2/web/chunks/${key}`],
+      ['PUT', '/v2/spaces/abc/web-store'],
+    ] as const) {
+      expect(programMayReach(method, path, false), `${method} ${path}`).toBe(false)
+    }
+  })
+
   test('and no path that only looks like one on the list', () => {
     expect(programMayReach('GET', '/v1/notes/abc/', false)).toBe(false)
     expect(programMayReach('GET', '/v1/notes/abc/versions/1/more', false)).toBe(false)
@@ -213,6 +232,24 @@ describe('a token acting for somebody', () => {
       body: { content: '# Three', baseVersion: 1 },
     })
     expect(put.status).toBe(403)
+  })
+
+  test('is turned away from the devices and the web state', async () => {
+    const key = 'k'.repeat(43)
+    for (const [method, path] of [
+      ['GET', '/v2/devices'],
+      ['DELETE', '/v2/devices/abc'],
+      ['GET', `/v2/web/${key}`],
+      ['PUT', `/v2/web/${key}`],
+      ['PUT', `/v2/web/chunks/${key}`],
+    ] as const) {
+      const answer = await call<ProgramView>(env, path, {
+        method,
+        token: program,
+        ...(method === 'PUT' ? { raw: new Uint8Array([1]) } : {}),
+      })
+      expect(answer.status, `${method} ${path}`).toBe(403)
+    }
   })
 
   test('and a token nobody minted is nobody', async () => {

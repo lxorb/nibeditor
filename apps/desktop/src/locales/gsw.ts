@@ -1562,4 +1562,8 @@ export const gsw: Dictionary = {
     one: '{count} archivierte Iitrag drin',
     other: '{count} archivierti Iiträg drin',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Das Gerät gits nöd',
+  'give the device a name': 'Gib em Gerät en Name',
+  'that computer is no longer waiting': 'De Computer wartet nüme',
 }

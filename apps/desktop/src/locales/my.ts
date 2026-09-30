@@ -1536,4 +1536,8 @@ export const my: Dictionary = {
   'Nothing archived is deleted': 'မှတ်တမ်းတင်ထားသည့် မည်သည့်အရာမှ မဖျက်ပါ',
   'Show them': 'ပြပါ',
   '{count} archived items inside': 'အတွင်း၌ မှတ်တမ်းတင်ထားသော အရာ {count} ခု',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ထိုစက် မရှိပါ',
+  'give the device a name': 'စက်ကို အမည်ပေးပါ',
+  'that computer is no longer waiting': 'ထိုကွန်ပျူတာ စောင့်မနေတော့ပါ',
 }

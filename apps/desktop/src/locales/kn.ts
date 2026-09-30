@@ -1567,4 +1567,8 @@ export const kn: Dictionary = {
     one: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂ',
     other: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂಗಳು',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ಅಂತಹ ಸಾಧನ ಇಲ್ಲ',
+  'give the device a name': 'ಸಾಧನಕ್ಕೆ ಹೆಸರು ನೀಡಿ',
+  'that computer is no longer waiting': 'ಆ ಕಂಪ್ಯೂಟರ್ ಇನ್ನು ಕಾಯುತ್ತಿಲ್ಲ',
 }

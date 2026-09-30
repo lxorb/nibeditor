@@ -1600,4 +1600,8 @@ export const es: Dictionary = {
     many: '{count} de elementos archivados dentro',
     other: '{count} elementos archivados dentro',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'no existe ese dispositivo',
+  'give the device a name': 'ponle un nombre al dispositivo',
+  'that computer is no longer waiting': 'ese ordenador ya no está esperando',
 }

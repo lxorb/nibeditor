@@ -1543,4 +1543,8 @@ export const ja: Dictionary = {
   'Nothing archived is deleted': 'アーカイブしたものは削除されません',
   'Show them': '表示',
   '{count} archived items inside': '中にアーカイブ済みの項目が{count}件',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'そのデバイスはありません',
+  'give the device a name': 'デバイスに名前を付けてください',
+  'that computer is no longer waiting': 'そのコンピューターはもう待っていません',
 }

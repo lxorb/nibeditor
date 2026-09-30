@@ -1,5 +1,5 @@
-import { Hono } from 'hono'
-import { SIGN_IN } from './refused'
+import { Hono, type MiddlewareHandler } from 'hono'
+import { SIGN_IN, SIGN_IN_TO_DO_THAT } from './refused'
 import { cors } from 'hono/cors'
 import { account } from './account'
 import { ask } from './ask'
@@ -21,6 +21,10 @@ import { notes } from './notes'
 import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
+import { devices } from './hub/devices'
+import { hubDoor } from './hub/door'
+import { web } from './hub/web'
+import { webStore } from './spaces/web-store'
 import { settings } from './settings'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
@@ -40,24 +44,34 @@ app.onError(failed)
 
 /** The desktop app is not served from the API's origin, so it needs to be let in
  *  by name. Auth rides on a bearer token, never on cookies. */
-app.use(
-  '/v1/*',
-  cors({
-    origin: (origin) =>
-      /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost|https:\/\/nibeditor\.com)$/.test(
-        origin,
-      )
-        ? origin
-        : '',
-    // `x-nib-device` is what a version the account keeps says it came from; a
-    // header that is not named here is dropped by the browser before the request
-    // leaves, which is a thing that only shows up on the builds whose origin is
-    // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
-    allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
-    allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    maxAge: 86400,
-  }),
-)
+const appOrigins = cors({
+  origin: (origin) =>
+    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost|https:\/\/nibeditor\.com)$/.test(
+      origin,
+    )
+      ? origin
+      : '',
+  // `x-nib-device` is what a version the account keeps says it came from; a
+  // header that is not named here is dropped by the browser before the request
+  // leaves, which is a thing that only shows up on the builds whose origin is
+  // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
+  // The other three are what a web state is uploaded under; see hub/web.ts.
+  allowHeaders: [
+    'authorization',
+    'content-type',
+    'x-nib-device',
+    'x-nib-fence',
+    'x-nib-generation',
+    'x-nib-chunks',
+  ],
+  // And what a downloaded web state says about itself, which a page may only read
+  // when it is named.
+  exposeHeaders: ['x-nib-version', 'x-nib-fence', 'x-nib-generation'],
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  maxAge: 86400,
+})
+app.use('/v1/*', appOrigins)
+app.use('/v2/*', appOrigins)
 
 app.route('/v1/auth', auth)
 
@@ -85,6 +99,11 @@ app.route('/mcp', mcp)
 // subprotocol and is let in ahead of the guard below; see rooms/index.ts.
 app.route('/rooms', rooms)
 
+// The account's hub, the one socket every signed-in device keeps: pokes, web leases
+// and the web key's relay. A socket for the same reason as a room's, so it is let
+// in ahead of the guard as well; see hub/door.ts.
+app.route('/v2/hub', hubDoor)
+
 // A link somebody was sent to a shared space. Both halves sit outside the guard
 // below, because a link is its own proof: what it is about is answered to
 // anybody, and walking through it is what hands out the session. See
@@ -100,8 +119,10 @@ app.route('/oauth', oauth)
 
 /** Everything past this point needs a session, of one of the two kinds there
  *  are. A guest's reaches the handful of routes `guestMayReach` names and
- *  nothing else: the spaces its links granted, and who it is. */
-app.use('/v1/*', async (context, next) => {
+ *  nothing else: the spaces its links granted, and who it is. The same for both
+ *  versions of the API, so a route under `/v2` is closed to a guest and to a
+ *  program until somebody says otherwise. */
+const guard: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async (context, next) => {
   const header = context.req.header('authorization')
   const who: Asking | null =
     (await requireWhoever(context.env, header)) ?? (await asProgram(context.env, header))
@@ -112,7 +133,7 @@ app.use('/v1/*', async (context, next) => {
   if (who.kind === 'guest') {
     const path = new URL(context.req.url).pathname
     if (!guestMayReach(context.req.method, path)) {
-      return context.json({ error: 'sign in to do that' }, 403)
+      return context.json({ error: SIGN_IN_TO_DO_THAT }, 403)
     }
     context.set('guest', who.guest)
   } else {
@@ -131,7 +152,9 @@ app.use('/v1/*', async (context, next) => {
   }
 
   await next()
-})
+}
+app.use('/v1/*', guard)
+app.use('/v2/*', guard)
 
 /** Whoever is asking, and whether it is a program rather than somebody at a
  *  keyboard. A program is the account for the routes it may reach, so nothing
@@ -219,6 +242,13 @@ app.route('/v1/second', second)
 // account.ts.
 app.route('/v1/account', account)
 app.route('/v1', notes)
+
+// Sync v2, the hub's half: a site's web state and its chunks, the account's
+// devices, and which web store a space's pages live in. See hub/web.ts,
+// hub/devices.ts and spaces/web-store.ts.
+app.route('/v2/web', web)
+app.route('/v2/devices', devices)
+app.route('/v2/spaces', webStore)
 
 app.get('/health', (context) => context.json({ ok: true }))
 
@@ -313,3 +343,4 @@ export default { fetch: app.fetch, scheduled }
 // Named at the top level because a Durable Object class is looked up on the
 // module, not through a binding.
 export { NoteRoom } from './rooms/room'
+export { AccountHub } from './hub/hub'

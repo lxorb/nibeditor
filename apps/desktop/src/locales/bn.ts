@@ -1552,4 +1552,8 @@ export const bn: Dictionary = {
     one: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
     other: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'এমন ডিভাইস নেই',
+  'give the device a name': 'ডিভাইসটির একটি নাম দিন',
+  'that computer is no longer waiting': 'সেই কম্পিউটারটি আর অপেক্ষা করছে না',
 }

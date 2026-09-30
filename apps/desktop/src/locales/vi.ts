@@ -1536,4 +1536,8 @@ export const vi: Dictionary = {
   'Nothing archived is deleted': 'Không gì đã lưu trữ bị xóa',
   'Show them': 'Hiển thị',
   '{count} archived items inside': '{count} mục đã lưu trữ bên trong',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'không có thiết bị đó',
+  'give the device a name': 'đặt tên cho thiết bị',
+  'that computer is no longer waiting': 'máy tính đó không còn chờ nữa',
 }

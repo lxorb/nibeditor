@@ -1550,4 +1550,8 @@ export const hi: Dictionary = {
     one: '{count} संग्रहित आइटम अंदर',
     other: '{count} संग्रहित आइटम अंदर',
   },
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ऐसा कोई डिवाइस नहीं',
+  'give the device a name': 'डिवाइस को नाम दें',
+  'that computer is no longer waiting': 'वह कंप्यूटर अब इंतज़ार नहीं कर रहा',
 }
