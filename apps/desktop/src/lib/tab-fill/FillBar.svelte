@@ -42,10 +42,14 @@
 
   /** Whether the bar is down over the tab. */
   let shown = $state(false)
-  /** What holds it down, besides a menu it opened. Plain fields: nothing is drawn from
-   *  them, they are asked when the bar would go. */
+  /** What holds it down, besides a menu it opened: the pointer over it, and a keyboard
+   *  walking it. Plain fields: nothing is drawn from them, they are asked when the bar
+   *  would go. */
   let pointer = false
   let keyboard = false
+  /** Whether the focus is in the bar at all, however it got there: the bar going takes
+   *  it along, and it has to land somewhere. */
+  let within = false
   /** The bar, which the pointer is measured against. */
   let bar = $state<HTMLElement>()
 
@@ -132,11 +136,11 @@
   )
 
   // However the fill ended, the chrome comes back from its edges once it is on the page;
-  // and a keyboard that was in the bar, which has gone, goes to the document.
+  // and a focus that was in the bar, which has gone, goes to the document.
   onDestroy(() => {
     clearTimeout(coming)
     clearTimeout(going)
-    const stranded = keyboard
+    const stranded = within
     void tick().then(() => {
       chromeComes()
       if (stranded) focusEditor()
@@ -167,11 +171,15 @@
     pointer = false
     letGo()
   }}
-  onfocusin={() => {
-    keyboard = true
-    hold()
+  onfocusin={(event: FocusEvent) => {
+    within = true
+    // A key's, not a click's: a tab pressed with the pointer takes the focus too, and
+    // the bar would then stay down after the pointer had gone.
+    keyboard = event.target instanceof Element && event.target.matches(':focus-visible')
+    if (keyboard) hold()
   }}
   onfocusout={() => {
+    within = false
     keyboard = false
     letGo()
   }}
