@@ -102,9 +102,12 @@ export async function askLocal(ask: Ask & { provider: { kind: LocalKind } }): Pr
         throw new Error(t('{name} is not installed.', { name }), { cause: error })
       throw new Error(said, { cause: error })
     }
+    // A stop pressed while the program was still being started reached a crate that
+    // had nothing to stop yet; now there is.
+    if (ask.signal?.aborted) stop()
 
     const end = await ended
-    if (end.stopped) throw stopped()
+    if (end.stopped || ask.signal?.aborted) throw stopped()
     if (heard.signedOut) plans.signedOut(kind)
 
     const trouble = troubleOf(name, PLANS[kind], heard, end, !!answer)
