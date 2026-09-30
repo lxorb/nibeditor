@@ -69,11 +69,9 @@
     // where the card has asked for them: the same picture the tab shows, since a note
     // in an archive is not part of what the space says about itself and a picture a
     // note holds either is part of it or is not, on both surfaces.
-    return neighbourhood(
-      without(links.pictureOf(attachments), workspace.excluded.here),
-      centre,
-      depth,
-    )
+    // Except the note itself: an archived note opened anyway still has neighbours.
+    const left = workspace.leftOut.filter((one) => centre !== one && !centre.startsWith(`${one}/`))
+    return neighbourhood(without(links.pictureOf(attachments), left), centre, depth)
   })
 
   /** Reads a value for its own sake, so the effect around it follows it. */

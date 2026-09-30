@@ -1601,4 +1601,18 @@ export const fr: Dictionary = {
   'Default browser': 'Navigateur par défaut',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annuler les modifications de {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archiver',
+  Unarchive: 'Désarchiver',
+  Archived: 'Archivé',
+  Unarchived: 'Désarchivé',
+  'Undo archiving {name}': 'Annuler l’archivage de {name}',
+  'Undo unarchiving {name}': 'Réarchiver {name}',
+  'Nothing archived is deleted': 'Rien d’archivé n’est supprimé',
+  'Show them': 'Les afficher',
+  '{count} archived items inside': {
+    one: '{count} élément archivé dedans',
+    many: '{count} d’éléments archivés dedans',
+    other: '{count} éléments archivés dedans',
+  },
 }

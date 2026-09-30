@@ -1506,4 +1506,14 @@ export const zhHans: Dictionary = {
   'Default browser': '默认浏览器',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: '归档',
+  Unarchive: '取消归档',
+  Archived: '已归档',
+  Unarchived: '已取消归档',
+  'Undo archiving {name}': '撤销归档 {name}',
+  'Undo unarchiving {name}': '重新归档 {name}',
+  'Nothing archived is deleted': '已归档的内容不会被删除',
+  'Show them': '显示',
+  '{count} archived items inside': '其中有 {count} 个已归档项目',
 }

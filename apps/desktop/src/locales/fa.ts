@@ -1544,4 +1544,17 @@ export const fa: Dictionary = {
   'Default browser': 'مرورگر پیش‌فرض',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'بایگانی',
+  Unarchive: 'خروج از بایگانی',
+  Archived: 'بایگانی شد',
+  Unarchived: 'از بایگانی خارج شد',
+  'Undo archiving {name}': 'واگرد بایگانی {name}',
+  'Undo unarchiving {name}': 'بایگانی دوباره {name}',
+  'Nothing archived is deleted': 'هیچ چیز بایگانی‌شده‌ای حذف نمی‌شود',
+  'Show them': 'نمایش',
+  '{count} archived items inside': {
+    one: '{count} مورد بایگانی‌شده در آن',
+    other: '{count} مورد بایگانی‌شده در آن',
+  },
 }

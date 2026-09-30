@@ -51,6 +51,7 @@ import {
 import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
+import { Archive } from './workspace/archive.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -90,7 +91,7 @@ import {
   unnesting,
 } from './folder-notes'
 import { flatRows } from './tree-flat'
-import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
+import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
 import { Arranged } from './workspace/arranged.svelte'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
@@ -326,6 +327,18 @@ class Workspace {
    *  unlinked mentions. Beside the other two because it is the same kind of thing:
    *  one space's own settings, kept on the account so every machine agrees. */
   readonly excluded = new Excluded(() => this.activeSpace?.root ?? null)
+  /** What the space has put away; see workspace/archive. */
+  readonly archive = new Archive(() => this.activeSpace?.root ?? null)
+
+  /** What the space's own lists leave out: what a reader excluded, and the archive. */
+  leftOutOf(root: string): string[] {
+    return [...this.excluded.of(root), ...this.archive.keysOf(root)]
+  }
+
+  get leftOut(): string[] {
+    const root = this.activeSpace?.root
+    return root === undefined ? [] : this.leftOutOf(root)
+  }
   /** Rows picked in the tree with Ctrl or Shift; see workspace/selection. */
   private readonly picked = new Selection()
   /** Writing what is open down, and a new tab becoming a file; see
@@ -527,8 +540,19 @@ class Workspace {
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
-    return orderedTree(coming, this.sortMode, (folder) => this.arranged.listOf(folder))
+    return orderedTree(this.unarchived(coming), this.sortMode, (folder) =>
+      this.arranged.listOf(folder),
+    )
   })
+
+  /** The tree without what the space has archived. */
+  private unarchived(tree: Entry): Entry {
+    const root = this.activeSpace?.root
+    const keys = root === undefined ? null : this.archive.keysOf(root)
+    if (root === undefined || !keys?.size) return tree
+
+    return withoutRows(tree, (entry) => keys.has(relativeTo(root, entry.path)))
+  }
 
   /** Which order this space's file list is read in. By name until somebody chooses
    *  otherwise, per space, on this machine; see `listOrder` in
@@ -2636,8 +2660,10 @@ class Workspace {
 
   /** Notes opened lately, for the palette. The taskbar keeps a list of its
    *  own, which is what the second call puts a note into. */
+  /** The notes read lately, newest first, without what has since been archived. */
   get recent(): string[] {
-    return this.device.recent
+    const recent = this.device.recent
+    return this.archive.any ? recent.filter((path) => !this.archive.has(path)) : recent
   }
 
   private remember(path: string) {
@@ -2821,11 +2847,23 @@ class Workspace {
   }
 
   async removeMany(paths: string[]) {
-    for (const path of outermost(paths)) {
+    for (const path of this.deletable(paths)) {
       const entry = this.entryAt(path)
       if (entry) await this.remove(path, entry.is_dir)
     }
     this.clearSelection()
+  }
+
+  /** The rows of a selection that may be deleted, which is what its menu counts. */
+  deletable(paths: readonly string[]): string[] {
+    return outermost([...paths]).filter((path) => !this.keepsArchived(path))
+  }
+
+  /** Whether deleting this row would delete something archived, which never happens.
+   *  Asked of the space holding it: the local endpoint may name any space. */
+  keepsArchived(path: string): boolean {
+    const root = this.spaces.find((one) => withinSpace(one.root, path) !== null)?.root
+    return root !== undefined && this.archive.holdsIn(root, path)
   }
 
   entryAt(path: string): Entry | null {
@@ -2949,6 +2987,13 @@ class Workspace {
   revealNote(path = this.active?.path) {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
+
+    // An archived note's row is in the archive, at the list's foot.
+    if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
+      this.showPanel('tree')
+      void import('./archive-list.svelte').then(({ archiveList }) => archiveList.show(path))
+      return
+    }
 
     const holder = folderOf(isFolderNote(path) ? folderOf(path) : path)
     if (holder !== root) this.revealFolder(holder)
@@ -3380,6 +3425,7 @@ class Workspace {
     this.folderIcons.moved(from, to)
     this.arranged.moved(from, to)
     this.excluded.moved(from, to)
+    this.archive.moved(from, to)
     this.bookmarks.moved(from, to)
   }
 
@@ -3404,6 +3450,10 @@ class Workspace {
   }
 
   async remove(path: string, isFolder: boolean) {
+    // Nothing archived is deleted; the menus and keys never ask, and this is for a
+    // caller that did not look.
+    if (this.keepsArchived(path)) return
+
     // Gone from the tree before the snapshot has been taken and the file has
     // been moved: three round trips is a long time for a row to sit there
     // looking as though the delete had not registered.
@@ -4059,3 +4109,6 @@ class Workspace {
 }
 
 export const workspace = new Workspace()
+
+// Handed over rather than imported: the index and the workspace read each other.
+links.archivedIn = (root) => workspace.archive.keysOf(root)

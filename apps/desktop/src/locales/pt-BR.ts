@@ -1576,4 +1576,18 @@ export const ptBR: Dictionary = {
   'Default browser': 'Navegador padrão',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arquivar',
+  Unarchive: 'Desarquivar',
+  Archived: 'Arquivado',
+  Unarchived: 'Desarquivado',
+  'Undo archiving {name}': 'Desfazer o arquivamento de {name}',
+  'Undo unarchiving {name}': 'Arquivar {name} de novo',
+  'Nothing archived is deleted': 'Nada arquivado é excluído',
+  'Show them': 'Mostrar',
+  '{count} archived items inside': {
+    one: '{count} item arquivado dentro',
+    many: '{count} de itens arquivados dentro',
+    other: '{count} itens arquivados dentro',
+  },
 }

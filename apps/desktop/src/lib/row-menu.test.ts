@@ -35,8 +35,13 @@ vi.stubGlobal('localStorage', memoryStorage())
  *  a row offers the word only while there is something to share. */
 const shareable = { yes: false }
 
+/** Whether the space may be written in, which is what archiving asks: a space shared
+ *  to be read keeps its archive as its owner left it. */
+const writable = { yes: true }
+
 vi.mock('./sharing.svelte', () => ({
   canShareItem: () => shareable.yes,
+  canWriteAt: () => writable.yes,
   shareThisFile: () => undefined,
 }))
 
@@ -93,6 +98,8 @@ beforeEach(() => {
   workspace.tree = tree
   workspace.clearSelection()
   shareable.yes = false
+  writable.yes = true
+  workspace.archive.forget('/s')
 })
 
 describe('every row', () => {
@@ -139,6 +146,7 @@ describe('a note', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Copy link',
       'Duplicate',
       'Delete',
@@ -176,6 +184,7 @@ describe('a paper', () => {
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Copy link',
       'Duplicate',
       'Delete',
@@ -200,6 +209,7 @@ describe('a file the account has a copy of', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Copy link',
       'Duplicate',
@@ -223,6 +233,7 @@ describe('a file the account has a copy of', () => {
       'Set cover',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Copy link',
       'Duplicate',
@@ -241,6 +252,7 @@ describe('a file the account has a copy of', () => {
       'Move',
       'Bookmark',
       'Leave out of search',
+      'Archive',
       'Share',
       'Copy link',
       'Duplicate',
@@ -254,7 +266,14 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual(['Open all', 'Move', 'Bookmark', 'Copy link', 'Delete 2 items'])
+    expect(labels(loose)).toEqual([
+      'Open all',
+      'Move',
+      'Bookmark',
+      'Archive',
+      'Copy link',
+      'Delete 2 items',
+    ])
   })
 
   test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
@@ -290,5 +309,29 @@ describe('a row that is part of a selection of several', () => {
   test('while a selection of one is an ordinary row', () => {
     workspace.select('/s/loose.md')
     expect(labels(loose)[0]).toBe('Open')
+  })
+})
+
+describe('the archive', () => {
+  test('is offered on every row, and not in a space shared to be read', () => {
+    for (const entry of [nested, plain, loose, paper]) expect(labels(entry)).toContain('Archive')
+
+    writable.yes = false
+    expect(labels(loose)).not.toContain('Archive')
+  })
+
+  test('and a folder holding something archived is not deleted from its menu', async () => {
+    await workspace.archive.change('/s', ['Projects/plan.md'], [])
+
+    expect(workspace.keepsArchived('/s/Projects')).toBe(true)
+    expect(workspace.keepsArchived('/s/loose.md')).toBe(false)
+  })
+
+  test('and a selection counts only the rows that can go', async () => {
+    await workspace.archive.change('/s', ['Projects/plan.md'], [])
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/Projects')
+
+    expect(labels(loose)).toContain('Delete 1 item')
   })
 })

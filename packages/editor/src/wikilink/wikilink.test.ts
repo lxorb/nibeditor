@@ -164,6 +164,33 @@ function concealed(doc: string, cursor?: number): string[] {
   return out
 }
 
+describe('a link into a note the space has archived', () => {
+  const archived = index([{ ...note('Plan.md'), archived: true }, note('Spark.md')], null)
+
+  /** The classes each link wears, by the words it shows. */
+  function looks(doc: string): Record<string, string> {
+    const full = doc + PARK
+    const out: Record<string, string> = {}
+    buildDecorations(state(full, full.length, archived)).decorations.between(
+      0,
+      full.length,
+      (from, to, value) => {
+        const classes = String(value.spec.class ?? '')
+        if (classes.includes('nib-link')) out[full.slice(from, to)] = classes
+      },
+    )
+    return out
+  }
+
+  test('still resolves, and is drawn marked rather than missing', () => {
+    expect(looks('[[Plan]] and [[Spark]] and [[Gone]]')).toEqual({
+      Plan: 'nib-link nib-link-archived',
+      Spark: 'nib-link',
+      Gone: 'nib-link nib-link-missing',
+    })
+  })
+})
+
 describe('a wikilink in the live preview', () => {
   test('shows the target and hides the brackets', () => {
     expect(linkMarks('see [[Plan]] now')).toEqual([{ text: 'Plan', note: 'Plan', missing: false }])

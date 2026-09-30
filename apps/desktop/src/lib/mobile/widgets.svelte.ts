@@ -73,7 +73,11 @@ function widgetState(): WidgetState {
   return {
     title: workspace.activeSpace?.name ?? t('Notes'),
     empty: t('Nothing here'),
-    notes: widgetRows(workspace.notes, kept),
+    // What the space archived is off the home screen as it is off the file list.
+    notes: widgetRows(
+      workspace.notes.filter((one) => !workspace.archive.has(one.path)),
+      kept,
+    ),
   }
 }
 

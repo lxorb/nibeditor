@@ -105,7 +105,13 @@
     // The note in front is not among the ones opened lately: with nothing typed,
     // Enter is the note before it, the way Alt+Tab is the window before this one.
     const recent = workspace.recent.filter((path) => path !== workspace.active?.path)
-    const notes = noteRows(term, workspace.files, recent, root ?? '')
+    // What the space archived is offered for its whole name only, the way `[[` offers
+    // it: somebody who types all of it means that one.
+    const whole = term.trim().toLowerCase()
+    const files = workspace.files.filter(
+      (one) => !workspace.archive.has(one.path) || shownName(one.name).toLowerCase() === whole,
+    )
+    const notes = noteRows(term, files, recent, root ?? '')
     if (notes.length || !makeable) return notes.map((note) => ({ kind: 'note', note }))
 
     return [{ kind: 'make', make: makeable }]

@@ -75,6 +75,7 @@ import { prompt } from './prompt.svelte'
 import { openSpaces, revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
+import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
@@ -367,6 +368,15 @@ function agentUndoRows(): Command[] {
     label: t('Undo edits by {name}', { name: agent.name }),
     run: () => void import('./agents/docs').then((docs) => docs.undoAgentIn(agent, path)),
   }))
+}
+
+/** Putting away what is open, or taking it back: one row saying which, the words
+ *  the menus use. No default key, for the reason Footnotes has none: a gesture made
+ *  now and then, in a keyboard full of ones made constantly. See archiving.ts. */
+function archiveCommand(): Command[] {
+  return archiveEntry(workspace.active?.path).flatMap((entry) =>
+    entry === DIVIDER ? [] : [{ id: 'archive', label: entry.label, run: entry.run }],
+  )
 }
 
 /** A tab's own menu, about the tab being read; see tab-strip/menu.ts. */
@@ -1038,6 +1048,7 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.close'),
       run: () => void workspace.closeActive(),
     },
+    ...archiveCommand(),
     ...tabCommands(),
     {
       id: 'back',

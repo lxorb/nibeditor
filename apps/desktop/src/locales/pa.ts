@@ -1548,4 +1548,17 @@ export const pa: Dictionary = {
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'ਪੁਰਾਲੇਖ ਕਰੋ',
+  Unarchive: 'ਪੁਰਾਲੇਖ ਵਿੱਚੋਂ ਕੱਢੋ',
+  Archived: 'ਪੁਰਾਲੇਖ ਕੀਤਾ',
+  Unarchived: 'ਪੁਰਾਲੇਖ ਵਿੱਚੋਂ ਕੱਢਿਆ',
+  'Undo archiving {name}': '{name} ਦਾ ਪੁਰਾਲੇਖ ਵਾਪਸ ਲਓ',
+  'Undo unarchiving {name}': '{name} ਨੂੰ ਮੁੜ ਪੁਰਾਲੇਖ ਕਰੋ',
+  'Nothing archived is deleted': 'ਪੁਰਾਲੇਖ ਕੀਤਾ ਕੁਝ ਵੀ ਮਿਟਾਇਆ ਨਹੀਂ ਜਾਂਦਾ',
+  'Show them': 'ਦਿਖਾਓ',
+  '{count} archived items inside': {
+    one: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀ ਆਈਟਮ',
+    other: 'ਅੰਦਰ {count} ਪੁਰਾਲੇਖ ਕੀਤੀਆਂ ਆਈਟਮਾਂ',
+  },
 }

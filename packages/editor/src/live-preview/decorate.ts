@@ -29,7 +29,7 @@ import { type LinkSpan, noteLinkOfNode, wikilinkOfNode } from '../wikilink/at'
 import { embedOfBlock, EmbedImageWidget, EmbedMediaWidget } from '../wikilink/embed'
 import { noteLinkTitle } from '../wikilink/follow'
 import { trustChanged } from '../markup'
-import { noteIndex, resolves } from '../wikilink/notes'
+import { archivedLink, noteIndex, resolves } from '../wikilink/notes'
 import { iframeCard, webCard } from '@nib/markdown/web-embed'
 import { ImageWidget, imageOfNode, imageRevealed } from './image'
 import { WebEmbedWidget } from './web'
@@ -299,15 +299,22 @@ class Decorator {
   }
 
   /** A link to another note, however it was written. Coloured like any link,
-   *  muted when the space holds no such note - a click on that one makes it -
-   *  and marked `data-note` so follow.ts and the hover preview know what it is. */
+   *  muted when the space holds no such note - a click on that one makes it - faded
+   *  when it is archived, and marked `data-note` so follow.ts and the hover preview
+   *  know what it is. */
   private noteLink(link: LinkSpan, from: number, to: number) {
     if (from >= to) return
 
-    const missing = !resolves(this.state.facet(noteIndex), link, link.kind)
+    const index = this.state.facet(noteIndex)
+    const missing = !resolves(index, link, link.kind)
+    const archived = !missing && archivedLink(index, link, link.kind)
     this.marks.push(
       Decoration.mark({
-        class: missing ? 'nib-link nib-link-missing' : 'nib-link',
+        class: missing
+          ? 'nib-link nib-link-missing'
+          : archived
+            ? 'nib-link nib-link-archived'
+            : 'nib-link',
         attributes: { 'data-note': linkTarget(link), title: noteLinkTitle(link, missing) },
       }).range(from, to),
     )

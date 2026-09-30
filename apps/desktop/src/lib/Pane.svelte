@@ -45,6 +45,7 @@
   import { rooms } from './rooms.svelte'
   import { settings } from './settings.svelte'
   import {
+    archivedStrip,
     canvasSurface,
     emptySurface,
     findBar,
@@ -81,7 +82,8 @@
   /** The space as a picture, without the notes it leaves out, and with the files its
    *  notes embed where the card has asked for them. Lazy like the graph itself:
    *  nothing here is worked out until a graph tab is open. */
-  const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.excluded.here))
+  const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut))
+  const archived = $derived(tab?.path ? workspace.archive.has(tab.path) : false)
   /** Every note this pane holds. The editor keeps a state for each one it has
    *  shown, and this is what tells it which of them are still open. The tabs
    *  themselves, because a tab is what a state is kept under; see
@@ -475,6 +477,13 @@
         onclose={shutFinding}
         onquery={(typed: string) => void look({ ...spec, query: typed })}
       />
+    {/await}
+  {/if}
+
+  <!-- Something archived, opened anyway, with the way back. -->
+  {#if !__EVEN_PLUGIN__ && archived && tab?.path}
+    {#await archivedStrip() then ArchivedStrip}
+      <ArchivedStrip path={tab.path} />
     {/await}
   {/if}
 

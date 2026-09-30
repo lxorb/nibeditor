@@ -1634,4 +1634,21 @@ export const ar: Dictionary = {
   'Default browser': 'المتصفح الافتراضي',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'أرشفة',
+  Unarchive: 'إلغاء الأرشفة',
+  Archived: 'مؤرشف',
+  Unarchived: 'أُلغيت الأرشفة',
+  'Undo archiving {name}': 'تراجع عن أرشفة {name}',
+  'Undo unarchiving {name}': 'أرشفة {name} مجددًا',
+  'Nothing archived is deleted': 'لا يُحذف أي شيء مؤرشف',
+  'Show them': 'عرضها',
+  '{count} archived items inside': {
+    zero: '{count} عناصر مؤرشفة بالداخل',
+    one: '{count} عنصر مؤرشف بالداخل',
+    two: '{count} عنصران مؤرشفان بالداخل',
+    few: '{count} عناصر مؤرشفة بالداخل',
+    many: '{count} عنصرًا مؤرشفًا بالداخل',
+    other: '{count} عنصر مؤرشف بالداخل',
+  },
 }

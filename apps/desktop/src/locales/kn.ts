@@ -1558,4 +1558,17 @@ export const kn: Dictionary = {
   'Default browser': 'ಡಿಫಾಲ್ಟ್ ಬ್ರೌಸರ್',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ಅವರ ಸಂಪಾದನೆಗಳನ್ನು ರದ್ದುಮಾಡಿ',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'ಆರ್ಕೈವ್ ಮಾಡಿ',
+  Unarchive: 'ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಿರಿ',
+  Archived: 'ಆರ್ಕೈವ್ ಮಾಡಲಾಗಿದೆ',
+  Unarchived: 'ಆರ್ಕೈವ್‌ನಿಂದ ತೆಗೆಯಲಾಗಿದೆ',
+  'Undo archiving {name}': '{name} ಆರ್ಕೈವ್ ರದ್ದುಮಾಡಿ',
+  'Undo unarchiving {name}': '{name} ಮತ್ತೆ ಆರ್ಕೈವ್ ಮಾಡಿ',
+  'Nothing archived is deleted': 'ಆರ್ಕೈವ್ ಮಾಡಿದ ಯಾವುದನ್ನೂ ಅಳಿಸಲಾಗುವುದಿಲ್ಲ',
+  'Show them': 'ತೋರಿಸಿ',
+  '{count} archived items inside': {
+    one: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂ',
+    other: 'ಒಳಗೆ {count} ಆರ್ಕೈವ್ ಮಾಡಿದ ಐಟಂಗಳು',
+  },
 }

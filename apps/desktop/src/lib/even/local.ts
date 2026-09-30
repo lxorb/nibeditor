@@ -92,6 +92,9 @@ const HOST_ONLY = new Set([
   // dropped smallest-first and written back as nothing.
   'nib:folder-icons',
   'nib:icon-tints',
+  // What each space has archived, which is the same shape: a map per space keyed by
+  // path, growing with what was put away. Read again when the host store answers.
+  'nib:archived',
 ])
 
 /** What the cookie may carry, which is everything that is not bookkeeping. */

@@ -19,7 +19,7 @@
 
 import { copyText } from '../clipboard'
 import { t } from '../i18n.svelte'
-import { DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
+import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
 import { shortcuts } from '../shortcuts.svelte'
 import { withinSpace } from '../space-paths'
 import { openTerminal, shellRows } from '../terminal/open'
@@ -248,6 +248,8 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...shellEntries(tab),
     ...tabEntries(tab),
     ...inListEntry(tab),
+    // Putting away what the tab shows, which closes it; see archiving.ts.
+    ...archiveEntry(tab.path),
     DIVIDER,
     ...closeEntries(tab),
     DIVIDER,

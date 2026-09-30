@@ -1530,4 +1530,14 @@ export const my: Dictionary = {
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'မှတ်တမ်းတင်',
+  Unarchive: 'မှတ်တမ်းမှ ပြန်ထုတ်',
+  Archived: 'မှတ်တမ်းတင်ပြီး',
+  Unarchived: 'မှတ်တမ်းမှ ပြန်ထုတ်ပြီး',
+  'Undo archiving {name}': '{name} မှတ်တမ်းတင်မှု ပြန်ဖျက်',
+  'Undo unarchiving {name}': '{name} ကို ထပ်မံ မှတ်တမ်းတင်',
+  'Nothing archived is deleted': 'မှတ်တမ်းတင်ထားသည့် မည်သည့်အရာမှ မဖျက်ပါ',
+  'Show them': 'ပြပါ',
+  '{count} archived items inside': 'အတွင်း၌ မှတ်တမ်းတင်ထားသော အရာ {count} ခု',
 }

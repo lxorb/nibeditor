@@ -1542,4 +1542,14 @@ export const id: Dictionary = {
   'Default browser': 'Peramban bawaan',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arsipkan',
+  Unarchive: 'Batal arsipkan',
+  Archived: 'Diarsipkan',
+  Unarchived: 'Batal diarsipkan',
+  'Undo archiving {name}': 'Urungkan pengarsipan {name}',
+  'Undo unarchiving {name}': 'Arsipkan {name} lagi',
+  'Nothing archived is deleted': 'Tidak ada yang diarsipkan yang dihapus',
+  'Show them': 'Tampilkan',
+  '{count} archived items inside': '{count} item diarsipkan di dalamnya',
 }

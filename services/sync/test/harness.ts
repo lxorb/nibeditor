@@ -241,6 +241,8 @@ interface SpaceView {
   /** The order each folder of its tree was arranged into, by the folder's path; see
    *  0037. */
   arranged: Record<string, string[]>
+  /** What it has archived, a moment per path; see 0041. */
+  archived: Record<string, number>
   createdAt: number
   updatedAt: number
   blog: {
@@ -340,6 +342,7 @@ export interface Reply {
   graph: Record<string, unknown>
   excluded: string[]
   arranged: Record<string, string[]>
+  archived: Record<string, number>
   files: SpaceFileView[]
   missing: string[]
   deleted: string[]

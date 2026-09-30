@@ -1536,4 +1536,14 @@ export const jv: Dictionary = {
   'Default browser': 'Panjelajah gawan',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arsipaké',
+  Unarchive: 'Wetokaké saka arsip',
+  Archived: 'Wis diarsipaké',
+  Unarchived: 'Wis diwetokaké saka arsip',
+  'Undo archiving {name}': 'Batalaké ngarsipaké {name}',
+  'Undo unarchiving {name}': 'Arsipaké {name} manèh',
+  'Nothing archived is deleted': 'Ora ana sing diarsipaké sing dibusak',
+  'Show them': 'Tuduhaké',
+  '{count} archived items inside': '{count} item diarsipaké ing njero',
 }

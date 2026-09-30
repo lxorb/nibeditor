@@ -15,6 +15,7 @@ import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
 import { bookmarks } from './bookmarks'
 import { spaceExcluded } from './excluded'
+import { spaceArchived } from './archived'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
 import { folderIcons, isIcon, isTint } from './icons'
@@ -282,5 +283,6 @@ spaces.route('/', folderIcons)
 spaces.route('/', spaceArranged)
 spaces.route('/', spaceGraph)
 spaces.route('/', spaceExcluded)
+spaces.route('/', spaceArchived)
 spaces.route('/', spaceFiles)
 spaces.route('/', share)

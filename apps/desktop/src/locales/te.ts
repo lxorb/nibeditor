@@ -1548,4 +1548,17 @@ export const te: Dictionary = {
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'ఆర్కైవ్ చేయి',
+  Unarchive: 'ఆర్కైవ్ నుండి తీయి',
+  Archived: 'ఆర్కైవ్ చేయబడింది',
+  Unarchived: 'ఆర్కైవ్ నుండి తీయబడింది',
+  'Undo archiving {name}': '{name} ఆర్కైవ్‌ను రద్దు చేయి',
+  'Undo unarchiving {name}': '{name} మళ్లీ ఆర్కైవ్ చేయి',
+  'Nothing archived is deleted': 'ఆర్కైవ్ చేసినదేదీ తొలగించబడదు',
+  'Show them': 'చూపించు',
+  '{count} archived items inside': {
+    one: 'లోపల {count} ఆర్కైవ్ అంశం',
+    other: 'లోపల {count} ఆర్కైవ్ అంశాలు',
+  },
 }

@@ -39,6 +39,15 @@ export type FileAction =
    *  back however many it made. Where each landed, and what it was copied from so
    *  it can be made again - which a file from outside the app has not got. */
   | { kind: 'copy'; made: Copied[] }
+  /** Rows archived or taken back: which paths went each way, and the tabs archiving
+   *  closed, so Undo opens them again. See archiving.ts. */
+  | {
+      kind: 'archive' | 'unarchive'
+      root: string
+      archived: string[]
+      restored: string[]
+      closed: string[]
+    }
 
 export interface Copied {
   path: string
@@ -132,6 +141,12 @@ export class FileActions {
         return t('Undo the import')
       case 'copy':
         return t('Undo the copy')
+      case 'archive':
+        return t('Undo archiving {name}', { name: shownName(nameOf(action.archived[0] ?? '')) })
+      case 'unarchive':
+        return t('Undo unarchiving {name}', {
+          name: shownName(nameOf(action.restored.at(-1) ?? '')),
+        })
     }
   }
 
@@ -145,11 +160,16 @@ export class FileActions {
  *  and a replacement kept only the way back. */
 function doesAgain(
   action: FileAction,
-): action is Extract<FileAction, { kind: 'move' | 'rename' | 'delete' | 'copy' }> {
+): action is Extract<
+  FileAction,
+  { kind: 'move' | 'rename' | 'delete' | 'copy' | 'archive' | 'unarchive' }
+> {
   switch (action.kind) {
     case 'move':
     case 'rename':
     case 'delete':
+    case 'archive':
+    case 'unarchive':
       return true
     case 'copy':
       return action.made.every((one) => one.from !== undefined)

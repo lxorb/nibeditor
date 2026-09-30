@@ -3,6 +3,7 @@ import { forTheCookie } from './local'
 import { STORAGE_KEY as RECOVERY_KEY } from '../recovery.svelte'
 import { STORAGE_KEY as MIRRORS_KEY } from '../sync.svelte'
 import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../workspace/folder-icons.svelte'
+import { STORAGE_KEY as ARCHIVED_KEY } from '../workspace/archive.svelte'
 import {
   EXPANDED_KEY,
   ICON_TINTS_KEY,
@@ -292,6 +293,7 @@ describe('which store a key rides in', () => {
       ICONS_KEY,
       ICON_TINTS_KEY,
       FOLDER_ICONS_KEY,
+      ARCHIVED_KEY,
     ]
 
     expect(forTheCookie(Object.fromEntries(owned.map((one) => [one, 'x'])))).toEqual({})

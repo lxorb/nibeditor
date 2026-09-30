@@ -425,3 +425,31 @@ describe('every row writes the link the app spells', () => {
     expect((await picked('[[Spark#Spa', asked, 'Sparks')).doc).toBe('[[Spark#Sparks]]')
   })
 })
+
+describe('a note the space has archived', () => {
+  const archived = (path: string): NoteRef => ({ ...note(path), archived: true })
+
+  test('is not offered for part of its name', async () => {
+    const asked = space([note('Plan.md'), archived('Planning 2019.md')])
+
+    expect(labels(await rowsFor('[[Plan', asked))).toEqual(['Plan'])
+  })
+
+  test('but is for the whole of it, and says it is archived', async () => {
+    const asked = space([note('Plan.md'), archived('Planning 2019.md')])
+    const found = await rowsFor('[[Planning 2019', asked)
+
+    expect(labels(found)).toEqual(['Planning 2019'])
+    expect(details(found)).toEqual(['Archived'])
+  })
+
+  test('and its headings and blocks stay out of the space-wide lists', async () => {
+    const asked = space([
+      { ...note('Old.md', ['Summary'], ['abc']), archived: true },
+      note('New.md', ['Summary'], ['abd']),
+    ])
+
+    expect(details(await rowsFor('[[##Summ', asked))).toEqual(['New'])
+    expect(labels(await rowsFor('[[^^ab', asked))).toEqual(['^abd'])
+  })
+})

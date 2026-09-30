@@ -1,0 +1,17 @@
+-- What a space has archived: one JSON object keyed by a path as the space speaks it,
+-- with a moment under each - positive while the path is archived, negative once it
+-- was taken back.
+--
+-- On the space, beside the exclusions and the folder icons, because it is the same
+-- kind of fact: something the space says about its own tree, written by whoever may
+-- write in it, travelling to every device signed in and going with the space when it
+-- is deleted. Not in the files themselves. An archived note keeps its bytes, its path
+-- and its modified time, which is what lets it come back exactly where it was; see
+-- docs/archive.md.
+--
+-- A moment per entry rather than a list of paths, and a restore kept as a negative
+-- moment rather than dropped: the apps meet their copy with this one entry by entry,
+-- the later moment winning, so two devices archiving different notes at once both keep
+-- theirs and a restore on one is not undone by a copy the other sent before it heard.
+-- That is the per-entry shape docs/sync-v2.md plans for every map a space keeps.
+alter table spaces add column archived text not null default '{}';

@@ -1543,4 +1543,17 @@ export const bn: Dictionary = {
   'Default browser': 'ডিফল্ট ব্রাউজার',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'আর্কাইভ করুন',
+  Unarchive: 'আর্কাইভ থেকে সরান',
+  Archived: 'আর্কাইভ করা হয়েছে',
+  Unarchived: 'আর্কাইভ থেকে সরানো হয়েছে',
+  'Undo archiving {name}': '{name} আর্কাইভ করা পূর্বাবস্থায় ফেরান',
+  'Undo unarchiving {name}': '{name} আবার আর্কাইভ করুন',
+  'Nothing archived is deleted': 'আর্কাইভ করা কিছুই মুছে ফেলা হয় না',
+  'Show them': 'দেখান',
+  '{count} archived items inside': {
+    one: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
+    other: 'ভিতরে {count}টি আর্কাইভ করা আইটেম',
+  },
 }

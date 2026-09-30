@@ -17,6 +17,22 @@ describe('what the toast offers', () => {
     expect(nextBatch([], [two], [one, two])).toEqual([two])
   })
 
+  /** Putting a row away and taking it back are quiet gestures whose row leaves the
+   *  list, the way a delete's does: Gmail's archive is the toast's own model. */
+  test('an archiving is offered either way round', () => {
+    const put: FileAction = {
+      kind: 'archive',
+      root: '/s',
+      archived: ['A.md'],
+      restored: [],
+      closed: [],
+    }
+    const back: FileAction = { ...put, kind: 'unarchive', archived: [], restored: ['A.md'] }
+
+    expect(nextBatch([], [put], [put])).toEqual([put])
+    expect(nextBatch([put], [back], [put, back])).toEqual([back])
+  })
+
   /** A rename is made in the field it was typed in, and a replacement from the find
    *  bar: neither is a surprise to take back from a toast. */
   test('nothing else is', () => {

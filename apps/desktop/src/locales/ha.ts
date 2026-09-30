@@ -1569,4 +1569,17 @@ export const ha: Dictionary = {
   'Default browser': 'Birawuza na asali',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Ajiye a rumbu',
+  Unarchive: 'Fitar daga rumbu',
+  Archived: 'An ajiye a rumbu',
+  Unarchived: 'An fitar daga rumbu',
+  'Undo archiving {name}': 'Soke ajiye {name} a rumbu',
+  'Undo unarchiving {name}': 'Sake ajiye {name} a rumbu',
+  'Nothing archived is deleted': 'Ba a share komai da aka ajiye a rumbu',
+  'Show them': 'Nuna su',
+  '{count} archived items inside': {
+    one: 'Abu {count} da aka ajiye a ciki',
+    other: 'Abubuwa {count} da aka ajiye a ciki',
+  },
 }

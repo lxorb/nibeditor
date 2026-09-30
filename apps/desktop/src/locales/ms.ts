@@ -1541,4 +1541,14 @@ export const ms: Dictionary = {
   'Default browser': 'Pelayar lalai',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Buat asal suntingan {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arkibkan',
+  Unarchive: 'Nyaharkib',
+  Archived: 'Diarkibkan',
+  Unarchived: 'Dinyaharkibkan',
+  'Undo archiving {name}': 'Buat asal pengarkiban {name}',
+  'Undo unarchiving {name}': 'Arkibkan {name} semula',
+  'Nothing archived is deleted': 'Tiada apa yang diarkibkan dipadam',
+  'Show them': 'Tunjukkan',
+  '{count} archived items inside': '{count} item diarkibkan di dalam',
 }

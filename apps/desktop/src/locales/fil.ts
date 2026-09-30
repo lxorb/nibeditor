@@ -1578,4 +1578,17 @@ export const fil: Dictionary = {
   'Default browser': 'Default na browser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'I-archive',
+  Unarchive: 'Alisin sa archive',
+  Archived: 'Na-archive',
+  Unarchived: 'Inalis sa archive',
+  'Undo archiving {name}': 'I-undo ang pag-archive ng {name}',
+  'Undo unarchiving {name}': 'I-archive muli ang {name}',
+  'Nothing archived is deleted': 'Walang na-archive na binubura',
+  'Show them': 'Ipakita',
+  '{count} archived items inside': {
+    one: '{count} na-archive na item sa loob',
+    other: '{count} na-archive na item sa loob',
+  },
 }

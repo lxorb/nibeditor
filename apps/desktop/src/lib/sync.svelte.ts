@@ -511,6 +511,8 @@ class Sync {
         this.clashed += 1
       },
       held: record.held,
+      // Nothing archived is deleted, whatever another device says; see `deletedThere`.
+      kept: (path) => workspace.archive.holdsIn(mirror.root, path),
     }
   }
 

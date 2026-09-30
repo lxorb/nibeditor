@@ -125,6 +125,21 @@ export const settingsSheet = latched(() => import('./SettingsPanel.svelte'))
  *  a page note is in front. See Sidebar.svelte. */
 export const pagesNavigator = held(() => import('./PagesNavigator.svelte'))
 
+/** The archive at the foot of the file list, once the space has one. Never the glasses'
+ *  plugin's: its package is at its ceiling, and it hides what is archived without them. */
+export const archiveSection = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no archive list in the Even Realities plugin'))
+    : import('./Archive.svelte'),
+)
+
+/** The strip over an archived note opened anyway; not the plugin's either. */
+export const archivedStrip = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no archive strip in the Even Realities plugin'))
+    : import('./ArchivedStrip.svelte'),
+)
+
 /** The overlays App.svelte holds: the sheets, the pickers and the deck.
  *
  *  None of them is on screen when the window opens, and between them they were the

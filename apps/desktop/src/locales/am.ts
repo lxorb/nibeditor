@@ -1523,4 +1523,17 @@ export const am: Dictionary = {
   'Default browser': 'ነባር አሳሽ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'በማህደር አስቀምጥ',
+  Unarchive: 'ከማህደር አውጣ',
+  Archived: 'በማህደር ተቀምጧል',
+  Unarchived: 'ከማህደር ወጥቷል',
+  'Undo archiving {name}': 'የ{name}ን በማህደር መቀመጥ ቀልብስ',
+  'Undo unarchiving {name}': '{name}ን እንደገና በማህደር አስቀምጥ',
+  'Nothing archived is deleted': 'በማህደር የተቀመጠ ምንም አይሰረዝም',
+  'Show them': 'አሳይ',
+  '{count} archived items inside': {
+    one: 'በውስጡ {count} በማህደር የተቀመጠ ንጥል',
+    other: 'በውስጡ {count} በማህደር የተቀመጡ ንጥሎች',
+  },
 }

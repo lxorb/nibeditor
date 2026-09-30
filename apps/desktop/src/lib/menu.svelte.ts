@@ -6,8 +6,8 @@ import { iconChoice } from './icon-choice.svelte'
 import { t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import { canHaveCover, chooseCover, removeCover } from './note-cover'
-import { canShareItem, shareThisFile } from './sharing.svelte'
-import { isMarkdownPath } from './space-paths'
+import { canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
+import { isMarkdownPath, withinSpace } from './space-paths'
 import type { Bookmark } from './workspace/bookmarks.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -132,6 +132,26 @@ export function excludeEntry(path: string | null | undefined): MenuEntry[] {
       run: () => workspace.excluded.toggle(path),
     },
   ]
+}
+
+/** Putting a row away, or taking it back, in one word that flips: the row's, the
+ *  tab's and the palette's. Not in a space shared to be read. See archiving.ts. */
+export function archiveEntry(path: string | null | undefined): MenuEntry[] {
+  const root = workspace.activeSpace?.root
+  if (!path || !root || withinSpace(root, path) === null || !canWriteAt(path)) return []
+
+  const archived = workspace.archive.has(path)
+  return __EVEN_PLUGIN__
+    ? []
+    : [
+        {
+          label: archived ? t('Unarchive') : t('Archive'),
+          run: () =>
+            void import('./archiving').then((one) =>
+              archived ? one.unarchive(path) : one.archive([path]),
+            ),
+        },
+      ]
 }
 
 /** The icon a row wears, in the same two words wherever one is chosen: one entry to

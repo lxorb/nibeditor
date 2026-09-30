@@ -1537,4 +1537,14 @@ export const ja: Dictionary = {
   'Default browser': '既定のブラウザ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'アーカイブ',
+  Unarchive: 'アーカイブを解除',
+  Archived: 'アーカイブ済み',
+  Unarchived: 'アーカイブを解除しました',
+  'Undo archiving {name}': '{name} のアーカイブを元に戻す',
+  'Undo unarchiving {name}': '{name} を再びアーカイブ',
+  'Nothing archived is deleted': 'アーカイブしたものは削除されません',
+  'Show them': '表示',
+  '{count} archived items inside': '中にアーカイブ済みの項目が{count}件',
 }

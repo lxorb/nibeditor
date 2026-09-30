@@ -10,6 +10,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { shownName } from './note-name'
+  import { ARCHIVE_MARK } from './archive-marks'
   import { SEARCH_MARK } from './panel-marks'
   import { roving } from './roving'
   import { howFor, middleOpens, tabAsk } from './new-tab'
@@ -64,7 +65,15 @@
     return out.sort()
   })
 
-  const names = $derived([...new Set(workspace.notes.map((note) => shownName(note.name)))].sort())
+  const names = $derived(
+    [
+      ...new Set(
+        workspace.notes
+          .filter((note) => search.archived || !workspace.archive.has(note.path))
+          .map((note) => shownName(note.name)),
+      ),
+    ].sort(),
+  )
 
   /** The space's tags as the tree their slashes describe. */
   const tags = $derived(tagTree(workspace.tags))
@@ -120,16 +129,26 @@
   /** Consecutive hits from one note read as that note's hits, with its name
    *  said once above them. */
   const groups = $derived.by(() => {
-    const out: { path: string; name: string; loose: boolean; hits: Hit[] }[] = []
+    const out: { path: string; name: string; loose: boolean; archived: boolean; hits: Hit[] }[] = []
 
     for (const hit of search.hits) {
       const last = out.at(-1)
       if (last?.path === hit.path) last.hits.push(hit)
       // A score is what a loose match has and an exact one has not; see fuzzy.ts.
-      else out.push({ path: hit.path, name: hit.name, loose: hit.score !== undefined, hits: [hit] })
+      else {
+        out.push({
+          path: hit.path,
+          name: hit.name,
+          loose: hit.score !== undefined,
+          archived: search.archived && workspace.archive.has(hit.path),
+          hits: [hit],
+        })
+      }
     }
 
-    return out
+    // What the archive answered goes under what the space did: asked for, but still
+    // put away.
+    return [...out.filter((group) => !group.archived), ...out.filter((group) => group.archived)]
   })
 
   /** One line cut into what matched and what did not, so the match can be
@@ -323,6 +342,20 @@
     >
       <svg viewBox="0 0 13 13"><path d={SWAP} /></svg>
     </button>
+
+    <!-- The archive, asked too. Only in a space that has one. -->
+    {#if workspace.archive.any || search.archived}
+      <button
+        class="swap"
+        class:active={search.archived}
+        title={t('Archived')}
+        aria-label={t('Archived')}
+        aria-pressed={search.archived}
+        onclick={() => search.showArchived(!search.archived)}
+      >
+        <svg viewBox="0 0 13 13"><path d={ARCHIVE_MARK} /></svg>
+      </button>
+    {/if}
   </div>
 
   {#if search.replacing}
@@ -368,9 +401,12 @@
           <!-- One character for "near enough", where a word would be prose. The
                place in the list already says it: the guesses are under the
                answers. -->
-          {#if group.loose}<span class="guess" title={t('Close match')}>~</span>{/if}{shownName(
-            group.name,
-          )}
+          {#if group.loose}<span class="guess" title={t('Close match')}>~</span
+            >{/if}{#if group.archived}<svg
+              class="archived"
+              viewBox="0 0 13 13"
+              aria-label={t('Archived')}><path d={ARCHIVE_MARK} /></svg
+            >{/if}{shownName(group.name)}
         </div>
 
         {#each group.hits as hit (hit.line)}
@@ -635,6 +671,14 @@
   .guess {
     margin-inline-end: 3px;
     color: var(--muted);
+  }
+
+  /* A note the archive answered with, marked in front of its name. */
+  svg.archived {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    margin-inline-end: var(--space-1);
+    vertical-align: -2px;
   }
 
   .line {

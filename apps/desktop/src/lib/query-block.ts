@@ -112,7 +112,7 @@ export async function queryRowsHtml(code: string, nothing: string): Promise<stri
     [],
     MOST,
     (batch) => hits.push(...batch.hits),
-    workspace.excluded.of(root),
+    workspace.leftOutOf(root),
   ).catch(() => undefined)
 
   if (!hits.length)

@@ -22,7 +22,7 @@ import type { Env } from '../types'
 
 /** A column a client writes whole. `icons` writes a second column beside it - the
  *  tints - so it has a statement of its own; see ./icons. */
-export type Column = 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
+export type Column = 'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
 
 /** How many bytes each column may hold, once written down.
  *
@@ -60,6 +60,10 @@ export const MOST_BYTES: Record<Column | 'icons', number> = {
   files: 32 * 1024,
   icons: 32 * 1024,
   arranged: 32 * 1024,
+  // A thousand paths with a moment on each: the most a space may have put away, and
+  // taken back within the last month. Keyed by path like the three above, and able to
+  // hold more of them, because a note is archived one press at a time for years.
+  archived: 96 * 1024,
 }
 
 /** Whether what is about to be written fits in its column. */

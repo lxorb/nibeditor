@@ -16,9 +16,9 @@
 
 import type { FileAction } from './workspace/undo.svelte'
 
-/** What the toast is about: a delete, or a move. Everything else on the stack is
- *  taken back from the menus. */
-type Offered = FileAction & { kind: 'delete' | 'move' }
+/** What the toast is about: a delete, a move, or a row archived or taken back out.
+ *  Everything else on the stack is taken back from the menus. */
+type Offered = FileAction & { kind: 'delete' | 'move' | 'archive' | 'unarchive' }
 
 /** How long it stays, unless the pointer is on it. Long enough to read one word and
  *  reach for it; Gmail's is about the same. Here rather than in backoff.ts because
@@ -26,7 +26,12 @@ type Offered = FileAction & { kind: 'delete' | 'move' }
 export const UNDO_LINGER = 6_000
 
 function offered(action: FileAction): action is Offered {
-  return action.kind === 'delete' || action.kind === 'move'
+  return (
+    action.kind === 'delete' ||
+    action.kind === 'move' ||
+    action.kind === 'archive' ||
+    action.kind === 'unarchive'
+  )
 }
 
 /** What the toast offers once the stack reads `stack`, having offered `batch`, where

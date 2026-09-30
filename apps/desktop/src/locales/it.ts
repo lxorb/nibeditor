@@ -1597,4 +1597,18 @@ export const it: Dictionary = {
   'Default browser': 'Browser predefinito',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annulla le modifiche di {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archivia',
+  Unarchive: 'Annulla archiviazione',
+  Archived: 'Archiviato',
+  Unarchived: 'Ripristinato',
+  'Undo archiving {name}': 'Annulla l’archiviazione di {name}',
+  'Undo unarchiving {name}': 'Archivia di nuovo {name}',
+  'Nothing archived is deleted': 'Nulla di archiviato viene eliminato',
+  'Show them': 'Mostrali',
+  '{count} archived items inside': {
+    one: '{count} elemento archiviato all’interno',
+    many: '{count} di elementi archiviati all’interno',
+    other: '{count} elementi archiviati all’interno',
+  },
 }

@@ -1553,4 +1553,17 @@ export const gsw: Dictionary = {
   'Default browser': 'Standardbrowser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archiviere',
+  Unarchive: 'Us em Archiv hole',
+  Archived: 'Archiviert',
+  Unarchived: 'Zruggholt',
+  'Undo archiving {name}': 'Archiviere vo {name} rückgängig',
+  'Undo unarchiving {name}': '{name} wieder archiviere',
+  'Nothing archived is deleted': 'Archivierts wird nie glöscht',
+  'Show them': 'Zeige',
+  '{count} archived items inside': {
+    one: '{count} archivierte Iitrag drin',
+    other: '{count} archivierti Iiträg drin',
+  },
 }

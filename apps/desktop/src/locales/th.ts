@@ -1512,4 +1512,14 @@ export const th: Dictionary = {
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'เก็บถาวร',
+  Unarchive: 'เลิกเก็บถาวร',
+  Archived: 'เก็บถาวรแล้ว',
+  Unarchived: 'เลิกเก็บถาวรแล้ว',
+  'Undo archiving {name}': 'เลิกทำการเก็บถาวร {name}',
+  'Undo unarchiving {name}': 'เก็บถาวร {name} อีกครั้ง',
+  'Nothing archived is deleted': 'สิ่งที่เก็บถาวรจะไม่ถูกลบ',
+  'Show them': 'แสดง',
+  '{count} archived items inside': 'มี {count} รายการที่เก็บถาวรอยู่ข้างใน',
 }

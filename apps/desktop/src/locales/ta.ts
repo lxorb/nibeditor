@@ -1566,4 +1566,17 @@ export const ta: Dictionary = {
   'Default browser': 'இயல்புநிலை உலாவி',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'காப்பகப்படுத்து',
+  Unarchive: 'காப்பகத்திலிருந்து எடு',
+  Archived: 'காப்பகப்படுத்தப்பட்டது',
+  Unarchived: 'காப்பகத்திலிருந்து எடுக்கப்பட்டது',
+  'Undo archiving {name}': '{name} காப்பகப்படுத்தலைச் செயல்தவிர்',
+  'Undo unarchiving {name}': '{name} மீண்டும் காப்பகப்படுத்து',
+  'Nothing archived is deleted': 'காப்பகப்படுத்தியவை எதுவும் நீக்கப்படாது',
+  'Show them': 'காட்டு',
+  '{count} archived items inside': {
+    one: 'உள்ளே {count} காப்பக உருப்படி',
+    other: 'உள்ளே {count} காப்பக உருப்படிகள்',
+  },
 }

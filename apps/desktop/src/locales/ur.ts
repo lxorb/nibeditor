@@ -1540,4 +1540,17 @@ export const ur: Dictionary = {
   'Default browser': 'طے شدہ براؤزر',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} کی ترامیم کالعدم کریں',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'آرکائیو کریں',
+  Unarchive: 'آرکائیو سے نکالیں',
+  Archived: 'آرکائیو ہو گیا',
+  Unarchived: 'آرکائیو سے نکال دیا',
+  'Undo archiving {name}': '{name} کی آرکائیونگ واپس لیں',
+  'Undo unarchiving {name}': '{name} دوبارہ آرکائیو کریں',
+  'Nothing archived is deleted': 'آرکائیو کی گئی کوئی چیز حذف نہیں ہوتی',
+  'Show them': 'دکھائیں',
+  '{count} archived items inside': {
+    one: '{count} آرکائیو شدہ آئٹم اندر',
+    other: '{count} آرکائیو شدہ آئٹمز اندر',
+  },
 }

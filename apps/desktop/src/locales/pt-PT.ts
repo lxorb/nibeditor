@@ -1585,4 +1585,18 @@ export const ptPT: Dictionary = {
   'Default browser': 'Navegador predefinido',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arquivar',
+  Unarchive: 'Desarquivar',
+  Archived: 'Arquivado',
+  Unarchived: 'Desarquivado',
+  'Undo archiving {name}': 'Anular o arquivamento de {name}',
+  'Undo unarchiving {name}': 'Voltar a arquivar {name}',
+  'Nothing archived is deleted': 'Nada do que está arquivado é eliminado',
+  'Show them': 'Mostrar',
+  '{count} archived items inside': {
+    one: '{count} item arquivado lá dentro',
+    many: '{count} de itens arquivados lá dentro',
+    other: '{count} itens arquivados lá dentro',
+  },
 }

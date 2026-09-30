@@ -1506,4 +1506,14 @@ export const zhHantHK: Dictionary = {
   'Default browser': '預設瀏覽器',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: '封存',
+  Unarchive: '取消封存',
+  Archived: '已封存',
+  Unarchived: '已取消封存',
+  'Undo archiving {name}': '還原封存 {name}',
+  'Undo unarchiving {name}': '重新封存 {name}',
+  'Nothing archived is deleted': '已封存的內容不會被刪除',
+  'Show them': '顯示',
+  '{count} archived items inside': '其中有 {count} 個已封存項目',
 }

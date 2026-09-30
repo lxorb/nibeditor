@@ -166,7 +166,7 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   // Every one of these is still behind its own `atLeast('write')`.
   {
     method: 'PUT',
-    path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|arranged|files|graph|excluded)$/,
+    path: /^\/v1\/spaces\/[^/]+\/(bookmarks|icons|arranged|files|graph|excluded|archived)$/,
   },
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },

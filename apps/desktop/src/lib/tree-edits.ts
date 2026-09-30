@@ -138,3 +138,29 @@ export function withMove(tree: Entry, from: string, to: string): Entry {
   if (!entry || from === to) return tree
   return withEntry(withoutEntry(tree, from), rebased(entry, from, to))
 }
+
+/** The tree without the rows `leaving` names, a folder with everything under it: what
+ *  the file list draws, and so what its keys walk. An untouched branch stays the same
+ *  array, so nothing redraws for it. */
+export function withoutRows(tree: Entry, leaving: (entry: Entry) => boolean): Entry {
+  const kept = pruned(tree.children, leaving)
+  return kept === tree.children ? tree : { ...tree, children: kept }
+}
+
+function pruned(children: Entry[], leaving: (entry: Entry) => boolean): Entry[] {
+  let touched = false
+  const out: Entry[] = []
+
+  for (const child of children) {
+    if (leaving(child)) {
+      touched = true
+      continue
+    }
+
+    const inside = child.children.length ? pruned(child.children, leaving) : child.children
+    if (inside !== child.children) touched = true
+    out.push(inside === child.children ? child : { ...child, children: inside })
+  }
+
+  return touched ? out : children
+}

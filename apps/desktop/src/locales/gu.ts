@@ -1534,4 +1534,17 @@ export const gu: Dictionary = {
   'Default browser': 'મૂળ બ્રાઉઝર',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'આર્કાઇવ કરો',
+  Unarchive: 'આર્કાઇવમાંથી કાઢો',
+  Archived: 'આર્કાઇવ કર્યું',
+  Unarchived: 'આર્કાઇવમાંથી કાઢ્યું',
+  'Undo archiving {name}': '{name} નું આર્કાઇવ પૂર્વવત્ કરો',
+  'Undo unarchiving {name}': '{name} ફરી આર્કાઇવ કરો',
+  'Nothing archived is deleted': 'આર્કાઇવ કરેલું કંઈ પણ કાઢી નાખવામાં આવતું નથી',
+  'Show them': 'બતાવો',
+  '{count} archived items inside': {
+    one: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
+    other: 'અંદર {count} આર્કાઇવ કરેલી આઇટમ',
+  },
 }

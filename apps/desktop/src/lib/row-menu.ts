@@ -23,6 +23,7 @@ import { folderNote, linkedFiles, nestedIn } from './folder-notes'
 import { key, plural, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
 import {
+  archiveEntry,
   bookmarkEntry,
   coverEntries,
   DIVIDER,
@@ -35,7 +36,7 @@ import { moveTargets, type MoveTarget, movesInto } from './move-targets'
 import { howFor } from './new-tab'
 import { rowName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
-import { folderOf, isMarkdownPath } from './space-paths'
+import { folderOf, isMarkdownPath, relativeTo } from './space-paths'
 import { isDesktop, platform } from './tauri'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
@@ -81,6 +82,9 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // everything under it, so leaving it out leaves out what is nested in it. See
     // workspace/excluded.svelte.ts.
     ...excludeEntry(entry.path),
+    // Putting it away, on the row's own path for the same reason: a folder goes with
+    // everything under it. See archiving.ts.
+    ...archiveEntry(entry.path),
     // Who else may have this one file, in the same word the space uses. On the
     // note the row is drawn as, because a share names a file the account has a
     // copy of: a folder is not one, and a folder with no note has nothing to
@@ -109,18 +113,22 @@ export function rowMenu(entry: Entry): MenuEntry[] {
 function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
   const paths = [...workspace.selection]
-  const count = paths.length
+  // The rows that can actually go: a count that took in a folder holding something
+  // archived would be a menu promising to delete what it is going to leave.
+  const count = workspace.deletable(paths).length
 
   return [
     { label: t('Open all'), run: () => void openAll(paths) },
     DIVIDER,
     { label: t('Move'), run: () => void moveAllTo(paths) },
     ...bookmarkAll(paths),
+    ...archiveAll(paths),
     { label: t('Copy link'), run: () => void copyLinks(paths) },
     DIVIDER,
     {
       label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
       danger: true,
+      disabled: count === 0,
       run: () => void workspace.removeMany(paths),
     },
     ...undoEntry(),
@@ -173,6 +181,22 @@ function bookmarkAll(paths: readonly string[]): MenuEntry[] {
       run: () => workspace.bookmarks.toggleAll(marks),
     },
   ]
+}
+
+/** The selection put away with one press, and one Undo for all of it. */
+function archiveAll(paths: readonly string[]): MenuEntry[] {
+  const [first] = paths
+  const entry = first === undefined ? [] : archiveEntry(first)
+  if (!entry.length) return []
+
+  return __EVEN_PLUGIN__
+    ? []
+    : [
+        {
+          label: t('Archive'),
+          run: () => void import('./archiving').then(({ archive }) => archive(paths)),
+        },
+      ]
 }
 
 /** A link to each row, a line each, written through the app's one writer; see
@@ -243,6 +267,11 @@ async function moveTo(entry: Entry, targets: readonly MoveTarget[]) {
  *  that holds anything. A row with nothing under it goes the way deleting one note
  *  has always gone, which is without a question. */
 async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
+  if (workspace.keepsArchived(entry.path)) {
+    await refuseDeleting([entry.path])
+    return
+  }
+
   if (!inside) {
     await workspace.remove(entry.path, entry.is_dir)
     return
@@ -257,6 +286,34 @@ async function removeRow(entry: Entry, marked: Entry, inside: boolean) {
   })
 
   if (sure) await workspace.remove(entry.path, true)
+}
+
+/** Rows a deletion left alone because something archived is in them, said: nothing
+ *  archived is deleted, so the sheet counts what is in the way and offers to show it.
+ *  For the row's Delete and for the keys; see `keepsArchived` in workspace.svelte.ts. */
+export async function refuseDeleting(paths: readonly string[]) {
+  const root = workspace.activeSpace?.root ?? ''
+  const held = [...workspace.archive.keysOf(root)].filter((one) =>
+    paths.some((path) => {
+      const at = relativeTo(root, path)
+      return one === at || one.startsWith(`${at}/`)
+    }),
+  ).length
+
+  const { prompt } = await import('./prompt.svelte')
+  const show = await prompt.confirm({
+    title: t('Nothing archived is deleted'),
+    detail: plural(held, {
+      one: '{count} archived item inside',
+      other: '{count} archived items inside',
+    }),
+    confirmLabel: key('Show them'),
+  })
+
+  if (show) {
+    const { archiveList } = await import('./archive-list.svelte')
+    archiveList.show()
+  }
 }
 
 /** The row in the file manager, in Obsidian's words on a Mac; see reveal.ts. */

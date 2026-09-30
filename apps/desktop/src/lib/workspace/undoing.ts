@@ -14,6 +14,7 @@
 import { links } from '../link-index.svelte'
 import { nameOf } from '../space-paths'
 import { invoke } from '../tauri'
+import type { Archive } from './archive.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
 import type { Positions } from './positions'
 import type { FileAction, FileActions } from './undo.svelte'
@@ -24,6 +25,8 @@ export interface PutsBack {
   readonly undone: FileActions
   readonly tabs: Tab[]
   readonly positions: Positions
+  readonly archive: Archive
+  openEntry(path: string): Promise<void>
   /** The document a file is open as; see workspace/open.ts. */
   documentAt(path: string): NoteDoc | null
   close(id: string): void
@@ -71,6 +74,10 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
         break
       case 'copy':
         await uncopy(ws, action)
+        break
+      case 'archive':
+      case 'unarchive':
+        await unarchive(ws, action)
         break
     }
   } catch {
@@ -145,6 +152,15 @@ async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise
 
   await invoke('write_note', { path: action.path, content: action.content })
   return action.path
+}
+
+/** Puts an archiving back, either way round, and opens the tabs it closed. */
+async function unarchive(
+  ws: PutsBack,
+  action: Extract<FileAction, { kind: 'archive' | 'unarchive' }>,
+) {
+  await ws.archive.change(action.root, action.restored, action.archived)
+  for (const path of action.closed) await ws.openEntry(path)
 }
 
 /** Puts a replacement back: every note that was touched says what it said,

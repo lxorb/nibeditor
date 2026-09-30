@@ -71,6 +71,7 @@ function store(spaces: Space[]) {
     arranged: follows('arranged'),
     graphSettings: follows('graph'),
     excluded: follows('left out'),
+    archive: follows('archive'),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
     loadTree: () => Promise.resolve(),
@@ -183,6 +184,7 @@ describe('a space renamed', () => {
       'arranged /spaces/Work -> /spaces/Studio',
       'graph /spaces/Work -> /spaces/Studio',
       'left out /spaces/Work -> /spaces/Studio',
+      'archive /spaces/Work -> /spaces/Studio',
       'bookmarks /spaces/Work -> /spaces/Studio',
     ])
   })
@@ -216,6 +218,7 @@ describe('a space deleted', () => {
       'arranged forgot /spaces/Work',
       'graph forgot /spaces/Work',
       'left out forgot /spaces/Work',
+      'archive forgot /spaces/Work',
     ])
     expect(ws.activeSpaceId).toBe('h')
   })

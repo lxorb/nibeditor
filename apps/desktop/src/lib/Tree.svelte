@@ -319,7 +319,10 @@
       shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
     if (deleting && workspace.selection.length) {
       event.preventDefault()
+      // What holds something archived stays, and says why.
+      const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       void workspace.removeMany(workspace.selection)
+      if (kept.length) void import('./row-menu').then((one) => one.refuseDeleting(kept))
       return
     }
 

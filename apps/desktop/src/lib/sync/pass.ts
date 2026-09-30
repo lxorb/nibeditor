@@ -165,6 +165,10 @@ export interface Waiting {
    *  answer: pushing one is exactly what would write over the copy nobody has
    *  looked at yet. */
   held?: ReadonlySet<string>
+  /** Whether a file, by the path it has here, is one this space keeps whatever
+   *  another device says: the archive, whose promise is that nothing in it is ever
+   *  deleted. Handed in for the reason the rest is; see workspace/archive. */
+  kept?: (path: string) => boolean
 }
 
 /** Takes what the account has moved on to. Answers whether anything did. */
@@ -201,7 +205,7 @@ export async function pull(
       const target = joinPath(root, remote.path)
 
       if (remote.deleted) {
-        await deletedThere(mirror, remote, target, joined)
+        await deletedThere(mirror, remote, target, joined, waiting?.kept?.(target) === true)
         continue
       }
 
@@ -405,7 +409,13 @@ export async function pull(
  *
  *  A delete names a note, not a path, and the name may be another note's by now - one
  *  made there since, that a create here was paired with. That note is left alone. */
-async function deletedThere(mirror: Mirror, remote: RemoteNote, target: string, joined: Joined) {
+async function deletedThere(
+  mirror: Mirror,
+  remote: RemoteNote,
+  target: string,
+  joined: Joined,
+  kept = false,
+) {
   const tracked = mirror.notes[remote.path]
   if (tracked && tracked.id !== remote.id) return
 
@@ -420,6 +430,13 @@ async function deletedThere(mirror: Mirror, remote: RemoteNote, target: string, 
 
   if (local === null || !(joined.has(remote.id) || (await holdsSameWords(local, tracked.hash)))) {
     log('info', `sync: ${target} was deleted elsewhere after it was written in here, so it stays`)
+    return
+  }
+
+  // Archived here, and nothing archived is deleted. The entry has gone from the mirror
+  // above, so the push sends the file up again as the note it still is.
+  if (kept) {
+    log('info', `sync: ${target} was deleted elsewhere and is archived here, so it stays`)
     return
   }
 

@@ -1520,4 +1520,14 @@ export const ko: Dictionary = {
   'Default browser': '기본 브라우저',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: '보관',
+  Unarchive: '보관 취소',
+  Archived: '보관됨',
+  Unarchived: '보관 취소됨',
+  'Undo archiving {name}': '{name} 보관 실행 취소',
+  'Undo unarchiving {name}': '{name} 다시 보관',
+  'Nothing archived is deleted': '보관한 항목은 삭제되지 않습니다',
+  'Show them': '보기',
+  '{count} archived items inside': '안에 보관된 항목 {count}개',
 }

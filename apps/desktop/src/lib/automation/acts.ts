@@ -357,6 +357,9 @@ export async function deleteFile(args: Said): Promise<unknown> {
   if ((await workspace.noteText(path)) === null) {
     throw new Error(`there is no note at ${relative}`)
   }
+  // Said rather than skipped: the deletion refuses it anyway, and a caller told
+  // `deleted` about a note that is still there would be told something untrue.
+  if (workspace.keepsArchived(path)) throw new Error(`${relative} is archived, and is kept`)
 
   await workspace.remove(path, false)
   return { path: relative, deleted: true }

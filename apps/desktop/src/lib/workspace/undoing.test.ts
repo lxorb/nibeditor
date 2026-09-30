@@ -362,3 +362,52 @@ describe('a merge and a carve put back', () => {
     expect(told).toEqual(['saved /s/a.md', 'gone /s/b.md', 'reloaded /s/a.md'])
   })
 })
+
+describe('an archiving put back', () => {
+  /** The store, with the archive and the opening as calls: which way each path went
+   *  and which tabs came back is all this is about. */
+  function archived(action: FileAction) {
+    const changes: unknown[] = []
+    const opened: string[] = []
+    const ws = Object.assign(store(action), {
+      archive: { change: (...args: unknown[]) => void changes.push(args) },
+      openEntry: (path: string) => {
+        opened.push(path)
+        return Promise.resolve()
+      },
+    }) as unknown as PutsBack
+
+    return { ws, changes, opened }
+  }
+
+  test('takes back what it put away, and opens the tabs it closed', async () => {
+    const { ws, changes, opened } = archived({
+      kind: 'archive',
+      root: '/s',
+      archived: ['Plan.md'],
+      restored: [],
+      closed: ['/s/Plan.md'],
+    })
+    await undoLastFileAction(ws)
+
+    expect(changes).toEqual([['/s', [], ['Plan.md']]])
+    expect(opened).toEqual(['/s/Plan.md'])
+    expect(ws.undone.stack).toEqual([])
+    // Nothing on disk moved, either way.
+    expect(sent).toEqual([])
+  })
+
+  test('and puts back away what taking a note out of a folder left out', async () => {
+    const { ws, changes } = archived({
+      kind: 'unarchive',
+      root: '/s',
+      archived: ['Old/Notes.md'],
+      restored: ['Old'],
+      closed: [],
+    })
+    await undoLastFileAction(ws)
+
+    expect(changes).toEqual([['/s', ['Old'], ['Old/Notes.md']]])
+    expect(ws.undone.ahead).toHaveLength(1)
+  })
+})

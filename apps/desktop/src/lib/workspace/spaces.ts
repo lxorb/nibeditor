@@ -21,6 +21,7 @@ import type { DeviceView } from './device.svelte'
 import type { NoteDoc, Tab } from './documents.svelte'
 import type { Arranged } from './arranged.svelte'
 import type { Excluded } from './excluded.svelte'
+import type { Archive } from './archive.svelte'
 import type { FolderIcons } from './folder-icons.svelte'
 import type { SpaceGraphSettings } from './graph-settings.svelte'
 
@@ -40,6 +41,7 @@ export interface HoldsSpaces {
   readonly arranged: Arranged
   readonly graphSettings: SpaceGraphSettings
   readonly excluded: Excluded
+  readonly archive: Archive
   close(id: string): void
   clearSelection(): void
   loadTree(): Promise<void>
@@ -161,6 +163,7 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   ws.arranged.spaceMoved(space.root, renamed.path)
   ws.graphSettings.spaceMoved(space.root, renamed.path)
   ws.excluded.spaceMoved(space.root, renamed.path)
+  ws.archive.spaceMoved(space.root, renamed.path)
   ws.bookmarks.spaceMoved(space.root, renamed.path)
 
   space.name = renamed.name
@@ -300,6 +303,7 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   ws.arranged.forget(space.root)
   ws.graphSettings.forget(space.root)
   ws.excluded.forget(space.root)
+  ws.archive.forget(space.root)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   if (ws.activeSpaceId !== id) {
     ws.persist()

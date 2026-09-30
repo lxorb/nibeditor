@@ -1545,4 +1545,17 @@ export const ps: Dictionary = {
   'Default browser': 'اصلي کوټګر',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'آرشیف',
+  Unarchive: 'له آرشیف څخه ایستل',
+  Archived: 'آرشیف شو',
+  Unarchived: 'له آرشیف څخه وایستل شو',
+  'Undo archiving {name}': 'د {name} آرشیف بېرته واخله',
+  'Undo unarchiving {name}': '{name} بیا آرشیف کړه',
+  'Nothing archived is deleted': 'هېڅ آرشیف شوی شی نه ړنګېږي',
+  'Show them': 'وښیه',
+  '{count} archived items inside': {
+    one: '{count} آرشیف شوی توکی دننه',
+    other: '{count} آرشیف شوي توکي دننه',
+  },
 }

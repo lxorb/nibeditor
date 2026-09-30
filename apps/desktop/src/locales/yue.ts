@@ -1507,4 +1507,14 @@ export const yue: Dictionary = {
   'Default browser': '預設瀏覽器',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: '封存',
+  Unarchive: '取消封存',
+  Archived: '已封存',
+  Unarchived: '已取消封存',
+  'Undo archiving {name}': '還原封存 {name}',
+  'Undo unarchiving {name}': '再封存 {name}',
+  'Nothing archived is deleted': '封存咗嘅嘢唔會被刪除',
+  'Show them': '顯示',
+  '{count} archived items inside': '入面有 {count} 個封存咗嘅項目',
 }

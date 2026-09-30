@@ -1615,4 +1615,19 @@ export const pl: Dictionary = {
   'Default browser': 'Domyślna przeglądarka',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archiwizuj',
+  Unarchive: 'Przywróć z archiwum',
+  Archived: 'Zarchiwizowano',
+  Unarchived: 'Przywrócono',
+  'Undo archiving {name}': 'Cofnij archiwizację {name}',
+  'Undo unarchiving {name}': 'Ponownie zarchiwizuj {name}',
+  'Nothing archived is deleted': 'Nic zarchiwizowanego nie jest usuwane',
+  'Show them': 'Pokaż je',
+  '{count} archived items inside': {
+    one: '{count} zarchiwizowany element w środku',
+    few: '{count} zarchiwizowane elementy w środku',
+    many: '{count} zarchiwizowanych elementów w środku',
+    other: '{count} zarchiwizowanego elementu w środku',
+  },
 }

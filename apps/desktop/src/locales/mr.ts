@@ -1543,4 +1543,17 @@ export const mr: Dictionary = {
   'Default browser': 'मूळ ब्राउझर',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'संग्रहित करा',
+  Unarchive: 'संग्रहातून काढा',
+  Archived: 'संग्रहित केले',
+  Unarchived: 'संग्रहातून काढले',
+  'Undo archiving {name}': '{name} चे संग्रहण पूर्ववत करा',
+  'Undo unarchiving {name}': '{name} पुन्हा संग्रहित करा',
+  'Nothing archived is deleted': 'संग्रहित केलेले काहीही हटवले जात नाही',
+  'Show them': 'दाखवा',
+  '{count} archived items inside': {
+    one: 'आत {count} संग्रहित आयटम',
+    other: 'आत {count} संग्रहित आयटम',
+  },
 }

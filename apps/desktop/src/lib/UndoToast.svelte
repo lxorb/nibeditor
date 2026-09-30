@@ -8,6 +8,14 @@
   import { unread } from './unread.svelte'
   import { workspace } from './workspace.svelte'
 
+  /** The one word for each thing the toast can take back. */
+  const said = $derived({
+    delete: t('Deleted'),
+    move: t('Moved'),
+    archive: t('Archived'),
+    unarchive: t('Unarchived'),
+  })
+
   // What is on the stack already, before this was on the page, is nobody's news.
   undoToast.know(workspace.undone.stack)
 
@@ -35,7 +43,7 @@
     onpointerenter={() => undoToast.hold()}
     onpointerleave={() => undoToast.linger()}
   >
-    <p>{undoToast.kind === 'delete' ? t('Deleted') : t('Moved')}</p>
+    <p>{said[undoToast.kind]}</p>
     <button class="undo" onclick={() => void undoToast.undo(workspace)}>{t('Undo')}</button>
   </div>
   <!-- A row clicked that opened nothing, because the file is there and would not

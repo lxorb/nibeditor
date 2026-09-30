@@ -38,6 +38,11 @@ export async function redoLastFileAction(ws: DoesAgain): Promise<void> {
       case 'copy':
         await copyAgain(ws, action.made)
         break
+      case 'archive':
+      case 'unarchive':
+        // Never in the glasses' plugin, which has no archiving to do again.
+        if (!__EVEN_PLUGIN__) (await import('../archiving')).archiveAgain(action)
+        break
       // Never ahead: they kept only the way back; see `doesAgain`.
       case 'merge':
       case 'split':

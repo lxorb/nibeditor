@@ -24,7 +24,7 @@
   import { arrive, leave, segmented } from './slide'
   import { headingAt, lineOf } from './outline'
   import { pages } from './pages/showing.svelte'
-  import { pagesNavigator, searchPanel } from './surfaces.svelte'
+  import { archiveSection, pagesNavigator, searchPanel } from './surfaces.svelte'
   import { bookmarkEntry, DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { roving } from './roving'
   import type { Panel, PanelSide } from './workspace.svelte'
@@ -729,6 +729,13 @@
               {#if !workspace.files.length && !arriving.coming.size}
                 <button class="empty" onclick={() => workspace.createNote()}>{t('New note')}</button
                 >
+              {/if}
+
+              <!-- What the space put away, at the list's foot; see Archive.svelte. -->
+              {#if !__EVEN_PLUGIN__ && workspace.archive.any}
+                {#await archiveSection() then Archive}
+                  <Archive />
+                {/await}
               {/if}
 
               <!-- The space below the last row still belongs to the space, so it

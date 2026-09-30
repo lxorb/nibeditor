@@ -136,6 +136,10 @@ export interface Space {
    *  spaces/arranged.ts. `{}` until a row is dragged, and holding only the folders
    *  where one was: everything a list leaves out falls to the end in name order. */
   arranged: string
+  /** What the space has archived, as a JSON map of path to moment: positive while
+   *  archived, negative once taken back; see spaces/archived.ts. `{}` until something
+   *  is put away. */
+  archived: string
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string

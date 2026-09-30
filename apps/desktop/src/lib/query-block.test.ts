@@ -26,7 +26,7 @@ vi.mock('./search/space', () => ({
 vi.mock('./workspace.svelte', () => ({
   workspace: {
     activeSpace: { root: '/space' },
-    excluded: { of: () => ['Archive'] },
+    leftOutOf: () => ['Archive'],
     open: () => Promise.resolve(),
     goto: null,
     toggleTaskAt: () => Promise.resolve(true),

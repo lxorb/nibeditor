@@ -1562,4 +1562,17 @@ export const ml: Dictionary = {
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'ആർക്കൈവ് ചെയ്യുക',
+  Unarchive: 'ആർക്കൈവിൽ നിന്ന് മാറ്റുക',
+  Archived: 'ആർക്കൈവ് ചെയ്തു',
+  Unarchived: 'ആർക്കൈവിൽ നിന്ന് മാറ്റി',
+  'Undo archiving {name}': '{name} ആർക്കൈവ് ചെയ്തത് പഴയപടിയാക്കുക',
+  'Undo unarchiving {name}': '{name} വീണ്ടും ആർക്കൈവ് ചെയ്യുക',
+  'Nothing archived is deleted': 'ആർക്കൈവ് ചെയ്തതൊന്നും ഇല്ലാതാക്കില്ല',
+  'Show them': 'കാണിക്കുക',
+  '{count} archived items inside': {
+    one: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനം',
+    other: 'ഉള്ളിൽ {count} ആർക്കൈവ് ചെയ്ത ഇനങ്ങൾ',
+  },
 }

@@ -1585,4 +1585,17 @@ export const de: Dictionary = {
   'Default browser': 'Standardbrowser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archivieren',
+  Unarchive: 'Archivierung aufheben',
+  Archived: 'Archiviert',
+  Unarchived: 'Zurückgeholt',
+  'Undo archiving {name}': 'Archivieren von {name} rückgängig',
+  'Undo unarchiving {name}': '{name} wieder archivieren',
+  'Nothing archived is deleted': 'Archiviertes wird nie gelöscht',
+  'Show them': 'Zeigen',
+  '{count} archived items inside': {
+    one: '{count} archivierter Eintrag darin',
+    other: '{count} archivierte Einträge darin',
+  },
 }

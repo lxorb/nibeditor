@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Entry } from './workspace.svelte'
-import { entryAt, withComing, withEntry, withMove, withoutEntry } from './tree-edits'
+import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree } from './tree-order'
 
 function file(path: string): Entry {
@@ -32,6 +32,30 @@ function root(): Entry {
 function shape(entry: Entry): string[] {
   return entry.children.flatMap((child) => [child.path, ...shape(child)])
 }
+
+describe('the rows a space has archived, left out of the list', () => {
+  test('go at any depth, and a folder takes everything under it', () => {
+    const tree = root()
+    const kept = withoutRows(tree, (entry) => ['/N/Deep', '/N/c.md'].includes(entry.path))
+
+    expect(shape(kept)).toEqual(['/N/a.md'])
+    // Nothing is taken out of the tree that was asked.
+    expect(shape(tree)).toHaveLength(4)
+  })
+
+  test('and a tree with nothing archived in it is handed back as it was', () => {
+    const tree = root()
+
+    expect(withoutRows(tree, () => false)).toBe(tree)
+  })
+
+  test('and a branch nothing left keeps its own rows, so the list redraws only what changed', () => {
+    const tree = root()
+    const kept = withoutRows(tree, (entry) => entry.path === '/N/c.md')
+
+    expect(kept.children[0]).toBe(tree.children[0])
+  })
+})
 
 describe('a row put into the tree before the disk answers', () => {
   /** Where in its folder a row lands is nobody's business here: the order the rows

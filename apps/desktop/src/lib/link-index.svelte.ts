@@ -65,6 +65,7 @@ import {
   relativeTo,
 } from './space-paths'
 import { invoke } from './tauri'
+import { coveredBy } from './workspace/archive.svelte'
 
 /** One place a link was found, as a row in the panel. */
 export interface Reference {
@@ -92,6 +93,8 @@ export interface Outgoing extends Reference {
 /** How many mentions are worth looking for. The same ceiling the search field
  *  uses, and for the same reason. */
 const MOST_MENTIONS = 200
+
+const NOTHING: ReadonlySet<string> = new Set()
 
 /** How many notes a read-through keeps in hand for the embeds and previews on
  *  screen. A handful is all a screenful of embeds can ask for. */
@@ -154,17 +157,28 @@ class Links {
    *  index changes, so a frame never shows a note as it was two saves ago. */
   private read = new Map<string, string>()
 
+  /** What a space has archived; handed in at the foot of workspace.svelte.ts. */
+  archivedIn: (root: string) => ReadonlySet<string> = () => NOTHING
+
+  private get archived(): ReadonlySet<string> {
+    return this.root === null ? NOTHING : this.archivedIn(this.root)
+  }
+
   /** Every note as the editor needs to see it. Derived once per change rather
-   *  than per link drawn, since resolving a name walks it. */
-  private readonly refs = $derived.by((): NoteRef[] =>
-    this.notes.map((note) => ({
+   *  than per link drawn, since resolving a name walks it. An archived note is
+   *  carried, marked: a link into it still resolves and opens. */
+  private readonly refs = $derived.by((): NoteRef[] => {
+    const archived = this.archived
+
+    return this.notes.map((note) => ({
       path: note.path,
       name: note.name,
       headings: note.headings,
       blocks: note.blocks,
       aliases: note.aliases,
-    })),
-  )
+      ...(coveredBy(archived, note.path) === null ? {} : { archived: true }),
+    }))
+  })
 
   /** Every tag of the space with the notes under it, most carried first.
    *
@@ -192,8 +206,12 @@ class Links {
   readonly spaceTags = $derived.by((): SpaceTag[] => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const counts = new Map<string, number>()
+    const archived = this.archived
 
     for (const note of this.notes) {
+      // An archived note's tags are not the space's, as the search behind a row says.
+      if (coveredBy(archived, note.path) !== null) continue
+
       // One note is one count per name, whatever it wrote twice and whatever two
       // of its tags share a level. A list rather than a set: a note carries a
       // handful of tags, and the reading below is a walk either way.
@@ -737,8 +755,9 @@ class Links {
     // One object per open note rather than one in all. A pane going back to a
     // note it was on a moment ago is handed the same object it had before, so
     // switching between two tabs does not redraw every link in either of them.
-    if (this.handedAt !== this.version) {
+    if (this.handedAt !== this.version || this.handedArchived !== this.archived) {
       this.handedAt = this.version
+      this.handedArchived = this.archived
       this.handed.clear()
     }
 
@@ -819,6 +838,8 @@ class Links {
   private readonly handed = new Map<string, NoteIndex>()
   /** Which version of the space the objects above describe. */
   private handedAt = -1
+  /** And which archive: it changes how links are drawn without changing a word. */
+  private handedArchived: ReadonlySet<string> = NOTHING
 
   /** One note's text, for an embed or a hover preview. Kept for a moment after
    *  it arrives, because a screen of embeds asks for the same few notes. */
@@ -1052,6 +1073,7 @@ class Links {
     // be anywhere; a quote inside a name is escaped the way the grammar escapes
     // one. See search/query.ts.
     const found: Hit[] = []
+    const left = await this.leftOut(root)
     await Promise.all(
       written.map((one) =>
         searchSpace(
@@ -1060,6 +1082,7 @@ class Links {
           [],
           MOST_MENTIONS,
           (batch) => found.push(...batch.hits),
+          left,
         ).catch(() => undefined),
       ),
     )
@@ -1158,7 +1181,6 @@ class Links {
     const needle = text.trim()
     if (!root || needle.length < 2) return []
 
-    const { workspace } = await import('./workspace.svelte')
     const found: Hit[] = []
 
     await searchSpace(
@@ -1167,7 +1189,7 @@ class Links {
       [],
       most,
       (batch) => found.push(...batch.hits),
-      workspace.excluded.of(root),
+      await this.leftOut(root),
     ).catch(() => undefined)
 
     return (
@@ -1184,6 +1206,12 @@ class Links {
           id: blockIdOf(hit.text),
         }))
     )
+  }
+
+  /** What the space's own searches skip; see `leftOutOf` in workspace.svelte.ts. */
+  private async leftOut(root: string): Promise<string[]> {
+    const { workspace } = await import('./workspace.svelte')
+    return workspace.leftOutOf(root)
   }
 
   /** Gives a block of another note a name, so a link can point at the block.

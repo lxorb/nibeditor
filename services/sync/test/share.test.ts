@@ -166,6 +166,16 @@ const ROUTES: Route[] = [
       call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded: [] } }),
   },
   {
+    what: 'putting a note away',
+    needs: 'write',
+    go: (token) =>
+      call(env, `/v1/spaces/${space}/archived`, {
+        method: 'PUT',
+        token,
+        body: { archived: { 'Plan.md': 1 } },
+      }),
+  },
+  {
     what: 'keeping the files beside the notes',
     needs: 'write',
     go: (token) =>

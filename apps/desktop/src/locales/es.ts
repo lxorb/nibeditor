@@ -1590,4 +1590,18 @@ export const es: Dictionary = {
   'Default browser': 'Navegador por defecto',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Deshacer los cambios de {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Archivar',
+  Unarchive: 'Desarchivar',
+  Archived: 'Archivado',
+  Unarchived: 'Desarchivado',
+  'Undo archiving {name}': 'Deshacer el archivado de {name}',
+  'Undo unarchiving {name}': 'Volver a archivar {name}',
+  'Nothing archived is deleted': 'Lo archivado nunca se elimina',
+  'Show them': 'Mostrarlos',
+  '{count} archived items inside': {
+    one: '{count} elemento archivado dentro',
+    many: '{count} de elementos archivados dentro',
+    other: '{count} elementos archivados dentro',
+  },
 }

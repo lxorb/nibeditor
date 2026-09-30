@@ -65,6 +65,7 @@ void filling.then(() => {
   workspace.arranged.reread()
   workspace.graphSettings.reread()
   workspace.excluded.reread()
+  workspace.archive.reread()
   sync.reread()
   recovery.restore()
 })

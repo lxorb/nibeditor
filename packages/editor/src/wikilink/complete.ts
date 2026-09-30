@@ -2,6 +2,7 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blocksOf, foldName } from '@nib/markdown/links'
+import { label } from '../labels'
 import {
   fuzzy,
   type LinkWrite,
@@ -145,12 +146,15 @@ function folderOf(path: string): string | undefined {
 function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] {
   const rows: Completion[] = []
   const folder = folderOf(note.path)
+  // An archived note is offered for its whole name only, and says so.
+  const archived = note.archived === true
+  const detail = archived ? label('archived') : folder
 
-  if (!needle || matches(note, needle)) {
+  if (archived ? foldName(note.name) === needle : !needle || matches(note, needle)) {
     rows.push({
       // Composed, for the popup's own filter; see `foldName`.
       label: note.name.normalize('NFC'),
-      ...(folder === undefined ? {} : { detail: folder }),
+      ...(detail === undefined ? {} : { detail }),
       apply: insert(about(index, note)),
       type: 'text',
     })
@@ -158,7 +162,9 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   for (const alias of note.aliases) {
     if (!alias.trim()) continue
-    if (needle && !foldName(alias).includes(needle)) continue
+    if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle)) {
+      continue
+    }
 
     // The alias is the name, so a wikilink writes the alias and a markdown link
     // shows it over the note's own path - which is the same sentence either way.
@@ -271,6 +277,8 @@ function spaceHeadings(index: NoteIndex, typed: string): Completion[] {
   const rows: Completion[] = []
 
   for (const note of index.notes) {
+    if (note.archived) continue
+
     for (const heading of note.headings) {
       if (!fuzzy(heading, needle)) continue
 
@@ -297,6 +305,8 @@ function namedBlocks(index: NoteIndex, needle: string): Completion[] {
   const rows: Completion[] = []
 
   for (const note of index.notes) {
+    if (note.archived) continue
+
     for (const id of note.blocks) {
       if (!fuzzy(id, needle)) continue
 

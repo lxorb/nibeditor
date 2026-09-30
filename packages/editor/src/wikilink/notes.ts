@@ -30,6 +30,8 @@ export interface NoteRef {
   /** The other names the note gave itself, in its own front matter. A link may
    *  use any of them; see `resolveNote`. */
   aliases: readonly string[]
+  /** Put away by the space: still linked to, drawn marked, offered by whole name. */
+  archived?: boolean
 }
 
 /** One tag the space uses, and how many of its notes carry it.
@@ -438,6 +440,12 @@ export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): bool
   if (isTabFile(link.target)) return resolveFile(index, link.target, kind) !== null
 
   return resolveLink(index, link, kind) !== null
+}
+
+/** Whether a link points at a note the space has archived. */
+export function archivedLink(index: NoteIndex, link: Wikilink, kind: LinkKind): boolean {
+  if (!link.target || isTabFile(link.target)) return false
+  return resolveLink(index, link, kind)?.archived === true
 }
 
 /** Where following a link would go. */

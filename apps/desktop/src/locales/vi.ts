@@ -1530,4 +1530,14 @@ export const vi: Dictionary = {
   'Default browser': 'Trình duyệt mặc định',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Lưu trữ',
+  Unarchive: 'Bỏ lưu trữ',
+  Archived: 'Đã lưu trữ',
+  Unarchived: 'Đã bỏ lưu trữ',
+  'Undo archiving {name}': 'Hoàn tác lưu trữ {name}',
+  'Undo unarchiving {name}': 'Lưu trữ lại {name}',
+  'Nothing archived is deleted': 'Không gì đã lưu trữ bị xóa',
+  'Show them': 'Hiển thị',
+  '{count} archived items inside': '{count} mục đã lưu trữ bên trong',
 }

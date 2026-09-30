@@ -16,6 +16,7 @@ import type { Env, Space, Variables, Whoever } from '../types'
 import { readArranged } from './arranged'
 import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
+import { readArchived } from './archived'
 import { readGraph } from './graph'
 import { readIcons, readTints } from './icons'
 import { presentSite, readSite } from '../blog/site'
@@ -107,6 +108,7 @@ export async function addSpace(
     tints: '{}',
     graph: '{}',
     arranged: '{}',
+    archived: '{}',
     excluded: '[]',
     site: '{}',
   }
@@ -405,6 +407,9 @@ export function presentSpace(
     // a tree that arrived in name order and rearranged itself a moment later would be
     // the rows moving under somebody's hand.
     arranged: readArranged(space.arranged),
+    // And what it has archived, which the tree is drawn without: a tree that showed an
+    // archived note and hid it a request later would be a row blinking out.
+    archived: readArchived(space.archived),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

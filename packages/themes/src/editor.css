@@ -164,6 +164,19 @@
   text-decoration-color: var(--accent);
 }
 
+/* A link to a note the space has archived. Still a link, in the link's own colour,
+   because it still opens; faded, and dashed rather than dotted so it is not read as a
+   note that is missing. */
+.nib-link-archived,
+.nib-link-archived * {
+  opacity: 0.7;
+  text-decoration-style: dashed;
+}
+.nib-link-archived:hover,
+.nib-link-archived:hover * {
+  opacity: 1;
+}
+
 /* `<u>text</u>`, with the tags hidden the way `**` is. */
 .nib-underline {
   text-decoration: underline;

@@ -74,6 +74,8 @@ class Search {
   /** Whether the replacement field is open. */
   replacing = $state(false)
   replacement = $state('')
+  /** Whether the archive answers too: off unless asked, as Bear searches its own. */
+  archived = $state(false)
 
   /** The hits the reader has turned off. Everything found is on to begin with,
    *  so what is worth keeping is the exceptions. */
@@ -108,6 +110,13 @@ class Search {
    *  notes. Every file rather than every note, because a paper answers a search
    *  too; see pdf/papers.ts. */
   private readonly dated = $derived.by(() => new Map(workspace.files.map((one) => [one.path, one])))
+
+  showArchived(shown: boolean) {
+    if (this.archived === shown) return
+
+    this.archived = shown
+    if (this.asks) void this.run()
+  }
 
   /** Chooses the order. The same key again flips the direction, as the file
    *  list's own sort does. */
@@ -243,7 +252,7 @@ class Search {
     // Rows arrive in handfuls and go on the end, so the list fills from the
     // top while the rest of the space is still being read. The guesses come in
     // the last handful, already ranked; see space.ts.
-    const excluded = workspace.excluded.of(root)
+    const excluded = this.archived ? workspace.excluded.of(root) : workspace.leftOutOf(root)
     await searchSpace(
       root,
       this.query,

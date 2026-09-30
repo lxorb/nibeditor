@@ -42,6 +42,8 @@ const DEFAULTS = {
   createNote: 'Ctrl+Click to create the note',
   createNoteMac: '⌘-click to create the note',
   noteNotFound: 'Note not found',
+  /** Beside a note `[[` offers although it has been put away. */
+  archived: 'Archived',
   loadingNote: 'Loading…',
   alignLeft: 'Align left',
   alignCenter: 'Align center',

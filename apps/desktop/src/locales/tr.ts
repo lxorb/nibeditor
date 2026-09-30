@@ -1548,4 +1548,17 @@ export const tr: Dictionary = {
   'Default browser': 'Öntanımlı tarayıcı',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Arşivle',
+  Unarchive: 'Arşivden çıkar',
+  Archived: 'Arşivlendi',
+  Unarchived: 'Arşivden çıkarıldı',
+  'Undo archiving {name}': '{name} arşivlemesini geri al',
+  'Undo unarchiving {name}': '{name} yeniden arşivle',
+  'Nothing archived is deleted': 'Arşivlenen hiçbir şey silinmez',
+  'Show them': 'Göster',
+  '{count} archived items inside': {
+    one: 'İçeride {count} arşivlenmiş öğe',
+    other: 'İçeride {count} arşivlenmiş öğe',
+  },
 }

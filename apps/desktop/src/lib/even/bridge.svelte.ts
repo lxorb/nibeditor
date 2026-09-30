@@ -109,6 +109,9 @@ function rowsOf(entry: Entry | null, folds: Folds, depth = 0): Row[] {
 
   const out: Row[] = []
   for (const child of entry.children) {
+    // What the space archived is left off the glass as it is off the file list.
+    if (workspace.archive.has(child.path)) continue
+
     if (child.is_dir) {
       const open = folds === null || folds(child.path)
       // A folder in a list where every folder is already open has nothing a tap
@@ -777,7 +780,7 @@ class Bridge {
       }
 
       case 'switchNote': {
-        const notes = workspace.notes
+        const notes = workspace.notes.filter((one) => !workspace.archive.has(one.path))
         const name = bestOf(
           command.name,
           notes.map((one) => shownName(one.name)),

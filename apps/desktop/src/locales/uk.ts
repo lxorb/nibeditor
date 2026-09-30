@@ -1609,4 +1609,19 @@ export const uk: Dictionary = {
   'Default browser': 'Браузер за умовчанням',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Архівувати',
+  Unarchive: 'Повернути з архіву',
+  Archived: 'В архіві',
+  Unarchived: 'Повернуто',
+  'Undo archiving {name}': 'Скасувати архівування {name}',
+  'Undo unarchiving {name}': 'Знову архівувати {name}',
+  'Nothing archived is deleted': 'Архівне ніколи не видаляється',
+  'Show them': 'Показати',
+  '{count} archived items inside': {
+    one: '{count} архівний елемент усередині',
+    few: '{count} архівні елементи всередині',
+    many: '{count} архівних елементів усередині',
+    other: '{count} архівного елемента всередині',
+  },
 }

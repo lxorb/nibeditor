@@ -191,6 +191,8 @@ export interface RemoteSpace {
    *  rather than trusted, for the reason the graph settings are: a build of the service
    *  older than this app answers with nothing at all. */
   arranged: unknown
+  /** What the space has archived; read rather than trusted, see workspace/archive. */
+  archived?: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -777,6 +779,14 @@ export const api = {
       method: 'PUT',
       token,
       body: { arranged },
+    }),
+
+  /** The whole map, met with the account's first; see workspace/archive-map.ts. */
+  saveArchived: (token: string, id: string, archived: Readonly<Record<string, number>>) =>
+    request<{ archived: Record<string, number> }>(`/v1/spaces/${id}/archived`, {
+      method: 'PUT',
+      token,
+      body: { archived },
     }),
 
   deleteSpace: (token: string, id: string) =>

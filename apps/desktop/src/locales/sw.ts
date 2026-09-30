@@ -1568,4 +1568,17 @@ export const sw: Dictionary = {
   'Default browser': 'Kivinjari chaguomsingi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Hifadhi kwenye kumbukumbu',
+  Unarchive: 'Toa kwenye kumbukumbu',
+  Archived: 'Imehifadhiwa kwenye kumbukumbu',
+  Unarchived: 'Imetolewa kwenye kumbukumbu',
+  'Undo archiving {name}': 'Tendua kuhifadhi {name} kwenye kumbukumbu',
+  'Undo unarchiving {name}': 'Hifadhi {name} kwenye kumbukumbu tena',
+  'Nothing archived is deleted': 'Hakuna kilichohifadhiwa kwenye kumbukumbu kinachofutwa',
+  'Show them': 'Vionyeshe',
+  '{count} archived items inside': {
+    one: 'Kipengee {count} cha kumbukumbu ndani',
+    other: 'Vipengee {count} vya kumbukumbu ndani',
+  },
 }

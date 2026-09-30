@@ -1614,4 +1614,19 @@ export const ru: Dictionary = {
   'Default browser': 'Браузер по умолчанию',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
+  // The archive: a row put away and taken back, and what refuses to delete it
+  Archive: 'Архивировать',
+  Unarchive: 'Вернуть из архива',
+  Archived: 'В архиве',
+  Unarchived: 'Возвращено',
+  'Undo archiving {name}': 'Отменить архивацию {name}',
+  'Undo unarchiving {name}': 'Снова архивировать {name}',
+  'Nothing archived is deleted': 'Архивное никогда не удаляется',
+  'Show them': 'Показать',
+  '{count} archived items inside': {
+    one: '{count} архивный элемент внутри',
+    few: '{count} архивных элемента внутри',
+    many: '{count} архивных элементов внутри',
+    other: '{count} архивного элемента внутри',
+  },
 }
