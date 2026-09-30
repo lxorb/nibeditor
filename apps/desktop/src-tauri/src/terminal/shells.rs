@@ -467,8 +467,10 @@ pub fn distributions(printed: &[u8]) -> Vec<String> {
     let wide = printed.len() >= 2 && printed.chunks(2).any(|pair| pair.get(1) == Some(&0));
     let text = if wide {
         let units: Vec<u16> = printed
-            .chunks_exact(2)
-            .map(|pair| u16::from_le_bytes([pair[0], pair[1]]))
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|pair| u16::from_le_bytes(*pair))
             .collect();
         String::from_utf16_lossy(&units)
     } else {

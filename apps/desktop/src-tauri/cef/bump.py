@@ -5,7 +5,7 @@ Emil's requirement for the engine was *"we don't need to do anything manually wh
 there are upstream changes"*, and this is the half of that which nib owns. The engine
 is published crates now - `tauri-runtime-cef` beside a Tauri 3 alpha, the plugins built
 against one of its alphas, and `cef` for the Chromium under all of it - and the pins
-are the five lines of `[package.metadata.engine]` in Cargo.toml beside this file. So
+are the six lines of `[package.metadata.engine]` in Cargo.toml beside this file. So
 nib's part is to find the newest set that belongs together, rewrite those lines and the
 dependency list written from them, and let the workflow build, measure and propose it.
 
@@ -14,7 +14,8 @@ and the day Tauri renamed a method between two alphas they did not compile again
 (measured: `tauri-plugin-dialog` 3.0.0-alpha.1 against `tauri` 3.0.0-alpha.3). So the
 set is read from what the plugins were built against rather than what they accept: the
 lowest Tauri every plugin's newest release asks for is the Tauri, and the runtime is the
-newest release built against exactly that Tauri.
+newest release built against exactly that Tauri, with Tauri's runtime interface held to
+the release the runtime itself was built against.
 
     python bump.py --out bump.json        # what would move; nothing is written
     python bump.py --set '<pins json>'    # write exactly these pins
@@ -39,7 +40,7 @@ ROOT = HERE.parents[3]
 PLUGIN = re.compile(r'^(tauri-plugin-[a-z-]+) = ', re.M)
 
 #: The pins, by the key `[package.metadata.engine]` writes them under.
-KEYS = ('tauri', 'tauri-runtime-cef', 'tauri-build', 'plugins', 'cef')
+KEYS = ('tauri', 'tauri-runtime-cef', 'tauri-runtime', 'tauri-build', 'plugins', 'cef')
 
 AGENT = {'User-Agent': 'nib cef-bump (https://github.com/lxorb/nibeditor)'}
 
@@ -100,6 +101,7 @@ def newest() -> dict[str, str]:
         if floor(wants('tauri-runtime-cef', one, 'tauri') or '') == tauri
     )
     cef = floor(wants('tauri-runtime-cef', runtime, 'cef') or '')
+    core = floor(wants('tauri-runtime-cef', runtime, 'tauri-runtime') or '')
     utils = floor(wants('tauri', tauri, 'tauri-utils') or '')
     build = next(
         one
@@ -109,6 +111,7 @@ def newest() -> dict[str, str]:
     return {
         'tauri': tauri,
         'tauri-runtime-cef': runtime,
+        'tauri-runtime': core,
         'tauri-build': build,
         'plugins': plugin_version,
         'cef': cef.split('+')[0],
