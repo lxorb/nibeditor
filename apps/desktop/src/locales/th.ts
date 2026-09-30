@@ -1530,6 +1530,8 @@ export const th: Dictionary = {
   Clear: 'ล้าง',
   'Exited with code {code}': 'จบด้วยรหัส {code}',
   'Could not start {shell}': 'ไม่สามารถเริ่ม {shell}',
+  'Restore history': 'กู้คืนประวัติ',
+  'Restored {time}': 'กู้คืนแล้ว {time}',
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',

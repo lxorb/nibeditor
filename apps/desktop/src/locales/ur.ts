@@ -1558,6 +1558,8 @@ export const ur: Dictionary = {
   Clear: 'صاف کریں',
   'Exited with code {code}': 'کوڈ {code} کے ساتھ ختم ہوا',
   'Could not start {shell}': '{shell} شروع نہیں ہو سکا',
+  'Restore history': 'ہسٹری بحال کریں',
+  'Restored {time}': 'بحال کیا گیا {time}',
   'Stop what is running in {name}?': '{name} میں جو چل رہا ہے اسے روکیں؟',
   'Stop what is running in these terminals?': 'ان ٹرمینلز میں جو چل رہا ہے اسے روکیں؟',
   'Paste {count} lines?': { one: '{count} سطر چسپاں کریں؟', other: '{count} سطریں چسپاں کریں؟' },

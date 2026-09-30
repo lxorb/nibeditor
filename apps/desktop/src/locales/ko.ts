@@ -1541,6 +1541,8 @@ export const ko: Dictionary = {
   Clear: '지우기',
   'Exited with code {code}': '코드 {code}(으)로 종료됨',
   'Could not start {shell}': '{shell}을(를) 시작할 수 없음',
+  'Restore history': '기록 복원',
+  'Restored {time}': '{time} 복원됨',
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',

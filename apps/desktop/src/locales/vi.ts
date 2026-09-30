@@ -1549,6 +1549,8 @@ export const vi: Dictionary = {
   Clear: 'Xóa',
   'Exited with code {code}': 'Đã thoát với mã {code}',
   'Could not start {shell}': 'Không thể khởi động {shell}',
+  'Restore history': 'Khôi phục lịch sử',
+  'Restored {time}': 'Đã khôi phục {time}',
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
   'Paste {count} lines?': 'Dán {count} dòng?',

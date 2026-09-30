@@ -1631,6 +1631,8 @@ export const ru: Dictionary = {
   Clear: 'Очистить',
   'Exited with code {code}': 'Завершено с кодом {code}',
   'Could not start {shell}': 'Не удалось запустить {shell}',
+  'Restore history': 'Восстанавливать историю',
+  'Restored {time}': 'Восстановлено {time}',
   'Stop what is running in {name}?': 'Остановить то, что выполняется в {name}?',
   'Stop what is running in these terminals?': 'Остановить то, что выполняется в этих терминалах?',
   'Paste {count} lines?': {

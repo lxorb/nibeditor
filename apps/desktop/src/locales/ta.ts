@@ -1585,6 +1585,8 @@ export const ta: Dictionary = {
   Clear: 'அழி',
   'Exited with code {code}': 'குறியீடு {code} உடன் முடிந்தது',
   'Could not start {shell}': '{shell} ஐத் தொடங்க முடியவில்லை',
+  'Restore history': 'வரலாற்றை மீட்டமை',
+  'Restored {time}': 'மீட்டமைக்கப்பட்டது {time}',
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },

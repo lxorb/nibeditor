@@ -1564,6 +1564,8 @@ export const tr: Dictionary = {
   Clear: 'Temizle',
   'Exited with code {code}': '{code} koduyla sonlandı',
   'Could not start {shell}': '{shell} başlatılamadı',
+  'Restore history': 'Geçmişi geri yükle',
+  'Restored {time}': 'Geri yüklendi {time}',
   'Stop what is running in {name}?': '{name} içinde çalışan durdurulsun mu?',
   'Stop what is running in these terminals?': 'Bu terminallerde çalışan durdurulsun mu?',
   'Paste {count} lines?': {

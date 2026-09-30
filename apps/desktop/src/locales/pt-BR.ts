@@ -1589,6 +1589,8 @@ export const ptBR: Dictionary = {
   Clear: 'Limpar',
   'Exited with code {code}': 'Encerrado com o código {code}',
   'Could not start {shell}': 'Não foi possível iniciar {shell}',
+  'Restore history': 'Restaurar histórico',
+  'Restored {time}': 'Restaurado {time}',
   'Stop what is running in {name}?': 'Parar o que está em execução em {name}?',
   'Stop what is running in these terminals?': 'Parar o que está em execução nestes terminais?',
   'Paste {count} lines?': {

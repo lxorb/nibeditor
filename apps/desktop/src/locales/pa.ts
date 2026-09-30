@@ -1566,6 +1566,8 @@ export const pa: Dictionary = {
   Clear: 'ਸਾਫ਼ ਕਰੋ',
   'Exited with code {code}': 'ਕੋਡ {code} ਨਾਲ ਬੰਦ ਹੋਇਆ',
   'Could not start {shell}': '{shell} ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕਿਆ',
+  'Restore history': 'ਇਤਿਹਾਸ ਬਹਾਲ ਕਰੋ',
+  'Restored {time}': 'ਬਹਾਲ ਕੀਤਾ {time}',
   'Stop what is running in {name}?': '{name} ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
   'Stop what is running in these terminals?': 'ਇਹਨਾਂ ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਜੋ ਚੱਲ ਰਿਹਾ ਹੈ ਉਸਨੂੰ ਰੋਕੀਏ?',
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },

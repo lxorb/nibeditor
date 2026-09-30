@@ -1563,6 +1563,8 @@ export const ps: Dictionary = {
   Clear: 'پاکول',
   'Exited with code {code}': 'د {code} کوډ سره پای ته ورسید',
   'Could not start {shell}': '{shell} پیل نشو',
+  'Restore history': 'تاریخچه بېرته راوړل',
+  'Restored {time}': 'بېرته راوړل شو {time}',
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },

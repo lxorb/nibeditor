@@ -1560,6 +1560,8 @@ export const ms: Dictionary = {
   Clear: 'Kosongkan',
   'Exited with code {code}': 'Tamat dengan kod {code}',
   'Could not start {shell}': 'Tidak dapat memulakan {shell}',
+  'Restore history': 'Pulihkan sejarah',
+  'Restored {time}': 'Dipulihkan {time}',
   'Stop what is running in {name}?': 'Hentikan yang sedang berjalan dalam {name}?',
   'Stop what is running in these terminals?': 'Hentikan yang sedang berjalan dalam terminal ini?',
   'Paste {count} lines?': 'Tampal {count} baris?',

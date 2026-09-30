@@ -1562,6 +1562,8 @@ export const mr: Dictionary = {
   Clear: 'साफ करा',
   'Exited with code {code}': 'कोड {code} सह बंद झाले',
   'Could not start {shell}': '{shell} सुरू करता आले नाही',
+  'Restore history': 'इतिहास पुनर्संचयित करा',
+  'Restored {time}': 'पुनर्संचयित {time}',
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },

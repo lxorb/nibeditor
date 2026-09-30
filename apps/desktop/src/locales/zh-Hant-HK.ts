@@ -1523,6 +1523,8 @@ export const zhHantHK: Dictionary = {
   Clear: '清除',
   'Exited with code {code}': '已結束，代碼 {code}',
   'Could not start {shell}': '無法啟動 {shell}',
+  'Restore history': '還原歷史紀錄',
+  'Restored {time}': '已還原 {time}',
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',

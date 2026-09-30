@@ -1553,6 +1553,8 @@ export const jv: Dictionary = {
   Clear: 'Resiki',
   'Exited with code {code}': 'Rampung kanthi kode {code}',
   'Could not start {shell}': 'Ora bisa miwiti {shell}',
+  'Restore history': 'Balèkaké riwayat',
+  'Restored {time}': 'Dibalèkaké {time}',
   'Stop what is running in {name}?': 'Mandhegake sing mlaku ing {name}?',
   'Stop what is running in these terminals?': 'Mandhegake sing mlaku ing terminal iki?',
   'Paste {count} lines?': 'Tempel {count} baris?',

@@ -1,5 +1,6 @@
-/** The shells this machine has, and the two things Settings says about terminals: which
- *  shell a new one opens, and how large its type is.
+/** The shells this machine has, and the three things Settings says about terminals: which
+ *  shell a new one opens, how large its type is, and whether a restart puts back what
+ *  was on its screen.
  *
  *  The list is the crate's (see src-tauri/src/terminal/shells.rs) and is asked for the
  *  first time something needs it - a chooser opening, the settings pane, a terminal
@@ -18,9 +19,10 @@ export interface Shell {
   name: string
 }
 
-/** Where the two settings are kept. */
+/** Where the three settings are kept. */
 const SHELL_KEY = 'nib:terminal-shell'
 const SIZE_KEY = 'nib:terminal-size'
+const RESTORE_KEY = 'nib:terminal-restore'
 
 /** The type sizes Settings offers, and where a terminal starts: the size a code block is
  *  read at, a little under the note's own. */
@@ -57,6 +59,9 @@ class Shells {
   preferred = $state(storedText(SHELL_KEY) ?? '')
   /** How large a terminal's type is, in pixels. */
   size = $state(sizeOf(storedText(SIZE_KEY)))
+  /** Whether a terminal's last lines are kept for the next launch: on, as VS Code,
+   *  Windows Terminal and Warp all start. See history.ts. */
+  restoring = $state(storedText(RESTORE_KEY) !== 'no')
 
   private asked: Promise<Shell[]> | null = null
 
@@ -94,6 +99,14 @@ class Shells {
   setSize(size: number) {
     this.size = sizeOf(String(size))
     keep(SIZE_KEY, String(this.size))
+  }
+
+  /** Off forgets every terminal's lines at once, rather than only writing no more of
+   *  them: what somebody turns this off for is what is already written. */
+  setRestoring(on: boolean) {
+    this.restoring = on
+    keep(RESTORE_KEY, on ? 'yes' : 'no')
+    if (!on) void import('./history').then((one) => one.forgetHistories())
   }
 }
 

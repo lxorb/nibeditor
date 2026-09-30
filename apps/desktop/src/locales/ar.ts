@@ -1650,6 +1650,8 @@ export const ar: Dictionary = {
   Clear: 'مسح',
   'Exited with code {code}': 'انتهى بالرمز {code}',
   'Could not start {shell}': 'تعذّر تشغيل {shell}',
+  'Restore history': 'استعادة السجل',
+  'Restored {time}': 'تمت الاستعادة {time}',
   'Stop what is running in {name}?': 'إيقاف ما يعمل في {name}؟',
   'Stop what is running in these terminals?': 'إيقاف ما يعمل في هذه الطرفيات؟',
   'Paste {count} lines?': {

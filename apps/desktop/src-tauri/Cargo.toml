@@ -19,11 +19,12 @@ missing_docs = "warn"
 # through to a terminal's shells (see terminal/process.rs and
 # terminal/session.rs), and the shell's answer to which program opens a web
 # address (default_browser.rs), and the hook that has a probe's window created off
-# the screen rather than moved there (placement.rs). Two more on a Mac: the
+# the screen rather than moved there (placement.rs). Three more on a Mac: the
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
-# edited (see document_window.rs), and the method that lets a quit ask about
+# edited (see document_window.rs), the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
-# lifecycle.rs). And the agents' own reach into WebView2 in src/agents: the
+# lifecycle.rs), and the kernel's answer to which folder a terminal's shell is in
+# (terminal/process.rs). And the agents' own reach into WebView2 in src/agents: the
 # DevTools Protocol's calls and events, an agent tab's settings and the events it
 # answers out of sight, the reader's tab's focus, and the engine's memory. And `nib mcp`
 # keeping its client's pipes out of the app it starts (src/mcp/app.rs), which the app
@@ -237,6 +238,10 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# The folder a terminal's shell is in, asked of the kernel (`proc_pidinfo`) for the
+# shells that do not say it themselves - zsh, a Mac's own. Already in the lock file, as
+# what portable-pty and tauri build with. See src/terminal/process.rs.
+libc = "0.2"
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
 # the only way into them: Notes has no export. Read with the same `rusqlite` the sync
 # store uses (above), and a temporary folder to copy the database into, because Notes

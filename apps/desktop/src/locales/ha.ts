@@ -1587,6 +1587,8 @@ export const ha: Dictionary = {
   Clear: 'Share',
   'Exited with code {code}': 'An ƙare da lamba {code}',
   'Could not start {shell}': 'Ba a iya fara {shell} ba',
+  'Restore history': 'Maido da tarihi',
+  'Restored {time}': 'An maido {time}',
   'Stop what is running in {name}?': 'A dakatar da abin da ke gudana a {name}?',
   'Stop what is running in these terminals?': 'A dakatar da abin da ke gudana a waɗannan tashoshi?',
   'Paste {count} lines?': { one: 'A liƙa layi {count}?', other: 'A liƙa layuka {count}?' },

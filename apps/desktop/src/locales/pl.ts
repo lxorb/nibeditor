@@ -1633,6 +1633,8 @@ export const pl: Dictionary = {
   Clear: 'Wyczyść',
   'Exited with code {code}': 'Zakończono z kodem {code}',
   'Could not start {shell}': 'Nie udało się uruchomić {shell}',
+  'Restore history': 'Przywracaj historię',
+  'Restored {time}': 'Przywrócono {time}',
   'Stop what is running in {name}?': 'Zatrzymać to, co działa w {name}?',
   'Stop what is running in these terminals?': 'Zatrzymać to, co działa w tych terminalach?',
   'Paste {count} lines?': {

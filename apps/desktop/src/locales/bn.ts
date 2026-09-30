@@ -1556,6 +1556,8 @@ export const bn: Dictionary = {
   Clear: 'মুছুন',
   'Exited with code {code}': 'কোড {code} দিয়ে বন্ধ হয়েছে',
   'Could not start {shell}': '{shell} চালু করা যায়নি',
+  'Restore history': 'ইতিহাস পুনরুদ্ধার করুন',
+  'Restored {time}': 'পুনরুদ্ধার করা হয়েছে {time}',
   'Stop what is running in {name}?': '{name}-এ যা চলছে তা বন্ধ করবেন?',
   'Stop what is running in these terminals?': 'এই টার্মিনালগুলিতে যা চলছে তা বন্ধ করবেন?',
   'Paste {count} lines?': {

@@ -1626,6 +1626,8 @@ export const uk: Dictionary = {
   Clear: 'Очистити',
   'Exited with code {code}': 'Завершено з кодом {code}',
   'Could not start {shell}': 'Не вдалося запустити {shell}',
+  'Restore history': 'Відновлювати історію',
+  'Restored {time}': 'Відновлено {time}',
   'Stop what is running in {name}?': 'Зупинити те, що виконується в {name}?',
   'Stop what is running in these terminals?': 'Зупинити те, що виконується в цих терміналах?',
   'Paste {count} lines?': {

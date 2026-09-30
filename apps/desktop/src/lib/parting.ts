@@ -44,6 +44,32 @@ export function settleUp(): void {
   for (const write of lastly) write()
 }
 
+/** How long a window going waits for its writes. A disk that does not answer must not
+ *  hold a window open for ever, and what did not land is in the session, which the next
+ *  launch writes; see `owed` in workspace/saving.svelte.ts. */
+export const GIVE_UP = 3000
+
+/** Writes on their way to the disk that are nobody's note - a terminal's last lines -
+ *  which the window going waits for as it waits for a note's. */
+const underway = new Set<Promise<unknown>>()
+
+/** Said by whoever starts one. */
+export function writing(work: Promise<unknown>): void {
+  const done = work.catch(() => undefined)
+  underway.add(done)
+  void done.then(() => underway.delete(done))
+}
+
+/** Whether one is still in the air. */
+export function stillWriting(): boolean {
+  return underway.size > 0
+}
+
+/** Every one landed, those started meanwhile too. */
+export async function written(): Promise<void> {
+  while (underway.size) await Promise.all(underway)
+}
+
 /** What has to reach the account rather than the disk before the window goes: a web
  *  login this computer holds, handed back so the next computer starts from where this
  *  one left it (web-tab/lease.svelte.ts). Whether it owes anything is asked at once,

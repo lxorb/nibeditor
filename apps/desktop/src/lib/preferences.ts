@@ -237,7 +237,7 @@ export interface Pane {
   groups: Group[]
 }
 
-/** The terminal's two settings. The shells are asked for as the pane is drawn, which is
+/** The terminal's three settings. The shells are asked for as the pane is drawn, which is
  *  the first time this list is needed; the row fills in when they arrive. */
 function terminalGroup(): Group {
   void shells.ask()
@@ -262,6 +262,14 @@ function terminalGroup(): Group {
         initial: SIZES.initial,
         get: () => shells.size,
         set: (size) => shells.setSize(size),
+      },
+      {
+        kind: 'switch',
+        label: t('Restore history'),
+        words: ['scrollback', 'session', 'restart', 'privacy'],
+        initial: true,
+        get: () => shells.restoring,
+        set: (on) => shells.setRestoring(on),
       },
     ],
   }
@@ -354,8 +362,9 @@ export function preferences(view?: EditorView): Pane[] {
           ],
         },
 
-        // Which shell a new terminal opens and how large its type is: this machine's,
-        // like the release channel below, because a shell is a program on one computer.
+        // Which shell a new terminal opens, how large its type is and whether its lines
+        // come back after a restart: this machine's, like the release channel below,
+        // because a shell is a program on one computer and its screen is nobody else's.
         // Only a desktop has a terminal; see docs/terminal.md.
         ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
 

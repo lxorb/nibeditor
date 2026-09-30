@@ -1615,6 +1615,8 @@ export const fr: Dictionary = {
   Clear: 'Effacer',
   'Exited with code {code}': 'Terminé avec le code {code}',
   'Could not start {shell}': 'Impossible de démarrer {shell}',
+  'Restore history': 'Restaurer l’historique',
+  'Restored {time}': 'Restauré {time}',
   'Stop what is running in {name}?': 'Arrêter ce qui tourne dans {name} ?',
   'Stop what is running in these terminals?': 'Arrêter ce qui tourne dans ces terminaux ?',
   'Paste {count} lines?': {
