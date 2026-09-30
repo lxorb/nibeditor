@@ -17,12 +17,10 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   invoke: () => Promise.resolve(undefined),
 }))
 
-// The window's listeners and its keyboard are the runtime's, which jsdom has none of.
+// The window's listeners are the runtime's, which jsdom has none of. Its keyboard is the
+// crate's, asked through `invoke` above.
 vi.mock('@tauri-apps/api/event', () => ({
   listen: () => Promise.resolve(() => undefined),
-}))
-vi.mock('@tauri-apps/api/webview', () => ({
-  getCurrentWebview: () => ({ setFocus: () => Promise.resolve() }),
 }))
 
 /** Svelte plays a surface's way in and out through the Web Animations API, which jsdom

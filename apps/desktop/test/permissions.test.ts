@@ -68,7 +68,7 @@ const TAKING = ['core:window:allow-set-focus', 'core:webview:allow-set-webview-f
 function sources(): [string, string][] {
   const root = fileURLToPath(new URL('../src/', import.meta.url))
   return readdirSync(root, { recursive: true, encoding: 'utf8' })
-    .filter((name) => /\.(ts|svelte)$/.test(name) && !/\.test\.ts$/.test(name))
+    .filter((name) => /\.(ts|svelte)$/.test(name) && !name.endsWith('.test.ts'))
     .map((name) => [name, readFileSync(join(root, name), 'utf8')])
 }
 

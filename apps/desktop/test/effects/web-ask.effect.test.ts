@@ -33,12 +33,9 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   isDesktop: true,
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'web_answer') told.push({ id: Number(args.id), allow: args.allow === true })
+    if (command === 'take_keyboard') return focused()
     return Promise.resolve(undefined)
   },
-}))
-
-vi.mock('@tauri-apps/api/webview', () => ({
-  getCurrentWebview: () => ({ setFocus: focused }),
 }))
 
 const { grants } = await import('../../src/lib/web-tab/permissions.svelte')
@@ -120,7 +117,7 @@ test('the keyboard is the bubble’s, taken back from the page that asked', asyn
 
   const card = target.querySelector('[role=dialog]')
   expect(document.activeElement).toBe(card)
-  // Through an import of the runtime's webview module, so a moment later.
+  // Asked of the crate, which is what says no to a probe.
   await vi.waitFor(() => expect(focused).toHaveBeenCalledTimes(1))
   // Neither answer is the one a stray Enter gives: Tab reaches them, in order.
   expect(document.activeElement?.tagName).not.toBe('BUTTON')

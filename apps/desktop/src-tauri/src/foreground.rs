@@ -39,13 +39,20 @@
 //! through the `DevTools` protocol or with messages to the probe's own window, and neither
 //! needs the foreground (docs/conventions.md, "Probes").
 
+// The styles and the two rules over them are Windows' alone, and tested everywhere: the
+// rules are numbers, and a Mac or Linux runner holds them as well as a Windows one does.
+
 /// `WS_EX_NOACTIVATE`: never activated by a click or by the system choosing a window.
+#[cfg(any(windows, test))]
 const NO_ACTIVATE: u32 = 0x0800_0000;
 /// `WS_EX_TOOLWINDOW`: not in Alt+Tab, and no taskbar button.
+#[cfg(any(windows, test))]
 const TOOL_WINDOW: u32 = 0x0000_0080;
 /// `WS_EX_APPWINDOW`: a taskbar button whatever else the style says.
+#[cfg(any(windows, test))]
 const APP_WINDOW: u32 = 0x0004_0000;
 /// `WS_CHILD`: a window inside another, which is activated only with it.
+#[cfg(any(windows, test))]
 const CHILD: u32 = 0x4000_0000;
 
 /// Holds this process out of the foreground for the rest of its life, where the run is a
@@ -64,6 +71,7 @@ pub fn hold() -> bool {
 }
 
 /// The extended style a probe's top-level window is held to, from the one it asked for.
+#[cfg(any(windows, test))]
 fn kept_back(asked: u32) -> u32 {
     (asked | NO_ACTIVATE | TOOL_WINDOW) & !APP_WINDOW
 }
@@ -71,6 +79,7 @@ fn kept_back(asked: u32) -> u32 {
 /// Whether a window about to be made is one the system could activate: a top-level
 /// window. A child is activated with its parent, and a window for messages alone is on
 /// no desktop.
+#[cfg(any(windows, test))]
 fn top_level(style: u32, for_messages: bool) -> bool {
     style & CHILD == 0 && !for_messages
 }
