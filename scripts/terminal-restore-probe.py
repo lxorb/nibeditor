@@ -82,31 +82,6 @@ def holding(paths: list[pathlib.Path], words: str) -> list[pathlib.Path]:
     return [path for path in paths if words in path.read_text(encoding="utf-8", errors="replace")]
 
 
-def paged(window, key: str, code: int, times: int) -> None:
-    """Shift and a paging key, pressed where the terminal has the keyboard: xterm.js's own
-    way through its scrollback."""
-
-    window.run(
-        "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
-        f"for (let i = 0; i < {times}; i++) {{ "
-        f"const press = new KeyboardEvent('keydown', {{ key: {json.dumps(key)}, code: {json.dumps(key)}, shiftKey: true, bubbles: true, cancelable: true }}); "
-        f"Object.defineProperty(press, 'keyCode', {{ get: () => {code} }}); field.dispatchEvent(press) }} "
-        "return true })()"
-    )
-    time.sleep(0.5)
-
-
-def above(window) -> list[str]:
-    """The rows at the top of the terminal's scrollback, where a restart on Windows puts
-    what the screen had (see `restoredAbove` in lib/terminal/history.ts): paged up to the
-    top, read, and paged back down to the prompt."""
-
-    paged(window, "PageUp", 33, 20)
-    rows = window.rows()
-    paged(window, "PageDown", 34, 20)
-    return rows
-
-
 def launched(exe: pathlib.Path, environment: dict[str, str], identifier: str, unlike: int):
     app = run_probe(exe, env=environment)
     if not until(lambda: main_window(app.pid), 120, 0.25):
@@ -223,7 +198,7 @@ def main() -> int:
                 bool(first) and first[0].startswith("Restored "),
                 f"under one line saying when, the screen's first row ({first})",
             )
-            history = above(window)
+            history = terminal.above(window)
             check(last in history and marker in history, "the marker and the last line are in the restored buffer")
             if fresh:
                 window.typed("echo %CD%\r")
@@ -240,7 +215,7 @@ def main() -> int:
             time.sleep(1.5)
             narrow = window.rows()
             check(any(row.startswith("Restored ") for row in narrow), "the line saying when is still there after the window narrows")
-            history = above(window)
+            history = terminal.above(window)
             check(last in history and marker in history, "and so is the history above it")
             tabs.shoot(app.pid, shots / "terminal-restored-narrow.png")
 
@@ -263,7 +238,7 @@ def main() -> int:
                 bool(until(lambda: any(row.endswith(f"{here}>") for row in window.rows()), 30)),
                 "with a fresh prompt",
             )
-            check(marker in above(window), "and its lines, from memory")
+            check(marker in terminal.above(window), "and its lines, from memory")
             check(bool(until(lambda: holding(histories(args.identifier), marker), 15)), "written down again")
     finally:
         if app.poll() is None and not close_app(app):
