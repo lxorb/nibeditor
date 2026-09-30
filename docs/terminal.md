@@ -114,6 +114,9 @@ word, as it does in every terminal there is. Cmd+W closes the tab on a Mac.
   (Cmd on a Mac) opens it in a web tab beside the terminal by `new-tab.ts`'s rule - behind,
   and in front with Shift. A plain click is the terminal's own: it is how a line is
   selected.
+- **A row of the file list** dropped on a terminal is its path at the prompt, spelled for
+  the shell: quoted where it has a space, `/mnt/c/...` in WSL and `/c/...` in Git Bash -
+  VS Code's drop into its terminal. See `spokenPath` in `lib/terminal/paste.ts`.
 - **Find**: Ctrl+F, in nib's find bar, painting what it finds the way a note's find does.
 - **Scrollback**: five thousand lines. VS Code keeps a thousand and Windows Terminal about
   nine; five is a long build log at a few megabytes a terminal.
