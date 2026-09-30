@@ -134,13 +134,18 @@ def trace_file(identifier: str) -> pathlib.Path:
     return local(identifier) / "logs" / "startup-trace.log"
 
 
-def load() -> float:
-    """The whole machine's processor load over one second, in per cent."""
+def load() -> str:
+    """What else the machine was doing: its processor load over one second, in per cent,
+    and the memory it had free. Both, because a machine out of memory pages the webview
+    in from disk and a launch there takes seconds at a low processor load - measured on
+    2026-09-30 at five seconds to a page, with 0.8 GB of 32 free and the load at 35%."""
 
     try:
         import psutil
 
-        return float(psutil.cpu_percent(interval=1.0))
+        cpu = psutil.cpu_percent(interval=1.0)
+        free = psutil.virtual_memory().available / 2**30
+        return f"load {cpu:.0f}%, {free:.1f} GB free"
     except ImportError:
         answer = subprocess.run(
             [
@@ -153,7 +158,7 @@ def load() -> float:
             text=True,
             check=False,
         )
-        return float(answer.stdout.strip() or "nan")
+        return f"load {answer.stdout.strip() or '?'}%"
 
 
 def machine() -> str:
@@ -505,7 +510,7 @@ def main() -> int:
                 after = load()
                 if cold:
                     kept[f"cold {kind}"] = cold
-                    medians = table(cold, f"cold, {kind} (load {before:.0f}% before, {after:.0f}% after)")
+                    medians = table(cold, f"cold, {kind} ({before} before, {after} after)")
                     summary.append(f"cold {kind}: " + ", ".join(phases(medians)))
 
             if told.only != "cold":
@@ -527,7 +532,7 @@ def main() -> int:
                 after = load()
                 if warm:
                     kept[f"warm {kind}"] = warm
-                    medians = table(warm, f"warm, {kind} (load {before:.0f}% before, {after:.0f}% after)")
+                    medians = table(warm, f"warm, {kind} ({before} before, {after} after)")
                     summary.append(f"warm {kind}: " + ", ".join(phases(medians)))
 
                 if told.throttle and warm:
