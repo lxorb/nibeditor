@@ -200,7 +200,6 @@ export const yue: Dictionary = {
   'That tag could not be deleted.': '冇辦法刪除嗰個標籤。',
   'Show sidebar': '顯示側邊欄',
   'Hide sidebar': '隱藏側邊欄',
-  'Go to note, or > for commands': '跳至筆記，或輸入>執行命令',
   'Search notes and commands': '搜尋筆記同命令',
   'Sort by relevance': '按相關性排序',
   'Page {page}': '第{page}頁',

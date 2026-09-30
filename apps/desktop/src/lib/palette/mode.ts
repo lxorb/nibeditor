@@ -1,12 +1,13 @@
-/** What the palette is listing, read off the first character in its field.
+/** What the palette is narrowed to, read off the first character in its field.
  *
- *  The text in the box is what the mode is made of, the way VS Code's quick open
- *  reads it: `>` for the commands, and two of VS Code's other marks, for the note in
- *  front - `#` for its headings, since that is how a heading is written and linked,
- *  and `:` and a number for a line of it. Anything else is a note's name. Deleting
- *  the mark is the way back, so there is nothing to learn beyond the mark itself. */
+ *  Nothing, by default: the palette is one search over everything, and a person
+ *  never has to say which list the thing they are after is in. The marks are there
+ *  for a hand that knows them, the way VS Code's quick open reads them: `>` for the
+ *  commands alone, and two of VS Code's other marks for the note in front - `#` for
+ *  its headings, since that is how a heading is written and linked, and `:` and a
+ *  number for a line of it. Deleting the mark is the way back to everything. */
 
-export type PaletteMode = 'notes' | 'commands' | 'headings' | 'line'
+export type PaletteMode = 'everything' | 'commands' | 'headings' | 'line'
 
 const MARKS: Record<string, PaletteMode> = {
   '>': 'commands',
@@ -16,7 +17,7 @@ const MARKS: Record<string, PaletteMode> = {
 
 export function modeOf(query: string): { mode: PaletteMode; term: string } {
   const mode = MARKS[query.charAt(0)]
-  return mode ? { mode, term: query.slice(1).trim() } : { mode: 'notes', term: query.trim() }
+  return mode ? { mode, term: query.slice(1).trim() } : { mode: 'everything', term: query.trim() }
 }
 
 /** The line a `:` asks for, counting from zero, in a note `lines` long; null for

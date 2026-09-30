@@ -228,12 +228,13 @@ in the palette, and it can be rebound. What was already there is marked.
 | | |
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
-| Ctrl+P | the palette. Type for a note, `>` for a command, the ones run lately first (already there). Empty, it lists the notes opened lately, the one before this first; a note is found by its folder too (`uni/lec`), and says its folder where another shares its name |
-| Enter, Shift+Enter in the palette | with nothing matching, Enter makes the note typed (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
-| Ctrl+Alt+Enter in the palette | the note in a pane to the right, the pane in front left as it was (Obsidian's chord; Ctrl+Alt+click too) |
+| Shift Shift, Ctrl+P | the palette: one search over everything - notes and every other file, commands with their keys, the open tabs, bookmarks, the pages this device has visited, and the settings one by one. Shift pressed twice on its own is JetBrains' Search Everywhere key and works over a web page too; Ctrl+P is its second key. Empty, it lists what was used lately, notes and commands together, newest first. See *The palette* below |
+| Enter, Shift+Enter in the palette | Enter goes to the top row. A name nothing has ends the list as a new note, and is the top row when nothing else matched (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
+| Ctrl+Enter, Ctrl+Shift+Enter, Ctrl+Alt+Enter in the palette | a note, a page or an open tab's file in a tab of its own behind this one, in front, or (a note) in a pane to the right (Obsidian's chord); the same with a click, and the middle button is Ctrl+click |
+| Shift+Delete in the palette | takes the row out of what is remembered: a page out of the history, a note off the recent ones, anything's count of uses (Chrome's key) |
 | Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
-| `#`, `:` in the palette | `#` lists the headings of the note in front, `:42` goes to its line 42 - VS Code's `@` and `:` |
-| Ctrl+Shift+P | the same palette, opened on the commands: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to the notes. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
+| `>`, `#`, `:` in the palette | never needed, for a hand that knows them: `>` narrows to the commands, the ones run lately first; `#` lists the headings of the note in front; `:42` goes to its line 42 - VS Code's `>`, `@` and `:` |
+| Ctrl+Shift+P | the same palette narrowed to the commands, for the hand that learned VS Code: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to everything. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
 | Ctrl+O | open a file (already there) |
 | Ctrl+Shift+S | save a file from outside the space under another name; a note in a space saves itself |
 | Ctrl+Shift+W | close the window, asking about anything unsaved first. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
@@ -513,6 +514,58 @@ F6 stays: VS Code walks its parts with it on a Mac too, and ⌃F6 is the system'
 settings warn about the keys a Mac keeps for itself - Spotlight, the switchers, the
 screenshots, Mission Control, ⌘\` and the rest - see `SYSTEM_KEYS` in the registry.
 
+### The palette
+
+One field for everything, because nobody should have to know which list the thing
+they are after is in (Emil: *"it should be all in the same thing"*). What it finds, each
+row wearing the mark its kind wears everywhere else - a file's mark, the tab's own, a
+chevron for a command, a globe or a site's mark for a page, a pane's drawing for a
+setting:
+
+- **the files** of the space, every kind: notes, canvases, page notes, PDFs, websites;
+- **the open tabs**, switched to. An open note is its tab rather than a second row, and
+  so is an open page: one row per place, which is Chrome's rule;
+- **the commands**, with their keys at the far end;
+- **the bookmarks** that are more than a note: a heading, a block, a folder, a search, a
+  view of the graph. A bookmarked note is the note, a little higher;
+- **the pages this device has visited**, from the space's own history where the space
+  keeps its web data apart; and an address typed in full offers to go there;
+- **the settings**, one by one, found by their names, their choices and the words they
+  are known by (`dark`, `font`). A switch is flipped where it stands, with the list left
+  up to show it; anything else opens its pane, scrolled to it and lit for a moment.
+
+The headings of the note in front come in only when typed for closely; `#` lists them
+all. A theme, a mode or an accent under the arrows is tried on the whole app, the way the
+theme picker tries one, and put back as the arrows move on or the palette closes; Enter
+keeps it.
+
+**The order** is one number per row, written out in `lib/palette/rank.ts`: how well the
+words were found (letters together and at the starts of words, any order of words, one
+slip forgiven in a longer word), the name typed whole winning outright, then the kind -
+a tab, a note, a bookmark, a command, a page, a setting, in that order, the gap wider
+for one or two letters so a letter finds a note rather than forty commands - then use,
+and then where the reader is: a command about the tab in front rises, one that cannot run
+sinks, the tab in front sinks. **Use** is frecency, Firefox's idea as one curve a thing
+(`lib/frecency.ts`): every choice counts one and halves a week later, so something
+reached for daily climbs over something that merely matches as well, and a note opened
+from the file list counts as much as one chosen here. Nothing about it is read at launch.
+
+`lib/palette/eval.test.ts` holds the order to fifty-odd real queries on a space shaped
+like Emil's (`NIB_EVAL=1` prints them): the row meant is first for 98% of them and in the
+first three for all, where the palette before this, which listed notes and nothing else
+without a `>`, had 28%.
+
+**Shift Shift** is two presses of Shift on their own, either key, each short and the
+second within 350 ms, answered as the second is let go (`lib/double-tap.ts`). A capital,
+a Shift+click, a selection with the arrows, a drag with Shift held, another key between,
+an input method mid-word: none of those is one. Five presses open the palette once, and
+Windows still hears all five for Sticky Keys. Over a web page the page's own script
+counts the taps by the same rules and asks for the palette (`SCRIPT` in
+`src-tauri/src/web_opens.rs`); the page keeps its Shift, and a Shift it answered itself
+does not count. It is a key in Settings, Shortcuts, like any other: tap a modifier
+twice while a row is listening to put a row the window runs on a double Shift, Ctrl, Alt
+or Cmd, and Backspace takes it away.
+
 ### The keyboards
 
 Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or
@@ -530,6 +583,7 @@ Obsidian and CodeMirror have it the other way round, and so do those two keyboar
 
 | | |
 | --- | --- |
+| Ctrl+P | the palette, first, so it is what the menu row says; Shift twice is its second key |
 | Ctrl+G | go to line; Ctrl+G on a Mac too, as there |
 | Ctrl+Shift+K | delete the line |
 | Ctrl+Shift+L | a cursor on every one like the selection |
@@ -546,8 +600,8 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 
 | | |
 | --- | --- |
-| Ctrl+O | the palette on the notes, which is the quick switcher |
-| Ctrl+P | the palette on the commands, which is the command palette; Ctrl+Shift+P as well |
+| Ctrl+O | the palette, which is the quick switcher; Shift twice as well |
+| Ctrl+P | the palette narrowed to the commands, which is the command palette; Ctrl+Shift+P as well |
 | Ctrl+1 to 9 | the notes on the strip |
 | Ctrl+Alt+Left, Ctrl+Alt+Right | back, forward |
 | Ctrl+D | delete the line, Obsidian's delete paragraph |

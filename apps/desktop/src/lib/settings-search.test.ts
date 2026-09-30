@@ -130,13 +130,14 @@ describe('searching the settings', () => {
 
 /** Which of the hand-written panes the search knows about at all.
  *
- *  The list is a component's own derived rather than a module, so what is read here is
- *  the source - the same reading i18n.test.ts does of the tree for the strings the app
- *  asks for. The search itself is held to its answers above; what goes wrong in
- *  practice is a row on a hand-written pane that nothing put in the list, which is a
- *  setting nobody can find by typing its name. */
+ *  The list reads the stores it describes - who is signed in, what the theme allows -
+ *  so what is read here is the source, the same reading i18n.test.ts does of the tree
+ *  for the strings the app asks for. The search itself is held to its answers above;
+ *  what goes wrong in practice is a row on a hand-written pane that nothing put in the
+ *  list, which is a setting nobody can find by typing its name - in the settings' box
+ *  or in the palette, which both read it. */
 describe('the hand-written panes the search knows about', () => {
-  const source = readFileSync(new URL('./SettingsPanel.svelte', import.meta.url), 'utf8')
+  const source = readFileSync(new URL('./settings/places.ts', import.meta.url), 'utf8')
 
   test('name how long the account keeps a note’s history', () => {
     expect(source).toContain("label: t('History on the account')")

@@ -200,7 +200,6 @@ export const fa: Dictionary = {
   'That tag could not be deleted.': 'آن برچسب حذف نشد.',
   'Show sidebar': 'نمایش نوار کناری',
   'Hide sidebar': 'نهفتن نوار کناری',
-  'Go to note, or > for commands': 'رفتن به یادداشت، یا > برای فرمان‌ها',
   'Search notes and commands': 'جست‌وجوی یادداشت‌ها و فرمان‌ها',
   'Sort by relevance': 'چیدن بر پایه همخوانی',
   'Page {page}': 'صفحه {page}',

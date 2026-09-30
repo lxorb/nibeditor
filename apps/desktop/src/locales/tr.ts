@@ -200,7 +200,6 @@ export const tr: Dictionary = {
   'That tag could not be deleted.': 'Bu etiket silinemedi.',
   'Show sidebar': 'Kenar çubuğunu göster',
   'Hide sidebar': 'Kenar çubuğunu gizle',
-  'Go to note, or > for commands': 'Nota git veya komutlar için >',
   'Search notes and commands': 'Notlarda ve komutlarda ara',
   'Sort by relevance': 'İlgiye göre sırala',
   'Page {page}': 'Sayfa {page}',

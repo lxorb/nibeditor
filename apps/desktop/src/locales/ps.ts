@@ -200,7 +200,6 @@ export const ps: Dictionary = {
   'That tag could not be deleted.': 'هغه نښکه ونه ړنګه شوه.',
   'Show sidebar': 'څنګ پټه ښودل',
   'Hide sidebar': 'څنګ پټه پټول',
-  'Go to note, or > for commands': 'يادښت ته ورشئ، يا > د کړنو لپاره',
   'Search notes and commands': 'يادښتونه او کړنې لټول',
   'Sort by relevance': 'د اړخ له مخې ترتيب',
   'Page {page}': 'مخ {page}',

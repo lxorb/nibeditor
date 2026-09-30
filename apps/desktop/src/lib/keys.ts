@@ -310,6 +310,11 @@ const SHOWN_MAC: Record<string, string> = {
  *  everywhere else. An unreadable one comes back as it was written, which is
  *  better than an empty box. */
 export function showCombination(text: string, platform: Platform): string {
+  // A double tap: the modifier as a chord shows it, twice.
+  const twice = /^(\w+) \1$/.exec(text)?.[1]
+  const one = twice && showCombination(`${twice}-a`, platform).slice(0, -1).replace(/\+$/, '')
+  if (one) return platform === 'mac' ? one + one : `${one} ${one}`
+
   const combination = parseCombination(text, platform)
   if (!combination) return text
 

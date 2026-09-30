@@ -200,7 +200,6 @@ export const vi: Dictionary = {
   'That tag could not be deleted.': 'Không xoá được thẻ đó.',
   'Show sidebar': 'Hiện thanh bên',
   'Hide sidebar': 'Ẩn thanh bên',
-  'Go to note, or > for commands': 'Tới ghi chú, hoặc > để ra lệnh',
   'Search notes and commands': 'Tìm ghi chú và lệnh',
   'Sort by relevance': 'Sắp theo liên quan',
   'Page {page}': 'Trang {page}',

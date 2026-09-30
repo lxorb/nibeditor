@@ -37,12 +37,12 @@ export interface Preset {
  *  differ.
  *
  *  Nib's palette is both of Obsidian's, and here it answers on both of their keys:
- *  Ctrl+O opens it on the notes, which is the quick switcher, and Ctrl+P on the
- *  commands, which is the command palette. Ctrl+Shift+P stays the commands as well,
- *  where every editor has them. Open file is left with no key, since Obsidian opens
- *  nothing from outside its vault. */
+ *  Ctrl+O opens it, which is the quick switcher, and Ctrl+P narrows it to the
+ *  commands, which is the command palette. Double Shift stays its first key and
+ *  Ctrl+Shift+P the commands as well, where every editor has them. Open file is left
+ *  with no key, since Obsidian opens nothing from outside its vault. */
 const OBSIDIAN: KeyOverrides = {
-  'app.palette': 'Mod-o',
+  'app.palette.alt': 'Mod-o',
   'app.commands.alt': 'Mod-p',
   'app.open': null,
   'pane.split-right': 'Mod-\\',
@@ -125,7 +125,7 @@ const NOTION: KeyOverrides = {
 
 /** VS Code's own keys.
  *
- *  Nib already has most of them: Ctrl+P and Ctrl+Shift+P, Ctrl+D for the next one
+ *  Nib already has most of them: Ctrl+Shift+P, Ctrl+D for the next one
  *  like it, Ctrl+L for the line, Alt and Shift+Alt with Up and Down for moving and
  *  copying lines, Ctrl+Shift+Enter for a line above, Shift+Alt+Right and Left for
  *  the selection outwards and back, Ctrl+Shift+E for the files, Ctrl+Shift+F,
@@ -138,6 +138,10 @@ const NOTION: KeyOverrides = {
  *  Ctrl+Shift+E, VS Code's key for the files, which opens them and gives the note
  *  the keyboard back on the second press. */
 const VSCODE: KeyOverrides = {
+  // Ctrl+P is the palette's first key here, so it is the one a menu row shows, and
+  // double Shift the second: the hand that learned VS Code looks for Ctrl+P.
+  'app.palette': 'Mod-p',
+  'app.palette.alt': 'Shift Shift',
   // Ctrl+G on every platform, which is VS Code's on a Mac as well, rather than Cmd+G.
   // Find next keeps F3, its second key and VS Code's own.
   'edit.goto-line': 'Ctrl-g',

@@ -200,7 +200,6 @@ export const gsw: Dictionary = {
   'That tag could not be deleted.': 'Das Schlagwort hät sich nöd lösche laa.',
   'Show sidebar': 'Sitteleiste zeige',
   'Hide sidebar': 'Sitteleiste uusblände',
-  'Go to note, or > for commands': 'Zur Notiz, oder > für Befähl',
   'Search notes and commands': 'Notize und Befähl sueche',
   'Sort by relevance': 'Nach Relevanz sortiere',
   'Page {page}': 'Siite {page}',

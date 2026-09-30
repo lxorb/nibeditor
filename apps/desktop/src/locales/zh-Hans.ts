@@ -200,7 +200,6 @@ export const zhHans: Dictionary = {
   'That tag could not be deleted.': '无法删除该标签。',
   'Show sidebar': '显示侧边栏',
   'Hide sidebar': '隐藏侧边栏',
-  'Go to note, or > for commands': '跳转笔记，输入>执行命令',
   'Search notes and commands': '搜索笔记和命令',
   'Sort by relevance': '按相关性排序',
   'Page {page}': '第{page}页',

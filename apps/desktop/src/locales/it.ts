@@ -200,7 +200,6 @@ export const it: Dictionary = {
   'That tag could not be deleted.': 'Quel tag non è stato eliminato.',
   'Show sidebar': 'Mostra la barra laterale',
   'Hide sidebar': 'Nascondi la barra laterale',
-  'Go to note, or > for commands': 'Vai a una nota, o > per i comandi',
   'Search notes and commands': 'Cerca note e comandi',
   'Sort by relevance': 'Ordina per pertinenza',
   'Page {page}': 'Pagina {page}',

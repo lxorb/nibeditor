@@ -53,6 +53,7 @@
  *  is being worked on. A row of the window's - New note, Close note, a panel - runs
  *  from anywhere, and hands the keyboard back to the app as it does. */
 
+import { tapOf } from './double-tap'
 import { matchesCombination, PHYSICAL, parseCombination } from './keys'
 import { DIVIDER, isSubmenu, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 
@@ -409,6 +410,20 @@ function claimer(): (accelerator: string | null) => string | null {
   }
 }
 
+/** The key a row's command has that a key equivalent can be: its own where it is a
+ *  chord, else its second key's (`<id>.alt`). The palette is Shift twice, which no
+ *  menu can show, so its row in View says Cmd+P. See double-tap.ts. */
+export function chordFor(
+  keyFor: (command: string) => string | null,
+  command: string,
+): string | null {
+  const key = keyFor(command)
+  if (!key || !tapOf(key, 'mac')) return key
+
+  const second = keyFor(`${command}.alt`)
+  return second && !tapOf(second, 'mac') ? second : null
+}
+
 /** The strip. */
 export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const { groups, words } = sources
@@ -419,7 +434,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const named = new Set<MenuRow>(sources.recent)
 
   const item = (row: MenuItem, id: string): NativeItem => {
-    const key = row.command ? sources.keyFor(row.command) : null
+    const key = row.command ? chordFor((one) => sources.keyFor(one), row.command) : null
     const accelerator = claim(key ? toAccelerator(key) : null)
     const standIn = row.command ? STAND_INS[row.command] : undefined
     runs.set(id, row.run)

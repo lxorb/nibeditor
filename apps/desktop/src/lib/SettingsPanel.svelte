@@ -28,6 +28,9 @@
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
   import { Rebind } from './settings/rebind.svelte'
+  import { hearTaps } from './tapped'
+  import { landing } from './settings/landing.svelte'
+  import { places as paneRows } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
   import { type Place, search } from './settings-search'
   import { sync } from './sync.svelte'
@@ -43,6 +46,7 @@
   import { pageHeight, viewport } from './viewport.svelte'
   import { workspace } from './workspace.svelte'
   import { dur } from './motion'
+  import { waited } from './timing'
   import { trap } from './trap'
 
   const { view }: { view?: EditorView | undefined } = $props()
@@ -57,6 +61,9 @@
 
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
+
+  /** How long a setting the palette opened on stays lit. */
+  const LIT = 1400
 
   const GROUPS = $derived(sectionGroups())
 
@@ -74,77 +81,24 @@
   const exportActions = () =>
     exportCommands().filter((command) => command.id !== 'page-setup' && command.id !== 'import')
 
-  /** What the hand-written panes show, so search can land on those too. */
+  /** What the hand-written panes show, so search can land on those too: the rows
+   *  the palette finds as well (see settings/places.ts), every shortcut by name, so
+   *  searching the settings for "Bold" lands on the key that runs it as well as on
+   *  the button that does, and the export buttons. */
   const places = $derived.by((): Place[] => {
     const all: Place[] = [
-      { section: 'account', label: t('Display name'), text: [] },
-      { section: 'account', label: t('Email'), text: [account.user?.email ?? ''] },
-      { section: 'account', label: t('Storage'), text: [] },
-      { section: 'account', label: account.user ? t('Sign out') : t('Sign in'), text: [] },
-      {
-        section: 'account',
-        label: t('Signing in'),
-        text: [t('Ask for a code from an app'), t('Recovery codes left')],
-      },
-      { section: 'account', label: t('Signed in on'), text: [t('End every other session')] },
-      ...(account.user
-        ? [{ section: 'account' as const, label: t('Delete account'), text: [] }]
-        : []),
-      {
-        section: 'sync',
-        label: t('When the same note was written twice'),
-        text: [t('Keep both copies'), t('Let the newest win'), t('Ask me each time')],
-      },
-      {
-        section: 'sync',
-        label: t('History on the account'),
-        text: [t('Keep versions'), t('A month'), t('A year')],
-      },
-      { section: 'sync', label: t('What synced'), text: [] },
-      { section: 'sync', label: t('Go back'), text: [t('This space, as it was')] },
-      { section: 'appearance', label: t('Themes'), text: [t('Browse'), t('Install')] },
-      { section: 'editor', label: t('Reset to defaults'), text: [] },
-      // Modal editing sits with the keyboard rather than with the editor, so
-      // this is where searching for it lands.
-      { section: 'shortcuts', label: t('Vim keys'), text: ['vim'] },
-      // Every shortcut by name, so searching the settings for "Bold" lands on
-      // the key that runs it as well as on the button that does.
+      ...paneRows(),
       ...SHORTCUTS.map((one): Place => ({
         section: 'shortcuts',
         label: one.label(),
         text: [shortcuts.hint(one.id) ?? '', t('Shortcuts')],
       })),
-      { section: 'markdown', label: t('Reset to defaults'), text: [] },
       ...exportActions().map((action): Place => ({
         section: 'export',
         label: action.label,
         text: [],
       })),
     ]
-
-    if (!theme.accentIsTheme) {
-      all.push({
-        section: 'appearance',
-        label: t('Accent'),
-        text: theme.accents.map((one) => t(one.name)),
-      })
-    }
-
-    if (isDesktop) {
-      all.push({
-        section: 'appearance',
-        label: t('Reload themes and custom CSS'),
-        text: [t('Custom')],
-      })
-    }
-
-    if (account.user) {
-      all.push({
-        section: 'llm',
-        label: t('LLM access'),
-        text: ['MCP', 'Claude', 'ChatGPT', 'token', t('Connect'), t('Create a token')],
-      })
-    }
 
     // The pane's own name counts as a word on everything in it.
     return all.map((place) => ({ ...place, text: [...place.text, titleOf(place.section)] }))
@@ -169,6 +123,34 @@
   // Account should find the row, not a flow that mails another code as it appears.
   $effect(() => {
     if (!settings.open || settings.section !== 'account') leaving = false
+  })
+
+  /** The scrolling half, where the panes are. */
+  let body = $state<HTMLElement>()
+
+  /** Opened on one setting - the palette's row for it - the pane scrolls it to the
+   *  middle and it is lit for a moment, so the eye lands where the reader was going.
+   *  Found by what its row says, which is the one thing a generated row and a
+   *  hand-written one have in common; see settings/places.ts. */
+  $effect(() => {
+    const label = landing.label
+    const box = body
+    if (!label || !box || !settings.open) return
+
+    query = ''
+    const frame = requestAnimationFrame(() => {
+      landing.label = null
+      const row = [...box.querySelectorAll<HTMLElement>('.nib-setting')].find((one) =>
+        one.querySelector('.name')?.textContent.trim().startsWith(label),
+      )
+      if (!row) return
+
+      row.scrollIntoView({ block: 'center' })
+      row.classList.add('landed')
+      void waited(LIT).then(() => row.classList.remove('landed'))
+    })
+
+    return () => cancelAnimationFrame(frame)
   })
 
   /** Opens a pane: from the list, from the search results, from anywhere. */
@@ -333,7 +315,14 @@
     }
 
     window.addEventListener('keydown', record, true)
-    return () => window.removeEventListener('keydown', record, true)
+    // And a modifier tapped twice, which is heard as a tap rather than read off one
+    // keystroke: the pane is on top of the palette while it listens. See tapped.ts.
+    const unheard = hearTaps((key) => rebind.tapped(key))
+
+    return () => {
+      window.removeEventListener('keydown', record, true)
+      unheard()
+    }
   })
 
   // Nothing is left listening behind a closed panel or a pane that moved on.
@@ -441,7 +430,13 @@
     {/if}
 
     {#if !viewport.touch || !settings.listing}
-      <div class="body" data-scrolls use:scrollbar={settings.section} in:fly={enter(24)}>
+      <div
+        class="body"
+        data-scrolls
+        bind:this={body}
+        use:scrollbar={settings.section}
+        in:fly={enter(24)}
+      >
         {#if query && !viewport.touch}
           <div class="pane">
             <h2>{t('Search settings')}</h2>
@@ -1487,6 +1482,17 @@
      use rather than as a moved row: nothing jumps until the drop. */
   .setting.button.landing {
     box-shadow: inset 0 2px 0 var(--accent);
+  }
+
+  /* ── A setting somebody arrived at ─────────────────────────────── */
+
+  /* The palette's row for one setting opens the pane on it, lit for a moment in the
+     tint a highlight wears everywhere else. The rows have no padding of their own, so
+     the tint reaches past the words by a shadow rather than by moving anything. */
+  .body :global(.nib-setting.landed) {
+    border-radius: var(--radius-row);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 var(--space-2) var(--accent-soft);
   }
 
   /* ── A shortcut and its key ────────────────────────────────────── */

@@ -200,7 +200,6 @@ export const ar: Dictionary = {
   'That tag could not be deleted.': 'لم يُحذف الوسم.',
   'Show sidebar': 'إظهار الشريط الجانبي',
   'Hide sidebar': 'إخفاء الشريط الجانبي',
-  'Go to note, or > for commands': 'الانتقال إلى ملاحظة، أو > للأوامر',
   'Search notes and commands': 'بحث في الملاحظات والأوامر',
   'Sort by relevance': 'الترتيب حسب الصلة',
   'Page {page}': 'صفحة {page}',

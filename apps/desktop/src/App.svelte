@@ -693,6 +693,13 @@
     shortcuts.handle(event, appContext())
   }
 
+  // Shift twice, heard from the launch's last turn; see tapped.ts.
+  let untap: (() => void) | undefined
+  void startup
+    .turn('doors')
+    .then(() => import('./lib/tapped').then(({ hear }) => (untap = hear(appContext))))
+  onDestroy(() => untap?.())
+
   /** The palette on the commands, waiting for it the once it has not arrived yet. */
   async function showCommands() {
     await paletteDoor.ask()

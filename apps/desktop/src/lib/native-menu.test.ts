@@ -3,6 +3,7 @@ import { matchesCombination, readCombination } from './keys'
 import { DIVIDER, type MenuGroup, type MenuItem } from './menu-item'
 import {
   changesBetween,
+  chordFor,
   describeMenuBar,
   documentWindows,
   keyRuns,
@@ -194,6 +195,28 @@ describe('a key as a Mac menu row writes it', () => {
     expect(toAccelerator('Mod-ContextMenu')).toBeNull()
     expect(toAccelerator('Mod-+')).toBeNull()
     expect(toAccelerator('')).toBeNull()
+  })
+})
+
+/** The palette is Shift twice, and a key equivalent is a chord: its row says the
+ *  second key, which is Cmd+P. */
+describe('a key a menu row can show', () => {
+  const keys: Record<string, string | null> = {
+    'app.palette': 'Shift Shift',
+    'app.palette.alt': 'Mod-p',
+    'app.save': 'Mod-s',
+    'app.graph': 'Alt Alt',
+  }
+  const keyFor = (command: string) => keys[command] ?? null
+
+  test('is the chord a command has, or its second key where it has a tap', () => {
+    expect(chordFor(keyFor, 'app.save')).toBe('Mod-s')
+    expect(chordFor(keyFor, 'app.palette')).toBe('Mod-p')
+    expect(toAccelerator(chordFor(keyFor, 'app.palette') ?? '')).toBe('Cmd+P')
+  })
+
+  test('is nothing for a tap with no second key', () => {
+    expect(chordFor(keyFor, 'app.graph')).toBeNull()
   })
 })
 

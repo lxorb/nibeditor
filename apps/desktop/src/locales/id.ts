@@ -200,7 +200,6 @@ export const id: Dictionary = {
   'That tag could not be deleted.': 'Tag itu tidak dapat dihapus.',
   'Show sidebar': 'Tampilkan bilah sisi',
   'Hide sidebar': 'Sembunyikan bilah sisi',
-  'Go to note, or > for commands': 'Ke catatan, atau > untuk perintah',
   'Search notes and commands': 'Cari catatan dan perintah',
   'Sort by relevance': 'Urutkan menurut kecocokan',
   'Page {page}': 'Halaman {page}',

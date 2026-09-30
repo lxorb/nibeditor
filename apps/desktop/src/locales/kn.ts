@@ -200,7 +200,6 @@ export const kn: Dictionary = {
   'That tag could not be deleted.': 'ಆ ಟ್ಯಾಗ್ ಅಳಿಸಲಾಗಲಿಲ್ಲ.',
   'Show sidebar': 'ಸೈಡ್‌ಬಾರ್ ತೋರಿಸಿ',
   'Hide sidebar': 'ಸೈಡ್‌ಬಾರ್ ಮರೆಮಾಡಿ',
-  'Go to note, or > for commands': 'ಟಿಪ್ಪಣಿಗೆ ಹೋಗಿ, ಕಮಾಂಡ್‌ಗಳಿಗೆ >',
   'Search notes and commands': 'ಟಿಪ್ಪಣಿ ಮತ್ತು ಕಮಾಂಡ್ ಹುಡುಕಿ',
   'Sort by relevance': 'ಪ್ರಸ್ತುತತೆ ಪ್ರಕಾರ ಕ್ರಮ',
   'Page {page}': 'ಪುಟ {page}',
