@@ -1536,4 +1536,8 @@ export const jv: Dictionary = {
   'Default browser': 'Panjelajah gawan',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Wurungaké suntingan {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ora ana piranti kuwi',
+  'give the device a name': 'wenehi jeneng piranti',
+  'that computer is no longer waiting': 'komputer kuwi wis ora ngenteni',
 }

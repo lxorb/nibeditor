@@ -1541,4 +1541,8 @@ export const hi: Dictionary = {
   'Default browser': 'डिफ़ॉल्ट ब्राउज़र',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} के संपादन पूर्ववत करें',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ऐसा कोई डिवाइस नहीं',
+  'give the device a name': 'डिवाइस को नाम दें',
+  'that computer is no longer waiting': 'वह कंप्यूटर अब इंतज़ार नहीं कर रहा',
 }

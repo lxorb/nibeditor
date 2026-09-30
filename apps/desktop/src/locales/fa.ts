@@ -1544,4 +1544,8 @@ export const fa: Dictionary = {
   'Default browser': 'مرورگر پیش‌فرض',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'چنین دستگاهی نیست',
+  'give the device a name': 'برای دستگاه نامی بگذارید',
+  'that computer is no longer waiting': 'آن رایانه دیگر منتظر نیست',
 }

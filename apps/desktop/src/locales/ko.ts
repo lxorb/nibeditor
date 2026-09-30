@@ -1520,4 +1520,8 @@ export const ko: Dictionary = {
   'Default browser': '기본 브라우저',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
+  // Web logins that travel, and the devices of an account
+  'no such device': '그런 기기가 없습니다',
+  'give the device a name': '기기 이름을 지정하세요',
+  'that computer is no longer waiting': '그 컴퓨터는 더 이상 기다리지 않습니다',
 }

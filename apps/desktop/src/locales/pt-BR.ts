@@ -1576,4 +1576,8 @@ export const ptBR: Dictionary = {
   'Default browser': 'Navegador padrão',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'esse dispositivo não existe',
+  'give the device a name': 'dê um nome ao dispositivo',
+  'that computer is no longer waiting': 'esse computador não está mais esperando',
 }

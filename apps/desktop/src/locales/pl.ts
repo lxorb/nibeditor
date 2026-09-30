@@ -1615,4 +1615,8 @@ export const pl: Dictionary = {
   'Default browser': 'Domyślna przeglądarka',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'nie ma takiego urządzenia',
+  'give the device a name': 'nadaj urządzeniu nazwę',
+  'that computer is no longer waiting': 'ten komputer już nie czeka',
 }

@@ -1548,4 +1548,8 @@ export const te: Dictionary = {
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'అలాంటి పరికరం లేదు',
+  'give the device a name': 'పరికరానికి ఒక పేరు ఇవ్వండి',
+  'that computer is no longer waiting': 'ఆ కంప్యూటర్ ఇక వేచి ఉండటం లేదు',
 }

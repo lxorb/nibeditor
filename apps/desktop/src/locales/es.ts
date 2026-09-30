@@ -1590,4 +1590,8 @@ export const es: Dictionary = {
   'Default browser': 'Navegador por defecto',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Deshacer los cambios de {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'no existe ese dispositivo',
+  'give the device a name': 'ponle un nombre al dispositivo',
+  'that computer is no longer waiting': 'ese ordenador ya no está esperando',
 }

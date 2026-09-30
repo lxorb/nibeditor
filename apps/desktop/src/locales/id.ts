@@ -1542,4 +1542,8 @@ export const id: Dictionary = {
   'Default browser': 'Peramban bawaan',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Urungkan suntingan {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'tidak ada perangkat itu',
+  'give the device a name': 'beri perangkat itu nama',
+  'that computer is no longer waiting': 'komputer itu tidak menunggu lagi',
 }

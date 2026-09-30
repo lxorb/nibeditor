@@ -48,3 +48,12 @@ export const NOT_AN_EMAIL = 'enter a valid email address'
 
 /** A blog route reached before the space has an address. */
 export const NO_ADDRESS = 'choose an address'
+
+/** A guest reaching for something only an account has. */
+export const SIGN_IN_TO_DO_THAT = 'sign in to do that'
+
+/** A web state written under a lease that has since gone to another device: the
+ *  hub refuses it, and so does the route for a device that holds no lease at all.
+ *  See hub/hub.ts. A capture uploads in the background and the app answers a 409 with
+ *  its own lock surface, so nobody reads this and it has no catalogue row. */
+export const FENCED = 'another device is using this site now'

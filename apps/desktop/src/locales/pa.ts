@@ -1548,4 +1548,8 @@ export const pa: Dictionary = {
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ਅਜਿਹਾ ਕੋਈ ਡਿਵਾਈਸ ਨਹੀਂ',
+  'give the device a name': 'ਡਿਵਾਈਸ ਨੂੰ ਨਾਂ ਦਿਓ',
+  'that computer is no longer waiting': 'ਉਹ ਕੰਪਿਊਟਰ ਹੁਣ ਉਡੀਕ ਨਹੀਂ ਕਰ ਰਿਹਾ',
 }

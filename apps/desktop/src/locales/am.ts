@@ -1523,4 +1523,8 @@ export const am: Dictionary = {
   'Default browser': 'ነባር አሳሽ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'እንዲህ ያለ መሣሪያ የለም',
+  'give the device a name': 'ለመሣሪያው ስም ስጠው',
+  'that computer is no longer waiting': 'ያ ኮምፒውተር ከእንግዲህ እየጠበቀ አይደለም',
 }

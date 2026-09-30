@@ -1566,4 +1566,8 @@ export const ta: Dictionary = {
   'Default browser': 'இயல்புநிலை உலாவி',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
+  'give the device a name': 'சாதனத்திற்கு ஒரு பெயர் கொடுங்கள்',
+  'that computer is no longer waiting': 'அந்தக் கணினி இனி காத்திருக்கவில்லை',
 }

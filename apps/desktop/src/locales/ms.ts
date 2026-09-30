@@ -1541,4 +1541,8 @@ export const ms: Dictionary = {
   'Default browser': 'Pelayar lalai',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Buat asal suntingan {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'tiada peranti sedemikian',
+  'give the device a name': 'beri nama kepada peranti',
+  'that computer is no longer waiting': 'komputer itu tidak lagi menunggu',
 }

@@ -13,6 +13,7 @@ import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
+import { webStoreOf } from './web-store'
 import { bookmarks } from './bookmarks'
 import { spaceExcluded } from './excluded'
 import { spaceFiles } from './files'
@@ -127,14 +128,19 @@ spaces.get('/', async (context) => {
 
   return context.json({
     spaces: results.map((one) => {
-      const view = presentSpace(
-        one,
-        context.env,
-        one.role,
-        shared.has(one.id),
-        held.get(one.id) ?? 0,
-        items.get(one.id) ?? [],
-      )
+      const view = {
+        ...presentSpace(
+          one,
+          context.env,
+          one.role,
+          shared.has(one.id),
+          held.get(one.id) ?? 0,
+          items.get(one.id) ?? [],
+        ),
+        // Which web store the space's pages live in on every computer, the owner's
+        // choice for everybody in it; see web-store.ts.
+        webStore: webStoreOf(one.web_store),
+      }
 
       return asking ? withoutSetup(view) : view
     }),

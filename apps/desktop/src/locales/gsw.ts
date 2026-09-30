@@ -1553,4 +1553,8 @@ export const gsw: Dictionary = {
   'Default browser': 'Standardbrowser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Das Gerät gits nöd',
+  'give the device a name': 'Gib em Gerät en Name',
+  'that computer is no longer waiting': 'De Computer wartet nüme',
 }

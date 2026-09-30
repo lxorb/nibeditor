@@ -1569,4 +1569,8 @@ export const ha: Dictionary = {
   'Default browser': 'Birawuza na asali',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Soke gyare-gyaren {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': "babu irin wannan na'ura",
+  'give the device a name': "ba na'urar suna",
+  'that computer is no longer waiting': 'wannan kwamfuta ba ta jira kuma',
 }

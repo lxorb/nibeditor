@@ -45,6 +45,15 @@ const NOTED: readonly string[] = [
      select distinct 'versions/' || hash, ?3 from note_versions where note_id in (${OWNED_NOTES})`,
   `insert or ignore into leftovers (what, since)
      select 'blobs/' || hash, ?3 from blobs where user_id = ?1`,
+  // The web logins' bytes, and the hubs of the account and of the guests at its
+  // address, which keep their leases in storage of their own; see hub/bucket.ts.
+  `insert or ignore into leftovers (what, since)
+     select 'web/' || user_id || '/' || key, ?3 from web_states where user_id = ?1`,
+  `insert or ignore into leftovers (what, since)
+     select 'web/' || user_id || '/chunks/' || name, ?3 from web_chunks where user_id = ?1`,
+  `insert or ignore into leftovers (what, since) values ('hubs/' || ?1, ?3)`,
+  `insert or ignore into leftovers (what, since)
+     select 'hubs/' || id, ?3 from guests where email = ?2`,
 ]
 
 /** Every table an account leaves a row in, and the statement that takes those rows
@@ -81,7 +90,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
     'limits',
     `delete from limits
       where key in (?1, ?2) or key in (${OWNED})
-         or (instr(key, ':') > 0 and substr(key, 1, instr(key, ':') - 1) in (${OWNED}))`,
+         or (instr(key, ':') > 0 and substr(key, 1, instr(key, ':') - 1) in (${OWNED}))
+         or (instr(key, ':') > 0 and substr(key, 1, instr(key, ':') - 1) = ?1)`,
   ],
   // The model list kept for it, a second factor half set up or half answered, and
   // the ticket that is deleting it now.
@@ -96,6 +106,12 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['login_codes', 'delete from login_codes where email = ?2'],
   ['mailed', 'delete from mailed where email = ?2'],
   ['mailed_days', 'delete from mailed_days where email = ?2'],
+  // Its devices and its web logins: the key wrapped to each device before the
+  // device, and the states whose bytes NOTED has already written down.
+  ['web_keys', 'delete from web_keys where user_id = ?1'],
+  ['devices', 'delete from devices where user_id = ?1'],
+  ['web_states', 'delete from web_states where user_id = ?1'],
+  ['web_chunks', 'delete from web_chunks where user_id = ?1'],
   ['users', 'delete from users where id = ?1'],
 ]
 

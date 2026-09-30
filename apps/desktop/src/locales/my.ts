@@ -1530,4 +1530,8 @@ export const my: Dictionary = {
   'Default browser': 'မူရင်း ဘရောက်ဇာ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ၏ ပြင်ဆင်မှုများကို ပြန်ဖျက်ရန်',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ထိုစက် မရှိပါ',
+  'give the device a name': 'စက်ကို အမည်ပေးပါ',
+  'that computer is no longer waiting': 'ထိုကွန်ပျူတာ စောင့်မနေတော့ပါ',
 }

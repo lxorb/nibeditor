@@ -1543,4 +1543,8 @@ export const bn: Dictionary = {
   'Default browser': 'ডিফল্ট ব্রাউজার',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'এমন ডিভাইস নেই',
+  'give the device a name': 'ডিভাইসটির একটি নাম দিন',
+  'that computer is no longer waiting': 'সেই কম্পিউটারটি আর অপেক্ষা করছে না',
 }

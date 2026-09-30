@@ -1634,4 +1634,8 @@ export const ar: Dictionary = {
   'Default browser': 'المتصفح الافتراضي',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'تراجع عن تعديلات {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'لا يوجد جهاز كهذا',
+  'give the device a name': 'أعطِ الجهاز اسمًا',
+  'that computer is no longer waiting': 'ذلك الحاسوب لم يعد ينتظر',
 }

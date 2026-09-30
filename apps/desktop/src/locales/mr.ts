@@ -1543,4 +1543,8 @@ export const mr: Dictionary = {
   'Default browser': 'मूळ ब्राउझर',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'असे डिव्हाइस नाही',
+  'give the device a name': 'डिव्हाइसला नाव द्या',
+  'that computer is no longer waiting': 'तो संगणक आता वाट पाहत नाही',
 }

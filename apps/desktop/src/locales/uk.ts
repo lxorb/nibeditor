@@ -1609,4 +1609,8 @@ export const uk: Dictionary = {
   'Default browser': 'Браузер за умовчанням',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Такого пристрою немає',
+  'give the device a name': 'Дайте пристрою назву',
+  'that computer is no longer waiting': 'Цей комп’ютер більше не чекає',
 }

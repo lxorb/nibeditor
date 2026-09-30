@@ -1601,4 +1601,8 @@ export const fr: Dictionary = {
   'Default browser': 'Navigateur par défaut',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annuler les modifications de {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Cet appareil n’existe pas',
+  'give the device a name': 'Donnez un nom à l’appareil',
+  'that computer is no longer waiting': 'Cet ordinateur n’attend plus',
 }

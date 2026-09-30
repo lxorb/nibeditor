@@ -1530,4 +1530,8 @@ export const vi: Dictionary = {
   'Default browser': 'Trình duyệt mặc định',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'không có thiết bị đó',
+  'give the device a name': 'đặt tên cho thiết bị',
+  'that computer is no longer waiting': 'máy tính đó không còn chờ nữa',
 }

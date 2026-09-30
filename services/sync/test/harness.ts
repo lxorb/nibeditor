@@ -83,7 +83,14 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
 function bucket() {
   // Notes go in as text and images as bytes, so both are kept as given and
   // handed back the way the Worker asks for them.
-  const store = new Map<string, { value: unknown; contentType: string | undefined }>()
+  const store = new Map<
+    string,
+    {
+      value: unknown
+      contentType: string | undefined
+      customMetadata: Record<string, string> | undefined
+    }
+  >()
 
   return {
     /** Everything in it, so a test can say that nothing is stored under a name no
@@ -91,8 +98,19 @@ function bucket() {
      *  environment. */
     keys: () => [...store.keys()],
 
-    put(key: string, value: unknown, options?: { httpMetadata?: { contentType?: string } }) {
-      store.set(key, { value, contentType: options?.httpMetadata?.contentType })
+    put(
+      key: string,
+      value: unknown,
+      options?: {
+        httpMetadata?: { contentType?: string }
+        customMetadata?: Record<string, string>
+      },
+    ) {
+      store.set(key, {
+        value,
+        contentType: options?.httpMetadata?.contentType,
+        customMetadata: options?.customMetadata,
+      })
       return Promise.resolve()
     },
     get(key: string) {
@@ -103,6 +121,7 @@ function bucket() {
         text: () => Promise.resolve(String(held.value)),
         body: held.value,
         httpMetadata: { contentType: held.contentType },
+        customMetadata: held.customMetadata,
       })
     },
     /** One name or a list of them, as R2 takes either. */

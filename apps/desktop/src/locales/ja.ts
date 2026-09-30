@@ -1537,4 +1537,8 @@ export const ja: Dictionary = {
   'Default browser': '既定のブラウザ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'そのデバイスはありません',
+  'give the device a name': 'デバイスに名前を付けてください',
+  'that computer is no longer waiting': 'そのコンピューターはもう待っていません',
 }

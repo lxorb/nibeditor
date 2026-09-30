@@ -1585,4 +1585,8 @@ export const de: Dictionary = {
   'Default browser': 'Standardbrowser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'Dieses Gerät gibt es nicht',
+  'give the device a name': 'Gib dem Gerät einen Namen',
+  'that computer is no longer waiting': 'Dieser Computer wartet nicht mehr',
 }

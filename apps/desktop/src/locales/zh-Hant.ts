@@ -1506,4 +1506,8 @@ export const zhHant: Dictionary = {
   'Default browser': '預設瀏覽器',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
+  // Web logins that travel, and the devices of an account
+  'no such device': '沒有這部裝置',
+  'give the device a name': '請為裝置命名',
+  'that computer is no longer waiting': '那部電腦已不再等候',
 }

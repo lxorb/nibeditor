@@ -1562,4 +1562,8 @@ export const ml: Dictionary = {
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
+  'give the device a name': 'ഉപകരണത്തിന് ഒരു പേര് നൽകുക',
+  'that computer is no longer waiting': 'ആ കമ്പ്യൂട്ടർ ഇനി കാത്തിരിക്കുന്നില്ല',
 }

@@ -1597,4 +1597,8 @@ export const it: Dictionary = {
   'Default browser': 'Browser predefinito',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annulla le modifiche di {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'dispositivo inesistente',
+  'give the device a name': 'dai un nome al dispositivo',
+  'that computer is no longer waiting': 'quel computer non è più in attesa',
 }

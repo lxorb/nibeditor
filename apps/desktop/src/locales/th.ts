@@ -1512,4 +1512,8 @@ export const th: Dictionary = {
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'ไม่มีอุปกรณ์นี้',
+  'give the device a name': 'ตั้งชื่อให้อุปกรณ์',
+  'that computer is no longer waiting': 'คอมพิวเตอร์เครื่องนั้นไม่ได้รอแล้ว',
 }

@@ -1578,4 +1578,8 @@ export const fil: Dictionary = {
   'Default browser': 'Default na browser',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'walang ganoong device',
+  'give the device a name': 'bigyan ng pangalan ang device',
+  'that computer is no longer waiting': 'hindi na naghihintay ang computer na iyon',
 }

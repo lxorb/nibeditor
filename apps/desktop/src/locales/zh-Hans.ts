@@ -1506,4 +1506,8 @@ export const zhHans: Dictionary = {
   'Default browser': '默认浏览器',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
+  // Web logins that travel, and the devices of an account
+  'no such device': '没有这个设备',
+  'give the device a name': '请为设备命名',
+  'that computer is no longer waiting': '那台电脑已不再等待',
 }

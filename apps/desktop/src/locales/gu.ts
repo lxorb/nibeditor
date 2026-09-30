@@ -1534,4 +1534,8 @@ export const gu: Dictionary = {
   'Default browser': 'મૂળ બ્રાઉઝર',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ના ફેરફારો પૂર્વવત્ કરો',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'એવું ઉપકરણ નથી',
+  'give the device a name': 'ઉપકરણને નામ આપો',
+  'that computer is no longer waiting': 'તે કમ્પ્યુટર હવે રાહ જોતું નથી',
 }

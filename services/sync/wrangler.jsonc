@@ -26,10 +26,23 @@
   // file, and a second class would mean a second migration tag for the sake of
   // one seed and one serialiser. No tag is added here for canvases, which is
   // the point.
+  //
+  // And one per account, the hub: every signed-in device keeps one socket to it,
+  // which carries the pokes that say a space moved, the leases on web logins, and
+  // the web key's relay between computers. Named by the account id (or a guest's),
+  // hibernating, SQLite-backed for the same reason as the rooms; see
+  // src/hub/hub.ts and docs/sync-v2.md section 6.2. A tag of its own, because a
+  // migration tag is applied once and never changed.
   "durable_objects": {
-    "bindings": [{ "name": "ROOMS", "class_name": "NoteRoom" }],
+    "bindings": [
+      { "name": "ROOMS", "class_name": "NoteRoom" },
+      { "name": "HUB", "class_name": "AccountHub" },
+    ],
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["NoteRoom"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["NoteRoom"] },
+    { "tag": "v2", "new_sqlite_classes": ["AccountHub"] },
+  ],
 
   "r2_buckets": [{ "binding": "NOTES", "bucket_name": "nib-notes" }],
 

@@ -1568,4 +1568,8 @@ export const sw: Dictionary = {
   'Default browser': 'Kivinjari chaguomsingi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'hakuna kifaa kama hicho',
+  'give the device a name': 'kipe kifaa jina',
+  'that computer is no longer waiting': 'kompyuta hiyo haisubiri tena',
 }

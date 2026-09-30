@@ -1545,4 +1545,8 @@ export const ps: Dictionary = {
   'Default browser': 'اصلي کوټګر',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'داسې وسیله نشته',
+  'give the device a name': 'وسیلې ته نوم ورکړئ',
+  'that computer is no longer waiting': 'هغه کمپیوټر نور انتظار نه کوي',
 }

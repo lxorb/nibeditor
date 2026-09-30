@@ -273,6 +273,23 @@ export function inviteMessage(invite: {
   }
 }
 
+/** A computer was given the account's web key: the one moment somebody who had
+ *  taken the mailbox and a session would need, and the one sync mail there is. Like
+ *  a bank's new-device mail, it says what happened and where to undo it. See
+ *  hub/keys.ts and docs/sync-v2.md section 6.6. */
+export function webKeyMessage(device: string, link: string) {
+  return {
+    subject: oneLine(`${device} was given your web logins`),
+    ...letter(
+      [
+        `Another of your computers allowed ${device} to open the sites you are signed in to in Nib.`,
+        'If that was not you, end it in Settings, Account.',
+      ],
+      { label: 'Open Nib', href: link },
+    ),
+  }
+}
+
 /** Somebody followed a link that asks first, and is waiting on the owner. */
 export function requestMessage(request: { space: string; who: string; link: string }) {
   return {

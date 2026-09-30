@@ -1585,4 +1585,8 @@ export const ptPT: Dictionary = {
   'Default browser': 'Navegador predefinido',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
+  // Web logins that travel, and the devices of an account
+  'no such device': 'esse dispositivo não existe',
+  'give the device a name': 'dê um nome ao dispositivo',
+  'that computer is no longer waiting': 'esse computador já não está à espera',
 }
