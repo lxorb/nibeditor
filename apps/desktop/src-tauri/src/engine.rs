@@ -261,6 +261,18 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     Ok(building)
 }
 
+/// Whether a page is one the engine loads for itself rather than one a tab was sent to.
+///
+/// `tauri-runtime-cef` builds every browser on an inert document of its own - a `data:`
+/// page marked `data-tauri-cef-internal`, titled "Tauri CEF Initial Load" - and only then
+/// sends it where it was asked to go. It hides that page's address from the address
+/// event and from nobody else: its load and its title arrive like any page's, and a web
+/// tab took them for its own - one came back from a relaunch named after that page, at
+/// that page. The system's engine has no such page, so nothing is one there.
+pub(crate) fn internal(url: &str) -> bool {
+    url.starts_with("data:") && url.contains("data-tauri-cef-internal")
+}
+
 #[cfg(feature = "cef")]
 pub(crate) mod devtools;
 #[cfg(feature = "cef")]
@@ -268,7 +280,18 @@ pub(crate) mod gate;
 
 #[cfg(test)]
 mod tests {
-    use super::{APP_PROFILE, ROOT};
+    use super::{internal, APP_PROFILE, ROOT};
+
+    #[test]
+    fn the_engine_s_own_first_page_is_nobody_s_address() {
+        assert!(internal(concat!(
+            "data:text/html;charset=utf-8,%3C!doctype%20html%3E",
+            "%3Chtml%20data-tauri-cef-internal%3D%22initial-load%22%3E"
+        )));
+        assert!(!internal("about:blank"));
+        assert!(!internal("https://example.com/?q=data-tauri-cef-internal"));
+        assert!(!internal("data:text/html,<p>a page somebody made</p>"));
+    }
 
     /// The one thing every release rests on: the engine is the system's unless
     /// somebody asked for the other one, so the app that ships is the app that

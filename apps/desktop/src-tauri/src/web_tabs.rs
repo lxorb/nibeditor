@@ -1618,7 +1618,9 @@ fn say(
     title: Option<String>,
     loading: bool,
 ) {
-    if url == BLANK {
+    // Neither is a page anybody sent the tab to: the blank page it is built on, and the
+    // one nib's own Chromium builds every browser on before that; see engine.rs.
+    if url == BLANK || crate::engine::internal(url) {
         return;
     }
 
