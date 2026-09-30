@@ -1607,11 +1607,14 @@ select:focus-visible,
   border-radius: 99px;
 }
 
+/* Filled from where the line starts, which is the right in a language that reads that
+   way: the engine runs the knob from the right there, and a fill drawn from the left
+   parted the two. */
 .nib-slider::-webkit-slider-runnable-track {
   height: 4px;
   border-radius: 2px;
   background:
-    linear-gradient(var(--accent), var(--accent)) 0 / var(--fill) 100% no-repeat,
+    linear-gradient(var(--accent), var(--accent)) var(--dir-start) / var(--fill) 100% no-repeat,
     var(--surface-3);
 }
 

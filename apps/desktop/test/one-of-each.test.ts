@@ -388,6 +388,8 @@ describe('the badge in front of a name', () => {
       // Also the space in the bar while the list is shut, which is the switcher
       // itself, bare: the same badge on the same space. See Titlebar.svelte.
       'lib/SpaceSwitcher.svelte',
+      // An agent, which wears a person's badge in the colour of its caret.
+      'lib/agents/settings/AgentMark.svelte',
       // A program asking to become an agent, as the Share sheet shows a person.
       'lib/agents/ui/PairingBubble.svelte',
     ])
@@ -439,6 +441,8 @@ describe('the switch', () => {
       'lib/McpSetup.svelte',
       'lib/SettingsPanel.svelte',
       'lib/ShareSheet.svelte',
+      // What an agent may do, a switch a scope, in Settings > Agents.
+      'lib/agents/settings/AgentDetail.svelte',
     ])
   })
 })

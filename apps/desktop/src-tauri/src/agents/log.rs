@@ -89,8 +89,7 @@ pub fn write(app: &AppHandle, mut line: Line<'_>) {
 
 /// The lines of one day, oldest first, for the activity panel.
 pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
-    let fine = day.len() == 10 && day.bytes().all(|one| one.is_ascii_digit() || one == b'-');
-    let Some(path) = fine
+    let Some(path) = is_day(day)
         .then(|| folder(app).ok())
         .flatten()
         .map(|folder| folder.join(format!("{day}.jsonl")))
@@ -102,6 +101,75 @@ pub fn read_day(app: &AppHandle, day: &str) -> Vec<Value> {
         .lines()
         .filter_map(|line| serde_json::from_str(line).ok())
         .collect()
+}
+
+/// The days the log has, newest first: what Settings > Agents reads the sessions from.
+pub fn days(app: &AppHandle) -> Vec<String> {
+    folder(app)
+        .map(|folder| days_in(&folder))
+        .unwrap_or_default()
+}
+
+/// The days in a folder of the log, newest first.
+fn days_in(folder: &Path) -> Vec<String> {
+    let mut days: Vec<String> = fs::read_dir(folder)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|entry| {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            name.strip_suffix(".jsonl")
+                .filter(|day| is_day(day))
+                .map(str::to_string)
+        })
+        .collect();
+    days.sort_unstable_by(|one, other| other.cmp(one));
+    days
+}
+
+/// Takes one agent's lines out of every day, or every line of every day when no agent
+/// is named: the reader's Clear. A day left with nothing in it goes.
+pub fn clear(app: &AppHandle, agent: Option<&str>) -> Result<(), String> {
+    clear_in(&folder(app)?, agent)
+}
+
+/// `clear` in a folder of the log.
+fn clear_in(folder: &Path, agent: Option<&str>) -> Result<(), String> {
+    for day in days_in(folder) {
+        let path = folder.join(format!("{day}.jsonl"));
+        let text = if agent.is_some() {
+            fs::read_to_string(&path).unwrap_or_default()
+        } else {
+            String::new()
+        };
+        let kept: Vec<&str> = agent.map_or_else(Vec::new, |agent| {
+            text.lines()
+                .filter(|line| !written_by(line, agent))
+                .collect()
+        });
+        let done = if kept.is_empty() {
+            fs::remove_file(&path)
+        } else {
+            fs::write(&path, format!("{}\n", kept.join("\n")))
+        };
+        done.map_err(|error| format!("could not clear the log: {error}"))?;
+    }
+    Ok(())
+}
+
+/// Whether a line of the log is one of this agent's calls. A line that cannot be read
+/// is nobody's, and stays.
+fn written_by(line: &str, agent: &str) -> bool {
+    serde_json::from_str::<Value>(line)
+        .ok()
+        .and_then(|value| value.get("agent")?.as_str().map(|one| one == agent))
+        .unwrap_or(false)
+}
+
+/// Whether a name is a day as the log writes one, `YYYY-MM-DD`: the one shape a file of
+/// it may have, and the one shape a day asked for may.
+fn is_day(day: &str) -> bool {
+    day.len() == 10 && day.bytes().all(|one| one.is_ascii_digit() || one == b'-')
 }
 
 /// Where the log lives, made if it is not there.
@@ -186,6 +254,47 @@ mod tests {
         assert_eq!(args["ref"], "e4");
         let form = redacted(json!({ "fields": [{ "ref": "e1", "value": "123" }] }));
         assert_eq!(form["fields"][0]["value"], "(not kept)");
+    }
+
+    #[test]
+    fn the_days_are_the_files_newest_first() {
+        let folder = tempfile::tempdir().expect("folder");
+        for name in [
+            "2026-09-29.jsonl",
+            "2026-09-30.jsonl",
+            "notes.txt",
+            "x.jsonl",
+        ] {
+            fs::write(folder.path().join(name), "{}\n").expect("write");
+        }
+        assert_eq!(days_in(folder.path()), ["2026-09-30", "2026-09-29"]);
+        assert!(days_in(&folder.path().join("missing")).is_empty());
+    }
+
+    #[test]
+    fn clearing_one_agent_keeps_everybody_else() {
+        let folder = tempfile::tempdir().expect("folder");
+        let day = |name: &str| folder.path().join(format!("{name}.jsonl"));
+        fs::write(
+            day("2026-09-29"),
+            "{\"agent\":\"a\",\"verb\":\"read_note\"}\n{\"agent\":\"b\",\"verb\":\"read_note\"}\nnot json\n",
+        )
+        .expect("write");
+        fs::write(
+            day("2026-09-30"),
+            "{\"agent\":\"a\",\"verb\":\"browser_open\"}\n",
+        )
+        .expect("write");
+
+        clear_in(folder.path(), Some("a")).expect("clear");
+        assert_eq!(
+            fs::read_to_string(day("2026-09-29")).expect("read"),
+            "{\"agent\":\"b\",\"verb\":\"read_note\"}\nnot json\n"
+        );
+        assert!(!day("2026-09-30").exists());
+
+        clear_in(folder.path(), None).expect("clear all");
+        assert!(days_in(folder.path()).is_empty());
     }
 
     #[test]

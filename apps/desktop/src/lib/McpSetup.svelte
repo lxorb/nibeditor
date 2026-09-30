@@ -15,6 +15,8 @@
   import Copyable from './Copyable.svelte'
   import CopyButton from './CopyButton.svelte'
   import { i18n, t } from './i18n.svelte'
+  import { reach } from './agents/settings/reach.svelte'
+  import { settings } from './settings.svelte'
   import { openExternal } from './tauri'
   import { dur } from './motion'
 
@@ -258,6 +260,16 @@
         {/if}
       </div>
     {/key}
+  {/if}
+
+  <!-- The other half: this connector reaches the account's notes from anywhere, and the
+       agents on this computer reach everything nib has open. See
+       agents/settings/AgentsPane.svelte, which leads back here. -->
+  {#if !__EVEN_PLUGIN__ && reach.offered}
+    <button class="link" onclick={() => (settings.section = 'agents')}>
+      {t('Agents on this computer')}
+      {@render chevron(false)}
+    </button>
   {/if}
 </div>
 

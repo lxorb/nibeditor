@@ -6,6 +6,7 @@
  *  out. */
 
 import { account } from '../account.svelte'
+import { reach } from '../agents/settings/reach.svelte'
 import { modes } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
@@ -43,6 +44,10 @@ export const ICONS: Record<string, string> = {
   // everybody started drawing one. Two of them, so it reads as a spark and not as
   // a star: the small one is what says this is the machine and not the sky.
   ai: 'M6 2.2l1.1 2.9L10 6.2 7.1 7.3 6 10.2 4.9 7.3 2 6.2l2.9-1.1zM11.5 9.2l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z',
+  // A head with two eyes and an aerial: something that acts on its own, which the
+  // spark beside it (a model answering) does not.
+  agents:
+    'M4.5 6h7a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-4A1.5 1.5 0 0 1 4.5 6zM8 6V3.6M8 3.4h.01M6.2 9.3v.4M9.8 9.3v.4',
   // Two arrows going round, which is what syncing has looked like since before
   // any of this.
   sync: 'M13.2 7a5.3 5.3 0 0 0-9.1-2.6L2.8 5.7M2.8 9a5.3 5.3 0 0 0 9.1 2.6l1.3-1.3M2.8 3v2.7h2.7M13.2 13v-2.7h-2.7',
@@ -79,6 +84,13 @@ export function sectionGroups(): Item[][] {
       // keys went. Always here: unlike the connector below, nothing about it needs
       // an account, and the pane's own first row is how one is added.
       { id: 'ai', label: t('AI') },
+      // The agents on this machine, and what each may do: a desktop's alone, because
+      // an agent reaches nib through the installed app's own program. Beside AI,
+      // since both are about a model; the account's connector is its other half,
+      // under the account. See agents/settings/reach.svelte.ts.
+      ...(!__EVEN_PLUGIN__ && reach.offered
+        ? [{ id: 'agents' as Section, label: t('Agents') }]
+        : []),
       // Only for somebody who has a pair: in the plugin always, and on any other
       // device once the plugin has answered one, which the account remembers.
       // Spread rather than hidden, so the group closes over the gap instead of

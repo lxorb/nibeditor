@@ -518,15 +518,19 @@
     // See surfaces.svelte.ts, test/e2e/import.py, test/e2e/site.py and test/e2e/ai.py.
     // Fetched here rather than imported so that a development build is the only one
     // that pays for them, and awaited by every drive the same way the space is:
-    // nothing reaches any of these before the space is open.
+    // nothing reaches any of these before the space is open. The agents' stand-in is
+    // how a drive sees Settings > Agents in a browser, which has no crate to ask; see
+    // agents/settings/fake.ts.
     void Promise.all([
       import('./lib/importing.svelte'),
       import('./lib/publishing.svelte'),
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),
       import('./lib/sync2/fake-engine.svelte'),
-    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2]) => {
+      import('./lib/agents/settings/fake'),
+    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }]) => {
       Object.assign((window as unknown as { nibApp: object }).nibApp, {
+        agents: { standIn },
         ai,
         importing,
         publish,

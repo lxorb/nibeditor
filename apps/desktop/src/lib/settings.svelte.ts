@@ -23,6 +23,7 @@ export type Section =
   | 'appearance'
   | 'glasses'
   | 'ai'
+  | 'agents'
   | 'account'
   | 'sync'
   | 'llm'

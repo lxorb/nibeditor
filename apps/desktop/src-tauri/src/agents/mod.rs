@@ -650,6 +650,25 @@ pub fn agents_log(
     Ok(log::read_day(&app, &day))
 }
 
+/// The days the audit log has, newest first, for Settings > Agents' sessions.
+#[tauri::command(async)]
+pub fn agents_log_days(webview: tauri::Webview, app: AppHandle) -> Result<Vec<String>, String> {
+    from_the_app(&webview)?;
+    Ok(log::days(&app))
+}
+
+/// The reader's Clear in Settings > Agents: one agent's calls out of the audit log, or
+/// every call when no agent is named.
+#[tauri::command(async)]
+pub fn agents_log_clear(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: Option<String>,
+) -> Result<(), String> {
+    from_the_app(&webview)?;
+    log::clear(&app, agent.as_deref())
+}
+
 /// An agent's tab made a tab of the reader's, without loading it again (6.7): the
 /// window has made the reader's tab `tab` for it, and places the page as it places any.
 #[tauri::command(async)]

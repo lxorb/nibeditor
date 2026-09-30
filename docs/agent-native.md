@@ -1046,7 +1046,9 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   `agents_resume {agent?, tab?}`, `agents_answer {id, allow, always}` (a takeover answered
   is the tab handed back), `agents_ask {agent, category, summary, key}` for a window verb
   that asks first, `agents_state` for everything the activity panel draws at once,
-  `agents_log {day}`, and `agents_adopt {agent_tab, tab}` for Show (6.7). The activity
+  `agents_log {day}` with `agents_log_days` (the days there are, newest first) and
+  `agents_log_clear {agent?}` (Settings > Agents' Clear), and `agents_adopt {agent_tab,
+  tab}` for Show (6.7). The activity
   UI adds five: `agents_stop {agent?}` stops one agent where one is named,
   `agents_pause {agent, tab, stop}` is Take over and a tab's Stop, `agents_watch {tabs}`
   starts the screencast of those agent tabs (and stops the rest) with its frames on
