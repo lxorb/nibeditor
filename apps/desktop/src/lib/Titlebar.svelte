@@ -8,7 +8,7 @@
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
-  import { titled } from './titled'
+  import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -169,7 +169,7 @@
         <button
           class="close"
           onclick={closeWindow}
-          title={titled(t('Close'), 'app.close-window')}
+          title={shortcuts.tooltip(t('Close'), 'app.close-window')}
           aria-label={t('Close')}
         >
           <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>

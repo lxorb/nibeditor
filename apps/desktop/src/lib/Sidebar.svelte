@@ -8,7 +8,6 @@
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
-  import { titled } from './titled'
   import { agentMarks } from './agent-marks.svelte'
   import {
     AGENTS_MARK,
@@ -588,7 +587,7 @@
         <button
           class:on={showing === item.id}
           role="tab"
-          title={titled(item.label, item.key)}
+          title={shortcuts.tooltip(item.label, item.key)}
           aria-label={item.label}
           aria-selected={showing === item.id}
           onclick={() => workspace.togglePanel(item.id)}
@@ -673,7 +672,7 @@
         {#if workspace.unfolded}
           <button
             class="nib-glyph tool"
-            title={titled(t('Collapse the file list'), 'app.fold-list')}
+            title={shortcuts.tooltip(t('Collapse the file list'), 'app.fold-list')}
             aria-label={t('Collapse the file list')}
             onclick={() => workspace.foldList()}
             transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
@@ -696,7 +695,7 @@
       <div class="tools">
         <button
           class="nib-glyph tool"
-          title={titled(t('Stop agents'), 'agents.stop')}
+          title={shortcuts.tooltip(t('Stop agents'), 'agents.stop')}
           aria-label={t('Stop agents')}
           onclick={() => {
             if (!__EVEN_PLUGIN__) void import('./agents/ui/index').then((one) => one.stopAgents())

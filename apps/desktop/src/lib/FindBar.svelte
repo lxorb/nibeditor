@@ -37,7 +37,7 @@
   import { dur } from './motion'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive, leave } from './slide'
-  import { titled } from './titled'
+  import { shortcuts } from './shortcuts.svelte'
   import Cross from './Cross.svelte'
 
   /** The three things a match may be fussy about: the same three the editor's
@@ -233,7 +233,7 @@
 
       <button
         class="nib-glyph act"
-        title={titled(t('Previous'), 'edit.find-previous')}
+        title={shortcuts.tooltip(t('Previous'), 'edit.find-previous')}
         aria-label={t('Previous')}
         disabled={!count}
         onclick={() => onstep(-1)}
@@ -242,7 +242,7 @@
       </button>
       <button
         class="nib-glyph act"
-        title={titled(t('Next'), 'edit.find-next')}
+        title={shortcuts.tooltip(t('Next'), 'edit.find-next')}
         aria-label={t('Next')}
         disabled={!count}
         onclick={() => onstep(1)}
@@ -257,7 +257,7 @@
         <button
           class="nib-glyph act"
           class:on={replacing}
-          title={titled(t('Replace'), 'edit.replace')}
+          title={shortcuts.tooltip(t('Replace'), 'edit.replace')}
           aria-label={t('Replace')}
           aria-expanded={replacing}
           onclick={() => onreplacing?.(!replacing)}
@@ -272,7 +272,7 @@
 
       <button
         class="nib-glyph act shut"
-        title={titled(t('Close'), 'fixed.escape')}
+        title={shortcuts.tooltip(t('Close'), 'fixed.escape')}
         aria-label={t('Close')}
         onclick={onclose}
       >

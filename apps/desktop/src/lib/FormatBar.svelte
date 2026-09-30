@@ -14,7 +14,7 @@
   import { modes } from './modes.svelte'
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/registry'
-  import { titled } from './titled'
+  import { shortcuts } from './shortcuts.svelte'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { viewport } from './viewport.svelte'
 
@@ -247,7 +247,7 @@
   key: string | null = null,
 )}
   <button
-    title={titled(title, key)}
+    title={shortcuts.tooltip(title, key)}
     aria-label={title}
     onpointerdown={(event) => event.preventDefault()}
     onmousedown={(event) => event.preventDefault()}

@@ -13,7 +13,6 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { shownName } from './note-name'
-  import { titled } from './titled'
   import { nameOf } from './space-paths'
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
@@ -170,20 +169,16 @@
   )
   const base = $derived(placed(widths))
 
-  /** What a click that picks does, and what a pick does together: fetched with the first
-   *  such click, and kept, so a block let go of lands in the frame it was let go in. */
+  /** What a pick does (tab-strip/picking.ts), fetched with the first click that picks. */
   let picking = $state<typeof import('./tab-strip/picking') | null>(null)
   /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/chosen.svelte.ts. */
   const picked = $derived(new Set(chosen.of(paneId).map((one) => one.id)))
-  /** Whether the press being held was a plain one on a picked tab, which picks that tab
-   *  alone once it turns out to have been a click. */
+  /** A plain press on a picked tab, which picks it alone if it turns out a click. */
   let plainOnPick = false
 
-  /** What the press being held would carry, when that is more than the tab pressed:
-   *  every tab picked with it that is pinned as it is. */
+  /** What the press would carry: every tab picked with it that is pinned as it is. */
   let carrying = $state<{ lead: string; ids: readonly string[] } | null>(null)
-  /** The strip as a drag of several sees it, the block standing as one tab; see
-   *  `gathered` in tab-strip/picking.ts, which is here by the time anything is picked. */
+  /** The strip as a drag of several sees it, the block standing as one tab. */
   const group = $derived(
     carrying && picking ? picking.gathered(sized, widths, carrying.ids, carrying.lead) : null,
   )
@@ -458,10 +453,9 @@
     }
     if (!finger) {
       // Chrome activates a tab on the press, before anything has moved, so the tab
-      // under a mouse answers at once and the one being dragged is the one open. A
-      // press on a picked tab leaves the pick alone: it may be the start of dragging
-      // all of them. A finger's press may be the start of a scroll, so it waits for
-      // the tap.
+      // under a mouse answers at once and the one being dragged is the one open; the
+      // pick stays while this may be dragging all of it. A finger's press may be the
+      // start of a scroll, so it waits for the tap.
       if (!picked.has(tab.id)) chosen.clear()
       workspace.activate(tab.id)
     }
@@ -604,8 +598,7 @@
     }
   }
 
-  /** A block of picked tabs let go of: side by side in their order, in front of one tab
-   *  of a pane or at its end, the one dragged in front and all of them still picked. */
+  /** A block of picked tabs let go of, the one dragged in front and all still picked. */
   function putDown(ids: readonly string[], lead: string, into: string, before: string | null) {
     withPicking((one) => {
       one.placeBlock(ids, into, before)
@@ -787,14 +780,13 @@
   }
 
   /* ── The card under a tab ─────────────────────────────────────────
-     Chrome's hover card, fetched with the first pointer to rest on a tab: nothing of
-     it is in front of the first paint. See tab-strip/hover-card.svelte.ts. */
+     Chrome's hover card, fetched with the first pointer to rest on a tab; see
+     tab-strip/hover-card.svelte.ts. */
 
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
 
-  /** A tab the pointer came to rest on, or the keyboard arrived at. The card hangs
-   *  from the tab's body rather than its box, and waits as long as the widest tab of
-   *  this strip says. */
+  /** A tab the pointer came to rest on, or the keyboard arrived at: the card hangs from
+   *  its body, and waits as long as the widest tab of this strip says. */
   function aimCard(tab: Tab, node: Element, focused = false) {
     const body = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
     const aim = {
@@ -834,7 +826,7 @@
     <div class="steps">
       <button
         class="step"
-        title={titled(t('Back'), 'app.back')}
+        title={shortcuts.tooltip(t('Back'), 'app.back')}
         aria-label={t('Back')}
         disabled={!walking.canGoBack}
         onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
@@ -848,7 +840,7 @@
       </button>
       <button
         class="step"
-        title={titled(t('Forward'), 'app.forward')}
+        title={shortcuts.tooltip(t('Forward'), 'app.forward')}
         aria-label={t('Forward')}
         disabled={!walking.canGoForward}
         onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
@@ -1078,7 +1070,7 @@
           <button
             class="shut"
             class:hidden={!parts.close}
-            title={titled(t('Close'), 'app.close')}
+            title={shortcuts.tooltip(t('Close'), 'app.close')}
             aria-label={t('Close')}
             onclick={(event) => closeTab(tab, pointerOf(event))}
           >
@@ -1099,7 +1091,7 @@
     {#if !viewport.touch}
       <button
         class="new"
-        title={titled(t('New'), 'app.new-kind')}
+        title={shortcuts.tooltip(t('New'), 'app.new-kind')}
         aria-label={t('New')}
         aria-haspopup="menu"
         style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"
