@@ -1109,16 +1109,12 @@ pub async fn web_open(
 
     // nib's own scripts for the page, and where the page is built: on the blank page, and
     // sent to the site once the runtime's scripts are off it and these are in nib's own
-    // world (see `listening` and web_worlds.rs). Under nib's own Chromium it is built on
-    // the site with these in the page's own world, as it always was.
+    // world, on either engine (see `listening` and web_worlds.rs).
     let scripts = opening(revived.place, &url);
-    #[cfg(not(feature = "cef"))]
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
     );
-    #[cfg(feature = "cef")]
-    let (built_on, onward) = (address, None::<(Url, String)>);
 
     let starting = (app.clone(), tab.clone());
     let builder = WebviewBuilder::new(label, WebviewUrl::External(built_on))
@@ -1140,9 +1136,6 @@ pub async fn web_open(
     // the site. What the zoom is kept as is web_page.rs's.
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.zoom_hotkeys_enabled(true);
-
-    #[cfg(feature = "cef")]
-    let builder = builder.initialization_script(scripts);
 
     // Where the site's own storage goes, decided once by the engine this build runs
     // on rather than here: a store the app's own session is not in under the system
@@ -1362,12 +1355,21 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
     // system's engines build on the blank page; see web_worlds.rs.
     #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = store;
-    #[cfg(feature = "cef")]
-    let _ = onward;
 
     let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
+
+    // nib's own Chromium clears the page and sends it on from a thread of its own, since
+    // every step waits for the page's agent, which answers on the window's thread.
+    #[cfg(feature = "cef")]
+    if let Some((address, scripts)) = onward.clone() {
+        let clearing = view.clone();
+        std::thread::spawn(move || {
+            let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
+            crate::trace::mark(&format!("web tab: {}", cleared.said()));
+        });
+    }
 
     let window = view.window().label().to_string();
     let asking = app.clone();
