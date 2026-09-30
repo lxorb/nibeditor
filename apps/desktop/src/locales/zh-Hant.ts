@@ -85,6 +85,7 @@ export const zhHant: Dictionary = {
   'Close all': '全部關閉',
   'Close all tabs': '關閉所有分頁',
   'Duplicate tab': '複製分頁',
+  'Deselect tab': '取消選取分頁',
   'Move to other pane': '移到另一個窗格',
   Tabs: '分頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 依使用順序',

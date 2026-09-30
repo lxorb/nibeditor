@@ -179,7 +179,8 @@ The file manager's gestures, the way Explorer and VS Code have them. Ctrl+C or
 Ctrl+X on the selection (or on the row the keyboard is on), then Ctrl+V: the rows
 land in the folder the focused row is, or sits in. A cut row is drawn faint until
 the paste moves it, and the paste is the ordinary move. A copy pastes as often as
-asked. Ctrl+D copies a row beside itself; a drag with Ctrl held (Alt on a Mac) copies
+asked. Duplicate in a row's menu copies it beside itself (no key: Ctrl+D puts the tab
+down, in the list too); a drag with Ctrl held (Alt on a Mac) copies
 instead of moving; files and folders dragged in from Explorer or Finder are copied
 into the row they land on, or into the space below the last row.
 

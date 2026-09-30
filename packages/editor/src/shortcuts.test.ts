@@ -162,17 +162,18 @@ describe('a state built with them', () => {
     const counted = new Map<string, number>()
     for (const chord of keysIn(installed)) counted.set(chord, (counted.get(chord) ?? 0) + 1)
 
-    // Find, the two steps, goto-line, and the one the library bound underneath nib's
-    // own Ctrl+D.
-    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g', 'Mod-d']) {
+    // Find, the two steps and goto-line.
+    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g']) {
       expect(counted.get(chord), chord).toBe(1)
     }
 
-    // And the sixth is bound by nothing at all, which is the same promise from the
-    // other side: Ctrl+Shift+L is the sidebar's key in the app, `edit.select-all-
-    // occurrences` is offered with no key of its own, and the library's own entry on
-    // that chord went with its keymap. A reader who binds the row gets one command.
+    // And the other two are bound by nothing at all, which is the same promise from the
+    // other side: Ctrl+Shift+L is the sidebar's key in the app and Ctrl+D its Deselect
+    // tab, `edit.select-all-occurrences` and `edit.select-word` are offered with no key
+    // of their own, and the library's own entries on those chords went with its keymap.
+    // A reader who binds either row gets one command.
     expect(counted.get('Mod-Shift-l')).toBeUndefined()
+    expect(counted.get('Mod-d')).toBeUndefined()
   })
 
   /** The bug: Ctrl+/ is source mode, read off the window, and the library binds

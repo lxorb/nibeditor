@@ -305,7 +305,9 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
       line stays `---`, so a rule, a slide break and a metadata block can all be
       written from the keyboard
 - [x] Select the word `Ctrl+D`, select the line `Ctrl+L`. A second `Ctrl+D` takes
-      the next one like it, which is where the extra cursors come from
+      the next one like it, which is where the extra cursors come from. Since
+      2026-09-30 the word has no key out of the box - Emil put Deselect tab on
+      `Ctrl+D` - and is a row of the palette; the VS Code keyboard puts it back
 - [x] Clear formatting `Ctrl+\`
 - [x] Change list type via shortcut and context menu
 - [x] Spellcheck (native, in the editor), on out of the box, with one switch to
@@ -613,8 +615,8 @@ Features Typora does not have, which are the reason this exists.
       the group was the shelf
 - [x] Several cursors. Alt and a click puts another one down, Alt and a drag adds
       a whole range to what is already selected, Alt+Shift and a drag takes a
-      column of them, and Escape leaves one. `Ctrl+D` grows to the word and then
-      to the next one like it; adding a cursor straight above or below is
+      column of them, and Escape leaves one. Select the word grows to the word and
+      then to the next one like it (`Ctrl+D` under the VS Code keyboard); adding a cursor straight above or below is
       `Ctrl+Alt+Shift+Up` and `Ctrl+Alt+Shift+Down`, because the chord every
       other editor uses for it splits the pane here. Selecting every one like
       what is selected has no key free and is in the palette. Each cursor reveals

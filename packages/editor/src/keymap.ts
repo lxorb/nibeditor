@@ -279,7 +279,9 @@ export const nibBindings: BindingSpec[] = [
     alias: true,
   },
 
-  { id: 'edit.select-word', key: 'Mod-d', run: selectWord, preventDefault: true },
+  // No key: Ctrl+D is the app's Deselect tab, which Emil asked for on it. The VS Code
+  // keyboard puts this back on Ctrl+D, and the palette has it.
+  { id: 'edit.select-word', key: null, run: selectWord, preventDefault: true },
   { id: 'edit.select-line', key: 'Mod-l', run: selectLine, preventDefault: true },
   // The selection a step outwards and back, on VS Code's keys. A Mac reads Alt,
   // Shift and an arrow as a word at a time and keeps it, so there it is VS Code's

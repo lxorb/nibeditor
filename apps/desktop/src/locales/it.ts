@@ -85,6 +85,7 @@ export const it: Dictionary = {
   'Close all': 'Chiudi tutte',
   'Close all tabs': 'Chiudi tutte le schede',
   'Duplicate tab': 'Duplica scheda',
+  'Deselect tab': 'Deseleziona scheda',
   'Move to other pane': 'Sposta nell’altro riquadro',
   Tabs: 'Schede',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in ordine di utilizzo',

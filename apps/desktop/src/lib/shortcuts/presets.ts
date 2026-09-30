@@ -58,9 +58,9 @@ const OBSIDIAN: KeyOverrides = {
   'app.back': 'Mod-Alt-ArrowLeft',
   'app.forward': 'Mod-Alt-ArrowRight',
   // Obsidian's Ctrl+D deletes the paragraph, which in a markdown file is the line.
-  // Selecting the word, which held it, has no counterpart there.
+  // Deselect tab, which holds it in Nib, has no counterpart there.
   'edit.delete-line': 'Mod-d',
-  'edit.select-word': null,
+  'app.deselect-tab': null,
   // Ctrl+] indents and Ctrl+[ outdents, the way round Obsidian and VS Code have it.
   // Nib's own order is Typora's; see `edit.indent` in @nib/editor's keymap.
   'edit.indent': 'Mod-]',
@@ -112,23 +112,22 @@ const NOTION: KeyOverrides = {
   'paragraph.bullet-list': 'Mod-Shift-5',
   'paragraph.ordered-list': 'Mod-Shift-6',
   'paragraph.code-block': 'Mod-Shift-8',
-  // The block the caret is in, as the grip's own Duplicate and Move rows. Selecting the
-  // word, which held Ctrl+D, has no counterpart in Notion. On a Mac the move is
+  // The block the caret is in, as the grip's own Duplicate and Move rows. Deselect tab,
+  // which holds Ctrl+D in Nib, has no counterpart in Notion. On a Mac the move is
   // Cmd+Shift and an arrow, which takes selecting to either end of the note away, the
   // way Notion does itself.
   'edit.duplicate-block': 'Mod-d',
-  'edit.select-word': null,
+  'app.deselect-tab': null,
   'edit.move-block-up': 'Mod-Shift-ArrowUp',
   'edit.move-block-down': 'Mod-Shift-ArrowDown',
 }
 
 /** VS Code's own keys.
  *
- *  Nib already has most of them: Ctrl+Shift+P, Ctrl+D for the next one
- *  like it, Ctrl+L for the line, Alt and Shift+Alt with Up and Down for moving and
- *  copying lines, Ctrl+Shift+Enter for a line above, Shift+Alt+Right and Left for
- *  the selection outwards and back, Ctrl+Shift+E for the files, Ctrl+Shift+F,
- *  Ctrl+H and F3. What is here is where they part.
+ *  Nib already has most of them: Ctrl+Shift+P, Ctrl+L for the line, Alt and Shift+Alt
+ *  with Up and Down for moving and copying lines, Ctrl+Shift+Enter for a line above,
+ *  Shift+Alt+Right and Left for the selection outwards and back, Ctrl+Shift+E for the
+ *  files, Ctrl+Shift+F, Ctrl+H and F3. What is here is where they part.
  *
  *  Ctrl+B is the one key of VS Code's that stays where it is. There it shows and
  *  hides the sidebar; in a note it is Bold, which is what the markdown extensions
@@ -145,6 +144,10 @@ const VSCODE: KeyOverrides = {
   // Find next keeps F3, its second key and VS Code's own.
   'edit.goto-line': 'Ctrl-g',
   'edit.find-next': null,
+  // Ctrl+D selects the word and then the next one like it, which is what every hand
+  // from VS Code presses it for; Deselect tab, which holds it in Nib, has none here.
+  'edit.select-word': 'Mod-d',
+  'app.deselect-tab': null,
   // Ctrl+Shift+K deletes the line. It was Code block, which VS Code has no key for.
   'edit.delete-line': 'Mod-Shift-k',
   'paragraph.code-block': null,
