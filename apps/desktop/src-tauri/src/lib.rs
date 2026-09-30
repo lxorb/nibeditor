@@ -489,19 +489,20 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             reason = "a phone has no window in the config to take out of it"
         )
     )]
+    #[cfg(not(feature = "cef"))]
     let mut context = tauri::generate_context!();
+    // The engine build compiles this file from a package of its own one folder down,
+    // and the config it is built from is the app's; see cef/Cargo.toml.
+    #[cfg(feature = "cef")]
+    let mut context = tauri::generate_context!("../tauri.conf.json");
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
-    #[cfg(all(desktop, not(feature = "cef")))]
-    let builder = builder.setup(move |app| ready(app, ui.as_ref()));
-    #[cfg(all(desktop, feature = "cef"))]
+    #[cfg(desktop)]
     let builder = builder.setup(move |app| {
+        #[cfg(feature = "cef")]
         engine::gate::say("\"event\":\"cef-initialised\"");
-        if let Some(ui) = &ui {
-            engine::open_ui_window(app, &placement::restored(app.handle(), ui))?;
-        }
-        ready(app, None)
+        ready(app, ui.as_ref())
     });
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
@@ -614,17 +615,13 @@ fn ready(
     //
     // Where it was left, too, put into the config rather than applied afterwards, so the
     // first frame is already in the right place; see placement.rs.
-    #[cfg(all(desktop, not(feature = "cef")))]
+    #[cfg(desktop)]
     if let Some(config) = ui {
         let config = placement::restored(handle, config);
         trace::mark("window placement");
-        // Developer tools are for the pages in web tabs, which the build that ships has for
-        // them; nib's own window keeps them to a development build, as it always did.
-        let building = tauri::WebviewWindowBuilder::from_config(app, &config)?
-            .devtools(cfg!(debug_assertions));
-        // The switches every page of this app starts with; see `engine::BROWSER_ARGS`.
-        #[cfg(windows)]
-        let building = building.additional_browser_args(engine::BROWSER_ARGS);
+        // What the engine needs of the window - its developer tools, its switches, its
+        // profile - is the engine's; see `engine::ui_window`.
+        let building = engine::ui_window(app, &config)?;
         // A window sent somewhere of its own - a probe off the screen - is built hidden,
         // put there, and shown without coming forward; see `built_away` in placement.rs.
         // A place that was only remembered is in the config and needs none of that.
@@ -661,9 +658,8 @@ fn ready(
         }
     }
 
-    // Nib's own Chromium builds it in `setup`, in a profile of its own, and it is built
-    // hidden there; and a phone's window is the activity's and is in neither place.
-    #[cfg(any(not(desktop), feature = "cef"))]
+    // A phone's window is the activity's.
+    #[cfg(not(desktop))]
     {
         let _ = ui;
         if let Some(window) = app.get_window("main") {
