@@ -200,7 +200,8 @@ describe('two devices on one plane', () => {
     both(one, two)
 
     for (const device of [one, two]) {
-      expect(device.canvas.nodes[0]?.text).toBe('Maybe we ship on Monday morning.')
+      const node = device.canvas.nodes[0]
+      expect(node && 'text' in node ? node.text : null).toBe('Maybe we ship on Monday morning.')
     }
     // And the file is the one a string would have written.
     expect(writeCanvas(one.canvas)).toBe(writeCanvas(two.canvas))
