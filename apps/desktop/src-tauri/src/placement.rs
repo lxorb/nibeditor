@@ -274,14 +274,25 @@ pub fn away() -> Option<(f64, f64)> {
 /// seen on a screen at the cascade's corner before the drive had asked it anything -
 /// and a window that has never had a pixel of itself on any screen has no frame there
 /// to show, whichever road it took.
+///
+/// And under every other window, for as long as it is open. The system hands the
+/// keyboard to the next window down when the one in front closes, and a probe that sat
+/// above the reader's other windows could be that next window - an off-screen probe the
+/// window in front, five seconds into a launch nothing had asked to come forward, was
+/// seen on 2026-09-30 - with the typing going somewhere nobody could see. tao holds a
+/// window that asks for the bottom there through every move.
 pub fn built_away<R: Runtime, M: Manager<R>>(
     building: WebviewWindowBuilder<'_, R, M>,
     (x, y): (f64, f64),
 ) -> tauri::Result<WebviewWindow<R>> {
+    let building = building
+        .visible(false)
+        .focused(false)
+        .always_on_bottom(true);
     #[cfg(windows)]
-    let window = created_away::during(|| building.visible(false).focused(false).build())?;
+    let window = created_away::during(|| building.build())?;
     #[cfg(not(windows))]
-    let window = building.visible(false).focused(false).build()?;
+    let window = building.build()?;
     window.set_position(LogicalPosition::new(x, y))?;
     window.show()?;
     Ok(window)
