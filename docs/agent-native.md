@@ -456,9 +456,9 @@ Three things follow and are part of the design, not the spike:
   a Quit in the tray (open question 6). Minimising the window is measured in section 3.
 - **In the reader's first window, not a window of its own.** `agent-core` measured the
   alternative, a window nobody ever sees, by hiding the window the agent's page lives in
-  (never activated, never on a screen): the page kept `requestAnimationFrame` at 54 and
-  the 10 ms interval at 100 a second, `visible`, and answered presses; minimised, 58 and
-  100. A screenshot took 520 to 580 ms either way against 70 to 85 ms in a shown window.
+  (never activated, never on a screen): the page kept `requestAnimationFrame` at 54 to 58
+  and the 10 ms interval at 100 a second, `visible`, and answered presses; minimised, 57
+  and 100. Screenshots answered in all three, in 60 to 580 ms.
   So the engine does not decide it; the app's own life does. nib ends with its last
   window and a quit asks every window about its unsaved notes, and a window of the
   agents' own would be a window that never answers and an app that never ends - where
@@ -918,6 +918,13 @@ is still off, and an agent's token never reaches it.
   and everything else an agent does runs through `Runtime.evaluate` and
   `Runtime.callFunctionOn`, which need no domain. One timer, started with the first agent
   tab, parks what nobody used, closes what a gone agent left and puts idle pages to sleep.
+- **Every verb, measured** by `scripts/agent-tab-probe.py` on this machine: `browser_open`
+  90 to 105 ms; `browser_snapshot` 12 to 19 ms; `browser_find` 5 to 12; `browser_type`,
+  `browser_select` and a date set 4 to 11; `browser_read` 4 to 8; `browser_navigate` to a
+  local page 35; a press 150 to 200 ms and a key 140 to 160 ms, most of it the settle
+  (the first press of a run up to 0.8 s); `browser_screenshot` 60 to 510 ms; a dialog
+  answered 190 ms; a frame of another origin pressed 160 to 180 ms; a policy question
+  answered in 5 ms.
 - **Measured costs** (section 3): an agent page adds one engine process and about 40 MB
   on a small page (about 180 MB on a real one, as a reader's tab does); a snapshot of a
   small page is 7 ms and 446 characters; a click is five protocol calls and 25 ms.
