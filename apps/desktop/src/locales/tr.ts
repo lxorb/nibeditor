@@ -4,7 +4,6 @@ export const tr: Dictionary = {
   // Files and notes
   Save: 'Kaydet',
   'New note': 'Yeni not',
-  'Open file': 'Dosya aç',
   'New note inside': 'İçine yeni not',
   'New canvas': 'Yeni tuval',
   'New page note': 'Yeni sayfalı not',
@@ -819,8 +818,6 @@ export const tr: Dictionary = {
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
   'Report an issue': 'Sorun bildir',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} diskte değişti. Düzenleyicideki sizin olandır.',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',
   'Copy the line up': 'Satırı yukarı kopyala',
@@ -1490,8 +1487,6 @@ export const tr: Dictionary = {
   'Show all': 'Tümünü göster',
   'Quit {name}': '{name} uygulamasından çık',
   'Bring all to front': 'Tümünü öne getir',
-  'Open recent': 'Son kullanılanları aç',
-  'Clear menu': 'Menüyü temizle',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

@@ -739,8 +739,7 @@ class Links {
   }
 
   /** A path the app holds as one the index speaks in, or null for a note that
-   *  lives outside the open space - a file opened from elsewhere, which has no
-   *  place in a space's links. */
+   *  lives outside the open space, which has no place in this space's links. */
   private relative(path: string): string | null {
     const root = this.root
     return root && path.startsWith(root) ? relativeTo(root, path) : null
@@ -1261,8 +1260,8 @@ class Links {
    *  the link showed. The same resolution the editor's own links get, so the
    *  export points where the app does.
    *
-   *  `from` is the note's path as the app holds it; a note opened from outside
-   *  the space has no place in the index and resolves to nothing. */
+   *  `from` is the note's path as the app holds it; a note outside the open space
+   *  has no place in the index and resolves to nothing. */
   relativeTarget(link: FoundLink, from: string | null): string | null {
     const source = from === null ? null : this.relative(from)
     if (source === null) return null

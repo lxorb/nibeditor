@@ -5,8 +5,8 @@ What the Mac build does differently from Windows and Linux, and the checklist it
 ## What is Mac-only
 
 - **Frame.** The window keeps the system's traffic lights over Nib's own bar (`titleBarStyle: Overlay`, `tauri.macos.conf.json`, `appearance.rs` `own_frame`). `lights.rs` centres them in the bar and puts them back whenever AppKit lays the titlebar out again, which it does on every resize, new title and edited dot. The bar leaves `--traffic-lights` of room in whichever bar holds the top left corner: the tab bar, or the sidebar's head while it is docked open. Full screen gives the room back. No drawn window buttons and no hamburger on a Mac.
-- **Menu bar.** Built from the same rows as the in-window menu (`native-menu.ts`, `native-menu-bar.svelte.ts`), plus the File rows a Mac's File menu has and the in-window one leaves to their keys: New Note, New Tab, New Window, Open File…, Open Recent, Close Note, Reopen Closed Tab and Close Window, with Settings… in the Nib menu. No Save and no Save As…: every note writes itself, and Cmd+S is a key with no row that writes what is waiting at once. With a web tab in front a key reaches the app only as a row of the bar, so those have to be rows here. Cut, Copy and Paste are the system's own rows, so they work in every webview. Undo, Redo and Select All hand their key to the page first, where the note, a canvas or a deck answers it, and to the system's own action when nothing there does, which is how a field and a web tab get it (`standIn`, `menu_bar.rs`).
-- **Lifecycle.** Finder opens files through `RunEvent::Opened`. Closing the last window keeps Nib in the Dock, and clicking the Dock icon opens a window again. Cmd+Q lets every window write what is waiting and then quits, asking nothing (`lifecycle.rs`, `start.ts`). The window frame is restored at launch.
+- **Menu bar.** Built from the same rows as the in-window menu (`native-menu.ts`, `native-menu-bar.svelte.ts`), plus the File rows a Mac's File menu has and the in-window one leaves to their keys: New Note, New Tab, New Window, Close Note, Reopen Closed Tab and Close Window, with Settings… in the Nib menu. No Save and no Save As…: every note writes itself, and Cmd+S is a key with no row that writes what is waiting at once. No Open File… and no Open Recent: nib opens nothing from outside its spaces, and Cmd+O is the palette on the notes, which is where a note is found by name. With a web tab in front a key reaches the app only as a row of the bar, so those have to be rows here. Cut, Copy and Paste are the system's own rows, so they work in every webview. Undo, Redo and Select All hand their key to the page first, where the note, a canvas or a deck answers it, and to the system's own action when nothing there does, which is how a field and a web tab get it (`standIn`, `menu_bar.rs`).
+- **Lifecycle.** The bundle declares no document type, so Finder offers Nib for no file; `RunEvent::Opened` carries the web pages another program hands over once Nib is the browser, and a file among them opens nothing. Nothing goes to the Dock's recent documents either. Closing the last window keeps Nib in the Dock, and clicking the Dock icon opens a window again. Cmd+Q lets every window write what is waiting and then quits, asking nothing (`lifecycle.rs`, `start.ts`). The window frame is restored at launch.
 - **Window.** Its title is the note's name, the edited dot in the red button is never lit because nothing is ever unwritten for long, and it knows which file it stands for (`document_window.rs`).
 - **Keys.** Mac defaults and key symbols (`shortcuts/registry.ts`, `keys.ts`, `docs/keyboard.md`).
 - **Files.**
@@ -58,8 +58,8 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 6. Cmd+, opens Settings.
 7. Switching the language in Settings relabels the menu.
 8. With two windows, the menu bar follows the focused window.
-9. Open Recent lists recent notes, and so does the Dock icon's menu. Clear Menu empties both.
-10. In English the rows read in title case (Bring All to Front), a row that asks first ends in an ellipsis (Open File…), and Find, Replace, Find Next and Find Previous are a submenu of Edit.
+9. File has no Open File… and no Open Recent, and the Dock icon's menu lists no recent documents. Cmd+O opens the palette on the notes.
+10. In English the rows read in title case (Bring All to Front), a row that asks first ends in an ellipsis (Settings…), and Find, Replace, Find Next and Find Previous are a submenu of Edit.
 11. Shift+Cmd+? opens the search field of Help rather than the list of keys.
 12. Cmd+W closes the last note, and pressed again closes the empty window. File > Close Window and Shift+Cmd+W close the window without a question, whatever was just typed.
 
@@ -69,7 +69,7 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### Lifecycle
 
-1. With Nib not running, double-click a `.md` in Finder: the note opens once and no error line appears. Open With and dropping a file on the Dock icon work too.
+1. A `.md` in Finder does not offer Nib under Open With, a double click opens it in whatever else is set for markdown, and `open -a Nib some.md` or a file dropped on the Dock icon brings Nib forward and opens nothing. A Mac that had an older Nib forgets it as the new bundle replaces it (Launch Services reads the bundle again).
 2. `open "nib://..."` from Terminal still works.
 3. Close every window: Nib stays in the Dock, and clicking the Dock icon brings a window back where it was.
 4. Type into a note and press Cmd+Q at once: Nib quits without a question, and the words are in the file. With two windows, and from the Dock menu's Quit, the same.

@@ -4,7 +4,6 @@ export const ha: Dictionary = {
   // Files and notes
   Save: 'Ajiye',
   'New note': 'Sabuwar bayanin kula',
-  'Open file': 'Buɗe fayil',
   'New note inside': 'Sabon bayanin kula a ciki',
   'New canvas': 'Sabon kanbas',
   'New page note': 'Sabon bayanin kula na shafuka',
@@ -827,8 +826,6 @@ export const ha: Dictionary = {
   'Always on top': 'Kullum a sama',
   'What is new': 'Abin da ke sabo',
   'Report an issue': 'Bayar da rahoton matsala',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ya sauya a faifai. Abin da ke cikin mai gyara naka ne.',
   'Move the line up': 'Matsar da layin sama',
   'Move the line down': 'Matsar da layin ƙasa',
   'Copy the line up': 'Kwafa layin sama',
@@ -1514,8 +1511,6 @@ export const ha: Dictionary = {
   'Show all': 'Nuna duka',
   'Quit {name}': 'Fita daga {name}',
   'Bring all to front': 'Kawo duka gaba',
-  'Open recent': 'Buɗe na kwanan nan',
-  'Clear menu': 'Share menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

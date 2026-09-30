@@ -13,7 +13,8 @@ import org.json.JSONObject
 
 /**
  * What another app handed this one: the text, link, picture or file behind a
- * share, and the `.md` behind an open.
+ * share. Never a file to open where it lies: nib opens nothing from outside its
+ * spaces, so what arrives is copied into one.
  *
  * Android gives an activity a `content://` URI and a grant that lasts as long as
  * the activity does. The page cannot read one - it has no file system of its own
@@ -70,10 +71,8 @@ object Shared {
       when (intent.action) {
         Intent.ACTION_SEND -> listOfNotNull(stream(intent))
         Intent.ACTION_SEND_MULTIPLE -> streams(intent)
-        // A file somebody opened, and not a `nib://` link, which is the other
-        // thing that arrives as a VIEW: that one is read in the window, and a
-        // share has no business clearing it. See docs/automation.md.
-        Intent.ACTION_VIEW -> listOfNotNull(intent.data?.takeIf { readable(it) })
+        // A VIEW is a `nib://` link, which is read in the window, and a share has
+        // no business clearing it; see docs/automation.md.
         else -> return false
       }
 
@@ -100,10 +99,6 @@ object Shared {
     items = read
     return waiting
   }
-
-  /** Whether a URI is one there are bytes behind. */
-  private fun readable(uri: Uri): Boolean =
-    uri.scheme == ContentResolver.SCHEME_CONTENT || uri.scheme == ContentResolver.SCHEME_FILE
 
   /** What arrived, as the page asks for it: everything except the bytes. */
   fun json(): String {

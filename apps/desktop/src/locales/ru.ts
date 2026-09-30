@@ -4,7 +4,6 @@ export const ru: Dictionary = {
   // Files and notes
   Save: 'Сохранить',
   'New note': 'Новая заметка',
-  'Open file': 'Открыть файл',
   'New note inside': 'Новая заметка внутри',
   'New canvas': 'Новое полотно',
   'New page note': 'Новая заметка со страницами',
@@ -850,8 +849,6 @@ export const ru: Dictionary = {
   'Always on top': 'Поверх всех окон',
   'What is new': 'Что нового',
   'Report an issue': 'Сообщить о проблеме',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} изменился на диске. В редакторе - ваша версия.',
   'Move the line up': 'Переместить строку выше',
   'Move the line down': 'Переместить строку ниже',
   'Copy the line up': 'Копировать строку выше',
@@ -1554,8 +1551,6 @@ export const ru: Dictionary = {
   'Show all': 'Показать все',
   'Quit {name}': 'Завершить {name}',
   'Bring all to front': 'Все окна на передний план',
-  'Open recent': 'Открыть недавние',
-  'Clear menu': 'Очистить меню',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

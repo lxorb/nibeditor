@@ -4,7 +4,6 @@ export const ko: Dictionary = {
   // Files and notes
   Save: '저장',
   'New note': '새 노트',
-  'Open file': '파일 열기',
   'New note inside': '안에 새 노트',
   'New canvas': '새 캔버스',
   'New page note': '새 페이지 노트',
@@ -810,8 +809,6 @@ export const ko: Dictionary = {
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
   'Report an issue': '문제 신고',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name}이 디스크에서 바뀌었습니다. 편집기에 있는 것이 내 것입니다.',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',
   'Copy the line up': '줄을 위로 복사',
@@ -1465,8 +1462,6 @@ export const ko: Dictionary = {
   'Show all': '모두 보기',
   'Quit {name}': '{name} 종료',
   'Bring all to front': '모두 앞으로 가져오기',
-  'Open recent': '최근 항목 열기',
-  'Clear menu': '메뉴 지우기',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

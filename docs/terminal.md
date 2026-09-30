@@ -46,8 +46,8 @@ machine's and never go to the account: a shell is a program on one computer.
 ## Where it starts
 
 In the folder of the space being worked in - VS Code's workspace root. Except beside a
-file opened from somewhere else on the computer, which is in no space: its own folder is
-the one that has anything to do with it. At home where there is neither, and at home
+file in no space - the app's own `custom.css` or `snippets.json`, the one kind nib opens
+from outside its spaces - whose own folder is the one that has anything to do with it. At home where there is neither, and at home
 when the folder asked for has gone, as Warp and Windows Terminal do rather than refusing
 to start. See `startingFolder` in `apps/desktop/src/lib/terminal/spec.ts`.
 

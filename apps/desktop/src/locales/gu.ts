@@ -4,7 +4,6 @@ export const gu: Dictionary = {
   // Files and notes
   Save: 'સાચવો',
   'New note': 'નવી નોંધ',
-  'Open file': 'ફાઇલ ખોલો',
   'New note inside': 'અંદર નવી નોંધ',
   'New canvas': 'નવું કેનવાસ',
   'New page note': 'નવી પાનાંવાળી નોંધ',
@@ -818,8 +817,6 @@ export const gu: Dictionary = {
   'Always on top': 'હંમેશાં ઉપર',
   'What is new': 'નવું શું છે',
   'Report an issue': 'સમસ્યા જણાવો',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ડિસ્ક પર બદલાયું. સંપાદકમાં જે છે તે તમારું છે.',
   'Move the line up': 'લીટી ઉપર ખસેડો',
   'Move the line down': 'લીટી નીચે ખસેડો',
   'Copy the line up': 'લીટી ઉપર નકલ કરો',
@@ -1479,8 +1476,6 @@ export const gu: Dictionary = {
   'Show all': 'બધું બતાવો',
   'Quit {name}': '{name} બંધ કરો',
   'Bring all to front': 'બધું આગળ લાવો',
-  'Open recent': 'તાજેતરનું ખોલો',
-  'Clear menu': 'મેનૂ સાફ કરો',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

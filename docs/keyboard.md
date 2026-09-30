@@ -237,7 +237,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | Ctrl+Alt+click on a link to a note | the same, from the note: the linked note in a pane to the right, made first if the space has none by that name. A pointer gesture rather than a chord, so it is not in the registry |
 | `>`, `#`, `:` in the palette | never needed, for a hand that knows them: `>` narrows to the commands, the ones run lately first; `#` lists the headings of the note in front; `:42` goes to its line 42 - VS Code's `>`, `@` and `:` |
 | Ctrl+Shift+P | the same palette narrowed to the commands, for the hand that learned VS Code: the field arrives holding `>` with the caret after it, so deleting the mark is the way back to everything. Pressed while it is open, it puts the `>` in front of whatever is typed, once |
-| Ctrl+O | open a file (already there) |
+| Ctrl+O | the palette, a third key after Shift Shift and Ctrl+P: Obsidian's quick switcher, and what a hand reaching to open something finds, since nib opens nothing from outside its spaces. It was Open file, which is gone |
 | Ctrl+S | nothing to save: every note writes itself a moment after it changes. The key is harmless out of habit - it writes what is waiting at once and keeps the note in front as a version, with no question and no file picker. A command somebody puts on it answers instead; see `writeKey` in `shortcuts.svelte.ts` |
 | Ctrl+Shift+W | close the window; whatever is waiting to be written goes down first, and nothing is asked. On a Mac, Cmd+W in a window with nothing left open closes it too, as in Safari and VS Code |
 | Ctrl+Shift+? | every key there is, which is the Shortcuts pane in Settings. Not on a Mac, where Shift+Cmd+? is the search field every app's Help menu has; there the list is the first row of Help |
@@ -678,7 +678,7 @@ Ctrl+Shift+E, VS Code's key for the files, opens them.
 | Ctrl+G | the graph |
 | Alt+Enter | follow the link |
 | Ctrl+], Ctrl+[ | indent, outdent |
-| no key | Open file, the heading levels, find next (F3 stays), Deselect tab, Clear formatting, the canvas's zoom to what is picked |
+| no key | the heading levels, find next (F3 stays), Deselect tab, Clear formatting, the canvas's zoom to what is picked |
 
 **Notion**
 

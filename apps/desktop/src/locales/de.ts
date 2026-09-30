@@ -4,7 +4,6 @@ export const de: Dictionary = {
   // Files and notes
   Save: 'Speichern',
   'New note': 'Neue Notiz',
-  'Open file': 'Datei öffnen',
   'New note inside': 'Neue Notiz darin',
   'New canvas': 'Neue Leinwand',
   'New page note': 'Neue Seitennotiz',
@@ -830,8 +829,6 @@ export const de: Dictionary = {
   'Always on top': 'Immer im Vordergrund',
   'What is new': 'Was ist neu',
   'Report an issue': 'Problem melden',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} hat sich auf der Festplatte geändert. Was im Editor steht, ist deins.',
   'Move the line up': 'Zeile nach oben schieben',
   'Move the line down': 'Zeile nach unten schieben',
   'Copy the line up': 'Zeile nach oben kopieren',
@@ -1529,8 +1526,6 @@ export const de: Dictionary = {
   'Show all': 'Alle einblenden',
   'Quit {name}': '{name} beenden',
   'Bring all to front': 'Alle nach vorne bringen',
-  'Open recent': 'Zuletzt geöffnet',
-  'Clear menu': 'Menü löschen',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',

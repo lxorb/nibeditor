@@ -16,16 +16,7 @@
  *  every time the folder is read again - on every save, rename and sync - and
  *  took the open folders with it each time. */
 
-import {
-  forget,
-  isBoolean,
-  isNumber,
-  isString,
-  keep,
-  recordOf,
-  stored,
-  stringList,
-} from '../stored'
+import { isBoolean, isNumber, isString, keep, recordOf, stored, stringList } from '../stored'
 import { without, withOrWithout } from '../records'
 import { withinSpace } from '../space-paths'
 import { FIRST_MODE, isSortMode, type SortMode } from '../tree-order'
@@ -145,11 +136,6 @@ export class DeviceView {
   unremember(path: string) {
     this.recent = this.recent.filter((entry) => entry !== path)
     keep(RECENT_KEY, JSON.stringify(this.recent))
-  }
-
-  forgetRecent() {
-    this.recent = []
-    forget(RECENT_KEY)
   }
 
   isExpanded(path: string): boolean {

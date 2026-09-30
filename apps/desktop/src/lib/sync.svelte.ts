@@ -526,8 +526,7 @@ class Sync {
    *  had noticed: the file changed, the tab did not, and the next save wrote the
    *  tab's older words back over it. A device that could not reach a note's room
    *  then offered them again on every pass, and the account kept what it replaced
-   *  every time. See watch.svelte.ts, which says the same thing about files from
-   *  outside a space.
+   *  every time.
    *
    *  Never for a note a room is carrying: the room is that note's truth and the
    *  document is already joined to it keystroke by keystroke, so putting a file into

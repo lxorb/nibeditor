@@ -4,7 +4,6 @@ export const zhHans: Dictionary = {
   // Files and notes
   Save: '保存',
   'New note': '新建笔记',
-  'Open file': '打开文件',
   'New note inside': '在其中新建笔记',
   'New canvas': '新建画布',
   'New page note': '新建分页笔记',
@@ -804,8 +803,6 @@ export const zhHans: Dictionary = {
   'Always on top': '始终置顶',
   'What is new': '更新内容',
   'Report an issue': '报告问题',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name}在磁盘上已更改。编辑器中的内容仍是你的。',
   'Move the line up': '上移此行',
   'Move the line down': '下移此行',
   'Copy the line up': '向上复制此行',
@@ -1451,8 +1448,6 @@ export const zhHans: Dictionary = {
   'Show all': '全部显示',
   'Quit {name}': '退出{name}',
   'Bring all to front': '前置全部窗口',
-  'Open recent': '打开最近使用',
-  'Clear menu': '清除菜单',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '撤销复制',
   'Redo the last file change': '重做上一次文件更改',

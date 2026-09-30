@@ -31,11 +31,11 @@ describe('where a new terminal starts', () => {
     expect(startingFolder(null, '/Notes', roots)).toBe('/Notes')
   })
 
-  /** A README opened from a repository is in no space: its own folder is the one that
-   *  has anything to do with it. */
-  test('beside a file opened from elsewhere on the computer', () => {
-    expect(startingFolder('/code/nib/README.md', '/Notes', roots)).toBe('/code/nib')
-    expect(startingFolder('C:\\code\\nib\\README.md', null, [])).toBe('C:\\code\\nib')
+  /** The app's own stylesheet is in no space: its own folder is the one that has
+   *  anything to do with it. */
+  test('beside a file in no space', () => {
+    expect(startingFolder('/config/nib/custom.css', '/Notes', roots)).toBe('/config/nib')
+    expect(startingFolder('C:\\config\\nib\\custom.css', null, [])).toBe('C:\\config\\nib')
   })
 
   test('and at home with neither', () => {

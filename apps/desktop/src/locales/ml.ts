@@ -4,7 +4,6 @@ export const ml: Dictionary = {
   // Files and notes
   Save: 'സേവ് ചെയ്യുക',
   'New note': 'പുതിയ കുറിപ്പ്',
-  'Open file': 'ഫയൽ തുറക്കുക',
   'New note inside': 'ഇതിനുള്ളിൽ പുതിയ കുറിപ്പ്',
   'New canvas': 'പുതിയ ക്യാൻവാസ്',
   'New page note': 'പുതിയ താൾ കുറിപ്പ്',
@@ -828,8 +827,6 @@ export const ml: Dictionary = {
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ഡിസ്കിൽ മാറി. എഡിറ്ററിലുള്ളത് നിങ്ങളുടേതാണ്.',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',
   'Copy the line up': 'വരി മുകളിലേക്ക് പകർത്തുക',
@@ -1507,8 +1504,6 @@ export const ml: Dictionary = {
   'Show all': 'എല്ലാം കാണിക്കുക',
   'Quit {name}': '{name} അടയ്ക്കുക',
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
-  'Open recent': 'സമീപകാലത്തുള്ളത് തുറക്കുക',
-  'Clear menu': 'മെനു മായ്ക്കുക',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

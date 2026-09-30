@@ -4,7 +4,6 @@ export const jv: Dictionary = {
   // Files and notes
   Save: 'Simpen',
   'New note': 'Cathetan anyar',
-  'Open file': 'Bukak berkas',
   'New note inside': 'Cathetan anyar ing njero',
   'New canvas': 'Kanvas anyar',
   'New page note': 'Cathetan kaca anyar',
@@ -815,8 +814,6 @@ export const jv: Dictionary = {
   'Always on top': 'Tansah ing ndhuwur',
   'What is new': 'Apa sing anyar',
   'Report an issue': 'Lapurake masalah',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} owah ing disk. Sing ana ing panyunting iku duwekmu.',
   'Move the line up': 'Munggahake larike',
   'Move the line down': 'Mudhunake larike',
   'Copy the line up': 'Salin larike munggah',
@@ -1481,8 +1478,6 @@ export const jv: Dictionary = {
   'Show all': 'Tampilake kabeh',
   'Quit {name}': 'Metu saka {name}',
   'Bring all to front': 'Gawa kabeh menyang ngarep',
-  'Open recent': 'Bukak sing anyar',
-  'Clear menu': 'Resiki menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

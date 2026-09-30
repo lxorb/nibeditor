@@ -139,8 +139,6 @@ export interface MenuBarWords {
   minimize: string
   zoom: string
   bringAllToFront: string
-  openRecent: string
-  clearMenu: string
   /** Edit's submenu of the rows that find in the note. */
   find: string
 }
@@ -148,18 +146,16 @@ export interface MenuBarWords {
 export interface MenuBarSources {
   /** The in-window menu's groups, as `appMenu` builds them. */
   groups: MenuGroup[]
-  /** File's rows the in-window menu leaves to their keys: making and opening ahead
-   *  of its own rows, closing after them. No Save and no Save As: every note writes
-   *  itself, and Cmd+S is a key with no row; see `writeKey` in shortcuts.svelte.ts. With a web tab in front a key is a
-   *  key only as a row of the strip (see the top of this file), so Cmd+N, Cmd+W and
-   *  the rest have to be rows here; and a Mac's File menu has them. Open Recent goes
-   *  under the row that opens a file. */
+  /** File's rows the in-window menu leaves to their keys: making ahead of its own
+   *  rows, closing after them. No Save and no Save As: every note writes itself, and
+   *  Cmd+S is a key with no row; see `writeKey` in shortcuts.svelte.ts. No Open and
+   *  no Open Recent either: nib opens nothing from outside its spaces, and a note is
+   *  found by name in the palette. With a web tab in front a key is a key only as a
+   *  row of the strip (see the top of this file), so Cmd+N, Cmd+W and the rest have
+   *  to be rows here; and a Mac's File menu has them. */
   file: { opening: MenuRow[]; closing: MenuRow[] }
   /** The row the app's own menu holds, where a Mac keeps it. */
   settings: MenuItem | null
-  /** The notes opened lately, newest first. */
-  recent: MenuItem[]
-  clearRecent: () => void
   /** The rows of Window between Zoom and Bring All to Front: walking the tabs. */
   windowRows: MenuItem[]
   /** Rows Help opens with, ahead of the in-window menu's own. */
@@ -431,8 +427,6 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
   const runs = new Map<string, () => void>()
   const claim = claimer()
   const say = (text: string) => (sources.english ? titled(text) : text)
-  /** Rows named by the reader rather than by the app: the notes opened lately. */
-  const named = new Set<MenuRow>(sources.recent)
 
   const item = (row: MenuItem, id: string): NativeItem => {
     const key = row.command ? chordFor((one) => sources.keyFor(one), row.command) : null
@@ -445,7 +439,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     return {
       kind: 'item',
       id,
-      text: (named.has(row) ? row.label : say(row.label)) + (row.asks ? '…' : ''),
+      text: say(row.label) + (row.asks ? '…' : ''),
       accelerator,
       enabled: standIn !== undefined || !row.disabled,
       ...(row.checked === undefined ? {} : { checked: row.checked }),
@@ -499,20 +493,9 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
     ],
   }
 
-  const recent: MenuRow[] = [
-    ...sources.recent,
-    ...(sources.recent.length ? [DIVIDER] : []),
-    { label: words.clearMenu, disabled: !sources.recent.length, run: sources.clearRecent },
-  ]
-
-  /** File, with the rows a Mac's File menu has around the in-window menu's own, and
-   *  Open Recent under Open, where every Mac app keeps it. */
+  /** File, with the rows a Mac's File menu has around the in-window menu's own. */
   const fileRows = (rows: MenuRow[]): MenuRow[] => [
-    ...sources.file.opening.flatMap((row) =>
-      row !== DIVIDER && !isSubmenu(row) && row.command === 'app.open'
-        ? [row, { label: words.openRecent, rows: recent }]
-        : [row],
-    ),
+    ...sources.file.opening,
     DIVIDER,
     ...rows,
     DIVIDER,

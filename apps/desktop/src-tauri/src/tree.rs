@@ -259,7 +259,7 @@ fn room(left: &mut usize) -> Result<(), String> {
 /// `space` is already resolved, so this is one `canonicalize` for the folder and
 /// nothing else. A folder whose real path cannot be read - a link to nowhere, a
 /// folder this user may not look inside - is not one to step into, which is the
-/// cautious answer and the same one `outside_spaces` gives.
+/// cautious answer.
 fn in_the_space(space: &Path, child: &Path) -> bool {
     fs::canonicalize(child).is_ok_and(|real| inside(space, &real))
 }

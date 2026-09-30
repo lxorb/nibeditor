@@ -4,7 +4,6 @@ export const pa: Dictionary = {
   // Files and notes
   Save: 'ਸਾਂਭੋ',
   'New note': 'ਨਵੀਂ ਨੋਟ',
-  'Open file': 'ਫ਼ਾਈਲ ਖੋਲ੍ਹੋ',
   'New note inside': 'ਅੰਦਰ ਨਵੀਂ ਨੋਟ',
   'New canvas': 'ਨਵਾਂ ਕੈਨਵਸ',
   'New page note': 'ਨਵੀਂ ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
@@ -823,8 +822,6 @@ export const pa: Dictionary = {
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
   'What is new': 'ਨਵਾਂ ਕੀ ਹੈ',
   'Report an issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ਡਿਸਕ ਉੱਤੇ ਬਦਲ ਗਈ। ਜੋ ਸੋਧਕ ਵਿੱਚ ਹੈ ਉਹ ਤੁਹਾਡਾ ਹੈ।',
   'Move the line up': 'ਲਾਈਨ ਉੱਪਰ ਭੇਜੋ',
   'Move the line down': 'ਲਾਈਨ ਹੇਠਾਂ ਭੇਜੋ',
   'Copy the line up': 'ਲਾਈਨ ਉੱਪਰ ਨਕਲ ਕਰੋ',
@@ -1493,8 +1490,6 @@ export const pa: Dictionary = {
   'Show all': 'ਸਭ ਦਿਖਾਓ',
   'Quit {name}': '{name} ਬੰਦ ਕਰੋ',
   'Bring all to front': 'ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ',
-  'Open recent': 'ਹਾਲੀਆ ਖੋਲ੍ਹੋ',
-  'Clear menu': 'ਮੀਨੂ ਸਾਫ਼ ਕਰੋ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

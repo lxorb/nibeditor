@@ -4,7 +4,6 @@ export const gsw: Dictionary = {
   // Files and notes
   Save: 'Spichere',
   'New note': 'Nöii Notiz',
-  'Open file': 'Datei öffne',
   'New note inside': 'Nöii Notiz dinne',
   'New canvas': 'Nöii Liinwand',
   'New page note': 'Nöii Siitenotiz',
@@ -820,8 +819,6 @@ export const gsw: Dictionary = {
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
   'Report an issue': 'Problem mälde',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} het sich uf de Festplatte gänderet. Was im Editor staht, ghört dir.',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',
   'Copy the line up': 'D Zile ufe kopiere',
@@ -1498,8 +1495,6 @@ export const gsw: Dictionary = {
   'Show all': 'Alli ybländä',
   'Quit {name}': '{name} beändä',
   'Bring all to front': 'Alli nach vorne bringä',
-  'Open recent': 'Zletscht göffnet',
-  'Clear menu': 'Menü löschä',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',

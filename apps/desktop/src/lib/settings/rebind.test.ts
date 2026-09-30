@@ -112,14 +112,14 @@ describe('a key that cannot be taken', () => {
 describe('a key something else already answers to', () => {
   test('is held back until it is answered', () => {
     rebind.listen('format.bold')
-    // Ctrl+O is Open file.
+    // Ctrl+O is the palette's third key.
     rebind.record(press('o', { ctrl: true }))
 
     expect(rebind.clash?.key).toBe('Mod-o')
-    expect(rebind.clash?.holders.map((one) => one.id)).toContain('app.open')
+    expect(rebind.clash?.holders.map((one) => one.id)).toContain('app.palette.open')
     // Nothing written while the question stands.
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-    expect(shortcuts.keyFor('app.open')).toBe('Mod-o')
+    expect(shortcuts.keyFor('app.palette.open')).toBe('Mod-o')
   })
 
   test('taking it over leaves the one that held it with none', () => {
@@ -128,7 +128,7 @@ describe('a key something else already answers to', () => {
     rebind.takeOver()
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-o')
-    expect(shortcuts.keyFor('app.open')).toBeNull()
+    expect(shortcuts.keyFor('app.palette.open')).toBeNull()
     expect(rebind.clash).toBeNull()
   })
 
@@ -138,7 +138,7 @@ describe('a key something else already answers to', () => {
     rebind.clash = null
 
     expect(shortcuts.keyFor('format.bold')).toBe('Mod-b')
-    expect(shortcuts.keyFor('app.open')).toBe('Mod-o')
+    expect(shortcuts.keyFor('app.palette.open')).toBe('Mod-o')
   })
 })
 

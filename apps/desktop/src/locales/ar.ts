@@ -4,7 +4,6 @@ export const ar: Dictionary = {
   // Files and notes
   Save: 'حفظ',
   'New note': 'ملاحظة جديدة',
-  'Open file': 'فتح ملف',
   'New note inside': 'ملاحظة جديدة بالداخل',
   'New canvas': 'لوحة جديدة',
   'New page note': 'ملاحظة صفحات جديدة',
@@ -857,8 +856,6 @@ export const ar: Dictionary = {
   'Always on top': 'دائمًا في المقدمة',
   'What is new': 'ما الجديد',
   'Report an issue': 'الإبلاغ عن مشكلة',
-  '{name} changed on the disk. What is in the editor is yours.':
-    'تغيّر {name} على القرص. وما في المحرر هو لك.',
   'Move the line up': 'نقل السطر لأعلى',
   'Move the line down': 'نقل السطر لأسفل',
   'Copy the line up': 'نسخ السطر لأعلى',
@@ -1572,8 +1569,6 @@ export const ar: Dictionary = {
   'Show all': 'إظهار الكل',
   'Quit {name}': 'إنهاء {name}',
   'Bring all to front': 'إحضار الكل إلى المقدمة',
-  'Open recent': 'فتح الأخيرة',
-  'Clear menu': 'مسح القائمة',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

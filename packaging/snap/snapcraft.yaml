@@ -39,8 +39,9 @@ issues: https://github.com/lxorb/nibeditor/issues
 contact: https://github.com/lxorb/nibeditor/issues
 
 grade: stable
-# Nothing here needs to reach outside the sandbox: documents come through the
-# home and removable-media interfaces, everything else is the desktop stack.
+# Nothing here needs to reach outside the sandbox: the spaces in ~/Documents come
+# through the home interface, an export saved elsewhere through removable-media,
+# and everything else is the desktop stack.
 confinement: strict
 
 platforms:
@@ -90,7 +91,7 @@ parts:
     override-build: |
       craftctl default
 
-      # Tauri writes a .desktop entry with no categories, no MIME types and no
+      # Tauri writes a .desktop entry with no categories, no web handlers and no
       # comment, and files a 256x256 icon under a scale-2 directory. Both are
       # replaced here, the same way the AUR and Flathub packaging does.
       rm -f "${CRAFT_PART_INSTALL}/usr/share/applications/Nib.desktop"
@@ -101,11 +102,11 @@ parts:
       Name=Nib
       GenericName=Markdown Editor
       Comment=Write markdown and see it as you type
-      Exec=nib %F
+      Exec=nib %U
       Icon=${SNAP}/usr/share/icons/hicolor/128x128/apps/nib.png
       Terminal=false
       Categories=Office;TextEditor;Utility;
-      MimeType=text/markdown;text/x-markdown;
+      MimeType=x-scheme-handler/http;x-scheme-handler/https;
       Keywords=markdown;md;editor;notes;writing;wysiwyg;
       StartupWMClass=nib
       StartupNotify=true

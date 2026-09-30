@@ -4,7 +4,6 @@ export const kn: Dictionary = {
   // Files and notes
   Save: 'ಉಳಿಸಿ',
   'New note': 'ಹೊಸ ಟಿಪ್ಪಣಿ',
-  'Open file': 'ಫೈಲ್ ತೆರೆಯಿರಿ',
   'New note inside': 'ಇದರೊಳಗೆ ಹೊಸ ಟಿಪ್ಪಣಿ',
   'New canvas': 'ಹೊಸ ಕ್ಯಾನ್ವಾಸ್',
   'New page note': 'ಹೊಸ ಪುಟ ಟಿಪ್ಪಣಿ',
@@ -823,8 +822,6 @@ export const kn: Dictionary = {
   'Always on top': 'ಯಾವಾಗಲೂ ಮೇಲೆ',
   'What is new': 'ಹೊಸದೇನು',
   'Report an issue': 'ಸಮಸ್ಯೆ ತಿಳಿಸಿ',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} ಡಿಸ್ಕ್‌ನಲ್ಲಿ ಬದಲಾಗಿದೆ. ಎಡಿಟರ್‌ನಲ್ಲಿರುವುದು ನಿಮ್ಮದು.',
   'Move the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ಸರಿಸಿ',
   'Move the line down': 'ಸಾಲನ್ನು ಕೆಳಕ್ಕೆ ಸರಿಸಿ',
   'Copy the line up': 'ಸಾಲನ್ನು ಮೇಲಕ್ಕೆ ನಕಲಿಸಿ',
@@ -1500,8 +1497,6 @@ export const kn: Dictionary = {
   'Show all': 'ಎಲ್ಲವನ್ನೂ ತೋರಿಸಿ',
   'Quit {name}': '{name} ತ್ಯಜಿಸಿ',
   'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
-  'Open recent': 'ಇತ್ತೀಚಿನದನ್ನು ತೆರೆಯಿರಿ',
-  'Clear menu': 'ಮೆನು ತೆರವುಗೊಳಿಸಿ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',

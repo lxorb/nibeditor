@@ -17,41 +17,38 @@ pub mod icloud;
 
 use crate::clock;
 use crate::paths::{
-    cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights,
-    note_from_outside, outside_spaces, write_atomically,
+    cannot, chosen, copy_highlights, drop_highlights, in_spaces, made, move_highlights, openable,
+    write_atomically,
 };
 
-/// Reads a note, whatever folder it is in. Opening a file from outside the
-/// spaces folder is the deliberate exception the app is built around, and it is
-/// also what makes the pictures beside that file readable.
+/// Reads a note: a file in a space, or one of the app's own two settings files.
+/// nib opens nothing from anywhere else on the disk; see `openable`.
 #[tauri::command(async)]
 pub fn read_note(app: AppHandle, path: String) -> Result<String, String> {
-    let target = chosen(&path)?;
+    let target = openable(&app, &path)?;
     // A note iCloud took off this Mac is brought back before it is read.
     #[cfg(target_os = "macos")]
     icloud::fetched(&app, &target)?;
-    let body = fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))?;
-
-    if outside_spaces(&app, &target) {
-        note_from_outside(&app, &target);
-    }
-
-    Ok(body)
+    fs::read_to_string(&target).map_err(|error| cannot("read", &target, &error))
 }
 
 /// Writes a note atomically, so a crash mid-write can never truncate the note
 /// that was already there. Missing folders are created, which is what lets sync
 /// land a note at a path that is new on this machine.
 ///
-/// Like `read_note` this takes any path the reader chose: a note in a space, a
-/// file opened from elsewhere, or the file an export was pointed at.
+/// A note in a space, one of the settings files, or the file an export was pointed
+/// at in the save dialog; see `chosen`.
 ///
 /// The line endings the file already had are kept; see `as_written`.
 #[tauri::command(async)]
-pub fn write_note(path: String, content: String) -> Result<(), String> {
-    let target = chosen(&path)?;
-    let body = as_written(&target, &content);
-    write_file(&target, &path, body.as_bytes())
+pub fn write_note(app: AppHandle, path: String, content: String) -> Result<(), String> {
+    note_written(&chosen(&app, &path)?, &path, &content)
+}
+
+/// The text writer once the path has been judged.
+fn note_written(target: &Path, shown: &str, content: &str) -> Result<(), String> {
+    let body = as_written(target, content);
+    write_file(target, shown, body.as_bytes())
 }
 
 /// The text with the line endings the file on disk already uses.
@@ -105,8 +102,8 @@ fn crlf(target: &Path) -> bool {
 /// front matter fence and a heading, short enough to cost nothing.
 const HEAD: usize = 8192;
 
-/// Writes bytes, under exactly the checks the text writer is held to: any path
-/// the reader chose, the folders above it made, and the file written whole.
+/// Writes bytes, under exactly the checks the text writer is held to: a path the
+/// reader chose, the folders above it made, and the file written whole.
 ///
 /// An export is bytes as often as it is text - a Word file, an `ePub`, a
 /// picture, a `TextPack`, the pictures inside a `TextBundle` - none of those go
@@ -116,12 +113,17 @@ const HEAD: usize = 8192;
 /// JSON digits is twenty megabytes of text for the bridge to parse, and one
 /// export is a document plus every picture in it.
 #[tauri::command(async)]
-pub fn write_bytes(path: String, base64: String) -> Result<(), String> {
+pub fn write_bytes(app: AppHandle, path: String, base64: String) -> Result<(), String> {
+    bytes_written(&chosen(&app, &path)?, &path, &base64)
+}
+
+/// The bytes writer once the path has been judged.
+fn bytes_written(target: &Path, shown: &str, base64: &str) -> Result<(), String> {
     let bytes = BASE64
         .decode(base64.as_bytes())
-        .map_err(|error| format!("{path} was handed something that is not base64: {error}"))?;
+        .map_err(|error| format!("{shown} was handed something that is not base64: {error}"))?;
 
-    write_file(&chosen(&path)?, &path, &bytes)
+    write_file(target, shown, &bytes)
 }
 
 /// What both writers do once they have the bytes: make the folder, then write
@@ -381,20 +383,19 @@ pub struct Stamp {
     pub len: u64,
 }
 
-/// The stamp of one file, or nothing where there is no file to stamp.
+/// The stamp of one file, or nothing where there is no file to stamp: whether a
+/// note that would not read is there all the same, and what the mirror compares a
+/// space's files by. Two numbers rather than a hash: reading a megabyte to answer a
+/// question a stat call answers is a megabyte wasted.
 ///
-/// What the window watches an opened file with. A file the reader keeps outside
-/// every space is a file other programs edit - a build writes it, a script
-/// rewrites it, git checks another branch out over it - and the note open in the
-/// editor should follow rather than sit there stale until it is saved over the
-/// top. Two numbers rather than a hash: reading a megabyte every few seconds to
-/// answer a question a stat call answers is a megabyte wasted.
+/// Only what `read_note` may read, and refused rather than null for anything else,
+/// so asking is also how the window learns whether nib may open a path at all.
 ///
 /// Null rather than an error for a file that is gone: a file being deleted or
 /// replaced is a thing that happens, not a failure to report.
 #[tauri::command(async)]
-pub fn file_stamp(path: String) -> Result<Option<Stamp>, String> {
-    Ok(stamp_of(&chosen(&path)?))
+pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String> {
+    Ok(stamp_of(&openable(&app, &path)?))
 }
 
 /// The stamp of one file, for the crate's own use: the command above, and the
@@ -418,7 +419,7 @@ pub fn stamp_of(target: &Path) -> Option<Stamp> {
 
 #[cfg(test)]
 mod tests {
-    use super::{copied, move_entry, respelled, write_bytes, write_note};
+    use super::{copied, move_entry, respelled, Stamp};
     use std::path::Path;
     // The trait the encoding method hangs off. The module above reaches it
     // through what it imports; a test module is its own scope and has to say so.
@@ -431,6 +432,20 @@ mod tests {
 
     fn path(dir: &tempfile::TempDir, name: &str) -> String {
         dir.path().join(name).to_string_lossy().to_string()
+    }
+
+    /// The two writers and the stamp past their judges, which want an app around
+    /// them: what `chosen` and `openable` let through is tested in paths.rs.
+    fn write_bytes(path: String, base64: String) -> Result<(), String> {
+        super::bytes_written(Path::new(&path), &path, &base64)
+    }
+
+    fn write_note(path: String, content: String) -> Result<(), String> {
+        super::note_written(Path::new(&path), &path, &content)
+    }
+
+    fn file_stamp(path: &str) -> Option<Stamp> {
+        super::stamp_of(Path::new(path))
     }
 
     #[test]
@@ -526,10 +541,10 @@ mod tests {
 
     #[test]
     fn refuses_a_path_that_names_no_file() {
-        // The same check the text writer is held to; see paths::chosen.
+        // The same check the text writer is held to.
         let error = write_bytes("/".to_string(), super::BASE64.encode(PNG))
             .expect_err("a root that is not a file");
-        assert!(error.contains("does not name a file"), "{error}");
+        assert!(error.contains("has no folder to write into"), "{error}");
     }
 
     #[test]
@@ -644,14 +659,10 @@ mod tests {
         let dir = tempfile::tempdir().expect("a temp folder");
         let target = path(&dir, "watched.md");
 
-        assert!(super::file_stamp(target.clone())
-            .expect("no error for a missing file")
-            .is_none());
+        assert!(file_stamp(&target).is_none());
 
         fs::write(&target, b"words").expect("the file");
-        let stamp = super::file_stamp(target)
-            .expect("the stamp")
-            .expect("a file that is there");
+        let stamp = file_stamp(&target).expect("a file that is there");
 
         assert_eq!(stamp.len, 5);
         assert!(stamp.modified > 0);
@@ -663,7 +674,7 @@ mod tests {
         let inside = path(&dir, "folder");
         fs::create_dir(&inside).expect("the folder");
 
-        assert!(super::file_stamp(inside).expect("no error").is_none());
+        assert!(file_stamp(&inside).is_none());
     }
 
     /// A rename that only changes a capital is the note itself, not a collision.

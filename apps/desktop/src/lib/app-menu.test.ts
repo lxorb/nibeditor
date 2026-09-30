@@ -103,14 +103,13 @@ describe('File', () => {
   /** Every row that left is still a command: in the palette, and on its key. */
   test('and every row it gave up is still in the palette and on its key', () => {
     const offered = new Set(appCommands().map((one) => one.id))
-    const commands = ['new', 'open', 'import', 'space', 'settings']
+    const commands = ['new', 'import', 'space', 'settings']
     for (const id of [...commands, 'close', 'reopen', 'new-window', 'close-window']) {
       expect(offered.has(id), id).toBe(true)
     }
 
     const keys = [
       'app.new',
-      'app.open',
       'app.close',
       'app.reopen',
       'app.new-window',

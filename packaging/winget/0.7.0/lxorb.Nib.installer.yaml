@@ -12,11 +12,6 @@ InstallModes:
 UpgradeBehavior: install
 ProductCode: Nib
 ReleaseDate: 2026-09-12
-FileExtensions:
-- md
-- markdown
-- mdown
-- mkd
 AppsAndFeaturesEntries:
 - DisplayName: Nib
   Publisher: emilvinu

@@ -12,9 +12,8 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [lints.rust]
 # Every module says what it owns, and every command says what it does.
 missing_docs = "warn"
-# Unsafe is denied everywhere and excepted by name in the eight functions that
-# call Windows directly: the shell's recent documents list, the two registry
-# calls behind Explorer's New menu, WebView2's print engine, the launch
+# Unsafe is denied everywhere and excepted by name in the seven functions that
+# call Windows directly: the two registry calls behind Explorer's New menu, WebView2's print engine, the launch
 # trace's question about when this process was created, the list of
 # processes a terminal asks before it closes on a running one, Ctrl+C let
 # through to a terminal's shells (see terminal/process.rs and
@@ -209,8 +208,8 @@ tempfile = "3"
 # AppKit, Foundation and WebKit as the objects tao and wry hand out, at the versions
 # they are built against so the pointers line up. What each is for: the dot in a
 # window's close button and the file it stands for (document_window.rs), the one
-# method AppKit asks before it quits (lifecycle.rs), the Dock's recent documents
-# (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), the
+# method AppKit asks before it quits (lifecycle.rs), asking iCloud for a note it took
+# off the Mac (notes/icloud.rs), the
 # menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs),
 # WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
 # web_tabs.rs, web_cookies.rs), which browser opens the web and the question that
@@ -250,7 +249,6 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSBitmapImageRep",
   "NSButton",
   "NSControl",
-  "NSDocumentController",
   "NSGraphics",
   "NSImage",
   "NSImageRep",
@@ -297,7 +295,6 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
 javascriptcore-rs = "=1.1.2"
 
-# Opened notes belong in the taskbar's own Recent list.
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open
 # handle. notify's own crate for it, so the one unsafe call it takes is not ours; a Mac

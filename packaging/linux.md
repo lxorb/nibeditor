@@ -41,10 +41,11 @@ repairs the same three things:
 
 - **`Categories=` is empty**, so Nib lands in no menu category at all. Tauri
   derives it from `bundle.category` in `tauri.conf.json`, which is unset.
-- **No `MimeType=` and no `%F` on `Exec=`**, so nothing offers Nib as a handler
-  for a `.md` file even though the binary happily opens paths given to it. Tauri
-  does not turn `bundle.fileAssociations` into a MIME type on Linux; only macOS
-  and Windows get that.
+- **No `MimeType=` and no `%U` on `Exec=`**, so nothing offers Nib as a web
+  browser. Nib claims `x-scheme-handler/http` and `https`, which is what lets it be
+  the default browser (see `default_browser.rs`), and no file type at all: it
+  opens nothing from outside its spaces, so a `.md` in a file manager is never
+  offered to it.
 - **The 256x256 icon is filed under `256x256@2`**, a scale-2 directory, where a
   256x256 image means "128 logical pixels at 2x" and every theme lookup scales
   it wrong. Tauri puts `128x128@2x.png` there by name rather than by size.
@@ -52,7 +53,7 @@ repairs the same three things:
 `Description:` in the control file is also literally `(none)` and `Maintainer:`
 has no email address. Fixing this upstream means setting `bundle.category`,
 `bundle.shortDescription`/`longDescription` and `bundle.publisher` in
-`tauri.conf.json`; the MIME type would still have to be added by hand.
+`tauri.conf.json`; the web handlers would still have to be added by hand.
 
 Each package therefore installs its own `.desktop` entry and moves the icon.
 The three copies differ only where they have to: the Flatpak one is named after
@@ -240,11 +241,10 @@ yours to open, and the disclosure belongs in the pull request body.
    - the packaging was written with an AI assistant, which their requirements
      ask you to disclose;
    - the manifest asks for `--filesystem=xdg-documents` rather than
-     `--filesystem=home`, because the linter treats `home` as an error. Files
-     picked in a dialog arrive through the document portal regardless, but a
-     recently-opened file kept outside ~/Documents will not reopen on its own.
-     Editors are the usual case for a `home` exception, so ask for one there
-     rather than shipping the narrower permission and living with it.
+     `--filesystem=home`, because the linter treats `home` as an error, and
+     because it is all Nib needs: the spaces are in `~/Documents/Nib`, Nib opens
+     nothing from outside them, and an export saved elsewhere goes through the
+     document portal of the save dialog.
 5. Once it is merged and published, verification is a token you serve yourself:
    put the line Flathub gives you at
    <https://emilvinu.ch/.well-known/org.flathub.VerifiedApps.txt>. That is what
@@ -265,8 +265,8 @@ of its own: the `gnome` extension's platform snap carries GTK, WebKitGTK 4.1 and
 libsoup3, and binds the `webkit2gtk-4.1` helper directory in from there. A staged
 second copy of the library would pair a WebKit UI process with web process
 helpers from a different WebKit, which is how a Tauri window ends up blank.
-Strict confinement: documents arrive through `home` and `removable-media`, and
-nothing else is needed.
+Strict confinement: the spaces are reached through `home`, an export saved to a
+stick through `removable-media`, and nothing else is needed.
 
 It pins the bytes it unpacks. `source-checksum` carries a `sha256/` per
 architecture, and `publish-linux.yml` rewrites both from what the release page

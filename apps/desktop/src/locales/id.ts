@@ -4,7 +4,6 @@ export const id: Dictionary = {
   // Files and notes
   Save: 'Simpan',
   'New note': 'Catatan baru',
-  'Open file': 'Buka berkas',
   'New note inside': 'Catatan baru di dalam',
   'New canvas': 'Kanvas baru',
   'New page note': 'Catatan halaman baru',
@@ -816,8 +815,6 @@ export const id: Dictionary = {
   'Always on top': 'Selalu di atas',
   'What is new': 'Apa yang baru',
   'Report an issue': 'Laporkan masalah',
-  '{name} changed on the disk. What is in the editor is yours.':
-    '{name} berubah di diska. Yang ada di penyunting adalah milik Anda.',
   'Move the line up': 'Pindahkan baris ke atas',
   'Move the line down': 'Pindahkan baris ke bawah',
   'Copy the line up': 'Salin baris ke atas',
@@ -1487,8 +1484,6 @@ export const id: Dictionary = {
   'Show all': 'Tampilkan semua',
   'Quit {name}': 'Keluar dari {name}',
   'Bring all to front': 'Bawa semua ke depan',
-  'Open recent': 'Buka terbaru',
-  'Clear menu': 'Bersihkan menu',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Undo the copy',
   'Redo the last file change': 'Redo the last file change',
