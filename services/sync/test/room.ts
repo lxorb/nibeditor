@@ -183,6 +183,8 @@ export async function join(
 export function running(env: Env): {
   ROOMS: DurableObjectNamespace
   of(noteId: string): { room: NoteRoom; state: FakeState }
+  /** Every room made so far, by note id. */
+  all(): ReadonlyMap<string, { room: NoteRoom; state: FakeState }>
 } {
   const made = new Map<string, { room: NoteRoom; state: FakeState }>()
 
@@ -199,7 +201,7 @@ export function running(env: Env): {
     }),
   }
 
-  return { ROOMS: namespace as unknown as DurableObjectNamespace, of }
+  return { ROOMS: namespace as unknown as DurableObjectNamespace, of, all: () => made }
 }
 
 /** A namespace that leads nowhere, so the door can be watched deciding without a

@@ -80,6 +80,13 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
   }
 }
 
+/** What was put, as bytes: text as UTF-8, and bytes as they came. */
+function bytesOf(value: unknown): Uint8Array {
+  if (value instanceof Uint8Array) return value
+  if (value instanceof ArrayBuffer) return new Uint8Array(value)
+  return new TextEncoder().encode(String(value))
+}
+
 function bucket() {
   // Notes go in as text and images as bytes, so both are kept as given and
   // handed back the way the Worker asks for them.
@@ -118,7 +125,13 @@ function bucket() {
       if (!held) return Promise.resolve(null)
 
       return Promise.resolve({
-        text: () => Promise.resolve(String(held.value)),
+        text: () =>
+          Promise.resolve(
+            typeof held.value === 'string'
+              ? held.value
+              : new TextDecoder().decode(bytesOf(held.value)),
+          ),
+        arrayBuffer: () => Promise.resolve(bytesOf(held.value).slice().buffer),
         body: held.value,
         httpMetadata: { contentType: held.contentType },
         customMetadata: held.customMetadata,

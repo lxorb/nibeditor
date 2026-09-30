@@ -8,7 +8,7 @@
 
 import { findLinks } from '@nib/markdown'
 import { byteLength } from '../crypto'
-import { addNote, cleanPath, MAX_NOTE_BYTES, noteKey, saveNote } from '../notes'
+import { addNote, cleanPath, MAX_NOTE_BYTES, MOVED, noteKey, writeWords } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
@@ -313,9 +313,13 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
   // like any other: the same version, the same cursor, the same conflict rule.
   // Which includes losing to somebody who saved while this was being written:
   // said plainly, because a model that is told so can read the note again.
+  //
+  // A note with a document is written by its room, which takes the text in as the
+  // operations it differs by (docs/sync-v2.md section 5.3); see `writeWords`.
   if (existing) {
-    const saved = await saveNote(env, existing, content, path)
-    if (!saved) return `${path} changed while I was writing it. Read it again first.`
+    const saved = await writeWords(env, existing, content, path, { name: '' })
+    if (saved === null) return `${path} could not be written just now. Try again.`
+    if (saved === MOVED) return `${path} changed while I was writing it. Read it again first.`
   } else {
     await addNote(env, space.id, path, content)
   }
