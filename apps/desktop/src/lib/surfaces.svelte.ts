@@ -65,11 +65,22 @@ export const graphSurface = held(() => import('./Graph.svelte'))
 /** Pages of paper, for a note laid out rather than flowed. */
 export const pagesSurface = held(() => import('./Pages.svelte'))
 
-/** A paper being read, beside the notes about it. Brings pdf.js with it. */
-export const pdfSurface = held(() => import('./Pdf.svelte'))
+/** A paper being read, beside the notes about it. Brings pdf.js with it, which is why
+ *  the glasses' plugin has neither; see vite.even.config.ts. */
+export const pdfSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no PDF viewer in the Even Realities plugin'))
+    : import('./Pdf.svelte'),
+)
 
-/** A website in a tab. See docs/web-tabs.md. */
-export const webSurface = held(() => import('./web-tab/WebTab.svelte'))
+/** A website in a tab. See docs/web-tabs.md. Never the glasses' plugin's, which opens
+ *  no website in a tab (see `openWeb` in workspace.svelte.ts), and a fetch that is
+ *  only never called still puts its chunk in the package. */
+export const webSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no web tab in the Even Realities plugin'))
+    : import('./web-tab/WebTab.svelte'),
+)
 
 /** A shell in a tab, with xterm.js behind it. Never the glasses' plugin's, which has no
  *  shell to run: the same reason as the space chooser's card below. See docs/terminal.md. */

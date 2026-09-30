@@ -1266,6 +1266,10 @@ class Workspace {
    *
    *  `page` counts from one, and null means wherever the tab was left. */
   openPdf(path: string, page: number | null = null, how: OpenHow = {}) {
+    // Not in the glasses' plugin, which has no viewer to draw one: a link or a search
+    // hit asks here directly rather than through `openerFor`. See `pdfSurface`.
+    if (__EVEN_PLUGIN__) return
+
     const paneId = this.panes.focusedId
     const existing = this.tabs.find((tab) => tab.kind === 'pdf' && tab.path === path)
 
@@ -1511,7 +1515,9 @@ class Workspace {
    *  first would leave behind. The file list's own gesture asks for the name, because
    *  there the row is the thing being made; see `createWebsite`. */
   openWebsite() {
-    if (viewport.device === 'phone') return
+    // Nor in the glasses' plugin, whose package has no web tab to draw; see
+    // `webSurface` in surfaces.svelte.ts.
+    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
 
     const file = this.document({
       kind: 'web',
@@ -1544,7 +1550,7 @@ class Workspace {
    *  own - `target="_blank"`, a Ctrl+click inside the page - so the tab lands beside
    *  that page, in its pane, rather than wherever the interface last had focus. */
   openPage(url: string, ask: TabAsk = 'plain', opener?: string): string | null {
-    if (viewport.device === 'phone') return null
+    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return null
 
     // A phone and a tablet hold one document, so there is no behind for a tab to be
     // in: one put there would be one the reader has no strip to find it in. See
@@ -1598,7 +1604,7 @@ class Workspace {
    *  wrote `Blog.url.url` and put `Blog.url` in the shortcut's own `Title`, which is
    *  the `.url` Emil kept seeing in the file list. */
   async createWebsite(folder?: string, named?: string) {
-    if (viewport.device === 'phone') return
+    if (__EVEN_PLUGIN__ || viewport.device === 'phone') return
 
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return

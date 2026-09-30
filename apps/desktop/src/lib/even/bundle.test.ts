@@ -2,10 +2,13 @@ import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 import { undrawable } from '@nib/glasses'
+import { serverWords, stringsIn } from '../../../even-catalogues'
 import manifest from '../../../even.app.json'
+import type { Dictionary } from '../i18n.svelte'
 
 /** What the store's review reads, held to what it asks for.
  *
@@ -316,10 +319,10 @@ describe('the bundle a package is made of', () => {
     // Speed is the selling point, and on a phone the download is part of it.
     //
     // What is left that is not the app, and what to weigh if this has to come down
-    // again: the 23 catalogues that are shipped, about 1.3 MB between them. The
-    // emoji table `insteadOf` in packages/glasses/src/firmware.ts reads, to write an
-    // emoji the firmware cannot draw as its own `:name:` rather than as a box, is
-    // already down to its names; see below.
+    // again: the 24 catalogues that are shipped, 1.40 MB between them, already down
+    // to the rows the plugin can ask for; see below. The emoji table `insteadOf` in
+    // packages/glasses/src/firmware.ts reads, to write an emoji the firmware cannot
+    // draw as its own `:name:` rather than as a box, is already down to its names.
     //
     // The number is the same on every run: each run builds into a folder of its own
     // that starts empty, so nothing a previous run left can be counted twice. That is
@@ -328,6 +331,15 @@ describe('the bundle a package is made of', () => {
     //
     // 8,167,705 bytes on 2026-09-28, down from 8,382,180 the same morning: the emoji
     // table ships as its names and characters alone; see `SLIM_EMOJI`.
+    //
+    // **8,071,920 bytes** on 2026-09-30, down from 8,268,410 for main at f94aa3ca and
+    // 316,688 under. The catalogues ship only the rows the plugin can ask for (see
+    // even-catalogues.ts and the two tests at the end of this file), which was 96,450
+    // bytes, and every string the app gains from here costs the package nothing unless
+    // the plugin can show it. The other 100,040 are the web tab and the PDF viewer's
+    // own pane, which the plugin never opens and carried all the same, now behind
+    // `__EVEN_PLUGIN__` - with the rows only they asked for. 1,264 rows of 1,372 are
+    // left in each catalogue.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 
@@ -373,4 +385,69 @@ describe('the bundle a package is made of', () => {
 
     expect(wrong.join('\n')).toBe('')
   }, 240_000)
+
+  /** And the rows of those, held to what the plugin can ask for; see
+   *  even-catalogues.ts. Both ways round: a row the package asks for and has not got
+   *  reads in English to somebody who chose another language, and a row nothing in it
+   *  can ask for is a string paid for twenty-four times and never shown. */
+  describe('the rows of each catalogue it ships', () => {
+    const WRITTEN = import.meta.glob<Record<string, Dictionary>>('../../locales/*.ts')
+
+    const shipped: { id: string; file: string; rows: Dictionary; written: Dictionary }[] = []
+    let asked = new Set<string>()
+
+    beforeAll(async () => {
+      const code = files.filter((one) => one.name.endsWith('.js'))
+
+      for (const [path, load] of Object.entries(WRITTEN)) {
+        const id = /([\w-]+)\.ts$/.exec(path)?.[1] ?? path
+        // The hash is eight characters, which is what tells `zh-Hant` from `zh-Hant-HK`.
+        const chunk = code.find((one) =>
+          new RegExp(`^${id}-[\\w-]{8}\\.js$`).test(basename(one.name)),
+        )
+        if (!chunk) continue
+
+        const read = async (from: Promise<Record<string, Dictionary>>) =>
+          Object.values(await from)[0] ?? {}
+        const url = pathToFileURL(join(staged, chunk.name)).href
+        shipped.push({
+          id,
+          file: chunk.name,
+          rows: await read(import(url) as Promise<Record<string, Dictionary>>),
+          written: await read(load()),
+        })
+      }
+
+      asked = serverWords()
+      for (const one of code) {
+        if (shipped.some((catalogue) => catalogue.file === one.name)) continue
+        for (const text of stringsIn(one.text)) asked.add(text)
+      }
+    })
+
+    test('are all found', () => {
+      expect(shipped.length).toBeGreaterThan(20)
+    })
+
+    test('hold every row the plugin can ask for, as it is written', () => {
+      const missing = shipped.flatMap(({ id, rows, written }) =>
+        Object.keys(written)
+          .filter((english) => asked.has(english))
+          .filter((english) => JSON.stringify(rows[english]) !== JSON.stringify(written[english]))
+          .map((english) => `${id}: ${english}`),
+      )
+
+      expect(missing.slice(0, 12).join('\n')).toBe('')
+    })
+
+    test('and not one it cannot', () => {
+      const unused = shipped.flatMap(({ id, rows }) =>
+        Object.keys(rows)
+          .filter((english) => !asked.has(english))
+          .map((english) => `${id}: ${english}`),
+      )
+
+      expect(unused.slice(0, 12).join('\n')).toBe('')
+    })
+  })
 })

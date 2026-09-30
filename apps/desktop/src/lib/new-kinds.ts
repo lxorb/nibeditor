@@ -92,8 +92,9 @@ export function newKinds(): NewKindRow[] {
     },
     // A website is a bookmark on a phone - it opens in the phone's own browser and
     // there is no tab to make - so the row is left out there rather than offered and
-    // answering nothing. See openWeb in workspace.svelte.ts.
-    ...(viewport.device === 'phone'
+    // answering nothing. See openWeb in workspace.svelte.ts. The glasses' plugin has no
+    // web tab on any screen.
+    ...(__EVEN_PLUGIN__ || viewport.device === 'phone'
       ? []
       : [
           {

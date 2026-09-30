@@ -35,8 +35,9 @@
  *  hold the staged folder to both findings. */
 
 import { resolve } from 'node:path'
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin, type Rollup } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { onlyRows, serverWords, stringsIn } from './even-catalogues.ts'
 import manifest from './even.app.json'
 
 /** Modules the plugin does not have, by the specifier that asks for them.
@@ -233,6 +234,48 @@ function withoutWhatTheGlassesCannotUse() {
   }
 }
 
+/** The catalogues that are shipped, trimmed to the rows the plugin can ask for; see
+ *  even-catalogues.ts for which those are.
+ *
+ *  At the end of the build rather than as each catalogue is loaded: a row is kept
+ *  for what the rest of the package says, and the package is only known once it has
+ *  been shaken down. `modules[...].code` is each module as it goes into its chunk,
+ *  after the shaking, so a string left behind in a branch `__EVEN_PLUGIN__` turned
+ *  off keeps no row. And in `renderChunk`, before the hash is taken, so a catalogue
+ *  that loses a row is a file of a new name rather than an old name with new words
+ *  in it. */
+function onlyTheRowsItAsksFor(): Plugin {
+  let asked: Set<string> | undefined
+
+  const shipped = (chunk: { facadeModuleId: string | null }) =>
+    CATALOGUE.test(chunk.facadeModuleId?.replace(/\\/g, '/') ?? '')
+
+  const askedIn = (chunks: Rollup.RenderedChunk[]) => {
+    const found = serverWords()
+    for (const chunk of chunks) {
+      if (shipped(chunk)) continue
+      for (const one of Object.values(chunk.modules)) {
+        if (one.code) for (const text of stringsIn(one.code)) found.add(text)
+      }
+    }
+
+    return found
+  }
+
+  return {
+    name: 'nib-even-rows',
+    renderStart() {
+      asked = undefined
+    },
+    renderChunk(code, chunk, _options, meta) {
+      if (!shipped(chunk)) return null
+
+      const words = (asked ??= askedIn(Object.values(meta.chunks)))
+      return onlyRows(code, (english) => words.has(english))
+    },
+  }
+}
+
 /** The part of a Rolldown plugin's context this uses. Said out loud because the
  *  plugin is written as a plain object rather than through a typed helper. */
 interface Resolver {
@@ -244,7 +287,7 @@ interface Resolver {
 }
 
 export default defineConfig({
-  plugins: [svelte(), withoutWhatTheGlassesCannotUse()],
+  plugins: [svelte(), withoutWhatTheGlassesCannotUse(), onlyTheRowsItAsksFor()],
   define: {
     // The plugin's own version, so a screenshot of a phone says which build is on
     // it, and the flag every branch below reads.

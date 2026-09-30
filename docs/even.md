@@ -320,6 +320,14 @@ Thai one with a panel of boxes - and `src/lib/even/bundle.test.ts` holds the pac
 to the rule from both ends, so a drawable catalogue cannot be dropped by accident
 either.
 
+And of the catalogues that are packed, only the rows the plugin can say. A row stays
+where its English is written somewhere in the plugin's own code or is something the
+sync server sends; the terminal's words, the Mac's menu and the default browser are
+not in them. So a string the app gains costs the package nothing unless the plugin can
+show it: on 2026-09-30, 1,264 rows of 1,372 in each. See
+`apps/desktop/even-catalogues.ts`, and the bundle test, which holds the package to it
+both ways round.
+
 ### The one fact nobody publishes
 
 **A codepoint the firmware has no glyph for is drawn as nothing at all.** Zero
