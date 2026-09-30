@@ -149,11 +149,32 @@ fn furniture(role: &str) -> bool {
     matches!(role, "inlineTextBox" | "lineBreak")
 }
 
+/// Roles whose insides are the engine's own: a date field's day, month and year and its
+/// "Show date picker" button, a colour well's swatch. The field is one line with its
+/// value, and nothing inside it has a ref, because pressing the picker's button would
+/// open a window of the engine's own (6.5).
+fn sealed(role: &str) -> bool {
+    matches!(
+        role,
+        "date" | "dateTime" | "inputTime" | "time" | "colorWell" | "month" | "week"
+    )
+}
+
 /// Roles whose value is what somebody typed or chose.
 fn has_value(role: &str) -> bool {
     matches!(
         role,
-        "textbox" | "searchbox" | "combobox" | "spinbutton" | "slider" | "textField"
+        "textbox"
+            | "searchbox"
+            | "combobox"
+            | "spinbutton"
+            | "slider"
+            | "textField"
+            | "date"
+            | "dateTime"
+            | "inputTime"
+            | "time"
+            | "colorWell"
     )
 }
 
@@ -312,7 +333,17 @@ pub fn render(parts: &[Part], asked: &Asked<'_>) -> Written {
     };
     if let Some((part, node)) = start {
         let skip_root = asked.under.is_none();
-        writer.walk(&forest, part, node, 0, skip_root, "");
+        writer.walk(
+            &forest,
+            part,
+            node,
+            &Around {
+                depth: 0,
+                skip: skip_root,
+                said: &[],
+                in_list: false,
+            },
+        );
     }
     if writer.truncated {
         let _ = write!(
@@ -344,16 +375,19 @@ struct Writer<'a> {
     origin: &'a str,
 }
 
+/// Where a node is being written: how deep, and what around it already says.
+struct Around<'a> {
+    depth: usize,
+    /// The root of a frame's document, which its frame element already stands for.
+    skip: bool,
+    /// The names a text node would only repeat: its parent's, and its siblings'.
+    said: &'a [String],
+    /// Inside a `<select>`: its options are chosen with `browser_select`, never pressed.
+    in_list: bool,
+}
+
 impl Writer<'_> {
-    fn walk(
-        &mut self,
-        forest: &Forest<'_>,
-        part: usize,
-        raw: &Value,
-        depth: usize,
-        skip: bool,
-        parent_name: &str,
-    ) {
+    fn walk(&mut self, forest: &Forest<'_>, part: usize, raw: &Value, around: &Around<'_>) {
         if self.truncated {
             return;
         }
@@ -361,27 +395,29 @@ impl Writer<'_> {
         let role = node.role();
         let name = node.name();
         let prefix = &forest.parts[part].prefix;
-        let mut inner = depth;
+        let mut inner = around.depth;
 
-        let quiet = skip
+        let repeats = |text: &str| around.said.iter().any(|one| one == text.trim());
+        let quiet = around.skip
             || node.ignored()
             || silent(&role, name)
             || furniture(&role)
-            || (role == "text" && (name.trim().is_empty() || name.trim() == parent_name.trim()));
+            || role == "menuListPopup"
+            || (role == "label" && name.is_empty())
+            || (role == "text" && (name.trim().is_empty() || repeats(name)));
         if !quiet {
             let secret = node
                 .backend()
                 .is_some_and(|backend| self.secret.contains(&(prefix.clone(), backend)));
-            let mut line = format!("{}- {role}", "  ".repeat(depth));
+            let mut line = format!("{}- {role}", "  ".repeat(around.depth));
             if !name.is_empty() {
                 line.push(' ');
                 line.push_str(&quoted(name));
             }
             line.push_str(&states(&node, &role, secret, self.origin));
-            if role != "text" {
-                if let Some(backend) = node.backend() {
-                    let _ = write!(line, " [ref={prefix}e{backend}]");
-                }
+            let pressable = role != "text" && !(around.in_list && role == "option");
+            if let Some(backend) = node.backend().filter(|_| pressable) {
+                let _ = write!(line, " [ref={prefix}e{backend}]");
             }
             line.push('\n');
             if self.text.len() + line.len() > self.most {
@@ -389,20 +425,49 @@ impl Writer<'_> {
                 return;
             }
             self.text.push_str(&line);
-            inner = depth + 1;
+            inner = around.depth + 1;
         }
 
-        let named = if quiet { parent_name } else { name };
-        for id in node.children() {
-            if let Some(child) = forest.child(part, id) {
-                self.walk(forest, part, child, inner, false, named);
-            }
+        if sealed(&role) {
+            return;
+        }
+        // What the children would only repeat: this node's name, and every name a
+        // sibling of theirs already says (a label's words beside the field they name).
+        let children: Vec<&Value> = node
+            .children()
+            .into_iter()
+            .filter_map(|id| forest.child(part, id))
+            .collect();
+        let mut said: Vec<String> = if quiet {
+            around.said.to_vec()
+        } else {
+            vec![name.trim().to_string()]
+        };
+        said.extend(children.iter().filter_map(|child| {
+            let child = Node { raw: child };
+            (child.role() != "text" && !child.name().trim().is_empty())
+                .then(|| child.name().trim().to_string())
+        }));
+        let within = Around {
+            depth: inner,
+            skip: false,
+            said: &said,
+            in_list: around.in_list || role == "combobox" || role == "listBox",
+        };
+        for child in children {
+            self.walk(forest, part, child, &within);
         }
         // A frame's document hangs under the frame element.
         if let Some(backend) = node.backend() {
             if let Some(&under) = forest.hung.get(&(part, backend)) {
                 if let Some(root) = forest.root(under) {
-                    self.walk(forest, under, root, inner, true, "");
+                    let framed = Around {
+                        depth: inner,
+                        skip: true,
+                        said: &[],
+                        in_list: false,
+                    };
+                    self.walk(forest, under, root, &framed);
                 }
             }
         }
@@ -486,6 +551,9 @@ fn search(
         _ => None,
     };
     let holding = here.as_ref().or(holder);
+    if sealed(&role) {
+        return;
+    }
     for id in node.children() {
         if let Some(child) = forest.child(part, id) {
             search(forest, part, child, holding, wanted, found);
@@ -692,6 +760,72 @@ mod tests {
         assert_eq!(found(None, Some("textbox"), None), ["e5", "e11"]);
         assert_eq!(found(None, Some("button"), Some("pay")), ["f1e20"]);
         assert_eq!(found(Some("help"), None, None), ["e9"]);
+    }
+
+    /// Trees recorded from headless Chromium, the engine `WebView2` is, on the probe's
+    /// own shop and sign-in pages (scripts/agent-tab-probe.py).
+    fn recorded(page: &str) -> Vec<Part> {
+        let all: Value =
+            serde_json::from_str(include_str!("fixtures.json")).expect("recorded trees");
+        vec![Part {
+            prefix: String::new(),
+            nodes: all[page].as_array().expect("a page").clone(),
+            owner: None,
+        }]
+    }
+
+    #[test]
+    fn a_recorded_shop_reads_as_its_form() {
+        // Every field once, by its label; a list's options without refs, because they are
+        // chosen with browser_select; a date field whole, because its insides - its
+        // picker's button above all - are the engine's own windows (6.5); and the words a
+        // label only repeats beside its field not said twice.
+        assert_eq!(
+            written(&recorded("/shop"), None, MOST).text,
+            [
+                "- main [ref=e9]",
+                "  - heading \"Basket\" [level=1] [ref=e10]",
+                "  - paragraph [ref=e11]",
+                "    - text \"One lamp, 42.00\"",
+                "  - form [ref=e12]",
+                "    - textbox \"Name\" [ref=e14]",
+                "    - combobox \"Quantity\" [expanded=false] [value=\"One\"] [ref=e17]",
+                "      - option \"One\" [selected]",
+                "      - option \"Two\"",
+                "      - option \"Three\"",
+                "    - date \"Delivery\" [ref=e34]",
+                "    - checkbox \"Gift wrap\" [ref=e45]",
+                "    - textbox \"Card number\" [ref=e47]",
+                "    - textbox \"Expiry\" [ref=e50]",
+                "    - textbox \"Security code\" [ref=e53]",
+                "    - button \"Receipt\" [ref=e56]",
+                "    - button \"Place order\" [ref=e59]",
+                "  - paragraph [ref=e60]",
+                "    - link \"Terms\" [ref=e61]",
+                "    - link \"Invoice\" [ref=e62]",
+                "  - status [ref=e63]",
+            ]
+            .join("\n")
+        );
+    }
+
+    #[test]
+    fn a_recorded_sign_in_never_says_its_password() {
+        let parts = recorded("/signin");
+        let secret: HashSet<(String, u64)> = HashSet::new();
+        let text = render(
+            &parts,
+            &Asked {
+                under: None,
+                most: MOST,
+                secret: &secret,
+                origin: "about:blank",
+            },
+        )
+        .text;
+        assert!(text.contains("- textbox \"Password\""), "{text}");
+        assert!(!text.contains("hunter2"), "{text}");
+        assert!(!text.contains("[value="), "{text}");
     }
 
     #[test]

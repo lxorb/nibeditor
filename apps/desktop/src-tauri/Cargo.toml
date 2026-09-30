@@ -23,9 +23,11 @@ missing_docs = "warn"
 # window's AppKit object, which Tauri hands over as a bare pointer, to mark it
 # edited (see document_window.rs), and the method that lets a quit ask about
 # unsaved notes first, added to an application delegate that is tao's (see
-# lifecycle.rs). None of them has a safe wrapper to use
-# instead, and anything new that wants unsafe has to say so at the function and
-# say why.
+# lifecycle.rs). And the agents' own reach into WebView2 in src/agents: the
+# DevTools Protocol's calls and events, an agent tab's settings and the events it
+# answers out of sight, the reader's tab's focus, and the engine's memory. None of
+# them has a safe wrapper to use instead, and anything new that wants unsafe has to
+# say so at the function and say why.
 unsafe_code = "deny"
 unsafe_op_in_unsafe_fn = "deny"
 

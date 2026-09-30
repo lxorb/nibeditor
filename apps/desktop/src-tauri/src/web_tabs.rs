@@ -80,6 +80,10 @@ fn adopted_label(label: &str) -> bool {
 /// has: the browser's keys, the page-first keys, full screen, finding, downloads and the
 /// permission bubble. The window places it as it places any tab's page, with `web_place`,
 /// and `web_open` finds it there rather than building another.
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2 has agent tabs to show")
+)]
 pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Option<String>) {
     if let Ok(mut held) = ADOPTED.lock() {
         held.get_or_insert_with(HashMap::new)
@@ -90,6 +94,10 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
 
 /// A window an adopted page asked for, handed to the window as a tab beside it: the
 /// page's own handler for that belonged to the agent. Nothing for a page no tab took.
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2 has agent tabs to show")
+)]
 pub(crate) fn opened_from_adopted(app: &AppHandle, label: &str, url: &str) {
     let tab = ADOPTED.lock().ok().and_then(|held| {
         held.as_ref()?

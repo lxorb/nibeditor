@@ -25,9 +25,21 @@
 //! parts that are only reading and deciding - the policy, the snapshot's shape, the keys
 //! - are built and tested everywhere.
 
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2's verbs read a grant's spaces")
+)]
 pub mod grants;
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "most answers are WebView2's to give")
+)]
 pub mod verbs;
 
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2's verbs ask about a tab")
+)]
 mod approvals;
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
@@ -40,6 +52,10 @@ mod keys;
 )]
 mod leases;
 mod limits;
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2 types into a page")
+)]
 mod log;
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
@@ -51,6 +67,10 @@ mod policy;
     allow(dead_code, reason = "only WebView2 has a tree to write")
 )]
 mod snapshot;
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2 has a tab to pause on")
+)]
 mod stop;
 
 #[cfg(all(windows, not(feature = "cef")))]

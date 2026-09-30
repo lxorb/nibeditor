@@ -12,7 +12,9 @@
 //! - **No key through the protocol.** A reader's tab has the page-first keys and the
 //!   browser's chords listening; a key pressed into it through the protocol is a key
 //!   those hand to the window, which then takes the keyboard back to itself - a probe did
-//!   exactly that and came to the front. So `browser_press` is refused on a reader's tab.
+//!   exactly that and came to the front. So `browser_press` on a reader's tab is the
+//!   page's own key events with the key's default done the page's way, and its text
+//!   inserted as text (`Page::press_in_page`); on an agent's own tab it is the engine's.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::{Mutex, PoisonError};
