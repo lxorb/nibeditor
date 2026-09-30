@@ -1090,12 +1090,9 @@ pub async fn web_open(
 
     if app.get_webview(&label).is_some() {
         // A page closed while it was still fetching a file is kept, out of sight, until
-        // the file is in; a tab opened again in the meantime has its page already.
-        if crate::downloads::revive(&app, &tab) {
-            return Ok(());
-        }
-        // An agent's page the reader was shown is already this tab's page, loaded.
-        if adopted_label(&label) {
+        // the file is in; a tab opened again in the meantime has its page already. And an
+        // agent's page the reader was shown is already this tab's page, loaded.
+        if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
             return Ok(());
         }
         return Err("that tab already has a page".into());

@@ -433,9 +433,7 @@ mod heard {
     use windows::Win32::UI::WindowsAndMessaging::IsChild;
     use windows_core::Interface;
 
-    use super::{
-        actual, chord, passed, placed, played, sought, taken_as_a_person_s, Asked, Held,
-    };
+    use super::{actual, chord, passed, placed, played, sought, taken_as_a_person_s, Asked, Held};
 
     thread_local! {
         /// What each tab's last request said, until `on_new_window` takes it. The
