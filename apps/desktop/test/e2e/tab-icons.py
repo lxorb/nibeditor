@@ -139,7 +139,10 @@ STRIP = """
 
   return [...document.querySelectorAll('.tab')].map((tab) => {
     const pick = tab.querySelector('.pick')
-    const marks = [...pick.children].filter((one) => one.classList.contains('mark'))
+    // The mark sits in the tab's face since the strip took Chrome's shape (917497b4);
+    // counted there, so a second mark anywhere in the face still counts as two.
+    const face = pick.querySelector('.face') ?? pick
+    const marks = [...face.children].filter((one) => one.classList.contains('mark'))
     const mark = marks[0] ?? null
     const box = mark?.getBoundingClientRect() ?? null
     const seat = pick.getBoundingClientRect()
