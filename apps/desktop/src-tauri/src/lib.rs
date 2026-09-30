@@ -722,6 +722,20 @@ fn ready(
     Ok(())
 }
 
+/// The app's own folder, `src-tauri`, for a test that reads a file beside the crate.
+///
+/// Not always the manifest's folder: the engine build compiles this library from a
+/// package one folder down (cef/Cargo.toml), and its tests read the same files.
+#[cfg(test)]
+pub(crate) fn app_dir() -> std::path::PathBuf {
+    let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    if cfg!(feature = "cef") {
+        manifest.join("..")
+    } else {
+        manifest.to_path_buf()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::{HashMap, HashSet};
@@ -909,7 +923,7 @@ mod tests {
     /// down rather than in its own three lines.
     #[test]
     fn a_command_that_waits_says_async() {
-        let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let src = crate::app_dir().join("src");
         let mut sources = Vec::new();
 
         for file in fs::read_dir(src).expect("the crate's own source").flatten() {

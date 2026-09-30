@@ -455,7 +455,6 @@ mod platform {
 #[cfg(test)]
 mod tests {
     use super::{exe_of, is_ours, registration, Value, PROG_ID};
-    use std::path::Path;
 
     const EXE: &str = r"C:\Users\me\AppData\Local\Nib\nib.exe";
 
@@ -539,7 +538,7 @@ mod tests {
     }
 
     fn source(relative: &str) -> String {
-        std::fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join(relative))
+        std::fs::read_to_string(crate::app_dir().join(relative))
             .expect("a file beside the crate")
     }
 

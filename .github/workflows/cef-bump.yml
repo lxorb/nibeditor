@@ -4,14 +4,15 @@
 # when there are upstream changes"*. The engine's cadence is CEF's - a branch per
 # Chromium milestone, about four weeks apart, `cef-rs` publishing within days of
 # each and `tauri-runtime-cef` taking whatever `cef-rs` has - so nib's part is to
-# follow one revision, rebuild, re-measure and put the numbers in front of a
+# follow the published crates, rebuild, re-measure and put the numbers in front of a
 # person. Weekly, and whenever somebody asks.
 #
-# What it does: moves the one pin in apps/desktop/src-tauri/cef/Cargo.toml to the
-# head of the branch it follows, builds the flagged app on all three desktops,
-# runs the same gate .github/workflows/cef.yml runs, and opens a **draft** pull
-# request with the table and with what moved. Nobody edits a URL and nobody reads
-# a release note to find a version number; a person presses merge, or does not.
+# What it does: moves the pins in apps/desktop/src-tauri/cef/Cargo.toml
+# (`[package.metadata.engine]`) to the newest published set that belongs together -
+# bump.py says what that means - writes the dependency list again from them, builds the
+# engine on the two desktops that offer it, runs the same gate .github/workflows/cef.yml
+# runs, and opens a **draft** pull request with the table and with what moved. Nobody
+# edits a version number by hand; a person presses merge, or does not.
 #
 # It never runs on a pull request and never on a branch: a scheduled workflow runs
 # on the default branch, and the only thing it pushes is the branch its own pull
@@ -24,8 +25,8 @@ on:
     - cron: '17 6 * * 1'
   workflow_dispatch:
     inputs:
-      revision:
-        description: 'Move the pin to exactly this revision, rather than the head of the branch'
+      pins:
+        description: 'Move the pins to exactly these, as JSON, rather than the newest set'
         type: string
         default: ''
 
@@ -45,24 +46,24 @@ jobs:
       contents: read
     outputs:
       moved: ${{ steps.look.outputs.moved }}
-      revision: ${{ steps.look.outputs.revision }}
+      pins: ${{ steps.look.outputs.pins }}
       report: ${{ steps.look.outputs.report }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
       - id: look
         shell: bash
+        env:
+          ASKED: ${{ inputs.pins }}
         run: |
-          args=()
-          [ -n "${{ inputs.revision }}" ] && args=(--set "${{ inputs.revision }}")
-          python apps/desktop/src-tauri/cef/bump.py "${args[@]}" --out bump.json
+          if [ -n "$ASKED" ]; then
+            python -c "import json,os; print(json.dumps({'moved': True, 'from': {}, 'to': json.loads(os.environ['ASKED'])}, indent=2))" > bump.json
+          else
+            python apps/desktop/src-tauri/cef/bump.py --out bump.json
+          fi
           echo "moved=$(python -c "import json;print(str(json.load(open('bump.json'))['moved']).lower())")" >>"$GITHUB_OUTPUT"
-          echo "revision=$(python -c "import json;print(json.load(open('bump.json'))['to'])")" >>"$GITHUB_OUTPUT"
-          # The delimiter has to be on a line of its own, and `cat` of a file that does
-          # not end in a newline does not put it there: the first scheduled run of this
-          # workflow wrote `}REPORT` and failed the job with "Matching delimiter not
-          # found" *after* resolving everything correctly. `bump.py` ends the file with
-          # a newline now and this no longer depends on it.
+          echo "pins=$(python -c "import json;print(json.dumps(json.load(open('bump.json'))['to'], separators=(',', ':')))")" >>"$GITHUB_OUTPUT"
+          # The delimiter has to be on a line of its own; the echo makes sure of it.
           {
             echo 'report<<REPORT'
             cat bump.json
@@ -87,16 +88,21 @@ jobs:
           path: bump.json
           retention-days: 7
 
-  # The same gate cef.yml runs, on the revision above. Its own job per platform so
-  # a red Mac is a row in the pull request rather than the end of the run.
+  # The same build, tests, pack and gate cef.yml runs, on the pins above. Its own job
+  # per platform so a red Mac is a row in the pull request rather than the end of the
+  # run.
   gate:
     needs: pin
     if: needs.pin.outputs.moved == 'true'
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+        include:
+          - runner: windows-latest
+            platform: windows-x86_64
+          - runner: macos-latest
+            platform: macos-aarch64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 150
     continue-on-error: true
     permissions:
@@ -105,7 +111,9 @@ jobs:
       run:
         shell: bash
     env:
+      NIB_CEF_ARGS: enable-logging=stderr
       CEF_DIR: ${{ github.workspace }}/.cef
+      PINS: ${{ needs.pin.outputs.pins }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -120,20 +128,8 @@ jobs:
         with:
           toolchain: stable
 
-      - name: Move the pin
-        run: |
-          python apps/desktop/src-tauri/cef/bump.py --set "${{ needs.pin.outputs.revision }}"
-
-      - name: System dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev \
-            libgtk-4-dev libclang-dev libglib2.0-dev \
-            libgbm1 libnss3 libnspr4 libasound2t64 libxss1 libxtst6 libdrm2 libxkbcommon0 \
-            libxcomposite1 libxdamage1 libxfixes3 libxrandr2 libpango-1.0-0 libcups2t64 \
-            xvfb imagemagick dbus-x11
+      - name: Move the pins
+        run: python apps/desktop/src-tauri/cef/bump.py --set "$PINS"
 
       - name: The frontend
         run: |
@@ -143,87 +139,65 @@ jobs:
       - name: The app as it ships
         run: cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --release
 
-      - name: Upstream
-        run: python apps/desktop/src-tauri/cef/upstream.py
+      - name: The engine
+        run: bash apps/desktop/src-tauri/cef/engine.sh "$(rustc -vV | sed -n 's/^host: //p')"
 
-      - name: The CEF the engine is pinned to
-        id: cef
-        run: |
-          version=$(grep -oE 'cef = \{ version = "=[^"]+"' \
-            apps/desktop/src-tauri/cef/target/upstream/tauri/crates/tauri-runtime-cef/Cargo.toml \
-            | head -1 | grep -oE '[0-9][^"]+')
-          echo "version=$version" >>"$GITHUB_OUTPUT"
+      - name: Where a run's spaces go
+        run: echo "NIB_SPACES_DIR=${{ runner.temp }}/nib-spaces" >>"$GITHUB_ENV"
 
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        id: cef-cache
-        with:
-          path: .cef
-          key: cef-${{ runner.os }}-${{ runner.arch }}-${{ steps.cef.outputs.version }}
-
-      - name: CEF
-        run: |
-          if [ "${{ steps.cef-cache.outputs.cache-hit }}" != "true" ]; then
-            cargo install export-cef-dir --version "=${{ steps.cef.outputs.version }}"
-            export-cef-dir --force "$CEF_DIR"
-          fi
-          echo "CEF_PATH=$CEF_DIR" >>"$GITHUB_ENV"
-
-      - name: The library path
-        run: |
-          echo "LD_LIBRARY_PATH=$CEF_DIR:${LD_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          echo "DYLD_FALLBACK_LIBRARY_PATH=$CEF_DIR:$CEF_DIR/Chromium Embedded Framework.framework/Libraries:${DYLD_FALLBACK_LIBRARY_PATH:-}" >>"$GITHUB_ENV"
-          echo "$CEF_DIR" >>"$GITHUB_PATH"
-
-      # A moved pin is a new resolution: the lock file is regenerated rather than
+      # Moved pins are a new resolution: the lock file is made again rather than
       # honoured, and the new one is part of what the pull request carries.
-      # Inside the workspace: see cef.yml for why the directory matters.
-      - name: The flagged build
+      - name: The engine build
         working-directory: apps/desktop/src-tauri/cef
         run: |
           cargo generate-lockfile
           cargo build --release
 
-      - name: Tests under the flag
+      - name: Its tests
         working-directory: apps/desktop/src-tauri/cef
-        run: cargo test
+        run: cargo test --release
 
-      - name: Run the gate
+      - name: Pack
         run: |
           suffix=''
           [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
-          run=(python apps/desktop/src-tauri/cef/gate.py
-            --cef "apps/desktop/src-tauri/cef/target/release/nib-cef$suffix"
-            --control "apps/desktop/src-tauri/target/release/nib$suffix"
-            --engine "$CEF_PATH"
-            --extension spike/browser/extension
-            --out gate-out)
-          if [ "${{ runner.os }}" = "Linux" ]; then
-            xvfb-run --auto-servernum --server-args='-screen 0 1600x1000x24' dbus-run-session -- "${run[@]}"
-          else
-            "${run[@]}"
-          fi
+          python apps/desktop/src-tauri/cef/pack.py \
+            --binary "apps/desktop/src-tauri/cef/target/release/nib-chromium$suffix" \
+            --engine "$CEF_PATH" --version 0.0.0 --platform "${{ matrix.platform }}" --out chromium-out
+
+      - name: Run the gate
+        env:
+          NIB_CEF_SANDBOX: disabled
+        run: |
+          suffix=''
+          [ "${{ runner.os }}" = "Windows" ] && suffix='.exe'
+          python apps/desktop/src-tauri/cef/gate.py \
+            --cef "apps/desktop/src-tauri/cef/target/release/nib-chromium$suffix" \
+            --control "apps/desktop/src-tauri/target/release/nib$suffix" \
+            --engine "$CEF_PATH" \
+            --extension spike/browser/extension \
+            --out gate-out
 
       - name: The gate table
         if: always()
         run: |
           mkdir -p bumped
-          cp gate-out/gate.md "bumped/${{ matrix.os }}.md" 2>/dev/null || true
+          cp gate-out/gate.md "bumped/${{ matrix.platform }}.md" 2>/dev/null || true
           cp apps/desktop/src-tauri/cef/Cargo.lock bumped/Cargo.lock 2>/dev/null || true
-          cp apps/desktop/src-tauri/cef/Cargo.toml bumped/Cargo.toml 2>/dev/null || true
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
-          name: cef-bump-${{ matrix.os }}
+          name: cef-bump-${{ matrix.platform }}
           path: |
             bumped/**
             gate-out/**
           if-no-files-found: warn
           retention-days: 7
 
-  # And the button: a draft pull request with the pin moved, the lock file the new
-  # revision resolved to, and the three tables in the body. Draft, because a person
-  # decides whether a Chromium nib has not shipped yet is a Chromium nib wants.
+  # And the button: a draft pull request with the pins moved, the lock file they
+  # resolved to, and the two tables in the body. Draft, because a person decides
+  # whether the Chromium every Chromium user of nib gets next is the one nib wants.
   #
   # **It only ever opens one from the default branch.** A `workflow_dispatch` can be
   # asked for on any ref - which is how the plumbing gets proved without waiting for a
@@ -249,18 +223,23 @@ jobs:
         id: branch
         shell: bash
         env:
-          REVISION: ${{ needs.pin.outputs.revision }}
+          PINS: ${{ needs.pin.outputs.pins }}
         run: |
-          short=${REVISION:0:12}
+          short=$(python -c "import json,os; p=json.loads(os.environ['PINS']); print(p['tauri-runtime-cef'] + '-cef-' + p['cef'])")
           echo "name=cef-pin-$short" >>"$GITHUB_OUTPUT"
           echo "short=$short" >>"$GITHUB_OUTPUT"
 
-      - name: Move the pin and take the lock file the runners resolved
+      # The written half of the manifest is made by a Node script.
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+
+      - name: Move the pins and take the lock file the runners resolved
         shell: bash
         env:
-          REVISION: ${{ needs.pin.outputs.revision }}
+          PINS: ${{ needs.pin.outputs.pins }}
         run: |
-          python apps/desktop/src-tauri/cef/bump.py --set "$REVISION"
+          python apps/desktop/src-tauri/cef/bump.py --set "$PINS"
           lock=$(find artefacts -name 'Cargo.lock' -path '*bumped*' | head -1)
           if [ -n "$lock" ]; then
             cp "$lock" apps/desktop/src-tauri/cef/Cargo.lock
@@ -270,7 +249,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "The engine's pin moves to \`${{ steps.branch.outputs.short }}\`."
+            echo "The engine's pins move to \`${{ steps.branch.outputs.short }}\`."
             echo
             echo '```json'
             cat <<'REPORT'
@@ -288,8 +267,8 @@ jobs:
               echo
             done
             echo
-            echo 'Draft on purpose: batch 1 of docs/browser.md is a gate, and a gate is'
-            echo 'allowed to say no. Read the table before merging.'
+            echo 'Draft on purpose: a new engine is what every Chromium user of nib runs'
+            echo 'next, so a person reads the table before merging.'
           } >body.md
           cat body.md
           {

@@ -277,10 +277,8 @@ mod tests {
     /// because that is where the packaging lives.
     #[test]
     fn the_engine_feature_is_never_on_by_default() {
-        let manifest = std::fs::read_to_string(
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("Cargo.toml"),
-        )
-        .expect("the crate's own manifest");
+        let manifest = std::fs::read_to_string(crate::app_dir().join("Cargo.toml"))
+            .expect("the crate's own manifest");
 
         assert!(
             manifest.contains("\ncef = []"),
