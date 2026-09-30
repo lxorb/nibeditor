@@ -150,8 +150,15 @@ jobs:
       # here: a cfg gate is the one thing that can be clean on one platform and
       # not on another. After the build, because the crate embeds the built
       # frontend and will not compile before there is one.
+      #
+      # The bundled SQLite of the sync store is C, and a bare cargo has no compiler
+      # for the phone: `tauri android build` names the NDK's own, this does the same,
+      # at the minSdk the app is built for (gen/android/app/build.gradle.kts).
       - name: Clippy for the phone
         run: |
+          ndk="$NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          CC_aarch64_linux_android="$ndk/aarch64-linux-android24-clang" \
+          AR_aarch64_linux_android="$ndk/llvm-ar" \
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml \
             --target aarch64-linux-android -- -D warnings
 
