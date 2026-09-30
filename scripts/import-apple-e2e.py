@@ -305,7 +305,9 @@ def hand_over(page, export: pathlib.Path) -> None:
 
 
 def press_import(page) -> None:
-    page.click(".sheet button.primary")
+    # The sheet's buttons are the app's one button shape now (`nib-button`), so the
+    # press is found by what it says rather than by a class it no longer has.
+    page.locator(".sheet").get_by_role("button", name="Import", exact=True).click()
     page.wait_for_timeout(2500)
 
 

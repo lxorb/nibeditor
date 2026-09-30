@@ -39,6 +39,10 @@ CHROME_HOME = pathlib.Path(os.environ["LOCALAPPDATA"]) / "ms-playwright"
 # Where a drive of this repository may listen; see docs/conventions.md.
 PORTS = range(21500, 21600)
 
+#: The address field: the web bar's combobox. By its role, which is what it is; it wore
+#: a class of its own until it took the app's one field shape (`nib-field`).
+ADDRESS = ".webbar input[role=combobox]"
+
 FRAMED = "/drive/framed.html"
 REFUSED = "/drive/refused.html"
 
@@ -230,7 +234,7 @@ def open_row(page, name: str) -> None:
 
 
 def address(page) -> str:
-    return page.input_value(".webbar input.address")
+    return page.input_value(ADDRESS)
 
 
 def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
@@ -314,7 +318,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     #    said yes to a frame in this tab. A site that refuses one is the browser's
     #    own grey apology inside it, and there is nothing here that can tell the two
     #    apart - which is why the card asked in the first place; see frame.ts.
-    page.fill(".webbar input.address", f"{url.rstrip('/')}{REFUSED}")
+    page.fill(ADDRESS, f"{url.rstrip('/')}{REFUSED}")
     page.keyboard.press("Enter")
     page.wait_for_timeout(2500)
     report[f"{scheme}: the frame after a second address"] = page.evaluate(
@@ -324,7 +328,7 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
 
     # 6. Back to a page that frames, and clip it. In a browser the frame's words
     #    belong to the site, so the clip is the link - which is what the glyph said.
-    page.fill(".webbar input.address", f"{url.rstrip('/')}{FRAMED}")
+    page.fill(ADDRESS, f"{url.rstrip('/')}{FRAMED}")
     page.keyboard.press("Enter")
     page.wait_for_timeout(2000)
 

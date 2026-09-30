@@ -414,6 +414,10 @@ def main() -> int:
             page.on("pageerror", lambda error: say(f"page error: {error}"))
             page.goto(origin, wait_until="domcontentloaded")
             wait_for(page, "() => !!window.nibApp", "the app to start")
+            # The space is read out of the database, so once there is one the app has
+            # opened it at its own version. Seeding before that opens it at version 1
+            # with no stores in it, which is what a busy machine did.
+            wait_for(page, "() => !!window.nibApp.workspace.activeSpace", "the space")
             page.evaluate(SEED, [NOTE_PATH, NOTE, "/Notes/Long.md", LONG])
             page.reload(wait_until="domcontentloaded")
             wait_for(page, "() => !!window.nibApp", "the app to start again")
