@@ -1220,6 +1220,31 @@ export const my: Dictionary = {
   'The provider answered {status}.': 'ပေးသူသည် {status} ဖြေသည်။',
   'Add an AI provider in Settings first.': 'ဦးစွာ ဆက်တင်တွင် AI ပေးသူ ထည့်ပါ။',
   'The model did not answer.': 'မော်ဒယ် မဖြေပါ။',
+  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
+  'Your {plan} plan is at its limit until {time}.':
+    'သင်၏ {plan} အစီအစဉ်သည် {time} အထိ ကန့်သတ်ချက်ပြည့်နေသည်။',
+  'Your {plan} plan is at its limit for now.':
+    'သင်၏ {plan} အစီအစဉ်သည် ယခုအတွက် ကန့်သတ်ချက်ပြည့်နေသည်။',
+  'Your {plan} plan is near its limit.': 'သင်၏ {plan} အစီအစဉ်သည် ကန့်သတ်ချက်နီးနေပြီ။',
+  'Sign in to {name} first.': '{name} သို့ အရင်ဝင်ပါ။',
+  '{name} took too long to answer.': '{name} ဖြေရန် အချိန်အလွန်ကြာသည်။',
+  '{name} is out of date. Update it and try again.':
+    '{name} ခေတ်နောက်ကျနေသည်။ အပ်ဒိတ်လုပ်ပြီး ထပ်စမ်းပါ။',
+  'Only in the desktop app.': 'ဒက်စ်တော့ အက်ပ်တွင်သာ။',
+  '{name} is not installed.': '{name} ကို မထည့်သွင်းရသေးပါ။',
+  'This ChatGPT plan cannot be used here.': 'ဤ ChatGPT အစီအစဉ်ကို ဤနေရာတွင် မသုံးနိုင်ပါ။',
+  'ChatGPT is not answering right now. Try again in a moment.':
+    'ChatGPT ယခု မဖြေကြားပါ။ ခဏနေ ထပ်စမ်းပါ။',
+  'Not installed': 'မထည့်သွင်းရသေး',
+  'Check again': 'ထပ်စစ်ပါ',
+  '{plan} plan': '{plan} အစီအစဉ်',
+  'Signed in': 'ဝင်ပြီး',
+  'Continue with ChatGPT': 'ChatGPT ဖြင့် ဆက်လုပ်ရန်',
+  'Manage usage': 'အသုံးပြုမှုကို စီမံရန်',
+  'Used for': 'အသုံးပြုရာ',
+  'Using ChatGPT plan': 'ChatGPT အစီအစဉ်ကို သုံးနေသည်',
+  'Could not sign in.': 'ဝင်၍မရပါ။',
+  'Could not sign out.': 'ထွက်၍မရပါ။',
   'Rewrite…': 'ပြန်ရေးပါ…',
   Shorter: 'ပိုတို',
   Longer: 'ပိုရှည်',

@@ -2,46 +2,148 @@
 
 nib asks models. It does not sell you one.
 
-Every provider is yours: you add it, you give it a key or an address, and the
-requests go from your device straight to it. The account is not in the path, the
-question is not logged, and the key never leaves the machine it was typed on.
+Every provider is yours: you add it, you give it a key, an address or your own
+plan, and the requests go from your device straight to it. The account is not in
+the path, the question is not logged, and the key never leaves the machine it was
+typed on.
 
-Three surfaces use it, and they all go through one module:
+Four surfaces use it, and they all go through one module:
 
 - the ```` ```ai ```` block in a note, whose answer is written under it,
 - the four rewrites on a selection,
-- and the Ask panel on the right side of the window, which answers questions about
-  your notes and says where each answer came from.
+- the Ask panel on the right side of the window, which answers questions about
+  your notes and says where each answer came from,
+- and a meeting's summary, written under its transcript.
 
-A fourth surface asks a different question of the same providers: a recording, as words.
+Each asks the default provider unless Settings > AI > **Used for** gives it one of its
+own: a plan for questions about the notes and a fast model on this machine for
+rewrites, say. `ai.providerFor(feature)` in `store.svelte.ts` is that choice, and
+`complete()` is the one request; together they are the seam, and nothing else asks a
+model.
+
+A fifth surface asks a different question of the same providers: a recording, as words.
 See **Sound, as words** below.
 
-## What nib cannot offer
+## Your own plan
 
-Neither Anthropic nor OpenAI lets a third-party app sign you in with a Claude or
-a ChatGPT subscription. There is no such API, for anybody, and no amount of
-wanting one changes that. So a subscription you already pay for cannot be spent
-here, and the honest options are the two nib offers: your own API key, or a model
-running on your own machine.
+A Claude or ChatGPT plan you already pay for can answer all four, on the desktop app,
+by the roads their makers allow and no other. What each maker says, and so what nib
+does and does not do. **Read this before changing any of it**: the obvious "improvement"
+- reusing the token a CLI keeps, or pasting a setup token into nib - is the one thing
+both of these pages rule out.
 
-That is not a hedge about a feature that is coming. It is the shape of the
-market, and it is written here so nobody has to find out by looking for a button
-that is not there.
+### Claude: the reader's own Claude Code
+
+Anthropic, [Legal and compliance, "Authentication and credential
+use"](https://code.claude.com/docs/en/legal-and-compliance), checked 2026-09-30:
+
+> Anthropic does not permit third-party developers to offer Claude.ai login into their
+> own applications, or to route requests through Free, Pro, or Max plan credentials on
+> behalf of their users. Moreover, developers may not collect, store, or intermediate
+> Claude.ai credentials or session tokens - sign-in to a Claude account must complete
+> through Anthropic's own flow.
+
+The same page does "not prevent an end user from signing in to the unmodified Claude
+Code binary with their own Claude subscription", and running Claude Code inside a
+product ("Can customers offer Claude Code in their products?") asks three things: the
+product's maker agrees to Anthropic's Commercial Terms, the binary is unmodified with no
+auth method removed, and every end user signs in with their own credentials.
+
+So nib runs the Claude Code **the reader installed**, as it is, headless (`claude -p
+--output-format stream-json`), with the question on stdin. The reader signs in through
+Claude Code's own login (`claude auth login`), which **Sign in** types into a nib
+terminal tab for them. nib never reads `~/.claude`, the keychain entry or any token, and
+knows whether somebody is signed in only because `claude auth status --json` says so.
+What OpenClaw and others did - reuse the CLI's stored token, or take a `claude
+setup-token` and keep it - is exactly the collecting and intermediating the quote
+forbids, and is not built. OpenCode had its Claude Pro and Max support taken out after
+Anthropic's lawyers asked.
+
+The first of the three conditions is a decision about the release, not the code: the
+Claude Code row is behind a build switch, on by default, off with `NIB_CLAUDE_CODE=off`
+(read by `vite.config.ts` as `__CLAUDE_CODE__` and by the crate in `ai_cli.rs`).
+
+### ChatGPT: Sign in with ChatGPT, or the reader's own Codex
+
+OpenAI, [ChatGPT plan usage](https://developers.openai.com/siwc/token-sharing-open-source),
+checked 2026-09-30: an open-source app may "request permission to use the user's ChatGPT
+plan for eligible Responses API requests"; "If you're interested in offering it in a paid
+or remotely hosted app, complete the interest form." nibeditor is open source and free,
+and the desktop app is hosted on the reader's own machine, so the desktop app offers
+**ChatGPT**: **Continue with ChatGPT** opens the browser on OpenAI's own sign-in, which
+registers this installation the documented way (`client_id=dynamic_agent_client`, the
+installation's `ext_agent_host_id`, `agent_name_hint=nibeditor`, PKCE, a loopback
+callback on `127.0.0.1`), and questions go to `api.openai.com/v1/responses` with the token
+it hands back - [sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in),
+[models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference),
+[preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
+The web app at nibeditor.com is remotely hosted and does not offer it. Never the Codex
+CLI's own client id, and never `chatgpt.com/backend-api`: that is the route tools used
+before this existed, and it is somebody else's identity.
+
+The refresh token is kept in the keychain under a name the page's own `secret_read`
+refuses, so the webview only ever holds the hour's access token; the crate refreshes it,
+one refresh at a time, and **Sign out** revokes it. See `src-tauri/src/chatgpt.rs`.
+
+**Codex** is the other road, and the same shape as Claude Code: the reader's own Codex
+CLI, `codex exec --json` with the question on stdin, signed in with `codex login` in a
+terminal tab, its state from `codex login status`. It answers a message at a time rather
+than word by word, which is how `exec` prints.
+
+### What a program is run with
+
+Fixed in the crate (`src-tauri/src/ai_cli/args.rs`); the page names a tool, a model and a
+question, never an argument:
+
+- **Claude Code**: no tools (`--tools ""`), none of the reader's MCP servers
+  (`--strict-mcp-config`), nothing written to its history (`--no-session-persistence`),
+  and where the installed version has them, `--safe-mode` (no hooks, plugins or
+  `CLAUDE.md`, sign-in and model as always) and `--permission-prompts none`. nib's own
+  one-line system prompt replaces the coding agent's.
+- **Codex**: `--sandbox read-only`, the shell tool, web search and MCP servers off,
+  `AGENTS.md` unread, `--ephemeral` and `--ignore-user-config` where it has them.
+- Both: started with no console window and none of nib's handles, in an empty folder of
+  the app's own (never a space), for at most five minutes, and ended with everything
+  they started - a job object on Windows, a process group elsewhere - on a stop, when
+  their window goes and when nib quits. A reload leaves a running answer to finish or
+  time out unread.
+
+The Ask panel hands a question the passages it found itself, so no feature needs a
+program to read the notes. One that ever does gets nib's own MCP server (`nib mcp`) with
+the grant Settings > Agents gives it, never a folder.
+
+### Honest about whose plan it is
+
+The row says which plan the program or OpenAI says it is signed in with (Max, Pro,
+ChatGPT), and **Using ChatGPT plan** under the ChatGPT one, as OpenAI's guidelines ask. A
+plan near its limit says so on its row; one at its limit is said in nib's words wherever
+the question was asked - "Your Claude plan is at its limit until 15:05." - with when it
+resets where Claude Code's `rate_limit_event` or Codex's message said, and **Manage
+usage** on the row goes to the plan's own page.
 
 ## Providers
 
-Settings > AI. Three kinds:
+Settings > AI. Six kinds, the three plans on a desktop only:
 
 | Kind | What it needs | Where the models come from |
 | --- | --- | --- |
+| Claude Code | Claude Code installed and signed in | the program's own default, or a name typed |
+| ChatGPT | Continue with ChatGPT | the plan's own catalogue, `api.openai.com/v1/models` |
+| Codex | Codex installed and signed in | the program's own default, or a name typed |
 | Claude | An Anthropic API key | `api.anthropic.com/v1/models` |
 | OpenAI | An OpenAI API key | `api.openai.com/v1/models` |
 | OpenAI-compatible | A base URL, and a key if the server wants one | `<base>/v1/models` |
 
-One Claude and one OpenAI, because there is one of each API and one key for
-each. As many compatible ones as you have servers: Ollama on this machine,
+One of each but the last, because there is one of each API, key, program and plan.
+As many compatible ones as you have servers: Ollama on this machine,
 LM Studio beside it, OpenRouter behind both, a gateway at work. Each gets a name
 so the list reads as what they are.
+
+Claude Code and Codex are found where their installers put them - the `PATH`,
+`~/.local/bin`, npm's global folder, Homebrew, Bun, Volta, mise, and on a Mac and Linux
+the `PATH` of the reader's login shell, asked once - because an app opened from the Dock
+does not have the terminal's `PATH`, which is where other apps doing this lose people.
+Not found, the row offers **Install**, the maker's own page, and **Check again**.
 
 The base URL is forgiving about `/v1`. `http://localhost:11434`,
 `http://localhost:11434/v1` and `http://localhost:11434/v1/` are the same
@@ -329,6 +431,9 @@ the size of a request visible rather than surprising:
   pane that offers the press: a key removed leaves the provider chosen, with its
   model still set.
 - A local model through an OpenAI-compatible provider costs electricity.
+- A plan costs what your plan costs, and spends its limits: a question from nib is a
+  question in Claude Code or Codex, counted the same. OpenClaw's own docs say the same
+  of theirs.
 
 If a provider refuses a request - a key that has expired, a model that has gone,
 a quota that has run out - what it said is what the line across the top of the
@@ -341,11 +446,13 @@ only the provider knows.
 | --- | --- |
 | `packages/editor/src/ai/block.ts` | What the block looks like in the file |
 | `packages/editor/src/ai/run.ts` | The fence, the answer's span, the stream, the stop |
-| `apps/desktop/src/lib/ai/providers.ts` | The three kinds, and their wire |
+| `apps/desktop/src/lib/ai/providers.ts` | The six kinds, and the wire of the four that are asked over it |
 | `apps/desktop/src/lib/ai/stream.ts` | Server-sent events, split safely |
-| `apps/desktop/src/lib/ai/complete.ts` | The one request nib makes |
+| `apps/desktop/src/lib/ai/complete.ts` | The one request nib makes, down whichever road |
 | `apps/desktop/src/lib/ai/keys.ts` | Where a key lives, per platform |
-| `apps/desktop/src/lib/ai/store.svelte.ts` | The providers, and the default |
+| `apps/desktop/src/lib/ai/chatgpt.ts` | A ChatGPT plan's token of the hour, and its refusals in nib's words |
+| `apps/desktop/src/lib/ai/local/` | Claude Code and Codex: a question put, their lines read, their state, their sign-in |
+| `apps/desktop/src/lib/ai/store.svelte.ts` | The providers, the default, and which one each feature asks |
 | `apps/desktop/src/lib/ai/ask.ts` | What the block asks, and who answers |
 | `apps/desktop/src/lib/ai/rewrite.ts` | The four verbs, and what each sends |
 | `apps/desktop/src/lib/ai/rewriting.svelte.ts` | One rewrite, start to accepted |
@@ -356,6 +463,15 @@ only the provider knows.
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |
 | `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain, and the iPhone's |
+| `apps/desktop/src-tauri/src/ai_cli.rs` | Claude Code and Codex run: found, argued, started, streamed, ended |
+| `apps/desktop/src-tauri/src/chatgpt.rs` | Sign in with ChatGPT: the loopback, the tokens, the refresh, the sign-out |
+
+`scripts/fake-ai-cli.mjs` stands in for both programs: the crate's tests run it through
+the same spawn, stream, stop and timeout as the real ones (and through an npm-style
+`.cmd` shim on Windows), and it refuses a question asked without the flags above. A
+native probe points the app at it with `NIB_AI_CLAUDE_CODE` and `NIB_AI_CODEX`. The one
+test that asks the real Claude Code, read-only, and only where it is already signed in,
+is `cargo test real_claude -- --ignored`.
 
 The drive is `apps/desktop/test/e2e/ai.py`. It serves a fake
 OpenAI-compatible provider that answers deterministically, so the block, the

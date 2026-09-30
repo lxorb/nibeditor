@@ -45,6 +45,17 @@ declare const __DRIVEABLE__: boolean
  *  the name on the space chooser; see vite.config.ts. */
 declare const __APP_VERSION__: string
 
+/** Whether this build offers Claude Code in Settings > AI.
+ *
+ *  Anthropic lets a product run Claude Code for its users when the product's maker has
+ *  agreed to Anthropic's Commercial Terms, the binary is the user's own and unmodified,
+ *  and every user signs in with their own account
+ *  (https://code.claude.com/docs/en/legal-and-compliance). The first of the three is a
+ *  decision about the release rather than the code, so it is a switch: on unless the
+ *  build is made with `NIB_CLAUDE_CODE=off`, which the crate reads too (see
+ *  src-tauri/src/ai_cli.rs). A constant, so the off build carries none of it. */
+declare const __CLAUDE_CODE__: boolean
+
 /** The build-time settings this app reads. Vite types every `VITE_` name as
  *  `any` by default, and an `any` spreading out of `import.meta.env` is how a
  *  missing variable becomes a URL of `undefined` at runtime. Named here, so the

@@ -1128,10 +1128,10 @@ Features Typora does not have, which are the reason this exists.
       Credential Manager, the Keychain, the Secret Service, Android's encrypted
       preferences - and never on the account, in a note or in a log; a browser
       keeps it in IndexedDB and the pane says so in one line rather than
-      pretending. The model list is asked for, never written down. Neither
-      Anthropic nor OpenAI lets a third-party app sign anybody in with a Claude or
-      a ChatGPT subscription, for anybody, so the two honest options are the two
-      offered: your own key, or a model on your own machine. See `docs/ai.md`
+      pretending. The model list is asked for, never written down. And a plan the
+      reader already pays for, on the desktop, by the roads its maker allows: their
+      own Claude Code or Codex run on this machine, or Sign in with ChatGPT; never a
+      token nib collects. See `docs/ai.md`, *Your own plan*
 - [x] A question as a block of the note: a ` ```ai ` fence holding the prompt, a
       triangle on its header row that asks it and becomes a square that stops it,
       and the answer streamed in as ordinary markdown underneath, under a quiet

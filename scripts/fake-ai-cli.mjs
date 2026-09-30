@@ -42,13 +42,13 @@ function refuse(why) {
 
 /** Starts a child that ends only with its family, and never ends either on its own. */
 function hang() {
-  const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], {
+  const child = spawn(process.execPath, ['-e', 'setInterval(Date.now, 1000)'], {
     stdio: 'ignore',
   })
   if (process.env.FAKE_AI_CLI_PIDS) {
     writeFileSync(process.env.FAKE_AI_CLI_PIDS, `${process.pid} ${child.pid}`)
   }
-  setInterval(() => {}, 1000)
+  setInterval(Date.now, 1000)
 }
 
 const CLAUDE_HELP = [
@@ -69,7 +69,12 @@ async function claude() {
   if (args[0] === 'auth' && args[1] === 'status') {
     const signedIn = mode !== 'signed-out'
     const status = signedIn
-      ? { loggedIn: true, authMethod: 'claude.ai', subscriptionType: 'max', email: 'reader@example.com' }
+      ? {
+          loggedIn: true,
+          authMethod: 'claude.ai',
+          subscriptionType: 'max',
+          email: 'reader@example.com',
+        }
       : { loggedIn: false, authMethod: 'none' }
     console.log(JSON.stringify(status, null, 2))
     process.exitCode = signedIn ? 0 : 1
@@ -83,16 +88,37 @@ async function claude() {
 
   const asked = (await question()).trim()
   const session = 'fake-session'
-  say({ type: 'system', subtype: 'init', model: `${after('--model') ?? 'claude-fake-1'}[1m]`, tools: [], session_id: session })
+  say({
+    type: 'system',
+    subtype: 'init',
+    model: `${after('--model') ?? 'claude-fake-1'}[1m]`,
+    tools: [],
+    session_id: session,
+  })
 
   if (mode === 'signed-out') {
-    say({ type: 'result', subtype: 'success', is_error: true, result: 'Not logged in · Please run /login', session_id: session })
+    say({
+      type: 'result',
+      subtype: 'success',
+      is_error: true,
+      result: 'Not logged in · Please run /login',
+      session_id: session,
+    })
     process.exitCode = 1
     return
   }
   if (mode === 'limit') {
-    say({ type: 'rate_limit_event', rate_limit_info: { status: 'rejected', resetsAt: 1790819400, rateLimitType: 'five_hour' } })
-    say({ type: 'result', subtype: 'success', is_error: true, result: "You've hit your limit", session_id: session })
+    say({
+      type: 'rate_limit_event',
+      rate_limit_info: { status: 'rejected', resetsAt: 1790819400, rateLimitType: 'five_hour' },
+    })
+    say({
+      type: 'result',
+      subtype: 'success',
+      is_error: true,
+      result: "You've hit your limit",
+      session_id: session,
+    })
     process.exitCode = 1
     return
   }
@@ -101,7 +127,10 @@ async function claude() {
   say({ type: 'stream_event', event: { type: 'message_start', message: { model, content: [] } } })
   const words = `You asked: ${asked.split('\n').at(-1) ?? ''}`.split(/(?<= )/)
   for (const word of words) {
-    say({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: word } } })
+    say({
+      type: 'stream_event',
+      event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: word } },
+    })
     if (mode === 'hang') return hang()
     if (mode === 'slow') await wait(150)
   }
@@ -115,7 +144,13 @@ async function claude() {
       unifiedWindows: { five_hour: { utilization: 0.82, resetsAt: 1790819400 } },
     },
   })
-  say({ type: 'result', subtype: 'success', is_error: false, result: words.join(''), session_id: session })
+  say({
+    type: 'result',
+    subtype: 'success',
+    is_error: false,
+    result: words.join(''),
+    session_id: session,
+  })
 }
 
 async function codex() {
@@ -151,10 +186,23 @@ async function codex() {
     return
   }
   if (mode === 'hang') return hang()
-  say({ type: 'item.completed', item: { id: 'item_0', type: 'reasoning', text: 'Thinking about it.' } })
+  say({
+    type: 'item.completed',
+    item: { id: 'item_0', type: 'reasoning', text: 'Thinking about it.' },
+  })
   if (mode === 'slow') await wait(300)
-  say({ type: 'item.completed', item: { id: 'item_1', type: 'agent_message', text: `You asked: ${asked.split('\n').at(-1) ?? ''}` } })
-  say({ type: 'turn.completed', usage: { input_tokens: 10, cached_input_tokens: 0, output_tokens: 5 } })
+  say({
+    type: 'item.completed',
+    item: {
+      id: 'item_1',
+      type: 'agent_message',
+      text: `You asked: ${asked.split('\n').at(-1) ?? ''}`,
+    },
+  })
+  say({
+    type: 'turn.completed',
+    usage: { input_tokens: 10, cached_input_tokens: 0, output_tokens: 5 },
+  })
 }
 
 if (tool === 'claude') await claude()

@@ -1255,6 +1255,31 @@ export const fil: Dictionary = {
   'The provider answered {status}.': 'Sumagot ang provider ng {status}.',
   'Add an AI provider in Settings first.': 'Magdagdag muna ng AI provider sa Mga setting.',
   'The model did not answer.': 'Hindi sumagot ang modelo.',
+  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
+  'Your {plan} plan is at its limit until {time}.':
+    'Naabot na ng iyong {plan} plan ang limitasyon hanggang {time}.',
+  'Your {plan} plan is at its limit for now.':
+    'Naabot na ng iyong {plan} plan ang limitasyon sa ngayon.',
+  'Your {plan} plan is near its limit.': 'Malapit na sa limitasyon ang iyong {plan} plan.',
+  'Sign in to {name} first.': 'Mag-sign in muna sa {name}.',
+  '{name} took too long to answer.': 'Masyadong natagalan ang {name} sa pagsagot.',
+  '{name} is out of date. Update it and try again.':
+    'Luma na ang {name}. I-update ito at subukang muli.',
+  'Only in the desktop app.': 'Sa desktop app lang.',
+  '{name} is not installed.': 'Hindi naka-install ang {name}.',
+  'This ChatGPT plan cannot be used here.': 'Hindi magagamit dito ang ChatGPT plan na ito.',
+  'ChatGPT is not answering right now. Try again in a moment.':
+    'Hindi sumasagot ang ChatGPT ngayon. Subukang muli maya-maya.',
+  'Not installed': 'Hindi naka-install',
+  'Check again': 'Suriin muli',
+  '{plan} plan': '{plan} plan',
+  'Signed in': 'Naka-sign in',
+  'Continue with ChatGPT': 'Magpatuloy gamit ang ChatGPT',
+  'Manage usage': 'Pamahalaan ang paggamit',
+  'Used for': 'Ginagamit para sa',
+  'Using ChatGPT plan': 'Gamit ang ChatGPT plan',
+  'Could not sign in.': 'Hindi makapag-sign in.',
+  'Could not sign out.': 'Hindi makapag-sign out.',
   'Rewrite…': 'Isulat muli…',
   Shorter: 'Paikliin',
   Longer: 'Pahabain',

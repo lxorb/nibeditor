@@ -88,14 +88,19 @@ function messages(transcript: string): Message[] {
 
 /** The summary, or a thrown sentence saying why there is none. */
 export async function summaryOf(transcript: string): Promise<Summary> {
-  const provider = ai.chosen
+  const provider = ai.providerFor('summary')
   if (provider) {
+    // Claude Code and Codex name their model only as they answer; see complete.ts.
+    const said = { model: provider.model }
     const text = await complete({
       provider,
       model: provider.model,
       messages: messages(transcript),
+      named: (model) => {
+        said.model = model
+      },
     })
-    return { text, model: provider.model }
+    return { text, model: said.model }
   }
 
   const token = account.accountToken

@@ -1,16 +1,19 @@
 /** The one place nib asks a model anything.
  *
  *  Every AI surface goes through this: the ```` ```ai ```` block in a note, the four
- *  rewrites on a selection, and whatever comes after them. One function, so there is
- *  one place that knows how a request is made, one place a key is read, and one place
- *  a failure becomes a sentence somebody can read.
+ *  rewrites on a selection, the Ask panel, a meeting's summary, and whatever comes after
+ *  them. One function, so there is one place that knows how a request is made, one place
+ *  a key is read, and one place a failure becomes a sentence somebody can read. Which
+ *  provider each of them asks is the store's `providerFor`, the other half of the seam.
  *
  *  The request is made by the page itself, from the device, to whichever provider
- *  the reader chose. Nothing goes through nibeditor's own server: the account never
- *  sees the question, the note or the key. The one exception is not an exception at
- *  all - the glasses ask through the Worker with the account's own OpenAI key, which
- *  is a different key for a different thing; see services/sync/src/ask and the AI
- *  pane, which says so.
+ *  the reader chose - or, for Claude Code and Codex, by the program the reader installed,
+ *  started on this machine by the crate. Nothing goes through nibeditor's own server:
+ *  the account never sees the question, the note or the key. The one exception is not
+ *  an exception at all - the glasses ask through the Worker with the account's own
+ *  OpenAI key, which is a different key for a different thing; see services/sync/src/ask
+ *  and the AI pane, which says so. A plan cannot be spent there: the Worker is
+ *  nibeditor's server, and no plan's terms let a server spend a reader's plan.
  *
  *  Streaming because an answer is read as it arrives, and abortable because a person
  *  who has read enough should be able to stop paying for the rest. */
@@ -22,6 +25,7 @@ import {
   bodyFor,
   deltaIn,
   headersFor,
+  isLocal,
   type Message,
   modelsIn,
   modelsUrl,
@@ -36,25 +40,39 @@ export interface Ask {
   provider: Provider
   /** Which model answers. Passed rather than read off the provider, so one call can
    *  ask a model other than the one that provider is set to - which is what listing
-   *  models and trying one out needs. */
+   *  models and trying one out needs. Empty, for Claude Code and Codex, is the model
+   *  the reader chose in the program. */
   model: string
   messages: readonly Message[]
   /** Each piece of the answer as it arrives. Without one the whole answer is asked
    *  for in a single reply, which is what a request nobody is watching should do. */
   stream?: (text: string) => void
+  /** Which model is answering, said once before the first piece. The model asked for
+   *  where it was named; the one a program says it runs where it was not. */
+  named?: (model: string) => void
   signal?: AbortSignal
 }
 
 /** Asks, and answers with the whole of what came back.
  *
+ *  Three roads, one call: a request from the page to the provider's API (a key, a
+ *  server on this machine, or a ChatGPT plan's token of the hour), or a question put to
+ *  Claude Code or Codex through the crate (local/ask.ts). Every caller is the same
+ *  either way.
+ *
  *  Throws with a sentence: whatever the provider said, or a translated one where it
  *  said nothing useful. Aborting throws too, with the browser's own `AbortError`,
  *  which callers tell apart with `wasStopped`. */
 export async function complete(ask: Ask): Promise<string> {
+  if (isLocal(ask.provider.kind)) {
+    const { askLocal } = await import('./local/ask')
+    return await askLocal({ ...ask, provider: { ...ask.provider, kind: ask.provider.kind } })
+  }
+
   const provider: Provider = { ...ask.provider, model: ask.model }
   if (!usable(provider)) throw new Error(t('That provider is not set up yet.'))
 
-  const apiKey = await readKey(provider)
+  const apiKey = await keyFor(provider)
   // No key, no request to somebody else's server - which is the same question the
   // pane asks before it offers to list the models, asked here because this is where
   // the note goes. A hosted provider with no key can only answer 401, and by the
@@ -63,7 +81,8 @@ export async function complete(ask: Ask): Promise<string> {
   // the chosen one; see store.svelte.ts.
   if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
 
-  const streaming = !!ask.stream
+  // A plan is only ever answered as a stream.
+  const streaming = !!ask.stream || provider.kind === 'chatgpt'
 
   const response = await fetch(askUrl(provider), {
     method: 'POST',
@@ -80,10 +99,19 @@ export async function complete(ask: Ask): Promise<string> {
     throw new Error(t('Could not reach {url}', { url: askUrl(provider) }))
   })
 
-  if (!response.ok) throw new Error(await refusal(response))
+  if (!response.ok) throw new Error(await refusal(response, provider))
+  ask.named?.(provider.model)
   if (!streaming || !response.body) return whole(await response.text(), provider)
 
   return await streamed(response.body, provider, ask.stream)
+}
+
+/** What a request is authorised with: the key on this device, or a plan's token of the
+ *  hour, asked of the crate. */
+async function keyFor(provider: Provider): Promise<string> {
+  if (provider.kind !== 'chatgpt') return await readKey(provider)
+  const { planToken } = await import('./chatgpt')
+  return await planToken()
 }
 
 /** Whether something thrown was a stop rather than a failure. */
@@ -93,13 +121,25 @@ export function wasStopped(error: unknown): boolean {
 
 /** What a refused request says. The provider's own sentence where it sent one, since
  *  "this key cannot use that model" is a thing only the provider knows. */
-async function refusal(response: Response): Promise<string> {
+async function refusal(response: Response, provider: Provider): Promise<string> {
   const text = await response.text().catch(() => '')
-  const said = troubleIn(sseJson(text))
+  const body = sseJson(text)
+  const plan = await planSaid(provider, response.status, body)
+  if (plan) return plan
+
+  const said = troubleIn(body)
   if (said) return said
 
   if (response.status === 401 || response.status === 403) return t('That key was refused.')
   return t('The provider answered {status}.', { status: response.status })
+}
+
+/** A ChatGPT plan's refusal in nib's words - its limit, a sign-in gone - or null for
+ *  any other provider and any other refusal. */
+async function planSaid(provider: Provider, status: number, body: unknown): Promise<string | null> {
+  if (provider.kind !== 'chatgpt') return null
+  const { planRefusal } = await import('./chatgpt')
+  return planRefusal(status, body)
 }
 
 /** The answer of a request that was not streamed. Both shapes put the words
@@ -156,7 +196,10 @@ async function streamed(
         // an event like any other. What has arrived so far is kept by the caller,
         // and this says why the rest never will.
         const said = troubleIn(event)
-        if (said) throw new Error(said)
+        if (said) {
+          const failed = (event as { response?: unknown } | null)?.response ?? event
+          throw new Error((await planSaid(provider, 0, failed)) ?? said)
+        }
 
         const piece = deltaIn(provider.kind, event)
         if (!piece) continue
@@ -176,7 +219,7 @@ async function streamed(
 /** What a provider says it has. Empty where it has nothing to say, which is what a
  *  local server with no model loaded looks like. */
 export async function listModels(provider: Provider, signal?: AbortSignal): Promise<string[]> {
-  const apiKey = await readKey(provider)
+  const apiKey = await keyFor(provider)
   // Asked here as well as by the pane that offers the press: the rule is about the
   // request rather than about the button.
   if (!reachable(provider, !!apiKey)) throw new Error(t('That provider is not set up yet.'))
@@ -189,6 +232,6 @@ export async function listModels(provider: Provider, signal?: AbortSignal): Prom
     throw new Error(t('Could not reach {url}', { url: modelsUrl(provider) }))
   })
 
-  if (!response.ok) throw new Error(await refusal(response))
+  if (!response.ok) throw new Error(await refusal(response, provider))
   return modelsIn(sseJson(await response.text()))
 }

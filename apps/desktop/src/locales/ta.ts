@@ -1253,6 +1253,31 @@ export const ta: Dictionary = {
   'The provider answered {status}.': 'வழங்குநர் {status} என்று பதிலளித்தது.',
   'Add an AI provider in Settings first.': 'முதலில் அமைப்புகளில் AI வழங்குநரைச் சேர்க்கவும்.',
   'The model did not answer.': 'மாடல் பதிலளிக்கவில்லை.',
+  // A plan of the reader’s own: Claude Code, Codex and ChatGPT
+  'Your {plan} plan is at its limit until {time}.':
+    'உங்கள் {plan} திட்டம் {time} வரை வரம்பை எட்டியுள்ளது.',
+  'Your {plan} plan is at its limit for now.':
+    'உங்கள் {plan} திட்டம் இப்போதைக்கு வரம்பை எட்டியுள்ளது.',
+  'Your {plan} plan is near its limit.': 'உங்கள் {plan} திட்டம் வரம்பை நெருங்குகிறது.',
+  'Sign in to {name} first.': 'முதலில் {name}-இல் உள்நுழையவும்.',
+  '{name} took too long to answer.': '{name} பதிலளிக்க அதிக நேரம் எடுத்தது.',
+  '{name} is out of date. Update it and try again.':
+    '{name} பழையது. புதுப்பித்து மீண்டும் முயலவும்.',
+  'Only in the desktop app.': 'டெஸ்க்டாப் ஆப்பில் மட்டும்.',
+  '{name} is not installed.': '{name} நிறுவப்படவில்லை.',
+  'This ChatGPT plan cannot be used here.': 'இந்த ChatGPT திட்டத்தை இங்கே பயன்படுத்த முடியாது.',
+  'ChatGPT is not answering right now. Try again in a moment.':
+    'ChatGPT இப்போது பதிலளிக்கவில்லை. சிறிது நேரத்தில் மீண்டும் முயலவும்.',
+  'Not installed': 'நிறுவப்படவில்லை',
+  'Check again': 'மீண்டும் சரிபார்',
+  '{plan} plan': '{plan} திட்டம்',
+  'Signed in': 'உள்நுழைந்துள்ளது',
+  'Continue with ChatGPT': 'ChatGPT உடன் தொடரவும்',
+  'Manage usage': 'பயன்பாட்டை நிர்வகி',
+  'Used for': 'இதற்குப் பயன்படுகிறது',
+  'Using ChatGPT plan': 'ChatGPT திட்டம் பயன்படுத்தப்படுகிறது',
+  'Could not sign in.': 'உள்நுழைய முடியவில்லை.',
+  'Could not sign out.': 'வெளியேற முடியவில்லை.',
   'Rewrite…': 'மாற்றி எழுது…',
   Shorter: 'சுருக்கமாக',
   Longer: 'விரிவாக',

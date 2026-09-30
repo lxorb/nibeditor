@@ -40,6 +40,7 @@ export default defineConfig({
     __EVEN_PLUGIN__: 'false',
     __DRIVEABLE__: 'true',
     __APP_VERSION__: JSON.stringify('under test'),
+    __CLAUDE_CODE__: 'true',
   },
   test: {
     // Every run used to compile the app from nothing: two thirds of a cold run is
