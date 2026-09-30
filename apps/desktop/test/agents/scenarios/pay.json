@@ -1,0 +1,86 @@
+{
+  "proves": "a press on Place order in a card form answers needs_approval and orders nothing, and the reader's Allow lets the same press through",
+  "doc": "9.3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/shop"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Place order"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "order": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{order}"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "has": ["approval"]
+      },
+      "save": {
+        "approval": "approval"
+      }
+    },
+    {
+      "record": "order",
+      "count": 0
+    },
+    {
+      "call": "approval_status",
+      "args": {
+        "id": "{approval}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result": "pending"
+        }
+      }
+    },
+    {
+      "reader": "agents_answer",
+      "args": {
+        "id": "{approval}",
+        "allow": true,
+        "always": false
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{order}"
+      }
+    },
+    {
+      "record": "order",
+      "count": 1
+    }
+  ]
+}

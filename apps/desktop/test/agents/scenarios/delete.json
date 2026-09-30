@@ -1,0 +1,51 @@
+{
+  "proves": "Delete on a site answers needs_approval and deletes nothing",
+  "doc": "9.3",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/mail"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Delete"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "delete": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{delete}"
+      },
+      "expect": {
+        "status": "needs_approval"
+      }
+    },
+    {
+      "record": "deleted",
+      "count": 0
+    }
+  ]
+}

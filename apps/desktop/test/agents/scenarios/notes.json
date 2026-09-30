@@ -1,0 +1,44 @@
+{
+  "proves": "an agent reads a note as it is on screen and edits it by anchor, and a note of the reader's own space comes back unmarked",
+  "doc": "8.1, 8.2",
+  "steps": [
+    {
+      "call": "read_note",
+      "args": {
+        "path": "Idea.md"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.text": "A note to open the space on"
+        }
+      }
+    },
+    {
+      "call": "edit_note",
+      "args": {
+        "path": "Idea.md",
+        "edits": [
+          {
+            "at": {
+              "end": true
+            },
+            "insert_after": "Added by the harness."
+          }
+        ]
+      }
+    },
+    {
+      "call": "read_note",
+      "args": {
+        "path": "Idea.md"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.text": "Added by the harness."
+        }
+      }
+    }
+  ]
+}

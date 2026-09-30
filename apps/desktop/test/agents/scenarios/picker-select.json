@@ -1,0 +1,62 @@
+{
+  "proves": "a select picker opened natively in an agent's page puts no engine window on any screen, and where the engine put it is reported",
+  "doc": "6.5",
+  "via": ["endpoint", "mcp", "spike"],
+  "idle": 60,
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/pickers"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "combobox",
+        "name": "Fruit"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "control": "result.matches.0.ref"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{control}"
+      }
+    },
+    {
+      "windows": 1500
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "Escape"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    }
+  ]
+}

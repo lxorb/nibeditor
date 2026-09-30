@@ -1,0 +1,59 @@
+{
+  "proves": "a denied site cannot be opened, and a page that sends itself there is stopped before the site sees it",
+  "doc": "9.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{denied}/landed"
+      },
+      "expect": {
+        "status": "error",
+        "code": "site_denied"
+      }
+    },
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/hop"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "pause": 1500
+    },
+    {
+      "record": "landed",
+      "count": 0
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      },
+      "expect": {
+        "one_of": [
+          {
+            "status": "ok",
+            "lacks": {
+              "result.url": "denied.localhost"
+            }
+          },
+          {
+            "status": "error",
+            "code": "site_denied"
+          }
+        ]
+      }
+    }
+  ]
+}

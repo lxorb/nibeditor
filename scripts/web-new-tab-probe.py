@@ -28,8 +28,10 @@ which has tests of its own.
       --identifier ch.emilvinu.nib.probe.new-tab
 
 The window opens off the screen and without the keyboard, which `run_probe` in
-scripts/probe_app.py sees to, and this probe never moves it. The popup is asked for off
-the screen too, which is where a page's own `left` and `top` put it.
+scripts/probe_app.py sees to, and this probe never moves it. The popup asks for a place
+on the screen, as a sign-in page does, and is built off it all the same: every window
+after the first goes where the first went (`built` in src-tauri/src/placement.rs). Before
+that it went where the page asked, and the watch ended this probe with a popup at 0,0.
 """
 
 from __future__ import annotations
@@ -79,7 +81,7 @@ ASKING = """<!doctype html>
   const to = location.origin + '/target-' + how
   if (how === 'plain') window.open(to)
   if (how === 'behind') window.open(to, 'nib-behind')
-  if (how === 'popup') window.open(location.origin + '/popup', 'signin', 'width=480,height=520,left=-32000,top=-32000')
+  if (how === 'popup') window.open(location.origin + '/popup', 'signin', 'width=480,height=520,left=40,top=40')
 </script>
 """
 

@@ -1,0 +1,242 @@
+{
+  "proves": "alert, confirm, prompt, two alerts in a row and beforeunload are each held and reported on the next answer until browser_dialog answers them, and none reaches the screen",
+  "doc": "6.2",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/dialogs"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Alert"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "alert": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Confirm"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "confirm": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Prompt"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "prompt": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "button",
+        "name": "Two alerts"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "twice": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{alert}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.kind": "alert"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true
+      }
+    },
+    {
+      "record": "dialog",
+      "where": {
+        "which": "alert"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{confirm}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.message": "Delete this?"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": false
+      }
+    },
+    {
+      "record": "dialog",
+      "where": {
+        "which": "confirm",
+        "answer": false
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{prompt}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.kind": "prompt"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true,
+        "text": "Ada"
+      }
+    },
+    {
+      "record": "dialog",
+      "where": {
+        "which": "prompt",
+        "answer": "Ada"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{twice}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.message": "One"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.message": "Two"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true
+      }
+    },
+    {
+      "record": "dialog",
+      "where": {
+        "which": "twice"
+      },
+      "count": 1
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{tab}",
+        "url": "{site}/leave"
+      }
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{tab}",
+        "url": "{site}/shop"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "dialog.kind": "beforeunload"
+        }
+      }
+    },
+    {
+      "call": "browser_dialog",
+      "args": {
+        "tab": "{tab}",
+        "accept": true
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": {
+          "url": "/shop"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,108 @@
+{
+  "proves": "an agent over its tabs parks the one used longest ago, and over its navigations a minute is held back",
+  "doc": "6.4, 9.5",
+  "grant": {
+    "limits": {
+      "tabs": 2,
+      "calls": 600,
+      "navigations": 3
+    }
+  },
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/keys"
+      },
+      "save": {
+        "first": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{first}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/shop"
+      },
+      "save": {
+        "second": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{second}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/mail"
+      },
+      "save": {
+        "third": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{third}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_tabs",
+      "args": {},
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.agent": "\"parked\": true"
+        }
+      }
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{third}",
+        "url": "{site}/keys"
+      },
+      "expect": {
+        "one_of": [
+          {
+            "status": "ok"
+          },
+          {
+            "status": "error",
+            "code": "limit"
+          }
+        ]
+      }
+    },
+    {
+      "call": "browser_navigate",
+      "args": {
+        "tab": "{third}",
+        "url": "{site}/shop"
+      },
+      "expect": {
+        "one_of": [
+          {
+            "status": "error",
+            "code": "limit"
+          },
+          {
+            "status": "ok",
+            "slower_than_ms": 1000
+          }
+        ]
+      }
+    }
+  ]
+}

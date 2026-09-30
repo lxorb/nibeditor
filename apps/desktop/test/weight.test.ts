@@ -837,6 +837,15 @@ describe('what the app evaluates before it draws anything', () => {
     }
   })
 
+  /** An agent costs nothing until one connects (docs/agent-native.md 11): everything the
+   *  window does for agents is `lib/agents`, fetched by the first agent request, and a
+   *  module of it here is paid by every launch whether an agent ever comes or not. The
+   *  launch itself is held to the same by the agent harness, which compares the launch
+   *  trace with an agent set up and without; see apps/desktop/test/agents/run.py. */
+  test('and nothing of the agents', () => {
+    expect([...names].filter((one) => one.includes('/src/lib/agents/'))).toEqual([])
+  })
+
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {
     for (const wanted of [
       '@codemirror/state',

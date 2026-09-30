@@ -1,0 +1,66 @@
+{
+  "proves": "the stop cancels a call in flight at once and pauses the agent until the reader gives it back",
+  "doc": "9.5",
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/keys"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": {
+          "text": "words that never come"
+        },
+        "timeout_ms": 20000
+      },
+      "as": "long"
+    },
+    {
+      "pause": 500
+    },
+    {
+      "reader": "agents_stop"
+    },
+    {
+      "join": "long",
+      "expect": {
+        "status": "error",
+        "code": "stopped",
+        "faster_than_ms": 5000
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      },
+      "expect": {
+        "status": "error",
+        "code": "stopped"
+      }
+    },
+    {
+      "reader": "agents_resume"
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      }
+    }
+  ]
+}

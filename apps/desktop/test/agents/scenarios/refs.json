@@ -1,0 +1,78 @@
+{
+  "proves": "a snapshot is the page's accessibility tree with refs, marked as the page's words, and a ref still reaches its element after another snapshot",
+  "doc": "5.2, 9.6",
+  "via": ["endpoint", "mcp", "spike"],
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/shop"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.text": "button \"Place order\""
+        },
+        "untrusted": true
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "textbox",
+        "name": "Name on card"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "name": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_snapshot",
+      "args": {
+        "tab": "{tab}"
+      }
+    },
+    {
+      "call": "browser_type",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{name}",
+        "text": "Ada Lovelace"
+      }
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{tab}",
+        "expression": "document.querySelector('[name=name]').value"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.value": "Ada Lovelace"
+        }
+      }
+    }
+  ]
+}

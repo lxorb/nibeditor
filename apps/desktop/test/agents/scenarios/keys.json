@@ -1,0 +1,115 @@
+{
+  "proves": "keys pressed into an agent's page through the engine arrive trusted, and neither the window in front nor the app's focus moves, whether the app's keyboard is nowhere yet or in a page of the reader's",
+  "doc": "3, 7.2",
+  "via": ["endpoint", "mcp", "spike"],
+  "steps": [
+    {
+      "call": "browser_open",
+      "args": {
+        "url": "{site}/keys"
+      },
+      "save": {
+        "tab": "result.tab"
+      }
+    },
+    {
+      "call": "browser_wait",
+      "args": {
+        "tab": "{tab}",
+        "for": "load"
+      }
+    },
+    {
+      "call": "browser_find",
+      "args": {
+        "tab": "{tab}",
+        "role": "textbox",
+        "name": "Words"
+      },
+      "expect": {
+        "status": "ok",
+        "has": ["result.matches.0.ref"]
+      },
+      "save": {
+        "words": "result.matches.0.ref"
+      }
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{words}"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "hello"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "Enter"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "record": "key",
+      "where": {
+        "trusted": true
+      },
+      "at_least": 6
+    },
+    {
+      "call": "browser_evaluate",
+      "args": {
+        "tab": "{tab}",
+        "expression": "document.getElementById('words').value"
+      },
+      "expect": {
+        "status": "ok",
+        "contains": {
+          "result.value": "hello"
+        }
+      }
+    },
+    {
+      "reader_eval": "nib.workspace.openPage('{site}/shop'); await new Promise((go) => setTimeout(go, 2000)); return true"
+    },
+    {
+      "keyboard": "now"
+    },
+    {
+      "call": "browser_click",
+      "args": {
+        "tab": "{tab}",
+        "ref": "{words}"
+      }
+    },
+    {
+      "call": "browser_press",
+      "args": {
+        "tab": "{tab}",
+        "keys": "again"
+      }
+    },
+    {
+      "keyboard": "unchanged"
+    },
+    {
+      "record": "key",
+      "where": {
+        "trusted": true
+      },
+      "at_least": 11
+    }
+  ]
+}

@@ -735,7 +735,10 @@ mod tests {
         let mut sources = vec![root.clone()];
         let mut unplaced = Vec::new();
         while let Some(at) = sources.pop() {
-            for entry in std::fs::read_dir(&at).expect("the crate's source").flatten() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
                 let path = entry.path();
                 if path.is_dir() {
                     sources.push(path);
@@ -749,13 +752,16 @@ mod tests {
                 let text = std::fs::read_to_string(&path).unwrap_or_default();
                 let builds = text.contains("WebviewWindowBuilder::new(")
                     || text.contains("WebviewWindowBuilder::from_config(");
-                let placed = text.contains("placement::built(")
-                    || text.contains("placement::built_away(");
+                let placed =
+                    text.contains("placement::built(") || text.contains("placement::built_away(");
                 if builds && !placed && name != "placement.rs" && !excused.contains(&&*name) {
                     unplaced.push(name);
                 }
             }
         }
-        assert!(unplaced.is_empty(), "built past `placement::built`: {unplaced:?}");
+        assert!(
+            unplaced.is_empty(),
+            "built past `placement::built`: {unplaced:?}"
+        );
     }
 }
