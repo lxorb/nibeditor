@@ -29,6 +29,7 @@ export const ptPT: Dictionary = {
   Grid: 'Quadriculado',
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Tela',
   Card: 'Cartão',
   'Note or picture': 'Nota ou imagem',

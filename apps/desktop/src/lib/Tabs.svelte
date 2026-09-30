@@ -13,6 +13,7 @@
   import { shortcuts } from './shortcuts.svelte'
   import { viewport } from './viewport.svelte'
   import { shownName } from './note-name'
+  import { titled } from './titled'
   import { nameOf } from './space-paths'
   import SharedMark from './SharedMark.svelte'
   import { heldMark } from './surfaces.svelte'
@@ -702,7 +703,7 @@
     <div class="steps">
       <button
         class="step"
-        title={t('Back')}
+        title={titled(t('Back'), 'app.back')}
         aria-label={t('Back')}
         disabled={!walking.canGoBack}
         onclick={(event) => workspace.goBack(walking.id, tabAsk(event))}
@@ -716,7 +717,7 @@
       </button>
       <button
         class="step"
-        title={t('Forward')}
+        title={titled(t('Forward'), 'app.forward')}
         aria-label={t('Forward')}
         disabled={!walking.canGoForward}
         onclick={(event) => workspace.goForward(walking.id, tabAsk(event))}
@@ -935,7 +936,7 @@
           <button
             class="shut"
             class:hidden={!parts.close}
-            title={t('Close')}
+            title={titled(t('Close'), 'app.close')}
             aria-label={t('Close')}
             onclick={(event) => closeTab(tab, pointerOf(event))}
           >
@@ -956,7 +957,7 @@
     {#if !viewport.touch}
       <button
         class="new"
-        title={t('New')}
+        title={titled(t('New'), 'app.new-kind')}
         aria-label={t('New')}
         aria-haspopup="menu"
         style:transform="translateX({(layout.end + PLUS_GAP) * i18n.factor}px)"

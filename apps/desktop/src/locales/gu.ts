@@ -29,6 +29,7 @@ export const gu: Dictionary = {
   Grid: 'ચોકડી',
   Dots: 'બિંદુઓ',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',
   'Note or picture': 'નોંધ કે ચિત્ર',

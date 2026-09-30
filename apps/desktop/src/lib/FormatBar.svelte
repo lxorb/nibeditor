@@ -14,6 +14,7 @@
   import { modes } from './modes.svelte'
   import { roving } from './roving'
   import { type AppContext, runEntry } from './shortcuts/registry'
+  import { titled } from './titled'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { viewport } from './viewport.svelte'
 
@@ -243,9 +244,10 @@
   act: () => void,
   glyph: IconNode | null = null,
   low = false,
+  key: string | null = null,
 )}
   <button
-    {title}
+    title={titled(title, key)}
     aria-label={title}
     onpointerdown={(event) => event.preventDefault()}
     onmousedown={(event) => event.preventDefault()}
@@ -295,7 +297,7 @@
          mark is, and the Mobile pane in the settings, which is where the list is
          put together. -->
     {#each held as id (id)}
-      {@render press(nameFor(id), markFor(id), () => act(id), glyphFor(id), lowMark(id))}
+      {@render press(nameFor(id), markFor(id), () => act(id), glyphFor(id), lowMark(id), id)}
 
       <!-- The colours sit behind one dot, next to the button they are about, so
            the bar says which colour that button is loaded with. -->

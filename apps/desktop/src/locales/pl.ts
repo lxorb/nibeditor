@@ -29,6 +29,7 @@ export const pl: Dictionary = {
   Grid: 'Kratka',
   Dots: 'Kropki',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Kanwa',
   Card: 'Karta',
   'Note or picture': 'Notatka lub obraz',

@@ -37,6 +37,7 @@
   import { dur } from './motion'
   import { SEARCH_MARK } from './panel-marks'
   import { arrive, leave } from './slide'
+  import { titled } from './titled'
   import Cross from './Cross.svelte'
 
   /** The three things a match may be fussy about: the same three the editor's
@@ -232,7 +233,7 @@
 
       <button
         class="nib-glyph act"
-        title={t('Previous')}
+        title={titled(t('Previous'), 'edit.find-previous')}
         aria-label={t('Previous')}
         disabled={!count}
         onclick={() => onstep(-1)}
@@ -241,7 +242,7 @@
       </button>
       <button
         class="nib-glyph act"
-        title={t('Next')}
+        title={titled(t('Next'), 'edit.find-next')}
         aria-label={t('Next')}
         disabled={!count}
         onclick={() => onstep(1)}
@@ -256,7 +257,7 @@
         <button
           class="nib-glyph act"
           class:on={replacing}
-          title={t('Replace')}
+          title={titled(t('Replace'), 'edit.replace')}
           aria-label={t('Replace')}
           aria-expanded={replacing}
           onclick={() => onreplacing?.(!replacing)}
@@ -271,7 +272,7 @@
 
       <button
         class="nib-glyph act shut"
-        title={t('Close')}
+        title={titled(t('Close'), 'fixed.escape')}
         aria-label={t('Close')}
         onclick={onclose}
       >

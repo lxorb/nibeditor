@@ -29,6 +29,7 @@ export const ptBR: Dictionary = {
   Grid: 'Quadriculado',
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Quadro',
   Card: 'Cartão',
   'Note or picture': 'Nota ou imagem',

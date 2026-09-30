@@ -29,6 +29,7 @@ export const te: Dictionary = {
   Grid: 'గ్రిడ్',
   Dots: 'చుక్కలు',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
   'Note or picture': 'నోట్ లేదా చిత్రం',

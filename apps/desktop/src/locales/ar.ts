@@ -29,6 +29,7 @@ export const ar: Dictionary = {
   Grid: 'شبكة',
   Dots: 'نقاط',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'لوحة',
   Card: 'بطاقة',
   'Note or picture': 'ملاحظة أو صورة',

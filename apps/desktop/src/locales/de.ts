@@ -29,6 +29,7 @@ export const de: Dictionary = {
   Grid: 'Raster',
   Dots: 'Punkte',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Leinwand',
   Card: 'Karte',
   'Note or picture': 'Notiz oder Bild',

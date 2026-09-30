@@ -29,6 +29,7 @@ export const ja: Dictionary = {
   Grid: '方眼',
   Dots: 'ドット',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'キャンバス',
   Card: 'カード',
   'Note or picture': 'ノートまたは画像',

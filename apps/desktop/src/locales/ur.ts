@@ -29,6 +29,7 @@ export const ur: Dictionary = {
   Grid: 'خانے',
   Dots: 'نقطے',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'کینوس',
   Card: 'کارڈ',
   'Note or picture': 'نوٹ یا تصویر',

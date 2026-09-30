@@ -21,17 +21,19 @@
   import { sync } from './sync.svelte'
   import { t } from './i18n.svelte'
   import { theme } from './theme.svelte'
+  import { titled } from './titled'
 
   /** What to call whoever is here. Null while the stores are still being asked,
    *  which is a third state and not the same as being signed out. */
   const who = $derived(account.name)
 
   /** The settings button doubles as the sync light, so its tooltip says what
-   *  the light means rather than leaving a colour to be guessed at. */
+   *  the light means rather than leaving a colour to be guessed at, and while it
+   *  means nothing the button's own name and key. */
   function syncTitle(): string {
     if (sync.status === 'syncing') return t('Syncing')
     if (sync.status === 'error') return sync.lastError ?? t('Sync failed')
-    return t('Settings')
+    return titled(t('Settings'), 'app.settings')
   }
 
   /** Every theme, each shown on the whole app while it is pointed at: a right click

@@ -29,6 +29,7 @@ export const vi: Dictionary = {
   Grid: 'Ô vuông',
   Dots: 'Dấu chấm',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Canvas',
   Card: 'Thẻ',
   'Note or picture': 'Ghi chú hoặc ảnh',

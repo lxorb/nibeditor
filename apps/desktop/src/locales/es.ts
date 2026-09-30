@@ -29,6 +29,7 @@ export const es: Dictionary = {
   Grid: 'Cuadrícula',
   Dots: 'Puntos',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Lienzo',
   Card: 'Tarjeta',
   'Note or picture': 'Nota o imagen',

@@ -8,6 +8,7 @@
   import TabMark from './TabMark.svelte'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
+  import { titled } from './titled'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -151,17 +152,26 @@
   {#if isDesktop && !mac}
     {#if modes.frame === 'nib'}
       <div class="controls">
-        <button onclick={minimize} aria-label={t('Minimize')}>
+        <button onclick={minimize} title={t('Minimize')} aria-label={t('Minimize')}>
           <svg viewBox="0 0 10 10"><path d="M0 5h10" /></svg>
         </button>
-        <button onclick={toggleMaximize} aria-label={maximized ? t('Restore') : t('Maximize')}>
+        <button
+          onclick={toggleMaximize}
+          title={maximized ? t('Restore') : t('Maximize')}
+          aria-label={maximized ? t('Restore') : t('Maximize')}
+        >
           {#if maximized}
             <svg viewBox="0 0 10 10"><path d="M2.5 0.5h7v7M0.5 2.5h7v7h-7z" /></svg>
           {:else}
             <svg viewBox="0 0 10 10"><path d="M0.5 0.5h9v9h-9z" /></svg>
           {/if}
         </button>
-        <button class="close" onclick={closeWindow} aria-label={t('Close')}>
+        <button
+          class="close"
+          onclick={closeWindow}
+          title={titled(t('Close'), 'app.close-window')}
+          aria-label={t('Close')}
+        >
           <svg viewBox="0 0 10 10"><path d="M0.5 0.5l9 9M9.5 0.5l-9 9" /></svg>
         </button>
       </div>

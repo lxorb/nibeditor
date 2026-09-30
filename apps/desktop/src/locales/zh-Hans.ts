@@ -29,6 +29,7 @@ export const zhHans: Dictionary = {
   Grid: '方格',
   Dots: '点阵',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: '画布',
   Card: '卡片',
   'Note or picture': '笔记或图片',

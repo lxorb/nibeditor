@@ -38,6 +38,7 @@
   import { shortcuts } from '../shortcuts.svelte'
   import { showTab } from '../shortcuts/registry'
   import { present } from '../slides/present.svelte'
+  import { titled } from '../titled'
   import AddressField from './AddressField.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
   import { plainOrigin } from './address'
@@ -207,7 +208,7 @@
        way, the way Chrome's do. -->
   <button
     class="nib-glyph"
-    title={t('Back')}
+    title={titled(t('Back'), 'app.back')}
     aria-label={t('Back')}
     disabled={!page.back}
     onclick={(event) => onstep('back', event)}
@@ -224,7 +225,7 @@
 
   <button
     class="nib-glyph"
-    title={t('Forward')}
+    title={titled(t('Forward'), 'app.forward')}
     aria-label={t('Forward')}
     disabled={!page.forward}
     onclick={(event) => onstep('forward', event)}
@@ -245,7 +246,7 @@
        or Ctrl, opens the page again in a tab of its own. -->
   <button
     class="nib-glyph"
-    title={page.loading ? t('Stop') : t('Reload')}
+    title={page.loading ? titled(t('Stop'), 'web.stop') : titled(t('Reload'), 'web.reload')}
     aria-label={page.loading ? t('Stop') : t('Reload')}
     onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
     use:middleOpens={(event) => onstep('reload', event)}

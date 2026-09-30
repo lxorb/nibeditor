@@ -29,6 +29,7 @@ export const tr: Dictionary = {
   Grid: 'Kareli',
   Dots: 'Noktalı',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Tuval',
   Card: 'Kart',
   'Note or picture': 'Not veya resim',

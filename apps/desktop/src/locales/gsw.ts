@@ -29,6 +29,7 @@ export const gsw: Dictionary = {
   Grid: 'Raschter',
   Dots: 'Pünkt',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Liinwand',
   Card: 'Chärtli',
   'Note or picture': 'Notiz oder Bild',

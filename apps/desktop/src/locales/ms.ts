@@ -29,6 +29,7 @@ export const ms: Dictionary = {
   Grid: 'Kotak',
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Kanvas',
   Card: 'Kad',
   'Note or picture': 'Nota atau gambar',

@@ -29,6 +29,7 @@ export const th: Dictionary = {
   Grid: 'ตาราง',
   Dots: 'จุด',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',
   'Note or picture': 'โน้ตหรือรูป',

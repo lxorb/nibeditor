@@ -29,6 +29,7 @@ export const fil: Dictionary = {
   Grid: 'Grid',
   Dots: 'Mga tuldok',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Canvas',
   Card: 'Card',
   'Note or picture': 'Tala o larawan',
