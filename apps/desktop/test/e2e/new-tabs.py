@@ -41,6 +41,7 @@ import http.server
 import threading
 from pathlib import Path
 
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -153,6 +154,21 @@ def wrong(words: str) -> None:
     print(f"  FAIL {words}", flush=True)
 
 
+def settles(page, condition: str, patience: int = 2000) -> bool:
+    """Whether `condition` comes true within `patience` milliseconds.
+
+    A layer on its way out is still in the page while it plays its way out
+    (`LAYER.rise`, 190 ms, in src/lib/motion.ts), so a flat sleep a little longer than
+    that races it: the palette measured 218 to 235 ms from Escape to gone on an idle
+    machine, and a busy one lost to the 260 ms this used to sleep about one run in
+    three. So the drive waits for the thing itself, as settling.py says."""
+    try:
+        page.wait_for_function(condition, timeout=patience)
+    except PlaywrightTimeout:
+        return False
+    return True
+
+
 class Quiet(http.server.SimpleHTTPRequestHandler):
     def log_message(self, *args: object) -> None:  # noqa: D102
         return
@@ -198,8 +214,7 @@ def palette(page) -> None:
         say("pressed again          -> '>fold', the caret at the end")
 
     page.keyboard.press("Escape")
-    page.wait_for_timeout(260)
-    if page.evaluate(FIELD) is not None:
+    if not settles(page, f"() => ({FIELD})() === null"):
         wrong("Escape did not close the palette")
 
     # The file list is a surface with keys of its own, and this chord is the app's: it
@@ -219,7 +234,8 @@ def palette(page) -> None:
     else:
         say("from the file list     -> '>' as well")
     page.keyboard.press("Escape")
-    page.wait_for_timeout(260)
+    if not settles(page, f"() => ({FIELD})() === null"):
+        wrong("Escape did not close the palette over the file list")
 
 
 def heading_key(page) -> None:
@@ -322,7 +338,7 @@ def chooser(page) -> None:
         wrong(f"letting Ctrl go did not make the kind that stood: {state['active']}")
     else:
         say("Ctrl let go            -> a plane, with no file")
-    if page.evaluate(SHEET)["cards"]:
+    if not settles(page, f"() => ({SHEET})().cards.length === 0"):
         wrong("the dialog stayed up after the release")
 
     # Escape closes it and makes nothing, like every other layer the app puts up - and
@@ -333,8 +349,7 @@ def chooser(page) -> None:
     page.keyboard.press("KeyT")
     page.wait_for_timeout(500)
     page.keyboard.press("Escape")
-    page.wait_for_timeout(300)
-    if page.evaluate(SHEET)["cards"]:
+    if not settles(page, f"() => ({SHEET})().cards.length === 0"):
         wrong("Escape did not close the dialog")
     page.keyboard.up("Control")
     page.wait_for_timeout(600)

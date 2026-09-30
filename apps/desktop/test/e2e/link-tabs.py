@@ -13,9 +13,10 @@ another browser. What this drives, in order:
   reading case, where there is no caret for a click to be about.
 * **The reading view answers the same three gestures**, because it draws the same
   words through a different renderer.
-* **A right click on a link offers the browser**, which is the way out in words for a
-  hand that does not know Shift+click - and it is not offered on words that are not a
-  link.
+* **Shift+click is a tab in front too**, since Chrome's new window has no nib
+  equivalent; see docs/web-tabs.md.
+* **A right click on a link offers the browser**, which is the way out to the system
+  browser - and it is not offered on words that are not a link.
 * **A `mailto:` link is never a tab.** No modifier turns an email address into a
   page, and nothing local is reachable from a note at all.
 
@@ -219,7 +220,7 @@ def an_email(page) -> None:
 
 
 def the_menu(page) -> None:
-    """The way out in words, for a hand that does not know Shift+click."""
+    """The way out to the system browser, which is a row of the link's menu."""
     say("--- a right click on a link ---")
 
     page.locator(".nib-link[data-href^='https']").first.click(button="right")
@@ -325,18 +326,21 @@ def the_reading_view(page) -> None:
         say("middle-click          -> the same, with a different finger")
     close_pages(page)
 
+    # Shift alone is Chrome's new window, and a nib window is a second workspace
+    # rather than one page, so it is a tab in front and nothing leaves the app: the
+    # rule since d68541d7, in docs/web-tabs.md. The way out is the link's menu row.
     page.evaluate(CATCH)
     press(page, anchor, modifiers=["Shift"])
     state = page.evaluate(STATE)
     left = page.evaluate(LEFT)
     page.evaluate("() => window.__unwrap()")
 
-    if web_tabs(state):
-        wrong(f"Shift+click made a tab rather than leaving: {state}")
-    elif left != ["https://svelte.dev/docs"]:
-        wrong(f"Shift+click did not leave for the system browser: {left}")
+    if state["active"]["address"] != "https://svelte.dev/docs":
+        wrong(f"Shift+click in the reading view did not open the page in front: {state}")
+    elif left:
+        wrong(f"Shift+click handed the page to the system browser: {left}")
     else:
-        say("Shift+click           -> out to the system browser, which is the way out")
+        say("Shift+click           -> the page, in front, and nothing left the app")
     close_pages(page)
 
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
