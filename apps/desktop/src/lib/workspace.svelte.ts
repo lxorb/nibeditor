@@ -1335,6 +1335,10 @@ class Workspace {
    *  question all work here without knowing what a canvas is. What differs is the
    *  surface drawn on top of those words. */
   async openCanvas(path: string, how: OpenHow = {}) {
+    // Not in the glasses' plugin, which has no plane to draw: a link asks here
+    // directly rather than through `openerFor`. See `canvasSurface`.
+    if (__EVEN_PLUGIN__) return
+
     this.showTab(await this.opened.opening(path, () => this.openPlane(path, how)), how)
   }
 
@@ -1790,6 +1794,9 @@ class Workspace {
    *
    *  `page` counts from one, and null means wherever the tab was left. */
   async openPages(path: string, page: number | null = null, how: OpenHow = {}) {
+    // Not in the plugin either, for the canvas's reason. See `pagesSurface`.
+    if (__EVEN_PLUGIN__) return
+
     const tab = this.showTab(
       await this.opened.opening(path, () => this.openDeck(path, page, how)),
       how,

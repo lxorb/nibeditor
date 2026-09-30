@@ -227,6 +227,18 @@ describe('the bundle a package is made of', () => {
     expect(here).toEqual([])
   })
 
+  test('and none of the surfaces it never opens: the canvas, a page note, their thumbnails', () => {
+    // A plane or a page note opens nothing in the plugin (see openers.ts), but each
+    // was a door of a pane all the same, so the ink engine, the plane's geometry and
+    // the pages engine came along: 237,982 bytes. Named by their chunks, which carry
+    // the component's own name whatever the minifier does inside them.
+    const surfaces = files
+      .map((one) => basename(one.name))
+      .filter((name) => /^(Canvas|Pages|PagesNavigator)-[\w-]{8}\.js$/.test(name))
+
+    expect(surfaces).toEqual([])
+  })
+
   /** Emil, on his phone: *"I don't see the icons of the spaces on the Even Realities
    *  plugin right now."* It was not this - the shapes were in the package all along,
    *  and the cause was the storage the chosen name is read from; see
@@ -340,6 +352,13 @@ describe('the bundle a package is made of', () => {
     // own pane, which the plugin never opens and carried all the same, now behind
     // `__EVEN_PLUGIN__` - with the rows only they asked for. 1,264 rows of 1,372 are
     // left in each catalogue.
+    //
+    // **8,146,387 bytes** later the same day, from 8,384,329 for main at 48ea24a2 -
+    // which was 4,279 under, and which a tile cache for the canvas's ink would have
+    // taken over. The canvas, a page note and a page note's thumbnails were each a
+    // door of a pane, so the ink engine, the plane's geometry and the pages engine
+    // shipped in a package that opens none of them; they are behind `__EVEN_PLUGIN__`
+    // now, like the PDF viewer, and asserted gone by the test above.
     expect(bytes).toBeLessThan(8 * 1024 * 1024)
   })
 

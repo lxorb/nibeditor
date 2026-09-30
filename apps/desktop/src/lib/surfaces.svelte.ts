@@ -56,14 +56,25 @@ function latched<T>(load: () => Promise<{ default: T }>): {
   }
 }
 
-/** A plane of cards, its ink and its tools. The largest of them by a good way. */
-export const canvasSurface = held(() => import('./Canvas.svelte'))
+/** A plane of cards, its ink and its tools. The largest of them by a good way, and
+ *  never the glasses' plugin's, which opens no canvas (see openers.ts): a fetch that is
+ *  only never called still puts its chunk in the package. */
+export const canvasSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no canvas in the Even Realities plugin'))
+    : import('./Canvas.svelte'),
+)
 
 /** The space as a picture: the layout, the painter and the controls over it. */
 export const graphSurface = held(() => import('./Graph.svelte'))
 
-/** Pages of paper, for a note laid out rather than flowed. */
-export const pagesSurface = held(() => import('./Pages.svelte'))
+/** Pages of paper, for a note laid out rather than flowed. Never the plugin's, for
+ *  the canvas's reason: it opens no page note either. */
+export const pagesSurface = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no page notes in the Even Realities plugin'))
+    : import('./Pages.svelte'),
+)
 
 /** A paper being read, beside the notes about it. Brings pdf.js with it, which is why
  *  the glasses' plugin has neither; see vite.even.config.ts. */
@@ -126,7 +137,11 @@ export const settingsSheet = latched(() => import('./SettingsPanel.svelte'))
  *  outline panel's thumbnails of a page note, which are drawn with the canvas's own ink
  *  engine and so carry the larger half of the canvas with them. Fetched the first time
  *  a page note is in front. See Sidebar.svelte. */
-export const pagesNavigator = held(() => import('./PagesNavigator.svelte'))
+export const pagesNavigator = held(() =>
+  __EVEN_PLUGIN__
+    ? Promise.reject(new Error('no page notes in the Even Realities plugin'))
+    : import('./PagesNavigator.svelte'),
+)
 
 /** The right side's panels that are more than a list of rows: the links with their
  *  picture, the conversation with the providers behind it, and the front matter. The
