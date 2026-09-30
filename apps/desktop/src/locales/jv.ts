@@ -197,7 +197,6 @@ export const jv: Dictionary = {
   'That tag could not be deleted.': 'Tag kuwi ora bisa dibusak.',
   'Show sidebar': 'Tuduhake bar sisih',
   'Hide sidebar': 'Umpetake bar sisih',
-  'Go to note, or > for commands': 'Menyang cathetan, utawa > kanggo printah',
   'Search notes and commands': 'Golek cathetan lan printah',
   'Sort by relevance': 'Urutake miturut cocoge',
   'Page {page}': 'Kaca {page}',

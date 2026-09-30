@@ -25,6 +25,12 @@ import { updates } from './updates.svelte'
 /** What every control has, whatever kind it is. */
 interface Common {
   label: string
+  /** Other words somebody might look for it by: `font` for the text size, `dark`
+   *  and `theme` for the mode. Searched, never shown, so they are the English ones a
+   *  hand types into any search box; the label and the choices are searched in the
+   *  reader's own language. The settings' own box and the palette both read them;
+   *  see settings-search.ts and palette/settings.ts. */
+  words?: string[]
   /** One plain sentence about what the setting does, shown behind a small `i`
    *  beside the label. For the settings whose name only means something to
    *  somebody who already knows the word; one that explains itself has none, and
@@ -191,6 +197,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'select',
               label: t('Keep a version every'),
+              words: ['backup', 'history', 'snapshot'],
               options: SNAPSHOT_MINUTES.map((minutes) => ({
                 value: String(minutes),
                 label: minutes ? t('{count} min', { count: minutes }) : t('Off'),
@@ -221,6 +228,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Ctrl+Tab in order of use'),
+              words: ['tabs', 'recent', 'switcher'],
               initial: false,
               get: () => tabCycle.byUse,
               set: (on) => tabCycle.setByUse(on),
@@ -276,6 +284,7 @@ export function preferences(view?: EditorView): Pane[] {
                   {
                     kind: 'segmented',
                     label: t('Release channel'),
+                    words: ['beta', 'updates', 'nightly'],
                     hint: t(
                       'Stable follows the official releases, Unstable every push to main and can break.',
                     ),
@@ -304,6 +313,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'slider',
               label: t('Text size'),
+              words: ['font', 'zoom', 'bigger', 'smaller'],
               min: 0.8,
               max: 1.6,
               step: 0.05,
@@ -315,6 +325,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'slider',
               label: t('Line spacing'),
+              words: ['line height', 'leading'],
               min: 1.3,
               max: 2.2,
               step: 0.02,
@@ -325,6 +336,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'slider',
               label: t('Line width'),
+              words: ['column', 'wide', 'readable width'],
               min: 30,
               max: 70,
               step: 1,
@@ -341,6 +353,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Close brackets and quotes'),
+              words: ['auto pair', 'autoclose'],
               initial: true,
               get: () => modes.closeBrackets,
               set: () => modes.toggleCloseBrackets(view),
@@ -348,6 +361,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Typewriter mode'),
+              words: ['centre', 'center', 'scroll'],
               initial: false,
               get: () => modes.typewriter,
               set: () => modes.toggleTypewriter(view),
@@ -355,6 +369,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Focus mode'),
+              words: ['zen', 'distraction free', 'dim'],
               initial: false,
               get: () => modes.focus,
               set: () => modes.toggleFocus(view),
@@ -366,6 +381,7 @@ export function preferences(view?: EditorView): Pane[] {
               // its own.
               kind: 'select',
               label: t('Ligatures'),
+              words: ['font'],
               options: [
                 { value: 'off', label: t('Off') },
                 { value: 'code', label: t('Code only') },
@@ -381,6 +397,7 @@ export function preferences(view?: EditorView): Pane[] {
               // nothing about notes already written.
               kind: 'select',
               label: t('Attachments'),
+              words: ['images', 'pictures', 'paste', 'assets'],
               options: [
                 { value: 'space', label: t('Assets folder of the space') },
                 { value: 'note', label: t('Next to the note') },
@@ -460,6 +477,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'select',
               label: t('Highlighting'),
+              words: ['syntax', 'code colours', 'code colors'],
               options: CODE_PALETTES.map((one) => ({ value: one.id, label: one.name })),
               initial: 'follow',
               get: () => modes.codeTheme,
@@ -468,6 +486,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Line numbers'),
+              words: ['gutter'],
               initial: false,
               get: () => modes.lineNumbers,
               set: () => modes.toggleLineNumbers(view),
@@ -487,6 +506,7 @@ export function preferences(view?: EditorView): Pane[] {
             {
               kind: 'switch',
               label: t('Check spelling'),
+              words: ['spellcheck', 'spell check', 'typos'],
               initial: true,
               get: () => modes.spellcheck,
               set: () => modes.toggleSpellcheck(view),
@@ -557,6 +577,7 @@ export function preferences(view?: EditorView): Pane[] {
               // cannot say one thing written and another read.
               kind: 'segmented',
               label: t('Front matter'),
+              words: ['properties', 'yaml', 'metadata'],
               hint: t(
                 'Properties draws the rows and edits them in place; Source is the YAML as typed.',
               ),
@@ -625,6 +646,7 @@ export function preferences(view?: EditorView): Pane[] {
               // below picks which side of it the app is showing.
               kind: 'select',
               label: t('Style'),
+              words: ['theme', 'look'],
               options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
               get: () => theme.id,
               set: (value) => theme.select(value),
@@ -640,6 +662,7 @@ export function preferences(view?: EditorView): Pane[] {
               // could not reach it.
               kind: 'segmented',
               label: t('Mode'),
+              words: ['dark', 'light', 'night', 'theme'],
               options: SCHEME_CHOICES.map((one) => ({
                 value: one,
                 label: t(SCHEME_NAMES[one]),
@@ -664,6 +687,7 @@ export function preferences(view?: EditorView): Pane[] {
                   {
                     kind: 'segmented',
                     label: t('Frame'),
+                    words: ['title bar', 'window'],
                     options: [
                       { value: 'nib', label: t('Nib’s own') },
                       { value: 'system', label: t('The system’s') },
@@ -680,6 +704,7 @@ export function preferences(view?: EditorView): Pane[] {
                     // `applyTranslucency` in modes.svelte.ts.
                     kind: 'segmented',
                     label: t('Translucency'),
+                    words: ['transparent', 'blur', 'mica', 'vibrancy'],
                     options: [
                       { value: 'off', label: t('Off') },
                       { value: 'on', label: t('On') },

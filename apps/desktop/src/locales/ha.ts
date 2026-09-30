@@ -197,7 +197,6 @@ export const ha: Dictionary = {
   'That tag could not be deleted.': 'Ba a iya share wannan tambari ba.',
   'Show sidebar': 'Nuna gefen mashaya',
   'Hide sidebar': 'Ɓoye gefen mashaya',
-  'Go to note, or > for commands': 'Je bayanin kula, ko > don umarni',
   'Search notes and commands': 'Nemi bayanan kula da umarni',
   'Sort by relevance': 'Tsara bisa dacewa',
   'Page {page}': 'Shafi {page}',

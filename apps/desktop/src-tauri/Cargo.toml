@@ -319,6 +319,10 @@ windows = { version = "0.58", features = [
   # How much memory the engine's processes hold, before an agent opens another page.
   # See agents/memory.rs.
   "Win32_System_ProcessStatus",
+  # Whether a page asking for the palette has the keyboard, and a key was just
+  # pressed: a double tap is taken on those two. See web_opens.rs.
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_SystemInformation",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built

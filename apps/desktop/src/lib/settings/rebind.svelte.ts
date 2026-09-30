@@ -6,8 +6,10 @@
  *  answer, because taking a key from another shortcut without saying so is how
  *  a reader ends up with two commands they cannot find. */
 
+import { type Modifier, writeTap } from '../double-tap'
 import { readCombination } from '../keys'
 import { type Shortcut, shortcuts } from '../shortcuts.svelte'
+import { BY_ID } from '../shortcuts/registry'
 
 export class Rebind {
   /** Which entry is listening for a key, if any. */
@@ -66,9 +68,26 @@ export class Rebind {
     }
 
     const key = readCombination(event, shortcuts.platform)
-    // Still only modifiers down: keep waiting for the key itself.
+    // Still only modifiers down: keep waiting for the key itself, or for the same
+    // modifier a second time; see `tapped`.
     if (!key) return
 
+    this.take(id, key)
+  }
+
+  /** A modifier tapped twice while a row is listening, which is that row's key when
+   *  the window runs it. A key the editor reads is CodeMirror's, which has no such
+   *  thing as a double tap, so there the row goes on waiting. See tapped.ts, which
+   *  hands the tap here rather than to the palette while a row is listening. */
+  tapped(key: Modifier) {
+    const id = this.listening
+    if (!id || BY_ID.get(id)?.scope !== 'app') return
+
+    this.take(id, writeTap(key, shortcuts.platform))
+  }
+
+  /** A key for a row, taken if nothing is against it and nobody else holds it. */
+  private take(id: string, key: string) {
     const reason = shortcuts.refuse(key)
     if (reason) {
       this.turnedDown = { id, reason }

@@ -197,7 +197,6 @@ export const ja: Dictionary = {
   'That tag could not be deleted.': 'このタグは削除できませんでした。',
   'Show sidebar': 'サイドバーを表示',
   'Hide sidebar': 'サイドバーを隠す',
-  'Go to note, or > for commands': 'ノートへ移動、> でコマンド',
   'Search notes and commands': 'ノートとコマンドを検索',
   'Sort by relevance': '関連度で並べる',
   'Page {page}': '{page} ページ',

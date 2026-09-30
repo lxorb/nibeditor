@@ -256,11 +256,13 @@ describe('the Obsidian keyboard', () => {
   })
 
   /** Obsidian's two: the quick switcher on Ctrl+O and the command palette on Ctrl+P,
-   *  which are Nib's one palette opened on the notes and on the commands. */
-  test('opens the palette on the notes on Ctrl+O and on the commands on Ctrl+P', () => {
+   *  which are Nib's one palette, and the same palette narrowed to the commands. Shift
+   *  twice stays its first key. */
+  test('opens the palette on Ctrl+O and narrows it to the commands on Ctrl+P', () => {
     const keys = presets.presetById('obsidian')?.keys ?? {}
 
-    expect(keys['app.palette']).toBe('Mod-o')
+    expect(keys['app.palette']).toBeUndefined()
+    expect(keys['app.palette.alt']).toBe('Mod-o')
     expect(keys['app.commands.alt']).toBe('Mod-p')
     expect(keys['app.open']).toBeNull()
     expect(registry.BY_ID.get('app.commands.alt')?.alias).toBe(true)
@@ -388,5 +390,16 @@ describe('a name written down or carried by the account', () => {
     expect(names.knownPreset('emacs')).toBe('custom')
     // And the Settings sheet, handed one, chooses nothing.
     expect(presets.presetById('emacs')).toBeUndefined()
+  })
+})
+
+describe('the VS Code keyboard', () => {
+  /** Ctrl+P first, since that is what a VS Code hand reaches for and what the menu
+   *  row should say; Shift twice still opens it, second. */
+  test('puts the palette on Ctrl+P first and Shift twice second', () => {
+    const keys = presets.presetById('vscode')?.keys ?? {}
+
+    expect(keys['app.palette']).toBe('Mod-p')
+    expect(keys['app.palette.alt']).toBe('Shift Shift')
   })
 })

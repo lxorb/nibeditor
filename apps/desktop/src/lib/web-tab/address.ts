@@ -17,7 +17,7 @@
  *  reasoning of the person typing.
  *
  *  Said here once so the app has one search and not a setting nobody would open. */
-const SEARCH = 'https://www.google.com/search?q='
+export const SEARCH = 'https://www.google.com/search?q='
 
 /** Something that could be a host: dotted labels, or `localhost`, either with a
  *  port and a path after it. Deliberately not a guess at every address on the web -

@@ -706,8 +706,12 @@ keyboard goes back to the app with them. F5 and Ctrl+R in a page are the engine'
 need nothing. The find keys, Ctrl+F, Ctrl+G and F3, and the address field's other two,
 Ctrl+L and Alt+D, are the page's first, as in Chrome: a site with its own find or its own
 Ctrl+L keeps it, and the app answers only when the page lets the key go by; see "The page
-itself". On `WebView2` only; see `docs/keyboard.md` and
-`src-tauri/src/web_keys.rs`.
+itself". Shift pressed twice on its own opens the palette over a page as over a note: the
+engine never tells the host about a lone Shift, so the page's own script counts the taps
+and asks, the page keeping every Shift and one it answered itself not counting, and the
+crate takes the ask only while that page has the keyboard and a key was just pressed. On
+`WebView2` only; see `docs/keyboard.md`, `src-tauri/src/web_keys.rs` and
+`src-tauri/src/web_opens.rs`.
 
 The bar reads F5, the reload keys and Ctrl and a digit before the window's own handler
 does, and only in the focused pane, because they share their keys with Present and a
@@ -1363,7 +1367,7 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src/lib/web-tab/mute.ts` | Mute site, in every tab showing it |
 | `apps/desktop/src/lib/web-tab/filling.svelte.ts` | a page holding the whole screen, and the window following it |
 | `apps/desktop/src/lib/web-tab/seek.ts` | finding in the page from the bar and from the keys. Tested |
-| `apps/desktop/src/lib/web-tab/passed.svelte.ts` | a key the page let go by - find, a step, the address field - answered for that tab alone. Tested |
+| `apps/desktop/src/lib/web-tab/passed.svelte.ts` | a key the page let go by - find, a step, the address field, a modifier tapped twice - answered for that tab alone, the tap by the palette. Tested |
 | `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
 | `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |
 | `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |

@@ -197,7 +197,6 @@ export const gu: Dictionary = {
   'That tag could not be deleted.': 'એ ટૅગ કાઢી શકાયું નહીં.',
   'Show sidebar': 'બાજુપટ્ટી બતાવો',
   'Hide sidebar': 'બાજુપટ્ટી છુપાવો',
-  'Go to note, or > for commands': 'નોંધ પર જાઓ, કે આદેશ માટે >',
   'Search notes and commands': 'નોંધ અને આદેશ શોધો',
   'Sort by relevance': 'સંબંધ પ્રમાણે ગોઠવો',
   'Page {page}': 'પાનું {page}',
