@@ -14,6 +14,8 @@ import {
   type ApprovalAnswer,
   BROWSER_VERBS,
   type BrowserVerb,
+  CAPTURE_AS,
+  type Captured,
   type Category,
   type Code,
   CRATE_ASKS,
@@ -75,6 +77,17 @@ describe('the mirror of the crate agent verbs', () => {
       (one) => one[1],
     )
     expect(named).toEqual([...AGENT_COMMANDS])
+  })
+
+  it('reads a capture as the crate answers it', () => {
+    const shapes = crate('verbs.rs').split('pub enum CaptureAs {')[1]?.split('}')[0] ?? ''
+    const named = [...shapes.matchAll(/^\s*([A-Z]\w*),$/gm)].map((one) => one[1]?.toLowerCase())
+    expect(named).toEqual([...CAPTURE_AS])
+
+    const fields = crate('verbs.rs').split('pub struct Captured {')[1]?.split('\n}')[0] ?? ''
+    const written = [...fields.matchAll(/^\s*pub (\w+):/gm)].map((one) => one[1])
+    const read: Required<Captured> = { url: '', title: '', html: '', png: '', pdf: '' }
+    expect(written).toEqual(Object.keys(read))
   })
 
   it('names the window verbs the crate asks as the crate does', () => {

@@ -447,7 +447,7 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 | `read_pdf` | `path`, `pages`? | a PDF's text (`papers.rs`) |
 | `pdf_highlights` | `path`, `op`: `list`, `add` (`quote`, `page`, `colour`, `comment`) | |
 | `read_setting`, `write_setting` | `key`, `value` | an allowlist of keys (8.8); writing asks |
-| `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`? | a page into a note: the clipper's markdown with `source:`, a screenshot as the note's own picture, or the address; answers the note |
+| `capture_to_note` | `tab`, `note`?, `as`: `clip`, `screenshot`, `pdf`, `link`; `under`?, `full_page`?, `folder`?, `space`? | a page into a note, from an agent's tab or the reader's: the clipper's markdown with `source:`, a screenshot or a PDF kept beside the note and embedded, or the address; answers the note |
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `run_command` | `id` | one row of the palette's registry, as `nib commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
@@ -456,6 +456,45 @@ session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 `capture_to_note` is the one no browser agent has, and it is the reason to do research in
 nib rather than beside it: the page, the screenshot and the source land in the space the
 reader is working in, as files that sync.
+
+**As built** (`lib/agents/workspace/capture.ts`, and the crate's `agents_capture` in
+`src-tauri/src/agents/capture.rs`). The window writes the note; the crate reads the page,
+an agent's own out-of-sight tab and the reader's alike, through the gate every browser verb
+goes through: the agent's own tab with `browser`, the reader's with `browser.reader` in a
+space it reaches, never another agent's, and the reader's pause, a dialog the page holds, a
+denied site and the stop answer exactly as they do for a press.
+
+- **Clip**: the clip button's own script (`web_tabs::reader`), run in nib's world and not
+  the page's, its markup unvalued the way `browser_read`'s is (no password field, no
+  field's `value`), and made markdown by the clipper's converter in the window. So a clip
+  of an agent's tab is the words a clip of the reader's would be, and `browser_read` as
+  `article` is those words too.
+- **Screenshot**: `browser_screenshot`'s picture, every filled secret field grey, refused
+  while a password field has the keyboard; the tab as it shows, or all of it with
+  `full_page`, as Playwright MCP and DevTools MCP offer it.
+- **PDF**: `Page.printToPDF` on the reader's own paper (Settings' page setup, A4 and
+  20 mm to start, as their own PDF export), backgrounds on, none of the browser's header
+  and footer, the way Browser Use's `save_as_pdf` prints. A page holding a filled secret
+  field is not printed (`password_field`): a printed field is its bullets, which say how
+  long it is, and nothing can paint over a PDF.
+- **Files, not bytes.** The picture and the PDF are kept in the reader's Attachments
+  folder and embedded, `![[page-....png]]`; the agent is answered the note's path, as all
+  three of those tools answer a file's path. The answer is marked as the page's
+  (`untrusted`), because the note is named after what the page calls itself.
+- **The log** has the call once, as `capture_to_note`, filed by the crate's own code:
+  a refused print is `error (password_field)`, not the window failing.
+- **Where the engine has no road** (CEF for now, a Mac, Linux), a reader's tab is clipped
+  the clip button's way and nothing is photographed or printed that could not be painted
+  over; a reader's page put away to give the memory back is clipped as its address, as
+  the button clips it. A reader's tab behind another one has no picture.
+- **Measured** by `scripts/capture-probe.py`, end to end over `nib mcp`: a clip 35 to
+  45 ms, a picture 120 to 145 ms, a PDF 115 to 130 ms, a refusal 8 to 12 ms. It proves
+  the note's words are `browser_read`'s article words with no field's value, that the
+  page saw no script and no global of nib's while it was clipped, the password field grey
+  pixel for pixel in a picture of an agent's tab and of the reader's, the PDF on A4, and
+  another agent's tab not there. It also shows what is still to do: the picture's secret
+  scan is `browser_screenshot`'s own, which looks for the fields from the page's world,
+  so a page that patched `querySelectorAll` sees a picture being taken.
 
 ---
 
@@ -851,13 +890,14 @@ press as whatever it was told to; the card field is still a card field.
 
 The agent never types a password and never reads one: `browser_type` refuses a password
 field, a screenshot of a page with a focused password field is refused, and in every other
-picture each filled secret field is painted over in flat grey. Nor does it
+picture each filled secret field is painted over in flat grey; a page holding a filled one
+is not printed to a PDF at all, where nothing could paint it over. Nor does it
 read any other secret - a one-time code, a card's number, expiry or security code - by
 any road: `browser_snapshot` writes such a field as `[filled]` or nothing, and nothing
 under it (the engine's own value for a password is one bullet a character, and its words
 inside the field the same, so either would say how long it is); `browser_find` never looks
 inside one; a name the engine builds out of a field's value has the value taken out; and
-`browser_read` carries no field's value in any shape. Signing in is a takeover, and so is
+`browser_read` and a clip carry no field's value in any shape. Signing in is a takeover, and so is
 submitting a sign-in form.
 The engine's password saving and autofill are off in agent tabs, so a saved password is
 not filled in behind the agent's back either.

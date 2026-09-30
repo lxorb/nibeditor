@@ -14,6 +14,7 @@
 //! | `tabs`, `quiet` | the agent's own tabs nobody sees, and everything they may not do |
 //! | `cdp`, `page`, `snapshot`, `keys` | the `DevTools` Protocol, and every act through it |
 //! | `browser`, `reader` | the browser verbs, on the agent's tabs and the reader's |
+//! | `capture` | a page read for the window's `capture_to_note` |
 //! | `memory`, `leases` | the engine's memory, and sync v2's seam |
 //! | `shell`, `watch` | what the app around the window does for agents - the tray, the stop key, the notifications, the window kept - and the pictures of their tabs |
 //!
@@ -42,6 +43,11 @@ pub mod verbs;
     allow(dead_code, reason = "only WebView2's verbs ask about a tab")
 )]
 mod approvals;
+#[cfg_attr(
+    not(all(windows, not(feature = "cef"))),
+    allow(dead_code, reason = "only WebView2 reads a page to capture")
+)]
+mod capture;
 #[cfg_attr(
     not(all(windows, not(feature = "cef"))),
     allow(dead_code, reason = "only WebView2 presses keys into a page")
@@ -667,6 +673,41 @@ pub fn agents_adopt(
         let _ = (app, agent_tab, tab);
         Err("agent tabs are not available on this engine yet".into())
     }
+}
+
+/// A page read for the window's `capture_to_note` (5.4), on the agent's behalf: `agent`
+/// is the grant the window's dispatcher was handed with the call, and none for the
+/// reader's own command line. `page` is the reader's paper, for a PDF. See `capture`.
+#[tauri::command(async)]
+pub fn agents_capture(
+    webview: tauri::Webview,
+    app: AppHandle,
+    agent: Option<String>,
+    tab: String,
+    shape: verbs::CaptureAs,
+    full_page: Option<bool>,
+    page: Option<crate::pdf::PdfPage>,
+) -> Answer {
+    if let Err(why) = from_the_app(&webview) {
+        return Answer::error(Code::NotGranted, why);
+    }
+    let caller = match agent {
+        None => Caller::Reader,
+        Some(id) => match state(&app).grants.by_id(&app, &id) {
+            Some(grant) => Caller::Agent(Box::new(grant)),
+            None => return Answer::error(Code::NotGranted, "there is no such agent"),
+        },
+    };
+    capture::answer(
+        &app,
+        &caller,
+        &tab,
+        capture::Asked {
+            shape,
+            full_page: full_page.unwrap_or(false),
+            paper: page,
+        },
+    )
 }
 
 #[cfg(test)]

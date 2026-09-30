@@ -691,14 +691,17 @@
   },
   {
     "name": "capture_to_note",
-    "description": "Put a page into a note: its words as markdown with the source (clip), a screenshot, a PDF, or the link. Into `note`, a new one when left out, under a heading if asked. Answers the note's path.",
+    "description": "Put a page into a note, from one of your tabs or the reader's: its article as markdown with the source (clip), a screenshot kept beside the note (the tab as it shows; `full_page` for all of it), the page printed to a PDF on the reader's paper, or the link. Secret fields are grey in a screenshot, and a page holding a filled one is not printed. Into `note`, or a new one named after the page (in `folder`), under a heading if asked. Answers the note's path.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "tab": { "type": "string" },
         "note": { "type": "string" },
         "as": { "type": "string", "enum": ["clip", "screenshot", "pdf", "link"] },
-        "under": { "type": "string" }
+        "under": { "type": "string" },
+        "full_page": { "type": "boolean" },
+        "folder": { "type": "string" },
+        "space": { "type": "string" }
       },
       "required": ["tab", "as"]
     },

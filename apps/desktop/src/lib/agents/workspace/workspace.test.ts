@@ -160,6 +160,18 @@ const asked: { command: string; args: Record<string, unknown> }[] = []
 /** What `agents_ask` answers next: the reader already allowed it, or a question. */
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 
+/** The page as the crate reads it for a capture: the article, or a file as base64. */
+const PAGE = {
+  url: 'https://docs.example/a',
+  title: 'A page',
+  html: '<article><p>Words of the page.</p></article>',
+}
+/** What `agents_capture` answers next. */
+let captured: Record<string, unknown> = {}
+function reads(result: Record<string, unknown>) {
+  captured = { status: 'ok', result: { ...PAGE, ...result }, untrusted: PAGE.url }
+}
+
 function crate(command: string, args: Record<string, unknown> = {}): Promise<unknown> {
   asked.push({ command, args })
   const path = typeof args.path === 'string' ? args.path : ''
@@ -184,6 +196,10 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
       return Promise.resolve()
     case 'agents_ask':
       return Promise.resolve(answer)
+    case 'agents_capture':
+      return Promise.resolve(captured)
+    case 'save_asset':
+      return Promise.resolve(`files/${String(args.name)}`)
     case 'agents_log':
       return Promise.resolve(log)
     default:
@@ -393,6 +409,7 @@ beforeEach(() => {
   searched.length = 0
   ran.length = 0
   answer = { status: 'ok', result: {} }
+  reads({})
   forgetIndexes()
   vi.clearAllMocks()
 })
@@ -791,33 +808,144 @@ describe('the notes, on the road', () => {
 })
 
 describe('a page into a note', () => {
-  test('is the markdown the clip button writes, with its source', async () => {
+  /** The one crate call a capture made, if any. */
+  const capture = () => asked.find((one) => one.command === 'agents_capture')?.args
+  const saved = () => asked.find((one) => one.command === 'save_asset')?.args
+
+  test('is the markdown the clip button writes, with its source, read by the crate', async () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-09-30T10:00:00.000Z'))
     try {
       const answered = await call('capture_to_note', { tab: 'w1', as: 'clip' })
-      expect(answered).toMatchObject({ result: { path: 'A page.md', created: true } })
+      // The note is named after the page, so the answer is the page's words too.
+      expect(answered).toMatchObject({
+        result: { path: 'A page.md', created: true },
+        untrusted: 'https://docs.example/a',
+      })
 
       const { clipNote } = await import('../../web-tab/note')
-      const clip = await clipNote(
-        {
-          url: 'https://docs.example/a',
-          title: 'A page',
-          html: '<article><p>Words of the page.</p></article>',
-        },
-        new Date(),
-      )
+      const clip = await clipNote(PAGE, new Date())
       expect(files.get('/s/Work/A page.md')).toBe(clip)
       expect(clip).toContain('source: https://docs.example/a')
+      expect(capture()).toMatchObject({ agent: 'claude-code', tab: 'w1', shape: 'clip' })
     } finally {
       vi.useRealTimers()
     }
   })
 
-  test('needs the reader tabs scope for a tab of the reader', async () => {
+  test('an agent tab is clipped the same way, through the crate', async () => {
+    const answered = await call('capture_to_note', { tab: 'a1', as: 'clip', note: 'Research' })
+    expect(answered).toMatchObject({ result: { path: 'Research.md', created: true } })
+    expect(files.get('/s/Work/Research.md')).toContain('Words of the page.')
+    expect(capture()).toMatchObject({ agent: 'claude-code', tab: 'a1', shape: 'clip' })
+  })
+
+  test('a screenshot is a picture kept beside the note, the whole page when asked', async () => {
+    reads({ html: undefined, png: btoa('PNG bytes') })
+    await call('capture_to_note', { tab: 'a1', as: 'screenshot', full_page: true })
+
+    expect(capture()).toMatchObject({ shape: 'screenshot', fullPage: true })
+    const kept = saved()
+    expect(String(kept?.name)).toMatch(/^page-[\d-]+\.png$/)
+    expect(kept?.bytes).toEqual([80, 78, 71, 32, 98, 121, 116, 101, 115])
+    expect(files.get('/s/Work/A page.md')).toContain(`![[files/${String(kept?.name)}]]`)
+  })
+
+  test('a PDF is printed on the reader own paper and kept beside the note', async () => {
+    reads({ html: undefined, pdf: btoa('%PDF-1.7') })
+    await call('capture_to_note', { tab: 'a1', as: 'pdf' })
+
+    // The A4 and the 20 mm the app's page setup starts on.
+    expect(capture()).toMatchObject({
+      shape: 'pdf',
+      fullPage: false,
+      page: { width: 8.27, height: 11.69, margin: 0.787, landscape: false },
+    })
+    expect(String(saved()?.name)).toMatch(/\.pdf$/)
+    expect(files.get('/s/Work/A page.md')).toMatch(/!\[\[files\/page-[\d-]+\.pdf\]\]/)
+  })
+
+  test('the crate refusal is the answer, code and all, and nothing is written', async () => {
+    captured = {
+      status: 'error',
+      code: 'password_field',
+      message: 'a filled secret field is on the page',
+    }
+    expect(await call('capture_to_note', { tab: 'a1', as: 'pdf' })).toMatchObject({
+      ok: false,
+      status: 'error',
+      code: 'password_field',
+      message: 'a filled secret field is on the page',
+    })
+    expect(saved()).toBeUndefined()
+    expect(files.has('/s/Work/A page.md')).toBe(false)
+
+    captured = { status: 'error', code: 'paused_by_reader', message: 'the reader is using it' }
+    expect(await call('capture_to_note', { tab: 'w1', as: 'clip' })).toMatchObject({
+      code: 'paused_by_reader',
+    })
+  })
+
+  test('needs the reader tabs scope for a tab of the reader, and browser for its own', async () => {
     expect(
       await call('capture_to_note', { tab: 'w1', as: 'link' }, agent({ scopes: ['notes.write'] })),
     ).toMatchObject({ code: 'not_granted' })
+    expect(
+      await call(
+        'capture_to_note',
+        { tab: 'a1', as: 'clip' },
+        agent({ scopes: ['notes.write', 'browser.reader'] }),
+      ),
+    ).toMatchObject({ code: 'not_granted' })
+    expect(capture()).toBeUndefined()
+  })
+
+  test('a reader tab in a space the agent may not reach is not there', async () => {
+    expect(
+      // Into Home, which it may reach, from a tab of Work, which it may not.
+      await call(
+        'capture_to_note',
+        { tab: 'w1', as: 'clip', space: 'Home' },
+        agent({ spaces: ['Home'] }),
+      ),
+    ).toMatchObject({ code: 'no_such_space' })
+    expect(capture()).toBeUndefined()
+  })
+
+  test('where the engine has no road, a reader tab is clipped the button way and never photographed', async () => {
+    captured = {
+      status: 'error',
+      code: 'unsupported_on_this_engine',
+      message: 'capturing a page is not available on this engine yet',
+    }
+    expect(await call('capture_to_note', { tab: 'w1', as: 'clip' })).toMatchObject({
+      result: { path: 'A page.md' },
+    })
+    expect(files.get('/s/Work/A page.md')).toContain('Words of the page.')
+
+    for (const shape of ['screenshot', 'pdf']) {
+      expect(await call('capture_to_note', { tab: 'w1', as: shape }), shape).toMatchObject({
+        code: 'unsupported_on_this_engine',
+      })
+    }
+    expect(saved()).toBeUndefined()
+  })
+
+  test('a reader page put away is clipped as its address, and not printed', async () => {
+    captured = { status: 'error', code: 'no_such_tab', message: 'there is no tab w1' }
+    await call('capture_to_note', { tab: 'w1', as: 'clip', note: 'Kept' })
+    expect(files.get('/s/Work/Kept.md')).toContain('<https://docs.example/a>')
+
+    expect(await call('capture_to_note', { tab: 'w1', as: 'pdf' })).toMatchObject({
+      code: 'failed',
+    })
+  })
+
+  test('says which shapes there are', async () => {
+    expect(await call('capture_to_note', { tab: 'w1', as: 'gif' })).toMatchObject({
+      code: 'bad_arguments',
+      message: 'as is one of clip, screenshot, pdf, link',
+    })
   })
 })
 

@@ -6,8 +6,13 @@
 
 import { type AgentAnswer, refusal } from '../../automation/caller'
 import { DocError } from '../docs/problem'
+import type { Code as CrateCode } from '../verbs'
 
 export type Code =
+  /** A code the crate answered with, passed on as it said it: a page read through the
+   *  crate refuses the way every browser verb does (`paused_by_reader`,
+   *  `password_field` and the rest), and the audit log files it by that word. */
+  | CrateCode
   /** The call's arguments do not say what they need to. */
   | 'bad_arguments'
   /** A scope the grant does not hold, beyond the one the verb's row checked. */
