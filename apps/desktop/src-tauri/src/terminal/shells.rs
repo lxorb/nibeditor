@@ -458,7 +458,10 @@ fn name_of(path: &Path) -> String {
 /// too.
 #[cfg_attr(
     not(windows),
-    allow(dead_code, reason = "only Windows has WSL to ask; the parser is tested everywhere")
+    allow(
+        dead_code,
+        reason = "only Windows has WSL to ask; the parser is tested everywhere"
+    )
 )]
 pub fn distributions(printed: &[u8]) -> Vec<String> {
     let wide = printed.len() >= 2 && printed.chunks(2).any(|pair| pair.get(1) == Some(&0));
