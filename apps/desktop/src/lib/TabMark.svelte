@@ -30,8 +30,7 @@
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from './panel-marks'
-  import { siteMark } from './web-tab/favicons.svelte'
-  import { type Page, pages } from './web-tab/pages.svelte'
+  import { type Page, pages, siteMark } from './web-tab/pages.svelte'
   import { readWebFile } from './web-tab/shortcut'
   import type { Tab } from './workspace.svelte'
 
@@ -48,13 +47,10 @@
   /** What a website's file says: where it points, and the mark it wrote down. */
   const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
 
-  /** The picture to draw for a website: the page's own while it has one, else the last
-   *  one this device saw where the tab is - which is what a restored tab, a parked one
-   *  and a reopened one wear before their page is there, from the first frame they are
-   *  drawn in - else the one its file wrote down, for a machine that has never opened the
-   *  site. Nothing where none says, and then the row's own reading of the file is what
-   *  answers: the mark out of the index, else whatever the file chose, else the globe.
-   *  See favicons.svelte.ts. */
+  /** The picture to draw for a website: the page's own, else the last one this device
+   *  saw where the tab is - what a restored, parked or reopened tab wears from its first
+   *  frame - else the one its file wrote down. Where none says, the row's own reading of
+   *  the file answers below. See `siteMark`. */
   const found = $derived(
     page ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon) : null,
   )

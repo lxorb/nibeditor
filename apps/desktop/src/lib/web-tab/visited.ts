@@ -13,7 +13,7 @@
  *  omnibox.ts. */
 
 import { keep, stored } from '../stored'
-import { favicons } from './favicons.svelte'
+import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
 import { named, typedTo, unvisited, visitKey, visited as arrived, visitsFrom } from './visits'
 import type { Visit } from './visits'
@@ -87,7 +87,7 @@ class Visited {
    *  this device kept for it: a page forgotten is forgotten everywhere it was kept. */
   remove(book: Book, url: string) {
     this.write(book, unvisited(this.rows(book), url))
-    favicons.forget(url)
+    forget(url)
   }
 
   /** What a page called itself the last time a tab was on it, or the empty string:

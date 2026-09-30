@@ -459,10 +459,9 @@ class Links {
     return map
   })
 
-  /** The websites, by path: where each `.url` points and the `Nib-Icon` it wrote down,
-   *  which the file list draws in front of the row rather than the plain globe - the
-   *  address being what this device's own sight of the site is looked up by; see
-   *  web-tab/favicons.svelte.ts.
+  /** The websites, by path: where each `.url` points, which the device's own marks are
+   *  looked up by, and the `Nib-Icon` it wrote down, which the file list draws in front
+   *  of the row rather than the plain globe.
    *
    *  The same shape as the icons above and for the same reason: a space holds a
    *  handful of websites, so the map is the size of what is there rather than of the

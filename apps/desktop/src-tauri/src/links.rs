@@ -108,7 +108,7 @@ pub struct Note {
     /// Where a website points: a `.url`'s own `URL`, or a `.webloc`'s, which is what the
     /// device's own sight of the site is looked up by. None for every note and canvas,
     /// and apart from `url`, which says a note is a website in the old format. See
-    /// web-tab/favicons.svelte.ts.
+    /// `favicons` in web-tab/pages.svelte.ts.
     address: Option<String>,
     /// The picture across the top of the note, as its front matter says it under
     /// `cover:`. None for a note with no cover, which is almost every note.
