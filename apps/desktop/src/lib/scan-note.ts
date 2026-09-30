@@ -11,7 +11,7 @@ import { frontMatterList, frontMatterValue } from '@nib/markdown/front-matter'
 import { blockIds, findLinks, headingsOf, type LinkKind } from '@nib/markdown/links'
 import { ICON_COLOUR_KEY, ICON_KEY } from './icons'
 import { tagsIn } from './search/tags'
-import { iconOf } from './web-tab/shortcut'
+import { readWebFile } from './web-tab/shortcut'
 
 /** One link out of a note. Named for the shape below rather than for a caller:
  *  everything outside reads a whole note, never one of its links. */
@@ -67,6 +67,11 @@ export interface ScannedNote {
    *  and canvas, and for a website nobody has followed a link out of yet. The twin of
    *  the same field in links.rs. See web-tab/shortcut.ts. */
   favicon: string | null
+  /** Where a website points: a `.url`'s own `URL`, which is what this device's own sight
+   *  of the site is looked up by. Null for everything else, and apart from `url`, which
+   *  says a note is a website in the old format. The twin of the same field in
+   *  links.rs. See web-tab/favicons.svelte.ts. */
+  address: string | null
   /** The picture across the top of the note, as its front matter says it under
    *  `cover:`, or null where it says nothing - which is almost every note.
    *
@@ -104,6 +109,7 @@ export function scanNote(path: string, content: string): ScannedNote {
     // A note wears its own front-matter icon, not a site's favicon; that is a
     // website's, read in `scanShortcut`.
     favicon: null,
+    address: null,
     cover: frontMatterValue(content, COVER_KEY),
     links: findLinks(content).map((link) => ({
       kind: link.kind,
@@ -140,6 +146,8 @@ export function scanNote(path: string, content: string): ScannedNote {
  *  give, the favicon out of its `Nib-Icon` key. The desktop's `shortcut_note` in
  *  links.rs says the same thing on the other side. */
 export function scanShortcut(path: string, content: string): ScannedNote {
+  const said = readWebFile(path, content)
+
   return {
     path,
     // The extension is part of the name, the way it is for a canvas: a link may be
@@ -154,9 +162,11 @@ export function scanShortcut(path: string, content: string): ScannedNote {
     // What `url:` means is a note that is a website in the old format and wants
     // converting; a shortcut is already one. See web-tab/shortcut.ts.
     url: null,
-    // The site's mark, so the row draws the favicon rather than the globe. `iconOf`
-    // reads it out of the `.url`; a `.webloc` has none and falls back to the globe.
-    favicon: iconOf(path, content),
+    // The site's mark, so the row draws the favicon rather than the globe, and where it
+    // points, which the device's own sight of the site is kept under. A `.webloc` has no
+    // mark of its own.
+    favicon: said?.icon ?? null,
+    address: said?.url ?? null,
     cover: null,
     links: [],
   }

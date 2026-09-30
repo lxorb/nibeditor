@@ -12,6 +12,7 @@
   import FileMark from '../../FileMark.svelte'
   import { t } from '../../i18n.svelte'
   import { dur } from '../../motion'
+  import { siteMark } from '../../web-tab/favicons.svelte'
   import { pages } from '../../web-tab/pages.svelte'
   import { workspace } from '../../workspace.svelte'
   import type { Approval } from '../verbs'
@@ -23,13 +24,13 @@
   /** The site, as its name: a question may carry a whole address. */
   const site = $derived(approval.site === undefined ? null : hostOf(approval.site))
 
-  /** The site's own mark, where one of the reader's tabs has already found it. Nothing
-   *  is fetched for a question: a globe stands in. */
+  /** The site's own mark, where one of the reader's tabs has found it or this device has
+   *  seen it before. Nothing is fetched for a question: a globe stands in. */
   const icon = $derived.by(() => {
     const tab = approval.tab
     const web =
       tab !== undefined && workspace.tabs.some((one) => one.id === tab && one.kind === 'web')
-    return web ? pages.of(tab).icon : null
+    return siteMark(web ? pages.of(tab).icon : null, approval.site)
   })
   let marked = $state(true)
 

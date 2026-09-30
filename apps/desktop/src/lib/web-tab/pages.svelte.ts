@@ -31,6 +31,7 @@
 
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
+import { favicons } from './favicons.svelte'
 import { grants, readAsked } from './permissions.svelte'
 import { placeOf, placeKept } from './place'
 
@@ -306,6 +307,11 @@ export class Page {
    *  about the document - and where the reading got to is kept by path, so that
    *  closing the tab and opening the note tomorrow lands back on it. See place.ts. */
   path: string | null = null
+
+  /** Where the engine last said the page is. `url` stops following it while the address
+   *  field is typed in, and a mark belongs to the page rather than to the field, so it is
+   *  filed under this; see favicons.svelte.ts. Not drawn. */
+  at: string | null = null
 
   /** Where the first load in this tab finished, or null before it has. What the
    *  page leaving it is measured against, which is what keeps a previewed website;
@@ -1035,10 +1041,16 @@ class Pages {
       const said = readDownload(event.payload)
       if (said && downloads.heard(said)) void this.downloaded(said.tab)
     })
-    // A page's mark has changed, which the engine says for as long as the page is open.
+    // A page's mark has changed, which the engine says for as long as the page is open,
+    // and it is the device's mark for that page from now on; see favicons.svelte.ts. A page
+    // with none says nothing about the one it had: a page on its way says none too.
     await listen('nib://web-icon', (event) => {
       const said = readIconed(event.payload)
-      if (said) this.held.get(said.tab)?.marked(said.icon)
+      const page = said ? this.held.get(said.tab) : undefined
+      if (!said || !page) return
+
+      page.marked(said.icon)
+      if (said.icon) favicons.saw(page.at ?? page.url, said.icon)
     })
     // Sound, full screen, zoom and find; see heard.ts.
     await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
@@ -1056,6 +1068,7 @@ class Pages {
       if (said.loading !== was) page.loaded(said.loading)
       page.back = said.back
       page.forward = said.forward
+      if (said.url) page.at = said.url
       if (said.url && !page.typing) page.url = said.url
       if (said.title) {
         page.title = said.title

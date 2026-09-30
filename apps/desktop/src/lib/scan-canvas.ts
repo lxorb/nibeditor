@@ -56,6 +56,7 @@ export function scanCanvas(path: string, content: string): ScannedNote {
     url: null,
     // A favicon is a website's; a canvas draws its own icon above.
     favicon: null,
+    address: null,
     // Nor a cover: the whole of a plane is a picture already.
     cover: null,
     links: canvas.nodes

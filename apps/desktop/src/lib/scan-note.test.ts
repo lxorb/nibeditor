@@ -180,7 +180,10 @@ describe('reading a website for the index', () => {
     const site = scanShortcut('Reading/Svelte docs.url', url)
     expect(site.name).toBe('Svelte docs.url')
     expect(site.favicon).toBe('https://svelte.dev/favicon.png')
-    // A shortcut is a name and a mark, and nothing else the index reads off it.
+    // And where it points, which this device's own sight of the site is kept under;
+    // see web-tab/favicons.svelte.ts.
+    expect(site.address).toBe('https://svelte.dev/docs')
+    // A shortcut is a name, a mark and an address, and nothing else the index reads.
     expect(site.url).toBeNull()
     expect(site.icon).toBeNull()
     expect(site.links).toEqual([])
@@ -191,5 +194,14 @@ describe('reading a website for the index', () => {
     expect(bare.favicon).toBeNull()
     // A .webloc carries no such key either.
     expect(scanShortcut('A.webloc', '<plist><dict></dict></plist>').favicon).toBeNull()
+  })
+
+  test('and where a .webloc points, and nothing for a note or a canvas', () => {
+    const webloc = '<plist><dict><key>URL</key><string>https://a.example/?x=1&amp;y=2</string>'
+    expect(scanShortcut('A.webloc', `${webloc}</dict></plist>`).address).toBe(
+      'https://a.example/?x=1&y=2',
+    )
+    expect(scanNote('Plan.md', '# Plan').address).toBeNull()
+    expect(scanCanvas('Board.canvas', '{}').address).toBeNull()
   })
 })

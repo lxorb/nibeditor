@@ -105,6 +105,11 @@ pub struct Note {
     /// every note and canvas, and for a website nobody has followed a link out of yet.
     /// Read on this pass for the reason the icon is. See web-tab/shortcut.ts.
     favicon: Option<String>,
+    /// Where a website points: a `.url`'s own `URL`, or a `.webloc`'s, which is what the
+    /// device's own sight of the site is looked up by. None for every note and canvas,
+    /// and apart from `url`, which says a note is a website in the old format. See
+    /// web-tab/favicons.svelte.ts.
+    address: Option<String>,
     /// The picture across the top of the note, as its front matter says it under
     /// `cover:`. None for a note with no cover, which is almost every note.
     ///
@@ -219,6 +224,7 @@ fn note_at(relative: String, body: &str) -> Note {
         // A note wears its own front-matter icon, not a site's favicon; that is a
         // website's, read in `shortcut_note`.
         favicon: None,
+        address: None,
         cover: said("cover"),
     }
 }
@@ -326,6 +332,7 @@ fn canvas_note(relative: String, body: &str) -> Note {
         // so, and JSON Canvas has no key for one.
         url: None,
         favicon: None,
+        address: None,
         // And a plane has no cover: the whole of it is a picture already.
         cover: None,
     }
@@ -357,6 +364,7 @@ fn shortcut_note(relative: String, content: &str) -> Note {
         // wants converting; a shortcut is already one. See shortcut.ts.
         url: None,
         favicon: favicon_of(content),
+        address: address_of(content),
         cover: None,
     }
 }
@@ -367,9 +375,34 @@ fn shortcut_note(relative: String, content: &str) -> Note {
 /// twenty-line file, so the whole INI parser the app has is not asked for on a pass
 /// that wants one line; see web-tab/shortcut.ts, which writes it and reads it there.
 fn favicon_of(content: &str) -> Option<String> {
+    key_of(content, "nib-icon")
+}
+
+/// Where a shortcut points: a `.url`'s `URL` line, else the string after a `.webloc`'s
+/// `URL` key with the five entities XML escapes put back. The app reads the same two the
+/// same way; see `readWebFile` in web-tab/shortcut.ts.
+fn address_of(content: &str) -> Option<String> {
+    key_of(content, "url").or_else(|| {
+        let (_, after) = content.split_once("<key>URL</key>")?;
+        let (_, after) = after.split_once("<string>")?;
+        let (said, _) = after.split_once("</string>")?;
+        let said = said
+            .trim()
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&apos;", "'")
+            .replace("&amp;", "&");
+        (!said.is_empty()).then_some(said)
+    })
+}
+
+/// The first `key=value` line of a shortcut with this key, however it is cased, as long
+/// as it says something.
+fn key_of(content: &str, wanted: &str) -> Option<String> {
     content.lines().find_map(|line| {
         let (key, value) = line.split_once('=')?;
-        if !key.trim().eq_ignore_ascii_case("nib-icon") {
+        if !key.trim().eq_ignore_ascii_case(wanted) {
             return None;
         }
 
@@ -968,9 +1001,30 @@ mod tests {
             read.favicon.as_deref(),
             Some("https://svelte.dev/favicon.png")
         );
-        // A shortcut is a name and a mark and nothing else the index reads off it.
+        // And where it points, which the device's own sight of the site is kept under.
+        assert_eq!(read.address.as_deref(), Some("https://svelte.dev/docs"));
+        // A shortcut is a name, a mark and an address, and nothing else the index reads.
         assert!(read.url.is_none());
         assert!(read.icon.is_none());
+    }
+
+    /// A `.webloc` says where it points in a plist, which is the other half of the
+    /// app's own reader; and a note or a canvas points nowhere.
+    #[test]
+    fn a_website_says_where_it_points_and_nothing_else_does() {
+        let webloc = shortcut_note(
+            "A.webloc".to_string(),
+            "<plist><dict><key>URL</key><string>https://a.example/?x=1&amp;y=2</string></dict></plist>",
+        );
+        assert_eq!(
+            webloc.address.as_deref(),
+            Some("https://a.example/?x=1&y=2")
+        );
+        assert!(webloc.favicon.is_none());
+
+        let empty = shortcut_note("B.url".to_string(), "[InternetShortcut]\n");
+        assert!(empty.address.is_none());
+        assert!(note_at("Plan.md".to_string(), "# Plan\n").address.is_none());
     }
 
     /// A shortcut nobody has followed a link out of has no mark yet, and a `.webloc`

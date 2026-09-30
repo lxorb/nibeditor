@@ -30,8 +30,9 @@
   import { markOf } from './file-mark'
   import FileMark from './FileMark.svelte'
   import { ASK_MARK, GRAPH_MARK } from './panel-marks'
+  import { siteMark } from './web-tab/favicons.svelte'
   import { type Page, pages } from './web-tab/pages.svelte'
-  import { iconOf } from './web-tab/shortcut'
+  import { readWebFile } from './web-tab/shortcut'
   import type { Tab } from './workspace.svelte'
 
   const { tab }: { tab: Tab } = $props()
@@ -44,12 +45,19 @@
    *  it, and a note has no page to make. */
   const page = $derived<Page | null>(mark === 'web' ? pages.of(tab.id) : null)
 
-  /** The picture to draw for a website: the one the page found while it was loading,
-   *  else the one its file wrote down - which is the only one a tab has before the page
-   *  is there and on a machine that has never opened the site. Nothing where neither
-   *  says, and then the row's own reading of the file is what answers: the mark out of
-   *  the index, else whatever the file chose, else the globe. */
-  const found = $derived(page ? (page.icon ?? iconOf(tab.path, tab.doc)) : null)
+  /** What a website's file says: where it points, and the mark it wrote down. */
+  const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
+
+  /** The picture to draw for a website: the page's own while it has one, else the last
+   *  one this device saw where the tab is - which is what a restored tab, a parked one
+   *  and a reopened one wear before their page is there, from the first frame they are
+   *  drawn in - else the one its file wrote down, for a machine that has never opened the
+   *  site. Nothing where none says, and then the row's own reading of the file is what
+   *  answers: the mark out of the index, else whatever the file chose, else the globe.
+   *  See favicons.svelte.ts. */
+  const found = $derived(
+    page ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon) : null,
+  )
 
   /** An agent acting here: its spark in its colour, turning, or still and muted while
    *  paused (docs/agent-native.md 7.1). It outranks a page on its way. */
