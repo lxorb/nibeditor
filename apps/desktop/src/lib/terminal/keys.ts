@@ -2,8 +2,8 @@
  *
  *  A shell reads nearly every chord there is: Ctrl+W deletes a word, Ctrl+N and Ctrl+P
  *  walk the history, Ctrl+R searches it, Ctrl+T swaps two letters, Ctrl+O runs a line
- *  again. A terminal that let the app have those would be a terminal nobody could
- *  type in. So everything goes to the shell except a short list - the one VS Code
+ *  again, Ctrl+D ends the input. A terminal that let the app have those would be a
+ *  terminal nobody could type in. So everything goes to the shell except a short list - the one VS Code
  *  keeps for its workbench, checked against its own `DEFAULT_COMMANDS_TO_SKIP_SHELL`:
  *
  *  - the tab and window keys: Ctrl+T (and its held chooser), Ctrl+Shift+T,
