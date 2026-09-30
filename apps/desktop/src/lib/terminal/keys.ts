@@ -8,7 +8,8 @@
  *
  *  - the tab and window keys: Ctrl+T (and its held chooser), Ctrl+Shift+T,
  *    Ctrl+Tab, Ctrl+PageUp and PageDown with and without Shift, the numbered tabs;
- *  - the palette on Ctrl+P and Ctrl+Shift+P, the settings on Ctrl+comma, full screen;
+ *  - the palette on Ctrl+P and Ctrl+Shift+P, and on whichever keys a keyboard gives it
+ *    instead, the settings on Ctrl+comma, full screen;
  *  - F6 and Shift+F6, which is how a keyboard leaves the terminal for the rest of the
  *    window - Tab cannot be, the shell completes with it;
  *  - the panes, on Ctrl+Alt and an arrow;
@@ -71,7 +72,9 @@ const APP_KEYS = new Set([
   'app.move-tab-left',
   'app.move-tab-right',
   'app.palette',
+  'app.palette.alt',
   'app.commands',
+  'app.commands.alt',
   'app.settings',
   'app.fullscreen',
   'app.region-next',
