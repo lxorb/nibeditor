@@ -839,7 +839,6 @@ mod mac {
     #[cfg(test)]
     mod tests {
         use super::{read_from, segment};
-        use std::path::Path;
 
         /// The store is a file somebody was handed, and every name in it is a name
         /// it chose: the one on the way out is joined onto the space's `assets/`,
@@ -868,7 +867,7 @@ mod mac {
         /// four notes in it. Built by `scripts/apple-notes-fixture.py`, which says
         /// what each row is for.
         fn fixture() -> std::path::PathBuf {
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/apple-notes")
+            crate::app_dir().join("tests/apple-notes")
         }
 
         #[test]
