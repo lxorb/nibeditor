@@ -136,7 +136,10 @@ impl Places {
 
     /// The places of the running app.
     pub fn app(app: &AppHandle) -> Option<Self> {
-        Self::of(&app.config().identifier, &app.package_info().version.to_string())
+        Self::of(
+            &app.config().identifier,
+            &app.package_info().version.to_string(),
+        )
     }
 
     /// The folder this version's Chromium build is in.
@@ -209,7 +212,13 @@ pub enum Launch {
 /// `handed` is a launch another build started, which never hands on again. `installed`
 /// is whether this version's Chromium build is there, and `launcher` whether the
 /// system's build is known to a Chromium one.
-pub fn decide(this: Engine, choice: &Choice, handed: bool, installed: bool, launcher: bool) -> Launch {
+pub fn decide(
+    this: Engine,
+    choice: &Choice,
+    handed: bool,
+    installed: bool,
+    launcher: bool,
+) -> Launch {
     if handed || choice.engine == this {
         return Launch::Run;
     }
@@ -485,11 +494,23 @@ mod tests {
     #[test]
     fn a_launch_runs_as_itself_when_its_engine_is_the_chosen_one() {
         assert_eq!(
-            decide(Engine::System, &chosen(Engine::System, 0), false, true, false),
+            decide(
+                Engine::System,
+                &chosen(Engine::System, 0),
+                false,
+                true,
+                false
+            ),
             Launch::Run
         );
         assert_eq!(
-            decide(Engine::Chromium, &chosen(Engine::Chromium, 1), false, true, true),
+            decide(
+                Engine::Chromium,
+                &chosen(Engine::Chromium, 1),
+                false,
+                true,
+                true
+            ),
             Launch::Run
         );
     }
@@ -507,7 +528,10 @@ mod tests {
         } else {
             Launch::Run
         };
-        assert_eq!(decide(Engine::System, &wanted, false, true, false), expected);
+        assert_eq!(
+            decide(Engine::System, &wanted, false, true, false),
+            expected
+        );
     }
 
     #[test]
@@ -516,11 +540,23 @@ mod tests {
             return;
         }
         assert_eq!(
-            decide(Engine::System, &chosen(Engine::Chromium, TRIES - 1), false, true, false),
+            decide(
+                Engine::System,
+                &chosen(Engine::Chromium, TRIES - 1),
+                false,
+                true,
+                false
+            ),
             Launch::ToChromium
         );
         assert_eq!(
-            decide(Engine::System, &chosen(Engine::Chromium, TRIES), false, true, false),
+            decide(
+                Engine::System,
+                &chosen(Engine::Chromium, TRIES),
+                false,
+                true,
+                false
+            ),
             Launch::FallBack
         );
     }
@@ -528,11 +564,23 @@ mod tests {
     #[test]
     fn a_handed_launch_never_hands_on() {
         assert_eq!(
-            decide(Engine::System, &chosen(Engine::Chromium, 0), true, true, true),
+            decide(
+                Engine::System,
+                &chosen(Engine::Chromium, 0),
+                true,
+                true,
+                true
+            ),
             Launch::Run
         );
         assert_eq!(
-            decide(Engine::Chromium, &chosen(Engine::System, 0), true, true, true),
+            decide(
+                Engine::Chromium,
+                &chosen(Engine::System, 0),
+                true,
+                true,
+                true
+            ),
             Launch::Run
         );
     }
@@ -540,8 +588,14 @@ mod tests {
     #[test]
     fn chromium_hands_back_only_to_a_system_build_it_knows() {
         let back = chosen(Engine::System, 0);
-        assert_eq!(decide(Engine::Chromium, &back, false, true, true), Launch::ToSystem);
-        assert_eq!(decide(Engine::Chromium, &back, false, true, false), Launch::Run);
+        assert_eq!(
+            decide(Engine::Chromium, &back, false, true, true),
+            Launch::ToSystem
+        );
+        assert_eq!(
+            decide(Engine::Chromium, &back, false, true, false),
+            Launch::Run
+        );
     }
 
     #[test]
@@ -559,7 +613,11 @@ mod tests {
         assert_eq!(read(&path), written);
 
         std::fs::write(&path, "{ half").expect("broken");
-        assert_eq!(read(&path).engine, Engine::System, "an unreadable choice is no choice");
+        assert_eq!(
+            read(&path).engine,
+            Engine::System,
+            "an unreadable choice is no choice"
+        );
     }
 
     #[test]

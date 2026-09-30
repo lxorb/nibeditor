@@ -66,14 +66,14 @@ describe('the engine build', () => {
   /** Every dependency the app has, with the Tauri family on the engine's pins: a crate
    *  added to the app is a crate the engine build would be missing, and this says so
    *  with the fix in its message. */
-  test('its dependencies are the app\'s, as scripts/engine-manifest.ts writes them', () => {
+  test("its dependencies are the app's, as scripts/engine-manifest.ts writes them", () => {
     expect(
       engine,
       'apps/desktop/src-tauri/cef/Cargo.toml is out of date: run `node scripts/engine-manifest.ts`',
     ).toBe(engineManifest(cargo, engine))
   })
 
-  test('it is the only manifest that names the engine, and it compiles the app\'s own library', () => {
+  test("it is the only manifest that names the engine, and it compiles the app's own library", () => {
     expect(engine).toMatch(/^tauri-runtime-cef = /m)
     expect(engine).toContain('path = "../src/lib.rs"')
     expect(engine).toContain('default = ["cef"]')

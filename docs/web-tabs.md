@@ -1121,7 +1121,7 @@ What a store is, per engine (`apps/desktop/src-tauri/src/web_stores.rs`):
 | Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/<name>`, a user data folder of its own |
 | Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/<name>`, a web context of its own |
 | macOS 14+ (`WKWebView`) | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name |
-| nib's own Chromium (`cef`) | the primary profile | **the primary profile** - the runtime cannot be asked for a profile per tab yet |
+| nib's own Chromium (`cef`) | the primary profile, `<config>/chromium/Default` | `<config>/chromium/store-<name>`, a profile of its own in the one browser process |
 
 On Windows a store of its own is a user data folder rather than a `WebView2` profile,
 because the runtime has no way to name a profile for a webview it builds. It costs a

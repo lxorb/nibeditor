@@ -64,11 +64,27 @@ export async function stageUpdate(channel: Channel): Promise<string | null> {
 
     await update.download()
     staged = update
+    void engineFor(update.version)
     return update.version
   } catch {
     // No network, no release yet, or a signature that did not verify. Any of
     // those simply means carrying on with the version already installed.
     return null
+  }
+}
+
+/** Where nib runs on its own Chromium, that engine for the version about to be
+ *  installed, fetched now rather than when the new version starts - so the two are
+ *  never out of step, which is what JetBrains' runtimes get wrong. Nothing where the
+ *  system's engine is chosen; and a fetch that fails leaves the next launch on the
+ *  system's engine, where the Browser row offers it again. See
+ *  src-tauri/src/engine_switch/fetch.rs. */
+async function engineFor(version: string) {
+  try {
+    const state = await invoke<{ chosen: string }>('engine_state')
+    if (state.chosen === 'chromium') await invoke('engine_fetch', { version })
+  } catch {
+    // The launch after the update runs on the system's engine and says so.
   }
 }
 

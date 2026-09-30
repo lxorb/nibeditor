@@ -40,7 +40,8 @@ use tauri::{AppHandle, Emitter, Manager};
 use super::{Places, State};
 
 /// The file written into a folder once everything in it is in place. A folder without
-/// it is one a fetch was interrupted in, and is fetched again.
+/// it is one a fetch was interrupted in, and is fetched again. A version's says which
+/// runtime its files are linked from, so the runtime is kept while the version is.
 pub const READY: &str = ".ready";
 
 /// Where this project's release files are served from; see updates.rs.
@@ -161,7 +162,8 @@ pub fn verified(path: &Path, signature: &str, key: &str) -> Result<(), String> {
         return stream.finalize().map_err(refused);
     }
     let mut whole = Vec::new();
-    file.read_to_end(&mut whole).map_err(|error| error.to_string())?;
+    file.read_to_end(&mut whole)
+        .map_err(|error| error.to_string())?;
     key.verify(&whole, &signature, true).map_err(refused)
 }
 
@@ -201,15 +203,22 @@ fn linked(from: &Path, to: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// Every engine folder that is not this version's or the runtime it uses: what earlier
-/// versions left behind. Whatever is still running from one is left where it is.
-fn pruned(places: &Places, runtime: &str) {
-    let Ok(entries) = std::fs::read_dir(&places.engines) else {
+/// Every engine folder but the versions in `keep` and the runtimes they use: what
+/// earlier versions left behind. The running app's version is always among `keep`, so a
+/// Chromium that is running is never taken from under itself - and an update fetched
+/// ahead of its install keeps the version that is running until the next launch.
+fn pruned(engines: &Path, keep: &[&str]) {
+    let used: Vec<String> = keep
+        .iter()
+        .filter_map(|version| std::fs::read_to_string(engines.join(version).join(READY)).ok())
+        .map(|runtime| runtime.trim().to_string())
+        .collect();
+    let Ok(entries) = std::fs::read_dir(engines) else {
         return;
     };
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().to_string();
-        if name != places.version && name != runtime {
+        if !keep.contains(&name.as_str()) && !used.contains(&name) {
             let _ = std::fs::remove_dir_all(entry.path());
         }
     }
@@ -217,10 +226,7 @@ fn pruned(places: &Places, runtime: &str) {
 
 /// The folder name a runtime archive is unpacked into.
 pub fn runtime_folder(archive: &Archive) -> String {
-    archive
-        .name
-        .trim_end_matches(".tar.gz")
-        .to_string()
+    archive.name.trim_end_matches(".tar.gz").to_string()
 }
 
 impl Fetching {
@@ -318,7 +324,12 @@ async fn fetch(app: &AppHandle, places: &Places) -> Result<(), String> {
     crate::paths::made(&places.engines)?;
     let runtime = places.engines.join(runtime_folder(&wanted.runtime));
     let needs_runtime = !runtime.join(READY).is_file();
-    let total = wanted.app.size + if needs_runtime { wanted.runtime.size } else { 0 };
+    let total = wanted.app.size
+        + if needs_runtime {
+            wanted.runtime.size
+        } else {
+            0
+        };
 
     if needs_runtime {
         let archive = places.engines.join(&wanted.runtime.name);
@@ -333,7 +344,11 @@ async fn fetch(app: &AppHandle, places: &Places) -> Result<(), String> {
     }
 
     let archive = places.engines.join(&wanted.app.name);
-    let before = if needs_runtime { wanted.runtime.size } else { 0 };
+    let before = if needs_runtime {
+        wanted.runtime.size
+    } else {
+        0
+    };
     downloaded(app, &client, &base, &wanted.app, &archive, before, total).await?;
 
     let folder = places.chromium();
@@ -344,23 +359,29 @@ async fn fetch(app: &AppHandle, places: &Places) -> Result<(), String> {
     unpacked(&archive, &staged)?;
     let _ = std::fs::remove_file(&archive);
     let _ = std::fs::remove_file(staged.join(READY));
-    std::fs::write(staged.join(READY), b"").map_err(|error| error.to_string())?;
+    std::fs::write(staged.join(READY), runtime_folder(&wanted.runtime))
+        .map_err(|error| error.to_string())?;
     let _ = std::fs::remove_dir_all(&folder);
     std::fs::rename(&staged, &folder).map_err(|error| error.to_string())?;
 
-    pruned(places, &runtime_folder(&wanted.runtime));
+    let running = app.package_info().version.to_string();
+    pruned(&places.engines, &[&places.version, &running]);
     Ok(())
 }
 
-/// Fetches nib's own Chromium for this version of the app, unless it is here already,
-/// saying how far it has got on `nib://engine-progress`. Answers the Browser row's state
-/// once it is in place.
+/// Fetches nib's own Chromium for this version of the app - or for `version`, the one an
+/// update is about to install, so the engine is there when the new version starts -
+/// unless it is here already, saying how far it has got on `nib://engine-progress`.
+/// Answers the Browser row's state once it is in place.
 #[tauri::command]
-pub async fn engine_fetch(app: AppHandle) -> Result<State, String> {
+pub async fn engine_fetch(app: AppHandle, version: Option<String>) -> Result<State, String> {
     if !super::OFFERED {
         return Err("Chromium is not available on this system".into());
     }
-    let places = super::places(&app)?;
+    let mut places = super::places(&app)?;
+    if let Some(version) = version {
+        places.version = version;
+    }
     let fetching = app.state::<Fetching>();
     if fetching.running.swap(true, Ordering::SeqCst) {
         return Err("Chromium is already being fetched".into());
@@ -377,7 +398,8 @@ pub async fn engine_fetch(app: AppHandle) -> Result<State, String> {
         fetch(&app, &places).await
     };
     fetching.running.store(false, Ordering::SeqCst);
-    done.map(|()| super::state(&places))
+    done?;
+    super::places(&app).map(|running| super::state(&running))
 }
 
 /// Stops a fetch that is running. What it had downloaded is thrown away.
@@ -395,7 +417,11 @@ mod tests {
     #[test]
     fn a_version_is_fetched_from_the_release_it_came_from() {
         assert_eq!(release("0.9.2"), "v0.9.2");
-        assert_eq!(release("0.9.2-431"), "edge", "a build of main is on the rolling release");
+        assert_eq!(
+            release("0.9.2-431"),
+            "edge",
+            "a build of main is on the rolling release"
+        );
     }
 
     #[test]
@@ -426,6 +452,33 @@ mod tests {
     }
 
     #[test]
+    fn pruning_keeps_the_versions_asked_for_and_the_runtimes_they_use() {
+        let root = tempfile::tempdir().expect("a folder");
+        let engines = root.path();
+        for (folder, ready) in [
+            ("1.0.0", "runtime-a"),
+            ("1.1.0", "runtime-b"),
+            ("0.9.0", "runtime-old"),
+            ("runtime-a", ""),
+            ("runtime-b", ""),
+            ("runtime-old", ""),
+        ] {
+            std::fs::create_dir_all(engines.join(folder)).expect("made");
+            std::fs::write(engines.join(folder).join(super::READY), ready).expect("marked");
+        }
+
+        super::pruned(engines, &["1.1.0", "1.0.0"]);
+
+        let mut left: Vec<String> = std::fs::read_dir(engines)
+            .expect("read")
+            .flatten()
+            .map(|one| one.file_name().to_string_lossy().to_string())
+            .collect();
+        left.sort();
+        assert_eq!(left, ["1.0.0", "1.1.0", "runtime-a", "runtime-b"]);
+    }
+
+    #[test]
     fn a_version_folder_is_the_runtime_linked_in_and_the_app_unpacked_over_it() {
         let root = tempfile::tempdir().expect("a folder");
         let runtime = root.path().join("runtime");
@@ -448,7 +501,13 @@ mod tests {
             tarball
                 .append_data(&mut header, "nib-chromium.exe", &b"app"[..])
                 .expect("appended");
-            tarball.into_inner().expect("finished").finish().expect("flushed").flush().expect("synced");
+            tarball
+                .into_inner()
+                .expect("finished")
+                .finish()
+                .expect("flushed")
+                .flush()
+                .expect("synced");
         }
 
         let version = root.path().join("1.2.3");
@@ -456,11 +515,17 @@ mod tests {
         linked(&runtime, &version).expect("linked");
         unpacked(&archive, &version).expect("unpacked");
 
-        assert_eq!(std::fs::read(version.join("libcef.dll")).expect("there"), b"engine");
+        assert_eq!(
+            std::fs::read(version.join("libcef.dll")).expect("there"),
+            b"engine"
+        );
         assert_eq!(
             std::fs::read(version.join("locales").join("en-US.pak")).expect("there"),
             b"words"
         );
-        assert_eq!(std::fs::read(version.join("nib-chromium.exe")).expect("there"), b"app");
+        assert_eq!(
+            std::fs::read(version.join("nib-chromium.exe")).expect("there"),
+            b"app"
+        );
     }
 }

@@ -140,7 +140,9 @@ jobs:
         run: cargo build --manifest-path apps/desktop/src-tauri/Cargo.toml --release
 
       - name: The engine
-        run: bash apps/desktop/src-tauri/cef/engine.sh "$(rustc -vV | sed -n 's/^host: //p')"
+        run: |
+          host=$(rustc -vV | sed -n 's/^host: //p')
+          bash apps/desktop/src-tauri/cef/engine.sh "$host"
 
       - name: Where a run's spaces go
         run: echo "NIB_SPACES_DIR=${{ runner.temp }}/nib-spaces" >>"$GITHUB_ENV"

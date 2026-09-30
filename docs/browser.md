@@ -50,6 +50,92 @@ engine costs **170 ms** on Windows and **1006 ms** on a macOS runner.
 
 ---
 
+## 0. Where it stands: the engine is a setting (2026-09-30)
+
+Emil, 2026-09-30: *"For the chromium engine: it should for now be possible to switch
+between chromium and the alternative."* So nib's own Chromium is not the app's engine
+yet; it is one of two, and **Settings > General > Browser > Engine** chooses:
+`Chromium | Edge` on Windows, `Chromium | Safari` on a Mac, no row on Linux.
+
+**Two builds of one source.** The app that ships stays on Tauri 2 and the system's
+engine, byte for byte. `nib-chromium` is the same `src/lib.rs` compiled a second time,
+against Tauri 3 and `tauri-runtime-cef` from crates.io, by the package in
+`apps/desktop/src-tauri/cef` - whose dependency list is the app's own, written by
+`scripts/engine-manifest.ts` and held to it by `apps/desktop/test/cef.test.ts`. The
+five pins (`tauri`, `tauri-runtime-cef`, `tauri-build`, the plugins, `cef`) are the
+one thing that manifest says for itself, and `cef/bump.py` moves them to the newest set
+that was built together. No checkout, no patch, no `upstream.py`: the day
+`tauri-runtime-cef` was published is the day that went.
+
+**The switch** is `src/engine_switch.rs`. The choice is a file read before Tauri or
+Chromium does anything; the build the system starts hands the launch to the other one
+where that one is chosen and there. A relaunch quits the careful way and the next launch
+waits for the lock the running app holds, so two engines never run on one set of notes.
+A Chromium that never gets as far as its window twice in a row is given up on, and the
+row says so. A second launch while either engine runs reaches the running app.
+
+**Fetched, not installed.** Chromium is ~415 MB on disk, so it is not in any installer.
+Each release carries, per platform, the engine's runtime (fetched when it moves) and the
+app built on it (a few MB, fetched with every version), both signed with the updater's
+key and checked before a byte is unpacked; `src/engine_switch/fetch.rs`,
+`cef/pack.py`, `scripts/chromium-manifest.mjs` and the `chromium` job of
+`release.yml`. The row fetches it the first time Chromium is chosen, with a ring that
+fills and stops it when pressed.
+
+**Batch 2's blockers.** Both are gone on Windows, and neither was upstream's:
+
+- *"A web tab leaves the main thread blocked"* was nib's own title handler asking the
+  webview for its address (`view.url()`) from inside the engine's event. On Chromium
+  that event runs on the thread the question waits on; the app wedged a second after its
+  first web tab, on a fresh profile every time. The page's last load says where it is
+  now (`address_now` in web_tabs.rs). The same kind of wait wedged a second launch, in
+  the single instance plugin's window procedure, and that launch is now answered in a
+  turn of the event loop of its own (`second_launch_heard` in launch.rs). The rule for
+  anything that runs inside one of the engine's events: ask no window and no webview
+  anything; hand the work to a thread or to the event loop.
+- *"A web tab never loads on macOS"* is not measured here; this machine is Windows, and
+  the Mac is `cef.yml`'s.
+
+**The isolated world, on both engines.** A web tab is built on `about:blank`, the
+runtime's scripts are taken back over the engine's `DevTools` protocol the way
+`WebView2`'s are, nib's own run in a world named `nib`, and frames from other sites are
+followed (`web_worlds.rs`, over `engine/devtools.rs`). The runtime's `window.ipc` is
+the one thing the protocol cannot take back - it is put in every world of every page by
+the runtime's own renderer - so nib runs its own renderer (`cef/src/helper.rs`) that
+gives it to the top frame of nib's interface and nothing else. Measured: a web tab's
+page has no `ipc`, `isTauri` or `__TAURI_INTERNALS__`, in its world or in nib's.
+
+**What each web-tab feature does on Chromium:**
+
+| | on Chromium |
+| --- | --- |
+| loading, back and forward, the trail, revived places | the same code |
+| downloads | the runtime's own download events, into nib's list; no progress bar while one runs |
+| find in page | in nib's world, not the page's |
+| zoom | the engine's own |
+| mute | the browser's own sound off (`set_audio_muted`), not the page's media |
+| the site's mark | read in nib's world |
+| Ctrl+click, the middle button, page-first keys (Ctrl+F, Ctrl+L, Alt+D, F3, Ctrl+D), a modifier tapped twice | nib's script, asking through a binding only nib's world has (`web_opens::BINDING`) |
+| Ctrl+T, Ctrl+W, Ctrl+Tab and the browser's other chords with the keyboard in a page | a keyboard hook on the app's thread, held to the same `meaning` as `WebView2`'s event (Windows) |
+| cookies, logins, stores per space | a Chromium profile per store (`<config>/chromium/Default`, `store-<name>`), nib's interface in `app` |
+| popups a sign-in asks for | a tab, as every other window a page asks for; a sized popup window is `WebView2`'s alone |
+| `alert`, `confirm`, `prompt` and a site's permission requests | Chromium's own, in the page |
+| PDF export | the system's print panel, as before |
+| web state for sync v2 | not yet: `web_state` is written against `WebView2` and WebKit; the `DevTools` door it would need is `engine/devtools.rs` |
+
+**The launch**, measured through `run_probe` on this machine (Snapdragon X Elite,
+release builds, `scripts/engine-switch-probe.py`): a launch with Chromium chosen is at
+its window in 263-699 ms, the hand-over included (reading the choice costs 4 ms); the
+system's engine 449-1100 ms on the same runs, the spread being the machine's. A switch
+is about a second of quitting and a launch.
+
+**What still stands between this and Chromium as the default:** Windows runs it
+**without Chromium's sandbox** (the runtime passes no broker; a sandboxed CEF app is a
+DLL `bootstrap.exe` hosts), H.264 is not in CEF's builds, and Linux has no row. Section
+10 has the rest.
+
+---
+
 ## 1. What the engines can actually do
 
 Every number and every claim below was read out of a primary source on
@@ -1865,25 +1951,27 @@ shape that will actually ship rather than in a standalone program.
   profiles are necessary and not sufficient. It is the one batch 2 criterion still
   answered no, and it makes batch 4's install the per-profile preference tree rather
   than a switch. Section 8.
-- **A webview's own title handler is never called under `tauri-runtime-cef`**, where a
-  window's is. To report upstream; the gate reads titles off a window because of it.
-- **A second web tab hangs on Windows under the flag.** The first opens; the second
-  never returns from `add_child`, with CEF's *"Timeout of new browser info response for
-  frame"* before it. Upstream's, and the same runtime opens five webviews in one window
-  on a Mac.
-- **Tauri's plugins cannot be resolved against the branch's `tauri`**, because every
-  one that supports iOS asks for a `wry` feature the branch removed. One empty
-  feature repairs it and batch 1 carries the repair in
-  `apps/desktop/src-tauri/cef/upstream.py`; until it is upstream, nib's flagged build
-  depends on a patch against somebody else's branch. Section 8.
-- **`tauri-runtime-cef 3.0.0-alpha.0` is published, and nib cannot use it**: the
-  alpha is built against `tauri 3.0.0-alpha.0` and no plugin has a release on that
-  line. Moving nib to Tauri 3 is the clean door and it is a decision, not a bump.
-  Section 7.
-- **The engine is CEF 151 and CEF's own stable is 152.** The branch pins
-  `cef = "=151.8.1"`, so the flagged build is one CEF milestone behind CEF and two or
-  three behind Chrome. It moves when the branch moves, which is what `cef-bump.yml`
-  watches.
+- ~~A second web tab hangs on Windows under the flag~~ - **nib's own, and fixed**: a
+  title handler asked the webview its address from inside the engine's event; see
+  section 0. The runtime's *"Timeout of new browser info response"* lines are still
+  logged for Chrome's own omnibox views and mean nothing for the pages.
+- **The engine build is on Tauri 3 alphas.** `tauri-runtime-cef` and every plugin nib
+  takes are published for Tauri 3 only, so the engine build is a second manifest for the
+  same source (section 0) until Tauri 3 is released - then the two builds are one binary
+  that picks its runtime as it starts (`tauri::DynRuntime`). The plugins' newest alpha is
+  built against `tauri 3.0.0-alpha.2`, and `tauri-plugin-dialog` does not compile
+  against alpha.3, so the pins stay on alpha.2 (`tauri-runtime-cef` alpha.2, CEF 152.0.6)
+  until the plugins move; `cef-bump.yml` notices the day they do.
+- **The runtime gives every page `window.ipc`**, in every world, from its own renderer.
+  nib runs a renderer of its own that does not (`cef/src/helper.rs`) and speaks the
+  runtime's message name to its browser side; a runtime that renames the message is a
+  build whose interface never answers, which the first launch shows.
+- **A reserved chord in a page has no event on the runtime**, so on Windows a keyboard
+  hook on the app's thread hears them (`web_keys::chromium`); a Mac has the menu bar.
+  To report upstream: an `on_chrome_command` or a key event on `WebviewBuilderCefExt`
+  would replace the hook.
+- **A web tab has no download progress on Chromium**: the runtime reports a download
+  started and finished, and nothing between.
 - **PDF export does not work under the flag.** It talks to `WebView2`'s print engine,
   which is not the engine any more; `pdf_supported` says no and the window falls back
   to the system's print panel. Chromium's own `PrintToPDF` is batch 6.

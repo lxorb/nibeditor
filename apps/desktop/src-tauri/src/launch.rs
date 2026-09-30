@@ -178,7 +178,7 @@ fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
         bring_forward(&window);
     }
 
-    hand_over(app, Handed::Pages, handed_by(&argv));
+    hand_over(app, Handed::Pages, handed_by(argv));
 }
 
 /// What arrived for the app, from whichever way it came, opened in the window in
