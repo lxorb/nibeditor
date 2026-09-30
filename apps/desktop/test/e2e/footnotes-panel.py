@@ -1,9 +1,10 @@
-"""The Footnotes panel, seen in the built app: the fifth tab the sidebar has.
+"""The Footnotes panel, seen in the built app: one of the note's panels on the right.
 
 What this drives:
 
-  * The strip holds five tabs, and the fifth opens a panel of the note's footnotes:
-    a row each, the label, what it says, and how many there are in the heading.
+  * The right side's strip holds the note's five panels, and Footnotes opens a panel
+    of the note's footnotes: a row each, the label, what it says, and how many there
+    are in the heading.
   * A row goes to the mark in the words. The sign at the end of it goes to the
     definition at the bottom, which is the one thing the section inside the Outline
     had no room to offer.
@@ -237,9 +238,11 @@ def the_strip(page: Page) -> None:
     show(page, "footnotes")
     tabs = page.evaluate(TABS)
     say(f"[strip] {json.dumps(tabs)}")
+    # A note's own panels are homed on the right since 4a5f7ddc, beside Ask, and the
+    # footnotes are one of them; the file list and the search stay on the left.
     is_true(
-        tabs == ["Files", "Outline", "Search", "Links", "Footnotes"],
-        f"the strip holds {tabs} rather than the five the sidebar has",
+        tabs == ["Outline", "Links", "Properties", "Footnotes", "Ask"],
+        f"the strip holds {tabs} rather than the note's five on the right",
     )
 
 
