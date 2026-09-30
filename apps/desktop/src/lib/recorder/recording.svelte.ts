@@ -103,6 +103,10 @@ class Recorder {
   retrying = $state(false)
 
   private ticking: ReturnType<typeof setInterval> | undefined
+  /** A stop pressed while the microphone was still being opened, kept until it is
+   *  open: there is nothing to stop before then, and a stop that went nowhere let the
+   *  recording start anyway and run until somebody pressed it again. */
+  private stopAsked = false
   private started = new Date()
   /** When the run started, by the clock the elapsed time is measured on. A monotonic
    *  one, because a laptop that changes its mind about the date mid recording must not
@@ -174,9 +178,12 @@ class Recorder {
       this.ticking = setInterval(() => {
         this.elapsed = (performance.now() - this.at) / 1000
       }, TICK)
+
+      if (this.stopAsked) void this.stop()
     } catch (error) {
       this.on = false
       this.held = null
+      this.stopAsked = false
       settings.error = message(error, key('That microphone could not be opened.'))
     }
   }
@@ -205,8 +212,15 @@ class Recorder {
   async stop() {
     const held = this.held
     const path = this.path
-    if (!held || !this.on) return
+    if (!this.on) return
 
+    // Still opening: stopped the moment it is open; see `stopAsked`.
+    if (!held) {
+      this.stopAsked = true
+      return
+    }
+
+    this.stopAsked = false
     this.on = false
     this.saving = true
     this.held = null
