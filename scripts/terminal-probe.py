@@ -15,9 +15,15 @@ the window itself, and so reaches what the window reaches; see docs/terminal.md)
 * **PowerShell** does the same, and says how wide its console is before and after the
   window is made narrower: the resize reaches the shell.
 * **A running command** is busy (`ping`), Ctrl+C stops it, and then it is not.
-* **Ctrl+T** in a terminal is the app's; **Ctrl+W** is the shell's and closes nothing.
-* **Closing** the tab ends its shell, and **`exit`** in PowerShell closes its own tab;
-  afterwards no shell and no console host of this app is left running.
+* **Ctrl+T** in a terminal is the app's, and its dialog has the terminal's card;
+  **Ctrl+W** is the shell's and closes nothing.
+* **A right click** is the terminal's own menu, and **a row of the file list dropped** on
+  it is its quoted path at the prompt.
+* **The plus** has the terminal's row, and its chevron lists every shell found.
+* **`exit`** in PowerShell closes its own tab; **quitting** asks nothing and leaves no
+  shell running; **the next launch** puts the terminal back in the folder it was last in,
+  with its last lines; and **closing the tab** ends its shell, with no shell and no
+  console host of this app left running.
 
 A photograph of the window is written to `--shots`, off the app's own window and by pid.
 
@@ -288,6 +294,47 @@ def main() -> int:
         window.chord("w", "KeyW", 87)
         time.sleep(0.5)
         check(cmd in window.open_tabs(), "Ctrl+W in a terminal is the shell's and closes nothing")
+
+        # A right click is the terminal's own menu.
+        window.run(
+            "(() => { const screen = document.querySelector('.xterm-screen'); const box = screen.getBoundingClientRect(); "
+            "screen.dispatchEvent(new MouseEvent('contextmenu', { clientX: box.left + 40, clientY: box.top + 40, button: 2, bubbles: true, cancelable: true })); "
+            "return true })()"
+        )
+        menu = until(
+            lambda: window.run(
+                "JSON.stringify([...document.querySelectorAll('.menu [role=menuitem]')].map((one) => one.textContent.trim().split(/\\s{2,}|Ctrl|⌘/)[0].trim()))"
+            )
+            if window.run("!!document.querySelector('.menu')") is True
+            else None,
+            5,
+        )
+        check(
+            isinstance(menu, str) and all(word in menu for word in ("Copy", "Paste", "Select all", "Find", "Clear")),
+            f"a right click is the terminal's own menu ({menu})",
+        )
+        window.run(
+            "(() => { window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })); return true })()"
+        )
+        time.sleep(0.4)
+
+        # A row of the file list dropped on it is its path at the prompt, quoted for cmd.
+        note = str(spaces / SPACE / "A note.md")
+        window.run(
+            "(() => { const transfer = new DataTransfer(); "
+            f"transfer.setData('text/nib-path', {json.dumps(note)}); "
+            "const host = document.querySelector('.nib-terminal'); const box = host.getBoundingClientRect(); "
+            "host.dispatchEvent(new DragEvent('drop', { dataTransfer: transfer, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2, bubbles: true, cancelable: true })); "
+            "return true })()"
+        )
+        # Compared without spaces, since a long line wraps and a row's trailing space is
+        # not part of what the screen reads back.
+        wanted = f'"{note}"'.replace(" ", "")
+        typed_path = until(lambda: wanted in "".join(window.rows()).replace(" ", ""), 10)
+        check(bool(typed_path), "a row dropped on the terminal is its quoted path at the prompt")
+        # Escape clears Command Prompt's line again.
+        window.typed("\x1b")
+        time.sleep(0.4)
 
         shoot = shots / "terminal-cmd.png"
         tabs.shoot(app.pid, shoot)
