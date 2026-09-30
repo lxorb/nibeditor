@@ -405,6 +405,12 @@ fn build(app: &AppHandle, tab: &Tab, address: Option<&Url>) -> Result<(), String
                 let Some(core) = cdp::core_of(&platform) else {
                     return;
                 };
+                // Every script the runtime registered on the page taken back before
+                // anything else is put on it, the way a reader's tab is (web_worlds.rs):
+                // the dialog plugin's `alert` and `confirm` with them, so a page's dialogs
+                // reach the engine and the agent rather than the app. Then the page's own
+                // stubs, and then the site, all in this one turn of the window's thread.
+                let _ = crate::web_worlds::cleared(&platform, "");
                 quiet::quieten(&setting, &core, &owner);
                 cdp::follow(&core, &owner.label);
                 listen(&setting, &core, &owner);
