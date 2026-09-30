@@ -279,6 +279,7 @@ export const fr: Dictionary = {
   },
   'on this device': 'sur cet appareil',
   '{count} notes': { one: '{count} note', many: '{count} de notes', other: '{count} notes' },
+  '{count} tabs': { one: '{count} onglet', many: '{count} d’onglets', other: '{count} onglets' },
   'Empty Recently deleted?': 'Vider Supprimés récemment ?',
   'Everything in it is gone for good.': 'Tout ce qui s’y trouve disparaît pour de bon.',
   'could not reach the server': 'Impossible de joindre le serveur',

@@ -274,6 +274,7 @@ export const sw: Dictionary = {
   },
   'on this device': 'kwenye kifaa hiki',
   '{count} notes': { one: 'dokezo {count}', other: 'madokezo {count}' },
+  '{count} tabs': { one: '{count} kichupo', other: '{count} vichupo' },
   'Empty Recently deleted?': 'Mwaga Vilivyofutwa hivi karibuni?',
   'Everything in it is gone for good.': 'Kila kilichomo kinapotea kabisa.',
   'could not reach the server': 'seva haikufikiwa',

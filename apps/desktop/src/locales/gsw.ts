@@ -271,6 +271,7 @@ export const gsw: Dictionary = {
   'gone in {count} days': { one: 'in {count} Tag wäg', other: 'in {count} Täg wäg' },
   'on this device': 'uf dem Grät',
   '{count} notes': { one: '{count} Notiz', other: '{count} Notize' },
+  '{count} tabs': { one: '{count} Tab', other: '{count} Tabs' },
   'Empty Recently deleted?': 'Zletscht glöscht leere?',
   'Everything in it is gone for good.': 'Alles drin isch für immer wäg.',
   'could not reach the server': 'De Server isch nöd z erreiche gsi',

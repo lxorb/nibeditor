@@ -271,6 +271,7 @@ export const ta: Dictionary = {
   'gone in {count} days': { one: '{count} நாளில் மறையும்', other: '{count} நாட்களில் மறையும்' },
   'on this device': 'இந்தச் சாதனத்தில்',
   '{count} notes': { one: '{count} குறிப்பு', other: '{count} குறிப்புகள்' },
+  '{count} tabs': { one: '{count} தாவல்', other: '{count} தாவல்கள்' },
   'Empty Recently deleted?': 'சமீபத்தில் நீக்கியவற்றைக் காலிசெய்யவா?',
   'Everything in it is gone for good.': 'அதில் உள்ள அனைத்தும் நிரந்தரமாக மறைந்துவிடும்.',
   'could not reach the server': 'சேவையகத்தை அணுக முடியவில்லை',

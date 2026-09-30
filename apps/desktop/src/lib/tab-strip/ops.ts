@@ -9,9 +9,7 @@ import { folderOf } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
 import { Tab } from '../workspace/documents.svelte'
-import { closesPinned } from '../workspace/closing-pinned'
 import { nextPane } from '../workspace/pane-tree'
-import { chosen } from './chosen.svelte'
 
 /** Chrome's and Obsidian's duplicate: right after the tab and in front, a second view
  *  of the one document, where the tab was in it - the caret, the trail, the page of a
@@ -73,56 +71,4 @@ export function renameFromTab(id: string) {
   workspace.showPanel('tree')
   if (folderOf(row) !== workspace.activeSpace?.root) workspace.revealFolder(folderOf(row))
   workspace.startRenaming(row)
-}
-
-/* ── Several tabs at once ─────────────────────────────────────────
-   What a pick of tabs does together; see chosen.svelte.ts. */
-
-/** Several tabs put down together, in their own order, in front of one tab of a pane or
- *  at its end, from wherever each of them was: a drag of a pick, let go. The last goes
- *  first and each of the others in front of the one after it, which is the one order in
- *  which every `moveTab` lands where it was meant to. The first of them is in front. */
-export function placeBlock(ids: readonly string[], paneId: string, before: string | null) {
-  let next = before
-  for (const id of [...ids].reverse()) {
-    const strip = workspace.tabsIn(paneId).filter((one) => one.id !== id)
-    const at = next === null ? -1 : strip.findIndex((one) => one.id === next)
-    workspace.moveTab(id, paneId, at < 0 ? strip.length : at)
-    next = id
-  }
-}
-
-/** A pick carried to the other pane, in its order, and still picked there. */
-export function moveManyToOtherPane(ids: readonly string[]) {
-  const [first] = ids
-  if (first === undefined) return
-
-  moveToOtherPane(first)
-  const paneId = workspace.tabs.find((one) => one.id === first)?.paneId
-  if (!paneId) return
-
-  placeBlock(ids, paneId, null)
-  chosen.paneId = paneId
-}
-
-/** Each tab of a pick duplicated, each beside itself. */
-export function duplicateMany(ids: readonly string[]) {
-  for (const id of ids) duplicateTab(id)
-}
-
-/** A pick pinned, or let go of, together: Pin while any of them is not, as Chrome's row
- *  says. Pinned in their order, each joining the back of the run, and let go of the
- *  other way round, each landing at the front of what is not pinned - so the order the
- *  strip had is the order it keeps. */
-export function pinMany(tabs: readonly Tab[]) {
-  const pinning = tabs.some((one) => !one.pinned)
-  const turning = pinning ? tabs.filter((one) => !one.pinned) : [...tabs].reverse()
-  for (const one of turning) workspace.togglePin(one.id)
-}
-
-/** Ctrl+W on a pick: all of it goes, as in Chrome, with the one question a pinned tab
- *  closed by key is asked, once for the lot. */
-export async function closeChosen(tabs: readonly Tab[]) {
-  if (tabs.some((one) => one.pinned) && !(await closesPinned())) return
-  await workspace.closeMany(tabs.map((one) => one.id))
 }

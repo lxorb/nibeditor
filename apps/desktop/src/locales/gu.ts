@@ -271,6 +271,7 @@ export const gu: Dictionary = {
   'gone in {count} days': { one: '{count} દિવસમાં જશે', other: '{count} દિવસમાં જશે' },
   'on this device': 'આ ઉપકરણ પર',
   '{count} notes': { one: '{count} નોંધ', other: '{count} નોંધ' },
+  '{count} tabs': { one: '{count} ટૅબ', other: '{count} ટૅબ' },
   'Empty Recently deleted?': 'હાલમાં કાઢેલું ખાલી કરવું?',
   'Everything in it is gone for good.': 'તેમાંનું બધું કાયમ માટે જાય છે.',
   'could not reach the server': 'સર્વર સુધી પહોંચી શકાયું નહીં',

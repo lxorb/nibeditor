@@ -271,6 +271,7 @@ export const jv: Dictionary = {
   'gone in {count} days': 'ilang sawise {count} dina',
   'on this device': 'ing piranti iki',
   '{count} notes': '{count} cathetan',
+  '{count} tabs': '{count} tab',
   'Empty Recently deleted?': 'Kosongake Anyar dibusak?',
   'Everything in it is gone for good.': 'Kabeh ing njerone ilang tenan.',
   'could not reach the server': 'ora bisa nggayuh server',

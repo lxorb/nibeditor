@@ -271,6 +271,7 @@ export const te: Dictionary = {
   'gone in {count} days': { one: '{count} రోజులో పోతుంది', other: '{count} రోజుల్లో పోతుంది' },
   'on this device': 'ఈ పరికరంలో',
   '{count} notes': { one: '{count} నోట్', other: '{count} నోట్‌లు' },
+  '{count} tabs': { one: '{count} ట్యాబ్', other: '{count} ట్యాబ్‌లు' },
   'Empty Recently deleted?': 'ఇటీవల తొలగించినవి ఖాళీ చేయాలా?',
   'Everything in it is gone for good.': 'దానిలోని అన్నీ శాశ్వతంగా పోతాయి.',
   'could not reach the server': 'సర్వర్‌ను చేరుకోలేకపోయింది',

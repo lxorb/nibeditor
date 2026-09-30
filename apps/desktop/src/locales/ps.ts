@@ -271,6 +271,7 @@ export const ps: Dictionary = {
   'gone in {count} days': { one: 'په {count} ورځ کې ځي', other: 'په {count} ورځو کې ځي' },
   'on this device': 'پر دې وسيله',
   '{count} notes': { one: '{count} يادښت', other: '{count} يادښتونه' },
+  '{count} tabs': { one: '{count} ټب', other: '{count} ټبونه' },
   'Empty Recently deleted?': 'نوی ړنګ شوي تش شي؟',
   'Everything in it is gone for good.': 'په دې کې هر څه د هميشه لپاره ځي.',
   'could not reach the server': 'سرور ته ونه رسېدل',

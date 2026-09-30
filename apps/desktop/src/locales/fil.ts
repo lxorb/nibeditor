@@ -274,6 +274,7 @@ export const fil: Dictionary = {
   'gone in {count} days': { one: 'mawawala sa {count} araw', other: 'mawawala sa {count} araw' },
   'on this device': 'sa device na ito',
   '{count} notes': { one: '{count} tala', other: '{count} tala' },
+  '{count} tabs': { one: '{count} tab', other: '{count} na tab' },
   'Empty Recently deleted?': 'Walisin ang Kanina lang tinanggal?',
   'Everything in it is gone for good.': 'Tuluyan nang mawawala ang lahat sa loob.',
   'could not reach the server': 'hindi maabot ang server',

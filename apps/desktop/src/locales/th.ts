@@ -271,6 +271,7 @@ export const th: Dictionary = {
   'gone in {count} days': 'หายใน {count} วัน',
   'on this device': 'บนเครื่องนี้',
   '{count} notes': '{count} โน้ต',
+  '{count} tabs': '{count} แท็บ',
   'Empty Recently deleted?': 'ล้างรายการที่ลบล่าสุด?',
   'Everything in it is gone for good.': 'ทุกอย่างในนั้นจะหายไปถาวร',
   'could not reach the server': 'ติดต่อเซิร์ฟเวอร์ไม่ได้',

@@ -274,6 +274,7 @@ export const pa: Dictionary = {
   },
   'on this device': 'ਇਸ ਡਿਵਾਈਸ ਉੱਤੇ',
   '{count} notes': { one: '{count} ਨੋਟ', other: '{count} ਨੋਟਾਂ' },
+  '{count} tabs': { one: '{count} ਟੈਬ', other: '{count} ਟੈਬਾਂ' },
   'Empty Recently deleted?': 'ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਖ਼ਾਲੀ ਕਰਨੇ ਹਨ?',
   'Everything in it is gone for good.': 'ਇਸ ਵਿੱਚ ਸਭ ਕੁਝ ਸਦਾ ਲਈ ਚਲਾ ਜਾਂਦਾ ਹੈ।',
   'could not reach the server': 'ਸਰਵਰ ਤੱਕ ਨਹੀਂ ਪਹੁੰਚ ਸਕੇ',

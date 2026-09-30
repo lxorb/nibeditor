@@ -279,6 +279,7 @@ export const ptBR: Dictionary = {
   },
   'on this device': 'neste dispositivo',
   '{count} notes': { one: '{count} nota', many: '{count} notas', other: '{count} notas' },
+  '{count} tabs': { one: '{count} aba', many: '{count} abas', other: '{count} abas' },
   'Empty Recently deleted?': 'Esvaziar a lixeira?',
   'Everything in it is gone for good.': 'Tudo o que está nela some de vez.',
   'could not reach the server': 'não foi possível falar com o servidor',

@@ -275,6 +275,7 @@ export const de: Dictionary = {
   'gone in {count} days': { one: 'in {count} Tag weg', other: 'in {count} Tagen weg' },
   'on this device': 'auf diesem Gerät',
   '{count} notes': { one: '{count} Notiz', other: '{count} Notizen' },
+  '{count} tabs': { one: '{count} Tab', other: '{count} Tabs' },
   'Empty Recently deleted?': 'Zuletzt gelöscht leeren?',
   'Everything in it is gone for good.': 'Alles darin ist endgültig weg.',
   'could not reach the server': 'Der Server war nicht zu erreichen',

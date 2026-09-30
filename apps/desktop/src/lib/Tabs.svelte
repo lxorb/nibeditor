@@ -25,7 +25,6 @@
   import {
     type Bounds,
     endOf,
-    gathered,
     holds,
     keptWidths,
     MAGNETISM,
@@ -171,6 +170,9 @@
   )
   const base = $derived(placed(widths))
 
+  /** What a click that picks does, and what a pick does together: fetched with the first
+   *  such click, and kept, so a block let go of lands in the frame it was let go in. */
+  let picking = $state<typeof import('./tab-strip/picking') | null>(null)
   /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/chosen.svelte.ts. */
   const picked = $derived(new Set(chosen.of(paneId).map((one) => one.id)))
   /** Whether the press being held was a plain one on a picked tab, which picks that tab
@@ -181,8 +183,10 @@
    *  every tab picked with it that is pinned as it is. */
   let carrying = $state<{ lead: string; ids: readonly string[] } | null>(null)
   /** The strip as a drag of several sees it, the block standing as one tab; see
-   *  `gathered`. */
-  const group = $derived(carrying ? gathered(sized, widths, carrying.ids, carrying.lead) : null)
+   *  `gathered` in tab-strip/picking.ts, which is here by the time anything is picked. */
+  const group = $derived(
+    carrying && picking ? picking.gathered(sized, widths, carrying.ids, carrying.lead) : null,
+  )
   /** Every tab that is up: the one dragged, and a block's others with it. */
   const lifted = $derived(drag.tabId === null ? [] : (carrying?.ids ?? [drag.tabId]))
 
@@ -446,15 +450,15 @@
     const finger = event.pointerType === 'touch'
     const how = finger ? null : pickingOf(event, shortcuts.platform === 'mac')
     if (how) {
-      // Ctrl or Shift: the pick changes, and a tab taken out of it is not dragged.
-      const front = chosen.pick(paneId, tab.id, how)
-      if (front) workspace.activate(front)
-      withOps(() => undefined)
-      if (front !== tab.id) {
-        event.preventDefault()
-        return
-      }
-    } else if (!finger) {
+      // Ctrl or Shift: the pick changes, and the press drags nothing.
+      event.preventDefault()
+      withPicking((one) => {
+        const front = one.pick(paneId, tab.id, how)
+        if (front) workspace.activate(front)
+      })
+      return
+    }
+    if (!finger) {
       // Chrome activates a tab on the press, before anything has moved, so the tab
       // under a mouse answers at once and the one being dragged is the one open. A
       // press on a picked tab leaves the pick alone: it may be the start of dragging
@@ -463,7 +467,7 @@
       if (!picked.has(tab.id)) chosen.clear()
       workspace.activate(tab.id)
     }
-    plainOnPick = !how && picked.has(tab.id)
+    plainOnPick = picked.has(tab.id)
 
     const node = event.currentTarget as HTMLElement
     const top = node.closest('.tab')?.getBoundingClientRect().top ?? event.clientY
@@ -473,7 +477,7 @@
       block.length > 1 && picked.has(tab.id)
         ? { lead: tab.id, ids: block.map((one) => one.id) }
         : null
-    const gather = carrying ? gathered(sized, widths, carrying.ids, tab.id) : null
+    const gather = group
 
     grabY = event.clientY - (top + TOP)
     drag.down({
@@ -603,23 +607,20 @@
   /** A block of picked tabs let go of: side by side in their order, in front of one tab
    *  of a pane or at its end, the one dragged in front and all of them still picked. */
   function putDown(ids: readonly string[], lead: string, into: string, before: string | null) {
-    withOps((ops) => {
-      ops.placeBlock(ids, into, before)
+    withPicking((one) => {
+      one.placeBlock(ids, into, before)
       workspace.activate(lead)
       chosen.paneId = into
     })
   }
 
-  /** What a pick does together, kept once fetched so a block let go of lands in the frame
-   *  it was let go in. Fetched with the first pick; see tab-strip/ops.ts. */
-  let ops: typeof import('./tab-strip/ops') | null = null
-  function withOps(run: (loaded: typeof import('./tab-strip/ops')) => void) {
-    if (ops) {
-      run(ops)
+  function withPicking(run: (loaded: typeof import('./tab-strip/picking')) => void) {
+    if (picking) {
+      run(picking)
       return
     }
-    void import('./tab-strip/ops').then((loaded) => {
-      ops = loaded
+    void import('./tab-strip/picking').then((loaded) => {
+      picking = loaded
       run(loaded)
     })
   }

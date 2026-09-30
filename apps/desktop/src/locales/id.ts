@@ -271,6 +271,7 @@ export const id: Dictionary = {
   'gone in {count} days': 'hilang dalam {count} hari',
   'on this device': 'di perangkat ini',
   '{count} notes': '{count} catatan',
+  '{count} tabs': '{count} tab',
   'Empty Recently deleted?': 'Kosongkan Baru dihapus?',
   'Everything in it is gone for good.': 'Semua di dalamnya hilang selamanya.',
   'could not reach the server': 'tidak dapat menghubungi server',

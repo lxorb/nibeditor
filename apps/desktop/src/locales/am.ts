@@ -271,6 +271,7 @@ export const am: Dictionary = {
   'gone in {count} days': { one: 'በ{count} ቀን ይሄዳል', other: 'በ{count} ቀናት ይሄዳል' },
   'on this device': 'በዚህ መሣሪያ ላይ',
   '{count} notes': { one: '{count} ማስታወሻ', other: '{count} ማስታወሻዎች' },
+  '{count} tabs': { one: '{count} ትር', other: '{count} ትሮች' },
   'Empty Recently deleted?': 'በቅርቡ የጠፋ ይራገፍ?',
   'Everything in it is gone for good.': 'ውስጡ ያለው ሁሉ ለዘላለም ይሄዳል።',
   'could not reach the server': 'አገልጋዩ ላይ መድረስ አልተቻለም',

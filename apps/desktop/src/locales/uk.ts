@@ -286,6 +286,12 @@ export const uk: Dictionary = {
     many: '{count} нотаток',
     other: '{count} нотатки',
   },
+  '{count} tabs': {
+    one: '{count} вкладка',
+    few: '{count} вкладки',
+    many: '{count} вкладок',
+    other: '{count} вкладки',
+  },
   'Empty Recently deleted?': 'Очистити недавно видалені?',
   'Everything in it is gone for good.': 'Усе в ньому зникне назавжди.',
   'could not reach the server': 'не вдалося зв’язатися із сервером',

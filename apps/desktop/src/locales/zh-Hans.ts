@@ -271,6 +271,7 @@ export const zhHans: Dictionary = {
   'gone in {count} days': '{count}天后清除',
   'on this device': '在此设备上',
   '{count} notes': '{count}篇笔记',
+  '{count} tabs': '{count} 个标签页',
   'Empty Recently deleted?': '清空最近删除？',
   'Everything in it is gone for good.': '其中的内容将被彻底清除。',
   'could not reach the server': '无法连接服务器',
