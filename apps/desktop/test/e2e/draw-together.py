@@ -439,7 +439,12 @@ def main() -> int:
         for point in live[1:]:
             move(*point)
 
-        two.wait_for_timeout(250)
+        # Waited for rather than slept on: a busy machine takes longer than a quarter of a
+        # second to carry it, and the check below says what the other browser shows.
+        try:
+            DRIVE.wait_for(two, "!!document.querySelector('svg.hands path')", "the stroke on the other device", 10)
+        except SystemExit:
+            pass
         drawing = two.evaluate(
             """() => {
                 const layer = document.querySelector('svg.hands')
