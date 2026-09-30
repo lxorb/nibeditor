@@ -1128,7 +1128,8 @@ asks. `apps/desktop/src-tauri/cef/bump.py` is what it runs.
    release note to find out a version number.
 
 **One hand step remains, and it is upstream's fault rather than a design choice.**
-The pin is turned into a checkout by `apps/desktop/src-tauri/cef/upstream.py` instead
+The pin is turned into a checkout by `cef/upstream.py` (gone since the runtime was
+published: section 0) instead
 of being a plain git dependency, because one line has to be repaired between the
 fetch and the build: the branch removed `tauri`'s `wry` feature, and every Tauri
 plugin that supports iOS still asks for it, so Cargo refuses to resolve. Section 8's
@@ -1349,7 +1350,7 @@ dependencies whatever platform it is building for, so the missing name is a hard
 resolution failure. It is not one an application can work round: both plugins are in
 nib's graph, nib's capabilities name their permissions, and **every** published
 version of either asks for it. The repair is one empty feature, carried as three lines
-in `apps/desktop/src-tauri/cef/upstream.py` rather than a fork nib would have to host,
+in `cef/upstream.py` (gone since: section 0) rather than a fork nib would have to host,
 and it is worth sending upstream - either the branch keeps `wry` as an empty name
 until the plugins are republished, or the plugins stop naming it.
 

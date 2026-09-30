@@ -20,49 +20,55 @@
   import { invoke, platform } from '../tauri'
   import { beside, systemName, type Engine, type EngineState } from './engine'
 
-  let state = $state<EngineState | null>(null)
+  let engines = $state<EngineState | null>(null)
   let fetching = $state(false)
   /** How much of Chromium has arrived, from nought to one. */
   let arrived = $state(0)
 
   const system = systemName(platform())
-  const next = $derived(state ? beside(state, fetching) : 'nothing')
+  const next = $derived(engines ? beside(engines, fetching) : 'nothing')
+
+  /** Which fetch is the one running: stopping it moves this on, so its end is not
+   *  taken for a failure. */
+  let fetches = 0
 
   async function fetchChromium() {
+    const mine = ++fetches
     fetching = true
     arrived = 0
     try {
-      state = await invoke<EngineState>('engine_fetch')
+      engines = await invoke<EngineState>('engine_fetch')
     } catch (error) {
       // A fetch that was stopped says nothing; one that failed says why, and the choice
       // goes back to the engine that is running.
-      if (fetching && state) {
+      if (mine === fetches && engines) {
         settings.error = message(error, 'that did not work')
-        state = await invoke<EngineState>('engine_choose', { engine: state.running })
+        engines = await invoke<EngineState>('engine_choose', { engine: engines.running })
       }
     } finally {
-      fetching = false
+      if (mine === fetches) fetching = false
     }
   }
 
   async function choose(engine: Engine) {
-    if (!state || state.chosen === engine) return
+    if (!engines || engines.chosen === engine) return
     settings.error = null
     if (fetching) {
+      fetches += 1
       fetching = false
       await invoke('engine_cancel').catch(() => undefined)
     }
     try {
-      state = await invoke<EngineState>('engine_choose', { engine })
+      engines = await invoke<EngineState>('engine_choose', { engine })
     } catch (error) {
       settings.error = message(error, 'that did not work')
       return
     }
-    if (engine === 'chromium' && !state.installed) await fetchChromium()
+    if (engine === 'chromium' && !engines.installed) await fetchChromium()
   }
 
   function stop() {
-    void choose(state?.running ?? 'system')
+    void choose(engines?.running ?? 'system')
   }
 
   function relaunch() {
@@ -77,7 +83,7 @@
 
     void invoke<EngineState>('engine_state')
       .then((said) => {
-        state = said
+        engines = said
         if (said.fellBack) settings.error = 'Chromium did not start'
       })
       .catch(() => undefined)
@@ -101,7 +107,7 @@
   })
 </script>
 
-{#if state?.offered && system}
+{#if engines?.offered && system}
   <div class="engine">
     {#if next === 'relaunch'}
       <button class="nib-chip" in:fade={{ duration: dur(120) }} onclick={relaunch}>
@@ -134,8 +140,8 @@
         <button
           type="button"
           role="radio"
-          aria-checked={state.chosen === value}
-          class:on={state.chosen === value}
+          aria-checked={engines.chosen === value}
+          class:on={engines.chosen === value}
           onclick={() => void choose(value as Engine)}
         >
           {label}
