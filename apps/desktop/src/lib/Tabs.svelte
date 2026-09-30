@@ -14,6 +14,7 @@
   import { shownName } from './note-name'
   import { nameOf } from './space-paths'
   import SharedMark from './SharedMark.svelte'
+  import { heldMark } from './surfaces.svelte'
   import TabMark from './TabMark.svelte'
   import { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
@@ -888,6 +889,9 @@
                row in the tree to carry it. See SharedMark.svelte. -->
           {#if tab.note.shared && parts.title}
             <SharedMark label={t('Shared with you')} />
+          {/if}
+          {#if heldMark.asked && parts.title}
+            {#await heldMark.asked then Held}<Held path={tab.path} />{/await}
           {/if}
           <!-- Who else is in this note: one dot per other device, in the accent,
                and nothing at all while nobody is. No word, because the dots are

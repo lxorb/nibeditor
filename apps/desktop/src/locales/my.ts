@@ -1548,4 +1548,9 @@ export const my: Dictionary = {
   'Settings › AI': 'ဆက်တင် › AI',
   'New chat': 'စကားဝိုင်းအသစ်',
   'Ask again': 'ထပ်မေးရန်',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'ဤ {device}',
+  '{name} is back: {device} was writing in it':
+    '{name} ပြန်ရောက်လာပါပြီ: {device} က ၎င်းထဲတွင် ရေးနေခဲ့သည်',
 }

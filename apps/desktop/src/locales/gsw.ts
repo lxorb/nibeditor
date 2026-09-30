@@ -1418,7 +1418,7 @@ export const gsw: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Die Asicht merke',
-  Keep: 'Merke',
+  Keep: 'Behalte',
 
   // Which side of the window a panel sits on.
   'Move to the right': 'Uf rechts',
@@ -1574,4 +1574,8 @@ export const gsw: Dictionary = {
   'Settings › AI': 'Iistellige › KI',
   'New chat': 'Neue Chat',
   'Ask again': 'Nomol frage',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} (das Grät)',
+  '{name} is back: {device} was writing in it': '{name} isch zrugg: {device} het drin gschribe',
 }

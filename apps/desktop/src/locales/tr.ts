@@ -1569,4 +1569,8 @@ export const tr: Dictionary = {
   'Settings › AI': 'Ayarlar › YZ',
   'New chat': 'Yeni sohbet',
   'Ask again': 'Yeniden sor',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'Bu {device}',
+  '{name} is back: {device} was writing in it': '{name} geri geldi: {device} içine yazıyordu',
 }

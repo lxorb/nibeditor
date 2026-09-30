@@ -1599,4 +1599,9 @@ export const fil: Dictionary = {
   'Settings › AI': 'Mga setting › AI',
   'New chat': 'Bagong chat',
   'Ask again': 'Itanong muli',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'Itong {device}',
+  '{name} is back: {device} was writing in it':
+    'Bumalik ang {name}: may isinusulat dito ang {device}',
 }

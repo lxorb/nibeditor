@@ -4,6 +4,7 @@
   import { cubicOut } from 'svelte/easing'
   import { t } from './i18n.svelte'
   import { dur } from './motion'
+  import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
   import { workspace } from './workspace.svelte'
@@ -30,6 +31,7 @@
   $effect(() => () => {
     undoToast.dismiss()
     unread.dismiss()
+    back.dismiss()
   })
 </script>
 
@@ -52,6 +54,25 @@
 {:else if unread.shown}
   <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
     <p>{t('That file could not be read')}</p>
+  </div>
+{/if}{#if back.said}
+  <!-- A note this device deleted, put back because another device was writing in
+       it; see sync2/resurrected.svelte.ts. Its own toast rather than a turn of the one
+       above, so an Undo that is up is not taken away by it. Written against the block
+       before it, because a line between two blocks is a space on the page. -->
+  <div
+    class="toast"
+    role="status"
+    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
+    onpointerenter={() => back.hold()}
+    onpointerleave={() => back.linger()}
+  >
+    <p>
+      {t('{name} is back: {device} was writing in it', {
+        name: back.said.name,
+        device: back.said.device,
+      })}
+    </p>
   </div>
 {/if}
 

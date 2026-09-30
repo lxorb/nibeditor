@@ -1561,4 +1561,8 @@ export const ur: Dictionary = {
   'Settings › AI': 'ترتیبات ‹ AI',
   'New chat': 'نئی چیٹ',
   'Ask again': 'دوبارہ پوچھیں',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'یہ {device}',
+  '{name} is back: {device} was writing in it': '{name} واپس آ گیا: {device} اس میں لکھ رہا تھا',
 }

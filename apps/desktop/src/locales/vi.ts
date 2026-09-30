@@ -1548,4 +1548,8 @@ export const vi: Dictionary = {
   'Settings › AI': 'Cài đặt › AI',
   'New chat': 'Cuộc trò chuyện mới',
   'Ask again': 'Hỏi lại',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} này',
+  '{name} is back: {device} was writing in it': '{name} đã quay lại: {device} đang viết trong đó',
 }

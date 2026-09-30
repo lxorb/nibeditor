@@ -1386,7 +1386,7 @@ export const ko: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': '이 보기를 북마크',
-  Keep: '보관',
+  Keep: '남기기',
 
   // Which side of the window a panel sits on.
   'Move to the right': '오른쪽으로 옮기기',
@@ -1538,4 +1538,9 @@ export const ko: Dictionary = {
   'Settings › AI': '설정 › AI',
   'New chat': '새 채팅',
   'Ask again': '다시 묻기',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '이 {device}',
+  '{name} is back: {device} was writing in it':
+    '{name}이(가) 돌아왔습니다: {device}에서 쓰고 있었습니다',
 }

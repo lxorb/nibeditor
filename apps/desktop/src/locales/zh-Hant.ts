@@ -1524,4 +1524,8 @@ export const zhHant: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新對話',
   'Ask again': '再問一次',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '這台{device}',
+  '{name} is back: {device} was writing in it': '{name} 已恢復：{device} 正在其中寫作',
 }

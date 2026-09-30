@@ -30,6 +30,7 @@
     title,
     mark,
     foot,
+    width,
     onclose,
     children,
   }: {
@@ -45,6 +46,9 @@
      *  that scrolls ends with a clean edge: the sheet read as finished, with the
      *  only thing it is for out of sight below the fold. */
     foot?: Snippet
+    /** Wider than the sheets that hold a form: the sync question puts two versions of
+     *  a passage side by side. */
+    width?: string
     onclose: () => void
     children: Snippet
   } = $props()
@@ -64,6 +68,7 @@
     role="dialog"
     aria-modal="true"
     aria-label={title}
+    style:--screen-width={width}
     transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
   >
     <!-- The subject, then the way out, which is where every window in the world

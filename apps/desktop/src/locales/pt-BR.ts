@@ -1598,4 +1598,8 @@ export const ptBR: Dictionary = {
   'Settings › AI': 'Configurações › IA',
   'New chat': 'Nova conversa',
   'Ask again': 'Perguntar de novo',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'Este {device}',
+  '{name} is back: {device} was writing in it': '{name} voltou: {device} estava escrevendo nela',
 }

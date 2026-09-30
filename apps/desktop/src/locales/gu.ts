@@ -1555,4 +1555,8 @@ export const gu: Dictionary = {
   'Settings › AI': 'ગોઠવણ › AI',
   'New chat': 'નવી ચેટ',
   'Ask again': 'ફરી પૂછો',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'આ {device}',
+  '{name} is back: {device} was writing in it': '{name} પાછી આવી: {device} તેમાં લખી રહ્યું હતું',
 }

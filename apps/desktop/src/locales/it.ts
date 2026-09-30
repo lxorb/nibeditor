@@ -1619,4 +1619,8 @@ export const it: Dictionary = {
   'Settings › AI': 'Impostazioni › IA',
   'New chat': 'Nuova chat',
   'Ask again': 'Chiedi di nuovo',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'Questo {device}',
+  '{name} is back: {device} was writing in it': '{name} è tornata: {device} ci stava scrivendo',
 }

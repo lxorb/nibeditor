@@ -1470,7 +1470,7 @@ export const uk: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Додати цей вигляд до закладок',
-  Keep: 'Зберегти',
+  Keep: 'Залишити',
 
   // Which side of the window a panel sits on.
   'Move to the right': 'Перенести праворуч',
@@ -1632,4 +1632,8 @@ export const uk: Dictionary = {
   'Settings › AI': 'Налаштування › ШІ',
   'New chat': 'Новий чат',
   'Ask again': 'Запитати знову',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} (цей пристрій)',
+  '{name} is back: {device} was writing in it': '{name} повернулася: у ній писав {device}',
 }

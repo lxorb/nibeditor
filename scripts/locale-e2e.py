@@ -142,6 +142,24 @@ async ([path, text, language]) => {
 }
 """
 
+# A note two devices rewrote while apart, held for the question, for whatever is in
+# front: the words are the note's and stay English; what is measured is the sheet's.
+HOLD = """
+() => {
+  // Only a build a drive may steer carries it (`--mode drive`); a release has none.
+  if (!window.nibApp?.sync2) throw new Error('not a drivable build')
+  const side = (device, at, text, word) => ({
+    device, at: Date.now() - at * 3600000,
+    excerpt: { text, marks: [[text.indexOf(word), text.indexOf(word) + word.length]] },
+  })
+  window.__held = window.nibApp.sync2.connectFake([{
+    id: 'held', path: window.nibApp.workspace.active.path, name: 'Plan',
+    mine: side('Laptop', 2, 'We meet at noon on Friday.', 'noon'),
+    theirs: side('iPhone', 1, 'We meet at one on Saturday.', 'one'),
+  }])
+}
+"""
+
 # What the page says about itself: every element that is drawn, that is not a
 # scroller, and whose contents are wider than the room it has. A path made of the
 # nearest few tags and classes names it, so the same row in two languages is the
@@ -469,6 +487,24 @@ def walk(page, shots: Shots, mod: str) -> list[str]:
             page.wait_for_timeout(700)
 
         reach(f"settings-{index + 1}", pane)
+
+    # Sync v2's question over the note in front, and the toast a note that came back
+    # says, both from the fake engine a drivable build carries; see
+    # apps/desktop/test/e2e/diverged.py.
+    def diverged():
+        page.evaluate(HOLD)
+        page.wait_for_selector("[role=dialog] .sides", timeout=4000)
+
+    reach("diverged", diverged)
+
+    def resurrected():
+        page.evaluate(
+            "() => window.__held.engine.emit('resurrected', { id: 'held', name: 'Plan', device: 'iPhone' })"
+        )
+        page.locator(".toast", has_text="Plan").hover(timeout=4000)
+
+    reach("resurrected", resurrected)
+    page.evaluate("() => window.__held?.stop()")
 
     return missed
 

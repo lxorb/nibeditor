@@ -1659,4 +1659,8 @@ export const ar: Dictionary = {
   'Settings › AI': 'الإعدادات ‹ ذكاء اصطناعي',
   'New chat': 'محادثة جديدة',
   'Ask again': 'اسأل مجددًا',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'هذا {device}',
+  '{name} is back: {device} was writing in it': 'عادت {name}: كان {device} يكتب فيها',
 }

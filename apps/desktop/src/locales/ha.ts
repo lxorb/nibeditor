@@ -1590,4 +1590,8 @@ export const ha: Dictionary = {
   'Settings › AI': 'Saituna › AI',
   'New chat': 'Sabuwar tattaunawa',
   'Ask again': 'Sake tambaya',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'Wannan {device}',
+  '{name} is back: {device} was writing in it': '{name} ya dawo: {device} yana rubutu a ciki',
 }

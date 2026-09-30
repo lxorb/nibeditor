@@ -1569,4 +1569,8 @@ export const te: Dictionary = {
   'Settings › AI': 'సెట్టింగ్‌లు › AI',
   'New chat': 'కొత్త చాట్',
   'Ask again': 'మళ్లీ అడగండి',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'ఈ {device}',
+  '{name} is back: {device} was writing in it': '{name} తిరిగి వచ్చింది: {device} దానిలో రాస్తోంది',
 }

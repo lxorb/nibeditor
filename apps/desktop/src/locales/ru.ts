@@ -1474,7 +1474,7 @@ export const ru: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Добавить этот вид в закладки',
-  Keep: 'Сохранить',
+  Keep: 'Оставить',
 
   // Which side of the window a panel sits on.
   'Move to the right': 'Перенести направо',
@@ -1637,4 +1637,8 @@ export const ru: Dictionary = {
   'Settings › AI': 'Настройки › ИИ',
   'New chat': 'Новый чат',
   'Ask again': 'Спросить снова',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} (это устройство)',
+  '{name} is back: {device} was writing in it': '{name} вернулась: в ней писал {device}',
 }

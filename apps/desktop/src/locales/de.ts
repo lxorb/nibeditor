@@ -1450,7 +1450,7 @@ export const de: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'Diese Ansicht merken',
-  Keep: 'Merken',
+  Keep: 'Behalten',
 
   // Which side of the window a panel sits on.
   'Move to the right': 'Nach rechts',
@@ -1606,4 +1606,8 @@ export const de: Dictionary = {
   'Settings › AI': 'Einstellungen › KI',
   'New chat': 'Neuer Chat',
   'Ask again': 'Nochmals fragen',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} (dieses Gerät)',
+  '{name} is back: {device} was writing in it': '{name} ist zurück: {device} hat darin geschrieben',
 }

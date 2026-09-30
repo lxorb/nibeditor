@@ -1569,4 +1569,8 @@ export const pa: Dictionary = {
   'Settings › AI': 'ਸੈਟਿੰਗਾਂ › AI',
   'New chat': 'ਨਵੀਂ ਚੈਟ',
   'Ask again': 'ਦੁਬਾਰਾ ਪੁੱਛੋ',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'ਇਹ {device}',
+  '{name} is back: {device} was writing in it': '{name} ਵਾਪਸ ਆ ਗਿਆ: {device} ਇਸ ਵਿੱਚ ਲਿਖ ਰਿਹਾ ਸੀ',
 }

@@ -13,15 +13,16 @@
    *  Small and quiet, at `--icon-sm`, which is the size of a mark inside a row that
    *  is not the row's own - the same slot a tab's kind and a bookmark's kind sit in;
    *  see docs/design.md. */
+  import type { IconNode } from 'lucide'
   import Users from 'lucide/dist/esm/icons/users.mjs'
   import { t } from './i18n.svelte'
 
-  const { label = t('Shared') }: { label?: string } = $props()
+  const { label = t('Shared'), icon = Users }: { label?: string; icon?: IconNode } = $props()
 </script>
 
 <span class="shared" title={label} aria-label={label} role="img">
   <svg viewBox="0 0 24 24" aria-hidden="true">
-    {#each Users as [tag, attrs], index (index)}
+    {#each icon as [tag, attrs], index (index)}
       <svelte:element this={tag} {...attrs} />
     {/each}
   </svg>

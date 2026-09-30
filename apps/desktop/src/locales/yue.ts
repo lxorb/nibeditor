@@ -1525,4 +1525,8 @@ export const yue: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新對話',
   'Ask again': '再問一次',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '呢部{device}',
+  '{name} is back: {device} was writing in it': '{name} 返嚟咗：{device} 啱啱喺入面寫緊嘢',
 }

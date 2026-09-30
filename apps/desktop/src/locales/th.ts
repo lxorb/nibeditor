@@ -1530,4 +1530,8 @@ export const th: Dictionary = {
   'Settings › AI': 'ตั้งค่า › AI',
   'New chat': 'แชทใหม่',
   'Ask again': 'ถามอีกครั้ง',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} เครื่องนี้',
+  '{name} is back: {device} was writing in it': '{name} กลับมาแล้ว: {device} กำลังเขียนอยู่ในนั้น',
 }

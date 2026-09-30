@@ -1559,4 +1559,9 @@ export const ms: Dictionary = {
   'Settings › AI': 'Tetapan › AI',
   'New chat': 'Sembang baharu',
   'Ask again': 'Tanya lagi',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} ini',
+  '{name} is back: {device} was writing in it':
+    '{name} kembali: {device} sedang menulis di dalamnya',
 }

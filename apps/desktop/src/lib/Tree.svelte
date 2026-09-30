@@ -51,6 +51,7 @@
   import SharedMark from './SharedMark.svelte'
   import { isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { heldMark } from './surfaces.svelte'
   import { carried, carriedNothing, carry, landing } from './drag-paths'
   import { dropOnList, fileClipboard } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
@@ -1178,6 +1179,7 @@
            notes is the note inside it. -->
       {#if othersIn(opens)}<SharedMark label={t('Also open elsewhere')} />
       {:else if isSharedItem(opens)}<SharedMark />{/if}
+      {#if heldMark.asked}{#await heldMark.asked then Held}<Held path={opens} />{/await}{/if}
       {#if nested.length}{@render twist(entry.path)}{/if}
     </button>
   {/if}

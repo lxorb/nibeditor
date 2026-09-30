@@ -1497,7 +1497,13 @@ then `web_sync`.
   `held: { readonly notes: readonly Held[]; answer(id, 'mine'|'theirs'|'both'): Promise<void> }`
   where `Held = { id, path, name, mine: Side, theirs: Side }` and
   `Side = { device, at, excerpt: { text, marks: [from, to][] } }`, and a `resurrected`
-  event `{ id, name, device }`.
+  event `{ id, name, device }`. As built on the UX side (`Engine` in
+  `lib/sync2/asking.svelte.ts`, which the engine hands itself to with `connect(engine)`
+  once it has started): `answer` resolves with the copy's path for `both`, so the copy
+  opens beside the note; a `Side` may carry `plane` (the contested cards as JSON Canvas
+  text) or `file` (`{ name, size, picture }`) instead of words; and the engine also
+  offers `store` (the Sync pane reads the pass log from it) and `on('resurrected' |
+  'pass', listener)`. `lib/sync2/fake-engine.svelte.ts` is the same interface, faked.
 - `web-state` exposes Tauri commands: `web_state_capture(store, site, origins)`,
   `web_state_restore(store, site, bundleRef)`, `web_state_seal`, `web_state_open`,
   `web_key_*` (device key, wrap, unwrap, digits), each tested on its own.

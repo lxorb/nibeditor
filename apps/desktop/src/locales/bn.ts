@@ -1564,4 +1564,8 @@ export const bn: Dictionary = {
   'Settings › AI': 'সেটিংস › AI',
   'New chat': 'নতুন চ্যাট',
   'Ask again': 'আবার জিজ্ঞাসা করুন',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'এই {device}',
+  '{name} is back: {device} was writing in it': '{name} ফিরে এসেছে: {device} এতে লিখছিল',
 }

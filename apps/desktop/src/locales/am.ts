@@ -1544,4 +1544,8 @@ export const am: Dictionary = {
   'Settings › AI': 'ማስተካከያ › AI',
   'New chat': 'አዲስ ውይይት',
   'Ask again': 'እንደገና ጠይቅ',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'ይህ {device}',
+  '{name} is back: {device} was writing in it': '{name} ተመልሷል: {device} በውስጡ እየጻፈ ነበር',
 }

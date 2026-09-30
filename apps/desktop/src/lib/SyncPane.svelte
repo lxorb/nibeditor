@@ -10,7 +10,13 @@
    *  And, at the foot, the one rescue: a space put back to how it read at a
    *  moment. It is last because it is the thing nobody wants and somebody
    *  occasionally needs, and it says what it would change before it changes
-   *  anything. */
+   *  anything.
+   *
+   *  Sync v2 has no rule to choose (docs/sync-v2.md section 4, "What goes away"): a
+   *  note two devices rewrote asks its own question when it is on screen, so the
+   *  first section goes, what is waiting is the notes it holds, and the passes are
+   *  read from its store. Until v1 is retired, a v1 engine keeps all three as they
+   *  were. */
 
   import { fade } from 'svelte/transition'
 
@@ -18,12 +24,16 @@
   import { api } from './api'
   import { plural, t } from './i18n.svelte'
   import { when } from './when'
+  import { log } from './log'
   import { KEEP_MONTH, KEEP_YEAR, modes, rollbackSteps } from './modes.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
   import { record } from './sync/record.svelte'
   import type { Answer, Clash } from './sync/conflicts'
   import { sync } from './sync.svelte'
+  import { nameOf } from './space-paths'
+  import { asking, type Engine } from './sync2/asking.svelte'
+  import { scan } from './sync2/store'
   import { workspace } from './workspace.svelte'
 
   let days = $state(1)
@@ -41,6 +51,68 @@
   let rolling = $state(false)
   let rolled = $state<number | null>(null)
   let wrong = $state<string | null>(null)
+
+  /** The passes as the list draws them, newest first, whichever engine ran them. */
+  interface Shown {
+    at: number
+    space: string
+    pulled: number
+    pushed: number
+    clashed: number
+    failed: string | null
+  }
+
+  /** How many passes the list shows. */
+  const SHOWN = 20
+
+  /** What the v2 store's log says, read when the pane opens and again after every
+   *  pass it writes. */
+  let logged = $state<Shown[]>([])
+
+  $effect(() => {
+    const engine = asking.engine
+    if (!engine) return
+
+    let live = true
+    const read = () =>
+      void logOf(engine)
+        .then((rows) => {
+          if (live) logged = rows
+        })
+        .catch((error: unknown) =>
+          log('warn', `sync: the pass log would not read: ${String(error)}`),
+        )
+    read()
+    const stop = engine.on('pass', read)
+    return () => {
+      live = false
+      stop()
+    }
+  })
+
+  /** The store's newest passes, each named by the space the reader knows it by. */
+  async function logOf(engine: Engine): Promise<Shown[]> {
+    const [rows, spaces] = await engine.store.read([scan('log'), scan('spaces')])
+    const nameFor = (id: string | null) => {
+      const root = spaces.find((one) => one.space_id === id)?.root
+      if (root === undefined) return id ?? ''
+      return workspace.spaces.find((one) => one.root === root)?.name ?? nameOf(root)
+    }
+
+    return rows
+      .slice(-SHOWN)
+      .reverse()
+      .map((row) => ({
+        at: row.at,
+        space: nameFor(row.space),
+        pulled: row.pulled ?? 0,
+        pushed: row.pushed ?? 0,
+        clashed: 0,
+        failed: row.failed,
+      }))
+  }
+
+  const passes = $derived(asking.engine ? logged : record.passes.slice(0, SHOWN))
 
   const rules = [
     { value: 'both', label: t('Keep both copies') },
@@ -133,25 +205,27 @@
   ]
 </script>
 
-<h3>{t('When the same note was written twice')}</h3>
+{#if !asking.engine}
+  <h3>{t('When the same note was written twice')}</h3>
 
-<div class="card">
-  <div class="nib-setting setting">
-    <span class="name">{t('On two devices')}</span>
-    <div class="pick">
-      <Select
-        value={modes.conflicts}
-        options={rules}
-        onchange={(value: string) => modes.setConflicts(value)}
-        label={t('On two devices')}
-      />
+  <div class="card">
+    <div class="nib-setting setting">
+      <span class="name">{t('On two devices')}</span>
+      <div class="pick">
+        <Select
+          value={modes.conflicts}
+          options={rules}
+          onchange={(value: string) => modes.setConflicts(value)}
+          label={t('On two devices')}
+        />
+      </div>
     </div>
   </div>
-</div>
 
-<p class="hint">
-  {t('Nothing is ever thrown away: what does not win is kept as a version.')}
-</p>
+  <p class="hint">
+    {t('Nothing is ever thrown away: what does not win is kept as a version.')}
+  </p>
+{/if}
 
 <!-- How long the account keeps them. What happens in between - one an hour for
      the first month, one a day for the next two, one a week after that - is said
@@ -178,7 +252,20 @@
   )}
 </p>
 
-{#if record.clashes.length}
+<!-- Under v2, the notes it holds: a press opens the note, and the question comes up
+     over it. -->
+{#if asking.engine && asking.held.length}
+  <h3>{t('Waiting for you')}</h3>
+
+  <div class="card" transition:fade={{ duration: dur(130) }}>
+    {#each asking.held as note (note.id)}
+      <button class="nib-action held" onclick={() => void asking.revisit(note)}>
+        <span class="name">{note.name}</span>
+        <span class="hint">{when(note.theirs.at, 'short')}</span>
+      </button>
+    {/each}
+  </div>
+{:else if !asking.engine && record.clashes.length}
   <h3>{t('Waiting for you')}</h3>
 
   <div class="card" transition:fade={{ duration: dur(130) }}>
@@ -204,11 +291,11 @@
 
 <h3>{t('What synced')}</h3>
 
-{#if !record.passes.length}
+{#if !passes.length}
   <p class="hint">{t('Nothing yet. A pass that moves nothing is not written down.')}</p>
 {:else}
   <div class="card">
-    {#each record.passes.slice(0, 20) as pass (pass.at)}
+    {#each passes as pass, at (at)}
       <div class="pass" class:bad={!!pass.failed}>
         <span class="at">{when(pass.at, 'short')}</span>
         <span class="what">
@@ -229,9 +316,12 @@
     {/each}
   </div>
 
-  <div class="card">
-    <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
-  </div>
+  <!-- The v2 store keeps its own last thousand, so there is nothing to clear. -->
+  {#if !asking.engine}
+    <div class="card">
+      <button class="nib-action" onclick={() => record.clear()}>{t('Clear the list')}</button>
+    </div>
+  {/if}
 {/if}
 
 <h3>{t('Go back')}</h3>
@@ -409,6 +499,23 @@
     display: flex;
     gap: var(--space-2);
     width: 100%;
+  }
+
+  /* A held note: its name, and when the other device wrote in it. */
+  .held {
+    gap: var(--space-3);
+  }
+
+  .held .name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.sheet.phone) .held {
+    padding: 0 var(--touch-pad);
   }
 
   /* One pass: when, what moved, and which space. The middle column takes the

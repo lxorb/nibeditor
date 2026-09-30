@@ -1587,4 +1587,9 @@ export const ta: Dictionary = {
   'Settings › AI': 'அமைப்புகள் › AI',
   'New chat': 'புதிய அரட்டை',
   'Ask again': 'மீண்டும் கேள்',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'இந்த {device}',
+  '{name} is back: {device} was writing in it':
+    '{name} திரும்பி வந்தது: {device} அதில் எழுதிக்கொண்டிருந்தது',
 }

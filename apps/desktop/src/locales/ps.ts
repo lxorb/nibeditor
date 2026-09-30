@@ -1566,4 +1566,8 @@ export const ps: Dictionary = {
   'Settings › AI': 'امستنې ‹ مصنوعي ځيرکتيا',
   'New chat': 'نوې خبرې',
   'Ask again': 'بیا پوښتنه وکړئ',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'دا {device}',
+  '{name} is back: {device} was writing in it': '{name} بېرته راغی: {device} پکې لیکل',
 }

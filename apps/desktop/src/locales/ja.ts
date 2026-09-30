@@ -1402,7 +1402,7 @@ export const ja: Dictionary = {
 
   // A way of looking at the space's graph, kept in the bookmarks.
   'Bookmark this view': 'この表示を保存',
-  Keep: '保存',
+  Keep: '残す',
 
   // Which side of the window a panel sits on.
   'Move to the right': '右へ移動',
@@ -1555,4 +1555,8 @@ export const ja: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新しいチャット',
   'Ask again': 'もう一度質問',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'この{device}',
+  '{name} is back: {device} was writing in it': '{name} が戻りました: {device} で書き込み中でした',
 }

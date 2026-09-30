@@ -497,12 +497,14 @@
       import('./lib/publishing.svelte'),
       import('./lib/ai/store.svelte'),
       import('./lib/ai/rewriting.svelte'),
-    ]).then(([{ importing }, { publish }, { ai }, { rewriting }]) => {
+      import('./lib/sync2/fake-engine.svelte'),
+    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2]) => {
       Object.assign((window as unknown as { nibApp: object }).nibApp, {
         ai,
         importing,
         publish,
         rewriting,
+        sync2,
       })
     })
   }

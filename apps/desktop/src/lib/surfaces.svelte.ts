@@ -198,6 +198,11 @@ export const undoToastNotice = latched(() => {
   return import('./UndoToast.svelte')
 })
 
+/** A held note's mark; see sync2/asking.svelte.ts. */
+export const heldMark = latched(() =>
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('v1 only')) : import('./sync2/HeldMark.svelte'),
+)
+
 /** The dialog Ctrl+T opens in the middle of the window: the kinds a new tab can be,
  *  as cards, on the website. Latched like the sheets, and asked for at the launch's
  *  last turn rather than behind the first press, because that press is a hand holding

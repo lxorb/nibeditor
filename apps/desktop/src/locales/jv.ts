@@ -1554,4 +1554,8 @@ export const jv: Dictionary = {
   'Settings › AI': 'Setelan › AI',
   'New chat': 'Obrolan anyar',
   'Ask again': 'Takon maneh',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': '{device} iki',
+  '{name} is back: {device} was writing in it': '{name} bali: {device} lagi nulis ing kono',
 }

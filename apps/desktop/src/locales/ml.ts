@@ -1583,4 +1583,9 @@ export const ml: Dictionary = {
   'Settings › AI': 'സെറ്റിംഗ്സ് › AI',
   'New chat': 'പുതിയ ചാറ്റ്',
   'Ask again': 'വീണ്ടും ചോദിക്കുക',
+  // Sync v2: the question two devices' versions of one note ask, and a deleted note
+  // that came back because another device was writing in it.
+  'This {device}': 'ഈ {device}',
+  '{name} is back: {device} was writing in it':
+    '{name} തിരിച്ചെത്തി: {device} അതിൽ എഴുതുകയായിരുന്നു',
 }
