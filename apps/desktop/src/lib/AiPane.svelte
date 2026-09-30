@@ -56,8 +56,10 @@
   let asking = $state('')
   /** What went wrong, by provider, in that provider's own words. */
   let trouble = $state<Record<string, string>>({})
-  /** Whether the browser is out signing somebody in to ChatGPT. */
+  /** Whether the browser is out signing somebody in to ChatGPT, and which press sent it:
+   *  a second press starts again rather than waiting out a tab somebody closed. */
   let signingIn = $state(false)
+  let signIns = 0
 
   /** Where each program is installed from: its maker's own page. */
   const INSTALL: Record<LocalKind, string> = {
@@ -195,6 +197,7 @@
 
   /** Sign in with ChatGPT: the browser, and back. */
   async function continueWithChatgpt(provider: Provider) {
+    const mine = ++signIns
     signingIn = true
     trouble = { ...trouble, [provider.id]: '' }
     try {
@@ -215,7 +218,7 @@
         }
       }
     } finally {
-      signingIn = false
+      if (signIns === mine) signingIn = false
     }
   }
 
@@ -294,13 +297,10 @@
           {t('Sign out')}
         </button>
       {:else if plans.chatgpt === null}
-        <button
-          class="nib-chip continue"
-          disabled={signingIn}
-          onclick={() => void continueWithChatgpt(provider)}
-        >
+        {#if signingIn}<span class="hint">{t('Asking…')}</span>{/if}
+        <button class="nib-chip continue" onclick={() => void continueWithChatgpt(provider)}>
           <ChatGptMark />
-          {signingIn ? t('Asking…') : t('Continue with ChatGPT')}
+          {t('Continue with ChatGPT')}
         </button>
       {:else}
         <span class="hint">{t('Asking…')}</span>
