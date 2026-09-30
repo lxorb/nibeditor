@@ -456,6 +456,10 @@ fn name_of(path: &Path) -> String {
 /// otherwise, and a newer WSL prints UTF-8 when asked; both are read. Docker's own two
 /// distributions are machinery rather than somewhere to type, and VS Code leaves them out
 /// too.
+#[cfg_attr(
+    not(windows),
+    allow(dead_code, reason = "only Windows has WSL to ask; the parser is tested everywhere")
+)]
 pub fn distributions(printed: &[u8]) -> Vec<String> {
     let wide = printed.len() >= 2 && printed.chunks(2).any(|pair| pair.get(1) == Some(&0));
     let text = if wide {
@@ -687,6 +691,7 @@ mod tests {
     }
 
     /// A Windows machine with everything on it, the way this one is.
+    #[cfg(windows)]
     fn loaded() -> Fake {
         let mut fake = Fake::default()
             .set("SystemRoot", r"C:\Windows")
