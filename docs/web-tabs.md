@@ -90,14 +90,15 @@ and the best for a sixteen pixel box on a double density screen is chosen. See
 **And the device keeps every mark it has seen**, because a browser tab has no file to
 keep one in: after a restart the strip, a parked tab, a tab reopened, the address
 field's rows and the palette's all wear the site before any page loads. One cache,
-`favicons` in `web-tab/pages.svelte.ts`, and one door to it, `siteMark`: the live page's mark,
-else the last one this device saw at that page (or, where that page showed none, at
-its origin - Chrome's host fallback, Firefox's root icon), else the file's `Nib-Icon`.
-It holds only what pages showed, never fetches anything to fill itself, keeps one mark
-per page so an unread count replaces rather than piles up (Firefox bug 1598371 stored
-207,000 of those), is capped at 500 pages and half a megabyte with the least recently
-used going first, and forgets a page when its history row is removed. It is read
-synchronously, so a restored tab's first frame already has its mark.
+`favicons` in `web-tab/pages.svelte.ts`, and one door to it, `siteMark`: the live
+page's mark, else the last one this device saw at that page (or, where that page showed
+none, at its origin - Chrome's host fallback, Firefox's root icon), else the file's
+`Nib-Icon`. It holds only what pages showed, never fetches anything to fill itself,
+keeps one mark per page so an unread count replaces rather than piles up (Firefox bug
+1598371 stored 207,000 of those), is capped at 500 pages and half a megabyte with the
+least recently used going first, and forgets a page when its history row is removed.
+It is read synchronously, so a restored tab's first frame already has its mark; the
+writing is `web-tab/favicons.ts`, fetched with the first mark.
 
 **What is _not_ in the file is where the reading was on the page, or the trail behind
 the tab.** A scroll offset is about this screen at this width and a trail is a
@@ -338,8 +339,8 @@ load and not a loss. Closing the tab takes the webview and the trail with it.
 
 #### Putting a page away is never asked of what the window believes
 
-Emil, 2026-09-18: _"For some reason a browser tab displayed above everything else. For
-example when I switched to a note, there was still the browser open."_
+Emil, 2026-09-18: *"For some reason a browser tab displayed above everything else. For
+example when I switched to a note, there was still the browser open."*
 
 A page left on screen over a note is not a page drawn in the wrong place - it is an
 operating system surface over the whole window. The note is under it, so is the tab
@@ -350,7 +351,7 @@ worst thing this feature can do, so it is worth being precise about how it happe
 it is an idea: nothing in the window can see a webview. Every command used to write it
 from its own failure. A refused address, a refused step, a refused placement - each of
 them set `live` to false, which reads as "the page has gone". And `place` would not act
-on a page it thought was gone, so from that moment the pane's _hide_ did nothing at all:
+on a page it thought was gone, so from that moment the pane's *hide* did nothing at all:
 the webview stayed exactly where it was, on top of whatever the pane showed next, with
 nothing left in the window able to reach it. One refused call was the whole of it.
 
@@ -361,7 +362,7 @@ placement that was meant to show the page may conclude the page has gone, becaus
 conclusion is the safe one to be wrong about: a page wrongly thought gone is built again
 on the next placement, where a page wrongly given up on is the window. The same rule at
 the other end of a page's life: the crate refuses a second page under one label, so a
-build that comes back refused may have been refused _because_ there is one - and the
+build that comes back refused may have been refused *because* there is one - and the
 pane is told there is no page only once the label has been cleared. See `place` and
 `build` in `pages.svelte.ts`, and the tests in
 `test/effects/web-switch.effect.test.ts`.
@@ -400,7 +401,7 @@ the card is up. Three things were, and the first was measured on 2026-09-18 by a
 pane's own hit test what it found - `['hole' x 8, 'DIV.notice']`:
 
 - **The update notice**, which floated in the bottom corner over the pane. Emil,
-  2026-09-27, in the installed app: _"Nib 0.9.1 is ready to install"_ in the corner and
+  2026-09-27, in the installed app: *"Nib 0.9.1 is ready to install"* in the corner and
   the whole web page gone until **Later** was pressed. A notice stands until it is
   dismissed, and a page hidden while nobody had pressed anything has no still picture to
   stand in for it: the pane was empty. The storage card sat in the other corner and did
@@ -425,7 +426,7 @@ was written to stop being. They are fixed where they came from:
   document is the whole of what is left - and it was on that stack for one line of
   Escape. Escape leaves it from the window's own key handler now, under the line that
   asks the stack, which is the same order it had and the same four ways back.
-- The way out of full screen is the one piece of furniture that is _meant_ to be over
+- The way out of full screen is the one piece of furniture that is *meant* to be over
   the document, and over a page it would be drawn behind it. A strip across the top of
   the panes would have cost every document in the window more than full screen gives a
   web tab back - measured: 46 pixels taken for a title bar of 37 - so the **web tab's own
@@ -562,14 +563,14 @@ the real mouse - it attaches to the window's queue for a `ShowCursor(TRUE)` and 
 `ShowCursor(FALSE)`, which answer the count and leave it as it was - and posts the keys and
 the moves to the engine windows themselves. Before, and after:
 
-|                                                | before | after |
-| ---------------------------------------------- | ------ | ----- |
-| typed in the address field                     | -1     | 0     |
-| ... then moved about the page                  | **-1** | 0     |
-| ... then moved over the app's own page         | 0      | 0     |
-| typed in the page                              | -1     | 0     |
-| ... then switched to a note and moved about it | **-1** | 0     |
-| ... then back on the page and moved about it   | 0      | 0     |
+|                                                            | before | after |
+| ---------------------------------------------------------- | ------ | ----- |
+| typed in the address field                                 | -1     | 0     |
+| ... then moved about the page                              | **-1** | 0     |
+| ... then moved over the app's own page                     | 0      | 0     |
+| typed in the page                                          | -1     | 0     |
+| ... then switched to a note and moved about it             | **-1** | 0     |
+| ... then back on the page and moved about it               | 0      | 0     |
 
 Below nought is no pointer anywhere over nib's window; two runs of each build, the same
 numbers. The address field held what was typed and the page heard its own, so the keys
@@ -621,11 +622,11 @@ Manipulation. See `src-tauri/src/web_wheel.rs`.
 Measured by `scripts/web-scroll-probe.py` at 200 per cent with five lines a notch, a pane of
 1187 by 718, against Chrome 153 at the same size handed the notch those five lines make:
 
-|                                        | wheel events | pixels | frames moving | ms  |
-| -------------------------------------- | ------------ | ------ | ------------- | --- |
-| a notch at the legacy window (before)  | 2            | 333.5  | 6             | 95  |
-| a notch at the page's own window (now) | 1            | 166.5  | 8             | 123 |
-| Chrome 153, one notch                  | 1            | 166.5  | 8             | 123 |
+|                                                 | wheel events | pixels | frames moving | ms  |
+| ----------------------------------------------- | ------------ | ------ | ------------- | --- |
+| a notch at the legacy window (before)           | 2            | 333.5  | 6             | 95  |
+| a notch at the page's own window (now)          | 1            | 166.5  | 8             | 123 |
+| Chrome 153, one notch                           | 1            | 166.5  | 8             | 123 |
 
 The two paths are the before and the after: the hook is what moves a wheel from the first
 to the second, and no posted message passes a hook, so the Rust tests beside it hold that
@@ -916,7 +917,6 @@ engines say nothing, and what each one does there is said with it.
   do the bar's keys but on a Mac, where the menu bar's Zoom rows take them first: Tauri's
   stand-in for the engine's zoom there is a script put into the page, which a site should
   never be given.
-
 - **Developer tools.** F12, Ctrl+Shift+I (Cmd+Alt+I on a Mac) and the page menu's
   Inspect open the engine's own tools for the page, from inside it or from the bar. The
   build that ships has them for web tabs only - the `devtools` feature, on desktops -
@@ -1081,8 +1081,8 @@ went, because that is when `WebView2` ends the profile's session. The third and 
 rows were always true and are what the `web` folder on disk is for.
 
 **A session cookie survives a restart, the way Chrome's do with "Continue where you left
-off".** Emil, 2026-09-27: _"on moodle-app2.let.ethz.ch every time i reopen nib I have to
-reloggin."_ The last row was the whole of it. Moodle's `MoodleSession`, Shibboleth's
+off".** Emil, 2026-09-27: *"on moodle-app2.let.ethz.ch every time i reopen nib I have to
+reloggin."* The last row was the whole of it. Moodle's `MoodleSession`, Shibboleth's
 `_shibsession_...` and the identity provider's session at `aai-logon.ethz.ch` are all
 session cookies - no expiry - and `WebView2` threw them away when nib quit, while the
 lasting cookies and `localStorage` beside them came back off disk as they always had.
@@ -1103,12 +1103,12 @@ page made without loading another. See `apps/desktop/src-tauri/src/web_cookies.r
 Measured 2026-09-27 on the probe, with the cookie database read between the quit and the
 next start:
 
-|                                                                   | before | `--restore-last-session` | the expiry |
-| ----------------------------------------------------------------- | ------ | ------------------------ | ---------- |
-| the session cookie after a quit and a start                       | 0 of 5 | 7 of 12                  | **7 of 7** |
-| the same, with the app killed seconds after signing in            | -      | 0 of 2                   | **2 of 2** |
-| the same, killed 45 s after signing in                            | 0 of 1 | 2 of 2                   | -          |
-| a cookie a page set without loading another, just before the quit | -      | -                        | **2 of 2** |
+| | before | `--restore-last-session` | the expiry |
+| --- | --- | --- | --- |
+| the session cookie after a quit and a start | 0 of 5 | 7 of 12 | **7 of 7** |
+| the same, with the app killed seconds after signing in | - | 0 of 2 | **2 of 2** |
+| the same, killed 45 s after signing in | 0 of 1 | 2 of 2 | - |
+| a cookie a page set without loading another, just before the quit | - | - | **2 of 2** |
 
 **A partitioned cookie stays in its partition.** A cookie set with `Partitioned` (CHIPS)
 belongs to its site only under the one top-level site it was set under: a chat widget's
@@ -1167,10 +1167,10 @@ there, so there is nothing yet to give an expiry through.
 ### Where a space keeps its web data
 
 **A space can keep what websites store apart: Global, Space or Site, in the space's own
-menu under Web data.** Emil, 2026-09-27: _"there should be a setting for a space where
+menu under Web data.** Emil, 2026-09-27: *"there should be a setting for a space where
 you can set on which granularity to save the website data. either global (default)
 which just uses the global cookies and data store of nib or per space which saves it per
-space or per site which makes it separate for each site in this space."_
+space or per site which makes it separate for each site in this space."*
 
 - **Global**, which every space is until asked: the one store all spaces share, in
   `web`, exactly as before. Signed in once, signed in everywhere.
@@ -1190,12 +1190,12 @@ site. See `siteOf` in `apps/desktop/src/lib/web-tab/web-data.ts`.
 
 What a store is, per engine (`apps/desktop/src-tauri/src/web_stores.rs`):
 
-|                            | Global                   | Space, Site                                                                     |
-| -------------------------- | ------------------------ | ------------------------------------------------------------------------------- |
-| Windows (`WebView2`)       | `<config>/web`           | `<config>/web-stores/<name>`, a user data folder of its own                     |
-| Linux (`WebKitGTK`)        | `<config>/web`           | `<config>/web-stores/<name>`, a web context of its own                          |
-| macOS 14+ (`WKWebView`)    | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name                     |
-| nib's own Chromium (`cef`) | the primary profile      | **the primary profile** - the runtime cannot be asked for a profile per tab yet |
+| | Global | Space, Site |
+| --- | --- | --- |
+| Windows (`WebView2`) | `<config>/web` | `<config>/web-stores/<name>`, a user data folder of its own |
+| Linux (`WebKitGTK`) | `<config>/web` | `<config>/web-stores/<name>`, a web context of its own |
+| macOS 14+ (`WKWebView`) | the store `nib-web-tabs` | a data store of its own, sixteen bytes hashed from the name |
+| nib's own Chromium (`cef`) | the primary profile | **the primary profile** - the runtime cannot be asked for a profile per tab yet |
 
 On Windows a store of its own is a user data folder rather than a `WebView2` profile,
 because the runtime has no way to name a profile for a webview it builds. It costs a
@@ -1421,73 +1421,73 @@ versions and goes to the trash like every other document.
 
 ## Where the code is
 
-|                                                       |                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested                                                                                                                                                                                       |
-| `apps/desktop/src-tauri/src/web_reload.rs`            | stopping a page, and loading it past the cache                                                                                                                                                                                                                                                                                                                                                                                        |
-| `apps/desktop/src-tauri/src/web_wheel.rs`             | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own                                                                                                                                                                                                                                                                                                                      |
-| `apps/desktop/src-tauri/src/web_page.rs`              | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom, kept as the app's own, and Ctrl+0; and a mute. Unit tested                                                                                                                                                                                                                                                          |
-| `apps/desktop/src-tauri/src/web_find.rs`              | finding in the page: the engine's find, and the page's own where there is none. Unit tested                                                                                                                                                                                                                                                                                                                                           |
-| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                                                                                                                                                                                           |
-| `apps/desktop/src-tauri/src/web_handed.rs`            | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested                                                                                                                                                                                                                                                                                                         |
-| `apps/desktop/src-tauri/src/default_browser.rs`       | nib among the browsers: the Windows registration and its repair, whether nib is the default and the press that asks each system. Unit tested                                                                                                                                                                                                                                                                                          |
-| `apps/desktop/src-tauri/src/web_cookies.rs`           | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested                                                                                                                                                                                                                                 |
-| `apps/desktop/src-tauri/src/web_cookies/twins.rs`     | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested                                                                                                                                                                                                                                                                                               |
-| `apps/desktop/src-tauri/src/web_stores.rs`            | a store's name checked, and what it is on each engine. Unit tested                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                                                                                                                                                                                                           |
-| `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                                                                                                                                                                                                           |
-| `apps/desktop/src-tauri/src/links.rs`                 | a website as a node in the index, and `url:` off every note, which now means a note that wants converting                                                                                                                                                                                                                                                                                                                             |
-| `apps/desktop/src-tauri/capabilities/default.json`    | webviews, not windows                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                                                                                                                                                                                                             |
-| `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/desktop/src/lib/web-tab/address.ts`             | what somebody typed, and the origin plainly. Pure, tested                                                                                                                                                                                                                                                                                                                                                                             |
-| `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                                                                                                                                                                                                         |
-| `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                                                                                                                                                                                                       |
-| `apps/desktop/src/lib/web-tab/place.ts`               | where each note was left, per device: the offset and the trail. Tested                                                                                                                                                                                                                                                                                                                                                                |
-| `apps/desktop/src/lib/web-tab/keep.ts`                | the file keeping up with the page, debounced. Tested                                                                                                                                                                                                                                                                                                                                                                                  |
-| `apps/desktop/src/lib/web-tab/permissions.svelte.ts`  | what each site was told, and the requests waiting for an answer. Tested                                                                                                                                                                                                                                                                                                                                                               |
-| `apps/desktop/src/lib/web-tab/WebAsk.svelte`          | the bubble a site is answered in                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `apps/desktop/src/lib/web-tab/WebSite.svelte`         | what a site is, behind the mark in the bar                                                                                                                                                                                                                                                                                                                                                                                            |
-| `apps/desktop/src/lib/web-tab/downloads.svelte.ts`    | the list the glyph and the bubble draw, and the ring. Tested                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/desktop/src/lib/web-tab/WebDownloads.svelte`    | the list under the glyph                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `apps/desktop/src/lib/web-tab/clip.ts`                | where the HTML comes from                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `apps/desktop/src/lib/web-tab/WebTab.svelte`          | the pane: the hole, the frame, the card                                                                                                                                                                                                                                                                                                                                                                                               |
-| `apps/desktop/src/lib/web-tab/WebBar.svelte`          | the bar                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `apps/desktop/src/lib/web-tab/AddressField.svelte`    | the field an address is typed into: two faces, the rest of the address written in, the pages under it                                                                                                                                                                                                                                                                                                                                 |
-| `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                                                                                                                                                                                                       |
-| `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                                                                                                                                                                                               |
-| `apps/desktop/src/lib/web-tab/visited.ts`             | this device's history, one per space kept apart, read on first use. Tested                                                                                                                                                                                                                                                                                                                                                            |
-| `apps/desktop/src/lib/web-tab/web-data.ts`            | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested                                                                                                                                                                                                                                                                                                                                                |
-| `apps/desktop/src/lib/web-tab/web-data.svelte.ts`     | which of the three each space chose, on this device. Tested                                                                                                                                                                                                                                                                                                                                                                           |
-| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                                                                                                                                                                     |
-| `apps/desktop/src/lib/web-tab/bar-keys.ts`            | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested                                                                                                                                                                                                                                                                                                                            |
-| `apps/desktop/src/lib/web-tab/heard.ts`               | what the engine says about a page, read and landed on the tab. Tested                                                                                                                                                                                                                                                                                                                                                                 |
-| `apps/desktop/src/lib/web-tab/sites.ts`               | a site muted, and the size a site is drawn at, per device. Tested                                                                                                                                                                                                                                                                                                                                                                     |
-| `apps/desktop/src/lib/web-tab/mute.ts`                | Mute site, in every tab showing it                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/desktop/src/lib/web-tab/filling.svelte.ts`      | a page holding the whole screen, and the window following it                                                                                                                                                                                                                                                                                                                                                                          |
-| `apps/desktop/src/lib/web-tab/seek.ts`                | finding in the page from the bar and from the keys. Tested                                                                                                                                                                                                                                                                                                                                                                            |
-| `apps/desktop/src/lib/web-tab/passed.svelte.ts`       | a key the page let go by - find, a step, the address field - answered for that tab alone. Tested                                                                                                                                                                                                                                                                                                                                      |
-| `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                                                                                                                                                                                                         |
-| `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                                                                                                                                                                                                  |
-| `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                                                                                                                                                                                                         |
-| `apps/desktop/src/lib/rooms/kind.ts`                  | no room for a website, said at the file's end                                                                                                                                                                                                                                                                                                                                                                                         |
-| `services/sync/src/notes.ts`                          | the extensions the account carries                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepAsWebNote`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                                                                                                                                                                                                   |
-| `scripts/web-tab-e2e.py`                              | the drive: the file, the mark, the tab, the card, the clip                                                                                                                                                                                                                                                                                                                                                                            |
-| `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                                                                                                                                                                                                             |
-| `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                                                                                                                                                                                                         |
-| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                                                                                                                                                                                               |
+|                                                       |                                                                                                                                                                                                                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
+| `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
+| `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
+| `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom, kept as the app's own, and Ctrl+0; and a mute. Unit tested |
+| `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
+| `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
+| `apps/desktop/src-tauri/src/web_handed.rs` | which of what another program handed over is a page: `http` and `https` with a host, never the app, never a path. Unit tested |
+| `apps/desktop/src-tauri/src/default_browser.rs` | nib among the browsers: the Windows registration and its repair, whether nib is the default and the press that asks each system. Unit tested |
+| `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested |
+| `apps/desktop/src-tauri/src/web_cookies/twins.rs` | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested |
+| `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
+| `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
+| `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
+| `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |
+| `apps/desktop/src-tauri/src/links.rs`                 | a website as a node in the index, and `url:` off every note, which now means a note that wants converting                                                                                                                                              |
+| `apps/desktop/src-tauri/capabilities/default.json`    | webviews, not windows                                                                                                                                                                                                                                  |
+| `apps/desktop/src/lib/web-tab/shortcut.ts`            | the file: written, read, and `.webloc` read. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/note.ts`                | what a clip says, and what the old format said. Pure, tested                                                                                                                                                                                           |
+| `apps/desktop/src/lib/web-tab/address.ts`             | what somebody typed, and the origin plainly. Pure, tested                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/frame.ts`               | what a frame may do, and the measurements behind asking first                                                                                                                                                                                          |
+| `apps/desktop/src/lib/web-tab/pages.svelte.ts`        | the page each tab is on, the webview's life, parking, the still picture. Tested                                                                                                                                                                        |
+| `apps/desktop/src/lib/web-tab/place.ts`               | where each note was left, per device: the offset and the trail. Tested                                                                                                                                                                                 |
+| `apps/desktop/src/lib/web-tab/keep.ts`                | the file keeping up with the page, debounced. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/permissions.svelte.ts`  | what each site was told, and the requests waiting for an answer. Tested                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/WebAsk.svelte`          | the bubble a site is answered in                                                                                                                                                                                                                       |
+| `apps/desktop/src/lib/web-tab/WebSite.svelte`         | what a site is, behind the mark in the bar                                                                                                                                                                                                             |
+| `apps/desktop/src/lib/web-tab/downloads.svelte.ts`    | the list the glyph and the bubble draw, and the ring. Tested                                                                                                                                                                                           |
+| `apps/desktop/src/lib/web-tab/WebDownloads.svelte`    | the list under the glyph                                                                                                                                                                                                                               |
+| `apps/desktop/src/lib/web-tab/clip.ts`                | where the HTML comes from                                                                                                                                                                                                                              |
+| `apps/desktop/src/lib/web-tab/WebTab.svelte`          | the pane: the hole, the frame, the card                                                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/WebBar.svelte`          | the bar                                                                                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/AddressField.svelte`    | the field an address is typed into: two faces, the rest of the address written in, the pages under it                                                                                                                                                  |
+| `apps/desktop/src/lib/web-tab/omnibox.ts`             | what the field offers: the rest of an address and the pages worth listing, ranked. Pure, tested                                                                                                                                                        |
+| `apps/desktop/src/lib/web-tab/visits.ts`              | the history's rows and what a visit does to them, bounded. Pure, tested                                                                                                                                                                                |
+| `apps/desktop/src/lib/web-tab/visited.ts` | this device's history, one per space kept apart, read on first use. Tested |
+| `apps/desktop/src/lib/web-tab/web-data.ts` | Global, Space or Site: what a site is, a store's name, a space's history. Pure, tested |
+| `apps/desktop/src/lib/web-tab/web-data.svelte.ts` | which of the three each space chose, on this device. Tested |
+| `apps/desktop/src/lib/web-tab/menu.ts`                | the dots: Chrome's rows, and the zoom ladder; the list under a held arrow. Tested                                                                                                                                                                                                   |
+| `apps/desktop/src/lib/web-tab/bar-keys.ts` | what a key means to the bar: the address field, reload, the tabs by number, the zoom, Escape. Pure, tested |
+| `apps/desktop/src/lib/web-tab/heard.ts` | what the engine says about a page, read and landed on the tab. Tested |
+| `apps/desktop/src/lib/web-tab/sites.ts` | a site muted, and the size a site is drawn at, per device. Tested |
+| `apps/desktop/src/lib/web-tab/mute.ts` | Mute site, in every tab showing it |
+| `apps/desktop/src/lib/web-tab/filling.svelte.ts` | a page holding the whole screen, and the window following it |
+| `apps/desktop/src/lib/web-tab/seek.ts` | finding in the page from the bar and from the keys. Tested |
+| `apps/desktop/src/lib/web-tab/passed.svelte.ts` | a key the page let go by - find, a step, the address field - answered for that tab alone. Tested |
+| `apps/desktop/src/lib/file-mark.ts`                   | the globe, off the name like every other mark                                                                                                                                                                                                          |
+| `packages/markdown/src/links.ts`                      | `isWebTarget`, and a website among the files a link resolves through                                                                                                                                                                                   |
+| `packages/editor/src/wikilink/notes.ts`               | `[[Svelte docs]]` with the extension left out                                                                                                                                                                                                          |
+| `apps/desktop/src/lib/rooms/kind.ts`                  | no room for a website, said at the file's end                                                                                                                                                                                                          |
+| `services/sync/src/notes.ts`                          | the extensions the account carries                                                                                                                                                                                                                     |
+| `apps/desktop/src/lib/workspace.svelte.ts`            | `openWeb`, `createWebsite`, `openWebsite`, `webNamed`, `keepAsWebNote`, `webAimed`, `asShortcut`, `convertWebsites`, and the routing in `openEntry`                                                                                                       |
+| `scripts/web-tab-e2e.py`                              | the drive: the file, the mark, the tab, the card, the clip                                                                                                                                                                                             |
+| `scripts/web-freeze-probe.py`                         | the drive for the freeze: the pump, the window's own answers, and the log                                                                                                                                                                              |
+| `scripts/web-switch-probe.py`                         | the drive for the switch: whether the page is still there, how long it takes to come back, what ten tabs cost                                                                                                                                          |
+| `scripts/web-open-probe.py`                           | the drive for the open: whether a tab covered when it mounted shows a page at all, and how long each kind of open takes - the clock behind `NIB_PERF=1`                                                                                                |
 | `scripts/web-session-probe.py`                        | the drive for the session: signs in to a page on the loopback, closes the note, opens it again, quits the app by closing its window and starts it over - a session cookie, a lasting one, a `localStorage` token and a partitioned cookie a widget from another site set, read back out of the page, all four kept; the widget's own site never sees its cookie, and a planted copy without the partition is gone after the next page |
-| `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                                                                                                                                                                                                          |
-| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                                                                                                                                                                                                       |
-| `scripts/web-bar-probe.py`                            | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1                                                                                                                                                                                                       |
-| `scripts/web-cursor-probe.py`                         | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types"                                                                                                                                                                                                                                                |
-| `scripts/web-scroll-probe.py`                         | the drive for the wheel: one notch at the legacy window and at the page's own, frame by frame, against Chrome headless. See "One notch of the wheel is one notch"                                                                                                                                                                                                                                                                     |
-| `scripts/web-zoom-probe.py`                           | the drive for the zoom: Ctrl and the wheel, the same site, another site, a site with its own Ctrl and the wheel, the keys in the app, and Ctrl+0 from inside the page. See "Zoom" under "The page itself"                                                                                                                                                                                                                             |
-| `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                                                                                                                                                                                                             |
-| `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                                                                                                                                                                                                            |
-| `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                                                                                                                                                                                                      |
+| `scripts/web-downloads-probe.py`                      | the drive for downloads: an attachment, `<a download>`, an inline PDF, `blob:` and `data:`, a file behind a cookie, a `_blank` link, a name taken, progress, Cancel and a tab closed halfway                                                           |
+| `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
+| `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
+| `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
+| `scripts/web-scroll-probe.py` | the drive for the wheel: one notch at the legacy window and at the page's own, frame by frame, against Chrome headless. See "One notch of the wheel is one notch" |
+| `scripts/web-zoom-probe.py` | the drive for the zoom: Ctrl and the wheel, the same site, another site, a site with its own Ctrl and the wheel, the keys in the app, and Ctrl+0 from inside the page. See "Zoom" under "The page itself" |
+| `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
+| `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
+| `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |
 
 ## What is left
 
