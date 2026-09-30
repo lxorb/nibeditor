@@ -243,17 +243,23 @@ does.
 
 **What it does not prove**, and where each goes:
 
-- **Real sites.** A local page of 22 nodes. Heavy pages, and frames from another origin
-  (which the engine runs in their own process and which need
-  `CallDevToolsProtocolMethodForSession`), are `agent-core`'s to measure.
+- **Real sites.** A local page of 22 nodes. `agent-core`'s probe adds a shop with a card
+  form, a sign-in, dialogs, a popup, a download, a file input, a `<select>` and a date
+  field, and a frame from another origin, which the engine runs in its own process: its
+  button came back as `f1e8`, through the frame's own session
+  (`CallDevToolsProtocolMethodForSession`), and was pressed. Heavy real sites are the
+  harness's nightly drive.
 - **The engine's own popups.** A `<select>` list, a date picker and autofill were not
   opened, on purpose (6.5). The harness opens them with the engine-process watch running.
 - **Keys.** None were pressed, which is this repository's rule while a key pressed in a
   page through the protocol can bring a probe forward. There the key went through a
   reader's tab's page-first script to the app, which then took the keyboard back to its own
-  webview; an agent's page has neither that script nor `web_keys.rs`, and the harness
-  proves `Input.dispatchKeyEvent` into an agent's page under the watch before any lane
-  relies on it.
+  webview; an agent's page has neither that script nor `web_keys.rs`. `agent-core`'s probe
+  then pressed `a`, `Shift+B`, `Backspace`, `c` and `Enter` into an agent's page through
+  `Input.dispatchKeyEvent`, with the engine-process watch running and the window in front
+  and the app thread's focus read before and after each: every key arrived trusted, Enter
+  submitted the form, and neither the window in front nor the focus moved, in every run.
+  A reader's tab still gets no engine key (7.2).
 - **Other screens, other scales.** One screen at 200 %. A screen to the left of the
   primary one sits at negative coordinates; 10,000 pixels is past any real arrangement,
   and the harness checks the page's screen rectangle against every monitor at 100 % and
@@ -329,15 +335,15 @@ reader's tab needs `browser.reader`; an agent's own needs `browser`.
 | tool | arguments | what it does |
 | --- | --- | --- |
 | `browser_tabs` | - | the reader's web tabs (id, title, address, space, in front, on screen) and this agent's (id, address, title, loading) |
-| `browser_open` | `url`, `store`?: `reader` (default), `agent`, `space`; `width`, `height`? | an agent tab, out of sight; answers its id |
+| `browser_open` | `url`, `store`?: `reader` (default), `agent`, `space`; `space`?; `width`, `height`? | an agent tab, out of sight; answers its id and the store it is in, which is the agent's own for a site kept to it (6.3) whatever was asked |
 | `browser_navigate` | `tab`, `url` or `back`/`forward`/`reload` | |
 | `browser_wait` | `tab`, `for`: `load`, `network_idle`, `{text}`, `{ref}`, `{url}`; `timeout_ms` | network idle is no request in flight for 500 ms, counted from the engine's own network events |
 | `browser_snapshot` | `tab`, `ref`? (a subtree), `max_chars`? | the accessibility tree as text: `- button "Save" [ref=e4812]`; refs are the engine's node ids, stable for as long as the element lives, `f2e17` inside a frame |
 | `browser_find` | `tab`, `text` or `role` and `name` | the refs that match |
-| `browser_read` | `tab`, `as`: `text`, `markdown`, `article` | the page as words, through the clipper's own converter (`@nib/markdown/from-html`) |
+| `browser_read` | `tab`, `as`: `text`, `markdown` (default), `article`; `max_chars`? | the page as words, through the clipper's own converter (`@nib/markdown/from-html`), which the crate asks the window for (`agent.markdown`); the page's text when no window answers |
 | `browser_click` | `tab`, `ref`, `button`?, `count`?, `modifiers`? | scrolled into view, the engine's highlight for a beat, then pressed |
-| `browser_type` | `tab`, `ref`, `text`, `submit`? | into a field, as text rather than keys (`Input.insertText`); refused on a password field (9.4) |
-| `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page** through the engine (`Input.dispatchKeyEvent`), never through the system and never into the window |
+| `browser_type` | `tab`, `ref`, `text`, `submit`?, `replace`? | into a field, as text rather than keys (`Input.insertText`); a date, time or colour field set through the page; refused on a password field and on every field of a sign-in form (9.4) |
+| `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page**: through the engine (`Input.dispatchKeyEvent`) in an agent's own tab, measured to move neither the window in front nor the keyboard; as the page's own key events in a reader's tab, whose page-first keys would hand an engine key to the window (7.2). Never through the system, never into the window, never a key that opens a picker |
 | `browser_scroll` | `tab`, `ref` or `dx`, `dy` | |
 | `browser_select` | `tab`, `ref`, `values` | a `<select>` set through the page, never by opening its native list (6.5) |
 | `browser_fill_form` | `tab`, `fields`: `[{ref, value}]` | several fields in one call |
@@ -345,7 +351,7 @@ reader's tab needs `browser.reader`; an agent's own needs `browser`.
 | `browser_upload` | `tab`, `ref`, `files`: paths inside a space | the file chooser is intercepted (`Page.setInterceptFileChooserDialog`) and answered with `DOM.setFileInputFiles`; a path outside every space asks (9.4) |
 | `browser_screenshot` | `tab`, `ref`?, `full_page`?, `scale`? | a PNG; scaled to the page's CSS pixels unless asked |
 | `browser_console` | `tab`, `since`?, `level`? | the last 500 lines per tab |
-| `browser_network` | `tab`, `since`?, `match`? | the last 500 requests per tab: method, address, status, type, time; a body only with `browser.network` |
+| `browser_network` | `tab`, `since`?, `match`?, `bodies`? | the last 500 requests per tab: method, address, status, type, time; bodies only with `browser.network` |
 | `browser_evaluate` | `tab`, `expression`, `world`?: `isolated` (default), `page` | only with `browser.script` for that site (9.2) |
 | `browser_dialog` | `tab`, `accept`, `text`? | answers the dialog the page is holding; every result says when one is waiting |
 | `browser_downloads` | `tab`? | what the agent's tabs downloaded, where to, and whether it finished |
@@ -353,6 +359,31 @@ reader's tab needs `browser.reader`; an agent's own needs `browser`.
 | `browser_close` | `tab` | |
 | `browser_show` | `tab` | asks for the agent tab to become a tab of the reader's, beside the one in front (6.7); it asks, because it changes the screen |
 | `browser_takeover` | `tab`, `reason` | asks the reader to do one step in that tab - sign in, a captcha, a payment - and answers when they hand it back (7.3) |
+
+Four verbs of the crate's own sit beside these: `agent_status`, `approval_status`,
+`agent_pair` (the installation's secret only: a client asking to become an agent, answered
+with its token once the reader allows it) and `agent_bye` (a client going away; its tabs
+close ten minutes later unless it comes back). Every answer is one of three shapes - `ok`
+with the verb's result, `needs_approval` (9.3), or `error` with a code an agent can act on
+(`paused_by_reader`, `no_such_ref`, `password_field`, `site_denied`,
+`unsupported_on_this_engine` and the rest) - and a dialog the page is holding rides on
+each. The whole contract is `src-tauri/src/agents/verbs.rs`, mirrored for the window in
+`src/lib/agents/verbs.ts`.
+
+**Every act settles** before it answers, the way Chrome DevTools MCP's
+`waitForEventsAfterAction` does: a navigation of the page's own frame that starts within
+100 ms is waited for (3 s at most), and then the document until it has not changed for
+100 ms (3 s at most). An agent rarely needs `browser_wait` after a press, and a dialog the
+press raised ends the wait and comes back on the answer.
+
+**The snapshot** is written the way Playwright MCP writes one, which agents are trained
+on - one element a line, indented, `- checkbox "Gift wrap" [checked] [ref=e47]` - with the
+states DevTools MCP writes (`[focused]`, `[disabled]`, `[expanded]`, `[selected]`,
+`[level=2]`, `[value="..."]`, a link's `[url=/path]`). Containers that say nothing give
+their children to their parent, and a password field's value is never written. Frames in
+the page's own process are in the page's tree under their frame element; a frame in a
+process of its own (another site, as Chromium isolates them) is reached through the
+session `Target.setAutoAttach` gives it, and its refs are `f<n>e<id>`.
 
 ### 5.3 Notes
 
@@ -423,6 +454,16 @@ Three things follow and are part of the design, not the spike:
   last window, and the agent's pages are children of that window. While an agent is
   connected, closing the last window hides it instead and says so once, with the stop and
   a Quit in the tray (open question 6). Minimising the window is measured in section 3.
+- **In the reader's first window, not a window of its own.** `agent-core` measured the
+  alternative, a window nobody ever sees, by hiding the window the agent's page lives in
+  (never activated, never on a screen): the page kept `requestAnimationFrame` at 54 and
+  the 10 ms interval at 100 a second, `visible`, and answered presses; minimised, 58 and
+  100. A screenshot took 520 to 580 ms either way against 70 to 85 ms in a shown window.
+  So the engine does not decide it; the app's own life does. nib ends with its last
+  window and a quit asks every window about its unsaved notes, and a window of the
+  agents' own would be a window that never answers and an app that never ends - where
+  hiding the reader's window into the tray (above) keeps the pages alive with none of
+  that, and measured at full speed.
 
 ### 6.2 Quiet
 
@@ -438,9 +479,9 @@ agent hears about all of them instead:
 | `alert`, `confirm`, `prompt`, `beforeunload` | held open and reported in every result until `browser_dialog` answers; an `alert` is accepted after 30 s unanswered, a `confirm` or `prompt` dismissed | `ScriptDialogOpening` with a deferral, default dialogs off; measured for `prompt`, and for the other two once the dialog plugin's script is out of the page (section 3) |
 | opens a window (`target=_blank`, `window.open`, a sign-in popup) | another agent tab of the same agent, with `window.opener` kept, so OAuth popups work | `NewWindowRequested` held with a deferral and answered with a new agent webview's engine, since Tauri's own answer can only be a window |
 | asks for the camera, the microphone, where you are, notifications, the clipboard | refused, and said in the result; never a bubble in front of the reader | `PermissionRequested`, denied |
-| a download | into the agent's own downloads folder (`Downloads/nib agents/<agent>`), listed by `browser_downloads`, at most 500 MB a file | wry's `on_download` for agent tabs, as `downloads.rs` does for the reader's |
+| a download | into the agent's own downloads folder (`Downloads/nib agents/<agent>`), listed by `browser_downloads`, at most 500 MB a file | `DownloadStarting` on the agent's page: the path set, the engine's flyout off (`Handled`), the size watched and the download cancelled past the ceiling; the same names and folder rules as `downloads.rs` |
 | a file chooser | never shown: answered by `browser_upload` or cancelled | `Page.setInterceptFileChooserDialog` |
-| `window.print()` | refused | the engine raises no event for it and has no setting, so an agent's page gets one document-start line in its own world making `print` do nothing: the one thing about a page an agent tab changes |
+| `window.print()`, `showPicker()` | nothing | the engine raises no event for either and has no setting, so an agent's page gets one document-start script in its own world making `print` and the pickers' `showPicker` do nothing: the one thing about a page an agent tab changes |
 | full screen | nothing: no handler, so the page is full screen inside its own 1280 by 800 | `ContainsFullScreenElementChanged` not listened to |
 | basic authentication, a client certificate | refused, and said; the agent asks for a takeover | `BasicAuthenticationRequested`, `ClientCertificateRequested` |
 | a `<select>`, a date or colour picker | never opened natively; `browser_select` and `browser_type` set them through the page | the tools do not click them |
@@ -872,7 +913,11 @@ is still off, and an agent's token never reaches it.
 - **Nothing while idle.** The protocol's domains an agent needs (`DOM`, `Accessibility`,
   `Network`, `Runtime`) are enabled on a tab while an agent is using it and disabled after
   a minute of nothing, because an enabled `Accessibility` domain keeps the engine
-  computing a tree nobody reads.
+  computing a tree nobody reads. `Runtime` is enabled only once an agent asks for a tab's
+  console, because a page can tell that it is on (the "is devtools open" tricks read it),
+  and everything else an agent does runs through `Runtime.evaluate` and
+  `Runtime.callFunctionOn`, which need no domain. One timer, started with the first agent
+  tab, parks what nobody used, closes what a gone agent left and puts idle pages to sleep.
 - **Measured costs** (section 3): an agent page adds one engine process and about 40 MB
   on a small page (about 180 MB on a real one, as a reader's tab does); a snapshot of a
   small page is 7 ms and 446 characters; a click is five protocol calls and 25 ms.
@@ -921,13 +966,31 @@ At most eight agents run at once and no wave needs more than five. Wave 1 can st
   with every browser verb's name, arguments and answer as serde types, and
   `lib/agents/verbs.ts` with the window's; `agent-mcp` generates the tool schemas from
   those two files, so a verb and its tool cannot drift.
-- **Events** from the crate to the window, on `nib://agent`: `acting {agent, tab}`,
-  `paused {agent, tab, by}`, `asked {approval}`, `answered {approval}`, `tab {agent, id,
-  url, title}`, `closed`, `stopped`. The activity UI is built against a fake emitter of
-  exactly these.
+- **Events** from the crate to the window, on `nib://agent`, each with its `kind`:
+  `acting {agent, tab, verb}`, `paused {agent, tab?, by}` (`reader`, `takeover`, `stop`),
+  `resumed {agent, tab?}`, `asked {approval}`, `answered {approval}`, `tab {agent, id, url,
+  title}`, `closed {agent, id}`, `stopped {closed}`. The activity UI is built against a
+  fake emitter of exactly these.
 - **The grant**: `{id, name, client, scopes[], spaces[] | "all", sites: {site: "allow" |
-  "deny" | "agent-store"}, mode, asks: {category: bool}, limits}`, stored by the crate in
-  `<config>/agents.json` (0600), read by the settings pane through two commands.
+  "deny" | "agent-store"}, scripts[], mode, asks: {category: bool}, always: {site:
+  [category]}, programs[], limits, created}`, stored by the crate in `<config>/agents.json`
+  (0600) with each token's SHA-256 beside it and never the token, read and written by the
+  settings pane through `agents_read` and `agents_write`; `agents_mint` makes one by hand
+  and answers its token once.
+- **The window's commands**, each answering only nib's own window: `agents_stop`,
+  `agents_resume {agent?, tab?}`, `agents_answer {id, allow, always}` (a takeover answered
+  is the tab handed back), `agents_ask {agent, category, summary, key}` for a window verb
+  that asks first, `agents_state` for everything the activity panel draws at once,
+  `agents_log {day}`, and `agents_adopt {agent_tab, tab}` for Show (6.7).
+- **The window's verbs the crate asks**, on the endpoint's own road, each optional:
+  `agent.reader_tabs` (the reader's web tabs with their space and whether in front),
+  `agent.store_for {space?, url}` (which store, as `web-data.ts` decides) and
+  `agent.markdown {html, url}`. Without them the crate answers from what it knows: every
+  reader's page it holds, the store every space shares, and the page's text.
+- **The endpoint**: an agent's token reaches the crate's verbs and, from the window's, only
+  the agent verbs of sections 5.1, 5.3 and 5.4, each checked against the scope it needs
+  before the window hears it, with the grant handed to the window as `agent` beside the
+  verb. Every call an agent makes is in its audit log, the window's verbs too.
 - **The docs interface**: `readNote(path, include)`, `editNote(path, edits, ifRev)`,
   `undoAgent(agent, path)` in `lib/agents/docs/`, with the Yjs peer as a second
   implementation of the same three.

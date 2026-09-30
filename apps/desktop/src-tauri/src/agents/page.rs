@@ -8,8 +8,8 @@
 //! the window in front and the app's focus never change.
 //!
 //! **Every act settles** the way Chrome `DevTools` MCP's `waitForEventsAfterAction` does:
-//! if the page's own frame starts a navigation within 100 ms, its load is waited for (up
-//! to 3 s), and then the document is waited on until it has not changed for 100 ms (up to
+//! if the page's own frame starts a navigation within 50 ms, its load is waited for (up
+//! to 3 s), and then the document is waited on until it has not changed for 80 ms (up to
 //! 3 s). So an agent rarely needs `browser_wait` after a press, and a dialog the act
 //! raised ends the wait and rides on the answer instead.
 //!
@@ -36,13 +36,13 @@ use super::verbs::{Answer, Code, Cookie, FieldValue, Match, Moment, Picture, Unt
 const WORLD: &str = "nib-agent";
 
 /// How long an act waits for a navigation it may have started to begin.
-const NAVIGATION_STARTS: Duration = Duration::from_millis(100);
+const NAVIGATION_STARTS: Duration = Duration::from_millis(50);
 
 /// How long an act waits for a navigation's load, and for the document to settle.
 const SETTLES: Duration = Duration::from_secs(3);
 
 /// How long the document has to be still to be settled.
-const STILL: Duration = Duration::from_millis(100);
+const STILL: Duration = Duration::from_millis(80);
 
 /// How long the element about to be pressed in a reader's tab is lit first (7.1).
 const LIT: Duration = Duration::from_millis(300);
@@ -53,8 +53,11 @@ const TALLEST: f64 = 16_384.0;
 /// What a page's element says about itself and its form, for the policy and for what
 /// may be done to it. Run with the element as `this`.
 const FACTS: &str = r"function () {
-  const el = this.nodeType === 1 ? this : this.parentElement
+  let el = this.nodeType === 1 ? this : this.parentElement
   if (!el) return {}
+  // A part of a field the engine draws itself (a date's picker button) is that field.
+  const root = el.getRootNode && el.getRootNode()
+  if (root && root.host && ['INPUT', 'SELECT', 'TEXTAREA'].includes(root.host.tagName)) el = root.host
   const tag = el.tagName.toLowerCase()
   const kind = tag === 'input' ? String(el.type || 'text').toLowerCase() : ''
   const text = (one) => String(one || '').replace(/\s+/g, ' ').trim()
@@ -171,18 +174,26 @@ impl Page<'_> {
         cdp::heard(&self.label)
     }
 
+    /// One call on the page's own session. A call the page cannot answer because it is
+    /// holding a dialog - the press that raised it, a navigation it asked to be asked
+    /// about - answers nothing rather than waiting for the agent to answer the dialog.
     fn call(&self, method: &str, params: &Value) -> Result<Value, Answer> {
-        cdp::call(self.view, method, params).map_err(|why| Answer::error(Code::Failed, why))
+        cdp::call_until(self.view, None, method, params, || {
+            super::quiet::dialog_of(&self.label).is_some()
+        })
+        .map(Option::unwrap_or_default)
+        .map_err(|why| Answer::error(Code::Failed, why))
     }
 
     fn call_on(&self, element: &Element, method: &str, params: &Value) -> Result<Value, Answer> {
-        cdp::call_in(
+        cdp::call_until(
             self.view,
             element.session.as_deref(),
             method,
             params,
-            cdp::PATIENCE,
+            || super::quiet::dialog_of(&self.label).is_some(),
         )
+        .map(Option::unwrap_or_default)
         .map_err(|why| stale(&why))
     }
 
@@ -1572,20 +1583,35 @@ fn png_size(base64: &str) -> Option<(u32, u32)> {
 
 /// Markup's words, for a page the window could not convert.
 fn strip_tags(html: &str) -> String {
-    let mut out = String::with_capacity(html.len() / 2);
-    let mut inside = false;
-    for one in html.chars() {
-        match one {
-            '<' => inside = true,
-            '>' => {
-                inside = false;
-                out.push(' ');
-            }
-            _ if !inside => out.push(one),
-            _ => {}
+    // A script's or a style's insides are not words on the page.
+    let mut kept = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(at) = rest.find('<') {
+        kept.push_str(&rest[..at]);
+        rest = &rest[at..];
+        let lower = rest.get(..8).unwrap_or(rest).to_ascii_lowercase();
+        let closing = if lower.starts_with("<script") {
+            Some("</script>")
+        } else if lower.starts_with("<style") {
+            Some("</style>")
+        } else {
+            None
+        };
+        let past = closing.and_then(|end| {
+            rest.to_ascii_lowercase()
+                .find(end)
+                .map(|found| found + end.len())
+        });
+        if let Some(past) = past {
+            rest = &rest[past..];
+        } else {
+            let end = rest.find('>').map_or(rest.len(), |found| found + 1);
+            kept.push(' ');
+            rest = &rest[end..];
         }
     }
-    out.split_whitespace().collect::<Vec<_>>().join(" ")
+    kept.push_str(rest);
+    kept.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 #[cfg(test)]
@@ -1634,5 +1660,9 @@ mod tests {
             }
         ));
         assert_eq!(strip_tags("<p>a <b>b</b></p>"), "a b");
+        assert_eq!(
+            strip_tags("<p>words</p><script>let x = 1</script><STYLE>p{}</STYLE> more"),
+            "words more"
+        );
     }
 }

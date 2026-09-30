@@ -85,6 +85,55 @@ pub fn call_in(
     serde_json::from_str(&text).map_err(|error| format!("{method}: {error}"))
 }
 
+/// One call that stops waiting as soon as `give_up` says so: `None` then, the call still
+/// made. For a page that may raise a dialog as it is pressed - the press's own answer only
+/// comes once the dialog is answered, and the dialog is waiting on the agent.
+pub fn call_until(
+    view: &Webview,
+    session: Option<&str>,
+    method: &str,
+    params: &Value,
+    give_up: impl Fn() -> bool,
+) -> Result<Option<Value>, String> {
+    let (answered, answer) = sync_channel::<Result<String, String>>(1);
+    let asking = (
+        method.to_string(),
+        params.to_string(),
+        session.map(str::to_string),
+    );
+    view.with_webview(move |platform| {
+        let (method, params, session) = asking;
+        send(&platform, session.as_deref(), &method, &params, answered);
+    })
+    .map_err(|error| format!("the page could not be reached: {error}"))?;
+
+    let started = Instant::now();
+    loop {
+        match answer.recv_timeout(Duration::from_millis(25)) {
+            Ok(text) => {
+                let text = text?;
+                if text.is_empty() {
+                    return Ok(Some(Value::Null));
+                }
+                return serde_json::from_str(&text)
+                    .map(Some)
+                    .map_err(|error| format!("{method}: {error}"));
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => {
+                return Err(format!("{method}: the page did not answer"));
+            }
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {
+                if give_up() {
+                    return Ok(None);
+                }
+                if started.elapsed() >= PATIENCE {
+                    return Err(format!("{method}: the page did not answer"));
+                }
+            }
+        }
+    }
+}
+
 /// Sends one call to the engine, on the window's thread, and the answer to `answered`
 /// whenever it comes.
 #[allow(
@@ -717,7 +766,14 @@ pub fn listen_to_console(view: &Webview, label: &str) {
         true,
     );
     if first {
-        let _ = call(view, "Runtime.enable", &json!({}));
+        // Briefly: a page holding a dialog answers nothing until the dialog is answered.
+        let _ = call_in(
+            view,
+            None,
+            "Runtime.enable",
+            &json!({}),
+            Duration::from_secs(3),
+        );
     }
 }
 
