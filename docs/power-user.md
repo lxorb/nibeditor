@@ -10,12 +10,6 @@ Paths: `lib/` = `apps/desktop/src/lib`, `ed/` = `packages/editor/src`, `rs/` =
 its own files, except three that everyone appends to: `lib/shortcuts/registry.ts`,
 `lib/commands.ts` and the 39 locale catalogues. Rebase conflicts there are one-liners.
 
-## In progress
-
-| area | behaviour | from | status | evidence | size | value |
-| --- | --- | --- | --- | --- | --- | --- |
-| Links | Ctrl+click and middle-click on a note link or a list row opens a new tab | Chrome, Obsidian, VS Code | in progress | agent `ctrl-click`, branch `feat/ctrl-click-new-tab`; `ed/wikilink/follow.ts:63` reads button 0 only | M | high |
-
 ## Batch 1: web tab, the page itself
 
 `rs/web_tabs.rs`, `rs/web_keys.rs`, `lib/web-tab/WebTab.svelte`, `lib/web-tab/pages.svelte.ts`. Rust batch: draft PR and CI.

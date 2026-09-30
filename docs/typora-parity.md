@@ -1333,12 +1333,6 @@ Features Typora does not have, which are the reason this exists.
       the account beside the note that asked, read in the publish sheet and
       exported as CSV. No third party, no captcha, nothing kept about the reader
       but the message, and spam held off by the rate limit every other route uses
-- [ ] A mermaid diagram on a published page. Reconsidered rather than assumed: a
-      Worker has no DOM to measure text in, the client renderer is about a megabyte
-      the Worker would carry for every site including the ones with no diagram, and
-      a CDN is what the KaTeX round removed. The way forward is the app drawing it
-      at save time and storing the SVG, which is how the favicon and the theme
-      already work
 
 ### The shell, the phone, and how far back a note goes
 
@@ -1378,11 +1372,6 @@ Features Typora does not have, which are the reason this exists.
       reaches, under a name, in the row above the file list. Pressing it writes
       those settings back and shows the graph, so a space has a second way of
       being looked at without setting the card up again
-- [ ] A three-step Lines dial on the graph's control card. Left out: the card
-      already holds a filter, a switch for orphans, the colour groups, a spread
-      dial and three more switches, and the thickness of a link is the one of
-      those nobody would come looking for. The card staying quiet was the
-      condition, and a ninth control is not quiet
 - [x] How far back the account keeps a note: a month, or a year, chosen in Sync
       and thinned the way a backup is - everything from the last day, one an hour
       to a month, one a day to three, one a week after that. The history sheet is
