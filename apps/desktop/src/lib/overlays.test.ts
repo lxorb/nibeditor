@@ -173,6 +173,8 @@ describe('what hides a web page', () => {
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
+    // Only while it would hang over a page, and gone the moment the pointer leaves.
+    'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/WebApprove.svelte': 'another computer asking for the web logins, under the bar',

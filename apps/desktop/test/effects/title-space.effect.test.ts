@@ -1,6 +1,7 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import Titlebar from '../../src/lib/Titlebar.svelte'
+import { shortcuts } from '../../src/lib/shortcuts.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
 import { workspace } from '../../src/lib/workspace.svelte'
 
@@ -112,9 +113,11 @@ test('the shut panel leaves the space’s mark in the bar, and not its name', ()
   expect(button?.querySelector('.nib-badge')).not.toBe(null)
   expect(target.querySelector('header .space')?.textContent.trim()).toBe('V')
   expect(target.querySelector('header')?.textContent).not.toContain('VIS')
-  // Where the name went: the tooltip, and what a screen reader hears, with what a
-  // press does.
-  expect(button?.getAttribute('title')).toBe('VIS: switch space')
+  // Where the name went: the tooltip, with the key that does the same, and what a
+  // screen reader hears, with what a press does.
+  expect(button?.getAttribute('title')).toBe(
+    `VIS: switch space (${shortcuts.hint('space.switcher') ?? ''})`,
+  )
   expect(button?.getAttribute('aria-label')).toBe('VIS: switch space')
   expect(button?.getAttribute('aria-haspopup')).toBe('menu')
   // Its own element, beside the stretch the window is dragged by, so a press on it
