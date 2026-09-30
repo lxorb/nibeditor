@@ -142,6 +142,13 @@ await import('./account.svelte')
 await import('./connectors.svelte')
 await import('./usage.svelte')
 
+/** Every test starts from the store graph evaluated again, which on a machine running
+ *  the rest of the gate beside it has outlasted the project's thirty seconds - the
+ *  flake this file was known for. The budget is this hook's own rather than the
+ *  project's, because it is this file that pays for it; it is a wall a slow honest run
+ *  must not hit, and nothing here asserts on time. */
+const REEVALUATING = 120_000
+
 beforeEach(async () => {
   localStorage.clear()
   server.refuse = false
@@ -163,7 +170,7 @@ beforeEach(async () => {
   ;({ connectors } = await import('./connectors.svelte'))
   ;({ usage } = await import('./usage.svelte'))
   account.email = 'me@example.com'
-})
+}, REEVALUATING)
 
 describe('the countdown to another code', () => {
   test('runs at one a second, however often a code is asked for', async () => {
