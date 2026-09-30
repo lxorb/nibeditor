@@ -200,6 +200,8 @@ test('the key fills the window with the tab being worked in, and gives the windo
 
 test('the chrome goes toward its edges and comes back from them, and nothing else moves', async () => {
   await window2()
+  // What came in with the window (the dot of a note with no file) is not Shift+F11's.
+  moved.length = 0
   await shiftF11()
 
   const going = moved.splice(0)
