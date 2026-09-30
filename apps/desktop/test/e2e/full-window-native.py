@@ -30,12 +30,13 @@ import importlib.util
 import json
 import os
 import sys
+import threading
 import time
 from ctypes import wintypes
 from pathlib import Path
 from typing import Any
 
-from harness import ROOT, Drive, Native, identifier_of
+from harness import ROOT, Drive, Native, end, identifier_of
 
 NEEDS = ("native",)
 
@@ -86,31 +87,25 @@ def content_of(hwnd: int, user32: Any) -> tuple[int, int, int, int]:
     return corner.x, corner.y, corner.x + box.right, corner.y + box.bottom
 
 
-# The hole the page is placed over, and every `web_place` the window asks for from now on.
-WATCH = """(() => {
-  const internals = window.__TAURI_INTERNALS__
-  if (!internals.watched) {
-    const invoke = internals.invoke.bind(internals)
-    internals.placed = []
-    internals.invoke = (command, args, options) => {
-      if (command === 'web_place') internals.placed.push({ ...args.pane, visible: args.visible })
-      return invoke(command, args, options)
-    }
-    internals.watched = true
-  }
-  internals.placed = []
-  return JSON.stringify(true)
-})()"""
-
+# The hole the page is placed over, as the window measures it.
 HOLE = """(() => {
   const hole = document.querySelector('.hole')?.getBoundingClientRect()
   return JSON.stringify({
     hole: hole ? [hole.x, hole.y, hole.width, hole.height] : null,
     scale: devicePixelRatio,
     fills: nib.workspace.panes.fills,
-    placed: window.__TAURI_INTERNALS__.placed ?? [],
   })
 })()"""
+
+
+def window_of(native: Native, app: Any) -> int:
+    """The app's own window, once it has one."""
+    until = time.perf_counter() + 90
+    while time.perf_counter() < until:
+        if window := native.probe.main_window(app.pid):
+            return int(window)
+        time.sleep(0.2)
+    raise SystemExit("the app never showed its window")
 
 
 def near(one: tuple[int, ...], other: tuple[int, ...], slack: int = 2) -> bool:
@@ -137,22 +132,20 @@ def drive(_browser: object) -> None:
     (space / f"{PAGE}.url").write_text(switch.shortcut(f"{origin}/page", PAGE), encoding="utf-8")
 
     # Once to write the endpoint, once more with `eval` on: the crate reads the flag as it
-    # opens the socket.
+    # opens the socket. The first is closed through its window once it has one, and ended
+    # by its own number if it will not go: a second launch under the same identifier is
+    # handed to the first and never runs.
     app = native.start()
     port, _ = switch.endpoint(identifier, 90)
-    native.probe.close_app(app)
+    window_of(native, app)
+    if not native.probe.close_app(app):
+        end(app)
     switch.allow_eval(identifier)
     app = native.start()
     port, secret = switch.endpoint(identifier, 90, unlike=port)
     asked = switch.App(port, secret)
 
-    window = 0
-    until = time.perf_counter() + 90
-    while not window and time.perf_counter() < until:
-        window = native.probe.main_window(app.pid)
-        time.sleep(0.2)
-    if not window:
-        raise SystemExit("the app never showed its window")
+    window = window_of(native, app)
     native.probe.sized(window, 1280, 860)
     time.sleep(1.5)
 
@@ -186,10 +179,26 @@ def drive(_browser: object) -> None:
     if not near(before, hole):
         wrong(f"before filling, the page {before} is not over its hole {hole}")
 
-    asked.ask(WATCH)
+    # Every size the page's window has on the way in, looked at as often as the watch on
+    # the probe looks: a document animated through the sizes in between would show here as
+    # a run of rectangles rather than two.
+    seen: list[tuple[int, int, int, int]] = []
+    watching = threading.Event()
+
+    def watch() -> None:
+        while not watching.is_set():
+            box = rect_of(site, user32)
+            if not seen or seen[-1] != box:
+                seen.append(box)
+            time.sleep(0.002)
+
+    watcher = threading.Thread(target=watch, daemon=True)
+    watcher.start()
     ran = switch.act(port, secret, "commands.run", {"id": "full-window"})
     say(f"commands.run full-window: {ran}")
     time.sleep(2)
+    watching.set()
+    watcher.join()
 
     filled = rect_of(site, user32)
     said = asked.ask(HOLE)
@@ -200,9 +209,9 @@ def drive(_browser: object) -> None:
     wanted = (content[0], content[1] + bar, content[2], content[3])
     if not near(filled, wanted):
         wrong(f"filled, the page is {filled} rather than the content area under its bar {wanted}")
-    places = {(one["x"], one["y"], one["width"], one["height"]) for one in said["placed"] if one["visible"]}
-    if len(places) != 1:
-        wrong(f"the page was placed at {len(places)} rectangles on the way in, not one: {places}")
+    say(f"the page's window on the way in: {seen}")
+    if seen != [before, filled]:
+        wrong(f"the page went through {len(seen) - 1} sizes on the way in, not one: {seen}")
 
     switch.act(port, secret, "commands.run", {"id": "full-window"})
     time.sleep(2)
