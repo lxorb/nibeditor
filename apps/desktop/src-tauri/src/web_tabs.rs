@@ -90,6 +90,88 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
             .insert(tab.to_string(), label.to_string());
     }
     listening(app, tab, store);
+    // Its loads and its title, said to the window as a built page's are.
+    #[cfg(all(windows, not(feature = "cef")))]
+    reported(app, tab, label);
+}
+
+/// What an adopted page does, said to the window the way `reporting` says it for a page
+/// a tab built: each load started and ended, and the title. The builder's own hooks were
+/// the agent's, so these are the engine's events on the page itself, answered on the
+/// window's thread from what the engine hands the event rather than by asking the
+/// webview, which from inside an engine event would wait on itself.
+#[cfg(all(windows, not(feature = "cef")))]
+#[allow(
+    unsafe_code,
+    reason = "a page's loads and title are WebView2's own events, reached through its COM interfaces"
+)]
+fn reported(app: &AppHandle, tab: &str, label: &str) {
+    use webview2_com::{
+        DocumentTitleChangedEventHandler, NavigationCompletedEventHandler,
+        NavigationStartingEventHandler,
+    };
+    use windows_core::PWSTR;
+
+    let Some(view) = app.get_webview(label) else {
+        return;
+    };
+    let (app, tab, label) = (app.clone(), tab.to_string(), label.to_string());
+    let _ = view.with_webview(move |platform| {
+        let said = |app: &AppHandle, tab: &str, label: &str, url: String, title: Option<String>| {
+            if let Some(view) = app.get_webview(label) {
+                say(app, &view, tab, &url, title, false);
+            }
+        };
+        let starting = {
+            let (app, tab) = (app.clone(), tab.clone());
+            NavigationStartingEventHandler::create(Box::new(move |_, _| {
+                started(&app, &tab);
+                Ok(())
+            }))
+        };
+        let ended = {
+            let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
+            NavigationCompletedEventHandler::create(Box::new(move |sender, _| {
+                let mut url = PWSTR::null();
+                // Safe: the engine's own object, on the window's thread.
+                let url = sender.and_then(|core| unsafe {
+                    core.Source(&raw mut url).ok()?;
+                    Some(webview2_com::take_pwstr(url))
+                });
+                said(&app, &tab, &label, url.unwrap_or_default(), None);
+                Ok(())
+            }))
+        };
+        let titled = {
+            let (app, tab, label) = (app.clone(), tab.clone(), label.clone());
+            DocumentTitleChangedEventHandler::create(Box::new(move |sender, _| {
+                let (mut url, mut title) = (PWSTR::null(), PWSTR::null());
+                // Safe: as above.
+                let read = sender.and_then(|core| unsafe {
+                    core.Source(&raw mut url).ok()?;
+                    core.DocumentTitle(&raw mut title).ok()?;
+                    Some((
+                        webview2_com::take_pwstr(url),
+                        webview2_com::take_pwstr(title),
+                    ))
+                });
+                if let Some((url, title)) = read {
+                    said(&app, &tab, &label, url, Some(title));
+                }
+                Ok(())
+            }))
+        };
+        // Safe: the controller is this webview's, on its own thread; the engine holds the
+        // handlers for as long as the webview lives.
+        unsafe {
+            if let Ok(core) = platform.controller().CoreWebView2() {
+                let mut token = 0i64;
+                let _ = core.add_NavigationStarting(&starting, &raw mut token);
+                let _ = core.add_NavigationCompleted(&ended, &raw mut token);
+                let _ = core.add_DocumentTitleChanged(&titled, &raw mut token);
+            }
+        }
+    });
 }
 
 /// A window an adopted page asked for, handed to the window as a tab beside it: the

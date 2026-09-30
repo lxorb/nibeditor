@@ -72,6 +72,11 @@ fn pages(app: &AppHandle) -> Vec<ReaderTab> {
 /// The page of a reader's tab, if the tab has one.
 pub fn page(app: &AppHandle, tab: &str) -> Option<Webview> {
     let label = crate::web_tabs::label_of(tab);
+    // The page that holds the shared session open is under the same prefix and is
+    // nobody's tab (see `session::anchor` in web_tabs.rs); nib's own window never is.
+    if label == "web-session" || !(label.starts_with("web-") || label.starts_with("agent-")) {
+        return None;
+    }
     app.get_webview(&label)
 }
 
