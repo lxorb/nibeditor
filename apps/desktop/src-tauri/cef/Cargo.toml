@@ -51,6 +51,9 @@ unsafe_op_in_unsafe_fn = "deny"
 [lints.clippy]
 pedantic = { level = "warn", priority = -1 }
 needless_pass_by_value = "allow"
+# The library is the app's, whose Rust is older than this build's: `Duration::from_hours`
+# and `from_mins` are newer than the app's `rust-version`, so the app writes seconds.
+duration_suboptimal_units = "allow"
 
 # **The pins**, and the only ones: every Tauri crate the engine build takes, and CEF.
 # Published crates, all of one release of Tauri 3 - `tauri` and the runtime on their
@@ -59,6 +62,10 @@ needless_pass_by_value = "allow"
 [package.metadata.engine]
 tauri = "3.0.0-alpha.2"
 tauri-runtime-cef = "3.0.0-alpha.2"
+# What `tauri-runtime-cef` was built against, which Cargo would otherwise move past:
+# `tauri-runtime` 3.0.0-alpha.2 asks every runtime for a method alpha.2 of this one only
+# has off a Mac, and the Mac build stopped there.
+tauri-runtime = "3.0.0-alpha.1"
 tauri-build = "3.0.0-alpha.1"
 plugins = "3.0.0-alpha.1"
 cef = "152.3.0"
@@ -71,6 +78,7 @@ tauri-build = "=3.0.0-alpha.1"
 [dependencies]
 tauri = { version = "=3.0.0-alpha.2", features = ["protocol-asset", "unstable", "custom-protocol"] }
 tauri-runtime-cef = { version = "=3.0.0-alpha.2", features = ["unstable"] }
+tauri-runtime = "=3.0.0-alpha.1"
 cef = { version = "=152.3.0", default-features = false }
 tauri-plugin-opener = "=3.0.0-alpha.1"
 tauri-plugin-os = "=3.0.0-alpha.1"

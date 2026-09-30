@@ -23,6 +23,7 @@ export const MARKER =
 interface Pins {
   tauri: string
   runtime: string
+  core: string
   build: string
   plugins: string
   cef: string
@@ -39,6 +40,7 @@ function pins(head: string): Pins {
   return {
     tauri: value('tauri'),
     runtime: value('tauri-runtime-cef'),
+    core: value('tauri-runtime'),
     build: value('tauri-build'),
     plugins: value('plugins'),
     cef: value('cef'),
@@ -56,10 +58,13 @@ function moved(line: string, pinned: Pins): string[] {
     // The app's own `tauri`, the one every build has: the engine's, with every feature
     // the app asks for, embedding the interface as a release does, and beside it the
     // engine itself and the crate the library reaches Chromium's own objects through.
+    // And Tauri's runtime interface, held to the release the engine was built against:
+    // a later one is within what the engine asks for and need not be what it implements.
     if (features.includes('protocol-asset')) {
       return [
         `tauri = { version = "=${pinned.tauri}", features = [${listed([...features, 'custom-protocol'])}] }`,
         `tauri-runtime-cef = { version = "=${pinned.runtime}", features = ["unstable"] }`,
+        `tauri-runtime = "=${pinned.core}"`,
         `cef = { version = "=${pinned.cef}", default-features = false }`,
       ]
     }
