@@ -25,6 +25,11 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   },
 }))
 
+// jsdom lays nothing out, and a focused editor measures where its caret is; an empty
+// list of boxes is what a range with no layout has.
+Range.prototype.getClientRects = () => [] as unknown as DOMRectList
+Range.prototype.getBoundingClientRect = () => new DOMRect()
+
 const { overlays } = await import('../../src/lib/overlays')
 const { adrift, pressedThrough } = await import('../../src/lib/keyboard-home')
 
