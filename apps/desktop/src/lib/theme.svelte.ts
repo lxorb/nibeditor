@@ -66,9 +66,6 @@ const STORAGE_KEY = 'nib:theme'
  *  theme has a dark side or a light one or both, and which of them the app is
  *  showing is not what theme it is. */
 const SCHEME_KEY = 'nib:theme-scheme'
-/** Where the side of a theme that stated both was kept, before the scheme was a
- *  choice of its own. Read once, by the migration, and never written. */
-const SIDE_KEY = 'nib:theme-side'
 const STYLE_ID = 'nib-user-theme'
 const CUSTOM_ID = 'nib-custom-css'
 
@@ -80,9 +77,6 @@ const SHEET_KEY = 'nib:theme-sheet'
 /** That the contrast theme has been offered, so it is offered once and never
  *  again. Absent means the offer has not been made yet; see `offerContrast`. */
 const OFFERED_KEY = 'nib:contrast-offered'
-/** Where the contrast switch wrote whether it was on, before contrast was a
- *  theme. Read once, by the offer, and never written. */
-const CONTRAST_KEY = 'nib:contrast'
 /** The high contrast theme's own id. The same word the registry knows it under, and
  *  deliberately: the theme in the store is this palette, published so a reader can
  *  update it without waiting for a release of the app, and a card there that installed
@@ -323,24 +317,15 @@ class Themes {
    *
    *  `dark`, `light` and `system` were themes in the dropdown before the scheme
    *  became a choice beside the theme. Each of them means the built-in theme and
-   *  a scheme, so that is what they are read as. The side of a theme that stated
-   *  both was already this choice under another name, so it is taken as the
-   *  scheme where the theme is a file.
+   *  a scheme, so that is what they are read as.
    *
    *  Written back in the new spelling at once, so nothing further along has to
    *  know there was an old one. */
   private restoreChoice() {
     const saved = storedText(STORAGE_KEY) ?? ''
     const chosen = storedText(SCHEME_KEY)
-    const side = storedText(SIDE_KEY)
 
-    this.scheme = isChoice(chosen)
-      ? chosen
-      : isChoice(saved)
-        ? saved
-        : isScheme(side)
-          ? side
-          : 'system'
+    this.scheme = isChoice(chosen) ? chosen : isChoice(saved) ? saved : 'system'
 
     this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
 
@@ -361,30 +346,15 @@ class Themes {
    *  nothing has silently changed and putting it back is one press. A theme applied
    *  without saying so would be the app deciding what somebody's screen looks like.
    *
-   *  One rule covers both the reader who has never launched this and the reader who
-   *  had the switch: answer anybody the switch would have been on for at this launch.
-   *  It said so itself, or their system says so and they never contradicted it. A
-   *  reader who turned the switch off said no to contrast, and that answer stands.
-   *
    *  The marker is written the moment it happens, so it happens once however it is
    *  answered: a reader who chooses something else keeps that from then on, whatever
    *  their system goes on asking for. */
   private offerTheContrastTheme() {
     if (storedText(OFFERED_KEY)) return
 
-    const had = storedText(CONTRAST_KEY)
-    // Read once. The switch is gone, and the key with it.
-    if (had !== null) forget(CONTRAST_KEY)
-
-    // Somebody who turned the switch off has answered the question already.
-    if (had === 'off') {
-      keep(OFFERED_KEY, 'yes')
-      return
-    }
-
     // Nobody is asking. Left unmarked on purpose: a system that starts asking
     // next month gets the offer then, which is still only ever once.
-    if (had !== 'on' && !window.matchMedia(MORE).matches) return
+    if (!window.matchMedia(MORE).matches) return
 
     // A reader who has already chosen a theme has answered the question about how
     // their screen looks, and repainting it because their system asks for contrast

@@ -414,15 +414,6 @@ describe('what an older device wrote down', () => {
     expect(theme.scheme).toBe('system')
   })
 
-  test('the side of a theme that stated both is that theme and that scheme', () => {
-    kept.setItem('nib:theme', 'file:rose')
-    kept.setItem('nib:theme-side', 'light')
-    theme.init()
-
-    expect(theme.id).toBe('file:rose')
-    expect(theme.scheme).toBe('light')
-  })
-
   test('and is written back in the new spelling, so nothing reads the old one twice', () => {
     kept.setItem('nib:theme', 'light')
     theme.init()
@@ -433,7 +424,6 @@ describe('what an older device wrote down', () => {
 
   test('a scheme already written down outranks either of those', () => {
     kept.setItem('nib:theme', 'dark')
-    kept.setItem('nib:theme-side', 'dark')
     kept.setItem('nib:theme-scheme', 'system')
     theme.init()
 
@@ -598,25 +588,6 @@ describe('answering a system that asks for more contrast', () => {
     theme.init()
 
     expect(theme.offerContrast).toBe(false)
-  })
-
-  test('to a reader who had the switch on, so their contrast goes nowhere in silence', () => {
-    kept.setItem('nib:contrast', 'on')
-    theme.init()
-
-    expect(theme.offerContrast).toBe(true)
-    // Read once, and the key the switch wrote goes with the switch.
-    expect(kept.getItem('nib:contrast')).toBe(null)
-  })
-
-  test('and never to one who turned the switch off, which was them answering it', () => {
-    kept.setItem('nib:contrast', 'off')
-    media.contrast = true
-    theme.init()
-
-    expect(theme.offerContrast).toBe(false)
-    expect(kept.getItem('nib:contrast')).toBe(null)
-    expect(kept.getItem('nib:contrast-offered')).toBe('yes')
   })
 
   test('with the theme itself, chosen and written down', () => {
