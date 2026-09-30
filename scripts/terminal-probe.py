@@ -206,6 +206,31 @@ class Window:
         return json.loads(said) if isinstance(said, str) else []
 
 
+def paged(window, key: str, code: int, times: int) -> None:
+    """Shift and a paging key, pressed where the terminal has the keyboard: xterm.js's own
+    way through its scrollback."""
+
+    window.run(
+        "(() => { const field = document.querySelector('.xterm-helper-textarea'); "
+        f"for (let i = 0; i < {times}; i++) {{ "
+        f"const press = new KeyboardEvent('keydown', {{ key: {json.dumps(key)}, code: {json.dumps(key)}, shiftKey: true, bubbles: true, cancelable: true }}); "
+        f"Object.defineProperty(press, 'keyCode', {{ get: () => {code} }}); field.dispatchEvent(press) }} "
+        "return true })()"
+    )
+    time.sleep(0.5)
+
+
+def above(window) -> list[str]:
+    """The rows at the top of the terminal's scrollback, where a restart on Windows puts
+    what the screen had (see `restoredAbove` in lib/terminal/history.ts): paged up to the
+    top, read, and paged back down to the prompt."""
+
+    paged(window, "PageUp", 33, 20)
+    rows = window.rows()
+    paged(window, "PageDown", 34, 20)
+    return rows
+
+
 def until(ask, seconds: float = 20.0, every: float = 0.25):
     """The first answer `ask` gives that is truthy, or its last one."""
 
@@ -460,8 +485,12 @@ def main() -> int:
             check(folder.endswith("inside"), f"in the folder it was last in ({folder})")
             again = until(lambda: any(row.endswith("inside>") for row in window.rows()), 30)
             check(bool(again), "with a fresh shell at its prompt there")
+            # Above the screen, on Windows, with the line saying when as its first row; see
+            # `restoredAbove` in lib/terminal/history.ts and terminal-restore-probe.py.
+            first = window.rows()[:1]
+            check(bool(first) and first[0].startswith("Restored "), "under a line saying when")
             check(
-                any("nib-before-restart" in row for row in window.rows()),
+                any("nib-before-restart" in row for row in above(window)),
                 "and its last lines above that",
             )
 
