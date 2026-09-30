@@ -11,11 +11,8 @@ notes and browses, and not on the one that does not; a switch pressed is in the
 crate's grant, and so is what it needs; a site typed as an address is kept as its
 site; a right-to-left language turns the pane round.
 
-Build first, with the app's own handle on the page:
-
-    NODE_ENV=development pnpm --filter @nib/desktop exec vite build --mode drive
-
-Then, from the repository root:
+From the repository root; the harness builds the app with its handle on the page
+the first time and serves it (see harness.py):
 
     python apps/desktop/test/e2e/agents-settings.py
 
@@ -24,25 +21,11 @@ Screenshots go beside this file under `shots/agents-settings/`, which is ignored
 
 from __future__ import annotations
 
-import functools
-import http.server
-import os
-import sys
-import threading
-from pathlib import Path
+from harness import Drive
+from settling import quiet
 
-from playwright.sync_api import sync_playwright
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from settling import quiet  # noqa: E402
-
-ROOT = Path(__file__).resolve().parents[4]
-APP = ROOT / "apps" / "desktop"
-SHOTS = APP / "test" / "e2e" / "shots" / "agents-settings"
-
-# Above 18000, and not a port any other drive here uses.
-PORT = 23871
-ORIGIN = f"http://127.0.0.1:{PORT}"
+DRIVE = Drive(__file__)
+say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 
 DESKTOP_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
@@ -63,47 +46,11 @@ GRANT = """
 (id) => JSON.parse(JSON.stringify(window.agentsFake.grants.find((one) => one.id === id)))
 """
 
-sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-
-failures: list[str] = []
-
-
-def say(words: str) -> None:
-    print(f"  {words}", flush=True)
-
-
 def check(what: str, held: bool) -> None:
-    say(f"{'ok  ' if held else 'FAIL'} {what}")
-    if not held:
-        failures.append(what)
-
-
-class Quiet(http.server.SimpleHTTPRequestHandler):
-    def log_message(self, *args: object) -> None:  # noqa: D102
-        return
-
-
-class Server(http.server.ThreadingHTTPServer):
-    # A page asks for every chunk of its first paint at once, and Windows refuses a
-    # connection past the listening queue rather than holding it: the default of five
-    # turned a busy machine's load into a page that never started.
-    request_queue_size = 256
-
-
-class Pages:
-    """The built page, served."""
-
-    def __init__(self) -> None:
-        handler = functools.partial(Quiet, directory=str(APP / "dist"))
-        self.server = Server(("127.0.0.1", PORT), handler)
-        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
-
-    def start(self) -> None:
-        self.thread.start()
-        say(f"serving {APP / 'dist'} on {ORIGIN}")
-
-    def stop(self) -> None:
-        self.server.shutdown()
+    if held:
+        say(f"ok   {what}")
+    else:
+        wrong(what)
 
 
 def body_to(page, where: str) -> None:
@@ -122,35 +69,33 @@ def body_to(page, where: str) -> None:
 
 def look(browser, scheme: str, language: str) -> None:
     name = f"{scheme}-{language}"
-    context = browser.new_context(
+    page = DRIVE.page(
+        browser,
+        errors=False,
         viewport={"width": 1280, "height": 860},
         user_agent=DESKTOP_AGENT,
         color_scheme=scheme,
         reduced_motion="reduce",
         device_scale_factor=2,
     )
+    context = page.context
     context.add_init_script(f"localStorage.setItem('nib:language', {language!r})")
-    page = context.new_page()
     page.set_default_timeout(8000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.on("console", lambda said: say(f"[{name}] {said.type}: {said.text[:200]}") if said.type == "error" else None)
-    page.goto(ORIGIN, wait_until="domcontentloaded")
     try:
-        page.wait_for_function("() => !!window.nibApp", timeout=60000)
-    except Exception:
-        page.screenshot(path=str(SHOTS / f"{name}-stuck.png"))
+        DRIVE.open(page)
+    except SystemExit:
+        shot(page, f"{name}-stuck")
         raise
-    page.wait_for_function("() => !!window.nibApp.workspace.activeSpace", timeout=60000)
-    page.wait_for_function("() => !!window.nibApp.agents", timeout=60000)
+    DRIVE.wait_for(page, "window.nibApp.agents", "the agents")
 
     page.evaluate(OPEN)
     page.wait_for_selector(".agents .agent")
     quiet(page)
 
-    def shot(tag: str) -> None:
-        path = SHOTS / f"{name}-{tag}.png"
-        page.screenshot(path=str(path))
-        say(f"[{name}] {path.name}")
+    def photograph(tag: str) -> None:
+        shot(page, f"{name}-{tag}")
 
     rows = page.locator(".agents .agent").count()
     check(f"[{name}] the list holds the three agents", rows == 3)
@@ -159,7 +104,7 @@ def look(browser, scheme: str, language: str) -> None:
         f"[{name}] the interface reads {'right to left' if language == 'ar' else 'left to right'}",
         direction == ("rtl" if language == "ar" else "ltr"),
     )
-    shot("list")
+    photograph("list")
 
     # Codex was granted no browser: no trifecta.
     page.locator(".agents .agent", has_text="Codex").click()
@@ -175,12 +120,12 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
     check(f"[{name}] the trifecta line is on the agent that reads and browses", page.locator(".trifecta").count() == 1)
     body_to(page, "top")
-    shot("agent-top")
+    photograph("agent-top")
 
     page.locator(".agents .session").first.click()
     page.wait_for_selector(".agents .calls li")
     quiet(page)
-    shot("session")
+    photograph("session")
     page.locator(".agents .session").first.click()
     quiet(page)
 
@@ -214,36 +159,20 @@ def look(browser, scheme: str, language: str) -> None:
         check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
 
     body_to(page, "middle")
-    shot("agent-middle")
+    photograph("agent-middle")
     body_to(page, "foot")
-    shot("agent-foot")
+    photograph("agent-foot")
 
     context.close()
 
 
+def drive(browser) -> None:
+    for scheme, language in LOOKS:
+        look(browser, scheme, language)
+
+
 def main() -> int:
-    if not (APP / "dist" / "index.html").exists() and not os.environ.get("NIB_SKIP_BUILD"):
-        raise SystemExit("build the app first; see the top of this file")
-
-    SHOTS.mkdir(parents=True, exist_ok=True)
-    pages = Pages()
-    pages.start()
-    try:
-        with sync_playwright() as play:
-            browser = play.chromium.launch(channel="chrome")
-            try:
-                for scheme, language in LOOKS:
-                    look(browser, scheme, language)
-            finally:
-                browser.close()
-    finally:
-        pages.stop()
-
-    say(f"shots in {SHOTS}")
-    if failures:
-        say(f"{len(failures)} failed")
-        return 1
-    return 0
+    return DRIVE.run(drive, "Settings > Agents held in all three looks")
 
 
 if __name__ == "__main__":
