@@ -88,7 +88,18 @@ describe('the mark a file wears', () => {
  *  chosen but that the set is one set: every mark has a drawing, every drawing
  *  is Lucide's own, and no two marks are the same picture. */
 describe('the marks a row wears', () => {
-  const MARK_NAMES: Mark[] = ['note', 'canvas', 'pages', 'pdf', 'picture', 'file', 'web']
+  // The terminal is a tab's mark and never a row's, and is here because the two share
+  // one drawing each; see file-mark.ts.
+  const MARK_NAMES: Mark[] = [
+    'note',
+    'canvas',
+    'pages',
+    'pdf',
+    'picture',
+    'file',
+    'web',
+    'terminal',
+  ]
 
   /** And no folder among them: no row in the list is a folder, so there is no
    *  drawing of one to reach for. See folder-notes.ts. */

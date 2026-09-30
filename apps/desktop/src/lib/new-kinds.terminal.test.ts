@@ -84,10 +84,10 @@ describe('a terminal, as a kind a new tab can be', () => {
 
   /** VS Code's `+ ˅`: the row makes the default, and the others are a chevron away. */
   test('and any other shell a chevron away', async () => {
-    const row = newKindMenu().at(-1)
-    expect(row && 'more' in row && row.more).toBeTruthy()
+    const more = newKindMenu().at(-1)?.more
+    expect(more).toBeDefined()
 
-    const others = row && 'more' in row && row.more ? await row.more() : []
+    const others = more ? await more() : []
     expect(others.map((one) => one?.label)).toEqual(['PowerShell', 'Ubuntu'])
 
     const ubuntu = others[1]
