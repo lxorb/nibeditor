@@ -20,6 +20,7 @@
   import { ClosingWidths } from './tab-strip/closing.svelte'
   import { wheelAlong } from './tab-strip/wheel'
   import { arrival, handOver, picks, register, stripOf, TabDrag } from './tab-strip/drag.svelte'
+  import type { Block } from './tab-strip/picking.svelte'
   import {
     type Bounds,
     endOf,
@@ -168,19 +169,13 @@
   )
   const base = $derived(placed(widths))
 
-  /** The tabs picked in this strip with Ctrl or Shift; see tab-strip/picking.svelte.ts. */
+  /** The tabs picked with Ctrl or Shift, and what a press on one carries; see
+   *  tab-strip/picking.svelte.ts. */
   const picking = $derived(picks.loaded)
   const picked = $derived(new Set(picking?.chosen.of(paneId).map((one) => one.id)))
-  /** A plain press on a picked tab, which picks it alone if it was a click. */
   let plainOnPick = false
-  /** What the press would carry: the tabs picked with it, pinned as it is. */
-  let carrying = $state<{ lead: string; ids: readonly string[] } | null>(null)
-  /** The strip as a drag of several sees it, the block standing as one tab. */
-  const group = $derived(
-    carrying && picking ? picking.gathered(sized, widths, carrying.ids, carrying.lead) : null,
-  )
-  /** Every tab that is up: the one dragged, and a block's others with it. */
-  const lifted = $derived(drag.tabId === null ? [] : (carrying?.ids ?? [drag.tabId]))
+  let block = $state<Block | null>(null)
+  const lifted = $derived(drag.tabId === null ? [] : (block?.ids ?? [drag.tabId]))
 
   const landing = $derived(workspace.panes.landing)
   /** Where something from outside the strip is about to be dropped: a note out of
@@ -196,36 +191,25 @@
     const carried = drag.tabId
 
     if (carried) {
-      // A block of several goes along as one tab and is drawn as its tabs.
-      const rows = group?.order ?? sized
-      const rowWidths = group?.widths ?? widths
+      if (block) return block.layout(room, drag)
       const from = drag.from
-      const own = { x: drag.x, width: rowWidths[from] ?? 0 }
-      const lay = () => {
-        let x = own.x
-        for (const id of lifted) {
-          const width = widths[sized.findIndex((one) => one.id === id)] ?? 0
-          boxes[id] = { x, width }
-          x += width
-        }
-      }
+      const own = { x: drag.x, width: widths[from] ?? 0 }
 
       // Out over the panes: the strip closes up behind it, and the tab itself stays
       // where it last was, out of sight, holding the pointer.
       if (drag.out) {
-        const rest = sized.filter((one) => !lifted.includes(one.id))
+        const rest = sized.filter((_, at) => at !== from)
         const bounds = placed(widthsFor(rest, room))
         for (const [at, one] of rest.entries()) boxes[one.id] = bounds[at] ?? own
-        lay()
+        boxes[carried] = own
         return { boxes, end: endOf(bounds) }
       }
 
-      const order = moved(rows, from, drag.slot)
-      const bounds = placed(moved(rowWidths, from, drag.slot))
+      const order = moved(sized, from, drag.slot)
+      const bounds = placed(moved(widths, from, drag.slot))
       for (const [at, one] of order.entries()) {
-        if (one.id !== carried) boxes[one.id] = bounds[at] ?? own
+        boxes[one.id] = one.id === carried ? own : (bounds[at] ?? own)
       }
-      lay()
       return { boxes, end: endOf(bounds) }
     }
 
@@ -252,9 +236,7 @@
   const lines = $derived.by(() => {
     const ids =
       drag.on && !drag.out
-        ? moved(group?.order ?? sized, drag.from, drag.slot).flatMap((one) =>
-            one.id === drag.tabId ? lifted : [one.id],
-          )
+        ? (block?.order(drag) ?? moved(sized, drag.from, drag.slot).map((one) => one.id))
         : sized.filter((one) => !(drag.out && lifted.includes(one.id))).map((one) => one.id)
     // The room opening for a drop is a tab that is not there yet, and a gap needs
     // no hairline either side of it.
@@ -405,7 +387,7 @@
     if (!press) return null
 
     const width = widths[sized.findIndex((one) => one.id === drag.tabId)] ?? 0
-    const grab = press.grab - (group?.before ?? 0)
+    const grab = press.grab - (block?.strip.before ?? 0)
     const left = i18n.factor > 0 ? drag.pointer.x - grab : drag.pointer.x + grab - width
     const target = landing?.kind === 'strip' ? stripOf(landing.paneId) : undefined
 
@@ -438,43 +420,37 @@
     if (!finger && picksWith(event)) {
       // Ctrl or Shift: the pick changes, and the press drags nothing.
       event.preventDefault()
-      withPicking((one) => {
+      void (
+        picks.loaded ? Promise.resolve(picks.loaded) : import('./tab-strip/picking.svelte')
+      ).then((one) => {
+        picks.loaded = one
         const how = one.pickingOf(event, shortcuts.platform === 'mac')
         const front = how && one.pick(paneId, tab.id, how)
         if (front) workspace.activate(front)
       })
       return
     }
-    if (!finger) {
-      // Chrome activates a tab on the press, before anything has moved, so the tab
-      // under a mouse answers at once and the one being dragged is the one open, and a
-      // pick stays while this may drag it. A finger's press may be a scroll, so it waits.
-      if (!picked.has(tab.id)) picking?.chosen.clear()
-      workspace.activate(tab.id)
-    }
+    // Chrome activates a tab on the press, before anything has moved, so the tab
+    // under a mouse answers at once and the one being dragged is the one open, and a
+    // pick stays while this may drag it. A finger's press may be a scroll, so it waits.
     plainOnPick = picked.has(tab.id)
+    if (!finger && !plainOnPick) picking?.chosen.clear()
+    if (!finger) workspace.activate(tab.id)
+    block = finger ? null : (picking?.Block.of(paneId, tab, sized, widths) ?? null)
 
     const node = event.currentTarget as HTMLElement
     const top = node.closest('.tab')?.getBoundingClientRect().top ?? event.clientY
     const along = alongOf(event.clientX)
-    const block = finger
-      ? []
-      : tabs.filter((one) => picked.has(one.id) && one.pinned === tab.pinned)
-    carrying =
-      block.length > 1 && picked.has(tab.id)
-        ? { lead: tab.id, ids: block.map((one) => one.id) }
-        : null
-    const gather = group
 
     grabY = event.clientY - (top + TOP)
     drag.down({
       tabId: tab.id,
-      from: gather ? gather.from : at,
+      from: block?.strip.from ?? at,
       pinned: tab.pinned,
       along,
       x: event.clientX,
       y: event.clientY,
-      grab: along - (base[at]?.x ?? 0) + (gather?.before ?? 0),
+      grab: along - (base[at]?.x ?? 0) + (block?.strip.before ?? 0),
       finger,
     })
 
@@ -496,11 +472,7 @@
         event.clientY,
         press.finger ? MAGNETISM.touch : MAGNETISM.mouse,
       ),
-      {
-        widths: group?.widths ?? widths,
-        room: room ?? endOf(base),
-        pinnedRun: group ? pinnedRun(group.order) : run,
-      },
+      block?.frame(room ?? endOf(base)) ?? { widths, room: room ?? endOf(base), pinnedRun: run },
     )
     if (!up) return
 
@@ -554,9 +526,8 @@
 
     const from = chip
     const where = workspace.panes.landing
-    const block = carrying?.ids ?? null
-    const rows = group?.order ?? null
-    carrying = null
+    const carried = block
+    block = null
     const ending = drag.release()
     unfollow()
     if (ending.kind === 'click') {
@@ -569,49 +540,19 @@
     settle(ending.tabId)
 
     if (ending.kind === 'moved') {
-      if (block && rows) {
-        const before = moved(rows, ending.from, ending.to)[ending.to + 1]?.id ?? null
-        putDown(block, ending.tabId, paneId, before)
-      } else if (ending.to !== ending.from) workspace.moveTab(ending.tabId, paneId, ending.to)
+      if (carried) carried.moved(paneId, ending.from, ending.to)
+      else if (ending.to !== ending.from) workspace.moveTab(ending.tabId, paneId, ending.to)
       return
     }
 
-    // Let go over another strip or a pane: that is where it goes, from where it was,
-    // a block's others with it.
+    // Let go over another strip or a pane: that is where it goes, from where it was.
     if (where) {
       if (from) handOver(ending.tabId, from.left, from.top)
-      const before =
-        where.kind === 'strip' ? (workspace.tabsIn(where.paneId)[where.at]?.id ?? null) : null
-      workspace.dropTab(ending.tabId, where)
-      const into = workspace.tabs.find((one) => one.id === ending.tabId)?.paneId
-      if (block && into) putDown(block, ending.tabId, into, before)
+      if (carried) carried.dropped(where)
+      else workspace.dropTab(ending.tabId, where)
     } else if (from) {
       flyHome(ending.tabId, from)
     }
-  }
-
-  /** A block of picked tabs let go of, the one dragged in front and all still picked. */
-  function putDown(ids: readonly string[], lead: string, into: string, before: string | null) {
-    withPicking((one) => {
-      one.placeBlock(ids, into, before)
-      workspace.activate(lead)
-      one.chosen.paneId = into
-    })
-  }
-
-  /** Whether a click picks: Ctrl, Cmd on a Mac, or Shift. */
-  const picksWith = (event: MouseEvent) =>
-    event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
-
-  function withPicking(run: (loaded: typeof import('./tab-strip/picking.svelte')) => void) {
-    if (picks.loaded) {
-      run(picks.loaded)
-      return
-    }
-    void import('./tab-strip/picking.svelte').then((loaded) => {
-      picks.loaded = loaded
-      run(loaded)
-    })
   }
 
   /** The drag given up - Escape, or a window that took the pointer away. Every tab
@@ -619,7 +560,7 @@
   function giveUp() {
     const tabId = drag.tabId
     const from = chip
-    carrying = null
+    block = null
     drag.cancel()
     unfollow()
     if (!tabId) return
@@ -775,19 +716,16 @@
     void import('./tab-strip/ops').then((ops) => ops.renameFromTab(tab.id))
   }
 
+  /** Whether a click picks: Ctrl, Cmd on a Mac, or Shift. */
+  const picksWith = (event: MouseEvent) =>
+    event.shiftKey || (shortcuts.platform === 'mac' ? event.metaKey : event.ctrlKey)
+
   /** Chrome's hover card, fetched with the first pointer on a tab; see hover-card.svelte.ts. */
   let cards: Promise<typeof import('./tab-strip/hover-card.svelte')> | undefined
-
-  function aimCard(tab: Tab, node: Element, focused = false) {
-    const widest = Math.max(0, ...widths)
+  const card = (tab: Tab, node: Element | null, focused = false) =>
     void (cards ??= import('./tab-strip/hover-card.svelte')).then(({ hovering }) =>
-      hovering.restOn(tab, node, widest, focused),
+      node ? hovering.restOn(tab, node, Math.max(0, ...widths), focused) : hovering.leave(tab.id),
     )
-  }
-
-  function unaimCard(id: string) {
-    void cards?.then(({ hovering }) => hovering.leave(id))
-  }
 
   /** Puts an element at the end of the page, where no strip can clip it and no
    *  pane can draw over it: the tab carried over the panes. */
@@ -914,11 +852,11 @@
         onpointerenter={(event) => {
           if (event.pointerType !== 'mouse') return
           hovered = tab.id
-          aimCard(tab, event.currentTarget)
+          card(tab, event.currentTarget)
         }}
         onpointerleave={() => {
           if (hovered === tab.id) hovered = null
-          unaimCard(tab.id)
+          card(tab, null)
         }}
         in:arrive={{ id: tab.id, x: box.x * i18n.factor }}
         out:leave
@@ -934,21 +872,19 @@
         <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
-             nothing to call it. No `title`: the card under the tab is what a pointer
-             resting on it is shown, and the two at once would be one too many. -->
+             nothing to call it. No `title`: the hover card says the name. -->
         <button
           class="pick"
           class:centred={parts.centred}
           data-tab={tab.id}
           aria-label={tab.shown}
           onfocus={(event) => {
-            if (event.currentTarget.matches(':focus-visible'))
-              aimCard(tab, event.currentTarget, true)
+            if (event.currentTarget.matches(':focus-visible')) card(tab, event.currentTarget, true)
           }}
-          onblur={() => unaimCard(tab.id)}
+          onblur={() => card(tab, null)}
           onclick={(event) => {
             givesBack(tab.id)
-            // A click with Ctrl or Shift was a pick, and its press has answered it.
+            // A click with Ctrl or Shift was a pick, and its press answered it.
             if (event.detail > 0 && picksWith(event)) return
             workspace.activate(tab.id)
           }}
