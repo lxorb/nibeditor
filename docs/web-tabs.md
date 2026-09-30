@@ -573,6 +573,47 @@ began hiding it. See `BROWSER_ARGS` in `src-tauri/src/engine.rs`: one list, beca
 webview on one user data folder has to be started with the same switches or the engine
 refuses the second one.
 
+#### One notch of the wheel is one notch
+
+Emil, 2026-09-30: _"the scrolling doesn't feel like it should. I have the feeling it may be
+faster than it should be (this is only when scrolling in a web tab)"_. It was twice as
+fast, and it lunged.
+
+Not the switches, not the screen's scale and not a site's zoom: both engine processes run
+the same command line, the engine's smooth scrolling is on, and a notch handed to it
+animates exactly as Chrome's does. The engine takes mouse input in a window of its own over
+the page, the "Chrome Legacy Window", which passes each message on to the page's own window.
+A wheel that lands on _that_ window is handled twice - once passed on, once more when the
+legacy window gives it to `DefWindowProc`, which bubbles a wheel up to the same parent. Two
+wheel events for one notch, in a bare wry window and in upstream Chromium (Electron 33)
+alike. Chrome never meets it, because its legacy window is on the thread that holds the
+keyboard and Windows hands a wheel over it to that thread's focus, the browser's own
+window. A page in nib is another process's window inside nib's, holding the keyboard only
+after a click in it, so a wheel over it with the keyboard anywhere else - the address
+field, the sidebar, a note, a tab just switched to - goes to the legacy window.
+
+So a wheel over a page is sent where Chrome's goes. A low-level mouse hook, installed with
+the first page of a run on a thread of its own, takes a wheel over a legacy window inside
+one of nib's own windows and posts it to that window's parent, with the turn, the point
+and the keys held as Windows writes them; every other wheel and every other program's
+window is left alone. The distance is still the engine's own, from the reader's _lines to
+scroll_, and a precision touchpad never comes this way: it pans the page through Direct
+Manipulation. See `src-tauri/src/web_wheel.rs`.
+
+Measured by `scripts/web-scroll-probe.py` at 200 per cent with five lines a notch, a pane of
+1187 by 718, against Chrome 153 at the same size handed the notch those five lines make:
+
+|                                                 | wheel events | pixels | frames moving | ms  |
+| ----------------------------------------------- | ------------ | ------ | ------------- | --- |
+| a notch at the legacy window (before)           | 2            | 333.5  | 6             | 95  |
+| a notch at the page's own window (now)          | 1            | 166.5  | 8             | 123 |
+| Chrome 153, one notch                           | 1            | 166.5  | 8             | 123 |
+
+The two paths are the before and the after: the hook is what moves a wheel from the first
+to the second, and no posted message passes a hook, so the Rust tests beside it hold that
+part. The doubled notch also started with a lunge - 23 and then 100 pixels in its first two
+frames where Chrome moves 5 and 24.
+
 ### The browser build: a card, and a frame when asked
 
 A page in a browser can only be shown in a frame, and a great deal of the web
@@ -1322,6 +1363,7 @@ versions and goes to the trash like every other document.
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `apps/desktop/src-tauri/src/web_tabs.rs`              | the child webview: the things the window may ask of a page, where a page may be built, the guard script, the place a revived page is put back at, the trail, the address rule, the permission request held open, the still picture. Unit tested |
 | `apps/desktop/src-tauri/src/web_reload.rs` | stopping a page, and loading it past the cache |
+| `apps/desktop/src-tauri/src/web_wheel.rs` | a wheel over a page sent to the page's own window, so a notch is one notch. Unit tested, with windows of its own |
 | `apps/desktop/src-tauri/src/web_page.rs` | what the engine says about a page besides where it is: its sound, its full screen and Escape out of it, its zoom; and a mute. Unit tested |
 | `apps/desktop/src-tauri/src/web_find.rs` | finding in the page: the engine's find, and the page's own where there is none. Unit tested |
 | `apps/desktop/src-tauri/src/downloads.rs`             | where a file goes, the list of what this run saved, progress and Cancel on `WebView2` and `WKWebView`, a closed page kept until its file is in. Unit tested                                                                                                            |
@@ -1378,6 +1420,7 @@ versions and goes to the trash like every other document.
 | `scripts/web-globals-probe.py`                        | the drive for what a page is handed: whether a site's own script may declare `ipc`, and what of the app's is on its `window`. Both are wrong today; see "What a page is given that a browser would not give it"                                        |
 | `scripts/web-bar-probe.py` | the drive for the bar and its keys: F6 and F5 inside the page, F5 and the reload keys in the app with the request's cache header, the cross and Stop, the history under Back, Alt+Enter, the middle button on reload and Ctrl+1 |
 | `scripts/web-cursor-probe.py` | the drive for the pointer: the window's pointer count after typing in the app's page and in a site, and after moving over each. See "The pointer is never hidden while somebody types" |
+| `scripts/web-scroll-probe.py` | the drive for the wheel: one notch at the legacy window and at the page's own, frame by frame, against Chrome headless. See "One notch of the wheel is one notch" |
 | `apps/desktop/src/lib/overlays.ts`                    | the one place that says something is over the note, and tells the web tab                                                                                                                                                                              |
 | `apps/desktop/test/effects/web-switch.effect.test.ts` | the pane, mounted and unmounted, which is where the page used to be closed                                                                                                                                                                             |
 | `apps/desktop/test/effects/web-tab.effect.test.ts`    | the pane, mounted, which is where a website used to take the window down with it                                                                                                                                                                       |

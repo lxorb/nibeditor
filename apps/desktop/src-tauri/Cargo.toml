@@ -319,6 +319,10 @@ windows = { version = "0.58", features = [
   # How much memory the engine's processes hold, before an agent opens another page.
   # See agents/memory.rs.
   "Win32_System_ProcessStatus",
+  # A wheel over a page, seen before Windows delivers it and sent to the page's own
+  # window, where the engine handles it once. See web_wheel.rs.
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_System_LibraryLoader",
 ] }
 # PDF export talks to WebView2's print engine directly, and a web tab asks the
 # engine to photograph itself. The versions are the ones tauri itself is built
@@ -341,6 +345,12 @@ windows_com = { package = "windows", version = "0.61", features = [
 # The tests that touch the disk do it in a folder that cleans itself up. Already
 # in the lock file as something tauri builds with, so this costs nothing new.
 tempfile = "3"
+
+# A window class of a test's own, which Windows describes with a brush: the tests in
+# web_wheel.rs build the windows a wheel over a page passes through. The tests' only,
+# so the app never compiles the drawing half of the crate.
+[target.'cfg(target_os = "windows")'.dev-dependencies]
+windows = { version = "0.58", features = ["Win32_Graphics_Gdi"] }
 
 [profile.release]
 codegen-units = 1

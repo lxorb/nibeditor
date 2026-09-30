@@ -137,6 +137,10 @@ mod web_state;
 mod web_stores;
 #[cfg(desktop)]
 mod web_tabs;
+// Only where a page's input window is a window of another process: the system's own
+// engine on Windows.
+#[cfg(all(windows, not(feature = "cef")))]
+mod web_wheel;
 
 use paths::Opened;
 #[cfg(desktop)]

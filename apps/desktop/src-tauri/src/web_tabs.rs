@@ -1252,6 +1252,11 @@ pub async fn web_open(
     tabs.built(&tab);
     made?;
 
+    // One notch of the wheel over the page is one notch, wherever the keyboard is; from
+    // the first page of the run. See web_wheel.rs.
+    #[cfg(all(windows, not(feature = "cef")))]
+    crate::web_wheel::arm();
+
     listening(&app, &tab, store);
     tabs.walked(&tab, &url);
     Ok(())
