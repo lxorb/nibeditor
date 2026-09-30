@@ -8,7 +8,7 @@
 
 import { findLinks } from '@nib/markdown'
 import { byteLength } from '../crypto'
-import { addNote, cleanPath, MAX_NOTE_BYTES, MOVED, noteKey, writeWords } from '../notes'
+import { addNote, cleanPath, MAX_NOTE_BYTES, MOVED, NoteTaken, noteKey, writeWords } from '../notes'
 import { fits } from '../storage'
 import type { Env, Note } from '../types'
 import type { TokenRow } from './tokens'
@@ -324,7 +324,14 @@ async function writeNote(env: Env, space: Space, args: Record<string, unknown>):
     if (saved === null) return `${path} could not be written just now. Try again.`
     if (saved === MOVED) return `${path} changed while I was writing it. Read it again first.`
   } else {
-    await addNote(env, space.id, path, content)
+    try {
+      await addNote(env, space.id, path, content)
+    } catch (error) {
+      // A space whose tree is rows holds one name per folder as Windows and a Mac
+      // compare names, so another spelling of a note that is there is that note.
+      if (!(error instanceof NoteTaken)) throw error
+      return `${path} is another spelling of a note that is already there. Read it first.`
+    }
   }
 
   return `Saved ${path}.`

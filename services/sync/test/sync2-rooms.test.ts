@@ -267,6 +267,32 @@ describe('whole texts', () => {
   })
 })
 
+describe('the connector in a space whose tree is rows', () => {
+  test('answers another spelling of a note that is there in words, and makes nothing', async () => {
+    await made('Plan.md', 'one')
+    await prepare()
+    const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
+    const written = await call<RpcView>(env, '/mcp', {
+      token: mcp.json.token,
+      body: {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'write_note',
+          arguments: { space: 'Rooms', path: 'plan.md', content: 'two' },
+        },
+      },
+    })
+    expect(written.json.result.content[0]?.text).toMatch(/another spelling/)
+    expect(env.db.prepare('select count(*) as n from notes where space_id = ?').get(space)).toEqual(
+      {
+        n: 1,
+      },
+    )
+  })
+})
+
 describe('an epoch starting', () => {
   test('a v1 room with words it never settled takes them into the new document', async () => {
     const id = await made('Plan.md', 'one\n')
