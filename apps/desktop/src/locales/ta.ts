@@ -29,6 +29,7 @@ export const ta: Dictionary = {
   Grid: 'கட்டம்',
   Dots: 'புள்ளிகள்',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
   'Note or picture': 'குறிப்பு அல்லது படம்',

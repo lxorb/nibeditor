@@ -29,6 +29,7 @@ export const pa: Dictionary = {
   Grid: 'ਜਾਲੀ',
   Dots: 'ਬਿੰਦੂ',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',
   'Note or picture': 'ਨੋਟ ਜਾਂ ਤਸਵੀਰ',

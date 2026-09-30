@@ -29,6 +29,7 @@ export const jv: Dictionary = {
   Grid: 'Kotak',
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Kanvas',
   Card: 'Kartu',
   'Note or picture': 'Cathetan utawa gambar',

@@ -21,6 +21,7 @@
    *  was reported as. A button that redraws itself is a button you have to read
    *  twice, and the state is already said three ways. */
   import { t } from './i18n.svelte'
+  import { titled } from './titled'
   import { type PanelSide, workspace } from './workspace.svelte'
 
   const { side = 'left' }: { side?: PanelSide } = $props()
@@ -36,7 +37,7 @@
   class="nib-glyph toggle"
   class:is-on={open}
   class:right={side === 'right'}
-  title={label}
+  title={titled(label, side === 'left' ? 'app.sidebar' : 'app.right-sidebar')}
   aria-label={label}
   aria-pressed={open}
   onclick={() => workspace.toggleSidebar(side)}

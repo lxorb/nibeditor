@@ -29,6 +29,7 @@ export const mr: Dictionary = {
   Grid: 'जाळी',
   Dots: 'ठिपके',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'कॅनव्हास',
   Card: 'कार्ड',
   'Note or picture': 'नोंद किंवा चित्र',

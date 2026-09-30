@@ -29,6 +29,7 @@ export const ps: Dictionary = {
   Grid: 'جال',
   Dots: 'ټکي',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'تخته',
   Card: 'کارت',
   'Note or picture': 'يادښت يا انځور',

@@ -29,6 +29,7 @@ export const ru: Dictionary = {
   Grid: 'Клетка',
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Полотно',
   Card: 'Карточка',
   'Note or picture': 'Заметка или картинка',

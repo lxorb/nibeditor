@@ -29,6 +29,7 @@ export const yue: Dictionary = {
   Grid: '方格',
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',

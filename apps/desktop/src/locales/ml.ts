@@ -29,6 +29,7 @@ export const ml: Dictionary = {
   Grid: 'ചതുരക്കള്ളി',
   Dots: 'കുത്തുകൾ',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',
   'Note or picture': 'കുറിപ്പ് അല്ലെങ്കിൽ ചിത്രം',

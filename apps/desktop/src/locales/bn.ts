@@ -29,6 +29,7 @@ export const bn: Dictionary = {
   Grid: 'ছক',
   Dots: 'বিন্দু',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ক্যানভাস',
   Card: 'কার্ড',
   'Note or picture': 'নোট বা ছবি',

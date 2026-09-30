@@ -29,6 +29,7 @@ export const uk: Dictionary = {
   Grid: 'Клітинка',
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Полотно',
   Card: 'Картка',
   'Note or picture': 'Нотатка або малюнок',

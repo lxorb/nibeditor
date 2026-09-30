@@ -29,6 +29,7 @@ export const ko: Dictionary = {
   Grid: '격자',
   Dots: '점',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: '캔버스',
   Card: '카드',
   'Note or picture': '노트 또는 그림',

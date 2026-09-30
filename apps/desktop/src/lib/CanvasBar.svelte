@@ -43,6 +43,7 @@
   import { nearestDock, pens, upright } from './canvas/pens.svelte'
   import { type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
+  import { titled } from './titled'
   import { tools } from './canvas/tools.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
@@ -436,7 +437,7 @@
 
         <button
           type="button"
-          title={t('Undo')}
+          title={titled(t('Undo'), 'edit.undo')}
           aria-label={t('Undo')}
           disabled={!canundo}
           onclick={() => {
@@ -449,7 +450,7 @@
 
         <button
           type="button"
-          title={t('Redo')}
+          title={titled(t('Redo'), 'edit.redo')}
           aria-label={t('Redo')}
           disabled={!canredo}
           onclick={() => {
@@ -464,7 +465,7 @@
 
         <button
           type="button"
-          title={t('Zoom out')}
+          title={titled(t('Zoom out'), zoomRows ? 'pages.zoom.out' : null)}
           aria-label={t('Zoom out')}
           onclick={() => {
             tick()
@@ -480,7 +481,7 @@
         <button
           type="button"
           class="how-far"
-          title={zoomRows ? t('Zoom') : t('Show the whole canvas')}
+          title={zoomRows ? t('Zoom') : titled(t('Show the whole canvas'), 'canvas.fit')}
           aria-label={zoomRows ? t('Zoom') : t('Show the whole canvas')}
           onclick={(event) => {
             tick()
@@ -494,7 +495,7 @@
 
         <button
           type="button"
-          title={t('Zoom in')}
+          title={titled(t('Zoom in'), zoomRows ? 'pages.zoom.in' : null)}
           aria-label={t('Zoom in')}
           onclick={() => {
             tick()

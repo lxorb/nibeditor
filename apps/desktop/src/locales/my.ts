@@ -29,6 +29,7 @@ export const my: Dictionary = {
   Grid: 'ဆန်းခါ',
   Dots: 'အစက်များ',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',
   'Note or picture': 'မှတ်စုသို့မဟုတ်ပုံ',

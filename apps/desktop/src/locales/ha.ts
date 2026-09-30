@@ -29,6 +29,7 @@ export const ha: Dictionary = {
   Grid: 'Tsari',
   Dots: 'Ɗigogi',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Kanbas',
   Card: 'Kati',
   'Note or picture': 'Bayanin kula ko hoto',

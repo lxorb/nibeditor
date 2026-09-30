@@ -29,6 +29,7 @@ export const fa: Dictionary = {
   Grid: 'شطرنجی',
   Dots: 'نقطه‌چین',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'بوم',
   Card: 'کارت',
   'Note or picture': 'یادداشت یا تصویر',

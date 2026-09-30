@@ -29,6 +29,7 @@ export const am: Dictionary = {
   Grid: 'መጋጠሚያ',
   Dots: 'ነጥቦች',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ሸራ',
   Card: 'ካርድ',
   'Note or picture': 'ማስታወሻ ወይም ምስል',

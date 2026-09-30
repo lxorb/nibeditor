@@ -29,6 +29,7 @@ export const sw: Dictionary = {
   Grid: 'Gridi',
   Dots: 'Vitone',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'Turubai',
   Card: 'Kadi',
   'Note or picture': 'Dokezo au picha',

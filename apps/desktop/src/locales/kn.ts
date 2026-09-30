@@ -29,6 +29,7 @@ export const kn: Dictionary = {
   Grid: 'ಚೌಕಟ್ಟು',
   Dots: 'ಚುಕ್ಕೆಗಳು',
   '{at} / {count}': '{at} / {count}',
+  '{label} ({key})': '{label} ({key})',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',
   'Note or picture': 'ಟಿಪ್ಪಣಿ ಅಥವಾ ಚಿತ್ರ',

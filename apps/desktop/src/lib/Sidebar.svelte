@@ -8,6 +8,7 @@
   import { longPress } from './longpress'
   import { landsIn } from './move-targets'
   import { shortcuts } from './shortcuts.svelte'
+  import { titled } from './titled'
   import { agentMarks } from './agent-marks.svelte'
   import {
     AGENTS_MARK,
@@ -122,15 +123,17 @@
    *  own. */
   const showing = $derived(workspace.openOn(side))
 
-  const PANELS: { id: Panel; label: string; path: string }[] = [
-    { id: 'tree', label: t('Files'), path: FILES_MARK },
-    { id: 'outline', label: t('Outline'), path: OUTLINE_MARK },
-    { id: 'search', label: t('Search'), path: SEARCH_MARK },
-    { id: 'links', label: t('Links'), path: LINKS_MARK },
-    { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK },
-    { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK },
-    { id: 'ask', label: t('Ask'), path: ASK_MARK },
-    { id: 'agents', label: t('Agents'), path: AGENTS_MARK },
+  /** Each tab, and the command that brings its panel up from the keyboard, whose key
+   *  its tooltip says; see titled.ts. */
+  const PANELS: { id: Panel; label: string; path: string; key: string | null }[] = [
+    { id: 'tree', label: t('Files'), path: FILES_MARK, key: 'app.files' },
+    { id: 'outline', label: t('Outline'), path: OUTLINE_MARK, key: 'app.outline' },
+    { id: 'search', label: t('Search'), path: SEARCH_MARK, key: 'app.search' },
+    { id: 'links', label: t('Links'), path: LINKS_MARK, key: 'app.links' },
+    { id: 'footnotes', label: t('Footnotes'), path: FOOTNOTES_MARK, key: null },
+    { id: 'properties', label: t('Properties'), path: PROPERTIES_MARK, key: 'app.properties' },
+    { id: 'ask', label: t('Ask'), path: ASK_MARK, key: 'app.ask' },
+    { id: 'agents', label: t('Agents'), path: AGENTS_MARK, key: null },
   ]
 
   /** The tabs this side holds, in the order it shows them; see
@@ -585,7 +588,7 @@
         <button
           class:on={showing === item.id}
           role="tab"
-          title={item.label}
+          title={titled(item.label, item.key)}
           aria-label={item.label}
           aria-selected={showing === item.id}
           onclick={() => workspace.togglePanel(item.id)}
@@ -637,7 +640,7 @@
         {#if workspace.unfolded}
           <button
             class="nib-glyph tool"
-            title={t('Collapse the file list')}
+            title={titled(t('Collapse the file list'), 'app.fold-list')}
             aria-label={t('Collapse the file list')}
             onclick={() => workspace.foldList()}
             transition:fly={{ x: 10, duration: dur(130), easing: cubicOut }}
@@ -660,7 +663,7 @@
       <div class="tools">
         <button
           class="nib-glyph tool"
-          title={t('Stop agents')}
+          title={titled(t('Stop agents'), 'agents.stop')}
           aria-label={t('Stop agents')}
           onclick={() => {
             if (!__EVEN_PLUGIN__) void import('./agents/ui/index').then((one) => one.stopAgents())
