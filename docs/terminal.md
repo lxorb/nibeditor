@@ -127,6 +127,33 @@ than being told), when its window's page loads again, when the window is destroy
 when the app exits. On Windows closing the pseudo console sends every console program
 still attached to it the close a console window's cross does.
 
+## What a program leaves on
+
+A full-screen program - Claude Code, vim, htop - asks the terminal to report the mouse, to
+say when the window gains the keyboard, to send its own codes for the arrows and the
+keypad, and to draw on a second screen, and switches all of it off as it leaves. One that
+crashes, is killed or is interrupted does not, and the prompt after it had every move of
+the mouse typed at it (Emil, 2026-10-01: `C"1C%0C` and on at a PowerShell prompt, after
+Claude Code and a restart).
+
+So the shells nib starts mark each prompt with OSC 133;A - FinalTerm's prompt mark, the one
+Windows Terminal, iTerm2, kitty and WezTerm read; VS Code's 633;A is read too - in front of
+the prompt: Command Prompt through `PROMPT` (in front of the reader's own as well, since the
+mark draws nothing), PowerShell in the prompt function, bash in `PROMPT_COMMAND`, WSL through
+`WSLENV`. Where a mark arrives, whatever is still on is switched off before the prompt is
+drawn, read off the screen as the mark is reached: the mouse in every encoding, focus
+reports, held frames, the program's cursor and keypad codes and its second screen.
+Bracketed paste stays the shell's own - bash, zsh, fish and PSReadLine switch it on for
+each line - and goes only in Command Prompt, which never asks for it. A shell nobody taught
+to mark its prompts - zsh, a reader's own bash prompt - is asked for in the kernel instead:
+once the output rests with the mouse still reported, and only the mouse and focus go when
+the shell is in front again. Never in WSL, whose programs Windows cannot see. Nothing a
+running program asked for is touched: the shell only prompts once it is in front. See
+`lib/terminal/modes.ts`.
+
+A screen written down for a restart is its lines and colours and never its modes, and a
+screen put back starts with every mode off, whatever an older build wrote down.
+
 ## Keys, copying, links, finding
 
 The keys are in docs/keyboard.md, under _A terminal_, and the rule is
@@ -231,8 +258,8 @@ test/weight.test.ts).
   Windows; Windows Terminal opens a second one.
 - **OSC 52**, a program writing the clipboard. Useful over SSH, and a way for anything
   printed to a terminal to put text on the clipboard.
-- **Shell integration** past the folder: marks by each command, sticky scroll, command
-  decorations.
+- **Shell integration** past the folder and the prompt mark: marks by each command, sticky
+  scroll, command decorations.
 - **Titles the shell sets.** Command Prompt sets its own path as the title; the tab says
   the shell's name, as VS Code's does by default.
 - **Paths as links**, and the screen reader mode.
@@ -261,6 +288,7 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/TerminalTab.svelte` | the surface in a pane                                                                                                                                                                                                            |
 | `apps/desktop/src/lib/terminal/keys.ts`            | which keys the app has                                                                                                                                                                                                           |
 | `apps/desktop/src/lib/terminal/paste.ts`           | what a paste becomes                                                                                                                                                                                                             |
+| `apps/desktop/src/lib/terminal/modes.ts` | what a program left on, switched off where the prompt begins |
 | `apps/desktop/src/lib/terminal/look.ts`            | the colours and the type                                                                                                                                                                                                         |
 | `apps/desktop/src/lib/terminal/history.ts`         | the last lines, between runs: how much, when, and a closed tab's                                                                                                                                                                 |
 | `apps/desktop/src-tauri/src/terminal/history.rs`   | where they are kept, a file per terminal, and how many                                                                                                                                                                           |
@@ -268,3 +296,4 @@ test/weight.test.ts).
 | `apps/desktop/src/lib/terminal/closing.ts`         | the question before a busy tab closes                                                                                                                                                                                            |
 | `scripts/terminal-probe.py`                        | the packaged app driven: Command Prompt and PowerShell answer, a resize reaches the shell, Ctrl+C interrupts, Ctrl+T and Ctrl+W go where they should, a restart puts the terminal back, and no shell outlives its tab or the app |
 | `scripts/terminal-restore-probe.py` | a restart driven: the lines written as the window goes and read back by the next launch, the fresh shell in the folder the old one was in, the tab in its place, and a closed tab leaving nothing on the disk |
+| `scripts/terminal-modes-probe.py` | a program that leaves the mouse reported: the prompt after it, and the one a restart put back, get nothing typed at them when the mouse moves |

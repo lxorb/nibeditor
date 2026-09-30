@@ -50,6 +50,7 @@ import {
 } from './history'
 import { type Route, routeKey } from './keys'
 import { findColours, monospace, terminalTheme } from './look'
+import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { asksFirst, linesIn, pasted, spokenPath } from './paste'
 import { setPty } from './running'
 import { shellName, shells, SIZES } from './shells.svelte'
@@ -67,6 +68,10 @@ const QUIET = 2000
 /** And how long they wait at most while it never rests - a server printing a line a
  *  second - so a crash in the middle of one loses no more than this. */
 const FLOOD = 10_000
+
+/** How long the output rests before a shell that marks no prompts is asked whether it is
+ *  in front again, where a program left the mouse reported; see `idle`. */
+const RESTING = 300
 
 /** The systems whose kernel says where a shell is, asked after Enter; see `pty_folder`. */
 const KERNEL_SAYS = ['linux', 'macos']
@@ -145,6 +150,13 @@ class Session {
   /** Whether that screen is being written back, which a fit waits for: it is written at
    *  the width it was written at, and the fit after it reflows it. */
   private replaying = false
+  /** Output waiting behind a prompt mark while what was left on is switched off; see
+   *  `through`. Null while nothing waits. */
+  private behind: [Uint8Array, () => void][] | null = null
+  /** Whether this tab's shell has marked a prompt, which makes the fallback in `idle`
+   *  unnecessary. */
+  private marks = false
+  private waitingIdle: ReturnType<typeof setTimeout> | undefined
   private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
 
   /** The find bar, when it is up; see TerminalTab.svelte. */
@@ -303,18 +315,21 @@ class Session {
     const when = i18n.when(history.at, { dateStyle: 'medium', timeStyle: 'short' })
     const words = t('Restored {time}', { time: when })
 
-    if (platform() !== 'windows') {
-      this.term.write(history.text + restoredLine(words), () => {
-        fitted()
-        void this.start()
-      })
-      return
-    }
-
     this.term.write(history.text, () => {
+      // Every mode off before the new shell, whatever the lines switched on: a screen is
+      // written down without its modes, but one a build before that wrote down may still
+      // turn the mouse on. See modes.ts.
+      const off = tidied(this.left(), false)
       fitted()
-      this.term.write(restoredAbove(words, this.term.rows), () => void this.start())
+      const under =
+        platform() === 'windows' ? restoredAbove(words, this.term.rows) : restoredLine(words)
+      this.term.write(off + under, () => void this.start())
     })
+  }
+
+  /** What is switched on in the terminal as it stands. */
+  private left(): Left {
+    return { modes: this.term.modes, alternate: this.term.buffer.active.type === 'alternate' }
   }
 
   /** Out of the pane, and still running. */
@@ -353,6 +368,7 @@ class Session {
    *  tab coming back through Reopen closed tab. */
   end() {
     clearTimeout(this.resting)
+    clearTimeout(this.waitingIdle)
     const place = this.place()
     if (this.drawn || !shells.restoring) {
       dropHistory(place, shells.restoring ? this.snapshot() : null)
@@ -386,7 +402,11 @@ class Session {
   /** The screen as it stands, as much of it as one history may hold. */
   private snapshot(): History | null {
     if (!this.drawn) return null
-    const text = fitted((lines) => this.serializing.serialize({ scrollback: lines }))
+    // The lines and their colours, never a mode: a screen put back never reports the
+    // mouse or stays on a program's second screen. See modes.ts.
+    const text = fitted((lines) =>
+      this.serializing.serialize({ scrollback: lines, excludeModes: true, excludeAltBuffer: true }),
+    )
     return text ? { cols: this.term.cols, rows: this.term.rows, at: Date.now(), text } : null
   }
 
@@ -463,15 +483,63 @@ class Session {
     if (message instanceof ArrayBuffer) {
       const bytes = new Uint8Array(message)
       // Said once drawn, which is what lets the crate send more; see MOST_UNSEEN.
-      this.term.write(
+      this.through(
         bytes,
         () => void invoke('pty_seen', { id, bytes: bytes.length }).catch(() => undefined),
       )
       this.printed()
+      clearTimeout(this.waitingIdle)
+      this.waitingIdle = setTimeout(() => void this.idle(), RESTING)
       return
     }
 
     if (isRecord(message) && isNumber(message.exit)) this.exitedWith(message.exit)
+  }
+
+  /** Output onto the screen, in order, cut at each prompt mark: where the shell begins a
+   *  prompt, what a program left on is switched off - read off the screen as the mark is
+   *  reached, so nothing the prompt or its line editor sets after it is touched. What
+   *  arrives while that is decided waits behind it. See modes.ts. */
+  private through(bytes: Uint8Array, drawn: () => void) {
+    if (this.behind) {
+      this.behind.push([bytes, drawn])
+      return
+    }
+
+    const end = promptEnd(bytes)
+    if (end < 0) {
+      this.term.write(bytes, drawn)
+      return
+    }
+
+    this.marks = true
+    this.behind = []
+    this.term.write(bytes.subarray(0, end), () => {
+      const off = tidied(this.left(), pastesItself(this.spec().shell))
+      if (off) this.term.write(off)
+
+      const waiting = this.behind ?? []
+      this.behind = null
+      const rest = bytes.subarray(end)
+      if (rest.length) this.through(rest, drawn)
+      else drawn()
+      for (const [one, done] of waiting) this.through(one, done)
+    })
+  }
+
+  /** The output has rested, in a shell that marks no prompts - zsh, a reader's own bash
+   *  prompt - with the mouse still reported: the kernel is asked whether the shell is in
+   *  front again, and the reporting goes if it is. Never for WSL, whose programs Windows
+   *  cannot see, so a program there would read as the shell. Only the mouse and focus:
+   *  the prompt is on the screen by now, and the keys are its line editor's. */
+  private async idle() {
+    const pty = this.pty
+    if (this.marks || pty === null || this.spec().shell.startsWith('wsl:')) return
+    if (!reporting(this.left())) return
+
+    const busy = await invoke<unknown>('pty_busy', { id: pty }).catch(() => true)
+    if (busy !== false || pty !== this.pty || !reporting(this.left())) return
+    this.term.write(tidied(this.left(), true, false))
   }
 
   /** The shell exited by itself. Windows Terminal's rule: cleanly, and the tab goes
