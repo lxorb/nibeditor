@@ -93,22 +93,25 @@
     style:grid-template-columns={split.along === 'row' && kept < 0 ? share(split) : undefined}
     style:grid-template-rows={split.along === 'column' && kept < 0 ? share(split) : undefined}
   >
-    {#if kept !== 1}
-      <div class="side"><PaneTree frame={split.sides[0]} /></div>
-    {/if}
+    <!-- Each side is handed down as the item of a block rather than as
+         `split.sides[i]`, which a side would read back through its prop after the
+         split had gone: a pane's effects give back what they took as the branch is
+         taken down, by which time a split collapsing to one pane is null here. An
+         item keeps the side it was last drawn for. -->
+    {#each split.sides as side, at (side.id)}
+      {#if at === 1 && kept < 0}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+          class="divider"
+          onpointerdown={(event) => grab(event, split)}
+          ondblclick={() => workspace.panes.equalise(split.id)}
+        ></div>
+      {/if}
 
-    {#if kept < 0}
-      <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="divider"
-        onpointerdown={(event) => grab(event, split)}
-        ondblclick={() => workspace.panes.equalise(split.id)}
-      ></div>
-    {/if}
-
-    {#if kept !== 0}
-      <div class="side"><PaneTree frame={split.sides[1]} /></div>
-    {/if}
+      {#if kept < 0 || kept === at}
+        <div class="side"><PaneTree frame={side} /></div>
+      {/if}
+    {/each}
   </div>
 {:else if frame.kind === 'pane'}
   <Pane pane={frame} />
