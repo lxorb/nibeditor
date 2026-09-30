@@ -275,8 +275,8 @@ export class Arranged {
    *
    *  Two things to put right, and a rename is both at once: the folder it sits in
    *  knows it by name, and a folder that moved is the key of its own list and of
-   *  every list under it. Called from the same three places `folderIcons.moved` is
-   *  - a rename, a move, and the undo of either. */
+   *  every list under it. Heard from every file operation that moves one; see
+   *  workspace/file-ops.ts. */
   moved(from: string, to: string, root = this.root()) {
     if (root === null || from === to) return
 

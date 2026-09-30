@@ -14,14 +14,13 @@ import { account } from './account.svelte'
 import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
-import { invoke } from './tauri'
+import { invoke, joinPath } from './tauri'
 import { type Mirror, newMirror, readMirror, type Tracked, within } from './sync/mirror'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import { workspace } from './workspace.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { samePath } from './space-paths'
-import { joinPath } from './tauri'
 
 export const STORAGE_KEY = 'nib:mirrors'
 
@@ -45,7 +44,7 @@ class Sync {
    *  it), and until then a note at its new name is still the note it always was: the
    *  same id, and so the same room. Held in memory only, and gone when the account
    *  has answered either way. */
-  private moving = $state.raw<readonly { root: string; path: string; tracked: Tracked }[]>([])
+  private moving = $state.raw<readonly { path: string; tracked: Tracked }[]>([])
   private timer: ReturnType<typeof setTimeout> | null = null
   /** When the pass that timer is for comes due, so a nudge can tell whether its
    *  own delay would be sooner than what is already planned; see `nudge`. */
@@ -195,8 +194,8 @@ class Sync {
   }
 
   /** The notes a move of `from` to `to` carries, each at its new name. */
-  private movingFrom(from: string, to: string): { root: string; path: string; tracked: Tracked }[] {
-    const out: { root: string; path: string; tracked: Tracked }[] = []
+  private movingFrom(from: string, to: string): { path: string; tracked: Tracked }[] {
+    const out: { path: string; tracked: Tracked }[] = []
 
     for (const mirror of Object.values(this.mirrors)) {
       const was = within(mirror.root, from)
@@ -205,11 +204,7 @@ class Sync {
 
       for (const [path, tracked] of Object.entries(mirror.notes)) {
         if (path !== was && !path.startsWith(`${was}/`)) continue
-        out.push({
-          root: mirror.root,
-          path: joinPath(mirror.root, now + path.slice(was.length)),
-          tracked,
-        })
+        out.push({ path: joinPath(mirror.root, now + path.slice(was.length)), tracked })
       }
     }
 
