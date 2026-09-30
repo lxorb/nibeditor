@@ -292,6 +292,7 @@ def fresh(
         )
 
     page = context.new_page()
+    DRIVE.choosers(page)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     # The app writes its own failures to the console through `log`, and a share
     # that could not be written would otherwise be a silent nothing.

@@ -725,6 +725,19 @@ class Drive:
             patience,
         )
 
+    def choosers(self, page: Any) -> None:
+        """Every file chooser the page opens is Playwright's to answer, from now on.
+
+        `expect_file_chooser` turns Playwright's interception on as it starts waiting,
+        without waiting for the browser to hear it, and off again after. On a busy
+        machine the key that opens the chooser then gets there first, the chooser opens
+        with nobody intercepting it, and headless Chromium drops it without a word. So a
+        drive that answers choosers says so once, when its page is made: a listener that
+        stays keeps the interception on, and the round trip after it is the browser
+        having heard before the drive does anything else."""
+        page.on("filechooser", lambda _chooser: None)
+        page.evaluate("0")
+
     def inject(self, page: Any, script: Path) -> None:
         """A script the drive brings - axe-core, say - run in the page past the app's
         own policy, which refuses every inline script and so every script tag a

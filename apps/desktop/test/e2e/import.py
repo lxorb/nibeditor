@@ -140,6 +140,7 @@ def opened(browser, width, height, agent, finger, scheme, name):
         device_scale_factor=2,
     )
     page = context.new_page()
+    DRIVE.choosers(page)
     page.set_default_timeout(10000)
     page.on("pageerror", lambda error: say(f"[{name}] page error: {error}"))
     page.on(

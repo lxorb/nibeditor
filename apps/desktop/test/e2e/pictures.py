@@ -251,6 +251,7 @@ def fresh(browser: Browser, finger: bool) -> Page:
         ),
     )
     page = context.new_page()
+    DRIVE.choosers(page)
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     page.goto(ORIGIN, wait_until="domcontentloaded")
 
