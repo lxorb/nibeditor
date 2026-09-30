@@ -207,7 +207,9 @@ zeroize = "1"
 # How long a web state's capture or restore waits for the engine before it gives up,
 # which is tokio's timer. Tauri runs on tokio already and builds its runtime with every
 # driver the features compile in; this is the one feature it does not ask for itself.
-tokio = { version = "1", default-features = false, features = ["time"] }
+# And its mutex, which an await may be held across: one refresh of a ChatGPT plan's token
+# at a time (chatgpt.rs).
+tokio = { version = "1", default-features = false, features = ["time", "sync"] }
 
 # UIKit as the objects tao hands out, at the version it is built against. For the one
 # thing the phone build answers itself: a second window an iPad asks for, which is

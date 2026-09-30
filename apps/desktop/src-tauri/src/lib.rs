@@ -38,10 +38,13 @@ mod agents;
 // ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
 mod ai_cli;
+// A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
 #[cfg(desktop)]
 mod appearance;
 #[cfg(desktop)]
 mod apple_notes;
+#[cfg(desktop)]
+mod chatgpt;
 // Where the database holding the notes is, that is a Mac: SQLite, a group
 // container and a permission no other system has, all of which is `apple_notes`.
 // What is *on* a row is a gzipped protobuf, and unpacking one is arithmetic over
@@ -261,6 +264,10 @@ macro_rules! desktop_commands {
             ai_cli::ai_cli_status,
             ai_cli::ai_cli_ask,
             ai_cli::ai_cli_stop,
+            chatgpt::chatgpt_sign_in,
+            chatgpt::chatgpt_account,
+            chatgpt::chatgpt_token,
+            chatgpt::chatgpt_sign_out,
             appearance::set_frame,
             appearance::set_translucency,
             ground::remember_ground,
@@ -512,9 +519,12 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     #[cfg(desktop)]
     let builder = terminal::managed(builder);
 
-    // The questions Claude Code and Codex are answering; see ai_cli.rs.
+    // The questions Claude Code and Codex are answering, and the ChatGPT plan's access
+    // token of the hour; see ai_cli.rs and chatgpt.rs.
     #[cfg(desktop)]
-    let builder = builder.manage(ai_cli::Asks::default());
+    let builder = builder
+        .manage(ai_cli::Asks::default())
+        .manage(chatgpt::ChatGpt::default());
 
     #[cfg(desktop)]
     let builder = builder.invoke_handler(desktop_commands!());
