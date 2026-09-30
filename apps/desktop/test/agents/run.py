@@ -528,12 +528,14 @@ def road(via: str, probe: Probe, token: str, spaces: pathlib.Path) -> Any:
 
     if via == "endpoint":
         return Endpoint(probe.port, token)
-    # The token kept where `nib mcp` keeps the one a pairing gave it, so it never asks
+    # The token kept where `nib mcp` keeps the one a pairing gave it, and as it keeps it -
+    # the agent it was made for and the token (mcp/pairing.rs `Kept`) - so it never asks
     # (docs/agent-native.md 9.1, a pasted token); and `nib mcp` is the probe's own binary
     # in a mode with no window, so it is launched, and watched, like the probe itself.
     clients = config_dir(probe.identifier) / "agents" / "clients"
     clients.mkdir(parents=True, exist_ok=True)
-    (clients / Mcp.CLIENT).write_text(token, encoding="utf-8")
+    kept = {"agent": GRANT["id"], "token": token}
+    (clients / Mcp.CLIENT).write_text(json.dumps(kept), encoding="utf-8")
     process = run_probe(probe.exe, env={**os.environ, "NIB_SPACES_DIR": str(spaces)}, args=["mcp"], piped=True)
     return Mcp(process)
 
