@@ -29,7 +29,7 @@ export async function toggleFill(tabId?: string): Promise<void> {
 }
 
 /** The pane being worked in fills the window, once the chrome around it has gone. */
-export async function fill(tabId?: string): Promise<void> {
+async function fill(tabId?: string): Promise<void> {
   if (going || workspace.panes.fills !== null) return
   if (tabId !== undefined && tabId !== workspace.activeTabId) workspace.activate(tabId)
 

@@ -658,7 +658,8 @@ mod tests {
             ..Held::default()
         };
         let filled = meaning(0x7A, shift, true, false);
-        assert_eq!(filled.as_ref().map(|one| (one.key, one.code)), Some(("F11", "F11")));
+        let named = filled.as_ref().map(|one| (one.key, one.code));
+        assert_eq!(named, Some(("F11", "F11")));
         // Said with its Shift, so the window reads Shift+F11 rather than full screen.
         assert!(filled.as_ref().is_some_and(|one| one.held.shift));
         assert!(filled.is_some_and(|one| one.keeps_page()));
@@ -666,13 +667,13 @@ mod tests {
         // F11 alone is the page's, for a video's own full screen, and so is it with Ctrl
         // or Alt.
         assert_eq!(meaning(0x7A, Held::default(), true, false), None);
-        assert_eq!(meaning(0x7A, Held { shift: true, ..CTRL }, true, false), None);
-        let alt = Held {
+        let with = |ctrl, alt| Held {
+            ctrl,
             shift: true,
-            alt: true,
-            ..Held::default()
+            alt,
         };
-        assert_eq!(meaning(0x7A, alt, true, false), None);
+        assert_eq!(meaning(0x7A, with(true, false), true, false), None);
+        assert_eq!(meaning(0x7A, with(false, true), true, false), None);
 
         // Every other chord hands the keyboard back to the app.
         assert!(meaning(0x54, CTRL, true, false).is_some_and(|one| !one.keeps_page()));
