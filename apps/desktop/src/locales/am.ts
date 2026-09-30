@@ -1417,6 +1417,7 @@ export const am: Dictionary = {
   'wants to': 'የሚከተሉትን ማድረግ ይፈልጋል',
   'Don’t allow': 'አትፍቀድ',
   Allow: 'ፍቀድ',
+  OK: 'እሺ',
   'Use your camera': 'ካሜራዎን ይጠቀማል',
   'Use your microphone': 'ማይክሮፎንዎን ይጠቀማል',
   'Know your location': 'የእርስዎን መገኛ አካባቢ ይወቁ',

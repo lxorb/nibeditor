@@ -1458,6 +1458,7 @@ export const ta: Dictionary = {
   'wants to': 'பின்வருவனவற்றைச் செய்ய விரும்புகிறது',
   'Don’t allow': 'அனுமதிக்காதே',
   Allow: 'அனுமதி',
+  OK: 'சரி',
   'Use your camera': 'உங்கள் கேமராவைப் பயன்படுத்த',
   'Use your microphone': 'உங்கள் மைக்ரோஃபோனைப் பயன்படுத்த',
   'Know your location': 'உங்கள் இருப்பிடத்தை அறிய',

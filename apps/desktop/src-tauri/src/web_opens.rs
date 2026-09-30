@@ -15,8 +15,11 @@
 //!
 //! 1. **The window name.** The middle button leaves no key held, so a small script in
 //!    every page (`SCRIPT`) answers that press itself and opens the link under a name
-//!    that says so. A site that opens a window under the same name gets a tab behind
-//!    it, which is less than it could already do by asking for one in front.
+//!    that says so. It runs in nib's own world in the page, which shares the page's
+//!    document and events and none of its globals, so the page can neither see it nor
+//!    replace the `window.open` it calls; see `web_worlds.rs`. A site that opens a
+//!    window under the same name gets a tab behind it, which is less than it could
+//!    already do by asking for one in front.
 //! 2. **The keys held.** Ctrl, and Shift, as the input this thread shares with the
 //!    page's window has them, the same reading `web_keys.rs` makes.
 //! 3. **The page's own menu.** Its link row opens the link it was raised on, so a
@@ -111,7 +114,10 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
     let _ = app.emit_to(window, PASSED, ask);
 }
 
-/// The script in every page and every frame.
+/// The script in every page and every frame, in nib's own world there rather than the
+/// page's: it adds no global, patches nothing, and a page that wraps `window.open`,
+/// `addEventListener` or `Element.prototype.closest` wraps its own and not these. See
+/// `web_worlds.rs`.
 ///
 /// The middle button on a link opens it as a window under a name that says how it was
 /// pressed, and keeps the engine from opening it a second time. Only a press a person
@@ -130,11 +136,9 @@ fn passed(app: &tauri::AppHandle, window: &str, tab: &str, key: Passed) {
 /// the order they were added - the probe caught a page's Ctrl+F answered twice. So each
 /// press puts the answer back at the end of the window's list on its way down, in the
 /// capturing turn, which is before the page's bubbling handlers run and after they were
-/// added. A page that stops the press on its way up is left to the engine, whose own find
-/// then opens, as a browser's would.
-///
-/// `window.open` is held from before the page's own first script, so a page that
-/// replaces it has not replaced this.
+/// added. The list is the document's and not a world's, so this holds from nib's own
+/// world as it did from the page's. A page that stops the press on its way up is left
+/// to the engine, whose own find then opens, as a browser's would.
 #[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 pub const SCRIPT: &str = r"(function () {
   var open = window.open.bind(window)

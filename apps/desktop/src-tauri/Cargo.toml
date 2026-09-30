@@ -182,8 +182,10 @@ tempfile = "3"
 # (recent.rs), asking iCloud for a note it took off the Mac (notes/icloud.rs), the
 # menu bar's own rows and actions (menu_bar.rs), the traffic lights (lights.rs),
 # WKWebView's own printing, capture prompt, cookie store and snapshot (pdf.rs,
-# web_tabs.rs, web_cookies.rs), and which browser opens the web and the question
-# that makes nib it (default_browser.rs).
+# web_tabs.rs, web_cookies.rs), which browser opens the web and the question that
+# makes nib it (default_browser.rs), and a web tab's user scripts, emptied of the
+# app's before the page is sent to the site and given nib's own in a world of their
+# own (web_worlds.rs).
 objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
@@ -233,9 +235,11 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "std",
   "objc2-app-kit",
   "block2",
+  "WKContentWorld",
   "WKDownload",
   "WKFrameInfo",
   "WKHTTPCookieStore",
+  "WKNavigation",
   "WKNavigationAction",
   "WKNavigationDelegate",
   "WKNavigationResponse",
@@ -243,6 +247,8 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKSecurityOrigin",
   "WKSnapshotConfiguration",
   "WKUIDelegate",
+  "WKUserContentController",
+  "WKUserScript",
   "WKWebView",
   "WKWebViewConfiguration",
   "WKWebsiteDataStore",
@@ -290,6 +296,13 @@ windows_com = { package = "windows", version = "0.61", features = [
   "Win32_System_Com",
   "Win32_System_Com_StructuredStorage",
 ] }
+
+# WebKitGTK as the webview wry hands out, at the version and the features wry builds it
+# with, so the types line up and the lock file gains no crate: a web tab's user scripts,
+# emptied of the app's before the page is sent to the site and given nib's own in a
+# script world of their own (web_worlds.rs).
+[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
+webkit2gtk = { version = "=2.0.2", features = ["v2_38"] }
 
 [dev-dependencies]
 # The tests that touch the disk do it in a folder that cleans itself up. Already

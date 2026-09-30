@@ -1439,6 +1439,7 @@ export const tr: Dictionary = {
   'wants to': 'şunu yapmak istiyor',
   'Don’t allow': 'İzin verme',
   Allow: 'İzin ver',
+  OK: 'Tamam',
   'Use your camera': 'Kameranızı kullanma',
   'Use your microphone': 'Mikrofonunuzu kullanma',
   'Know your location': 'Konumunuzu bilme',

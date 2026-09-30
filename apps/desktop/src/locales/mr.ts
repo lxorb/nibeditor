@@ -1437,6 +1437,7 @@ export const mr: Dictionary = {
   'wants to': 'ला हे करायचे आहे',
   'Don’t allow': 'अनुमती देऊ नका',
   Allow: 'परवानगी द्या',
+  OK: 'ठीक आहे',
   'Use your camera': 'तुमचा कॅमेरा वापरा',
   'Use your microphone': 'तुमचा मायक्रोफोन वापरा',
   'Know your location': 'तुमचे स्थान जाणून घ्या',

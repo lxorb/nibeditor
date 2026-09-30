@@ -175,6 +175,7 @@ describe('what hides a web page', () => {
     'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
+    'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
     'lib/web-tab/WebDownloads.svelte': 'bubble',
     'lib/web-tab/WebSite.svelte': 'bubble',
   }

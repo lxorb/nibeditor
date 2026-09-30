@@ -1434,6 +1434,7 @@ export const ur: Dictionary = {
   'wants to': 'چاہتی ہے کہ',
   'Don’t allow': 'اجازت نہ دیں',
   Allow: 'اجازت دیں',
+  OK: 'ٹھیک ہے',
   'Use your camera': 'اپنا کیمرا استعمال کریں',
   'Use your microphone': 'اپنا مائیکروفون استعمال کریں',
   'Know your location': 'اپنا مقام جانیں',

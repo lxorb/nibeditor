@@ -1435,6 +1435,7 @@ export const id: Dictionary = {
   'wants to': 'ingin',
   'Don’t allow': 'Jangan izinkan',
   Allow: 'Izinkan',
+  OK: 'OK',
   'Use your camera': 'Menggunakan kamera Anda',
   'Use your microphone': 'Menggunakan mikrofon Anda',
   'Know your location': 'Mengetahui lokasi Anda',
